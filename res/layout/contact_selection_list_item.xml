@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<org.thoughtcrime.securesms.contacts.ContactSelectionListItem
+<su.sres.securesms.contacts.ContactSelectionListItem
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
@@ -12,7 +12,7 @@
         android:paddingStart="48dp"
         android:paddingEnd="24dp">
 
-    <org.thoughtcrime.securesms.components.AvatarImageView
+    <su.sres.securesms.components.AvatarImageView
             android:id="@+id/contact_photo_image"
             android:layout_width="40dp"
             android:layout_height="40dp"
@@ -28,7 +28,7 @@
                   android:paddingEnd="16dp"
                   android:orientation="vertical">
 
-        <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+        <su.sres.securesms.components.emoji.EmojiTextView
                 android:id="@+id/name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -77,4 +77,4 @@
               android:focusable="false"
               android:clickable="false" />
 
-</org.thoughtcrime.securesms.contacts.ContactSelectionListItem>
+</su.sres.securesms.contacts.ContactSelectionListItem>

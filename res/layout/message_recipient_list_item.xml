@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.thoughtcrime.securesms.MessageRecipientListItem
+<su.sres.securesms.MessageRecipientListItem
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -8,7 +8,7 @@
     android:layout_height="wrap_content"
     android:padding="16dp">
 
-    <org.thoughtcrime.securesms.components.AvatarImageView
+    <su.sres.securesms.components.AvatarImageView
             android:id="@+id/contact_photo_image"
             android:foreground="@drawable/contact_photo_background"
             android:layout_width="40dp"
@@ -36,7 +36,7 @@
                       android:layout_height="wrap_content"
                       android:orientation="vertical">
 
-            <org.thoughtcrime.securesms.components.FromTextView
+            <su.sres.securesms.components.FromTextView
                       android:id="@+id/from"
                       android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
@@ -87,7 +87,7 @@
             android:src="@drawable/ic_unidentified_delivery"
             android:tint="?attr/conversation_item_sent_text_secondary_color"/>
 
-        <org.thoughtcrime.securesms.components.DeliveryStatusView
+        <su.sres.securesms.components.DeliveryStatusView
                 android:id="@+id/delivery_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -96,4 +96,4 @@
 
     </LinearLayout>
 
-</org.thoughtcrime.securesms.MessageRecipientListItem>
+</su.sres.securesms.MessageRecipientListItem>

@@ -142,7 +142,7 @@
                 android:layoutDirection="ltr"
                 android:orientation="horizontal">
 
-                <org.thoughtcrime.securesms.components.LabeledEditText
+                <su.sres.securesms.components.LabeledEditText
                     android:id="@+id/country_code"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -151,7 +151,7 @@
                     app:labeledEditText_background="@color/white"
                     app:labeledEditText_textLayout="@layout/country_code_text" />
 
-                <org.thoughtcrime.securesms.components.LabeledEditText
+                <su.sres.securesms.components.LabeledEditText
                     android:id="@+id/number"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -195,7 +195,7 @@
             android:visibility="invisible"
             tools:visibility="visible">
 
-            <org.thoughtcrime.securesms.components.registration.VerificationCodeView
+            <su.sres.securesms.components.registration.VerificationCodeView
                 android:id="@+id/code"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -212,7 +212,7 @@
                 app:vcv_spacing="10dp"
                 app:vcv_textColor="@color/core_black" />
 
- <!--           <org.thoughtcrime.securesms.components.registration.CallMeCountDownView
+ <!--           <su.sres.securesms.components.registration.CallMeCountDownView
                 android:id="@+id/call_me_count_down"
                 style="@style/Button.Borderless.Registration"
                 android:layout_width="wrap_content"
@@ -234,7 +234,7 @@
 
             <!-- android:layout_toEndOf="@id/call_me_count_down" -->
 
-            <org.thoughtcrime.securesms.components.registration.VerificationPinKeyboard
+            <su.sres.securesms.components.registration.VerificationPinKeyboard
                 android:id="@+id/keyboard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

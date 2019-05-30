@@ -5,7 +5,7 @@
  */
 package signalservice;
 
-option java_package = "org.thoughtcrime.securesms.devicelist";
+option java_package = "su.sres.securesms.devicelist";
 option java_outer_classname = "DeviceNameProtos";
 
 message DeviceName {

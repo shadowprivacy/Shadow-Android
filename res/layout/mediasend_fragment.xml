@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/core_black">
 
-    <org.thoughtcrime.securesms.components.ControllableViewPager
+    <su.sres.securesms.components.ControllableViewPager
         android:id="@+id/mediasend_pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
@@ -19,7 +19,7 @@
         android:animateLayoutChanges="true"
         android:layout_gravity="top"/>
 
-    <org.thoughtcrime.securesms.components.InputAwareLayout
+    <su.sres.securesms.components.InputAwareLayout
         android:id="@+id/mediasend_hud"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -32,7 +32,7 @@
             android:orientation="vertical"
             android:background="@color/transparent_black_70">
 
-            <org.thoughtcrime.securesms.components.emoji.EmojiEditText
+            <su.sres.securesms.components.emoji.EmojiEditText
                 android:id="@+id/mediasend_caption"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -76,7 +76,7 @@
                     android:orientation="horizontal"
                     android:background="@drawable/compose_background_camera">
 
-                    <org.thoughtcrime.securesms.components.emoji.EmojiToggle
+                    <su.sres.securesms.components.emoji.EmojiToggle
                         android:id="@+id/mediasend_emoji_toggle"
                         android:layout_width="wrap_content"
                         android:layout_height="@dimen/conversation_compose_height"
@@ -90,7 +90,7 @@
                         android:layout_width="0dp"
                         android:layout_height="@dimen/conversation_compose_height" />
 
-                    <org.thoughtcrime.securesms.components.ComposeText
+                    <su.sres.securesms.components.ComposeText
                         style="@style/ComposeEditText"
                         android:id="@+id/mediasend_compose_text"
                         android:layout_width="0dp"
@@ -101,7 +101,7 @@
                         android:nextFocusRight="@+id/send_button"
                         tools:hint="Send TextSecure message" >
                         <requestFocus />
-                    </org.thoughtcrime.securesms.components.ComposeText>
+                    </su.sres.securesms.components.ComposeText>
 
                 </LinearLayout>
 
@@ -114,7 +114,7 @@
                     android:background="@drawable/circle_tintable"
                     tools:backgroundTint="@color/core_blue">
 
-                    <org.thoughtcrime.securesms.components.SendButton
+                    <su.sres.securesms.components.SendButton
                         android:id="@+id/mediasend_send_button"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
@@ -151,6 +151,6 @@
 
         </LinearLayout>
 
-    </org.thoughtcrime.securesms.components.InputAwareLayout>
+    </su.sres.securesms.components.InputAwareLayout>
 
 </FrameLayout>

@@ -6,7 +6,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    tools:parentTag="org.thoughtcrime.securesms.components.ConversationItemFooter">
+    tools:parentTag="su.sres.securesms.components.ConversationItemFooter">
 
     <LinearLayout
         android:layout_width="0dp"
@@ -27,7 +27,7 @@
             android:textAllCaps="true"
             tools:text="30 mins"/>
 
-        <org.thoughtcrime.securesms.components.ExpirationTimerView
+        <su.sres.securesms.components.ExpirationTimerView
             android:id="@+id/footer_expiration_timer"
             android:layout_gravity="center_vertical|end"
             android:layout_marginStart="6dp"
@@ -65,7 +65,7 @@
         android:contentDescription="@string/conversation_item__secure_message_description"
         tools:visibility="visible"/>
 
-    <org.thoughtcrime.securesms.components.DeliveryStatusView
+    <su.sres.securesms.components.DeliveryStatusView
         android:id="@+id/footer_delivery_status"
         android:layout_width="20dp"
         android:layout_height="wrap_content"

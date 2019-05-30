@@ -3,33 +3,34 @@
                   xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory android:key="about" android:title="@string/recipient_preferences__about">
-        <org.thoughtcrime.securesms.preferences.widgets.ContactPreference android:key="pref_key_number" android:persistent="false"/>
+        <su.sres.securesms.preferences.widgets.ContactPreference
+            android:key="pref_key_number" android:persistent="false"/>
     </PreferenceCategory>
 
     <PreferenceCategory android:key="about_divider" android:layout="@layout/preference_divider"/>
 
     <PreferenceCategory android:key="notification_settings" android:title="@string/recipient_preferences__chat_settings">
-        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+        <su.sres.securesms.components.SwitchPreferenceCompat
                 android:key="pref_key_recipient_mute"
                 android:title="@string/recipient_preferences__mute_conversation"
                 android:defaultValue="false"
                 android:disableDependentsState="true"
                 android:persistent="false" />
 
-        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+        <su.sres.securesms.components.SwitchPreferenceCompat
             android:key="pref_key_recipient_custom_notifications"
             android:title="@string/recipient_preferences__custom_notifications"
             android:defaultValue="false"
             android:persistent="false" />
 
 
-        <org.thoughtcrime.securesms.preferences.widgets.SignalPreference
+        <su.sres.securesms.preferences.widgets.SignalPreference
                             android:dependency="pref_key_recipient_mute"
                             android:key="pref_key_recipient_ringtone"
                             android:title="@string/recipient_preferences__notification_sound"
                             android:persistent="false"/>
 
-        <org.thoughtcrime.securesms.preferences.widgets.SignalListPreference
+        <su.sres.securesms.preferences.widgets.SignalListPreference
                 android:dependency="pref_key_recipient_mute"
                 android:key="pref_key_recipient_vibrate"
                 android:title="@string/recipient_preferences__vibrate"
@@ -38,7 +39,7 @@
                 android:defaultValue="0"
                 android:persistent="false"/>
 
-        <org.thoughtcrime.securesms.preferences.widgets.ColorPickerPreference
+        <su.sres.securesms.preferences.widgets.ColorPickerPreference
                 android:key="pref_key_recipient_color"
                 android:title="@string/recipient_preferences__color"
                 android:defaultValue="@android:color/black"
@@ -52,12 +53,12 @@
 
     <PreferenceCategory android:key="call_settings" android:title="@string/recipient_preferences__call_settings">
 
-        <org.thoughtcrime.securesms.preferences.widgets.SignalPreference
+        <su.sres.securesms.preferences.widgets.SignalPreference
                 android:key="pref_key_recipient_call_ringtone"
                 android:title="@string/recipient_preferences__ringtone"
                 android:persistent="false"/>
 
-        <org.thoughtcrime.securesms.preferences.widgets.SignalListPreference
+        <su.sres.securesms.preferences.widgets.SignalListPreference
                 android:key="pref_key_recipient_call_vibrate"
                 android:title="@string/recipient_preferences__vibrate"
                 android:entries="@array/recipient_vibrate_entries"

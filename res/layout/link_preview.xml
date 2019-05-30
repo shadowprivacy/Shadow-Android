@@ -11,7 +11,7 @@
         android:padding="6dp"
         android:background="?linkpreview_background_color">
 
-        <org.thoughtcrime.securesms.components.OutlinedThumbnailView
+        <su.sres.securesms.components.OutlinedThumbnailView
             android:id="@+id/linkpreview_thumbnail"
             android:layout_width="72dp"
             android:layout_height="0dp"
@@ -24,7 +24,7 @@
             tools:src="@drawable/ic_contact_picture"
             tools:visibility="visible" />
 
-        <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+        <su.sres.securesms.components.emoji.EmojiTextView
             android:id="@+id/linkpreview_title"
             style="@style/Signal.Text.Body"
             android:layout_width="0dp"
@@ -41,7 +41,7 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Wall Crawler Strikes Again!" />
 
-        <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+        <su.sres.securesms.components.emoji.EmojiTextView
             android:id="@+id/linkpreview_site"
             style="@style/Signal.Text.Caption"
             android:layout_width="wrap_content"

@@ -18,7 +18,7 @@
                 android:titleTextColor="?attr/media_overview_toolbar_foreground"
                 app:layout_scrollFlags="scroll|enterAlways"/>
 
-        <org.thoughtcrime.securesms.components.ControllableTabLayout
+        <su.sres.securesms.components.ControllableTabLayout
                 android:id="@+id/tab_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -30,7 +30,7 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <org.thoughtcrime.securesms.components.ControllableViewPager
+    <su.sres.securesms.components.ControllableViewPager
             android:id="@+id/pager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.thoughtcrime.securesms.video.VideoPlayer
+<su.sres.securesms.video.VideoPlayer
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/video_player"
         android:layout_width="match_parent"
