@@ -26,3 +26,6 @@ jni/libspeex/.deps/
 pkcs11.password
 libs/signal-service-android-*.aar
 libs/signal-service-java-*.jar
+src/su/sres/securesms/backup/BackupProtos.java
+src/su/sres/securesms/devicelist/DeviceNameProtos.java
+src/su/sres/securesms/webrtc/WebRtcDataProtos.java
