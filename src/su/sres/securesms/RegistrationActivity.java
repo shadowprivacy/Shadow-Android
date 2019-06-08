@@ -3,10 +3,10 @@ package su.sres.securesms;
 import android.Manifest;
 import android.animation.Animator;
 import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
+// import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
+// import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -33,8 +33,8 @@ import com.google.android.gms.auth.api.phone.SmsRetriever;
 import com.google.android.gms.auth.api.phone.SmsRetrieverClient;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.CommonStatusCodes;
-import com.google.android.gms.common.api.Status;
+// import com.google.android.gms.common.api.CommonStatusCodes;
+// import com.google.android.gms.common.api.Status;
 import com.google.android.gms.tasks.Task;
 import com.google.i18n.phonenumbers.AsYouTypeFormatter;
 import com.google.i18n.phonenumbers.NumberParseException;
@@ -50,7 +50,6 @@ import su.sres.securesms.animation.AnimationCompleteListener;
 import su.sres.securesms.backup.FullBackupBase;
 import su.sres.securesms.backup.FullBackupImporter;
 import su.sres.securesms.components.LabeledEditText;
-// import su.sres.securesms.components.registration.CallMeCountDownView;
 import su.sres.securesms.components.registration.VerificationCodeView;
 import su.sres.securesms.components.registration.VerificationPinKeyboard;
 import su.sres.securesms.crypto.AttachmentSecretProvider;
@@ -72,7 +71,7 @@ import su.sres.securesms.push.AccountManagerFactory;
 import su.sres.securesms.registration.CaptchaActivity;
 import su.sres.securesms.service.DirectoryRefreshListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
-import su.sres.securesms.service.VerificationCodeParser;
+// import su.sres.securesms.service.VerificationCodeParser;
 import su.sres.securesms.util.BackupUtil;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.Dialogs;
@@ -94,8 +93,8 @@ import su.sres.signalservice.api.util.PhoneNumberFormatter;
 import su.sres.signalservice.internal.push.LockedException;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedList;
+// import java.util.Collections;
+// import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -141,12 +140,11 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
   private TextView               pinForgotButton;
   private View                   pinClarificationContainer;
 
-//  private CallMeCountDownView         callMeCountDownView;
   private View                        wrongNumberButton;
   private VerificationPinKeyboard     keyboard;
   private VerificationCodeView        verificationCodeView;
   private RegistrationState           registrationState;
-  private SmsRetrieverReceiver        smsRetrieverReceiver;
+  //  private SmsRetrieverReceiver        smsRetrieverReceiver;
   private SignalServiceAccountManager accountManager;
   private int                         debugTapCounter;
 
@@ -160,13 +158,13 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     initializeSpinner();
     initializeNumber();
     initializeBackupDetection();
-    initializeChallengeListener();
+//    initializeChallengeListener();
   }
 
   @Override
   public void onDestroy() {
     super.onDestroy();
-    shutdownChallengeListener();
+//    shutdownChallengeListener();
     markAsVerifying(false);
     EventBus.getDefault().unregister(this);
   }
@@ -183,7 +181,7 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
       if (data.getBooleanExtra(CaptchaActivity.KEY_IS_SMS, true)) {
         handleRegister();
       } else {
-        handlePhoneCallRequest();
+//        handlePhoneCallRequest();
       }
     } else if (requestCode == CAPTCHA) {
       Toast.makeText(this, R.string.RegistrationActivity_failed_to_verify_the_captcha, Toast.LENGTH_LONG).show();
@@ -207,7 +205,6 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
 
     this.verificationCodeView = findViewById(R.id.code);
     this.keyboard             = findViewById(R.id.keyboard);
-//    this.callMeCountDownView  = findViewById(R.id.call_me_count_down);
     this.wrongNumberButton    = findViewById(R.id.wrong_number);
 
     this.restoreContainer      = findViewById(R.id.restore_container);
@@ -227,7 +224,6 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     this.countryCode.getInput().addTextChangedListener(new CountryCodeChangedListener());
     this.number.getInput().addTextChangedListener(new NumberChangedListener());
     this.createButton.setOnClickListener(v -> handleRegister());
-//    this.callMeCountDownView.setOnClickListener(v -> handlePhoneCallRequest());
 
     skipButton.setOnClickListener(v -> handleCancel());
     restoreSkipButton.setOnClickListener(v -> displayInitialView(true));
@@ -243,23 +239,23 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
       else          verificationCodeView.delete();
     });
 
-      this.verificationCodeView.setOnCompleteListener(this);
+    this.verificationCodeView.setOnCompleteListener(this);
     EventBus.getDefault().register(this);
   }
-    private void onDebugClick(View view) {
-        debugTapCounter++;
+  private void onDebugClick(View view) {
+    debugTapCounter++;
 
-        if (debugTapCounter >= DEBUG_TAP_TARGET) {
-            startActivity(new Intent(this, LogSubmitActivity.class));
-        } else if (debugTapCounter >= DEBUG_TAP_ANNOUNCE) {
-            int remaining = DEBUG_TAP_TARGET - debugTapCounter;
-            Toast.makeText(this, getResources().getQuantityString(R.plurals.RegistrationActivity_debug_log_hint, remaining, remaining), Toast.LENGTH_SHORT).show();
-        }
+    if (debugTapCounter >= DEBUG_TAP_TARGET) {
+      startActivity(new Intent(this, LogSubmitActivity.class));
+    } else if (debugTapCounter >= DEBUG_TAP_ANNOUNCE) {
+      int remaining = DEBUG_TAP_TARGET - debugTapCounter;
+      Toast.makeText(this, getResources().getQuantityString(R.plurals.RegistrationActivity_debug_log_hint, remaining, remaining), Toast.LENGTH_SHORT).show();
     }
+  }
 
 
 
-    @SuppressLint("ClickableViewAccessibility")
+  @SuppressLint("ClickableViewAccessibility")
   private void initializeSpinner() {
     this.countrySpinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
     this.countrySpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -346,7 +342,7 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
 
   private String getConfiguredE164Number() {
     return PhoneNumberFormatter.formatE164(countryCode.getText().toString(),
-                                           number.getText().toString());
+            number.getText().toString());
   }
 
   @SuppressLint("StaticFieldLeak")
@@ -355,66 +351,66 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     EditText prompt = view.findViewById(R.id.restore_passphrase_input);
 
     new AlertDialog.Builder(this)
-        .setTitle(R.string.RegistrationActivity_enter_backup_passphrase)
-        .setView(view)
-        .setPositiveButton(getString(R.string.RegistrationActivity_restore), (dialog, which) -> {
-          InputMethodManager inputMethodManager = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-          inputMethodManager.hideSoftInputFromWindow(prompt.getWindowToken(), 0);
+            .setTitle(R.string.RegistrationActivity_enter_backup_passphrase)
+            .setView(view)
+            .setPositiveButton(getString(R.string.RegistrationActivity_restore), (dialog, which) -> {
+              InputMethodManager inputMethodManager = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+              inputMethodManager.hideSoftInputFromWindow(prompt.getWindowToken(), 0);
 
-          restoreButton.setIndeterminateProgressMode(true);
-          restoreButton.setProgress(50);
+              restoreButton.setIndeterminateProgressMode(true);
+              restoreButton.setProgress(50);
 
-          final String passphrase = prompt.getText().toString();
+              final String passphrase = prompt.getText().toString();
 
-          new AsyncTask<Void, Void, BackupImportResult>() {
-            @Override
-            protected BackupImportResult doInBackground(Void... voids) {
-              try {
-                Context        context  = RegistrationActivity.this;
-                SQLiteDatabase database = DatabaseFactory.getBackupDatabase(context);
+              new AsyncTask<Void, Void, BackupImportResult>() {
+                @Override
+                protected BackupImportResult doInBackground(Void... voids) {
+                  try {
+                    Context        context  = RegistrationActivity.this;
+                    SQLiteDatabase database = DatabaseFactory.getBackupDatabase(context);
 
-                FullBackupImporter.importFile(context,
-                                              AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret(),
-                                              database, backup.getFile(), passphrase);
+                    FullBackupImporter.importFile(context,
+                            AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret(),
+                            database, backup.getFile(), passphrase);
 
-                DatabaseFactory.upgradeRestored(context, database);
-                NotificationChannels.restoreContactNotificationChannels(context);
+                    DatabaseFactory.upgradeRestored(context, database);
+                    NotificationChannels.restoreContactNotificationChannels(context);
 
-                TextSecurePreferences.setBackupEnabled(context, true);
-                TextSecurePreferences.setBackupPassphrase(context, passphrase);
-                  return BackupImportResult.SUCCESS;
-              } catch (FullBackupImporter.DatabaseDowngradeException e) {
-                  Log.w(TAG, "Failed due to the backup being from a newer version of Signal.", e);
-                  return BackupImportResult.FAILURE_VERSION_DOWNGRADE;
-              } catch (IOException e) {
-                Log.w(TAG, e);
-                  return BackupImportResult.FAILURE_UNKNOWN;
-              }
-            }
+                    TextSecurePreferences.setBackupEnabled(context, true);
+                    TextSecurePreferences.setBackupPassphrase(context, passphrase);
+                    return BackupImportResult.SUCCESS;
+                  } catch (FullBackupImporter.DatabaseDowngradeException e) {
+                    Log.w(TAG, "Failed due to the backup being from a newer version of Signal.", e);
+                    return BackupImportResult.FAILURE_VERSION_DOWNGRADE;
+                  } catch (IOException e) {
+                    Log.w(TAG, e);
+                    return BackupImportResult.FAILURE_UNKNOWN;
+                  }
+                }
 
-            @Override
-            protected void onPostExecute(@NonNull BackupImportResult result) {
-              restoreButton.setIndeterminateProgressMode(false);
-              restoreButton.setProgress(0);
-              restoreBackupProgress.setText("");
+                @Override
+                protected void onPostExecute(@NonNull BackupImportResult result) {
+                  restoreButton.setIndeterminateProgressMode(false);
+                  restoreButton.setProgress(0);
+                  restoreBackupProgress.setText("");
 
-                switch (result) {
+                  switch (result) {
                     case SUCCESS:
-                        displayInitialView(true);
-                        break;
+                      displayInitialView(true);
+                      break;
                     case FAILURE_VERSION_DOWNGRADE:
-                        Toast.makeText(RegistrationActivity.this, R.string.RegistrationActivity_backup_failure_downgrade, Toast.LENGTH_LONG).show();
-                        break;
+                      Toast.makeText(RegistrationActivity.this, R.string.RegistrationActivity_backup_failure_downgrade, Toast.LENGTH_LONG).show();
+                      break;
                     case FAILURE_UNKNOWN:
-                        Toast.makeText(RegistrationActivity.this, R.string.RegistrationActivity_incorrect_backup_passphrase, Toast.LENGTH_LONG).show();
-                        break;
-              }
-            }
-          }.execute();
+                      Toast.makeText(RegistrationActivity.this, R.string.RegistrationActivity_incorrect_backup_passphrase, Toast.LENGTH_LONG).show();
+                      break;
+                  }
+                }
+              }.execute();
 
-        })
-        .setNegativeButton(android.R.string.cancel, null)
-        .show();
+            })
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
   }
 
   private void handleRegister() {
@@ -447,7 +443,7 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
       GoogleApiAvailability.getInstance().getErrorDialog(this, ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED, 0).show();
     } else {
       Dialogs.showAlertDialog(this, getString(R.string.RegistrationActivity_play_services_error),
-                              getString(R.string.RegistrationActivity_google_play_services_is_updating_or_unavailable));
+              getString(R.string.RegistrationActivity_google_play_services_is_updating_or_unavailable));
     }
   }
 
@@ -508,11 +504,11 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
           requestCaptcha(true);
         } else if (result.exception.isPresent()) {
           Toast.makeText(RegistrationActivity.this, R.string.RegistrationActivity_unable_to_connect_to_service, Toast.LENGTH_LONG).show();
-            createButton.setIndeterminateProgressMode(false);
-            createButton.setProgress(0);
+          createButton.setIndeterminateProgressMode(false);
+          createButton.setProgress(0);
         } else {
           registrationState = new RegistrationState(RegistrationState.State.VERIFYING, e164number, result.password, result.fcmToken, Optional.absent());
-          displayVerificationView(e164number, 64);
+          displayVerificationView();
         }
       }
     }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
@@ -522,7 +518,7 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     startActivityForResult(CaptchaActivity.getIntent(this, isSms), CAPTCHA);
   }
 
-  private void handleVerificationCodeReceived(@Nullable String code) {
+/*  private void handleVerificationCodeReceived(@Nullable String code) {
     List<Integer> parsedCode = convertVerificationCodeToDigits(code);
 
     for (int i = 0; i < parsedCode.size(); i++) {
@@ -548,13 +544,12 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     }
 
     return result;
-  }
+  } */
 
   @SuppressLint("StaticFieldLeak")
   @Override
   public void onCodeComplete(@NonNull String code) {
     this.registrationState = new RegistrationState(RegistrationState.State.CHECKING, this.registrationState);
-//    callMeCountDownView.setVisibility(View.INVISIBLE);
     keyboard.displayProgress();
 
     new AsyncTask<Void, Void, Pair<Integer, Long>>() {
@@ -594,7 +589,6 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
             @Override
             public void onSuccess(Boolean result) {
               registrationState = new RegistrationState(RegistrationState.State.VERIFYING, registrationState);
-//              callMeCountDownView.setVisibility(View.VISIBLE);
               verificationCodeView.clear();
               keyboard.displayKeyboard();
             }
@@ -649,10 +643,10 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
           Toast.makeText(RegistrationActivity.this, R.string.RegistrationActivity_incorrect_registration_lock_pin, Toast.LENGTH_LONG).show();
         } else if (result == 3) {
           new AlertDialog.Builder(RegistrationActivity.this)
-                         .setTitle(R.string.RegistrationActivity_too_many_attempts)
-                         .setMessage(R.string.RegistrationActivity_you_have_made_too_many_incorrect_registration_lock_pin_attempts_please_try_again_in_a_day)
-                         .setPositiveButton(android.R.string.ok, null)
-                         .show();
+                  .setTitle(R.string.RegistrationActivity_too_many_attempts)
+                  .setMessage(R.string.RegistrationActivity_you_have_made_too_many_incorrect_registration_lock_pin_attempts_please_try_again_in_a_day)
+                  .setPositiveButton(android.R.string.ok, null)
+                  .show();
         } else if (result == 4) {
           Toast.makeText(RegistrationActivity.this, R.string.RegistrationActivity_error_connecting_to_service, Toast.LENGTH_LONG).show();
         }
@@ -662,16 +656,15 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
 
   private void handleForgottenPin(long timeRemaining) {
     new AlertDialog.Builder(RegistrationActivity.this)
-        .setTitle(R.string.RegistrationActivity_oh_no)
-        .setMessage(getString(R.string.RegistrationActivity_registration_of_this_phone_number_will_be_possible_without_your_registration_lock_pin_after_seven_days_have_passed, (TimeUnit.MILLISECONDS.toDays(timeRemaining) + 1)))
-        .setPositiveButton(android.R.string.ok, null)
-        .show();
+            .setTitle(R.string.RegistrationActivity_oh_no)
+            .setMessage(getString(R.string.RegistrationActivity_registration_of_this_phone_number_will_be_possible_without_your_registration_lock_pin_after_seven_days_have_passed, (TimeUnit.MILLISECONDS.toDays(timeRemaining) + 1)))
+            .setPositiveButton(android.R.string.ok, null)
+            .show();
   }
 
-  @SuppressLint("StaticFieldLeak")
+/*  @SuppressLint("StaticFieldLeak")
   private void handlePhoneCallRequest() {
     if (registrationState.state == RegistrationState.State.VERIFYING) {
-//      callMeCountDownView.startCountDown(300);
 
       new AsyncTask<Void, Void, Void>() {
         @Override
@@ -688,7 +681,7 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
         }
       }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
-  }
+  }  */
 
   private void verifyAccount(@NonNull String code, @Nullable String pin) throws IOException {
     int     registrationId              = KeyHelper.generateRegistrationId(false);
@@ -716,9 +709,9 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     TextSecurePreferences.setWebsocketRegistered(RegistrationActivity.this, true);
 
     DatabaseFactory.getIdentityDatabase(RegistrationActivity.this)
-                   .saveIdentity(Address.fromSerialized(registrationState.e164number),
-                                 identityKey.getPublicKey(), IdentityDatabase.VerifiedStatus.VERIFIED,
-                                 true, System.currentTimeMillis(), true);
+            .saveIdentity(Address.fromSerialized(registrationState.e164number),
+                    identityKey.getPublicKey(), IdentityDatabase.VerifiedStatus.VERIFIED,
+                    true, System.currentTimeMillis(), true);
 
     TextSecurePreferences.setVerifying(RegistrationActivity.this, false);
     TextSecurePreferences.setPushRegistered(RegistrationActivity.this, true);
@@ -831,17 +824,16 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     }).start();
   }
 
-  private void displayVerificationView(@NonNull String e164number, int callCountdown) {
+  private void displayVerificationView() {
     ServiceUtil.getInputMethodManager(this)
-               .hideSoftInputFromWindow(countryCode.getWindowToken(), 0);
+            .hideSoftInputFromWindow(countryCode.getWindowToken(), 0);
 
     ServiceUtil.getInputMethodManager(this)
-               .hideSoftInputFromWindow(number.getWindowToken(), 0);
+            .hideSoftInputFromWindow(number.getWindowToken(), 0);
 
     title.animate().translationX(-1 * title.getWidth()).setDuration(SCENE_TRANSITION_DURATION).setListener(new AnimationCompleteListener() {
       @Override
       public void onAnimationEnd(Animator animation) {
-//        title.setText(getString(R.string.RegistrationActivity_enter_the_code_we_sent_to_s, formatNumber(e164number)));
         title.setText(getString(R.string.RegistrationActivity_enter_the_code_we_sent_to_s));
         title.clearAnimation();
         title.setTranslationX(title.getWidth());
@@ -864,7 +856,6 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
       }
     }).start();
 
-//    this.callMeCountDownView.startCountDown(callCountdown);
 
     this.wrongNumberButton.setOnClickListener(v -> onWrongNumberClicked());
   }
@@ -939,7 +930,7 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     dialog.show();
   }
 
-  private void initializeChallengeListener() {
+/*  private void initializeChallengeListener() {
     smsRetrieverReceiver = new SmsRetrieverReceiver();
     IntentFilter filter = new IntentFilter(SmsRetriever.SMS_RETRIEVED_ACTION);
     registerReceiver(smsRetrieverReceiver, filter);
@@ -950,7 +941,7 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
       unregisterReceiver(smsRetrieverReceiver);
       smsRetrieverReceiver = null;
     }
-  }
+  } */
 
   private void markAsVerifying(boolean verifying) {
     TextSecurePreferences.setVerifying(this, verifying);
@@ -980,7 +971,7 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     else                       restoreBackupProgress.setText(getString(R.string.RegistrationActivity_d_messages_so_far, event.getCount()));
   }
 
-  private class SmsRetrieverReceiver extends BroadcastReceiver {
+/*  private class SmsRetrieverReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
       Log.i(TAG, "SmsRetrieverReceiver received a broadcast...");
@@ -1007,7 +998,7 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
         Log.w(TAG, "SmsRetrieverReceiver received the wrong action?");
       }
     }
-  }
+  } */
 
   private class CountryCodeChangedListener implements TextWatcher {
     @Override
@@ -1127,7 +1118,7 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     }
   }
 
-    private enum BackupImportResult {
-        SUCCESS, FAILURE_VERSION_DOWNGRADE, FAILURE_UNKNOWN
-    }
+  private enum BackupImportResult {
+    SUCCESS, FAILURE_VERSION_DOWNGRADE, FAILURE_UNKNOWN
+  }
 }
