@@ -551,12 +551,12 @@
     <provider android:name="su.sres.securesms.providers.PartProvider"
               android:grantUriPermissions="true"
               android:exported="false"
-              android:authorities="org.thoughtcrime.provider.securesms" />
+              android:authorities="su.sres.provider.securesms" />
 
     <provider android:name="su.sres.securesms.providers.MmsBodyProvider"
               android:grantUriPermissions="true"
               android:exported="false"
-              android:authorities="org.thoughtcrime.provider.securesms.mms" />
+              android:authorities="su.sres.provider.securesms.mms" />
 
     <provider android:name="android.support.v4.content.FileProvider"
               android:authorities="su.sres.securesms.fileprovider"
