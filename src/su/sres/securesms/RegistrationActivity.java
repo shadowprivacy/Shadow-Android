@@ -71,7 +71,6 @@ import su.sres.securesms.push.AccountManagerFactory;
 import su.sres.securesms.registration.CaptchaActivity;
 import su.sres.securesms.service.DirectoryRefreshListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
-// import su.sres.securesms.service.VerificationCodeParser;
 import su.sres.securesms.util.BackupUtil;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.Dialogs;
