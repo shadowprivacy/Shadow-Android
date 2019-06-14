@@ -7,6 +7,7 @@ import android.arch.lifecycle.ViewModel;
 import android.arch.lifecycle.ViewModelProvider;
 
 import android.database.ContentObserver;
+import android.net.Uri;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 
@@ -30,15 +31,17 @@ class LongMessageViewModel extends ViewModel {
         this.isMms           = isMms;
         this.message         = new MutableLiveData<>();
         this.messageObserver = new MessageObserver(new Handler());
-    }
 
-    LiveData<Optional<LongMessage>> getMessage() {
         repository.getMessage(application, messageId, isMms, longMessage -> {
             if (longMessage.isPresent()) {
-                application.getContentResolver().registerContentObserver(DatabaseContentProviders.Conversation.getUriForThread(longMessage.get().getMessageRecord().getThreadId()), true, messageObserver);
+                Uri uri = DatabaseContentProviders.Conversation.getUriForThread(longMessage.get().getMessageRecord().getThreadId());
+                application.getContentResolver().registerContentObserver(uri, true, messageObserver);
             }
             message.postValue(longMessage);
         });
+    }
+
+    LiveData<Optional<LongMessage>> getMessage() {
         return message;
     }
 
@@ -54,7 +57,7 @@ class LongMessageViewModel extends ViewModel {
 
         @Override
         public void onChange(boolean selfChange) {
-            getMessage();
+            repository.getMessage(application, messageId, isMms, message::postValue);
         }
     }
 

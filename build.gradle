@@ -14,7 +14,6 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.3.2'
-        classpath files('libs/gradle-witness.jar')
     }
 }
 
@@ -99,7 +98,7 @@ dependencies {
     compile 'com.squareup.okhttp3:okhttp:3.12.1'
 
 //    compile 'org.whispersystems:signal-service-android:2.13.1'
-    implementation files('libs/signal-service-android-2.13.1.aar', 'libs/signal-service-java-2.13.1.jar')
+    implementation files('libs/signal-service-android-2.13.2.aar', 'libs/signal-service-java-2.13.2.jar')
     compile 'org.whispersystems:webrtc-android:M74'
 
     compile "me.leolin:ShortcutBadger:1.1.16"
@@ -173,6 +172,7 @@ dependencies {
 }
 
 dependencyVerification {
+    configuration = '(play|website)(Debug|Release)RuntimeClasspath'
     verify = [
             'com.android.support:design:7874ad1904eedc74aa41cffffb7f759d8990056f3bbbc9264911651c67c42f5f',
             'com.android.support:preference-v14:8133c6e19233fa51e036a341e6d3f4adeead3375cebf777efced0fe154c3267e',
@@ -290,6 +290,16 @@ dependencyVerification {
     ]
 }
 
+def canonicalVersionCode = 488
+def canonicalVersionName = "4.41.0"
+
+def postFixSize = 10
+def abiPostFix = ['armeabi-v7a' : 1,
+                  'arm64-v8a'   : 2,
+                  'x86'         : 3,
+                  'x86_64'      : 4,
+                  'universal'   : 5]
+
 android {
     flavorDimensions "none"
     compileSdkVersion 28
@@ -301,8 +311,8 @@ android {
     }
 
     defaultConfig {
-        versionCode 487
-        versionName "4.40.4"
+        versionCode canonicalVersionCode * postFixSize
+        versionName canonicalVersionName
 
         minSdkVersion 19
         targetSdkVersion 26
@@ -321,9 +331,10 @@ android {
         buildConfigField "boolean", "DEV_BUILD", "false"
         buildConfigField "String", "UNIDENTIFIED_SENDER_TRUST_ROOT", "\"yourpublickeyhere\""
         buildConfigField "String[]", "LANGUAGES", "new String[]{\"" + autoResConfig().collect { s -> s.replace('-r', '_') }.join('", "') + '"}'
+        buildConfigField "int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode"
 
         ndk {
-            abiFilters 'armeabi-v7a', 'x86'
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
         }
 
         resConfigs autoResConfig()
@@ -332,7 +343,7 @@ android {
             abi {
                 enable true
                 reset()
-                include 'armeabi-v7a', 'x86'
+                include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
                 universalApk true
             }
         }
@@ -403,8 +414,14 @@ android {
     }
 
     android.applicationVariants.all { variant ->
-        variant.outputs.all {
-            outputFileName = outputFileName.replace(".apk", "-${variant.versionName}.apk")
+        variant.outputs.each { output ->
+            output.outputFileName = output.outputFileName.replace(".apk", "-${variant.versionName}.apk")
+            def abiName = output.getFilter("ABI") ?: 'universal'
+            def postFix = abiPostFix.get(abiName, 0)
+
+            if (postFix >= postFixSize) throw new AssertionError("postFix is too large")
+
+            output.versionCodeOverride = canonicalVersionCode * postFixSize + postFix
         }
     }
 
@@ -430,8 +447,9 @@ android {
         website.manifest.srcFile 'website/AndroidManifest.xml'
     }
 
-     lintOptions {
-        abortOnError false
+    lintOptions {
+        abortOnError true
+        baseline file("lint-baseline.xml")
     }
 
     testOptions {
@@ -454,8 +472,8 @@ def assembleWebsiteDescriptor = { variant, file ->
         String apkName = file.getName()
 
         String descriptor = "{" +
-                "\"versionCode\" : $project.android.defaultConfig.versionCode," +
-                "\"versionName\" : \"$project.android.defaultConfig.versionName\"," +
+                "\"versionCode\" : $canonicalVersionCode," +
+                "\"versionName\" : \"$canonicalVersionName\"," +
                 "\"sha256sum\" : \"$digest\"," +
                 "\"url\" : \"$url/$apkName\"" +
                 "}"
@@ -544,5 +562,5 @@ static def autoResConfig() {
 task qa {
     group 'Verification'
     description 'Quality Assurance. Run before pushing.'
-    dependsOn ':testPlayReleaseUnitTest', ':assemblePlayDebug'
+    dependsOn ':testPlayReleaseUnitTest', ':lintPlayRelease', ':assemblePlayDebug'
 }

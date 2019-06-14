@@ -51,6 +51,7 @@ import su.sres.securesms.logging.CustomSignalProtocolLogger;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.logging.PersistentLogger;
 import su.sres.securesms.logging.UncaughtExceptionLogger;
+import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
@@ -141,6 +142,7 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
     isAppVisible = false;
     Log.i(TAG, "App is no longer visible.");
     KeyCachingService.onAppBackgrounded(this);
+    MessageNotifier.setVisibleThread(-1);
   }
 
   @Override

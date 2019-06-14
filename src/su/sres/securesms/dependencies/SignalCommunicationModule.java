@@ -26,6 +26,8 @@ import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceGroupUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceProfileKeyUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceReadUpdateJob;
+import su.sres.securesms.jobs.MultiDeviceStickerPackOperationJob;
+import su.sres.securesms.jobs.MultiDeviceStickerPackSyncJob;
 import su.sres.securesms.jobs.MultiDeviceVerifiedUpdateJob;
 import su.sres.securesms.jobs.PushGroupSendJob;
 import su.sres.securesms.jobs.PushGroupUpdateJob;
@@ -41,11 +43,16 @@ import su.sres.securesms.jobs.RotateCertificateJob;
 import su.sres.securesms.jobs.RotateSignedPreKeyJob;
 import su.sres.securesms.jobs.SendDeliveryReceiptJob;
 import su.sres.securesms.jobs.SendReadReceiptJob;
+import su.sres.securesms.jobs.StickerDownloadJob;
+import su.sres.securesms.jobs.StickerPackDownloadJob;
+import su.sres.securesms.linkpreview.LinkPreviewRepository;
 import su.sres.securesms.preferences.AppProtectionPreferenceFragment;
 import su.sres.securesms.push.SecurityEventListener;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.service.IncomingMessageObserver;
 import su.sres.securesms.service.WebRtcCallService;
+import su.sres.securesms.stickers.StickerPackPreviewRepository;
+import su.sres.securesms.stickers.StickerRemoteUriLoader;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
@@ -95,7 +102,14 @@ import dagger.Provides;
                                      MultiDeviceConfigurationUpdateJob.class,
                                      RefreshUnidentifiedDeliveryAbilityJob.class,
         TypingSendJob.class,
-        AttachmentUploadJob.class})
+        AttachmentUploadJob.class,
+        StickerDownloadJob.class,
+        StickerPackPreviewRepository.class,
+        StickerRemoteUriLoader.Factory.class,
+        StickerPackDownloadJob.class,
+        MultiDeviceStickerPackOperationJob.class,
+        MultiDeviceStickerPackSyncJob.class,
+        LinkPreviewRepository.class})
 public class SignalCommunicationModule {
 
   private static final String TAG = SignalCommunicationModule.class.getSimpleName();

@@ -37,7 +37,11 @@ public class AttachmentUtil {
     Set<String> allowedTypes = getAllowedAutoDownloadTypes(context);
     String      contentType  = attachment.getContentType();
 
-    if (attachment.isVoiceNote() || (MediaUtil.isAudio(attachment) && TextUtils.isEmpty(attachment.getFileName())) || MediaUtil.isLongTextType(attachment.getContentType())) {
+    if (attachment.isVoiceNote()                                                       ||
+            (MediaUtil.isAudio(attachment) && TextUtils.isEmpty(attachment.getFileName())) ||
+            MediaUtil.isLongTextType(attachment.getContentType())                          ||
+            attachment.isSticker())
+    {
       return true;
     } else if (isNonDocumentType(contentType)) {
       return allowedTypes.contains(MediaUtil.getDiscreteMimeType(contentType));

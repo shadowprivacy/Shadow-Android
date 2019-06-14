@@ -182,7 +182,7 @@ public class MmsDownloadJob extends BaseJob {
   }
 
   @Override
-  public boolean onShouldRetry(Exception exception) {
+  public boolean onShouldRetry(@NonNull Exception exception) {
     return false;
   }
 
@@ -238,7 +238,7 @@ public class MmsDownloadJob extends BaseJob {
 
           attachments.add(new UriAttachment(uri, Util.toIsoString(part.getContentType()),
                                             AttachmentDatabase.TRANSFER_PROGRESS_DONE,
-                                            part.getData().length, name, false, false, null));
+                  part.getData().length, name, false, false, null, null));
         }
       }
     }

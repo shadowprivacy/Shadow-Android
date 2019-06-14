@@ -50,12 +50,28 @@ public abstract class Database {
     context.getContentResolver().notifyChange(DatabaseContentProviders.ConversationList.CONTENT_URI, null);
   }
 
+  protected void notifyStickerListeners() {
+    context.getContentResolver().notifyChange(DatabaseContentProviders.Sticker.CONTENT_URI, null);
+  }
+
+  protected void notifyStickerPackListeners() {
+    context.getContentResolver().notifyChange(DatabaseContentProviders.StickerPack.CONTENT_URI, null);
+  }
+
   protected void setNotifyConverationListeners(Cursor cursor, long threadId) {
     cursor.setNotificationUri(context.getContentResolver(), DatabaseContentProviders.Conversation.getUriForThread(threadId));
   }
 
   protected void setNotifyConverationListListeners(Cursor cursor) {
     cursor.setNotificationUri(context.getContentResolver(), DatabaseContentProviders.ConversationList.CONTENT_URI);
+  }
+
+  protected void setNotifyStickerListeners(Cursor cursor) {
+    cursor.setNotificationUri(context.getContentResolver(), DatabaseContentProviders.Sticker.CONTENT_URI);
+  }
+
+  protected void setNotifyStickerPackListeners(Cursor cursor) {
+    cursor.setNotificationUri(context.getContentResolver(), DatabaseContentProviders.StickerPack.CONTENT_URI);
   }
 
   protected void registerAttachmentListeners(@NonNull ContentObserver observer) {

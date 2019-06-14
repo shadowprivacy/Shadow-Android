@@ -20,6 +20,7 @@ import su.sres.securesms.backup.BackupProtos.BackupFrame;
 import su.sres.securesms.backup.BackupProtos.DatabaseVersion;
 import su.sres.securesms.backup.BackupProtos.SharedPreference;
 import su.sres.securesms.backup.BackupProtos.SqlStatement;
+import su.sres.securesms.backup.BackupProtos.Sticker;
 import su.sres.securesms.crypto.AttachmentSecret;
 import su.sres.securesms.crypto.ModernEncryptingPartOutputStream;
 import su.sres.securesms.database.Address;
@@ -28,6 +29,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupReceiptDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.SearchDatabase;
+import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.util.Conversions;
@@ -82,6 +84,7 @@ public class FullBackupImporter extends FullBackupBase {
         else if (frame.hasStatement())  processStatement(db, frame.getStatement());
         else if (frame.hasPreference()) processPreference(context, frame.getPreference());
         else if (frame.hasAttachment()) processAttachment(context, attachmentSecret, db, frame.getAttachment(), inputStream);
+        else if (frame.hasSticker())    processSticker(context, attachmentSecret, db, frame.getSticker(), inputStream);
         else if (frame.hasAvatar())     processAvatar(context, frame.getAvatar(), inputStream);
       }
 
@@ -146,6 +149,25 @@ public class FullBackupImporter extends FullBackupBase {
     db.update(AttachmentDatabase.TABLE_NAME, contentValues,
               AttachmentDatabase.ROW_ID + " = ? AND " + AttachmentDatabase.UNIQUE_ID + " = ?",
               new String[] {String.valueOf(attachment.getRowId()), String.valueOf(attachment.getAttachmentId())});
+  }
+
+  private static void processSticker(@NonNull Context context, @NonNull AttachmentSecret attachmentSecret, @NonNull SQLiteDatabase db, @NonNull Sticker sticker, BackupRecordInputStream inputStream)
+          throws IOException
+  {
+    File stickerDirectory = context.getDir(AttachmentDatabase.DIRECTORY, Context.MODE_PRIVATE);
+    File dataFile         = File.createTempFile("sticker", ".mms", stickerDirectory);
+
+    Pair<byte[], OutputStream> output = ModernEncryptingPartOutputStream.createFor(attachmentSecret, dataFile, false);
+
+    inputStream.readAttachmentTo(output.second, sticker.getLength());
+
+    ContentValues contentValues = new ContentValues();
+    contentValues.put(StickerDatabase.FILE_PATH, dataFile.getAbsolutePath());
+    contentValues.put(StickerDatabase.FILE_RANDOM, output.first);
+
+    db.update(StickerDatabase.TABLE_NAME, contentValues,
+            StickerDatabase._ID + " = ?",
+            new String[] {String.valueOf(sticker.getRowId())});
   }
 
   private static void processAvatar(@NonNull Context context, @NonNull BackupProtos.Avatar avatar, @NonNull BackupRecordInputStream inputStream) throws IOException {

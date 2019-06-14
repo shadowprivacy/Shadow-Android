@@ -35,9 +35,10 @@ import su.sres.securesms.components.ComposeText;
 import su.sres.securesms.components.ControllableViewPager;
 import su.sres.securesms.components.InputAwareLayout;
 import su.sres.securesms.components.SendButton;
-import su.sres.securesms.components.emoji.EmojiDrawer;
+import su.sres.securesms.components.emoji.EmojiKeyboardProvider;
 import su.sres.securesms.components.emoji.EmojiEditText;
 import su.sres.securesms.components.emoji.EmojiToggle;
+import su.sres.securesms.components.emoji.MediaKeyboard;
 import su.sres.securesms.contactshare.SimpleTextWatcher;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediapreview.MediaRailAdapter;
@@ -87,7 +88,7 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
     private ViewGroup         composeContainer;
     private EmojiEditText     captionText;
     private EmojiToggle       emojiToggle;
-    private Stub<EmojiDrawer> emojiDrawer;
+    private Stub<MediaKeyboard> emojiDrawer;
     private ViewGroup         playbackControlsContainer;
     private TextView          charactersLeft;
 
@@ -401,8 +402,7 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
 
     private void onEmojiToggleClicked(View v) {
         if (!emojiDrawer.resolved()) {
-            emojiToggle.attach(emojiDrawer.get());
-            emojiDrawer.get().setEmojiEventListener(new EmojiDrawer.EmojiEventListener() {
+            emojiDrawer.get().setProviders(0, new EmojiKeyboardProvider(requireContext(), new EmojiKeyboardProvider.EmojiEventListener() {
                 @Override
                 public void onKeyEvent(KeyEvent keyEvent) {
                     getActiveInputField().dispatchKeyEvent(keyEvent);
@@ -412,7 +412,8 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
                 public void onEmojiSelected(String emoji) {
                     getActiveInputField().insertEmoji(emoji);
                 }
-            });
+            }));
+            emojiToggle.attach(emojiDrawer.get());
         }
 
         if (hud.getCurrentInput() == emojiDrawer.get()) {

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 Open Whisper Systems
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,8 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.ArrayRes;
 import android.support.annotation.AttrRes;
+import android.support.annotation.DimenRes;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.util.TypedValue;
 
@@ -57,5 +59,11 @@ public class ResUtil {
     }
     typedArray.recycle();
     return resourceIds;
+  }
+
+  public static float getFloat(@NonNull Context context, @DimenRes int resId) {
+    TypedValue value = new TypedValue();
+    context.getResources().getValue(resId, value, true);
+    return value.getFloat();
   }
 }

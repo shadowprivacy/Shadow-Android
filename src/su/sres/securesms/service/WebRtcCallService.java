@@ -18,8 +18,8 @@ import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
+import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
-import su.sres.securesms.logging.Log;
 import android.util.Pair;
 
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -34,12 +34,14 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase.VibrateState;
 import su.sres.securesms.dependencies.InjectableType;
 import su.sres.securesms.events.WebRtcViewModel;
+import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.FutureTaskListener;
 import su.sres.securesms.util.ListenableFutureTask;
 import su.sres.securesms.util.ServiceUtil;
+import su.sres.securesms.util.TelephonyUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.webrtc.CallNotificationBuilder;
@@ -190,15 +192,21 @@ public class WebRtcCallService extends Service implements InjectableType,
   private ExecutorService          networkExecutor = Executors.newSingleThreadExecutor();
   private ScheduledExecutorService timeoutExecutor = Executors.newScheduledThreadPool(1);
 
+  private final PhoneStateListener hangUpRtcOnDeviceCallAnswered = new HangUpRtcOnPstnCallAnsweredListener();
+
   @Override
   public void onCreate() {
     super.onCreate();
+    Log.d(TAG, "onCreate");
 
     initializeResources();
 
     registerIncomingPstnCallReceiver();
     registerUncaughtExceptionHandler();
     registerWiredHeadsetStateReceiver();
+
+    TelephonyUtil.getManager(this)
+            .listen(hangUpRtcOnDeviceCallAnswered, PhoneStateListener.LISTEN_CALL_STATE);
   }
 
   @Override
@@ -237,6 +245,7 @@ public class WebRtcCallService extends Service implements InjectableType,
   @Override
   public void onDestroy() {
     super.onDestroy();
+    Log.d(TAG, "onDestroy");
 
     if (callReceiver != null) {
       unregisterReceiver(callReceiver);
@@ -259,6 +268,10 @@ public class WebRtcCallService extends Service implements InjectableType,
       unregisterReceiver(powerButtonReceiver);
       powerButtonReceiver = null;
     }
+
+
+    TelephonyUtil.getManager(this)
+            .listen(hangUpRtcOnDeviceCallAnswered, PhoneStateListener.LISTEN_NONE);
   }
 
   @Override
@@ -897,9 +910,7 @@ public class WebRtcCallService extends Service implements InjectableType,
   /// Helper Methods
 
   private boolean isBusy() {
-    TelephonyManager telephonyManager = (TelephonyManager)getSystemService(TELEPHONY_SERVICE);
-
-    return callState != CallState.STATE_IDLE || telephonyManager.getCallState() != TelephonyManager.CALL_STATE_IDLE;
+    return callState != CallState.STATE_IDLE || TelephonyUtil.isAnyPstnLineBusy(this);
   }
 
   private boolean isIdle() {
@@ -1376,5 +1387,25 @@ public class WebRtcCallService extends Service implements InjectableType,
     intent.putExtra(EXTRA_RESULT_RECEIVER, resultReceiver);
 
     context.startService(intent);
+  }
+
+
+  private class HangUpRtcOnPstnCallAnsweredListener extends PhoneStateListener {
+
+    @Override
+    public void onCallStateChanged(int state, String phoneNumber) {
+      super.onCallStateChanged(state, phoneNumber);
+      if (state == TelephonyManager.CALL_STATE_OFFHOOK) {
+        hangup();
+        Log.i(TAG, "Device phone call ended Signal call.");
+      }
+    }
+
+    private void hangup() {
+      Intent intent = new Intent(WebRtcCallService.this, WebRtcCallService.class);
+      intent.setAction(ACTION_LOCAL_HANGUP);
+
+      startService(intent);
+    }
   }
 }

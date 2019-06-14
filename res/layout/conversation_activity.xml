@@ -1,16 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<su.sres.securesms.components.InputAwareLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/layout_container"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/conversation_list_toolbar_background"
+        android:theme="?attr/actionBarStyle"
+        app:contentInsetStartWithNavigation="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navigationIcon="?homeAsUpIndicator"
+        tools:background="#ff007f00">
+
+        <include layout="@layout/conversation_title_view" />
+
+    </android.support.v7.widget.Toolbar>
+
+    <su.sres.securesms.components.InputAwareLayout
+        android:id="@+id/layout_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
     <LinearLayout
         android:id="@+id/conversation_container"
-        android:layout_width="match_parent"
+            android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipChildren="false"
+            android:clipChildren="false"
         android:clipToPadding="false"
         android:gravity="bottom"
         android:orientation="vertical"
@@ -105,4 +127,6 @@
 
     </LinearLayout>
 
-</su.sres.securesms.components.InputAwareLayout>
+    </su.sres.securesms.components.InputAwareLayout>
+
+</FrameLayout>

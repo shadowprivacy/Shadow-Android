@@ -5,12 +5,12 @@ import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
-import android.widget.ImageView;
 
 import su.sres.securesms.R;
 
-public class CircleColorImageView extends ImageView {
+public class CircleColorImageView extends AppCompatImageView {
 
  public CircleColorImageView(Context context) {
     this(context, null);

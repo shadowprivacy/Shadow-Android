@@ -30,6 +30,7 @@ public class ConversationItemThumbnail extends FrameLayout {
   private CornerMask             cornerMask;
 
   private Outliner               outliner;
+  private boolean                borderless;
 
   public ConversationItemThumbnail(Context context) {
     super(context);
@@ -74,10 +75,12 @@ public class ConversationItemThumbnail extends FrameLayout {
 
     super.dispatchDraw(canvas);
 
-    cornerMask.mask(canvas);
+    if (!borderless) {
+      cornerMask.mask(canvas);
 
-    if (album.getVisibility() != VISIBLE) {
-      outliner.draw(canvas);
+      if (album.getVisibility() != VISIBLE) {
+        outliner.draw(canvas);
+      }
     }
   }
 
@@ -108,6 +111,10 @@ public class ConversationItemThumbnail extends FrameLayout {
 
     cornerMask.setRadii(topLeft, topRight, bottomRight, bottomLeft);
     outliner.setRadii(topLeft, topRight, bottomRight, bottomLeft);
+  }
+
+  public void setBorderless(boolean borderless) {
+    this.borderless = borderless;
   }
 
   public ConversationItemFooter getFooter() {

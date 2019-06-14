@@ -33,8 +33,9 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.dd.CircularProgressButton;
 
 import su.sres.securesms.components.InputAwareLayout;
-import su.sres.securesms.components.emoji.EmojiDrawer;
+import su.sres.securesms.components.emoji.EmojiKeyboardProvider;
 import su.sres.securesms.components.emoji.EmojiToggle;
+import su.sres.securesms.components.emoji.MediaKeyboard;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.Address;
@@ -84,7 +85,7 @@ public class CreateProfileActivity extends BaseActionBarActivity implements Inje
   private CircularProgressButton finishButton;
   private LabeledEditText        name;
   private EmojiToggle            emojiToggle;
-  private EmojiDrawer            emojiDrawer;
+  private MediaKeyboard          mediaKeyboard;
   private View                   reveal;
 
   private Intent nextIntent;
@@ -127,7 +128,7 @@ public class CreateProfileActivity extends BaseActionBarActivity implements Inje
   public void onConfigurationChanged(Configuration newConfig) {
     super.onConfigurationChanged(newConfig);
 
-    if (container.getCurrentInput() == emojiDrawer) {
+    if (container.getCurrentInput() == mediaKeyboard) {
       container.hideAttachedInput(true);
     }
   }
@@ -200,7 +201,7 @@ public class CreateProfileActivity extends BaseActionBarActivity implements Inje
     this.avatar       = ViewUtil.findById(this, R.id.avatar);
     this.name         = ViewUtil.findById(this, R.id.name);
     this.emojiToggle  = ViewUtil.findById(this, R.id.emoji_toggle);
-    this.emojiDrawer  = ViewUtil.findById(this, R.id.emoji_drawer);
+    this.mediaKeyboard = ViewUtil.findById(this, R.id.emoji_drawer);
     this.container    = ViewUtil.findById(this, R.id.container);
     this.finishButton = ViewUtil.findById(this, R.id.finish_button);
     this.reveal       = ViewUtil.findById(this, R.id.reveal);
@@ -313,17 +314,17 @@ public class CreateProfileActivity extends BaseActionBarActivity implements Inje
   }
 
   private void initializeEmojiInput() {
-    this.emojiToggle.attach(emojiDrawer);
+    this.emojiToggle.attach(mediaKeyboard);
 
     this.emojiToggle.setOnClickListener(v -> {
-      if (container.getCurrentInput() == emojiDrawer) {
+      if (container.getCurrentInput() == mediaKeyboard) {
         container.showSoftkey(name.getInput());
       } else {
-        container.show(name.getInput(), emojiDrawer);
+        container.show(name.getInput(), mediaKeyboard);
       }
     });
 
-    this.emojiDrawer.setEmojiEventListener(new EmojiDrawer.EmojiEventListener() {
+    this.mediaKeyboard.setProviders(0, new EmojiKeyboardProvider(this, new EmojiKeyboardProvider.EmojiEventListener() {
       @Override
       public void onKeyEvent(KeyEvent keyEvent) {
         name.dispatchKeyEvent(keyEvent);
@@ -337,9 +338,9 @@ public class CreateProfileActivity extends BaseActionBarActivity implements Inje
         name.getText().replace(Math.min(start, end), Math.max(start, end), emoji);
         name.getInput().setSelection(start + emoji.length());
       }
-    });
+    }));
 
-    this.container.addOnKeyboardShownListener(() -> emojiToggle.setToEmoji());
+    this.container.addOnKeyboardShownListener(() -> emojiToggle.setToMedia());
     this.name.setOnClickListener(v -> container.showSoftkey(name.getInput()));
   }
 

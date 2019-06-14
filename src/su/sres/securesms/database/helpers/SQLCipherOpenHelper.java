@@ -32,6 +32,7 @@ import su.sres.securesms.database.SearchDatabase;
 import su.sres.securesms.database.SessionDatabase;
 import su.sres.securesms.database.SignedPreKeyDatabase;
 import su.sres.securesms.database.SmsDatabase;
+import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.jobs.RefreshPreKeysJob;
 import su.sres.securesms.notifications.NotificationChannels;
@@ -64,8 +65,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int SELF_ATTACHMENT_CLEANUP          = 18;
   private static final int RECIPIENT_FORCE_SMS_SELECTION    = 19;
   private static final int JOBMANAGER_STRIKES_BACK          = 20;
+  private static final int STICKERS                         = 21;
 
-  private static final int    DATABASE_VERSION = 20;
+  private static final int    DATABASE_VERSION = 21;
   private static final String DATABASE_NAME    = "signal.db";
 
   private final Context        context;
@@ -105,13 +107,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(OneTimePreKeyDatabase.CREATE_TABLE);
     db.execSQL(SignedPreKeyDatabase.CREATE_TABLE);
     db.execSQL(SessionDatabase.CREATE_TABLE);
-    for (String sql : SearchDatabase.CREATE_TABLE) {
-      db.execSQL(sql);
-    }
-
-    for (String sql : JobDatabase.CREATE_TABLE) {
-      db.execSQL(sql);
-    }
+    db.execSQL(StickerDatabase.CREATE_TABLE);
+    executeStatements(db, SearchDatabase.CREATE_TABLE);
+    executeStatements(db, JobDatabase.CREATE_TABLE);
 
     executeStatements(db, SmsDatabase.CREATE_INDEXS);
     executeStatements(db, MmsDatabase.CREATE_INDEXS);
@@ -120,6 +118,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     executeStatements(db, DraftDatabase.CREATE_INDEXS);
     executeStatements(db, GroupDatabase.CREATE_INDEXS);
     executeStatements(db, GroupReceiptDatabase.CREATE_INDEXES);
+    executeStatements(db, StickerDatabase.CREATE_INDEXES);
 
     if (context.getDatabasePath(ClassicOpenHelper.NAME).exists()) {
       ClassicOpenHelper                      legacyHelper = new ClassicOpenHelper(context);
@@ -436,6 +435,31 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
                 "job_spec_id TEXT, " +
                 "depends_on_job_spec_id TEXT, " +
                 "UNIQUE(job_spec_id, depends_on_job_spec_id))");
+      }
+
+      if (oldVersion < STICKERS) {
+        db.execSQL("CREATE TABLE sticker (_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "pack_id TEXT NOT NULL, " +
+                "pack_key TEXT NOT NULL, " +
+                "pack_title TEXT NOT NULL, " +
+                "pack_author TEXT NOT NULL, " +
+                "sticker_id INTEGER, " +
+                "cover INTEGER, " +
+                "emoji TEXT NOT NULL, " +
+                "last_used INTEGER, " +
+                "installed INTEGER," +
+                "file_path TEXT NOT NULL, " +
+                "file_length INTEGER, " +
+                "file_random BLOB, " +
+                "UNIQUE(pack_id, sticker_id, cover) ON CONFLICT IGNORE)");
+
+        db.execSQL("CREATE INDEX IF NOT EXISTS sticker_pack_id_index ON sticker (pack_id);");
+        db.execSQL("CREATE INDEX IF NOT EXISTS sticker_sticker_id_index ON sticker (sticker_id);");
+
+        db.execSQL("ALTER TABLE part ADD COLUMN sticker_pack_id TEXT");
+        db.execSQL("ALTER TABLE part ADD COLUMN sticker_pack_key TEXT");
+        db.execSQL("ALTER TABLE part ADD COLUMN sticker_id INTEGER DEFAULT -1");
+        db.execSQL("CREATE INDEX IF NOT EXISTS part_sticker_pack_id_index ON part (sticker_pack_id)");
       }
 
       db.setTransactionSuccessful();

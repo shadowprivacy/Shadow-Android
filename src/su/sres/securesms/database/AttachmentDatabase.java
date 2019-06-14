@@ -47,6 +47,7 @@ import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.mms.MediaStream;
 import su.sres.securesms.mms.MmsException;
 import su.sres.securesms.mms.PartAuthority;
+import su.sres.securesms.stickers.StickerLocator;
 import su.sres.securesms.util.BitmapDecodingException;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.JsonUtils;
@@ -92,6 +93,9 @@ public class AttachmentDatabase extends Database {
           static final String DIGEST                 = "digest";
           static final String VOICE_NOTE             = "voice_note";
           static final String QUOTE                  = "quote";
+  public  static final String STICKER_PACK_ID        = "sticker_pack_id";
+  public  static final String STICKER_PACK_KEY       = "sticker_pack_key";
+  static final String STICKER_ID             = "sticker_id";
           static final String FAST_PREFLIGHT_ID      = "fast_preflight_id";
   public  static final String DATA_RANDOM            = "data_random";
   private static final String THUMBNAIL_RANDOM       = "thumbnail_random";
@@ -114,7 +118,7 @@ public class AttachmentDatabase extends Database {
                                                            SIZE, FILE_NAME, THUMBNAIL, THUMBNAIL_ASPECT_RATIO,
                                                            UNIQUE_ID, DIGEST, FAST_PREFLIGHT_ID, VOICE_NOTE,
                                                            QUOTE, DATA_RANDOM, THUMBNAIL_RANDOM, WIDTH, HEIGHT,
-                                                           CAPTION };
+                                                           CAPTION, STICKER_PACK_ID, STICKER_PACK_KEY, STICKER_ID};
 
   public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " (" + ROW_ID + " INTEGER PRIMARY KEY, " +
     MMS_ID + " INTEGER, " + "seq" + " INTEGER DEFAULT 0, "                        +
@@ -127,11 +131,13 @@ public class AttachmentDatabase extends Database {
     UNIQUE_ID + " INTEGER NOT NULL, " + DIGEST + " BLOB, " + FAST_PREFLIGHT_ID + " TEXT, " +
     VOICE_NOTE + " INTEGER DEFAULT 0, " + DATA_RANDOM + " BLOB, " + THUMBNAIL_RANDOM + " BLOB, " +
     QUOTE + " INTEGER DEFAULT 0, " + WIDTH + " INTEGER DEFAULT 0, " + HEIGHT + " INTEGER DEFAULT 0, " +
-    CAPTION + " TEXT DEFAULT NULL);";
+          CAPTION + " TEXT DEFAULT NULL, " + STICKER_PACK_ID + " TEXT DEFAULT NULL, " +
+          STICKER_PACK_KEY + " DEFAULT NULL, " + STICKER_ID + " INTEGER DEFAULT -1);";
 
   public static final String[] CREATE_INDEXS = {
     "CREATE INDEX IF NOT EXISTS part_mms_id_index ON " + TABLE_NAME + " (" + MMS_ID + ");",
     "CREATE INDEX IF NOT EXISTS pending_push_index ON " + TABLE_NAME + " (" + TRANSFER_STATE + ");",
+          "CREATE INDEX IF NOT EXISTS part_sticker_pack_id_index ON " + TABLE_NAME + " (" + STICKER_PACK_ID + ");",
   };
 
   private final ExecutorService thumbnailExecutor = Util.newSingleThreadedLifoExecutor();
@@ -172,6 +178,15 @@ public class AttachmentDatabase extends Database {
     } catch (ExecutionException ee) {
       Log.w(TAG, ee);
       throw new IOException(ee);
+    }
+  }
+
+  public boolean containsStickerPackId(@NonNull String stickerPackId) {
+    String   selection = STICKER_PACK_ID + " = ?";
+    String[] args      = new String[] { stickerPackId };
+
+    try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, selection, args, null, null, "1")) {
+      return cursor != null && cursor.moveToFirst();
     }
   }
 
@@ -434,7 +449,8 @@ public class AttachmentDatabase extends Database {
                                   mediaStream.getWidth(),
                                   mediaStream.getHeight(),
                                   databaseAttachment.isQuote(),
-                                  databaseAttachment.getCaption());
+            databaseAttachment.getCaption(),
+            databaseAttachment.getSticker());
   }
 
 
@@ -474,6 +490,26 @@ public class AttachmentDatabase extends Database {
     values.put(TRANSFER_STATE, transferState);
     database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings());
     notifyConversationListeners(DatabaseFactory.getMmsDatabase(context).getThreadIdForMessage(messageId));
+  }
+
+  /**
+   * Returns (pack_id, pack_key) pairs that are referenced in attachments but not in the stickers
+   * database.
+   */
+  public @Nullable Cursor getUnavailableStickerPacks() {
+    String query = "SELECT DISTINCT " + STICKER_PACK_ID + ", " + STICKER_PACK_KEY + " FROM " + TABLE_NAME + " WHERE " + STICKER_PACK_ID + " NOT IN (" +
+            "SELECT DISTINCT " + StickerDatabase.PACK_ID + " FROM " + StickerDatabase.TABLE_NAME +
+            ")";
+
+    return databaseHelper.getReadableDatabase().rawQuery(query, null);
+  }
+
+  public boolean hasStickerAttachments() {
+    String selection = STICKER_PACK_ID + " NOT NULL";
+
+    try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, selection, null, null, null, null, "1")) {
+      return cursor != null && cursor.moveToFirst();
+    }
   }
 
   @SuppressWarnings("WeakerAccess")
@@ -608,7 +644,12 @@ public class AttachmentDatabase extends Database {
                                               object.getInt(WIDTH),
                                               object.getInt(HEIGHT),
                                              object.getInt(QUOTE) == 1,
-                                              object.getString(CAPTION)));
+                    object.getString(CAPTION),
+                    object.getInt(STICKER_ID) >= 0
+                            ? new StickerLocator(object.getString(STICKER_PACK_ID),
+                            object.getString(STICKER_PACK_KEY),
+                            object.getInt(STICKER_ID))
+                            : null));
           }
         }
 
@@ -632,7 +673,12 @@ public class AttachmentDatabase extends Database {
                                                                 cursor.getInt(cursor.getColumnIndexOrThrow(WIDTH)),
                                                                 cursor.getInt(cursor.getColumnIndexOrThrow(HEIGHT)),
                                                                cursor.getInt(cursor.getColumnIndexOrThrow(QUOTE)) == 1,
-                                                                cursor.getString(cursor.getColumnIndexOrThrow(CAPTION))));
+                cursor.getString(cursor.getColumnIndexOrThrow(CAPTION)),
+                cursor.getInt(cursor.getColumnIndexOrThrow(STICKER_ID)) >= 0
+                        ? new StickerLocator(cursor.getString(cursor.getColumnIndexOrThrow(STICKER_PACK_ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(STICKER_PACK_KEY)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(STICKER_ID)))
+                        : null));
       }
     } catch (JSONException e) {
       throw new AssertionError(e);
@@ -672,12 +718,19 @@ public class AttachmentDatabase extends Database {
     contentValues.put(QUOTE, quote);
     contentValues.put(CAPTION, attachment.getCaption());
 
+    if (attachment.isSticker()) {
+      contentValues.put(STICKER_PACK_ID, attachment.getSticker().getPackId());
+      contentValues.put(STICKER_PACK_KEY, attachment.getSticker().getPackKey());
+      contentValues.put(STICKER_ID, attachment.getSticker().getStickerId());
+    }
+
     if (dataInfo != null) {
       contentValues.put(DATA, dataInfo.file.getAbsolutePath());
       contentValues.put(SIZE, dataInfo.length);
       contentValues.put(DATA_RANDOM, dataInfo.random);
     }
 
+    boolean      notifyPacks  = attachment.isSticker() && !hasStickerAttachments();
     long         rowId        = database.insert(TABLE_NAME, null, contentValues);
     AttachmentId attachmentId = new AttachmentId(rowId, uniqueId);
     Uri          thumbnailUri = attachment.getThumbnailUri();
@@ -710,6 +763,10 @@ public class AttachmentDatabase extends Database {
         Log.i(TAG, "Submitting thumbnail generation job...");
         thumbnailExecutor.submit(new ThumbnailFetchCallable(attachmentId));
       }
+    }
+
+    if (notifyPacks) {
+      notifyStickerPackListeners();
     }
 
     return attachmentId;

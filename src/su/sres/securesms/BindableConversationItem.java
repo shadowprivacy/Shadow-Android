@@ -11,6 +11,7 @@ import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.stickers.StickerLocator;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public interface BindableConversationItem extends Unbindable {
     void onQuoteClicked(MmsMessageRecord messageRecord);
     void onLinkPreviewClicked(@NonNull LinkPreview linkPreview);
     void onMoreTextClicked(@NonNull Address conversationAddress, long messageId, boolean isMms);
+    void onStickerClicked(@NonNull StickerLocator stickerLocator);
     void onSharedContactDetailsClicked(@NonNull Contact contact, @NonNull View avatarTransitionView);
     void onAddToContactsClicked(@NonNull Contact contact);
     void onMessageSharedContactClicked(@NonNull List<Recipient> choices);

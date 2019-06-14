@@ -32,6 +32,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.attachments.PointerAttachment;
+import su.sres.securesms.attachments.UriAttachment;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.contactshare.ContactModelMapper;
 import su.sres.securesms.crypto.IdentityKeyUtil;
@@ -40,6 +41,7 @@ import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.crypto.storage.SignalProtocolStoreImpl;
 import su.sres.securesms.crypto.storage.TextSecureSessionStore;
 import su.sres.securesms.database.Address;
+import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupReceiptDatabase;
@@ -51,12 +53,15 @@ import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.PushDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.SmsDatabase;
+import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
+import su.sres.securesms.database.model.StickerRecord;
 import su.sres.securesms.groups.GroupMessageProcessor;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.linkpreview.Link;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.linkpreview.LinkPreviewUtil;
@@ -68,6 +73,7 @@ import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.OutgoingSecureMediaMessage;
 import su.sres.securesms.mms.QuoteModel;
 import su.sres.securesms.mms.SlideDeck;
+import su.sres.securesms.mms.StickerSlide;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.recipients.Recipient;
@@ -78,8 +84,11 @@ import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.sms.OutgoingEncryptedMessage;
 import su.sres.securesms.sms.OutgoingEndSessionMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
+import su.sres.securesms.stickers.StickerLocator;
 import su.sres.securesms.util.GroupUtil;
+import su.sres.securesms.util.Hex;
 import su.sres.securesms.util.IdentityUtil;
+import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.state.SessionStore;
 import org.whispersystems.libsignal.state.SignalProtocolStore;
@@ -102,11 +111,13 @@ import su.sres.signalservice.api.messages.multidevice.ReadMessage;
 import su.sres.signalservice.api.messages.multidevice.RequestMessage;
 import su.sres.signalservice.api.messages.multidevice.SentTranscriptMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
+import su.sres.signalservice.api.messages.multidevice.StickerPackOperationMessage;
 import su.sres.signalservice.api.messages.multidevice.VerifiedMessage;
 import su.sres.signalservice.api.messages.shared.SharedContact;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -179,7 +190,7 @@ public class PushDecryptJob extends BaseJob {
   }
 
   @Override
-  public boolean onShouldRetry(Exception exception) {
+  public boolean onShouldRetry(@NonNull Exception exception) {
     return false;
   }
 
@@ -236,7 +247,7 @@ public class PushDecryptJob extends BaseJob {
 
       if (content.getDataMessage().isPresent()) {
         SignalServiceDataMessage message        = content.getDataMessage().get();
-        boolean                  isMediaMessage = message.getAttachments().isPresent() || message.getQuote().isPresent() || message.getSharedContacts().isPresent() || message.getPreviews().isPresent();
+        boolean                  isMediaMessage = message.getAttachments().isPresent() || message.getQuote().isPresent() || message.getSharedContacts().isPresent() || message.getPreviews().isPresent() || message.getSticker().isPresent();
 
         if      (message.isEndSession())        handleEndSessionMessage(content, smsMessageId);
         else if (message.isGroupUpdate())       handleGroupMessage(content, message, smsMessageId);
@@ -260,11 +271,12 @@ public class PushDecryptJob extends BaseJob {
 
         SignalServiceSyncMessage syncMessage = content.getSyncMessage().get();
 
-        if      (syncMessage.getSent().isPresent())     handleSynchronizeSentMessage(content, syncMessage.getSent().get());
-        else if (syncMessage.getRequest().isPresent())  handleSynchronizeRequestMessage(syncMessage.getRequest().get());
-        else if (syncMessage.getRead().isPresent())     handleSynchronizeReadMessage(syncMessage.getRead().get(), content.getTimestamp());
-        else if (syncMessage.getVerified().isPresent()) handleSynchronizeVerifiedMessage(syncMessage.getVerified().get());
-        else                                           Log.w(TAG, "Contains no known sync types...");
+        if      (syncMessage.getSent().isPresent())                  handleSynchronizeSentMessage(content, syncMessage.getSent().get());
+        else if (syncMessage.getRequest().isPresent())               handleSynchronizeRequestMessage(syncMessage.getRequest().get());
+        else if (syncMessage.getRead().isPresent())                  handleSynchronizeReadMessage(syncMessage.getRead().get(), content.getTimestamp());
+        else if (syncMessage.getVerified().isPresent())              handleSynchronizeVerifiedMessage(syncMessage.getVerified().get());
+        else if (syncMessage.getStickerPackOperations().isPresent()) handleSynchronizeStickerPackOperation(syncMessage.getStickerPackOperations().get());
+        else                                                         Log.w(TAG, "Contains no known sync types...");
       } else if (content.getCallMessage().isPresent()) {
         Log.i(TAG, "Got call message...");
         SignalServiceCallMessage message = content.getCallMessage().get();
@@ -497,6 +509,7 @@ public class PushDecryptJob extends BaseJob {
               Optional.absent(),
               Optional.absent(),
               Optional.absent(),
+              Optional.absent(),
               Optional.absent());
 
       database.insertSecureDecryptedMessageInbox(mediaMessage, -1);
@@ -515,6 +528,28 @@ public class PushDecryptJob extends BaseJob {
     IdentityUtil.processVerifiedMessage(context, verifiedMessage);
   }
 
+  private void handleSynchronizeStickerPackOperation(@NonNull List<StickerPackOperationMessage> stickerPackOperations) {
+    JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
+
+    for (StickerPackOperationMessage operation : stickerPackOperations) {
+      if (operation.getPackId().isPresent() && operation.getPackKey().isPresent() && operation.getType().isPresent()) {
+        String packId  = Hex.toStringCondensed(operation.getPackId().get());
+        String packKey = Hex.toStringCondensed(operation.getPackKey().get());
+
+        switch (operation.getType().get()) {
+          case INSTALL:
+            jobManager.add(new StickerPackDownloadJob(packId, packKey, false));
+            break;
+          case REMOVE:
+            DatabaseFactory.getStickerDatabase(context).uninstallPack(packId);
+            break;
+        }
+      } else {
+        Log.w(TAG, "Received incomplete sticker pack operation sync.");
+      }
+    }
+  }
+
   private void handleSynchronizeSentMessage(@NonNull SignalServiceContent content,
                                             @NonNull SentTranscriptMessage message)
           throws StorageFailedException
@@ -531,7 +566,7 @@ public class PushDecryptJob extends BaseJob {
         threadId = GroupMessageProcessor.process(context, content, message.getMessage(), true);
       } else if (message.getMessage().isExpirationUpdate()) {
         threadId = handleSynchronizeSentExpirationUpdate(message);
-      } else if (message.getMessage().getAttachments().isPresent() || message.getMessage().getQuote().isPresent() || message.getMessage().getPreviews().isPresent()) {
+      } else if (message.getMessage().getAttachments().isPresent() || message.getMessage().getQuote().isPresent() || message.getMessage().getPreviews().isPresent() || message.getMessage().getSticker().isPresent()) {
         threadId = handleSynchronizeSentMediaMessage(message);
       } else {
         threadId = handleSynchronizeSentTextMessage(message);
@@ -596,6 +631,10 @@ public class PushDecryptJob extends BaseJob {
                       TextSecurePreferences.isTypingIndicatorsEnabled(context),
                       TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(context),
                       TextSecurePreferences.isLinkPreviewsEnabled(context)));
+
+      ApplicationContext.getInstance(context)
+              .getJobManager()
+              .add(new MultiDeviceStickerPackSyncJob());
     }
   }
 
@@ -630,11 +669,16 @@ public class PushDecryptJob extends BaseJob {
   {
     notifyTypingStoppedFromIncomingMessage(getMessageDestination(content, message), content.getSender(), content.getSenderDevice());
 
+    Optional<InsertResult> insertResult;
+
+    MmsDatabase database = DatabaseFactory.getMmsDatabase(context);
+    database.beginTransaction();
+
     try {
-      MmsDatabase                 database       = DatabaseFactory.getMmsDatabase(context);
       Optional<QuoteModel>        quote          = getValidatedQuote(message.getQuote());
       Optional<List<Contact>>     sharedContacts = getContacts(message.getSharedContacts());
       Optional<List<LinkPreview>> linkPreviews   = getLinkPreviews(message.getPreviews(), message.getBody().or(""));
+      Optional<Attachment>        sticker        = getStickerAttachment(message.getSticker());
       IncomingMediaMessage        mediaMessage   = new IncomingMediaMessage(Address.fromExternal(context, content.getSender()),
               message.getTimestamp(), -1,
               message.getExpiresInSeconds() * 1000L, false,
@@ -644,12 +688,17 @@ public class PushDecryptJob extends BaseJob {
               message.getAttachments(),
               quote,
               sharedContacts,
-              linkPreviews);
+              linkPreviews,
+              sticker);
 
-      Optional<InsertResult> insertResult = database.insertSecureDecryptedMessageInbox(mediaMessage, -1);
+      insertResult = database.insertSecureDecryptedMessageInbox(mediaMessage, -1);
 
       if (insertResult.isPresent()) {
-        List<DatabaseAttachment> attachments = DatabaseFactory.getAttachmentDatabase(context).getAttachmentsForMessage(insertResult.get().getMessageId());
+        List<DatabaseAttachment> allAttachments     = DatabaseFactory.getAttachmentDatabase(context).getAttachmentsForMessage(insertResult.get().getMessageId());
+        List<DatabaseAttachment> stickerAttachments = Stream.of(allAttachments).filter(Attachment::isSticker).toList();
+        List<DatabaseAttachment> attachments        = Stream.of(allAttachments).filterNot(Attachment::isSticker).toList();
+
+        forceStickerDownloadIfNecessary(stickerAttachments);
 
         for (DatabaseAttachment attachment : attachments) {
           ApplicationContext.getInstance(context)
@@ -660,11 +709,17 @@ public class PushDecryptJob extends BaseJob {
           DatabaseFactory.getSmsDatabase(context).deleteMessage(smsMessageId.get());
         }
 
-        MessageNotifier.updateNotification(context, insertResult.get().getThreadId());
+        database.setTransactionSuccessful();
       }
 
     } catch (MmsException e) {
       throw new StorageFailedException(e, content.getSender(), content.getSenderDevice());
+    } finally {
+      database.endTransaction();
+    }
+
+    if (insertResult.isPresent()) {
+      MessageNotifier.updateNotification(context, insertResult.get().getThreadId());
     }
   }
 
@@ -689,13 +744,20 @@ public class PushDecryptJob extends BaseJob {
   private long handleSynchronizeSentMediaMessage(@NonNull SentTranscriptMessage message)
       throws MmsException
   {
-    MmsDatabase                 database       = DatabaseFactory.getMmsDatabase(context);
-    Recipient                   recipients     = getSyncMessageDestination(message);
-    Optional<QuoteModel>        quote          = getValidatedQuote(message.getMessage().getQuote());
-    Optional<List<Contact>>     sharedContacts = getContacts(message.getMessage().getSharedContacts());
-    Optional<List<LinkPreview>> previews       = getLinkPreviews(message.getMessage().getPreviews(), message.getMessage().getBody().or(""));
-    OutgoingMediaMessage        mediaMessage   = new OutgoingMediaMessage(recipients, message.getMessage().getBody().orNull(),
-            PointerAttachment.forPointers(message.getMessage().getAttachments()),
+    MmsDatabase                 database        = DatabaseFactory.getMmsDatabase(context);
+    Recipient                   recipients      = getSyncMessageDestination(message);
+    Optional<QuoteModel>        quote           = getValidatedQuote(message.getMessage().getQuote());
+    Optional<Attachment>        sticker         = getStickerAttachment(message.getMessage().getSticker());
+    Optional<List<Contact>>     sharedContacts  = getContacts(message.getMessage().getSharedContacts());
+    Optional<List<LinkPreview>> previews        = getLinkPreviews(message.getMessage().getPreviews(), message.getMessage().getBody().or(""));
+    List<Attachment>            syncAttachments = PointerAttachment.forPointers(message.getMessage().getAttachments());
+
+    if (sticker.isPresent()) {
+      syncAttachments.add(sticker.get());
+    }
+
+    OutgoingMediaMessage mediaMessage = new OutgoingMediaMessage(recipients, message.getMessage().getBody().orNull(),
+            syncAttachments,
             message.getTimestamp(), -1,
             message.getMessage().getExpiresInSeconds() * 1000,
             ThreadDatabase.DistributionTypes.DEFAULT, quote.orNull(),
@@ -710,39 +772,54 @@ public class PushDecryptJob extends BaseJob {
     }
 
     long threadId  = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipients);
-    long messageId = database.insertMessageOutbox(mediaMessage, threadId, false, null);
 
-    if (recipients.getAddress().isGroup()) {
-      GroupReceiptDatabase receiptDatabase = DatabaseFactory.getGroupReceiptDatabase(context);
-      List<Recipient>      members         = DatabaseFactory.getGroupDatabase(context).getGroupMembers(recipients.getAddress().toGroupString(), false);
+    database.beginTransaction();
 
-      for (Recipient member : members) {
-        receiptDatabase.setUnidentified(member.getAddress(), messageId, message.isUnidentified(member.getAddress().serialize()));
+    try {
+      long messageId = database.insertMessageOutbox(mediaMessage, threadId, false, null);
+
+      if (recipients.getAddress().isGroup()) {
+        GroupReceiptDatabase receiptDatabase = DatabaseFactory.getGroupReceiptDatabase(context);
+        List<Recipient>      members         = DatabaseFactory.getGroupDatabase(context).getGroupMembers(recipients.getAddress().toGroupString(), false);
+
+        for (Recipient member : members) {
+          receiptDatabase.setUnidentified(member.getAddress(), messageId, message.isUnidentified(member.getAddress().serialize()));
+        }
       }
-    }
 
     database.markAsSent(messageId, true);
     database.markUnidentified(messageId, message.isUnidentified(recipients.getAddress().serialize()));
 
-    for (DatabaseAttachment attachment : DatabaseFactory.getAttachmentDatabase(context).getAttachmentsForMessage(messageId)) {
-      ApplicationContext.getInstance(context)
-                        .getJobManager()
-              .add(new AttachmentDownloadJob(messageId, attachment.getAttachmentId(), false));
-    }
+      List<DatabaseAttachment> allAttachments     = DatabaseFactory.getAttachmentDatabase(context).getAttachmentsForMessage(messageId);
+      List<DatabaseAttachment> stickerAttachments = Stream.of(allAttachments).filter(Attachment::isSticker).toList();
+      List<DatabaseAttachment> attachments        = Stream.of(allAttachments).filterNot(Attachment::isSticker).toList();
 
-    if (message.getMessage().getExpiresInSeconds() > 0) {
-      database.markExpireStarted(messageId, message.getExpirationStartTimestamp());
-      ApplicationContext.getInstance(context)
-                        .getExpiringMessageManager()
-                        .scheduleDeletion(messageId, true,
-                                          message.getExpirationStartTimestamp(),
-                                          message.getMessage().getExpiresInSeconds() * 1000L);
-    }
+      forceStickerDownloadIfNecessary(stickerAttachments);
 
-    if (recipients.isLocalNumber()) {
-      SyncMessageId id = new SyncMessageId(recipients.getAddress(), message.getTimestamp());
-      DatabaseFactory.getMmsSmsDatabase(context).incrementDeliveryReceiptCount(id, System.currentTimeMillis());
-      DatabaseFactory.getMmsSmsDatabase(context).incrementReadReceiptCount(id, System.currentTimeMillis());
+      for (DatabaseAttachment attachment : attachments) {
+        ApplicationContext.getInstance(context)
+                .getJobManager()
+                .add(new AttachmentDownloadJob(messageId, attachment.getAttachmentId(), false));
+      }
+
+      if (message.getMessage().getExpiresInSeconds() > 0) {
+        database.markExpireStarted(messageId, message.getExpirationStartTimestamp());
+        ApplicationContext.getInstance(context)
+                .getExpiringMessageManager()
+                .scheduleDeletion(messageId, true,
+                        message.getExpirationStartTimestamp(),
+                        message.getMessage().getExpiresInSeconds() * 1000L);
+      }
+
+      if (recipients.isLocalNumber()) {
+        SyncMessageId id = new SyncMessageId(recipients.getAddress(), message.getTimestamp());
+        DatabaseFactory.getMmsSmsDatabase(context).incrementDeliveryReceiptCount(id, System.currentTimeMillis());
+        DatabaseFactory.getMmsSmsDatabase(context).incrementReadReceiptCount(id, System.currentTimeMillis());
+      }
+
+      database.setTransactionSuccessful();
+    } finally {
+      database.endTransaction();
     }
 
     return threadId;
@@ -1055,6 +1132,42 @@ public class PushDecryptJob extends BaseJob {
                                       PointerAttachment.forPointers(quote.get().getAttachments())));
   }
 
+  private Optional<Attachment> getStickerAttachment(Optional<SignalServiceDataMessage.Sticker> sticker) {
+    if (!sticker.isPresent()) {
+      return Optional.absent();
+    }
+
+    if (sticker.get().getPackId() == null || sticker.get().getPackKey() == null || sticker.get().getAttachment() == null) {
+      Log.w(TAG, "Malformed sticker!");
+      return Optional.absent();
+    }
+
+    String          packId          = Hex.toStringCondensed(sticker.get().getPackId());
+    String          packKey         = Hex.toStringCondensed(sticker.get().getPackKey());
+    int             stickerId       = sticker.get().getStickerId();
+    StickerLocator  stickerLocator  = new StickerLocator(packId, packKey, stickerId);
+    StickerDatabase stickerDatabase = DatabaseFactory.getStickerDatabase(context);
+    StickerRecord   stickerRecord   = stickerDatabase.getSticker(stickerLocator.getPackId(), stickerLocator.getStickerId(), false);
+
+    if (stickerRecord != null) {
+      return Optional.of(new UriAttachment(stickerRecord.getUri(),
+              stickerRecord.getUri(),
+              MediaUtil.IMAGE_WEBP,
+              AttachmentDatabase.TRANSFER_PROGRESS_DONE,
+              stickerRecord.getSize(),
+              StickerSlide.WIDTH,
+              StickerSlide.HEIGHT,
+              null,
+              String.valueOf(new SecureRandom().nextLong()),
+              false,
+              false,
+              null,
+              stickerLocator));
+    } else {
+      return Optional.of(PointerAttachment.forPointer(Optional.of(sticker.get().getAttachment()), stickerLocator).get());
+    }
+  }
+
   private Optional<List<Contact>> getContacts(Optional<List<SharedContact>> sharedContacts) {
     if (!sharedContacts.isPresent()) return Optional.absent();
 
@@ -1171,6 +1284,25 @@ public class PushDecryptJob extends BaseJob {
   private void resetRecipientToPush(@NonNull Recipient recipient) {
     if (recipient.isForceSmsSelection()) {
       DatabaseFactory.getRecipientDatabase(context).setForceSmsSelection(recipient, false);
+    }
+  }
+
+  private void forceStickerDownloadIfNecessary(List<DatabaseAttachment> stickerAttachments) {
+    if (stickerAttachments.isEmpty()) return;
+
+    DatabaseAttachment stickerAttachment = stickerAttachments.get(0);
+
+    if (stickerAttachment.getTransferState() != AttachmentDatabase.TRANSFER_PROGRESS_DONE) {
+      AttachmentDownloadJob downloadJob = new AttachmentDownloadJob(messageId, stickerAttachment.getAttachmentId(), true);
+
+      try {
+        ApplicationContext.getInstance(context).injectDependencies(downloadJob);
+        downloadJob.setContext(context);
+        downloadJob.doWork();
+      } catch (Exception e) {
+        Log.w(TAG, "Failed to download sticker inline. Scheduling.");
+        ApplicationContext.getInstance(context).getJobManager().add(downloadJob);
+      }
     }
   }
 

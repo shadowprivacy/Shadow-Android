@@ -49,6 +49,7 @@ import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.stickers.StickerLocator;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
@@ -254,12 +255,14 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
   }
 
   private Intent getBaseShareIntent(final @NonNull Class<?> target) {
-    final Intent           intent     = new Intent(this, target);
-    final String           textExtra  = getIntent().getStringExtra(Intent.EXTRA_TEXT);
-    final ArrayList<Media> mediaExtra = getIntent().getParcelableArrayListExtra(ConversationActivity.MEDIA_EXTRA);
+    final Intent           intent       = new Intent(this, target);
+    final String           textExtra    = getIntent().getStringExtra(Intent.EXTRA_TEXT);
+    final ArrayList<Media> mediaExtra   = getIntent().getParcelableArrayListExtra(ConversationActivity.MEDIA_EXTRA);
+    final StickerLocator   stickerExtra = getIntent().getParcelableExtra(ConversationActivity.STICKER_EXTRA);
 
     intent.putExtra(ConversationActivity.TEXT_EXTRA, textExtra);
     intent.putExtra(ConversationActivity.MEDIA_EXTRA, mediaExtra);
+    intent.putExtra(ConversationActivity.STICKER_EXTRA, stickerExtra);
 
     if (resolvedExtra != null) intent.setDataAndType(resolvedExtra, mimeType);
 

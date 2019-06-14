@@ -28,9 +28,9 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.search.model.MessageResult;
 import su.sres.securesms.search.model.SearchResult;
 import su.sres.securesms.util.StickyHeaderDecoration;
+import su.sres.securesms.util.concurrent.SignalExecutors;
 
 import java.util.Locale;
-import java.util.concurrent.Executors;
 
 /**
  * A fragment that is displayed to do full-text search of messages, groups, and contacts.
@@ -70,7 +70,7 @@ public class SearchFragment extends Fragment implements SearchListAdapter.EventL
                                                              DatabaseFactory.getContactsDatabase(getContext()),
                                                              DatabaseFactory.getThreadDatabase(getContext()),
                                                              ContactAccessor.getInstance(),
-                                                             Executors.newSingleThreadExecutor());
+            SignalExecutors.SERIAL);
     viewModel = ViewModelProviders.of(this, new SearchViewModel.Factory(searchRepository)).get(SearchViewModel.class);
 
     if (pendingQuery != null) {

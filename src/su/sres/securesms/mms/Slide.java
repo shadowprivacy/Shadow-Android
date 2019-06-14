@@ -26,6 +26,7 @@ import android.support.annotation.Nullable;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.UriAttachment;
 import su.sres.securesms.database.AttachmentDatabase;
+import su.sres.securesms.stickers.StickerLocator;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -85,6 +86,8 @@ public abstract class Slide {
     return false;
   }
 
+  public boolean hasSticker() { return false; }
+
   public boolean hasVideo() {
     return false;
   }
@@ -132,17 +135,18 @@ public abstract class Slide {
     return false;
   }
 
-  protected static Attachment constructAttachmentFromUri(@NonNull  Context context,
-                                                         @NonNull  Uri     uri,
-                                                         @NonNull  String  defaultMime,
-                                                         long    size,
-                                                         int     width,
-                                                         int     height,
-                                                         boolean hasThumbnail,
-                                                         @Nullable String  fileName,
-                                                         @Nullable String  caption,
-                                                         boolean voiceNote,
-                                                                   boolean quote)
+  protected static Attachment constructAttachmentFromUri(@NonNull  Context        context,
+                                                         @NonNull  Uri            uri,
+                                                         @NonNull  String         defaultMime,
+                                                         long           size,
+                                                         int            width,
+                                                         int            height,
+                                                         boolean        hasThumbnail,
+                                                         @Nullable String         fileName,
+                                                         @Nullable String         caption,
+                                                         @Nullable StickerLocator stickerLocator,
+                                                         boolean        voiceNote,
+                                                         boolean        quote)
   {
     String                 resolvedType    = Optional.fromNullable(MediaUtil.getMimeType(context, uri)).or(defaultMime);
     String                 fastPreflightId = String.valueOf(new SecureRandom().nextLong());
@@ -157,7 +161,8 @@ public abstract class Slide {
             fastPreflightId,
             voiceNote,
             quote,
-            caption);
+            caption,
+            stickerLocator);
   }
 
   @Override

@@ -26,6 +26,7 @@ import su.sres.securesms.mms.ImageSlide;
 import su.sres.securesms.mms.MmsSlide;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.mms.Slide;
+import su.sres.securesms.mms.StickerSlide;
 import su.sres.securesms.mms.TextSlide;
 import su.sres.securesms.mms.VideoSlide;
 
@@ -40,6 +41,7 @@ public class MediaUtil {
 
   public static final String IMAGE_PNG         = "image/png";
   public static final String IMAGE_JPEG        = "image/jpeg";
+  public static final String IMAGE_WEBP        = "image/webp";
   public static final String IMAGE_GIF         = "image/gif";
   public static final String AUDIO_AAC         = "audio/aac";
   public static final String AUDIO_UNSPECIFIED = "audio/*";
@@ -50,7 +52,9 @@ public class MediaUtil {
 
   public static Slide getSlideForAttachment(Context context, Attachment attachment) {
     Slide slide = null;
-    if (isGif(attachment.getContentType())) {
+    if (attachment.isSticker()) {
+      slide = new StickerSlide(context, attachment);
+    } else if (isGif(attachment.getContentType())) {
       slide = new GifSlide(context, attachment);
     } else if (isImageType(attachment.getContentType())) {
       slide = new ImageSlide(context, attachment);

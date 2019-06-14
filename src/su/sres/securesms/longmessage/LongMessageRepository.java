@@ -3,7 +3,6 @@ package su.sres.securesms.longmessage;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 
@@ -16,6 +15,7 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.mms.TextSlide;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
@@ -34,7 +34,7 @@ class LongMessageRepository {
     }
 
     void getMessage(@NonNull Context context, long messageId, boolean isMms, @NonNull Callback<Optional<LongMessage>> callback) {
-        AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
+        SignalExecutors.BOUNDED.execute(() -> {
             if (isMms) {
                 callback.onComplete(getMmsLongMessage(context, mmsDatabase, messageId));
             } else {

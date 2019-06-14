@@ -368,7 +368,24 @@ public class Util {
     return context.getPackageName().equals(Telephony.Sms.getDefaultSmsPackage(context));
   }
 
-  public static int getCurrentApkReleaseVersion(Context context) {
+  /**
+   * The app version.
+   * <p>
+   * This code should be used in all places that compare app versions rather than
+   * {@link #getManifestApkVersion(Context)} or {@link BuildConfig#VERSION_CODE}.
+   */
+  public static int getCanonicalVersionCode() {
+    return BuildConfig.CANONICAL_VERSION_CODE;
+  }
+
+  /**
+   * {@link BuildConfig#VERSION_CODE} may not be the actual version due to ABI split code adding a
+   * postfix after BuildConfig is generated.
+   * <p>
+   * However, in most cases you want to use {@link BuildConfig#CANONICAL_VERSION_CODE} via
+   * {@link #getCanonicalVersionCode()}
+   */
+  public static int getManifestApkVersion(Context context) {
     try {
       return context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionCode;
     } catch (PackageManager.NameNotFoundException e) {
