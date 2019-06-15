@@ -14,6 +14,7 @@ import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.GroupReceiptDatabase;
 import su.sres.securesms.database.GroupReceiptDatabase.GroupReceiptInfo;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
@@ -32,6 +33,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.transport.UndeliverableMessageException;
 import su.sres.securesms.util.GroupUtil;
+import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
@@ -238,6 +240,7 @@ public class PushGroupSendJob extends PushSendJob implements InjectableType {
     List<SignalServiceAddress>                 addresses          = Stream.of(destinations).map(this::getPushAddress).toList();
     List<Attachment>                           attachments        = Stream.of(message.getAttachments()).filterNot(Attachment::isSticker).toList();
     List<SignalServiceAttachment>              attachmentPointers = getAttachmentPointersFor(attachments);
+    boolean                                    isRecipientUpdate  = destinations.size() != DatabaseFactory.getGroupReceiptDatabase(context).getGroupReceiptInfo(messageId).size();
 
     List<Optional<UnidentifiedAccessPair>> unidentifiedAccess = Stream.of(addresses)
             .map(address -> Address.fromSerialized(address.getNumber()))
@@ -258,7 +261,7 @@ public class PushGroupSendJob extends PushSendJob implements InjectableType {
                                                                            .asGroupMessage(group)
                                                                            .build();
 
-      return messageSender.sendMessage(addresses, unidentifiedAccess, groupDataMessage);
+      return messageSender.sendMessage(addresses, unidentifiedAccess, isRecipientUpdate, groupDataMessage);
     } else {
 
       SignalServiceGroup       group        = new SignalServiceGroup(GroupUtil.getDecodedId(groupId));
@@ -276,7 +279,7 @@ public class PushGroupSendJob extends PushSendJob implements InjectableType {
                                                                       .withPreviews(previews)
                                                                       .build();
 
-      return messageSender.sendMessage(addresses, unidentifiedAccess, groupMessage);
+      return messageSender.sendMessage(addresses, unidentifiedAccess, isRecipientUpdate, groupMessage);
     }
   }
 
