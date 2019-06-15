@@ -38,7 +38,7 @@ public class PartAuthority {
     uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     uriMatcher.addURI("su.sres.securesms", "part/*/#", PART_ROW);
     uriMatcher.addURI("su.sres.securesms", "thumb/*/#", THUMB_ROW);
-    uriMatcher.addURI("org.thoughtcrime.securesms", "sticker/#", STICKER_ROW);
+    uriMatcher.addURI("su.sres.securesms", "sticker/#", STICKER_ROW);
     uriMatcher.addURI(DeprecatedPersistentBlobProvider.AUTHORITY, DeprecatedPersistentBlobProvider.EXPECTED_PATH_OLD, PERSISTENT_ROW);
     uriMatcher.addURI(DeprecatedPersistentBlobProvider.AUTHORITY, DeprecatedPersistentBlobProvider.EXPECTED_PATH_NEW, PERSISTENT_ROW);
     uriMatcher.addURI(BlobProvider.AUTHORITY, BlobProvider.PATH, BLOB_ROW);

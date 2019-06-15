@@ -30,11 +30,11 @@ public class DatabaseContentProviders {
     }
 
     public static class Sticker extends NoopContentProvider {
-        public static final Uri CONTENT_URI = Uri.parse("content://org.thoughtcrime.securesms.database.sticker");
+        public static final Uri CONTENT_URI = Uri.parse("content://su.sres.securesms.database.sticker");
     }
 
     public static class StickerPack extends NoopContentProvider {
-        public static final Uri CONTENT_URI = Uri.parse("content://org.thoughtcrime.securesms.database.stickerpack");
+        public static final Uri CONTENT_URI = Uri.parse("content://su.sres.securesms.database.stickerpack");
     }
 
     private static abstract class NoopContentProvider extends ContentProvider {
