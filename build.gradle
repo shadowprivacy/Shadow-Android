@@ -3,6 +3,12 @@ import org.signal.signing.ApkSignerUtil
 import java.security.MessageDigest
 
 buildscript {
+
+    exec {
+        workingDir './protobuf'
+        commandLine 'make'
+    }
+
     repositories {
 
         google()
