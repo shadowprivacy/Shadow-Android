@@ -59,6 +59,7 @@ public class DatabaseFactory {
   private final SearchDatabase        searchDatabase;
   private final JobDatabase           jobDatabase;
   private final StickerDatabase       stickerDatabase;
+  private final ConfigDatabase        configDatabase;
 
   public static DatabaseFactory getInstance(Context context) {
     synchronized (lock) {
@@ -145,6 +146,10 @@ public class DatabaseFactory {
     return getInstance(context).stickerDatabase;
   }
 
+  public static ConfigDatabase getConfigDatabase(Context context) {
+    return getInstance(context).configDatabase;
+  }
+
   public static SQLiteDatabase getBackupDatabase(Context context) {
     return getInstance(context).databaseHelper.getReadableDatabase();
   }
@@ -181,6 +186,7 @@ public class DatabaseFactory {
     this.searchDatabase       = new SearchDatabase(context, databaseHelper);
     this.jobDatabase          = new JobDatabase(context, databaseHelper);
     this.stickerDatabase      = new StickerDatabase(context, databaseHelper, attachmentSecret);
+    this.configDatabase       = new ConfigDatabase(context, databaseHelper);
   }
 
   public void onApplicationLevelUpgrade(@NonNull Context context, @NonNull MasterSecret masterSecret,

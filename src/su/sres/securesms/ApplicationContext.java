@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Open Whisper Systems
+ * Copyright (C) 2013 Open Whisper Systems, modifications (C) 2019 Sophisticated Research
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,10 @@ import android.support.multidex.MultiDexApplication;
 import com.google.android.gms.security.ProviderInstaller;
 
 import org.conscrypt.Conscrypt;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import org.signal.aesgcmprovider.AesGcmProvider;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
@@ -36,6 +40,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.AxolotlStorageModule;
 import su.sres.securesms.dependencies.InjectableType;
 import su.sres.securesms.dependencies.SignalCommunicationModule;
+import su.sres.securesms.events.ServerSetEvent;
 import su.sres.securesms.jobmanager.DependencyInjector;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.FastJobStorage;
@@ -100,6 +105,9 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
 
   private volatile boolean isAppVisible;
 
+  private boolean isserverset;
+  private final String DEFAULT_SERVER_URL = "https://example.org";
+
   public static ApplicationContext getInstance(Context context) {
     return (ApplicationContext)context.getApplicationContext();
   }
@@ -111,26 +119,41 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
     initializeSecurityProvider();
     initializeLogging();
     initializeCrashHandling();
-    initializeDependencyInjection();
-    initializeJobManager();
-    initializeMessageRetrieval();
-    initializeExpiringMessageManager();
-    initializeTypingStatusRepository();
-    initializeTypingStatusSender();
-    initializeGcmCheck();
-    initializeSignedPreKeyCheck();
-    initializePeriodicTasks();
-    initializeCircumvention();
-    initializeWebRtc();
-    initializePendingMessages();
-    initializeUnidentifiedDeliveryAbilityRefresh();
-    initializeBlobProvider();
+
+    // register to Event Bus
+    EventBus.getDefault().register(this);
+
+    // checking at subsequent launches of the app, if the server is already known in the DB, then no need for delay, just initialize immediately
+    if (!DatabaseFactory.getConfigDatabase(this).getConfigById(1).equals(DEFAULT_SERVER_URL)) {
+      isserverset = true;
+      initializeDependencyInjection();
+      initializeJobManager();
+      initializeMessageRetrieval();
+      initializeExpiringMessageManager();
+      initializeTypingStatusRepository();
+      initializeTypingStatusSender();
+      initializeGcmCheck();
+      initializeSignedPreKeyCheck();
+      initializePeriodicTasks();
+      initializeCircumvention();
+      initializeWebRtc();
+      initializePendingMessages();
+      initializeUnidentifiedDeliveryAbilityRefresh();
+      initializeBlobProvider();
+    }
+
     NotificationChannels.create(this);
     ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
   }
 
   @Override
   public void onStart(@NonNull LifecycleOwner owner) {
+
+   // check if we're already registered, if not then register; this is needed for the case when the app is brought back on top
+    if (!EventBus.getDefault().isRegistered(this)) {
+      EventBus.getDefault().register(this);
+    }
+
     isAppVisible = true;
     Log.i(TAG, "App is now visible.");
     executePendingContactSync();
@@ -143,6 +166,9 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
     Log.i(TAG, "App is no longer visible.");
     KeyCachingService.onAppBackgrounded(this);
     MessageNotifier.setVisibleThread(-1);
+
+    // unregister from Event Bus
+    EventBus.getDefault().unregister(this);
   }
 
   @Override
@@ -356,6 +382,33 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
     super.attachBaseContext(DynamicLanguageContextWrapper.updateContext(base, TextSecurePreferences.getLanguage(base)));
   }
 
+    public boolean getserverset() {
+        return isserverset;
+    }
+
+    public void setserverset(boolean flag) {
+        isserverset = flag;
+    }
+
+    @Subscribe
+    public void onServerSetEvent(ServerSetEvent event) {
+        initializeDependencyInjection();
+        initializeJobManager();
+        initializeMessageRetrieval();
+        initializeExpiringMessageManager();
+        initializeTypingStatusRepository();
+        initializeTypingStatusSender();
+        initializeGcmCheck();
+        initializeSignedPreKeyCheck();
+        initializePeriodicTasks();
+        initializeCircumvention();
+        initializeWebRtc();
+        initializePendingMessages();
+        initializeUnidentifiedDeliveryAbilityRefresh();
+        initializeBlobProvider();
+    }
+
   private static class ProviderInitializationException extends RuntimeException {
   }
+
 }

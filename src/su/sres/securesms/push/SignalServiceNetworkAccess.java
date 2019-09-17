@@ -5,6 +5,7 @@ import android.content.Context;
 import android.support.annotation.Nullable;
 
 import su.sres.securesms.BuildConfig;
+import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.push.TrustStore;
 import su.sres.signalservice.internal.configuration.SignalCdnUrl;
@@ -119,7 +120,8 @@ public class SignalServiceNetworkAccess {
 
                   }};
 
-    this.uncensoredConfiguration = new SignalServiceConfiguration(new SignalServiceUrl[] {new SignalServiceUrl(BuildConfig.SIGNAL_URL, new SignalServiceTrustStore(context))},
+    // taking the server URL from the config database
+    this.uncensoredConfiguration = new SignalServiceConfiguration(new SignalServiceUrl[] {new SignalServiceUrl(DatabaseFactory.getConfigDatabase(context).getConfigById(1), new SignalServiceTrustStore(context))},
                                                                   new SignalCdnUrl[] {new SignalCdnUrl(BuildConfig.SIGNAL_CDN_URL, new SignalServiceTrustStore(context))});
 
     this.censoredCountries = this.censorshipConfiguration.keySet().toArray(new String[0]);

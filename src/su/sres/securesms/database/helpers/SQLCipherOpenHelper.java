@@ -34,6 +34,7 @@ import su.sres.securesms.database.SignedPreKeyDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.ThreadDatabase;
+import su.sres.securesms.database.ConfigDatabase;
 import su.sres.securesms.jobs.RefreshPreKeysJob;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.service.KeyCachingService;
@@ -108,6 +109,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(SignedPreKeyDatabase.CREATE_TABLE);
     db.execSQL(SessionDatabase.CREATE_TABLE);
     db.execSQL(StickerDatabase.CREATE_TABLE);
+    db.execSQL(ConfigDatabase.CREATE_TABLE);
+    db.execSQL(ConfigDatabase.INITIALIZE_CONFIG);
     executeStatements(db, SearchDatabase.CREATE_TABLE);
     executeStatements(db, JobDatabase.CREATE_TABLE);
 
@@ -140,6 +143,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     }
   }
 
+// TODO consider cleanup of the below stuff
   @Override
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
     Log.i(TAG, "Upgrading database: " + oldVersion + ", " + newVersion);

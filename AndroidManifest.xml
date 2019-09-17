@@ -196,22 +196,16 @@
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
               android:exported="true" />
 
-    <activity-alias android:name=".RoutingActivity"
-                    android:targetActivity="su.sres.securesms.ConversationListActivity"
-                    android:exported="true">
-
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-            <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
-        </intent-filter>
+        <activity-alias android:name=".RoutingActivity"
+              android:targetActivity="su.sres.securesms.ConversationListActivity"
+             android:exported="true">
 
         <meta-data android:name="com.sec.minimode.icon.portrait.normal"
                    android:resource="@mipmap/ic_launcher" />
         <meta-data android:name="com.sec.minimode.icon.landscape.normal"
                    android:resource="@mipmap/ic_launcher" />
 
-    </activity-alias>
+        </activity-alias>
 
     <activity android:name="su.sres.securesms.ConversationListArchiveActivity"
               android:label="@string/AndroidManifest_archived_conversations"
@@ -455,6 +449,17 @@
               android:theme="@style/TextSecure.LightNoActionBar"
               android:exported="true"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+
+    <activity android:name="su.sres.securesms.InitialActivity"
+              android:theme="@style/TextSecure.LightNoActionBar"
+              android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize">
+
+        <intent-filter>
+              <action android:name="android.intent.action.MAIN" />
+              <category android:name="android.intent.category.LAUNCHER" />
+              <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
+        </intent-filter>
+    </activity>
 
     <service android:enabled="true" android:name="su.sres.securesms.service.WebRtcCallService"/>
     <service android:enabled="true" android:name="su.sres.securesms.service.ApplicationMigrationService"/>

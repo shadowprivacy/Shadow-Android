@@ -363,6 +363,12 @@
   <!--CropImageActivity-->
   <string name="CropImageActivity_group_avatar">Аватара группы</string>
   <string name="CropImageActivity_profile_avatar">Аватара</string>
+
+  <!-- InitialActivity -->
+
+  <string name="InitialActivity_you_must_specify_the_server_address_and_port">Укажите адрес и порт сервера</string>
+  <string name="InitialActivity_invalid_URL">Некорректное URL</string>
+
   <!--InputPanel-->
   <string name="InputPanel_tap_and_hold_to_record_a_voice_message_release_to_send">Нажмите и держите, чтобы записать голосовое сообщение; отпустите, чтобы отправить</string>
   <!--InviteActivity-->
@@ -574,9 +580,14 @@
   <string name="RegistrationActivity_continue">Продолжить</string>
   <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">Общайтесь\nбез тревог</string>
   <string name="RegistrationActivity_enter_your_phone_number_to_get_started">Введите ваш номер телефона, чтобы начать</string>
-  <string name="RegistrationActivity_you_will_receive_a_verification_code">Обратитесь к администратору для получения проверочного кода. Не закрывайте это окно.</string>
+  <string name="RegistrationActivity_enter_server_address">Введите адрес и порт сервера</string>
+  <string name="RegistrationActivity_you_will_receive_a_verification_code">Обратитесь к администратору для получения проверочного кода.</string>
   <string name="RegistrationActivity_enter_the_code_we_sent_to_s">Введите код, полученный от администратора</string>
   <string name="RegistrationActivity_call">Вызов</string>
+  <string name="RegistrationActivity_phone_number">Номер телефона</string>
+  <string name="RegistrationActivity_shadowUrl">Адрес сервера</string>
+  <string name="RegistrationActivity_shadowPort">Порт</string>
+
   <!--ScribbleActivity-->
   <string name="ScribbleActivity_save_failure">Не удалось сохранить изменения изображения</string>
   <!--Search-->
