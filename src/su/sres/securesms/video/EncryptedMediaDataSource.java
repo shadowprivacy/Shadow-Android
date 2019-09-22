@@ -4,8 +4,8 @@ package su.sres.securesms.video;
 import android.annotation.TargetApi;
 import android.media.MediaDataSource;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import su.sres.securesms.crypto.AttachmentSecret;
 import su.sres.securesms.crypto.ClassicDecryptingPartInputStream;

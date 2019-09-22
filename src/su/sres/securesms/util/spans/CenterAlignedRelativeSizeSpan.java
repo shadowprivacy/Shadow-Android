@@ -1,7 +1,7 @@
 package su.sres.securesms.util.spans;
 
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.text.TextPaint;
 import android.text.style.MetricAffectingSpan;
 

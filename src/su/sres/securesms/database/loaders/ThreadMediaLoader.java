@@ -3,7 +3,7 @@ package su.sres.securesms.database.loaders;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;

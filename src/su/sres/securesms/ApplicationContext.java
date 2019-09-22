@@ -17,14 +17,14 @@
 package su.sres.securesms;
 
 import android.annotation.SuppressLint;
-import android.arch.lifecycle.DefaultLifecycleObserver;
-import android.arch.lifecycle.LifecycleOwner;
-import android.arch.lifecycle.ProcessLifecycleOwner;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.multidex.MultiDexApplication;
+import androidx.annotation.NonNull;
+import androidx.multidex.MultiDexApplication;
 
 import com.google.android.gms.security.ProviderInstaller;
 
@@ -40,6 +40,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.AxolotlStorageModule;
 import su.sres.securesms.dependencies.InjectableType;
 import su.sres.securesms.dependencies.SignalCommunicationModule;
+import su.sres.securesms.gcm.FcmJobService;
 import su.sres.securesms.events.ServerSetEvent;
 import su.sres.securesms.jobmanager.DependencyInjector;
 import su.sres.securesms.jobmanager.JobManager;
@@ -158,6 +159,7 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
     Log.i(TAG, "App is now visible.");
     executePendingContactSync();
     KeyCachingService.onAppForegrounded(this);
+    MessageNotifier.cancelMessagesPending(this);
   }
 
   @Override
@@ -353,7 +355,11 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
 
   private void executePendingContactSync() {
     if (TextSecurePreferences.needsFullContactSync(this)) {
-      ApplicationContext.getInstance(this).getJobManager().add(new MultiDeviceContactUpdateJob(this, true));
+      if (Build.VERSION.SDK_INT >= 26) {
+        FcmJobService.schedule(this);
+      } else {
+        ApplicationContext.getInstance(this).getJobManager().add(new PushNotificationReceiveJob(this));
+      }
     }
   }
 

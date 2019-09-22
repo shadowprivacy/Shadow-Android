@@ -1,6 +1,6 @@
 package su.sres.securesms.gcm;
 
-import android.support.annotation.WorkerThread;
+import androidx.annotation.WorkerThread;
 import android.text.TextUtils;
 
 import com.google.firebase.iid.FirebaseInstanceId;

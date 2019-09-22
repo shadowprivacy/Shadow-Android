@@ -1,7 +1,7 @@
 package su.sres.securesms.components.viewpager;
 
 
-import android.support.v4.view.ViewPager;
+import androidx.viewpager.widget.ViewPager;
 
 public abstract class ExtendedOnPageChangedListener implements ViewPager.OnPageChangeListener {
 

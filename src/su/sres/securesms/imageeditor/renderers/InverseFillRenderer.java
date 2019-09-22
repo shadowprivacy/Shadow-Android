@@ -2,8 +2,8 @@ package su.sres.securesms.imageeditor.renderers;
 
 import android.graphics.Path;
 import android.os.Parcel;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.imageeditor.Bounds;
 import su.sres.securesms.imageeditor.Renderer;

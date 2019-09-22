@@ -4,7 +4,7 @@ package su.sres.securesms.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import su.sres.securesms.logging.Log;
 
 import net.sqlcipher.database.SQLiteDatabase;

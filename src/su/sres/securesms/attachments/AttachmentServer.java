@@ -3,7 +3,7 @@ package su.sres.securesms.attachments;
 
 import android.content.Context;
 import android.net.Uri;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.util.Hex;

@@ -1,6 +1,6 @@
 package su.sres.securesms.jobmanager.migration;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.logging.Log;

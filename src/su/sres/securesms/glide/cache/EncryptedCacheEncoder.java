@@ -1,7 +1,7 @@
 package su.sres.securesms.glide.cache;
 
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.bumptech.glide.load.Encoder;
 import com.bumptech.glide.load.Options;

@@ -1,7 +1,7 @@
 package su.sres.securesms.notifications;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.recipients.Recipient;

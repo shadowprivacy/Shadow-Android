@@ -2,7 +2,7 @@ package su.sres.securesms.imageeditor.model;
 
 import android.graphics.Matrix;
 import android.os.Parcel;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.R;
 import su.sres.securesms.imageeditor.Bounds;

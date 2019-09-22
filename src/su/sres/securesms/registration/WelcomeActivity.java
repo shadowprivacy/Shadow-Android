@@ -3,7 +3,7 @@ package su.sres.securesms.registration;
 import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.BaseActionBarActivity;
 import su.sres.securesms.R;

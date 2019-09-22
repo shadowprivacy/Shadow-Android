@@ -2,7 +2,7 @@ package su.sres.securesms.jobs;
 
 
 import android.Manifest;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import su.sres.securesms.backup.BackupPassphrase;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -16,6 +16,7 @@ import su.sres.securesms.database.NoExternalStorageException;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.service.GenericForegroundService;
+import su.sres.securesms.service.NotificationController;
 import su.sres.securesms.util.BackupUtil;
 import su.sres.securesms.util.StorageUtil;
 
@@ -61,12 +62,12 @@ public class LocalBackupJob extends BaseJob {
       throw new IOException("No external storage permission!");
     }
 
-    GenericForegroundService.startForegroundTask(context,
-                                                 context.getString(R.string.LocalBackupJob_creating_backup),
+    try (NotificationController notification = GenericForegroundService.startForegroundTask(context,
+            context.getString(R.string.LocalBackupJob_creating_backup),
             NotificationChannels.BACKUPS,
-            R.drawable.ic_signal_backup);
-
-    try {
+            R.drawable.ic_signal_backup))
+    {
+      notification.setIndeterminateProgress();
       String backupPassword  = BackupPassphrase.get(context);
       File   backupDirectory = StorageUtil.getBackupDirectory();
       String timestamp       = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).format(new Date());
@@ -95,8 +96,6 @@ public class LocalBackupJob extends BaseJob {
       }
 
       BackupUtil.deleteOldBackups();
-    } finally {
-      GenericForegroundService.stopForegroundTask(context);
     }
   }
 

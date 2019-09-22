@@ -26,7 +26,7 @@ import android.net.Uri;
 import android.os.MemoryFile;
 import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.attachments.AttachmentId;

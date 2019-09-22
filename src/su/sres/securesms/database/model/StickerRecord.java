@@ -1,7 +1,7 @@
 package su.sres.securesms.database.model;
 
 import android.net.Uri;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.mms.PartAuthority;
 

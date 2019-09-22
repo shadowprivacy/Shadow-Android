@@ -2,7 +2,7 @@ package su.sres.securesms.push;
 
 
 import android.content.Context;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.database.DatabaseFactory;

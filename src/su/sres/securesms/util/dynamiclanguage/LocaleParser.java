@@ -2,8 +2,8 @@ package su.sres.securesms.util.dynamiclanguage;
 
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.support.annotation.Nullable;
-import android.support.v4.os.ConfigurationCompat;
+import androidx.annotation.Nullable;
+import androidx.core.os.ConfigurationCompat;
 
 import su.sres.securesms.BuildConfig;
 

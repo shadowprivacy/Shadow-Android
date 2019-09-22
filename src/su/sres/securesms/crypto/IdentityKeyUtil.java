@@ -20,7 +20,7 @@ package su.sres.securesms.crypto;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.backup.BackupProtos;
 import su.sres.securesms.util.Base64;

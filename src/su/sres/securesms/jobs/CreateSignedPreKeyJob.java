@@ -1,7 +1,7 @@
 package su.sres.securesms.jobs;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.PreKeyUtil;

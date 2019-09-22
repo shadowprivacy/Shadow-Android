@@ -1,9 +1,9 @@
 package su.sres.securesms.jobs;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.WorkerThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
@@ -14,7 +14,6 @@ import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.GroupReceiptDatabase;
 import su.sres.securesms.database.GroupReceiptDatabase.GroupReceiptInfo;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
@@ -33,7 +32,6 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.transport.UndeliverableMessageException;
 import su.sres.securesms.util.GroupUtil;
-import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;

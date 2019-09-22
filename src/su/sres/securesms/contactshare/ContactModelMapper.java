@@ -1,6 +1,6 @@
 package su.sres.securesms.contactshare;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.PointerAttachment;

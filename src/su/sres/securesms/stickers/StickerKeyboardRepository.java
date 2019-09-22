@@ -1,7 +1,7 @@
 package su.sres.securesms.stickers;
 
 import android.database.Cursor;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.StickerDatabase.StickerPackRecordReader;

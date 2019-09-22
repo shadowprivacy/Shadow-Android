@@ -3,12 +3,13 @@ package su.sres.securesms.contacts.avatars;
 
 import android.content.Context;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import su.sres.securesms.database.Address;
 import su.sres.securesms.profiles.AvatarHelper;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
@@ -30,7 +31,8 @@ public class ProfileContactPhoto implements ContactPhoto {
 
   @Override
   public @Nullable Uri getUri(@NonNull Context context) {
-    return Uri.fromFile(AvatarHelper.getAvatarFile(context, address));
+    File avatarFile = AvatarHelper.getAvatarFile(context, address);
+    return avatarFile.exists() ? Uri.fromFile(avatarFile) : null;
   }
 
   @Override

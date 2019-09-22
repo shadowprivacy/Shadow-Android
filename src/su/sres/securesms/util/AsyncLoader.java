@@ -16,7 +16,7 @@ package su.sres.securesms.util;
  * limitations under the License.
  */
 
-import android.support.v4.content.AsyncTaskLoader;
+import androidx.loader.content.AsyncTaskLoader;
 import android.content.Context;
 
 /**

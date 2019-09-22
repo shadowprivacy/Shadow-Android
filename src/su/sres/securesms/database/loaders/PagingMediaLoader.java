@@ -4,9 +4,9 @@ package su.sres.securesms.database.loaders;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.util.Pair;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.util.Pair;
 
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.database.AttachmentDatabase;

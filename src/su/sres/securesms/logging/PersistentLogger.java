@@ -1,8 +1,8 @@
 package su.sres.securesms.logging;
 
 import android.content.Context;
-import android.support.annotation.AnyThread;
-import android.support.annotation.WorkerThread;
+import androidx.annotation.AnyThread;
+import androidx.annotation.WorkerThread;
 
 import su.sres.securesms.database.NoExternalStorageException;
 import su.sres.securesms.util.concurrent.ListenableFuture;

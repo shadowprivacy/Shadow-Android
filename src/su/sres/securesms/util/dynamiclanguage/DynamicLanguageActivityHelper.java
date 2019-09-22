@@ -1,8 +1,8 @@
 package su.sres.securesms.util.dynamiclanguage;
 
 import android.app.Activity;
-import android.support.annotation.MainThread;
-import android.support.v4.os.ConfigurationCompat;
+import androidx.annotation.MainThread;
+import androidx.core.os.ConfigurationCompat;
 
 import su.sres.securesms.logging.Log;
 

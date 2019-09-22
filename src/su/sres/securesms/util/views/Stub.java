@@ -1,7 +1,7 @@
 package su.sres.securesms.util.views;
 
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.view.ViewStub;
 
 public class Stub<T> {

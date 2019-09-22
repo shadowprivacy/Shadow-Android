@@ -1,6 +1,6 @@
 package su.sres.securesms.logging;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 public class UncaughtExceptionLogger implements Thread.UncaughtExceptionHandler {
 

@@ -1,8 +1,8 @@
 package su.sres.securesms.components;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.util.AttributeSet;
 
 import su.sres.securesms.R;
@@ -11,7 +11,7 @@ import su.sres.securesms.util.Util;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
 
-public class ExpirationTimerView extends android.support.v7.widget.AppCompatImageView {
+public class ExpirationTimerView extends androidx.appcompat.widget.AppCompatImageView {
 
   private long startedAt;
   private long expiresIn;

@@ -7,8 +7,6 @@ import android.util.AttributeSet;
 import su.sres.securesms.R;
 import su.sres.securesms.util.ThemeUtil;
 
-import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
-
 public class OutlinedThumbnailView extends ThumbnailView {
 
     private CornerMask cornerMask;

@@ -1,14 +1,15 @@
 package su.sres.securesms.mediasend;
 
 import android.Manifest;
-import android.arch.lifecycle.ViewModelProviders;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
@@ -50,7 +51,7 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
         MediaPickerItemFragment.Controller,
         MediaSendFragment.Controller,
         ImageEditorFragment.Controller,
-        Camera1Fragment.Controller
+        CameraFragment.Controller
 {
     private static final String TAG = MediaSendActivity.class.getSimpleName();
 
@@ -146,7 +147,7 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
         boolean     isCamera = getIntent().getBooleanExtra(KEY_IS_CAMERA, false);
 
         if (isCamera) {
-            Fragment fragment = Camera1Fragment.newInstance();
+            Fragment fragment = CameraFragment.newInstance();
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.mediasend_fragment_container, fragment, TAG_CAMERA)
                     .commit();
@@ -219,7 +220,7 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
     @Override
     public void onMediaSelected(@NonNull Media media) {
         viewModel.onSingleMediaSelected(this, media);
-        navigateToMediaSend(recipient, transport, dynamicLanguage.getCurrentLocale());
+        navigateToMediaSend(recipient, transport, dynamicLanguage.getCurrentLocale(), false);
     }
 
     @Override
@@ -308,7 +309,7 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
             Log.i(TAG, "Camera capture stored: " + media.getUri().toString());
 
             viewModel.onImageCaptured(media);
-            navigateToMediaSend(recipient, transport, dynamicLanguage.getCurrentLocale());
+            navigateToMediaSend(recipient, transport, dynamicLanguage.getCurrentLocale(), true);
         });
     }
 
@@ -326,7 +327,7 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
             animateButtonVisibility(countButton, countButton.getVisibility(), buttonState.isVisible() ? View.VISIBLE : View.GONE);
 
             if (buttonState.getCount() > 0) {
-                countButton.setOnClickListener(v -> navigateToMediaSend(recipient, transport, locale));
+                countButton.setOnClickListener(v -> navigateToMediaSend(recipient, transport, locale, false));
                 if (buttonState.isVisible()) {
                     animateButtonTextChange(countButton);
                 }
@@ -359,7 +360,7 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
         });
     }
 
-    private void navigateToMediaSend(@NonNull Recipient recipient, @NonNull TransportOption transport, @NonNull Locale locale) {
+    private void navigateToMediaSend(@NonNull Recipient recipient, @NonNull TransportOption transport, @NonNull Locale locale, boolean fade) {
         MediaSendFragment fragment     = MediaSendFragment.newInstance(recipient, transport, locale);
         String            backstackTag = null;
 
@@ -368,9 +369,15 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
             backstackTag = TAG_SEND;
         }
 
-        getSupportFragmentManager().beginTransaction()
-                .setCustomAnimations(R.anim.slide_from_right, R.anim.slide_to_left, R.anim.slide_from_left, R.anim.slide_to_right)
-                .replace(R.id.mediasend_fragment_container, fragment, TAG_SEND)
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+        if (fade) {
+            transaction.setCustomAnimations(R.anim.fade_in, R.anim.fade_out, R.anim.fade_out, R.anim.fade_in);
+        } else {
+            transaction.setCustomAnimations(R.anim.slide_from_right, R.anim.slide_to_left, R.anim.slide_from_left, R.anim.slide_to_right);
+        }
+
+        transaction.replace(R.id.mediasend_fragment_container, fragment, TAG_SEND)
                 .addToBackStack(backstackTag)
                 .commit();
     }
@@ -383,7 +390,7 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
                 .withRationaleDialog(getString(R.string.ConversationActivity_to_capture_photos_and_video_allow_signal_access_to_the_camera), R.drawable.ic_photo_camera_white_48dp)
                 .withPermanentDenialDialog(getString(R.string.ConversationActivity_signal_needs_the_camera_permission_to_take_photos_or_video))
                 .onAllGranted(() -> {
-                    Camera1Fragment fragment = getOrCreateCameraFragment();
+                    Fragment fragment = getOrCreateCameraFragment();
                     getSupportFragmentManager().beginTransaction()
                             .setCustomAnimations(R.anim.slide_from_right, R.anim.slide_to_left, R.anim.slide_from_left, R.anim.slide_to_right)
                             .replace(R.id.mediasend_fragment_container, fragment, TAG_CAMERA)
@@ -394,11 +401,11 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
                 .execute();
     }
 
-    private Camera1Fragment getOrCreateCameraFragment() {
-        Camera1Fragment fragment = (Camera1Fragment) getSupportFragmentManager().findFragmentByTag(TAG_CAMERA);
+    private Fragment getOrCreateCameraFragment() {
+        Fragment fragment = getSupportFragmentManager().findFragmentByTag(TAG_CAMERA);
 
         return fragment != null ? fragment
-                : Camera1Fragment.newInstance();
+                : CameraFragment.newInstance();
     }
 
     private void animateButtonVisibility(@NonNull View button, int oldVisibility, int newVisibility) {

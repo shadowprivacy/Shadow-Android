@@ -6,7 +6,7 @@ xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <android.support.v7.widget.Toolbar
+    <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
@@ -21,7 +21,7 @@ xmlns:tools="http://schemas.android.com/tools"
 
         <include layout="@layout/conversation_title_view" />
 
-    </android.support.v7.widget.Toolbar>
+    </androidx.appcompat.widget.Toolbar>
 
     <su.sres.securesms.components.InputAwareLayout
         android:id="@+id/layout_container"

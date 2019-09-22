@@ -1,7 +1,7 @@
 package su.sres.securesms.mediasend;
 
 import android.annotation.SuppressLint;
-import android.arch.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProviders;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
@@ -10,9 +10,9 @@ import android.graphics.PointF;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -43,7 +43,11 @@ import su.sres.securesms.util.TextSecurePreferences;
 
 import java.io.ByteArrayOutputStream;
 
-public class Camera1Fragment extends Fragment implements TextureView.SurfaceTextureListener,
+/**
+ * Camera capture implemented with the legacy camera API's. Should only be used if sdk < 21.
+ */
+public class Camera1Fragment extends Fragment implements CameraFragment,
+        TextureView.SurfaceTextureListener,
         Camera1Controller.EventListener
 {
 
@@ -318,12 +322,6 @@ public class Camera1Fragment extends Fragment implements TextureView.SurfaceText
             return true;
         }
     };
-
-    public interface Controller {
-        void onCameraError();
-        void onImageCaptured(@NonNull byte[] data, int width, int height);
-        int getDisplayRotation();
-    }
 
     private enum Stage {
         SURFACE_AVAILABLE, CAMERA_PROPERTIES_AVAILABLE

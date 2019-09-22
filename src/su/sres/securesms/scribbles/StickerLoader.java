@@ -18,7 +18,7 @@ package su.sres.securesms.scribbles;
 
 
 import android.content.Context;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.util.AsyncLoader;

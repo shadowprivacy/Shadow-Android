@@ -1,6 +1,6 @@
 package su.sres.securesms;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.mms.GlideRequests;

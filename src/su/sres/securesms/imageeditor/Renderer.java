@@ -1,7 +1,7 @@
 package su.sres.securesms.imageeditor;
 
 import android.os.Parcelable;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * Responsible for rendering a single {@link su.sres.securesms.imageeditor.model.EditorElement} to the canvas.

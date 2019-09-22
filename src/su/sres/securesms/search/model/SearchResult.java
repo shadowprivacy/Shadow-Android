@@ -1,7 +1,7 @@
 package su.sres.securesms.search.model;
 
 import android.database.ContentObserver;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.CursorList;
 import su.sres.securesms.database.model.ThreadRecord;

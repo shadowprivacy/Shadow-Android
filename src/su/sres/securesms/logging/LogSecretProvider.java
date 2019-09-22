@@ -2,7 +2,7 @@ package su.sres.securesms.logging;
 
 import android.content.Context;
 import android.os.Build;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.KeyStoreHelper;
 import su.sres.securesms.util.Base64;

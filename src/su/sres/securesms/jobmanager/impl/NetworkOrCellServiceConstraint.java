@@ -2,7 +2,7 @@ package su.sres.securesms.jobmanager.impl;
 
 import android.app.Application;
 import android.app.job.JobInfo;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.jobmanager.Constraint;
 

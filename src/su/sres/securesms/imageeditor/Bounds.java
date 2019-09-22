@@ -2,8 +2,8 @@ package su.sres.securesms.imageeditor;
 
 import android.graphics.Matrix;
 import android.graphics.RectF;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * The local extent of a {@link su.sres.securesms.imageeditor.model.EditorElement}.

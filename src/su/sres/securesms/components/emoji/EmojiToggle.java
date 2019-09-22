@@ -3,8 +3,8 @@ package su.sres.securesms.components.emoji;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.AppCompatImageButton;
+import androidx.annotation.NonNull;
+import androidx.appcompat.widget.AppCompatImageButton;
 import android.util.AttributeSet;
 
 import su.sres.securesms.R;

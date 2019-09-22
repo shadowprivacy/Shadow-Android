@@ -22,7 +22,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.support.v4.app.NotificationManagerCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;

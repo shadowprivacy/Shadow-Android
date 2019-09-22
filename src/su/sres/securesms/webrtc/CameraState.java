@@ -1,6 +1,6 @@
 package su.sres.securesms.webrtc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 public class CameraState {
 

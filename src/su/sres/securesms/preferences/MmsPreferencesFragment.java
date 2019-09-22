@@ -19,7 +19,7 @@ package su.sres.securesms.preferences;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import su.sres.securesms.PassphraseRequiredActionBarActivity;
 import su.sres.securesms.R;

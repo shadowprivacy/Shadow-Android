@@ -2,7 +2,7 @@ package su.sres.securesms.crypto;
 
 
 import android.content.Context;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.TextSecurePreferences;

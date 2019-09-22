@@ -1,6 +1,6 @@
 package su.sres.securesms.util;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;

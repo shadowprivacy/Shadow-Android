@@ -1,7 +1,7 @@
 package su.sres.securesms.jobmanager.migration;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import su.sres.securesms.jobs.AttachmentDownloadJob;
 import su.sres.securesms.jobs.AttachmentUploadJob;

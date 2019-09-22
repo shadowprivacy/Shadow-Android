@@ -2,7 +2,7 @@ package su.sres.securesms.mms;
 
 import android.content.Context;
 import android.net.Uri;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.util.MediaUtil;

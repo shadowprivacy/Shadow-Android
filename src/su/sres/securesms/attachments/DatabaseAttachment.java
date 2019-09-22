@@ -1,7 +1,7 @@
 package su.sres.securesms.attachments;
 
 import android.net.Uri;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.stickers.StickerLocator;

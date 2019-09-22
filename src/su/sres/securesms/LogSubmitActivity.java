@@ -3,7 +3,7 @@ package su.sres.securesms;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentTransaction;
+import androidx.fragment.app.FragmentTransaction;
 import su.sres.securesms.logging.Log;
 import android.view.MenuItem;
 import android.widget.Toast;

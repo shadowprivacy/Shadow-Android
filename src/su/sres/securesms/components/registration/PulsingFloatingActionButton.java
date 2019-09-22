@@ -3,7 +3,7 @@ package su.sres.securesms.components.registration;
 
 import android.animation.Animator;
 import android.content.Context;
-import android.support.design.widget.FloatingActionButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import android.util.AttributeSet;
 
 import su.sres.securesms.animation.AnimationCompleteListener;

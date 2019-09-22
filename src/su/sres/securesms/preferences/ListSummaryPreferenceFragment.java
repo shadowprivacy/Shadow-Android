@@ -1,8 +1,8 @@
 package su.sres.securesms.preferences;
 
 
-import android.support.v7.preference.ListPreference;
-import android.support.v7.preference.Preference;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
 
 import su.sres.securesms.R;
 

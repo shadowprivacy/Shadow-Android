@@ -1,6 +1,6 @@
 package su.sres.securesms.net;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
 

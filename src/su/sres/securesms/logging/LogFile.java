@@ -1,6 +1,6 @@
 package su.sres.securesms.logging;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.util.Conversions;
 import su.sres.securesms.util.Util;

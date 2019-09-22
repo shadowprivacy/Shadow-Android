@@ -1,6 +1,6 @@
 package su.sres.securesms.mms;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import su.sres.securesms.logging.Log;
 
 import com.bumptech.glide.Priority;

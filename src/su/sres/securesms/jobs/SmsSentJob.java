@@ -1,7 +1,7 @@
 package su.sres.securesms.jobs;
 
 import android.app.Activity;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.telephony.SmsManager;
 
 import su.sres.securesms.jobmanager.Data;

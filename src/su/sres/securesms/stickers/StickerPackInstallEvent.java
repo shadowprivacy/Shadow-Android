@@ -1,6 +1,6 @@
 package su.sres.securesms.stickers;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 public class StickerPackInstallEvent {
     private final Object iconGlideModel;

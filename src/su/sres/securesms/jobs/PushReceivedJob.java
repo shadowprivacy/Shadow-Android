@@ -1,7 +1,7 @@
 package su.sres.securesms.jobs;
 
 import android.annotation.SuppressLint;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.database.Address;

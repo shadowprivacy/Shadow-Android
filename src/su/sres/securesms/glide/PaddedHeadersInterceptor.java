@@ -1,6 +1,6 @@
 package su.sres.securesms.glide;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import java.io.IOException;
 import java.security.SecureRandom;

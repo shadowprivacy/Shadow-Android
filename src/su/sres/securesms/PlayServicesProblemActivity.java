@@ -17,7 +17,7 @@
 package su.sres.securesms;
 
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import androidx.fragment.app.FragmentActivity;
 
 public class PlayServicesProblemActivity extends FragmentActivity {
 

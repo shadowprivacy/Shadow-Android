@@ -2,7 +2,7 @@ package su.sres.securesms.stickers;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.CursorList;

@@ -2,7 +2,7 @@ package su.sres.securesms.util;
 
 import android.content.Context;
 import android.os.Environment;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import su.sres.securesms.database.NoExternalStorageException;
 

@@ -2,22 +2,23 @@ package su.sres.securesms.jobs;
 
 
 import android.app.Application;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
 import su.sres.securesms.database.Address;
+import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.dependencies.InjectableType;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 
-import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.RecipientDatabase;
-import su.sres.securesms.dependencies.InjectableType;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
+import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.File;
@@ -91,7 +92,7 @@ public class RetrieveProfileAvatarJob extends BaseJob implements InjectableType 
     }
 
     if (TextUtils.isEmpty(profileAvatar)) {
-      Log.w(TAG, "Removing profile avatar for: " + recipient.getAddress().serialize());
+      Log.w(TAG, "Removing profile avatar (no url) for: " + recipient.getAddress().serialize());
       AvatarHelper.delete(context, recipient.getAddress());
       database.setProfileAvatar(recipient, profileAvatar);
       return;
@@ -105,6 +106,13 @@ public class RetrieveProfileAvatarJob extends BaseJob implements InjectableType 
 
       Util.copy(avatarStream, new FileOutputStream(decryptDestination));
       decryptDestination.renameTo(AvatarHelper.getAvatarFile(context, recipient.getAddress()));
+    } catch (PushNetworkException e) {
+      if (e.getCause() instanceof NonSuccessfulResponseCodeException) {
+        Log.w(TAG, "Removing profile avatar (no image available) for: " + recipient.getAddress().serialize());
+        AvatarHelper.delete(context, recipient.getAddress());
+      } else {
+        throw e;
+      }
     } finally {
       if (downloadDestination != null) downloadDestination.delete();
     }

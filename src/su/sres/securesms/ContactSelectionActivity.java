@@ -19,7 +19,7 @@ package su.sres.securesms;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.widget.SwipeRefreshLayout;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.components.ContactFilterToolbar;

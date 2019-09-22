@@ -17,7 +17,7 @@
  */
 package su.sres.securesms.crypto;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.util.Base64;

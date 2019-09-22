@@ -17,7 +17,7 @@
 package su.sres.securesms.sms;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.MessagingDatabase.SyncMessageId;
 import su.sres.securesms.database.MmsSmsDatabase;

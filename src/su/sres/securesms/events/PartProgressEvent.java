@@ -1,7 +1,7 @@
 package su.sres.securesms.events;
 
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.attachments.Attachment;
 

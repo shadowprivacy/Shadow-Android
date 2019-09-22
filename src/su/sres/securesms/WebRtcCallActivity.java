@@ -25,8 +25,9 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.media.AudioManager;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AlertDialog;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import su.sres.securesms.logging.Log;
 import android.view.View;
 import android.view.Window;
@@ -46,6 +47,7 @@ import su.sres.securesms.service.WebRtcCallService;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ViewUtil;
+import su.sres.securesms.webrtc.CallNotificationBuilder;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.SignalProtocolAddress;
 
@@ -77,6 +79,8 @@ public class WebRtcCallActivity extends Activity {
     setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
 
     initializeResources();
+
+    processIntent(getIntent());
   }
 
 
@@ -92,13 +96,7 @@ public class WebRtcCallActivity extends Activity {
   @Override
   public void onNewIntent(Intent intent){
     Log.i(TAG, "onNewIntent");
-    if (ANSWER_ACTION.equals(intent.getAction())) {
-      handleAnswerCall();
-    } else if (DENY_ACTION.equals(intent.getAction())) {
-      handleDenyCall();
-    } else if (END_CALL_ACTION.equals(intent.getAction())) {
-      handleEndCall();
-    }
+    processIntent(intent);
   }
 
   @Override
@@ -117,6 +115,16 @@ public class WebRtcCallActivity extends Activity {
   @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
+  }
+
+  private void processIntent(@NonNull Intent intent) {
+    if (ANSWER_ACTION.equals(intent.getAction())) {
+      handleAnswerCall();
+    } else if (DENY_ACTION.equals(intent.getAction())) {
+      handleDenyCall();
+    } else if (END_CALL_ACTION.equals(intent.getAction())) {
+      handleEndCall();
+    }
   }
 
   private void initializeScreenshotSecurity() {

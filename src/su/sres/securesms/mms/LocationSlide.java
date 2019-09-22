@@ -2,7 +2,7 @@ package su.sres.securesms.mms;
 
 import android.content.Context;
 import android.net.Uri;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.components.location.SignalPlace;
 import org.whispersystems.libsignal.util.guava.Optional;

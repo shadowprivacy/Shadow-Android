@@ -1,6 +1,6 @@
 package su.sres.securesms.jobs;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobLogger;

@@ -1,7 +1,7 @@
 package su.sres.securesms.components.reminder;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.R;
 import su.sres.securesms.util.TextSecurePreferences;

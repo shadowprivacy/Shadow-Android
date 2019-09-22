@@ -1,7 +1,7 @@
 package su.sres.securesms.crypto.storage;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;

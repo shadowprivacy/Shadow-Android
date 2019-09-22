@@ -1,13 +1,14 @@
 package su.sres.securesms.jobs;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.dependencies.InjectableType;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
@@ -61,6 +62,7 @@ public class PushNotificationReceiveJob extends PushReceivedJob implements Injec
         Log.i(tag, "Successfully processed an envelope." + timeSuffix(startTime));
       });
       TextSecurePreferences.setNeedsMessagePull(context, false);
+      MessageNotifier.cancelMessagesPending(context);
     }
   }
 

@@ -2,8 +2,8 @@ package su.sres.securesms;
 
 import android.Manifest;
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.util.CharacterCalculator;

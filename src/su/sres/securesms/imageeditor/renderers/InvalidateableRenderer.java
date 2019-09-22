@@ -1,6 +1,6 @@
 package su.sres.securesms.imageeditor.renderers;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.imageeditor.Renderer;
 import su.sres.securesms.imageeditor.RendererContext;

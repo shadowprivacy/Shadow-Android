@@ -1,6 +1,6 @@
 package su.sres.securesms.util.concurrent;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

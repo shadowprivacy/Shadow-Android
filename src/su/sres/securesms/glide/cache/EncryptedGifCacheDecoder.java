@@ -1,8 +1,8 @@
 package su.sres.securesms.glide.cache;
 
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import su.sres.securesms.logging.Log;
 
 import com.bumptech.glide.load.Options;

@@ -16,6 +16,7 @@ import su.sres.securesms.CreateProfileActivity;
 import su.sres.securesms.DeviceListFragment;
 import su.sres.securesms.crypto.storage.SignalProtocolStoreImpl;
 import su.sres.securesms.events.ReminderUpdateEvent;
+import su.sres.securesms.gcm.FcmJobService;
 import su.sres.securesms.jobs.AttachmentDownloadJob;
 import su.sres.securesms.jobs.AvatarDownloadJob;
 import su.sres.securesms.jobs.CleanPreKeysJob;
@@ -109,7 +110,8 @@ import dagger.Provides;
         StickerPackDownloadJob.class,
         MultiDeviceStickerPackOperationJob.class,
         MultiDeviceStickerPackSyncJob.class,
-        LinkPreviewRepository.class})
+        LinkPreviewRepository.class,
+        FcmJobService.class})
 public class SignalCommunicationModule {
 
   private static final String TAG = SignalCommunicationModule.class.getSimpleName();

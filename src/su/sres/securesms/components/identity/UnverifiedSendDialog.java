@@ -3,8 +3,8 @@ package su.sres.securesms.components.identity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AlertDialog;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 
 import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;

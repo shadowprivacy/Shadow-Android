@@ -2,7 +2,7 @@ package su.sres.securesms.imageeditor;
 
 import android.graphics.Matrix;
 import android.graphics.PointF;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.imageeditor.model.EditorElement;
 

@@ -1,8 +1,10 @@
 package su.sres.securesms.jobs;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.greenrobot.eventbus.EventBus;
+import su.sres.securesms.R;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.attachments.DatabaseAttachment;
@@ -19,6 +21,8 @@ import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.mms.MediaStream;
 import su.sres.securesms.mms.MmsException;
 import su.sres.securesms.mms.PartAuthority;
+import su.sres.securesms.service.GenericForegroundService;
+import su.sres.securesms.service.NotificationController;
 import su.sres.securesms.transport.UndeliverableMessageException;
 import su.sres.securesms.util.MediaUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -40,6 +44,11 @@ public class AttachmentUploadJob extends BaseJob implements InjectableType {
 
     private static final String KEY_ROW_ID    = "row_id";
     private static final String KEY_UNIQUE_ID = "unique_id";
+
+    /**
+     * Foreground notification shows while uploading attachments above this.
+     */
+    private static final int FOREGROUND_LIMIT = 10 * 1024 * 1024;
 
     private AttachmentId               attachmentId;
     @Inject SignalServiceMessageSender messageSender;
@@ -80,15 +89,26 @@ public class AttachmentUploadJob extends BaseJob implements InjectableType {
             throw new IllegalStateException("Cannot find the specified attachment.");
         }
 
-        MediaConstraints               mediaConstraints = MediaConstraints.getPushMediaConstraints();
-        Attachment                     scaledAttachment = scaleAndStripExif(database, mediaConstraints, databaseAttachment);
-        SignalServiceAttachment        localAttachment  = getAttachmentFor(scaledAttachment);
-        SignalServiceAttachmentPointer remoteAttachment = messageSender.uploadAttachment(localAttachment.asStream(), databaseAttachment.isSticker());
-        Attachment                     attachment       = PointerAttachment.forPointer(Optional.of(remoteAttachment), null, databaseAttachment.getFastPreflightId()).get();
+        MediaConstraints mediaConstraints = MediaConstraints.getPushMediaConstraints();
+        Attachment       scaledAttachment = scaleAndStripExif(database, mediaConstraints, databaseAttachment);
+
+        try (NotificationController notification = getNotificationForAttachment(scaledAttachment)) {
+            SignalServiceAttachment        localAttachment  = getAttachmentFor(scaledAttachment, notification);
+            SignalServiceAttachmentPointer remoteAttachment = messageSender.uploadAttachment(localAttachment.asStream(), databaseAttachment.isSticker());
+            Attachment                     attachment       = PointerAttachment.forPointer(Optional.of(remoteAttachment), null, databaseAttachment.getFastPreflightId()).get();
+
+            database.updateAttachmentAfterUpload(databaseAttachment.getAttachmentId(), attachment);
+        }
+    }
 
 
 
-        database.updateAttachmentAfterUpload(databaseAttachment.getAttachmentId(), attachment);
+    private @Nullable NotificationController getNotificationForAttachment(@NonNull Attachment attachment) {
+        if (attachment.getSize() >= FOREGROUND_LIMIT) {
+            return GenericForegroundService.startForegroundTask(context, context.getString(R.string.AttachmentUploadJob_uploading_media));
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -99,7 +119,7 @@ public class AttachmentUploadJob extends BaseJob implements InjectableType {
         return exception instanceof IOException;
     }
 
-    private SignalServiceAttachment getAttachmentFor(Attachment attachment) {
+    private SignalServiceAttachment getAttachmentFor(Attachment attachment, @Nullable NotificationController notification) {
         try {
             if (attachment.getDataUri() == null || attachment.getSize() == 0) throw new IOException("Assertion failed, outgoing attachment has no data!");
             InputStream is = PartAuthority.getAttachmentStream(context, attachment.getDataUri());
@@ -112,7 +132,12 @@ public class AttachmentUploadJob extends BaseJob implements InjectableType {
                     .withWidth(attachment.getWidth())
                     .withHeight(attachment.getHeight())
                     .withCaption(attachment.getCaption())
-                    .withListener((total, progress) -> EventBus.getDefault().postSticky(new PartProgressEvent(attachment, total, progress)))
+                    .withListener((total, progress) -> {
+                        EventBus.getDefault().postSticky(new PartProgressEvent(attachment, total, progress));
+                        if (notification != null) {
+                            notification.setProgress(total, progress);
+                        }
+                    })
                     .build();
         } catch (IOException ioe) {
             Log.w(TAG, "Couldn't open attachment", ioe);

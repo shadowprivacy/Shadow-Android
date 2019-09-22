@@ -2,7 +2,7 @@ package su.sres.securesms.jobs;
 
 
 import android.content.Context;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.dependencies.InjectableType;
 import su.sres.securesms.jobmanager.Data;

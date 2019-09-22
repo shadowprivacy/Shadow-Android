@@ -1,7 +1,7 @@
 package su.sres.securesms.jobs;
 
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.crypto.IdentityKeyUtil;
@@ -29,6 +29,7 @@ public class RotateSignedPreKeyJob extends BaseJob implements InjectableType {
 
   public RotateSignedPreKeyJob() {
     this(new Job.Parameters.Builder()
+            .setQueue("RotateSignedPreKeyJob")
             .addConstraint(NetworkConstraint.KEY)
             .setMaxAttempts(5)
             .build());

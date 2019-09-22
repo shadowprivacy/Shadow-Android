@@ -1,7 +1,7 @@
 package su.sres.securesms.jobs;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.Address;
