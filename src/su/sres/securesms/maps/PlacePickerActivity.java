@@ -82,7 +82,7 @@ public final class PlacePickerActivity extends AppCompatActivity {
         ) {
             fusedLocationClient.getLastLocation()
                     .addOnFailureListener(e -> {
-                        Log.e(TAG, "Failed to get location", e);
+                        Log.w(TAG, "Failed to get location", e);
                         setInitialLocation(PRIME_MERIDIAN);
                     })
                     .addOnSuccessListener(location -> {
@@ -156,8 +156,10 @@ public final class PlacePickerActivity extends AppCompatActivity {
     }
 
     private void finishWithAddress() {
-        Intent returnIntent = new Intent();
-        AddressData addressData = new AddressData(currentLocation.latitude, currentLocation.longitude, currentAddress);
+        Intent      returnIntent = new Intent();
+        String      address      = currentAddress != null && currentAddress.getAddressLine(0) != null ? currentAddress.getAddressLine(0) : "";
+        AddressData addressData  = new AddressData(currentLocation.latitude, currentLocation.longitude, address);
+
         returnIntent.putExtra(ADDRESS_INTENT, addressData);
         setResult(RESULT_OK, returnIntent);
         finish();
@@ -207,14 +209,13 @@ public final class PlacePickerActivity extends AppCompatActivity {
                 List<Address> result = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
                 return !result.isEmpty() ? result.get(0) : null;
             } catch (IOException e) {
-                Log.e(TAG, "Failed to get address from location", e);
+                Log.w(TAG, "Failed to get address from location", e);
                 return null;
             }
         }
 
         @Override
         protected void onPostExecute(@Nullable Address address) {
-            Log.d(TAG, String.format("%s", addressToString(address)));
             currentAddress = address;
             if (address != null) {
                 bottomSheet.showResult(address.getLatitude(), address.getLongitude(), addressToShortString(address), addressToString(address));

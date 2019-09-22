@@ -17,6 +17,9 @@
 package su.sres.securesms;
 
 import android.annotation.SuppressLint;
+
+import androidx.camera.camera2.Camera2AppConfig;
+import androidx.camera.core.CameraX;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
@@ -49,7 +52,6 @@ import su.sres.securesms.jobs.JobManagerFactories;
 import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
-import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
 import su.sres.securesms.jobs.RefreshUnidentifiedDeliveryAbilityJob;
 import su.sres.securesms.logging.AndroidLogger;
@@ -141,6 +143,7 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
       initializePendingMessages();
       initializeUnidentifiedDeliveryAbilityRefresh();
       initializeBlobProvider();
+      initializeCameraX();
     }
 
     NotificationChannels.create(this);
@@ -383,6 +386,17 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
     });
   }
 
+  @SuppressLint("RestrictedApi")
+  private void initializeCameraX() {
+    if (Build.VERSION.SDK_INT >= 21) {
+      try {
+        CameraX.init(this, Camera2AppConfig.create(this));
+      } catch (Throwable t) {
+        Log.w(TAG, "Failed to initialize CameraX.");
+      }
+    }
+  }
+
   @Override
   protected void attachBaseContext(Context base) {
     super.attachBaseContext(DynamicLanguageContextWrapper.updateContext(base, TextSecurePreferences.getLanguage(base)));
@@ -412,6 +426,7 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
         initializePendingMessages();
         initializeUnidentifiedDeliveryAbilityRefresh();
         initializeBlobProvider();
+        initializeCameraX();
     }
 
   private static class ProviderInitializationException extends RuntimeException {

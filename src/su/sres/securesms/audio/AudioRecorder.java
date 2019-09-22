@@ -11,10 +11,10 @@ import android.util.Pair;
 
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.util.MediaUtil;
-import su.sres.securesms.util.ThreadUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.ListenableFuture;
 import su.sres.securesms.util.concurrent.SettableFuture;
+import su.sres.securesms.util.concurrent.SignalExecutors;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -24,7 +24,7 @@ public class AudioRecorder {
 
   private static final String TAG = AudioRecorder.class.getSimpleName();
 
-  private static final ExecutorService executor = ThreadUtil.newDynamicSingleThreadedExecutor();
+  private static final ExecutorService executor = SignalExecutors.newCachedSingleThreadExecutor("signal-AudioRecorder");
 
   private final Context context;
 

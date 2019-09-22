@@ -1,6 +1,5 @@
 package su.sres.securesms.components.location;
 
-import android.location.Address;
 import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -35,10 +34,9 @@ public class SignalPlace {
   private double longitude;
 
   public SignalPlace(@NonNull AddressData place) {
-    Address address = place.getAddress();
 
     this.name      = "";
-    this.address   = address!= null ? address.getAddressLine(0) : "";
+    this.address   = place.getAddress();
     this.latitude  = place.getLatitude();
     this.longitude = place.getLongitude();
   }
