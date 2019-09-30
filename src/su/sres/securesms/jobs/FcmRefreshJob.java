@@ -27,6 +27,7 @@ import androidx.core.app.NotificationCompat;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.gcm.FcmUtil;
 
 import su.sres.securesms.jobmanager.Data;
@@ -36,26 +37,20 @@ import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.PlayServicesProblemActivity;
 import su.sres.securesms.R;
-import su.sres.securesms.dependencies.InjectableType;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
-import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-
-public class FcmRefreshJob extends BaseJob implements InjectableType {
+public class FcmRefreshJob extends BaseJob {
 
   public static final String KEY = "FcmRefreshJob";
 
   private static final String TAG = FcmRefreshJob.class.getSimpleName();
-
-  @Inject SignalServiceAccountManager textSecureAccountManager;
 
   public FcmRefreshJob() {
     this(new Job.Parameters.Builder()
@@ -104,7 +99,7 @@ public class FcmRefreshJob extends BaseJob implements InjectableType {
           Log.i(TAG, "Token didn't change.");
         }
 
-        textSecureAccountManager.setGcmId(token);
+        ApplicationDependencies.getSignalServiceAccountManager().setGcmId(token);
         TextSecurePreferences.setFcmToken(context, token.get());
         TextSecurePreferences.setFcmTokenLastSetTime(context, System.currentTimeMillis());
         TextSecurePreferences.setWebsocketRegistered(context, true);

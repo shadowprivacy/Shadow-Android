@@ -4,15 +4,18 @@ import android.content.Context;
 import android.os.Build;
 import android.os.PowerManager;
 
+import androidx.annotation.NonNull;
+
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import su.sres.securesms.ApplicationContext;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.registration.PushChallengeRequest;
 import su.sres.securesms.util.PowerManagerCompat;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -22,27 +25,27 @@ import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-
-public class FcmService extends FirebaseMessagingService implements InjectableType {
+public class FcmService extends FirebaseMessagingService {
 
   private static final String TAG = FcmService.class.getSimpleName();
 
   private static final String   WAKE_LOCK_TAG  = "FcmMessageProcessing";
   private static final long     SOCKET_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
 
-  @Inject SignalServiceMessageReceiver messageReceiver;
-
   private static int activeCount;
 
   @Override
   public void onMessageReceived(RemoteMessage remoteMessage) {
-    Log.i(TAG, "FCM message... Original Priority: " + remoteMessage.getOriginalPriority() + ", Actual Priority: " + remoteMessage.getPriority());
-    ApplicationContext.getInstance(getApplicationContext()).injectDependencies(this);
+    Log.i(TAG, "FCM message... Delay: " + (System.currentTimeMillis() - remoteMessage.getSentTime()));
+    String challenge = remoteMessage.getData().get("challenge");
+    if (challenge != null) {
+      handlePushChallenge(challenge);
+    } else {
 
-    WakeLockUtil.runWithLock(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK, 60000, WAKE_LOCK_TAG, () -> {
-      handleReceivedNotification(getApplicationContext());
-    });
+      WakeLockUtil.runWithLock(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK, 60000, WAKE_LOCK_TAG, () ->
+              handleReceivedNotification(getApplicationContext())
+      );
+    }
   }
 
   @Override
@@ -67,10 +70,11 @@ public class FcmService extends FirebaseMessagingService implements InjectableTy
 
     TextSecurePreferences.setNeedsMessagePull(context, true);
 
-    long         startTime    = System.currentTimeMillis();
-    PowerManager powerManager = ServiceUtil.getPowerManager(getApplicationContext());
-    boolean      doze         = PowerManagerCompat.isDeviceIdleMode(powerManager);
-    boolean      network      = new NetworkConstraint.Factory(ApplicationContext.getInstance(context)).create().isMet();
+    long                         startTime       = System.currentTimeMillis();
+    SignalServiceMessageReceiver messageReceiver = ApplicationDependencies.getSignalServiceMessageReceiver();
+    PowerManager                 powerManager    = ServiceUtil.getPowerManager(getApplicationContext());
+    boolean                      doze            = PowerManagerCompat.isDeviceIdleMode(powerManager);
+    boolean                      network         = new NetworkConstraint.Factory(ApplicationContext.getInstance(context)).create().isMet();
 
     if (doze || !network) {
       Log.w(TAG, "We may be operating in a constrained environment. Doze: " + doze + " Network: " + network);
@@ -95,6 +99,11 @@ public class FcmService extends FirebaseMessagingService implements InjectableTy
     Log.i(TAG, "Processing complete.");
   }
 
+  private static void handlePushChallenge(@NonNull String challenge) {
+    Log.d(TAG, String.format("Got a push challenge \"%s\"", challenge));
+
+    PushChallengeRequest.postChallengeResponse(challenge);
+  }
 
   private static synchronized boolean incrementActiveGcmCount() {
     if (activeCount < 2) {

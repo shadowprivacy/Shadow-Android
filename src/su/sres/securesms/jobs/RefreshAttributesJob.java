@@ -8,7 +8,7 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -17,15 +17,13 @@ import su.sres.signalservice.api.push.exceptions.NetworkFailureException;
 
 import java.io.IOException;
 
-import javax.inject.Inject;
 
-public class RefreshAttributesJob extends BaseJob implements InjectableType {
+
+public class RefreshAttributesJob extends BaseJob  {
 
   public static final String KEY = "RefreshAttributesJob";
 
   private static final String TAG = RefreshAttributesJob.class.getSimpleName();
-
-  @Inject SignalServiceAccountManager signalAccountManager;
 
   public RefreshAttributesJob() {
     this(new Job.Parameters.Builder()
@@ -56,6 +54,7 @@ public class RefreshAttributesJob extends BaseJob implements InjectableType {
     byte[]  unidentifiedAccessKey       = UnidentifiedAccessUtil.getSelfUnidentifiedAccessKey(context);
     boolean universalUnidentifiedAccess = TextSecurePreferences.isUniversalUnidentifiedAccess(context);
 
+    SignalServiceAccountManager signalAccountManager = ApplicationDependencies.getSignalServiceAccountManager();
     signalAccountManager.setAccountAttributes(null, registrationId, fetchesMessages, pin,
             unidentifiedAccessKey, universalUnidentifiedAccess);
 

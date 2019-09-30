@@ -2,10 +2,14 @@ package su.sres.securesms.jobmanager.impl;
 
 import android.app.Application;
 import android.app.job.JobInfo;
+import android.telephony.ServiceState;
+import android.telephony.TelephonyManager;
+
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.jobmanager.Constraint;
 import su.sres.securesms.sms.TelephonyServiceState;
+import su.sres.securesms.util.ServiceUtil;
 
 public class CellServiceConstraint implements Constraint {
 
@@ -24,8 +28,7 @@ public class CellServiceConstraint implements Constraint {
 
     @Override
     public boolean isMet() {
-        TelephonyServiceState telephonyServiceState = new TelephonyServiceState();
-        return telephonyServiceState.isConnected(application);
+        return CellServiceConstraintObserver.getInstance(application).hasService();
     }
 
     @Override

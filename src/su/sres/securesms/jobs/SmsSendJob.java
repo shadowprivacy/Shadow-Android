@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.SmsManager;
 
+import su.sres.securesms.database.Address;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkOrCellServiceConstraint;
@@ -39,12 +40,12 @@ public class SmsSendJob extends SendJob {
   private long messageId;
   private int  runAttempt;
 
-  public SmsSendJob(Context context, long messageId, String name) {
-    this(context, messageId, name, 0);
+  public SmsSendJob(Context context, long messageId, @NonNull Address destination) {
+    this(context, messageId, destination, 0);
   }
 
-  public SmsSendJob(Context context, long messageId, String name, int runAttempt) {
-    this(constructParameters(context, name), messageId, runAttempt);
+  public SmsSendJob(Context context, long messageId, @NonNull Address destination, int runAttempt) {
+    this(constructParameters(context, destination), messageId, runAttempt);
   }
 
   private SmsSendJob(@NonNull Job.Parameters parameters, long messageId, int runAttempt) {
@@ -228,12 +229,12 @@ public class SmsSendJob extends SendJob {
     }
   }
 
-  private static Job.Parameters constructParameters(@NonNull Context context, String name) {
+  private static Job.Parameters constructParameters(@NonNull Context context, @NonNull Address destination) {
     String constraint = TextSecurePreferences.isWifiSmsEnabled(context) ? NetworkOrCellServiceConstraint.KEY
             : CellServiceConstraint.KEY;
     return new Job.Parameters.Builder()
             .setMaxAttempts(MAX_ATTEMPTS)
-            .setQueue(name)
+            .setQueue(destination.serialize())
             .addConstraint(constraint)
             .build();
   }

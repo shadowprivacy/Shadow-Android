@@ -12,7 +12,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.model.SmsMessageRecord;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.notifications.MessageNotifier;
@@ -32,9 +32,9 @@ import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 
 import java.io.IOException;
 
-import javax.inject.Inject;
 
-public class PushTextSendJob extends PushSendJob implements InjectableType {
+
+public class PushTextSendJob extends PushSendJob  {
 
   public static final String KEY = "PushTextSendJob";
 
@@ -42,7 +42,7 @@ public class PushTextSendJob extends PushSendJob implements InjectableType {
 
   private static final String KEY_MESSAGE_ID = "message_id";
 
-  @Inject SignalServiceMessageSender messageSender;
+
 
   private long messageId;
 
@@ -156,6 +156,7 @@ public class PushTextSendJob extends PushSendJob implements InjectableType {
     try {
       rotateSenderCertificateIfNecessary();
 
+      SignalServiceMessageSender       messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
       SignalServiceAddress             address            = getPushAddress(message.getIndividualRecipient().getAddress());
       Optional<byte[]>                 profileKey         = getProfileKey(message.getIndividualRecipient());
       Optional<UnidentifiedAccessPair> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, message.getIndividualRecipient());

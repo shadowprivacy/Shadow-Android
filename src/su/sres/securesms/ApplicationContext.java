@@ -40,12 +40,10 @@ import org.signal.aesgcmprovider.AesGcmProvider;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.dependencies.AxolotlStorageModule;
-import su.sres.securesms.dependencies.InjectableType;
-import su.sres.securesms.dependencies.SignalCommunicationModule;
+import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.dependencies.ApplicationDependencyProvider;
 import su.sres.securesms.gcm.FcmJobService;
 import su.sres.securesms.events.ServerSetEvent;
-import su.sres.securesms.jobmanager.DependencyInjector;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.FastJobStorage;
 import su.sres.securesms.jobs.JobManagerFactories;
@@ -68,6 +66,7 @@ import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.service.IncomingMessageObserver;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.service.LocalBackupListener;
+import su.sres.securesms.revealable.RevealableMessageManager;
 import su.sres.securesms.service.RotateSenderCertificateListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
@@ -84,8 +83,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import dagger.ObjectGraph;
-
 /**
  * Will be called once when the TextSecure process is created.
  *
@@ -94,17 +91,17 @@ import dagger.ObjectGraph;
  *
  * @author Moxie Marlinspike
  */
-public class ApplicationContext extends MultiDexApplication implements DependencyInjector, DefaultLifecycleObserver {
+public class ApplicationContext extends MultiDexApplication implements DefaultLifecycleObserver {
 
   private static final String TAG = ApplicationContext.class.getSimpleName();
 
-  private ExpiringMessageManager  expiringMessageManager;
-  private TypingStatusRepository  typingStatusRepository;
-  private TypingStatusSender      typingStatusSender;
-  private JobManager jobManager;
-  private IncomingMessageObserver incomingMessageObserver;
-  private ObjectGraph             objectGraph;
-  private PersistentLogger        persistentLogger;
+  private ExpiringMessageManager   expiringMessageManager;
+  private RevealableMessageManager revealableMessageManager;
+  private TypingStatusRepository   typingStatusRepository;
+  private TypingStatusSender       typingStatusSender;
+  private JobManager               jobManager;
+  private IncomingMessageObserver  incomingMessageObserver;
+  private PersistentLogger         persistentLogger;
 
   private volatile boolean isAppVisible;
 
@@ -129,10 +126,11 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
     // checking at subsequent launches of the app, if the server is already known in the DB, then no need for delay, just initialize immediately
     if (!DatabaseFactory.getConfigDatabase(this).getConfigById(1).equals(DEFAULT_SERVER_URL)) {
       isserverset = true;
-      initializeDependencyInjection();
+      initializeAppDependencies();
       initializeJobManager();
       initializeMessageRetrieval();
       initializeExpiringMessageManager();
+      initializeRevealableMessageManager();
       initializeTypingStatusRepository();
       initializeTypingStatusSender();
       initializeGcmCheck();
@@ -176,19 +174,16 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
     EventBus.getDefault().unregister(this);
   }
 
-  @Override
-  public void injectDependencies(Object object) {
-    if (object instanceof InjectableType) {
-      objectGraph.inject(object);
-    }
-  }
-
   public JobManager getJobManager() {
     return jobManager;
   }
 
   public ExpiringMessageManager getExpiringMessageManager() {
     return expiringMessageManager;
+  }
+
+  public RevealableMessageManager getRevealableMessageManager() {
+    return revealableMessageManager;
   }
 
   public TypingStatusRepository getTypingStatusRepository() {
@@ -250,7 +245,6 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
             .setConstraintFactories(JobManagerFactories.getConstraintFactories(this))
             .setConstraintObservers(JobManagerFactories.getConstraintObservers(this))
             .setJobStorage(new FastJobStorage(DatabaseFactory.getJobDatabase(this)))
-            .setDependencyInjector(this)
             .build());
   }
 
@@ -258,9 +252,8 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
     this.incomingMessageObserver = new IncomingMessageObserver(this);
   }
 
-  private void initializeDependencyInjection() {
-    this.objectGraph = ObjectGraph.create(new SignalCommunicationModule(this, new SignalServiceNetworkAccess(this)),
-                                          new AxolotlStorageModule(this));
+  private void initializeAppDependencies() {
+    ApplicationDependencies.init(new ApplicationDependencyProvider(this, new SignalServiceNetworkAccess(this)));
   }
 
   private void initializeGcmCheck() {
@@ -281,6 +274,10 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
 
   private void initializeExpiringMessageManager() {
     this.expiringMessageManager = new ExpiringMessageManager(this);
+  }
+
+  private void initializeRevealableMessageManager() {
+    this.revealableMessageManager = new RevealableMessageManager(this);
   }
 
   private void initializeTypingStatusRepository() {
@@ -412,10 +409,11 @@ public class ApplicationContext extends MultiDexApplication implements Dependenc
 
     @Subscribe
     public void onServerSetEvent(ServerSetEvent event) {
-        initializeDependencyInjection();
+        initializeAppDependencies();
         initializeJobManager();
         initializeMessageRetrieval();
         initializeExpiringMessageManager();
+        initializeRevealableMessageManager();
         initializeTypingStatusRepository();
         initializeTypingStatusSender();
         initializeGcmCheck();

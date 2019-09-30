@@ -3,10 +3,8 @@ package su.sres.securesms;
 import android.Manifest;
 import android.animation.Animator;
 import android.annotation.SuppressLint;
-// import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-// import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -33,8 +31,6 @@ import com.google.android.gms.auth.api.phone.SmsRetriever;
 import com.google.android.gms.auth.api.phone.SmsRetrieverClient;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-// import com.google.android.gms.common.api.CommonStatusCodes;
-// import com.google.android.gms.common.api.Status;
 import com.google.android.gms.tasks.Task;
 import com.google.i18n.phonenumbers.AsYouTypeFormatter;
 import com.google.i18n.phonenumbers.NumberParseException;
@@ -69,6 +65,7 @@ import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.push.AccountManagerFactory;
 import su.sres.securesms.registration.CaptchaActivity;
+import su.sres.securesms.registration.PushChallengeRequest;
 import su.sres.securesms.service.DirectoryRefreshListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.util.BackupUtil;
@@ -99,7 +96,7 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
- * The register account activity.  Prompts ths user for their registration information
+ * The register account activity.  Prompts the user for their registration information
  * and begins the account registration process.
  *
  * @author Moxie Marlinspike
@@ -112,7 +109,8 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
   private static final int    SCENE_TRANSITION_DURATION = 250;
   private static final int    DEBUG_TAP_TARGET          = 8;
   private static final int    DEBUG_TAP_ANNOUNCE        = 4;
-  public static final  String RE_REGISTRATION_EXTRA     = "re_registration";
+  private static final long   PUSH_REQUEST_TIMEOUT_MS   = 5000L;
+  public static final String RE_REGISTRATION_EXTRA = "re_registration";
 
   private static final String TAG = RegistrationActivity.class.getSimpleName();
 
@@ -488,7 +486,9 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
           }
 
           accountManager = AccountManagerFactory.createManager(RegistrationActivity.this, e164number, password);
-          accountManager.requestSmsVerificationCode(smsRetrieverSupported, registrationState.captchaToken);
+          Optional<String> pushChallenge = PushChallengeRequest.getPushChallengeBlocking(accountManager, fcmToken, e164number, PUSH_REQUEST_TIMEOUT_MS);
+
+          accountManager.requestSmsVerificationCode(smsRetrieverSupported, registrationState.captchaToken, pushChallenge);
 
           return new VerificationRequestResult(password, fcmToken, Optional.absent());
         } catch (IOException e) {
@@ -661,26 +661,14 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
             .show();
   }
 
-/*  @SuppressLint("StaticFieldLeak")
-  private void handlePhoneCallRequest() {
-    if (registrationState.state == RegistrationState.State.VERIFYING) {
-
-      new AsyncTask<Void, Void, Void>() {
-        @Override
-        protected Void doInBackground(Void... voids) {
-          try {
-            accountManager.requestVoiceVerificationCode(Locale.getDefault(), registrationState.captchaToken);
-          } catch (CaptchaRequiredException e) {
-            requestCaptcha(false);
-          } catch (IOException e) {
-            Log.w(TAG, e);
-          }
-
-          return null;
-        }
-      }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+  private Optional<String> getFcmToken() {
+    final boolean gcmSupported = PlayServicesUtil.getPlayServicesStatus(this) == PlayServicesStatus.SUCCESS;
+    if (gcmSupported) {
+      return FcmUtil.getToken();
+    } else {
+      return Optional.absent();
     }
-  }  */
+  }
 
   private void verifyAccount(@NonNull String code, @Nullable String pin) throws IOException {
     int     registrationId              = KeyHelper.generateRegistrationId(false);

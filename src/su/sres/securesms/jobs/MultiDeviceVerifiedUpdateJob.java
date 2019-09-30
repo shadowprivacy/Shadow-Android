@@ -11,7 +11,7 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.Address;
 import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -26,9 +26,9 @@ import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
 
-public class MultiDeviceVerifiedUpdateJob extends BaseJob implements InjectableType {
+
+public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
 
   public static final String KEY = "MultiDeviceVerifiedUpdateJob";
 
@@ -40,7 +40,7 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob implements InjectableT
   private static final String KEY_TIMESTAMP       = "timestamp";
 
 
-  @Inject SignalServiceMessageSender messageSender;
+
 
   private String         destination;
   private byte[]         identityKey;
@@ -101,6 +101,7 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob implements InjectableT
         return;
       }
 
+      SignalServiceMessageSender    messageSender        = ApplicationDependencies.getSignalServiceMessageSender();
       Address                       canonicalDestination = Address.fromSerialized(destination);
       VerifiedMessage.VerifiedState verifiedState        = getVerifiedState(verifiedStatus);
       VerifiedMessage               verifiedMessage      = new VerifiedMessage(canonicalDestination.toPhoneString(), new IdentityKey(identityKey, 0), verifiedState, timestamp);

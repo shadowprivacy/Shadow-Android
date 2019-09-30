@@ -272,6 +272,7 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActionBarA
 
           FragmentManager     fragmentManager     = getActivity().getSupportFragmentManager();
           FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+          fragmentTransaction.setCustomAnimations(R.anim.slide_from_end, R.anim.slide_to_start, R.anim.slide_from_start, R.anim.slide_to_end);
           fragmentTransaction.replace(android.R.id.content, fragment);
           fragmentTransaction.addToBackStack(null);
           fragmentTransaction.commit();

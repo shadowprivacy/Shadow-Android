@@ -10,11 +10,10 @@ import android.text.TextUtils;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.FutureTarget;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.UriAttachment;
 import su.sres.securesms.database.AttachmentDatabase;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.giph.model.ChunkedImageUrl;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.GlideApp;
@@ -43,7 +42,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.inject.Inject;
+
 
 import okhttp3.CacheControl;
 import okhttp3.Call;
@@ -51,7 +50,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class LinkPreviewRepository implements InjectableType {
+public class LinkPreviewRepository  {
 
     private static final String TAG = LinkPreviewRepository.class.getSimpleName();
 
@@ -59,16 +58,13 @@ public class LinkPreviewRepository implements InjectableType {
 
     private final OkHttpClient client;
 
-    @Inject SignalServiceMessageReceiver messageReceiver;
-
-    public LinkPreviewRepository(@NonNull Context context) {
+    public LinkPreviewRepository() {
         this.client = new OkHttpClient.Builder()
                 .proxySelector(new ContentProxySelector())
                 .addNetworkInterceptor(new ContentProxySafetyInterceptor())
                 .cache(null)
                 .build();
 
-        ApplicationContext.getInstance(context).injectDependencies(this);
     }
 
     RequestController getLinkPreview(@NonNull Context context, @NonNull String url, @NonNull Callback<Optional<LinkPreview>> callback) {
@@ -219,7 +215,8 @@ public class LinkPreviewRepository implements InjectableType {
                 byte[]               packIdBytes   = Hex.fromStringCondensed(packIdString);
                 byte[]               packKeyBytes  = Hex.fromStringCondensed(packKeyString);
 
-                SignalServiceStickerManifest manifest = messageReceiver.retrieveStickerManifest(packIdBytes, packKeyBytes);
+                SignalServiceMessageReceiver receiver = ApplicationDependencies.getSignalServiceMessageReceiver();
+                SignalServiceStickerManifest manifest = receiver.retrieveStickerManifest(packIdBytes, packKeyBytes);
 
                 String                title        = manifest.getTitle().or(manifest.getAuthor()).or("");
                 Optional<StickerInfo> firstSticker = Optional.fromNullable(manifest.getStickers().size() > 0 ? manifest.getStickers().get(0) : null);

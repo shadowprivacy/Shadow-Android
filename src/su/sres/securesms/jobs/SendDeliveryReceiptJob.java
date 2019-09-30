@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.Address;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -21,9 +21,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
 
-public class SendDeliveryReceiptJob extends BaseJob implements InjectableType {
+
+public class SendDeliveryReceiptJob extends BaseJob  {
 
     public static final String KEY = "SendDeliveryReceiptJob";
 
@@ -32,9 +32,6 @@ public class SendDeliveryReceiptJob extends BaseJob implements InjectableType {
     private static final String KEY_TIMESTAMP  = "timestamp";
 
     private static final String TAG = SendReadReceiptJob.class.getSimpleName();
-
-    @Inject
-    transient SignalServiceMessageSender messageSender;
 
     private String address;
     private long   messageId;
@@ -78,6 +75,7 @@ public class SendDeliveryReceiptJob extends BaseJob implements InjectableType {
 
     @Override
     public void onRun() throws IOException, UntrustedIdentityException {
+        SignalServiceMessageSender  messageSender  = ApplicationDependencies.getSignalServiceMessageSender();
         SignalServiceAddress        remoteAddress  = new SignalServiceAddress(address);
         SignalServiceReceiptMessage receiptMessage = new SignalServiceReceiptMessage(SignalServiceReceiptMessage.Type.DELIVERY,
                 Collections.singletonList(messageId),

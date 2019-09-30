@@ -3,7 +3,7 @@ package su.sres.securesms.jobs;
 import android.content.Context;
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -15,15 +15,13 @@ import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
 
-import javax.inject.Inject;
 
-public class PushNotificationReceiveJob extends PushReceivedJob implements InjectableType {
+
+public class PushNotificationReceiveJob extends PushReceivedJob  {
 
   public static final String KEY = "PushNotificationReceiveJob";
 
   private static final String TAG = PushNotificationReceiveJob.class.getSimpleName();
-
-  @Inject SignalServiceMessageReceiver receiver;
 
   public PushNotificationReceiveJob(Context context) {
     this(new Job.Parameters.Builder()
@@ -51,7 +49,7 @@ public class PushNotificationReceiveJob extends PushReceivedJob implements Injec
 
   @Override
   public void onRun() throws IOException {
-    pullAndProcessMessages(receiver, TAG, System.currentTimeMillis());
+    pullAndProcessMessages(ApplicationDependencies.getSignalServiceMessageReceiver(), TAG, System.currentTimeMillis());
   }
 
   public void pullAndProcessMessages(SignalServiceMessageReceiver receiver, String tag, long startTime) throws IOException {

@@ -10,7 +10,7 @@ import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
@@ -28,15 +28,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-
-public class MultiDeviceProfileKeyUpdateJob extends BaseJob implements InjectableType {
+public class MultiDeviceProfileKeyUpdateJob extends BaseJob  {
 
   public static String KEY = "MultiDeviceProfileKeyUpdateJob";
 
   private static final String TAG = MultiDeviceProfileKeyUpdateJob.class.getSimpleName();
-
-  @Inject SignalServiceMessageSender messageSender;
 
   public MultiDeviceProfileKeyUpdateJob() {
     this(new Job.Parameters.Builder()
@@ -81,6 +77,7 @@ public class MultiDeviceProfileKeyUpdateJob extends BaseJob implements Injectabl
 
     out.close();
 
+    SignalServiceMessageSender    messageSender    = ApplicationDependencies.getSignalServiceMessageSender();
     SignalServiceAttachmentStream attachmentStream = SignalServiceAttachment.newStreamBuilder()
                                                                             .withStream(new ByteArrayInputStream(baos.toByteArray()))
                                                                             .withContentType("application/octet-stream")

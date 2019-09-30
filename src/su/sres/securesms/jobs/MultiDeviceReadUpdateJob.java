@@ -13,7 +13,7 @@ import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.MessagingDatabase.SyncMessageId;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceMessageSender;
@@ -28,9 +28,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
 
-public class MultiDeviceReadUpdateJob extends BaseJob implements InjectableType {
+
+public class MultiDeviceReadUpdateJob extends BaseJob  {
 
   public static final String KEY = "MultiDeviceReadUpdateJob";
 
@@ -40,7 +40,7 @@ public class MultiDeviceReadUpdateJob extends BaseJob implements InjectableType 
 
   private List<SerializableSyncMessageId> messageIds;
 
-  @Inject SignalServiceMessageSender messageSender;
+
 
   public MultiDeviceReadUpdateJob(List<SyncMessageId> messageIds) {
     this(new Job.Parameters.Builder()
@@ -94,6 +94,7 @@ public class MultiDeviceReadUpdateJob extends BaseJob implements InjectableType 
       readMessages.add(new ReadMessage(messageId.sender, messageId.timestamp));
     }
 
+    SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
     messageSender.sendMessage(SignalServiceSyncMessage.forRead(readMessages), UnidentifiedAccessUtil.getAccessForSync(context));
   }
 

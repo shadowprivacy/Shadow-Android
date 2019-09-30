@@ -2,16 +2,15 @@ package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
 
+import su.sres.securesms.crypto.storage.SignalProtocolStoreImpl;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.crypto.PreKeyUtil;
-import su.sres.securesms.dependencies.InjectableType;
 import org.whispersystems.libsignal.InvalidKeyIdException;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 import org.whispersystems.libsignal.state.SignedPreKeyStore;
-import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
@@ -22,20 +21,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-
-import static su.sres.securesms.dependencies.AxolotlStorageModule.SignedPreKeyStoreFactory;
-
-public class CleanPreKeysJob extends BaseJob implements InjectableType {
+public class CleanPreKeysJob extends BaseJob {
 
   public static final String KEY = "CleanPreKeysJob";
 
   private static final String TAG = CleanPreKeysJob.class.getSimpleName();
 
   private static final long ARCHIVE_AGE = TimeUnit.DAYS.toMillis(7);
-
-  @Inject SignalServiceAccountManager accountManager;
-  @Inject SignedPreKeyStoreFactory signedPreKeyStoreFactory;
 
   public CleanPreKeysJob() {
     this(new Job.Parameters.Builder()
@@ -65,7 +57,7 @@ public class CleanPreKeysJob extends BaseJob implements InjectableType {
       Log.i(TAG, "Cleaning prekeys...");
 
       int                activeSignedPreKeyId = PreKeyUtil.getActiveSignedPreKeyId(context);
-      SignedPreKeyStore  signedPreKeyStore    = signedPreKeyStoreFactory.create();
+      SignedPreKeyStore  signedPreKeyStore    = new SignalProtocolStoreImpl(context);
 
       if (activeSignedPreKeyId < 0) return;
 

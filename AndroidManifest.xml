@@ -96,8 +96,7 @@
                  tools:replace="android:allowBackup"
                  android:allowBackup="false"
                  android:theme="@style/TextSecure.LightTheme"
-        android:largeHeap="true"
-        android:networkSecurityConfig="@xml/local_audio_server_config">
+        android:largeHeap="true">
 
     <meta-data
             android:name="com.google.android.geo.API_KEY"
@@ -282,22 +281,22 @@
               android:windowSoftInputMode="stateAlwaysVisible"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.mediasend.MediaSendActivity"
-            android:theme="@style/TextSecure.LightNoActionBar"
-            android:windowSoftInputMode="stateHidden"
-            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
-
         <activity android:name="su.sres.securesms.PushContactSelectionActivity"
           android:label="@string/AndroidManifest__select_contacts"
           android:windowSoftInputMode="stateHidden"
           android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
     <activity android:name="su.sres.securesms.giph.ui.GiphyActivity"
-              android:theme="@style/TextSecure.DarkNoActionBar"
+        android:theme="@style/TextSecure.LightNoActionBar"
               android:windowSoftInputMode="stateHidden"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.PassphraseChangeActivity"
+        <activity android:name="su.sres.securesms.mediasend.MediaSendActivity"
+            android:theme="@style/TextSecure.FullScreenMedia"
+            android:windowSoftInputMode="stateHidden"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+
+        <activity android:name="su.sres.securesms.PassphraseChangeActivity"
               android:label="@string/AndroidManifest__change_passphrase"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
@@ -328,6 +327,13 @@
             android:launchMode="singleTask"
             android:theme="@style/TextSecure.LightNoActionBar"
             android:windowSoftInputMode="stateUnchanged"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+
+        <activity android:name=".revealable.RevealableMessageActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/TextSecure.FullScreenMedia"
+            android:windowSoftInputMode="stateHidden"
+            android:excludeFromRecents="true"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
         <activity android:name=".stickers.StickerManagementActivity"
@@ -581,6 +587,8 @@
     </receiver>
 
     <receiver android:name="su.sres.securesms.service.ExpirationListener" />
+
+    <receiver android:name=".revealable.RevealableMessageManager$RevealAlarm" />
 
     <provider android:name="su.sres.securesms.providers.PartProvider"
               android:grantUriPermissions="true"

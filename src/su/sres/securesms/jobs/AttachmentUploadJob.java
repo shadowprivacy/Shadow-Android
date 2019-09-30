@@ -11,7 +11,7 @@ import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.attachments.PointerAttachment;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.PartProgressEvent;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -34,9 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-
-public class AttachmentUploadJob extends BaseJob implements InjectableType {
+public class AttachmentUploadJob extends BaseJob {
 
     public static final String KEY = "AttachmentUploadJob";
 
@@ -50,8 +48,7 @@ public class AttachmentUploadJob extends BaseJob implements InjectableType {
      */
     private static final int FOREGROUND_LIMIT = 10 * 1024 * 1024;
 
-    private AttachmentId               attachmentId;
-    @Inject SignalServiceMessageSender messageSender;
+    private AttachmentId attachmentId;
 
     public AttachmentUploadJob(AttachmentId attachmentId) {
         this(new Job.Parameters.Builder()
@@ -82,8 +79,9 @@ public class AttachmentUploadJob extends BaseJob implements InjectableType {
 
     @Override
     public void onRun() throws Exception {
-        AttachmentDatabase database           = DatabaseFactory.getAttachmentDatabase(context);
-        DatabaseAttachment databaseAttachment = database.getAttachment(attachmentId);
+        SignalServiceMessageSender messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
+        AttachmentDatabase         database           = DatabaseFactory.getAttachmentDatabase(context);
+        DatabaseAttachment         databaseAttachment = database.getAttachment(attachmentId);
 
         if (databaseAttachment == null) {
             throw new IllegalStateException("Cannot find the specified attachment.");

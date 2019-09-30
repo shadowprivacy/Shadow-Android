@@ -19,7 +19,7 @@ import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.documents.NetworkFailure;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
@@ -53,15 +53,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
 
-public class PushGroupSendJob extends PushSendJob implements InjectableType {
+
+public class PushGroupSendJob extends PushSendJob  {
 
   public static final String KEY = "PushGroupSendJob";
 
   private static final String TAG = PushGroupSendJob.class.getSimpleName();
 
-  @Inject SignalServiceMessageSender messageSender;
+
 
   private static final String KEY_MESSAGE_ID     = "message_id";
   private static final String KEY_FILTER_ADDRESS = "filter_address";
@@ -199,6 +199,14 @@ public class PushGroupSendJob extends PushSendJob implements InjectableType {
                             .getExpiringMessageManager()
                             .scheduleDeletion(messageId, true, message.getExpiresIn());
         }
+
+        if (message.getRevealDuration() > 0) {
+          database.markRevealStarted(messageId);
+          ApplicationContext.getInstance(context)
+                  .getRevealableMessageManager()
+                  .scheduleIfNecessary();
+        }
+
       } else if (!networkFailures.isEmpty()) {
         throw new RetryLaterException();
       } else if (!identityMismatches.isEmpty()) {
@@ -229,6 +237,7 @@ public class PushGroupSendJob extends PushSendJob implements InjectableType {
           throws IOException, UntrustedIdentityException, UndeliverableMessageException {
     rotateSenderCertificateIfNecessary();
 
+    SignalServiceMessageSender                 messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
     String                                     groupId            = message.getRecipient().getAddress().toGroupString();
     Optional<byte[]>                           profileKey         = getProfileKey(message.getRecipient());
     Optional<Quote>                            quote              = getQuoteFor(message);
@@ -269,6 +278,7 @@ public class PushGroupSendJob extends PushSendJob implements InjectableType {
                                                                       .withAttachments(attachmentPointers)
                                                                       .withBody(message.getBody())
                                                                       .withExpiration((int)(message.getExpiresIn() / 1000))
+              .withMessageTimer((int)(message.getRevealDuration() / 1000))
                                                                       .asExpirationUpdate(message.isExpirationUpdate())
                                                                       .withProfileKey(profileKey.orNull())
                                                                       .withQuote(quote.orNull())

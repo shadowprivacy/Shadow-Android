@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.Address;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -23,9 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
 
-public class SendReadReceiptJob extends BaseJob implements InjectableType {
+
+public class SendReadReceiptJob extends BaseJob  {
 
   public static final String KEY = "SendReadReceiptJob";
 
@@ -35,7 +35,7 @@ public class SendReadReceiptJob extends BaseJob implements InjectableType {
   private static final String KEY_MESSAGE_IDS = "message_ids";
   private static final String KEY_TIMESTAMP   = "timestamp";
 
-  @Inject SignalServiceMessageSender messageSender;
+
 
   private String     address;
   private List<Long> messageIds;
@@ -86,6 +86,7 @@ public class SendReadReceiptJob extends BaseJob implements InjectableType {
   public void onRun() throws IOException, UntrustedIdentityException {
     if (!TextSecurePreferences.isReadReceiptsEnabled(context) || messageIds.isEmpty()) return;
 
+    SignalServiceMessageSender  messageSender  = ApplicationDependencies.getSignalServiceMessageSender();
     SignalServiceAddress        remoteAddress  = new SignalServiceAddress(address);
     SignalServiceReceiptMessage receiptMessage = new SignalServiceReceiptMessage(SignalServiceReceiptMessage.Type.READ, messageIds, timestamp);
 

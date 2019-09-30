@@ -11,7 +11,7 @@ import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -37,17 +37,15 @@ import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeExcept
 import java.io.IOException;
 import java.util.List;
 
-import javax.inject.Inject;
 
-public class RetrieveProfileJob extends BaseJob implements InjectableType {
+
+public class RetrieveProfileJob extends BaseJob  {
 
   public static final String KEY = "RetrieveProfileJob";
 
   private static final String TAG = RetrieveProfileJob.class.getSimpleName();
 
   private static final String KEY_ADDRESS = "address";
-
-  @Inject SignalServiceMessageReceiver receiver;
 
   private final Recipient recipient;
 
@@ -141,6 +139,7 @@ public class RetrieveProfileJob extends BaseJob implements InjectableType {
       }
     }
 
+    SignalServiceMessageReceiver receiver = ApplicationDependencies.getSignalServiceMessageReceiver();
     return receiver.retrieveProfile(new SignalServiceAddress(number), unidentifiedAccess);
   }
 

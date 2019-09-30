@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.PreKeyUtil;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -21,17 +21,15 @@ import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import java.io.IOException;
 import java.util.List;
 
-import javax.inject.Inject;
 
-public class RefreshPreKeysJob extends BaseJob implements InjectableType {
+
+public class RefreshPreKeysJob extends BaseJob  {
 
   public static final String KEY = "RefreshPreKeysJob";
 
   private static final String TAG = RefreshPreKeysJob.class.getSimpleName();
 
   private static final int PREKEY_MINIMUM = 10;
-
-  @Inject SignalServiceAccountManager accountManager;
 
   public RefreshPreKeysJob() {
     this(new Job.Parameters.Builder()
@@ -59,6 +57,8 @@ public class RefreshPreKeysJob extends BaseJob implements InjectableType {
   @Override
   public void onRun() throws IOException {
     if (!TextSecurePreferences.isPushRegistered(context)) return;
+
+    SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
 
     int availableKeys = accountManager.getPreKeysCount();
 

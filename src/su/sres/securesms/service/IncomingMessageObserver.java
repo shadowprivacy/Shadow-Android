@@ -19,7 +19,7 @@ import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.R;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.PushContentReceiveJob;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
@@ -31,9 +31,9 @@ import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.inject.Inject;
 
-public class IncomingMessageObserver implements InjectableType, ConstraintObserver.Notifier {
+
+public class IncomingMessageObserver implements ConstraintObserver.Notifier {
 
     private static final String TAG = IncomingMessageObserver.class.getSimpleName();
 
@@ -43,21 +43,20 @@ public class IncomingMessageObserver implements InjectableType, ConstraintObserv
     private static SignalServiceMessagePipe pipe             = null;
     private static SignalServiceMessagePipe unidentifiedPipe = null;
 
-    private final Context           context;
-    private final NetworkConstraint networkConstraint;
+    private final Context                      context;
+    private final NetworkConstraint            networkConstraint;
+    private final SignalServiceMessageReceiver receiver;
+    private final SignalServiceNetworkAccess   networkAccess;
 
     private boolean appVisible;
 
-    @Inject SignalServiceMessageReceiver receiver;
-    @Inject SignalServiceNetworkAccess   networkAccess;
-
     public IncomingMessageObserver(@NonNull Context context) {
-        ApplicationContext.getInstance(context).injectDependencies(this);
-
-        this.context            = context;
+        this.context           = context;
         this.networkConstraint = new NetworkConstraint.Factory(ApplicationContext.getInstance(context)).create();
 
         new NetworkConstraintObserver(ApplicationContext.getInstance(context)).register(this);
+        this.receiver          = ApplicationDependencies.getSignalServiceMessageReceiver();
+        this.networkAccess     = ApplicationDependencies.getSignalServiceNetworkAccess();
         new MessageRetrievalThread().start();
 
         if (TextSecurePreferences.isFcmDisabled(context)) {

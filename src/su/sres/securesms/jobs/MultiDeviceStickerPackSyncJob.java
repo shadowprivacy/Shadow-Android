@@ -6,7 +6,7 @@ import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.StickerDatabase.StickerPackRecordReader;
 import su.sres.securesms.database.model.StickerPackRecord;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -22,18 +22,18 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
+
 
 /**
  * Tells a linked desktop about all installed sticker packs.
  */
-public class MultiDeviceStickerPackSyncJob extends BaseJob implements InjectableType {
+public class MultiDeviceStickerPackSyncJob extends BaseJob  {
 
     private static final String TAG = Log.tag(MultiDeviceStickerPackSyncJob.class);
 
     public static final String KEY = "MultiDeviceStickerPackSyncJob";
 
-    @Inject SignalServiceMessageSender messageSender;
+
 
     public MultiDeviceStickerPackSyncJob() {
         this(new Parameters.Builder()
@@ -76,6 +76,7 @@ public class MultiDeviceStickerPackSyncJob extends BaseJob implements Injectable
             }
         }
 
+        SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
         messageSender.sendMessage(SignalServiceSyncMessage.forStickerPackOperations(operations),
                 UnidentifiedAccessUtil.getAccessForSync(context));
     }

@@ -74,6 +74,16 @@ public class DeviceActivity extends PassphraseRequiredActionBarActivity
     } else {
       initFragment(android.R.id.content, deviceListFragment, dynamicLanguage.getCurrentLocale());
     }
+
+    overridePendingTransition(R.anim.slide_from_end, R.anim.slide_to_start);
+  }
+
+  @Override
+  protected void onPause() {
+    if (isFinishing()) {
+      overridePendingTransition(R.anim.slide_from_start, R.anim.slide_to_end);
+    }
+    super.onPause();
   }
 
   @Override

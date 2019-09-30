@@ -8,7 +8,7 @@ import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupDatabase.GroupRecord;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -32,9 +32,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
 
-public class PushGroupUpdateJob extends BaseJob implements InjectableType {
+
+public class PushGroupUpdateJob extends BaseJob  {
 
   public static final String KEY = "PushGroupUpdateJob";
 
@@ -43,7 +43,7 @@ public class PushGroupUpdateJob extends BaseJob implements InjectableType {
   private static final String KEY_SOURCE   = "source";
   private static final String KEY_GROUP_ID = "group_id";
 
-  @Inject SignalServiceMessageSender messageSender;
+
 
   private String source;
   private byte[] groupId;
@@ -118,6 +118,7 @@ public class PushGroupUpdateJob extends BaseJob implements InjectableType {
                                                                .withExpiration(groupRecipient.getExpireMessages())
                                                                .build();
 
+    SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
     messageSender.sendMessage(new SignalServiceAddress(source),
             UnidentifiedAccessUtil.getAccessFor(context, Recipient.from(context, Address.fromSerialized(source), false)),
             message);

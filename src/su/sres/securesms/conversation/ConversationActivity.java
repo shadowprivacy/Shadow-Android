@@ -93,6 +93,8 @@ import su.sres.securesms.RegistrationActivity;
 import su.sres.securesms.ShortcutLauncherActivity;
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.VerifyIdentityActivity;
+import su.sres.securesms.attachments.Attachment;
+import su.sres.securesms.attachments.TombstoneAttachment;
 import su.sres.securesms.audio.AudioRecorder;
 import su.sres.securesms.audio.AudioSlidePlayer;
 import su.sres.securesms.color.MaterialColor;
@@ -540,6 +542,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
         TransportOption transport      = data.getParcelableExtra(MediaSendActivity.EXTRA_TRANSPORT);
         String          message        = data.getStringExtra(MediaSendActivity.EXTRA_MESSAGE);
+        long            revealDuration = data.getLongExtra(MediaSendActivity.EXTRA_REVEAL_DURATION, 0);
+        QuoteModel      quote          = (revealDuration == 0) ? inputPanel.getQuote().orNull() : null;
         SlideDeck       slideDeck      = new SlideDeck();
 
         if (transport == null) {
@@ -567,10 +571,11 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         sendMediaMessage(transport.isSms(),
                 message,
                 slideDeck,
-                inputPanel.getQuote().orNull(),
+                quote,
                 Collections.emptyList(),
                 Collections.emptyList(),
                 expiresIn,
+                revealDuration,
                 subscriptionId,
                 initiating,
                 true).addListener(new AssertedSuccessListener<Void>() {
@@ -1591,7 +1596,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
 
   private void initializeLinkPreviewObserver() {
-    linkPreviewViewModel = ViewModelProviders.of(this, new LinkPreviewViewModel.Factory(new LinkPreviewRepository(this))).get(LinkPreviewViewModel.class);
+    linkPreviewViewModel = ViewModelProviders.of(this, new LinkPreviewViewModel.Factory(new LinkPreviewRepository())).get(LinkPreviewViewModel.class);
 
     if (!TextSecurePreferences.isLinkPreviewsEnabled(this)) {
       linkPreviewViewModel.onUserCancel();
@@ -1808,7 +1813,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     long       expiresIn      = recipient.getExpireMessages() * 1000L;
     boolean    initiating     = threadId == -1;
 
-    sendMediaMessage(isSmsForced(), "", attachmentManager.buildSlideDeck(), null, contacts, Collections.emptyList(), expiresIn, subscriptionId, initiating, false);
+    sendMediaMessage(isSmsForced(), "", attachmentManager.buildSlideDeck(), null, contacts, Collections.emptyList(), expiresIn, 0, subscriptionId, initiating, false);
   }
 
   private void selectContactInfo(ContactData contactData) {
@@ -2129,7 +2134,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
       } else if (!forceSms && identityRecords.isUntrusted()) {
         handleUntrustedRecipients();
       } else if (isMediaMessage) {
-        sendMediaMessage(forceSms, expiresIn, subscriptionId, initiating);
+        sendMediaMessage(forceSms, expiresIn, 0, subscriptionId, initiating);
       } else {
         sendTextMessage(forceSms, expiresIn, subscriptionId, initiating);
       }
@@ -2145,11 +2150,11 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     }
   }
 
-  private void sendMediaMessage(final boolean forceSms, final long expiresIn, final int subscriptionId, boolean initiating)
+  private void sendMediaMessage(final boolean forceSms, final long expiresIn, final long revealDuration, final int subscriptionId, boolean initiating)
       throws InvalidMessageException
   {
     Log.i(TAG, "Sending media message...");
-    sendMediaMessage(forceSms, getMessage(), attachmentManager.buildSlideDeck(), inputPanel.getQuote().orNull(), Collections.emptyList(), linkPreviewViewModel.getActiveLinkPreviews(), expiresIn, subscriptionId, initiating, true);
+    sendMediaMessage(forceSms, getMessage(), attachmentManager.buildSlideDeck(), inputPanel.getQuote().orNull(), Collections.emptyList(), linkPreviewViewModel.getActiveLinkPreviews(), expiresIn, revealDuration, subscriptionId, initiating, true);
   }
 
   private ListenableFuture<Void> sendMediaMessage(final boolean forceSms,
@@ -2159,6 +2164,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                                                   List<Contact> contacts,
                                                   List<LinkPreview> previews,
                                                   final long expiresIn,
+                                                  final long revealDuration,
                                                   final int subscriptionId,
                                                   final boolean initiating,
                                                   final boolean clearComposeBox)
@@ -2177,7 +2183,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
       }
     }
 
-    OutgoingMediaMessage outgoingMessageCandidate = new OutgoingMediaMessage(recipient, slideDeck, body, System.currentTimeMillis(), subscriptionId, expiresIn, distributionType, quote, contacts, previews);
+    OutgoingMediaMessage outgoingMessageCandidate = new OutgoingMediaMessage(recipient, slideDeck, body, System.currentTimeMillis(), subscriptionId, expiresIn, revealDuration, distributionType, quote, contacts, previews);
 
     final SettableFuture<Void> future  = new SettableFuture<>();
     final Context              context = getApplicationContext();
@@ -2376,7 +2382,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         SlideDeck  slideDeck      = new SlideDeck();
         slideDeck.addSlide(audioSlide);
 
-        sendMediaMessage(forceSms, "", slideDeck, inputPanel.getQuote().orNull(), Collections.emptyList(), Collections.emptyList(), expiresIn, subscriptionId, initiating, true).addListener(new AssertedSuccessListener<Void>() {
+        sendMediaMessage(forceSms, "", slideDeck, inputPanel.getQuote().orNull(), Collections.emptyList(), Collections.emptyList(), expiresIn, 0, subscriptionId, initiating, true).addListener(new AssertedSuccessListener<Void>() {
           @Override
           public void onSuccess(Void nothing) {
             new AsyncTask<Void, Void, Void>() {
@@ -2504,7 +2510,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
     slideDeck.addSlide(stickerSlide);
 
-    sendMediaMessage(transport.isSms(), "", slideDeck, null, Collections.emptyList(), Collections.emptyList(), expiresIn, subscriptionId, initiating, clearCompose);
+    sendMediaMessage(transport.isSms(), "", slideDeck, null, Collections.emptyList(), Collections.emptyList(), expiresIn, 0, subscriptionId, initiating, clearCompose);
 
   }
 
@@ -2686,11 +2692,19 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
               slideDeck);
 
     } else {
+      SlideDeck slideDeck = messageRecord.isMms() ? ((MmsMessageRecord) messageRecord).getSlideDeck() : new SlideDeck();
+
+      if (messageRecord.isMms() && ((MmsMessageRecord) messageRecord).getRevealDuration() > 0 && slideDeck.getSlides().size() > 0) {
+        Attachment attachment = new TombstoneAttachment(slideDeck.getSlides().get(0).getContentType(), true);
+        slideDeck = new SlideDeck();
+        slideDeck.addSlide(MediaUtil.getSlideForAttachment(this, attachment));
+      }
+
       inputPanel.setQuote(GlideApp.with(this),
                           messageRecord.getDateSent(),
                           author,
                           messageRecord.getBody(),
-                          messageRecord.isMms() ? ((MmsMessageRecord) messageRecord).getSlideDeck() : new SlideDeck());
+              slideDeck);
     }
   }
 

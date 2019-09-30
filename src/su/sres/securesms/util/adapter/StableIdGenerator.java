@@ -1,4 +1,4 @@
-package su.sres.securesms.util;
+package su.sres.securesms.util.adapter;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;

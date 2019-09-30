@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.PreKeyUtil;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -17,15 +17,13 @@ import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
-import javax.inject.Inject;
 
-public class RotateSignedPreKeyJob extends BaseJob implements InjectableType {
+
+public class RotateSignedPreKeyJob extends BaseJob  {
 
   public static final String KEY = "RotateSignedPreKeyJob";
 
   private static final String TAG = RotateSignedPreKeyJob.class.getSimpleName();
-
-  @Inject SignalServiceAccountManager accountManager;
 
   public RotateSignedPreKeyJob() {
     this(new Job.Parameters.Builder()
@@ -54,8 +52,9 @@ public class RotateSignedPreKeyJob extends BaseJob implements InjectableType {
   public void onRun() throws Exception {
     Log.i(TAG, "Rotating signed prekey...");
 
-    IdentityKeyPair    identityKey        = IdentityKeyUtil.getIdentityKeyPair(context);
-    SignedPreKeyRecord signedPreKeyRecord = PreKeyUtil.generateSignedPreKey(context, identityKey, false);
+    SignalServiceAccountManager accountManager     = ApplicationDependencies.getSignalServiceAccountManager();
+    IdentityKeyPair             identityKey        = IdentityKeyUtil.getIdentityKeyPair(context);
+    SignedPreKeyRecord          signedPreKeyRecord = PreKeyUtil.generateSignedPreKey(context, identityKey, false);
 
     accountManager.setSignedPreKey(signedPreKeyRecord);
 

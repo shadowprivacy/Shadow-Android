@@ -8,12 +8,11 @@ import androidx.annotation.WorkerThread;
 import com.annimon.stream.Stream;
 import com.google.android.gms.common.util.Hex;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.model.StickerPackRecord;
 import su.sres.securesms.database.model.StickerRecord;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.InvalidMessageException;
@@ -25,18 +24,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
 
-public final class StickerPackPreviewRepository implements InjectableType {
+
+public final class StickerPackPreviewRepository  {
 
     private static final String TAG = Log.tag(StickerPackPreviewRepository.class);
 
-    private final StickerDatabase stickerDatabase;
-
-    @Inject SignalServiceMessageReceiver receiver;
+    private final StickerDatabase              stickerDatabase;
+    private final SignalServiceMessageReceiver receiver;
 
     public StickerPackPreviewRepository(@NonNull Context context) {
-        ApplicationContext.getInstance(context).injectDependencies(this);
+        this.receiver        = ApplicationDependencies.getSignalServiceMessageReceiver();
         this.stickerDatabase = DatabaseFactory.getStickerDatabase(context);
     }
 

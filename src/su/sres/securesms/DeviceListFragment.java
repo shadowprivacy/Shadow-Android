@@ -26,7 +26,7 @@ import android.widget.Toast;
 import com.melnykov.fab.FloatingActionButton;
 
 import su.sres.securesms.database.loaders.DeviceListLoader;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ViewUtil;
@@ -36,23 +36,19 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
-import javax.inject.Inject;
-
 public class DeviceListFragment extends ListFragment
         implements LoaderManager.LoaderCallbacks<List<Device>>,
-               ListView.OnItemClickListener, InjectableType, Button.OnClickListener
+        ListView.OnItemClickListener, Button.OnClickListener
 {
 
   private static final String TAG = DeviceListFragment.class.getSimpleName();
 
-  @Inject
-  SignalServiceAccountManager accountManager;
-
-  private Locale                 locale;
-  private View                   empty;
-  private View                   progressContainer;
-  private FloatingActionButton   addDeviceButton;
-  private Button.OnClickListener addDeviceButtonListener;
+  private SignalServiceAccountManager accountManager;
+  private Locale                      locale;
+  private View                        empty;
+  private View                        progressContainer;
+  private FloatingActionButton        addDeviceButton;
+  private Button.OnClickListener      addDeviceButtonListener;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -63,7 +59,7 @@ public class DeviceListFragment extends ListFragment
   @Override
   public void onAttach(Activity activity) {
     super.onAttach(activity);
-    ApplicationContext.getInstance(activity).injectDependencies(this);
+    this.accountManager = ApplicationDependencies.getSignalServiceAccountManager();
   }
 
   @Override

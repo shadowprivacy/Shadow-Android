@@ -27,6 +27,10 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
 
 import com.bumptech.glide.load.MultiTransformation;
 import com.bumptech.glide.load.Transformation;
@@ -36,10 +40,12 @@ import com.bumptech.glide.request.transition.Transition;
 
 import su.sres.securesms.R;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.TextSecurePreferences;
+import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.ByteArrayOutputStream;
 
@@ -107,6 +113,9 @@ public class Camera1Fragment extends Fragment implements CameraFragment,
 
         GestureDetector gestureDetector = new GestureDetector(flipGestureListener);
         cameraPreview.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
+
+        viewModel.getMostRecentMediaItem(requireContext()).observe(this, this::presentRecentItemThumbnail);
+        viewModel.getHudState().observe(this, this::presentHud);
     }
 
     @Override
@@ -130,8 +139,6 @@ public class Camera1Fragment extends Fragment implements CameraFragment,
 
         orderEnforcer.run(Stage.CAMERA_PROPERTIES_AVAILABLE, this::updatePreviewScale);
 
-        requireActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        requireActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
     }
 
     @Override
@@ -181,10 +188,46 @@ public class Camera1Fragment extends Fragment implements CameraFragment,
         controller.onCameraError();
     }
 
+    private void presentRecentItemThumbnail(Optional<Media> media) {
+        if (media == null) {
+            return;
+        }
+
+        ImageView thumbnail = controlsContainer.findViewById(R.id.camera_gallery_button);
+
+        if (media.isPresent()) {
+            thumbnail.setVisibility(View.VISIBLE);
+            Glide.with(this)
+                    .load(new DecryptableUri(media.get().getUri()))
+                    .centerCrop()
+                    .into(thumbnail);
+        } else {
+            thumbnail.setVisibility(View.GONE);
+            thumbnail.setImageResource(0);
+        }
+    }
+
+    private void presentHud(@Nullable MediaSendViewModel.HudState state) {
+        if (state == null) return;
+
+        View     countButton     = controlsContainer.findViewById(R.id.camera_count_button);
+        TextView countButtonText = controlsContainer.findViewById(R.id.mediasend_count_button_text);
+
+        if (state.getButtonState() == MediaSendViewModel.ButtonState.COUNT) {
+            countButton.setVisibility(View.VISIBLE);
+            countButtonText.setText(String.valueOf(state.getSelectionCount()));
+        } else {
+            countButton.setVisibility(View.GONE);
+        }
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     private void initControls() {
-        flipButton    = getView().findViewById(R.id.camera_flip_button);
-        captureButton = getView().findViewById(R.id.camera_capture_button);
+        flipButton    = requireView().findViewById(R.id.camera_flip_button);
+        captureButton = requireView().findViewById(R.id.camera_capture_button);
+
+        View galleryButton = requireView().findViewById(R.id.camera_gallery_button);
+        View countButton   = requireView().findViewById(R.id.camera_count_button);
 
         captureButton.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
@@ -225,6 +268,11 @@ public class Camera1Fragment extends Fragment implements CameraFragment,
                 flipButton.setVisibility(View.GONE);
             }
         });
+
+        galleryButton.setOnClickListener(v -> controller.onGalleryClicked());
+        countButton.setOnClickListener(v -> controller.onCameraCountButtonClicked());
+
+        viewModel.onCameraControlsInitialized();
     }
 
     private void onCaptureClicked() {

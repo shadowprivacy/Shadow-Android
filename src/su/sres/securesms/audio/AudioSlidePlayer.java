@@ -27,18 +27,18 @@ import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.audio.AudioAttributes;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
+import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 
-import su.sres.securesms.BuildConfig;
 import su.sres.securesms.R;
-import su.sres.securesms.attachments.AttachmentServer;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.AudioSlide;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.video.exo.AttachmentDataSourceFactory;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
@@ -60,7 +60,6 @@ public class AudioSlidePlayer implements SensorEventListener {
 
   private @NonNull  WeakReference<Listener> listener;
   private @Nullable SimpleExoPlayer         mediaPlayer;
-  private @Nullable AttachmentServer        audioAttachmentServer;
   private           long                    startTime;
 
   public synchronized static AudioSlidePlayer createFor(@NonNull Context context,
@@ -99,16 +98,19 @@ public class AudioSlidePlayer implements SensorEventListener {
   }
 
   private void play(final double progress, boolean earpiece) throws IOException {
-    if (this.mediaPlayer != null) return;
+    if (this.mediaPlayer != null) {
+      return;
+    }
+
+    if (slide.getUri() == null) {
+      throw new IOException("Slide has no URI!");
+    }
 
     LoadControl loadControl = new DefaultLoadControl.Builder().setBufferDurationsMs(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE).createDefaultLoadControl();
     this.mediaPlayer = ExoPlayerFactory.newSimpleInstance(context, new DefaultRenderersFactory(context), new DefaultTrackSelector(), loadControl);
-    this.audioAttachmentServer = new AttachmentServer(context, slide.asAttachment());
     this.startTime = System.currentTimeMillis();
 
-    audioAttachmentServer.start();
-
-    mediaPlayer.prepare(createMediaSource(audioAttachmentServer.getUri()));
+    mediaPlayer.prepare(createMediaSource(slide.getUri()));
     mediaPlayer.setPlayWhenReady(true);
     mediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
             .setContentType(earpiece ? C.CONTENT_TYPE_SPEECH : C.CONTENT_TYPE_MUSIC)
@@ -152,11 +154,6 @@ public class AudioSlidePlayer implements SensorEventListener {
             synchronized (AudioSlidePlayer.this) {
               mediaPlayer = null;
 
-              if (audioAttachmentServer != null) {
-                audioAttachmentServer.stop();
-                audioAttachmentServer = null;
-              }
-
               sensorManager.unregisterListener(AudioSlidePlayer.this);
 
               if (wakeLock != null && wakeLock.isHeld()) {
@@ -180,11 +177,6 @@ public class AudioSlidePlayer implements SensorEventListener {
         synchronized (AudioSlidePlayer.this) {
           mediaPlayer = null;
 
-          if (audioAttachmentServer != null) {
-            audioAttachmentServer.stop();
-            audioAttachmentServer = null;
-          }
-
           sensorManager.unregisterListener(AudioSlidePlayer.this);
 
           if (wakeLock != null && wakeLock.isHeld()) {
@@ -202,8 +194,12 @@ public class AudioSlidePlayer implements SensorEventListener {
   }
 
   private MediaSource createMediaSource(@NonNull Uri uri) {
-    return new ExtractorMediaSource.Factory(new DefaultDataSourceFactory(context, BuildConfig.USER_AGENT))
-            .setExtractorsFactory(new DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true))
+    DefaultDataSourceFactory    defaultDataSourceFactory    = new DefaultDataSourceFactory(context, "GenericUserAgent", null);
+    AttachmentDataSourceFactory attachmentDataSourceFactory = new AttachmentDataSourceFactory(context, defaultDataSourceFactory, null);
+    ExtractorsFactory           extractorsFactory           = new DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true);
+
+    return new ExtractorMediaSource.Factory(attachmentDataSourceFactory)
+            .setExtractorsFactory(extractorsFactory)
             .createMediaSource(uri);
   }
 
@@ -217,14 +213,9 @@ public class AudioSlidePlayer implements SensorEventListener {
       this.mediaPlayer.release();
     }
 
-    if (this.audioAttachmentServer != null) {
-      this.audioAttachmentServer.stop();
-    }
-
     sensorManager.unregisterListener(AudioSlidePlayer.this);
 
-    this.mediaPlayer           = null;
-    this.audioAttachmentServer = null;
+    this.mediaPlayer = null;
   }
 
   public synchronized static void stopAll() {

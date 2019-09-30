@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.PreKeyUtil;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -18,15 +18,11 @@ import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
 
-import javax.inject.Inject;
-
-public class CreateSignedPreKeyJob extends BaseJob implements InjectableType {
+public class CreateSignedPreKeyJob extends BaseJob {
 
   public static final String KEY = "CreateSignedPreKeyJob";
 
   private static final String TAG = CreateSignedPreKeyJob.class.getSimpleName();
-
-  @Inject SignalServiceAccountManager accountManager;
 
   public CreateSignedPreKeyJob(Context context) {
     this(new Job.Parameters.Builder()
@@ -63,8 +59,9 @@ public class CreateSignedPreKeyJob extends BaseJob implements InjectableType {
       return;
     }
 
-    IdentityKeyPair    identityKeyPair    = IdentityKeyUtil.getIdentityKeyPair(context);
-    SignedPreKeyRecord signedPreKeyRecord = PreKeyUtil.generateSignedPreKey(context, identityKeyPair, true);
+    SignalServiceAccountManager accountManager     = ApplicationDependencies.getSignalServiceAccountManager();
+    IdentityKeyPair             identityKeyPair    = IdentityKeyUtil.getIdentityKeyPair(context);
+    SignedPreKeyRecord          signedPreKeyRecord = PreKeyUtil.generateSignedPreKey(context, identityKeyPair, true);
 
     accountManager.setSignedPreKey(signedPreKeyRecord);
     TextSecurePreferences.setSignedPreKeyRegistered(context, true);

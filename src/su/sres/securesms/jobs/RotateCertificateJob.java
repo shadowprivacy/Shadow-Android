@@ -4,7 +4,7 @@ package su.sres.securesms.jobs;
 import android.content.Context;
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -16,16 +16,11 @@ import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-
-@SuppressWarnings("WeakerAccess")
-public class RotateCertificateJob extends BaseJob implements InjectableType {
+public class RotateCertificateJob extends BaseJob  {
 
     public static final String KEY = "RotateCertificateJob";
 
     private static final String TAG = RotateCertificateJob.class.getSimpleName();
-
-    @Inject SignalServiceAccountManager accountManager;
 
     public RotateCertificateJob(Context context) {
         this(new Job.Parameters.Builder()
@@ -57,7 +52,9 @@ public class RotateCertificateJob extends BaseJob implements InjectableType {
     @Override
     public void onRun() throws IOException {
         synchronized (RotateCertificateJob.class) {
-            byte[] certificate = accountManager.getSenderCertificate();
+            SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
+            byte[]                      certificate    = accountManager.getSenderCertificate();
+
             TextSecurePreferences.setUnidentifiedAccessCertificate(context, certificate);
         }
     }

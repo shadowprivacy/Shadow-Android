@@ -3,7 +3,7 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.ProfileKeyUtil;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -21,15 +21,13 @@ import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
 
-import javax.inject.Inject;
 
-public class RefreshUnidentifiedDeliveryAbilityJob extends BaseJob implements InjectableType {
+
+public class RefreshUnidentifiedDeliveryAbilityJob extends BaseJob  {
 
     public static final String KEY = "RefreshUnidentifiedDeliveryAbilityJob";
 
     private static final String TAG = RefreshUnidentifiedDeliveryAbilityJob.class.getSimpleName();
-
-    @Inject SignalServiceMessageReceiver receiver;
 
     public RefreshUnidentifiedDeliveryAbilityJob() {
         this(new Job.Parameters.Builder()
@@ -73,7 +71,8 @@ public class RefreshUnidentifiedDeliveryAbilityJob extends BaseJob implements In
     }
 
     private SignalServiceProfile retrieveProfile(@NonNull String number) throws IOException {
-        SignalServiceMessagePipe pipe = IncomingMessageObserver.getPipe();
+        SignalServiceMessageReceiver receiver = ApplicationDependencies.getSignalServiceMessageReceiver();
+        SignalServiceMessagePipe     pipe     = IncomingMessageObserver.getPipe();
 
         if (pipe != null) {
             try {

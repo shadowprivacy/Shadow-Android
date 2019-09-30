@@ -6,7 +6,7 @@ import androidx.annotation.Nullable;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.Address;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -20,13 +20,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import javax.inject.Inject;
 
-public class RotateProfileKeyJob extends BaseJob implements InjectableType {
+
+public class RotateProfileKeyJob extends BaseJob  {
 
     public static String KEY = "RotateProfileKeyJob";
-
-    @Inject SignalServiceAccountManager accountManager;
 
     public RotateProfileKeyJob() {
         this(new Job.Parameters.Builder()
@@ -53,7 +51,8 @@ public class RotateProfileKeyJob extends BaseJob implements InjectableType {
 
     @Override
     public void onRun() throws Exception {
-        byte[] profileKey = ProfileKeyUtil.rotateProfileKey(context);
+        SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
+        byte[]                      profileKey     = ProfileKeyUtil.rotateProfileKey(context);
 
         accountManager.setProfileName(profileKey, TextSecurePreferences.getProfileName(context));
         accountManager.setProfileAvatar(profileKey, getProfileAvatar());

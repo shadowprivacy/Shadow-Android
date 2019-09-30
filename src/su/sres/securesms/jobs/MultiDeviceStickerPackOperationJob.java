@@ -3,7 +3,7 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -18,9 +18,9 @@ import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
 
-public class MultiDeviceStickerPackOperationJob extends BaseJob implements InjectableType {
+
+public class MultiDeviceStickerPackOperationJob extends BaseJob  {
 
     private static final String TAG = Log.tag(MultiDeviceStickerPackOperationJob.class);
 
@@ -34,7 +34,7 @@ public class MultiDeviceStickerPackOperationJob extends BaseJob implements Injec
     private final String packKey;
     private final Type   type;
 
-    @Inject SignalServiceMessageSender messageSender;
+
 
     public MultiDeviceStickerPackOperationJob(@NonNull String packId,
                                               @NonNull String packKey,
@@ -92,6 +92,7 @@ public class MultiDeviceStickerPackOperationJob extends BaseJob implements Injec
             default:      throw new AssertionError("No matching type?");
         }
 
+        SignalServiceMessageSender  messageSender        = ApplicationDependencies.getSignalServiceMessageSender();
         StickerPackOperationMessage stickerPackOperation = new StickerPackOperationMessage(packIdBytes, packKeyBytes, remoteType);
 
         messageSender.sendMessage(SignalServiceSyncMessage.forStickerPackOperations(Collections.singletonList(stickerPackOperation)),

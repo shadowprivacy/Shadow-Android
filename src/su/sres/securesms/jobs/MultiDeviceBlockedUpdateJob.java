@@ -6,7 +6,7 @@ import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.RecipientReader;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -25,16 +25,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-
-public class MultiDeviceBlockedUpdateJob extends BaseJob implements InjectableType {
+public class MultiDeviceBlockedUpdateJob extends BaseJob {
 
   public static final String KEY = "MultiDeviceBlockedUpdateJob";
 
   @SuppressWarnings("unused")
   private static final String TAG = MultiDeviceBlockedUpdateJob.class.getSimpleName();
-
-  @Inject SignalServiceMessageSender messageSender;
 
   public MultiDeviceBlockedUpdateJob() {
     this(new Job.Parameters.Builder()
@@ -85,6 +81,8 @@ public class MultiDeviceBlockedUpdateJob extends BaseJob implements InjectableTy
           blockedIndividuals.add(recipient.getAddress().serialize());
         }
       }
+
+      SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
       messageSender.sendMessage(SignalServiceSyncMessage.forBlocked(new BlockedListMessage(blockedIndividuals, blockedGroups)),
               UnidentifiedAccessUtil.getAccessForSync(context));
     }

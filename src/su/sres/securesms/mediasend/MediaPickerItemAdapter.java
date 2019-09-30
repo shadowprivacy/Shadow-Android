@@ -14,7 +14,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import su.sres.securesms.R;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.util.MediaUtil;
-import su.sres.securesms.util.StableIdGenerator;
+import su.sres.securesms.util.adapter.StableIdGenerator;
 
 import java.util.ArrayList;
 import java.util.Collection;

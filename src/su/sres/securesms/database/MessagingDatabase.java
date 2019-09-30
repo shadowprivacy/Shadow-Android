@@ -5,15 +5,19 @@ import android.content.Context;
 import android.database.Cursor;
 import android.text.TextUtils;
 
+import androidx.annotation.NonNull;
+
 import net.sqlcipher.database.SQLiteDatabase;
 
 import su.sres.securesms.database.documents.Document;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.documents.IdentityKeyMismatchList;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
+import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.util.JsonUtils;
 import org.whispersystems.libsignal.IdentityKey;
+import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
 import java.util.ArrayList;

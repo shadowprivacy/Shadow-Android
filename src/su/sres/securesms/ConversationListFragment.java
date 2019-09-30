@@ -16,6 +16,7 @@
  */
 package su.sres.securesms;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -32,6 +33,8 @@ import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.fragment.app.Fragment;
 import androidx.loader.app.LoaderManager;
@@ -51,6 +54,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -73,9 +77,11 @@ import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;
 import su.sres.securesms.database.loaders.ConversationListLoader;
 import su.sres.securesms.events.ReminderUpdateEvent;
 import su.sres.securesms.jobs.ServiceOutageDetectionJob;
+import su.sres.securesms.mediasend.MediaSendActivity;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.notifications.MarkReadReceiver;
 import su.sres.securesms.notifications.MessageNotifier;
+import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
@@ -110,6 +116,7 @@ public class ConversationListFragment extends Fragment
   private ImageView                   emptyImage;
   private TextView                    emptySearch;
   private PulsingFloatingActionButton fab;
+  private FloatingActionButton        cameraFab;
   private Locale                      locale;
   private String                      queryFilter  = "";
   private boolean                     archive;
@@ -128,6 +135,7 @@ public class ConversationListFragment extends Fragment
     reminderView = ViewUtil.findById(view, R.id.reminder);
     list         = ViewUtil.findById(view, R.id.list);
     fab          = ViewUtil.findById(view, R.id.fab);
+    cameraFab    = ViewUtil.findById(view, R.id.camera_fab);
     emptyState   = ViewUtil.findById(view, R.id.empty_state);
     emptyImage   = ViewUtil.findById(view, R.id.empty);
     emptySearch  = ViewUtil.findById(view, R.id.empty_search);
@@ -152,6 +160,16 @@ public class ConversationListFragment extends Fragment
 
     setHasOptionsMenu(true);
     fab.setOnClickListener(v -> startActivity(new Intent(getActivity(), NewConversationActivity.class)));
+    cameraFab.setOnClickListener(v -> {
+      Permissions.with(requireActivity())
+              .request(Manifest.permission.CAMERA)
+              .ifNecessary()
+              .withRationaleDialog(getString(R.string.ConversationActivity_to_capture_photos_and_video_allow_signal_access_to_the_camera), R.drawable.ic_photo_camera_white_48dp)
+              .withPermanentDenialDialog(getString(R.string.ConversationActivity_signal_needs_the_camera_permission_to_take_photos_or_video))
+              .onAllGranted(() -> startActivity(MediaSendActivity.buildCameraFirstIntent(requireActivity())))
+              .onAnyDenied(() -> Toast.makeText(requireContext(), R.string.ConversationActivity_signal_needs_camera_permissions_to_take_photos_or_video, Toast.LENGTH_LONG).show())
+              .execute();
+    });
     initializeListAdapter();
     initializeTypingObserver();
   }

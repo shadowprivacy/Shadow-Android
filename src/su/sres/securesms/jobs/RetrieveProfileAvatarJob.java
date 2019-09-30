@@ -8,7 +8,7 @@ import android.text.TextUtils;
 import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -27,9 +27,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
 
-public class RetrieveProfileAvatarJob extends BaseJob implements InjectableType {
+
+public class RetrieveProfileAvatarJob extends BaseJob  {
 
   public static final String KEY = "RetrieveProfileAvatarJob";
 
@@ -39,9 +39,6 @@ public class RetrieveProfileAvatarJob extends BaseJob implements InjectableType 
 
   private static final String KEY_PROFILE_AVATAR = "profile_avatar";
   private static final String KEY_ADDRESS        = "address";
-
-
-  @Inject SignalServiceMessageReceiver receiver;
 
   private String    profileAvatar;
   private Recipient recipient;
@@ -101,8 +98,9 @@ public class RetrieveProfileAvatarJob extends BaseJob implements InjectableType 
     File downloadDestination = File.createTempFile("avatar", "jpg", context.getCacheDir());
 
     try {
-      InputStream avatarStream       = receiver.retrieveProfileAvatar(profileAvatar, downloadDestination, profileKey, MAX_PROFILE_SIZE_BYTES);
-      File        decryptDestination = File.createTempFile("avatar", "jpg", context.getCacheDir());
+      SignalServiceMessageReceiver receiver           = ApplicationDependencies.getSignalServiceMessageReceiver();
+      InputStream                  avatarStream       = receiver.retrieveProfileAvatar(profileAvatar, downloadDestination, profileKey, MAX_PROFILE_SIZE_BYTES);
+      File                         decryptDestination = File.createTempFile("avatar", "jpg", context.getCacheDir());
 
       try {
         Util.copy(avatarStream, new FileOutputStream(decryptDestination));

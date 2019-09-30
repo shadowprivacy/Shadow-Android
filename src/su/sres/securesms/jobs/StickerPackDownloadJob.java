@@ -6,7 +6,7 @@ import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.model.IncomingSticker;
-import su.sres.securesms.dependencies.InjectableType;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
@@ -24,9 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
 
-public class StickerPackDownloadJob extends BaseJob implements InjectableType {
+
+public class StickerPackDownloadJob extends BaseJob  {
 
     public static final String KEY = "StickerPackDownloadJob";
 
@@ -39,8 +39,6 @@ public class StickerPackDownloadJob extends BaseJob implements InjectableType {
     private final String  packId;
     private final String  packKey;
     private final boolean isReferencePack;
-
-    @Inject SignalServiceMessageReceiver receiver;
 
     public StickerPackDownloadJob(@NonNull String packId, @NonNull String packKey, boolean isReferencePack)
     {
@@ -77,6 +75,7 @@ public class StickerPackDownloadJob extends BaseJob implements InjectableType {
             return;
         }
 
+        SignalServiceMessageReceiver receiver        = ApplicationDependencies.getSignalServiceMessageReceiver();
         JobManager                   jobManager      = ApplicationContext.getInstance(context).getJobManager();
         StickerDatabase              stickerDatabase = DatabaseFactory.getStickerDatabase(context);
         byte[]                       packIdBytes     = Hex.fromStringCondensed(packId);
