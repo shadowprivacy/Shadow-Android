@@ -186,7 +186,9 @@ class MediaSendViewModel extends ViewModel {
         buttonState    = (recipient != null) ? ButtonState.SEND : ButtonState.CONTINUE;
 
         if (revealState == RevealState.GONE && revealSupported()) {
-            revealState = TextSecurePreferences.isRevealableMessageEnabled(application) ? RevealState.ENABLED : RevealState.DISABLED;
+            // TODO[reveal]
+//      revealState = TextSecurePreferences.isRevealableMessageEnabled(application) ? RevealState.ENABLED : RevealState.DISABLED;
+            revealState = RevealState.GONE;
         } else if (!revealSupported()) {
             revealState = RevealState.GONE;
         }
@@ -463,7 +465,7 @@ class MediaSendViewModel extends ViewModel {
                 .filter(m -> {
                     return (MediaUtil.isImageType(m.getMimeType()) && !MediaUtil.isGif(m.getMimeType()))               ||
                             (MediaUtil.isGif(m.getMimeType()) && m.getSize() < mediaConstraints.getGifMaxSize(context)) ||
-                            (MediaUtil.isVideoType(m.getMimeType()) && m.getSize() < mediaConstraints.getVideoMaxSize(context));
+                            (MediaUtil.isVideoType(m.getMimeType()) && m.getSize() < mediaConstraints.getUncompressedVideoMaxSize(context));
                 }).toList();
 
     }

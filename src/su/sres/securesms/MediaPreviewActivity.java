@@ -47,6 +47,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
+import su.sres.securesms.animation.DepthPageTransformer;
 import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.components.viewpager.ExtendedOnPageChangedListener;
 import su.sres.securesms.database.Address;
@@ -191,6 +192,7 @@ public final class MediaPreviewActivity extends PassphraseRequiredActionBarActiv
   private void initializeViews() {
     mediaPager = findViewById(R.id.media_pager);
     mediaPager.setOffscreenPageLimit(1);
+    mediaPager.setPageTransformer(true, new DepthPageTransformer());
 
     viewPagerListener = new ViewPagerListener();
     mediaPager.addOnPageChangeListener(viewPagerListener);

@@ -14,7 +14,7 @@ import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.util.MediaUtil;
 
-final class ImageMediaPreviewFragment extends MediaPreviewFragment {
+public final class ImageMediaPreviewFragment extends MediaPreviewFragment {
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {

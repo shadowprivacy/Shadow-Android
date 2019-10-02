@@ -22,10 +22,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.RotateAnimation;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -62,7 +60,7 @@ public class Camera1Fragment extends Fragment implements CameraFragment,
     private TextureView                  cameraPreview;
     private ViewGroup                    controlsContainer;
     private ImageButton                  flipButton;
-    private Button                       captureButton;
+    private View                         captureButton;
     private Camera1Controller            camera;
     private Controller                   controller;
     private OrderEnforcer<Stage>         orderEnforcer;
@@ -221,7 +219,6 @@ public class Camera1Fragment extends Fragment implements CameraFragment,
         }
     }
 
-    @SuppressLint("ClickableViewAccessibility")
     private void initControls() {
         flipButton    = requireView().findViewById(R.id.camera_flip_button);
         captureButton = requireView().findViewById(R.id.camera_capture_button);
@@ -229,26 +226,9 @@ public class Camera1Fragment extends Fragment implements CameraFragment,
         View galleryButton = requireView().findViewById(R.id.camera_gallery_button);
         View countButton   = requireView().findViewById(R.id.camera_count_button);
 
-        captureButton.setOnTouchListener((v, event) -> {
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    Animation shrinkAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.camera_capture_button_shrink);
-                    shrinkAnimation.setFillAfter(true);
-                    shrinkAnimation.setFillEnabled(true);
-                    captureButton.startAnimation(shrinkAnimation);
-                    onCaptureClicked();
-                    break;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                case MotionEvent.ACTION_OUTSIDE:
-                    Animation growAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.camera_capture_button_grow);
-                    growAnimation.setFillAfter(true);
-                    growAnimation.setFillEnabled(true);
-                    captureButton.startAnimation(growAnimation);
-                    captureButton.setEnabled(false);
-                    break;
-            }
-            return true;
+        captureButton.setOnClickListener(v -> {
+            captureButton.setEnabled(false);
+            onCaptureClicked();
         });
 
         orderEnforcer.run(Stage.CAMERA_PROPERTIES_AVAILABLE, () -> {

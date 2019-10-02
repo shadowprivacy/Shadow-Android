@@ -30,7 +30,6 @@ public abstract class TimedEventManager<E> {
         this.application = application;
         this.handler     = new Handler(handlerThread.getLooper());
 
-        scheduleIfNecessary();
     }
 
     /**

@@ -1,5 +1,6 @@
 package su.sres.securesms.mediasend;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.Cursor;
@@ -17,6 +18,7 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.R;
 import su.sres.securesms.mms.PartAuthority;
+import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SignalExecutors;
@@ -69,6 +71,10 @@ class MediaRepository {
 
     @WorkerThread
     private @NonNull List<MediaFolder> getFolders(@NonNull Context context) {
+        if (!Permissions.hasAll(context, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            return Collections.emptyList();
+        }
+
         FolderResult imageFolders       = getFolders(context, Images.Media.EXTERNAL_CONTENT_URI);
         FolderResult videoFolders       = getFolders(context, Video.Media.EXTERNAL_CONTENT_URI);
         Map<String, FolderData> folders = new HashMap<>(imageFolders.getFolderData());
@@ -88,6 +94,7 @@ class MediaRepository {
                 folder.getCount(),
                 folder.getBucketId(),
                 MediaFolder.FolderType.NORMAL))
+                .filter(folder -> folder.getTitle() != null)
                 .sorted((o1, o2) -> o1.getTitle().toLowerCase().compareTo(o2.getTitle().toLowerCase()))
                 .toList();
 
@@ -150,6 +157,10 @@ class MediaRepository {
 
     @WorkerThread
     private @NonNull List<Media> getMediaInBucket(@NonNull Context context, @NonNull String bucketId) {
+        if (!Permissions.hasAll(context, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            return Collections.emptyList();
+        }
+
         List<Media> images = getMediaInBucket(context, bucketId, Images.Media.EXTERNAL_CONTENT_URI, true);
         List<Media> videos = getMediaInBucket(context, bucketId, Video.Media.EXTERNAL_CONTENT_URI, false);
         List<Media> media  = new ArrayList<>(images.size() + videos.size());
@@ -171,9 +182,9 @@ class MediaRepository {
         String[] projection;
 
         if (hasOrientation) {
-            projection = new String[]{Images.Media._ID, Images.Media.MIME_TYPE, Images.Media.DATE_TAKEN, Images.Media.ORIENTATION, Images.Media.WIDTH, Images.Media.HEIGHT, Images.Media.SIZE};
+            projection = new String[]{Images.Media.DATA, Images.Media.MIME_TYPE, Images.Media.DATE_TAKEN, Images.Media.ORIENTATION, Images.Media.WIDTH, Images.Media.HEIGHT, Images.Media.SIZE};
         } else {
-            projection = new String[]{Images.Media._ID, Images.Media.MIME_TYPE, Images.Media.DATE_TAKEN, Images.Media.WIDTH, Images.Media.HEIGHT, Images.Media.SIZE};
+            projection = new String[]{Images.Media.DATA, Images.Media.MIME_TYPE, Images.Media.DATE_TAKEN, Images.Media.WIDTH, Images.Media.HEIGHT, Images.Media.SIZE};
         }
 
         if (Media.ALL_MEDIA_BUCKET_ID.equals(bucketId)) {
@@ -183,7 +194,8 @@ class MediaRepository {
 
         try (Cursor cursor = context.getContentResolver().query(contentUri, projection, selection, selectionArgs, sortBy)) {
             while (cursor != null && cursor.moveToNext()) {
-                Uri    uri         = Uri.withAppendedPath(contentUri, cursor.getString(cursor.getColumnIndexOrThrow(Images.Media._ID)));
+                String path        = cursor.getString(cursor.getColumnIndexOrThrow(projection[0]));
+                Uri    uri         = Uri.fromFile(new File(path));
                 String mimetype    = cursor.getString(cursor.getColumnIndexOrThrow(Images.Media.MIME_TYPE));
                 long   dateTaken   = cursor.getLong(cursor.getColumnIndexOrThrow(Images.Media.DATE_TAKEN));
                 int    orientation = hasOrientation ? cursor.getInt(cursor.getColumnIndexOrThrow(Images.Media.ORIENTATION)) : 0;
@@ -200,6 +212,10 @@ class MediaRepository {
 
     @WorkerThread
     private List<Media> getPopulatedMedia(@NonNull Context context, @NonNull List<Media> media) {
+        if (!Permissions.hasAll(context, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            return media;
+        }
+
         return Stream.of(media).map(m -> {
             try {
                 if (isPopulated(m)) {
@@ -217,6 +233,10 @@ class MediaRepository {
 
     @WorkerThread
     private Optional<Media> getMostRecentItem(@NonNull Context context) {
+        if (!Permissions.hasAll(context, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            return Optional.absent();
+        }
+
         List<Media> media = getMediaInBucket(context, Media.ALL_MEDIA_BUCKET_ID, Images.Media.EXTERNAL_CONTENT_URI, true);
         return media.size() > 0 ? Optional.of(media.get(0)) : Optional.absent();
     }

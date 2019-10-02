@@ -235,4 +235,21 @@
         <item name="colorControlActivated">@color/white</item>
     </style>
 
+    <style name="WebRtcCallScreenTextWhite">
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="WebRtcCallScreenTextWhite.Small">
+        <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+    </style>
+
+    <style name="WebRtcCallScreenTextWhite.Medium">
+        <item name="android:textAppearance">?android:attr/textAppearanceMedium</item>
+    </style>
+
+    <style name="WebRtcCallScreenTextWhite.ExtraLarge">
+        <item name="android:textAppearance">?android:attr/textAppearanceLarge</item>
+        <item name="android:textSize">40sp</item>
+    </style>
+
 </resources>

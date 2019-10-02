@@ -253,7 +253,11 @@ public class WebRtcCallScreen extends FrameLayout implements RecipientModifiedLi
     this.remoteRenderLayout.setHidden(true);
     this.minimized = false;
 
-    this.remoteRenderLayout.setOnClickListener(v -> setMinimized(!minimized));
+    this.remoteRenderLayout.setOnClickListener(v -> {
+      if (!this.remoteRenderLayout.isHidden()) {
+        setMinimized(!minimized);
+      }
+    });
   }
 
   private void setConnected(SurfaceViewRenderer localRenderer,

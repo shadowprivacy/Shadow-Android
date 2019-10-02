@@ -116,7 +116,7 @@ public class ConversationListFragment extends Fragment
   private ImageView                   emptyImage;
   private TextView                    emptySearch;
   private PulsingFloatingActionButton fab;
-  private FloatingActionButton        cameraFab;
+  private PulsingFloatingActionButton cameraFab;
   private Locale                      locale;
   private String                      queryFilter  = "";
   private boolean                     archive;
@@ -140,8 +140,13 @@ public class ConversationListFragment extends Fragment
     emptyImage   = ViewUtil.findById(view, R.id.empty);
     emptySearch  = ViewUtil.findById(view, R.id.empty_search);
 
-    if (archive) fab.hide();
-    else         fab.show();
+    if (archive) {
+      fab.hide();
+      cameraFab.hide();
+    } else {
+      fab.show();
+      cameraFab.show();
+    }
 
     reminderView.setOnDismissListener(() -> updateReminders(true));
 
@@ -188,6 +193,7 @@ public class ConversationListFragment extends Fragment
     super.onPause();
 
     fab.stopPulse();
+    cameraFab.stopPulse();
     EventBus.getDefault().unregister(this);
   }
 
@@ -381,6 +387,7 @@ public class ConversationListFragment extends Fragment
       emptySearch.setVisibility(View.INVISIBLE);
       emptyImage.setImageResource(EMPTY_IMAGES[(int) (Math.random() * EMPTY_IMAGES.length)]);
       fab.startPulse(3 * 1000);
+      cameraFab.startPulse(3 * 1000);
     } else if ((cursor == null || cursor.getCount() <= 0) && !TextUtils.isEmpty(queryFilter)) {
       list.setVisibility(View.INVISIBLE);
       emptyState.setVisibility(View.GONE);
@@ -391,6 +398,7 @@ public class ConversationListFragment extends Fragment
       emptyState.setVisibility(View.GONE);
       emptySearch.setVisibility(View.INVISIBLE);
       fab.stopPulse();
+      cameraFab.stopPulse();
     }
 
     getListAdapter().changeCursor(cursor);
