@@ -7,6 +7,7 @@ import com.annimon.stream.Stream;
 import org.junit.Test;
 import su.sres.securesms.database.JobDatabase;
 import su.sres.securesms.jobmanager.Data;
+import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
 import su.sres.securesms.jobmanager.persistence.ConstraintSpec;
 import su.sres.securesms.jobmanager.persistence.DependencySpec;
@@ -264,6 +265,76 @@ public class FastJobStorageTest {
 
 
         FastJobStorage subject = new FastJobStorage(fixedDataDatabase(Arrays.asList(fullSpec1, fullSpec2)));
+        subject.init();
+
+        List<JobSpec> jobs = subject.getPendingJobsWithNoDependenciesInCreatedOrder(10);
+
+        assertEquals(1, jobs.size());
+        assertEquals("1", jobs.get(0).getId());
+    }
+
+    @Test
+    public void getPendingJobsWithNoDependenciesInCreatedOrder_migrationJobTakesPrecedence() {
+        FullSpec plainSpec     = new FullSpec(new JobSpec("1", "f1", "q", 0, 0, 0, 0, 0, -1, -1, EMPTY_DATA, false),
+                Collections.emptyList(),
+                Collections.emptyList());
+        FullSpec migrationSpec = new FullSpec(new JobSpec("2", "f2", Job.Parameters.MIGRATION_QUEUE_KEY, 5, 0, 0, 0, 0, -1, -1, EMPTY_DATA, false),
+                Collections.emptyList(),
+                Collections.emptyList());
+
+        FastJobStorage subject = new FastJobStorage(fixedDataDatabase(Arrays.asList(plainSpec, migrationSpec)));
+        subject.init();
+
+        List<JobSpec> jobs = subject.getPendingJobsWithNoDependenciesInCreatedOrder(10);
+
+        assertEquals(1, jobs.size());
+        assertEquals("2", jobs.get(0).getId());
+    }
+
+    @Test
+    public void getPendingJobsWithNoDependenciesInCreatedOrder_runningMigrationBlocksNormalJobs() {
+        FullSpec plainSpec     = new FullSpec(new JobSpec("1", "f1", "q", 0, 0, 0, 0, 0, -1, -1, EMPTY_DATA, false),
+                Collections.emptyList(),
+                Collections.emptyList());
+        FullSpec migrationSpec = new FullSpec(new JobSpec("2", "f2", Job.Parameters.MIGRATION_QUEUE_KEY, 5, 0, 0, 0, 0, -1, -1, EMPTY_DATA, true),
+                Collections.emptyList(),
+                Collections.emptyList());
+
+        FastJobStorage subject = new FastJobStorage(fixedDataDatabase(Arrays.asList(plainSpec, migrationSpec)));
+        subject.init();
+
+        List<JobSpec> jobs = subject.getPendingJobsWithNoDependenciesInCreatedOrder(10);
+
+        assertEquals(0, jobs.size());
+    }
+
+    @Test
+    public void getPendingJobsWithNoDependenciesInCreatedOrder_runningMigrationBlocksLaterMigrationJobs() {
+        FullSpec migrationSpec1 = new FullSpec(new JobSpec("1", "f1", Job.Parameters.MIGRATION_QUEUE_KEY, 0, 0, 0, 0, 0, -1, -1, EMPTY_DATA, true),
+                Collections.emptyList(),
+                Collections.emptyList());
+        FullSpec migrationSpec2 = new FullSpec(new JobSpec("2", "f2", Job.Parameters.MIGRATION_QUEUE_KEY, 5, 0, 0, 0, 0, -1, -1, EMPTY_DATA, false),
+                Collections.emptyList(),
+                Collections.emptyList());
+
+        FastJobStorage subject = new FastJobStorage(fixedDataDatabase(Arrays.asList(migrationSpec1, migrationSpec2)));
+        subject.init();
+
+        List<JobSpec> jobs = subject.getPendingJobsWithNoDependenciesInCreatedOrder(10);
+
+        assertEquals(0, jobs.size());
+    }
+
+    @Test
+    public void getPendingJobsWithNoDependenciesInCreatedOrder_onlyReturnFirstEligibleMigrationJob() {
+        FullSpec migrationSpec1 = new FullSpec(new JobSpec("1", "f1", Job.Parameters.MIGRATION_QUEUE_KEY, 0, 0, 0, 0, 0, -1, -1, EMPTY_DATA, false),
+                Collections.emptyList(),
+                Collections.emptyList());
+        FullSpec migrationSpec2 = new FullSpec(new JobSpec("2", "f2", Job.Parameters.MIGRATION_QUEUE_KEY, 5, 0, 0, 0, 0, -1, -1, EMPTY_DATA, false),
+                Collections.emptyList(),
+                Collections.emptyList());
+
+        FastJobStorage subject = new FastJobStorage(fixedDataDatabase(Arrays.asList(migrationSpec1, migrationSpec2)));
         subject.init();
 
         List<JobSpec> jobs = subject.getPendingJobsWithNoDependenciesInCreatedOrder(10);

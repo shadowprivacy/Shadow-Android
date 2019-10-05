@@ -103,11 +103,11 @@ dependencies {
 
     implementation 'com.google.protobuf:protobuf-java:3.8.0'
     implementation 'com.googlecode.libphonenumber:libphonenumber:8.10.7'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.9.2'
     implementation 'org.signal:signal-metadata-java:0.0.3'
     implementation 'com.squareup.okhttp3:okhttp:3.12.1'
 
-    implementation files('libs/signal-service-android-2.13.6.aar', 'libs/signal-service-java-2.13.6.jar', 'libs/stickyheadergrid-debug.aar')
+    implementation files('libs/signal-service-android-2.13.7.aar', 'libs/signal-service-java-2.13.7.jar', 'libs/stickyheadergrid-debug.aar')
     implementation 'org.whispersystems:webrtc-android:M75'
     implementation 'commons-validator:commons-validator:1.6'
     implementation "me.leolin:ShortcutBadger:1.1.16"
@@ -294,7 +294,7 @@ dependencyVerification {
 //            'org.whispersystems:signal-protocol-java:7f6df67a963acbab7716424b01b12fa7279f18a9623a2a7c8ba7b1c285830168',
 //            'com.google.protobuf:protobuf-java:07A55D5D34D2B47D2D1D9092BE1DBF1B1D99FFFCEA19B7EAFBA508DE8DAAE2CD',
             'com.googlecode.libphonenumber:libphonenumber:dbf4bf566d17a60044c19e282a619684e4b4abb0f9f9f24f843c55d19826ab5e',
-            'com.fasterxml.jackson.core:jackson-databind:2351c3eba73a545db9079f5d6d768347ad72666537362c8220fe3e950a55a864',
+            'com.fasterxml.jackson.core:jackson-databind:fb262d42ea2de98044b62d393950a5aa050435fec38bbcadf2325cf7dc41b848',
             'com.squareup.okhttp3:okhttp:07c3d82ca7eaf4722f00b2da807dc7860f6169ae60cfedcf5d40218f90880a46',
 //            'org.threeten:threetenbp:f4c23ffaaed717c3b99c003e0ee02d6d66377fd47d866fec7d971bd8644fc1a7',
 //            'org.whispersystems:curve25519-android:b502bcf83efe001f09a7a9efda6f0fa772c43ed5924e97816296ed3503caa092',
@@ -305,8 +305,8 @@ dependencyVerification {
     ]
 }
 
-def canonicalVersionCode = 516
-def canonicalVersionName = "4.45.0"
+def canonicalVersionCode = 519
+def canonicalVersionName = "4.46.0"
 
 def postFixSize = 10
 def abiPostFix = ['armeabi-v7a' : 1,

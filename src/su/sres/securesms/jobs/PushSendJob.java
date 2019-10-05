@@ -14,16 +14,22 @@ import org.signal.libsignal.metadata.certificate.SenderCertificate;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.TextSecureExpiredException;
 import su.sres.securesms.attachments.Attachment;
+import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.contactshare.ContactModelMapper;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.MmsDatabase;
+import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.events.PartProgressEvent;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
+import su.sres.securesms.mms.MmsException;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.notifications.MessageNotifier;
@@ -135,12 +141,36 @@ public abstract class PushSendJob extends SendJob {
                                     .withWidth(attachment.getWidth())
                                     .withHeight(attachment.getHeight())
                                     .withCaption(attachment.getCaption())
-                                    .withListener((total, progress) -> EventBus.getDefault().postSticky(new PartProgressEvent(attachment, total, progress)))
+              .withListener((total, progress) -> EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress)))
                                     .build();
     } catch (IOException ioe) {
       Log.w(TAG, "Couldn't open attachment", ioe);
     }
     return null;
+  }
+
+  protected static JobManager.Chain createCompressingAndUploadAttachmentsChain(@NonNull JobManager jobManager, OutgoingMediaMessage message) {
+    List<Attachment> attachments = new LinkedList<>();
+
+    attachments.addAll(message.getAttachments());
+
+    attachments.addAll(Stream.of(message.getLinkPreviews())
+            .map(LinkPreview::getThumbnail)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .toList());
+
+    attachments.addAll(Stream.of(message.getSharedContacts())
+            .map(Contact::getAvatar).withoutNulls()
+            .map(Contact.Avatar::getAttachment).withoutNulls()
+            .toList());
+
+    List<AttachmentCompressionJob> compressionJobs = Stream.of(attachments).map(a -> AttachmentCompressionJob.fromAttachment((DatabaseAttachment) a, false, -1)).toList();
+
+    List<AttachmentUploadJob> attachmentJobs = Stream.of(attachments).map(a -> new AttachmentUploadJob(((DatabaseAttachment) a).getAttachmentId())).toList();
+
+    return jobManager.startChain(compressionJobs)
+            .then(attachmentJobs);
   }
 
   protected @NonNull List<SignalServiceAttachment> getAttachmentPointersFor(List<Attachment> attachments) {

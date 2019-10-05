@@ -6,12 +6,14 @@ import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.database.JobDatabase;
+import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.persistence.ConstraintSpec;
 import su.sres.securesms.jobmanager.persistence.DependencySpec;
 import su.sres.securesms.jobmanager.persistence.FullSpec;
 import su.sres.securesms.jobmanager.persistence.JobSpec;
 import su.sres.securesms.jobmanager.persistence.JobStorage;
 import su.sres.securesms.util.Util;
+import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -88,13 +90,29 @@ public class FastJobStorage implements JobStorage {
 
     @Override
     public synchronized @NonNull List<JobSpec> getPendingJobsWithNoDependenciesInCreatedOrder(long currentTime) {
-        return Stream.of(jobs)
-                .filterNot(JobSpec::isRunning)
+        Optional<JobSpec> migrationJob = getMigrationJob();
+
+        if (migrationJob.isPresent() && !migrationJob.get().isRunning()) {
+            return Collections.singletonList(migrationJob.get());
+        } else if (migrationJob.isPresent()) {
+            return Collections.emptyList();
+        } else {
+            return Stream.of(jobs)
+                    .filterNot(JobSpec::isRunning)
+                    .filter(this::firstInQueue)
+                    .filter(j -> !dependenciesByJobId.containsKey(j.getId()) || dependenciesByJobId.get(j.getId()).isEmpty())
+                    .filter(j -> j.getNextRunAttemptTime() <= currentTime)
+                    .sorted((j1, j2) -> Long.compare(j1.getCreateTime(), j2.getCreateTime()))
+                    .toList();
+        }
+    }
+
+    private Optional<JobSpec> getMigrationJob() {
+        return Optional.fromNullable(Stream.of(jobs)
+                .filter(j -> Job.Parameters.MIGRATION_QUEUE_KEY.equals(j.getQueueKey()))
                 .filter(this::firstInQueue)
-                .filter(j -> !dependenciesByJobId.containsKey(j.getId()) || dependenciesByJobId.get(j.getId()).isEmpty())
-                .filter(j -> j.getNextRunAttemptTime() <= currentTime)
-                .sorted((j1, j2) -> Long.compare(j1.getCreateTime(), j2.getCreateTime()))
-                .toList();
+                .findFirst()
+                .orElse(null));
     }
 
     private boolean firstInQueue(@NonNull JobSpec job) {

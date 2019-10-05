@@ -1,6 +1,7 @@
 package su.sres.securesms.database;
 
 import android.content.Context;
+import android.text.TextUtils;
 import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
@@ -9,9 +10,6 @@ import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
 
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
-import su.sres.securesms.util.Util;
-
-import java.util.List;
 
 /**
  * Contains all databases necessary for full-text search (FTS).
@@ -112,32 +110,48 @@ public class SearchDatabase extends Database {
   }
 
   public Cursor queryMessages(@NonNull String query) {
-    SQLiteDatabase db          = databaseHelper.getReadableDatabase();
-    String         prefixQuery = adjustQuery(query);
+    SQLiteDatabase db                  = databaseHelper.getReadableDatabase();
+    String         fullTextSearchQuery = createFullTextSearchQuery(query);
 
-    Cursor cursor = db.rawQuery(MESSAGES_QUERY, new String[] { prefixQuery, prefixQuery });
+    if (TextUtils.isEmpty(fullTextSearchQuery)) {
+      return null;
+    }
+
+    Cursor cursor = db.rawQuery(MESSAGES_QUERY, new String[] { fullTextSearchQuery,
+            fullTextSearchQuery });
+
     setNotifyConverationListListeners(cursor);
     return cursor;
   }
 
   public Cursor queryMessages(@NonNull String query, long threadId) {
-    SQLiteDatabase db          = databaseHelper.getReadableDatabase();
-    String         prefixQuery = adjustQuery(query);
+    SQLiteDatabase db                  = databaseHelper.getReadableDatabase();
+    String         fullTextSearchQuery = createFullTextSearchQuery(query);
 
-    Cursor cursor = db.rawQuery(MESSAGES_FOR_THREAD_QUERY, new String[] { prefixQuery, String.valueOf(threadId), prefixQuery, String.valueOf(threadId) });
+    if (TextUtils.isEmpty(fullTextSearchQuery)) {
+      return null;
+    }
+
+    Cursor cursor = db.rawQuery(MESSAGES_FOR_THREAD_QUERY, new String[] { fullTextSearchQuery,
+            String.valueOf(threadId),
+            fullTextSearchQuery,
+            String.valueOf(threadId) });
+
     setNotifyConverationListListeners(cursor);
     return cursor;
-
   }
 
-  private String adjustQuery(@NonNull String query) {
+  private static String createFullTextSearchQuery(@NonNull String query) {
+    return Stream.of(query.split(" "))
+            .map(String::trim)
+            .filter(s -> s.length() > 0)
+            .map(SearchDatabase::fullTextSearchEscape)
+            .collect(StringBuilder::new, (sb, s) -> sb.append(s).append("* "))
+            .toString();
+  }
 
-    List<String> tokens      = Stream.of(query.split(" ")).filter(s -> s.trim().length() > 0).toList();
-    String       prefixQuery = Util.join(tokens, "* ");
-
-    prefixQuery += "*";
-
-    return prefixQuery;
+  private static String fullTextSearchEscape(String s) {
+    return "\"" + s.replace("\"", "\"\"") + "\"";
   }
 }
 

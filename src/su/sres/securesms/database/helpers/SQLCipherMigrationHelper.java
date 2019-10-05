@@ -12,13 +12,13 @@ import android.util.Pair;
 
 import com.annimon.stream.function.BiFunction;
 
-import su.sres.securesms.DatabaseUpgradeActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.crypto.AsymmetricMasterCipher;
 import su.sres.securesms.crypto.AttachmentSecretProvider;
 import su.sres.securesms.crypto.MasterCipher;
 import su.sres.securesms.crypto.MasterSecret;
 import su.sres.securesms.crypto.MasterSecretUtil;
+import su.sres.securesms.migrations.LegacyMigrationJob;
 import su.sres.securesms.service.GenericForegroundService;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -58,7 +58,7 @@ public class SQLCipherMigrationHelper {
                                        @NonNull MasterSecret masterSecret,
                                        @NonNull android.database.sqlite.SQLiteDatabase legacyDb,
                                        @NonNull net.sqlcipher.database.SQLiteDatabase modernDb,
-                                       @Nullable DatabaseUpgradeActivity.DatabaseUpgradeListener listener)
+                                       @Nullable LegacyMigrationJob.DatabaseUpgradeListener listener)
   {
     MasterCipher           legacyCipher           = new MasterCipher(masterSecret);
     AsymmetricMasterCipher legacyAsymmetricCipher = new AsymmetricMasterCipher(MasterSecretUtil.getAsymmetricMasterSecret(context, masterSecret));

@@ -8,7 +8,6 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.attachments.Attachment;
-import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
@@ -43,10 +42,7 @@ import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.List;
-
-
 
 public class PushMediaSendJob extends PushSendJob  {
 
@@ -76,24 +72,12 @@ public class PushMediaSendJob extends PushSendJob  {
         throw new AssertionError();
       }
 
-      MmsDatabase          database    = DatabaseFactory.getMmsDatabase(context);
-      OutgoingMediaMessage message     = database.getOutgoingMessage(messageId);
-      List<Attachment>     attachments = new LinkedList<>();
+      MmsDatabase          database                    = DatabaseFactory.getMmsDatabase(context);
+      OutgoingMediaMessage message                     = database.getOutgoingMessage(messageId);
+      JobManager.Chain     compressAndUploadAttachment = createCompressingAndUploadAttachmentsChain(jobManager, message);
 
-      attachments.addAll(message.getAttachments());
-      attachments.addAll(Stream.of(message.getLinkPreviews()).filter(p -> p.getThumbnail().isPresent()).map(p -> p.getThumbnail().get()).toList());
-      attachments.addAll(Stream.of(message.getSharedContacts()).filter(c -> c.getAvatar() != null).map(c -> c.getAvatar().getAttachment()).withoutNulls().toList());
-
-      List<AttachmentUploadJob> attachmentJobs = Stream.of(attachments).map(a -> AttachmentUploadJob.fromAttachment((DatabaseAttachment) a)).toList();
-
-
-      if (attachmentJobs.isEmpty()) {
-        jobManager.add(new PushMediaSendJob(messageId, destination));
-      } else {
-        jobManager.startChain(attachmentJobs)
-                .then(new PushMediaSendJob(messageId, destination))
-                .enqueue();
-      }
+      compressAndUploadAttachment.then(new PushMediaSendJob(messageId, destination))
+              .enqueue();
 
     } catch (NoSuchMessageException | MmsException e) {
       Log.w(TAG, "Failed to enqueue message.", e);
@@ -167,11 +151,8 @@ public class PushMediaSendJob extends PushSendJob  {
         expirationManager.scheduleDeletion(messageId, true, message.getExpiresIn());
       }
 
-      if (message.getRevealDuration() > 0) {
-        database.markRevealStarted(messageId);
-        ApplicationContext.getInstance(context)
-                .getRevealableMessageManager()
-                .scheduleIfNecessary();
+      if (message.isViewOnce()) {
+        DatabaseFactory.getAttachmentDatabase(context).deleteAttachmentFilesForMessage(messageId);
       }
 
       log(TAG, "Sent message: " + messageId);
@@ -234,7 +215,7 @@ public class PushMediaSendJob extends PushSendJob  {
               .withAttachments(serviceAttachments)
               .withTimestamp(message.getSentTimeMillis())
               .withExpiration((int)(message.getExpiresIn() / 1000))
-              .withMessageTimer((int) message.getRevealDuration() / 1000)
+              .withViewOnce(message.isViewOnce())
               .withProfileKey(profileKey.orNull())
               .withQuote(quote.orNull())
               .withSticker(sticker.orNull())

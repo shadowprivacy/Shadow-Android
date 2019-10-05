@@ -16,7 +16,6 @@
  */
 package su.sres.securesms.sms;
 
-import android.app.Application;
 import android.content.Context;
 import androidx.annotation.NonNull;
 
@@ -44,6 +43,7 @@ import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.MessageRecord;
+import su.sres.securesms.jobs.AttachmentCompressionJob;
 import su.sres.securesms.jobs.MmsSendJob;
 import su.sres.securesms.jobs.PushGroupSendJob;
 import su.sres.securesms.jobs.PushMediaSendJob;
@@ -171,14 +171,17 @@ public class MessageSender {
         mmsDatabase.endTransaction();
       }
 
-      List<AttachmentUploadJob> uploadJobs  = new ArrayList<>(databaseAttachments.size());
-      List<AttachmentCopyJob>   copyJobs    = new ArrayList<>(databaseAttachments.size());
-      List<Job>                 messageJobs = new ArrayList<>(databaseAttachments.get(0).size());
+      List<Job> compressionJobs = new ArrayList<>(databaseAttachments.size());
+      List<Job> uploadJobs      = new ArrayList<>(databaseAttachments.size());
+      List<Job> copyJobs        = new ArrayList<>(databaseAttachments.size());
+      List<Job> messageJobs     = new ArrayList<>(databaseAttachments.get(0).size());
 
       for (List<DatabaseAttachment> attachmentList : databaseAttachments) {
         DatabaseAttachment source = attachmentList.get(0);
 
-        uploadJobs.add(AttachmentUploadJob.fromAttachment(source));
+        compressionJobs.add(AttachmentCompressionJob.fromAttachment(source, false, -1));
+
+        uploadJobs.add(new AttachmentUploadJob(source.getAttachmentId()));
 
         if (attachmentList.size() > 1) {
           AttachmentId       sourceId       = source.getAttachmentId();
@@ -209,7 +212,10 @@ public class MessageSender {
               copyJobs.size(),
               messageJobs.size()));
 
-      JobManager.Chain chain = ApplicationContext.getInstance(context).getJobManager().startChain(uploadJobs);
+      JobManager.Chain chain = ApplicationContext.getInstance(context)
+              .getJobManager()
+              .startChain(compressionJobs)
+              .then(uploadJobs);
 
       if (copyJobs.size() > 0) {
         chain = chain.then(copyJobs);
@@ -289,7 +295,7 @@ public class MessageSender {
 
   private static void sendMms(Context context, long messageId) {
     JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
-    jobManager.add(new MmsSendJob(messageId));
+    MmsSendJob.enqueue(context, jobManager, messageId);
   }
 
   private static boolean isPushTextSend(Context context, Recipient recipient, boolean keyExchange) {

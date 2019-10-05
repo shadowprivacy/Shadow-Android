@@ -60,12 +60,12 @@ class MediaSendViewModel extends ViewModel {
     private boolean          isSms;
     private Optional<Media>  lastCameraCapture;
 
-    private boolean     hudVisible;
-    private boolean     composeVisible;
-    private boolean     captionVisible;
-    private ButtonState buttonState;
-    private RailState   railState;
-    private RevealState revealState;
+    private boolean       hudVisible;
+    private boolean       composeVisible;
+    private boolean       captionVisible;
+    private ButtonState   buttonState;
+    private RailState     railState;
+    private ViewOnceState viewOnceState;
 
     private @Nullable Recipient recipient;
 
@@ -85,7 +85,7 @@ class MediaSendViewModel extends ViewModel {
         this.body              = "";
         this.buttonState       = ButtonState.GONE;
         this.railState         = RailState.GONE;
-        this.revealState       = RevealState.GONE;
+        this.viewOnceState     = ViewOnceState.GONE;
         this.page              = Page.UNKNOWN;
 
         position.setValue(-1);
@@ -173,7 +173,7 @@ class MediaSendViewModel extends ViewModel {
         captionVisible = false;
         buttonState    = ButtonState.COUNT;
         railState      = RailState.VIEWABLE;
-        revealState    = RevealState.GONE;
+        viewOnceState  = ViewOnceState.GONE;
 
         hudState.setValue(buildHudState());
     }
@@ -181,19 +181,19 @@ class MediaSendViewModel extends ViewModel {
     void onImageEditorStarted() {
         page           = Page.EDITOR;
         hudVisible     = true;
-        composeVisible = revealState != RevealState.ENABLED;
+        composeVisible = viewOnceState != ViewOnceState.ENABLED;
         captionVisible = getSelectedMediaOrDefault().size() > 1 || (getSelectedMediaOrDefault().size() > 0 && getSelectedMediaOrDefault().get(0).getCaption().isPresent());
         buttonState    = (recipient != null) ? ButtonState.SEND : ButtonState.CONTINUE;
 
-        if (revealState == RevealState.GONE && revealSupported()) {
+        if (viewOnceState == ViewOnceState.GONE && viewOnceSupported()) {
             // TODO[reveal]
-//      revealState = TextSecurePreferences.isRevealableMessageEnabled(application) ? RevealState.ENABLED : RevealState.DISABLED;
-            revealState = RevealState.GONE;
-        } else if (!revealSupported()) {
-            revealState = RevealState.GONE;
+//      viewOnceState = TextSecurePreferences.isRevealableMessageEnabled(application) ? ViewOnceState.ENABLED : ViewOnceState.DISABLED;
+            viewOnceState = ViewOnceState.GONE;
+        } else if (!viewOnceSupported()) {
+            viewOnceState = ViewOnceState.GONE;
         }
 
-        railState  = !isSms && revealState != RevealState.ENABLED ? RailState.INTERACTIVE : RailState.GONE;
+        railState  = !isSms && viewOnceState != ViewOnceState.ENABLED ? RailState.INTERACTIVE : RailState.GONE;
 
         hudState.setValue(buildHudState());
     }
@@ -202,10 +202,10 @@ class MediaSendViewModel extends ViewModel {
         // TODO: Don't need this?
         Page previous = page;
 
-        page        = Page.CAMERA;
-        hudVisible  = false;
-        revealState = RevealState.GONE;
-        buttonState = ButtonState.COUNT;
+        page          = Page.CAMERA;
+        hudVisible    = false;
+        viewOnceState = ViewOnceState.GONE;
+        buttonState   = ButtonState.COUNT;
 
         List<Media> selected = getSelectedMediaOrDefault();
 
@@ -224,7 +224,7 @@ class MediaSendViewModel extends ViewModel {
         composeVisible = false;
         captionVisible = false;
         buttonState    = ButtonState.COUNT;
-        revealState = RevealState.GONE;
+        viewOnceState  = ViewOnceState.GONE;
         railState      = getSelectedMediaOrDefault().isEmpty() ? RailState.GONE : RailState.VIEWABLE;
 
         lastCameraCapture = Optional.absent();
@@ -238,7 +238,7 @@ class MediaSendViewModel extends ViewModel {
         composeVisible = false;
         captionVisible = false;
         buttonState    = ButtonState.COUNT;
-        revealState    = RevealState.GONE;
+        viewOnceState  = ViewOnceState.GONE;
         railState      = getSelectedMediaOrDefault().isEmpty() ? RailState.GONE : RailState.VIEWABLE;
 
         lastCameraCapture = Optional.absent();
@@ -254,9 +254,9 @@ class MediaSendViewModel extends ViewModel {
 
     void onRevealButtonToggled() {
         hudVisible     = true;
-        revealState    = revealState == RevealState.ENABLED ? RevealState.DISABLED : RevealState.ENABLED;
-        composeVisible = revealState != RevealState.ENABLED;
-        railState      = revealState == RevealState.ENABLED || isSms ? RailState.GONE : RailState.INTERACTIVE;
+        viewOnceState  = viewOnceState == ViewOnceState.ENABLED ? ViewOnceState.DISABLED : ViewOnceState.ENABLED;
+        composeVisible = viewOnceState != ViewOnceState.ENABLED;
+        railState      = viewOnceState == ViewOnceState.ENABLED || isSms ? RailState.GONE : RailState.INTERACTIVE;
         captionVisible = false;
 
         List<Media> uncaptioned = Stream.of(getSelectedMediaOrDefault())
@@ -265,7 +265,7 @@ class MediaSendViewModel extends ViewModel {
 
         selectedMedia.setValue(uncaptioned);
 
-        TextSecurePreferences.setIsRevealableMessageEnabled(application, revealState == RevealState.ENABLED);
+        TextSecurePreferences.setIsRevealableMessageEnabled(application, viewOnceState == ViewOnceState.ENABLED);
 
         hudState.setValue(buildHudState());
     }
@@ -273,14 +273,14 @@ class MediaSendViewModel extends ViewModel {
     void onKeyboardHidden(boolean isSms) {
         if (page != Page.EDITOR) return;
 
-        composeVisible = (revealState != RevealState.ENABLED);
+        composeVisible = (viewOnceState != ViewOnceState.ENABLED);
         buttonState    = (recipient != null) ? ButtonState.SEND : ButtonState.CONTINUE;
 
         if (isSms) {
             railState      = RailState.GONE;
             captionVisible = false;
         } else {
-            railState = revealState != RevealState.ENABLED ? RailState.INTERACTIVE : RailState.GONE;
+            railState = viewOnceState != ViewOnceState.ENABLED ? RailState.INTERACTIVE : RailState.GONE;
 
             if (getSelectedMediaOrDefault().size() > 1 || (getSelectedMediaOrDefault().size() > 0 && getSelectedMediaOrDefault().get(0).getCaption().isPresent())) {
                 captionVisible = true;
@@ -295,18 +295,19 @@ class MediaSendViewModel extends ViewModel {
 
         if (isSms) {
             railState      = RailState.GONE;
-            composeVisible = (revealState == RevealState.GONE);
+            composeVisible = (viewOnceState == ViewOnceState.GONE);
             captionVisible = false;
             buttonState    = (recipient != null) ? ButtonState.SEND : ButtonState.CONTINUE;
         } else {
             if (isCaptionFocused) {
-                railState      = revealState != RevealState.ENABLED ? RailState.INTERACTIVE : RailState.GONE;
+                railState      = viewOnceState != ViewOnceState.ENABLED ? RailState.INTERACTIVE : RailState.GONE;
                 composeVisible = false;
                 captionVisible = true;
                 buttonState    = ButtonState.GONE;
             } else if (isComposeFocused) {
-                railState      = revealState != RevealState.ENABLED ? RailState.INTERACTIVE : RailState.GONE;
-                composeVisible = (revealState != RevealState.ENABLED);
+
+                railState      = viewOnceState != ViewOnceState.ENABLED ? RailState.INTERACTIVE : RailState.GONE;
+                composeVisible = (viewOnceState != ViewOnceState.ENABLED);
                 captionVisible = false;
                 buttonState    = (recipient != null) ? ButtonState.SEND : ButtonState.CONTINUE;
             }
@@ -356,7 +357,7 @@ class MediaSendViewModel extends ViewModel {
         }
 
         if (getSelectedMediaOrDefault().size() == 1) {
-            revealState = revealSupported() ? RevealState.DISABLED : RevealState.GONE;
+            viewOnceState = viewOnceSupported() ? ViewOnceState.DISABLED : ViewOnceState.GONE;
         }
 
         hudState.setValue(buildHudState());
@@ -447,10 +448,9 @@ class MediaSendViewModel extends ViewModel {
         return maxSelection;
     }
 
-    long getRevealDuration() {
+    boolean isViewOnce() {
         // TODO[reveal]
-//    return revealState == RevealState.ENABLED ? RevealableUtil.DURATION : 0;
-        return 0;
+        return false;
     }
 
     private @NonNull List<Media> getSelectedMediaOrDefault() {
@@ -472,20 +472,20 @@ class MediaSendViewModel extends ViewModel {
 
     private HudState buildHudState() {
         // TODO[reveal]
-        RevealState updatedRevealState    = RevealState.GONE;
-        List<Media> selectedMedia         = getSelectedMediaOrDefault();
-        int         selectionCount        = selectedMedia.size();
-        ButtonState updatedButtonState    = buttonState == ButtonState.COUNT && selectionCount == 0 ? ButtonState.GONE : buttonState;
-        boolean     updatedCaptionVisible = captionVisible && (selectedMedia.size() > 1 || (selectedMedia.size() > 0 && selectedMedia.get(0).getCaption().isPresent()));
+        ViewOnceState updatedViewOnceState  = ViewOnceState.GONE;
+        List<Media>   selectedMedia         = getSelectedMediaOrDefault();
+        int           selectionCount        = selectedMedia.size();
+        ButtonState   updatedButtonState    = buttonState == ButtonState.COUNT && selectionCount == 0 ? ButtonState.GONE : buttonState;
+        boolean       updatedCaptionVisible = captionVisible && (selectedMedia.size() > 1 || (selectedMedia.size() > 0 && selectedMedia.get(0).getCaption().isPresent()));
 
-        return new HudState(hudVisible, composeVisible, updatedCaptionVisible, selectionCount, updatedButtonState, railState, updatedRevealState);
+        return new HudState(hudVisible, composeVisible, updatedCaptionVisible, selectionCount, updatedButtonState, railState, updatedViewOnceState);
     }
 
     private void clearPersistedMedia() {
         clearPersistedMedia();
     }
 
-    private boolean revealSupported() {
+    private boolean viewOnceSupported() {
         return !isSms && (recipient == null || !recipient.isLocalNumber()) && mediaSupportsRevealableMessage(getSelectedMediaOrDefault());
     }
 
@@ -519,7 +519,7 @@ class MediaSendViewModel extends ViewModel {
         INTERACTIVE, VIEWABLE, GONE
     }
 
-    enum RevealState {
+    enum ViewOnceState {
         ENABLED, DISABLED, GONE
     }
 
@@ -531,7 +531,7 @@ class MediaSendViewModel extends ViewModel {
         private final int         selectionCount;
         private final ButtonState buttonState;
         private final RailState   railState;
-        private final RevealState revealState;
+        private final ViewOnceState viewOnceState;
 
         HudState(boolean hudVisible,
                  boolean composeVisible,
@@ -539,7 +539,7 @@ class MediaSendViewModel extends ViewModel {
                  int selectionCount,
                  @NonNull ButtonState buttonState,
                  @NonNull RailState railState,
-                 @NonNull RevealState revealState)
+                 @NonNull ViewOnceState viewOnceState)
         {
             this.hudVisible      = hudVisible;
             this.composeVisible  = composeVisible;
@@ -547,7 +547,7 @@ class MediaSendViewModel extends ViewModel {
             this.selectionCount  = selectionCount;
             this.buttonState     = buttonState;
             this.railState       = railState;
-            this.revealState = revealState;
+            this.viewOnceState = viewOnceState;
         }
 
         public boolean isHudVisible() {
@@ -574,9 +574,8 @@ class MediaSendViewModel extends ViewModel {
             return hudVisible ? railState : RailState.GONE;
         }
 
-        public @NonNull
-        RevealState getRevealState() {
-            return hudVisible ? revealState : RevealState.GONE;
+        public @NonNull ViewOnceState getViewOnceState() {
+            return hudVisible ? viewOnceState : ViewOnceState.GONE;
         }
     }
 

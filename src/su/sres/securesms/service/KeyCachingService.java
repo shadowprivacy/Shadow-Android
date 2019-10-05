@@ -35,12 +35,12 @@ import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.ConversationListActivity;
-import su.sres.securesms.DatabaseUpgradeActivity;
 import su.sres.securesms.DummyActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.crypto.InvalidPassphraseException;
 import su.sres.securesms.crypto.MasterSecret;
 import su.sres.securesms.crypto.MasterSecretUtil;
+import su.sres.securesms.migrations.ApplicationMigrations;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.util.DynamicLanguage;
@@ -114,7 +114,7 @@ public class KeyCachingService extends Service {
       new AsyncTask<Void, Void, Void>() {
         @Override
         protected Void doInBackground(Void... params) {
-          if (!DatabaseUpgradeActivity.isUpdate(KeyCachingService.this)) {
+          if (!ApplicationMigrations.isUpdate(KeyCachingService.this)) {
             MessageNotifier.updateNotification(KeyCachingService.this);
           }
           return null;

@@ -47,7 +47,6 @@ import su.sres.securesms.mms.SlideDeck;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.DelimiterUtil;
 import su.sres.securesms.util.JsonUtils;
-import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.Pair;
@@ -631,7 +630,7 @@ public class ThreadDatabase extends Database {
     SlideDeck slideDeck = ((MediaMmsMessageRecord)record).getSlideDeck();
     Slide     thumbnail = slideDeck.getThumbnailSlide();
 
-    if (thumbnail != null && ((MmsMessageRecord) record).getRevealDuration() == 0) {
+    if (thumbnail != null && !((MmsMessageRecord) record).isViewOnce()) {
       return thumbnail.getThumbnailUri();
     }
 
@@ -651,7 +650,7 @@ public class ThreadDatabase extends Database {
   }
 
   private @Nullable Extra getExtrasFor(MessageRecord record) {
-    if (record.isMms() && ((MmsMessageRecord) record).getRevealDuration() > 0) {
+    if (record.isMms() && ((MmsMessageRecord) record).isViewOnce()) {
       return Extra.forRevealableMessage();
     } else if (record.isMms() && ((MmsMessageRecord) record).getSlideDeck().getStickerSlide() != null) {
       return Extra.forSticker();

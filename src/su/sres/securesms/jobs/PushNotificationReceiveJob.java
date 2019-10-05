@@ -4,20 +4,19 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.gcm.MessageRetriever;
+import su.sres.securesms.gcm.RestStrategy;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.notifications.MessageNotifier;
-import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
 
 
 
-public class PushNotificationReceiveJob extends PushReceivedJob  {
+public class PushNotificationReceiveJob extends BaseJob {
 
   public static final String KEY = "PushNotificationReceiveJob";
 
@@ -49,18 +48,13 @@ public class PushNotificationReceiveJob extends PushReceivedJob  {
 
   @Override
   public void onRun() throws IOException {
-    pullAndProcessMessages(ApplicationDependencies.getSignalServiceMessageReceiver(), TAG, System.currentTimeMillis());
-  }
+    MessageRetriever retriever = ApplicationDependencies.getMessageRetriever();
+    boolean          result    = retriever.retrieveMessages(context, new RestStrategy());
 
-  public void pullAndProcessMessages(SignalServiceMessageReceiver receiver, String tag, long startTime) throws IOException {
-    synchronized (PushReceivedJob.RECEIVE_LOCK) {
-      receiver.retrieveMessages(envelope -> {
-        Log.i(tag, "Retrieved an envelope." + timeSuffix(startTime));
-        processEnvelope(envelope);
-        Log.i(tag, "Successfully processed an envelope." + timeSuffix(startTime));
-      });
-      TextSecurePreferences.setNeedsMessagePull(context, false);
-      MessageNotifier.cancelMessagesPending(context);
+    if (result) {
+      Log.i(TAG, "Successfully pulled messages.");
+    } else {
+      throw new PushNetworkException("Failed to pull messages.");
     }
   }
 

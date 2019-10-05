@@ -83,7 +83,7 @@ import su.sres.securesms.database.model.MediaMmsMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.jobs.DirectoryRefreshJob;
-import su.sres.securesms.jobs.MultiDeviceRevealUpdateJob;
+import su.sres.securesms.jobs.MultiDeviceViewOnceOpenJob;
 import su.sres.securesms.longmessage.LongMessageActivity;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mms.GlideApp;
@@ -91,9 +91,10 @@ import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.profiles.UnknownSenderView;
+import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.revealable.RevealableMessageActivity;
-import su.sres.securesms.revealable.RevealableUtil;
+import su.sres.securesms.revealable.ViewOnceMessageActivity;
+import su.sres.securesms.revealable.ViewOnceUtil;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.sms.OutgoingTextMessage;
 import su.sres.securesms.stickers.StickerLocator;
@@ -104,6 +105,7 @@ import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
+import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -957,35 +959,46 @@ public class ConversationFragment extends Fragment
     }
 
     @Override
-    public void onRevealableMessageClicked(@NonNull MmsMessageRecord messageRecord) {
-      if (messageRecord.getRevealDuration() == 0) {
+    public void onViewOnceMessageClicked(@NonNull MmsMessageRecord messageRecord) {
+      if (!messageRecord.isViewOnce()) {
         throw new AssertionError("Non-revealable message clicked.");
       }
 
-      if (messageRecord.getRevealStartTime() == 0) {
-        SimpleTask.run(getLifecycle(), () -> {
-          if (!messageRecord.isOutgoing()) {
-            Log.i(TAG, "Marking revealable message as opened.");
-
-            DatabaseFactory.getMmsDatabase(requireContext()).markRevealStarted(messageRecord.getId());
-
-            ApplicationContext.getInstance(requireContext())
-                    .getRevealableMessageManager()
-                    .scheduleIfNecessary();
-
-            ApplicationContext.getInstance(requireContext())
-                    .getJobManager()
-                    .add(new MultiDeviceRevealUpdateJob(new MessagingDatabase.SyncMessageId(messageRecord.getIndividualRecipient().getAddress(), messageRecord.getDateSent())));
-          } else {
-            Log.i(TAG, "Opening your own revealable message. It will automatically be marked as opened when it is sent.");
-          }
-          return null;
-        }, (nothing) -> {
-          startActivity(RevealableMessageActivity.getIntent(requireContext(), messageRecord.getId()));
-        });
-      } else if (RevealableUtil.isViewable(messageRecord)) {
-        startActivity(RevealableMessageActivity.getIntent(requireContext(), messageRecord.getId()));
+      if (!ViewOnceUtil.isViewable(messageRecord)) {
+        Log.w(TAG, "View-once photo is not viewable!");
+        return;
       }
+
+      SimpleTask.run(getLifecycle(), () -> {
+        Log.i(TAG, "Copying the view-once photo to temp storage and deleting underlying media.");
+
+        try {
+          InputStream inputStream = PartAuthority.getAttachmentStream(requireContext(), messageRecord.getSlideDeck().getThumbnailSlide().getUri());
+          Uri         tempUri     = BlobProvider.getInstance().forData(inputStream, 0).createForSingleSessionOnDisk(requireContext());
+
+          DatabaseFactory.getAttachmentDatabase(requireContext()).deleteAttachmentFilesForMessage(messageRecord.getId());
+
+          ApplicationContext.getInstance(requireContext())
+                  .getViewOnceMessageManager()
+                  .scheduleIfNecessary();
+
+          ApplicationContext.getInstance(requireContext())
+                  .getJobManager()
+                  .add(new MultiDeviceViewOnceOpenJob(new MessagingDatabase.SyncMessageId(messageRecord.getIndividualRecipient().getAddress(), messageRecord.getDateSent())));
+
+          return tempUri;
+        } catch (IOException e) {
+          return null;
+        }
+      }, (uri) -> {
+        if (uri != null) {
+          startActivity(ViewOnceMessageActivity.getIntent(requireContext(), messageRecord.getId(), uri));
+        } else {
+          Log.w(TAG, "Failed to open view-once photo. Showing a toast and deleting the attachments for the message just in case.");
+          Toast.makeText(requireContext(), R.string.ConversationFragment_failed_to_open_message, Toast.LENGTH_SHORT).show();
+          SignalExecutors.BOUNDED.execute(() -> DatabaseFactory.getAttachmentDatabase(requireContext()).deleteAttachmentFilesForMessage(messageRecord.getId()));
+        }
+      });
     }
 
     @Override

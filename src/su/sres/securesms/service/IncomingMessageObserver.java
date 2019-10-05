@@ -19,8 +19,8 @@ import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.R;
+import su.sres.securesms.IncomingMessageProcessor.Processor;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.jobs.PushContentReceiveJob;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -45,7 +45,6 @@ public class IncomingMessageObserver implements ConstraintObserver.Notifier {
 
     private final Context                      context;
     private final NetworkConstraint            networkConstraint;
-    private final SignalServiceMessageReceiver receiver;
     private final SignalServiceNetworkAccess   networkAccess;
 
     private boolean appVisible;
@@ -55,7 +54,6 @@ public class IncomingMessageObserver implements ConstraintObserver.Notifier {
         this.networkConstraint = new NetworkConstraint.Factory(ApplicationContext.getInstance(context)).create();
 
         new NetworkConstraintObserver(ApplicationContext.getInstance(context)).register(this);
-        this.receiver          = ApplicationDependencies.getSignalServiceMessageReceiver();
         this.networkAccess     = ApplicationDependencies.getSignalServiceNetworkAccess();
         new MessageRetrievalThread().start();
 
@@ -145,6 +143,8 @@ public class IncomingMessageObserver implements ConstraintObserver.Notifier {
                 waitForConnectionNecessary();
 
                 Log.i(TAG, "Making websocket connection....");
+                SignalServiceMessageReceiver receiver = ApplicationDependencies.getSignalServiceMessageReceiver();
+
                 pipe             = receiver.createMessagePipe();
                 unidentifiedPipe = receiver.createUnidentifiedMessagePipe();
 
@@ -158,7 +158,9 @@ public class IncomingMessageObserver implements ConstraintObserver.Notifier {
                             localPipe.read(REQUEST_TIMEOUT_MINUTES, TimeUnit.MINUTES,
                                     envelope -> {
                                         Log.i(TAG, "Retrieved envelope! " + String.valueOf(envelope.getSource()));
-                                        new PushContentReceiveJob(context).processEnvelope(envelope);
+                                        try (Processor processor = ApplicationDependencies.getIncomingMessageProcessor().acquire()) {
+                                            processor.processEnvelope(envelope);
+                                        }
                                     });
                         } catch (TimeoutException e) {
                             Log.w(TAG, "Application level read timeout...");

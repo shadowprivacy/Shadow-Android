@@ -57,6 +57,7 @@ import su.sres.securesms.logging.CustomSignalProtocolLogger;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.logging.PersistentLogger;
 import su.sres.securesms.logging.UncaughtExceptionLogger;
+import su.sres.securesms.migrations.ApplicationMigrations;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.providers.BlobProvider;
@@ -66,7 +67,7 @@ import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.service.IncomingMessageObserver;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.service.LocalBackupListener;
-import su.sres.securesms.revealable.RevealableMessageManager;
+import su.sres.securesms.revealable.ViewOnceMessageManager;
 import su.sres.securesms.service.RotateSenderCertificateListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
@@ -96,7 +97,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   private static final String TAG = ApplicationContext.class.getSimpleName();
 
   private ExpiringMessageManager   expiringMessageManager;
-  private RevealableMessageManager revealableMessageManager;
+  private ViewOnceMessageManager viewOnceMessageManager;
   private TypingStatusRepository   typingStatusRepository;
   private TypingStatusSender       typingStatusSender;
   private JobManager               jobManager;
@@ -128,9 +129,10 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
       isserverset = true;
       initializeAppDependencies();
       initializeJobManager();
+      initializeApplicationMigrations();
       initializeMessageRetrieval();
       initializeExpiringMessageManager();
-      initializeRevealableMessageManager();
+      initializeViewOnceMessageManager();
       initializeTypingStatusRepository();
       initializeTypingStatusSender();
       initializeGcmCheck();
@@ -142,6 +144,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
       initializeUnidentifiedDeliveryAbilityRefresh();
       initializeBlobProvider();
       initializeCameraX();
+      jobManager.beginJobLoop();
     }
 
     NotificationChannels.create(this);
@@ -160,7 +163,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     Log.i(TAG, "App is now visible.");
     executePendingContactSync();
     KeyCachingService.onAppForegrounded(this);
-    MessageNotifier.cancelMessagesPending(this);
   }
 
   @Override
@@ -182,8 +184,8 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     return expiringMessageManager;
   }
 
-  public RevealableMessageManager getRevealableMessageManager() {
-    return revealableMessageManager;
+  public ViewOnceMessageManager getViewOnceMessageManager() {
+    return viewOnceMessageManager;
   }
 
   public TypingStatusRepository getTypingStatusRepository() {
@@ -248,12 +250,16 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
             .build());
   }
 
+  private void initializeApplicationMigrations() {
+    ApplicationMigrations.onApplicationCreate(this, jobManager);
+  }
+
   public void initializeMessageRetrieval() {
     this.incomingMessageObserver = new IncomingMessageObserver(this);
   }
 
   private void initializeAppDependencies() {
-    ApplicationDependencies.init(new ApplicationDependencyProvider(this, new SignalServiceNetworkAccess(this)));
+    ApplicationDependencies.init(this, new ApplicationDependencyProvider(this, new SignalServiceNetworkAccess(this)));
   }
 
   private void initializeGcmCheck() {
@@ -276,8 +282,8 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     this.expiringMessageManager = new ExpiringMessageManager(this);
   }
 
-  private void initializeRevealableMessageManager() {
-    this.revealableMessageManager = new RevealableMessageManager(this);
+  private void initializeViewOnceMessageManager() {
+    this.viewOnceMessageManager = new ViewOnceMessageManager(this);
   }
 
   private void initializeTypingStatusRepository() {
@@ -411,9 +417,10 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     public void onServerSetEvent(ServerSetEvent event) {
         initializeAppDependencies();
         initializeJobManager();
+        initializeApplicationMigrations();
         initializeMessageRetrieval();
         initializeExpiringMessageManager();
-        initializeRevealableMessageManager();
+        initializeViewOnceMessageManager();
         initializeTypingStatusRepository();
         initializeTypingStatusSender();
         initializeGcmCheck();
@@ -425,6 +432,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         initializeUnidentifiedDeliveryAbilityRefresh();
         initializeBlobProvider();
         initializeCameraX();
+        jobManager.beginJobLoop();
     }
 
   private static class ProviderInitializationException extends RuntimeException {

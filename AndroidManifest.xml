@@ -254,7 +254,7 @@
               android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.DatabaseUpgradeActivity"
+        <activity android:name=".migrations.ApplicationMigrationActivity"
               android:theme="@style/NoAnimation.Theme.AppCompat.Light.DarkActionBar"
               android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
@@ -329,7 +329,7 @@
             android:windowSoftInputMode="stateUnchanged"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-        <activity android:name=".revealable.RevealableMessageActivity"
+        <activity android:name=".revealable.ViewOnceMessageActivity"
             android:launchMode="singleTask"
             android:theme="@style/TextSecure.FullScreenMedia"
             android:windowSoftInputMode="stateHidden"
@@ -588,7 +588,7 @@
 
     <receiver android:name="su.sres.securesms.service.ExpirationListener" />
 
-    <receiver android:name=".revealable.RevealableMessageManager$RevealAlarm" />
+    <receiver android:name=".revealable.ViewOnceMessageManager$ViewOnceAlarm" />
 
     <provider android:name="su.sres.securesms.providers.PartProvider"
               android:grantUriPermissions="true"

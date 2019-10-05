@@ -5,7 +5,6 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.drawable.Drawable;
 import android.provider.ContactsContract;
 import android.util.AttributeSet;
@@ -19,7 +18,6 @@ import su.sres.securesms.R;
 import su.sres.securesms.contacts.avatars.ContactColors;
 import su.sres.securesms.contacts.avatars.ContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
-import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientExporter;
@@ -27,8 +25,9 @@ import su.sres.securesms.util.ThemeUtil;
 
 import java.util.Objects;
 
-public class AvatarImageView extends AppCompatImageView {
+public final class AvatarImageView extends AppCompatImageView {
 
+  @SuppressWarnings("unused")
   private static final String TAG = AvatarImageView.class.getSimpleName();
 
   private static final Paint LIGHT_THEME_OUTLINE_PAINT = new Paint();
@@ -100,6 +99,7 @@ public class AvatarImageView extends AppCompatImageView {
       RecipientContactPhoto photo = new RecipientContactPhoto(recipient);
 
       if (!photo.equals(recipientContactPhoto)) {
+        requestManager.clear(this);
         recipientContactPhoto = photo;
 
         Drawable fallbackContactPhotoDrawable = photo.recipient.getFallbackContactPhotoDrawable(getContext(), inverted);
@@ -112,14 +112,14 @@ public class AvatarImageView extends AppCompatImageView {
                   .circleCrop()
                   .into(this);
         } else {
-          recipientContactPhoto = null;
-          setImageDrawable(unknownRecipientDrawable);
+          setImageDrawable(fallbackContactPhotoDrawable);
         }
       }
-
       setAvatarClickHandler(recipient, quickContactEnabled);
     } else {
-      setImageDrawable(new ResourceContactPhoto(R.drawable.ic_profile_default).asDrawable(getContext(), ContactColors.UNKNOWN_COLOR.toConversationColor(getContext()), inverted));
+      recipientContactPhoto = null;
+      requestManager.clear(this);
+      setImageDrawable(unknownRecipientDrawable);
       super.setOnClickListener(listener);
     }
   }

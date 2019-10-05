@@ -4,7 +4,6 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.model.MmsMessageRecord;
@@ -12,13 +11,13 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.guava.Optional;
 
-class RevealableMessageRepository {
+class ViewOnceMessageRepository {
 
-    private static final String TAG = Log.tag(RevealableMessageRepository.class);
+    private static final String TAG = Log.tag(ViewOnceMessageRepository.class);
 
     private final MmsDatabase mmsDatabase;
 
-    RevealableMessageRepository(@NonNull Context context) {
+    ViewOnceMessageRepository(@NonNull Context context) {
         this.mmsDatabase = DatabaseFactory.getMmsDatabase(context);
     }
 
