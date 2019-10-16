@@ -105,7 +105,7 @@ public class SmsSentJob extends BaseJob {
           Log.w(TAG, "Service connectivity problem, requeuing...");
           ApplicationContext.getInstance(context)
                   .getJobManager()
-                  .add(new SmsSendJob(context, messageId, record.getIndividualRecipient().getAddress(), runAttempt + 1));
+                  .add(new SmsSendJob(context, messageId, record.getIndividualRecipient(), runAttempt + 1));
           break;
         default:
           database.markAsSentFailed(messageId);

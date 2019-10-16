@@ -8,13 +8,12 @@ import androidx.annotation.WorkerThread;
 import com.google.protobuf.ByteString;
 
 import su.sres.securesms.R;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.OutgoingGroupMediaMessage;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.recipients.RecipientModifiedListener;
+import su.sres.securesms.recipients.RecipientForeverObserver;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
@@ -51,7 +50,7 @@ public class GroupUtil {
   }
   @WorkerThread
   public static Optional<OutgoingGroupMediaMessage> createGroupLeaveMessage(@NonNull Context context, @NonNull Recipient groupRecipient) {
-    String        encodedGroupId = groupRecipient.getAddress().toGroupString();
+    String        encodedGroupId = groupRecipient.requireAddress().toGroupString();
     GroupDatabase groupDatabase  = DatabaseFactory.getGroupDatabase(context);
 
     if (!groupDatabase.isActive(encodedGroupId)) {
@@ -107,7 +106,7 @@ public class GroupUtil {
         this.members = new LinkedList<>();
 
         for (String member : groupContext.getMembersList()) {
-          this.members.add(Recipient.from(context, Address.fromExternal(context, member), true));
+          this.members.add(Recipient.external(context, member));
         }
       }
     }
@@ -137,10 +136,18 @@ public class GroupUtil {
       return description.toString();
     }
 
-    public void addListener(RecipientModifiedListener listener) {
+    public void addObserver(RecipientForeverObserver listener) {
       if (this.members != null) {
         for (Recipient member : this.members) {
-          member.addListener(listener);
+          member.live().observeForever(listener);
+        }
+      }
+    }
+
+    public void removeObserver(RecipientForeverObserver listener) {
+      if (this.members != null) {
+        for (Recipient member : this.members) {
+          member.live().removeForeverObserver(listener);
         }
       }
     }

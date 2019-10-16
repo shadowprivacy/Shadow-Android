@@ -32,8 +32,6 @@ import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 
 import java.io.IOException;
 
-
-
 public class PushTextSendJob extends PushSendJob  {
 
   public static final String KEY = "PushTextSendJob";
@@ -42,12 +40,10 @@ public class PushTextSendJob extends PushSendJob  {
 
   private static final String KEY_MESSAGE_ID = "message_id";
 
-
-
   private long messageId;
 
-  public PushTextSendJob(long messageId, Address destination) {
-    this(constructParameters(destination), messageId);
+  public PushTextSendJob(long messageId, @NonNull Recipient recipient) {
+    this(constructParameters(recipient), messageId);
   }
 
   private PushTextSendJob(@NonNull Job.Parameters parameters, long messageId) {
@@ -93,7 +89,7 @@ public class PushTextSendJob extends PushSendJob  {
       database.markUnidentified(messageId, unidentified);
 
       if (recipient.isLocalNumber()) {
-        SyncMessageId id = new SyncMessageId(recipient.getAddress(), record.getDateSent());
+        SyncMessageId id = new SyncMessageId(recipient.getId(), record.getDateSent());
         DatabaseFactory.getMmsSmsDatabase(context).incrementDeliveryReceiptCount(id, System.currentTimeMillis());
         DatabaseFactory.getMmsSmsDatabase(context).incrementReadReceiptCount(id, System.currentTimeMillis());
       }
@@ -101,13 +97,13 @@ public class PushTextSendJob extends PushSendJob  {
       if (TextSecurePreferences.isUnidentifiedDeliveryEnabled(context)) {
         if (unidentified && accessMode == UnidentifiedAccessMode.UNKNOWN && profileKey == null) {
           log(TAG, "Marking recipient as UD-unrestricted following a UD send.");
-          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient, UnidentifiedAccessMode.UNRESTRICTED);
+          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.UNRESTRICTED);
         } else if (unidentified && accessMode == UnidentifiedAccessMode.UNKNOWN) {
           log(TAG, "Marking recipient as UD-enabled following a UD send.");
-          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient, UnidentifiedAccessMode.ENABLED);
+          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.ENABLED);
         } else if (!unidentified && accessMode != UnidentifiedAccessMode.DISABLED) {
           log(TAG, "Marking recipient as UD-disabled following a non-UD send.");
-          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient, UnidentifiedAccessMode.DISABLED);
+          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.DISABLED);
         }
       }
 
@@ -125,7 +121,7 @@ public class PushTextSendJob extends PushSendJob  {
       ApplicationContext.getInstance(context).getJobManager().add(new DirectoryRefreshJob(false));
     } catch (UntrustedIdentityException e) {
       warn(TAG, "Failure", e);
-      database.addMismatchedIdentity(record.getId(), Address.fromSerialized(e.getE164Number()), e.getIdentityKey());
+      database.addMismatchedIdentity(record.getId(), Recipient.external(context, e.getE164Number()).getId(), e.getIdentityKey());
       database.markAsSentFailed(record.getId());
       database.markAsPush(record.getId());
     }
@@ -157,7 +153,7 @@ public class PushTextSendJob extends PushSendJob  {
       rotateSenderCertificateIfNecessary();
 
       SignalServiceMessageSender       messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-      SignalServiceAddress             address            = getPushAddress(message.getIndividualRecipient().getAddress());
+      SignalServiceAddress             address            = getPushAddress(message.getIndividualRecipient().requireAddress());
       Optional<byte[]>                 profileKey         = getProfileKey(message.getIndividualRecipient());
       Optional<UnidentifiedAccessPair> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, message.getIndividualRecipient());
 

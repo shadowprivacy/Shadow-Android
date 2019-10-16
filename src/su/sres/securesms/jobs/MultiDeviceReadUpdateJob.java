@@ -5,7 +5,6 @@ import androidx.annotation.NonNull;
 import com.annimon.stream.Stream;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import su.sres.securesms.database.Address;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -13,6 +12,8 @@ import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.MessagingDatabase.SyncMessageId;
+import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -27,8 +28,6 @@ import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-
 
 public class MultiDeviceReadUpdateJob extends BaseJob  {
 
@@ -57,7 +56,7 @@ public class MultiDeviceReadUpdateJob extends BaseJob  {
     this.messageIds = new LinkedList<>();
 
     for (SyncMessageId messageId : messageIds) {
-      this.messageIds.add(new SerializableSyncMessageId(messageId.getAddress().toPhoneString(), messageId.getTimetamp()));
+      this.messageIds.add(new SerializableSyncMessageId(messageId.getRecipientId().serialize(), messageId.getTimetamp()));
     }
   }
 
@@ -91,7 +90,8 @@ public class MultiDeviceReadUpdateJob extends BaseJob  {
     List<ReadMessage> readMessages = new LinkedList<>();
 
     for (SerializableSyncMessageId messageId : messageIds) {
-      readMessages.add(new ReadMessage(messageId.sender, messageId.timestamp));
+      Recipient recipient = Recipient.resolved(RecipientId.from(messageId.recipientId));
+      readMessages.add(new ReadMessage(recipient.requireAddress().serialize(), messageId.timestamp));
     }
 
     SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
@@ -114,14 +114,14 @@ public class MultiDeviceReadUpdateJob extends BaseJob  {
     private static final long serialVersionUID = 1L;
 
     @JsonProperty
-    private final String sender;
+    private final String recipientId;
 
     @JsonProperty
     private final long   timestamp;
 
-    private SerializableSyncMessageId(@JsonProperty("sender") String sender, @JsonProperty("timestamp") long timestamp) {
-      this.sender = sender;
-      this.timestamp = timestamp;
+    private SerializableSyncMessageId(@JsonProperty("recipientId") String recipientId, @JsonProperty("timestamp") long timestamp) {
+      this.recipientId = recipientId;
+      this.timestamp   = timestamp;
     }
   }
 
@@ -136,11 +136,10 @@ public class MultiDeviceReadUpdateJob extends BaseJob  {
                   throw new AssertionError(e);
                 }
               })
-              .map(id -> new SyncMessageId(Address.fromSerialized(id.sender), id.timestamp))
+              .map(id -> new SyncMessageId(RecipientId.from(id.recipientId), id.timestamp))
               .toList();
 
       return new MultiDeviceReadUpdateJob(parameters, ids);
-
     }
   }
 }

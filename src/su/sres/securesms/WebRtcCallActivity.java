@@ -26,7 +26,6 @@ import android.content.res.Configuration;
 import android.media.AudioManager;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import su.sres.securesms.logging.Log;
 import android.view.View;
@@ -47,7 +46,6 @@ import su.sres.securesms.service.WebRtcCallService;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ViewUtil;
-import su.sres.securesms.webrtc.CallNotificationBuilder;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.SignalProtocolAddress;
 
@@ -283,11 +281,11 @@ public class WebRtcCallActivity extends Activity {
       public void onClick(View v) {
         synchronized (SESSION_LOCK) {
           TextSecureIdentityKeyStore identityKeyStore = new TextSecureIdentityKeyStore(WebRtcCallActivity.this);
-          identityKeyStore.saveIdentity(new SignalProtocolAddress(recipient.getAddress().serialize(), 1), theirIdentity, true);
+          identityKeyStore.saveIdentity(new SignalProtocolAddress(recipient.requireAddress().serialize(), 1), theirIdentity, true);
         }
 
         Intent intent = new Intent(WebRtcCallActivity.this, WebRtcCallService.class);
-        intent.putExtra(WebRtcCallService.EXTRA_REMOTE_ADDRESS, recipient.getAddress());
+        intent.putExtra(WebRtcCallService.EXTRA_REMOTE_RECIPIENT, recipient.getId());
         intent.setAction(WebRtcCallService.ACTION_OUTGOING_CALL);
         startService(intent);
       }

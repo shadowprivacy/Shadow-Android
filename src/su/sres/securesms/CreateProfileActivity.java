@@ -1,6 +1,5 @@
 package su.sres.securesms;
 
-
 import android.Manifest;
 import android.animation.Animator;
 import android.annotation.SuppressLint;
@@ -39,6 +38,8 @@ import su.sres.securesms.components.emoji.MediaKeyboard;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.Address;
+import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceProfileKeyUpdateJob;
 import su.sres.securesms.mms.GlideApp;
@@ -46,6 +47,7 @@ import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.profiles.ProfileMediaConstraints;
 import su.sres.securesms.profiles.SystemProfileUtil;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.BitmapDecodingException;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.DynamicLanguage;
@@ -364,6 +366,7 @@ public class CreateProfileActivity extends BaseActionBarActivity {
         try {
           accountManager.setProfileName(profileKey, name);
           TextSecurePreferences.setProfileName(context, name);
+          DatabaseFactory.getRecipientDatabase(context).setProfileName(Recipient.self().getId(), name);
         } catch (IOException e) {
           Log.w(TAG, e);
           return false;

@@ -9,6 +9,7 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import android.util.Pair;
 
 import net.sqlcipher.database.SQLiteDatabase;
@@ -164,7 +165,7 @@ public class FullBackupImporter extends FullBackupBase {
   }
 
   private static void processAvatar(@NonNull Context context, @NonNull BackupProtos.Avatar avatar, @NonNull BackupRecordInputStream inputStream) throws IOException {
-    inputStream.readAttachmentTo(new FileOutputStream(AvatarHelper.getAvatarFile(context, Address.fromExternal(context, avatar.getName()))), avatar.getLength());
+    inputStream.readAttachmentTo(new FileOutputStream(AvatarHelper.getAvatarFile(context, Address.fromSerialized(PhoneNumberFormatter.get(context).format(avatar.getName())))), avatar.getLength());
   }
 
   @SuppressLint("ApplySharedPref")

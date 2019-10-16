@@ -62,7 +62,7 @@ public final class RecipientExporterTest {
     private Recipient givenRecipient(String profileName, Address address) {
         Recipient recipient = mock(Recipient.class);
         when(recipient.getProfileName()).thenReturn(profileName);
-        when(recipient.getAddress()).thenReturn(address);
+        when(recipient.requireAddress()).thenReturn(address);
         return recipient;
     }
 

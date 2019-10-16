@@ -13,6 +13,7 @@ import su.sres.securesms.gcm.MessageRetriever;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.push.SecurityEventListener;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
+import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.IncomingMessageObserver;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -83,6 +84,12 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     @Override
     public @NonNull MessageRetriever provideMessageRetriever() {
         return new MessageRetriever();
+    }
+
+    @Override
+    public @NonNull
+    LiveRecipientCache provideRecipientCache() {
+        return new LiveRecipientCache(context);
     }
 
     private static class DynamicCredentialsProvider implements CredentialsProvider {

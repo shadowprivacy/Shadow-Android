@@ -40,13 +40,16 @@ import org.signal.aesgcmprovider.AesGcmProvider;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.dependencies.ApplicationDependencyProvider;
 import su.sres.securesms.gcm.FcmJobService;
 import su.sres.securesms.events.ServerSetEvent;
 import su.sres.securesms.jobmanager.JobManager;
+import su.sres.securesms.jobmanager.JobMigrator;
 import su.sres.securesms.jobs.FastJobStorage;
 import su.sres.securesms.jobs.JobManagerFactories;
+import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
@@ -72,9 +75,11 @@ import su.sres.securesms.service.RotateSenderCertificateListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.VersionTracker;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
 import org.webrtc.PeerConnectionFactory;
 import org.webrtc.PeerConnectionFactory.InitializationOptions;
+
 import org.webrtc.voiceengine.WebRtcAudioManager;
 import org.webrtc.voiceengine.WebRtcAudioUtils;
 import org.whispersystems.libsignal.logging.SignalProtocolLoggerProvider;
@@ -97,7 +102,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   private static final String TAG = ApplicationContext.class.getSimpleName();
 
   private ExpiringMessageManager   expiringMessageManager;
-  private ViewOnceMessageManager viewOnceMessageManager;
+  private ViewOnceMessageManager   viewOnceMessageManager;
   private TypingStatusRepository   typingStatusRepository;
   private TypingStatusSender       typingStatusSender;
   private JobManager               jobManager;
@@ -120,6 +125,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeSecurityProvider();
     initializeLogging();
     initializeCrashHandling();
+    initializeFirstEverAppLaunch();
 
     // register to Event Bus
     EventBus.getDefault().register(this);
@@ -247,6 +253,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
             .setConstraintFactories(JobManagerFactories.getConstraintFactories(this))
             .setConstraintObservers(JobManagerFactories.getConstraintObservers(this))
             .setJobStorage(new FastJobStorage(DatabaseFactory.getJobDatabase(this)))
+            .setJobMigrator(new JobMigrator(TextSecurePreferences.getJobManagerVersion(this), JobManager.CURRENT_VERSION, JobManagerFactories.getJobMigrations(this)))
             .build());
   }
 
@@ -260,6 +267,20 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   private void initializeAppDependencies() {
     ApplicationDependencies.init(this, new ApplicationDependencyProvider(this, new SignalServiceNetworkAccess(this)));
+  }
+
+  private void initializeFirstEverAppLaunch() {
+    if (TextSecurePreferences.getFirstInstallVersion(this) == -1) {
+      if (!SQLCipherOpenHelper.databaseFileExists(this)) {
+        Log.i(TAG, "First ever app launch!");
+
+        TextSecurePreferences.setAppMigrationVersion(this, ApplicationMigrations.CURRENT_VERSION);
+        TextSecurePreferences.setJobManagerVersion(this, JobManager.CURRENT_VERSION);
+      }
+
+      Log.i(TAG, "Setting first install version to " + BuildConfig.CANONICAL_VERSION_CODE);
+      TextSecurePreferences.setFirstInstallVersion(this, BuildConfig.CANONICAL_VERSION_CODE);
+    }
   }
 
   private void initializeGcmCheck() {
@@ -361,18 +382,18 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   private void executePendingContactSync() {
     if (TextSecurePreferences.needsFullContactSync(this)) {
-      if (Build.VERSION.SDK_INT >= 26) {
-        FcmJobService.schedule(this);
-      } else {
-        ApplicationContext.getInstance(this).getJobManager().add(new PushNotificationReceiveJob(this));
-      }
+      ApplicationContext.getInstance(this).getJobManager().add(new MultiDeviceContactUpdateJob(true));
     }
   }
 
   private void initializePendingMessages() {
     if (TextSecurePreferences.getNeedsMessagePull(this)) {
       Log.i(TAG, "Scheduling a message fetch.");
-      ApplicationContext.getInstance(this).getJobManager().add(new PushNotificationReceiveJob(this));
+      if (Build.VERSION.SDK_INT >= 26) {
+        FcmJobService.schedule(this);
+      } else {
+        ApplicationContext.getInstance(this).getJobManager().add(new PushNotificationReceiveJob(this));
+      }
       TextSecurePreferences.setNeedsMessagePull(this, false);
     }
   }

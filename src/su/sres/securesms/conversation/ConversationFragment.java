@@ -50,7 +50,6 @@ import su.sres.securesms.ShareActivity;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.components.ConversationTypingView;
 import su.sres.securesms.components.recyclerview.SmoothScrollingLinearLayoutManager;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.logging.Log;
 
@@ -92,7 +91,9 @@ import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.profiles.UnknownSenderView;
 import su.sres.securesms.providers.BlobProvider;
+import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.revealable.ViewOnceMessageActivity;
 import su.sres.securesms.revealable.ViewOnceUtil;
 import su.sres.securesms.sms.MessageSender;
@@ -136,7 +137,7 @@ public class ConversationFragment extends Fragment
 
   private ConversationFragmentListener listener;
 
-  private Recipient                   recipient;
+  private LiveRecipient               recipient;
   private long                        threadId;
   private long                        lastSeen;
   private int                         startingPosition;
@@ -183,6 +184,12 @@ public class ConversationFragment extends Fragment
     initializeLoadMoreView(bottomLoadMoreView);
 
     typingView = (ConversationTypingView) inflater.inflate(R.layout.conversation_typing_view, container, false);
+
+    new ConversationItemSwipeCallback(
+            messageRecord -> actionMode == null &&
+                    canReplyToMessage(isActionMessage(messageRecord), messageRecord),
+            this::handleReplyMessage
+    ).attachToRecyclerView(list);
 
     return view;
   }
@@ -255,12 +262,12 @@ public class ConversationFragment extends Fragment
   }
 
   private void initializeResources() {
-    this.recipient         = Recipient.from(getActivity(), getActivity().getIntent().getParcelableExtra(ConversationActivity.ADDRESS_EXTRA), true);
+    this.recipient         = Recipient.live(getActivity().getIntent().getParcelableExtra(ConversationActivity.RECIPIENT_EXTRA));
     this.threadId          = this.getActivity().getIntent().getLongExtra(ConversationActivity.THREAD_ID_EXTRA, -1);
     this.lastSeen          = this.getActivity().getIntent().getLongExtra(ConversationActivity.LAST_SEEN_EXTRA, -1);
     this.startingPosition  = this.getActivity().getIntent().getIntExtra(ConversationActivity.STARTING_POSITION_EXTRA, -1);
     this.firstLoad         = true;
-    this.unknownSenderView = new UnknownSenderView(getActivity(), recipient, threadId);
+    this.unknownSenderView = new UnknownSenderView(getActivity(), recipient.get(), threadId);
 
     OnScrollListener scrollListener = new ConversationScrollListener(getActivity());
     list.addOnScrollListener(scrollListener);
@@ -268,7 +275,7 @@ public class ConversationFragment extends Fragment
 
   private void initializeListAdapter() {
     if (this.recipient != null && this.threadId != -1) {
-      ConversationAdapter adapter = new ConversationAdapter(getActivity(), GlideApp.with(this), locale, selectionClickListener, null, this.recipient);
+      ConversationAdapter adapter = new ConversationAdapter(requireContext(), GlideApp.with(this), locale, selectionClickListener, null, this.recipient.get());
       list.setAdapter(adapter);
       list.addItemDecoration(new StickyHeaderDecoration(adapter, false, false));
 
@@ -304,7 +311,7 @@ public class ConversationFragment extends Fragment
         replacedByIncomingMessage = false;
       }
 
-      typingView.setTypists(GlideApp.with(ConversationFragment.this), recipients, recipient.isGroupRecipient());
+      typingView.setTypists(GlideApp.with(ConversationFragment.this), recipients, recipient.get().isGroup());
 
       ConversationAdapter adapter = getListAdapter();
 
@@ -360,10 +367,7 @@ public class ConversationFragment extends Fragment
     }
 
     for (MessageRecord messageRecord : messageRecords) {
-      if (messageRecord.isGroupAction() || messageRecord.isCallLog() ||
-          messageRecord.isJoined() || messageRecord.isExpirationTimerUpdate() ||
-          messageRecord.isEndSession() || messageRecord.isIdentityUpdate() ||
-          messageRecord.isIdentityVerified() || messageRecord.isIdentityDefault())
+      if (isActionMessage(messageRecord))
       {
         actionMessage = true;
       }
@@ -394,12 +398,27 @@ public class ConversationFragment extends Fragment
 
       menu.findItem(R.id.menu_context_forward).setVisible(!actionMessage && !sharedContact);
       menu.findItem(R.id.menu_context_details).setVisible(!actionMessage);
-      menu.findItem(R.id.menu_context_reply).setVisible(!actionMessage             &&
-                                                        !messageRecord.isPending() &&
-                                                        !messageRecord.isFailed()  &&
-                                                        messageRecord.isSecure());
+      menu.findItem(R.id.menu_context_reply).setVisible(canReplyToMessage(actionMessage, messageRecord));
     }
     menu.findItem(R.id.menu_context_copy).setVisible(!actionMessage && hasText);
+  }
+
+  private static boolean canReplyToMessage(boolean actionMessage, MessageRecord messageRecord) {
+    return !actionMessage             &&
+            !messageRecord.isPending() &&
+            !messageRecord.isFailed()  &&
+            messageRecord.isSecure();
+  }
+
+  private static boolean isActionMessage(MessageRecord messageRecord) {
+    return messageRecord.isGroupAction()           ||
+            messageRecord.isCallLog()               ||
+            messageRecord.isJoined()                ||
+            messageRecord.isExpirationTimerUpdate() ||
+            messageRecord.isEndSession()            ||
+            messageRecord.isIdentityUpdate()        ||
+            messageRecord.isIdentityVerified()      ||
+            messageRecord.isIdentityDefault();
   }
 
   private ConversationAdapter getListAdapter() {
@@ -418,7 +437,7 @@ public class ConversationFragment extends Fragment
   }
 
   public void reload(Recipient recipient, long threadId) {
-    this.recipient = recipient;
+    this.recipient = recipient.live();
 
     if (this.threadId != threadId) {
       this.threadId = threadId;
@@ -522,8 +541,8 @@ public class ConversationFragment extends Fragment
     intent.putExtra(MessageDetailsActivity.MESSAGE_ID_EXTRA, message.getId());
     intent.putExtra(MessageDetailsActivity.THREAD_ID_EXTRA, threadId);
     intent.putExtra(MessageDetailsActivity.TYPE_EXTRA, message.isMms() ? MmsSmsDatabase.MMS_TRANSPORT : MmsSmsDatabase.SMS_TRANSPORT);
-    intent.putExtra(MessageDetailsActivity.ADDRESS_EXTRA, recipient.getAddress());
-    intent.putExtra(MessageDetailsActivity.IS_PUSH_GROUP_EXTRA, recipient.isGroupRecipient() && message.isPush());
+    intent.putExtra(MessageDetailsActivity.RECIPIENT_EXTRA, recipient.getId());
+    intent.putExtra(MessageDetailsActivity.IS_PUSH_GROUP_EXTRA, recipient.get().isGroup() && message.isPush());
     startActivity(intent);
   }
 
@@ -664,7 +683,7 @@ public class ConversationFragment extends Fragment
       setLastSeen(loader.getLastSeen());
     }
 
-    if (!loader.hasSent() && !recipient.isSystemContact() && !recipient.isGroupRecipient() && recipient.getRegistered() == RecipientDatabase.RegisteredState.REGISTERED) {
+    if (!loader.hasSent() && !recipient.get().isSystemContact() && !recipient.get().isGroup() && recipient.get().getRegistered() == RecipientDatabase.RegisteredState.REGISTERED) {
       adapter.setHeaderView(unknownSenderView);
     } else {
       clearHeaderIfNotTyping(adapter);
@@ -790,7 +809,7 @@ public class ConversationFragment extends Fragment
     }
   }
 
-  public void jumpToMessage(@NonNull Address author, long timestamp, @Nullable Runnable onMessageNotFound) {
+  public void jumpToMessage(@NonNull RecipientId author, long timestamp, @Nullable Runnable onMessageNotFound) {
     SimpleTask.run(getLifecycle(), () -> {
       return DatabaseFactory.getMmsSmsDatabase(getContext())
               .getMessagePositionInConversation(threadId, timestamp, author);
@@ -952,6 +971,14 @@ public class ConversationFragment extends Fragment
     }
 
     @Override
+    public void onMoreTextClicked(@NonNull RecipientId conversationRecipientId, long messageId, boolean isMms) {
+      if (getContext() != null && getActivity() != null) {
+        startActivity(LongMessageActivity.getIntent(getContext(), conversationRecipientId, messageId, isMms));
+      }
+    }
+
+
+    @Override
     public void onStickerClicked(@NonNull StickerLocator sticker) {
       if (getContext() != null && getActivity() != null) {
         startActivity(StickerPackPreviewActivity.getIntent(sticker.getPackId(), sticker.getPackKey()));
@@ -984,7 +1011,7 @@ public class ConversationFragment extends Fragment
 
           ApplicationContext.getInstance(requireContext())
                   .getJobManager()
-                  .add(new MultiDeviceViewOnceOpenJob(new MessagingDatabase.SyncMessageId(messageRecord.getIndividualRecipient().getAddress(), messageRecord.getDateSent())));
+                  .add(new MultiDeviceViewOnceOpenJob(new MessagingDatabase.SyncMessageId(messageRecord.getIndividualRecipient().getId(), messageRecord.getDateSent())));
 
           return tempUri;
         } catch (IOException e) {
@@ -1006,13 +1033,6 @@ public class ConversationFragment extends Fragment
       if (getContext() != null && getActivity() != null) {
         Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(), avatarTransitionView, "avatar").toBundle();
         ActivityCompat.startActivity(getActivity(), SharedContactDetailsActivity.getIntent(getContext(), contact), bundle);
-      }
-    }
-
-    @Override
-    public void onMoreTextClicked(@NonNull Address conversationAddress, long messageId, boolean isMms) {
-      if (getContext() != null && getActivity() != null) {
-        startActivity(LongMessageActivity.getIntent(getContext(), conversationAddress, messageId, isMms));
       }
     }
 
@@ -1047,7 +1067,7 @@ public class ConversationFragment extends Fragment
       if (getContext() == null) return;
 
       ContactUtil.selectRecipientThroughDialog(getContext(), choices, locale, recipient -> {
-        CommunicationActions.composeSmsThroughDefaultApp(getContext(), recipient.getAddress(), getString(R.string.InviteActivity_lets_switch_to_signal, getString(R.string.install_url)));
+        CommunicationActions.composeSmsThroughDefaultApp(getContext(), recipient.requireAddress(), getString(R.string.InviteActivity_lets_switch_to_signal, getString(R.string.install_url)));
       });
     }
   }

@@ -29,6 +29,7 @@ import com.bumptech.glide.Glide;
 
 import su.sres.securesms.R;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.mediasend.camerax.CameraXFlashToggleView;
 import su.sres.securesms.mediasend.camerax.CameraXUtil;
 import su.sres.securesms.mediasend.camerax.CameraXView;
 import su.sres.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
@@ -52,6 +53,7 @@ public class CameraXFragment extends Fragment implements CameraFragment {
     private ViewGroup          controlsContainer;
     private Controller         controller;
     private MediaSendViewModel viewModel;
+    private View               selfieFlash;
 
     public static CameraXFragment newInstance() {
         return new CameraXFragment();
@@ -160,14 +162,18 @@ public class CameraXFragment extends Fragment implements CameraFragment {
 
     @SuppressLint({"ClickableViewAccessibility", "MissingPermission"})
     private void initControls() {
-        View flipButton    = requireView().findViewById(R.id.camera_flip_button);
-        View captureButton = requireView().findViewById(R.id.camera_capture_button);
-        View galleryButton = requireView().findViewById(R.id.camera_gallery_button);
-        View countButton   = requireView().findViewById(R.id.camera_count_button);
+        View                   flipButton    = requireView().findViewById(R.id.camera_flip_button);
+        View                   captureButton = requireView().findViewById(R.id.camera_capture_button);
+        View                   galleryButton = requireView().findViewById(R.id.camera_gallery_button);
+        View                   countButton   = requireView().findViewById(R.id.camera_count_button);
+        CameraXFlashToggleView flashButton   = requireView().findViewById(R.id.camera_flash_button);
+
+        selfieFlash = requireView().findViewById(R.id.camera_selfie_flash);
 
         captureButton.setOnClickListener(v -> {
             captureButton.setEnabled(false);
             flipButton.setEnabled(false);
+            flashButton.setEnabled(false);
             onCaptureClicked();
         });
 
@@ -181,6 +187,8 @@ public class CameraXFragment extends Fragment implements CameraFragment {
                 animation.setDuration(200);
                 animation.setInterpolator(new DecelerateInterpolator());
                 flipButton.startAnimation(animation);
+                flashButton.setAutoFlashEnabled(camera.hasFlash());
+                flashButton.setFlash(camera.getFlash());
             });
 
 
@@ -200,6 +208,10 @@ public class CameraXFragment extends Fragment implements CameraFragment {
             flipButton.setVisibility(View.GONE);
         }
 
+        flashButton.setAutoFlashEnabled(camera.hasFlash());
+        flashButton.setFlash(camera.getFlash());
+        flashButton.setOnFlashModeChangedListener(camera::setFlash);
+
         galleryButton.setOnClickListener(v -> controller.onGalleryClicked());
         countButton.setOnClickListener(v -> controller.onCameraCountButtonClicked());
 
@@ -209,9 +221,17 @@ public class CameraXFragment extends Fragment implements CameraFragment {
     private void onCaptureClicked() {
         Stopwatch stopwatch = new Stopwatch("Capture");
 
+        CameraXSelfieFlashHelper flashHelper = new CameraXSelfieFlashHelper(
+                requireActivity().getWindow(),
+                camera,
+                selfieFlash
+        );
+
         camera.takePicture(new ImageCapture.OnImageCapturedListener() {
             @Override
             public void onCaptureSuccess(ImageProxy image, int rotationDegrees) {
+                flashHelper.endFlash();
+
                 SimpleTask.run(CameraXFragment.this.getLifecycle(), () -> {
                     stopwatch.split("captured");
                     try {
@@ -235,8 +255,11 @@ public class CameraXFragment extends Fragment implements CameraFragment {
 
             @Override
             public void onError(ImageCapture.UseCaseError useCaseError, String message, @Nullable Throwable cause) {
+                flashHelper.endFlash();
                 controller.onCameraError();
             }
         });
+
+        flashHelper.startFlash();
     }
 }

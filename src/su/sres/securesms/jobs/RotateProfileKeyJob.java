@@ -11,6 +11,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.profiles.AvatarHelper;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
@@ -19,8 +20,6 @@ import su.sres.signalservice.api.util.StreamDetails;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-
-
 
 public class RotateProfileKeyJob extends BaseJob  {
 
@@ -74,8 +73,7 @@ public class RotateProfileKeyJob extends BaseJob  {
 
     private @Nullable StreamDetails getProfileAvatar() {
         try {
-            Address localAddress = Address.fromSerialized(TextSecurePreferences.getLocalNumber(context));
-            File    avatarFile   = AvatarHelper.getAvatarFile(context, localAddress);
+            File avatarFile = AvatarHelper.getAvatarFile(context, Recipient.self().requireAddress());
 
             if (avatarFile.exists()) {
                 return new StreamDetails(new FileInputStream(avatarFile), "image/jpeg", avatarFile.length());

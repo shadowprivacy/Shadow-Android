@@ -22,13 +22,13 @@ import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.GlideRequests;
+import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.recipients.RecipientModifiedListener;
+import su.sres.securesms.recipients.RecipientForeverObserver;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.ExpirationUtil;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.IdentityUtil;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.ListenableFuture;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -37,7 +37,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 public class ConversationUpdateItem extends LinearLayout
-    implements RecipientModifiedListener, BindableConversationItem
+        implements RecipientForeverObserver, BindableConversationItem
 {
   private static final String TAG = ConversationUpdateItem.class.getSimpleName();
 
@@ -47,7 +47,7 @@ public class ConversationUpdateItem extends LinearLayout
   private TextView      title;
   private TextView      body;
   private TextView      date;
-  private Recipient     sender;
+  private LiveRecipient sender;
   private MessageRecord messageRecord;
   private Locale        locale;
 
@@ -98,11 +98,28 @@ public class ConversationUpdateItem extends LinearLayout
   }
 
   private void bind(@NonNull MessageRecord messageRecord, @NonNull Locale locale) {
+    if (this.sender != null) {
+      this.sender.removeForeverObserver(this);
+    }
+
+    if (this.messageRecord != null && messageRecord.isGroupAction()) {
+      GroupUtil.getDescription(getContext(), messageRecord.getBody()).removeObserver(this);
+    }
+
     this.messageRecord = messageRecord;
-    this.sender        = messageRecord.getIndividualRecipient();
+    this.sender        = messageRecord.getIndividualRecipient().live();
     this.locale        = locale;
 
-    this.sender.addListener(this);
+    this.sender.observeForever(this);
+
+    if (this.messageRecord != null && messageRecord.isGroupAction()) {
+      GroupUtil.getDescription(getContext(), messageRecord.getBody()).addObserver(this);
+    }
+
+    present(messageRecord);
+  }
+
+  private void present(MessageRecord messageRecord) {
 
     if      (messageRecord.isGroupAction())           setGroupRecord(messageRecord);
     else if (messageRecord.isCallLog())               setCallRecord(messageRecord);
@@ -174,7 +191,6 @@ public class ConversationUpdateItem extends LinearLayout
     icon.setImageResource(R.drawable.ic_group_grey600_24dp);
     icon.clearColorFilter();
 
-    GroupUtil.getDescription(getContext(), messageRecord.getBody()).addListener(this);
     body.setText(messageRecord.getDisplayBody(getContext()));
 
     title.setVisibility(GONE);
@@ -203,8 +219,8 @@ public class ConversationUpdateItem extends LinearLayout
   }
   
   @Override
-  public void onModified(Recipient recipient) {
-    Util.runOnMain(() -> bind(messageRecord, locale));
+  public void onRecipientChanged(@NonNull Recipient recipient) {
+    present(messageRecord);
   }
 
   @Override
@@ -215,7 +231,10 @@ public class ConversationUpdateItem extends LinearLayout
   @Override
   public void unbind() {
     if (sender != null) {
-      sender.removeListener(this);
+      sender.removeForeverObserver(this);
+    }
+    if (this.messageRecord != null && messageRecord.isGroupAction()) {
+      GroupUtil.getDescription(getContext(), messageRecord.getBody()).removeObserver(this);
     }
   }
 
@@ -238,14 +257,14 @@ public class ConversationUpdateItem extends LinearLayout
         return;
       }
 
-      final Recipient sender = ConversationUpdateItem.this.sender;
+      final Recipient sender = ConversationUpdateItem.this.sender.get();
 
       IdentityUtil.getRemoteIdentityKey(getContext(), sender).addListener(new ListenableFuture.Listener<Optional<IdentityRecord>>() {
         @Override
         public void onSuccess(Optional<IdentityRecord> result) {
           if (result.isPresent()) {
             Intent intent = new Intent(getContext(), VerifyIdentityActivity.class);
-            intent.putExtra(VerifyIdentityActivity.ADDRESS_EXTRA, sender.getAddress());
+            intent.putExtra(VerifyIdentityActivity.RECIPIENT_EXTRA, sender.getId());
             intent.putExtra(VerifyIdentityActivity.IDENTITY_EXTRA, new IdentityKeyParcelable(result.get().getIdentityKey()));
             intent.putExtra(VerifyIdentityActivity.VERIFIED_EXTRA, result.get().getVerifiedStatus() == IdentityDatabase.VerifiedStatus.VERIFIED);
 

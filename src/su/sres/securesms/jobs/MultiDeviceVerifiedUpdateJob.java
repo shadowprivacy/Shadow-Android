@@ -1,6 +1,5 @@
 package su.sres.securesms.jobs;
 
-
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.jobmanager.Data;
@@ -11,6 +10,7 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.Address;
 import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.recipients.Recipient;
@@ -26,8 +26,6 @@ import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-
-
 public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
 
   public static final String KEY = "MultiDeviceVerifiedUpdateJob";
@@ -39,15 +37,12 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
   private static final String KEY_VERIFIED_STATUS = "verified_status";
   private static final String KEY_TIMESTAMP       = "timestamp";
 
-
-
-
-  private String         destination;
+  private RecipientId    destination;
   private byte[]         identityKey;
   private VerifiedStatus verifiedStatus;
   private long           timestamp;
 
-  public MultiDeviceVerifiedUpdateJob(Address destination, IdentityKey identityKey, VerifiedStatus verifiedStatus) {
+  public MultiDeviceVerifiedUpdateJob(@NonNull RecipientId destination, IdentityKey identityKey, VerifiedStatus verifiedStatus) {
     this(new Job.Parameters.Builder()
                     .addConstraint(NetworkConstraint.KEY)
                     .setQueue("__MULTI_DEVICE_VERIFIED_UPDATE__")
@@ -61,14 +56,14 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
   }
 
   private MultiDeviceVerifiedUpdateJob(@NonNull Job.Parameters parameters,
-                                       @NonNull Address destination,
+                                       @NonNull RecipientId destination,
                                        @NonNull byte[] identityKey,
                                        @NonNull VerifiedStatus verifiedStatus,
                                        long timestamp)
   {
     super(parameters);
 
-    this.destination    = destination.serialize();
+    this.destination    = destination;
     this.identityKey    = identityKey;
     this.verifiedStatus = verifiedStatus;
     this.timestamp      = timestamp;
@@ -76,7 +71,7 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
 
   @Override
   public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_DESTINATION, destination)
+    return new Data.Builder().putString(KEY_DESTINATION, destination.serialize())
             .putString(KEY_IDENTITY_KEY, Base64.encodeBytes(identityKey))
             .putInt(KEY_VERIFIED_STATUS, verifiedStatus.toInt())
             .putLong(KEY_TIMESTAMP, timestamp)
@@ -102,12 +97,13 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
       }
 
       SignalServiceMessageSender    messageSender        = ApplicationDependencies.getSignalServiceMessageSender();
-      Address                       canonicalDestination = Address.fromSerialized(destination);
+      Recipient                     recipient            = Recipient.resolved(destination);
+      Address                       canonicalDestination = recipient.requireAddress();
       VerifiedMessage.VerifiedState verifiedState        = getVerifiedState(verifiedStatus);
       VerifiedMessage               verifiedMessage      = new VerifiedMessage(canonicalDestination.toPhoneString(), new IdentityKey(identityKey, 0), verifiedState, timestamp);
 
       messageSender.sendMessage(SignalServiceSyncMessage.forVerified(verifiedMessage),
-              UnidentifiedAccessUtil.getAccessFor(context, Recipient.from(context, Address.fromSerialized(destination), false)));
+              UnidentifiedAccessUtil.getAccessFor(context, recipient));
     } catch (InvalidKeyException e) {
       throw new IOException(e);
     }
@@ -141,7 +137,7 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
     @Override
     public @NonNull MultiDeviceVerifiedUpdateJob create(@NonNull Parameters parameters, @NonNull Data data) {
       try {
-        Address        destination    = Address.fromSerialized(data.getString(KEY_DESTINATION));
+        RecipientId    destination    = RecipientId.from(data.getString(KEY_DESTINATION));
         VerifiedStatus verifiedStatus = VerifiedStatus.forState(data.getInt(KEY_VERIFIED_STATUS));
         long           timestamp      = data.getLong(KEY_TIMESTAMP);
         byte[]         identityKey    = Base64.decode(data.getString(KEY_IDENTITY_KEY));

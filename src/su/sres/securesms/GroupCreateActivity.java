@@ -60,6 +60,7 @@ import su.sres.securesms.groups.GroupManager;
 import su.sres.securesms.groups.GroupManager.GroupActionResult;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
@@ -260,7 +261,7 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
     Intent intent = new Intent(this, ConversationActivity.class);
     intent.putExtra(ConversationActivity.THREAD_ID_EXTRA, threadId);
     intent.putExtra(ConversationActivity.DISTRIBUTION_TYPE_EXTRA, ThreadDatabase.DistributionTypes.DEFAULT);
-    intent.putExtra(ConversationActivity.ADDRESS_EXTRA, recipient.getAddress());
+    intent.putExtra(ConversationActivity.RECIPIENT_EXTRA, recipient.getId());
     startActivity(intent);
     finish();
   }
@@ -286,8 +287,7 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
         List<String> selected = data.getStringArrayListExtra("contacts");
 
         for (String contact : selected) {
-          Address   address   = Address.fromExternal(this, contact);
-          Recipient recipient = Recipient.from(this, address, false);
+          Recipient recipient = Recipient.external(this, contact);
 
           addSelectedContacts(recipient);
         }
@@ -338,17 +338,18 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
 
     @Override
     protected GroupActionResult doInBackground(Void... avoid) {
-      List<Address> memberAddresses = new LinkedList<>();
+      List<RecipientId> memberAddresses = new LinkedList<>();
 
       for (Recipient recipient : members) {
-        memberAddresses.add(recipient.getAddress());
+        memberAddresses.add(recipient.getId());
       }
 
-      memberAddresses.add(Address.fromSerialized(TextSecurePreferences.getLocalNumber(activity)));
+      memberAddresses.add(Recipient.self().getId());
 
-      String    groupId        = DatabaseFactory.getGroupDatabase(activity).getOrCreateGroupForMembers(memberAddresses, true);
-      Recipient groupRecipient = Recipient.from(activity, Address.fromSerialized(groupId), true);
-      long      threadId       = DatabaseFactory.getThreadDatabase(activity).getThreadIdFor(groupRecipient, ThreadDatabase.DistributionTypes.DEFAULT);
+      String      groupId          = DatabaseFactory.getGroupDatabase(activity).getOrCreateGroupForMembers(memberAddresses, true);
+      RecipientId groupRecipientId = DatabaseFactory.getRecipientDatabase(activity).getOrInsertFromGroupId(groupId);
+      Recipient   groupRecipient   = Recipient.resolved(groupRecipientId);
+      long        threadId         = DatabaseFactory.getThreadDatabase(activity).getThreadIdFor(groupRecipient, ThreadDatabase.DistributionTypes.DEFAULT);
 
       return new GroupActionResult(groupRecipient, threadId);
     }
@@ -451,7 +452,7 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
         if (!activity.isFinishing()) {
           Intent intent = activity.getIntent();
           intent.putExtra(GROUP_THREAD_EXTRA, result.get().getThreadId());
-          intent.putExtra(GROUP_ADDRESS_EXTRA, result.get().getGroupRecipient().getAddress());
+          intent.putExtra(GROUP_ADDRESS_EXTRA, result.get().getGroupRecipient().requireAddress());
           activity.setResult(RESULT_OK, intent);
           activity.finish();
         }
@@ -494,7 +495,7 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
         if (failIfNotPush && !isPush) {
           results.add(new Result(null, false, activity.getString(R.string.GroupCreateActivity_cannot_add_non_push_to_existing_group,
                                                                  recipient.toShortString())));
-        } else if (TextUtils.equals(TextSecurePreferences.getLocalNumber(activity), recipient.getAddress().serialize())) {
+        } else if (TextUtils.equals(TextSecurePreferences.getLocalNumber(activity), recipient.requireAddress().serialize())) {
           results.add(new Result(null, false, activity.getString(R.string.GroupCreateActivity_youre_already_in_the_group)));
         } else {
           results.add(new Result(recipient, isPush, null));

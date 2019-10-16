@@ -1,13 +1,12 @@
 package su.sres.securesms.sms;
 
-import su.sres.securesms.database.Address;
+import su.sres.securesms.recipients.RecipientId;
 import org.whispersystems.libsignal.util.guava.Optional;
-import su.sres.signalservice.api.messages.SignalServiceGroup;
 
 public class IncomingJoinedMessage extends IncomingTextMessage {
 
-  public IncomingJoinedMessage(Address sender) {
-    super(sender, 1, System.currentTimeMillis(), null, Optional.<SignalServiceGroup>absent(), 0, false);
+  public IncomingJoinedMessage(RecipientId sender) {
+    super(sender, 1, System.currentTimeMillis(), null, Optional.absent(), 0, false);
   }
 
   @Override

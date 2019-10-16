@@ -45,7 +45,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.transport.InsecureFallbackApprovalException;
 import su.sres.securesms.transport.UndeliverableMessageException;
 import su.sres.securesms.util.Hex;
-import su.sres.securesms.util.NumberUtil;
+import su.sres.securesms.phonenumbers.NumberUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 
@@ -221,7 +221,7 @@ public final class MmsSendJob extends SendJob {
   {
     SendReq          req               = new SendReq();
     String           lineNumber        = getMyNumber(context);
-    Address          destination       = message.getRecipient().getAddress();
+    Address          destination       = message.getRecipient().requireAddress();
     MediaConstraints mediaConstraints  = MediaConstraints.getMmsMediaConstraints(message.getSubscriptionId());
     List<Attachment> scaledAttachments = message.getAttachments();
 
@@ -236,9 +236,9 @@ public final class MmsSendJob extends SendJob {
 
       for (Recipient member : members) {
         if (message.getDistributionType() == ThreadDatabase.DistributionTypes.BROADCAST) {
-          req.addBcc(new EncodedStringValue(member.getAddress().serialize()));
+          req.addBcc(new EncodedStringValue(member.requireAddress().serialize()));
         } else {
-          req.addTo(new EncodedStringValue(member.getAddress().serialize()));
+          req.addTo(new EncodedStringValue(member.requireAddress().serialize()));
         }
       }
     } else {

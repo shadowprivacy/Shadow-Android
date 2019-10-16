@@ -1,13 +1,13 @@
 package su.sres.securesms.dependencies;
 
 import android.app.Application;
-import android.content.Context;
 
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.IncomingMessageProcessor;
 import su.sres.securesms.gcm.MessageRetriever;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
+import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.IncomingMessageObserver;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
@@ -32,6 +32,7 @@ public class ApplicationDependencies {
     private static SignalServiceMessageReceiver messageReceiver;
     private static IncomingMessageProcessor     incomingMessageProcessor;
     private static MessageRetriever             messageRetriever;
+    private static LiveRecipientCache           recipientCache;
 
     public static synchronized void init(@NonNull Application application, @NonNull Provider provider) {
         if (ApplicationDependencies.application != null || ApplicationDependencies.provider != null) {
@@ -105,6 +106,16 @@ public class ApplicationDependencies {
         return messageRetriever;
     }
 
+    public static synchronized @NonNull LiveRecipientCache getRecipientCache() {
+        assertInitialization();
+
+        if (recipientCache == null) {
+            recipientCache = provider.provideRecipientCache();
+        }
+
+        return recipientCache;
+    }
+
     private static void assertInitialization() {
         if (application == null || provider == null) {
             throw new UninitializedException();
@@ -118,6 +129,8 @@ public class ApplicationDependencies {
         @NonNull SignalServiceNetworkAccess provideSignalServiceNetworkAccess();
         @NonNull IncomingMessageProcessor provideIncomingMessageProcessor();
         @NonNull MessageRetriever provideMessageRetriever();
+        @NonNull
+        LiveRecipientCache provideRecipientCache();
     }
 
     private static class UninitializedException extends IllegalStateException {

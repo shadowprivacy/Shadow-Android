@@ -35,7 +35,6 @@ import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.attachments.Attachment;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MmsDatabase;
@@ -54,6 +53,7 @@ import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.OutgoingSecureMediaMessage;
 import su.sres.securesms.push.AccountManagerFactory;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -201,9 +201,9 @@ public class MessageSender {
         if (isLocalSelfSend(context, recipient, false)) {
           sendLocalMediaSelf(context, messageId);
         } else if (isGroupPushSend(recipient)) {
-          messageJobs.add(new PushGroupSendJob(messageId, recipient.getAddress(), null));
+          messageJobs.add(new PushGroupSendJob(messageId, recipient.getId(), null));
         } else {
-          messageJobs.add(new PushMediaSendJob(messageId, recipient.getAddress()));
+          messageJobs.add(new PushMediaSendJob(messageId, recipient));
         }
       }
 
@@ -228,9 +228,9 @@ public class MessageSender {
     }
   }
 
-  public static void resendGroupMessage(Context context, MessageRecord messageRecord, Address filterAddress) {
+  public static void resendGroupMessage(Context context, MessageRecord messageRecord, RecipientId filterRecipientId) {
     if (!messageRecord.isMms()) throw new AssertionError("Not Group");
-    sendGroupPush(context, messageRecord.getRecipient(), messageRecord.getId(), filterAddress);
+    sendGroupPush(context, messageRecord.getRecipient(), messageRecord.getId(), filterRecipientId);
   }
 
   public static void resend(Context context, MessageRecord messageRecord) {
@@ -275,22 +275,22 @@ public class MessageSender {
 
   private static void sendTextPush(Context context, Recipient recipient, long messageId) {
     JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
-    jobManager.add(new PushTextSendJob(messageId, recipient.getAddress()));
+    jobManager.add(new PushTextSendJob(messageId, recipient));
   }
 
   private static void sendMediaPush(Context context, Recipient recipient, long messageId) {
     JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
-    PushMediaSendJob.enqueue(context, jobManager, messageId, recipient.getAddress());
+    PushMediaSendJob.enqueue(context, jobManager, messageId, recipient);
   }
 
-  private static void sendGroupPush(Context context, Recipient recipient, long messageId, Address filterAddress) {
+  private static void sendGroupPush(Context context, Recipient recipient, long messageId, RecipientId filterRecipientId) {
     JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
-    PushGroupSendJob.enqueue(context, jobManager, messageId, recipient.getAddress(), filterAddress);
+    PushGroupSendJob.enqueue(context, jobManager, messageId, recipient.getId(), filterRecipientId);
   }
 
   private static void sendSms(Context context, Recipient recipient, long messageId) {
     JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
-    jobManager.add(new SmsSendJob(context, messageId, recipient.getAddress()));
+    jobManager.add(new SmsSendJob(context, messageId, recipient));
   }
 
   private static void sendMms(Context context, long messageId) {
@@ -315,7 +315,7 @@ public class MessageSender {
       return false;
     }
 
-    if (recipient.isGroupRecipient()) {
+    if (recipient.isGroup()) {
       return false;
     }
 
@@ -323,8 +323,8 @@ public class MessageSender {
   }
 
   private static boolean isGroupPushSend(Recipient recipient) {
-    return recipient.getAddress().isGroup() &&
-           !recipient.getAddress().isMmsGroup();
+    return recipient.requireAddress().isGroup() &&
+            !recipient.requireAddress().isMmsGroup();
   }
 
   private static boolean isPushDestination(Context context, Recipient destination) {
@@ -335,13 +335,13 @@ public class MessageSender {
     } else {
       try {
         SignalServiceAccountManager   accountManager = AccountManagerFactory.createManager(context);
-        Optional<ContactTokenDetails> registeredUser = accountManager.getContact(destination.getAddress().serialize());
+        Optional<ContactTokenDetails> registeredUser = accountManager.getContact(destination.requireAddress().serialize());
 
         if (!registeredUser.isPresent()) {
-          DatabaseFactory.getRecipientDatabase(context).setRegistered(destination, RecipientDatabase.RegisteredState.NOT_REGISTERED);
+          DatabaseFactory.getRecipientDatabase(context).setRegistered(destination.getId(), RecipientDatabase.RegisteredState.NOT_REGISTERED);
           return false;
         } else {
-          DatabaseFactory.getRecipientDatabase(context).setRegistered(destination, RecipientDatabase.RegisteredState.REGISTERED);
+          DatabaseFactory.getRecipientDatabase(context).setRegistered(destination.getId(), RecipientDatabase.RegisteredState.REGISTERED);
           return true;
         }
       } catch (IOException e1) {
@@ -365,7 +365,7 @@ public class MessageSender {
       MmsDatabase            mmsDatabase        = DatabaseFactory.getMmsDatabase(context);
       MmsSmsDatabase         mmsSmsDatabase     = DatabaseFactory.getMmsSmsDatabase(context);
       OutgoingMediaMessage   message            = mmsDatabase.getOutgoingMessage(messageId);
-      SyncMessageId          syncId             = new SyncMessageId(Address.fromSerialized(TextSecurePreferences.getLocalNumber(context)), message.getSentTimeMillis());
+      SyncMessageId          syncId             = new SyncMessageId(Recipient.self().getId(), message.getSentTimeMillis());
 
       for (Attachment attachment : message.getAttachments()) {
         attachmentDatabase.markAttachmentUploaded(messageId, attachment);
@@ -392,7 +392,7 @@ public class MessageSender {
       SmsDatabase            smsDatabase       = DatabaseFactory.getSmsDatabase(context);
       MmsSmsDatabase         mmsSmsDatabase    = DatabaseFactory.getMmsSmsDatabase(context);
       SmsMessageRecord       message           = smsDatabase.getMessage(messageId);
-      SyncMessageId          syncId            = new SyncMessageId(Address.fromSerialized(TextSecurePreferences.getLocalNumber(context)), message.getDateSent());
+      SyncMessageId          syncId            = new SyncMessageId(Recipient.self().getId(), message.getDateSent());
 
       smsDatabase.markAsSent(messageId, true);
       smsDatabase.markUnidentified(messageId, true);

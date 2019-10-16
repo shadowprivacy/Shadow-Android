@@ -18,6 +18,7 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.SingleLiveEvent;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -186,9 +187,11 @@ class MediaSendViewModel extends ViewModel {
         buttonState    = (recipient != null) ? ButtonState.SEND : ButtonState.CONTINUE;
 
         if (viewOnceState == ViewOnceState.GONE && viewOnceSupported()) {
-            // TODO[reveal]
-//      viewOnceState = TextSecurePreferences.isRevealableMessageEnabled(application) ? ViewOnceState.ENABLED : ViewOnceState.DISABLED;
-            viewOnceState = ViewOnceState.GONE;
+            if (FeatureFlags.VIEW_ONCE_SENDING) {
+                viewOnceState = TextSecurePreferences.isRevealableMessageEnabled(application) ? ViewOnceState.ENABLED : ViewOnceState.DISABLED;
+            } else {
+                viewOnceState = ViewOnceState.GONE;
+            }
         } else if (!viewOnceSupported()) {
             viewOnceState = ViewOnceState.GONE;
         }
@@ -449,8 +452,7 @@ class MediaSendViewModel extends ViewModel {
     }
 
     boolean isViewOnce() {
-        // TODO[reveal]
-        return false;
+        return FeatureFlags.VIEW_ONCE_SENDING && viewOnceState == ViewOnceState.ENABLED;
     }
 
     private @NonNull List<Media> getSelectedMediaOrDefault() {
@@ -471,8 +473,7 @@ class MediaSendViewModel extends ViewModel {
     }
 
     private HudState buildHudState() {
-        // TODO[reveal]
-        ViewOnceState updatedViewOnceState  = ViewOnceState.GONE;
+        ViewOnceState updatedViewOnceState  = FeatureFlags.VIEW_ONCE_SENDING ? viewOnceState : ViewOnceState.GONE;
         List<Media>   selectedMedia         = getSelectedMediaOrDefault();
         int           selectionCount        = selectedMedia.size();
         ButtonState   updatedButtonState    = buttonState == ButtonState.COUNT && selectionCount == 0 ? ButtonState.GONE : buttonState;

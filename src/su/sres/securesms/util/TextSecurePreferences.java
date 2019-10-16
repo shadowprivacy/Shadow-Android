@@ -187,6 +187,12 @@ public class TextSecurePreferences {
 
   private static final String SEEN_CAMERA_FIRST_TOOLTIP = "pref_seen_camera_first_tooltip";
 
+  private static final String JOB_MANAGER_VERSION = "pref_job_manager_version";
+
+  private static final String APP_MIGRATION_VERSION = "pref_app_migration_version";
+
+  private static final String FIRST_INSTALL_VERSION = "pref_first_install_version";
+
   public static boolean isScreenLockEnabled(@NonNull Context context) {
     return getBooleanPreference(context, SCREEN_LOCK, false);
   }
@@ -1116,6 +1122,30 @@ public class TextSecurePreferences {
 
   public static boolean hasSeendCameraFirstTooltip(Context context) {
     return getBooleanPreference(context, SEEN_CAMERA_FIRST_TOOLTIP, false);
+  }
+
+  public static void setJobManagerVersion(Context context, int version) {
+    setIntegerPrefrence(context, JOB_MANAGER_VERSION, version);
+  }
+
+  public static int getJobManagerVersion(Context contex) {
+    return getIntegerPreference(contex, JOB_MANAGER_VERSION, 1);
+  }
+
+  public static void setAppMigrationVersion(Context context, int version) {
+    setIntegerPrefrence(context, APP_MIGRATION_VERSION, version);
+  }
+
+  public static int getAppMigrationVersion(Context context) {
+    return getIntegerPreference(context, APP_MIGRATION_VERSION, 1);
+  }
+
+  public static void setFirstInstallVersion(Context context, int version) {
+    setIntegerPrefrence(context, FIRST_INSTALL_VERSION, version);
+  }
+
+  public static int getFirstInstallVersion(Context context) {
+    return getIntegerPreference(context, FIRST_INSTALL_VERSION, -1);
   }
 
   public static void setBooleanPreference(Context context, String key, boolean value) {

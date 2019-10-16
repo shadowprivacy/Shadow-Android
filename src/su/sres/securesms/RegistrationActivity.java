@@ -57,6 +57,7 @@ import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.NoExternalStorageException;
+import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.gcm.FcmUtil;
 import su.sres.securesms.jobs.DirectoryRefreshJob;
 import su.sres.securesms.lock.RegistrationLockReminders;
@@ -64,6 +65,7 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.push.AccountManagerFactory;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.registration.CaptchaActivity;
 import su.sres.securesms.registration.PushChallengeRequest;
 import su.sres.securesms.service.DirectoryRefreshListener;
@@ -89,8 +91,6 @@ import su.sres.signalservice.api.util.PhoneNumberFormatter;
 import su.sres.signalservice.internal.push.LockedException;
 
 import java.io.IOException;
-// import java.util.Collections;
-// import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -141,7 +141,6 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
   private VerificationPinKeyboard     keyboard;
   private VerificationCodeView        verificationCodeView;
   private RegistrationState           registrationState;
-  //  private SmsRetrieverReceiver        smsRetrieverReceiver;
   private SignalServiceAccountManager accountManager;
   private int                         debugTapCounter;
 
@@ -155,13 +154,11 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     initializeSpinner();
     initializeNumber();
     initializeBackupDetection();
-//    initializeChallengeListener();
   }
 
   @Override
   public void onDestroy() {
     super.onDestroy();
-//    shutdownChallengeListener();
     markAsVerifying(false);
     EventBus.getDefault().unregister(this);
   }
@@ -179,7 +176,6 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
       if (data.getBooleanExtra(CaptchaActivity.KEY_IS_SMS, true)) {
         handleRegister();
       } else {
-//        handlePhoneCallRequest();
       }
     } else if (requestCode == CAPTCHA) {
       Toast.makeText(this, R.string.RegistrationActivity_failed_to_verify_the_captcha, Toast.LENGTH_LONG).show();
@@ -518,34 +514,6 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     startActivityForResult(CaptchaActivity.getIntent(this, isSms), CAPTCHA);
   }
 
-/*  private void handleVerificationCodeReceived(@Nullable String code) {
-    List<Integer> parsedCode = convertVerificationCodeToDigits(code);
-
-    for (int i = 0; i < parsedCode.size(); i++) {
-      int index = i;
-      verificationCodeView.postDelayed(() -> verificationCodeView.append(parsedCode.get(index)), i * 200);
-    }
-  }
-
-  private List<Integer> convertVerificationCodeToDigits(@Nullable String code) {
-    if (code == null || code.length() != 6 || registrationState.state != RegistrationState.State.VERIFYING) {
-      return Collections.emptyList();
-    }
-
-    List<Integer> result = new LinkedList<>();
-
-    try {
-      for (int i = 0; i < code.length(); i++) {
-        result.add(Integer.parseInt(Character.toString(code.charAt(i))));
-      }
-    } catch (NumberFormatException e) {
-      Log.w(TAG, "Failed to convert code into digits.",e );
-      return Collections.emptyList();
-    }
-
-    return result;
-  } */
-
   @SuppressLint("StaticFieldLeak")
   @Override
   public void onCodeComplete(@NonNull String code) {
@@ -695,19 +663,21 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     TextSecurePreferences.setFcmToken(RegistrationActivity.this, registrationState.gcmToken.orNull());
     TextSecurePreferences.setFcmDisabled(RegistrationActivity.this, !registrationState.gcmToken.isPresent());
     TextSecurePreferences.setWebsocketRegistered(RegistrationActivity.this, true);
+    TextSecurePreferences.setLocalNumber(RegistrationActivity.this, registrationState.e164number);
 
     DatabaseFactory.getIdentityDatabase(RegistrationActivity.this)
-            .saveIdentity(Address.fromSerialized(registrationState.e164number),
+            .saveIdentity(Recipient.self().getId(),
                     identityKey.getPublicKey(), IdentityDatabase.VerifiedStatus.VERIFIED,
                     true, System.currentTimeMillis(), true);
 
     TextSecurePreferences.setVerifying(RegistrationActivity.this, false);
     TextSecurePreferences.setPushRegistered(RegistrationActivity.this, true);
-    TextSecurePreferences.setLocalNumber(RegistrationActivity.this, registrationState.e164number);
     TextSecurePreferences.setPushServerPassword(RegistrationActivity.this, registrationState.password);
     TextSecurePreferences.setSignedPreKeyRegistered(RegistrationActivity.this, true);
     TextSecurePreferences.setPromptedPushRegistration(RegistrationActivity.this, true);
     TextSecurePreferences.setUnauthorizedReceived(RegistrationActivity.this, false);
+    DatabaseFactory.getRecipientDatabase(this).setProfileSharing(Recipient.self().getId(), true);
+    DatabaseFactory.getRecipientDatabase(this).setRegistered(Recipient.self().getId(), RecipientDatabase.RegisteredState.REGISTERED);
   }
 
   private void handleSuccessfulRegistration() {
@@ -917,19 +887,6 @@ public class RegistrationActivity extends BaseActionBarActivity implements Verif
     dialog.setNegativeButton(android.R.string.cancel, null);
     dialog.show();
   }
-
-/*  private void initializeChallengeListener() {
-    smsRetrieverReceiver = new SmsRetrieverReceiver();
-    IntentFilter filter = new IntentFilter(SmsRetriever.SMS_RETRIEVED_ACTION);
-    registerReceiver(smsRetrieverReceiver, filter);
-  }
-
-  private void shutdownChallengeListener() {
-    if (smsRetrieverReceiver != null) {
-      unregisterReceiver(smsRetrieverReceiver);
-      smsRetrieverReceiver = null;
-    }
-  } */
 
   private void markAsVerifying(boolean verifying) {
     TextSecurePreferences.setVerifying(this, verifying);

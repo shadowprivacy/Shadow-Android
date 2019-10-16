@@ -1,5 +1,6 @@
 package su.sres.securesms.components.reminder;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.AsyncTask;
 import androidx.annotation.NonNull;
@@ -9,7 +10,9 @@ import android.view.View.OnClickListener;
 import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.concurrent.SignalExecutors;
 
+@SuppressLint("StaticFieldLeak")
 public class InviteReminder extends Reminder {
 
   public InviteReminder(final @NonNull Context context,
@@ -18,16 +21,8 @@ public class InviteReminder extends Reminder {
     super(context.getString(R.string.reminder_header_invite_title),
           context.getString(R.string.reminder_header_invite_text, recipient.toShortString()));
 
-    setDismissListener(new OnClickListener() {
-      @Override public void onClick(View v) {
-        new AsyncTask<Void,Void,Void>() {
-
-          @Override protected Void doInBackground(Void... params) {
-            DatabaseFactory.getRecipientDatabase(context).setSeenInviteReminder(recipient, true);
-            return null;
-          }
-        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-      }
-    });
+    setDismissListener(v -> SignalExecutors.BOUNDED.execute(() -> {
+      DatabaseFactory.getRecipientDatabase(context).setSeenInviteReminder(recipient.getId(), true);
+    }));
   }
 }

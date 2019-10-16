@@ -22,10 +22,12 @@ import su.sres.securesms.components.emoji.EmojiStrings;
 import su.sres.securesms.contactshare.Contact.Email;
 import su.sres.securesms.contactshare.Contact.Phone;
 import su.sres.securesms.contactshare.Contact.PostalAddress;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
+import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
+import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.SpanUtil;
 import su.sres.securesms.util.Util;
 
@@ -112,8 +114,7 @@ public final class ContactUtil {
   }
 
   public static @NonNull String getNormalizedPhoneNumber(@NonNull Context context, @NonNull String number) {
-    Address address = Address.fromExternal(context, number);
-    return address.serialize();
+    return PhoneNumberFormatter.get(context).format(number);
   }
 
   @MainThread
@@ -122,7 +123,7 @@ public final class ContactUtil {
       CharSequence[] values = new CharSequence[choices.size()];
 
       for (int i = 0; i < values.length; i++) {
-        values[i] = getPrettyPhoneNumber(choices.get(i).getAddress().toPhoneString(), locale);
+        values[i] = getPrettyPhoneNumber(choices.get(i).requireAddress().toPhoneString(), locale);
       }
 
       new AlertDialog.Builder(context)
@@ -134,8 +135,8 @@ public final class ContactUtil {
     }
   }
 
-  public static List<Recipient> getRecipients(@NonNull Context context, @NonNull Contact contact) {
-    return Stream.of(contact.getPhoneNumbers()).map(phone -> Recipient.from(context, Address.fromExternal(context, phone.getNumber()), true)).toList();
+  public static List<RecipientId> getRecipients(@NonNull Context context, @NonNull Contact contact) {
+    return Stream.of(contact.getPhoneNumbers()).map(phone -> Recipient.external(context, phone.getNumber())).map(Recipient::getId).toList();
   }
 
   @WorkerThread

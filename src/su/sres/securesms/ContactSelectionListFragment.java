@@ -16,9 +16,9 @@
  */
 package su.sres.securesms;
 
-
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -37,6 +37,8 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
+
 import com.pnikosis.materialishprogress.ProgressWheel;
 
 import su.sres.securesms.components.RecyclerViewFastScroller;
@@ -44,7 +46,6 @@ import su.sres.securesms.contacts.ContactSelectionListAdapter;
 import su.sres.securesms.contacts.ContactSelectionListItem;
 import su.sres.securesms.contacts.ContactsCursorLoader;
 import su.sres.securesms.contacts.ContactsCursorLoader.DisplayMode;
-import su.sres.securesms.database.CursorRecyclerViewAdapter;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.permissions.Permissions;
@@ -52,6 +53,8 @@ import su.sres.securesms.util.DirectoryHelper;
 import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ViewUtil;
+import su.sres.securesms.util.adapter.FixedViewsAdapter;
+import su.sres.securesms.util.adapter.RecyclerViewConcatenateAdapterStickyHeader;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -64,28 +67,41 @@ import java.util.Set;
  * @author Moxie Marlinspike
  *
  */
-public class ContactSelectionListFragment extends    Fragment
-                                          implements LoaderManager.LoaderCallbacks<Cursor>
+public final class ContactSelectionListFragment extends    Fragment
+        implements LoaderManager.LoaderCallbacks<Cursor>
 {
   @SuppressWarnings("unused")
-  private static final String TAG = ContactSelectionListFragment.class.getSimpleName();
+  private static final String TAG = Log.tag(ContactSelectionListFragment.class);
 
   public static final String DISPLAY_MODE = "display_mode";
   public static final String MULTI_SELECT = "multi_select";
   public static final String REFRESHABLE  = "refreshable";
   public static final String RECENTS      = "recents";
 
-  private TextView                  emptyText;
-  private Set<String>               selectedContacts;
-  private OnContactSelectedListener onContactSelectedListener;
-  private SwipeRefreshLayout        swipeRefresh;
-  private View                      showContactsLayout;
-  private Button                    showContactsButton;
-  private TextView                  showContactsDescription;
-  private ProgressWheel             showContactsProgress;
-  private String                    cursorFilter;
-  private RecyclerView              recyclerView;
-  private RecyclerViewFastScroller  fastScroller;
+    private TextView                    emptyText;
+    private Set<String>                 selectedContacts;
+    private OnContactSelectedListener   onContactSelectedListener;
+    private SwipeRefreshLayout          swipeRefresh;
+    private View                        showContactsLayout;
+    private Button                      showContactsButton;
+    private TextView                    showContactsDescription;
+    private ProgressWheel               showContactsProgress;
+    private String                      cursorFilter;
+    private RecyclerView                recyclerView;
+    private RecyclerViewFastScroller    fastScroller;
+    private ContactSelectionListAdapter cursorRecyclerViewAdapter;
+
+    @Nullable private FixedViewsAdapter footerAdapter;
+    @Nullable private InviteCallback    inviteCallback;
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+
+        if (context instanceof InviteCallback) {
+            inviteCallback = (InviteCallback) context;
+        }
+    }
 
   @Override
   public void onActivityCreated(Bundle icicle) {
@@ -158,14 +174,34 @@ public class ContactSelectionListFragment extends    Fragment
   }
 
   private void initializeCursor() {
-    ContactSelectionListAdapter adapter = new ContactSelectionListAdapter(getActivity(),
-                                                                          GlideApp.with(this),
-                                                                          null,
-                                                                          new ListClickListener(),
-                                                                          isMulti());
-    selectedContacts = adapter.getSelectedContacts();
-    recyclerView.setAdapter(adapter);
-    recyclerView.addItemDecoration(new StickyHeaderDecoration(adapter, true, true));
+      cursorRecyclerViewAdapter = new ContactSelectionListAdapter(requireContext(),
+              GlideApp.with(this),
+              null,
+              new ListClickListener(),
+              isMulti());
+      selectedContacts = cursorRecyclerViewAdapter.getSelectedContacts();
+
+      RecyclerViewConcatenateAdapterStickyHeader concatenateAdapter = new RecyclerViewConcatenateAdapterStickyHeader();
+
+      concatenateAdapter.addAdapter(cursorRecyclerViewAdapter);
+
+// remove the invite button
+
+//      if (inviteCallback != null) {
+//          footerAdapter = new FixedViewsAdapter(createInviteActionView(inviteCallback));
+//          footerAdapter.hide();
+//          concatenateAdapter.addAdapter(footerAdapter);
+//      }
+
+      recyclerView.setAdapter(concatenateAdapter);
+      recyclerView.addItemDecoration(new StickyHeaderDecoration(concatenateAdapter, true, true));
+  }
+
+    private View createInviteActionView(@NonNull InviteCallback inviteCallback) {
+        View view = LayoutInflater.from(requireContext())
+                .inflate(R.layout.contact_selection_invite_action_item, (ViewGroup) requireView(), false);
+        view.setOnClickListener(v -> inviteCallback.onInvite());
+        return view;
   }
 
   private void initializeNoContactsPermission() {
@@ -192,7 +228,7 @@ public class ContactSelectionListFragment extends    Fragment
 
   public void setQueryFilter(String filter) {
     this.cursorFilter = filter;
-    this.getLoaderManager().restartLoader(0, null, this);
+      LoaderManager.getInstance(this).restartLoader(0, null, this);
   }
 
   public void resetQueryFilter() {
@@ -224,9 +260,14 @@ public class ContactSelectionListFragment extends    Fragment
     swipeRefresh.setVisibility(View.VISIBLE);
     showContactsLayout.setVisibility(View.GONE);
 
-    ((CursorRecyclerViewAdapter) recyclerView.getAdapter()).changeCursor(data);
-    emptyText.setText(R.string.contact_selection_group_activity__no_contacts);
-    boolean useFastScroller = (recyclerView.getAdapter().getItemCount() > 20);
+      cursorRecyclerViewAdapter.changeCursor(data);
+
+      if (footerAdapter != null) {
+          footerAdapter.show();
+      }
+
+      emptyText.setText(R.string.contact_selection_group_activity__no_contacts);
+      boolean useFastScroller = data.getCount() > 20;
     recyclerView.setVerticalScrollBarEnabled(!useFastScroller);
     if (useFastScroller) {
       fastScroller.setVisibility(View.VISIBLE);
@@ -239,7 +280,7 @@ public class ContactSelectionListFragment extends    Fragment
 
   @Override
   public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-    ((CursorRecyclerViewAdapter) recyclerView.getAdapter()).changeCursor(null);
+      cursorRecyclerViewAdapter.changeCursor(null);
     fastScroller.setVisibility(View.GONE);
   }
 
@@ -308,5 +349,9 @@ public class ContactSelectionListFragment extends    Fragment
     void onContactSelected(String number);
     void onContactDeselected(String number);
   }
+
+    public interface InviteCallback {
+        void onInvite();
+    }
 
 }

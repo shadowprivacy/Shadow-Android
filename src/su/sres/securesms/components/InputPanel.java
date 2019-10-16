@@ -171,7 +171,7 @@ public class InputPanel extends LinearLayout
 
   public Optional<QuoteModel> getQuote() {
     if (quoteView.getQuoteId() > 0 && quoteView.getVisibility() == View.VISIBLE) {
-      return Optional.of(new QuoteModel(quoteView.getQuoteId(), quoteView.getAuthor().getAddress(), quoteView.getBody(), false, quoteView.getAttachments()));
+      return Optional.of(new QuoteModel(quoteView.getQuoteId(), quoteView.getAuthor().getId(), quoteView.getBody(), false, quoteView.getAttachments()));
     } else {
       return Optional.absent();
     }
@@ -194,6 +194,10 @@ public class InputPanel extends LinearLayout
             : readDimen(R.dimen.message_corner_radius);
 
     this.linkPreview.setCorners(cornerRadius, cornerRadius);
+  }
+
+  public void clickOnComposeInput() {
+    composeText.performClick();
   }
 
   public void setMediaKeyboard(@NonNull MediaKeyboard mediaKeyboard) {

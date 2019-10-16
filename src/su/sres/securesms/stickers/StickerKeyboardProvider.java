@@ -7,9 +7,9 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
-import androidx.appcompat.app.AppCompatActivity;
 import android.widget.ImageView;
 
 import su.sres.securesms.R;
@@ -48,7 +48,7 @@ public final class StickerKeyboardProvider implements MediaKeyboardProvider,
     private boolean                  isSoloProvider;
     private StickerKeyboardViewModel viewModel;
 
-    public StickerKeyboardProvider(@NonNull AppCompatActivity activity,
+    public StickerKeyboardProvider(@NonNull FragmentActivity activity,
                                    @NonNull StickerEventListener eventListener)
     {
         this.context          = activity;
@@ -109,7 +109,7 @@ public final class StickerKeyboardProvider implements MediaKeyboardProvider,
         }
     }
 
-    private void initViewModel(@NonNull AppCompatActivity activity) {
+    private void initViewModel(@NonNull FragmentActivity activity) {
         StickerKeyboardRepository repository = new StickerKeyboardRepository(DatabaseFactory.getStickerDatabase(activity));
         viewModel = ViewModelProviders.of(activity, new StickerKeyboardViewModel.Factory(activity.getApplication(), repository)).get(StickerKeyboardViewModel.class);
 

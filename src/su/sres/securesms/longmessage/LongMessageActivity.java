@@ -25,10 +25,10 @@ import su.sres.securesms.PassphraseRequiredActionBarActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.components.ConversationItemFooter;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.linkpreview.LinkPreviewUtil;
+import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.recipients.RecipientModifiedListener;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -36,11 +36,11 @@ import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.views.Stub;
 
-public class LongMessageActivity extends PassphraseRequiredActionBarActivity implements RecipientModifiedListener {
+public class LongMessageActivity extends PassphraseRequiredActionBarActivity {
 
-    private static final String KEY_ADDRESS    = "address";
-    private static final String KEY_MESSAGE_ID = "message_id";
-    private static final String KEY_IS_MMS     = "is_mms";
+    private static final String KEY_CONVERSATION_RECIPIENT = "recipient_id";
+    private static final String KEY_MESSAGE_ID             = "message_id";
+    private static final String KEY_IS_MMS                 = "is_mms";
 
     private static final int MAX_DISPLAY_LENGTH = 64 * 1024;
 
@@ -52,9 +52,9 @@ public class LongMessageActivity extends PassphraseRequiredActionBarActivity imp
 
     private LongMessageViewModel viewModel;
 
-    public static Intent getIntent(@NonNull Context context, @NonNull Address conversationAddress, long messageId, boolean isMms) {
+    public static Intent getIntent(@NonNull Context context, @NonNull RecipientId conversationRecipient, long messageId, boolean isMms) {
         Intent intent = new Intent(context, LongMessageActivity.class);
-        intent.putExtra(KEY_ADDRESS, conversationAddress.serialize());
+        intent.putExtra(KEY_CONVERSATION_RECIPIENT, conversationRecipient);
         intent.putExtra(KEY_MESSAGE_ID, messageId);
         intent.putExtra(KEY_IS_MMS, isMms);
         return intent;
@@ -77,9 +77,9 @@ public class LongMessageActivity extends PassphraseRequiredActionBarActivity imp
 
         initViewModel(getIntent().getLongExtra(KEY_MESSAGE_ID, -1), getIntent().getBooleanExtra(KEY_IS_MMS, false));
 
-        Recipient conversationRecipient = Recipient.from(this, Address.fromSerialized(getIntent().getStringExtra(KEY_ADDRESS)), true);
-        conversationRecipient.addListener(this);
-        updateActionBarColor(conversationRecipient.getColor());
+        LiveRecipient conversationRecipient = Recipient.live(getIntent().getParcelableExtra(KEY_CONVERSATION_RECIPIENT));
+        conversationRecipient.observe(this, recipient -> updateActionBarColor(recipient.getColor()));
+        updateActionBarColor(conversationRecipient.get().getColor());
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
@@ -102,11 +102,6 @@ public class LongMessageActivity extends PassphraseRequiredActionBarActivity imp
         }
 
         return false;
-    }
-
-    @Override
-    public void onModified(final Recipient recipient) {
-        Util.runOnMain(() -> updateActionBarColor(recipient.getColor()));
     }
 
     private void updateActionBarColor(@NonNull MaterialColor color) {
@@ -135,7 +130,7 @@ public class LongMessageActivity extends PassphraseRequiredActionBarActivity imp
                 getSupportActionBar().setTitle(getString(R.string.LongMessageActivity_your_message));
             } else {
                 Recipient recipient = message.get().getMessageRecord().getRecipient();
-                String    name      = Util.getFirstNonEmpty(recipient.getName(), recipient.getProfileName(), recipient.getAddress().serialize()) ;
+                String    name      = Util.getFirstNonEmpty(recipient.getName(), recipient.getProfileName(), recipient.requireAddress().serialize()) ;
                 getSupportActionBar().setTitle(getString(R.string.LongMessageActivity_message_from_s, name));
             }
 

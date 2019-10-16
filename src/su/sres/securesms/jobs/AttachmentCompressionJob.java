@@ -28,6 +28,8 @@ import su.sres.securesms.transport.UndeliverableMessageException;
 import su.sres.securesms.util.BitmapDecodingException;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.MediaUtil;
+import su.sres.securesms.util.MemoryFileDescriptor;
+import su.sres.securesms.util.MemoryFileDescriptor.MemoryFileException;
 import su.sres.securesms.video.InMemoryTranscoder;
 import su.sres.securesms.video.VideoSizeException;
 import su.sres.securesms.video.VideoSourceException;
@@ -110,7 +112,7 @@ public final class AttachmentCompressionJob extends BaseJob {
         DatabaseAttachment         databaseAttachment = database.getAttachment(attachmentId);
 
         if (databaseAttachment == null) {
-            throw new IllegalStateException("Cannot find the specified attachment.");
+            throw new UndeliverableMessageException("Cannot find the specified attachment.");
         }
 
         MediaConstraints mediaConstraints = mms ? MediaConstraints.getMmsMediaConstraints(mmsSubscriptionId)
@@ -185,7 +187,7 @@ public final class AttachmentCompressionJob extends BaseJob {
                     }
                 }
             }
-        } catch (VideoSourceException | EncodingException e) {
+        } catch (VideoSourceException | EncodingException | MemoryFileException e) {
             if (attachment.getSize() > constraints.getVideoMaxSize(context)) {
                 throw new UndeliverableMessageException("Duration not found, attachment too large to skip transcode", e);
             } else {

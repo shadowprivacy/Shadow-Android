@@ -1,21 +1,22 @@
 package su.sres.securesms.database.model;
 
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.database.Address;
 import su.sres.securesms.mms.SlideDeck;
+import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 
 public class Quote {
 
-  private final long      id;
-  private final Address   author;
-  private final String    text;
-  private final boolean   missing;
-  private final SlideDeck attachment;
+  private final long        id;
+  private final RecipientId author;
+  private final String      text;
+  private final boolean     missing;
+  private final SlideDeck   attachment;
 
-  public Quote(long id, @NonNull Address author, @Nullable String text, boolean missing, @NonNull SlideDeck attachment) {
+  public Quote(long id, @NonNull RecipientId author, @Nullable String text, boolean missing, @NonNull SlideDeck attachment) {
     this.id         = id;
     this.author     = author;
     this.text       = text;
@@ -27,7 +28,7 @@ public class Quote {
     return id;
   }
 
-  public @NonNull Address getAuthor() {
+  public @NonNull RecipientId getAuthor() {
     return author;
   }
 

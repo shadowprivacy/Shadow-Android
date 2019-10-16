@@ -1,12 +1,12 @@
 package su.sres.securesms.database.helpers;
 
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.SystemClock;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.text.TextUtils;
 import su.sres.securesms.database.Address;
 import su.sres.securesms.database.JobDatabase;
@@ -37,8 +37,14 @@ import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.ConfigDatabase;
 import su.sres.securesms.jobs.RefreshPreKeysJob;
 import su.sres.securesms.notifications.NotificationChannels;
+import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.service.KeyCachingService;
+import su.sres.securesms.util.DelimiterUtil;
+import su.sres.securesms.util.GroupUtil;
+import su.sres.securesms.phonenumbers.NumberUtil;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.Util;
 
 import java.io.File;
 
@@ -69,8 +75,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int STICKERS                         = 21;
   private static final int REVEALABLE_MESSAGES              = 22;
   private static final int VIEW_ONCE_ONLY                   = 23;
+  private static final int RECIPIENT_IDS                    = 24;
+  private static final int RECIPIENT_SEARCH                 = 25;
 
-  private static final int    DATABASE_VERSION = 23;
+  private static final int    DATABASE_VERSION = 25;
   private static final String DATABASE_NAME    = "signal.db";
 
   private final Context        context;
@@ -290,18 +298,18 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
         try (Cursor cursor = db.rawQuery("SELECT recipient_ids, system_display_name, signal_profile_name, notification, vibrate FROM recipient_preferences WHERE notification NOT NULL OR vibrate != 0", null)) {
           while (cursor != null && cursor.moveToNext()) {
-            String  addressString   = cursor.getString(cursor.getColumnIndexOrThrow("recipient_ids"));
-            Address address         = Address.fromExternal(context, addressString);
+            String  rawAddress      = cursor.getString(cursor.getColumnIndexOrThrow("recipient_ids"));
+            String  address         = PhoneNumberFormatter.get(context).format(rawAddress);
             String  systemName      = cursor.getString(cursor.getColumnIndexOrThrow("system_display_name"));
             String  profileName     = cursor.getString(cursor.getColumnIndexOrThrow("signal_profile_name"));
             String  messageSound    = cursor.getString(cursor.getColumnIndexOrThrow("notification"));
             Uri     messageSoundUri = messageSound != null ? Uri.parse(messageSound) : null;
             int     vibrateState    = cursor.getInt(cursor.getColumnIndexOrThrow("vibrate"));
-            String  displayName     = NotificationChannels.getChannelDisplayNameFor(context, systemName, profileName, address);
+            String  displayName     = NotificationChannels.getChannelDisplayNameFor(context, systemName, profileName, Address.fromSerialized(address));
             boolean vibrateEnabled  = vibrateState == 0 ? TextSecurePreferences.isNotificationVibrateEnabled(context) : vibrateState == 1;
 
-              if (address.isGroup()) {
-                  try(Cursor groupCursor = db.rawQuery("SELECT title FROM groups WHERE group_id = ?", new String[] { address.toGroupString() })) {
+            if (GroupUtil.isEncodedGroup(address)) {
+              try(Cursor groupCursor = db.rawQuery("SELECT title FROM groups WHERE group_id = ?", new String[] { address })) {
                       if (groupCursor != null && groupCursor.moveToFirst()) {
                           String title = groupCursor.getString(groupCursor.getColumnIndexOrThrow("title"));
 
@@ -312,12 +320,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
                   }
               }
 
-
-              String channelId = NotificationChannels.createChannelFor(context, address, displayName, messageSoundUri, vibrateEnabled);
+            String channelId = NotificationChannels.createChannelFor(context, Address.fromSerialized(address), displayName, messageSoundUri, vibrateEnabled);
 
             ContentValues values = new ContentValues(1);
             values.put("notification_channel", channelId);
-            db.update("recipient_preferences", values, "recipient_ids = ?", new String[] { addressString });
+            db.update("recipient_preferences", values, "recipient_ids = ?", new String[] { rawAddress });
           }
         }
       }
@@ -481,6 +488,31 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL("UPDATE mms SET reveal_start_time = 0");
       }
 
+      if (oldVersion < RECIPIENT_IDS) {
+        RecipientIdMigrationHelper.execute(db);
+      }
+
+      if (oldVersion < RECIPIENT_SEARCH) {
+        db.execSQL("ALTER TABLE recipient ADD COLUMN system_phone_type INTEGER DEFAULT -1");
+
+        String localNumber = TextSecurePreferences.getLocalNumber(context);
+        if (!TextUtils.isEmpty(localNumber)) {
+          try (Cursor cursor = db.query("recipient", null, "phone = ?", new String[] { localNumber }, null, null, null)) {
+            if (cursor == null || !cursor.moveToFirst()) {
+              ContentValues values = new ContentValues();
+              values.put("phone", localNumber);
+              values.put("registered", 1);
+              values.put("profile_sharing", 1);
+              values.put("signal_profile_name", TextSecurePreferences.getProfileName(context));
+              db.insert("recipient", null, values);
+            } else {
+              db.execSQL("UPDATE recipient SET registered = ?, profile_sharing = ?, signal_profile_name = ? WHERE phone = ?",
+                      new String[] { "1", "1", TextSecurePreferences.getProfileName(context), localNumber });
+            }
+          }
+        }
+      }
+
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -501,6 +533,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
   public void markCurrent(SQLiteDatabase db) {
     db.setVersion(DATABASE_VERSION);
+  }
+
+  public static boolean databaseFileExists(@NonNull Context context) {
+    return context.getDatabasePath(DATABASE_NAME).exists();
   }
 
   private void executeStatements(SQLiteDatabase db, String[] statements) {

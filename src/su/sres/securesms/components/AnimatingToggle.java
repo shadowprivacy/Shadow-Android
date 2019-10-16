@@ -41,13 +41,15 @@ public class AnimatingToggle extends FrameLayout {
   public void addView(@NonNull View child, int index, ViewGroup.LayoutParams params) {
     super.addView(child, index, params);
 
-    if (getChildCount() == 1) {
-      current = child;
-      child.setVisibility(View.VISIBLE);
-    } else {
-      child.setVisibility(View.GONE);
+    if (!isInEditMode()) {
+      if (getChildCount() == 1) {
+        current = child;
+        child.setVisibility(View.VISIBLE);
+      } else {
+        child.setVisibility(View.GONE);
+      }
+      child.setClickable(false);
     }
-    child.setClickable(false);
   }
 
   public void display(@Nullable View view) {

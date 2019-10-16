@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -13,6 +12,7 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -84,11 +84,12 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
         if (!record.isMms()) {
           List<String> members = new LinkedList<>();
 
-          for (Address member : record.getMembers()) {
-            members.add(member.serialize());
+          for (RecipientId member : record.getMembers()) {
+            members.add(Recipient.resolved(member).requireAddress().serialize());
           }
 
-          Recipient         recipient       = Recipient.from(context, Address.fromSerialized(GroupUtil.getEncodedId(record.getId(), record.isMms())), false);
+          RecipientId       recipientId     = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(GroupUtil.getEncodedId(record.getId(), record.isMms()));
+          Recipient         recipient       = Recipient.resolved(recipientId);
           Optional<Integer> expirationTimer = recipient.getExpireMessages() > 0 ? Optional.of(recipient.getExpireMessages()) : Optional.absent();
 
           out.write(new DeviceGroup(record.getId(), Optional.fromNullable(record.getTitle()),

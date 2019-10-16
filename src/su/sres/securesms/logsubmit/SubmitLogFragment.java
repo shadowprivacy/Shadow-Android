@@ -58,6 +58,7 @@ import su.sres.securesms.contactshare.SimpleTextWatcher;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.logsubmit.util.Scrubber;
 import su.sres.securesms.util.BucketInfo;
+import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
 
@@ -509,20 +510,19 @@ public class SubmitLogFragment extends Fragment {
     final PackageManager pm      = context.getPackageManager();
     final StringBuilder  builder = new StringBuilder();
 
-
-    builder.append("Time    : ").append(System.currentTimeMillis()).append('\n');
-    builder.append("Device  : ")
-           .append(Build.MANUFACTURER).append(" ")
-           .append(Build.MODEL).append(" (")
-           .append(Build.PRODUCT).append(")\n");
-    builder.append("Android : ").append(VERSION.RELEASE).append(" (")
-                               .append(VERSION.INCREMENTAL).append(", ")
-                               .append(Build.DISPLAY).append(")\n");
-    builder.append("ABIs    : ").append(TextUtils.join(", ", getSupportedAbis())).append("\n");
-    builder.append("Memory  : ").append(getMemoryUsage(context)).append("\n");
-    builder.append("Memclass: ").append(getMemoryClass(context)).append("\n");
-    builder.append("OS Host : ").append(Build.HOST).append("\n");
-    builder.append("App     : ");
+    builder.append("Time         : ").append(System.currentTimeMillis()).append('\n');
+    builder.append("Device       : ").append(Build.MANUFACTURER).append(" ")
+            .append(Build.MODEL).append(" (")
+            .append(Build.PRODUCT).append(")\n");
+    builder.append("Android      : ").append(VERSION.RELEASE).append(" (")
+            .append(VERSION.INCREMENTAL).append(", ")
+            .append(Build.DISPLAY).append(")\n");
+    builder.append("ABIs         : ").append(TextUtils.join(", ", getSupportedAbis())).append("\n");
+    builder.append("Memory       : ").append(getMemoryUsage(context)).append("\n");
+    builder.append("Memclass     : ").append(getMemoryClass(context)).append("\n");
+    builder.append("OS Host      : ").append(Build.HOST).append("\n");
+    builder.append("First Version: ").append(TextSecurePreferences.getFirstInstallVersion(context)).append("\n");
+    builder.append("App          : ");
     try {
       builder.append(pm.getApplicationLabel(pm.getApplicationInfo(context.getPackageName(), 0)))
              .append(" ")

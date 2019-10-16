@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.database.Address;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 
 import su.sres.signalservice.api.util.InvalidNumberException;
 
@@ -22,7 +23,7 @@ public final class GroupManager {
                                                        @Nullable String         name,
                                                                  boolean        mms)
   {
-    Set<Address> addresses = getMemberAddresses(members);
+    Set<RecipientId> addresses = getMemberIds(members);
 
     return V1GroupManager.createGroup(context, addresses, avatar, name, mms);
   }
@@ -34,15 +35,15 @@ public final class GroupManager {
                                               @Nullable String         name)
       throws InvalidNumberException
   {
-    Set<Address> addresses = getMemberAddresses(members);
+    Set<RecipientId> addresses = getMemberIds(members);
 
     return V1GroupManager.updateGroup(context, groupId, addresses, avatar, name);
   }
 
-  private static Set<Address> getMemberAddresses(Collection<Recipient> recipients) {
-    final Set<Address> results = new HashSet<>();
+  private static Set<RecipientId> getMemberIds(Collection<Recipient> recipients) {
+    final Set<RecipientId> results = new HashSet<>();
     for (Recipient recipient : recipients) {
-      results.add(recipient.getAddress());
+      results.add(recipient.getId());
     }
 
     return results;

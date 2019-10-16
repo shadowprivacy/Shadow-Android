@@ -15,6 +15,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.database.model.StickerPackRecord;
 import su.sres.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
 import su.sres.securesms.mms.GlideRequests;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.adapter.SectionedRecyclerViewAdapter;
 import su.sres.securesms.util.adapter.StableIdGenerator;
 
@@ -220,10 +221,9 @@ final class StickerManagementAdapter extends SectionedRecyclerViewAdapter<String
                 actionButtonImage.setImageResource(R.drawable.ic_x);
                 actionButton.setOnClickListener(v -> eventListener.onStickerPackUninstallClicked(stickerPack.getPackId(), stickerPack.getPackKey()));
 
-                // TODO [Stickers]: Re-enable later
-//        shareButton.setVisibility(View.VISIBLE);
-//        shareButtonImage.setVisibility(View.VISIBLE);
-//        shareButton.setOnClickListener(v -> eventListener.onStickerPackShareClicked(stickerPack.getPackId(), stickerPack.getPackKey()));
+                shareButton.setVisibility(View.VISIBLE);
+                shareButtonImage.setVisibility(View.VISIBLE);
+                shareButton.setOnClickListener(v -> eventListener.onStickerPackShareClicked(stickerPack.getPackId(), stickerPack.getPackKey()));
             } else {
                 actionButtonImage.setImageResource(R.drawable.ic_arrow_down);
                 actionButton.setOnClickListener(v -> eventListener.onStickerPackInstallClicked(stickerPack.getPackId(), stickerPack.getPackKey()));
@@ -232,10 +232,6 @@ final class StickerManagementAdapter extends SectionedRecyclerViewAdapter<String
                 shareButtonImage.setVisibility(View.GONE);
                 shareButton.setOnClickListener(null);
             }
-
-            // TODO [Stickers]: Delete later
-            shareButton.setVisibility(View.GONE);
-            shareButtonImage.setVisibility(View.GONE);
 
             itemView.setOnClickListener(v -> eventListener.onStickerPackClicked(stickerPack.getPackId(), stickerPack.getPackKey()));
         }

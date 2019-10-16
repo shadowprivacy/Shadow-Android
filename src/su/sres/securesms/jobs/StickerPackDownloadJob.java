@@ -1,6 +1,7 @@
 package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.core.util.Preconditions;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.database.DatabaseFactory;
@@ -58,6 +59,10 @@ public class StickerPackDownloadJob extends BaseJob  {
                                    boolean isReferencePack)
     {
         super(parameters);
+
+        Preconditions.checkNotNull(packId);
+        Preconditions.checkNotNull(packKey);
+
         this.packId          = packId;
         this.packKey         = packKey;
         this.isReferencePack = isReferencePack;

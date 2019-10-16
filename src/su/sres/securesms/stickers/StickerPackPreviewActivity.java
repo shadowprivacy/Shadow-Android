@@ -28,6 +28,7 @@ import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.stickers.StickerManifest.Sticker;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import org.whispersystems.libsignal.util.Pair;
@@ -147,8 +148,6 @@ public final class StickerPackPreviewActivity extends PassphraseRequiredActionBa
             if (manifest.isPresent()) {
                 presentManifest(manifest.get().getManifest());
                 presentButton(manifest.get().isInstalled());
-                // TODO [Stickers]: Re-enable later
-//        presentShareButton(manifest.get().isInstalled(), manifest.get().getManifest().getPackId(), manifest.get().getManifest().getPackKey());
             } else {
                 presentError();
             }

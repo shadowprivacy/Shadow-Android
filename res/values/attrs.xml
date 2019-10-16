@@ -351,10 +351,23 @@
         <attr name="labeledEditText_textLayout" format="reference" />
     </declare-styleable>
 
-
     <declare-styleable name="ViewOnceMessageView">
         <attr name="revealable_unopenedForegroundColor" format="color" />
         <attr name="revealable_openedForegroundColor" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="MediaKeyboard">
+        <attr name="tabs_gravity" format="enum">
+            <enum name="bottom" value="0" />
+            <enum name="top" value="1" />
+        </attr>
+    </declare-styleable>
+
+
+    <declare-styleable name="CameraXFlashState">
+        <attr name="state_flash_auto" format="boolean" />
+        <attr name="state_flash_off" format="boolean" />
+        <attr name="state_flash_on" format="boolean" />
     </declare-styleable>
 
 </resources>

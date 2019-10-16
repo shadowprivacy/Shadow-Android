@@ -52,12 +52,10 @@ public class PushMediaSendJob extends PushSendJob  {
 
   private static final String KEY_MESSAGE_ID = "message_id";
 
-
-
   private long messageId;
 
-  public PushMediaSendJob(long messageId, Address destination) {
-    this(constructParameters(destination), messageId);
+  public PushMediaSendJob(long messageId, @NonNull Recipient recipient) {
+    this(constructParameters(recipient), messageId);
   }
 
   private PushMediaSendJob(Job.Parameters parameters, long messageId) {
@@ -66,9 +64,9 @@ public class PushMediaSendJob extends PushSendJob  {
   }
 
   @WorkerThread
-  public static void enqueue(@NonNull Context context, @NonNull JobManager jobManager, long messageId, @NonNull Address destination) {
+  public static void enqueue(@NonNull Context context, @NonNull JobManager jobManager, long messageId, @NonNull Recipient recipient) {
     try {
-      if (!destination.isPhone()) {
+      if (!recipient.requireAddress().isPhone()) {
         throw new AssertionError();
       }
 
@@ -76,7 +74,7 @@ public class PushMediaSendJob extends PushSendJob  {
       OutgoingMediaMessage message                     = database.getOutgoingMessage(messageId);
       JobManager.Chain     compressAndUploadAttachment = createCompressingAndUploadAttachmentsChain(jobManager, message);
 
-      compressAndUploadAttachment.then(new PushMediaSendJob(messageId, destination))
+      compressAndUploadAttachment.then(new PushMediaSendJob(messageId, recipient))
               .enqueue();
 
     } catch (NoSuchMessageException | MmsException e) {
@@ -128,7 +126,7 @@ public class PushMediaSendJob extends PushSendJob  {
       database.markUnidentified(messageId, unidentified);
 
       if (recipient.isLocalNumber()) {
-        SyncMessageId id = new SyncMessageId(recipient.getAddress(), message.getSentTimeMillis());
+        SyncMessageId id = new SyncMessageId(recipient.getId(), message.getSentTimeMillis());
         DatabaseFactory.getMmsSmsDatabase(context).incrementDeliveryReceiptCount(id, System.currentTimeMillis());
         DatabaseFactory.getMmsSmsDatabase(context).incrementReadReceiptCount(id, System.currentTimeMillis());
       }
@@ -136,13 +134,13 @@ public class PushMediaSendJob extends PushSendJob  {
       if (TextSecurePreferences.isUnidentifiedDeliveryEnabled(context)) {
         if (unidentified && accessMode == UnidentifiedAccessMode.UNKNOWN && profileKey == null) {
           log(TAG, "Marking recipient as UD-unrestricted following a UD send.");
-          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient, UnidentifiedAccessMode.UNRESTRICTED);
+          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.UNRESTRICTED);
         } else if (unidentified && accessMode == UnidentifiedAccessMode.UNKNOWN) {
           log(TAG, "Marking recipient as UD-enabled following a UD send.");
-          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient, UnidentifiedAccessMode.ENABLED);
+          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.ENABLED);
         } else if (!unidentified && accessMode != UnidentifiedAccessMode.DISABLED) {
           log(TAG, "Marking recipient as UD-disabled following a non-UD send.");
-          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient, UnidentifiedAccessMode.DISABLED);
+          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.DISABLED);
         }
       }
 
@@ -164,7 +162,7 @@ public class PushMediaSendJob extends PushSendJob  {
       ApplicationContext.getInstance(context).getJobManager().add(new DirectoryRefreshJob(false));
     } catch (UntrustedIdentityException uie) {
       warn(TAG, "Failure", uie);
-      database.addMismatchedIdentity(messageId, Address.fromSerialized(uie.getE164Number()), uie.getIdentityKey());
+      database.addMismatchedIdentity(messageId, Recipient.external(context, uie.getE164Number()).getId(), uie.getIdentityKey());
       database.markAsSentFailed(messageId);
     }
   }
@@ -190,7 +188,7 @@ public class PushMediaSendJob extends PushSendJob  {
       throw new UndeliverableMessageException("No destination address.");
     }
 
-    final Address destination = message.getRecipient().getAddress();
+    final Address destination = message.getRecipient().requireAddress();
 
     if (!destination.isPhone()) {
       if (destination.isEmail()) throw new UndeliverableMessageException("Not e164, is email");

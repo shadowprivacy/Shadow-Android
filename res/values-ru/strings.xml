@@ -11,6 +11,10 @@
   <string name="AbstractNotificationBuilder_new_message">Новое сообщение</string>
   <!--AlbumThumbnailView-->
   <string name="AlbumThumbnailView_plus">\+%d</string>
+
+  <!--ApplicationMigrationActivity-->
+  <string name="ApplicationMigrationActivity__signal_is_updating">Shadow обновляется…</string>
+
   <!--ApplicationPreferencesActivity-->
   <string name="ApplicationPreferencesActivity_currently_s">Сейчас: %s</string>
   <string name="ApplicationPreferenceActivity_you_havent_set_a_passphrase_yet">Вы ещё не задали парольную фразу!</string>
@@ -42,8 +46,8 @@
   <string name="ApplicationPreferencesActivity_touch_to_make_signal_your_default_sms_app">Нажмите, чтобы сделать Shadow вашим приложением для SMS по умолчанию</string>
   <string name="ApplicationPreferencesActivity_on">включена</string>
   <string name="ApplicationPreferencesActivity_On">Включено</string>
-  <string name="ApplicationPreferencesActivity_off">выключена</string>
-  <string name="ApplicationPreferencesActivity_Off">Выключено</string>
+  <string name="ApplicationPreferencesActivity_off">отключена</string>
+  <string name="ApplicationPreferencesActivity_Off">Отключено</string>
   <string name="ApplicationPreferencesActivity_sms_mms_summary">SMS %1$s, MMS %2$s</string>
   <string name="ApplicationPreferencesActivity_privacy_summary">Блокировка экрана %1$s, блокировка регистрации %2$s</string>
   <string name="ApplicationPreferencesActivity_appearance_summary">Тема %1$s, язык %2$s</string>
@@ -481,7 +485,7 @@
     <item quantity="one">Вы не можете поделиться больше, чем %d элементом.</item>
     <item quantity="few">Вы не можете поделиться больше, чем %d элементами.</item>
     <item quantity="many">Вы не можете поделиться больше, чем %d элементами.</item>
-    <item quantity="other">Вы не можете поделиться больше, чем %d элементами.</item>
+    <item quantity="other">Вы не можете поделиться более чем %d элементами.</item>
   </plurals>
   <string name="MediaSendActivity_select_recipients_description">Выберите получателей</string>
   <!--MediaRepository-->
@@ -567,7 +571,7 @@
   <string name="RecipientPreferenceActivity_error_leaving_group">Ошибка при выходе из группы</string>
   <string name="RecipientPreferenceActivity_unblock">Разблокировать</string>
   <string name="RecipientPreferenceActivity_enabled">Включено</string>
-  <string name="RecipientPreferenceActivity_disabled">Выключено</string>
+  <string name="RecipientPreferenceActivity_disabled">Отключено</string>
   <string name="RecipientPreferenceActivity_available_once_a_message_has_been_sent_or_received">Доступно после отправки или получения сообщения.</string>
   <!--RecipientProvider-->
   <string name="RecipientProvider_unnamed_group">Безымянная группа</string>
@@ -707,7 +711,7 @@
   <string name="UnknownSenderView_block">Заблокировать</string>
   <string name="UnknownSenderView_share_profile_with_s">Открыть ваш профиль для %s?</string>
   <string name="UnknownSenderView_the_easiest_way_to_share_your_profile_information_is_to_add_the_sender_to_your_contacts">Самый простой способ открыть свой профиль кому-то — добавить отправителя в контакты. Если вы не хотите этого делать, можете открыть профиль и так.</string>
-  <string name="UnknownSenderView_share_profile">Поделиться профилем</string>
+  <string name="UnknownSenderView_share_profile">Открыть профиль</string>
   <!--UntrustedSendDialog-->
   <string name="UntrustedSendDialog_send_message">Отправить сообщение?</string>
   <string name="UntrustedSendDialog_send">Отправить</string>
@@ -850,6 +854,7 @@
   <string name="change_passphrase_activity__repeat_new_passphrase"> Повторите новую парольную фразу</string>
   <!--contact_selection_activity-->
   <string name="contact_selection_activity__enter_name_or_number">Введите имя или номер</string>
+  <string name="contact_selection_activity__invite_to_signal">Пригласить в Shadow</string>
   <!--contact_filter_toolbar-->
   <string name="contact_filter_toolbar__clear_entered_text_description">Стереть введенный текст</string>
   <string name="contact_filter_toolbar__show_keyboard_description">Показать клавиатуру</string>
@@ -895,8 +900,7 @@
   <!--conversation_item_received-->
   <string name="conversation_item_received__contact_photo_description">Фотография контакта</string>
   <!--audio_view-->
-  <string name="audio_view__play_accessibility_description">Воспроизвести</string>
-  <string name="audio_view__pause_accessibility_description">Пауза</string>
+  <string name="audio_view__play_pause_accessibility_description">Воспроизведение … Пауза</string>
   <string name="audio_view__download_accessibility_description">Скачать</string>
   <!--QuoteView-->
   <string name="QuoteView_audio">Аудио</string>
@@ -924,7 +928,7 @@
   <string name="experience_upgrade_preference_fragment__optionally_see_and_share_when_messages_have_been_read">При желании вы можете видеть и показывать другим, когда сообщения были прочитаны.</string>
   <string name="experience_upgrade_preference_fragment__enable_read_receipts">Включить уведомления о прочтении</string>
   <!--expiration-->
-  <string name="expiration_off">Выключено</string>
+  <string name="expiration_off">Отключено</string>
   <plurals name="expiration_seconds">
     <item quantity="one">%d секунда</item>
     <item quantity="few">%d секунды</item>
@@ -1005,8 +1009,7 @@
   <string name="database_migration_activity__import">Импортировать</string>
   <string name="database_migration_activity__this_could_take_a_moment_please_be_patient">Это может занять некоторое время. Пожалуйста, наберитесь терпения, мы сообщим вам, когда импорт завершится.</string>
   <string name="database_migration_activity__importing">ИДЁТ ИМПОРТ</string>
-  <!--application_migration_activity-->
-  <string name="database_upgrade_activity__updating_database">Обновляем базу данных…</string>
+
   <string name="import_fragment__import_system_sms_database">Импорт системной базы SMS</string>
   <string name="import_fragment__import_the_database_from_the_default_system">Импортировать сообщения из системного SMS-приложения.</string>
   <string name="import_fragment__import_plaintext_backup">Импорт незашифрованной резервной копии</string>
@@ -1244,7 +1247,7 @@
   <string name="preferences_communication__sealed_sender_display_indicators">Показывать индикаторы</string>
   <string name="preferences_communication__sealed_sender_display_indicators_description">Показывать значок в «Подробностях сообщения» для сообщений, доставленных с использованием скрытого отправителя.</string>
   <string name="preferences_communication__sealed_sender_allow_from_anyone">Разрешить от всех</string>
-  <string name="preferences_communication__sealed_sender_allow_from_anyone_description">Разрешить скрытого отправителя для входящих сообщений от людей, которых нет в ваших контактах и с кем вы еще не делились профилем.</string>
+  <string name="preferences_communication__sealed_sender_allow_from_anyone_description">Разрешить скрытого отправителя для входящих сообщений от людей, которых нет в ваших контактах и кому вы ещё не открывали свой профиль.</string>
   <string name="preferences_communication__sealed_sender_learn_more">Узнать больше</string>
   <!--****************************************-->
   <!--menus-->
@@ -1277,6 +1280,7 @@
   <string name="conversation_list_batch_unarchive__menu_unarchive_selected">Разархивировать выбранное</string>
   <!--conversation_list-->
   <string name="conversation_list_settings_shortcut">Ярлык настроек</string>
+  <string name="conversation_list_search_description">Поиск</string>
   <!--conversation_list_item_view-->
   <string name="conversation_list_item_view__contact_photo_image">Фотография контакта</string>
   <string name="conversation_list_item_view__archived">В архиве</string>

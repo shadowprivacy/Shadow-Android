@@ -1,13 +1,10 @@
 package su.sres.securesms.jobs;
 
-
-import android.app.Application;
 import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
@@ -17,6 +14,7 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.service.IncomingMessageObserver;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.IdentityUtil;
@@ -37,15 +35,13 @@ import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeExcept
 import java.io.IOException;
 import java.util.List;
 
-
-
 public class RetrieveProfileJob extends BaseJob  {
 
   public static final String KEY = "RetrieveProfileJob";
 
   private static final String TAG = RetrieveProfileJob.class.getSimpleName();
 
-  private static final String KEY_ADDRESS = "address";
+  private static final String KEY_RECIPIENT = "recipient";
 
   private final Recipient recipient;
 
@@ -65,7 +61,7 @@ public class RetrieveProfileJob extends BaseJob  {
 
   @Override
   public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_ADDRESS, recipient.getAddress().serialize()).build();
+    return new Data.Builder().putString(KEY_RECIPIENT, recipient.getId().serialize()).build();
   }
 
   @Override
@@ -75,8 +71,8 @@ public class RetrieveProfileJob extends BaseJob  {
 
   @Override
   public void onRun() throws IOException {
-    if (recipient.isGroupRecipient()) handleGroupRecipient(recipient);
-    else                              handleIndividualRecipient(recipient);
+    if (recipient.isGroup()) handleGroupRecipient(recipient);
+    else                     handleIndividualRecipient(recipient);
   }
 
   @Override
@@ -88,12 +84,12 @@ public class RetrieveProfileJob extends BaseJob  {
   public void onCanceled() {}
 
   private void handleIndividualRecipient(Recipient recipient) throws IOException {
-    if (recipient.getAddress().isPhone()) handlePhoneNumberRecipient(recipient);
+    if (recipient.requireAddress().isPhone()) handlePhoneNumberRecipient(recipient);
     else                                  Log.w(TAG, "Skipping fetching profile of non-phone recipient");
   }
 
   private void handlePhoneNumberRecipient(Recipient recipient) throws IOException {
-    String                       number             = recipient.getAddress().toPhoneString();
+    String                       number             = recipient.requireAddress().toPhoneString();
     Optional<UnidentifiedAccess> unidentifiedAccess = getUnidentifiedAccess(recipient);
 
     SignalServiceProfile profile;
@@ -116,7 +112,7 @@ public class RetrieveProfileJob extends BaseJob  {
   }
 
   private void handleGroupRecipient(Recipient group) throws IOException {
-    List<Recipient> recipients = DatabaseFactory.getGroupDatabase(context).getGroupMembers(group.getAddress().toGroupString(), false);
+    List<Recipient> recipients = DatabaseFactory.getGroupDatabase(context).getGroupMembers(group.requireAddress().toGroupString(), false);
 
     for (Recipient recipient : recipients) {
       handleIndividualRecipient(recipient);
@@ -153,14 +149,14 @@ public class RetrieveProfileJob extends BaseJob  {
       IdentityKey identityKey = new IdentityKey(Base64.decode(identityKeyValue), 0);
 
       if (!DatabaseFactory.getIdentityDatabase(context)
-                          .getIdentity(recipient.getAddress())
+              .getIdentity(recipient.getId())
                           .isPresent())
       {
         Log.w(TAG, "Still first use...");
         return;
       }
 
-      IdentityUtil.saveIdentity(context, recipient.getAddress().toPhoneString(), identityKey);
+      IdentityUtil.saveIdentity(context, recipient.requireAddress().toPhoneString(), identityKey);
     } catch (InvalidKeyException | IOException e) {
       Log.w(TAG, e);
     }
@@ -172,10 +168,10 @@ public class RetrieveProfileJob extends BaseJob  {
 
     if (unrestrictedUnidentifiedAccess && unidentifiedAccessVerifier != null) {
       Log.i(TAG, "Marking recipient UD status as unrestricted.");
-      recipientDatabase.setUnidentifiedAccessMode(recipient, UnidentifiedAccessMode.UNRESTRICTED);
+      recipientDatabase.setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.UNRESTRICTED);
     } else if (profileKey == null || unidentifiedAccessVerifier == null) {
       Log.i(TAG, "Marking recipient UD status as disabled.");
-      recipientDatabase.setUnidentifiedAccessMode(recipient, UnidentifiedAccessMode.DISABLED);
+      recipientDatabase.setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.DISABLED);
     } else {
       ProfileCipher profileCipher = new ProfileCipher(profileKey);
       boolean verifiedUnidentifiedAccess;
@@ -189,7 +185,7 @@ public class RetrieveProfileJob extends BaseJob  {
 
       UnidentifiedAccessMode mode = verifiedUnidentifiedAccess ? UnidentifiedAccessMode.ENABLED : UnidentifiedAccessMode.DISABLED;
       Log.i(TAG, "Marking recipient UD status as " + mode.name() + " after verification.");
-      recipientDatabase.setUnidentifiedAccessMode(recipient, mode);
+      recipientDatabase.setUnidentifiedAccessMode(recipient.getId(), mode);
     }
   }
 
@@ -206,7 +202,7 @@ public class RetrieveProfileJob extends BaseJob  {
       }
 
       if (!Util.equals(plaintextProfileName, recipient.getProfileName())) {
-        DatabaseFactory.getRecipientDatabase(context).setProfileName(recipient, plaintextProfileName);
+        DatabaseFactory.getRecipientDatabase(context).setProfileName(recipient.getId(), plaintextProfileName);
       }
     } catch (InvalidCiphertextException | IOException e) {
       Log.w(TAG, e);
@@ -235,15 +231,9 @@ public class RetrieveProfileJob extends BaseJob  {
 
   public static final class Factory implements Job.Factory<RetrieveProfileJob> {
 
-    private final Application application;
-
-    public Factory(Application application) {
-      this.application = application;
-    }
-
     @Override
     public @NonNull RetrieveProfileJob create(@NonNull Parameters parameters, @NonNull Data data) {
-      return new RetrieveProfileJob(parameters, Recipient.from(application, Address.fromSerialized(data.getString(KEY_ADDRESS)), true));
+      return new RetrieveProfileJob(parameters, Recipient.resolved(RecipientId.from(data.getString(KEY_RECIPIENT))));
     }
   }
 }

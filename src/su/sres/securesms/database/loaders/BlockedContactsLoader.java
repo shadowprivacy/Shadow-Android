@@ -14,8 +14,6 @@ public class BlockedContactsLoader extends AbstractCursorLoader {
 
   @Override
   public Cursor getCursor() {
-    return DatabaseFactory.getRecipientDatabase(getContext())
-                          .getBlocked();
+    return DatabaseFactory.getRecipientDatabase(getContext()).getBlocked();
   }
-
 }

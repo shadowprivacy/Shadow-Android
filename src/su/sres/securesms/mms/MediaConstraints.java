@@ -4,7 +4,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import su.sres.securesms.logging.Log;
 import android.util.Pair;
 
@@ -12,6 +11,7 @@ import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.util.BitmapDecodingException;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.MediaUtil;
+import su.sres.securesms.util.MemoryFileDescriptor;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,7 +75,7 @@ public abstract class MediaConstraints {
   }
 
   public static boolean isVideoTranscodeAvailable() {
-    return Build.VERSION.SDK_INT >= 26;
+    return Build.VERSION.SDK_INT >= 26 && MemoryFileDescriptor.supported();
 
   }
 }

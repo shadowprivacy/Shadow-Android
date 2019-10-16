@@ -62,9 +62,7 @@ final class UriGlideRenderer implements Renderer {
                 try {
                     Bitmap bitmap = getBitmapGlideRequest(rendererContext.context, false).submit().get();
                     setBitmap(rendererContext, bitmap);
-                } catch (ExecutionException e) {
-                    throw new RuntimeException(e);
-                } catch (InterruptedException e) {
+                } catch (ExecutionException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             } else {
@@ -72,6 +70,7 @@ final class UriGlideRenderer implements Renderer {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                         setBitmap(rendererContext, resource);
+                        rendererContext.invalidate.onInvalidate(UriGlideRenderer.this);
                     }
 
                     @Override
@@ -98,7 +97,7 @@ final class UriGlideRenderer implements Renderer {
             paint.setAlpha(alpha);
 
             rendererContext.restore();
-        } else {
+        } else if (rendererContext.isBlockingLoad()) {
             // If failed to load, we draw a black out, in case image was sticker positioned to cover private info.
             rendererContext.canvas.drawRect(Bounds.FULL_BOUNDS, paint);
         }
