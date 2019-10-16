@@ -1,6 +1,5 @@
 package su.sres.securesms.components.webrtc;
 
-
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ArgbEvaluator;
@@ -8,7 +7,6 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
-import android.provider.Settings;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -25,6 +23,7 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.R;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.util.AccessibilityUtil;
 import su.sres.securesms.util.ServiceUtil;
 
 import su.sres.securesms.R;
@@ -267,7 +266,7 @@ public final class WebRtcAnswerDeclineButton extends LinearLayout implements Acc
     }
 
     private void animateElements(int delay) {
-      if (areAnimationsDisabled()) return;
+      if (AccessibilityUtil.areAnimationsDisabled(getContext())) return;
       ObjectAnimator fabUp    = getUpAnimation(answer);
       ObjectAnimator fabDown  = getDownAnimation(answer);
       ObjectAnimator fabShake = getShakeAnimation(answer);
@@ -300,11 +299,6 @@ public final class WebRtcAnswerDeclineButton extends LinearLayout implements Acc
 
       animatorSet.setStartDelay(delay);
       animatorSet.start();
-    }
-
-    private boolean areAnimationsDisabled() {
-      return Settings.Global.getFloat(getContext().getContentResolver(),
-              Settings.Global.ANIMATOR_DURATION_SCALE, 1) == 0f;
     }
 
     private void resetElements() {

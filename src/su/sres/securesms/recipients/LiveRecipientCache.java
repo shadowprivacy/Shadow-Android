@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.RecipientDatabase.MissingRecipientError;
 import su.sres.securesms.util.LRUCache;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.concurrent.SignalExecutors;
@@ -44,7 +45,16 @@ public final class LiveRecipientCache {
             final LiveRecipient newLive = new LiveRecipient(context, new MutableLiveData<>(), new Recipient(id));
 
             recipients.put(id, newLive);
-            SignalExecutors.BOUNDED.execute(newLive::resolve);
+
+            MissingRecipientError prettyStackTraceError = new MissingRecipientError(newLive.getId());
+
+            SignalExecutors.BOUNDED.execute(() -> {
+                try {
+                    newLive.resolve();
+                } catch (MissingRecipientError e) {
+                    throw prettyStackTraceError;
+                }
+            });
 
             live = newLive;
         }
@@ -52,9 +62,11 @@ public final class LiveRecipientCache {
         return live;
     }
 
-    synchronized @NonNull Recipient getSelf() {
-        if (localRecipientId == null) {
-            localRecipientId = recipientDatabase.getOrInsertFromE164(TextSecurePreferences.getLocalNumber(context));
+    @NonNull Recipient getSelf() {
+        synchronized (this) {
+            if (localRecipientId == null) {
+                localRecipientId = recipientDatabase.getOrInsertFromE164(TextSecurePreferences.getLocalNumber(context));
+            }
         }
 
         return getLive(localRecipientId).resolve();

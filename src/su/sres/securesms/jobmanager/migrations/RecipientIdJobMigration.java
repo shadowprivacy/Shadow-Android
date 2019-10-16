@@ -47,8 +47,8 @@ public class RecipientIdJobMigration extends JobMigration {
     }
 
     private @NonNull JobData migrateMultiDeviceContactUpdateJob(@NonNull JobData jobData) {
-        String  address     = jobData.getData().getString("address");
-        Data    updatedData = new Data.Builder().putString("recipient", Recipient.external(application, address).getId().serialize())
+        String  address     = jobData.getData().hasString("address") ? jobData.getData().getString("address") : null;
+        Data    updatedData = new Data.Builder().putString("recipient", address != null ? Recipient.external(application, address).getId().serialize() : null)
                 .putBoolean("force_sync", jobData.getData().getBoolean("force_sync"))
                 .build();
 
@@ -73,7 +73,9 @@ public class RecipientIdJobMigration extends JobMigration {
     private @NonNull JobData migrateRequestGroupInfoJob(@NonNull JobData jobData) {
         String    address     = jobData.getData().getString("source");
         Recipient recipient   = Recipient.external(application, address);
-        Data      updatedData = new Data.Builder().putString("source", recipient.getId().serialize()).build();
+        Data      updatedData = new Data.Builder().putString("source", recipient.getId().serialize())
+                .putString("group_id", jobData.getData().getString("group_id"))
+                .build();
 
         return jobData.withData(updatedData);
     }
@@ -81,7 +83,10 @@ public class RecipientIdJobMigration extends JobMigration {
     private @NonNull JobData migrateSendDeliveryReceiptJob(@NonNull JobData jobData) {
         String    address     = jobData.getData().getString("address");
         Recipient recipient   = Recipient.external(application, address);
-        Data      updatedData = new Data.Builder().putString("recipient", recipient.getId().serialize()).build();
+        Data      updatedData = new Data.Builder().putString("recipient", recipient.getId().serialize())
+                .putLong("message_id", jobData.getData().getLong("message_id"))
+                .putLong("timestamp", jobData.getData().getLong("timestamp"))
+                .build();
 
         return jobData.withData(updatedData);
     }
@@ -109,7 +114,7 @@ public class RecipientIdJobMigration extends JobMigration {
     private @NonNull JobData migratePushGroupSendJob(@NonNull JobData jobData) {
         // noinspection ConstantConditions
         Recipient   queueRecipient = Recipient.external(application, jobData.getQueueKey());
-        String      address        = jobData.getData().getString("filter_address");
+        String      address        = jobData.getData().hasString("filter_address") ? jobData.getData().getString("filter_address") : null;
         RecipientId recipientId    = address != null ? Recipient.external(application, address).getId() : null;
         Data        updatedData    = new Data.Builder().putString("filter_recipient", recipientId != null ? recipientId.serialize() : null)
                 .putLong("message_id", jobData.getData().getLong("message_id"))
@@ -130,7 +135,7 @@ public class RecipientIdJobMigration extends JobMigration {
     }
 
     private @NonNull JobData migrateDirectoryRefreshJob(@NonNull JobData jobData) {
-        String    address     = jobData.getData().getString("address");
+        String    address     = jobData.getData().hasString("address") ? jobData.getData().getString("address") : null;
         Recipient recipient   = address != null ? Recipient.external(application, address) : null;
         Data      updatedData = new Data.Builder().putString("recipient", recipient != null ? recipient.getId().serialize() : null)
                 .putBoolean("notify_of_new_users", jobData.getData().getBoolean("notify_of_new_users"))
@@ -188,8 +193,12 @@ public class RecipientIdJobMigration extends JobMigration {
 
     private @NonNull JobData migrateSmsSendJob(@NonNull JobData jobData) {
         //noinspection ConstantConditions
-        Recipient recipient = Recipient.external(application, jobData.getQueueKey());
-        return jobData.withQueueKey(recipient.getId().toQueueKey());
+        if (jobData.getQueueKey() != null) {
+            Recipient recipient = Recipient.external(application, jobData.getQueueKey());
+            return jobData.withQueueKey(recipient.getId().toQueueKey());
+        } else {
+            return jobData;
+        }
     }
 
     @VisibleForTesting

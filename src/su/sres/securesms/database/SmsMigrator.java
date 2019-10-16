@@ -183,9 +183,10 @@ public class SmsMigrator {
       statement = ourSmsDatabase.createInsertStatement(transaction);
 
       while (cursor != null && cursor.moveToNext()) {
-        int typeColumn = cursor.getColumnIndex(SmsDatabase.TYPE);
+        int addressColumn = cursor.getColumnIndexOrThrow(SystemColumns.ADDRESS);
+        int typeColumn    = cursor.getColumnIndex(SmsDatabase.TYPE);
 
-        if (cursor.isNull(typeColumn) || isAppropriateTypeForMigration(cursor, typeColumn)) {
+        if (!cursor.isNull(addressColumn) && (cursor.isNull(typeColumn) || isAppropriateTypeForMigration(cursor, typeColumn))) {
           getContentValuesForRow(context, cursor, ourThreadId, statement);
           statement.execute();
         }
@@ -220,7 +221,7 @@ public class SmsMigrator {
       while (cursor != null && cursor.moveToNext()) {
         long                theirThreadId   = cursor.getLong(cursor.getColumnIndexOrThrow("_id"));
         String              theirRecipients = cursor.getString(cursor.getColumnIndexOrThrow("recipient_ids"));
-        Set<Recipient>     ourRecipients   = getOurRecipients(context, theirRecipients);
+        Set<Recipient>      ourRecipients   = getOurRecipients(context, theirRecipients);
         ProgressDescription progress        = new ProgressDescription(cursor.getCount(), cursor.getPosition(), 100, 0);
 
         if (ourRecipients != null) {

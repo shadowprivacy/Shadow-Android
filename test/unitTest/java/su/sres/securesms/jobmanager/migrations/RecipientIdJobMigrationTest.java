@@ -9,9 +9,24 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import su.sres.securesms.jobmanager.Data;
+import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobMigration.JobData;
 import su.sres.securesms.jobmanager.migrations.RecipientIdJobMigration.NewSerializableSyncMessageId;
 import su.sres.securesms.jobmanager.migrations.RecipientIdJobMigration.OldSerializableSyncMessageId;
+import su.sres.securesms.jobs.DirectoryRefreshJob;
+import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
+import su.sres.securesms.jobs.MultiDeviceReadUpdateJob;
+import su.sres.securesms.jobs.MultiDeviceVerifiedUpdateJob;
+import su.sres.securesms.jobs.MultiDeviceViewOnceOpenJob;
+import su.sres.securesms.jobs.PushGroupSendJob;
+import su.sres.securesms.jobs.PushGroupUpdateJob;
+import su.sres.securesms.jobs.PushMediaSendJob;
+import su.sres.securesms.jobs.PushTextSendJob;
+import su.sres.securesms.jobs.RequestGroupInfoJob;
+import su.sres.securesms.jobs.RetrieveProfileAvatarJob;
+import su.sres.securesms.jobs.RetrieveProfileJob;
+import su.sres.securesms.jobs.SendDeliveryReceiptJob;
+import su.sres.securesms.jobs.SmsSendJob;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.JsonUtils;
@@ -28,12 +43,13 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ Recipient.class })
+@PrepareForTest({ Recipient.class, Job.Parameters.class })
 public class RecipientIdJobMigrationTest {
 
     @Before
     public void init() {
         mockStatic(Recipient.class);
+        mockStatic(Job.Parameters.class);
     }
 
     @Test
@@ -49,6 +65,8 @@ public class RecipientIdJobMigrationTest {
         assertFalse(converted.getData().getBoolean("force_sync"));
         assertFalse(converted.getData().hasString("address"));
         assertEquals("1", converted.getData().getString("recipient"));
+
+        new MultiDeviceContactUpdateJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
@@ -63,11 +81,15 @@ public class RecipientIdJobMigrationTest {
         assertEquals("MultiDeviceRevealUpdateJob", converted.getFactoryKey());
         assertNull(converted.getQueueKey());
         assertEquals(JsonUtils.toJson(new NewSerializableSyncMessageId("1", 1)), converted.getData().getString("message_id"));
+
+        new MultiDeviceViewOnceOpenJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
     public void migrate_requestGroupInfoJob() throws Exception {
-        JobData testData = new JobData("RequestGroupInfoJob", null, new Data.Builder().putString("source", "+16101234567").build());
+        JobData testData = new JobData("RequestGroupInfoJob", null, new Data.Builder().putString("source", "+16101234567")
+                .putString("group_id", "__textsecure_group__!abcd")
+                .build());
         mockRecipientResolve("+16101234567", 1);
 
         RecipientIdJobMigration subject   = new RecipientIdJobMigration(mock(Application.class));
@@ -76,11 +98,17 @@ public class RecipientIdJobMigrationTest {
         assertEquals("RequestGroupInfoJob", converted.getFactoryKey());
         assertNull(converted.getQueueKey());
         assertEquals("1", converted.getData().getString("source"));
+        assertEquals("__textsecure_group__!abcd", converted.getData().getString("group_id"));
+
+        new RequestGroupInfoJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
     public void migrate_sendDeliveryReceiptJob() throws Exception {
-        JobData testData = new JobData("SendDeliveryReceiptJob", null, new Data.Builder().putString("address", "+16101234567").build());
+        JobData testData = new JobData("SendDeliveryReceiptJob", null, new Data.Builder().putString("address", "+16101234567")
+                .putLong("message_id", 1)
+                .putLong("timestamp", 2)
+                .build());
         mockRecipientResolve("+16101234567", 1);
 
         RecipientIdJobMigration subject   = new RecipientIdJobMigration(mock(Application.class));
@@ -89,12 +117,16 @@ public class RecipientIdJobMigrationTest {
         assertEquals("SendDeliveryReceiptJob", converted.getFactoryKey());
         assertNull(converted.getQueueKey());
         assertEquals("1", converted.getData().getString("recipient"));
+        assertEquals(1, converted.getData().getLong("message_id"));
+        assertEquals(2, converted.getData().getLong("timestamp"));
+
+        new SendDeliveryReceiptJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
     public void migrate_multiDeviceVerifiedUpdateJob() throws Exception {
         JobData testData = new JobData("MultiDeviceVerifiedUpdateJob", "__MULTI_DEVICE_VERIFIED_UPDATE__", new Data.Builder().putString("destination", "+16101234567")
-                .putString("identity_key", "abc")
+                .putString("identity_key", "abcd")
                 .putInt("verified_status", 1)
                 .putLong("timestamp", 123)
                 .build());
@@ -105,10 +137,12 @@ public class RecipientIdJobMigrationTest {
 
         assertEquals("MultiDeviceVerifiedUpdateJob", converted.getFactoryKey());
         assertEquals("__MULTI_DEVICE_VERIFIED_UPDATE__", converted.getQueueKey());
-        assertEquals("abc", converted.getData().getString("identity_key"));
+        assertEquals("abcd", converted.getData().getString("identity_key"));
         assertEquals(1, converted.getData().getInt("verified_status"));
         assertEquals(123, converted.getData().getLong("timestamp"));
         assertEquals("1", converted.getData().getString("destination"));
+
+        new MultiDeviceVerifiedUpdateJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
@@ -122,6 +156,8 @@ public class RecipientIdJobMigrationTest {
         assertEquals("RetrieveProfileJob", converted.getFactoryKey());
         assertNull(converted.getQueueKey());
         assertEquals("1", converted.getData().getString("recipient"));
+
+        new RetrieveProfileJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
@@ -138,6 +174,8 @@ public class RecipientIdJobMigrationTest {
         assertEquals(RecipientId.from(5).toQueueKey(), converted.getQueueKey());
         assertNull(converted.getData().getString("filter_recipient"));
         assertFalse(converted.getData().hasString("filter_address"));
+
+        new PushGroupSendJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
@@ -155,11 +193,15 @@ public class RecipientIdJobMigrationTest {
         assertEquals(RecipientId.from(5).toQueueKey(), converted.getQueueKey());
         assertEquals("1", converted.getData().getString("filter_recipient"));
         assertFalse(converted.getData().hasString("filter_address"));
+
+        new PushGroupSendJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
     public void migrate_pushGroupUpdateJob() throws Exception {
-        JobData testData = new JobData("PushGroupUpdateJob", null, new Data.Builder().putString("source", "+16101234567").putString("group_id", "abc").build());
+        JobData testData = new JobData("PushGroupUpdateJob", null, new Data.Builder().putString("source", "+16101234567")
+                .putString("group_id", "__textsecure_group__!abcd")
+                .build());
         mockRecipientResolve("+16101234567", 1);
 
         RecipientIdJobMigration subject   = new RecipientIdJobMigration(mock(Application.class));
@@ -168,7 +210,9 @@ public class RecipientIdJobMigrationTest {
         assertEquals("PushGroupUpdateJob", converted.getFactoryKey());
         assertNull(converted.getQueueKey());
         assertEquals("1", converted.getData().getString("source"));
-        assertEquals("abc", converted.getData().getString("group_id"));
+        assertEquals("__textsecure_group__!abcd", converted.getData().getString("group_id"));
+
+        new PushGroupUpdateJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
@@ -183,6 +227,8 @@ public class RecipientIdJobMigrationTest {
         assertNull(converted.getData().getString("recipient"));
         assertTrue(converted.getData().getBoolean("notify_of_new_users"));
         assertFalse(converted.getData().hasString("address"));
+
+        new DirectoryRefreshJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
@@ -198,6 +244,8 @@ public class RecipientIdJobMigrationTest {
         assertTrue(converted.getData().getBoolean("notify_of_new_users"));
         assertEquals("1", converted.getData().getString("recipient"));
         assertFalse(converted.getData().hasString("address"));
+
+        new DirectoryRefreshJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
@@ -211,6 +259,8 @@ public class RecipientIdJobMigrationTest {
         assertEquals("RetrieveProfileAvatarJob", converted.getFactoryKey());
         assertEquals("RetrieveProfileAvatarJob::" + RecipientId.from(1).toQueueKey(), converted.getQueueKey());
         assertEquals("1", converted.getData().getString("recipient"));
+
+        new RetrieveProfileAvatarJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
@@ -223,6 +273,8 @@ public class RecipientIdJobMigrationTest {
         assertEquals("MultiDeviceReadUpdateJob", converted.getFactoryKey());
         assertNull(converted.getQueueKey());
         assertEquals(0, converted.getData().getStringArray("message_ids").length);
+
+        new MultiDeviceReadUpdateJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
@@ -245,6 +297,8 @@ public class RecipientIdJobMigrationTest {
 
         assertEquals(JsonUtils.toJson(new NewSerializableSyncMessageId("1", 1)), updated[0]);
         assertEquals(JsonUtils.toJson(new NewSerializableSyncMessageId("2", 2)), updated[1]);
+
+        new MultiDeviceReadUpdateJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
@@ -258,6 +312,8 @@ public class RecipientIdJobMigrationTest {
         assertEquals("PushTextSendJob", converted.getFactoryKey());
         assertEquals(RecipientId.from(1).toQueueKey(), converted.getQueueKey());
         assertEquals(1, converted.getData().getLong("message_id"));
+
+        new PushTextSendJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
@@ -271,10 +327,12 @@ public class RecipientIdJobMigrationTest {
         assertEquals("PushMediaSendJob", converted.getFactoryKey());
         assertEquals(RecipientId.from(1).toQueueKey(), converted.getQueueKey());
         assertEquals(1, converted.getData().getLong("message_id"));
+
+        new PushMediaSendJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     @Test
-    public void migrate_smsSendJob() throws Exception {
+    public void migrate_smsSendJob_nonNull() throws Exception {
         JobData testData = new JobData("SmsSendJob", "+16101234567", new Data.Builder().putLong("message_id", 1).putInt("run_attempt", 0).build());
         mockRecipientResolve("+16101234567", 1);
 
@@ -285,6 +343,24 @@ public class RecipientIdJobMigrationTest {
         assertEquals(RecipientId.from(1).toQueueKey(), converted.getQueueKey());
         assertEquals(1, converted.getData().getLong("message_id"));
         assertEquals(0, converted.getData().getInt("run_attempt"));
+
+        new SmsSendJob.Factory().create(mock(Job.Parameters.class), converted.getData());
+    }
+
+    @Test
+    public void migrate_smsSendJob_null() throws Exception {
+        JobData testData = new JobData("SmsSendJob", null, new Data.Builder().putLong("message_id", 1).putInt("run_attempt", 0).build());
+        mockRecipientResolve("+16101234567", 1);
+
+        RecipientIdJobMigration subject   = new RecipientIdJobMigration(mock(Application.class));
+        JobData                 converted = subject.migrate(testData);
+
+        assertEquals("SmsSendJob", converted.getFactoryKey());
+        assertNull(converted.getQueueKey());
+        assertEquals(1, converted.getData().getLong("message_id"));
+        assertEquals(0, converted.getData().getInt("run_attempt"));
+
+        new SmsSendJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
     private void mockRecipientResolve(String address, long recipientId) throws Exception {

@@ -142,7 +142,8 @@ public class NotificationChannels {
    * Creates a channel for the specified recipient.
    * @return The channel ID for the newly-created channel.
    */
-  public static synchronized String createChannelFor(@NonNull Context context, @NonNull Recipient recipient) {
+  public static synchronized @Nullable String createChannelFor(@NonNull Context context, @NonNull Recipient recipient) {
+    if (recipient.getId().isUnknown()) return null;
     VibrateState vibrateState     = recipient.getMessageVibrate();
     boolean      vibrationEnabled = vibrateState == VibrateState.DEFAULT ? TextSecurePreferences.isNotificationVibrateEnabled(context) : vibrateState == VibrateState.ENABLED;
       Uri          messageRingtone  = recipient.getMessageRingtone() != null ? recipient.getMessageRingtone() : getMessageRingtone(context);
@@ -154,11 +155,11 @@ public class NotificationChannels {
   /**
    * More verbose version of {@link #createChannelFor(Context, Recipient)}.
    */
-  public static synchronized  @Nullable String createChannelFor(@NonNull Context context,
-                                                                @NonNull Address address,
-                                                                @NonNull String displayName,
-                                                                @Nullable Uri messageSound,
-                                                                boolean vibrationEnabled)
+  public static synchronized @Nullable String createChannelFor(@NonNull Context context,
+                                                               @NonNull Address address,
+                                                               @NonNull String displayName,
+                                                               @Nullable Uri messageSound,
+                                                               boolean vibrationEnabled)
   {
     if (!supported()) {
       return null;
@@ -410,14 +411,17 @@ public class NotificationChannels {
 
     for (NotificationChannel existingChannel : notificationManager.getNotificationChannels()) {
       if (existingChannel.getId().startsWith(CONTACT_PREFIX) && !customChannelIds.contains(existingChannel.getId())) {
+        Log.i(TAG, "Consistency: Deleting channel '"+ existingChannel.getId() + "' because the DB has no record of it.");
         notificationManager.deleteNotificationChannel(existingChannel.getId());
       } else if (existingChannel.getId().startsWith(MESSAGES_PREFIX) && !existingChannel.getId().equals(getMessagesChannel(context))) {
+        Log.i(TAG, "Consistency: Deleting channel '"+ existingChannel.getId() + "' because it's out of date.");
         notificationManager.deleteNotificationChannel(existingChannel.getId());
       }
     }
 
     for (Recipient customRecipient : customRecipients) {
       if (!existingChannelIds.contains(customRecipient.getNotificationChannel())) {
+        Log.i(TAG, "Consistency: Removing custom channel '"+ customRecipient.getNotificationChannel() + "' because the system doesn't have it.");
         db.setNotificationChannel(customRecipient.getId(), null);
       }
     }

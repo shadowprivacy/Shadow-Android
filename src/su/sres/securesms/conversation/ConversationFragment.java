@@ -49,6 +49,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.ShareActivity;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.components.ConversationTypingView;
+import su.sres.securesms.components.TooltipPopup;
 import su.sres.securesms.components.recyclerview.SmoothScrollingLinearLayoutManager;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.logging.Log;
@@ -275,6 +276,7 @@ public class ConversationFragment extends Fragment
 
   private void initializeListAdapter() {
     if (this.recipient != null && this.threadId != -1) {
+      Log.d(TAG, "Initializing adapter for " + recipient.getId());
       ConversationAdapter adapter = new ConversationAdapter(requireContext(), GlideApp.with(this), locale, selectionClickListener, null, this.recipient.get());
       list.setAdapter(adapter);
       list.addItemDecoration(new StickyHeaderDecoration(adapter, false, false));
@@ -837,6 +839,20 @@ public class ConversationFragment extends Fragment
     }
   }
 
+  private void maybeShowSwipeToReplyTooltip() {
+    if (!TextSecurePreferences.hasSeenSwipeToReplyTooltip(requireContext())) {
+      int text = getResources().getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_LTR ? R.string.ConversationFragment_you_can_swipe_to_the_right_reply
+              : R.string.ConversationFragment_you_can_swipe_to_the_left_reply;
+      TooltipPopup.forTarget(requireActivity().findViewById(R.id.menu_context_reply))
+              .setText(text)
+              .setTextColor(getResources().getColor(R.color.core_white))
+              .setBackgroundTint(getResources().getColor(R.color.core_blue))
+              .show(TooltipPopup.POSITION_BELOW);
+
+      TextSecurePreferences.setHasSeenSwipeToReplyTooltip(requireContext(), true);
+    }
+  }
+
   public interface ConversationFragmentListener {
     void setThreadId(long threadId);
     void handleReplyMessage(MessageRecord messageRecord);
@@ -1152,6 +1168,7 @@ public class ConversationFragment extends Fragment
           actionMode.finish();
           return true;
         case R.id.menu_context_reply:
+          maybeShowSwipeToReplyTooltip();
           handleReplyMessage(getSelectedMessageRecord());
           actionMode.finish();
           return true;

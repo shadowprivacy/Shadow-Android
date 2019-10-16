@@ -186,6 +186,7 @@ import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientFormattingException;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientExporter;
 import su.sres.securesms.search.model.MessageResult;
 import su.sres.securesms.service.KeyCachingService;
@@ -337,6 +338,15 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
   protected void onCreate(Bundle state, boolean ready) {
     Log.i(TAG, "onCreate()");
 
+    RecipientId recipientId = getIntent().getParcelableExtra(RECIPIENT_EXTRA);
+
+    if (recipientId == null) {
+      Log.w(TAG, "[onCreate] Missing recipientId!");
+      startActivity(new Intent(this, ConversationListActivity.class));
+      finish();
+      return;
+    }
+
     setContentView(R.layout.conversation_activity);
 
     TypedArray typedArray = obtainStyledAttributes(new int[] {R.attr.conversation_background});
@@ -396,6 +406,15 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
       saveDraft();
       attachmentManager.clear(glideRequests, false);
       silentlySetComposeText("");
+    }
+
+    RecipientId recipientId = intent.getParcelableExtra(RECIPIENT_EXTRA);
+
+    if (recipientId == null) {
+      Log.w(TAG, "[onNewIntent] Missing recipientId!");
+      startActivity(new Intent(this, ConversationListActivity.class));
+      finish();
+      return;
     }
 
     setIntent(intent);
@@ -1697,7 +1716,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
   }
 
   private void onRecipientChanged(@NonNull Recipient recipient) {
-    Log.i(TAG, "onModified(" + recipient.requireAddress().serialize() + ") " + recipient.getRegistered());
+    Log.i(TAG, "onModified(" + recipient.getId() + ") " + recipient.getRegistered());
     titleView.setTitle(glideRequests, recipient);
     titleView.setVerified(identityRecords.isVerified());
     setBlockedUserState(recipient, isSecureText, isDefaultSms);

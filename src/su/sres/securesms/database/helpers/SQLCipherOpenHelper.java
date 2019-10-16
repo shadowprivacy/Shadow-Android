@@ -38,13 +38,9 @@ import su.sres.securesms.database.ConfigDatabase;
 import su.sres.securesms.jobs.RefreshPreKeysJob;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
-import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.service.KeyCachingService;
-import su.sres.securesms.util.DelimiterUtil;
 import su.sres.securesms.util.GroupUtil;
-import su.sres.securesms.phonenumbers.NumberUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
 
 import java.io.File;
 
@@ -77,8 +73,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int VIEW_ONCE_ONLY                   = 23;
   private static final int RECIPIENT_IDS                    = 24;
   private static final int RECIPIENT_SEARCH                 = 25;
+  private static final int RECIPIENT_CLEANUP                = 26;
+  private static final int MMS_RECIPIENT_CLEANUP            = 27;
 
-  private static final int    DATABASE_VERSION = 25;
+  private static final int    DATABASE_VERSION = 27;
   private static final String DATABASE_NAME    = "signal.db";
 
   private final Context        context;
@@ -511,6 +509,17 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
             }
           }
         }
+      }
+
+      if (oldVersion < RECIPIENT_CLEANUP) {
+        RecipientIdCleanupHelper.execute(db);
+      }
+
+      if (oldVersion < MMS_RECIPIENT_CLEANUP) {
+        ContentValues values = new ContentValues(1);
+        values.put("address", "-1");
+        int count = db.update("mms", values, "address = ?", new String[] { "0" });
+        Log.i(TAG, "MMS recipient cleanup updated " + count + " rows.");
       }
 
       db.setTransactionSuccessful();

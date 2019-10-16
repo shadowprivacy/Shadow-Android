@@ -14,6 +14,8 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraintObserver;
 import su.sres.securesms.jobmanager.impl.NetworkOrCellServiceConstraint;
 import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraint;
 import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraintObserver;
+import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration;
+import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration2;
 import su.sres.securesms.jobmanager.migrations.RecipientIdJobMigration;
 import su.sres.securesms.migrations.DatabaseMigrationJob;
 import su.sres.securesms.migrations.LegacyMigrationJob;
@@ -108,6 +110,8 @@ public final class JobManagerFactories {
     }
 
     public static List<JobMigration> getJobMigrations(@NonNull Application application) {
-        return Arrays.asList(new RecipientIdJobMigration(application));
+        return Arrays.asList(new RecipientIdJobMigration(application),
+                new RecipientIdFollowUpJobMigration(),
+                new RecipientIdFollowUpJobMigration2());
     }
 }
