@@ -56,7 +56,7 @@ public class SearchToolbar extends LinearLayout {
 
     this.searchItem = toolbar.getMenu().findItem(R.id.action_filter_search);
     SearchView searchView = (SearchView) searchItem.getActionView();
-    EditText   searchText = searchView.findViewById(android.support.v7.appcompat.R.id.search_src_text);
+    EditText   searchText = searchView.findViewById(R.id.search_src_text);
 
     searchView.setSubmitButtonEnabled(false);
 

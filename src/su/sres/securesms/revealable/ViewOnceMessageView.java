@@ -106,7 +106,7 @@ public class ViewOnceMessageView extends LinearLayout {
             progress.setVisibility(GONE);
         } else if (ViewOnceUtil.isViewable(messageRecord)) {
             foregroundColor = unopenedForegroundColor;
-            text.setText(R.string.ViewOnceMessageView_view_photo);
+            text.setText(R.string.RevealableMessageView_view_photo);
             icon.setImageResource(R.drawable.ic_play_solid_24);
             progress.setVisibility(GONE);
         } else if (networkInProgress(messageRecord)) {
@@ -121,7 +121,7 @@ public class ViewOnceMessageView extends LinearLayout {
             progress.setVisibility(GONE);
         } else {
             foregroundColor = openedForegroundColor;
-            text.setText(R.string.ViewOnceMessageView_viewed);
+            text.setText(R.string.RevealableMessageView_viewed);
             icon.setImageResource(R.drawable.ic_play_outline_24);
             progress.setVisibility(GONE);
         }
