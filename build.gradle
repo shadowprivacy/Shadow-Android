@@ -346,7 +346,7 @@ android {
         buildConfigField "int", "CONTENT_PROXY_PORT", "443"
         buildConfigField "String", "USER_AGENT", "\"OWA\""
         buildConfigField "boolean", "DEV_BUILD", "false"
-        buildConfigField "String", "UNIDENTIFIED_SENDER_TRUST_ROOT", "\"BUU50qYOJqz3I984eDi4YgL+0qIbkXXNnFABRSw7u3dN\""
+        buildConfigField "String", "UNIDENTIFIED_SENDER_TRUST_ROOT", "\"yourpublickeyhere\""
         buildConfigField "String[]", "LANGUAGES", "new String[]{\"" + autoResConfig().collect { s -> s.replace('-r', '_') }.join('", "') + '"}'
         buildConfigField "int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode"
 
