@@ -75,6 +75,7 @@ import su.sres.securesms.qr.ScanningThread;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.util.DynamicDarkActionBarTheme;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.IdentityUtil;
@@ -107,7 +108,7 @@ public class VerifyIdentityActivity extends PassphraseRequiredActionBarActivity 
   public static final String IDENTITY_EXTRA  = "recipient_identity";
   public static final String VERIFIED_EXTRA  = "verified_state";
 
-  private final DynamicTheme    dynamicTheme    = new DynamicTheme();
+  private final DynamicTheme    dynamicTheme    = new DynamicDarkActionBarTheme();
   private final DynamicLanguage dynamicLanguage = new DynamicLanguage();
 
   private VerifyDisplayFragment displayFragment = new VerifyDisplayFragment();

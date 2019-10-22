@@ -1,10 +1,9 @@
 package su.sres.securesms.mediasend;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
-import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -26,11 +25,13 @@ import androidx.annotation.RequiresApi;
 import androidx.camera.core.CameraX;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageProxy;
+import androidx.camera.core.impl.utils.executor.CameraXExecutors;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.util.Executors;
 
 import su.sres.securesms.R;
 import su.sres.securesms.components.TooltipPopup;
@@ -263,8 +264,10 @@ public class CameraXFragment extends Fragment implements CameraFragment {
                 ));
                 displayVideoRecordingTooltipIfNecessary(captureButton);
             } catch (IOException e) {
-                Log.w(TAG, "Video capture is not supported on this device.");
+                Log.w(TAG, "Video capture is not supported on this device.", e);
             }
+        } else {
+            Log.i(TAG, "Video capture not supported. API: " + Build.VERSION.SDK_INT + ", MFD: " + MemoryFileDescriptor.supported());
         }
 
         viewModel.onCameraControlsInitialized();
@@ -278,7 +281,7 @@ public class CameraXFragment extends Fragment implements CameraFragment {
                     .setOnDismissListener(this::neverDisplayVideoRecordingTooltipAgain)
                     .setBackgroundTint(ContextCompat.getColor(requireContext(), R.color.signal_primary))
                     .setTextColor(ThemeUtil.getThemedColor(requireContext(), R.attr.conversation_title_color))
-                    .setText(R.string.CameraXFragment_video_recording_available)
+                    .setText(R.string.CameraXFragment_tap_for_photo_hold_for_video)
                     .show(displayRotation == Surface.ROTATION_0 || displayRotation == Surface.ROTATION_180 ? TooltipPopup.POSITION_ABOVE : TooltipPopup.POSITION_START);
         }
     }
@@ -326,7 +329,7 @@ public class CameraXFragment extends Fragment implements CameraFragment {
                 selfieFlash
         );
 
-        camera.takePicture(new ImageCapture.OnImageCapturedListener() {
+        camera.takePicture(Executors.mainThreadExecutor(), new ImageCapture.OnImageCapturedListener() {
             @Override
             public void onCaptureSuccess(ImageProxy image, int rotationDegrees) {
                 flashHelper.endFlash();
@@ -353,7 +356,7 @@ public class CameraXFragment extends Fragment implements CameraFragment {
             }
 
             @Override
-            public void onError(ImageCapture.UseCaseError useCaseError, String message, @Nullable Throwable cause) {
+            public void onError(ImageCapture.ImageCaptureError useCaseError, String message, @Nullable Throwable cause) {
                 flashHelper.endFlash();
                 controller.onCameraError();
             }
