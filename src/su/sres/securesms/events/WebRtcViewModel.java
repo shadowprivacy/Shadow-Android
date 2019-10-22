@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.webrtc.CameraState;
+import su.sres.securesms.ringrtc.CameraState;
 import org.webrtc.SurfaceViewRenderer;
 import org.whispersystems.libsignal.IdentityKey;
 

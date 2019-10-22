@@ -10,6 +10,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.StickerDatabase.StickerPackRecordReader;
 import su.sres.securesms.database.model.StickerPackRecord;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.MultiDeviceStickerPackOperationJob;
 import su.sres.securesms.jobs.StickerPackDownloadJob;
@@ -37,7 +38,7 @@ final class StickerManagementRepository {
 
     void fetchUnretrievedReferencePacks() {
         SignalExecutors.SERIAL.execute(() -> {
-            JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
+            JobManager jobManager = ApplicationDependencies.getJobManager();
 
             try (Cursor cursor = attachmentDatabase.getUnavailableStickerPacks()) {
                 while (cursor != null && cursor.moveToNext()) {
@@ -78,16 +79,14 @@ final class StickerManagementRepository {
             stickerDatabase.uninstallPack(packId);
 
             if (TextSecurePreferences.isMultiDevice(context)) {
-                ApplicationContext.getInstance(context)
-                        .getJobManager()
-                        .add(new MultiDeviceStickerPackOperationJob(packId, packKey, MultiDeviceStickerPackOperationJob.Type.REMOVE));
+                ApplicationDependencies.getJobManager().add(new MultiDeviceStickerPackOperationJob(packId, packKey, MultiDeviceStickerPackOperationJob.Type.REMOVE));
             }
         });
     }
 
     void installStickerPack(@NonNull String packId, @NonNull String packKey) {
         SignalExecutors.SERIAL.execute(() -> {
-            JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
+            JobManager jobManager = ApplicationDependencies.getJobManager();
 
             if (stickerDatabase.isPackAvailableAsReference(packId)) {
                 stickerDatabase.markPackAsInstalled(packId);

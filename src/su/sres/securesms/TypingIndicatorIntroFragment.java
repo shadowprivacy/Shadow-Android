@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import su.sres.securesms.components.TypingIndicatorView;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceConfigurationUpdateJob;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -58,12 +59,10 @@ public class TypingIndicatorIntroFragment extends Fragment {
 
     private void onButtonClicked(boolean typingEnabled) {
         TextSecurePreferences.setTypingIndicatorsEnabled(getContext(), typingEnabled);
-        ApplicationContext.getInstance(requireContext())
-                .getJobManager()
-                .add(new MultiDeviceConfigurationUpdateJob(TextSecurePreferences.isReadReceiptsEnabled(requireContext()),
-                        typingEnabled,
-                        TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(getContext()),
-                        TextSecurePreferences.isLinkPreviewsEnabled(getContext())));
+        ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(TextSecurePreferences.isReadReceiptsEnabled(requireContext()),
+                typingEnabled,
+                TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(getContext()),
+                TextSecurePreferences.isLinkPreviewsEnabled(getContext())));
 
         controller.onTypingIndicatorsFinished();
     }

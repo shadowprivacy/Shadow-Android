@@ -5,12 +5,13 @@ import android.content.Context;
 import android.content.Intent;
 
 import su.sres.securesms.ApplicationContext;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
 
 public class BootReceiver extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
-    ApplicationContext.getInstance(context).getJobManager().add(new PushNotificationReceiveJob(context));
+    ApplicationDependencies.getJobManager().add(new PushNotificationReceiveJob(context));
   }
 }

@@ -24,6 +24,7 @@ import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.PassphraseRequiredActionBarActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.DirectoryRefreshJob;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequests;
@@ -248,9 +249,7 @@ public class SharedContactDetailsActivity extends PassphraseRequiredActionBarAct
     super.onActivityResult(requestCode, resultCode, data);
 
     if (requestCode == CODE_ADD_EDIT_CONTACT && contact != null) {
-      ApplicationContext.getInstance(getApplicationContext())
-                        .getJobManager()
-              .add(new DirectoryRefreshJob(false));
+      ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
     }
   }
 }

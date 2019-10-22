@@ -2,11 +2,12 @@ package su.sres.securesms.conversation;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageView;
@@ -29,6 +30,7 @@ import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.ExpirationUtil;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.IdentityUtil;
+import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.concurrent.ListenableFuture;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -150,13 +152,12 @@ public class ConversationUpdateItem extends LinearLayout
 
   private void setTimerRecord(final MessageRecord messageRecord) {
     if (messageRecord.getExpiresIn() > 0) {
-      icon.setImageResource(R.drawable.ic_timer);
-      icon.setColorFilter(new PorterDuffColorFilter(Color.parseColor("#757575"), PorterDuff.Mode.MULTIPLY));
+      icon.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_timer_24));
     } else {
-      icon.setImageResource(R.drawable.ic_timer_disabled);
-      icon.setColorFilter(new PorterDuffColorFilter(Color.parseColor("#757575"), PorterDuff.Mode.MULTIPLY));
+      icon.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_timer_disabled_24));
     }
 
+    icon.setColorFilter(getGreyFilter());
     title.setText(ExpirationUtil.getExpirationDisplayValue(getContext(), (int)(messageRecord.getExpiresIn() / 1000)));
     body.setText(messageRecord.getDisplayBody(getContext()));
 
@@ -165,9 +166,13 @@ public class ConversationUpdateItem extends LinearLayout
     date.setVisibility(GONE);
   }
 
+  private ColorFilter getGreyFilter() {
+    return new PorterDuffColorFilter(ContextCompat.getColor(getContext(), R.color.core_grey_50), PorterDuff.Mode.MULTIPLY);
+  }
+
   private void setIdentityRecord(final MessageRecord messageRecord) {
-    icon.setImageResource(R.drawable.ic_security_white_24dp);
-    icon.setColorFilter(new PorterDuffColorFilter(Color.parseColor("#757575"), PorterDuff.Mode.MULTIPLY));
+    icon.setImageDrawable(ThemeUtil.getThemedDrawable(getContext(), R.attr.safety_number_icon));
+    icon.setColorFilter(getGreyFilter());
     body.setText(messageRecord.getDisplayBody(getContext()));
 
     title.setVisibility(GONE);
@@ -179,7 +184,7 @@ public class ConversationUpdateItem extends LinearLayout
     if (messageRecord.isIdentityVerified()) icon.setImageResource(R.drawable.ic_check_white_24dp);
     else                                    icon.setImageResource(R.drawable.ic_info_outline_white_24dp);
 
-    icon.setColorFilter(new PorterDuffColorFilter(Color.parseColor("#757575"), PorterDuff.Mode.MULTIPLY));
+    icon.setColorFilter(getGreyFilter());
     body.setText(messageRecord.getDisplayBody(getContext()));
 
     title.setVisibility(GONE);
@@ -188,7 +193,7 @@ public class ConversationUpdateItem extends LinearLayout
   }
 
   private void setGroupRecord(MessageRecord messageRecord) {
-    icon.setImageResource(R.drawable.ic_group_grey600_24dp);
+    icon.setImageDrawable(ThemeUtil.getThemedDrawable(getContext(), R.attr.menu_group_icon));
     icon.clearColorFilter();
 
     body.setText(messageRecord.getDisplayBody(getContext()));
@@ -210,7 +215,7 @@ public class ConversationUpdateItem extends LinearLayout
 
   private void setEndSessionRecord(MessageRecord messageRecord) {
     icon.setImageResource(R.drawable.ic_refresh_white_24dp);
-    icon.setColorFilter(new PorterDuffColorFilter(Color.parseColor("#757575"), PorterDuff.Mode.MULTIPLY));
+    icon.setColorFilter(getGreyFilter());
     body.setText(messageRecord.getDisplayBody(getContext()));
 
     title.setVisibility(GONE);
@@ -279,5 +284,4 @@ public class ConversationUpdateItem extends LinearLayout
       });
     }
   }
-
 }

@@ -22,6 +22,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.backup.BackupDialog;
 import su.sres.securesms.backup.FullBackupBase.BackupEvent;
 import su.sres.securesms.components.SwitchPreferenceCompat;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.LocalBackupJob;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.permissions.Permissions;
@@ -161,9 +162,7 @@ public class ChatsPreferenceFragment extends ListSummaryPreferenceFragment {
                  .ifNecessary()
                  .onAllGranted(() -> {
                    Log.i(TAG, "Queing backup...");
-                   ApplicationContext.getInstance(getContext())
-                                     .getJobManager()
-                           .add(new LocalBackupJob());
+                   ApplicationDependencies.getJobManager().add(new LocalBackupJob());
                  })
                  .withPermanentDenialDialog(getString(R.string.ChatsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups))
                  .execute();

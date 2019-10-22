@@ -1,10 +1,10 @@
 package su.sres.securesms.service;
 
-
 import android.content.Context;
 import android.content.Intent;
 
 import su.sres.securesms.ApplicationContext;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.RotateCertificateJob;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -21,9 +21,7 @@ public class RotateSenderCertificateListener extends PersistentAlarmManagerListe
 
     @Override
     protected long onAlarm(Context context, long scheduledTime) {
-        ApplicationContext.getInstance(context)
-                .getJobManager()
-                .add(new RotateCertificateJob(context));
+        ApplicationDependencies.getJobManager().add(new RotateCertificateJob(context));
 
         long nextTime = System.currentTimeMillis() + INTERVAL;
         TextSecurePreferences.setUnidentifiedAccessCertificateRotationTime(context, nextTime);

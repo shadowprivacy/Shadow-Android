@@ -1,5 +1,10 @@
 package su.sres.securesms.jobs;
 
+import android.graphics.Bitmap;
+import android.media.MediaDataSource;
+import android.media.MediaMetadataRetriever;
+import android.os.Build;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -9,6 +14,7 @@ import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.attachments.PointerAttachment;
+import su.sres.securesms.blurhash.BlurHashEncoder;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -20,6 +26,7 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.service.GenericForegroundService;
 import su.sres.securesms.service.NotificationController;
+import su.sres.securesms.util.MediaUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
@@ -90,7 +97,7 @@ public final class AttachmentUploadJob extends BaseJob {
 
         try (NotificationController notification = getNotificationForAttachment(databaseAttachment)) {
             SignalServiceAttachment        localAttachment  = getAttachmentFor(databaseAttachment, notification);
-            SignalServiceAttachmentPointer remoteAttachment = messageSender.uploadAttachment(localAttachment.asStream(), databaseAttachment.isSticker());
+            SignalServiceAttachmentPointer remoteAttachment = messageSender.uploadAttachment(localAttachment.asStream());
             Attachment                     attachment       = PointerAttachment.forPointer(Optional.of(remoteAttachment), null, databaseAttachment.getFastPreflightId()).get();
 
             database.updateAttachmentAfterUpload(databaseAttachment.getAttachmentId(), attachment);
@@ -117,7 +124,7 @@ public final class AttachmentUploadJob extends BaseJob {
         try {
             if (attachment.getDataUri() == null || attachment.getSize() == 0) throw new IOException("Assertion failed, outgoing attachment has no data!");
             InputStream is = PartAuthority.getAttachmentStream(context, attachment.getDataUri());
-            return SignalServiceAttachment.newStreamBuilder()
+            SignalServiceAttachment.Builder builder = SignalServiceAttachment.newStreamBuilder()
                     .withStream(is)
                     .withContentType(attachment.getContentType())
                     .withLength(attachment.getSize())
@@ -131,10 +138,59 @@ public final class AttachmentUploadJob extends BaseJob {
                         if (notification != null) {
                             notification.setProgress(total, progress);
                         }
-                    })
-                    .build();
+                    });
+            if (MediaUtil.isImageType(attachment.getContentType())) {
+                return builder.withBlurHash(getImageBlurHash(attachment)).build();
+            } else if (MediaUtil.isVideoType(attachment.getContentType())) {
+                return builder.withBlurHash(getVideoBlurHash(attachment)).build();
+            } else {
+                return builder.build();
+            }
+
         } catch (IOException ioe) {
             throw new InvalidAttachmentException(ioe);
+        }
+    }
+
+    private @Nullable String getImageBlurHash(@NonNull Attachment attachment) throws IOException {
+        if (attachment.getBlurHash() != null) return attachment.getBlurHash().getHash();
+        if (attachment.getDataUri() == null) return null;
+
+        return BlurHashEncoder.encode(PartAuthority.getAttachmentStream(context, attachment.getDataUri()));
+    }
+
+    private @Nullable String getVideoBlurHash(@NonNull Attachment attachment) throws IOException {
+        if (attachment.getThumbnailUri() != null) {
+            return BlurHashEncoder.encode(PartAuthority.getAttachmentStream(context, attachment.getThumbnailUri()));
+        }
+
+        if (attachment.getBlurHash() != null) return attachment.getBlurHash().getHash();
+
+        if (Build.VERSION.SDK_INT < 23) {
+            Log.w(TAG, "Video thumbnails not supported...");
+            return null;
+        }
+
+        try (MediaDataSource dataSource = DatabaseFactory.getAttachmentDatabase(context).mediaDataSourceFor(attachmentId)) {
+            if (dataSource == null) return null;
+
+            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+            retriever.setDataSource(dataSource);
+
+            Bitmap bitmap = retriever.getFrameAtTime(1000);
+
+            if (bitmap != null) {
+                Bitmap thumb = Bitmap.createScaledBitmap(bitmap, 100, 100, false);
+                bitmap.recycle();
+
+                Log.i(TAG, "Generated video thumbnail...");
+                String hash = BlurHashEncoder.encode(thumb);
+                thumb.recycle();
+
+                return hash;
+            } else {
+                return null;
+            }
         }
     }
 

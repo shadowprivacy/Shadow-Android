@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.ApplicationContext;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.TypingSendJob;
 import su.sres.securesms.util.Util;
 
@@ -74,7 +75,7 @@ public class TypingStatusSender {
     }
 
     private void sendTyping(long threadId, boolean typingStarted) {
-        ApplicationContext.getInstance(context).getJobManager().add(new TypingSendJob(threadId, typingStarted));
+        ApplicationDependencies.getJobManager().add(new TypingSendJob(threadId, typingStarted));
     }
 
     private class StartRunnable implements Runnable {

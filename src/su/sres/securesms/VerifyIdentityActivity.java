@@ -42,6 +42,7 @@ import androidx.appcompat.widget.SwitchCompat;
 import android.text.Html;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -583,12 +584,11 @@ public class VerifyIdentityActivity extends PassphraseRequiredActionBarActivity 
                                           VerifiedStatus.DEFAULT);
             }
 
-            ApplicationContext.getInstance(getActivity())
-                              .getJobManager()
+            ApplicationDependencies.getJobManager()
                     .add(new MultiDeviceVerifiedUpdateJob(recipient.getId(),
-                                                                    remoteIdentity,
-                                                                    isChecked ? VerifiedStatus.VERIFIED :
-                                                                                VerifiedStatus.DEFAULT));
+                            remoteIdentity,
+                            isChecked ? VerifiedStatus.VERIFIED :
+                                    VerifiedStatus.DEFAULT));
 
             IdentityUtil.markIdentityVerified(getActivity(), recipient.get(), isChecked, false);
           }

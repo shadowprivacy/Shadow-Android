@@ -12,6 +12,7 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.BuildConfig;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 
 import java.util.List;
@@ -61,7 +62,7 @@ public class AlarmManagerScheduler implements Scheduler {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.i(TAG, "Received an alarm to retry a job.");
-            ApplicationContext.getInstance(context).getJobManager().wakeUp();
+            ApplicationDependencies.getJobManager().wakeUp();
         }
     }
 }

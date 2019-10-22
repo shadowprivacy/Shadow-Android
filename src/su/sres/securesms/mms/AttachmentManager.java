@@ -36,6 +36,7 @@ import android.util.Pair;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -43,6 +44,8 @@ import su.sres.securesms.MediaPreviewActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.attachments.Attachment;
+import su.sres.securesms.color.MaterialColor;
+import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.components.AudioView;
 import su.sres.securesms.components.DocumentView;
 import su.sres.securesms.components.RemovableEditableMediaView;
@@ -74,7 +77,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-
 
 public class AttachmentManager {
 
@@ -314,7 +316,7 @@ public class AttachmentManager {
             }
 
             Log.d(TAG, "remote slide with size " + fileSize + " took " + (System.currentTimeMillis() - start) + "ms");
-            return mediaType.createSlide(context, uri, fileName, mimeType, fileSize, width, height);
+            return mediaType.createSlide(context, uri, fileName, mimeType, null, fileSize, width, height);
           }
         } finally {
           if (cursor != null) cursor.close();
@@ -324,10 +326,10 @@ public class AttachmentManager {
       }
 
       private @NonNull Slide getManuallyCalculatedSlideInfo(Uri uri, int width, int height) throws IOException {
-        long start      = System.currentTimeMillis();
-        Long mediaSize  = null;
-        String fileName = null;
-        String mimeType = null;
+        long     start     = System.currentTimeMillis();
+        Long     mediaSize = null;
+        String   fileName  = null;
+        String   mimeType  = null;
 
         if (PartAuthority.isLocalUri(uri)) {
           mediaSize = PartAuthority.getAttachmentSize(context, uri);
@@ -350,7 +352,7 @@ public class AttachmentManager {
         }
 
         Log.d(TAG, "local slide with size " + mediaSize + " took " + (System.currentTimeMillis() - start) + "ms");
-        return mediaType.createSlide(context, uri, fileName, mimeType, mediaSize, width, height);
+        return mediaType.createSlide(context, uri, fileName, mimeType, null, mediaSize, width, height);
       }
     }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
@@ -416,9 +418,10 @@ public class AttachmentManager {
                .execute();
   }
 
-  public static void selectGif(Activity activity, int requestCode, boolean isForMms) {
+  public static void selectGif(Activity activity, int requestCode, boolean isForMms, @ColorInt int color) {
     Intent intent = new Intent(activity, GiphyActivity.class);
     intent.putExtra(GiphyActivity.EXTRA_IS_MMS, isForMms);
+    intent.putExtra(GiphyActivity.EXTRA_COLOR, color);
     activity.startActivityForResult(intent, requestCode);
   }
 
@@ -523,20 +526,21 @@ public class AttachmentManager {
   public enum MediaType {
     IMAGE, GIF, AUDIO, VIDEO, DOCUMENT, VCARD;
 
-    public @NonNull Slide createSlide(@NonNull  Context context,
-                                      @NonNull  Uri     uri,
-                                      @Nullable String fileName,
-                                      @Nullable String mimeType,
-                                                long    dataSize,
-                                                int     width,
-                                                int     height)
+    public @NonNull Slide createSlide(@NonNull  Context  context,
+                                      @NonNull  Uri      uri,
+                                      @Nullable String   fileName,
+                                      @Nullable String   mimeType,
+                                      @Nullable BlurHash blurHash,
+                                      long     dataSize,
+                                      int      width,
+                                      int      height)
     {
       if (mimeType == null) {
         mimeType = "application/octet-stream";
       }
 
       switch (this) {
-      case IMAGE:    return new ImageSlide(context, uri, dataSize, width, height);
+      case IMAGE:    return new ImageSlide(context, uri, dataSize, width, height, blurHash);
       case GIF:      return new GifSlide(context, uri, dataSize, width, height);
       case AUDIO:    return new AudioSlide(context, uri, dataSize, false);
       case VIDEO:    return new VideoSlide(context, uri, dataSize);

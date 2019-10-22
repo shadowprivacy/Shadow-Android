@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.telephony.SmsMessage;
 
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.logging.Log;
 
@@ -21,7 +22,7 @@ public class SmsDeliveryListener extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
-    JobManager  jobManager = ApplicationContext.getInstance(context).getJobManager();
+    JobManager  jobManager = ApplicationDependencies.getJobManager();
     long        messageId  = intent.getLongExtra("message_id", -1);
     int         runAttempt = intent.getIntExtra("run_attempt", 0);
 

@@ -96,6 +96,7 @@
     <string name="CameraActivity_image_save_failure">Failed to save image.</string>
 
     <!-- CameraXFragment -->
+    <string name="CameraXFragment_video_recording_available">Tap to take a picture, or keep your finger on the capture button to record a video.</string>
     <string name="CameraXFragment_capture_description">Capture</string>
     <string name="CameraXFragment_change_camera_description">Change camera</string>
     <string name="CameraXFragment_open_gallery_description">Open gallery</string>
@@ -314,7 +315,7 @@
 
     <!-- DateUtils -->
     <string name="DateUtils_just_now">Now</string>
-    <string name="DateUtils_minutes_ago">%d min</string>
+    <string name="DateUtils_minutes_ago">%dm</string>
     <string name="DateUtils_today">Today</string>
     <string name="DateUtils_yesterday">Yesterday</string>
 
@@ -672,15 +673,18 @@
     <string name="RegistrationActivity_enter_server_address">Enter your server address and port</string>
     <string name="RegistrationActivity_you_will_receive_a_verification_code">Refer to your administrator for the verification code.</string>
     <string name="RegistrationActivity_enter_the_code_we_sent_to_s">Enter the code obtained from your administrator</string>
+    <string name="RegistrationActivity_phone_number_description">Phone number</string>
+    <string name="RegistrationActivity_country_code_description">Country code</string>
     <string name="RegistrationActivity_call">Call</string>
     <string name="RegistrationActivity_phone_number">Phone number</string>
     <string name="RegistrationActivity_shadowUrl">Server address</string>
     <string name="RegistrationActivity_shadowPort">Port</string>
 
     <!-- RevealableMessageView -->
-    <string name="RevealableMessageView_view_photo">View Photo</string>
-    <string name="RevealableMessageView_viewed">Viewed</string>
     <string name="RevealableMessageView_photo">Photo</string>
+    <string name="RevealableMessageView_video">Video</string>
+    <string name="RevealableMessageView_viewed">Viewed</string>
+    <string name="RevealableMessageView_outgoing_media">Media</string>
 
     <!-- ScribbleActivity -->
     <string name="ScribbleActivity_save_failure">Failed to save image changes</string>
@@ -753,6 +757,7 @@
     <string name="ThreadRecord_media_message">Media message</string>
     <string name="ThreadRecord_sticker">Sticker</string>
     <string name="ThreadRecord_disappearing_photo">Disappearing photo</string>
+    <string name="ThreadRecord_disappearing_video">Disappearing video</string>
     <string name="ThreadRecord_s_is_on_signal">%s is on Shadow!</string>
     <string name="ThreadRecord_disappearing_messages_disabled">Disappearing messages disabled</string>
     <string name="ThreadRecord_disappearing_message_time_updated_to_s">Disappearing message time set to %s</string>
@@ -792,6 +797,9 @@
     <string name="VerifyIdentityActivity_no_safety_number_to_compare_was_found_in_the_clipboard">No safety number to compare was found in the clipboard</string>
     <string name="VerifyIdentityActivity_signal_needs_the_camera_permission_in_order_to_scan_a_qr_code_but_it_has_been_permanently_denied">Shadow needs the Camera permission in order to scan a QR code, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Camera\".</string>
     <string name="VerifyIdentityActivity_unable_to_scan_qr_code_without_camera_permission">Unable to scan QR code without Camera permission</string>
+
+    <!-- ViewOnceMessageActivity -->
+    <string name="ViewOnceMessageActivity_video_duration" translatable="false">%1$02d:%2$02d</string>
 
     <!-- MessageDisplayHelper -->
     <string name="MessageDisplayHelper_bad_encrypted_message">Bad encrypted message</string>
@@ -841,6 +849,7 @@
     <string name="MessageNotifier_media_message">Media message</string>
     <string name="MessageNotifier_sticker">Sticker</string>
     <string name="MessageNotifier_disappearing_photo">Disappearing photo</string>
+    <string name="MessageNotifier_disappearing_video">Disappearing video</string>
     <string name="MessageNotifier_reply">Reply</string>
     <string name="MessageNotifier_signal_message">Shadow Message</string>
     <string name="MessageNotifier_unsecured_sms">Unsecured SMS</string>
@@ -1006,6 +1015,7 @@
     <string name="QuoteView_audio">Audio</string>
     <string name="QuoteView_video">Video</string>
     <string name="QuoteView_photo">Photo</string>
+    <string name="QuoteView_media">Media message</string>
     <string name="QuoteView_sticker">Sticker</string>
     <string name="QuoteView_document">Document</string>
     <string name="QuoteView_you">You</string>
@@ -1271,8 +1281,8 @@
 
     <!-- plurals.xml -->
     <plurals name="hours_ago">
-        <item quantity="one">%d hour</item>
-        <item quantity="other">%d hours</item>
+        <item quantity="one">%dh</item>
+        <item quantity="other">%dh</item>
     </plurals>
 
     <!-- preferences.xml -->
@@ -1342,6 +1352,7 @@
     <string name="preferences__linked_devices">Linked devices</string>
     <string name="preferences__light_theme">Light</string>
     <string name="preferences__dark_theme">Dark</string>
+    <string name="preferences__system_theme">System</string>
     <string name="preferences__appearance">Appearance</string>
     <string name="preferences__theme">Theme</string>
     <string name="preferences__default">Default</string>
@@ -1577,6 +1588,10 @@
     <string name="RegistrationActivity_please_enter_the_verification_code_sent_to_s">Please enter the verification code sent to %s.</string>
     <string name="RegistrationActivity_wrong_number">Wrong number?</string>
     <string name="RegistrationActivity_call_me_instead_available_in">Call me instead \n (Available in %1$02d:%2$02d)</string>
+    <string name="RegistrationActivity_contact_signal_support">Contact Shadow Support</string>
+    <string name="RegistrationActivity_support_email" translatable="false">info@sres.su</string>
+    <string name="RegistrationActivity_code_support_subject">Shadow Registration - Verification Code for Android</string>
+    <string name="RegistrationActivity_code_support_body">Subject: Shadow Registration - Verification Code for Android\nDevice info: %1$s\nAndroid version: %2$s\nShadow version: %3$s\nLocale: %4$s</string>
     <string name="BackupUtil_never">Never</string>
     <string name="BackupUtil_unknown">Unknown</string>
     <string name="preferences_app_protection__screen_lock">Screen lock</string>

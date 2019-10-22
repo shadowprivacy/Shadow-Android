@@ -1,10 +1,10 @@
 package su.sres.securesms.service;
 
-
 import android.content.Context;
 import android.content.Intent;
 
 import su.sres.securesms.ApplicationContext;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.RotateSignedPreKeyJob;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -22,9 +22,7 @@ public class RotateSignedPreKeyListener extends PersistentAlarmManagerListener {
   @Override
   protected long onAlarm(Context context, long scheduledTime) {
     if (scheduledTime != 0 && TextSecurePreferences.isPushRegistered(context)) {
-      ApplicationContext.getInstance(context)
-                        .getJobManager()
-              .add(new RotateSignedPreKeyJob());
+      ApplicationDependencies.getJobManager().add(new RotateSignedPreKeyJob());
     }
 
     long nextTime = System.currentTimeMillis() + INTERVAL;

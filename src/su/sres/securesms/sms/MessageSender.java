@@ -27,6 +27,7 @@ import su.sres.securesms.database.MessagingDatabase.SyncMessageId;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.model.SmsMessageRecord;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.AttachmentCopyJob;
@@ -212,8 +213,7 @@ public class MessageSender {
               copyJobs.size(),
               messageJobs.size()));
 
-      JobManager.Chain chain = ApplicationContext.getInstance(context)
-              .getJobManager()
+      JobManager.Chain chain = ApplicationDependencies.getJobManager()
               .startChain(compressionJobs)
               .then(uploadJobs);
 
@@ -274,27 +274,27 @@ public class MessageSender {
   }
 
   private static void sendTextPush(Context context, Recipient recipient, long messageId) {
-    JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
+    JobManager jobManager = ApplicationDependencies.getJobManager();
     jobManager.add(new PushTextSendJob(messageId, recipient));
   }
 
   private static void sendMediaPush(Context context, Recipient recipient, long messageId) {
-    JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
+    JobManager jobManager = ApplicationDependencies.getJobManager();
     PushMediaSendJob.enqueue(context, jobManager, messageId, recipient);
   }
 
   private static void sendGroupPush(Context context, Recipient recipient, long messageId, RecipientId filterRecipientId) {
-    JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
+    JobManager jobManager = ApplicationDependencies.getJobManager();
     PushGroupSendJob.enqueue(context, jobManager, messageId, recipient.getId(), filterRecipientId);
   }
 
   private static void sendSms(Context context, Recipient recipient, long messageId) {
-    JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
+    JobManager jobManager = ApplicationDependencies.getJobManager();
     jobManager.add(new SmsSendJob(context, messageId, recipient));
   }
 
   private static void sendMms(Context context, long messageId) {
-    JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
+    JobManager jobManager = ApplicationDependencies.getJobManager();
     MmsSendJob.enqueue(context, jobManager, messageId);
   }
 

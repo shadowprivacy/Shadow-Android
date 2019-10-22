@@ -9,6 +9,7 @@ import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.crypto.MasterSecretUtil;
@@ -16,7 +17,7 @@ import su.sres.securesms.jobs.PushNotificationReceiveJob;
 import su.sres.securesms.migrations.ApplicationMigrationActivity;
 import su.sres.securesms.migrations.ApplicationMigrations;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
-import su.sres.securesms.registration.WelcomeActivity;
+import su.sres.securesms.registration.RegistrationNavigationActivity;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -27,13 +28,12 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
 
   public static final String LOCALE_EXTRA = "locale_extra";
 
-  private static final int STATE_NORMAL                   = 0;
-  private static final int STATE_CREATE_PASSPHRASE        = 1;
-  private static final int STATE_PROMPT_PASSPHRASE        = 2;
-  private static final int STATE_UI_BLOCKING_UPGRADE      = 3;
-  private static final int STATE_PROMPT_PUSH_REGISTRATION = 4;
-  private static final int STATE_EXPERIENCE_UPGRADE       = 5;
-  private static final int STATE_WELCOME_SCREEN           = 6;
+  private static final int STATE_NORMAL              = 0;
+  private static final int STATE_CREATE_PASSPHRASE   = 1;
+  private static final int STATE_PROMPT_PASSPHRASE   = 2;
+  private static final int STATE_UI_BLOCKING_UPGRADE = 3;
+  private static final int STATE_EXPERIENCE_UPGRADE  = 4;
+  private static final int STATE_WELCOME_PUSH_SCREEN = 5;
 
   private SignalServiceNetworkAccess networkAccess;
   private BroadcastReceiver          clearKeyReceiver;
@@ -62,11 +62,8 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
     Log.i(TAG, "onResume()");
     super.onResume();
     if (networkAccess.isCensored(this)) {
-      ApplicationContext.getInstance(this).getJobManager().add(new PushNotificationReceiveJob(this));
+      ApplicationDependencies.getJobManager().add(new PushNotificationReceiveJob(this));
     }
-
-    ApplicationContext.getInstance(this).getJobManager().add(new PushNotificationReceiveJob(this));
-
   }
 
   @Override
@@ -134,13 +131,12 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
     Log.i(TAG, "routeApplicationState(), state: " + state);
 
     switch (state) {
-    case STATE_CREATE_PASSPHRASE:        return getCreatePassphraseIntent();
-    case STATE_PROMPT_PASSPHRASE:        return getPromptPassphraseIntent();
-      case STATE_UI_BLOCKING_UPGRADE:      return getUiBlockingUpgradeIntent();
-    case STATE_WELCOME_SCREEN:           return getWelcomeIntent();
-    case STATE_PROMPT_PUSH_REGISTRATION: return getPushRegistrationIntent();
-    case STATE_EXPERIENCE_UPGRADE:       return getExperienceUpgradeIntent();
-    default:                             return null;
+      case STATE_CREATE_PASSPHRASE:   return getCreatePassphraseIntent();
+      case STATE_PROMPT_PASSPHRASE:   return getPromptPassphraseIntent();
+      case STATE_UI_BLOCKING_UPGRADE: return getUiBlockingUpgradeIntent();
+      case STATE_WELCOME_PUSH_SCREEN: return getPushRegistrationIntent();
+      case STATE_EXPERIENCE_UPGRADE:  return getExperienceUpgradeIntent();
+      default:                        return null;
     }
   }
 
@@ -151,10 +147,8 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
       return STATE_PROMPT_PASSPHRASE;
     } else if (ApplicationMigrations.isUpdate(this) && ApplicationMigrations.isUiBlockingMigrationRunning()) {
       return STATE_UI_BLOCKING_UPGRADE;
-    } else if (!TextSecurePreferences.hasSeenWelcomeScreen(this)) {
-      return STATE_WELCOME_SCREEN;
     } else if (!TextSecurePreferences.hasPromptedPushRegistration(this)) {
-      return STATE_PROMPT_PUSH_REGISTRATION;
+      return STATE_WELCOME_PUSH_SCREEN;
     } else if (ExperienceUpgradeActivity.isUpdate(this)) {
       return STATE_EXPERIENCE_UPGRADE;
     } else {
@@ -181,16 +175,8 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
     return getRoutedIntent(ExperienceUpgradeActivity.class, getIntent());
   }
 
-  private Intent getWelcomeIntent() {
-    return getRoutedIntent(WelcomeActivity.class, getPushRegistrationIntent());
-  }
-
   private Intent getPushRegistrationIntent() {
-    return getRoutedIntent(RegistrationActivity.class, getCreateProfileIntent());
-  }
-
-  private Intent getCreateProfileIntent() {
-    return getRoutedIntent(CreateProfileActivity.class, getConversationListIntent());
+    return RegistrationNavigationActivity.newIntentForNewRegistration(this);
   }
 
   private Intent getRoutedIntent(Class<?> destination, @Nullable Intent nextIntent) {

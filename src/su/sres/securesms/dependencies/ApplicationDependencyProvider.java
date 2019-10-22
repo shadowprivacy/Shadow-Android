@@ -1,5 +1,6 @@
 package su.sres.securesms.dependencies;
 
+import android.app.Application;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
@@ -8,8 +9,15 @@ import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.IncomingMessageProcessor;
 import su.sres.securesms.crypto.storage.SignalProtocolStoreImpl;
+import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.events.ReminderUpdateEvent;
 import su.sres.securesms.gcm.MessageRetriever;
+import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.jobmanager.JobManager;
+import su.sres.securesms.jobmanager.JobMigrator;
+import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
+import su.sres.securesms.jobs.FastJobStorage;
+import su.sres.securesms.jobs.JobManagerFactories;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.push.SecurityEventListener;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
@@ -33,11 +41,11 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
 
     private static final String TAG = Log.tag(ApplicationDependencyProvider.class);
 
-    private final Context                    context;
+    private final Application                context;
     private final SignalServiceNetworkAccess networkAccess;
 
-    public ApplicationDependencyProvider(@NonNull Context context, @NonNull SignalServiceNetworkAccess networkAccess) {
-        this.context       = context.getApplicationContext();
+    public ApplicationDependencyProvider(@NonNull Application context, @NonNull SignalServiceNetworkAccess networkAccess) {
+        this.context       = context;
         this.networkAccess = networkAccess;
     }
 
@@ -87,9 +95,20 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     }
 
     @Override
-    public @NonNull
-    LiveRecipientCache provideRecipientCache() {
+    public @NonNull LiveRecipientCache provideRecipientCache() {
         return new LiveRecipientCache(context);
+    }
+
+    @Override
+    public @NonNull JobManager provideJobManager() {
+        return new JobManager(context, new JobManager.Configuration.Builder()
+                .setDataSerializer(new JsonDataSerializer())
+                .setJobFactories(JobManagerFactories.getJobFactories(context))
+                .setConstraintFactories(JobManagerFactories.getConstraintFactories(context))
+                .setConstraintObservers(JobManagerFactories.getConstraintObservers(context))
+                .setJobStorage(new FastJobStorage(DatabaseFactory.getJobDatabase(context)))
+                .setJobMigrator(new JobMigrator(TextSecurePreferences.getJobManagerVersion(context), JobManager.CURRENT_VERSION, JobManagerFactories.getJobMigrations(context)))
+                .build());
     }
 
     private static class DynamicCredentialsProvider implements CredentialsProvider {

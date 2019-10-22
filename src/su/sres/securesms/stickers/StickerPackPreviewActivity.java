@@ -21,6 +21,7 @@ import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.PassphraseRequiredActionBarActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.ShareActivity;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.StickerPackDownloadJob;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
@@ -161,9 +162,7 @@ public final class StickerPackPreviewActivity extends PassphraseRequiredActionBa
 
         installButton.setOnClickListener(v -> {
             SimpleTask.run(() -> {
-                ApplicationContext.getInstance(this)
-                        .getJobManager()
-                        .add(new StickerPackDownloadJob(manifest.getPackId(), manifest.getPackKey(), false));
+                ApplicationDependencies.getJobManager().add(new StickerPackDownloadJob(manifest.getPackId(), manifest.getPackKey(), false));
 
                 return null;
             }, (nothing) -> finish());

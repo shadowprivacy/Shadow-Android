@@ -19,6 +19,7 @@ import su.sres.securesms.database.PushDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.model.MessageRecord;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.PushDecryptJob;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -175,9 +176,7 @@ public class ConfirmIdentityDialog extends AlertDialog {
 
             long pushId = pushDatabase.insert(envelope);
 
-            ApplicationContext.getInstance(getContext())
-                              .getJobManager()
-                              .add(new PushDecryptJob(getContext(), pushId, messageRecord.getId()));
+            ApplicationDependencies.getJobManager().add(new PushDecryptJob(getContext(), pushId, messageRecord.getId()));
           } catch (IOException e) {
             throw new AssertionError(e);
           }

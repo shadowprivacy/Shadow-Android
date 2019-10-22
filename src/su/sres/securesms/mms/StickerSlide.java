@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.R;
 import su.sres.securesms.attachments.Attachment;
+import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.stickers.StickerLocator;
 import su.sres.securesms.util.MediaUtil;
 
@@ -22,7 +23,7 @@ public class StickerSlide extends Slide {
     }
 
     public StickerSlide(Context context, Uri uri, long size, @NonNull StickerLocator stickerLocator) {
-        super(context, constructAttachmentFromUri(context, uri, MediaUtil.IMAGE_WEBP, size, WIDTH, HEIGHT, true, null, null, stickerLocator, false, false));
+        super(context, constructAttachmentFromUri(context, uri, MediaUtil.IMAGE_WEBP, size, WIDTH, HEIGHT, true, null, null, stickerLocator, null, false, false));
     }
 
     @Override

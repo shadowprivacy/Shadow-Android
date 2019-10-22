@@ -56,6 +56,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.util.DateUtils;
+import su.sres.securesms.util.DynamicDarkActionBarTheme;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.ExpirationUtil;
@@ -100,7 +101,7 @@ public class MessageDetailsActivity extends PassphraseRequiredActionBarActivity 
   private ListView         recipientsList;
   private LayoutInflater   inflater;
 
-  private DynamicTheme     dynamicTheme    = new DynamicTheme();
+  private DynamicTheme     dynamicTheme    = new DynamicDarkActionBarTheme();
   private DynamicLanguage  dynamicLanguage = new DynamicLanguage();
 
   private boolean running;

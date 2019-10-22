@@ -43,7 +43,7 @@ import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
-import su.sres.securesms.webrtc.CameraState;
+import su.sres.securesms.ringrtc.CameraState;
 import su.sres.securesms.util.VerifySpan;
 import su.sres.securesms.util.ViewUtil;
 

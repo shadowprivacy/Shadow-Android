@@ -43,9 +43,7 @@ public class FcmService extends FirebaseMessagingService {
       return;
     }
 
-    ApplicationContext.getInstance(getApplicationContext())
-            .getJobManager()
-            .add(new FcmRefreshJob());
+    ApplicationDependencies.getJobManager().add(new FcmRefreshJob());
   }
 
   private static void handleReceivedNotification(Context context) {
@@ -60,9 +58,7 @@ public class FcmService extends FirebaseMessagingService {
         FcmJobService.schedule(context);
       } else {
         Log.w(TAG, "Failed to retrieve messages. Scheduling on JobManager (API " + Build.VERSION.SDK_INT + ").");
-        ApplicationContext.getInstance(context)
-                .getJobManager()
-                .add(new PushNotificationReceiveJob(context));
+        ApplicationDependencies.getJobManager().add(new PushNotificationReceiveJob(context));
       }
     }
 

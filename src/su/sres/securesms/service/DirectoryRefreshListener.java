@@ -1,10 +1,10 @@
 package su.sres.securesms.service;
 
-
 import android.content.Context;
 import android.content.Intent;
 
 import su.sres.securesms.ApplicationContext;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.DirectoryRefreshJob;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -22,9 +22,7 @@ public class DirectoryRefreshListener extends PersistentAlarmManagerListener {
   @Override
   protected long onAlarm(Context context, long scheduledTime) {
     if (scheduledTime != 0 && TextSecurePreferences.isPushRegistered(context)) {
-      ApplicationContext.getInstance(context)
-                        .getJobManager()
-              .add(new DirectoryRefreshJob(true));
+      ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(true));
     }
 
     long newTime = System.currentTimeMillis() + INTERVAL;

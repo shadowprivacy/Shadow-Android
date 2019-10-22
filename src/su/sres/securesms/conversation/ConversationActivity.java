@@ -31,13 +31,15 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.PorterDuff.Mode;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.os.Vibrator;
 import android.provider.Browser;
 import android.provider.ContactsContract;
@@ -46,12 +48,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.core.graphics.drawable.IconCompat;
 import androidx.core.view.MenuItemCompat;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -91,7 +95,7 @@ import su.sres.securesms.PassphraseRequiredActionBarActivity;
 import su.sres.securesms.PromptMmsActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.RecipientPreferenceActivity;
-import su.sres.securesms.RegistrationActivity;
+import su.sres.securesms.registration.RegistrationNavigationActivity;
 import su.sres.securesms.ShortcutLauncherActivity;
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.VerifyIdentityActivity;
@@ -99,6 +103,7 @@ import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.TombstoneAttachment;
 import su.sres.securesms.audio.AudioRecorder;
 import su.sres.securesms.audio.AudioSlidePlayer;
+import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.components.AnimatingToggle;
 import su.sres.securesms.components.AttachmentTypeSelector;
@@ -146,6 +151,7 @@ import su.sres.securesms.database.identity.IdentityRecordList;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.database.model.StickerRecord;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.ReminderUpdateEvent;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.linkpreview.LinkPreviewRepository;
@@ -204,8 +210,9 @@ import su.sres.securesms.util.CharacterCalculator.CharacterState;
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.Dialogs;
 import su.sres.securesms.util.DirectoryHelper;
+import su.sres.securesms.util.DynamicDarkToolbarTheme;
 import su.sres.securesms.util.DynamicLanguage;
-import su.sres.securesms.util.DynamicNoActionBarTheme;
+import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.ExpirationUtil;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.IdentityUtil;
@@ -213,6 +220,7 @@ import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.TextSecurePreferences.MediaKeyboardMode;
+import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.AssertedSuccessListener;
@@ -325,7 +333,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
   private boolean       isSecurityInitialized = false;
 
   private final IdentityRecordList identityRecords = new IdentityRecordList();
-  private final DynamicNoActionBarTheme dynamicTheme    = new DynamicNoActionBarTheme();
+  private final DynamicTheme       dynamicTheme    = new DynamicDarkToolbarTheme();
   private final DynamicLanguage    dynamicLanguage = new DynamicLanguage();
 
   @Override
@@ -364,7 +372,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     initializeLinkPreviewObserver();
     initializeSearchObserver();
     initializeStickerObserver();
-    initializeSecurity(false, isDefaultSms).addListener(new AssertedSuccessListener<Boolean>() {
+    initializeSecurity(recipient.get().isRegistered(), isDefaultSms).addListener(new AssertedSuccessListener<Boolean>() {
       @Override
       public void onSuccess(Boolean result) {
         initializeProfiles();
@@ -419,7 +427,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
     setIntent(intent);
     initializeResources();
-    initializeSecurity(false, isDefaultSms).addListener(new AssertedSuccessListener<Boolean>() {
+    initializeSecurity(recipient.get().isRegistered(), isDefaultSms).addListener(new AssertedSuccessListener<Boolean>() {
       @Override
       public void onSuccess(Boolean result) {
         initializeDraft();
@@ -535,9 +543,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
       supportInvalidateOptionsMenu();
       break;
     case TAKE_PHOTO:
-      if (attachmentManager.getCaptureUri() != null) {
-        setMedia(attachmentManager.getCaptureUri(), MediaType.IMAGE);
-      }
+      handleImageFromDeviceCameraApp();
       break;
     case ADD_CONTACT:
       onRecipientChanged(recipient.get());
@@ -582,7 +588,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
           } else if (MediaUtil.isGif(mediaItem.getMimeType())) {
             slideDeck.addSlide(new GifSlide(this, mediaItem.getUri(), 0, mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.getCaption().orNull()));
           } else if (MediaUtil.isImageType(mediaItem.getMimeType())) {
-            slideDeck.addSlide(new ImageSlide(this, mediaItem.getUri(), 0, mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.getCaption().orNull()));
+            slideDeck.addSlide(new ImageSlide(this, mediaItem.getUri(), 0, mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.getCaption().orNull(), null));
           } else {
             Log.w(TAG, "Asked to send an unexpected mimeType: '" + mediaItem.getMimeType() + "'. Skipping.");
           }
@@ -614,6 +620,26 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         });
 
         break;
+    }
+  }
+
+  private void handleImageFromDeviceCameraApp() {
+    if (attachmentManager.getCaptureUri() == null) {
+      Log.w(TAG, "No image available.");
+      return;
+    }
+
+    try {
+      Uri mediaUri = BlobProvider.getInstance()
+              .forData(getContentResolver().openInputStream(attachmentManager.getCaptureUri()), 0L)
+              .withMimeType(MediaUtil.IMAGE_JPEG)
+              .createForSingleSessionOnDisk(this);
+
+      getContentResolver().delete(attachmentManager.getCaptureUri(), null, null);
+
+      setMedia(mediaUri, MediaType.IMAGE);
+    } catch (IOException ioe) {
+      Log.w(TAG, "Could not handle public image", ioe);
     }
   }
 
@@ -892,10 +918,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                 protected Void doInBackground(Void... params) {
                   DatabaseFactory.getRecipientDatabase(ConversationActivity.this)
                           .setBlocked(recipient.getId(), false);
-
-                  ApplicationContext.getInstance(ConversationActivity.this)
-                          .getJobManager()
-                          .add(new MultiDeviceBlockedUpdateJob());
+                  ApplicationDependencies.getJobManager().add(new MultiDeviceBlockedUpdateJob());
 
                   return null;
                 }
@@ -911,9 +934,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
   }
 
   private void handleRegisterForSignal() {
-    Intent intent = new Intent(this, RegistrationActivity.class);
-    intent.putExtra(RegistrationActivity.RE_REGISTRATION_EXTRA, true);
-    startActivity(intent);
+    startActivity(RegistrationNavigationActivity.newIntentForReRegistration(this));
   }
 
   private void handleInviteLink() {
@@ -1419,7 +1440,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     } else if (ExpiredBuildReminder.isEligible()) {
       reminderView.get().showReminder(new ExpiredBuildReminder(this));
     } else if (ServiceOutageReminder.isEligible(this)) {
-      ApplicationContext.getInstance(this).getJobManager().add(new ServiceOutageDetectionJob());
+      ApplicationDependencies.getJobManager().add(new ServiceOutageDetectionJob());
       reminderView.get().showReminder(new ServiceOutageReminder(this));
     } else if (TextSecurePreferences.isPushRegistered(this)      &&
                TextSecurePreferences.isShowInviteReminders(this) &&
@@ -1559,7 +1580,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
       calculateCharactersRemaining();
       updateLinkPreviewState();
       composeText.setTransport(newTransport);
-      buttonToggle.getBackground().setColorFilter(newTransport.getBackgroundColor(), Mode.MULTIPLY);
+
+      buttonToggle.getBackground().setColorFilter(newTransport.getBackgroundColor(), PorterDuff.Mode.MULTIPLY);
       buttonToggle.getBackground().invalidateSelf();
       if (manuallySelected) recordTransportPreference(newTransport);
     });
@@ -1594,6 +1616,12 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
     ActionBar supportActionBar = getSupportActionBar();
     if (supportActionBar == null) throw new AssertionError();
+
+    Drawable drawable = ContextCompat.getDrawable(this, R.drawable.ic_arrow_left_24);
+    DrawableCompat.setTint(drawable, ThemeUtil.getThemedColor(this, R.attr.icon_tint_dark));
+    toolbar.setCollapseIcon(drawable);
+
+    supportActionBar.setHomeAsUpIndicator(drawable);
 
     supportActionBar.setDisplayHomeAsUpEnabled(true);
     supportActionBar.setDisplayShowTitleEnabled(false);
@@ -1710,9 +1738,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
       return;
     }
 
-    ApplicationContext.getInstance(this)
-                      .getJobManager()
-            .add(new RetrieveProfileJob(recipient.get()));
+    ApplicationDependencies.getJobManager().add(new RetrieveProfileJob(recipient.get()));
   }
 
   private void onRecipientChanged(@NonNull Recipient recipient) {
@@ -1781,7 +1807,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     case AttachmentTypeSelector.TAKE_PHOTO:
       attachmentManager.capturePhoto(this, TAKE_PHOTO); break;
 //    case AttachmentTypeSelector.ADD_GIF:
-//      AttachmentManager.selectGif(this, PICK_GIF, !isSecureText); break;
+//      AttachmentManager.selectGif(this, PICK_GIF, !isSecureText, recipient.get().getColor().toConversationColor(this)); break;
     }
   }
 
@@ -2353,7 +2379,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     Permissions.with(this)
                .request(Manifest.permission.RECORD_AUDIO)
                .ifNecessary()
-               .withRationaleDialog(getString(R.string.ConversationActivity_to_send_audio_messages_allow_signal_access_to_your_microphone), R.drawable.ic_mic_white_48dp)
+            .withRationaleDialog(getString(R.string.ConversationActivity_to_send_audio_messages_allow_signal_access_to_your_microphone), R.drawable.ic_mic_solid_24)
                .withPermanentDenialDialog(getString(R.string.ConversationActivity_signal_requires_the_microphone_permission_in_order_to_send_audio_messages))
                .execute();
   }
@@ -2554,7 +2580,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
       Permissions.with(ConversationActivity.this)
               .request(Manifest.permission.CAMERA)
               .ifNecessary()
-              .withRationaleDialog(getString(R.string.ConversationActivity_to_capture_photos_and_video_allow_signal_access_to_the_camera), R.drawable.ic_photo_camera_white_48dp)
+              .withRationaleDialog(getString(R.string.ConversationActivity_to_capture_photos_and_video_allow_signal_access_to_the_camera), R.drawable.ic_camera_solid_24)
               .withPermanentDenialDialog(getString(R.string.ConversationActivity_signal_needs_the_camera_permission_to_take_photos_or_video))
               .onAllGranted(() -> {
                 composeText.clearFocus();
@@ -2687,7 +2713,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                           messageRecord.getDateSent(),
                           author,
                           body,
-                          slideDeck);
+              slideDeck,
+              messageRecord.isViewOnce());
 
     } else if (messageRecord.isMms() && !((MmsMessageRecord) messageRecord).getLinkPreviews().isEmpty()) {
       LinkPreview linkPreview = ((MmsMessageRecord) messageRecord).getLinkPreviews().get(0);
@@ -2701,7 +2728,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
               messageRecord.getDateSent(),
               author,
               messageRecord.getBody(),
-              slideDeck);
+              slideDeck,
+              messageRecord.isViewOnce());
 
     } else {
       SlideDeck slideDeck = messageRecord.isMms() ? ((MmsMessageRecord) messageRecord).getSlideDeck() : new SlideDeck();
@@ -2716,7 +2744,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                           messageRecord.getDateSent(),
                           author,
                           messageRecord.getBody(),
-              slideDeck);
+              slideDeck,
+              messageRecord.isViewOnce());
     }
 
     inputPanel.clickOnComposeInput();

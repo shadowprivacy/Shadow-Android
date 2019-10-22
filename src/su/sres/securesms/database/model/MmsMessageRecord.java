@@ -65,6 +65,11 @@ public abstract class MmsMessageRecord extends MessageRecord {
     return false;
   }
 
+  @Override
+  public boolean isViewOnce() {
+    return viewOnce;
+  }
+
   public boolean containsMediaSlide() {
     return slideDeck.containsMediaSlide();
   }
@@ -79,10 +84,5 @@ public abstract class MmsMessageRecord extends MessageRecord {
 
   public @NonNull List<LinkPreview> getLinkPreviews() {
     return linkPreviews;
-  }
-
-
-  public boolean isViewOnce() {
-    return viewOnce;
   }
 }

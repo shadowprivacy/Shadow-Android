@@ -1,6 +1,5 @@
 package su.sres.securesms.backup;
 
-
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
@@ -28,6 +27,8 @@ import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.SearchDatabase;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.profiles.AvatarHelper;
+import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.Conversions;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.kdf.HKDFv3;
@@ -165,7 +166,10 @@ public class FullBackupImporter extends FullBackupBase {
   }
 
   private static void processAvatar(@NonNull Context context, @NonNull BackupProtos.Avatar avatar, @NonNull BackupRecordInputStream inputStream) throws IOException {
-    inputStream.readAttachmentTo(new FileOutputStream(AvatarHelper.getAvatarFile(context, Address.fromSerialized(PhoneNumberFormatter.get(context).format(avatar.getName())))), avatar.getLength());
+    Recipient recipient = avatar.hasRecipientId() ? Recipient.resolved(RecipientId.from(avatar.getRecipientId()))
+            : Recipient.external(context, avatar.getName());
+
+    inputStream.readAttachmentTo(new FileOutputStream(AvatarHelper.getAvatarFile(context, recipient.getId())), avatar.getLength());
   }
 
   @SuppressLint("ApplySharedPref")

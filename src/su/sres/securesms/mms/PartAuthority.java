@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.AttachmentId;
+import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.providers.DeprecatedPersistentBlobProvider;

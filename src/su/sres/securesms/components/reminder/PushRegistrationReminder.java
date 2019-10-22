@@ -1,11 +1,9 @@
 package su.sres.securesms.components.reminder;
 
 import android.content.Context;
-import android.content.Intent;
-import android.view.View.OnClickListener;
 
 import su.sres.securesms.R;
-import su.sres.securesms.RegistrationActivity;
+import su.sres.securesms.registration.RegistrationNavigationActivity;
 import su.sres.securesms.util.TextSecurePreferences;
 
 public class PushRegistrationReminder extends Reminder {
@@ -14,13 +12,7 @@ public class PushRegistrationReminder extends Reminder {
     super(context.getString(R.string.reminder_header_push_title),
           context.getString(R.string.reminder_header_push_text));
 
-    final OnClickListener okListener = v -> {
-      Intent intent = new Intent(context, RegistrationActivity.class);
-      intent.putExtra(RegistrationActivity.RE_REGISTRATION_EXTRA, true);
-      context.startActivity(intent);
-    };
-
-    setOkListener(okListener);
+    setOkListener(v -> context.startActivity(RegistrationNavigationActivity.newIntentForReRegistration(context)));
   }
 
   @Override

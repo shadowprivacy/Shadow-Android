@@ -68,6 +68,7 @@ import su.sres.securesms.util.AttachmentUtil;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.SaveAttachmentTask;
 import su.sres.securesms.util.SaveAttachmentTask.Attachment;
+import su.sres.securesms.util.Util;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -427,14 +428,14 @@ public final class MediaPreviewActivity extends PassphraseRequiredActionBarActiv
       mediaPager.setAdapter(adapter);
       adapter.setActive(true);
 
-      viewModel.setCursor(this, data.first, leftIsRecent);
-
       int item = restartItem >= 0 ? restartItem : data.second;
       mediaPager.setCurrentItem(item);
 
       if (item == 0) {
         viewPagerListener.onPageSelected(0);
       }
+
+      Util.postToMain(() -> viewModel.setCursor(this, data.first, leftIsRecent));
     }
   }
 

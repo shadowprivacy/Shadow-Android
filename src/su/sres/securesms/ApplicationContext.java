@@ -18,6 +18,7 @@ package su.sres.securesms;
 
 import android.annotation.SuppressLint;
 
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.camera.camera2.Camera2AppConfig;
 import androidx.camera.core.CameraX;
 import androidx.lifecycle.DefaultLifecycleObserver;
@@ -37,6 +38,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import org.signal.aesgcmprovider.AesGcmProvider;
+import su.sres.ringrtc.CallConnectionFactory;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.database.DatabaseFactory;
@@ -77,8 +79,6 @@ import su.sres.securesms.service.UpdateApkRefreshListener;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.VersionTracker;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
-import org.webrtc.PeerConnectionFactory;
-import org.webrtc.PeerConnectionFactory.InitializationOptions;
 
 import org.webrtc.voiceengine.WebRtcAudioManager;
 import org.webrtc.voiceengine.WebRtcAudioUtils;
@@ -105,7 +105,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   private ViewOnceMessageManager   viewOnceMessageManager;
   private TypingStatusRepository   typingStatusRepository;
   private TypingStatusSender       typingStatusSender;
-  private JobManager               jobManager;
   private IncomingMessageObserver  incomingMessageObserver;
   private PersistentLogger         persistentLogger;
 
@@ -134,7 +133,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     if (!DatabaseFactory.getConfigDatabase(this).getConfigById(1).equals(DEFAULT_SERVER_URL)) {
       isserverset = true;
       initializeAppDependencies();
-      initializeJobManager();
       initializeApplicationMigrations();
       initializeMessageRetrieval();
       initializeExpiringMessageManager();
@@ -145,16 +143,20 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
       initializeSignedPreKeyCheck();
       initializePeriodicTasks();
       initializeCircumvention();
-      initializeWebRtc();
+      initializeRingRtc();
       initializePendingMessages();
       initializeUnidentifiedDeliveryAbilityRefresh();
       initializeBlobProvider();
       initializeCameraX();
-      jobManager.beginJobLoop();
+      ApplicationDependencies.getJobManager().beginJobLoop();
     }
 
     NotificationChannels.create(this);
     ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
+
+    if (Build.VERSION.SDK_INT < 21) {
+      AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+    }
   }
 
   @Override
@@ -167,6 +169,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
     isAppVisible = true;
     Log.i(TAG, "App is now visible.");
+    ApplicationDependencies.getRecipientCache().warmUp();
     executePendingContactSync();
     KeyCachingService.onAppForegrounded(this);
   }
@@ -180,10 +183,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
     // unregister from Event Bus
     EventBus.getDefault().unregister(this);
-  }
-
-  public JobManager getJobManager() {
-    return jobManager;
   }
 
   public ExpiringMessageManager getExpiringMessageManager() {
@@ -246,19 +245,8 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionLogger(originalHandler));
   }
 
-  private void initializeJobManager() {
-    this.jobManager = new JobManager(this, new JobManager.Configuration.Builder()
-            .setDataSerializer(new JsonDataSerializer())
-            .setJobFactories(JobManagerFactories.getJobFactories(this))
-            .setConstraintFactories(JobManagerFactories.getConstraintFactories(this))
-            .setConstraintObservers(JobManagerFactories.getConstraintObservers(this))
-            .setJobStorage(new FastJobStorage(DatabaseFactory.getJobDatabase(this)))
-            .setJobMigrator(new JobMigrator(TextSecurePreferences.getJobManagerVersion(this), JobManager.CURRENT_VERSION, JobManagerFactories.getJobMigrations(this)))
-            .build());
-  }
-
   private void initializeApplicationMigrations() {
-    ApplicationMigrations.onApplicationCreate(this, jobManager);
+    ApplicationMigrations.onApplicationCreate(this, ApplicationDependencies.getJobManager());
   }
 
   public void initializeMessageRetrieval() {
@@ -288,14 +276,14 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
       long nextSetTime = TextSecurePreferences.getFcmTokenLastSetTime(this) + TimeUnit.HOURS.toMillis(6);
 
       if (TextSecurePreferences.getFcmToken(this) == null || nextSetTime <= System.currentTimeMillis()) {
-        this.jobManager.add(new FcmRefreshJob());
+        ApplicationDependencies.getJobManager().add(new FcmRefreshJob());
       }
     }
   }
 
   private void initializeSignedPreKeyCheck() {
     if (!TextSecurePreferences.isSignedPreKeyRegistered(this)) {
-      jobManager.add(new CreateSignedPreKeyJob(this));
+      ApplicationDependencies.getJobManager().add(new CreateSignedPreKeyJob(this));
     }
   }
 
@@ -326,7 +314,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     }
   }
 
-  private void initializeWebRtc() {
+  private void initializeRingRtc() {
     try {
       Set<String> HARDWARE_AEC_BLACKLIST = new HashSet<String>() {{
         add("Pixel");
@@ -355,7 +343,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         WebRtcAudioManager.setBlacklistDeviceForOpenSLESUsage(true);
       }
 
-      PeerConnectionFactory.initialize(InitializationOptions.builder(this).createInitializationOptions());
+      CallConnectionFactory.initialize(this);
     } catch (UnsatisfiedLinkError e) {
       Log.w(TAG, e);
     }
@@ -382,7 +370,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   private void executePendingContactSync() {
     if (TextSecurePreferences.needsFullContactSync(this)) {
-      ApplicationContext.getInstance(this).getJobManager().add(new MultiDeviceContactUpdateJob(true));
+      ApplicationDependencies.getJobManager().add(new MultiDeviceContactUpdateJob(true));
     }
   }
 
@@ -392,7 +380,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
       if (Build.VERSION.SDK_INT >= 26) {
         FcmJobService.schedule(this);
       } else {
-        ApplicationContext.getInstance(this).getJobManager().add(new PushNotificationReceiveJob(this));
+        ApplicationDependencies.getJobManager().add(new PushNotificationReceiveJob(this));
       }
       TextSecurePreferences.setNeedsMessagePull(this, false);
     }
@@ -400,7 +388,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   private void initializeUnidentifiedDeliveryAbilityRefresh() {
     if (TextSecurePreferences.isMultiDevice(this) && !TextSecurePreferences.isUnidentifiedDeliveryEnabled(this)) {
-      jobManager.add(new RefreshUnidentifiedDeliveryAbilityJob());
+      ApplicationDependencies.getJobManager().add(new RefreshUnidentifiedDeliveryAbilityJob());
     }
   }
 
@@ -439,7 +427,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     @Subscribe
     public void onServerSetEvent(ServerSetEvent event) {
         initializeAppDependencies();
-        initializeJobManager();
         initializeApplicationMigrations();
         initializeMessageRetrieval();
         initializeExpiringMessageManager();
@@ -450,12 +437,12 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         initializeSignedPreKeyCheck();
         initializePeriodicTasks();
         initializeCircumvention();
-        initializeWebRtc();
+        initializeRingRtc();
         initializePendingMessages();
         initializeUnidentifiedDeliveryAbilityRefresh();
         initializeBlobProvider();
         initializeCameraX();
-        jobManager.beginJobLoop();
+        ApplicationDependencies.getJobManager().beginJobLoop();
     }
 
   private static class ProviderInitializationException extends RuntimeException {

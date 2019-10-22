@@ -4,6 +4,7 @@ import android.app.Activity;
 import androidx.annotation.NonNull;
 import android.telephony.SmsManager;
 
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.logging.Log;
@@ -103,9 +104,7 @@ public class SmsSentJob extends BaseJob {
         case SmsManager.RESULT_ERROR_NO_SERVICE:
         case SmsManager.RESULT_ERROR_RADIO_OFF:
           Log.w(TAG, "Service connectivity problem, requeuing...");
-          ApplicationContext.getInstance(context)
-                  .getJobManager()
-                  .add(new SmsSendJob(context, messageId, record.getIndividualRecipient(), runAttempt + 1));
+          ApplicationDependencies.getJobManager().add(new SmsSendJob(context, messageId, record.getIndividualRecipient(), runAttempt + 1));
           break;
         default:
           database.markAsSentFailed(messageId);

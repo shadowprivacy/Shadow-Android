@@ -6,6 +6,6 @@ package su.sres.securesms.util;
  */
 public class FeatureFlags {
 
-    /** Send support for view-once photos. */
+    /** Send support for view-once media. */
     public static final boolean VIEW_ONCE_SENDING = false;
 }

@@ -11,17 +11,16 @@ import com.annimon.stream.Stream;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.libsignal.metadata.certificate.InvalidCertificateException;
 import org.signal.libsignal.metadata.certificate.SenderCertificate;
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.TextSecureExpiredException;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.DatabaseAttachment;
+import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.contactshare.ContactModelMapper;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MmsDatabase;
-import su.sres.securesms.database.NoSuchMessageException;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.PartProgressEvent;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
@@ -29,7 +28,6 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
-import su.sres.securesms.mms.MmsException;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.notifications.MessageNotifier;
@@ -82,9 +80,7 @@ public abstract class PushSendJob extends SendJob {
   @Override
   protected final void onSend() throws Exception {
     if (TextSecurePreferences.getSignedPreKeyFailureCount(context) > 5) {
-      ApplicationContext.getInstance(context)
-                        .getJobManager()
-              .add(new RotateSignedPreKeyJob());
+      ApplicationDependencies.getJobManager().add(new RotateSignedPreKeyJob());
 
       throw new TextSecureExpiredException("Too many signed prekey rotation failures");
     }
@@ -99,7 +95,7 @@ public abstract class PushSendJob extends SendJob {
 
       if (getRunAttempt() > 1) {
       Log.i(TAG, "Scheduling service outage detection job.");
-        ApplicationContext.getInstance(context).getJobManager().add(new ServiceOutageDetectionJob());
+        ApplicationDependencies.getJobManager().add(new ServiceOutageDetectionJob());
     }
   }
 
@@ -203,7 +199,8 @@ public abstract class PushSendJob extends SendJob {
               Optional.fromNullable(attachment.getDigest()),
               Optional.fromNullable(attachment.getFileName()),
               attachment.isVoiceNote(),
-              Optional.fromNullable(attachment.getCaption()));
+              Optional.fromNullable(attachment.getCaption()),
+              Optional.fromNullable(attachment.getBlurHash()).transform(BlurHash::getHash));
     } catch (IOException | ArithmeticException e) {
       Log.w(TAG, e);
       return null;

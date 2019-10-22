@@ -12,6 +12,7 @@ import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.MessagingDatabase.InsertResult;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.SmsDatabase;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.AvatarDownloadJob;
 import su.sres.securesms.jobs.PushGroupUpdateJob;
 import su.sres.securesms.logging.Log;
@@ -165,9 +166,7 @@ public class GroupMessageProcessor {
     Recipient sender = Recipient.external(context, content.getSender());
 
     if (record.getMembers().contains(sender.getId())) {
-      ApplicationContext.getInstance(context)
-                        .getJobManager()
-              .add(new PushGroupUpdateJob(sender.getId(), group.getGroupId()));
+      ApplicationDependencies.getJobManager().add(new PushGroupUpdateJob(sender.getId(), group.getGroupId()));
     }
 
     return null;
@@ -204,7 +203,7 @@ public class GroupMessageProcessor {
                                              boolean  outgoing)
   {
     if (group.getAvatar().isPresent()) {
-      ApplicationContext.getInstance(context).getJobManager()
+      ApplicationDependencies.getJobManager()
               .add(new AvatarDownloadJob(group.getGroupId()));
     }
 

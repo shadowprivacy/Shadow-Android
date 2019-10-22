@@ -59,9 +59,7 @@ public class RefreshAttributesJob extends BaseJob  {
             unidentifiedAccessKey, universalUnidentifiedAccess);
 
 
-    ApplicationContext.getInstance(context)
-            .getJobManager()
-            .add(new RefreshUnidentifiedDeliveryAbilityJob());
+    ApplicationDependencies.getJobManager().add(new RefreshUnidentifiedDeliveryAbilityJob());
   }
 
   @Override

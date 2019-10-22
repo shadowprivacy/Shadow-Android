@@ -3,6 +3,7 @@ package su.sres.securesms.mediasend;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.view.ContextThemeWrapper;
+import androidx.core.util.Supplier;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.Manifest;
@@ -36,6 +37,7 @@ import su.sres.securesms.PassphraseRequiredActionBarActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.TransportOptions;
+import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.components.ComposeText;
 import su.sres.securesms.components.InputAwareLayout;
 import su.sres.securesms.components.SendButton;
@@ -65,6 +67,8 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.scribbles.ImageEditorFragment;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.util.CharacterCalculator.CharacterState;
+import su.sres.securesms.util.Function3;
+import su.sres.securesms.util.IOFunction;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -72,9 +76,12 @@ import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.views.Stub;
+import su.sres.securesms.video.VideoUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -383,21 +390,53 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
     @Override
     public void onImageCaptured(@NonNull byte[] data, int width, int height) {
         Log.i(TAG, "Camera image captured.");
+        onMediaCaptured(() -> data,
+                ignored -> (long) data.length,
+                (blobProvider, bytes, ignored) -> blobProvider.forData(bytes),
+                MediaUtil.IMAGE_JPEG,
+                width,
+                height);
+    }
+
+    @Override
+    public void onVideoCaptured(@NonNull FileDescriptor fd) {
+        Log.i(TAG, "Camera video captured.");
+        onMediaCaptured(() -> new FileInputStream(fd),
+                fin -> fin.getChannel().size(),
+                BlobProvider::forData,
+                VideoUtil.RECORDED_VIDEO_CONTENT_TYPE,
+                0,
+                0);
+    }
+
+
+    private <T> void onMediaCaptured(Supplier<T> dataSupplier,
+                                     IOFunction<T, Long> getLength,
+                                     Function3<BlobProvider, T, Long, BlobProvider.BlobBuilder> createBlobBuilder,
+                                     String mimeType,
+                                     int width,
+                                     int height)
+    {
 
         SimpleTask.run(getLifecycle(), () -> {
             try {
-                Uri uri = BlobProvider.getInstance()
-                        .forData(data)
-                        .withMimeType(MediaUtil.IMAGE_JPEG)
+                T    data   = dataSupplier.get();
+                long length = getLength.apply(data);
+
+                Uri uri = createBlobBuilder.apply(BlobProvider.getInstance(), data, length)
+                        .withMimeType(mimeType)
                         .createForSingleSessionOnDisk(this);
-                return new Media(uri,
-                        MediaUtil.IMAGE_JPEG,
+
+                return new Media(
+                        uri,
+                        mimeType,
                         System.currentTimeMillis(),
                         width,
                         height,
-                        data.length,
+                        length,
                         Optional.of(Media.ALL_MEDIA_BUCKET_ID),
-                        Optional.absent());
+                        Optional.absent()
+                );
             } catch (IOException e) {
                 return null;
             }
@@ -409,7 +448,7 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
 
             Log.i(TAG, "Camera capture stored: " + media.getUri().toString());
 
-            viewModel.onImageCaptured(media);
+            viewModel.onMediaCaptured(media);
             navigateToMediaSend(Locale.getDefault());
         });
     }
@@ -539,7 +578,7 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
             } else if (state.getViewOnceState() == ViewOnceState.ENABLED) {
                 captionBackground = 0;
             } else {
-                captionBackground = R.color.transparent_black_70;
+                captionBackground = R.color.transparent_black_40;
             }
 
             captionAndRail.setBackgroundResource(captionBackground);
@@ -685,7 +724,7 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
         Permissions.with(this)
                 .request(Manifest.permission.CAMERA)
                 .ifNecessary()
-                .withRationaleDialog(getString(R.string.ConversationActivity_to_capture_photos_and_video_allow_signal_access_to_the_camera), R.drawable.ic_photo_camera_white_48dp)
+                .withRationaleDialog(getString(R.string.ConversationActivity_to_capture_photos_and_video_allow_signal_access_to_the_camera), R.drawable.ic_camera_solid_24)
                 .withPermanentDenialDialog(getString(R.string.ConversationActivity_signal_needs_the_camera_permission_to_take_photos_or_video))
                 .onAllGranted(() -> {
                     Fragment fragment = getOrCreateCameraFragment();
@@ -930,7 +969,7 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
             } else if (MediaUtil.isGif(mediaItem.getMimeType())) {
                 slideDeck.addSlide(new GifSlide(this, mediaItem.getUri(), 0, mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.getCaption().orNull()));
             } else if (MediaUtil.isImageType(mediaItem.getMimeType())) {
-                slideDeck.addSlide(new ImageSlide(this, mediaItem.getUri(), 0, mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.getCaption().orNull()));
+                slideDeck.addSlide(new ImageSlide(this, mediaItem.getUri(), 0, mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.getCaption().orNull(), null));
             } else {
                 Log.w(TAG, "Asked to send an unexpected mimeType: '" + mediaItem.getMimeType() + "'. Skipping.");
             }

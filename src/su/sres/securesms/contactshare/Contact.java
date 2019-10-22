@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.attachments.UriAttachment;
+import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.MediaUtil;
@@ -642,7 +643,7 @@ public class Contact implements Parcelable {
 
     private static Attachment attachmentFromUri(@Nullable Uri uri) {
       if (uri == null) return null;
-      return new UriAttachment(uri, MediaUtil.IMAGE_JPEG, AttachmentDatabase.TRANSFER_PROGRESS_DONE, 0, null, false, false, null, null);
+      return new UriAttachment(uri, MediaUtil.IMAGE_JPEG, AttachmentDatabase.TRANSFER_PROGRESS_DONE, 0, null, false, false, null, null, null);
     }
 
     @Override

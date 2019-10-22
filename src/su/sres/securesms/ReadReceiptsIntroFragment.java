@@ -1,6 +1,5 @@
 package su.sres.securesms;
 
-
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -9,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceConfigurationUpdateJob;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ViewUtil;
@@ -37,8 +37,7 @@ public class ReadReceiptsIntroFragment extends Fragment {
     preference.setChecked(TextSecurePreferences.isReadReceiptsEnabled(getContext()));
     preference.setOnCheckedChangeListener((buttonView, isChecked) -> {
       TextSecurePreferences.setReadReceiptsEnabled(getContext(), isChecked);
-      ApplicationContext.getInstance(getContext())
-                        .getJobManager()
+      ApplicationDependencies.getJobManager()
               .add(new MultiDeviceConfigurationUpdateJob(isChecked,
                       TextSecurePreferences.isTypingIndicatorsEnabled(requireContext()),
                       TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(getContext()),

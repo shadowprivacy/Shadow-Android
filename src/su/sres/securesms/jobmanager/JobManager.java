@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
+import androidx.lifecycle.LiveData;
 
 import su.sres.securesms.jobmanager.impl.DefaultExecutorFactory;
 import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
@@ -40,6 +41,7 @@ public class JobManager implements ConstraintObserver.Notifier {
   private final Configuration   configuration;
   private final ExecutorService executor;
   private final JobController   jobController;
+  private final JobTracker      jobTracker;
 
   private final Set<EmptyQueueListener> emptyQueueListeners = new CopyOnWriteArraySet<>();
 
@@ -47,11 +49,13 @@ public class JobManager implements ConstraintObserver.Notifier {
     this.application   = application;
     this.configuration = configuration;
     this.executor      = configuration.getExecutorFactory().newSingleThreadExecutor("signal-JobManager");
+    this.jobTracker    = configuration.getJobTracker();
     this.jobController = new JobController(application,
             configuration.getJobStorage(),
             configuration.getJobInstantiator(),
             configuration.getConstraintFactories(),
             configuration.getDataSerializer(),
+            configuration.getJobTracker(),
             Build.VERSION.SDK_INT < 26 ? new AlarmManagerScheduler(application)
                     : new CompositeScheduler(new InAppScheduler(this), new JobSchedulerScheduler(application)),
             new Debouncer(500),
@@ -92,6 +96,22 @@ public class JobManager implements ConstraintObserver.Notifier {
 
       wakeUp();
     });
+  }
+
+  /**
+   * Add a listener to subscribe to job state updates. Listeners will be invoked on an arbitrary
+   * background thread. You must eventually call {@link #removeListener(JobTracker.JobListener)} to avoid
+   * memory leaks.
+   */
+  public void addListener(@NonNull String id, @NonNull JobTracker.JobListener listener) {
+    jobTracker.addListener(id, listener);
+  }
+
+  /**
+   * Unsubscribe the provided listener from all job updates.
+   */
+  public void removeListener(@NonNull JobTracker.JobListener listener) {
+    jobTracker.removeListener(listener);
   }
 
   /**
@@ -164,6 +184,11 @@ public class JobManager implements ConstraintObserver.Notifier {
   }
 
   private void enqueueChain(@NonNull Chain chain) {
+    for (List<Job> jobList : chain.getJobListChain()) {
+      for (Job job : jobList) {
+        jobTracker.onStateChange(job.getId(), JobTracker.JobState.PENDING);
+      }
+    }
     executor.execute(() -> {
       jobController.submitNewJobChain(chain.getJobListChain());
       wakeUp();
@@ -229,6 +254,7 @@ public class JobManager implements ConstraintObserver.Notifier {
     private final Data.Serializer          dataSerializer;
     private final JobStorage               jobStorage;
     private final JobMigrator              jobMigrator;
+    private final JobTracker               jobTracker;
 
     private Configuration(int jobThreadCount,
                           @NonNull ExecutorFactory executorFactory,
@@ -237,7 +263,8 @@ public class JobManager implements ConstraintObserver.Notifier {
                           @NonNull List<ConstraintObserver> constraintObservers,
                           @NonNull Data.Serializer dataSerializer,
                           @NonNull JobStorage jobStorage,
-                          @NonNull JobMigrator jobMigrator)
+                          @NonNull JobMigrator jobMigrator,
+                          @NonNull JobTracker jobTracker)
     {
       this.executorFactory        = executorFactory;
       this.jobThreadCount         = jobThreadCount;
@@ -247,6 +274,7 @@ public class JobManager implements ConstraintObserver.Notifier {
       this.dataSerializer         = dataSerializer;
       this.jobStorage             = jobStorage;
       this.jobMigrator            = jobMigrator;
+      this.jobTracker             = jobTracker;
     }
 
     int getJobThreadCount() {
@@ -282,6 +310,10 @@ public class JobManager implements ConstraintObserver.Notifier {
       return jobMigrator;
     }
 
+    @NonNull JobTracker getJobTracker() {
+      return jobTracker;
+    }
+
     public static class Builder {
 
       private ExecutorFactory                 executorFactory     = new DefaultExecutorFactory();
@@ -292,6 +324,7 @@ public class JobManager implements ConstraintObserver.Notifier {
       private Data.Serializer                 dataSerializer      = new JsonDataSerializer();
       private JobStorage                      jobStorage          = null;
       private JobMigrator                     jobMigrator         = null;
+      private JobTracker                      jobTracker          = new JobTracker();
 
       public @NonNull Builder setJobThreadCount(int jobThreadCount) {
         this.jobThreadCount = jobThreadCount;
@@ -341,7 +374,8 @@ public class JobManager implements ConstraintObserver.Notifier {
                 new ArrayList<>(constraintObservers),
                 dataSerializer,
                 jobStorage,
-                jobMigrator);
+                jobMigrator,
+                jobTracker);
       }
     }
   }

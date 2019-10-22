@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import su.sres.securesms.ApplicationContext;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 
 import java.util.List;
@@ -65,7 +66,7 @@ public class JobSchedulerScheduler implements Scheduler {
         public boolean onStartJob(JobParameters params) {
             Log.d(TAG, "onStartJob()");
 
-            JobManager jobManager = ApplicationContext.getInstance(getApplicationContext()).getJobManager();
+            JobManager jobManager = ApplicationDependencies.getJobManager();
 
             jobManager.addOnEmptyQueueListener(new JobManager.EmptyQueueListener() {
                 @Override

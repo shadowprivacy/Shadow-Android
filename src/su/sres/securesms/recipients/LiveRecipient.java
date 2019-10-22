@@ -125,8 +125,6 @@ public final class LiveRecipient {
 
         if (Util.isMainThread()) {
             Log.w(TAG, "[Resolve][MAIN] " + getId(), new Throwable());
-        } else {
-            Log.d(TAG, "[Resolve][" + Thread.currentThread().getName() + "] " + getId());
         }
 
         Recipient       updated      = fetchRecipientFromDisk(getId());
@@ -153,8 +151,6 @@ public final class LiveRecipient {
         if (getId().isUnknown()) return;
         if (Util.isMainThread()) {
             Log.w(TAG, "[Refresh][MAIN] " + getId(), new Throwable());
-        } else {
-            Log.d(TAG, "[Refresh][" + Thread.currentThread().getName() + "] " + getId());
         }
 
         Recipient       recipient    = fetchRecipientFromDisk(getId());

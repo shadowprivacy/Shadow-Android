@@ -35,6 +35,7 @@ import su.sres.securesms.database.documents.IdentityKeyMismatchList;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.SmsMessageRecord;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.TrimThreadJob;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
@@ -477,11 +478,25 @@ public class SmsDatabase extends MessagingDatabase {
       DatabaseFactory.getThreadDatabase(context).update(record.getThreadId(), true);
       notifyConversationListeners(record.getThreadId());
 
-      ApplicationContext.getInstance(context).getJobManager().add(new TrimThreadJob(record.getThreadId()));
+      ApplicationDependencies.getJobManager().add(new TrimThreadJob(record.getThreadId()));
 
       return new Pair<>(newMessageId, record.getThreadId());
     } catch (NoSuchMessageException e) {
       throw new AssertionError(e);
+    }
+  }
+
+  boolean hasReceivedAnyCallsSince(long threadId, long timestamp) {
+    SQLiteDatabase db            = databaseHelper.getReadableDatabase();
+    String[]       projection    = new String[]{SmsDatabase.TYPE};
+    String         selection     = THREAD_ID + " = ? AND " + DATE_RECEIVED  + " > ? AND (" + TYPE + " = ? OR " + TYPE + " = ?)";
+    String[]       selectionArgs = new String[]{String.valueOf(threadId),
+            String.valueOf(timestamp),
+            String.valueOf(Types.INCOMING_CALL_TYPE),
+            String.valueOf(Types.MISSED_CALL_TYPE)};
+
+    try (Cursor cursor = db.query(TABLE_NAME, projection, selection, selectionArgs, null, null, null)) {
+      return cursor != null && cursor.moveToFirst();
     }
   }
 
@@ -516,7 +531,7 @@ public class SmsDatabase extends MessagingDatabase {
     DatabaseFactory.getThreadDatabase(context).update(threadId, true);
     notifyConversationListeners(threadId);
 
-    ApplicationContext.getInstance(context).getJobManager().add(new TrimThreadJob(threadId));
+    ApplicationDependencies.getJobManager().add(new TrimThreadJob(threadId));
 
     if (unread) {
       DatabaseFactory.getThreadDatabase(context).incrementUnread(threadId, 1);
@@ -610,7 +625,7 @@ public class SmsDatabase extends MessagingDatabase {
       notifyConversationListeners(threadId);
 
       if (!message.isIdentityUpdate() && !message.isIdentityVerified() && !message.isIdentityDefault()) {
-        ApplicationContext.getInstance(context).getJobManager().add(new TrimThreadJob(threadId));
+        ApplicationDependencies.getJobManager().add(new TrimThreadJob(threadId));
       }
 
       return Optional.of(new InsertResult(messageId, threadId));
@@ -668,7 +683,7 @@ public class SmsDatabase extends MessagingDatabase {
     notifyConversationListeners(threadId);
 
     if (!message.isIdentityVerified() && !message.isIdentityDefault()) {
-      ApplicationContext.getInstance(context).getJobManager().add(new TrimThreadJob(threadId));
+      ApplicationDependencies.getJobManager().add(new TrimThreadJob(threadId));
     }
 
     return messageId;

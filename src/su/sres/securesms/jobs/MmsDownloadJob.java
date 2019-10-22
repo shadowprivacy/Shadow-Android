@@ -16,6 +16,7 @@ import com.google.android.mms.pdu_alt.RetrieveConf;
 
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.UriAttachment;
+import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.database.Address;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
@@ -229,7 +230,7 @@ public class MmsDownloadJob extends BaseJob {
 
           attachments.add(new UriAttachment(uri, Util.toIsoString(part.getContentType()),
                                             AttachmentDatabase.TRANSFER_PROGRESS_DONE,
-                  part.getData().length, name, false, false, null, null));
+                  part.getData().length, name, false, false, null, null, null));
         }
       }
     }

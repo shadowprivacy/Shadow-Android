@@ -17,6 +17,7 @@ import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraintObserver;
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration;
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration2;
 import su.sres.securesms.jobmanager.migrations.RecipientIdJobMigration;
+import su.sres.securesms.migrations.AvatarMigrationJob;
 import su.sres.securesms.migrations.DatabaseMigrationJob;
 import su.sres.securesms.migrations.LegacyMigrationJob;
 import su.sres.securesms.migrations.MigrationCompleteJob;
@@ -82,6 +83,7 @@ public final class JobManagerFactories {
             put(UpdateApkJob.KEY,                          new UpdateApkJob.Factory());
 
             // Migrations
+            put(AvatarMigrationJob.KEY,                    new AvatarMigrationJob.Factory());
             put(DatabaseMigrationJob.KEY,                  new DatabaseMigrationJob.Factory());
             put(LegacyMigrationJob.KEY,                    new LegacyMigrationJob.Factory());
             put(MigrationCompleteJob.KEY,                  new MigrationCompleteJob.Factory());

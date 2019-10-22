@@ -48,6 +48,7 @@ import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.profiles.ProfileMediaConstraints;
 import su.sres.securesms.profiles.SystemProfileUtil;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.BitmapDecodingException;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.DynamicLanguage;
@@ -151,7 +152,7 @@ public class CreateProfileActivity extends BaseActionBarActivity {
 
           if (data != null && data.getBooleanExtra("delete", false)) {
             avatarBytes = null;
-            avatar.setImageDrawable(new ResourceContactPhoto(R.drawable.ic_camera_alt_white_24dp).asDrawable(this, getResources().getColor(R.color.grey_400)));
+            avatar.setImageDrawable(new ResourceContactPhoto(R.drawable.ic_camera_solid_white_24).asDrawable(this, getResources().getColor(R.color.grey_400)));
           } else {
             AvatarSelection.circularCropImage(this, inputFile, outputFile, R.string.CropImageActivity_profile_avatar);
           }
@@ -264,14 +265,14 @@ public class CreateProfileActivity extends BaseActionBarActivity {
   }
 
   private void initializeProfileAvatar(boolean excludeSystem) {
-    Address ourAddress = Address.fromSerialized(TextSecurePreferences.getLocalNumber(this));
+    RecipientId selfId = Recipient.self().getId();
 
-    if (AvatarHelper.getAvatarFile(this, ourAddress).exists() && AvatarHelper.getAvatarFile(this, ourAddress).length() > 0) {
+    if (AvatarHelper.getAvatarFile(this, selfId).exists() && AvatarHelper.getAvatarFile(this, selfId).length() > 0) {
       new AsyncTask<Void, Void, byte[]>() {
         @Override
         protected byte[] doInBackground(Void... params) {
           try {
-            return Util.readFully(AvatarHelper.getInputStreamFor(CreateProfileActivity.this, ourAddress));
+            return Util.readFully(AvatarHelper.getInputStreamFor(CreateProfileActivity.this, selfId));
           } catch (IOException e) {
             Log.w(TAG, e);
             return null;
@@ -374,14 +375,14 @@ public class CreateProfileActivity extends BaseActionBarActivity {
 
         try {
           accountManager.setProfileAvatar(profileKey, avatar);
-          AvatarHelper.setAvatar(CreateProfileActivity.this, Address.fromSerialized(TextSecurePreferences.getLocalNumber(context)), avatarBytes);
+          AvatarHelper.setAvatar(CreateProfileActivity.this, Recipient.self().getId(), avatarBytes);
           TextSecurePreferences.setProfileAvatarId(CreateProfileActivity.this, new SecureRandom().nextInt());
         } catch (IOException e) {
           Log.w(TAG, e);
           return false;
         }
 
-        ApplicationContext.getInstance(context).getJobManager().add(new MultiDeviceProfileKeyUpdateJob());
+        ApplicationDependencies.getJobManager().add(new MultiDeviceProfileKeyUpdateJob());
 
         return true;
       }

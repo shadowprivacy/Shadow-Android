@@ -25,8 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-
-
 public class StickerPackDownloadJob extends BaseJob  {
 
     public static final String KEY = "StickerPackDownloadJob";
@@ -81,7 +79,7 @@ public class StickerPackDownloadJob extends BaseJob  {
         }
 
         SignalServiceMessageReceiver receiver        = ApplicationDependencies.getSignalServiceMessageReceiver();
-        JobManager                   jobManager      = ApplicationContext.getInstance(context).getJobManager();
+        JobManager                   jobManager      = ApplicationDependencies.getJobManager();
         StickerDatabase              stickerDatabase = DatabaseFactory.getStickerDatabase(context);
         byte[]                       packIdBytes     = Hex.fromStringCondensed(packId);
         byte[]                       packKeyBytes    = Hex.fromStringCondensed(packKey);

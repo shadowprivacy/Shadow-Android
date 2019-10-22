@@ -56,9 +56,7 @@ public class RotateProfileKeyJob extends BaseJob  {
         accountManager.setProfileName(profileKey, TextSecurePreferences.getProfileName(context));
         accountManager.setProfileAvatar(profileKey, getProfileAvatar());
 
-        ApplicationContext.getInstance(context)
-                .getJobManager()
-                .add(new RefreshAttributesJob());
+        ApplicationDependencies.getJobManager().add(new RefreshAttributesJob());
     }
 
     @Override
@@ -73,7 +71,7 @@ public class RotateProfileKeyJob extends BaseJob  {
 
     private @Nullable StreamDetails getProfileAvatar() {
         try {
-            File avatarFile = AvatarHelper.getAvatarFile(context, Recipient.self().requireAddress());
+            File avatarFile = AvatarHelper.getAvatarFile(context, Recipient.self().getId());
 
             if (avatarFile.exists()) {
                 return new StreamDetails(new FileInputStream(avatarFile), "image/jpeg", avatarFile.length());

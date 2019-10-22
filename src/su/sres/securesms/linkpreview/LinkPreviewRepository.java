@@ -12,6 +12,7 @@ import com.bumptech.glide.request.FutureTarget;
 
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.UriAttachment;
+import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.giph.model.ChunkedImageUrl;
@@ -177,6 +178,7 @@ public class LinkPreviewRepository  {
                         false,
                         false,
                         null,
+                        null,
                         null));
 
                 callback.onComplete(thumbnail);
@@ -248,6 +250,7 @@ public class LinkPreviewRepository  {
                             null,
                             false,
                             false,
+                            null,
                             null,
                             null));
 

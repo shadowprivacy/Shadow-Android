@@ -29,6 +29,7 @@ import su.sres.securesms.linkpreview.LinkPreviewUtil;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.util.DynamicDarkActionBarTheme;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -45,7 +46,7 @@ public class LongMessageActivity extends PassphraseRequiredActionBarActivity {
     private static final int MAX_DISPLAY_LENGTH = 64 * 1024;
 
     private final DynamicLanguage dynamicLanguage = new DynamicLanguage();
-    private final DynamicTheme    dynamicTheme    = new DynamicTheme();
+    private final DynamicTheme    dynamicTheme    = new DynamicDarkActionBarTheme();
 
     private Stub<ViewGroup> sentBubble;
     private Stub<ViewGroup> receivedBubble;

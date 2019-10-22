@@ -74,6 +74,7 @@ import su.sres.securesms.components.ConversationItemFooter;
 import su.sres.securesms.components.ConversationItemThumbnail;
 import su.sres.securesms.components.DocumentView;
 import su.sres.securesms.components.QuoteView;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
 import su.sres.securesms.revealable.ViewOnceMessageView;
@@ -847,7 +848,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     if (current.isMms() && !current.isMmsNotification() && ((MediaMmsMessageRecord)current).getQuote() != null) {
       Quote quote = ((MediaMmsMessageRecord)current).getQuote();
       //noinspection ConstantConditions
-      quoteView.setQuote(glideRequests, quote.getId(), Recipient.live(quote.getAuthor()).get(), quote.getText(), quote.isOriginalMissing(), quote.getAttachment());
+      quoteView.setQuote(glideRequests, quote.getId(), Recipient.live(quote.getAuthor()).get(), quote.getText(), quote.isOriginalMissing(), quote.getAttachment(), messageRecord.isViewOnce());
       quoteView.setVisibility(View.VISIBLE);
       quoteView.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
 
@@ -1215,18 +1216,16 @@ public class ConversationItem extends LinearLayout implements BindableConversati
       Log.i(TAG, "onClick() for attachment download");
       if (messageRecord.isMmsNotification()) {
         Log.i(TAG, "Scheduling MMS attachment download");
-        ApplicationContext.getInstance(context)
-                          .getJobManager()
-                .add(new MmsDownloadJob(messageRecord.getId(),
-                                                  messageRecord.getThreadId(), false));
+        ApplicationDependencies.getJobManager().add(new MmsDownloadJob(messageRecord.getId(),
+                messageRecord.getThreadId(),
+                false));
       } else {
         Log.i(TAG, "Scheduling push attachment downloads for " + slides.size() + " items");
 
         for (Slide slide : slides) {
-          ApplicationContext.getInstance(context)
-                  .getJobManager()
-                  .add(new AttachmentDownloadJob(messageRecord.getId(),
-                          ((DatabaseAttachment)slide.asAttachment()).getAttachmentId(), true));
+          ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(messageRecord.getId(),
+                  ((DatabaseAttachment)slide.asAttachment()).getAttachmentId(),
+                  true));
         }
       }
     }
@@ -1356,7 +1355,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
         database.markAsForcedSms(messageRecord.getId());
 
         MmsSendJob.enqueue(context,
-                ApplicationContext.getInstance(context).getJobManager(),
+                ApplicationDependencies.getJobManager(),
                 messageRecord.getId());
       } else {
         SmsDatabase database = DatabaseFactory.getSmsDatabase(context);
@@ -1364,10 +1363,9 @@ public class ConversationItem extends LinearLayout implements BindableConversati
         database.markAsOutbox(messageRecord.getId());
         database.markAsForcedSms(messageRecord.getId());
 
-        ApplicationContext.getInstance(context)
-                          .getJobManager()
-                          .add(new SmsSendJob(context, messageRecord.getId(),
-                                  messageRecord.getIndividualRecipient()));
+        ApplicationDependencies.getJobManager().add(new SmsSendJob(context,
+                messageRecord.getId(),
+                messageRecord.getIndividualRecipient()));
       }
     });
 

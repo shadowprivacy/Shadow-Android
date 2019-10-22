@@ -1,13 +1,13 @@
 package su.sres.securesms.contacts.avatars;
 
-
 import android.content.Context;
 import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.database.Address;
 import su.sres.securesms.profiles.AvatarHelper;
+import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,22 +16,22 @@ import java.security.MessageDigest;
 
 public class ProfileContactPhoto implements ContactPhoto {
 
-  private final @NonNull Address address;
-  private final @NonNull String  avatarObject;
+  private final @NonNull RecipientId recipient;
+  private final @NonNull String      avatarObject;
 
-  public ProfileContactPhoto(@NonNull Address address, @NonNull String avatarObject) {
-    this.address      = address;
+  public ProfileContactPhoto(@NonNull RecipientId recipient, @NonNull String avatarObject) {
+    this.recipient    = recipient;
     this.avatarObject = avatarObject;
   }
 
   @Override
-  public InputStream openInputStream(Context context) throws IOException {
-    return AvatarHelper.getInputStreamFor(context, address);
+  public @NonNull InputStream openInputStream(Context context) throws IOException {
+    return AvatarHelper.getInputStreamFor(context, recipient);
   }
 
   @Override
   public @Nullable Uri getUri(@NonNull Context context) {
-    File avatarFile = AvatarHelper.getAvatarFile(context, address);
+    File avatarFile = AvatarHelper.getAvatarFile(context, recipient);
     return avatarFile.exists() ? Uri.fromFile(avatarFile) : null;
   }
 
@@ -42,7 +42,7 @@ public class ProfileContactPhoto implements ContactPhoto {
 
   @Override
   public void updateDiskCacheKey(@NonNull MessageDigest messageDigest) {
-    messageDigest.update(address.serialize().getBytes());
+    messageDigest.update(recipient.serialize().getBytes());
     messageDigest.update(avatarObject.getBytes());
   }
 
@@ -52,11 +52,11 @@ public class ProfileContactPhoto implements ContactPhoto {
 
     ProfileContactPhoto that = (ProfileContactPhoto)other;
 
-    return this.address.equals(that.address) && this.avatarObject.equals(that.avatarObject);
+    return this.recipient.equals(that.recipient) && this.avatarObject.equals(that.avatarObject);
   }
 
   @Override
   public int hashCode() {
-    return address.hashCode() ^ avatarObject.hashCode();
+    return recipient.hashCode() ^ avatarObject.hashCode();
   }
 }

@@ -18,6 +18,9 @@ public final class EncryptedMediaDataSource {
     } else {
       return new ModernEncryptedMediaDataSource(attachmentSecret, mediaFile, random, length);
     }
+  }
 
+  public static MediaDataSource createForDiskBlob(@NonNull AttachmentSecret attachmentSecret, @NonNull File mediaFile) {
+    return new ModernEncryptedMediaDataSource(attachmentSecret, mediaFile, null, 0);
   }
 }

@@ -26,19 +26,19 @@ import androidx.annotation.Nullable;
 import su.sres.securesms.R;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.UriAttachment;
+import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.ResUtil;
 
-
 public class AudioSlide extends Slide {
 
   public AudioSlide(Context context, Uri uri, long dataSize, boolean voiceNote) {
-    super(context, constructAttachmentFromUri(context, uri, MediaUtil.AUDIO_UNSPECIFIED, dataSize, 0, 0, false, null, null, null, voiceNote, false));
+    super(context, constructAttachmentFromUri(context, uri, MediaUtil.AUDIO_UNSPECIFIED, dataSize, 0, 0, false, null, null, null, null, voiceNote, false));
   }
 
   public AudioSlide(Context context, Uri uri, long dataSize, String contentType, boolean voiceNote) {
-    super(context,  new UriAttachment(uri, null, contentType, AttachmentDatabase.TRANSFER_PROGRESS_STARTED, dataSize, 0, 0, null, null, voiceNote, false, null, null));
+    super(context,  new UriAttachment(uri, null, contentType, AttachmentDatabase.TRANSFER_PROGRESS_STARTED, dataSize, 0, 0, null, null, voiceNote, false, null, null, null));
   }
 
   public AudioSlide(Context context, Attachment attachment) {

@@ -1,4 +1,5 @@
 .classpath
+captures/
 project.properties
 .project
 .settings
@@ -28,6 +29,6 @@ libs/signal-service-android-*.aar
 libs/signal-service-java-*.jar
 src/su/sres/securesms/backup/BackupProtos.java
 src/su/sres/securesms/devicelist/DeviceNameProtos.java
-src/su/sres/securesms/webrtc/WebRtcDataProtos.java
 res/values/firebase-messaging.xml
 res/raw/whisper.store
+witness-verifications.gradle

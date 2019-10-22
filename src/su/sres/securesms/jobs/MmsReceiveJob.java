@@ -1,5 +1,6 @@
 package su.sres.securesms.jobs;
 
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.logging.Log;
@@ -80,11 +81,9 @@ public class MmsReceiveJob extends BaseJob {
 
       Log.i(TAG, "Inserted received MMS notification...");
 
-      ApplicationContext.getInstance(context)
-                        .getJobManager()
-              .add(new MmsDownloadJob(messageAndThreadId.first,
-                                                messageAndThreadId.second,
-                                                true));
+      ApplicationDependencies.getJobManager().add(new MmsDownloadJob(messageAndThreadId.first,
+              messageAndThreadId.second,
+              true));
     } else if (isNotification(pdu)) {
       Log.w(TAG, "*** Received blocked MMS, ignoring...");
     }

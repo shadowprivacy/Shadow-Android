@@ -1,8 +1,9 @@
 package su.sres.securesms.service;
 
-
 import android.content.Context;
 import android.content.Intent;
+
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.ApplicationContext;
@@ -29,9 +30,7 @@ public class UpdateApkRefreshListener extends PersistentAlarmManagerListener {
 
     if (scheduledTime != 0 && BuildConfig.PLAY_STORE_DISABLED) {
       Log.i(TAG, "Queueing APK update job...");
-      ApplicationContext.getInstance(context)
-                        .getJobManager()
-              .add(new UpdateApkJob());
+      ApplicationDependencies.getJobManager().add(new UpdateApkJob());
     }
 
     long newTime = System.currentTimeMillis() + INTERVAL;

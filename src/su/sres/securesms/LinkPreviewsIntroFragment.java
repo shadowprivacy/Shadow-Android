@@ -1,6 +1,5 @@
 package su.sres.securesms;
 
-
 import android.content.Context;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -9,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceConfigurationUpdateJob;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -46,12 +46,10 @@ public class LinkPreviewsIntroFragment extends Fragment {
         View view = inflater.inflate(R.layout.experience_upgrade_link_previews_fragment, container, false);
 
         view.findViewById(R.id.experience_ok_button).setOnClickListener(v -> {
-            ApplicationContext.getInstance(requireContext())
-                    .getJobManager()
-                    .add(new MultiDeviceConfigurationUpdateJob(TextSecurePreferences.isReadReceiptsEnabled(requireContext()),
-                            TextSecurePreferences.isTypingIndicatorsEnabled(requireContext()),
-                            TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(requireContext()),
-                            TextSecurePreferences.isLinkPreviewsEnabled(requireContext())));
+            ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(TextSecurePreferences.isReadReceiptsEnabled(requireContext()),
+                    TextSecurePreferences.isTypingIndicatorsEnabled(requireContext()),
+                    TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(requireContext()),
+                    TextSecurePreferences.isLinkPreviewsEnabled(requireContext())));
             controller.onLinkPreviewsFinished();
         });
 

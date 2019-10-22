@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.IncomingMessageProcessor;
 import su.sres.securesms.gcm.MessageRetriever;
+import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.IncomingMessageObserver;
@@ -33,6 +34,7 @@ public class ApplicationDependencies {
     private static IncomingMessageProcessor     incomingMessageProcessor;
     private static MessageRetriever             messageRetriever;
     private static LiveRecipientCache           recipientCache;
+    private static JobManager                   jobManager;
 
     public static synchronized void init(@NonNull Application application, @NonNull Provider provider) {
         if (ApplicationDependencies.application != null || ApplicationDependencies.provider != null) {
@@ -116,6 +118,16 @@ public class ApplicationDependencies {
         return recipientCache;
     }
 
+    public static synchronized @NonNull JobManager getJobManager() {
+        assertInitialization();
+
+        if (jobManager == null) {
+            jobManager = provider.provideJobManager();
+        }
+
+        return jobManager;
+    }
+
     private static void assertInitialization() {
         if (application == null || provider == null) {
             throw new UninitializedException();
@@ -129,8 +141,8 @@ public class ApplicationDependencies {
         @NonNull SignalServiceNetworkAccess provideSignalServiceNetworkAccess();
         @NonNull IncomingMessageProcessor provideIncomingMessageProcessor();
         @NonNull MessageRetriever provideMessageRetriever();
-        @NonNull
-        LiveRecipientCache provideRecipientCache();
+        @NonNull LiveRecipientCache provideRecipientCache();
+        @NonNull JobManager provideJobManager();
     }
 
     private static class UninitializedException extends IllegalStateException {

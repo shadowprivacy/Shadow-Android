@@ -1,26 +1,32 @@
 package su.sres.securesms.giph.ui;
 
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.google.android.material.tabs.TabLayout;
+
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 import su.sres.securesms.logging.Log;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import su.sres.securesms.PassphraseRequiredActionBarActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.providers.BlobProvider;
+import su.sres.securesms.util.DynamicDarkToolbarTheme;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
@@ -41,8 +47,9 @@ public class GiphyActivity extends PassphraseRequiredActionBarActivity
   public static final String EXTRA_IS_MMS = "extra_is_mms";
   public static final String EXTRA_WIDTH  = "extra_width";
   public static final String EXTRA_HEIGHT = "extra_height";
+  public static final String EXTRA_COLOR  = "extra_color";
 
-  private final DynamicTheme    dynamicTheme    = new DynamicNoActionBarTheme();
+  private final DynamicTheme    dynamicTheme    = new DynamicDarkToolbarTheme();
   private final DynamicLanguage dynamicLanguage = new DynamicLanguage();
 
   private GiphyGifFragment     gifFragment;
@@ -71,6 +78,10 @@ public class GiphyActivity extends PassphraseRequiredActionBarActivity
     toolbar.setOnLayoutChangedListener(this);
     toolbar.setPersistence(GiphyActivityToolbarTextSecurePreferencesPersistence.fromContext(this));
 
+    final int conversationColor = getConversationColor();
+    toolbar.setBackgroundColor(conversationColor);
+    setStatusBarColor(conversationColor);
+
     setSupportActionBar(toolbar);
 
     getSupportActionBar().setDisplayHomeAsUpEnabled(false);
@@ -91,6 +102,11 @@ public class GiphyActivity extends PassphraseRequiredActionBarActivity
     viewPager.setAdapter(new GiphyFragmentPagerAdapter(this, getSupportFragmentManager(),
                                                        gifFragment, stickerFragment));
     tabLayout.setupWithViewPager(viewPager);
+    tabLayout.setBackgroundColor(getConversationColor());
+  }
+
+  private @ColorInt int getConversationColor() {
+    return getIntent().getIntExtra(EXTRA_COLOR, ActivityCompat.getColor(this, R.color.signal_primary));
   }
 
   @Override

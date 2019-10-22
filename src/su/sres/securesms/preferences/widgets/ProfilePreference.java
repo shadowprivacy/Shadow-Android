@@ -1,6 +1,5 @@
 package su.sres.securesms.preferences.widgets;
 
-
 import android.content.Context;
 import android.os.Build;
 import androidx.annotation.RequiresApi;
@@ -18,6 +17,7 @@ import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.database.Address;
 import su.sres.securesms.mms.GlideApp;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.TextSecurePreferences;
 
 public class ProfilePreference extends Preference {
@@ -64,12 +64,12 @@ public class ProfilePreference extends Preference {
   public void refresh() {
     if (profileNumberView == null) return;
 
-    final Address localAddress = Address.fromSerialized(TextSecurePreferences.getLocalNumber(getContext()));
-    final String  profileName  = TextSecurePreferences.getProfileName(getContext());
+    final Recipient self        = Recipient.self();
+    final String    profileName = TextSecurePreferences.getProfileName(getContext());
 
     GlideApp.with(getContext().getApplicationContext())
-            .load(new ProfileContactPhoto(localAddress, String.valueOf(TextSecurePreferences.getProfileAvatarId(getContext()))))
-            .error(new ResourceContactPhoto(R.drawable.ic_camera_alt_white_24dp).asDrawable(getContext(), getContext().getResources().getColor(R.color.grey_400)))
+            .load(new ProfileContactPhoto(self.getId(), String.valueOf(TextSecurePreferences.getProfileAvatarId(getContext()))))
+            .error(new ResourceContactPhoto(R.drawable.ic_camera_solid_white_24).asDrawable(getContext(), getContext().getResources().getColor(R.color.grey_400)))
             .circleCrop()
             .diskCacheStrategy(DiskCacheStrategy.ALL)
             .into(avatarView);
@@ -78,6 +78,6 @@ public class ProfilePreference extends Preference {
       profileNameView.setText(profileName);
     }
 
-    profileNumberView.setText(localAddress.toPhoneString());
+    profileNumberView.setText(self.requireAddress().toPhoneString());
   }
 }

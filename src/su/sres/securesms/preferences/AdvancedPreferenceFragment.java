@@ -22,7 +22,7 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.LogSubmitActivity;
 import su.sres.securesms.R;
-import su.sres.securesms.RegistrationActivity;
+import su.sres.securesms.registration.RegistrationNavigationActivity;
 import su.sres.securesms.contacts.ContactAccessor;
 import su.sres.securesms.contacts.ContactIdentityManager;
 import su.sres.securesms.push.AccountManagerFactory;
@@ -220,12 +220,7 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
         });
         builder.show();
       } else {
-        Intent nextIntent = new Intent(getActivity(), ApplicationPreferencesActivity.class);
-
-        Intent intent = new Intent(getActivity(), RegistrationActivity.class);
-        intent.putExtra(RegistrationActivity.RE_REGISTRATION_EXTRA, true);
-        intent.putExtra("next_intent", nextIntent);
-        startActivity(intent);
+        startActivity(RegistrationNavigationActivity.newIntentForReRegistration(requireContext()));
       }
 
       return false;

@@ -12,6 +12,7 @@ import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.attachments.DatabaseAttachment;
+import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -211,7 +212,8 @@ public class AttachmentDownloadJob extends BaseJob {
                                                 Optional.fromNullable(attachment.getDigest()),
                                                 Optional.fromNullable(attachment.getFileName()),
                                                 attachment.isVoiceNote(),
-                                                Optional.absent());
+              Optional.absent(),
+              Optional.fromNullable(attachment.getBlurHash()).transform(BlurHash::getHash));
 
     } catch (IOException | ArithmeticException e) {
       Log.w(TAG, e);

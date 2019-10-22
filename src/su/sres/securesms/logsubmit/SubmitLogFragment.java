@@ -56,6 +56,7 @@ import org.json.JSONObject;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.R;
 import su.sres.securesms.contactshare.SimpleTextWatcher;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.logsubmit.util.Scrubber;
 import su.sres.securesms.util.BucketInfo;
@@ -390,7 +391,7 @@ public class SubmitLogFragment extends Fragment {
               .append("\n\n\n")
               .append(HEADER_JOBS)
               .append("\n\n")
-              .append(Scrubber.scrub(ApplicationContext.getInstance(context).getJobManager().getDebugInfo()))
+              .append(Scrubber.scrub(ApplicationDependencies.getJobManager().getDebugInfo()))
               .append("\n\n\n");
 
       if (VERSION.SDK_INT >= 28) {

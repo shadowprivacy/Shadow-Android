@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import android.text.TextUtils;
 import android.transition.TransitionInflater;
 import su.sres.securesms.logging.Log;
@@ -60,6 +61,7 @@ public class DeviceActivity extends PassphraseRequiredActionBarActivity
 
   @Override
   public void onCreate(Bundle bundle, boolean ready) {
+    getSupportActionBar().setHomeAsUpIndicator(ContextCompat.getDrawable(this, R.drawable.ic_arrow_left_24));
     getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     getSupportActionBar().setTitle(R.string.AndroidManifest__linked_devices);
     this.deviceAddFragment  = new DeviceAddFragment();

@@ -25,6 +25,7 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.UriAttachment;
+import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.stickers.StickerLocator;
 import su.sres.securesms.util.MediaUtil;
@@ -127,6 +128,10 @@ public abstract class Slide {
     throw new AssertionError("getPlaceholderRes() called for non-drawable slide");
   }
 
+  public @Nullable BlurHash getPlaceholderBlur() {
+    return attachment.getBlurHash();
+  }
+
   public boolean hasPlaceholder() {
     return false;
   }
@@ -145,6 +150,7 @@ public abstract class Slide {
                                                          @Nullable String         fileName,
                                                          @Nullable String         caption,
                                                          @Nullable StickerLocator stickerLocator,
+                                                         @Nullable BlurHash       blurHash,
                                                          boolean        voiceNote,
                                                          boolean        quote)
   {
@@ -162,7 +168,8 @@ public abstract class Slide {
             voiceNote,
             quote,
             caption,
-            stickerLocator);
+            stickerLocator,
+            blurHash);
   }
 
   @Override

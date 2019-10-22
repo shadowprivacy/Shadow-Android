@@ -1,6 +1,5 @@
 package su.sres.securesms.video.exo;
 
-
 import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,6 +27,7 @@ public class AttachmentDataSourceFactory implements DataSource.Factory {
   @Override
   public AttachmentDataSource createDataSource() {
     return new AttachmentDataSource(defaultDataSourceFactory.createDataSource(),
-                                    new PartDataSource(context, listener));
+            new PartDataSource(context, listener),
+            new BlobDataSource(context, listener));
   }
 }
