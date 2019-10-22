@@ -26,6 +26,7 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.service.GenericForegroundService;
 import su.sres.securesms.service.NotificationController;
+import su.sres.securesms.util.MediaMetadataRetrieverUtil;
 import su.sres.securesms.util.MediaUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
@@ -175,7 +176,7 @@ public final class AttachmentUploadJob extends BaseJob {
             if (dataSource == null) return null;
 
             MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-            retriever.setDataSource(dataSource);
+            MediaMetadataRetrieverUtil.setDataSource(retriever, dataSource);
 
             Bitmap bitmap = retriever.getFrameAtTime(1000);
 

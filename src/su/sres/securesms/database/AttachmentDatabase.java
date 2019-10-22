@@ -55,6 +55,7 @@ import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.BitmapDecodingException;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.JsonUtils;
+import su.sres.securesms.util.MediaMetadataRetrieverUtil;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.MediaUtil.ThumbnailData;
 import su.sres.securesms.util.StorageUtil;
@@ -1081,7 +1082,7 @@ public class AttachmentDatabase extends Database {
         if (dataSource == null) return null;
 
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        retriever.setDataSource(dataSource);
+        MediaMetadataRetrieverUtil.setDataSource(retriever, dataSource);
 
         Bitmap bitmap = retriever.getFrameAtTime(1000);
 
