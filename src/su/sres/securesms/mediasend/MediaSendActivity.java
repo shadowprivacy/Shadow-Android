@@ -16,6 +16,7 @@ import android.graphics.Rect;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Vibrator;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -37,7 +38,6 @@ import su.sres.securesms.PassphraseRequiredActionBarActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.TransportOptions;
-import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.components.ComposeText;
 import su.sres.securesms.components.InputAwareLayout;
 import su.sres.securesms.components.SendButton;
@@ -70,6 +70,7 @@ import su.sres.securesms.util.CharacterCalculator.CharacterState;
 import su.sres.securesms.util.Function3;
 import su.sres.securesms.util.IOFunction;
 import su.sres.securesms.util.MediaUtil;
+import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -385,6 +386,12 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
         Toast.makeText(this, R.string.MediaSendActivity_camera_unavailable, Toast.LENGTH_SHORT).show();
         setResult(RESULT_CANCELED, new Intent());
         finish();
+    }
+
+    @Override
+    public void onVideoCaptureError() {
+        Vibrator vibrator = ServiceUtil.getVibrator(this);
+        vibrator.vibrate(50);
     }
 
     @Override
