@@ -1,8 +1,6 @@
 package su.sres.securesms.mediasend;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -17,10 +15,10 @@ import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.util.Executors;
+import com.nineoldandroids.animation.Animator;
+import com.nineoldandroids.animation.ValueAnimator;
 
 import su.sres.securesms.R;
-import su.sres.securesms.animation.AnimationCompleteListener;
-import su.sres.securesms.components.TooltipPopup;
 import su.sres.securesms.mediasend.camerax.CameraXView;
 import su.sres.securesms.mediasend.camerax.VideoCapture;
 import su.sres.securesms.permissions.Permissions;
@@ -52,6 +50,7 @@ class CameraXVideoCaptureHelper implements CameraButtonView.VideoCaptureListener
         @Override
         public void onVideoSaved(@NonNull FileDescriptor fileDescriptor) {
             try {
+                isRecording = false;
                 camera.setZoomLevel(0f);
                 memoryFileDescriptor.seek(0);
                 callback.onVideoSaved(fileDescriptor);
@@ -65,6 +64,7 @@ class CameraXVideoCaptureHelper implements CameraButtonView.VideoCaptureListener
                             @NonNull String message,
                             @Nullable Throwable cause)
         {
+            isRecording = false;
             callback.onVideoError(cause);
             Util.runOnMain(() -> resetCameraSizing());
         }
@@ -83,7 +83,7 @@ class CameraXVideoCaptureHelper implements CameraButtonView.VideoCaptureListener
 
         updateProgressAnimator.setInterpolator(new LinearInterpolator());
         updateProgressAnimator.addUpdateListener(anim -> captureButton.setProgress(anim.getAnimatedFraction()));
-        updateProgressAnimator.addListener(new AnimationCompleteListener() {
+        updateProgressAnimator.addListener(new AnimationEndCallback() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 if (isRecording) onVideoCaptureComplete();
@@ -142,7 +142,7 @@ class CameraXVideoCaptureHelper implements CameraButtonView.VideoCaptureListener
         ViewGroup.LayoutParams params = camera.getLayoutParams();
         cameraMetricsAnimator.setInterpolator(new LinearInterpolator());
         cameraMetricsAnimator.setDuration(200);
-        cameraMetricsAnimator.addListener(new AnimationCompleteListener() {
+        cameraMetricsAnimator.addListener(new AnimationEndCallback() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 if (!isRecording) return;
@@ -223,6 +223,24 @@ class CameraXVideoCaptureHelper implements CameraButtonView.VideoCaptureListener
                 VIDEO_DEBUG_LABEL,
                 VIDEO_SIZE
         );
+    }
+
+    private abstract class AnimationEndCallback implements Animator.AnimatorListener {
+
+        @Override
+        public final void onAnimationStart(Animator animation) {
+
+        }
+
+        @Override
+        public final void onAnimationCancel(Animator animation) {
+
+        }
+
+        @Override
+        public final void onAnimationRepeat(Animator animation) {
+
+        }
     }
 
     interface Callback {

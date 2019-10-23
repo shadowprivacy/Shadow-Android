@@ -179,6 +179,7 @@ public class LinkPreviewRepository  {
                         false,
                         null,
                         null,
+                        null,
                         null));
 
                 callback.onComplete(thumbnail);
@@ -250,6 +251,7 @@ public class LinkPreviewRepository  {
                             null,
                             false,
                             false,
+                            null,
                             null,
                             null,
                             null));

@@ -169,7 +169,8 @@ public abstract class Slide {
             quote,
             caption,
             stickerLocator,
-            blurHash);
+            blurHash,
+            null);
   }
 
   @Override
