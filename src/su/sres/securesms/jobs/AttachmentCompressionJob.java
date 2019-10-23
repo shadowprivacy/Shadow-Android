@@ -8,7 +8,6 @@ import androidx.annotation.RequiresApi;
 
 import org.greenrobot.eventbus.EventBus;
 
-import su.sres.securesms.ExifTagBlacklist;
 import su.sres.securesms.R;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.AttachmentId;
@@ -140,7 +139,7 @@ public final class AttachmentCompressionJob extends BaseJob {
             if (MediaUtil.isVideo(attachment) && MediaConstraints.isVideoTranscodeAvailable()) {
                 transcodeVideoIfNeededToDatabase(context, attachmentDatabase, attachment, constraints, EventBus.getDefault());
             } else if (constraints.isSatisfied(context, attachment)) {
-                if (MediaUtil.isJpeg(attachment) && ExifTagBlacklist.hasViolations(attachmentDatabase.getAttachmentStream(attachmentId, 0))) {
+                if (MediaUtil.isJpeg(attachment)) {
                     MediaStream stripped = getResizedMedia(context, attachment, constraints);
                     attachmentDatabase.updateAttachmentData(attachment, stripped);
                 }
