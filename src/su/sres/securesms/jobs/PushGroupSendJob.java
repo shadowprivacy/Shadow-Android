@@ -13,6 +13,7 @@ import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupReceiptDatabase.GroupReceiptInfo;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
@@ -90,6 +91,14 @@ public class PushGroupSendJob extends PushSendJob  {
                              @Nullable RecipientId filterAddress)
   {
     try {
+      Recipient group = Recipient.resolved(destination);
+      if (!group.isPushGroup()) {
+        throw new AssertionError("Not a group!");
+      }
+
+      if (!DatabaseFactory.getGroupDatabase(context).isActive(group.requireAddress().toGroupString())) {
+        throw new MmsException("Inactive group!");
+      }
       MmsDatabase          database                    = DatabaseFactory.getMmsDatabase(context);
       OutgoingMediaMessage message                     = database.getOutgoingMessage(messageId);
       JobManager.Chain     compressAndUploadAttachment = createCompressingAndUploadAttachmentsChain(jobManager, message);

@@ -27,6 +27,7 @@ import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.RecyclerView;
 import android.telephony.PhoneNumberUtils;
 import su.sres.securesms.components.SwitchPreferenceCompat;
 import su.sres.securesms.contacts.avatars.ContactPhoto;
@@ -38,8 +39,10 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.RotateProfileKeyJob;
 import su.sres.securesms.logging.Log;
 import android.util.Pair;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -349,6 +352,14 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
 
         findPreference(PREFERENCE_CALL_TONE).getOnPreferenceChangeListener().onPreferenceChange(findPreference(PREFERENCE_CALL_TONE), uri);
       }
+    }
+
+    @Override
+    public RecyclerView onCreateRecyclerView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
+      RecyclerView recyclerView = super.onCreateRecyclerView(inflater, parent, savedInstanceState);
+      recyclerView.setItemAnimator(null);
+      recyclerView.setLayoutAnimation(null);
+      return recyclerView;
     }
 
     private void initializeRecipients() {

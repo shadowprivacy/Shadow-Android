@@ -34,6 +34,7 @@ import su.sres.securesms.components.FromTextView;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.documents.NetworkFailure;
 import su.sres.securesms.database.model.MessageRecord;
+import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
@@ -169,7 +170,12 @@ public class MessageRecipientListItem extends RelativeLayout
 
   @Override
   public void onRecipientChanged(@NonNull Recipient recipient) {
-    fromView.setText(recipient);
-    contactPhotoImage.setAvatar(glideRequests, recipient, false);
+    if (this.member != null && this.member.getRecipient().equals(recipient)) {
+      Log.d(TAG, "onRecipientChanged -- valid");
+      fromView.setText(recipient);
+      contactPhotoImage.setAvatar(glideRequests, recipient, false);
+    } else {
+      Log.d(TAG, "onRecipientChanged -- invalid");
+    }
   }
 }
