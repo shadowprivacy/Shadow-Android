@@ -9,4 +9,5 @@
 }
 -dontwarn com.fasterxml.jackson.databind.**
 -keep class org.codehaus.** { *; }
+-keep class * extends com.fasterxml.jackson.databind.**
 
