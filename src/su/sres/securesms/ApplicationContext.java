@@ -18,6 +18,7 @@ package su.sres.securesms;
 
 import android.annotation.SuppressLint;
 
+import androidx.annotation.Keep;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.camera.camera2.Camera2AppConfig;
 import androidx.camera.core.CameraX;
@@ -48,11 +49,7 @@ import su.sres.securesms.dependencies.ApplicationDependencyProvider;
 import su.sres.securesms.gcm.FcmJobService;
 import su.sres.securesms.events.ServerSetEvent;
 import su.sres.securesms.jobmanager.JobManager;
-import su.sres.securesms.jobmanager.JobMigrator;
-import su.sres.securesms.jobs.FastJobStorage;
-import su.sres.securesms.jobs.JobManagerFactories;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
-import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
@@ -77,7 +74,6 @@ import su.sres.securesms.service.RotateSenderCertificateListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.VersionTracker;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
 
 import org.webrtc.voiceengine.WebRtcAudioManager;
@@ -97,6 +93,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Moxie Marlinspike
  */
+
+// This annontation prevents Proguard from deleting methods from this class
+@Keep
 public class ApplicationContext extends MultiDexApplication implements DefaultLifecycleObserver {
 
   private static final String TAG = ApplicationContext.class.getSimpleName();
@@ -125,6 +124,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeLogging();
     initializeCrashHandling();
     initializeFirstEverAppLaunch();
+    initializeAppDependencies();
 
     // register to Event Bus
     EventBus.getDefault().register(this);
@@ -132,23 +132,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     // checking at subsequent launches of the app, if the server is already known in the DB, then no need for delay, just initialize immediately
     if (!DatabaseFactory.getConfigDatabase(this).getConfigById(1).equals(DEFAULT_SERVER_URL)) {
       isserverset = true;
-      initializeAppDependencies();
-      initializeApplicationMigrations();
-      initializeMessageRetrieval();
-      initializeExpiringMessageManager();
-      initializeViewOnceMessageManager();
-      initializeTypingStatusRepository();
-      initializeTypingStatusSender();
-      initializeGcmCheck();
-      initializeSignedPreKeyCheck();
-      initializePeriodicTasks();
-      initializeCircumvention();
-      initializeRingRtc();
-      initializePendingMessages();
-      initializeUnidentifiedDeliveryAbilityRefresh();
-      initializeBlobProvider();
-      initializeCameraX();
-      ApplicationDependencies.getJobManager().beginJobLoop();
+      InitializeApp();
     }
 
     NotificationChannels.create(this);
@@ -426,23 +410,26 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
     @Subscribe
     public void onServerSetEvent(ServerSetEvent event) {
-        initializeAppDependencies();
-        initializeApplicationMigrations();
-        initializeMessageRetrieval();
-        initializeExpiringMessageManager();
-        initializeViewOnceMessageManager();
-        initializeTypingStatusRepository();
-        initializeTypingStatusSender();
-        initializeGcmCheck();
-        initializeSignedPreKeyCheck();
-        initializePeriodicTasks();
-        initializeCircumvention();
-        initializeRingRtc();
-        initializePendingMessages();
-        initializeUnidentifiedDeliveryAbilityRefresh();
-        initializeBlobProvider();
-        initializeCameraX();
-        ApplicationDependencies.getJobManager().beginJobLoop();
+        InitializeApp();
+    }
+
+    private void InitializeApp()  {
+      initializeApplicationMigrations();
+      initializeMessageRetrieval();
+      initializeExpiringMessageManager();
+      initializeViewOnceMessageManager();
+      initializeTypingStatusRepository();
+      initializeTypingStatusSender();
+      initializeGcmCheck();
+      initializeSignedPreKeyCheck();
+      initializePeriodicTasks();
+      initializeCircumvention();
+      initializeRingRtc();
+      initializePendingMessages();
+      initializeUnidentifiedDeliveryAbilityRefresh();
+      initializeBlobProvider();
+      initializeCameraX();
+      ApplicationDependencies.getJobManager().beginJobLoop();
     }
 
   private static class ProviderInitializationException extends RuntimeException {

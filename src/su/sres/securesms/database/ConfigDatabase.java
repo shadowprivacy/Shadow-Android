@@ -37,19 +37,23 @@ public class ConfigDatabase extends Database {
 
     public String getConfigById(int configId) {
         SQLiteDatabase db = databaseHelper.getReadableDatabase();
-
-        Cursor cursor = db.query(TABLE_NAME, new String[]{SHADOW_URL}, "_id = ?", new String[] {Integer.toString(configId)}, null, null, null);
-        cursor.moveToFirst();
-
         try {
-            if (cursor != null) {
-                return cursor.getString(cursor.getColumnIndex(SHADOW_URL));
+            Cursor cursor = db.query(TABLE_NAME, new String[]{SHADOW_URL}, "_id = ?", new String[]{Integer.toString(configId)}, null, null, null);
+            cursor.moveToFirst();
+
+            if (cursor != null)
+            {
+               String url =  cursor.getString(cursor.getColumnIndex(SHADOW_URL));
+               cursor.close();
+               return url;
             }
-
-            else return "https://example.org";
-
-        } finally {
-            if (cursor != null) cursor.close();
         }
+        catch(Exception e)
+        {
+            Log.e(TAG, "Failed to get Config by Id. Default value was returned.");
+        }
+
+        return "https://example.org";
+
     }
 }
