@@ -1,5 +1,6 @@
 package su.sres.securesms.jobmanager.impl;
 
+import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 
 import org.greenrobot.eventbus.EventBus;
@@ -7,6 +8,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import su.sres.securesms.jobmanager.ConstraintObserver;
 
+@Keep
 public class SqlCipherMigrationConstraintObserver implements ConstraintObserver {
 
     private static final String REASON = SqlCipherMigrationConstraintObserver.class.getSimpleName();
