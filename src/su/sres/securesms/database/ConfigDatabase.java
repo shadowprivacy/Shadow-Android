@@ -28,38 +28,28 @@ public class ConfigDatabase extends Database {
     }
 
     public long setConfigById(String shadowUrl, int configId) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(SHADOW_URL, shadowUrl);
 
-        long ret = 0;
-        try
-        {
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(SHADOW_URL, shadowUrl);
-
-            SQLiteDatabase db = databaseHelper.getWritableDatabase();
-
-            ret = db.update(TABLE_NAME, contentValues, "_id = ?", new String[] {Integer.toString(configId)});;
-        }
-        catch (Exception e) {
-            Log.e(TAG, "Failed to set Config by Id. Exception:" + e);
-        }
-        return ret;
+        SQLiteDatabase db = databaseHelper.getWritableDatabase();
+        return db.update(TABLE_NAME, contentValues, "_id = ?", new String[] {Integer.toString(configId)});
     }
 
     public String getConfigById(int configId) {
         SQLiteDatabase db = databaseHelper.getReadableDatabase();
+
+        Cursor cursor = db.query(TABLE_NAME, new String[]{SHADOW_URL}, "_id = ?", new String[] {Integer.toString(configId)}, null, null, null);
+        cursor.moveToFirst();
+
         try {
-            Cursor cursor = db.query(TABLE_NAME, new String[]{SHADOW_URL}, "_id = ?", new String[]{Integer.toString(configId)}, null, null, null);
-            cursor.moveToFirst();
-
             if (cursor != null) {
-                String url = cursor.getString(cursor.getColumnIndex(SHADOW_URL));
-                cursor.close();
-                return url;
+                return cursor.getString(cursor.getColumnIndex(SHADOW_URL));
             }
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to get Config by Id. Default value was returned. Exception: " + e);
-        }
 
-        return "https://example.org";
+            else return "https://example.org";
+
+        } finally {
+            if (cursor != null) cursor.close();
+        }
     }
 }
