@@ -18,6 +18,7 @@ package su.sres.securesms;
 
 import android.annotation.SuppressLint;
 
+import androidx.annotation.Keep;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.camera.camera2.Camera2AppConfig;
 import androidx.camera.core.CameraX;
@@ -27,6 +28,10 @@ import androidx.lifecycle.ProcessLifecycleOwner;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+
 import androidx.annotation.NonNull;
 import androidx.multidex.MultiDexApplication;
 
@@ -48,11 +53,7 @@ import su.sres.securesms.dependencies.ApplicationDependencyProvider;
 import su.sres.securesms.gcm.FcmJobService;
 import su.sres.securesms.events.ServerSetEvent;
 import su.sres.securesms.jobmanager.JobManager;
-import su.sres.securesms.jobmanager.JobMigrator;
-import su.sres.securesms.jobs.FastJobStorage;
-import su.sres.securesms.jobs.JobManagerFactories;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
-import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
@@ -77,7 +78,6 @@ import su.sres.securesms.service.RotateSenderCertificateListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.VersionTracker;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
 
 import org.webrtc.voiceengine.WebRtcAudioManager;
@@ -97,6 +97,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Moxie Marlinspike
  */
+@Keep
 public class ApplicationContext extends MultiDexApplication implements DefaultLifecycleObserver {
 
   private static final String TAG = ApplicationContext.class.getSimpleName();
@@ -110,7 +111,9 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   private volatile boolean isAppVisible;
 
-  private boolean isserverset;
+  private boolean isServerSet,
+                  initializedOnCreate = false;
+
   private final String DEFAULT_SERVER_URL = "https://example.org";
 
   public static ApplicationContext getInstance(Context context) {
@@ -120,6 +123,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   @Override
   public void onCreate() {
     super.onCreate();
+
     Log.i(TAG, "onCreate()");
     initializeSecurityProvider();
     initializeLogging();
@@ -129,27 +133,22 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     // register to Event Bus
     EventBus.getDefault().register(this);
 
-    // checking at subsequent launches of the app, if the server is already known in the DB, then no need for delay, just initialize immediately
-    if (!DatabaseFactory.getConfigDatabase(this).getConfigById(1).equals(DEFAULT_SERVER_URL)) {
-      isserverset = true;
-      initializeAppDependencies();
-      initializeApplicationMigrations();
-      initializeMessageRetrieval();
-      initializeExpiringMessageManager();
-      initializeViewOnceMessageManager();
-      initializeTypingStatusRepository();
-      initializeTypingStatusSender();
-      initializeGcmCheck();
-      initializeSignedPreKeyCheck();
-      initializePeriodicTasks();
-      initializeCircumvention();
-      initializeRingRtc();
-      initializePendingMessages();
-      initializeUnidentifiedDeliveryAbilityRefresh();
-      initializeBlobProvider();
-      initializeCameraX();
-      ApplicationDependencies.getJobManager().beginJobLoop();
-    }
+      InitWorker initWorker = new InitWorker();
+      initWorker.execute(() -> {
+                // checking at subsequent launches of the app, if the server is already known in the DB, then no need for delay, just initialize immediately
+                if (!DatabaseFactory.getConfigDatabase(this).getConfigById(1).equals(DEFAULT_SERVER_URL)) {
+                  setServerSet(true);
+                  initializeOnCreate();
+                } else {
+                  Log.i(TAG, "Waiting for the server URL to be configured...");
+                  try {
+                    Thread.sleep(2000);
+                  }
+                  catch (InterruptedException e) {
+                    e.printStackTrace();
+                  }
+                }
+         });
 
     NotificationChannels.create(this);
     ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
@@ -169,7 +168,23 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
     isAppVisible = true;
     Log.i(TAG, "App is now visible.");
-    ApplicationDependencies.getRecipientCache().warmUp();
+
+    InitWorker initWorker = new InitWorker();
+    initWorker.execute(() -> {
+
+      if (getServerSet() && initializedOnCreate) {
+        ApplicationDependencies.getRecipientCache().warmUp();
+      } else {
+        Log.i(TAG, "Waiting for initialization to complete...");
+        try {
+          Thread.sleep(2000);
+        }
+        catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+    });
+
     executePendingContactSync();
     KeyCachingService.onAppForegrounded(this);
   }
@@ -250,6 +265,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   }
 
   public void initializeMessageRetrieval() {
+
     this.incomingMessageObserver = new IncomingMessageObserver(this);
   }
 
@@ -416,36 +432,42 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     super.attachBaseContext(DynamicLanguageContextWrapper.updateContext(base, TextSecurePreferences.getLanguage(base)));
   }
 
-    public boolean getserverset() {
-        return isserverset;
+    public boolean getServerSet() {
+        return isServerSet;
     }
 
-    public void setserverset(boolean flag) {
-        isserverset = flag;
+    public void setServerSet(boolean flag) {
+        isServerSet = flag;
     }
 
     @Subscribe
     public void onServerSetEvent(ServerSetEvent event) {
-        initializeAppDependencies();
-        initializeApplicationMigrations();
-        initializeMessageRetrieval();
-        initializeExpiringMessageManager();
-        initializeViewOnceMessageManager();
-        initializeTypingStatusRepository();
-        initializeTypingStatusSender();
-        initializeGcmCheck();
-        initializeSignedPreKeyCheck();
-        initializePeriodicTasks();
-        initializeCircumvention();
-        initializeRingRtc();
-        initializePendingMessages();
-        initializeUnidentifiedDeliveryAbilityRefresh();
-        initializeBlobProvider();
-        initializeCameraX();
-        ApplicationDependencies.getJobManager().beginJobLoop();
+        initializeOnCreate();
     }
 
   private static class ProviderInitializationException extends RuntimeException {
   }
 
+  private void initializeOnCreate() {
+
+    initializeAppDependencies();
+    initializeApplicationMigrations();
+    initializeMessageRetrieval();
+    initializeExpiringMessageManager();
+    initializeViewOnceMessageManager();
+    initializeTypingStatusRepository();
+    initializeTypingStatusSender();
+    initializeGcmCheck();
+    initializeSignedPreKeyCheck();
+    initializePeriodicTasks();
+    initializeCircumvention();
+    initializeRingRtc();
+    initializePendingMessages();
+    initializeUnidentifiedDeliveryAbilityRefresh();
+    initializeBlobProvider();
+    initializeCameraX();
+    ApplicationDependencies.getJobManager().beginJobLoop();
+
+    initializedOnCreate = true;
+  }
 }

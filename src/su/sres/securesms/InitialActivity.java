@@ -35,7 +35,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate()");
-        if (((ApplicationContext) getApplication()).getserverset()) {
+        if (((ApplicationContext) getApplication()).getServerSet()) {
             Log.i(TAG, "the server URL is already present in the config database, quitting the activity");
             startActivity(new Intent(this, ConversationListActivity.class));
             finish();
@@ -83,7 +83,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
             DatabaseFactory.getConfigDatabase(this).setConfigById(shadowUrl, 1);
             Log.i(TAG, "server URL added to the config database");
-            ((ApplicationContext) getApplication()).setserverset(true);
+            ((ApplicationContext) getApplication()).setServerSet(true);
             EventBus.getDefault().post(new ServerSetEvent());
 
             startActivity(new Intent(this, ConversationListActivity.class));

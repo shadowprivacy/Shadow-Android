@@ -17,9 +17,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.R;
 
@@ -143,20 +140,6 @@ public final class EnterCodeFragment extends BaseRegistrationFragment {
     private void handleSuccessfulRegistration() {
         Navigation.findNavController(requireView()).navigate(EnterCodeFragmentDirections.actionSuccessfulRegistration());
     }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        EventBus.getDefault().register(this);
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        EventBus.getDefault().unregister(this);
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
 
     private void connectKeyboard(VerificationCodeView verificationCodeView, VerificationPinKeyboard keyboard) {
         keyboard.setOnKeyPressListener(key -> {

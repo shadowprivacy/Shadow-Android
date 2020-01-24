@@ -285,7 +285,7 @@ android {
                           'proguard-retrolambda.pro',
                           'proguard-okhttp.pro',
                           'proguard-ez-vcard.pro',
-                          'proguard-validator.pro'
+                          'proguard-validator.pro',
                           'proguard.cfg'
             testProguardFiles 'proguard-automation.pro',
                           'proguard.cfg'
@@ -367,12 +367,6 @@ android {
             includeAndroidResources = true
         }
     }
-
-//    protobuf {
-//        protoc {
-//            artifact = 'com.google.protobuf:protoc:2.5.0'
-//        }
-//    }
 }
 
 def assembleWebsiteDescriptor = { variant, file ->

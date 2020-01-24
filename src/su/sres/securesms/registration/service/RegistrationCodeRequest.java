@@ -36,7 +36,7 @@ public final class RegistrationCodeRequest {
 //    static void requestSmsVerificationCode(@NonNull Context context, @NonNull Credentials credentials, @Nullable String captchaToken, @NonNull Mode mode, @NonNull SmsVerificationCodeCallback callback) {
     static void requestSmsVerificationCode(@NonNull Context context, @NonNull Credentials credentials, @NonNull Mode mode, @NonNull SmsVerificationCodeCallback callback) {
 //        Log.d(TAG, String.format("SMS Verification requested for %s captcha %s", credentials.getE164number(), captchaToken));
-        Log.d(TAG, String.format("SMS Verification requested for %s captcha %s", credentials.getE164number()));
+        Log.d(TAG, String.format("SMS Verification requested for %s", credentials.getE164number()));
 
         new AsyncTask<Void, Void, VerificationRequestResult>() {
             @Override
