@@ -286,6 +286,8 @@ public final class ContactSelectionListFragment extends    Fragment
 
   @SuppressLint("StaticFieldLeak")
   private void handleContactPermissionGranted() {
+    final Context context = requireContext();
+
     new AsyncTask<Void, Void, Boolean>() {
       @Override
       protected void onPreExecute() {
@@ -300,7 +302,7 @@ public final class ContactSelectionListFragment extends    Fragment
       @Override
       protected Boolean doInBackground(Void... voids) {
         try {
-          DirectoryHelper.refreshDirectory(getContext(), false);
+          DirectoryHelper.refreshDirectory(context, false);
           return true;
         } catch (IOException e) {
           Log.w(TAG, e);

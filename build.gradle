@@ -114,7 +114,7 @@ dependencies {
     implementation 'org.signal:signal-metadata-java:0.0.3'
     implementation 'com.squareup.okhttp3:okhttp:3.12.1'
 
-    implementation files('libs/signal-service-android-2.13.9.aar', 'libs/signal-service-java-2.13.9.jar', 'libs/ringrtc-android-0.1.4.aar')
+    implementation files('libs/signal-service-android-2.13.9.aar', 'libs/signal-service-java-2.13.9.jar', 'libs/ringrtc-android-0.1.8.aar')
     implementation 'commons-validator:commons-validator:1.6'
     implementation "me.leolin:ShortcutBadger:1.1.16"
     implementation 'se.emilsjolander:stickylistheaders:2.7.0'
@@ -191,8 +191,8 @@ dependencyVerification {
     configuration = '(play|website)(Debug|Release)RuntimeClasspath'
 }
 
-def canonicalVersionCode = 559
-def canonicalVersionName = "4.49.12"
+def canonicalVersionCode = 564
+def canonicalVersionName = "4.49.17"
 
 def postFixSize = 10
 def abiPostFix = ['universal'   : 0,
