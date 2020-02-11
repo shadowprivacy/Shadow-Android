@@ -222,6 +222,10 @@ public final class EnterPhoneNumberFragment extends BaseRegistrationFragment {
 
                     @Override
                     public void onNeedCaptcha() {
+                        if (getContext() == null) {
+                            Log.i(TAG, "Got onNeedCaptcha response, but fragment is no longer attached.");
+                            return;
+                        }
                 // captcha off
                         //        navController.navigate(EnterPhoneNumberFragmentDirections.actionRequestCaptcha());
                         cancelSpinning(register);
@@ -232,6 +236,10 @@ public final class EnterPhoneNumberFragment extends BaseRegistrationFragment {
 
                     @Override
                     public void requestSent(@Nullable String fcmToken) {
+                        if (getContext() == null) {
+                            Log.i(TAG, "Got requestSent response, but fragment is no longer attached.");
+                            return;
+                        }
                         model.setFcmToken(fcmToken);
                         model.markASuccessfulAttempt();
                         navController.navigate(EnterPhoneNumberFragmentDirections.actionEnterVerificationCode());
@@ -344,13 +352,13 @@ public final class EnterPhoneNumberFragment extends BaseRegistrationFragment {
 
         @Override
         public void afterTextChanged(Editable s) {
-            String number = reformatText(s);
+            Long number = reformatText(s);
 
             if (number == null) return;
 
             RegistrationViewModel model = getModel();
 
-            model.setNationalNumber(Long.parseLong(number));
+            model.setNationalNumber(number);
 
             setCountryDisplay(model.getNumber().getCountryDisplayName());
         }
@@ -365,7 +373,7 @@ public final class EnterPhoneNumberFragment extends BaseRegistrationFragment {
         }
     }
 
-    private String reformatText(Editable s) {
+    private Long reformatText(Editable s) {
         if (countryFormatter == null) {
             return null;
         }
@@ -376,17 +384,25 @@ public final class EnterPhoneNumberFragment extends BaseRegistrationFragment {
 
         countryFormatter.clear();
 
-        String number          = s.toString().replaceAll("[^\\d.]", "");
-        String formattedNumber = null;
+        String        formattedNumber = null;
+        StringBuilder justDigits      = new StringBuilder();
 
-        for (int i = 0; i < number.length(); i++) {
-            formattedNumber = countryFormatter.inputDigit(number.charAt(i));
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (Character.isDigit(c)) {
+                formattedNumber = countryFormatter.inputDigit(c);
+                justDigits.append(c);
+            }
         }
 
         if (formattedNumber != null && !s.toString().equals(formattedNumber)) {
             s.replace(0, s.length(), formattedNumber);
         }
-        return number;
+        if (justDigits.length() == 0) {
+            return null;
+        }
+
+        return Long.parseLong(justDigits.toString());
     }
 
     private void setCountryFormatter(@Nullable String regionCode) {
