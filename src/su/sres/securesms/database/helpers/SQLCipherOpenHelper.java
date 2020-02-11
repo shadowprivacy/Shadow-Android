@@ -87,9 +87,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int BLUR_HASH                        = 30;
   private static final int MMS_RECIPIENT_CLEANUP_2          = 31;
   private static final int ATTACHMENT_TRANSFORM_PROPERTIES  = 32;
+  private static final int ATTACHMENT_CLEAR_HASHES          = 33;
 
-  private static final int    DATABASE_VERSION = 32;
-  private static final String DATABASE_NAME    = "signal.db";
+  private static final int    DATABASE_VERSION = 33;
+  private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
   private final DatabaseSecret databaseSecret;
@@ -601,6 +602,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       if (oldVersion < ATTACHMENT_TRANSFORM_PROPERTIES) {
         db.execSQL("ALTER TABLE part ADD COLUMN transform_properties TEXT DEFAULT NULL");
+      }
+
+      if (oldVersion < ATTACHMENT_CLEAR_HASHES) {
+        db.execSQL("UPDATE part SET data_hash = null");
       }
 
       db.setTransactionSuccessful();

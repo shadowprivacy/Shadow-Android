@@ -289,9 +289,10 @@
               android:windowSoftInputMode="stateHidden"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-        <activity android:name="su.sres.securesms.mediasend.MediaSendActivity"
+        <activity android:name=".mediasend.MediaSendActivity"
             android:theme="@style/TextSecure.FullScreenMedia"
             android:windowSoftInputMode="stateHidden"
+            android:launchMode="singleTask"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
         <activity android:name="su.sres.securesms.PassphraseChangeActivity"

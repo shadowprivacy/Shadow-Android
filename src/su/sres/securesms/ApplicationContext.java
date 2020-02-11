@@ -28,9 +28,6 @@ import androidx.lifecycle.ProcessLifecycleOwner;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 
 import androidx.annotation.NonNull;
 import androidx.multidex.MultiDexApplication;
@@ -63,6 +60,8 @@ import su.sres.securesms.logging.CustomSignalProtocolLogger;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.logging.PersistentLogger;
 import su.sres.securesms.logging.UncaughtExceptionLogger;
+import su.sres.securesms.mediasend.LegacyCameraModels;
+import su.sres.securesms.mediasend.camerax.CameraXUtil;
 import su.sres.securesms.migrations.ApplicationMigrations;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.NotificationChannels;
@@ -416,7 +415,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   @SuppressLint("RestrictedApi")
   private void initializeCameraX() {
-    if (Build.VERSION.SDK_INT >= 21) {
+    if (CameraXUtil.isSupported()) {
       new Thread(() -> {
         try {
           CameraX.init(this, Camera2AppConfig.create(this));

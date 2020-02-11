@@ -408,7 +408,7 @@ public class SubmitLogFragment extends Fragment {
 
       stringBuilder.append(HEADER_PERMISSIONS)
               .append("\n\n")
-              .append(buildPermissions(requireContext()))
+              .append(buildPermissions(context))
               .append("\n\n\n");
 
       stringBuilder.append(HEADER_LOGCAT)

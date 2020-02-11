@@ -1,6 +1,7 @@
 package su.sres.securesms.service;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -12,7 +13,9 @@ import android.service.chooser.ChooserTarget;
 import android.service.chooser.ChooserTargetService;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.view.ContextThemeWrapper;
 
+import su.sres.securesms.R;
 import su.sres.securesms.ShareActivity;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.ThreadDatabase;
@@ -83,7 +86,8 @@ public class DirectShareService extends ChooserTargetService {
   }
 
   private Bitmap getFallbackDrawable(@NonNull Recipient recipient) {
-    return BitmapUtil.createFromDrawable(recipient.getFallbackContactPhotoDrawable(this, false),
+    Context themedContext = new ContextThemeWrapper(this, R.style.TextSecure_LightTheme);
+    return BitmapUtil.createFromDrawable(recipient.getFallbackContactPhotoDrawable(themedContext, false),
                                          getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
                                          getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_height));
   }

@@ -265,6 +265,8 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
                 hud.hideSoftkey(composeText, null);
             }
 
+            sendButton.setEnabled(false);
+
             MediaSendFragment fragment = getMediaSendFragment();
 
             if (fragment != null) {
@@ -276,6 +278,7 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
             }
         });
 
+        sendButton.setOnLongClickListener(v -> true);
 
         sendButton.addOnTransportChangedListener((newTransport, manuallySelected) -> {
             presentCharactersRemaining();
