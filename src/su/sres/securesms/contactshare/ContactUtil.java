@@ -25,7 +25,6 @@ import su.sres.securesms.contactshare.Contact.PostalAddress;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
-import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.SpanUtil;
@@ -123,7 +122,7 @@ public final class ContactUtil {
       CharSequence[] values = new CharSequence[choices.size()];
 
       for (int i = 0; i < values.length; i++) {
-        values[i] = getPrettyPhoneNumber(choices.get(i).requireAddress().toPhoneString(), locale);
+        values[i] = getPrettyPhoneNumber(choices.get(i).requireE164(), locale);
       }
 
       new AlertDialog.Builder(context)

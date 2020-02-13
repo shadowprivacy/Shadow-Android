@@ -6,7 +6,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.profiles.AvatarHelper;
-import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 
 import java.io.File;

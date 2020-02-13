@@ -14,7 +14,6 @@ import com.google.android.mms.pdu_alt.PduHeaders;
 import com.google.android.mms.pdu_alt.PduParser;
 
 import su.sres.securesms.ApplicationContext;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.recipients.Recipient;

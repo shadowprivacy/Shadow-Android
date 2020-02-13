@@ -14,7 +14,6 @@ import android.util.Pair;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
-import com.google.android.mms.APN;
 
 import org.signal.libsignal.metadata.InvalidMetadataMessageException;
 import org.signal.libsignal.metadata.InvalidMetadataVersionException;
@@ -35,7 +34,6 @@ import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.attachments.PointerAttachment;
 import su.sres.securesms.attachments.TombstoneAttachment;
 import su.sres.securesms.attachments.UriAttachment;
-import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.contactshare.ContactModelMapper;
 import su.sres.securesms.crypto.IdentityKeyUtil;
@@ -97,6 +95,8 @@ import su.sres.securesms.util.Hex;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.Util;
+
 import org.whispersystems.libsignal.state.SessionStore;
 import org.whispersystems.libsignal.state.SignalProtocolStore;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -226,7 +226,7 @@ public class PushDecryptJob extends BaseJob {
     try {
       GroupDatabase        groupDatabase = DatabaseFactory.getGroupDatabase(context);
       SignalProtocolStore  axolotlStore  = new SignalProtocolStoreImpl(context);
-      SignalServiceAddress localAddress  = new SignalServiceAddress(TextSecurePreferences.getLocalNumber(context));
+      SignalServiceAddress localAddress  = new SignalServiceAddress(Optional.of(TextSecurePreferences.getLocalUuid(context)), Optional.of(TextSecurePreferences.getLocalNumber(context)));
       SignalServiceCipher  cipher        = new SignalServiceCipher(localAddress, axolotlStore, UnidentifiedAccessUtil.getCertificateValidator());
 
       SignalServiceContent content = cipher.decrypt(envelope);
@@ -291,7 +291,7 @@ public class PushDecryptJob extends BaseJob {
         Log.w(TAG, "Got unrecognized message...");
       }
 
-      resetRecipientToPush(Recipient.external(context, content.getSender()));
+      resetRecipientToPush(Recipient.externalPush(context, content.getSender()));
 
       if (envelope.isPreKeySignalMessage()) {
         ApplicationDependencies.getJobManager().add(new RefreshPreKeysJob());
@@ -300,10 +300,13 @@ public class PushDecryptJob extends BaseJob {
       Log.w(TAG, e);
       handleInvalidVersionMessage(e.getSender(), e.getSenderDevice(), envelope.getTimestamp(), smsMessageId);
     } catch (ProtocolInvalidMessageException  e) {
-      Log.w(TAG, e);
-      handleCorruptMessage(e.getSender(), e.getSenderDevice(), envelope.getTimestamp(), smsMessageId);
-    }
-    catch (ProtocolInvalidKeyIdException | ProtocolInvalidKeyException | ProtocolUntrustedIdentityException e) {
+      if (!TextUtils.isEmpty(e.getSender())) {
+        Log.w(TAG, e);
+        handleCorruptMessage(e.getSender(), e.getSenderDevice(), envelope.getTimestamp(), smsMessageId);
+      } else {
+        Log.w(TAG, "Invalid message, but no sender info!", e);
+      }
+    } catch (ProtocolInvalidKeyIdException | ProtocolInvalidKeyException | ProtocolUntrustedIdentityException e) {
       Log.w(TAG, e);
       handleCorruptMessage(e.getSender(), e.getSenderDevice(), envelope.getTimestamp(), smsMessageId);
     } catch (StorageFailedException e) {
@@ -341,7 +344,7 @@ public class PushDecryptJob extends BaseJob {
       Intent intent = new Intent(context, WebRtcCallService.class);
       intent.setAction(WebRtcCallService.ACTION_INCOMING_CALL);
       intent.putExtra(WebRtcCallService.EXTRA_CALL_ID, message.getId());
-      intent.putExtra(WebRtcCallService.EXTRA_REMOTE_RECIPIENT, Recipient.external(context, content.getSender()).getId());
+      intent.putExtra(WebRtcCallService.EXTRA_REMOTE_RECIPIENT, Recipient.externalPush(context, content.getSender()).getId());
       intent.putExtra(WebRtcCallService.EXTRA_REMOTE_DESCRIPTION, message.getDescription());
       intent.putExtra(WebRtcCallService.EXTRA_TIMESTAMP, content.getTimestamp());
 
@@ -357,7 +360,7 @@ public class PushDecryptJob extends BaseJob {
     Intent intent = new Intent(context, WebRtcCallService.class);
     intent.setAction(WebRtcCallService.ACTION_RESPONSE_MESSAGE);
     intent.putExtra(WebRtcCallService.EXTRA_CALL_ID, message.getId());
-    intent.putExtra(WebRtcCallService.EXTRA_REMOTE_RECIPIENT, Recipient.external(context, content.getSender()).getId());
+    intent.putExtra(WebRtcCallService.EXTRA_REMOTE_RECIPIENT, Recipient.externalPush(context, content.getSender()).getId());
     intent.putExtra(WebRtcCallService.EXTRA_REMOTE_DESCRIPTION, message.getDescription());
 
     context.startService(intent);
@@ -371,7 +374,7 @@ public class PushDecryptJob extends BaseJob {
       Intent intent = new Intent(context, WebRtcCallService.class);
       intent.setAction(WebRtcCallService.ACTION_ICE_MESSAGE);
       intent.putExtra(WebRtcCallService.EXTRA_CALL_ID, message.getId());
-      intent.putExtra(WebRtcCallService.EXTRA_REMOTE_RECIPIENT, Recipient.external(context, content.getSender()).getId());
+      intent.putExtra(WebRtcCallService.EXTRA_REMOTE_RECIPIENT, Recipient.externalPush(context, content.getSender()).getId());
       intent.putExtra(WebRtcCallService.EXTRA_ICE_SDP, message.getSdp());
       intent.putExtra(WebRtcCallService.EXTRA_ICE_SDP_MID, message.getSdpMid());
       intent.putExtra(WebRtcCallService.EXTRA_ICE_SDP_LINE_INDEX, message.getSdpMLineIndex());
@@ -391,7 +394,7 @@ public class PushDecryptJob extends BaseJob {
       Intent intent = new Intent(context, WebRtcCallService.class);
       intent.setAction(WebRtcCallService.ACTION_REMOTE_HANGUP);
       intent.putExtra(WebRtcCallService.EXTRA_CALL_ID, message.getId());
-      intent.putExtra(WebRtcCallService.EXTRA_REMOTE_RECIPIENT, Recipient.external(context, content.getSender()).getId());
+      intent.putExtra(WebRtcCallService.EXTRA_REMOTE_RECIPIENT, Recipient.externalPush(context, content.getSender()).getId());
 
       context.startService(intent);
     }
@@ -403,7 +406,7 @@ public class PushDecryptJob extends BaseJob {
     Intent intent = new Intent(context, WebRtcCallService.class);
     intent.setAction(WebRtcCallService.ACTION_REMOTE_BUSY);
     intent.putExtra(WebRtcCallService.EXTRA_CALL_ID, message.getId());
-    intent.putExtra(WebRtcCallService.EXTRA_REMOTE_RECIPIENT, Recipient.external(context, content.getSender()).getId());
+    intent.putExtra(WebRtcCallService.EXTRA_REMOTE_RECIPIENT, Recipient.externalPush(context, content.getSender()).getId());
 
     context.startService(intent);
   }
@@ -412,7 +415,7 @@ public class PushDecryptJob extends BaseJob {
                                        @NonNull Optional<Long>       smsMessageId)
   {
     SmsDatabase         smsDatabase         = DatabaseFactory.getSmsDatabase(context);
-    IncomingTextMessage incomingTextMessage = new IncomingTextMessage(Recipient.external(context, content.getSender()).getId(),
+    IncomingTextMessage incomingTextMessage = new IncomingTextMessage(Recipient.externalPush(context, content.getSender()).getId(),
             content.getSenderDevice(),
             content.getTimestamp(),
             "", Optional.absent(), 0,
@@ -433,7 +436,7 @@ public class PushDecryptJob extends BaseJob {
 
     if (threadId != null) {
       SessionStore sessionStore = new TextSecureSessionStore(context);
-      sessionStore.deleteAllSessions(content.getSender());
+      sessionStore.deleteAllSessions(content.getSender().getIdentifier());
 
       SecurityEvent.broadcastSecurityUpdateEvent(context);
       MessageNotifier.updateNotification(context, threadId);
@@ -451,7 +454,7 @@ public class PushDecryptJob extends BaseJob {
 
     if (!recipient.isGroup()) {
       SessionStore sessionStore = new TextSecureSessionStore(context);
-      sessionStore.deleteAllSessions(recipient.requireAddress().toPhoneString());
+      sessionStore.deleteAllSessions(recipient.requireServiceId());
 
       SecurityEvent.broadcastSecurityUpdateEvent(context);
 
@@ -483,7 +486,7 @@ public class PushDecryptJob extends BaseJob {
   private void handleUnknownGroupMessage(@NonNull SignalServiceContent content,
                                          @NonNull SignalServiceGroup group)
   {
-    ApplicationDependencies.getJobManager().add(new RequestGroupInfoJob(Recipient.external(context, content.getSender()).getId(), group.getGroupId()));
+    ApplicationDependencies.getJobManager().add(new RequestGroupInfoJob(Recipient.externalPush(context, content.getSender()).getId(), group.getGroupId()));
   }
 
   private void handleExpirationUpdate(@NonNull SignalServiceContent content,
@@ -515,7 +518,7 @@ public class PushDecryptJob extends BaseJob {
         DatabaseFactory.getSmsDatabase(context).deleteMessage(smsMessageId.get());
       }
     } catch (MmsException e) {
-      throw new StorageFailedException(e, content.getSender(), content.getSenderDevice());
+      throw new StorageFailedException(e, content.getSender().getIdentifier(), content.getSenderDevice());
     }
   }
 
@@ -574,10 +577,7 @@ public class PushDecryptJob extends BaseJob {
       }
 
       if (message.getMessage().getProfileKey().isPresent()) {
-        Recipient recipient = null;
-
-        if      (message.getDestination().isPresent())            recipient = Recipient.external(context, message.getDestination().get());
-        else if (message.getMessage().getGroupInfo().isPresent()) recipient = Recipient.external(context, GroupUtil.getEncodedId(message.getMessage().getGroupInfo().get().getGroupId(), false));
+        Recipient recipient = getSyncMessageDestination(message);
 
         if (recipient != null && !recipient.isSystemContact() && !recipient.isProfileSharing()) {
           DatabaseFactory.getRecipientDatabase(context).setProfileSharing(recipient.getId(), true);
@@ -592,7 +592,7 @@ public class PushDecryptJob extends BaseJob {
 
       MessageNotifier.setLastDesktopActivityTimestamp(message.getTimestamp());
     } catch (MmsException e) {
-      throw new StorageFailedException(e, content.getSender(), content.getSenderDevice());
+      throw new StorageFailedException(e, content.getSender().getIdentifier(), content.getSenderDevice());
     }
   }
 
@@ -623,8 +623,8 @@ public class PushDecryptJob extends BaseJob {
   private void handleSynchronizeReadMessage(@NonNull List<ReadMessage> readMessages, long envelopeTimestamp)
   {
     for (ReadMessage readMessage : readMessages) {
-      List<Pair<Long, Long>> expiringText = DatabaseFactory.getSmsDatabase(context).setTimestampRead(new SyncMessageId(Recipient.external(context, readMessage.getSender()).getId(), readMessage.getTimestamp()), envelopeTimestamp);
-      List<Pair<Long, Long>> expiringMedia = DatabaseFactory.getMmsDatabase(context).setTimestampRead(new SyncMessageId(Recipient.external(context, readMessage.getSender()).getId(), readMessage.getTimestamp()), envelopeTimestamp);
+      List<Pair<Long, Long>> expiringText  = DatabaseFactory.getSmsDatabase(context).setTimestampRead(new SyncMessageId(Recipient.externalPush(context, readMessage.getSender()).getId(), readMessage.getTimestamp()), envelopeTimestamp);
+      List<Pair<Long, Long>> expiringMedia = DatabaseFactory.getMmsDatabase(context).setTimestampRead(new SyncMessageId(Recipient.externalPush(context, readMessage.getSender()).getId(), readMessage.getTimestamp()), envelopeTimestamp);
 
       for (Pair<Long, Long> expiringMessage : expiringText) {
         ApplicationContext.getInstance(context)
@@ -645,7 +645,7 @@ public class PushDecryptJob extends BaseJob {
   }
 
   private void handleSynchronizeViewOnceOpenMessage(@NonNull ViewOnceOpenMessage openMessage, long envelopeTimestamp) {
-    RecipientId   author    = Recipient.external(context, openMessage.getSender()).getId();
+    RecipientId   author    = Recipient.externalPush(context, openMessage.getSender()).getId();
     long          timestamp = openMessage.getTimestamp();
     MessageRecord record    = DatabaseFactory.getMmsSmsDatabase(context).getMessageFor(timestamp, author);
 
@@ -675,7 +675,7 @@ public class PushDecryptJob extends BaseJob {
       Optional<List<Contact>>     sharedContacts = getContacts(message.getSharedContacts());
       Optional<List<LinkPreview>> linkPreviews   = getLinkPreviews(message.getPreviews(), message.getBody().or(""));
       Optional<Attachment>        sticker        = getStickerAttachment(message.getSticker());
-      IncomingMediaMessage        mediaMessage   = new IncomingMediaMessage(Recipient.external(context, content.getSender()).getId(),
+      IncomingMediaMessage        mediaMessage   = new IncomingMediaMessage(Recipient.externalPush(context, content.getSender()).getId(),
               message.getTimestamp(), -1,
               message.getExpiresInSeconds() * 1000L, false,
               message.isViewOnce(),
@@ -708,7 +708,7 @@ public class PushDecryptJob extends BaseJob {
       }
 
     } catch (MmsException e) {
-      throw new StorageFailedException(e, content.getSender(), content.getSenderDevice());
+      throw new StorageFailedException(e, content.getSender().getIdentifier(), content.getSenderDevice());
     } finally {
       database.endTransaction();
     }
@@ -779,12 +779,13 @@ public class PushDecryptJob extends BaseJob {
     try {
       long messageId = database.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptDatabase.STATUS_UNKNOWN, null);
 
-      if (recipients.requireAddress().isGroup()) {
-        updateGroupReceiptStatus(message, messageId, recipients.requireAddress().toGroupString());
+      if (recipients.isGroup()) {
+        updateGroupReceiptStatus(message, messageId, recipients.requireGroupId());
+      } else {
+        database.markUnidentified(messageId, message.isUnidentified(recipients.requireServiceId()));
       }
 
     database.markAsSent(messageId, true);
-      database.markUnidentified(messageId, message.isUnidentified(recipients.requireAddress().serialize()));
 
       List<DatabaseAttachment> allAttachments     = DatabaseFactory.getAttachmentDatabase(context).getAttachmentsForMessage(messageId);
       List<DatabaseAttachment> stickerAttachments = Stream.of(allAttachments).filter(Attachment::isSticker).toList();
@@ -840,12 +841,12 @@ public class PushDecryptJob extends BaseJob {
       return;
     }
 
-    updateGroupReceiptStatus(message, record.getId(), recipient.requireAddress().toGroupString());
+    updateGroupReceiptStatus(message, record.getId(), recipient.requireGroupId());
   }
 
   private void updateGroupReceiptStatus(@NonNull SentTranscriptMessage message, long messageId, @NonNull String groupString) {
     GroupReceiptDatabase      receiptDatabase   = DatabaseFactory.getGroupReceiptDatabase(context);
-    List<Recipient>           messageRecipients = Stream.of(message.getRecipients()).map(address -> Recipient.external(context, address)).toList();
+    List<Recipient>           messageRecipients = Stream.of(message.getRecipients()).map(address -> Recipient.externalPush(context, address)).toList();
     List<Recipient>           members           = DatabaseFactory.getGroupDatabase(context).getGroupMembers(groupString, false);
     Map<RecipientId, Integer> localReceipts     = Stream.of(receiptDatabase.getGroupReceiptInfo(messageId))
             .collect(Collectors.toMap(GroupReceiptInfo::getRecipientId, GroupReceiptInfo::getStatus));
@@ -860,7 +861,7 @@ public class PushDecryptJob extends BaseJob {
     }
 
     for (Recipient member : members) {
-      receiptDatabase.setUnidentified(member.getId(), messageId, message.isUnidentified(member.requireAddress().serialize()));
+      receiptDatabase.setUnidentified(member.getId(), messageId, message.isUnidentified(member.requireServiceId()));
     }
   }
 
@@ -884,7 +885,7 @@ public class PushDecryptJob extends BaseJob {
     } else {
       notifyTypingStoppedFromIncomingMessage(recipient, content.getSender(), content.getSenderDevice());
 
-      IncomingTextMessage textMessage = new IncomingTextMessage(Recipient.external(context, content.getSender()).getId(),
+      IncomingTextMessage textMessage = new IncomingTextMessage(Recipient.externalPush(context, content.getSender()).getId(),
                                                                 content.getSenderDevice(),
                                                                 message.getTimestamp(), body,
                                                                 message.getGroupInfo(),
@@ -918,7 +919,7 @@ public class PushDecryptJob extends BaseJob {
     }
 
     long    threadId  = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient);
-    boolean isGroup   = recipient.requireAddress().isGroup();
+    boolean isGroup   = recipient.isGroup();
 
     MessagingDatabase database;
     long              messageId;
@@ -930,14 +931,14 @@ public class PushDecryptJob extends BaseJob {
       messageId = DatabaseFactory.getMmsDatabase(context).insertMessageOutbox(outgoingMediaMessage, threadId, false, GroupReceiptDatabase.STATUS_UNKNOWN, null);
       database  = DatabaseFactory.getMmsDatabase(context);
 
-      updateGroupReceiptStatus(message, messageId, recipient.requireAddress().toGroupString());
+      updateGroupReceiptStatus(message, messageId, recipient.requireGroupId());
 
     } else {
       OutgoingTextMessage outgoingTextMessage = new OutgoingEncryptedMessage(recipient, body, expiresInMillis);
 
       messageId = DatabaseFactory.getSmsDatabase(context).insertMessageOutbox(threadId, outgoingTextMessage, false, message.getTimestamp(), null);
       database  = DatabaseFactory.getSmsDatabase(context);
-      database.markUnidentified(messageId, message.isUnidentified(recipient.requireAddress().serialize()));
+      database.markUnidentified(messageId, message.isUnidentified(recipient.requireServiceId()));
     }
 
     database.markAsSent(messageId, true);
@@ -1029,7 +1030,7 @@ public class PushDecryptJob extends BaseJob {
     }
   }
 
-  private void handleInvalidMessage(@NonNull String sender,
+  private void handleInvalidMessage(@NonNull SignalServiceAddress sender,
                                     int senderDevice,
                                     @NonNull Optional<SignalServiceGroup> group,
                                     long timestamp,
@@ -1038,7 +1039,7 @@ public class PushDecryptJob extends BaseJob {
     SmsDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
 
     if (!smsMessageId.isPresent()) {
-      Optional<InsertResult> insertResult = insertPlaceholder(sender, senderDevice, timestamp, group);
+      Optional<InsertResult> insertResult = insertPlaceholder(sender.getIdentifier(), senderDevice, timestamp, group);
 
       if (insertResult.isPresent()) {
         smsDatabase.markAsInvalidMessage(insertResult.get().getMessageId());
@@ -1086,7 +1087,7 @@ public class PushDecryptJob extends BaseJob {
                                 @NonNull SignalServiceDataMessage message)
   {
     RecipientDatabase database  = DatabaseFactory.getRecipientDatabase(context);
-    Recipient         recipient = Recipient.external(context, content.getSender());
+    Recipient         recipient = Recipient.externalPush(context, content.getSender());
 
     if (recipient.getProfileKey() == null || !MessageDigest.isEqual(recipient.getProfileKey(), message.getProfileKey().get())) {
       database.setProfileKey(recipient.getId(), message.getProfileKey().get());
@@ -1098,7 +1099,7 @@ public class PushDecryptJob extends BaseJob {
   private void handleNeedsDeliveryReceipt(@NonNull SignalServiceContent content,
                                           @NonNull SignalServiceDataMessage message)
   {
-    ApplicationDependencies.getJobManager().add(new SendDeliveryReceiptJob(Recipient.external(context, content.getSender()).getId(), message.getTimestamp()));
+    ApplicationDependencies.getJobManager().add(new SendDeliveryReceiptJob(Recipient.externalPush(context, content.getSender()).getId(), message.getTimestamp()));
   }
 
   @SuppressLint("DefaultLocale")
@@ -1108,7 +1109,7 @@ public class PushDecryptJob extends BaseJob {
     for (long timestamp : message.getTimestamps()) {
       Log.i(TAG, String.format("Received encrypted delivery receipt: (XXXXX, %d)", timestamp));
       DatabaseFactory.getMmsSmsDatabase(context)
-              .incrementDeliveryReceiptCount(new SyncMessageId(Recipient.external(context, content.getSender()).getId(), timestamp), System.currentTimeMillis());
+              .incrementDeliveryReceiptCount(new SyncMessageId(Recipient.externalPush(context, content.getSender()).getId(), timestamp), System.currentTimeMillis());
     }
   }
 
@@ -1121,7 +1122,7 @@ public class PushDecryptJob extends BaseJob {
         Log.i(TAG, String.format("Received encrypted read receipt: (XXXXX, %d)", timestamp));
 
         DatabaseFactory.getMmsSmsDatabase(context)
-                .incrementReadReceiptCount(new SyncMessageId(Recipient.external(context, content.getSender()).getId(), timestamp), content.getTimestamp());
+                .incrementReadReceiptCount(new SyncMessageId(Recipient.externalPush(context, content.getSender()).getId(), timestamp), content.getTimestamp());
       }
     }
   }
@@ -1133,7 +1134,7 @@ public class PushDecryptJob extends BaseJob {
       return;
     }
 
-    Recipient author = Recipient.external(context, content.getSender());
+    Recipient author = Recipient.externalPush(context, content.getSender());
 
     long threadId;
 
@@ -1188,7 +1189,7 @@ public class PushDecryptJob extends BaseJob {
       return Optional.absent();
     }
 
-    RecipientId   author  = Recipient.external(context, quote.get().getAuthor().getNumber()).getId();
+    RecipientId   author  = Recipient.externalPush(context, quote.get().getAuthor()).getId();
     MessageRecord message = DatabaseFactory.getMmsSmsDatabase(context).getMessageFor(quote.get().getId(), author);
 
     if (message != null) {
@@ -1316,7 +1317,7 @@ public class PushDecryptJob extends BaseJob {
     if (message.getMessage().getGroupInfo().isPresent()) {
       return Recipient.external(context, GroupUtil.getEncodedId(message.getMessage().getGroupInfo().get().getGroupId(), false));
     } else {
-      return Recipient.external(context, message.getDestination().get());
+      return Recipient.externalPush(context, message.getDestination().get());
     }
   }
 
@@ -1324,12 +1325,12 @@ public class PushDecryptJob extends BaseJob {
     if (message.getGroupInfo().isPresent()) {
       return Recipient.external(context, GroupUtil.getEncodedId(message.getGroupInfo().get().getGroupId(), false));
     } else {
-      return Recipient.external(context, content.getSender());
+      return Recipient.externalPush(context, content.getSender());
     }
   }
 
-  private void notifyTypingStoppedFromIncomingMessage(@NonNull Recipient conversationRecipient, @NonNull String sender, int device) {
-    Recipient author   = Recipient.external(context, sender);
+  private void notifyTypingStoppedFromIncomingMessage(@NonNull Recipient conversationRecipient, @NonNull SignalServiceAddress sender, int device) {
+    Recipient author   = Recipient.externalPush(context, sender);
     long      threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(conversationRecipient);
 
     if (threadId > 0) {
@@ -1344,7 +1345,7 @@ public class PushDecryptJob extends BaseJob {
       return true;
     }
 
-    Recipient sender = Recipient.external(context, content.getSender());
+    Recipient sender = Recipient.externalPush(context, content.getSender());
 
     if (content.getDataMessage().isPresent()) {
       SignalServiceDataMessage message      = content.getDataMessage().get();

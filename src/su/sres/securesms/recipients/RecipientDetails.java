@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.color.MaterialColor;
-import su.sres.securesms.database.Address;
+import su.sres.securesms.database.RecipientDatabase.InsightsBannerTier;
 import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
 import su.sres.securesms.database.RecipientDatabase.RegisteredState;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
@@ -19,9 +19,14 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import java.util.LinkedList;
 import java.util.List;
 
+import java.util.UUID;
+
 public class RecipientDetails {
 
-    final Address                address;
+    final UUID                   uuid;
+    final String                 e164;
+    final String                 email;
+    final String                 groupId;
     final String                 name;
     final String                 customLabel;
     final Uri                    systemContactPhoto;
@@ -37,7 +42,6 @@ public class RecipientDetails {
     final int                    expireMessages;
     final List<Recipient>        participants;
     final String                 profileName;
-    final boolean                seenInviteReminder;
     final Optional<Integer>      defaultSubscriptionId;
     final RegisteredState        registered;
     final byte[]                 profileKey;
@@ -48,6 +52,8 @@ public class RecipientDetails {
     final String                 notificationChannel;
     final UnidentifiedAccessMode unidentifiedAccessMode;
     final boolean                forceSmsSelection;
+    final boolean                uuidSuported;
+    final InsightsBannerTier     insightsBannerTier;
 
     RecipientDetails(@NonNull Context context,
                      @Nullable String name,
@@ -61,7 +67,10 @@ public class RecipientDetails {
         this.systemContactPhoto              = Util.uri(settings.getSystemContactPhotoUri());
         this.customLabel                     = settings.getSystemPhoneLabel();
         this.contactUri                      = Util.uri(settings.getSystemContactUri());
-        this.address                         = settings.getAddress();
+        this.uuid                            = settings.getUuid();
+        this.e164                            = settings.getE164();
+        this.email                           = settings.getEmail();
+        this.groupId                         = settings.getGroupId();
         this.color                           = settings.getColor();
         this.messageRingtone                 = settings.getMessageRingtone();
         this.callRingtone                    = settings.getCallRingtone();
@@ -72,7 +81,6 @@ public class RecipientDetails {
         this.expireMessages                  = settings.getExpireMessages();
         this.participants                    = participants == null ? new LinkedList<>() : participants;
         this.profileName                     = isLocalNumber ? TextSecurePreferences.getProfileName(context) : settings.getProfileName();
-        this.seenInviteReminder              = settings.hasSeenInviteReminder();
         this.defaultSubscriptionId           = settings.getDefaultSubscriptionId();
         this.registered                      = settings.getRegistered();
         this.profileKey                      = settings.getProfileKey();
@@ -83,6 +91,8 @@ public class RecipientDetails {
         this.notificationChannel             = settings.getNotificationChannel();
         this.unidentifiedAccessMode          = settings.getUnidentifiedAccessMode();
         this.forceSmsSelection               = settings.isForceSmsSelection();
+        this.uuidSuported                    = settings.isUuidSupported();
+        this.insightsBannerTier              = settings.getInsightsBannerTier();
 
         if (name == null) this.name = settings.getSystemDisplayName();
         else              this.name = name;
@@ -93,7 +103,10 @@ public class RecipientDetails {
         this.systemContactPhoto     = null;
         this.customLabel            = null;
         this.contactUri             = null;
-        this.address                = Address.UNKNOWN;
+        this.uuid                   = null;
+        this.e164                   = null;
+        this.email                  = null;
+        this.groupId                = null;
         this.color                  = null;
         this.messageRingtone        = null;
         this.callRingtone           = null;
@@ -104,7 +117,7 @@ public class RecipientDetails {
         this.expireMessages         = 0;
         this.participants           = new LinkedList<>();
         this.profileName            = null;
-        this.seenInviteReminder     = true;
+        this.insightsBannerTier     = InsightsBannerTier.TIER_TWO;
         this.defaultSubscriptionId  = Optional.absent();
         this.registered             = RegisteredState.UNKNOWN;
         this.profileKey             = null;
@@ -116,5 +129,6 @@ public class RecipientDetails {
         this.unidentifiedAccessMode = UnidentifiedAccessMode.UNKNOWN;
         this.forceSmsSelection      = false;
         this.name                   = null;
+        this.uuidSuported           = false;
     }
 }

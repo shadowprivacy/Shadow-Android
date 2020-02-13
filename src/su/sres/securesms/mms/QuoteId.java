@@ -7,7 +7,6 @@ import androidx.annotation.Nullable;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.logging.Log;
 

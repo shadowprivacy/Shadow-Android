@@ -3,9 +3,7 @@ package su.sres.securesms.database.model;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.database.Address;
 import su.sres.securesms.mms.SlideDeck;
-import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 
 public class Quote {

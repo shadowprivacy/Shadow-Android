@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Shadow</string>
+    <string name="app_name" translatable="false">Shadow</string>
 
     <string name="install_url" translatable="false">http://sres.su/shadow</string>
 
@@ -15,7 +15,7 @@
     <string name="AbstractNotificationBuilder_new_message">New message</string>
 
     <!-- AlbumThumbnailView -->
-    <string name="AlbumThumbnailView_plus">\+%d</string>
+    <string name="AlbumThumbnailView_plus" translatable="false">\+%d</string>
 
     <!-- ApplicationMigrationActivity -->
     <string name="ApplicationMigrationActivity__signal_is_updating">Shadow is updating…</string>
@@ -1519,6 +1519,8 @@
     <string name="reminder_header_share_text">The more friends use Shadow, the better it gets.</string>
     <string name="reminder_header_service_outage_text">Shadow is experiencing technical difficulties. We are working hard to restore service as quickly as possible.</string>
     <string name="reminder_header_the_latest_signal_features_wont_work">The latest Shadow features won\'t work on this version of Android. Please upgrade this device to receive future Shadow updates.</string>
+    <string name="reminder_header_progress">%1$d%%</string>
+
 
     <!-- media_preview -->
     <string name="media_preview__save_title">Save</string>
@@ -1539,6 +1541,34 @@
     <string name="trimmer__deleting">Deleting</string>
     <string name="trimmer__deleting_old_messages">Deleting old messages…</string>
     <string name="trimmer__old_messages_successfully_deleted">Old messages successfully deleted</string>
+
+    <!-- Insights -->
+    <string name="Insights__percent">%</string>
+    <string name="Insights__title">Insights</string>
+    <string name="InsightsDashboardFragment__title">Insights</string>
+    <string name="InsightsDashboardFragment__tagline">%1$d%% of your outgoing messages in the past 7 days were end-to-end encrypted with Signal Protocol.</string>
+    <string name="InsightsDashboardFragment__boost_your_signal">Boost your Shadow</string>
+    <string name="InsightsDashboardFragment__100_title">Your Shadow Strong</string>
+    <string name="InsightsDashboardFragment__no_signal_yet">No Shadow (yet)</string>
+    <string name="InsightsDashboardFragment__youre_just_getting_started">You\'re just getting started. Insights will be displayed after you send a few messages.</string>
+    <string name="InsightsDashboardFragment__start_a_conversation">Start a conversation</string>
+    <string name="InsightsDashboardFragment__100_description">Shadow\'s advanced privacy-preserving technology automatically protected all of your recent outgoing messages.</string>
+    <string name="InsightsDashboardFragment__invite_your_contacts">Start communicating securely and enable new features that go beyond the limitations of unencrypted SMS messages by inviting more contacts to join Shadow.</string>
+    <string name="InsightsDashboardFragment__this_stat_was_generated_locally">This stat was locally generated on your device and can only be seen by you. It is never transmitted anywhere.</string>
+    <string name="InsightsDashboardFragment__encrypted_messages">Encrypted messages</string>
+    <string name="InsightsDashboardFragment__cancel">Cancel</string>
+    <string name="InsightsDashboardFragment__send">Send</string>
+    <string name="InsightsDashboardFragment__not_using_signal_yet">Not using Shadow yet</string>
+    <string name="InsightsModalFragment__title">Introducing Insights</string>
+    <string name="InsightsModalFragment__description">Find out how many of your outgoing messages were sent securely, then quickly invite new contacts to boost your Shadow percentage.</string>
+    <string name="InsightsModalFragment__view_insights">View Insights</string>
+
+    <string name="FirstInviteReminder__title">Invite to Shadow</string>
+    <string name="FirstInviteReminder__description">You could increase the number of encrypted messages you send by %1$d%%</string>
+    <string name="SecondInviteReminder__title">Boost your Shadow</string>
+    <string name="SecondInviteReminder__description">Invite %1$s</string>
+    <string name="InsightsReminder__view_insights">View Insights</string>
+    <string name="InsightsReminder__invite">Invite</string>
 
     <!-- transport_selection_list_item -->
     <string name="transport_selection_list_item__transport_icon">Transport icon</string>
@@ -1635,6 +1665,7 @@
     <string name="prompt_passphrase_activity__tap_to_unlock">TAP TO UNLOCK</string>
     <string name="RegistrationLockDialog_reminder">Reminder:</string>
     <string name="recipient_preferences__about">About</string>
+    <string name="Recipient_unknown">Unknown</string>
     <!-- EOF -->
 
 </resources>

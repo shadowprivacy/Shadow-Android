@@ -5,7 +5,6 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.crypto.ProfileKeyUtil;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;

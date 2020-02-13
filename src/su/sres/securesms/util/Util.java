@@ -48,7 +48,6 @@ import com.google.i18n.phonenumbers.Phonenumber;
 
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.components.ComposeText;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.mms.OutgoingLegacyMmsConnection;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -230,13 +229,6 @@ public class Util {
     }
 
     return totalSize;
-  }
-
-  public static boolean isOwnNumber(Context context, Address address) {
-    if (address.isGroup()) return false;
-    if (address.isEmail()) return false;
-
-    return TextSecurePreferences.getLocalNumber(context).equals(address.toPhoneString());
   }
 
   public static void readFully(InputStream in, byte[] buffer) throws IOException {

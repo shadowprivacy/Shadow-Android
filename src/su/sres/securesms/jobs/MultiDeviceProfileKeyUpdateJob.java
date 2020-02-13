@@ -1,6 +1,5 @@
 package su.sres.securesms.jobs;
 
-
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.jobmanager.Data;
@@ -10,6 +9,8 @@ import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
+import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -68,7 +69,7 @@ public class MultiDeviceProfileKeyUpdateJob extends BaseJob  {
     ByteArrayOutputStream      baos       = new ByteArrayOutputStream();
     DeviceContactsOutputStream out        = new DeviceContactsOutputStream(baos);
 
-    out.write(new DeviceContact(TextSecurePreferences.getLocalNumber(context),
+    out.write(new DeviceContact(RecipientUtil.toSignalServiceAddress(context, Recipient.self()),
                                 Optional.absent(),
                                 Optional.absent(),
                                 Optional.absent(),

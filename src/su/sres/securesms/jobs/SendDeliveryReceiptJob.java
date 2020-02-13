@@ -3,7 +3,6 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -11,6 +10,7 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SignalServiceReceiptMessage;
@@ -75,7 +75,7 @@ public class SendDeliveryReceiptJob extends BaseJob  {
     public void onRun() throws IOException, UntrustedIdentityException {
         SignalServiceMessageSender  messageSender  = ApplicationDependencies.getSignalServiceMessageSender();
         Recipient                   recipient      = Recipient.resolved(recipientId);
-        SignalServiceAddress        remoteAddress  = new SignalServiceAddress(recipient.requireAddress().serialize());
+        SignalServiceAddress        remoteAddress  = RecipientUtil.toSignalServiceAddress(context, recipient);
         SignalServiceReceiptMessage receiptMessage = new SignalServiceReceiptMessage(SignalServiceReceiptMessage.Type.DELIVERY,
                 Collections.singletonList(messageId),
                 timestamp);

@@ -1,12 +1,11 @@
 package su.sres.securesms.contacts.avatars;
 
-
 import android.content.Context;
 import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.database.Address;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.Conversions;
 
 import java.io.FileNotFoundException;
@@ -15,12 +14,12 @@ import java.security.MessageDigest;
 
 public class SystemContactPhoto implements ContactPhoto {
 
-  private final @NonNull Address address;
-  private final @NonNull Uri     contactPhotoUri;
-  private final          long    lastModifiedTime;
+  private final RecipientId recipientId;
+  private final Uri         contactPhotoUri;
+  private final long        lastModifiedTime;
 
-  public SystemContactPhoto(@NonNull Address address, @NonNull Uri contactPhotoUri, long lastModifiedTime) {
-    this.address          = address;
+  public SystemContactPhoto(@NonNull RecipientId recipientId, @NonNull Uri contactPhotoUri, long lastModifiedTime) {
+    this.recipientId = recipientId;
     this.contactPhotoUri  = contactPhotoUri;
     this.lastModifiedTime = lastModifiedTime;
   }
@@ -42,7 +41,7 @@ public class SystemContactPhoto implements ContactPhoto {
 
   @Override
   public void updateDiskCacheKey(@NonNull MessageDigest messageDigest) {
-    messageDigest.update(address.serialize().getBytes());
+    messageDigest.update(recipientId.serialize().getBytes());
     messageDigest.update(contactPhotoUri.toString().getBytes());
     messageDigest.update(Conversions.longToByteArray(lastModifiedTime));
   }
@@ -53,12 +52,11 @@ public class SystemContactPhoto implements ContactPhoto {
 
     SystemContactPhoto that = (SystemContactPhoto)other;
 
-    return this.address.equals(that.address) && this.contactPhotoUri.equals(that.contactPhotoUri) && this.lastModifiedTime == that.lastModifiedTime;
+    return this.recipientId.equals(that.recipientId) && this.contactPhotoUri.equals(that.contactPhotoUri) && this.lastModifiedTime == that.lastModifiedTime;
   }
 
   @Override
   public int hashCode() {
-    return address.hashCode() ^ contactPhotoUri.hashCode() ^ (int)lastModifiedTime;
+    return recipientId.hashCode() ^ contactPhotoUri.hashCode() ^ (int)lastModifiedTime;
   }
-
 }

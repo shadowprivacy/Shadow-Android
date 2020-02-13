@@ -78,6 +78,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.DynamicDarkActionBarTheme;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -87,6 +88,7 @@ import org.whispersystems.libsignal.fingerprint.Fingerprint;
 import org.whispersystems.libsignal.fingerprint.FingerprintParsingException;
 import org.whispersystems.libsignal.fingerprint.FingerprintVersionMismatchException;
 import org.whispersystems.libsignal.fingerprint.NumericFingerprintGenerator;
+import su.sres.signalservice.api.util.UuidUtil;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
@@ -204,13 +206,9 @@ public class VerifyIdentityActivity extends PassphraseRequiredActionBarActivity 
     public static final String VERIFIED_STATE  = "verified_state";
 
     private LiveRecipient recipient;
-    private String        localNumber;
-    private String        remoteNumber;
-
-    private IdentityKey localIdentity;
-    private IdentityKey remoteIdentity;
-
-    private Fingerprint fingerprint;
+    private IdentityKey   localIdentity;
+    private IdentityKey   remoteIdentity;
+    private Fingerprint   fingerprint;
 
     private View                 container;
     private View                 numbersContainer;
@@ -268,19 +266,34 @@ public class VerifyIdentityActivity extends PassphraseRequiredActionBarActivity 
       if (localIdentityParcelable == null)  throw new AssertionError("local identity required");
       if (remoteIdentityParcelable == null) throw new AssertionError("remote identity required");
 
-      this.localNumber    = getArguments().getString(LOCAL_NUMBER);
       this.localIdentity  = localIdentityParcelable.get();
       this.recipient      = Recipient.live(recipientId);
-      this.remoteNumber   = recipient.get().requireAddress().serialize();
       this.remoteIdentity = remoteIdentityParcelable.get();
+
+      int    version;
+      byte[] localId;
+      byte[] remoteId;
+
+      if (FeatureFlags.UUIDS && recipient.resolve().getUuid().isPresent()) {
+        Log.i(TAG, "Using UUID (version 2).");
+        version  = 2;
+        localId  = UuidUtil.toByteArray(TextSecurePreferences.getLocalUuid(requireContext()));
+        remoteId = UuidUtil.toByteArray(recipient.resolve().getUuid().get());
+      } else {
+        Log.i(TAG, "Using E164 (version 1).");
+        version  = 1;
+        localId  = TextSecurePreferences.getLocalNumber(requireContext()).getBytes();
+        remoteId = recipient.resolve().requireE164().getBytes();
+      }
 
       this.recipient.observe(this, this::setRecipientText);
 
       new AsyncTask<Void, Void, Fingerprint>() {
         @Override
         protected Fingerprint doInBackground(Void... params) {
-          return new NumericFingerprintGenerator(5200).createFor(localNumber, localIdentity,
-                                                                 remoteNumber, remoteIdentity);
+          return new NumericFingerprintGenerator(5200).createFor(version,
+                  localId, localIdentity,
+                  remoteId, remoteIdentity);
         }
 
         @Override
@@ -440,7 +453,7 @@ public class VerifyIdentityActivity extends PassphraseRequiredActionBarActivity 
     }
 
     private void setRecipientText(Recipient recipient) {
-      description.setText(Html.fromHtml(String.format(getActivity().getString(R.string.verify_display_fragment__if_you_wish_to_verify_the_security_of_your_end_to_end_encryption_with_s), recipient.toShortString())));
+      description.setText(Html.fromHtml(String.format(getActivity().getString(R.string.verify_display_fragment__if_you_wish_to_verify_the_security_of_your_end_to_end_encryption_with_s), recipient.toShortString(getContext()))));
       description.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
@@ -572,7 +585,7 @@ public class VerifyIdentityActivity extends PassphraseRequiredActionBarActivity 
         protected Void doInBackground(Recipient... params) {
           synchronized (SESSION_LOCK) {
             if (isChecked) {
-              Log.i(TAG, "Saving identity: " + params[0].requireAddress());
+              Log.i(TAG, "Saving identity: " + params[0].getId());
               DatabaseFactory.getIdentityDatabase(getActivity())
                       .saveIdentity(params[0].getId(),
                                            remoteIdentity,

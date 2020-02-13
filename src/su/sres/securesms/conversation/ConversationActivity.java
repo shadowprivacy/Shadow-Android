@@ -33,29 +33,28 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.ParcelFileDescriptor;
 import android.os.Vibrator;
 import android.provider.Browser;
 import android.provider.ContactsContract;
 import android.provider.Telephony;
+
+import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.core.graphics.drawable.IconCompat;
 import androidx.core.view.MenuItemCompat;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
+
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -75,8 +74,6 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.lifecycle.ViewModelProviders;
 
 import com.annimon.stream.Stream;
 
@@ -103,7 +100,6 @@ import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.TombstoneAttachment;
 import su.sres.securesms.audio.AudioRecorder;
 import su.sres.securesms.audio.AudioSlidePlayer;
-import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.components.AnimatingToggle;
 import su.sres.securesms.components.AttachmentTypeSelector;
@@ -122,12 +118,14 @@ import su.sres.securesms.components.identity.UntrustedSendDialog;
 import su.sres.securesms.components.identity.UnverifiedBannerView;
 import su.sres.securesms.components.identity.UnverifiedSendDialog;
 import su.sres.securesms.components.location.SignalPlace;
+import su.sres.securesms.components.reminder.Reminder;
 import su.sres.securesms.components.reminder.ExpiredBuildReminder;
 import su.sres.securesms.components.reminder.ReminderView;
 import su.sres.securesms.components.reminder.ServiceOutageReminder;
 import su.sres.securesms.components.reminder.UnauthorizedReminder;
 import su.sres.securesms.contacts.ContactAccessor;
 import su.sres.securesms.contacts.ContactAccessor.ContactData;
+import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.contactshare.ContactShareEditActivity;
 import su.sres.securesms.contactshare.ContactUtil;
@@ -153,6 +151,9 @@ import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.database.model.StickerRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.ReminderUpdateEvent;
+import su.sres.securesms.insights.InsightsLauncher;
+import su.sres.securesms.invites.InviteReminderModel;
+import su.sres.securesms.invites.InviteReminderRepository;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.linkpreview.LinkPreviewRepository;
 import su.sres.securesms.linkpreview.LinkPreviewViewModel;
@@ -209,7 +210,6 @@ import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.CharacterCalculator.CharacterState;
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.Dialogs;
-import su.sres.securesms.util.DirectoryHelper;
 import su.sres.securesms.util.DynamicDarkToolbarTheme;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
@@ -220,7 +220,6 @@ import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.TextSecurePreferences.MediaKeyboardMode;
-import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.AssertedSuccessListener;
@@ -322,6 +321,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
   private LinkPreviewViewModel         linkPreviewViewModel;
   private ConversationSearchViewModel  searchViewModel;
   private ConversationStickerViewModel stickerViewModel;
+  private InviteReminderModel          inviteReminderModel;
 
   private LiveRecipient recipient;
   private long          threadId;
@@ -398,6 +398,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         });
       }
     });
+
+    initializeInsightObserver();
   }
 
   @Override
@@ -817,7 +819,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onEvent(ReminderUpdateEvent event) {
-    updateReminders(recipient.get().hasSeenInviteReminder());
+    updateReminders();
   }
 
   @Override
@@ -944,7 +946,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
       composeText.appendInvite(inviteText);
     } else {
       Intent intent = new Intent(Intent.ACTION_SENDTO);
-      intent.setData(Uri.parse("smsto:" + recipient.get().requireAddress().serialize()));
+      intent.setData(Uri.parse("smsto:" + recipient.get().requireSmsAddress()));
       intent.putExtra("sms_body", inviteText);
       intent.putExtra(Intent.EXTRA_TEXT, inviteText);
       startActivity(intent);
@@ -988,7 +990,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
   }
 
   private void handleAddShortcut() {
-    Log.i(TAG, "Creating home screen shortcut for recipient " + recipient.get().requireAddress());
+    Log.i(TAG, "Creating home screen shortcut for recipient " + recipient.get().getId());
 
     new AsyncTask<Void, Void, IconCompat>() {
 
@@ -1018,11 +1020,9 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
       @Override
       protected void onPostExecute(IconCompat icon) {
         Context context  = getApplicationContext();
-        String  name     = Optional.fromNullable(recipient.get().getName())
-                .or(Optional.fromNullable(recipient.get().getProfileName()))
-                .or(recipient.get().toShortString());
+        String  name     = recipient.get().getDisplayName(ConversationActivity.this);
 
-        ShortcutInfoCompat shortcutInfo = new ShortcutInfoCompat.Builder(context, recipient.get().requireAddress().serialize() + '-' + System.currentTimeMillis())
+        ShortcutInfoCompat shortcutInfo = new ShortcutInfoCompat.Builder(context, recipient.get().getId().serialize() + '-' + System.currentTimeMillis())
                                                                 .setShortLabel(name)
                                                                 .setIcon(icon)
                 .setIntent(ShortcutLauncherActivity.createIntent(context, recipient.getId()))
@@ -1060,7 +1060,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         MessageSender.send(this, leaveMessage.get(), threadId, false, null);
 
         GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(this);
-        String        groupId       = groupRecipient.requireAddress().toGroupString();
+        String        groupId       = groupRecipient.requireGroupId();
         groupDatabase.setActive(groupId, false);
         groupDatabase.remove(groupId, Recipient.self().getId());
 
@@ -1076,7 +1076,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
   private void handleEditPushGroup() {
     Intent intent = new Intent(ConversationActivity.this, GroupCreateActivity.class);
-    intent.putExtra(GroupCreateActivity.GROUP_ADDRESS_EXTRA, recipient.get().requireAddress());
+    intent.putExtra(GroupCreateActivity.GROUP_ID_EXTRA, recipient.get().requireGroupId());
     startActivityForResult(intent, GROUP_EDIT);
   }
 
@@ -1120,7 +1120,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     } else {
       try {
         Intent dialIntent = new Intent(Intent.ACTION_DIAL,
-                Uri.parse("tel:" + recipient.requireAddress().serialize()));
+                Uri.parse("tel:" + recipient.requireSmsAddress()));
         startActivity(dialIntent);
       } catch (ActivityNotFoundException anfe) {
         Log.w(TAG, anfe);
@@ -1136,7 +1136,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
   }
 
   private void handleAddToContacts() {
-    if (recipient.get().requireAddress().isGroup()) return;
+    if (recipient.get().isGroup()) return;
 
     try {
       startActivityForResult(RecipientExporter.export(recipient.get()).asAddContactIntent(), ADD_CONTACT);
@@ -1146,7 +1146,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
   }
 
   private boolean handleDisplayQuickContact() {
-    if (recipient.get().requireAddress().isGroup()) return false;
+    if (recipient.get().isGroup()) return false;
 
     if (recipient.get().getContactUri() != null) {
       ContactsContract.QuickContact.showQuickContact(ConversationActivity.this, titleView, recipient.get().getContactUri(), ContactsContract.QuickContact.MODE_LARGE, null);
@@ -1400,8 +1400,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
         if (registeredState == RegisteredState.UNKNOWN) {
           try {
-            Log.i(TAG, "Refreshing directory for user: " + recipient.requireAddress().serialize());
-            registeredState = DirectoryHelper.refreshDirectoryFor(context, recipient);
+            Log.i(TAG, "Refreshing directory for user: " + recipient.getId().serialize());
+            registeredState = DirectoryHelper.refreshDirectoryFor(context, recipient, false);
           } catch (IOException e) {
             Log.w(TAG, e);
           }
@@ -1428,12 +1428,17 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
   private void onSecurityUpdated() {
     Log.i(TAG, "onSecurityUpdated()");
-    updateReminders(recipient.get().hasSeenInviteReminder());
+    updateReminders();
     updateDefaultSubscriptionId(recipient.get().getDefaultSubscriptionId());
   }
 
-  protected void updateReminders(boolean seenInvite) {
-    Log.i(TAG, "updateReminders(" + seenInvite + ")");
+  private void initializeInsightObserver() {
+    inviteReminderModel = new InviteReminderModel(this, new InviteReminderRepository(this));
+    inviteReminderModel.loadReminder(recipient, this::updateReminders);
+  }
+
+  protected void updateReminders() {
+    Optional<Reminder> inviteReminder = inviteReminderModel.getReminder();
 
     if (UnauthorizedReminder.isEligible(this)) {
       reminderView.get().showReminder(new UnauthorizedReminder(this));
@@ -1444,18 +1449,28 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
       reminderView.get().showReminder(new ServiceOutageReminder(this));
     } else if (TextSecurePreferences.isPushRegistered(this)      &&
                TextSecurePreferences.isShowInviteReminders(this) &&
-               !isSecureText                                            &&
-               !seenInvite                                              &&
-            !recipient.get().isGroup())
-    {
-//      InviteReminder reminder = new InviteReminder(this, recipient.get());
-//      reminder.setOkListener(v -> {
-//        handleInviteLink();
-//        reminderView.get().requestDismiss();
-//      });
-//      reminderView.get().showReminder(reminder);
+            !isSecureText                                     &&
+            inviteReminder.isPresent()                        &&
+            !recipient.get().isGroup()) {
+ //     reminderView.get().setOnActionClickListener(this::handleReminderAction);
+ //     reminderView.get().setOnDismissListener(() -> inviteReminderModel.dismissReminder());
+ //     reminderView.get().showReminder(inviteReminder.get());
     } else if (reminderView.resolved()) {
       reminderView.get().hide();
+    }
+  }
+
+  private void handleReminderAction(@IdRes int reminderActionId) {
+    switch (reminderActionId) {
+      case R.id.reminder_action_invite:
+        handleInviteLink();
+        reminderView.get().requestDismiss();
+        break;
+      case R.id.reminder_action_view_insights:
+        InsightsLauncher.showInsightsDashboard(getSupportFragmentManager());
+        break;
+      default:
+        throw new IllegalArgumentException("Unknown ID: " + reminderActionId);
     }
   }
 
@@ -1490,13 +1505,13 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
         if (params[0].isGroup()) {
           recipients.addAll(DatabaseFactory.getGroupDatabase(ConversationActivity.this)
-                  .getGroupMembers(params[0].requireAddress().toGroupString(), false));
+                  .getGroupMembers(params[0].requireGroupId(), false));
         } else {
           recipients.add(params[0]);
         }
 
         for (Recipient recipient : recipients) {
-          Log.i(TAG, "Loading identity for: " + recipient.requireAddress());
+          Log.i(TAG, "Loading identity for: " + recipient.getId());
           identityRecordList.add(identityDatabase.getIdentity(recipient.getId()));
         }
 
@@ -1622,6 +1637,10 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
   }
 
   private void initializeResources() {
+    if (recipient != null) {
+      recipient.removeObservers(this);
+    }
+
     recipient        = Recipient.live(getIntent().getParcelableExtra(RECIPIENT_EXTRA));
     threadId         = getIntent().getLongExtra(THREAD_ID_EXTRA, -1);
     archived         = getIntent().getBooleanExtra(IS_ARCHIVED_EXTRA, false);
@@ -1742,7 +1761,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     setBlockedUserState(recipient, isSecureText, isDefaultSms);
     setActionBarColor(recipient.getColor());
     setGroupShareProfileReminder(recipient);
-//    updateReminders(recipient.hasSeenInviteReminder());
+//    updateReminders();
     updateDefaultSubscriptionId(recipient.getDefaultSubscriptionId());
     initializeSecurity(isSecureText, isDefaultSms);
 
@@ -2020,9 +2039,9 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
   @SuppressWarnings("SimplifiableIfStatement")
   private boolean isSelfConversation() {
     if (!TextSecurePreferences.isPushRegistered(this)) return false;
-    if (recipient.get().isGroup())                         return false;
+    if (recipient.get().isGroup())                     return false;
 
-    return Util.isOwnNumber(this, recipient.get().requireAddress());
+    return recipient.get().isLocalNumber();
   }
 
   private boolean isGroupConversation() {
@@ -2149,8 +2168,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
       boolean         initiating     = threadId == -1;
       boolean         needsSplit     = !transport.isSms() && message.length() > transport.calculateCharacters(message).maxPrimaryMessageSize;
       boolean         isMediaMessage = attachmentManager.isAttachmentPresent() ||
-              recipient.isGroup()            ||
-              recipient.requireAddress().isEmail()        ||
+              recipient.isGroup()                     ||
+              recipient.getEmail().isPresent()        ||
               inputPanel.getQuote().isPresent()       ||
               linkPreviewViewModel.hasLinkPreview()   ||
               needsSplit;
@@ -2158,7 +2177,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
       Log.i(TAG, "isManual Selection: " + sendButton.isManualSelection());
       Log.i(TAG, "forceSms: " + forceSms);
 
-      if ((recipient.isMmsGroup() || recipient.requireAddress().isEmail()) && !isMmsEnabled) {
+      if ((recipient.isMmsGroup() || recipient.getEmail().isPresent()) && !isMmsEnabled) {
         handleManualMmsRequired();
       } else if (!forceSms && identityRecords.isUnverified()) {
         handleUnverifiedRecipients();
@@ -2804,7 +2823,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         String[] unverifiedNames = new String[unverifiedIdentities.size()];
 
         for (int i=0;i<unverifiedIdentities.size();i++) {
-          unverifiedNames[i] = Recipient.resolved(unverifiedIdentities.get(i).getRecipientId()).toShortString();
+          unverifiedNames[i] = Recipient.resolved(unverifiedIdentities.get(i).getRecipientId()).toShortString(ConversationActivity.this);
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(ConversationActivity.this);

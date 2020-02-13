@@ -28,10 +28,8 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteStatement;
 
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.TextSecurePreferences;
 
 import java.util.HashSet;
 import java.util.List;

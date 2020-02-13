@@ -175,7 +175,7 @@ public class WebRtcCallActivity extends Activity {
       Permissions.with(this)
                  .request(Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA)
                  .ifNecessary()
-                 .withRationaleDialog(getString(R.string.WebRtcCallActivity_to_answer_the_call_from_s_give_signal_access_to_your_microphone, event.getRecipient().toShortString()),
+              .withRationaleDialog(getString(R.string.WebRtcCallActivity_to_answer_the_call_from_s_give_signal_access_to_your_microphone, event.getRecipient().toShortString(this)),
                          R.drawable.ic_mic_solid_24, R.drawable.ic_videocam_white_48dp)
                  .withPermanentDenialDialog(getString(R.string.WebRtcCallActivity_signal_requires_microphone_and_camera_permissions_in_order_to_make_or_receive_calls))
                  .onAllGranted(() -> {
@@ -284,7 +284,7 @@ public class WebRtcCallActivity extends Activity {
       public void onClick(View v) {
         synchronized (SESSION_LOCK) {
           TextSecureIdentityKeyStore identityKeyStore = new TextSecureIdentityKeyStore(WebRtcCallActivity.this);
-          identityKeyStore.saveIdentity(new SignalProtocolAddress(recipient.requireAddress().serialize(), 1), theirIdentity, true);
+          identityKeyStore.saveIdentity(new SignalProtocolAddress(recipient.requireServiceId(), 1), theirIdentity, true);
         }
 
         Intent intent = new Intent(WebRtcCallActivity.this, WebRtcCallService.class);

@@ -49,12 +49,15 @@ import su.sres.securesms.contacts.ContactsCursorLoader.DisplayMode;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.permissions.Permissions;
-import su.sres.securesms.util.DirectoryHelper;
+import su.sres.securesms.contacts.sync.DirectoryHelper;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.adapter.FixedViewsAdapter;
 import su.sres.securesms.util.adapter.RecyclerViewConcatenateAdapterStickyHeader;
+
+import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -330,11 +333,11 @@ public final class ContactSelectionListFragment extends    Fragment
       if (!isMulti() || !selectedContacts.contains(contact.getNumber())) {
         selectedContacts.add(contact.getNumber());
         contact.setChecked(true);
-        if (onContactSelectedListener != null) onContactSelectedListener.onContactSelected(contact.getNumber());
+        if (onContactSelectedListener != null) onContactSelectedListener.onContactSelected(contact.getRecipientId(), contact.getNumber());
       } else {
         selectedContacts.remove(contact.getNumber());
         contact.setChecked(false);
-        if (onContactSelectedListener != null) onContactSelectedListener.onContactDeselected(contact.getNumber());
+        if (onContactSelectedListener != null) onContactSelectedListener.onContactDeselected(contact.getRecipientId(), contact.getNumber());
       }
     }
   }
@@ -348,8 +351,8 @@ public final class ContactSelectionListFragment extends    Fragment
   }
 
   public interface OnContactSelectedListener {
-    void onContactSelected(String number);
-    void onContactDeselected(String number);
+    void onContactSelected(Optional<RecipientId> recipientId, String number);
+    void onContactDeselected(Optional<RecipientId> recipientId, String number);
   }
 
     public interface InviteCallback {

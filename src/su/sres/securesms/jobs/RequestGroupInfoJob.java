@@ -3,14 +3,15 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.recipients.Recipient;
+import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
@@ -79,7 +80,7 @@ public class RequestGroupInfoJob extends BaseJob  {
     SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
     Recipient                  recipient     = Recipient.resolved(source);
 
-    messageSender.sendMessage(new SignalServiceAddress(recipient.requireAddress().serialize()),
+    messageSender.sendMessage(RecipientUtil.toSignalServiceAddress(context, recipient),
             UnidentifiedAccessUtil.getAccessFor(context, recipient),
             message);
   }

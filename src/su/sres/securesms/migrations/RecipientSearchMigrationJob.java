@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
-import su.sres.securesms.util.DirectoryHelper;
+import su.sres.securesms.contacts.sync.DirectoryHelper;
 
 import java.io.IOException;
 

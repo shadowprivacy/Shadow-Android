@@ -52,7 +52,6 @@ import androidx.viewpager.widget.ViewPager;
 import su.sres.securesms.animation.DepthPageTransformer;
 import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.components.viewpager.ExtendedOnPageChangedListener;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.MediaDatabase;
 import su.sres.securesms.database.MediaDatabase.MediaRecord;
 import su.sres.securesms.database.loaders.PagingMediaLoader;
@@ -161,7 +160,7 @@ public final class MediaPreviewActivity extends PassphraseRequiredActionBarActiv
       }
 
       if      (mediaItem.outgoing)          getSupportActionBar().setTitle(getString(R.string.MediaPreviewActivity_you));
-      else if (mediaItem.recipient != null) getSupportActionBar().setTitle(mediaItem.recipient.toShortString());
+      else if (mediaItem.recipient != null) getSupportActionBar().setTitle(mediaItem.recipient.toShortString(this));
       else                                  getSupportActionBar().setTitle("");
 
       getSupportActionBar().setSubtitle(relativeTimeSpan);

@@ -1,6 +1,5 @@
 package su.sres.securesms.service;
 
-import android.Manifest;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -30,7 +29,6 @@ import su.sres.ringrtc.SignalMessageRecipient;
 import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.WebRtcCallActivity;
-import su.sres.securesms.contacts.ContactAccessor;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase.VibrateState;
@@ -39,11 +37,11 @@ import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.DoNotDisturbUtil;
 import su.sres.securesms.notifications.MessageNotifier;
-import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.ringrtc.MessageRecipient;
 import su.sres.securesms.ringrtc.CallConnectionWrapper;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.FutureTaskListener;
 import su.sres.securesms.util.ListenableFutureTask;
 import su.sres.securesms.util.ServiceUtil;
@@ -75,7 +73,6 @@ import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.calls.BusyMessage;
 import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
-import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 import su.sres.signalservice.internal.util.concurrent.SettableFuture;
 
@@ -469,7 +466,7 @@ public class WebRtcCallService extends Service implements CallConnection.Observe
     } catch (CallException e) {
       Log.w(TAG, e);
       sendMessage(WebRtcViewModel.State.NETWORK_FAILURE, recipient, localCameraState, remoteVideoEnabled, bluetoothAvailable, microphoneEnabled);
-      terminate();
+      hangupAndTerminate();
     }
   }
 
@@ -552,7 +549,7 @@ public class WebRtcCallService extends Service implements CallConnection.Observe
     } catch (CallException e) {
       Log.w(TAG, e);
       sendMessage(WebRtcViewModel.State.NETWORK_FAILURE, recipient, localCameraState, remoteVideoEnabled, bluetoothAvailable, microphoneEnabled);
-      terminate();
+      hangupAndTerminate();
     }
   }
 
@@ -675,13 +672,12 @@ public class WebRtcCallService extends Service implements CallConnection.Observe
       intent.putExtra(EXTRA_CALL_ID, callId);
       intent.putExtra(EXTRA_REMOTE_RECIPIENT, recipient.getId());
       handleCallConnected(intent);
+      activateCallMedia();
     } catch (CallException e) {
       Log.w(TAG, e);
       sendMessage(WebRtcViewModel.State.NETWORK_FAILURE, recipient, localCameraState, remoteVideoEnabled, bluetoothAvailable, microphoneEnabled);
-      terminate();
+      hangupAndTerminate();
     }
-
-    activateCallMedia();
   }
 
   private void handleDenyCall(Intent intent) {
@@ -773,7 +769,8 @@ public class WebRtcCallService extends Service implements CallConnection.Observe
       } catch (CallException e) {
         Log.w(TAG, e);
         sendMessage(WebRtcViewModel.State.NETWORK_FAILURE, recipient, localCameraState, remoteVideoEnabled, bluetoothAvailable, microphoneEnabled);
-        terminate();
+        hangupAndTerminate();
+        return;
       }
     }
 
@@ -893,7 +890,7 @@ public class WebRtcCallService extends Service implements CallConnection.Observe
         sendMessage(WebRtcViewModel.State.NETWORK_FAILURE, recipient, localCameraState, remoteVideoEnabled, bluetoothAvailable, microphoneEnabled);
         break;
     }
-    terminate();
+    hangupAndTerminate();
 
   }
 
@@ -933,6 +930,22 @@ public class WebRtcCallService extends Service implements CallConnection.Observe
   private void setCallInProgressNotification(int type, Recipient recipient) {
     startForeground(CallNotificationBuilder.getNotificationId(getApplicationContext(), type),
                     CallNotificationBuilder.getCallInProgressNotification(this, type, recipient));
+  }
+
+  private void hangupAndTerminate() {
+    if (callConnection != null && callId != null) {
+      accountManager.cancelInFlightRequests();
+      messageSender.cancelInFlightRequests();
+
+      try {
+        callConnection.hangUp();
+      } catch (CallException e) {
+        Log.w(TAG, e);
+      }
+
+    }
+
+    terminate();
   }
 
   private synchronized void terminate() {
@@ -1017,7 +1030,7 @@ public class WebRtcCallService extends Service implements CallConnection.Observe
     Callable<Boolean> callable = new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        messageSender.sendCallMessage(new SignalServiceAddress(recipient.requireAddress().toPhoneString()),
+        messageSender.sendCallMessage(RecipientUtil.toSignalServiceAddress(WebRtcCallService.this, recipient),
                 UnidentifiedAccessUtil.getAccessFor(WebRtcCallService.this, recipient),
                 callMessage);
         return true;

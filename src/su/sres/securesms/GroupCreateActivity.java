@@ -52,7 +52,6 @@ import su.sres.securesms.contacts.ContactsCursorLoader.DisplayMode;
 import su.sres.securesms.contacts.RecipientsEditor;
 import su.sres.securesms.contacts.avatars.ContactColors;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupDatabase.GroupRecord;
@@ -93,7 +92,7 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
 
   private final static String TAG = GroupCreateActivity.class.getSimpleName();
 
-  public static final String GROUP_ADDRESS_EXTRA = "group_recipient";
+  public static final String GROUP_ID_EXTRA      = "group_id";
   public static final String GROUP_THREAD_EXTRA  = "group_thread";
 
   private final DynamicTheme    dynamicTheme    = new DynamicTheme();
@@ -203,10 +202,10 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
   }
 
   private void initializeExistingGroup() {
-    final Address groupAddress = getIntent().getParcelableExtra(GROUP_ADDRESS_EXTRA);
+    final String groupId = getIntent().getStringExtra(GROUP_ID_EXTRA);
 
-    if (groupAddress != null) {
-      new FillExistingGroupInfoAsyncTask(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, groupAddress.toGroupString());
+    if (groupId != null) {
+      new FillExistingGroupInfoAsyncTask(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, groupId);
     }
   }
 
@@ -460,7 +459,7 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
         if (!activity.isFinishing()) {
           Intent intent = activity.getIntent();
           intent.putExtra(GROUP_THREAD_EXTRA, result.get().getThreadId());
-          intent.putExtra(GROUP_ADDRESS_EXTRA, result.get().getGroupRecipient().requireAddress());
+          intent.putExtra(GROUP_ID_EXTRA, result.get().getGroupRecipient().requireGroupId());
           activity.setResult(RESULT_OK, intent);
           activity.finish();
         }
@@ -502,8 +501,8 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
 
         if (failIfNotPush && !isPush) {
           results.add(new Result(null, false, activity.getString(R.string.GroupCreateActivity_cannot_add_non_push_to_existing_group,
-                                                                 recipient.toShortString())));
-        } else if (TextUtils.equals(TextSecurePreferences.getLocalNumber(activity), recipient.requireAddress().serialize())) {
+                  recipient.toShortString(activity))));
+        } else if (TextUtils.equals(TextSecurePreferences.getLocalNumber(activity), recipient.getE164().or(""))) {
           results.add(new Result(null, false, activity.getString(R.string.GroupCreateActivity_youre_already_in_the_group)));
         } else {
           results.add(new Result(recipient, isPush, null));

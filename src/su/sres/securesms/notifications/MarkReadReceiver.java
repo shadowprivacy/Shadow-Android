@@ -12,7 +12,6 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.ApplicationContext;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessagingDatabase.ExpirationInfo;
 import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;

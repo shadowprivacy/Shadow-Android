@@ -10,7 +10,7 @@ import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.DirectoryHelper;
+import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
@@ -68,7 +68,7 @@ public class DirectoryRefreshJob extends BaseJob {
     if (recipient == null) {
       DirectoryHelper.refreshDirectory(context, notifyOfNewUsers);
     } else {
-      DirectoryHelper.refreshDirectoryFor(context, recipient);
+      DirectoryHelper.refreshDirectoryFor(context, recipient, notifyOfNewUsers);
     }
   }
 

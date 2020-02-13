@@ -76,6 +76,7 @@ import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;
 import su.sres.securesms.database.loaders.ConversationListLoader;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.ReminderUpdateEvent;
+import su.sres.securesms.insights.InsightsLauncher;
 import su.sres.securesms.jobs.ServiceOutageDetectionJob;
 import su.sres.securesms.mediasend.MediaSendActivity;
 import su.sres.securesms.mms.GlideApp;
@@ -83,6 +84,7 @@ import su.sres.securesms.notifications.MarkReadReceiver;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.task.SnackbarAsyncTask;
@@ -186,7 +188,11 @@ public class ConversationListFragment extends Fragment
 //    updateReminders(true);
     list.getAdapter().notifyDataSetChanged();
     EventBus.getDefault().register(this);
+    if (TextSecurePreferences.isSmsEnabled(requireContext())) {
+      InsightsLauncher.showInsightsModal(requireContext(), requireFragmentManager());
   }
+}
+
 
   @Override
   public void onPause() {

@@ -14,6 +14,7 @@ import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.MessagingDatabase.SyncMessageId;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -21,6 +22,7 @@ import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.multidevice.ReadMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
+import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
@@ -91,7 +93,7 @@ public class MultiDeviceReadUpdateJob extends BaseJob  {
 
     for (SerializableSyncMessageId messageId : messageIds) {
       Recipient recipient = Recipient.resolved(RecipientId.from(messageId.recipientId));
-      readMessages.add(new ReadMessage(recipient.requireAddress().serialize(), messageId.timestamp));
+      readMessages.add(new ReadMessage(RecipientUtil.toSignalServiceAddress(context, recipient), messageId.timestamp));
     }
 
     SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();

@@ -6,10 +6,8 @@ import android.database.MatrixCursor;
 import android.database.MergeCursor;
 
 import su.sres.securesms.contacts.ContactAccessor;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.ThreadDatabase;
-import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.AbstractCursorLoader;

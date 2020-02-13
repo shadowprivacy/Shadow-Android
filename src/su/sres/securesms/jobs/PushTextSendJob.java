@@ -7,7 +7,6 @@ import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.SmsDatabase;
@@ -21,6 +20,7 @@ import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.transport.InsecureFallbackApprovalException;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
@@ -121,7 +121,7 @@ public class PushTextSendJob extends PushSendJob  {
       ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
     } catch (UntrustedIdentityException e) {
       warn(TAG, "Failure", e);
-      database.addMismatchedIdentity(record.getId(), Recipient.external(context, e.getE164Number()).getId(), e.getIdentityKey());
+      database.addMismatchedIdentity(record.getId(), Recipient.external(context, e.getIdentifier()).getId(), e.getIdentityKey());
       database.markAsSentFailed(record.getId());
       database.markAsPush(record.getId());
     }
@@ -153,7 +153,7 @@ public class PushTextSendJob extends PushSendJob  {
       rotateSenderCertificateIfNecessary();
 
       SignalServiceMessageSender       messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-      SignalServiceAddress             address            = getPushAddress(message.getIndividualRecipient().requireAddress());
+      SignalServiceAddress             address            = getPushAddress(message.getIndividualRecipient());
       Optional<byte[]>                 profileKey         = getProfileKey(message.getIndividualRecipient());
       Optional<UnidentifiedAccessPair> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, message.getIndividualRecipient());
 
@@ -167,7 +167,7 @@ public class PushTextSendJob extends PushSendJob  {
               .asEndSessionMessage(message.isEndSession())
               .build();
 
-      if (address.getNumber().equals(TextSecurePreferences.getLocalNumber(context))) {
+      if (Util.equals(TextSecurePreferences.getLocalUuid(context), address.getUuid().orNull())) {
         Optional<UnidentifiedAccessPair> syncAccess  = UnidentifiedAccessUtil.getAccessForSync(context);
         SignalServiceSyncMessage         syncMessage = buildSelfSendSyncMessage(context, textSecureMessage, syncAccess);
 

@@ -13,15 +13,15 @@ import android.widget.TextView;
 import su.sres.securesms.R;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.components.FromTextView;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.GroupUtil;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
+
+import org.whispersystems.libsignal.util.guava.Optional;
 
 public class ContactSelectionListItem extends LinearLayout implements RecipientForeverObserver {
 
@@ -77,9 +77,7 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
       this.recipient = Recipient.live(recipientId);
       this.recipient.observeForever(this);
 
-      if (this.recipient.get().getName() != null) {
-        name = this.recipient.get().getName();
-      }
+      name = this.recipient.get().getDisplayName(getContext());
     }
 
     Recipient recipientSnapshot = recipient != null ? recipient.get() : null;
@@ -130,6 +128,10 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
 
   public String getNumber() {
     return number;
+  }
+
+  public Optional<RecipientId> getRecipientId() {
+    return recipient != null ? Optional.of(recipient.getId()) : Optional.absent();
   }
 
   @Override

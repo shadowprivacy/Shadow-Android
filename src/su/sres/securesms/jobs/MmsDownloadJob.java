@@ -7,7 +7,6 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.logging.Log;
 
-import com.annimon.stream.Stream;
 import com.google.android.mms.pdu_alt.CharacterSets;
 import com.google.android.mms.pdu_alt.EncodedStringValue;
 import com.google.android.mms.pdu_alt.PduBody;
@@ -16,8 +15,6 @@ import com.google.android.mms.pdu_alt.RetrieveConf;
 
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.UriAttachment;
-import su.sres.securesms.blurhash.BlurHash;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessagingDatabase.InsertResult;
@@ -35,10 +32,6 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
-import org.whispersystems.libsignal.DuplicateMessageException;
-import org.whispersystems.libsignal.InvalidMessageException;
-import org.whispersystems.libsignal.LegacyMessageException;
-import org.whispersystems.libsignal.NoSessionException;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;

@@ -12,7 +12,9 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.TextSecurePreferences;
+import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SignalServiceReceiptMessage;
@@ -86,7 +88,7 @@ public class SendReadReceiptJob extends BaseJob  {
 
     Recipient                   recipient      = Recipient.resolved(recipientId);
     SignalServiceMessageSender  messageSender  = ApplicationDependencies.getSignalServiceMessageSender();
-    SignalServiceAddress        remoteAddress  = new SignalServiceAddress(recipient.requireAddress().serialize());
+    SignalServiceAddress        remoteAddress  = RecipientUtil.toSignalServiceAddress(context, recipient);
     SignalServiceReceiptMessage receiptMessage = new SignalServiceReceiptMessage(SignalServiceReceiptMessage.Type.READ, messageIds, timestamp);
 
     messageSender.sendReceipt(remoteAddress,

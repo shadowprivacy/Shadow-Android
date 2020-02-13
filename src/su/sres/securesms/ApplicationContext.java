@@ -67,6 +67,7 @@ import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
+import su.sres.securesms.ringrtc.RingRtcLogger;
 import su.sres.securesms.service.DirectoryRefreshListener;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.service.IncomingMessageObserver;
@@ -358,7 +359,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         WebRtcAudioManager.setBlacklistDeviceForOpenSLESUsage(true);
       }
 
-      CallConnectionFactory.initialize(this);
+      CallConnectionFactory.initialize(this, new RingRtcLogger());
     } catch (UnsatisfiedLinkError e) {
       Log.w(TAG, e);
     }

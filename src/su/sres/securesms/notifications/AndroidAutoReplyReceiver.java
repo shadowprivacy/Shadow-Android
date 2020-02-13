@@ -25,7 +25,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.core.app.RemoteInput;
 
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;
 import su.sres.securesms.mms.OutgoingMediaMessage;

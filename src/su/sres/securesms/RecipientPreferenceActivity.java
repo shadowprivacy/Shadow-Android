@@ -16,7 +16,6 @@ import android.provider.Settings;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
-import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.fragment.app.Fragment;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
@@ -28,7 +27,6 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
-import android.telephony.PhoneNumberUtils;
 import su.sres.securesms.components.SwitchPreferenceCompat;
 import su.sres.securesms.contacts.avatars.ContactPhoto;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
@@ -38,6 +36,8 @@ import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.RotateProfileKeyJob;
 import su.sres.securesms.logging.Log;
+
+import android.telephony.PhoneNumberUtils;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -54,7 +54,6 @@ import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.color.MaterialColors;
 import su.sres.securesms.components.ThreadPhotoRailView;
 import su.sres.securesms.crypto.IdentityKeyParcelable;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
@@ -80,6 +79,7 @@ import su.sres.securesms.util.Dialogs;
 import su.sres.securesms.util.DynamicDarkToolbarTheme;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -226,7 +226,7 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
     else                      this.avatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
     this.avatar.setBackgroundColor(recipient.getColor().toActionBarColor(this));
-    this.toolbarLayout.setTitle(recipient.toShortString());
+    this.toolbarLayout.setTitle(recipient.toShortString(this));
     this.toolbarLayout.setContentScrimColor(recipient.getColor().toActionBarColor(this));
   }
 
@@ -419,11 +419,17 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
         if (aboutDivider       != null) aboutDivider.setVisible(false);
         if (divider            != null) divider.setVisible(false);
       } else {
-        colorPreference.setColors(MaterialColors.CONVERSATION_PALETTE.asConversationColorArray(getActivity()));
-        colorPreference.setColor(recipient.getColor().toActionBarColor(getActivity()));
+        colorPreference.setColors(MaterialColors.CONVERSATION_PALETTE.asConversationColorArray(requireActivity()));
+        colorPreference.setColor(recipient.getColor().toActionBarColor(requireActivity()));
 
-        aboutPreference.setTitle(formatAddress(recipient.requireAddress()));
-        aboutPreference.setSummary(recipient.getCustomLabel());
+        if (FeatureFlags.PROFILE_DISPLAY) {
+          aboutPreference.setTitle(recipient.getDisplayName(requireContext()));
+          aboutPreference.setSummary(recipient.resolve().getE164().or(""));
+        } else {
+          aboutPreference.setTitle(formatRecipient(recipient));
+          aboutPreference.setSummary(recipient.getCustomLabel());
+        }
+
         aboutPreference.setSecure(recipient.getRegistered() == RecipientDatabase.RegisteredState.REGISTERED);
 
         if (recipient.isBlocked()) blockPreference.setTitle(R.string.RecipientPreferenceActivity_unblock);
@@ -451,10 +457,10 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
       }
     }
 
-    private @NonNull String formatAddress(@NonNull Address address) {
-      if      (address.isPhone()) return PhoneNumberUtils.formatNumber(address.toPhoneString());
-      else if (address.isEmail()) return address.toEmailString();
-      else                        return "";
+    private @NonNull String formatRecipient(@NonNull Recipient recipient) {
+      if      (recipient.getE164().isPresent())  return PhoneNumberUtils.formatNumber(recipient.requireE164());
+      else if (recipient.getEmail().isPresent()) return recipient.requireEmail();
+      else                                       return "";
     }
 
     private @NonNull String getRingtoneSummary(@NonNull Context context, @Nullable Uri ringtone) {
@@ -695,7 +701,7 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
             if (recipient.get().isGroup()) {
               bodyRes = R.string.RecipientPreferenceActivity_block_and_leave_group_description;
 
-              if (recipient.get().isGroup() && DatabaseFactory.getGroupDatabase(context).isActive(recipient.get().requireAddress().toGroupString())) {
+              if (recipient.get().isGroup() && DatabaseFactory.getGroupDatabase(context).isActive(recipient.get().requireGroupId())) {
                 titleRes = R.string.RecipientPreferenceActivity_block_and_leave_group;
               } else {
                 titleRes = R.string.RecipientPreferenceActivity_block_group;
@@ -745,7 +751,7 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
             DatabaseFactory.getRecipientDatabase(context)
                     .setBlocked(recipient.getId(), blocked);
 
-            if (recipient.isGroup() && DatabaseFactory.getGroupDatabase(context).isActive(recipient.requireAddress().toGroupString())) {
+            if (recipient.isGroup() && DatabaseFactory.getGroupDatabase(context).isActive(recipient.requireGroupId())) {
               long                                threadId     = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient);
               Optional<OutgoingGroupMediaMessage> leaveMessage = GroupUtil.createGroupLeaveMessage(context, recipient);
 
@@ -753,7 +759,7 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
                 MessageSender.send(context, leaveMessage.get(), threadId, false, null);
 
                 GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
-                String        groupId       = recipient.requireAddress().toGroupString();
+                String        groupId       = recipient.requireGroupId();
                 groupDatabase.setActive(groupId, false);
                 groupDatabase.remove(groupId, Recipient.self().getId());
               } else {
@@ -789,7 +795,7 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
       public void onInSecureCallClicked() {
         try {
           Intent dialIntent = new Intent(Intent.ACTION_DIAL,
-                  Uri.parse("tel:" + recipient.get().requireAddress().serialize()));
+                  Uri.parse("tel:" + recipient.get().requireE164()));
           startActivity(dialIntent);
         } catch (ActivityNotFoundException anfe) {
           Log.w(TAG, anfe);

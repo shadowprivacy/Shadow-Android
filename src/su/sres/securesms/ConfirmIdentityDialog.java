@@ -23,10 +23,13 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.PushDecryptJob;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.util.Base64;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.VerifySpan;
 import org.whispersystems.libsignal.SignalProtocolAddress;
+import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.messages.SignalServiceEnvelope;
 import su.sres.signalservice.internal.push.SignalServiceProtos;
 
@@ -48,7 +51,7 @@ public class ConfirmIdentityDialog extends AlertDialog {
     super(context);
 
       Recipient       recipient       = Recipient.resolved(mismatch.getRecipientId(context));
-      String          name            = recipient.toShortString();
+    String          name            = recipient.toShortString(context);
       String          introduction    = context.getString(R.string.ConfirmIdentityDialog_your_safety_number_with_s_has_changed, name, name);
       SpannableString spannableString = new SpannableString(introduction + " " +
                                                             context.getString(R.string.ConfirmIdentityDialog_you_may_wish_to_verify_your_safety_number_with_this_contact));
@@ -95,7 +98,7 @@ public class ConfirmIdentityDialog extends AlertDialog {
         @Override
         protected Void doInBackground(Void... params) {
           synchronized (SESSION_LOCK) {
-            SignalProtocolAddress      mismatchAddress  = new SignalProtocolAddress(Recipient.resolved(recipientId).requireAddress().toPhoneString(), 1);
+            SignalProtocolAddress      mismatchAddress  = new SignalProtocolAddress(Recipient.resolved(recipientId).requireServiceId(), 1);
             TextSecureIdentityKeyStore identityKeyStore = new TextSecureIdentityKeyStore(getContext());
 
             identityKeyStore.saveIdentity(mismatchAddress, mismatch.getIdentityKey(), true);
@@ -167,7 +170,7 @@ public class ConfirmIdentityDialog extends AlertDialog {
             boolean legacy = !messageRecord.isContentBundleKeyExchange();
 
             SignalServiceEnvelope envelope = new SignalServiceEnvelope(SignalServiceProtos.Envelope.Type.PREKEY_BUNDLE_VALUE,
-                    messageRecord.getIndividualRecipient().requireAddress().toPhoneString(),
+                    Optional.of(RecipientUtil.toSignalServiceAddress(getContext(), messageRecord.getIndividualRecipient())),
                                                                        messageRecord.getRecipientDeviceId(),
                                                                        messageRecord.getDateSent(),
                                                                        legacy ? Base64.decode(messageRecord.getBody()) : null,

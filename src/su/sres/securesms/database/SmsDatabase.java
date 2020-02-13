@@ -29,7 +29,6 @@ import com.annimon.stream.Stream;
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteStatement;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.documents.IdentityKeyMismatchList;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
@@ -45,6 +44,7 @@ import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
@@ -53,6 +53,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Database for storage of SMS messages.
@@ -102,6 +103,9 @@ public class SmsDatabase extends MessagingDatabase {
       NOTIFIED, READ_RECEIPT_COUNT, UNIDENTIFIED
   };
 
+  private final String OUTGOING_INSECURE_MESSAGE_CLAUSE = "(" + TYPE + " & " + Types.BASE_TYPE_MASK + ") = " + Types.BASE_SENT_TYPE + " AND NOT (" + TYPE + " & " + Types.SECURE_MESSAGE_BIT + ")";
+  private final String OUTGOING_SECURE_MESSAGE_CLAUSE   = "(" + TYPE + " & " + Types.BASE_TYPE_MASK + ") = " + Types.BASE_SENT_TYPE + " AND (" + TYPE + " & " + (Types.SECURE_MESSAGE_BIT | Types.PUSH_MESSAGE_BIT) + ")";
+
   private static final EarlyReceiptCache earlyDeliveryReceiptCache = new EarlyReceiptCache("SmsDelivery");
   private static final EarlyReceiptCache earlyReadReceiptCache     = new EarlyReceiptCache("SmsRead");
 
@@ -111,6 +115,16 @@ public class SmsDatabase extends MessagingDatabase {
 
   protected String getTableName() {
     return TABLE_NAME;
+  }
+
+  @Override
+  protected String getDateSentColumnName() {
+    return DATE_SENT;
+  }
+
+  @Override
+  protected String getTypeField() {
+    return TYPE;
   }
 
   private void updateTypeBitmask(long id, long maskOff, long maskOn) {
@@ -570,7 +584,7 @@ public class SmsDatabase extends MessagingDatabase {
     if (message.getGroupId() == null) {
       groupRecipient = null;
     } else {
-      RecipientId id = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(message.getGroupId().serialize());
+      RecipientId id = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(message.getGroupId());
       groupRecipient = Recipient.resolved(id);
     }
 

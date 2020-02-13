@@ -20,6 +20,7 @@ import su.sres.securesms.mms.OutgoingGroupMediaMessage;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.GroupUtil;
@@ -48,7 +49,7 @@ final class V1GroupManager {
         final RecipientId   groupRecipientId = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
         final Recipient     groupRecipient   = Recipient.resolved(groupRecipientId);
 
-        memberIds.add(Recipient.external(context, TextSecurePreferences.getLocalNumber(context)).getId());
+        memberIds.add(Recipient.self().getId());
         groupDatabase.create(groupId, name, new LinkedList<>(memberIds), null, null);
 
         if (!mms) {
@@ -71,7 +72,7 @@ final class V1GroupManager {
         final GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
         final byte[]        avatarBytes   = BitmapUtil.toByteArray(avatar);
 
-        memberAddresses.add(Recipient.external(context, TextSecurePreferences.getLocalNumber(context)).getId());
+        memberAddresses.add(Recipient.self().getId());
         groupDatabase.updateMembers(groupId, new LinkedList<>(memberAddresses));
         groupDatabase.updateTitle(groupId, name);
         groupDatabase.updateAvatar(groupId, avatarBytes);
@@ -97,16 +98,19 @@ final class V1GroupManager {
             RecipientId groupRecipientId = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
             Recipient   groupRecipient   = Recipient.resolved(groupRecipientId);
 
-            List<String> numbers = new LinkedList<>();
+            List<GroupContext.Member> uuidMembers = new LinkedList<>();
+            List<String>              e164Members = new LinkedList<>();
 
             for (RecipientId member : members) {
-                numbers.add(Recipient.resolved(member).requireAddress().serialize());
+                Recipient recipient = Recipient.resolved(member);
+                uuidMembers.add(GroupMessageProcessor.createMember(RecipientUtil.toSignalServiceAddress(context, recipient)));
             }
 
             GroupContext.Builder groupContextBuilder = GroupContext.newBuilder()
                     .setId(ByteString.copyFrom(GroupUtil.getDecodedId(groupId)))
                     .setType(GroupContext.Type.UPDATE)
-                    .addAllMembers(numbers);
+                    .addAllMembersE164(e164Members)
+                    .addAllMembers(uuidMembers);
             if (groupName != null) groupContextBuilder.setName(groupName);
             GroupContext groupContext = groupContextBuilder.build();
 

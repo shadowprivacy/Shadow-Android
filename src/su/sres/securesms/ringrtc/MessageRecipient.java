@@ -12,6 +12,7 @@ import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
@@ -59,7 +60,7 @@ public final class MessageRecipient implements SignalMessageRecipient {
     private void sendMessage(Context context, SignalServiceCallMessage callMessage)
             throws UntrustedIdentityException, IOException
     {
-        messageSender.sendCallMessage(new SignalServiceAddress(recipient.requireAddress().toPhoneString()),
+        messageSender.sendCallMessage(RecipientUtil.toSignalServiceAddress(context, recipient),
                 UnidentifiedAccessUtil.getAccessFor(context, recipient),
                 callMessage);
     }

@@ -4,11 +4,6 @@ import java.security.MessageDigest
 
 buildscript {
 
-    exec {
-        workingDir './protobuf'
-        commandLine 'make'
-    }
-
     repositories {
 
         google()
@@ -25,10 +20,12 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:3.5.1'
         classpath 'androidx.navigation:navigation-safe-args-gradle-plugin:2.1.0'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.10'
     }
 }
 
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.protobuf'
 apply plugin: 'androidx.navigation.safeargs'
 apply plugin: 'witness'
 apply from: 'translations.gradle'
@@ -67,8 +64,24 @@ repositories {
     }
 
     google()
+    mavenCentral()
     jcenter()
     mavenLocal()
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.10.0'
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java {
+                    option "lite"
+                }
+            }
+        }
+    }
 }
 
 dependencies {
@@ -109,13 +122,13 @@ dependencies {
 
 // additional classes for signal-service
 
-    implementation 'com.google.protobuf:protobuf-java:3.8.0'
+//    implementation 'com.google.protobuf:protobuf-javalite:3.10.0'
     implementation 'com.googlecode.libphonenumber:libphonenumber:8.10.7'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
-    implementation 'org.signal:signal-metadata-java:0.0.3'
+    implementation 'org.signal:signal-metadata-java:0.1.0'
     implementation 'com.squareup.okhttp3:okhttp:3.12.1'
 
-    implementation files('libs/signal-service-android-2.13.9.aar', 'libs/signal-service-java-2.13.9.jar', 'libs/ringrtc-android-0.1.8.aar')
+    implementation files('libs/signal-service-android-2.15.1.aar', 'libs/signal-service-java-2.15.1.jar', 'libs/ringrtc-android-0.1.9.aar')
     implementation 'commons-validator:commons-validator:1.6'
     implementation "me.leolin:ShortcutBadger:1.1.16"
     implementation 'se.emilsjolander:stickylistheaders:2.7.0'
@@ -192,8 +205,8 @@ dependencyVerification {
     configuration = '(play|website)(Debug|Release)RuntimeClasspath'
 }
 
-def canonicalVersionCode = 565
-def canonicalVersionName = "4.49.18"
+def canonicalVersionCode = 566
+def canonicalVersionName = "4.50.0"
 
 def postFixSize = 10
 def abiPostFix = ['universal'   : 0,
@@ -345,6 +358,7 @@ android {
             res.srcDirs = ['res']
             assets.srcDirs = ['assets']
             jniLibs.srcDirs = ['libs']
+            proto.srcDir 'protobuf'
         }
         androidTest {
             java.srcDirs = ['test/androidTest/java']
@@ -352,6 +366,9 @@ android {
         test {
             java.srcDirs = ['test/unitTest/java']
             resources.srcDirs = ['test/unitTest/resources']
+        }
+        staging {
+            res.srcDirs = ['staging/res']
         }
 
         website.manifest.srcFile 'website/AndroidManifest.xml'

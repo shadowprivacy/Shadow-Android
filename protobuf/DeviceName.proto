@@ -3,6 +3,8 @@
  *
  * Licensed according to the LICENSE file in this repository.
  */
+syntax = "proto2";
+
 package signalservice;
 
 option java_package = "su.sres.securesms.devicelist";

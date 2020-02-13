@@ -1,6 +1,8 @@
 package su.sres.securesms.util;
 
 import android.content.Context;
+import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
@@ -15,6 +17,8 @@ import su.sres.securesms.mms.OutgoingGroupMediaMessage;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
 import org.whispersystems.libsignal.util.guava.Optional;
+import su.sres.signalservice.api.push.SignalServiceAddress;
+import su.sres.signalservice.api.util.UuidUtil;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -50,7 +54,7 @@ public class GroupUtil {
   }
   @WorkerThread
   public static Optional<OutgoingGroupMediaMessage> createGroupLeaveMessage(@NonNull Context context, @NonNull Recipient groupRecipient) {
-    String        encodedGroupId = groupRecipient.requireAddress().toGroupString();
+    String        encodedGroupId = groupRecipient.requireGroupId();
     GroupDatabase groupDatabase  = DatabaseFactory.getGroupDatabase(context);
 
     if (!groupDatabase.isActive(encodedGroupId)) {
@@ -105,15 +109,15 @@ public class GroupUtil {
       } else {
         this.members = new LinkedList<>();
 
-        for (String member : groupContext.getMembersList()) {
-          this.members.add(Recipient.external(context, member));
+        for (GroupContext.Member member : groupContext.getMembersList()) {
+          this.members.add(Recipient.externalPush(context, new SignalServiceAddress(UuidUtil.parseOrNull(member.getUuid()), member.getE164())));
         }
       }
     }
 
     public String toString(Recipient sender) {
       StringBuilder description = new StringBuilder();
-      description.append(context.getString(R.string.MessageRecord_s_updated_group, sender.toShortString()));
+      description.append(context.getString(R.string.MessageRecord_s_updated_group, sender.toShortString(context)));
 
       if (groupContext == null) {
         return description.toString();
@@ -156,7 +160,7 @@ public class GroupUtil {
       String result = "";
 
       for (int i=0;i<recipients.size();i++) {
-        result += recipients.get(i).toShortString();
+        result += recipients.get(i).toShortString(context);
 
       if (i != recipients.size() -1 )
         result += ", ";

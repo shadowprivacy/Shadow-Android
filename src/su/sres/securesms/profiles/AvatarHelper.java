@@ -6,7 +6,6 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.database.Address;
 import su.sres.securesms.recipients.RecipientId;
 
 import java.io.File;
@@ -21,10 +20,10 @@ public class AvatarHelper {
 
   private static final String AVATAR_DIRECTORY = "avatars";
 
-  public static InputStream getInputStreamFor(@NonNull Context context, @NonNull RecipientId address)
+  public static InputStream getInputStreamFor(@NonNull Context context, @NonNull RecipientId recipientId)
       throws IOException
   {
-    return new FileInputStream(getAvatarFile(context, address));
+    return new FileInputStream(getAvatarFile(context, recipientId));
   }
 
   public static List<File> getAvatarFiles(@NonNull Context context) {

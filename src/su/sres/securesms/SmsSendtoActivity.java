@@ -12,7 +12,6 @@ import su.sres.securesms.conversation.ConversationActivity;
 import su.sres.securesms.logging.Log;
 import android.widget.Toast;
 
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.Rfc5724Uri;

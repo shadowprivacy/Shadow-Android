@@ -8,7 +8,7 @@ import android.content.SyncResult;
 import android.os.Bundle;
 import su.sres.securesms.logging.Log;
 
-import su.sres.securesms.util.DirectoryHelper;
+import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import java.io.IOException;

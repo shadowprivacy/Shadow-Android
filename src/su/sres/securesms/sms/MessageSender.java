@@ -23,6 +23,7 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.attachments.DatabaseAttachment;
+import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.database.MessagingDatabase.SyncMessageId;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
@@ -323,8 +324,7 @@ public class MessageSender {
   }
 
   private static boolean isGroupPushSend(Recipient recipient) {
-    return recipient.requireAddress().isGroup() &&
-            !recipient.requireAddress().isMmsGroup();
+    return recipient.isGroup() && !recipient.isMmsGroup();
   }
 
   private static boolean isPushDestination(Context context, Recipient destination) {
@@ -334,16 +334,8 @@ public class MessageSender {
       return false;
     } else {
       try {
-        SignalServiceAccountManager   accountManager = AccountManagerFactory.createManager(context);
-        Optional<ContactTokenDetails> registeredUser = accountManager.getContact(destination.requireAddress().serialize());
-
-        if (!registeredUser.isPresent()) {
-          DatabaseFactory.getRecipientDatabase(context).setRegistered(destination.getId(), RecipientDatabase.RegisteredState.NOT_REGISTERED);
-          return false;
-        } else {
-          DatabaseFactory.getRecipientDatabase(context).setRegistered(destination.getId(), RecipientDatabase.RegisteredState.REGISTERED);
-          return true;
-        }
+        RecipientDatabase.RegisteredState state = DirectoryHelper.refreshDirectoryFor(context, destination, false);
+        return state == RecipientDatabase.RegisteredState.REGISTERED;
       } catch (IOException e1) {
         Log.w(TAG, e1);
         return false;

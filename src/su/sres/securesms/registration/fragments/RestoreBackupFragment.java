@@ -33,6 +33,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import su.sres.securesms.R;
+import su.sres.securesms.backup.BackupPassphrase;
 import su.sres.securesms.backup.FullBackupBase;
 import su.sres.securesms.backup.FullBackupImporter;
 import su.sres.securesms.crypto.AttachmentSecretProvider;
@@ -41,6 +42,7 @@ import su.sres.securesms.database.NoExternalStorageException;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.permissions.Permissions;
+import su.sres.securesms.service.LocalBackupListener;
 import su.sres.securesms.util.BackupUtil;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -204,8 +206,10 @@ public final class RestoreBackupFragment extends BaseRegistrationFragment {
                     DatabaseFactory.upgradeRestored(context, database);
                     NotificationChannels.restoreContactNotificationChannels(context);
 
+                    LocalBackupListener.setNextBackupTimeToIntervalFromNow(context);
+                    BackupPassphrase.set(context, passphrase);
                     TextSecurePreferences.setBackupEnabled(context, true);
-                    TextSecurePreferences.setBackupPassphrase(context, passphrase);
+                    LocalBackupListener.schedule(context);
 
                     Log.i(TAG, "Backup restore complete.");
                     return BackupImportResult.SUCCESS;

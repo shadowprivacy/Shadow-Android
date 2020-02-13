@@ -24,12 +24,16 @@ import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.components.ContactFilterToolbar;
 import su.sres.securesms.contacts.ContactsCursorLoader.DisplayMode;
-import su.sres.securesms.util.DirectoryHelper;
+import su.sres.securesms.contacts.sync.DirectoryHelper;
+import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ViewUtil;
+
+import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -112,10 +116,10 @@ public abstract class ContactSelectionActivity extends PassphraseRequiredActionB
   }
 
   @Override
-  public void onContactSelected(String number) {}
+  public void onContactSelected(Optional<RecipientId> recipientId, String number) {}
 
   @Override
-  public void onContactDeselected(String number) {}
+  public void onContactDeselected(Optional<RecipientId> recipientId, String number) {}
 
   private static class RefreshDirectoryTask extends AsyncTask<Context, Void, Void> {
 

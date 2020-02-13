@@ -30,7 +30,6 @@ import com.annimon.stream.Stream;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.RecipientsAdapter;
 import su.sres.securesms.contacts.RecipientsEditor;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
 

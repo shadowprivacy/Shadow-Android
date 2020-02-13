@@ -1,7 +1,6 @@
 package su.sres.securesms.jobs;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.net.Uri;
@@ -14,7 +13,6 @@ import su.sres.securesms.contacts.ContactAccessor;
 import su.sres.securesms.contacts.ContactAccessor.ContactData;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -25,6 +23,7 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -37,6 +36,7 @@ import su.sres.signalservice.api.messages.multidevice.DeviceContact;
 import su.sres.signalservice.api.messages.multidevice.DeviceContactsOutputStream;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.messages.multidevice.VerifiedMessage;
+import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.util.InvalidNumberException;
 
@@ -129,8 +129,8 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
       Optional<IdentityDatabase.IdentityRecord> identityRecord  = DatabaseFactory.getIdentityDatabase(context).getIdentity(recipient.getId());
       Optional<VerifiedMessage>                 verifiedMessage = getVerifiedMessage(recipient, identityRecord);
 
-      out.write(new DeviceContact(recipient.requireAddress().toPhoneString(),
-                                  Optional.fromNullable(recipient.getName()),
+      out.write(new DeviceContact(RecipientUtil.toSignalServiceAddress(context, recipient),
+              Optional.of(recipient.getDisplayName(context)),
                                   getAvatar(recipient.getContactUri()),
                                   Optional.fromNullable(recipient.getColor().serialize()),
                                   verifiedMessage,
@@ -189,12 +189,12 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
         boolean                                   blocked     = recipient.isBlocked();
         Optional<Integer>                         expireTimer = recipient.getExpireMessages() > 0 ? Optional.of(recipient.getExpireMessages()) : Optional.absent();
 
-        out.write(new DeviceContact(recipient.requireAddress().toPhoneString(), name, getAvatar(contactUri), color, verified, profileKey, blocked, expireTimer));
+        out.write(new DeviceContact(RecipientUtil.toSignalServiceAddress(context, recipient), name, getAvatar(contactUri), color, verified, profileKey, blocked, expireTimer));
       }
 
       if (ProfileKeyUtil.hasProfileKey(context)) {
         Recipient self = Recipient.self();
-        out.write(new DeviceContact(TextSecurePreferences.getLocalNumber(context),
+        out.write(new DeviceContact(RecipientUtil.toSignalServiceAddress(context, Recipient.self()),
                                     Optional.absent(), Optional.absent(),
                 Optional.of(self.getColor().serialize()), Optional.absent(),
                                     Optional.of(ProfileKeyUtil.getProfileKey(context)),
@@ -301,8 +301,8 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
   private Optional<VerifiedMessage> getVerifiedMessage(Recipient recipient, Optional<IdentityDatabase.IdentityRecord> identity) throws InvalidNumberException {
     if (!identity.isPresent()) return Optional.absent();
 
-    String      destination = recipient.requireAddress().toPhoneString();
-    IdentityKey identityKey = identity.get().getIdentityKey();
+    SignalServiceAddress destination = RecipientUtil.toSignalServiceAddress(context, recipient);
+    IdentityKey          identityKey = identity.get().getIdentityKey();
 
     VerifiedMessage.VerifiedState state;
 

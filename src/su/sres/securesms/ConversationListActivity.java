@@ -49,6 +49,7 @@ import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
 import su.sres.securesms.conversation.ConversationActivity;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;
+import su.sres.securesms.insights.InsightsLauncher;
 import su.sres.securesms.lock.RegistrationLockDialog;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.notifications.MarkReadReceiver;
@@ -131,6 +132,7 @@ public class ConversationListActivity extends PassphraseRequiredActionBarActivit
 
     inflater.inflate(R.menu.text_secure_normal, menu);
 
+    menu.findItem(R.id.menu_insights).setVisible(TextSecurePreferences.isSmsEnabled(this));
     menu.findItem(R.id.menu_clear_passphrase).setVisible(!TextSecurePreferences.isPasswordDisabled(this));
 
     super.onPrepareOptionsMenu(menu);
@@ -183,7 +185,7 @@ public class ConversationListActivity extends PassphraseRequiredActionBarActivit
 
   private void initializeProfileIcon(@NonNull Recipient recipient) {
     ImageView     icon          = findViewById(R.id.toolbar_icon);
-    String        name          = Optional.fromNullable(recipient.getName()).or(Optional.fromNullable(TextSecurePreferences.getProfileName(this))).or("");
+    String        name          = Optional.fromNullable(recipient.getDisplayName(this)).or(Optional.fromNullable(TextSecurePreferences.getProfileName(this))).or("");
     MaterialColor fallbackColor = recipient.getColor();
 
     if (fallbackColor == ContactColors.UNKNOWN_COLOR && !TextUtils.isEmpty(name)) {
@@ -213,6 +215,7 @@ public class ConversationListActivity extends PassphraseRequiredActionBarActivit
     case R.id.menu_clear_passphrase:  handleClearPassphrase(); return true;
     case R.id.menu_mark_all_read:     handleMarkAllRead();     return true;
 //    case R.id.menu_invite:            handleInvite();          return true;
+      case R.id.menu_insights:          handleInsights();        return true;
 //    case R.id.menu_help:              handleHelp();            return true;
     }
 
@@ -299,6 +302,10 @@ public class ConversationListActivity extends PassphraseRequiredActionBarActivit
 
   private void handleInvite() {
     startActivity(new Intent(this, InviteActivity.class));
+  }
+
+  private void handleInsights() {
+    InsightsLauncher.showInsightsDashboard(getSupportFragmentManager());
   }
 
   private void handleHelp() {

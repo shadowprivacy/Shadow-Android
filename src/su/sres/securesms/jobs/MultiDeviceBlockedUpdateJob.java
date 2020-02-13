@@ -12,12 +12,14 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.multidevice.BlockedListMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
+import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
@@ -69,16 +71,16 @@ public class MultiDeviceBlockedUpdateJob extends BaseJob {
 
     RecipientDatabase database = DatabaseFactory.getRecipientDatabase(context);
     try (RecipientReader reader = database.readerForBlocked(database.getBlocked())) {
-      List<String> blockedIndividuals = new LinkedList<>();
-      List<byte[]> blockedGroups      = new LinkedList<>();
+      List<SignalServiceAddress> blockedIndividuals = new LinkedList<>();
+      List<byte[]>               blockedGroups      = new LinkedList<>();
 
       Recipient recipient;
 
       while ((recipient = reader.getNext()) != null) {
         if (recipient.isGroup()) {
-          blockedGroups.add(GroupUtil.getDecodedId(recipient.requireAddress().toGroupString()));
+          blockedGroups.add(GroupUtil.getDecodedId(recipient.requireGroupId()));
         } else {
-          blockedIndividuals.add(recipient.requireAddress().serialize());
+          blockedIndividuals.add(RecipientUtil.toSignalServiceAddress(context, recipient));
         }
       }
 

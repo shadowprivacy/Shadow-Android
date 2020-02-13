@@ -8,9 +8,9 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.recipients.Recipient;
@@ -21,6 +21,7 @@ import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.messages.multidevice.VerifiedMessage;
+import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
@@ -98,9 +99,9 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
 
       SignalServiceMessageSender    messageSender        = ApplicationDependencies.getSignalServiceMessageSender();
       Recipient                     recipient            = Recipient.resolved(destination);
-      Address                       canonicalDestination = recipient.requireAddress();
       VerifiedMessage.VerifiedState verifiedState        = getVerifiedState(verifiedStatus);
-      VerifiedMessage               verifiedMessage      = new VerifiedMessage(canonicalDestination.toPhoneString(), new IdentityKey(identityKey, 0), verifiedState, timestamp);
+      SignalServiceAddress          verifiedAddress      = RecipientUtil.toSignalServiceAddress(context, recipient);
+      VerifiedMessage               verifiedMessage      = new VerifiedMessage(verifiedAddress, new IdentityKey(identityKey, 0), verifiedState, timestamp);
 
       messageSender.sendMessage(SignalServiceSyncMessage.forVerified(verifiedMessage),
               UnidentifiedAccessUtil.getAccessFor(context, recipient));

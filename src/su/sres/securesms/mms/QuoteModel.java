@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.attachments.Attachment;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.recipients.RecipientId;
 
 import java.util.List;

@@ -14,6 +14,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.Preference;
+
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 import android.widget.Toast;
 
@@ -25,7 +27,6 @@ import su.sres.securesms.R;
 import su.sres.securesms.registration.RegistrationNavigationActivity;
 import su.sres.securesms.contacts.ContactAccessor;
 import su.sres.securesms.contacts.ContactIdentityManager;
-import su.sres.securesms.push.AccountManagerFactory;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -184,7 +185,7 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
       protected Integer doInBackground(Void... params) {
         try {
           Context                     context        = getActivity();
-          SignalServiceAccountManager accountManager = AccountManagerFactory.createManager(context);
+          SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
 
           try {
             accountManager.setGcmId(Optional.<String>absent());

@@ -18,7 +18,6 @@ import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.contactshare.ContactModelMapper;
 import su.sres.securesms.crypto.ProfileKeyUtil;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.PartProgressEvent;
@@ -33,6 +32,7 @@ import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.BitmapDecodingException;
 import su.sres.securesms.util.BitmapUtil;
@@ -107,9 +107,8 @@ public abstract class PushSendJob extends SendJob {
     return Optional.of(ProfileKeyUtil.getProfileKey(context));
   }
 
-  protected SignalServiceAddress getPushAddress(Address address) {
-    String relay = null;
-    return new SignalServiceAddress(address.toPhoneString(), Optional.fromNullable(relay));
+  protected SignalServiceAddress getPushAddress(@NonNull Recipient recipient) {
+    return RecipientUtil.toSignalServiceAddress(context, recipient);
   }
 
   protected List<SignalServiceAttachment> getAttachmentsFor(List<Attachment> parts) {
@@ -257,7 +256,9 @@ public abstract class PushSendJob extends SendJob {
       }
     }
 
-    return Optional.of(new SignalServiceDataMessage.Quote(quoteId, new SignalServiceAddress(Recipient.resolved(quoteAuthor).requireAddress().serialize()), quoteBody, quoteAttachments));
+    Recipient            quoteAuthorRecipient = Recipient.resolved(quoteAuthor);
+    SignalServiceAddress quoteAddress         = RecipientUtil.toSignalServiceAddress(context, quoteAuthorRecipient);
+    return Optional.of(new SignalServiceDataMessage.Quote(quoteId, quoteAddress, quoteBody, quoteAttachments));
   }
 
   protected Optional<SignalServiceDataMessage.Sticker> getStickerFor(OutgoingMediaMessage message) {
@@ -330,12 +331,12 @@ public abstract class PushSendJob extends SendJob {
     }
 
   protected SignalServiceSyncMessage buildSelfSendSyncMessage(@NonNull Context context, @NonNull SignalServiceDataMessage message, Optional<UnidentifiedAccessPair> syncAccess) {
-    String                localNumber = TextSecurePreferences.getLocalNumber(context);
-    SentTranscriptMessage transcript  = new SentTranscriptMessage(localNumber,
+    SignalServiceAddress  localAddress = new SignalServiceAddress(TextSecurePreferences.getLocalUuid(context), TextSecurePreferences.getLocalNumber(context));
+    SentTranscriptMessage transcript   = new SentTranscriptMessage(Optional.of(localAddress),
             message.getTimestamp(),
             message,
             message.getExpiresInSeconds(),
-            Collections.singletonMap(localNumber, syncAccess.isPresent()),
+            Collections.singletonMap(localAddress, syncAccess.isPresent()),
             false);
     return SignalServiceSyncMessage.forSentTranscript(transcript);
   }

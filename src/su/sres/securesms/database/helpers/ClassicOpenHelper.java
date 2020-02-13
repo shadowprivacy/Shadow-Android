@@ -1,6 +1,5 @@
 package su.sres.securesms.database.helpers;
 
-
 import android.Manifest;
 import android.content.ContentValues;
 import android.content.Context;
@@ -25,7 +24,6 @@ import su.sres.securesms.crypto.ClassicDecryptingPartInputStream;
 import su.sres.securesms.crypto.MasterCipher;
 import su.sres.securesms.crypto.MasterSecret;
 import su.sres.securesms.crypto.MasterSecretUtil;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DraftDatabase;
 import su.sres.securesms.database.GroupDatabase;
@@ -39,8 +37,10 @@ import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.migrations.LegacyMigrationJob;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.permissions.Permissions;
+import su.sres.securesms.phonenumbers.NumberUtil;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.DelimiterUtil;
+import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.Hex;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.MediaUtil;
@@ -1269,10 +1269,10 @@ public class ClassicOpenHelper extends SQLiteOpenHelper {
       if (Permissions.hasAny(context, Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)) {
         try (Cursor cursor = db.query("recipient_preferences", null, null, null, null, null, null)) {
           while (cursor != null && cursor.moveToNext()) {
-            Address address = Address.fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow("recipient_ids")));
+            String address = cursor.getString(cursor.getColumnIndexOrThrow("recipient_ids"));
 
-            if (address.isPhone() && !TextUtils.isEmpty(address.toPhoneString())) {
-              Uri lookup = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(address.toPhoneString()));
+            if (!TextUtils.isEmpty(address) && !GroupUtil.isEncodedGroup(address) && !NumberUtil.isValidEmail(address)) {
+              Uri lookup = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(address));
 
               try (Cursor contactCursor = context.getContentResolver().query(lookup, new String[] {ContactsContract.PhoneLookup.DISPLAY_NAME,
                                                                                                    ContactsContract.PhoneLookup.LOOKUP_KEY,
@@ -1288,7 +1288,7 @@ public class ClassicOpenHelper extends SQLiteOpenHelper {
                   contentValues.put("system_phone_label", contactCursor.getString(4));
                   contentValues.put("system_contact_uri", ContactsContract.Contacts.getLookupUri(contactCursor.getLong(2), contactCursor.getString(1)).toString());
 
-                  db.update("recipient_preferences", contentValues, "recipient_ids = ?", new String[] {address.toPhoneString()});
+                  db.update("recipient_preferences", contentValues, "recipient_ids = ?", new String[] {address});
                 }
               }
             }

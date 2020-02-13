@@ -11,6 +11,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -86,12 +87,14 @@ public class TypingSendJob extends BaseJob  {
         Optional<byte[]> groupId    = Optional.absent();
 
         if (recipient.isGroup()) {
-            recipients = DatabaseFactory.getGroupDatabase(context).getGroupMembers(recipient.requireAddress().toGroupString(), false);
-            groupId    = Optional.of(GroupUtil.getDecodedId(recipient.requireAddress().toGroupString()));
+            recipients = DatabaseFactory.getGroupDatabase(context).getGroupMembers(recipient.requireGroupId(), false);
+            groupId    = Optional.of(GroupUtil.getDecodedId(recipient.requireGroupId()));
         }
 
+        recipients = Stream.of(recipients).map(Recipient::resolve).toList();
+
         SignalServiceMessageSender             messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-        List<SignalServiceAddress>             addresses          = Stream.of(recipients).map(r -> new SignalServiceAddress(r.requireAddress().serialize())).toList();
+        List<SignalServiceAddress>             addresses          = Stream.of(recipients).map(r -> RecipientUtil.toSignalServiceAddress(context, r)).toList();
         List<Optional<UnidentifiedAccessPair>> unidentifiedAccess = Stream.of(recipients).map(r -> UnidentifiedAccessUtil.getAccessFor(context, r)).toList();
         SignalServiceTypingMessage             typingMessage      = new SignalServiceTypingMessage(typing ? Action.STARTED : Action.STOPPED, System.currentTimeMillis(), groupId);
 

@@ -13,11 +13,14 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.TextSecurePreferences;
+import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.multidevice.ViewOnceOpenMessage;
+import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
@@ -76,7 +79,7 @@ public class MultiDeviceViewOnceOpenJob extends BaseJob {
 
         SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
         Recipient                  recipient     = Recipient.resolved(RecipientId.from(messageId.recipientId));
-        ViewOnceOpenMessage        openMessage   = new ViewOnceOpenMessage(recipient.requireAddress().serialize(), messageId.timestamp);
+        ViewOnceOpenMessage        openMessage   = new ViewOnceOpenMessage(RecipientUtil.toSignalServiceAddress(context, recipient), messageId.timestamp);
 
         messageSender.sendMessage(SignalServiceSyncMessage.forViewOnceOpen(openMessage), UnidentifiedAccessUtil.getAccessForSync(context));
     }

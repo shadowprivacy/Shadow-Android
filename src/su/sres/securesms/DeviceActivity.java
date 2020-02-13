@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.ProfileKeyUtil;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.push.AccountManagerFactory;
 import su.sres.securesms.qr.ScanListener;
@@ -176,7 +177,7 @@ public class DeviceActivity extends PassphraseRequiredActionBarActivity
 
         try {
           Context                     context          = DeviceActivity.this;
-          SignalServiceAccountManager accountManager   = AccountManagerFactory.createManager(context);
+          SignalServiceAccountManager accountManager   = ApplicationDependencies.getSignalServiceAccountManager();
           String                      verificationCode = accountManager.getNewDeviceVerificationCode();
           String                      ephemeralId      = uri.getQueryParameter("uuid");
           String                      publicKeyEncoded = uri.getQueryParameter("pub_key");

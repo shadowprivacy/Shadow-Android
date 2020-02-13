@@ -15,7 +15,6 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -78,6 +77,6 @@ public class ProfilePreference extends Preference {
       profileNameView.setText(profileName);
     }
 
-    profileNumberView.setText(self.requireAddress().toPhoneString());
+    profileNumberView.setText(self.requireE164());
   }
 }

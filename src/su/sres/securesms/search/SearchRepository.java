@@ -10,11 +10,8 @@ import android.text.TextUtils;
 
 import com.annimon.stream.Stream;
 
-
 import su.sres.securesms.contacts.ContactAccessor;
 import su.sres.securesms.contacts.ContactRepository;
-import su.sres.securesms.contacts.ContactsDatabase;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.CursorList;
 import su.sres.securesms.database.MmsSmsColumns;
 import su.sres.securesms.database.SearchDatabase;

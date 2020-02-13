@@ -16,7 +16,6 @@ import android.widget.Toast;
 import su.sres.securesms.conversation.ConversationActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.WebRtcCallActivity;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
@@ -36,10 +35,10 @@ public class CommunicationActions {
     Permissions.with(activity)
         .request(Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA)
         .ifNecessary()
-        .withRationaleDialog(activity.getString(R.string.ConversationActivity_to_call_s_signal_needs_access_to_your_microphone_and_camera, recipient.toShortString()),
+        .withRationaleDialog(activity.getString(R.string.ConversationActivity_to_call_s_signal_needs_access_to_your_microphone_and_camera, recipient.toShortString(activity)),
                 R.drawable.ic_mic_solid_24,
                              R.drawable.ic_videocam_white_48dp)
-        .withPermanentDenialDialog(activity.getString(R.string.ConversationActivity_signal_needs_the_microphone_and_camera_permissions_in_order_to_call_s, recipient.toShortString()))
+        .withPermanentDenialDialog(activity.getString(R.string.ConversationActivity_signal_needs_the_microphone_and_camera_permissions_in_order_to_call_s, recipient.toShortString(activity)))
         .onAllGranted(() -> {
           Intent intent = new Intent(activity, WebRtcCallService.class);
           intent.setAction(WebRtcCallService.ACTION_OUTGOING_CALL);
@@ -89,8 +88,8 @@ public class CommunicationActions {
     }.execute();
   }
 
-  public static void composeSmsThroughDefaultApp(@NonNull Context context, @NonNull Address address, @Nullable String text) {
-    Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + address.serialize()));
+  public static void composeSmsThroughDefaultApp(@NonNull Context context, @NonNull Recipient recipient, @Nullable String text) {
+    Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + recipient.requireSmsAddress()));
     if (text != null) {
       intent.putExtra("sms_body", text);
     }

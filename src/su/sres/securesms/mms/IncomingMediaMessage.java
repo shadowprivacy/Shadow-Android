@@ -5,7 +5,6 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.PointerAttachment;
 import su.sres.securesms.contactshare.Contact;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.GroupUtil;

@@ -3,7 +3,8 @@ package su.sres.securesms.service;
 import android.content.Context;
 import android.content.Intent;
 
-import su.sres.securesms.ApplicationContext;
+import androidx.annotation.NonNull;
+
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.LocalBackupJob;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -25,15 +26,19 @@ public class LocalBackupListener extends PersistentAlarmManagerListener {
       ApplicationDependencies.getJobManager().add(new LocalBackupJob());
     }
 
-    long nextTime = System.currentTimeMillis() + INTERVAL;
-    TextSecurePreferences.setNextBackupTime(context, nextTime);
-
-    return nextTime;
+    return setNextBackupTimeToIntervalFromNow(context);
   }
 
   public static void schedule(Context context) {
     if (TextSecurePreferences.isBackupEnabled(context)) {
       new LocalBackupListener().onReceive(context, new Intent());
     }
+  }
+
+  public static long setNextBackupTimeToIntervalFromNow(@NonNull Context context) {
+    long nextTime = System.currentTimeMillis() + INTERVAL;
+    TextSecurePreferences.setNextBackupTime(context, nextTime);
+
+    return nextTime;
   }
 }

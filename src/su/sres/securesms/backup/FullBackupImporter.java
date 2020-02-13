@@ -8,7 +8,6 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import android.util.Pair;
 
 import net.sqlcipher.database.SQLiteDatabase;
@@ -22,7 +21,6 @@ import su.sres.securesms.backup.BackupProtos.SqlStatement;
 import su.sres.securesms.backup.BackupProtos.Sticker;
 import su.sres.securesms.crypto.AttachmentSecret;
 import su.sres.securesms.crypto.ModernEncryptingPartOutputStream;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.SearchDatabase;
 import su.sres.securesms.database.StickerDatabase;

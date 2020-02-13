@@ -5,7 +5,6 @@ import androidx.annotation.Nullable;
 import android.view.View;
 
 import su.sres.securesms.contactshare.Contact;
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.linkpreview.LinkPreview;

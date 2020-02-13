@@ -35,7 +35,6 @@ import net.sqlcipher.database.SQLiteDatabase;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.attachments.DatabaseAttachment;
@@ -81,6 +80,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static su.sres.securesms.contactshare.Contact.Avatar;
 
@@ -182,6 +182,9 @@ public class MmsDatabase extends MessagingDatabase {
 
   private static final String RAW_ID_WHERE = TABLE_NAME + "._id = ?";
 
+  private static final String OUTGOING_INSECURE_MESSAGES_CLAUSE = "(" + MESSAGE_BOX + " & " + Types.BASE_TYPE_MASK + ") = " + Types.BASE_SENT_TYPE + " AND NOT (" + MESSAGE_BOX + " & " + Types.SECURE_MESSAGE_BIT + ")";
+  private static final String OUTGOING_SECURE_MESSAGES_CLAUSE   = "(" + MESSAGE_BOX + " & " + Types.BASE_TYPE_MASK + ") = " + Types.BASE_SENT_TYPE + " AND (" + MESSAGE_BOX + " & " + (Types.SECURE_MESSAGE_BIT | Types.PUSH_MESSAGE_BIT) + ")";
+
   private final EarlyReceiptCache earlyDeliveryReceiptCache = new EarlyReceiptCache("MmsDelivery");
   private final EarlyReceiptCache earlyReadReceiptCache     = new EarlyReceiptCache("MmsRead");
 
@@ -192,6 +195,16 @@ public class MmsDatabase extends MessagingDatabase {
   @Override
   protected String getTableName() {
     return TABLE_NAME;
+  }
+
+  @Override
+  protected String getDateSentColumnName() {
+    return DATE_SENT;
+  }
+
+  @Override
+  protected String getTypeField() {
+    return MESSAGE_BOX;
   }
 
   public int getMessageCountForThread(long threadId) {
@@ -1013,8 +1026,8 @@ public class MmsDatabase extends MessagingDatabase {
 
     long messageId = insertMediaMessage(message.getBody(), message.getAttachments(), quoteAttachments, message.getSharedContacts(), message.getLinkPreviews(), contentValues, insertListener);
 
-    if (message.getRecipient().requireAddress().isGroup()) {
-      List<Recipient>      members         = DatabaseFactory.getGroupDatabase(context).getGroupMembers(message.getRecipient().requireAddress().toGroupString(), false);
+    if (message.getRecipient().isGroup()) {
+      List<Recipient>      members         = DatabaseFactory.getGroupDatabase(context).getGroupMembers(message.getRecipient().requireGroupId(), false);
       GroupReceiptDatabase receiptDatabase = DatabaseFactory.getGroupReceiptDatabase(context);
 
       receiptDatabase.insert(Stream.of(members).map(Recipient::getId).toList(),

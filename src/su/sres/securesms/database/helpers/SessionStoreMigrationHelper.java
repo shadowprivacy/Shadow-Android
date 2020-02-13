@@ -1,13 +1,11 @@
 package su.sres.securesms.database.helpers;
 
-
 import android.content.ContentValues;
 import android.content.Context;
 import su.sres.securesms.logging.Log;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
-import su.sres.securesms.database.Address;
 import su.sres.securesms.database.SessionDatabase;
 import su.sres.securesms.util.Conversions;
 import org.whispersystems.libsignal.state.SessionRecord;
@@ -41,7 +39,7 @@ class SessionStoreMigrationHelper {
         for (File sessionFile : sessionFiles) {
           try {
             String[] parts   = sessionFile.getName().split("[.]");
-            Address  address = Address.fromSerialized(parts[0]);
+            String   address = parts[0];
 
             int deviceId;
 
@@ -79,7 +77,7 @@ class SessionStoreMigrationHelper {
 
 
             ContentValues contentValues = new ContentValues();
-            contentValues.put(SessionDatabase.RECIPIENT_ID, address.serialize());
+            contentValues.put(SessionDatabase.RECIPIENT_ID, address);
             contentValues.put(SessionDatabase.DEVICE, deviceId);
             contentValues.put(SessionDatabase.RECORD, sessionRecord.serialize());
 

@@ -13,6 +13,7 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.GroupUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
@@ -24,6 +25,8 @@ import su.sres.signalservice.api.messages.SignalServiceGroup;
 import su.sres.signalservice.api.messages.SignalServiceGroup.Type;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
+import su.sres.signalservice.internal.push.SignalServiceProtos;
+import su.sres.signalservice.internal.push.SignalServiceProtos.GroupContext;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -93,10 +96,11 @@ public class PushGroupUpdateJob extends BaseJob  {
                                             .build();
     }
 
-    List<String> members = new LinkedList<>();
+    List<SignalServiceAddress> members = new LinkedList<>();
 
     for (RecipientId member : record.get().getMembers()) {
-      members.add(Recipient.resolved(member).requireAddress().serialize());
+      Recipient recipient = Recipient.resolved(member);
+      members.add(RecipientUtil.toSignalServiceAddress(context, recipient));
     }
 
     SignalServiceGroup groupContext = SignalServiceGroup.newBuilder(Type.UPDATE)
@@ -118,7 +122,7 @@ public class PushGroupUpdateJob extends BaseJob  {
     SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
     Recipient                  recipient     = Recipient.resolved(source);
 
-    messageSender.sendMessage(new SignalServiceAddress(recipient.requireAddress().serialize()),
+    messageSender.sendMessage(RecipientUtil.toSignalServiceAddress(context, recipient),
             UnidentifiedAccessUtil.getAccessFor(context, recipient),
             message);
   }
