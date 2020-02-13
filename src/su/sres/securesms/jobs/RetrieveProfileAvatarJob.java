@@ -14,6 +14,7 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
@@ -117,6 +118,10 @@ public class RetrieveProfileAvatarJob extends BaseJob  {
     }
 
     database.setProfileAvatar(recipient.getId(), profileAvatar);
+
+    if (recipient.isLocalNumber()) {
+      TextSecurePreferences.setProfileAvatarId(context, Util.getSecureRandom().nextInt());
+    }
   }
 
   @Override

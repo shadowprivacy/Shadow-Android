@@ -40,6 +40,8 @@ import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceProfileKeyUpdateJob;
+import su.sres.securesms.jobs.MultiDeviceProfileContentUpdateJob;
+import su.sres.securesms.jobs.RefreshOwnProfileJob;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.profiles.AvatarHelper;
@@ -381,6 +383,7 @@ public class CreateProfileActivity extends BaseActionBarActivity {
         }
 
         ApplicationDependencies.getJobManager().add(new MultiDeviceProfileKeyUpdateJob());
+        ApplicationDependencies.getJobManager().add(new MultiDeviceProfileContentUpdateJob());
 
         return true;
       }
