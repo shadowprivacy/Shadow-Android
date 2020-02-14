@@ -18,6 +18,7 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 
 import su.sres.securesms.R;
+import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.ViewUtil;
 
 public class RationaleDialog {
@@ -52,7 +53,8 @@ public class RationaleDialog {
 
     text.setText(message);
 
-    return new AlertDialog.Builder(context, R.style.RationaleDialog).setView(view);
+    return new AlertDialog.Builder(context, ThemeUtil.isDarkTheme(context) ? R.style.RationaleDialogDark : R.style.RationaleDialogLight)
+            .setView(view);
   }
 
 }

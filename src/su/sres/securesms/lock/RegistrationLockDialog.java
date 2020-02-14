@@ -1,6 +1,5 @@
 package su.sres.securesms.lock;
 
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Typeface;
@@ -32,6 +31,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.components.SwitchPreferenceCompat;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.ThemeUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 
@@ -45,11 +45,11 @@ public class RegistrationLockDialog {
     if (!RegistrationLockReminders.needsReminder(context))    return;
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return;
 
-    AlertDialog dialog      = new AlertDialog.Builder(context, R.style.RationaleDialog)
-                                             .setView(R.layout.registration_lock_reminder_view)
-                                             .setCancelable(true)
-                                             .setOnCancelListener(d -> RegistrationLockReminders.scheduleReminder(context, false))
-                                             .create();
+    AlertDialog dialog = new AlertDialog.Builder(context, ThemeUtil.isDarkTheme(context) ? R.style.RationaleDialogDark : R.style.RationaleDialogLight)
+            .setView(R.layout.registration_lock_reminder_view)
+            .setCancelable(true)
+            .setOnCancelListener(d -> RegistrationLockReminders.scheduleReminder(context, false))
+            .create();
 
     WindowManager  windowManager = ServiceUtil.getWindowManager(context);
     Display        display       = windowManager.getDefaultDisplay();

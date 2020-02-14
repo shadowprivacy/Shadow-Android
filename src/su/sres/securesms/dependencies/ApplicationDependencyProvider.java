@@ -23,13 +23,13 @@ import su.sres.securesms.push.SecurityEventListener;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.IncomingMessageObserver;
+import su.sres.securesms.util.AlarmSleepTimer;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.util.CredentialsProvider;
-import su.sres.signalservice.api.util.RealtimeSleepTimer;
 import su.sres.signalservice.api.util.SleepTimer;
 import su.sres.signalservice.api.util.UptimeSleepTimer;
 import su.sres.signalservice.api.websocket.ConnectivityListener;
@@ -72,7 +72,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
 
     @Override
     public @NonNull SignalServiceMessageReceiver provideSignalServiceMessageReceiver() {
-        SleepTimer sleepTimer = TextSecurePreferences.isFcmDisabled(context) ? new RealtimeSleepTimer(context)
+        SleepTimer sleepTimer = TextSecurePreferences.isFcmDisabled(context) ? new AlarmSleepTimer(context)
                 : new UptimeSleepTimer();
         return new SignalServiceMessageReceiver(networkAccess.getConfiguration(context),
                 new DynamicCredentialsProvider(context),

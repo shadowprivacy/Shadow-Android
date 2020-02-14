@@ -548,6 +548,7 @@
   <string name="PassphrasePromptActivity_watermark_content_description">Значок Shadow</string>
   <string name="PassphrasePromptActivity_ok_button_content_description">Подтвердить парольную фразу</string>
   <string name="PassphrasePromptActivity_invalid_passphrase_exclamation">Неверная парольная фраза!</string>
+    <string name="PassphrasePromptActivity_unlock_signal">Разблокировать Shadow</string>
   <!--PlacePickerActivity-->
   <string name="PlacePickerActivity_title">Карта</string>
   <string name="PlacePickerActivity_not_a_valid_address">Недействительный адрес</string>
@@ -1391,7 +1392,7 @@
   <string name="InsightsDashboardFragment__encrypted_messages">Зашифрованные сообщения</string>
   <string name="InsightsDashboardFragment__cancel">Отменить</string>
   <string name="InsightsDashboardFragment__send">Отправить</string>
-  <string name="InsightsDashboardFragment__not_using_signal_yet">Ещё не использует Shadow</string>
+    <!-- Removed by excludeNonTranslatables <string name="InsightsDashboardFragment__not_using_signal_yet">Ещё не использует Shadow</string> -->
   <string name="InsightsModalFragment__title">Представляем «Выводы»</string>
   <string name="InsightsModalFragment__description">Узнайте, сколько из ваших исходящих сообщений было отправлено безопасно, а затем быстро пригласите новые контакты, чтобы увеличить ваш процент Shadow.</string>
   <string name="InsightsModalFragment__view_insights">Просмотреть выводы</string>
