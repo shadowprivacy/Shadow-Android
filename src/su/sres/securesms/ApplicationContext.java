@@ -48,6 +48,7 @@ import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.dependencies.ApplicationDependencyProvider;
 import su.sres.securesms.gcm.FcmJobService;
+import su.sres.securesms.insights.InsightsOptOut;
 import su.sres.securesms.events.ServerSetEvent;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
@@ -277,6 +278,8 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     if (TextSecurePreferences.getFirstInstallVersion(this) == -1) {
       if (!SQLCipherOpenHelper.databaseFileExists(this)) {
         Log.i(TAG, "First ever app launch!");
+
+        InsightsOptOut.userRequestedOptOut(this);
 
         TextSecurePreferences.setAppMigrationVersion(this, ApplicationMigrations.CURRENT_VERSION);
         TextSecurePreferences.setJobManagerVersion(this, JobManager.CURRENT_VERSION);

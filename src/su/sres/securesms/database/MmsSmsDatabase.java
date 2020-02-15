@@ -31,7 +31,6 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class MmsSmsDatabase extends Database {
@@ -163,16 +162,16 @@ public class MmsSmsDatabase extends Database {
     return count;
   }
 
-  public int getInsecureMessageCountForRecipients(List<RecipientId> recipients) {
-    int count = DatabaseFactory.getSmsDatabase(context).getInsecureMessageCountForRecipients(recipients);
-    count    += DatabaseFactory.getMmsDatabase(context).getInsecureMessageCountForRecipients(recipients);
+  public int getInsecureMessageCountForInsights() {
+    int count = DatabaseFactory.getSmsDatabase(context).getInsecureMessageCountForInsights();
+    count    += DatabaseFactory.getMmsDatabase(context).getInsecureMessageCountForInsights();
 
     return count;
   }
 
-  public int getSecureMessageCountForRecipients(List<RecipientId> recipients) {
-    int count = DatabaseFactory.getSmsDatabase(context).getSecureMessageCountForRecipients(recipients);
-    count    += DatabaseFactory.getMmsDatabase(context).getSecureMessageCountForRecipients(recipients);
+  public int getSecureMessageCountForInsights() {
+    int count = DatabaseFactory.getSmsDatabase(context).getSecureMessageCountForInsights();
+    count    += DatabaseFactory.getMmsDatabase(context).getSecureMessageCountForInsights();
 
     return count;
   }

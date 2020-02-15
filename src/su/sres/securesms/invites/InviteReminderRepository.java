@@ -6,9 +6,6 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.recipients.RecipientId;
-
-import java.util.List;
 
 public final class InviteReminderRepository implements InviteReminderModel.Repository {
 
@@ -32,12 +29,9 @@ public final class InviteReminderRepository implements InviteReminderModel.Repos
 
     @Override
     public int getPercentOfInsecureMessages(int insecureCount) {
-        RecipientDatabase recipientDatabase      = DatabaseFactory.getRecipientDatabase(context);
-        List<RecipientId> registeredRecipients   = recipientDatabase.getRegisteredForInsights();
-        List<RecipientId> unregisteredRecipients = recipientDatabase.getNotRegisteredForInsights();
-        MmsSmsDatabase    mmsSmsDatabase         = DatabaseFactory.getMmsSmsDatabase(context);
-        int               insecure               = mmsSmsDatabase.getInsecureMessageCountForRecipients(unregisteredRecipients);
-        int               secure                 = mmsSmsDatabase.getSecureMessageCountForRecipients(registeredRecipients);
+        MmsSmsDatabase mmsSmsDatabase = DatabaseFactory.getMmsSmsDatabase(context);
+        int            insecure       = mmsSmsDatabase.getInsecureMessageCountForInsights();
+        int            secure         = mmsSmsDatabase.getSecureMessageCountForInsights();
 
         if (insecure + secure == 0) return 0;
         return Math.round(100f * (insecureCount / (float) (insecure + secure)));
