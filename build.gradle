@@ -122,7 +122,6 @@ dependencies {
 
 // additional classes for signal-service
 
-//    implementation 'com.google.protobuf:protobuf-javalite:3.10.0'
     implementation 'com.googlecode.libphonenumber:libphonenumber:8.10.7'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
     implementation 'org.signal:signal-metadata-java:0.1.0'
