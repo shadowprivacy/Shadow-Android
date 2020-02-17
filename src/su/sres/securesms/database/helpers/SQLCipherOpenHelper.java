@@ -134,8 +134,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(SignedPreKeyDatabase.CREATE_TABLE);
     db.execSQL(SessionDatabase.CREATE_TABLE);
     db.execSQL(StickerDatabase.CREATE_TABLE);
-    db.execSQL(ConfigDatabase.CREATE_TABLE);
-    db.execSQL(ConfigDatabase.INITIALIZE_CONFIG);
+//    db.execSQL(ConfigDatabase.CREATE_TABLE);
+//    db.execSQL(ConfigDatabase.INITIALIZE_CONFIG);
     executeStatements(db, SearchDatabase.CREATE_TABLE);
     executeStatements(db, JobDatabase.CREATE_TABLE);
 

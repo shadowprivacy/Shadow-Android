@@ -17,6 +17,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.events.ServerSetEvent;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.components.LabeledEditText;
+import su.sres.securesms.util.TextSecurePreferences;
 
 public class InitialActivity extends AppCompatActivity implements OnClickListener {
 
@@ -81,8 +82,9 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
             shadowUrl = candidateURL;
 
-            DatabaseFactory.getConfigDatabase(this).setConfigById(shadowUrl, 1);
-            Log.i(TAG, "server URL added to the config database");
+ //           DatabaseFactory.getConfigDatabase(this).setConfigById(shadowUrl, 1);
+            TextSecurePreferences.setShadowServerUrl(this, shadowUrl);
+            Log.i(TAG, "server URL added to app preferences");
             ((ApplicationContext) getApplication()).setServerSet(true);
             EventBus.getDefault().post(new ServerSetEvent());
 

@@ -136,8 +136,9 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
       InitWorker initWorker = new InitWorker();
       initWorker.execute(() -> {
-                // checking at subsequent launches of the app, if the server is already known in the DB, then no need for delay, just initialize immediately
-                if (!DatabaseFactory.getConfigDatabase(this).getConfigById(1).equals(DEFAULT_SERVER_URL)) {
+                // checking at subsequent launches of the app, if the server is already known in prefs, then no need for delay, just initialize immediately
+//                if (!DatabaseFactory.getConfigDatabase(this).getConfigById(1).equals(DEFAULT_SERVER_URL)) {
+                if (!TextSecurePreferences.getShadowServerUrl(this).equals(DEFAULT_SERVER_URL)) {
                   setServerSet(true);
                   initializeOnCreate();
                 } else {

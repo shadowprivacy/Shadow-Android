@@ -201,6 +201,8 @@ public class TextSecurePreferences {
 
   private static final String HAS_SEEN_VIDEO_RECORDING_TOOLTIP = "camerax.fragment.has.dismissed.video.recording.tooltip";
 
+  private static final String SHADOW_SERVER_URL = "pref_shadow_server_url";
+
   public static boolean isScreenLockEnabled(@NonNull Context context) {
     return getBooleanPreference(context, SCREEN_LOCK, false);
   }
@@ -1246,6 +1248,14 @@ public class TextSecurePreferences {
     } else {
       return defaultValues;
     }
+  }
+
+  public static void setShadowServerUrl(Context context, String value) {
+    setStringPreference(context, SHADOW_SERVER_URL, value);
+  }
+
+  public static String getShadowServerUrl(Context context) {
+    return getStringPreference(context, SHADOW_SERVER_URL, "https://example.org");
   }
 
   // NEVER rename these -- they're persisted by name
