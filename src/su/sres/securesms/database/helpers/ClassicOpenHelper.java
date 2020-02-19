@@ -1,3 +1,5 @@
+// TODO: Consider removing this
+
 package su.sres.securesms.database.helpers;
 
 import android.Manifest;
@@ -788,7 +790,7 @@ public class ClassicOpenHelper extends SQLiteOpenHelper {
       db.execSQL("UPDATE part SET pending_push = '2' WHERE pending_push = '1'");
     }
 
-    if (oldVersion < NO_MORE_CANONICAL_ADDRESS_DATABASE) {
+    if (oldVersion < NO_MORE_CANONICAL_ADDRESS_DATABASE && !TextUtils.isEmpty(TextSecurePreferences.getLocalNumber(context))) {
       SQLiteOpenHelper canonicalAddressDatabaseHelper = new SQLiteOpenHelper(context, "canonical_address.db", null, 1) {
         @Override
         public void onCreate(SQLiteDatabase db) {
@@ -1185,8 +1187,9 @@ public class ClassicOpenHelper extends SQLiteOpenHelper {
     if (oldVersion < INTERNAL_DIRECTORY) {
       db.execSQL("ALTER TABLE recipient_preferences ADD COLUMN registered INTEGER DEFAULT 0");
 
-      OldDirectoryDatabaseHelper directoryDatabaseHelper = new OldDirectoryDatabaseHelper(context);
-      SQLiteDatabase             directoryDatabase       = directoryDatabaseHelper.getWritableDatabase();
+      if (!TextUtils.isEmpty(TextSecurePreferences.getLocalNumber(context))) {
+        OldDirectoryDatabaseHelper directoryDatabaseHelper = new OldDirectoryDatabaseHelper(context);
+        SQLiteDatabase             directoryDatabase       = directoryDatabaseHelper.getWritableDatabase();
 
       Cursor cursor = directoryDatabase.query("directory", new String[] {"number", "registered"}, null, null, null, null, null);
 
@@ -1200,9 +1203,10 @@ public class ClassicOpenHelper extends SQLiteOpenHelper {
           contentValues.put("recipient_ids", address);
           db.insert("recipient_preferences", null, contentValues);
         }
-      }
+        }
 
-      if (cursor != null) cursor.close();
+        if (cursor != null) cursor.close();
+      }
     }
 
     if (oldVersion < INTERNAL_SYSTEM_DISPLAY_NAME) {

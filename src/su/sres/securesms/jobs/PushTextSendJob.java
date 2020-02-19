@@ -94,17 +94,15 @@ public class PushTextSendJob extends PushSendJob  {
         DatabaseFactory.getMmsSmsDatabase(context).incrementReadReceiptCount(id, System.currentTimeMillis());
       }
 
-      if (TextSecurePreferences.isUnidentifiedDeliveryEnabled(context)) {
         if (unidentified && accessMode == UnidentifiedAccessMode.UNKNOWN && profileKey == null) {
-          log(TAG, "Marking recipient as UD-unrestricted following a UD send.");
-          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.UNRESTRICTED);
+            log(TAG, "Marking recipient as UD-unrestricted following a UD send.");
+            DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.UNRESTRICTED);
         } else if (unidentified && accessMode == UnidentifiedAccessMode.UNKNOWN) {
-          log(TAG, "Marking recipient as UD-enabled following a UD send.");
-          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.ENABLED);
+            log(TAG, "Marking recipient as UD-enabled following a UD send.");
+            DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.ENABLED);
         } else if (!unidentified && accessMode != UnidentifiedAccessMode.DISABLED) {
-          log(TAG, "Marking recipient as UD-disabled following a non-UD send.");
-          DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.DISABLED);
-        }
+            log(TAG, "Marking recipient as UD-disabled following a non-UD send.");
+            DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.DISABLED);
       }
 
       if (record.getExpiresIn() > 0) {

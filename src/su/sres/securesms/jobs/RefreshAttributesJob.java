@@ -58,8 +58,6 @@ public class RefreshAttributesJob extends BaseJob  {
     signalAccountManager.setAccountAttributes(null, registrationId, fetchesMessages, pin,
             unidentifiedAccessKey, universalUnidentifiedAccess);
 
-
-    ApplicationDependencies.getJobManager().add(new RefreshUnidentifiedDeliveryAbilityJob());
   }
 
   @Override

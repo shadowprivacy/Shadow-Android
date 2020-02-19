@@ -1,6 +1,5 @@
 package su.sres.securesms.backup;
 
-
 import android.content.Context;
 import android.database.Cursor;
 import androidx.annotation.NonNull;
@@ -20,6 +19,7 @@ import su.sres.securesms.crypto.ClassicDecryptingPartInputStream;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.ModernDecryptingPartInputStream;
 import su.sres.securesms.database.AttachmentDatabase;
+import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupReceiptDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.MmsSmsColumns;
@@ -31,6 +31,7 @@ import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.util.Conversions;
+import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.kdf.HKDFv3;
 import org.whispersystems.libsignal.util.ByteUtil;
@@ -73,6 +74,8 @@ public class FullBackupExporter extends FullBackupBase {
     List<String> tables = exportSchema(input, outputStream);
     int          count  = 0;
 
+    Stopwatch stopwatch = new Stopwatch("Backup");
+
     for (String table : tables) {
       if (table.equals(MmsDatabase.TABLE_NAME)) {
         count = exportTable(table, input, outputStream, FullBackupExporter::isNonExpiringMessage, null, count);
@@ -91,6 +94,8 @@ public class FullBackupExporter extends FullBackupBase {
       {
         count = exportTable(table, input, outputStream, null, null, count);
       }
+
+      stopwatch.split("table::" + table);
     }
 
     for (BackupProtos.SharedPreference preference : IdentityKeyUtil.getBackupRecord(context)) {
@@ -98,10 +103,15 @@ public class FullBackupExporter extends FullBackupBase {
       outputStream.write(preference);
     }
 
+    stopwatch.split("prefs");
+
     for (File avatar : AvatarHelper.getAvatarFiles(context)) {
       EventBus.getDefault().post(new BackupEvent(BackupEvent.Type.PROGRESS, ++count));
       outputStream.write(avatar.getName(), new FileInputStream(avatar), avatar.length());
     }
+
+    stopwatch.split("avatars");
+    stopwatch.stop(TAG);
 
     outputStream.writeEnd();
     outputStream.close();
@@ -201,8 +211,14 @@ public class FullBackupExporter extends FullBackupBase {
       String data   = cursor.getString(cursor.getColumnIndexOrThrow(AttachmentDatabase.DATA));
       byte[] random = cursor.getBlob(cursor.getColumnIndexOrThrow(AttachmentDatabase.DATA_RANDOM));
 
-      if (!TextUtils.isEmpty(data) && size <= 0) {
-        size = calculateVeryOldStreamLength(attachmentSecret, random, data);
+      if (!TextUtils.isEmpty(data)) {
+        long fileLength = new File(data).length();
+        long dbLength   = size;
+
+        if (size <= 0 || fileLength != dbLength) {
+          size = calculateVeryOldStreamLength(attachmentSecret, random, data);
+          Log.w(TAG, "Needed size calculation! Manual: " + size + " File: " + fileLength + "  DB: " + dbLength + " ID: " + new AttachmentId(rowId, uniqueId));
+        }
       }
 
       if (!TextUtils.isEmpty(data) && size > 0) {
@@ -331,7 +347,9 @@ public class FullBackupExporter extends FullBackupBase {
                                                                                 .build())
                                                   .build());
 
-      writeStream(in);
+      if (writeStream(in) != size) {
+        throw new IOException("Size mismatch!");
+      }
     }
 
     public void write(@NonNull AttachmentId attachmentId, @NonNull InputStream in, long size) throws IOException {
@@ -343,7 +361,9 @@ public class FullBackupExporter extends FullBackupBase {
                                                                                         .build())
                                                   .build());
 
-      writeStream(in);
+      if (writeStream(in) != size) {
+        throw new IOException("Size mismatch!");
+      }
     }
 
     public void writeSticker(long rowId, @NonNull InputStream in, long size) throws IOException {
@@ -354,7 +374,9 @@ public class FullBackupExporter extends FullBackupBase {
                       .build())
               .build());
 
-      writeStream(in);
+      if (writeStream(in) != size) {
+        throw new IOException("Size mismatch!");
+      }
     }
 
     void writeDatabaseVersion(int version) throws IOException {
@@ -367,13 +389,18 @@ public class FullBackupExporter extends FullBackupBase {
       write(outputStream, BackupProtos.BackupFrame.newBuilder().setEnd(true).build());
     }
 
-    private void writeStream(@NonNull InputStream inputStream) throws IOException {
+    /**
+     * @return The amount of data written from the provided InputStream.
+     */
+    private long writeStream(@NonNull InputStream inputStream) throws IOException {
       try {
         Conversions.intToByteArray(iv, 0, counter++);
         cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(cipherKey, "AES"), new IvParameterSpec(iv));
         mac.update(iv);
 
         byte[] buffer = new byte[8192];
+        long   total  = 0;
+
         int read;
 
         while ((read = inputStream.read(buffer)) != -1) {
@@ -383,6 +410,8 @@ public class FullBackupExporter extends FullBackupBase {
             outputStream.write(ciphertext);
             mac.update(ciphertext);
           }
+
+          total += read;
         }
 
         byte[] remainder = cipher.doFinal();
@@ -391,6 +420,8 @@ public class FullBackupExporter extends FullBackupBase {
 
         byte[] attachmentDigest = mac.doFinal();
         outputStream.write(attachmentDigest, 0, 10);
+
+        return total;
       } catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
         throw new AssertionError(e);
       }

@@ -204,8 +204,8 @@ dependencyVerification {
     configuration = '(play|website)(Debug|Release)RuntimeClasspath'
 }
 
-def canonicalVersionCode = 569
-def canonicalVersionName = "4.50.3"
+def canonicalVersionCode = 572
+def canonicalVersionName = "4.50.6"
 
 def postFixSize = 10
 def abiPostFix = ['universal'   : 0,

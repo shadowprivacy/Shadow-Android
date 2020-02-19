@@ -73,6 +73,7 @@ import su.sres.securesms.preferences.widgets.ContactPreference;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.Dialogs;
@@ -398,6 +399,9 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
       vibrateCallPreference.setSummary(vibrateCallSummary.first);
       vibrateCallPreference.setValueIndex(vibrateCallSummary.second);
 
+      blockPreference.setVisible(RecipientUtil.isBlockable(recipient));
+      if (recipient.isBlocked()) blockPreference.setTitle(R.string.RecipientPreferenceActivity_unblock);
+      else                       blockPreference.setTitle(R.string.RecipientPreferenceActivity_block);
 
         if (recipient.isLocalNumber()) {
           mutePreference.setVisible(false);
@@ -411,7 +415,7 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
           if (privacyCategory    != null) privacyCategory.setVisible(false);
           if (divider            != null) divider.setVisible(false);
           if (callCategory       != null) callCategory.setVisible(false);
-        } if (recipient.isGroup()) {
+        } else if (recipient.isGroup()) {
         if (colorPreference    != null) colorPreference.setVisible(false);
         if (identityPreference != null) identityPreference.setVisible(false);
         if (callCategory       != null) callCategory.setVisible(false);
@@ -432,9 +436,6 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
 
         aboutPreference.setSecure(recipient.getRegistered() == RecipientDatabase.RegisteredState.REGISTERED);
 
-        if (recipient.isBlocked()) blockPreference.setTitle(R.string.RecipientPreferenceActivity_unblock);
-        else                       blockPreference.setTitle(R.string.RecipientPreferenceActivity_block);
-
         IdentityUtil.getRemoteIdentityKey(getActivity(), recipient).addListener(new ListenableFuture.Listener<Optional<IdentityRecord>>() {
           @Override
           public void onSuccess(Optional<IdentityRecord> result) {
@@ -454,6 +455,9 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
             if (identityPreference != null) getPreferenceScreen().removePreference(identityPreference);
           }
         });
+      }
+      if (recipient.isMmsGroup() && privacyCategory != null) {
+        privacyCategory.setVisible(false);
       }
     }
 

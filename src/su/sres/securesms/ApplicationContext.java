@@ -43,7 +43,6 @@ import org.signal.aesgcmprovider.AesGcmProvider;
 import su.sres.ringrtc.CallConnectionFactory;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.dependencies.ApplicationDependencyProvider;
@@ -55,13 +54,11 @@ import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
-import su.sres.securesms.jobs.RefreshUnidentifiedDeliveryAbilityJob;
 import su.sres.securesms.logging.AndroidLogger;
 import su.sres.securesms.logging.CustomSignalProtocolLogger;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.logging.PersistentLogger;
 import su.sres.securesms.logging.UncaughtExceptionLogger;
-import su.sres.securesms.mediasend.LegacyCameraModels;
 import su.sres.securesms.mediasend.camerax.CameraXUtil;
 import su.sres.securesms.migrations.ApplicationMigrations;
 import su.sres.securesms.notifications.MessageNotifier;
@@ -406,12 +403,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     }
   }
 
-  private void initializeUnidentifiedDeliveryAbilityRefresh() {
-    if (TextSecurePreferences.isMultiDevice(this) && !TextSecurePreferences.isUnidentifiedDeliveryEnabled(this)) {
-      ApplicationDependencies.getJobManager().add(new RefreshUnidentifiedDeliveryAbilityJob());
-    }
-  }
-
   private void initializeBlobProvider() {
     AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
       BlobProvider.getInstance().onSessionStart(this);
@@ -467,7 +458,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeCircumvention();
     initializeRingRtc();
     initializePendingMessages();
-    initializeUnidentifiedDeliveryAbilityRefresh();
     initializeBlobProvider();
     initializeCameraX();
     ApplicationDependencies.getJobManager().beginJobLoop();

@@ -1,5 +1,6 @@
 package su.sres.securesms;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -12,7 +13,6 @@ import androidx.loader.content.Loader;
 import androidx.appcompat.app.AlertDialog;
 
 import su.sres.securesms.devicelist.Device;
-import su.sres.securesms.jobs.RefreshUnidentifiedDeliveryAbilityJob;
 import su.sres.securesms.logging.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -162,6 +162,7 @@ public class DeviceListFragment extends ListFragment
     builder.show();
   }
 
+  @SuppressLint("StaticFieldLeak")
   private void handleDisconnectDevice(final long deviceId) {
     new ProgressDialogAsyncTask<Void, Void, Void>(getActivity(),
                                                   R.string.DeviceListActivity_unlinking_device_no_ellipsis,
@@ -172,7 +173,6 @@ public class DeviceListFragment extends ListFragment
         try {
           accountManager.removeDevice(deviceId);
 
-          ApplicationDependencies.getJobManager().add(new RefreshUnidentifiedDeliveryAbilityJob());
         } catch (IOException e) {
           Log.w(TAG, e);
           Toast.makeText(getActivity(), R.string.DeviceListActivity_network_failed, Toast.LENGTH_LONG).show();

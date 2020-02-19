@@ -5,9 +5,7 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -58,6 +56,7 @@ public class UuidMigrationJob extends MigrationJob {
             return;
         }
 
+        ensureSelfRecipientExists(context);
         fetchOwnUuid(context);
         rotateSealedSenderCerts(context);
     }
@@ -65,6 +64,10 @@ public class UuidMigrationJob extends MigrationJob {
     @Override
     boolean shouldRetry(@NonNull Exception e) {
         return e instanceof IOException;
+    }
+
+    private static void ensureSelfRecipientExists(@NonNull Context context) {
+        DatabaseFactory.getRecipientDatabase(context).getOrInsertFromE164(TextSecurePreferences.getLocalNumber(context));
     }
 
     private static void fetchOwnUuid(@NonNull Context context) throws IOException {
