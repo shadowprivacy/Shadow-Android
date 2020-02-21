@@ -27,6 +27,7 @@ import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.SignedPreKeyEntity;
 import su.sres.signalservice.api.push.exceptions.AuthorizationFailedException;
 import su.sres.signalservice.api.push.exceptions.CaptchaRequiredException;
+import su.sres.signalservice.api.push.exceptions.ContactManifestMismatchException;
 import su.sres.signalservice.api.push.exceptions.ExpectationFailedException;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import su.sres.signalservice.api.push.exceptions.NotFoundException;
@@ -35,6 +36,7 @@ import su.sres.signalservice.api.push.exceptions.RateLimitException;
 import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 import su.sres.signalservice.api.push.exceptions.UsernameMalformedException;
 import su.sres.signalservice.api.push.exceptions.UsernameTakenException;
+import su.sres.signalservice.api.storage.StorageAuthResponse;
 import su.sres.signalservice.api.util.CredentialsProvider;
 import su.sres.signalservice.api.util.Tls12SocketFactory;
 import su.sres.signalservice.api.util.UuidUtil;
@@ -44,6 +46,10 @@ import su.sres.signalservice.internal.push.exceptions.MismatchedDevicesException
 import su.sres.signalservice.internal.push.exceptions.StaleDevicesException;
 import su.sres.signalservice.internal.push.http.DigestingRequestBody;
 import su.sres.signalservice.internal.push.http.OutputStreamFactory;
+import su.sres.signalservice.internal.storage.protos.ReadOperation;
+import su.sres.signalservice.internal.storage.protos.StorageItems;
+import su.sres.signalservice.internal.storage.protos.StorageManifest;
+import su.sres.signalservice.internal.storage.protos.WriteOperation;
 import su.sres.util.Base64;
 import su.sres.signalservice.internal.util.BlacklistingTrustManager;
 import su.sres.signalservice.internal.util.Hex;
@@ -80,6 +86,7 @@ import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Call;
 import okhttp3.ConnectionSpec;
+import okhttp3.Credentials;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -145,6 +152,7 @@ public class PushServiceSocket {
 
   private final ServiceConnectionHolder[]  serviceClients;
   private final ConnectionHolder[]         cdnClients;
+  private final ConnectionHolder[]         storageClients;
   private final OkHttpClient               attachmentClient;
 
   private final CredentialsProvider credentialsProvider;
@@ -156,6 +164,7 @@ public class PushServiceSocket {
     this.userAgent           = userAgent;
     this.serviceClients                    = createServiceConnectionHolders(signalServiceConfiguration.getSignalServiceUrls());
     this.cdnClients          = createConnectionHolders(signalServiceConfiguration.getSignalCdnUrls());
+    this.storageClients                    = createConnectionHolders(signalServiceConfiguration.getSignalStorageUrls());
     this.attachmentClient                  = createAttachmentClient();
     this.random              = new SecureRandom();
   }
@@ -588,6 +597,42 @@ public class PushServiceSocket {
     return JsonUtil.fromJson(response, TurnServerInfo.class);
   }
 
+  public String getStorageAuth() throws IOException {
+    String              response     = makeServiceRequest("/v1/storage/auth", "GET", null);
+    StorageAuthResponse authResponse = JsonUtil.fromJson(response, StorageAuthResponse.class);
+
+    return Credentials.basic(authResponse.getUsername(), authResponse.getPassword());
+  }
+
+  public StorageManifest getStorageManifest(String authToken) throws IOException {
+    Response response = makeStorageRequest(authToken, "/v1/storage/manifest", "GET", null);
+
+    if (response.body() == null) {
+      throw new IOException("Missing body!");
+    }
+
+    return StorageManifest.parseFrom(response.body().bytes());
+  }
+
+  public StorageItems readStorageItems(String authToken, ReadOperation operation) throws IOException {
+    Response response = makeStorageRequest(authToken, "/v1/storage/read", "PUT", operation.toByteArray());
+
+    if (response.body() == null) {
+      throw new IOException("Missing body!");
+    }
+
+    return StorageItems.parseFrom(response.body().bytes());
+  }
+
+  public Optional<StorageManifest> writeStorageContacts(String authToken, WriteOperation writeOperation) throws IOException {
+    try {
+      makeStorageRequest(authToken, "/v1/storage", "PUT", writeOperation.toByteArray());
+      return Optional.absent();
+    } catch (ContactManifestMismatchException e) {
+      return Optional.of(StorageManifest.parseFrom(e.getResponseBody()));
+    }
+  }
+
   public void setSoTimeoutMillis(long soTimeoutMillis) {
     this.soTimeoutMillis = soTimeoutMillis;
   }
@@ -927,6 +972,75 @@ public class PushServiceSocket {
     } catch (IOException e) {
       throw new PushNetworkException(e);
     }
+  }
+
+  private Response makeStorageRequest(String authorization, String path, String method, byte[] body)
+          throws PushNetworkException, NonSuccessfulResponseCodeException
+  {
+    ConnectionHolder connectionHolder = getRandom(storageClients, random);
+    OkHttpClient     okHttpClient     = connectionHolder.getClient()
+            .newBuilder()
+            .connectTimeout(soTimeoutMillis, TimeUnit.MILLISECONDS)
+            .readTimeout(soTimeoutMillis, TimeUnit.MILLISECONDS)
+            .build();
+
+    Request.Builder request = new Request.Builder().url(connectionHolder.getUrl() + path);
+
+    if (body != null) {
+      request.method(method, RequestBody.create(MediaType.parse("application/x-protobuf"), body));
+    } else {
+      request.method(method, null);
+    }
+
+    if (connectionHolder.getHostHeader().isPresent()) {
+      request.addHeader("Host", connectionHolder.getHostHeader().get());
+    }
+
+    if (authorization != null) {
+      request.addHeader("Authorization", authorization);
+    }
+
+    Call call = okHttpClient.newCall(request.build());
+
+    synchronized (connections) {
+      connections.add(call);
+    }
+
+    Response response;
+
+    try {
+      response = call.execute();
+
+      if (response.isSuccessful()) {
+        return response;
+      }
+    } catch (IOException e) {
+      throw new PushNetworkException(e);
+    } finally {
+      synchronized (connections) {
+        connections.remove(call);
+      }
+    }
+
+    switch (response.code()) {
+      case 401:
+      case 403:
+        throw new AuthorizationFailedException("Authorization failed!");
+      case 404:
+        throw new NotFoundException("Not found");
+      case 409:
+        if (response.body() != null) {
+          try {
+            throw new ContactManifestMismatchException(response.body().bytes());
+          } catch (IOException e) {
+            throw new PushNetworkException(e);
+          }
+        }
+      case 429:
+        throw new RateLimitException("Rate limit exceeded: " + response.code());
+    }
+
+    throw new NonSuccessfulResponseCodeException("Response: " + response);
   }
 
   private ServiceConnectionHolder[] createServiceConnectionHolders(SignalUrl[] urls) {

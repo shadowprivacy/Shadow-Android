@@ -25,7 +25,6 @@ import androidx.annotation.WorkerThread;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.ContactAccessor;
 import su.sres.securesms.crypto.SessionUtil;
@@ -161,7 +160,7 @@ class DirectoryHelperV1 {
                 DatabaseFactory.getContactsDatabase(context).setRegisteredUsers(account.get().getAccount(), activeAddresses, removeMissing);
 
                 Cursor                                 cursor = ContactAccessor.getInstance().getAllSystemContacts(context);
-                RecipientDatabase.BulkOperationsHandle handle = DatabaseFactory.getRecipientDatabase(context).resetAllSystemContactInfo();
+                RecipientDatabase.BulkOperationsHandle handle = DatabaseFactory.getRecipientDatabase(context).beginBulkSystemContactUpdate();
 
                 try {
                     while (cursor != null && cursor.moveToNext()) {

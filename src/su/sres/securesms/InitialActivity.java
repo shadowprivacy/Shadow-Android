@@ -13,6 +13,8 @@ import org.apache.commons.validator.routines.UrlValidator;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.security.SecureRandom;
+
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.events.ServerSetEvent;
 import su.sres.securesms.logging.Log;
@@ -82,8 +84,15 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
             shadowUrl = candidateURL;
 
+            // generate a random "master key"
+            byte[] masterKey = new byte[32];
+            SecureRandom random = new SecureRandom();
+            random.nextBytes(masterKey);
+
  //           DatabaseFactory.getConfigDatabase(this).setConfigById(shadowUrl, 1);
             TextSecurePreferences.setShadowServerUrl(this, shadowUrl);
+ // set just a filler for now
+            TextSecurePreferences.setMasterKey(this, masterKey);
             Log.i(TAG, "server URL added to app preferences");
             ((ApplicationContext) getApplication()).setServerSet(true);
             EventBus.getDefault().post(new ServerSetEvent());

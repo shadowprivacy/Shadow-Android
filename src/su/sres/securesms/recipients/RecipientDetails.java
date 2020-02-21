@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.database.RecipientDatabase.InsightsBannerTier;
 import su.sres.securesms.crypto.ProfileKeyUtil;
+import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
 import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
 import su.sres.securesms.database.RecipientDatabase.RegisteredState;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
@@ -56,6 +57,9 @@ public class RecipientDetails {
     final boolean                forceSmsSelection;
     final boolean                uuidSuported;
     final InsightsBannerTier     insightsBannerTier;
+    final byte[]                 storageKey;
+    final byte[]                 identityKey;
+    final VerifiedStatus         identityStatus;
 
     RecipientDetails(@NonNull Context context,
                      @Nullable String name,
@@ -96,12 +100,18 @@ public class RecipientDetails {
         this.forceSmsSelection               = settings.isForceSmsSelection();
         this.uuidSuported                    = settings.isUuidSupported();
         this.insightsBannerTier              = settings.getInsightsBannerTier();
+        this.storageKey                      = settings.getStorageKey();
+        this.identityKey                     = settings.getIdentityKey();
+        this.identityStatus                  = settings.getIdentityStatus();
 
         if (name == null) this.name = settings.getSystemDisplayName();
         else              this.name = name;
     }
 
-    public RecipientDetails() {
+    /**
+     * Only used for {@link Recipient#UNKNOWN}.
+     */
+    RecipientDetails() {
         this.groupAvatarId          = null;
         this.systemContactPhoto     = null;
         this.customLabel            = null;
@@ -134,5 +144,8 @@ public class RecipientDetails {
         this.forceSmsSelection      = false;
         this.name                   = null;
         this.uuidSuported           = false;
+        this.storageKey             = null;
+        this.identityKey            = null;
+        this.identityStatus         = VerifiedStatus.DEFAULT;
     }
 }

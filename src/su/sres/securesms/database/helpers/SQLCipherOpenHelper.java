@@ -21,6 +21,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteDatabaseHook;
 import net.sqlcipher.database.SQLiteOpenHelper;
 
+import su.sres.securesms.contacts.sync.StorageSyncHelper;
 import su.sres.securesms.crypto.DatabaseSecret;
 import su.sres.securesms.crypto.MasterSecret;
 import su.sres.securesms.database.AttachmentDatabase;
@@ -37,13 +38,16 @@ import su.sres.securesms.database.SessionDatabase;
 import su.sres.securesms.database.SignedPreKeyDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.StickerDatabase;
+import su.sres.securesms.database.StorageKeyDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.database.ConfigDatabase;
+// not used for now
+// import su.sres.securesms.database.ConfigDatabase;
 import su.sres.securesms.jobs.RefreshPreKeysJob;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.service.KeyCachingService;
+import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.SqlUtil;
@@ -93,8 +97,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int UUIDS                            = 35;
   private static final int USERNAMES                        = 36;
   private static final int REACTIONS                        = 37;
+  private static final int STORAGE_SERVICE                  = 38;
 
-  private static final int    DATABASE_VERSION = 37;
+  private static final int    DATABASE_VERSION = 38;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -135,11 +140,13 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(SignedPreKeyDatabase.CREATE_TABLE);
     db.execSQL(SessionDatabase.CREATE_TABLE);
     db.execSQL(StickerDatabase.CREATE_TABLE);
+    db.execSQL(StorageKeyDatabase.CREATE_TABLE);
 //    db.execSQL(ConfigDatabase.CREATE_TABLE);
 //    db.execSQL(ConfigDatabase.INITIALIZE_CONFIG);
     executeStatements(db, SearchDatabase.CREATE_TABLE);
     executeStatements(db, JobDatabase.CREATE_TABLE);
 
+    executeStatements(db, RecipientDatabase.CREATE_INDEXS);
     executeStatements(db, SmsDatabase.CREATE_INDEXS);
     executeStatements(db, MmsDatabase.CREATE_INDEXS);
     executeStatements(db, AttachmentDatabase.CREATE_INDEXS);
@@ -148,6 +155,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     executeStatements(db, GroupDatabase.CREATE_INDEXS);
     executeStatements(db, GroupReceiptDatabase.CREATE_INDEXES);
     executeStatements(db, StickerDatabase.CREATE_INDEXES);
+    executeStatements(db, StorageKeyDatabase.CREATE_INDEXES);
 
     if (context.getDatabasePath(ClassicOpenHelper.NAME).exists()) {
       ClassicOpenHelper                      legacyHelper = new ClassicOpenHelper(context);
@@ -173,6 +181,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   @Override
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
     Log.i(TAG, "Upgrading database: " + oldVersion + ", " + newVersion);
+    long startTime = System.currentTimeMillis();
 
     db.beginTransaction();
 
@@ -639,6 +648,34 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL("ALTER TABLE mms ADD COLUMN reactions_last_seen INTEGER DEFAULT -1");
       }
 
+      if (oldVersion < STORAGE_SERVICE) {
+        db.execSQL("CREATE TABLE storage_key (_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "type INTEGER, " +
+                "key TEXT UNIQUE)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS storage_key_type_index ON storage_key (type)");
+
+        db.execSQL("ALTER TABLE recipient ADD COLUMN system_info_pending INTEGER DEFAULT 0");
+        db.execSQL("ALTER TABLE recipient ADD COLUMN storage_service_key TEXT DEFAULT NULL");
+        db.execSQL("ALTER TABLE recipient ADD COLUMN dirty INTEGER DEFAULT 0");
+
+        db.execSQL("CREATE UNIQUE INDEX recipient_storage_service_key ON recipient (storage_service_key)");
+        db.execSQL("CREATE INDEX recipient_dirty_index ON recipient (dirty)");
+
+        // TODO [greyson] Do this in a future DB migration
+//        db.execSQL("UPDATE recipient SET dirty = 2 WHERE registered = 1");
+//
+//        try (Cursor cursor = db.rawQuery("SELECT _id FROM recipient WHERE registered = 1", null)) {
+//          while (cursor != null && cursor.moveToNext()) {
+//            String        id     = cursor.getString(cursor.getColumnIndexOrThrow("_id"));
+//            ContentValues values = new ContentValues(1);
+//
+//            values.put("storage_service_key", Base64.encodeBytes(StorageSyncHelper.generateKey()));
+//
+//            db.update("recipient", values, "_id = ?", new String[] { id });
+//          }
+//        }
+      }
+
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -647,6 +684,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     if (oldVersion < MIGRATE_PREKEYS_VERSION) {
       PreKeyMigrationHelper.cleanUpPreKeys(context);
     }
+
+    Log.i(TAG, "Upgrade complete. Took " + (System.currentTimeMillis() - startTime) + " ms.");
   }
 
   public SQLiteDatabase getReadableDatabase() {

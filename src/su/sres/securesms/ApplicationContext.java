@@ -53,6 +53,7 @@ import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
+import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
 import su.sres.securesms.logging.AndroidLogger;
 import su.sres.securesms.logging.CustomSignalProtocolLogger;

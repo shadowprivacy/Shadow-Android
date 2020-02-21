@@ -13,6 +13,7 @@ import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.IdentityKeyPair;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.ecc.ECPublicKey;
+import org.whispersystems.libsignal.logging.Log;
 import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -22,6 +23,12 @@ import su.sres.signalservice.api.messages.calls.TurnServerInfo;
 import su.sres.signalservice.api.messages.multidevice.DeviceInfo;
 import su.sres.signalservice.api.push.ContactTokenDetails;
 import su.sres.signalservice.api.push.SignedPreKeyEntity;
+import su.sres.signalservice.api.push.exceptions.NotFoundException;
+import su.sres.signalservice.api.storage.SignalStorageCipher;
+import su.sres.signalservice.api.storage.SignalContactRecord;
+import su.sres.signalservice.api.storage.SignalStorageModels;
+import su.sres.signalservice.api.storage.SignalStorageRecord;
+import su.sres.signalservice.api.storage.SignalStorageManifest;
 import su.sres.signalservice.api.util.CredentialsProvider;
 import su.sres.signalservice.api.util.StreamDetails;
 import su.sres.signalservice.internal.configuration.SignalServiceConfiguration;
@@ -29,16 +36,21 @@ import su.sres.signalservice.internal.crypto.ProvisioningCipher;
 import su.sres.signalservice.internal.push.ProfileAvatarData;
 import su.sres.signalservice.internal.push.PushServiceSocket;
 import su.sres.signalservice.internal.push.http.ProfileCipherOutputStreamFactory;
+import su.sres.signalservice.internal.storage.protos.ManifestRecord;
+import su.sres.signalservice.internal.storage.protos.ReadOperation;
+import su.sres.signalservice.internal.storage.protos.StorageItem;
+import su.sres.signalservice.internal.storage.protos.StorageItems;
+import su.sres.signalservice.internal.storage.protos.StorageManifest;
+import su.sres.signalservice.internal.storage.protos.WriteOperation;
 import su.sres.signalservice.internal.util.StaticCredentialsProvider;
 import su.sres.signalservice.internal.util.Util;
 
 import su.sres.util.Base64;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -57,6 +69,8 @@ import static su.sres.signalservice.internal.push.ProvisioningProtos.Provisionin
  * @author Moxie Marlinspike
  */
 public class SignalServiceAccountManager {
+
+  private static final String TAG = SignalServiceAccountManager.class.getSimpleName();
 
   private final PushServiceSocket pushServiceSocket;
   private final UUID              userUuid;
@@ -285,6 +299,111 @@ public class SignalServiceAccountManager {
     }
 
     return activeTokens;
+  }
+
+  public long getStorageManifestVersion() throws IOException {
+    try {
+      String          authToken       = this.pushServiceSocket.getStorageAuth();
+      StorageManifest storageManifest = this.pushServiceSocket.getStorageManifest(authToken);
+
+      return  storageManifest.getVersion();
+    } catch (NotFoundException e) {
+      return 0;
+    }
+  }
+
+  public Optional<SignalStorageManifest> getStorageManifest(byte[] storageServiceKey) throws IOException, InvalidKeyException {
+    try {
+      SignalStorageCipher cipher          = new SignalStorageCipher(storageServiceKey);
+      String              authToken       = this.pushServiceSocket.getStorageAuth();
+      StorageManifest     storageManifest = this.pushServiceSocket.getStorageManifest(authToken);
+      byte[]              rawRecord       = cipher.decrypt(storageManifest.getValue().toByteArray());
+      ManifestRecord      manifestRecord  = ManifestRecord.parseFrom(rawRecord);
+      List<byte[]>        keys            = new ArrayList<>(manifestRecord.getKeysCount());
+
+      for (ByteString key : manifestRecord.getKeysList()) {
+        keys.add(key.toByteArray());
+      }
+
+      return Optional.of(new SignalStorageManifest(manifestRecord.getVersion(), keys));
+    } catch (NotFoundException e) {
+      return Optional.absent();
+    }
+  }
+
+  public List<SignalStorageRecord> readStorageRecords(byte[] storageServiceKey, List<byte[]> storageKeys) throws IOException, InvalidKeyException {
+    ReadOperation.Builder operation = ReadOperation.newBuilder();
+
+    for (byte[] key : storageKeys) {
+      operation.addReadKey(ByteString.copyFrom(key));
+    }
+
+    String       authToken = this.pushServiceSocket.getStorageAuth();
+    StorageItems items     = this.pushServiceSocket.readStorageItems(authToken, operation.build());
+
+    SignalStorageCipher       storageCipher = new SignalStorageCipher(storageServiceKey);
+    List<SignalStorageRecord> result        = new ArrayList<>(items.getItemsCount());
+
+    for (StorageItem item : items.getItemsList()) {
+      if (item.hasKey()) {
+        result.add(SignalStorageModels.remoteToLocalStorageRecord(item, storageCipher));
+      } else {
+        Log.w(TAG, "Encountered a StorageItem with no key! Skipping.");
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * @return If there was a conflict, the latest {@link SignalStorageManifest}. Otherwise absent.
+   */
+  public Optional<SignalStorageManifest> writeStorageRecords(byte[] storageServiceKey,
+                                                             SignalStorageManifest manifest,
+                                                             List<SignalStorageRecord> inserts,
+                                                             List<byte[]> deletes)
+          throws IOException, InvalidKeyException
+  {
+    ManifestRecord.Builder manifestRecordBuilder = ManifestRecord.newBuilder().setVersion(manifest.getVersion());
+
+    for (byte[] key : manifest.getStorageKeys()) {
+      manifestRecordBuilder.addKeys(ByteString.copyFrom(key));
+    }
+
+    String              authToken       = this.pushServiceSocket.getStorageAuth();
+    SignalStorageCipher cipher          = new SignalStorageCipher(storageServiceKey);
+    byte[]              encryptedRecord = cipher.encrypt(manifestRecordBuilder.build().toByteArray());
+    StorageManifest     storageManifest = StorageManifest.newBuilder()
+            .setVersion(manifest.getVersion())
+            .setValue(ByteString.copyFrom(encryptedRecord))
+            .build();
+    WriteOperation.Builder writeBuilder  = WriteOperation.newBuilder().setManifest(storageManifest);
+
+    for (SignalStorageRecord insert : inserts) {
+      writeBuilder.addInsertItem(SignalStorageModels.localToRemoteStorageRecord(insert, cipher));
+    }
+
+    for (byte[] delete : deletes) {
+      writeBuilder.addDeleteKey(ByteString.copyFrom(delete));
+    }
+
+    Optional<StorageManifest> conflict = this.pushServiceSocket.writeStorageContacts(authToken, writeBuilder.build());
+
+    if (conflict.isPresent()) {
+      byte[]         rawManifestRecord = cipher.decrypt(conflict.get().getValue().toByteArray());
+      ManifestRecord record            = ManifestRecord.parseFrom(rawManifestRecord);
+      List<byte[]>   keys              = new ArrayList<>(record.getKeysCount());
+
+      for (ByteString key : record.getKeysList()) {
+        keys.add(key.toByteArray());
+      }
+
+      SignalStorageManifest conflictManifest = new SignalStorageManifest(record.getVersion(), keys);
+
+      return Optional.of(conflictManifest);
+    } else {
+      return Optional.absent();
+    }
   }
 
   public String getNewDeviceVerificationCode() throws IOException {

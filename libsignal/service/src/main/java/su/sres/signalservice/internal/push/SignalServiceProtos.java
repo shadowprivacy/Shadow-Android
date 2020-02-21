@@ -18403,6 +18403,17 @@ public final class SignalServiceProtos {
      * @return The fetchLatest.
      */
     su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.FetchLatest getFetchLatest();
+
+    /**
+     * <code>optional .signalservice.SyncMessage.Keys keys = 13;</code>
+     * @return Whether the keys field is set.
+     */
+    boolean hasKeys();
+    /**
+     * <code>optional .signalservice.SyncMessage.Keys keys = 13;</code>
+     * @return The keys.
+     */
+    su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys getKeys();
   }
   /**
    * Protobuf type {@code signalservice.SyncMessage}
@@ -21528,6 +21539,10 @@ public final class SignalServiceProtos {
          * <code>CONFIGURATION = 4;</code>
          */
         CONFIGURATION(4),
+        /**
+         * <code>KEYS = 5;</code>
+         */
+        KEYS(5),
         ;
 
         /**
@@ -21550,6 +21565,10 @@ public final class SignalServiceProtos {
          * <code>CONFIGURATION = 4;</code>
          */
         public static final int CONFIGURATION_VALUE = 4;
+        /**
+         * <code>KEYS = 5;</code>
+         */
+        public static final int KEYS_VALUE = 5;
 
 
         @java.lang.Override
@@ -21574,6 +21593,7 @@ public final class SignalServiceProtos {
             case 2: return GROUPS;
             case 3: return BLOCKED;
             case 4: return CONFIGURATION;
+            case 5: return KEYS;
             default: return null;
           }
         }
@@ -24421,6 +24441,276 @@ public final class SignalServiceProtos {
       }
     }
 
+    public interface KeysOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:signalservice.SyncMessage.Keys)
+        com.google.protobuf.MessageLiteOrBuilder {
+
+      /**
+       * <code>optional bytes storageService = 1;</code>
+       * @return Whether the storageService field is set.
+       */
+      boolean hasStorageService();
+      /**
+       * <code>optional bytes storageService = 1;</code>
+       * @return The storageService.
+       */
+      com.google.protobuf.ByteString getStorageService();
+    }
+    /**
+     * Protobuf type {@code signalservice.SyncMessage.Keys}
+     */
+    public  static final class Keys extends
+        com.google.protobuf.GeneratedMessageLite<
+            Keys, Keys.Builder> implements
+        // @@protoc_insertion_point(message_implements:signalservice.SyncMessage.Keys)
+        KeysOrBuilder {
+      private Keys() {
+        storageService_ = com.google.protobuf.ByteString.EMPTY;
+      }
+      private int bitField0_;
+      public static final int STORAGESERVICE_FIELD_NUMBER = 1;
+      private com.google.protobuf.ByteString storageService_;
+      /**
+       * <code>optional bytes storageService = 1;</code>
+       * @return Whether the storageService field is set.
+       */
+      @java.lang.Override
+      public boolean hasStorageService() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>optional bytes storageService = 1;</code>
+       * @return The storageService.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getStorageService() {
+        return storageService_;
+      }
+      /**
+       * <code>optional bytes storageService = 1;</code>
+       * @param value The storageService to set.
+       */
+      private void setStorageService(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        storageService_ = value;
+      }
+      /**
+       * <code>optional bytes storageService = 1;</code>
+       */
+      private void clearStorageService() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        storageService_ = getDefaultInstance().getStorageService();
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+
+      public static Builder newBuilder() {
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
+      }
+      public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys prototype) {
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+      }
+
+      /**
+       * Protobuf type {@code signalservice.SyncMessage.Keys}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageLite.Builder<
+            su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys, Builder> implements
+          // @@protoc_insertion_point(builder_implements:signalservice.SyncMessage.Keys)
+          su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.KeysOrBuilder {
+        // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys.newBuilder()
+        private Builder() {
+          super(DEFAULT_INSTANCE);
+        }
+
+
+        /**
+         * <code>optional bytes storageService = 1;</code>
+         * @return Whether the storageService field is set.
+         */
+        @java.lang.Override
+        public boolean hasStorageService() {
+          return instance.hasStorageService();
+        }
+        /**
+         * <code>optional bytes storageService = 1;</code>
+         * @return The storageService.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString getStorageService() {
+          return instance.getStorageService();
+        }
+        /**
+         * <code>optional bytes storageService = 1;</code>
+         * @param value The storageService to set.
+         * @return This builder for chaining.
+         */
+        public Builder setStorageService(com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setStorageService(value);
+          return this;
+        }
+        /**
+         * <code>optional bytes storageService = 1;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearStorageService() {
+          copyOnWrite();
+          instance.clearStorageService();
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:signalservice.SyncMessage.Keys)
+      }
+      @java.lang.Override
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      protected final java.lang.Object dynamicMethod(
+          com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+          java.lang.Object arg0, java.lang.Object arg1) {
+        switch (method) {
+          case NEW_MUTABLE_INSTANCE: {
+            return new su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys();
+          }
+          case NEW_BUILDER: {
+            return new Builder();
+          }
+          case BUILD_MESSAGE_INFO: {
+              java.lang.Object[] objects = new java.lang.Object[] {
+                "bitField0_",
+                "storageService_",
+              };
+              java.lang.String info =
+                  "\u0001\u0001\u0000\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0001\n\u0000";
+              return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+          }
+          // fall through
+          case GET_DEFAULT_INSTANCE: {
+            return DEFAULT_INSTANCE;
+          }
+          case GET_PARSER: {
+            com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys> parser = PARSER;
+            if (parser == null) {
+              synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys.class) {
+                parser = PARSER;
+                if (parser == null) {
+                  parser =
+                      new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys>(
+                          DEFAULT_INSTANCE);
+                  PARSER = parser;
+                }
+              }
+            }
+            return parser;
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return (byte) 1;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          return null;
+        }
+        }
+        throw new UnsupportedOperationException();
+      }
+
+
+      // @@protoc_insertion_point(class_scope:signalservice.SyncMessage.Keys)
+      private static final su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys DEFAULT_INSTANCE;
+      static {
+        Keys defaultInstance = new Keys();
+        // New instances are implicitly immutable so no need to make
+        // immutable.
+        DEFAULT_INSTANCE = defaultInstance;
+        com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+          Keys.class, defaultInstance);
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static volatile com.google.protobuf.Parser<Keys> PARSER;
+
+      public static com.google.protobuf.Parser<Keys> parser() {
+        return DEFAULT_INSTANCE.getParserForType();
+      }
+    }
+
     private int bitField0_;
     public static final int SENT_FIELD_NUMBER = 1;
     private su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Sent sent_;
@@ -25227,6 +25517,64 @@ public final class SignalServiceProtos {
       bitField0_ = (bitField0_ & ~0x00000200);
     }
 
+    public static final int KEYS_FIELD_NUMBER = 13;
+    private su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys keys_;
+    /**
+     * <code>optional .signalservice.SyncMessage.Keys keys = 13;</code>
+     */
+    @java.lang.Override
+    public boolean hasKeys() {
+      return ((bitField0_ & 0x00000400) != 0);
+    }
+    /**
+     * <code>optional .signalservice.SyncMessage.Keys keys = 13;</code>
+     */
+    @java.lang.Override
+    public su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys getKeys() {
+      return keys_ == null ? su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys.getDefaultInstance() : keys_;
+    }
+    /**
+     * <code>optional .signalservice.SyncMessage.Keys keys = 13;</code>
+     */
+    private void setKeys(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      keys_ = value;
+      bitField0_ |= 0x00000400;
+      }
+    /**
+     * <code>optional .signalservice.SyncMessage.Keys keys = 13;</code>
+     */
+    private void setKeys(
+        su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys.Builder builderForValue) {
+      keys_ = builderForValue.build();
+      bitField0_ |= 0x00000400;
+    }
+    /**
+     * <code>optional .signalservice.SyncMessage.Keys keys = 13;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeKeys(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      if (keys_ != null &&
+          keys_ != su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys.getDefaultInstance()) {
+        keys_ =
+          su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys.newBuilder(keys_).mergeFrom(value).buildPartial();
+      } else {
+        keys_ = value;
+      }
+      bitField0_ |= 0x00000400;
+    }
+    /**
+     * <code>optional .signalservice.SyncMessage.Keys keys = 13;</code>
+     */
+    private void clearKeys() {  keys_ = null;
+      bitField0_ = (bitField0_ & ~0x00000400);
+    }
+
     public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -25981,6 +26329,53 @@ public final class SignalServiceProtos {
         return this;
       }
 
+      /**
+       * <code>optional .signalservice.SyncMessage.Keys keys = 13;</code>
+       */
+      @java.lang.Override
+      public boolean hasKeys() {
+        return instance.hasKeys();
+      }
+      /**
+       * <code>optional .signalservice.SyncMessage.Keys keys = 13;</code>
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys getKeys() {
+        return instance.getKeys();
+      }
+      /**
+       * <code>optional .signalservice.SyncMessage.Keys keys = 13;</code>
+       */
+      public Builder setKeys(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys value) {
+        copyOnWrite();
+        instance.setKeys(value);
+        return this;
+        }
+      /**
+       * <code>optional .signalservice.SyncMessage.Keys keys = 13;</code>
+       */
+      public Builder setKeys(
+          su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys.Builder builderForValue) {
+        copyOnWrite();
+        instance.setKeys(builderForValue);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.SyncMessage.Keys keys = 13;</code>
+       */
+      public Builder mergeKeys(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Keys value) {
+        copyOnWrite();
+        instance.mergeKeys(value);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.SyncMessage.Keys keys = 13;</code>
+       */
+      public Builder clearKeys() {  copyOnWrite();
+        instance.clearKeys();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:signalservice.SyncMessage)
     }
     @java.lang.Override
@@ -26012,11 +26407,12 @@ public final class SignalServiceProtos {
               su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.StickerPackOperation.class,
               "viewOnceOpen_",
               "fetchLatest_",
+              "keys_",
             };
             java.lang.String info =
-                "\u0001\f\u0000\u0001\u0001\f\f\u0000\u0002\u0000\u0001\t\u0000\u0002\t\u0001\u0003" +
+                "\u0001\r\u0000\u0001\u0001\r\r\u0000\u0002\u0000\u0001\t\u0000\u0002\t\u0001\u0003" +
                 "\t\u0002\u0004\t\u0003\u0005\u001b\u0006\t\u0004\u0007\t\u0005\b\n\u0007\t\t\u0006" +
-                "\n\u001b\u000b\t\b\f\t\t";
+                "\n\u001b\u000b\t\b\f\t\t\r\t\n";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through

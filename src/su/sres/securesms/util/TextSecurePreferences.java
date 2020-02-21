@@ -20,7 +20,10 @@ import su.sres.securesms.R;
 import su.sres.securesms.lock.RegistrationLockReminders;
 import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 import org.whispersystems.libsignal.util.Medium;
+
+// import su.sres.signalservice.api.RegistrationLockData;
 import su.sres.signalservice.api.util.UuidUtil;
+// import su.sres.signalservice.internal.registrationpin.PinStretcher;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -155,6 +158,10 @@ public class TextSecurePreferences {
 
   public static final  String REGISTRATION_LOCK_PREF                   = "pref_registration_lock";
   private static final String REGISTRATION_LOCK_PIN_PREF               = "pref_registration_lock_pin";
+
+  // this is required by storage service
+  private static final String REGISTRATION_LOCK_MASTER_KEY             = "pref_registration_lock_master_key";
+
   private static final String REGISTRATION_LOCK_LAST_REMINDER_TIME     = "pref_registration_lock_last_reminder_time";
   private static final String REGISTRATION_LOCK_NEXT_REMINDER_INTERVAL = "pref_registration_lock_next_reminder_interval";
 
@@ -208,6 +215,8 @@ public class TextSecurePreferences {
     return getBooleanPreference(context, SCREEN_LOCK, false);
   }
 
+  private static final String STORAGE_MANIFEST_VERSION = "pref_storage_manifest_version";
+
   public static void setScreenLockEnabled(@NonNull Context context, boolean value) {
     setBooleanPreference(context, SCREEN_LOCK, value);
   }
@@ -234,6 +243,59 @@ public class TextSecurePreferences {
 
   public static void setRegistrationLockPin(@NonNull Context context, String pin) {
     setStringPreference(context, REGISTRATION_LOCK_PIN_PREF, pin);
+  }
+
+  // The master key required by storage service. The method's been cleared from other KBS-related stuff.
+///  public static void setRegistrationLockMasterKey(@NonNull Context context, @Nullable RegistrationLockData registrationLockData, long time)
+/// SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+//            .edit()
+//            .putBoolean(REGISTRATION_LOCK_SERVER_CONSISTENT, true)
+//            .putLong(REGISTRATION_LOCK_SERVER_CONSISTENT_TIME, time);
+
+//    if (registrationLockData == null) {
+//      editor.remove(REGISTRATION_LOCK_TOKEN_RESPONSE)
+//              .remove(REGISTRATION_LOCK_MASTER_KEY)
+//              .remove(REGISTRATION_LOCK_TOKEN_PREF)
+//              .remove(REGISTRATION_LOCK_PIN_KEY_2_PREF);
+//    } else {
+///      PinStretcher.MasterKey masterKey = registrationLockData.getMasterKey();
+///      String tokenResponse;
+///      try {
+///        tokenResponse = JsonUtils.toJson(registrationLockData.getTokenResponse());
+///      } catch (IOException e) {
+///        throw new AssertionError(e);
+///      }
+
+///      editor
+//              .remove(REGISTRATION_LOCK_PIN_PREF) // Removal of V1 pin
+//              .putBoolean(REGISTRATION_LOCK_PREF, true)
+//              .putString(REGISTRATION_LOCK_TOKEN_RESPONSE, tokenResponse)
+///              .putString(REGISTRATION_LOCK_MASTER_KEY, Base64.encodeBytes(masterKey.getMasterKey()));
+//              .putString(REGISTRATION_LOCK_TOKEN_PREF, masterKey.getRegistrationLock())
+//              .putString(REGISTRATION_LOCK_PIN_KEY_2_PREF, Base64.encodeBytes(masterKey.getPinKey2()));
+//    }
+
+///    editor.apply();
+///  }
+
+  // this is required by storage service
+  public static byte[] getMasterKey(@NonNull Context context) {
+    String key = getStringPreference(context, REGISTRATION_LOCK_MASTER_KEY, null);
+    if (key == null) {
+      return null;
+    }
+    try {
+      return Base64.decode(key);
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
+  }
+
+  // just write the byte array that we feed in
+  public static void setMasterKey(@NonNull Context context, byte[] key) {
+    SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+    editor.putString(REGISTRATION_LOCK_MASTER_KEY, Base64.encodeBytes(key));
+    editor.apply();
   }
 
   public static long getRegistrationLockLastReminderTime(@NonNull Context context) {
@@ -1208,6 +1270,14 @@ public class TextSecurePreferences {
 
   public static void setHasSeenVideoRecordingTooltip(Context context, boolean value) {
     setBooleanPreference(context, HAS_SEEN_VIDEO_RECORDING_TOOLTIP, value);
+  }
+
+  public static long getStorageManifestVersion(Context context) {
+    return getLongPreference(context, STORAGE_MANIFEST_VERSION, 0);
+  }
+
+  public static void setStorageManifestVersion(Context context, long version) {
+    setLongPreference(context, STORAGE_MANIFEST_VERSION, version);
   }
 
   public static void setBooleanPreference(Context context, String key, boolean value) {

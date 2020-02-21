@@ -21,6 +21,9 @@ public class FeatureFlags {
     /** Creating usernames, sending messages by username. Requires {@link #UUIDS}. */
     public static final boolean USERNAMES = false;
 
+    /** Storage service. Requires {@link #KBS}. */
+    public static final boolean STORAGE_SERVICE = false;
+
     /** Send support for reactions. */
     public static final boolean REACTION_SENDING = false;
 }
