@@ -26,19 +26,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
-import androidx.core.app.ActivityOptionsCompat;
-import androidx.fragment.app.Fragment;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.Loader;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.view.ActionMode;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 import android.text.ClipboardManager;
 import android.text.TextUtils;
 
@@ -67,7 +54,24 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.ActionMode;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityOptionsCompat;
+import androidx.fragment.app.Fragment;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
+
 import com.annimon.stream.Stream;
+
+import com.google.android.collect.Sets;
 
 import su.sres.securesms.conversation.ConversationAdapter.HeaderViewHolder;
 import su.sres.securesms.conversation.ConversationAdapter.ItemClickListener;
@@ -93,6 +97,7 @@ import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.profiles.UnknownSenderView;
 import su.sres.securesms.providers.BlobProvider;
+import su.sres.securesms.reactions.ReactionsBottomSheetDialogFragment;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -103,6 +108,7 @@ import su.sres.securesms.sms.OutgoingTextMessage;
 import su.sres.securesms.stickers.StickerLocator;
 import su.sres.securesms.stickers.StickerPackPreviewActivity;
 import su.sres.securesms.util.CommunicationActions;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.SaveAttachmentTask;
 import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -146,7 +152,7 @@ public class ConversationFragment extends Fragment
   private int                         previousOffset;
   private int                         activeOffset;
   private boolean                     firstLoad;
-  private long                        loaderStartTime;
+  private boolean                     isReacting;
   private ActionMode                  actionMode;
   private Locale                      locale;
   private RecyclerView                list;
@@ -327,7 +333,9 @@ public class ConversationFragment extends Fragment
         if (!isTypingIndicatorShowing() && isAtBottom()) {
           Context context = requireContext();
           list.setVerticalScrollBarEnabled(false);
-          list.post(() -> getListLayoutManager().smoothScrollToPosition(context, 0, 250));
+          list.post(() -> { if (!isReacting) {
+            getListLayoutManager().smoothScrollToPosition(context, 0, 250);
+          }});
           list.postDelayed(() -> list.setVerticalScrollBarEnabled(true), 300);
           adapter.setHeaderView(typingView);
           adapter.notifyItemInserted(0);
@@ -342,7 +350,7 @@ public class ConversationFragment extends Fragment
         }
       } else {
         if (getListLayoutManager().findFirstCompletelyVisibleItemPosition() == 0 && getListLayoutManager().getItemCount() > 1 && !replacedByIncomingMessage) {
-          getListLayoutManager().smoothScrollToPosition(requireContext(), 1, 250);
+          if (!isReacting) getListLayoutManager().smoothScrollToPosition(requireContext(), 1, 250);
           list.setVerticalScrollBarEnabled(false);
           list.postDelayed(() -> {
             adapter.setHeaderView(null);
@@ -653,7 +661,6 @@ public class ConversationFragment extends Fragment
   @Override
   public @NonNull Loader<Cursor> onCreateLoader(int id, Bundle args) {
     Log.i(TAG, "onCreateLoader");
-    loaderStartTime = System.currentTimeMillis();
 
     int limit  = args.getInt(KEY_LIMIT, PARTIAL_CONVERSATION_LIMIT);
     int offset = 0;
@@ -667,9 +674,7 @@ public class ConversationFragment extends Fragment
 
   @Override
   public void onLoadFinished(@NonNull Loader<Cursor> cursorLoader, Cursor cursor) {
-    long loadTime = System.currentTimeMillis() - loaderStartTime;
     int  count    = cursor.getCount();
-    Log.i(TAG, "onLoadFinished - took " + loadTime + " ms to load a cursor of size " + count);
     ConversationLoader loader = (ConversationLoader)cursorLoader;
 
     ConversationAdapter adapter = getListAdapter();
@@ -687,10 +692,18 @@ public class ConversationFragment extends Fragment
       setLastSeen(loader.getLastSeen());
     }
 
-    if (!loader.hasSent() && !recipient.get().isSystemContact() && !recipient.get().isGroup() && recipient.get().getRegistered() == RecipientDatabase.RegisteredState.REGISTERED) {
-      adapter.setHeaderView(unknownSenderView);
+    if (FeatureFlags.MESSAGE_REQUESTS) {
+      if (!loader.hasSent() && !recipient.get().isSystemContact() && !recipient.get().isProfileSharing() && !recipient.get().isBlocked() && recipient.get().isRegistered()) {
+        listener.onMessageRequest();
+      } else {
+        clearHeaderIfNotTyping(adapter);
+      }
     } else {
-      clearHeaderIfNotTyping(adapter);
+      if (!loader.hasSent() && !recipient.get().isSystemContact() && !recipient.get().isGroup() && recipient.get().getRegistered() == RecipientDatabase.RegisteredState.REGISTERED) {
+        adapter.setHeaderView(unknownSenderView);
+      } else {
+        clearHeaderIfNotTyping(adapter);
+      }
     }
 
     if (loader.hasOffset()) {
@@ -704,6 +717,7 @@ public class ConversationFragment extends Fragment
     activeOffset = loader.getOffset();
 
     adapter.changeCursor(cursor);
+    listener.onCursorChanged();
 
     int lastSeenPosition = adapter.findLastSeenPosition(lastSeen);
 
@@ -744,6 +758,7 @@ public class ConversationFragment extends Fragment
   public void onLoaderReset(@NonNull Loader<Cursor> arg0) {
     if (list.getAdapter() != null) {
       getListAdapter().changeCursor(null);
+      listener.onCursorChanged();
     }
   }
 
@@ -860,6 +875,12 @@ public class ConversationFragment extends Fragment
     void handleReplyMessage(MessageRecord messageRecord);
     void onMessageActionToolbarOpened();
     void onForwardClicked();
+    void onMessageRequest();
+    void handleReaction(@NonNull View maskTarget,
+                        @NonNull MessageRecord messageRecord,
+                        @NonNull Toolbar.OnMenuItemClickListener toolbarListener,
+                        @NonNull ConversationReactionOverlay.OnHideListener onHideListener);
+    void onCursorChanged();
   }
 
   private class ConversationScrollListener extends OnScrollListener {
@@ -949,8 +970,21 @@ public class ConversationFragment extends Fragment
     }
 
     @Override
-    public void onItemLongClick(MessageRecord messageRecord) {
-      if (actionMode == null) {
+    public void onItemLongClick(View maskTarget, MessageRecord messageRecord) {
+
+      if (actionMode != null) return;
+
+      if (FeatureFlags.REACTION_SENDING &&
+              messageRecord.isSecure()      &&
+              ((ConversationAdapter) list.getAdapter()).getSelectedItems().isEmpty())
+      {
+        isReacting = true;
+        list.setLayoutFrozen(true);
+        listener.handleReaction(maskTarget, messageRecord, new ReactionsToolbarListener(messageRecord), () -> {
+          isReacting = false;
+          list.setLayoutFrozen(false);
+        });
+      } else {
         ((ConversationAdapter) list.getAdapter()).toggleSelection(messageRecord);
         list.getAdapter().notifyDataSetChanged();
 
@@ -1089,6 +1123,12 @@ public class ConversationFragment extends Fragment
         CommunicationActions.composeSmsThroughDefaultApp(getContext(), recipient, getString(R.string.InviteActivity_lets_switch_to_signal, getString(R.string.install_url)));
       });
     }
+    @Override
+    public void onReactionClicked(long messageId, boolean isMms) {
+      if (getContext() == null) return;
+
+      ReactionsBottomSheetDialogFragment.create(messageId, isMms).show(requireFragmentManager(), null);
+    }
   }
 
   @Override
@@ -1097,6 +1137,36 @@ public class ConversationFragment extends Fragment
 
     if (requestCode == CODE_ADD_EDIT_CONTACT && getContext() != null) {
       ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
+    }
+  }
+
+  private void handleEnterMultiSelect(@NonNull MessageRecord messageRecord) {
+    ((ConversationAdapter) list.getAdapter()).toggleSelection(messageRecord);
+    list.getAdapter().notifyDataSetChanged();
+
+    actionMode = ((AppCompatActivity)getActivity()).startSupportActionMode(actionModeCallback);
+  }
+
+  private class ReactionsToolbarListener implements Toolbar.OnMenuItemClickListener {
+
+    private final MessageRecord messageRecord;
+
+    private ReactionsToolbarListener(@NonNull MessageRecord messageRecord) {
+      this.messageRecord = messageRecord;
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+      switch (item.getItemId()) {
+        case R.id.action_info:        handleDisplayDetails(messageRecord);                         return true;
+        case R.id.action_delete:      handleDeleteMessages(Sets.newHashSet(messageRecord));        return true;
+        case R.id.action_copy:        handleCopyMessage(Sets.newHashSet(messageRecord));           return true;
+        case R.id.action_reply:       handleReplyMessage(messageRecord);                           return true;
+        case R.id.action_multiselect: handleEnterMultiSelect(messageRecord);                       return true;
+        case R.id.action_forward:     handleForwardMessage(messageRecord);                         return true;
+        case R.id.action_download:    handleSaveAttachment((MediaMmsMessageRecord) messageRecord); return true;
+        default:                                                                                   return false;
+      }
     }
   }
 

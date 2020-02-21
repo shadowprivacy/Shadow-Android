@@ -119,6 +119,26 @@ public class ThumbnailView extends FrameLayout {
                     MeasureSpec.makeMeasureSpec(finalHeight, MeasureSpec.EXACTLY));
   }
 
+  @Override
+  protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+    super.onSizeChanged(w, h, oldw, oldh);
+
+    float playOverlayScale = 1;
+    float captionIconScale = 1;
+    int   playOverlayWidth = playOverlay.getLayoutParams().width;
+
+    if (playOverlayWidth * 2 > getWidth()) {
+      playOverlayScale /= 2;
+      captionIconScale  = 0;
+    }
+
+    playOverlay.setScaleX(playOverlayScale);
+    playOverlay.setScaleY(playOverlayScale);
+
+    captionIcon.setScaleX(captionIconScale);
+    captionIcon.setScaleY(captionIconScale);
+  }
+
   @SuppressWarnings("SuspiciousNameCombination")
   private void fillTargetDimensions(int[] targetDimens, int[] dimens, int[] bounds) {
     int     dimensFilledCount = getNonZeroCount(dimens);
@@ -291,7 +311,7 @@ public class ThumbnailView extends FrameLayout {
     SettableFuture<Boolean> result        = new SettableFuture<>();
     boolean                 resultHandled = false;
 
-    if (slide.hasPlaceholder() && !Objects.equals(slide.getPlaceholderBlur(), previousBlurhash)) {
+    if (slide.hasPlaceholder() && (previousBlurhash == null || !Objects.equals(slide.getPlaceholderBlur(), previousBlurhash))) {
       buildPlaceholderGlideRequest(glideRequests, slide).into(new GlideBitmapListeningTarget(blurhash, result));
       resultHandled = true;
     } else if (!slide.hasPlaceholder()) {

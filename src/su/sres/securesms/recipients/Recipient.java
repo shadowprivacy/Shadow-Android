@@ -59,6 +59,7 @@ public class Recipient {
   private final RecipientId            id;
   private final boolean                resolving;
   private final UUID                   uuid;
+  private final String                 username;
   private final String                 e164;
   private final String                 email;
   private final String                 groupId;
@@ -109,6 +110,16 @@ public class Recipient {
   public static @NonNull Recipient resolved(@NonNull RecipientId id) {
     Preconditions.checkNotNull(id, "ID cannot be null.");
     return live(id).resolve();
+  }
+
+  /**
+   * Returns a fully-populated {@link Recipient} and associates it with the provided username.
+   */
+  @WorkerThread
+  public static @NonNull Recipient externalUsername(@NonNull Context context, @NonNull UUID uuid, @NonNull String username) {
+    Recipient recipient = externalPush(context, uuid, null);
+    DatabaseFactory.getRecipientDatabase(context).setUsername(recipient.getId(), username);
+    return recipient;
   }
 
   /**
@@ -251,6 +262,7 @@ public class Recipient {
     this.id                     = id;
     this.resolving              = true;
     this.uuid                   = null;
+    this.username               = null;
     this.e164                   = null;
     this.email                  = null;
     this.groupId                = null;
@@ -286,6 +298,7 @@ public class Recipient {
     this.id                     = id;
     this.resolving              = false;
     this.uuid                   = details.uuid;
+    this.username               = details.username;
     this.e164                   = details.e164;
     this.email                  = details.email;
     this.groupId                = details.groupId;
@@ -355,19 +368,10 @@ public class Recipient {
   public @NonNull String getDisplayName(@NonNull Context context) {
     return Util.getFirstNonEmpty(getName(context),
             getProfileName(),
-            getUsername(),
+            getDisplayUsername(),
             e164,
             email,
             context.getString(R.string.Recipient_unknown));
-  }
-
-  private @NonNull String getUsername() {
-    if (FeatureFlags.USERNAMES) {
-      // TODO [greyson] Replace with actual username
-      return "@caycepollard";
-    }
-
-      return "";
   }
 
   public @NonNull MaterialColor getColor() {
@@ -379,6 +383,14 @@ public class Recipient {
 
   public @NonNull Optional<UUID> getUuid() {
     return Optional.fromNullable(uuid);
+  }
+
+  public @NonNull Optional<String> getUsername() {
+    if (FeatureFlags.USERNAMES) {
+      return Optional.fromNullable(username);
+    } else {
+      return Optional.absent();
+    }
   }
 
   public @NonNull Optional<String> getE164() {
@@ -621,7 +633,11 @@ public class Recipient {
    * @return True if this recipient can support receiving UUID-only messages, otherwise false.
    */
   public boolean isUuidSupported() {
-    return FeatureFlags.UUIDS && uuidSupported;
+    if (FeatureFlags.USERNAMES) {
+      return true;
+    } else {
+      return FeatureFlags.UUIDS && uuidSupported;
+    }
   }
 
   public @Nullable byte[] getProfileKey() {
@@ -650,6 +666,14 @@ public class Recipient {
 
   public @NonNull LiveRecipient live() {
     return ApplicationDependencies.getRecipientCache().getLive(id);
+  }
+
+  private @Nullable String getDisplayUsername() {
+    if (!TextUtils.isEmpty(username)) {
+      return "@" + username;
+    } else {
+      return null;
+    }
   }
 
   @Override

@@ -5,32 +5,42 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.AbstractCursorLoader;
+import su.sres.securesms.database.MediaDatabase;
 
-public class ThreadMediaLoader extends AbstractCursorLoader {
+public final class ThreadMediaLoader extends MediaLoader {
 
-  private final RecipientId recipientId;
-  private final boolean     gallery;
+  private final long                  threadId;
+  @NonNull private final MediaType             mediaType;
+  @NonNull private final MediaDatabase.Sorting sorting;
 
-  public ThreadMediaLoader(@NonNull Context context, @NonNull RecipientId recipientId, boolean gallery) {
+  public ThreadMediaLoader(@NonNull Context context,
+                           long threadId,
+                           @NonNull MediaType mediaType,
+                           @NonNull MediaDatabase.Sorting sorting)
+  {
     super(context);
-    this.recipientId = recipientId;
-    this.gallery     = gallery;
+    this.threadId  = threadId;
+    this.mediaType = mediaType;
+    this.sorting   = sorting;
   }
 
   @Override
   public Cursor getCursor() {
-    if (recipientId.isUnknown()) return null;
-
-    long threadId = DatabaseFactory.getThreadDatabase(getContext()).getThreadIdFor(Recipient.resolved(recipientId));
-
-    if (gallery) return DatabaseFactory.getMediaDatabase(getContext()).getGalleryMediaForThread(threadId);
-    else         return DatabaseFactory.getMediaDatabase(getContext()).getDocumentMediaForThread(threadId);
+    return createThreadMediaCursor(context, threadId, mediaType, sorting);
   }
 
-  public RecipientId getRecipientId() {
-    return recipientId;
+  static Cursor createThreadMediaCursor(@NonNull Context context,
+                                        long threadId,
+                                        @NonNull MediaType mediaType,
+                                        @NonNull MediaDatabase.Sorting sorting) {
+    MediaDatabase mediaDatabase = DatabaseFactory.getMediaDatabase(context);
+
+    switch (mediaType) {
+      case GALLERY : return mediaDatabase.getGalleryMediaForThread(threadId, sorting);
+      case DOCUMENT: return mediaDatabase.getDocumentMediaForThread(threadId, sorting);
+      case AUDIO   : return mediaDatabase.getAudioMediaForThread(threadId, sorting);
+      case ALL     : return mediaDatabase.getAllMediaForThread(threadId, sorting);
+      default      : throw new AssertionError();
+    }
   }
 }

@@ -69,7 +69,6 @@
 
     <style name="TextSecure.HighlightActionBar" parent="@style/TextSecure.DarkActionBar.Conversation">
         <item name="background">@color/signal_primary</item>
-        <item name="popupTheme">@style/ThemeOverlay.AppCompat.Light</item>
         <item name="elevation">0dp</item>
     </style>
 
@@ -383,6 +382,25 @@
         <attr name="arcStartAngle" format="float"   />
         <attr name="arcSweepAngle" format="float"   />
         <attr name="arcProgress" format="float"   />
+    </declare-styleable>
+
+    <style name="Signal.MessageRequest.Button" parent="Button.Borderless">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:background">?message_request_dialog_button_background</item>
+    </style>
+
+    <style name="Signal.MessageRequest.Button.Deny">
+        <item name="android:textColor">@color/core_red</item>
+    </style>
+
+    <style name="Signal.MessageRequest.Button.Accept">
+        <item name="android:textColor">@color/core_blue</item>
+    </style>
+
+    <declare-styleable name="MaxHeightFrameLayout">
+        <attr name="mhfl_maxHeight" format="dimension" />
     </declare-styleable>
 
 </resources>

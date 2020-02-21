@@ -29,6 +29,7 @@ import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.ContactAccessor;
 import su.sres.securesms.crypto.SessionUtil;
+import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessagingDatabase.InsertResult;
 import su.sres.securesms.database.RecipientDatabase;
@@ -41,14 +42,20 @@ import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
+import su.sres.securesms.service.IncomingMessageObserver;
 import su.sres.securesms.sms.IncomingJoinedMessage;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
+import su.sres.signalservice.api.SignalServiceMessagePipe;
+import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
 import su.sres.signalservice.api.push.ContactTokenDetails;
 import su.sres.signalservice.api.util.UuidUtil;
+import su.sres.signalservice.api.push.SignalServiceAddress;
+import su.sres.signalservice.api.push.exceptions.NotFoundException;
 
 import java.io.IOException;
 import java.util.Calendar;
@@ -114,7 +121,18 @@ class DirectoryHelperV1 {
 
     @WorkerThread
     static RegisteredState refreshDirectoryFor(@NonNull Context context, @NonNull Recipient recipient, boolean notifyOfNewUsers) throws IOException {
-        RecipientDatabase           recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+        RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+
+        if (recipient.getUuid().isPresent() && !recipient.getE164().isPresent()) {
+            boolean isRegistered = isUuidRegistered(context, recipient);
+            if (isRegistered) {
+                recipientDatabase.markRegistered(recipient.getId(), recipient.getUuid().get());
+            } else {
+                recipientDatabase.markUnregistered(recipient.getId());
+            }
+
+            return isRegistered ? RegisteredState.REGISTERED : RegisteredState.NOT_REGISTERED;
+        }
         SignalServiceAccountManager accountManager    = ApplicationDependencies.getSignalServiceAccountManager();
         Future<RegisteredState>     legacyRequest     = getLegacyRegisteredState(context, accountManager, recipientDatabase, recipient);
 
@@ -314,6 +332,32 @@ class DirectoryHelperV1 {
 
     private static boolean isValidContactNumber(@Nullable String number) {
         return !TextUtils.isEmpty(number) && !UuidUtil.isUuid(number);
+    }
+
+    private static boolean isUuidRegistered(@NonNull Context context, @NonNull Recipient recipient) throws IOException {
+        Optional<UnidentifiedAccessPair> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, recipient);
+        SignalServiceMessagePipe         authPipe           = IncomingMessageObserver.getPipe();
+        SignalServiceMessagePipe         unidentifiedPipe   = IncomingMessageObserver.getUnidentifiedPipe();
+        SignalServiceMessagePipe         pipe               = unidentifiedPipe != null && unidentifiedAccess.isPresent() ? unidentifiedPipe : authPipe;
+        SignalServiceAddress             address            = RecipientUtil.toSignalServiceAddress(context, recipient);
+
+        if (pipe != null) {
+            try {
+                pipe.getProfile(address, unidentifiedAccess.get().getTargetUnidentifiedAccess());
+                return true;
+            } catch (NotFoundException e) {
+                return false;
+            } catch (IOException e) {
+                Log.w(TAG, "Websocket request failed. Falling back to REST.");
+            }
+        }
+
+        try {
+            ApplicationDependencies.getSignalServiceMessageReceiver().retrieveProfile(address, unidentifiedAccess.get().getTargetUnidentifiedAccess());
+            return true;
+        } catch (NotFoundException e) {
+            return false;
+        }
     }
 
     private static class DirectoryResult {

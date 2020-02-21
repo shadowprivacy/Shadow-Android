@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import su.sres.securesms.MediaDocumentsAdapter;
 import su.sres.securesms.R;
 import su.sres.securesms.components.FromTextView;
 import su.sres.securesms.recipients.Recipient;
@@ -51,7 +50,7 @@ class CameraContactSelectionAdapter extends RecyclerView.Adapter<CameraContactSe
         notifyDataSetChanged();
     }
 
-    static class RecipientViewHolder extends MediaDocumentsAdapter.ViewHolder {
+    static class RecipientViewHolder extends RecyclerView.ViewHolder {
 
         private final FromTextView name;
 

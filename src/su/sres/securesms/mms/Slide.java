@@ -173,6 +173,34 @@ public abstract class Slide {
             null);
   }
 
+  public @NonNull Optional<String> getFileType(@NonNull Context context) {
+    Optional<String> fileName = getFileName();
+
+    if (fileName.isPresent()) {
+      return Optional.of(getFileType(fileName));
+    }
+
+    return Optional.fromNullable(MediaUtil.getExtension(context, getUri()));
+  }
+
+  private static @NonNull String getFileType(Optional<String> fileName) {
+    if (!fileName.isPresent()) return "";
+
+    String[] parts = fileName.get().split("\\.");
+
+    if (parts.length < 2) {
+      return "";
+    }
+
+    String suffix = parts[parts.length - 1];
+
+    if (suffix.length() <= 3) {
+      return suffix;
+    }
+
+    return "";
+  }
+
   @Override
   public boolean equals(Object other) {
     if (other == null)             return false;

@@ -38,7 +38,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
         Log.i(TAG, "onCreate()");
         if (((ApplicationContext) getApplication()).getServerSet()) {
             Log.i(TAG, "the server URL is already present in the config database, quitting the activity");
-            startActivity(new Intent(this, ConversationListActivity.class));
+            startActivity(new Intent(this, MainActivity.class));
             finish();
         }
 
@@ -88,7 +88,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
             ((ApplicationContext) getApplication()).setServerSet(true);
             EventBus.getDefault().post(new ServerSetEvent());
 
-            startActivity(new Intent(this, ConversationListActivity.class));
+            startActivity(new Intent(this, MainActivity.class));
             finish();
         }
 

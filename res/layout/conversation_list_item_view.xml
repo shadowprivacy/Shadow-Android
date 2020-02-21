@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<su.sres.securesms.ConversationListItem
+<su.sres.securesms.conversationlist.ConversationListItem
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
@@ -171,4 +171,4 @@
 
     </RelativeLayout>
 
-</su.sres.securesms.ConversationListItem>
+</su.sres.securesms.conversationlist.ConversationListItem>

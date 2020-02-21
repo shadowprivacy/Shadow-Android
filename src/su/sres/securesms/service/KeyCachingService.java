@@ -34,7 +34,7 @@ import androidx.core.app.NotificationCompat;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.logging.Log;
 
-import su.sres.securesms.ConversationListActivity;
+import su.sres.securesms.MainActivity;
 import su.sres.securesms.DummyActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.crypto.InvalidPassphraseException;
@@ -79,7 +79,7 @@ public class KeyCachingService extends Service {
   public KeyCachingService() {}
 
   public static synchronized boolean isLocked(Context context) {
-    return getMasterSecret(context) == null;
+    return masterSecret == null && (!TextSecurePreferences.isPasswordDisabled(context) || TextSecurePreferences.isScreenLockEnabled(context));
   }
 
   public static synchronized @Nullable MasterSecret getMasterSecret(Context context) {
@@ -286,7 +286,8 @@ public class KeyCachingService extends Service {
   }
 
   private PendingIntent buildLaunchIntent() {
-    Intent intent              = new Intent(this, ConversationListActivity.class);
+    // TODO [greyson] Navigation
+    Intent intent              = new Intent(this, MainActivity.class);
     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
     return PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
   }

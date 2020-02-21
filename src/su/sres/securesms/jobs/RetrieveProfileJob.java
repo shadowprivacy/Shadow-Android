@@ -20,6 +20,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.service.IncomingMessageObserver;
 import su.sres.securesms.util.Base64;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.ProfileUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -80,6 +81,7 @@ public class RetrieveProfileJob extends BaseJob  {
 
   @Override
   public void onRun() throws IOException {
+    Log.i(TAG, "Retrieving profile of " + recipient.getId());
     Recipient resolved = recipient.resolve();
 
     if (resolved.isGroup()) handleGroupRecipient(resolved);
@@ -102,8 +104,15 @@ public class RetrieveProfileJob extends BaseJob  {
   private void handlePhoneNumberRecipient(Recipient recipient) throws IOException {
     SignalServiceProfile profile = ProfileUtil.retrieveProfile(context, recipient);
 
+    if (recipient.getProfileKey() == null) {
+      Log.i(TAG, "No profile key for available for " + recipient.getId());
+    } else {
+      Log.i(TAG, "Profile key available for " + recipient.getId());
+    }
+
     setProfileName(recipient, profile.getName());
     setProfileAvatar(recipient, profile.getAvatar());
+    if (FeatureFlags.USERNAMES) setUsername(recipient, profile.getUsername());
     setProfileCapabilities(recipient, profile.getCapabilities());
     setIdentityKey(recipient, profile.getIdentityKey());
     setUnidentifiedAccessMode(recipient, profile.getUnidentifiedAccess(), profile.isUnrestrictedUnidentifiedAccess());
@@ -194,7 +203,13 @@ public class RetrieveProfileJob extends BaseJob  {
 
     if (!Util.equals(profileAvatar, recipient.getProfileAvatar())) {
       ApplicationDependencies.getJobManager().add(new RetrieveProfileAvatarJob(recipient, profileAvatar));
+    } else {
+      Log.d(TAG, "Skipping avatar fetch for " + recipient.getId());
     }
+  }
+
+  private void setUsername(Recipient recipient, @Nullable String username) {
+    DatabaseFactory.getRecipientDatabase(context).setUsername(recipient.getId(), username);
   }
 
   private void setProfileCapabilities(@NonNull Recipient recipient, @Nullable SignalServiceProfile.Capabilities capabilities) {

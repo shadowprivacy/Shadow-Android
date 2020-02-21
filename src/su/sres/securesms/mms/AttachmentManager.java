@@ -44,7 +44,6 @@ import su.sres.securesms.MediaPreviewActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.attachments.Attachment;
-import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.components.AudioView;
 import su.sres.securesms.components.DocumentView;
@@ -497,7 +496,6 @@ public class AttachmentManager {
       intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
       intent.putExtra(MediaPreviewActivity.SIZE_EXTRA, slide.asAttachment().getSize());
       intent.putExtra(MediaPreviewActivity.CAPTION_EXTRA, slide.getCaption().orNull());
-      intent.putExtra(MediaPreviewActivity.OUTGOING_EXTRA, true);
       intent.setDataAndType(slide.getUri(), slide.getContentType());
 
       context.startActivity(intent);

@@ -88,6 +88,9 @@
     <string name="BucketedThreadMedia_Yesterday">Yesterday</string>
     <string name="BucketedThreadMedia_This_week">This week</string>
     <string name="BucketedThreadMedia_This_month">This month</string>
+    <string name="BucketedThreadMedia_Large">Large</string>
+    <string name="BucketedThreadMedia_Medium">Medium</string>
+    <string name="BucketedThreadMedia_Small">Small</string>
 
     <!-- CallScreen -->
     <string name="CallScreen_Incoming_call">Incoming call</string>
@@ -121,6 +124,11 @@
     <string name="CommunicationActions_no_browser_found">No web browser found.</string>
     <string name="CommunicationActions_a_cellular_call_is_already_in_progress">A cellular call is already in progress.</string>
 
+    <string name="CommunicationActions_start_video_call">Start video call?</string>
+    <string name="CommunicationActions_start_voice_call">Start voice call?</string>
+    <string name="CommunicationActions_cancel">Cancel</string>
+    <string name="CommunicationActions_call">Call</string>
+
     <!-- ConfirmIdentityDialog -->
     <string name="ConfirmIdentityDialog_your_safety_number_with_s_has_changed">Your safety number with %1$s has changed. This could either mean that someone is trying to intercept your communication, or that %2$s simply reinstalled Shadow.</string>
     <string name="ConfirmIdentityDialog_you_may_wish_to_verify_your_safety_number_with_this_contact">You may wish to verify your safety number with this contact.</string>
@@ -130,6 +138,8 @@
     <string name="ContactsCursorLoader_recent_chats">Recent chats</string>
     <string name="ContactsCursorLoader_contacts">Contacts</string>
     <string name="ContactsCursorLoader_groups">Groups</string>
+    <string name="ContactsCursorLoader_phone_number_search">Phone number search</string>
+    <string name="ContactsCursorLoader_username_search">Username search</string>
 
     <!-- ContactsDatabase -->
     <string name="ContactsDatabase_message_s">Message %s</string>
@@ -345,6 +355,10 @@
 
     <!-- DocumentView -->
     <string name="DocumentView_unknown_file">Unknown file</string>
+    <string name="DocumentView_unnamed_file">Unnamed file</string>
+    <string name="DocumentView_audio_file">Audio file</string>
+    <string name="DocumentView_image_file">Image file</string>
+    <string name="DocumentView_video_file">Video file</string>
 
     <!-- DozeReminder -->
     <string name="DozeReminder_optimize_for_missing_play_services">Optimize for missing Play Services</string>
@@ -437,6 +451,8 @@
     <!-- InviteActivity -->
     <string name="InviteActivity_share">Share</string>
     <string name="InviteActivity_choose_contacts">Choose contacts</string>
+    <string name="InviteActivity_share_with_contacts">Share with contacts</string>
+    <string name="InviteActivity_choose_how_to_share">Choose how to share</string>
     <string name="InviteActivity_cancel">Cancel</string>
     <string name="InviteActivity_sending">Sending…</string>
     <string name="InviteActivity_heart_content_description">Heart</string>
@@ -476,18 +492,28 @@
     <!-- MediaOverviewActivity -->
     <string name="MediaOverviewActivity_Media">Media</string>
     <plurals name="MediaOverviewActivity_Media_delete_confirm_title">
-        <item quantity="one">Delete selected message?</item>
-        <item quantity="other">Delete selected messages?</item>
+        <item quantity="one">Delete selected item?</item>
+        <item quantity="other">Delete selected items?</item>
     </plurals>
     <plurals name="MediaOverviewActivity_Media_delete_confirm_message">
-        <item quantity="one">This will permanently delete the selected message.</item>
-        <item quantity="other">This will permanently delete all %1$d selected messages.</item>
+        <item quantity="one">This will permanently delete the selected file. Any message text associated with this item will also be deleted.</item>
+        <item quantity="other">This will permanently delete all %1$d selected files. Any message text associated with these items will also be deleted.</item>
     </plurals>
     <string name="MediaOverviewActivity_Media_delete_progress_title">Deleting</string>
     <string name="MediaOverviewActivity_Media_delete_progress_message">Deleting messages…</string>
-    <string name="MediaOverviewActivity_Documents">Documents</string>
+    <string name="MediaOverviewActivity_Files">Files</string>
     <string name="MediaOverviewActivity_Select_all">Select all</string>
     <string name="MediaOverviewActivity_collecting_attachments">Collecting attachments…</string>
+    <string name="MediaOverviewActivity_Audio">Audio</string>
+    <string name="MediaOverviewActivity_All">All</string>
+    <string name="MediaOverviewActivity_Sort_by">Sort by</string>
+    <string name="MediaOverviewActivity_Newest">Newest</string>
+    <string name="MediaOverviewActivity_Oldest">Oldest</string>
+    <string name="MediaOverviewActivity_Storage_used">Storage used</string>
+    <string name="MediaOverviewActivity_All_storage_use">All storage use</string>
+    <string name="MediaOverviewActivity_Grid_view_description">Grid view</string>
+    <string name="MediaOverviewActivity_List_view_description">List view</string>
+    <string name="MediaOverviewActivity_Selected_description">Selected</string>
 
     <!--- NotificationBarManager -->
     <string name="NotificationBarManager_signal_call_in_progress">Shadow call in progress</string>
@@ -600,6 +626,19 @@
 
     <!-- PlayServicesProblemFragment -->
     <string name="PlayServicesProblemFragment_the_version_of_google_play_services_you_have_installed_is_not_functioning">The version of Google Play Services you have installed is not functioning correctly.  Please reinstall Google Play Services and try again.</string>
+
+    <!-- ProfileEditNameFragment -->
+    <string name="ProfileEditNameFragment_profile_name">Profile name</string>
+    <string name="ProfileEditNameFragment_your_profile_name_can_be_seen_by_your_contacts">Your profile name can be seen by your contacts and by other users or groups when you initiate a conversation or accept a conversation request.</string>
+    <string name="ProfileEditNameFragment_save">Save</string>
+
+    <!-- ProfileEditOverviewFragment -->
+    <string name="ProfileEditOverviewFragment_profile">Profile</string>
+    <string name="ProfileEditOverviewFragment_profile_name">Profile name</string>
+    <string name="ProfileEditOverviewFragment_username">Username</string>
+    <string name="ProfileEditOverviewFragment_create_a_profile_name">Create a profile name</string>
+    <string name="ProfileEditOverviewFragment_create_a_username">Create a username</string>
+    <string name="ProfileEditOverviewFragment_your_signal_profile_can_be_seen_by">Your Shadow Profile can be seen by your contacts and by other users or groups when you initiate a conversation or accept a conversation request.</string>
 
     <!-- RatingManager -->
     <string name="RatingManager_rate_this_app">Rate this app</string>
@@ -789,6 +828,21 @@
     <string name="UnverifiedSendDialog_send_message">Send message?</string>
     <string name="UnverifiedSendDialog_send">Send</string>
 
+    <!-- UsernameEditFragment -->
+    <string name="UsernameEditFragment_username">Username</string>
+    <string name="UsernameEditFragment_submit">Submit</string>
+    <string name="UsernameEditFragment_delete">Delete</string>
+    <string name="UsernameEditFragment_successfully_set_username">Successfully set username.</string>
+    <string name="UsernameEditFragment_successfully_removed_username">Successfully removed username.</string>
+    <string name="UsernameEditFragment_encountered_a_network_error">Encountered a network error.</string>
+    <string name="UsernameEditFragment_this_username_is_taken">This username is taken.</string>
+    <string name="UsernameEditFragment_this_username_is_available">This username is available.</string>
+    <string name="UsernameEditFragment_usernames_can_only_include">Usernames can only include a-Z, 0-9, and underscores.</string>
+    <string name="UsernameEditFragment_usernames_cannot_begin_with_a_number">Usernames cannot begin with a number.</string>
+    <string name="UsernameEditFragment_username_is_invalid">Username is invalid.</string>
+    <string name="UsernameEditFragment_usernames_must_be_between_a_and_b_characters">Usernames must be between %1$d and %2$d characters.</string>
+    <string name="UsernameEditFragment_other_signal_users_can_send_message_requests_to_your_unique_username">Other Shadow users can send message requests to your unique username without knowing your phone number. Choosing a username is optional.</string>
+
     <!-- VerifyIdentityActivity -->
     <string name="VerifyIdentityActivity_your_contact_is_running_an_old_version_of_signal">Your contact is running an old version of Shadow. Please ask them to update before verifying your safety number.</string>
     <string name="VerifyIdentityActivity_your_contact_is_running_a_newer_version_of_Signal">Your contact is running a newer version of Shadow with an incompatible QR code format. Please update to compare.</string>
@@ -837,6 +891,7 @@
     <string name="MediaPreviewActivity_unable_to_write_to_external_storage_without_permission">Unable to save to external storage without permissions</string>
     <string name="MediaPreviewActivity_media_delete_confirmation_title">Delete message?</string>
     <string name="MediaPreviewActivity_media_delete_confirmation_message">This will permanently delete this message.</string>
+    <string name="MediaPreviewActivity_s_to_s">%1$s to %2$s</string>
 
     <!-- MessageNotifier -->
     <string name="MessageNotifier_d_new_messages_in_d_conversations">%1$d new messages in %2$d conversations</string>
@@ -859,6 +914,7 @@
     <string name="MessageNotifier_open_signal_to_check_for_recent_notifications">Open Shadow to check for recent notifications.</string>
     <string name="MessageNotifier_contact_message">%1$s %2$s</string>
     <string name="MessageNotifier_unknown_contact_message">Contact</string>
+    <string name="MessageNotifier_reacted_to_your_message">Reacted to your message: %1$s</string>
 
     <!-- Notification Channels -->
     <string name="NotificationChannel_messages">Default</string>
@@ -870,6 +926,10 @@
     <string name="NotificationChannel_other">Other</string>
     <string name="NotificationChannel_group_messages">Messages</string>
     <string name="NotificationChannel_missing_display_name">Unknown</string>
+
+    <!-- ProfileEditNameFragment -->
+    <string name="ProfileEditNameFragment_successfully_set_profile_name">Successfully set profile name.</string>
+    <string name="ProfileEditNameFragment_encountered_a_network_error">Encountered a network error.</string>
 
     <!-- QuickResponseService -->
     <string name="QuickResponseService_quick_response_unavailable_when_Signal_is_locked">Quick response unavailable when Shadow is locked!</string>
@@ -889,6 +949,9 @@
     <!-- SingleRecipientNotificationBuilder -->
     <string name="SingleRecipientNotificationBuilder_signal">Shadow</string>
     <string name="SingleRecipientNotificationBuilder_new_message">New message</string>
+    <!-- ThumbnailView -->
+    <string name="ThumbnailView_Play_video_description">Play video</string>
+    <string name="ThumbnailView_Has_a_caption_description">Has a caption</string>
 
     <!-- TransferControlView -->
     <plurals name="TransferControlView_n_items">
@@ -969,6 +1032,10 @@
     <!-- ContactSelectionListFragment-->
     <string name="ContactSelectionListFragment_signal_requires_the_contacts_permission_in_order_to_display_your_contacts">Shadow requires the Contacts permission in order to display your contacts, but it has been permanently denied. Please continue to the app settings menu, select \"Permissions\", and enable \"Contacts\".</string>
     <string name="ContactSelectionListFragment_error_retrieving_contacts_check_your_network_connection">Error retrieving contacts, check your network connection</string>
+
+    <string name="ContactSelectionListFragment_username_not_found">Username not found</string>
+    <string name="ContactSelectionListFragment_s_is_not_a_signal_user">"%1$s" is not a Shadow user. Please check the username and try again.</string>
+    <string name="ContactSelectionListFragment_okay">Okay</string>
 
     <!-- blocked_contacts_fragment -->
     <string name="blocked_contacts_fragment__no_blocked_contacts">No blocked contacts</string>
@@ -1348,6 +1415,7 @@
     <string name="preferences__automatically_delete_older_messages_once_a_conversation_exceeds_a_specified_length">Automatically delete older messages once a conversation exceeds a specified length</string>
     <string name="preferences__delete_old_messages">Delete old messages</string>
     <string name="preferences__chats">Chats and media</string>
+    <string name="preferences__storage">Storage</string>
     <string name="preferences__conversation_length_limit">Conversation length limit</string>
     <string name="preferences__trim_all_conversations_now">Trim all conversations now</string>
     <string name="preferences__scan_through_all_conversations_and_enforce_conversation_length_limits">Scan through all conversations and enforce conversation length limits</string>
@@ -1376,6 +1444,12 @@
     <string name="preferences_chats__when_roaming">When roaming</string>
     <string name="preferences_chats__media_auto_download">Media auto-download</string>
     <string name="preferences_chats__message_trimming">Message trimming</string>
+    <string name="preferences_storage__storage_usage">Storage usage</string>
+    <string name="preferences_storage__photos">Photos</string>
+    <string name="preferences_storage__videos">Videos</string>
+    <string name="preferences_storage__files">Files</string>
+    <string name="preferences_storage__audio">Audio</string>
+    <string name="preferences_storage__review_storage">Review storage</string>
     <string name="preferences_advanced__use_system_emoji">Use system emoji</string>
     <string name="preferences_advanced__disable_signal_built_in_emoji_support">Disable Shadow\'s built-in emoji support</string>
     <string name="preferences_advanced__relay_all_calls_through_the_signal_server_to_avoid_revealing_your_ip_address">Relay all calls through the Shadow server to avoid revealing your IP address to your contact. Enabling will reduce call quality.</string>
@@ -1413,6 +1487,7 @@
 
     <!-- conversation_callable_secure -->
     <string name="conversation_callable_secure__menu_call">Shadow call</string>
+    <string name="conversation_callable_secure__menu_video">Shadow video call</string>
 
     <!-- conversation_context -->
     <string name="conversation_context__menu_message_details">Message details</string>
@@ -1421,6 +1496,9 @@
     <string name="conversation_context__menu_forward_message">Forward message</string>
     <string name="conversation_context__menu_resend_message">Resend message</string>
     <string name="conversation_context__menu_reply_to_message">Reply to message</string>
+
+    <!-- conversation_context_reacction -->
+    <string name="conversation_context__reaction_multi_select">Select multiple</string>
 
     <!-- conversation_context_image -->
     <string name="conversation_context_image__save_attachment">Save attachment</string>
@@ -1527,9 +1605,6 @@
     <string name="media_preview__save_title">Save</string>
     <string name="media_preview__forward_title">Forward</string>
     <string name="media_preview__all_media_title">All media</string>
-
-    <!-- media_overview -->
-    <string name="media_overview_documents_fragment__no_documents_found">No documents</string>
 
     <!-- media_preview_activity -->
     <string name="media_preview_activity__media_content_description">Media preview</string>
@@ -1664,6 +1739,18 @@
     <string name="RegistrationLockDialog_reminder">Reminder:</string>
     <string name="recipient_preferences__about">About</string>
     <string name="Recipient_unknown">Unknown</string>
+    <string name="MessageRequestBottomView_accept">Accept</string>
+    <string name="MessageRequestBottomView_delete">Delete</string>
+    <string name="MessageRequestBottomView_block">Block</string>
+    <string name="MessageRequestBottomView_do_you_want_to_let">Do you want to receive messages from %1$s?</string>
+    <string name="MessageRequestProfileView_member_of_one_group">Member of %1$s</string>
+    <string name="MessageRequestProfileView_member_of_two_groups">Member of %1$s and %2$s</string>
+    <string name="MessageRequestProfileView_member_of_many_groups">Member of %1$s, %2$s, and %3$s</string>
+    <string name="MessageRequestProfileView_members">%1$d members</string>
+    <plurals name="MessageRequestProfileView_member_of_others">
+        <item quantity="one">%d other</item>
+        <item quantity="other">%d others</item>
+    </plurals>
     <!-- EOF -->
 
 </resources>

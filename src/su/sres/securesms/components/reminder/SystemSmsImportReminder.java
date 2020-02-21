@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.view.View;
 import android.view.View.OnClickListener;
 
-import su.sres.securesms.ConversationListActivity;
+import su.sres.securesms.MainActivity;
 import su.sres.securesms.DatabaseMigrationActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.service.ApplicationMigrationService;
@@ -21,7 +21,8 @@ public class SystemSmsImportReminder extends Reminder {
       intent.setAction(ApplicationMigrationService.MIGRATE_DATABASE);
       context.startService(intent);
 
-      Intent nextIntent = new Intent(context, ConversationListActivity.class);
+      // TODO [greyson] Navigation
+      Intent nextIntent = new Intent(context, MainActivity.class);
       Intent activityIntent = new Intent(context, DatabaseMigrationActivity.class);
       activityIntent.putExtra("next_intent", nextIntent);
       context.startActivity(activityIntent);

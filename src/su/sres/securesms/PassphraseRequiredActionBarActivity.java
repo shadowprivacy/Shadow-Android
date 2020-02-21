@@ -40,6 +40,7 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
 
   @Override
   protected final void onCreate(Bundle savedInstanceState) {
+    Log.d(TAG, "[" + Log.tag(getClass()) + "] onCreate()");
     this.networkAccess = new SignalServiceNetworkAccess(this);
     onPreCreate();
 
@@ -59,7 +60,7 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
 
   @Override
   protected void onResume() {
-    Log.i(TAG, "onResume()");
+    Log.d(TAG, "[" + Log.tag(getClass()) + "] onResume()");
     super.onResume();
     if (networkAccess.isCensored(this)) {
       ApplicationDependencies.getJobManager().add(new PushNotificationReceiveJob(this));
@@ -67,22 +68,33 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
   }
 
   @Override
-  protected void onPause() {
-    Log.i(TAG, "onPause()");
-    super.onPause();
+  protected void onStart() {
+    Log.d(TAG, "[" + Log.tag(getClass()) + "] onStart()");
+    super.onStart();
+  }
 
+  @Override
+  protected void onPause() {
+    Log.d(TAG, "[" + Log.tag(getClass()) + "] onPause()");
+    super.onPause();
+  }
+
+  @Override
+  protected void onStop() {
+    Log.d(TAG, "[" + Log.tag(getClass()) + "] onStop()");
+    super.onStop();
   }
 
   @Override
   protected void onDestroy() {
-    Log.i(TAG, "onDestroy()");
+    Log.d(TAG, "[" + Log.tag(getClass()) + "] onDestroy()");
     super.onDestroy();
     removeClearKeyReceiver(this);
   }
 
   @Override
   public void onMasterSecretCleared() {
-    Log.i(TAG, "onMasterSecretCleared()");
+    Log.d(TAG, "onMasterSecretCleared()");
     if (ApplicationContext.getInstance(this).isAppVisible()) routeApplicationState(true);
     else                                                     finish();
   }
@@ -128,7 +140,7 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
   }
 
   private Intent getIntentForState(int state) {
-    Log.i(TAG, "routeApplicationState(), state: " + state);
+    Log.d(TAG, "routeApplicationState(), state: " + state);
 
     switch (state) {
       case STATE_CREATE_PASSPHRASE:   return getCreatePassphraseIntent();
@@ -186,11 +198,11 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
   }
 
   private Intent getConversationListIntent() {
-    return new Intent(this, ConversationListActivity.class);
+    // TODO [greyson] Navigation
+    return new Intent(this, MainActivity.class);
   }
 
   private void initializeClearKeyReceiver() {
-    Log.i(TAG, "initializeClearKeyReceiver()");
     this.clearKeyReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {

@@ -1,49 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<su.sres.securesms.conversation.ConversationItem
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<su.sres.securesms.conversation.ConversationItem xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/conversation_item"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
+    android:background="@drawable/conversation_item_background"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:focusable="true"
     android:nextFocusLeft="@id/container"
     android:nextFocusRight="@id/embedded_text_editor"
-    android:background="@drawable/conversation_item_background"
-    android:clipToPadding="false"
-    android:clipChildren="false">
+    android:orientation="horizontal">
 
     <RelativeLayout
         android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/conversation_individual_right_gutter"
-        android:clipToPadding="false"
-        android:clipChildren="false">
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
         <ImageView
             android:id="@+id/reply_icon"
             android:layout_width="@dimen/conversation_item_reply_size"
             android:layout_height="@dimen/conversation_item_reply_size"
-            android:alpha="0"
-            android:src="@drawable/ic_reply_white_24dp"
-            android:tint="?compose_icon_tint"
+            android:layout_alignStart="@id/body_bubble"
             android:layout_alignTop="@id/body_bubble"
             android:layout_alignBottom="@id/body_bubble"
-            android:layout_alignStart="@id/body_bubble" />
+            android:alpha="0"
+            app:srcCompat="?menu_reply_icon"
+            android:tint="?compose_icon_tint" />
 
         <su.sres.securesms.conversation.ConversationItemBodyBubble
             android:id="@+id/body_bubble"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_toStartOf="@+id/indicators_parent"
             android:layout_alignWithParentIfMissing="true"
             android:layout_marginStart="@dimen/message_bubble_edge_margin"
-            android:clipToPadding="false"
-            android:clipChildren="false"
+            android:layout_toStartOf="@+id/indicators_parent"
             android:background="@color/white"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:orientation="vertical"
             tools:backgroundTint="@color/core_grey_05">
 
             <su.sres.securesms.components.QuoteView
@@ -183,11 +182,47 @@
             android:id="@+id/indicators_parent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingBottom="4dp"
-            android:layout_marginStart="8dp"
             android:layout_alignParentEnd="true"
-            android:layout_alignParentBottom="true" />
+            android:layout_alignParentBottom="true"
+            android:layout_marginStart="8dp"
+            android:orientation="vertical"
+            android:paddingBottom="4dp" />
+
+        <su.sres.securesms.components.MaxHeightFrameLayout
+            android:id="@+id/reactions_bubbles_container"
+            android:layout_width="wrap_content"
+            android:layout_height="0dip"
+            android:layout_alignTop="@id/body_bubble"
+            android:layout_alignBottom="@id/body_bubble"
+            android:layout_marginEnd="@dimen/reactions_bubble_margin"
+            android:layout_toStartOf="@id/body_bubble"
+            android:visibility="gone"
+            app:mhfl_maxHeight="@dimen/reactions_bubble_container_max_height"
+            tools:visibility="visible">
+
+            <su.sres.securesms.components.emoji.EmojiTextView
+                android:id="@+id/reactions_bubbles_secondary"
+                android:layout_width="@dimen/reactions_bubble_size"
+                android:layout_height="@dimen/reactions_bubble_size"
+                android:layout_gravity="bottom"
+                android:background="?attr/reactions_recv_background"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:textSize="@dimen/reactions_bubble_text_size"
+                tools:ignore="SpUsage" />
+
+            <su.sres.securesms.components.emoji.EmojiTextView
+                android:id="@+id/reactions_bubbles_primary"
+                android:layout_width="@dimen/reactions_bubble_size"
+                android:layout_height="@dimen/reactions_bubble_size"
+                android:layout_gravity="top"
+                android:background="?attr/reactions_recv_background"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:textSize="@dimen/reactions_bubble_text_size"
+                tools:ignore="SpUsage" />
+
+        </su.sres.securesms.components.MaxHeightFrameLayout>
 
     </RelativeLayout>
 

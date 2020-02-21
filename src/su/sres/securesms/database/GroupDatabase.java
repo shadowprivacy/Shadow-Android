@@ -1,6 +1,5 @@
 package su.sres.securesms.database;
 
-
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
@@ -152,6 +151,26 @@ public class GroupDatabase extends Database {
     } finally {
       if (cursor != null) cursor.close();
     }
+  }
+
+  public List<String> getGroupNamesContainingMember(RecipientId recipientId) {
+    SQLiteDatabase database   = databaseHelper.getReadableDatabase();
+    List<String>   groupNames = new LinkedList<>();
+    String[]       projection = new String[]{TITLE, MEMBERS};
+    String         query      = MEMBERS + " LIKE ?";
+    String[]       args       = new String[]{"%" + recipientId.serialize() + "%"};
+
+    try (Cursor cursor = database.query(TABLE_NAME, projection, query, args, null, null, null)) {
+      while (cursor != null && cursor.moveToNext()) {
+        List<String> members = Util.split(cursor.getString(cursor.getColumnIndexOrThrow(MEMBERS)), ",");
+
+        if (members.contains(recipientId.serialize())) {
+          groupNames.add(cursor.getString(cursor.getColumnIndexOrThrow(TITLE)));
+        }
+      }
+    }
+
+    return groupNames;
   }
 
   public Reader getGroups() {

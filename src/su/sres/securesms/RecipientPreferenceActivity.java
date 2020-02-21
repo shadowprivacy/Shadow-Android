@@ -13,30 +13,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import com.google.android.material.appbar.CollapsingToolbarLayout;
-import androidx.fragment.app.Fragment;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.Loader;
-import androidx.core.view.ViewCompat;
-import androidx.appcompat.app.AlertDialog;
-import androidx.preference.CheckBoxPreference;
-import androidx.preference.ListPreference;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceCategory;
-import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.RecyclerView;
-import su.sres.securesms.components.SwitchPreferenceCompat;
-import su.sres.securesms.contacts.avatars.ContactPhoto;
-import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
-import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
-import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
-import su.sres.securesms.database.GroupDatabase;
-import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.jobs.RotateProfileKeyJob;
-import su.sres.securesms.logging.Log;
-
 import android.telephony.PhoneNumberUtils;
 import android.util.Pair;
 import android.view.LayoutInflater;
@@ -46,9 +22,29 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.ViewCompat;
+import androidx.fragment.app.Fragment;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
+import androidx.preference.CheckBoxPreference;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceCategory;
+import androidx.recyclerview.widget.RecyclerView;
+import su.sres.securesms.components.SwitchPreferenceCompat;
+import su.sres.securesms.contacts.avatars.ContactPhoto;
+import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
+import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
+import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
+import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.logging.Log;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.material.appbar.CollapsingToolbarLayout;
 
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.color.MaterialColors;
@@ -57,14 +53,14 @@ import su.sres.securesms.crypto.IdentityKeyParcelable;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
+import su.sres.securesms.database.MediaDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.VibrateState;
-import su.sres.securesms.database.loaders.ThreadMediaLoader;
-import su.sres.securesms.jobs.MultiDeviceBlockedUpdateJob;
+import su.sres.securesms.database.loaders.RecipientMediaLoader;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
+import su.sres.securesms.mediaoverview.MediaOverviewActivity;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequests;
-import su.sres.securesms.mms.OutgoingGroupMediaMessage;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.preferences.CorrectedPreferenceFragment;
@@ -74,19 +70,19 @@ import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
-import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.Dialogs;
 import su.sres.securesms.util.DynamicDarkToolbarTheme;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.ListenableFuture;
+import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.securesms.util.concurrent.SimpleTask;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.concurrent.ExecutionException;
@@ -184,8 +180,7 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
 
     this.threadPhotoRailView.setListener(mediaRecord -> {
       Intent intent = new Intent(RecipientPreferenceActivity.this, MediaPreviewActivity.class);
-      intent.putExtra(MediaPreviewActivity.RECIPIENT_EXTRA, recipientId);
-      intent.putExtra(MediaPreviewActivity.OUTGOING_EXTRA, mediaRecord.isOutgoing());
+      intent.putExtra(MediaPreviewActivity.THREAD_ID_EXTRA, mediaRecord.getThreadId());
       intent.putExtra(MediaPreviewActivity.DATE_EXTRA, mediaRecord.getDate());
       intent.putExtra(MediaPreviewActivity.SIZE_EXTRA, mediaRecord.getAttachment().getSize());
       intent.putExtra(MediaPreviewActivity.CAPTION_EXTRA, mediaRecord.getAttachment().getCaption());
@@ -194,11 +189,15 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
       startActivity(intent);
     });
 
-    this.threadPhotoRailLabel.setOnClickListener(v -> {
-      Intent intent = new Intent(this, MediaOverviewActivity.class);
-      intent.putExtra(MediaOverviewActivity.RECIPIENT_EXTRA, recipientId);
-      startActivity(intent);
-    });
+    SimpleTask.run(
+            () -> DatabaseFactory.getThreadDatabase(this).getThreadIdFor(recipientId),
+            (threadId) -> {
+              if (threadId == null) {
+                throw new AssertionError();
+              }
+              this.threadPhotoRailLabel.setOnClickListener(v -> startActivity(MediaOverviewActivity.forThread(this, threadId)));
+            }
+    );
 
     Toolbar toolbar = ViewUtil.findById(this, R.id.toolbar);
     setSupportActionBar(toolbar);
@@ -233,7 +232,7 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
 
   @Override
   public @NonNull Loader<Cursor> onCreateLoader(int id, Bundle args) {
-    return new ThreadMediaLoader(this, recipientId, true);
+    return new RecipientMediaLoader(this, recipientId, RecipientMediaLoader.MediaType.GALLERY, MediaDatabase.Sorting.Newest);
   }
 
   @Override
@@ -415,7 +414,9 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
           if (privacyCategory    != null) privacyCategory.setVisible(false);
           if (divider            != null) divider.setVisible(false);
           if (callCategory       != null) callCategory.setVisible(false);
-        } else if (recipient.isGroup()) {
+        }
+
+      if (recipient.isGroup()) {
         if (colorPreference    != null) colorPreference.setVisible(false);
         if (identityPreference != null) identityPreference.setVisible(false);
         if (callCategory       != null) callCategory.setVisible(false);
@@ -748,38 +749,13 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
       }
 
       private void setBlocked(@NonNull final Context context, final Recipient recipient, final boolean blocked) {
-        new AsyncTask<Void, Void, Void>() {
-          @Override
-          protected Void doInBackground(Void... params) {
-
-            DatabaseFactory.getRecipientDatabase(context)
-                    .setBlocked(recipient.getId(), blocked);
-
-            if (recipient.isGroup() && DatabaseFactory.getGroupDatabase(context).isActive(recipient.requireGroupId())) {
-              long                                threadId     = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient);
-              Optional<OutgoingGroupMediaMessage> leaveMessage = GroupUtil.createGroupLeaveMessage(context, recipient);
-
-              if (threadId != -1 && leaveMessage.isPresent()) {
-                MessageSender.send(context, leaveMessage.get(), threadId, false, null);
-
-                GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
-                String        groupId       = recipient.requireGroupId();
-                groupDatabase.setActive(groupId, false);
-                groupDatabase.remove(groupId, Recipient.self().getId());
-              } else {
-                Log.w(TAG, "Failed to leave group. Can't block.");
-                Toast.makeText(context, R.string.RecipientPreferenceActivity_error_leaving_group, Toast.LENGTH_LONG).show();
-              }
-            }
-
-            if (blocked && (recipient.resolve().isSystemContact() || recipient.resolve().isProfileSharing())) {
-              ApplicationDependencies.getJobManager().add(new RotateProfileKeyJob());
-            }
-
-            ApplicationDependencies.getJobManager().add(new MultiDeviceBlockedUpdateJob());
-            return null;
+        SignalExecutors.BOUNDED.execute(() -> {
+          if (blocked) {
+            RecipientUtil.block(context, recipient);
+          } else {
+            RecipientUtil.unblock(context, recipient);
           }
-        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        });
       }
     }
 
@@ -793,6 +769,11 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
       @Override
       public void onSecureCallClicked() {
         CommunicationActions.startVoiceCall(getActivity(), recipient.get());
+      }
+
+      @Override
+      public void onSecureVideoClicked() {
+        CommunicationActions.startVideoCall(getActivity(), recipient.get());
       }
 
       @Override

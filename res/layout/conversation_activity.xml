@@ -135,4 +135,15 @@ xmlns:tools="http://schemas.android.com/tools"
 
     </su.sres.securesms.components.InputAwareLayout>
 
+    <FrameLayout
+        android:id="@+id/fragment_overlay_container"
+        android:visibility="gone"
+        android:focusableInTouchMode="true"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:background="?conversation_background"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <include layout="@layout/conversation_reaction_scrubber" />
+
 </FrameLayout>

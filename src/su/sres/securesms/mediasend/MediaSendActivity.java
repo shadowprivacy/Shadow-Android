@@ -76,6 +76,7 @@ import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
+import su.sres.securesms.util.views.SimpleProgressDialog;
 import su.sres.securesms.util.views.Stub;
 import su.sres.securesms.video.VideoUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -850,13 +851,7 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
             protected void onPreExecute() {
                 renderTimer   = new Stopwatch("ProcessMedia");
                 progressTimer = () -> {
-                    dialog = new AlertDialog.Builder(new ContextThemeWrapper(MediaSendActivity.this, R.style.TextSecure_MediaSendProgressDialog))
-                            .setView(R.layout.progress_dialog)
-                            .setCancelable(false)
-                            .create();
-                    dialog.show();
-                    dialog.getWindow().setLayout(getResources().getDimensionPixelSize(R.dimen.mediasend_progress_dialog_size),
-                            getResources().getDimensionPixelSize(R.dimen.mediasend_progress_dialog_size));
+                    dialog = SimpleProgressDialog.show(new ContextThemeWrapper(MediaSendActivity.this, R.style.TextSecure_MediaSendProgressDialog));
                 };
                 Util.runOnMainDelayed(progressTimer, 250);
             }

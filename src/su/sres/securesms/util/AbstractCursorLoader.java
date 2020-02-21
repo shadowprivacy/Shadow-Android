@@ -4,6 +4,9 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import androidx.loader.content.AsyncTaskLoader;
+import su.sres.securesms.logging.Log;
+
+
 
 /**
  * A Loader similar to CursorLoader that doesn't require queries to go through the ContentResolver
@@ -71,11 +74,14 @@ public abstract class AbstractCursorLoader extends AsyncTaskLoader<Cursor> {
 
   @Override
   public Cursor loadInBackground() {
+    long startTime = System.currentTimeMillis();
     Cursor newCursor = getCursor();
     if (newCursor != null) {
       newCursor.getCount();
       newCursor.registerContentObserver(observer);
     }
+
+    Log.d(TAG, "[" + getClass().getSimpleName() + "] Cursor load time: " + (System.currentTimeMillis() - startTime) + " ms");
     return newCursor;
   }
 

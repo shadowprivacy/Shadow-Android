@@ -45,6 +45,11 @@ public class ApplicationDependencies {
         ApplicationDependencies.provider    = provider;
     }
 
+    public static @NonNull Application getApplication() {
+        assertInitialization();
+        return application;
+    }
+
     public static synchronized @NonNull SignalServiceAccountManager getSignalServiceAccountManager() {
         assertInitialization();
 

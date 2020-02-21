@@ -1,6 +1,5 @@
 package su.sres.securesms.database.loaders;
 
-
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -11,33 +10,33 @@ import androidx.core.util.Pair;
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.MediaDatabase.Sorting;
 import su.sres.securesms.mms.PartAuthority;
-import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.AsyncLoader;
 
-public class PagingMediaLoader extends AsyncLoader<Pair<Cursor, Integer>> {
+public final class PagingMediaLoader extends AsyncLoader<Pair<Cursor, Integer>> {
 
   @SuppressWarnings("unused")
   private static final String TAG = PagingMediaLoader.class.getSimpleName();
 
-  private final Recipient recipient;
-  private final Uri       uri;
-  private final boolean   leftIsRecent;
+  private final Uri     uri;
+  private final boolean leftIsRecent;
+  private final Sorting sorting;
+  private final long    threadId;
 
-  public PagingMediaLoader(@NonNull Context context, @NonNull Recipient recipient, @NonNull Uri uri, boolean leftIsRecent) {
+  public PagingMediaLoader(@NonNull Context context, long threadId, @NonNull Uri uri, boolean leftIsRecent, @NonNull Sorting sorting) {
     super(context);
-    this.recipient    = recipient;
+    this.threadId     = threadId;
     this.uri          = uri;
     this.leftIsRecent = leftIsRecent;
+    this.sorting      = sorting;
   }
 
-  @Nullable
   @Override
-  public Pair<Cursor, Integer> loadInBackground() {
-    long   threadId = DatabaseFactory.getThreadDatabase(getContext()).getThreadIdFor(recipient);
-    Cursor cursor   = DatabaseFactory.getMediaDatabase(getContext()).getGalleryMediaForThread(threadId);
+  public @Nullable Pair<Cursor, Integer> loadInBackground() {
+    Cursor cursor = DatabaseFactory.getMediaDatabase(getContext()).getGalleryMediaForThread(threadId, sorting);
 
-    while (cursor != null && cursor.moveToNext()) {
+    while (cursor.moveToNext()) {
       AttachmentId attachmentId  = new AttachmentId(cursor.getLong(cursor.getColumnIndexOrThrow(AttachmentDatabase.ROW_ID)), cursor.getLong(cursor.getColumnIndexOrThrow(AttachmentDatabase.UNIQUE_ID)));
       Uri          attachmentUri = PartAuthority.getAttachmentDataUri(attachmentId);
 

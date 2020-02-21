@@ -8,6 +8,7 @@ import android.text.TextUtils;
 
 import com.annimon.stream.function.Consumer;
 import com.annimon.stream.function.Predicate;
+import com.google.android.collect.Sets;
 import com.google.protobuf.ByteString;
 
 import net.sqlcipher.database.SQLiteDatabase;
@@ -21,6 +22,7 @@ import su.sres.securesms.crypto.ModernDecryptingPartInputStream;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupReceiptDatabase;
+import su.sres.securesms.database.JobDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.MmsSmsColumns;
 import su.sres.securesms.database.OneTimePreKeyDatabase;
@@ -45,8 +47,10 @@ import java.io.OutputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -60,6 +64,17 @@ public class FullBackupExporter extends FullBackupBase {
 
   @SuppressWarnings("unused")
   private static final String TAG = FullBackupExporter.class.getSimpleName();
+
+  private static final Set<String> BLACKLISTED_TABLES = Sets.newHashSet(
+          SignedPreKeyDatabase.TABLE_NAME,
+          OneTimePreKeyDatabase.TABLE_NAME,
+          SessionDatabase.TABLE_NAME,
+          SearchDatabase.SMS_FTS_TABLE_NAME,
+          SearchDatabase.MMS_FTS_TABLE_NAME,
+          JobDatabase.JOBS_TABLE_NAME,
+          JobDatabase.CONSTRAINTS_TABLE_NAME,
+          JobDatabase.DEPENDENCIES_TABLE_NAME
+  );
 
   public static void export(@NonNull Context context,
                             @NonNull AttachmentSecret attachmentSecret,
@@ -85,13 +100,7 @@ public class FullBackupExporter extends FullBackupBase {
         count = exportTable(table, input, outputStream, cursor -> isForNonExpiringMessage(input, cursor.getLong(cursor.getColumnIndexOrThrow(AttachmentDatabase.MMS_ID))), cursor -> exportAttachment(attachmentSecret, cursor, outputStream), count);
       } else if (table.equals(StickerDatabase.TABLE_NAME)) {
         count = exportTable(table, input, outputStream, cursor -> true, cursor -> exportSticker(attachmentSecret, cursor, outputStream), count);
-      } else if (!table.equals(SignedPreKeyDatabase.TABLE_NAME)       &&
-                 !table.equals(OneTimePreKeyDatabase.TABLE_NAME)      &&
-                 !table.equals(SessionDatabase.TABLE_NAME)            &&
-                 !table.startsWith(SearchDatabase.SMS_FTS_TABLE_NAME) &&
-              !table.startsWith(SearchDatabase.MMS_FTS_TABLE_NAME) &&
-              !table.startsWith("sqlite_"))
-      {
+      } else if (!BLACKLISTED_TABLES.contains(table) && !table.startsWith("sqlite_")) {
         count = exportTable(table, input, outputStream, null, null, count);
       }
 

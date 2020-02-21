@@ -34,9 +34,11 @@ import com.annimon.stream.Stream;
 import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.Util;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -183,20 +185,14 @@ public class ContactAccessor {
 
   public List<String> getNumbersForThreadSearchFilter(Context context, String constraint) {
     LinkedList<String> numberList = new LinkedList<>();
-    Cursor cursor                 = null;
-
-    try {
-      cursor = context.getContentResolver().query(Uri.withAppendedPath(Phone.CONTENT_FILTER_URI,
-                                                                       Uri.encode(constraint)),
-                                                  null, null, null, null);
+    try (Cursor cursor = DatabaseFactory.getRecipientDatabase(context).queryAllContacts(constraint)) {
 
       while (cursor != null && cursor.moveToNext()) {
-        numberList.add(cursor.getString(cursor.getColumnIndexOrThrow(Phone.NUMBER)));
-      }
+        String phone = cursor.getString(cursor.getColumnIndexOrThrow(RecipientDatabase.PHONE));
+        String email = cursor.getString(cursor.getColumnIndexOrThrow(RecipientDatabase.EMAIL));
 
-    } finally {
-      if (cursor != null)
-        cursor.close();
+        numberList.add(Util.getFirstNonEmpty(phone, email));
+      }
     }
 
     GroupDatabase.Reader reader = null;

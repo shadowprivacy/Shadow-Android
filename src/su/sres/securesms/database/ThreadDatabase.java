@@ -279,14 +279,23 @@ public class ThreadDatabase extends Database {
 
     notifyConversationListListeners();
 
-    return new LinkedList<MarkedMessageInfo>() {{
-      addAll(smsRecords);
-      addAll(mmsRecords);
-    }};
+    return Util.concatenatedList(smsRecords, mmsRecords);
   }
 
   public boolean hasCalledSince(@NonNull Recipient recipient, long timestamp) {
     return DatabaseFactory.getMmsSmsDatabase(context).hasReceivedAnyCallsSince(getThreadIdFor(recipient), timestamp);
+  }
+
+  public List<MarkedMessageInfo> setEntireThreadRead(long threadId) {
+    setRead(threadId, false);
+
+    final List<MarkedMessageInfo> smsRecords = DatabaseFactory.getSmsDatabase(context).setEntireThreadRead(threadId);
+    final List<MarkedMessageInfo> mmsRecords = DatabaseFactory.getMmsDatabase(context).setEntireThreadRead(threadId);
+
+    DatabaseFactory.getSmsDatabase(context).setAllReactionsSeen();
+    DatabaseFactory.getMmsDatabase(context).setAllReactionsSeen();
+
+    return Util.concatenatedList(smsRecords, mmsRecords);
   }
 
   public List<MarkedMessageInfo> setRead(long threadId, boolean lastSeen) {
@@ -304,12 +313,12 @@ public class ThreadDatabase extends Database {
     final List<MarkedMessageInfo> smsRecords = DatabaseFactory.getSmsDatabase(context).setMessagesRead(threadId);
     final List<MarkedMessageInfo> mmsRecords = DatabaseFactory.getMmsDatabase(context).setMessagesRead(threadId);
 
+    DatabaseFactory.getSmsDatabase(context).setReactionsSeen(threadId);
+    DatabaseFactory.getMmsDatabase(context).setReactionsSeen(threadId);
+
     notifyConversationListListeners();
 
-    return new LinkedList<MarkedMessageInfo>() {{
-      addAll(smsRecords);
-      addAll(mmsRecords);
-    }};
+    return Util.concatenatedList(smsRecords, mmsRecords);
   }
 
   public void incrementUnread(long threadId, int amount) {
@@ -521,47 +530,50 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  public long getThreadIdFor(Recipient recipient) {
+  public long getThreadIdFor(@NonNull Recipient recipient) {
     return getThreadIdFor(recipient, DistributionTypes.DEFAULT);
   }
 
-  public long getThreadIdFor(Recipient recipient, int distributionType) {
+  public long getThreadIdFor(@NonNull Recipient recipient, int distributionType) {
+    Long threadId = getThreadIdFor(recipient.getId());
+    if (threadId != null) {
+      return threadId;
+    } else {
+      return createThreadForRecipient(recipient.getId(), recipient.isGroup(), distributionType);
+    }
+  }
+
+  public Long getThreadIdFor(@NonNull RecipientId recipientId) {
     SQLiteDatabase db            = databaseHelper.getReadableDatabase();
     String         where         = RECIPIENT_ID + " = ?";
-    String[]       recipientsArg = new String[]{recipient.getId().serialize()};
-    Cursor         cursor        = null;
+    String[]       recipientsArg = new String[]{recipientId.serialize()};
 
-    try {
-      cursor = db.query(TABLE_NAME, new String[]{ID}, where, recipientsArg, null, null, null);
+    try (Cursor cursor = db.query(TABLE_NAME, new String[]{ ID }, where, recipientsArg, null, null, null)) {
 
       if (cursor != null && cursor.moveToFirst()) {
         return cursor.getLong(cursor.getColumnIndexOrThrow(ID));
       } else {
-        return createThreadForRecipient(recipient.getId(), recipient.isGroup(), distributionType);
+        return null;
       }
-    } finally {
-      if (cursor != null)
-        cursor.close();
     }
   }
 
-  public @Nullable Recipient getRecipientForThreadId(long threadId) {
+  public @Nullable RecipientId getRecipientIdForThreadId(long threadId) {
     SQLiteDatabase db = databaseHelper.getReadableDatabase();
-    Cursor cursor     = null;
-
-    try {
-      cursor = db.query(TABLE_NAME, null, ID + " = ?", new String[] {threadId+""}, null, null, null);
+    try (Cursor cursor = db.query(TABLE_NAME, null, ID + " = ?", new String[]{ threadId + "" }, null, null, null)) {
 
       if (cursor != null && cursor.moveToFirst()) {
-        RecipientId id = RecipientId.from(cursor.getLong(cursor.getColumnIndexOrThrow(RECIPIENT_ID)));
-        return Recipient.resolved(id);
+        return RecipientId.from(cursor.getLong(cursor.getColumnIndexOrThrow(RECIPIENT_ID)));
       }
-    } finally {
-      if (cursor != null)
-        cursor.close();
     }
 
     return null;
+  }
+
+  public @Nullable Recipient getRecipientForThreadId(long threadId) {
+    RecipientId id = getRecipientIdForThreadId(threadId);
+    if (id == null) return null;
+    return Recipient.resolved(id);
   }
 
   public void setHasSent(long threadId, boolean hasSent) {

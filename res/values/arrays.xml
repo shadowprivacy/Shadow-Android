@@ -202,4 +202,10 @@
         <item>2</item>
     </string-array>
 
+    <string-array name="MediaOverviewActivity_Sort_by">
+        <item>@string/MediaOverviewActivity_Newest</item>
+        <item>@string/MediaOverviewActivity_Oldest</item>
+        <item>@string/MediaOverviewActivity_Storage_used</item>
+    </string-array>
+
 </resources>

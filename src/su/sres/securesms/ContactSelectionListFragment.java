@@ -38,6 +38,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 
 import com.pnikosis.materialishprogress.ProgressWheel;
 
@@ -46,16 +47,21 @@ import su.sres.securesms.contacts.ContactSelectionListAdapter;
 import su.sres.securesms.contacts.ContactSelectionListItem;
 import su.sres.securesms.contacts.ContactsCursorLoader;
 import su.sres.securesms.contacts.ContactsCursorLoader.DisplayMode;
+import su.sres.securesms.contacts.SelectedContact;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.contacts.sync.DirectoryHelper;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.UsernameUtil;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.adapter.FixedViewsAdapter;
 import su.sres.securesms.util.adapter.RecyclerViewConcatenateAdapterStickyHeader;
+import su.sres.securesms.util.concurrent.SimpleTask;
+import su.sres.securesms.util.views.SimpleProgressDialog;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -82,7 +88,7 @@ public final class ContactSelectionListFragment extends    Fragment
   public static final String RECENTS      = "recents";
 
     private TextView                    emptyText;
-    private Set<String>                 selectedContacts;
+    private Set<SelectedContact>        selectedContacts;
     private OnContactSelectedListener   onContactSelectedListener;
     private SwipeRefreshLayout          swipeRefresh;
     private View                        showContactsLayout;
@@ -163,8 +169,8 @@ public final class ContactSelectionListFragment extends    Fragment
     Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
   }
 
-  public @NonNull List<String> getSelectedContacts() {
-    List<String> selected = new LinkedList<>();
+  public @NonNull List<SelectedContact> getSelectedContacts() {
+    List<SelectedContact> selected = new LinkedList<>();
     if (selectedContacts != null) {
       selected.addAll(selectedContacts);
     }
@@ -330,14 +336,48 @@ public final class ContactSelectionListFragment extends    Fragment
   private class ListClickListener implements ContactSelectionListAdapter.ItemClickListener {
     @Override
     public void onItemClick(ContactSelectionListItem contact) {
-      if (!isMulti() || !selectedContacts.contains(contact.getNumber())) {
-        selectedContacts.add(contact.getNumber());
-        contact.setChecked(true);
-        if (onContactSelectedListener != null) onContactSelectedListener.onContactSelected(contact.getRecipientId(), contact.getNumber());
+      SelectedContact selectedContact = contact.isUsernameType() ? SelectedContact.forUsername(contact.getRecipientId().orNull(), contact.getNumber())
+              : SelectedContact.forPhone(contact.getRecipientId().orNull(), contact.getNumber());
+
+      if (!isMulti() || !selectedContacts.contains(selectedContact)) {
+        if (contact.isUsernameType()) {
+          AlertDialog loadingDialog = SimpleProgressDialog.show(requireContext());
+
+          SimpleTask.run(getViewLifecycleOwner().getLifecycle(), () -> {
+            return UsernameUtil.fetchUuidForUsername(requireContext(), contact.getNumber());
+          }, uuid -> {
+            loadingDialog.dismiss();
+            if (uuid.isPresent()) {
+              Recipient recipient = Recipient.externalUsername(requireContext(), uuid.get(), contact.getNumber());
+              selectedContacts.add(SelectedContact.forUsername(recipient.getId(), contact.getNumber()));
+              contact.setChecked(true);
+
+              if (onContactSelectedListener != null) {
+                onContactSelectedListener.onContactSelected(Optional.of(recipient.getId()), null);
+              }
+            } else {
+              new AlertDialog.Builder(requireContext())
+                      .setTitle(R.string.ContactSelectionListFragment_username_not_found)
+                      .setMessage(getString(R.string.ContactSelectionListFragment_s_is_not_a_signal_user, contact.getNumber()))
+                      .setPositiveButton(R.string.ContactSelectionListFragment_okay, (dialog, which) -> dialog.dismiss())
+                      .show();
+            }
+          });
+        } else {
+          selectedContacts.add(selectedContact);
+          contact.setChecked(true);
+
+          if (onContactSelectedListener != null) {
+            onContactSelectedListener.onContactSelected(contact.getRecipientId(), contact.getNumber());
+          }
+        }
       } else {
-        selectedContacts.remove(contact.getNumber());
+        selectedContacts.remove(selectedContact);
         contact.setChecked(false);
-        if (onContactSelectedListener != null) onContactSelectedListener.onContactDeselected(contact.getRecipientId(), contact.getNumber());
+
+        if (onContactSelectedListener != null) {
+          onContactSelectedListener.onContactDeselected(contact.getRecipientId(), contact.getNumber());
+        }
       }
     }
   }

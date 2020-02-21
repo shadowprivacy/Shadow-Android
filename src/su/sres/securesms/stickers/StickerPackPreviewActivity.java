@@ -131,10 +131,6 @@ public final class StickerPackPreviewActivity extends PassphraseRequiredActionBa
 
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
-        if (!ThemeUtil.isDarkTheme(this) && Build.VERSION.SDK_INT >= 23) {
-            setStatusBarColor(ThemeUtil.getThemedColor(this, R.attr.sticker_preview_status_bar_color));
-            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-        }
     }
 
     private void initViewModel(@NonNull String packId, @NonNull String packKey) {

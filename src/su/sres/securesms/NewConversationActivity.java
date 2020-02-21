@@ -22,6 +22,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import su.sres.securesms.conversation.ConversationActivity;
 import su.sres.securesms.database.DatabaseFactory;
@@ -30,6 +31,19 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import org.whispersystems.libsignal.util.guava.Optional;
+import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.logging.Log;
+import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.FeatureFlags;
+import su.sres.securesms.util.UsernameUtil;
+import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.securesms.util.concurrent.SimpleTask;
+import org.whispersystems.libsignal.util.guava.Optional;
+import su.sres.signalservice.api.profiles.SignalServiceProfile;
+import su.sres.signalservice.api.util.UuidUtil;
+
+import java.io.IOException;
+import java.util.UUID;
 
 
 /**
@@ -61,6 +75,11 @@ public class NewConversationActivity extends ContactSelectionActivity
       Log.i(TAG, "[onContactSelected] Maybe creating a new recipient.");
       recipient = Recipient.external(this, number);
     }
+
+    launch(recipient);
+  }
+
+  private void launch(Recipient recipient) {
 
     Intent intent = new Intent(this, ConversationActivity.class);
     intent.putExtra(ConversationActivity.RECIPIENT_EXTRA, recipient.getId());

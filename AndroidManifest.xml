@@ -27,6 +27,7 @@
                      tools:ignore="ProtectedPermissions"/>
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
     <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
 
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.RECEIVE_MMS"/>
@@ -89,7 +90,7 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
 
-    <application android:name="su.sres.securesms.ApplicationContext"
+    <application android:name=".ApplicationContext"
                  android:icon="@mipmap/ic_launcher"
                  android:label="@string/app_name"
                  android:supportsRtl="true"
@@ -119,22 +120,22 @@
               android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|fontScale"
               android:launchMode="singleTask"/>
 
-    <activity android:name="su.sres.securesms.InviteActivity"
-              android:theme="@style/TextSecure.HighlightTheme"
+    <activity android:name=".InviteActivity"
+              android:theme="@style/Signal.Light.NoActionBar.Invite"
               android:windowSoftInputMode="stateHidden"
-              android:parentActivityName="su.sres.securesms.ConversationListActivity"
+              android:parentActivityName=".MainActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize">
         <meta-data
             android:name="android.support.PARENT_ACTIVITY"
-            android:value="su.sres.securesms.ConversationListActivity" />
+            android:value="su.sres.securesms.MainActivity" />
     </activity>
 
-    <activity android:name="su.sres.securesms.PromptMmsActivity"
+    <activity android:name=".PromptMmsActivity"
               android:label="Configure MMS Settings"
               android:windowSoftInputMode="stateUnchanged"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.DeviceProvisioningActivity"
+    <activity android:name=".DeviceProvisioningActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize">
         <intent-filter>
             <action android:name="android.intent.action.VIEW" />
@@ -144,10 +145,10 @@
         </intent-filter>
     </activity>
 
-    <activity android:name="su.sres.securesms.preferences.MmsPreferencesActivity"
+    <activity android:name=".preferences.MmsPreferencesActivity"
                android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.ShareActivity"
+    <activity android:name=".ShareActivity"
               android:theme="@style/TextSecure.LightNoActionBar"
               android:excludeFromRecents="true"
               android:launchMode="singleTask"
@@ -189,15 +190,9 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="su.sres.securesms.ConversationListActivity"
-              android:label="@string/app_name"
-              android:launchMode="singleTask"
-              android:theme="@style/TextSecure.LightNoActionBar"
-              android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-              android:exported="true" />
 
         <activity-alias android:name=".RoutingActivity"
-              android:targetActivity="su.sres.securesms.ConversationListActivity"
+              android:targetActivity=".MainActivity"
              android:exported="true">
 
         <meta-data android:name="com.sec.minimode.icon.portrait.normal"
@@ -207,29 +202,19 @@
 
         </activity-alias>
 
-    <activity android:name="su.sres.securesms.ConversationListArchiveActivity"
-              android:label="@string/AndroidManifest_archived_conversations"
-              android:launchMode="singleTask"
-              android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-              android:parentActivityName="su.sres.securesms.ConversationListActivity">
-        <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="su.sres.securesms.ConversationListActivity" />
-    </activity>
-
-        <activity android:name="su.sres.securesms.conversation.ConversationActivity"
+        <activity android:name=".conversation.ConversationActivity"
               android:windowSoftInputMode="stateUnchanged"
               android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-              android:parentActivityName="su.sres.securesms.ConversationListActivity">
+              android:parentActivityName=".MainActivity">
         <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="su.sres.securesms.ConversationListActivity" />
+                android:value="su.sres.securesms.MainActivity" />
     </activity>
 
-        <activity android:name="su.sres.securesms.longmessage.LongMessageActivity" />
+        <activity android:name=".longmessage.LongMessageActivity" />
 
-        <activity android:name="su.sres.securesms.conversation.ConversationPopupActivity"
+        <activity android:name=".conversation.ConversationPopupActivity"
               android:windowSoftInputMode="stateVisible"
               android:launchMode="singleTask"
               android:taskAffinity=""
@@ -237,17 +222,17 @@
               android:theme="@style/TextSecure.LightTheme.Popup"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
-    <activity android:name="su.sres.securesms.MessageDetailsActivity"
+    <activity android:name=".MessageDetailsActivity"
               android:label="@string/AndroidManifest__message_details"
               android:windowSoftInputMode="stateHidden"
               android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.GroupCreateActivity"
+    <activity android:name=".GroupCreateActivity"
           android:windowSoftInputMode="stateVisible"
           android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.DatabaseMigrationActivity"
+    <activity android:name=".DatabaseMigrationActivity"
               android:theme="@style/NoAnimation.Theme.AppCompat.Light.DarkActionBar"
               android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
@@ -257,34 +242,34 @@
               android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.ExperienceUpgradeActivity"
+    <activity android:name=".ExperienceUpgradeActivity"
               android:theme="@style/Theme.AppCompat.Light.NoActionBar"
               android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.PassphraseCreateActivity"
+    <activity android:name=".PassphraseCreateActivity"
               android:label="@string/AndroidManifest__create_passphrase"
               android:windowSoftInputMode="stateUnchanged"
               android:theme="@style/TextSecure.LightNoActionBar"
               android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.PassphrasePromptActivity"
+    <activity android:name=".PassphrasePromptActivity"
               android:launchMode="singleTask"
               android:theme="@style/TextSecure.LightIntroTheme"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.NewConversationActivity"
+    <activity android:name=".NewConversationActivity"
               android:theme="@style/TextSecure.LightNoActionBar"
               android:windowSoftInputMode="stateAlwaysVisible"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-        <activity android:name="su.sres.securesms.PushContactSelectionActivity"
+        <activity android:name=".PushContactSelectionActivity"
           android:label="@string/AndroidManifest__select_contacts"
           android:windowSoftInputMode="stateHidden"
           android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.giph.ui.GiphyActivity"
+    <activity android:name=".giph.ui.GiphyActivity"
         android:theme="@style/TextSecure.LightNoActionBar"
               android:windowSoftInputMode="stateHidden"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
@@ -295,14 +280,14 @@
             android:launchMode="singleTop"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-        <activity android:name="su.sres.securesms.PassphraseChangeActivity"
+        <activity android:name=".PassphraseChangeActivity"
               android:label="@string/AndroidManifest__change_passphrase"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.VerifyIdentityActivity"
+    <activity android:name=".VerifyIdentityActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.ApplicationPreferencesActivity"
+    <activity android:name=".ApplicationPreferencesActivity"
         android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize">
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
@@ -329,28 +314,27 @@
             android:windowSoftInputMode="stateUnchanged"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-     <activity android:name="su.sres.securesms.DeviceActivity"
+     <activity android:name=".DeviceActivity"
                android:label="@string/AndroidManifest__linked_devices"
                android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.LogSubmitActivity"
+    <activity android:name=".LogSubmitActivity"
               android:label="@string/AndroidManifest__log_submit"
               android:windowSoftInputMode="stateHidden"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.MediaPreviewActivity"
+    <activity android:name=".MediaPreviewActivity"
               android:label="@string/AndroidManifest__media_preview"
               android:windowSoftInputMode="stateHidden"
               android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.MediaOverviewActivity"
+    <activity android:name=".mediaoverview.MediaOverviewActivity"
               android:theme="@style/TextSecure.LightNoActionBar"
               android:windowSoftInputMode="stateHidden"
-              android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.DummyActivity"
+    <activity android:name=".DummyActivity"
               android:theme="@android:style/Theme.NoDisplay"
               android:enabled="true"
               android:allowTaskReparenting="true"
@@ -361,11 +345,11 @@
               android:clearTaskOnLaunch="true"
               android:finishOnTaskLaunch="true" />
 
-    <activity android:name="su.sres.securesms.PlayServicesProblemActivity"
+    <activity android:name=".PlayServicesProblemActivity"
               android:theme="@style/TextSecure.DialogActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.SmsSendtoActivity">
+    <activity android:name=".SmsSendtoActivity">
         <intent-filter>
             <action android:name="android.intent.action.SENDTO" />
             <action android:name="android.intent.action.VIEW" />
@@ -397,15 +381,15 @@
 
     </activity>
 
-    <activity android:name="su.sres.securesms.RecipientPreferenceActivity"
+    <activity android:name=".RecipientPreferenceActivity"
               android:theme="@style/TextSecure.LightNoActionBar"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.BlockedContactsActivity"
+    <activity android:name=".BlockedContactsActivity"
               android:theme="@style/TextSecure.LightTheme"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.scribbles.StickerSelectActivity"
+    <activity android:name=".scribbles.StickerSelectActivity"
               android:theme="@style/TextSecure.DarkTheme"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
@@ -416,12 +400,12 @@
     <activity android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
             android:theme="@style/TextSecure.DarkTheme"/>
 
-    <activity android:name="su.sres.securesms.CreateProfileActivity"
+    <activity android:name=".CreateProfileActivity"
               android:theme="@style/TextSecure.LightRegistrationTheme"
               android:windowSoftInputMode="stateVisible"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.ClearProfileAvatarActivity"
+    <activity android:name=".ClearProfileAvatarActivity"
               android:theme="@style/Theme.AppCompat.Dialog.Alert"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
               android:icon="@drawable/clear_profile_avatar"
@@ -433,24 +417,24 @@
         </intent-filter>
     </activity>
 
-    <activity android:name="su.sres.securesms.contactshare.ContactShareEditActivity"
+    <activity android:name=".contactshare.ContactShareEditActivity"
               android:theme="@style/TextSecure.LightTheme"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.contactshare.ContactNameEditActivity"
+    <activity android:name=".contactshare.ContactNameEditActivity"
               android:theme="@style/TextSecure.LightNoActionBar"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.contactshare.SharedContactDetailsActivity"
+    <activity android:name=".contactshare.SharedContactDetailsActivity"
               android:theme="@style/TextSecure.LightNoActionBar"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.ShortcutLauncherActivity"
+    <activity android:name=".ShortcutLauncherActivity"
               android:theme="@style/TextSecure.LightNoActionBar"
               android:exported="true"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name="su.sres.securesms.InitialActivity"
+    <activity android:name=".InitialActivity"
               android:theme="@style/TextSecure.LightNoActionBar"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize">
 
@@ -464,14 +448,24 @@
         <activity
             android:name=".maps.PlacePickerActivity"
             android:label="@string/PlacePickerActivity_title"
-            android:theme="@style/TextSecure.LightNoActionBar" />
+            android:theme="@style/TextSecure.LightNoActionBar"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+
+        <activity
+            android:name=".usernames.ProfileEditActivityV2"
+            android:theme="@style/TextSecure.LightNoActionBar"
+            android:windowSoftInputMode="adjustResize"/>
+
+        <activity android:name=".MainActivity"
+            android:theme="@style/TextSecure.LightNoActionBar"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
     <service android:enabled="true" android:name="su.sres.securesms.service.WebRtcCallService"/>
     <service android:enabled="true" android:name="su.sres.securesms.service.ApplicationMigrationService"/>
     <service android:enabled="true" android:exported="false" android:name="su.sres.securesms.service.KeyCachingService"/>
     <service android:enabled="true" android:name="su.sres.securesms.service.IncomingMessageObserver$ForegroundService"/>
 
-    <service android:name="su.sres.securesms.service.QuickResponseService"
+    <service android:name=".service.QuickResponseService"
              android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE"
              android:exported="true" >
         <intent-filter>
@@ -484,14 +478,14 @@
         </intent-filter>
     </service>
 
-    <service android:name="su.sres.securesms.service.AccountAuthenticatorService" android:exported="true">
+    <service android:name=".service.AccountAuthenticatorService" android:exported="true">
         <intent-filter>
             <action android:name="android.accounts.AccountAuthenticator" />
         </intent-filter>
         <meta-data android:name="android.accounts.AccountAuthenticator" android:resource="@xml/authenticator" />
     </service>
 
-    <service android:name="su.sres.securesms.service.ContactsSyncAdapterService" android:exported="true">
+    <service android:name=".service.ContactsSyncAdapterService" android:exported="true">
         <intent-filter>
             <action android:name="android.content.SyncAdapter"/>
         </intent-filter>
@@ -499,22 +493,22 @@
         <meta-data android:name="android.provider.CONTACTS_STRUCTURE" android:resource="@xml/contactsformat" />
     </service>
 
-    <service android:name="su.sres.securesms.service.DirectShareService"
+    <service android:name=".service.DirectShareService"
              android:permission="android.permission.BIND_CHOOSER_TARGET_SERVICE">
         <intent-filter>
             <action android:name="android.service.chooser.ChooserTargetService" />
         </intent-filter>
     </service>
 
-    <service android:name="su.sres.securesms.service.GenericForegroundService"/>
+    <service android:name=".service.GenericForegroundService"/>
 
-        <service android:name="su.sres.securesms.gcm.FcmService">
+        <service android:name=".gcm.FcmService">
         <intent-filter>
             <action android:name="com.google.firebase.MESSAGING_EVENT" />
         </intent-filter>
         </service>
 
-    <receiver android:name="su.sres.securesms.service.SmsListener"
+    <receiver android:name=".service.SmsListener"
               android:permission="android.permission.BROADCAST_SMS"
               android:enabled="true"
               android:exported="true">
@@ -526,14 +520,14 @@
              </intent-filter>
     </receiver>
 
-    <receiver android:name="su.sres.securesms.service.SmsDeliveryListener"
+    <receiver android:name=".service.SmsDeliveryListener"
               android:exported="true">
         <intent-filter>
             <action android:name="su.sres.securesms.services.MESSAGE_SENT"/>
         </intent-filter>
     </receiver>
 
-    <receiver android:name="su.sres.securesms.service.MmsListener"
+    <receiver android:name=".service.MmsListener"
               android:enabled="true"
               android:exported="true"
               android:permission="android.permission.BROADCAST_WAP_PUSH">
@@ -547,7 +541,7 @@
              </intent-filter>
     </receiver>
 
-    <receiver android:name="su.sres.securesms.notifications.MarkReadReceiver"
+    <receiver android:name=".notifications.MarkReadReceiver"
               android:enabled="true"
               android:exported="false">
         <intent-filter>
@@ -555,7 +549,7 @@
         </intent-filter>
     </receiver>
 
-    <receiver android:name="su.sres.securesms.notifications.RemoteReplyReceiver"
+    <receiver android:name=".notifications.RemoteReplyReceiver"
               android:enabled="true"
               android:exported="false">
         <intent-filter>
@@ -563,30 +557,30 @@
         </intent-filter>
     </receiver>
 
-    <receiver android:name="su.sres.securesms.notifications.AndroidAutoHeardReceiver"
+    <receiver android:name=".notifications.AndroidAutoHeardReceiver"
               android:exported="false">
         <intent-filter>
           <action android:name="su.sres.securesms.notifications.ANDROID_AUTO_HEARD"/>
         </intent-filter>
     </receiver>
 
-    <receiver android:name="su.sres.securesms.notifications.AndroidAutoReplyReceiver"
+    <receiver android:name=".notifications.AndroidAutoReplyReceiver"
               android:exported="false">
         <intent-filter>
           <action android:name="su.sres.securesms.notifications.ANDROID_AUTO_REPLY"/>
         </intent-filter>
     </receiver>
 
-    <receiver android:name="su.sres.securesms.service.ExpirationListener" />
+    <receiver android:name=".service.ExpirationListener" />
 
     <receiver android:name=".revealable.ViewOnceMessageManager$ViewOnceAlarm" />
 
-    <provider android:name="su.sres.securesms.providers.PartProvider"
+    <provider android:name=".providers.PartProvider"
               android:grantUriPermissions="true"
               android:exported="false"
               android:authorities="su.sres.provider.securesms" />
 
-    <provider android:name="su.sres.securesms.providers.MmsBodyProvider"
+    <provider android:name=".providers.MmsBodyProvider"
               android:grantUriPermissions="true"
               android:exported="false"
               android:authorities="su.sres.provider.securesms.mms" />
@@ -600,15 +594,15 @@
 
     </provider>
 
-        <provider android:name="su.sres.securesms.database.DatabaseContentProviders$Conversation"
+        <provider android:name=".database.DatabaseContentProviders$Conversation"
             android:authorities="su.sres.securesms.database.conversation"
             android:exported="false" />
 
-        <provider android:name="su.sres.securesms.database.DatabaseContentProviders$ConversationList"
+        <provider android:name=".database.DatabaseContentProviders$ConversationList"
             android:authorities="su.sres.securesms.database.conversationlist"
             android:exported="false" />
 
-        <provider android:name="su.sres.securesms.database.DatabaseContentProviders$Attachment"
+        <provider android:name=".database.DatabaseContentProviders$Attachment"
             android:authorities="su.sres.securesms.database.attachment"
             android:exported="false" />
 
@@ -625,62 +619,62 @@
             android:exported="false"
             android:enabled="false" />
 
-        <receiver android:name="su.sres.securesms.service.BootReceiver">
+        <receiver android:name=".service.BootReceiver">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED"/>
             <action android:name="su.sres.securesms.RESTART"/>
         </intent-filter>
     </receiver>
 
-    <receiver android:name="su.sres.securesms.service.DirectoryRefreshListener">
+    <receiver android:name=".service.DirectoryRefreshListener">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
     </receiver>
 
-    <receiver android:name="su.sres.securesms.service.RotateSignedPreKeyListener">
+    <receiver android:name=".service.RotateSignedPreKeyListener">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
     </receiver>
 
-        <receiver android:name="su.sres.securesms.service.RotateSenderCertificateListener">
+        <receiver android:name=".service.RotateSenderCertificateListener">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name="su.sres.securesms.service.LocalBackupListener">
+        <receiver android:name=".service.LocalBackupListener">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
     </receiver>
 
-    <receiver android:name="su.sres.securesms.service.PersistentConnectionBootListener">
+    <receiver android:name=".service.PersistentConnectionBootListener">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED"/>
         </intent-filter>
     </receiver>
 
-    <receiver android:name="su.sres.securesms.notifications.LocaleChangedReceiver">
+    <receiver android:name=".notifications.LocaleChangedReceiver">
         <intent-filter>
             <action android:name="android.intent.action.LOCALE_CHANGED"/>
         </intent-filter>
     </receiver>
 
-    <receiver android:name="su.sres.securesms.notifications.MessageNotifier$ReminderReceiver">
+    <receiver android:name=".notifications.MessageNotifier$ReminderReceiver">
         <intent-filter>
             <action android:name="su.sres.securesms.MessageNotifier.REMINDER_ACTION"/>
         </intent-filter>
     </receiver>
 
-    <receiver android:name="su.sres.securesms.notifications.DeleteNotificationReceiver">
+    <receiver android:name=".notifications.DeleteNotificationReceiver">
         <intent-filter>
             <action android:name="su.sres.securesms.DELETE_NOTIFICATION"/>
         </intent-filter>
     </receiver>
 
-    <receiver android:name="su.sres.securesms.ExperienceUpgradeActivity$AppUpgradeReceiver">
+    <receiver android:name=".ExperienceUpgradeActivity$AppUpgradeReceiver">
         <intent-filter>
             <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
             <data android:scheme="package" />
@@ -692,7 +686,7 @@
     </receiver>
 
     <receiver
-        android:name="su.sres.securesms.service.PanicResponderListener"
+        android:name=".service.PanicResponderListener"
         android:exported="true">
         <intent-filter>
             <action android:name="info.guardianproject.panic.action.TRIGGER" />
@@ -706,22 +700,22 @@
             tools:targetApi="26" />
 
         <service
-            android:name="su.sres.securesms.jobmanager.JobSchedulerScheduler$SystemService"
+            android:name=".jobmanager.JobSchedulerScheduler$SystemService"
             android:permission="android.permission.BIND_JOB_SERVICE"
             android:enabled="@bool/enable_job_service"
             tools:targetApi="26" />
 
         <service
-            android:name="su.sres.securesms.jobmanager.KeepAliveService"
+            android:name=".jobmanager.KeepAliveService"
             android:enabled="@bool/enable_alarm_manager" />
 
         <receiver
-            android:name="su.sres.securesms.jobmanager.AlarmManagerScheduler$RetryReceiver"
+            android:name=".jobmanager.AlarmManagerScheduler$RetryReceiver"
             android:enabled="@bool/enable_alarm_manager" />
 
         <!-- Probably don't need this one -->
         <receiver
-            android:name="su.sres.securesms.jobmanager.BootReceiver"
+            android:name=".jobmanager.BootReceiver"
             android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

@@ -39,31 +39,32 @@ import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.MessagingDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.MessageRecord;
+import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.jobs.AttachmentCompressionJob;
 import su.sres.securesms.jobs.MmsSendJob;
 import su.sres.securesms.jobs.PushGroupSendJob;
 import su.sres.securesms.jobs.PushMediaSendJob;
 import su.sres.securesms.jobs.PushTextSendJob;
+import su.sres.securesms.jobs.ReactionSendJob;
 import su.sres.securesms.jobs.SmsSendJob;
 import su.sres.securesms.mms.MmsException;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.OutgoingSecureMediaMessage;
-import su.sres.securesms.push.AccountManagerFactory;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.util.TextSecurePreferences;
-import org.whispersystems.libsignal.util.guava.Optional;
-import su.sres.signalservice.api.SignalServiceAccountManager;
-import su.sres.signalservice.api.push.ContactTokenDetails;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -226,6 +227,31 @@ public class MessageSender {
       chain.enqueue();
     } catch (MmsException e) {
       Log.w(TAG, "sendMediaBroadcast() - Failed to send messages!", e);
+    }
+  }
+
+  public static void sendNewReaction(@NonNull Context context, long messageId, boolean isMms, @NonNull String emoji) {
+    MessagingDatabase db       = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
+    ReactionRecord    reaction = new ReactionRecord(emoji, Recipient.self().getId(), System.currentTimeMillis(), System.currentTimeMillis());
+
+    db.addReaction(messageId, reaction);
+
+    try {
+      ApplicationDependencies.getJobManager().add(ReactionSendJob.create(context, messageId, isMms, reaction, false));
+    } catch (NoSuchMessageException e) {
+      Log.w(TAG, "[sendNewReaction] Could not find message! Ignoring.");
+    }
+  }
+
+  public static void sendReactionRemoval(@NonNull Context context, long messageId, boolean isMms, @NonNull ReactionRecord reaction) {
+    MessagingDatabase db = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
+
+    db.deleteReaction(messageId, reaction.getAuthor());
+
+    try {
+      ApplicationDependencies.getJobManager().add(ReactionSendJob.create(context, messageId, isMms, reaction, true));
+    } catch (NoSuchMessageException e) {
+      Log.w(TAG, "[sendReactionRemoval] Could not find message! Ignoring.");
     }
   }
 
