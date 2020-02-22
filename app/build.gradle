@@ -239,7 +239,10 @@ android {
         project.ext.set("archivesBaseName", "Shadow");
 
         buildConfigField "long", "BUILD_TIMESTAMP", getLastCommitTimestamp() + "L"
-        buildConfigField "String", "SIGNAL_CDN_URL", "\"https://example.cloudfront.net\""
+
+        buildConfigField "String", "STORAGE_URL", "\"https://example.org\""
+
+        buildConfigField "String", "SIGNAL_CDN_URL", "\"https://example.org\""
         buildConfigField "String", "SIGNAL_SERVICE_STATUS_URL", "\"status.example.org\""
         buildConfigField "String", "CONTENT_PROXY_HOST", "\"contentproxy.signal.org\""
         buildConfigField "int", "CONTENT_PROXY_PORT", "443"
