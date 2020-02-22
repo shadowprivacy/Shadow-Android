@@ -764,7 +764,7 @@
     <string name="SmsMessageRecord_secure_session_reset">You reset the secure session.</string>
     <string name="SmsMessageRecord_secure_session_reset_s">%s reset the secure session.</string>
     <string name="SmsMessageRecord_duplicate_message">Duplicate message.</string>
-    <string name="SmsMessageRecord_this_message_could_not_be_processed_because_it_was_sent_from_a_newer_version">This message could not be processed because it was sent from a newer version of Signal. You can ask your contact to send this message again after you update.</string>
+    <string name="SmsMessageRecord_this_message_could_not_be_processed_because_it_was_sent_from_a_newer_version">This message could not be processed because it was sent from a newer version of Shadow. You can ask your contact to send this message again after you update.</string>
     <string name="SmsMessageRecord_error_handling_incoming_message">Error handling incoming message</string>
 
     <!-- StickerManagementActivity -->
@@ -773,7 +773,7 @@
     <!-- StickerManagementAdapter -->
     <string name="StickerManagementAdapter_installed_stickers">Installed Stickers</string>
     <string name="StickerManagementAdapter_stickers_you_received">Stickers You Received</string>
-    <string name="StickerManagementAdapter_signal_artist_series">Shadow Artist Series</string>
+    <string name="StickerManagementAdapter_signal_artist_series">Signal Artist Series</string>
     <string name="StickerManagementAdapter_no_stickers_installed">No stickers installed</string>
     <string name="StickerManagementAdapter_stickers_from_incoming_messages_will_appear_here">Stickers from incoming messages will appear here</string>
     <string name="StickerManagementAdapter_untitled">Untitled</string>
@@ -1669,7 +1669,7 @@
     <string name="preferences_chats__create_backup">Create backup</string>
     <string name="RegistrationActivity_enter_backup_passphrase">Enter backup passphrase</string>
     <string name="RegistrationActivity_restore">Restore</string>
-    <string name="RegistrationActivity_backup_failure_downgrade">Cannot import backups from newer versions of Signal</string>
+    <string name="RegistrationActivity_backup_failure_downgrade">Cannot import backups from newer versions of Shadow</string>
     <string name="RegistrationActivity_incorrect_backup_passphrase">Incorrect backup passphrase</string>
     <string name="RegistrationActivity_checking">Checking…</string>
     <string name="RegistrationActivity_d_messages_so_far">%d messages so far…</string>

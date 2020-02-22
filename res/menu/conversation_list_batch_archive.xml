@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:title="@string/conversation_list_batch_archive__menu_archive_selected"
-          android:id="@+id/menu_archive_selected"
-        android:icon="@drawable/ic_archive_solid_24"
-          app:showAsAction="always"/>
+    <item
+        android:id="@+id/menu_archive_selected"
+        android:icon="?menu_archive_icon"
+        android:title="@string/conversation_list_batch_archive__menu_archive_selected"
+        app:showAsAction="always" />
 
 </menu>

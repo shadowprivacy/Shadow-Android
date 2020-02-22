@@ -11,17 +11,12 @@ import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessagingDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
-import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.MessageRecord;
-import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
-import su.sres.securesms.database.model.SmsMessageRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -37,8 +32,6 @@ import su.sres.signalservice.api.messages.SignalServiceGroup;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -84,7 +77,7 @@ public class ReactionSendJob extends BaseJob {
         }
 
         List<RecipientId> recipients = conversationRecipient.isGroup() ? Stream.of(conversationRecipient.getParticipants()).map(Recipient::getId).toList()
-                : Arrays.asList(conversationRecipient.getId());
+                : Stream.of(conversationRecipient.getId()).toList();
 
         recipients.remove(Recipient.self().getId());
 

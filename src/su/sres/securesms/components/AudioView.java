@@ -220,9 +220,9 @@ public final class AudioView extends FrameLayout implements AudioSlidePlayer.Lis
   }
 
   public void setTint(int foregroundTint, int backgroundTint) {
-    this.playPauseButton.addValueCallback(new KeyPath("**"),
+    post(()-> this.playPauseButton.addValueCallback(new KeyPath("**"),
             LottieProperty.COLOR_FILTER,
-            new LottieValueCallback<>(new SimpleColorFilter(foregroundTint)));
+            new LottieValueCallback<>(new SimpleColorFilter(foregroundTint))));
 
     this.downloadButton.setColorFilter(foregroundTint, PorterDuff.Mode.SRC_IN);
     this.circleProgress.setBarColor(foregroundTint);
