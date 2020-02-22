@@ -9,6 +9,7 @@ import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
 import su.sres.securesms.util.Util;
+// import su.sres.securesms.util.livedata.LiveDataPair;
 
 public final class RegistrationViewModel extends ViewModel {
 

@@ -10,6 +10,7 @@ import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.IncomingMessageObserver;
+import su.sres.securesms.util.FrameRateTracker;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
@@ -35,6 +36,7 @@ public class ApplicationDependencies {
     private static MessageRetriever             messageRetriever;
     private static LiveRecipientCache           recipientCache;
     private static JobManager                   jobManager;
+    private static FrameRateTracker             frameRateTracker;
 
     public static synchronized void init(@NonNull Application application, @NonNull Provider provider) {
         if (ApplicationDependencies.application != null || ApplicationDependencies.provider != null) {
@@ -133,6 +135,16 @@ public class ApplicationDependencies {
         return jobManager;
     }
 
+    public static synchronized @NonNull FrameRateTracker getFrameRateTracker() {
+        assertInitialization();
+
+        if (frameRateTracker == null) {
+            frameRateTracker = provider.provideFrameRateTracker();
+        }
+
+        return frameRateTracker;
+    }
+
     private static void assertInitialization() {
         if (application == null || provider == null) {
             throw new UninitializedException();
@@ -148,6 +160,7 @@ public class ApplicationDependencies {
         @NonNull MessageRetriever provideMessageRetriever();
         @NonNull LiveRecipientCache provideRecipientCache();
         @NonNull JobManager provideJobManager();
+        @NonNull FrameRateTracker provideFrameRateTracker();
     }
 
     private static class UninitializedException extends IllegalStateException {

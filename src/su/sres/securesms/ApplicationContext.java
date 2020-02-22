@@ -53,7 +53,6 @@ import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
-import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
 import su.sres.securesms.logging.AndroidLogger;
 import su.sres.securesms.logging.CustomSignalProtocolLogger;
@@ -76,6 +75,7 @@ import su.sres.securesms.revealable.ViewOnceMessageManager;
 import su.sres.securesms.service.RotateSenderCertificateListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
+import su.sres.securesms.util.FrameRateTracker;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
 
@@ -187,6 +187,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
     executePendingContactSync();
     KeyCachingService.onAppForegrounded(this);
+    ApplicationDependencies.getFrameRateTracker().begin();
   }
 
   @Override
@@ -195,6 +196,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     Log.i(TAG, "App is no longer visible.");
     KeyCachingService.onAppBackgrounded(this);
     MessageNotifier.setVisibleThread(-1);
+    ApplicationDependencies.getFrameRateTracker().end();
 
     // unregister from Event Bus
     EventBus.getDefault().unregister(this);
@@ -309,7 +311,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     this.expiringMessageManager = new ExpiringMessageManager(this);
   }
 
-  private void initializeViewOnceMessageManager() {
+  private void initializeRevealableMessageManager() {
     this.viewOnceMessageManager = new ViewOnceMessageManager(this);
   }
 
@@ -450,7 +452,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeApplicationMigrations();
     initializeMessageRetrieval();
     initializeExpiringMessageManager();
-    initializeViewOnceMessageManager();
+    initializeRevealableMessageManager();
     initializeTypingStatusRepository();
     initializeTypingStatusSender();
     initializeGcmCheck();

@@ -60,6 +60,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.logsubmit.util.Scrubber;
 import su.sres.securesms.util.BucketInfo;
+import su.sres.securesms.util.FrameRateTracker;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
@@ -541,6 +542,8 @@ public class SubmitLogFragment extends Fragment {
     builder.append("Memory       : ").append(getMemoryUsage(context)).append("\n");
     builder.append("Memclass     : ").append(getMemoryClass(context)).append("\n");
     builder.append("OS Host      : ").append(Build.HOST).append("\n");
+    builder.append("Refresh Rate : ").append(String.format(Locale.ENGLISH, "%.2f", FrameRateTracker.getDisplayRefreshRate(context))).append(" hz").append("\n");
+    builder.append("Average FPS  : ").append(String.format(Locale.ENGLISH, "%.2f", ApplicationDependencies.getFrameRateTracker().getRunningAverageFps())).append("\n");
     builder.append("First Version: ").append(TextSecurePreferences.getFirstInstallVersion(context)).append("\n");
     builder.append("App          : ");
     try {

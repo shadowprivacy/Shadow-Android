@@ -24,6 +24,7 @@ import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.IncomingMessageObserver;
 import su.sres.securesms.util.AlarmSleepTimer;
+import su.sres.securesms.util.FrameRateTracker;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
@@ -111,6 +112,11 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
                 .setJobStorage(new FastJobStorage(DatabaseFactory.getJobDatabase(context)))
                 .setJobMigrator(new JobMigrator(TextSecurePreferences.getJobManagerVersion(context), JobManager.CURRENT_VERSION, JobManagerFactories.getJobMigrations(context)))
                 .build());
+    }
+
+    @Override
+    public @NonNull FrameRateTracker provideFrameRateTracker() {
+        return new FrameRateTracker(context);
     }
 
     private static class DynamicCredentialsProvider implements CredentialsProvider {
