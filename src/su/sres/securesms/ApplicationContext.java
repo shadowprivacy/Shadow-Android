@@ -174,6 +174,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
       if (getServerSet() && initializedOnCreate) {
         ApplicationDependencies.getRecipientCache().warmUp();
+        ApplicationDependencies.getFrameRateTracker().begin();
       } else {
         Log.i(TAG, "Waiting for initialization to complete...");
         try {
@@ -187,7 +188,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
     executePendingContactSync();
     KeyCachingService.onAppForegrounded(this);
-    ApplicationDependencies.getFrameRateTracker().begin();
   }
 
   @Override
