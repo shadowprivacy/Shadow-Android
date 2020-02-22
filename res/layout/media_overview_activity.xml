@@ -66,7 +66,7 @@
         app:layout_constraintTop_toTopOf="@+id/sort_order"
         app:srcCompat="@drawable/ic_arrow_down_14" />
 
-    <org.thoughtcrime.securesms.components.AnimatingToggle
+    <su.sres.securesms.components.AnimatingToggle
         android:id="@+id/grid_list_toggle"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
@@ -106,7 +106,7 @@
             android:visibility="gone"
             app:srcCompat="?attr/media_overview_list_view_icon" />
 
-    </org.thoughtcrime.securesms.components.AnimatingToggle>
+    </su.sres.securesms.components.AnimatingToggle>
 
     <su.sres.securesms.components.ControllableViewPager
         android:id="@+id/pager"
