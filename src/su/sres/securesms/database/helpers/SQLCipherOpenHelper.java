@@ -98,8 +98,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int USERNAMES                        = 36;
   private static final int REACTIONS                        = 37;
   private static final int STORAGE_SERVICE                  = 38;
+  private static final int REACTIONS_UNREAD_INDEX           = 39;
 
-  private static final int    DATABASE_VERSION = 38;
+  private static final int    DATABASE_VERSION = 39;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -674,6 +675,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 //            db.update("recipient", values, "_id = ?", new String[] { id });
 //          }
 //        }
+      }
+
+      if (oldVersion < REACTIONS_UNREAD_INDEX) {
+        db.execSQL("CREATE INDEX IF NOT EXISTS sms_reactions_unread_index ON sms (reactions_unread);");
+        db.execSQL("CREATE INDEX IF NOT EXISTS mms_reactions_unread_index ON mms (reactions_unread);");
       }
 
       db.setTransactionSuccessful();

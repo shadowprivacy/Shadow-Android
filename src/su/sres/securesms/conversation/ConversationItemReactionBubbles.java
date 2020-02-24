@@ -9,23 +9,22 @@ import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 
 import su.sres.securesms.R;
-import su.sres.securesms.components.emoji.EmojiTextView;
+import su.sres.securesms.components.emoji.EmojiImageView;
 import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.ThemeUtil;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 final class ConversationItemReactionBubbles {
 
-    private final ViewGroup     reactionsContainer;
-    private final EmojiTextView primaryEmojiReaction;
-    private final EmojiTextView secondaryEmojiReaction;
+    private final ViewGroup      reactionsContainer;
+    private final EmojiImageView primaryEmojiReaction;
+    private final EmojiImageView secondaryEmojiReaction;
 
     ConversationItemReactionBubbles(@NonNull ViewGroup reactionsContainer) {
         this.reactionsContainer     = reactionsContainer;
@@ -81,7 +80,7 @@ final class ConversationItemReactionBubbles {
         primaryEmojiReaction.setVisibility(View.VISIBLE);
         secondaryEmojiReaction.setVisibility(View.GONE);
 
-        primaryEmojiReaction.setText(reactionInfo.emoji);
+        primaryEmojiReaction.setImageEmoji(reactionInfo.emoji);
         primaryEmojiReaction.setBackground(getBackgroundDrawableForReactionBubble(reactionInfo));
     }
 
@@ -91,9 +90,9 @@ final class ConversationItemReactionBubbles {
         secondaryEmojiReaction.setVisibility(View.VISIBLE);
 
         Pair<ReactionInfo, ReactionInfo> primaryAndSecondaryReactions = getPrimaryAndSecondaryReactions(reactionInfos);
-        primaryEmojiReaction.setText(primaryAndSecondaryReactions.first.emoji);
+        primaryEmojiReaction.setImageEmoji(primaryAndSecondaryReactions.first.emoji);
         primaryEmojiReaction.setBackground(getBackgroundDrawableForReactionBubble(primaryAndSecondaryReactions.first));
-        secondaryEmojiReaction.setText(primaryAndSecondaryReactions.second.emoji);
+        secondaryEmojiReaction.setImageEmoji(primaryAndSecondaryReactions.second.emoji);
         secondaryEmojiReaction.setBackground(getBackgroundDrawableForReactionBubble(primaryAndSecondaryReactions.second));
     }
 

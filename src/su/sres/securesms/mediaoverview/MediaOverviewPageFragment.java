@@ -37,6 +37,7 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.util.MediaUtil;
+import su.sres.securesms.util.Util;
 
 public final class MediaOverviewPageFragment extends Fragment
         implements MediaGalleryAllAdapter.ItemClickListener,
@@ -117,6 +118,7 @@ public final class MediaOverviewPageFragment extends Fragment
                         this.sorting = sorting;
                         adapter.setShowFileSizes(sorting.isRelatedToFileSize());
                         LoaderManager.getInstance(this).restartLoader(0, null, this);
+                        refreshActionModeTitle();
                     }
                 });
 
@@ -134,6 +136,7 @@ public final class MediaOverviewPageFragment extends Fragment
         this.detail = detail;
         adapter.setDetailView(detail);
         refreshLayoutManager();
+        refreshActionModeTitle();
     }
 
     @Override
@@ -202,7 +205,7 @@ public final class MediaOverviewPageFragment extends Fragment
         if (adapter.getSelectedMediaCount() == 0) {
             actionMode.finish();
         } else {
-            actionMode.setTitle(String.valueOf(adapter.getSelectedMediaCount()));
+            refreshActionModeTitle();
         }
     }
 
@@ -253,17 +256,43 @@ public final class MediaOverviewPageFragment extends Fragment
 
     @Override
     public void onMediaLongClicked(MediaDatabase.MediaRecord mediaRecord) {
-        if (actionMode == null) {
-            ((MediaGalleryAllAdapter) recyclerView.getAdapter()).toggleSelection(mediaRecord);
-            recyclerView.getAdapter().notifyDataSetChanged();
+        ((MediaGalleryAllAdapter) recyclerView.getAdapter()).toggleSelection(mediaRecord);
+        recyclerView.getAdapter().notifyDataSetChanged();
 
-            enterMultiSelect();
+        if (actionMode == null) {
+        enterMultiSelect();
         }
     }
 
     private void handleSelectAllMedia() {
         getListAdapter().selectAllMedia();
-        actionMode.setTitle(String.valueOf(getListAdapter().getSelectedMediaCount()));
+        refreshActionModeTitle();
+    }
+
+    private void refreshActionModeTitle() {
+        if (actionMode != null) {
+            actionMode.setTitle(getActionModeTitle());
+        }
+    }
+
+    private String getActionModeTitle() {
+        MediaGalleryAllAdapter adapter           = getListAdapter();
+        int                    mediaCount        = adapter.getSelectedMediaCount();
+        boolean                showTotalFileSize = detail                                     ||
+                mediaType != MediaLoader.MediaType.GALLERY ||
+                sorting   == MediaDatabase.Sorting.Largest;
+
+        if (showTotalFileSize) {
+            long                   totalFileSize = adapter.getSelectedMediaTotalFileSize();
+            return getResources().getQuantityString(R.plurals.MediaOverviewActivity_d_items_s,
+                    mediaCount,
+                    mediaCount,
+                    Util.getPrettyFileSize(totalFileSize));
+        } else {
+            return getResources().getQuantityString(R.plurals.MediaOverviewActivity_d_items,
+                    mediaCount,
+                    mediaCount);
+        }
     }
 
     private MediaGalleryAllAdapter getListAdapter() {
@@ -283,7 +312,7 @@ public final class MediaOverviewPageFragment extends Fragment
         @Override
         public boolean onCreateActionMode(ActionMode mode, Menu menu) {
             mode.getMenuInflater().inflate(R.menu.media_overview_context, menu);
-            mode.setTitle("1");
+            mode.setTitle(getActionModeTitle());
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 Window window = requireActivity().getWindow();

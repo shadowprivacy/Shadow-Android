@@ -25,9 +25,11 @@ import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.IdentityUtil;
+import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
+import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.util.UuidUtil;
@@ -35,7 +37,6 @@ import su.sres.signalservice.api.storage.SignalContactRecord;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -658,36 +659,41 @@ public class RecipientDatabase extends Database {
   public void setMessageRingtone(@NonNull RecipientId id, @Nullable Uri notification) {
     ContentValues values = new ContentValues();
     values.put(MESSAGE_RINGTONE, notification == null ? null : notification.toString());
-    update(id, values);
-    Recipient.live(id).refresh();
+    if (update(id, values)) {
+      Recipient.live(id).refresh();
+    }
   }
 
   public void setCallRingtone(@NonNull RecipientId id, @Nullable Uri ringtone) {
     ContentValues values = new ContentValues();
     values.put(CALL_RINGTONE, ringtone == null ? null : ringtone.toString());
-    update(id, values);
-    Recipient.live(id).refresh();
+    if (update(id, values)) {
+      Recipient.live(id).refresh();
+    }
   }
 
   public void setMessageVibrate(@NonNull RecipientId id, @NonNull VibrateState enabled) {
     ContentValues values = new ContentValues();
     values.put(MESSAGE_VIBRATE, enabled.getId());
-    update(id, values);
-    Recipient.live(id).refresh();
+    if (update(id, values)) {
+      Recipient.live(id).refresh();
+    }
   }
 
   public void setCallVibrate(@NonNull RecipientId id, @NonNull VibrateState enabled) {
     ContentValues values = new ContentValues();
     values.put(CALL_VIBRATE, enabled.getId());
-    update(id, values);
-    Recipient.live(id).refresh();
+    if (update(id, values)) {
+      Recipient.live(id).refresh();
+    }
   }
 
   public void setMuted(@NonNull RecipientId id, long until) {
     ContentValues values = new ContentValues();
     values.put(MUTE_UNTIL, until);
-    update(id, values);
-    Recipient.live(id).refresh();
+    if (update(id, values)) {
+      Recipient.live(id).refresh();
+    }
   }
 
   public void setSeenFirstInviteReminder(@NonNull RecipientId id) {
@@ -1165,29 +1171,13 @@ public class RecipientDatabase extends Database {
    * query such that this will only return true if a row was *actually* updated.
    */
   private boolean update(@NonNull RecipientId id, ContentValues contentValues) {
-    SQLiteDatabase                 database  = databaseHelper.getWritableDatabase();
-    StringBuilder                  qualifier = new StringBuilder();
-    Set<Map.Entry<String, Object>> valueSet  = contentValues.valueSet();
-    String[]                       args      = new String[valueSet.size() + 1];
+    SQLiteDatabase database  = databaseHelper.getWritableDatabase();
+    String         selection = ID + " = ?";
+    String[]       args      = new String[]{id.serialize()};
 
-    args[0] = id.serialize();
+    Pair<String, String[]> result = SqlUtil.buildTrueUpdateQuery(selection, args, contentValues);
 
-    int i = 0;
-
-    for (Map.Entry<String, Object> entry : valueSet) {
-      qualifier.append(entry.getKey()).append(" != ?");
-
-      if (i != valueSet.size() - 1) {
-        qualifier.append(" OR ");
-      }
-
-      args[i + 1] = String.valueOf(entry.getValue());
-
-      i++;
-    }
-
-
-    return database.update(TABLE_NAME, contentValues, ID + " = ? AND (" + qualifier + ")", args) > 0;
+    return database.update(TABLE_NAME, contentValues, result.first(), result.second()) > 0;
   }
 
   private @NonNull Optional<RecipientId> getByColumn(@NonNull String column, String value) {

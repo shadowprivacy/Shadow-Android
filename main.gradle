@@ -16,11 +16,11 @@ subprojects {
     }
 }
 
-task qa {
-    group 'Verification'
-    description 'Quality Assurance. Run before pushing.'
-    dependsOn ':Shadow-Android:testPlayReleaseUnitTest',
-            ':Shadow-Android:lintPlayRelease',
-            ':libsignal-service:test',
-            ':Shadow-Android:assemblePlayDebug'
-}
+// task qa {
+//    group 'Verification'
+//    description 'Quality Assurance. Run before pushing.'
+//    dependsOn ':Shadow-Android:testPlayReleaseUnitTest',
+//            ':Shadow-Android:lintPlayRelease',
+//            ':libsignal-service:test',
+//            ':Shadow-Android:assemblePlayDebug'
+// }
