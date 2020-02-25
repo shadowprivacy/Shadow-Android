@@ -93,10 +93,10 @@ public class ApplicationMigrations {
 
             if (uiBlockingVersion > lastSeenVersion) {
                 Log.i(TAG, "Migration set is UI-blocking through version " + uiBlockingVersion + ".");
-                UI_BLOCKING_MIGRATION_RUNNING.setValue(true);
+                UI_BLOCKING_MIGRATION_RUNNING.postValue(true);
             } else {
                 Log.i(TAG, "Migration set is non-UI-blocking.");
-                UI_BLOCKING_MIGRATION_RUNNING.setValue(false);
+                UI_BLOCKING_MIGRATION_RUNNING.postValue(false);
             }
 
             final long startTime = System.currentTimeMillis();

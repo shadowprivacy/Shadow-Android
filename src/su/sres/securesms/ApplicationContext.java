@@ -114,7 +114,8 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   private volatile boolean isAppVisible;
 
   private boolean isServerSet,
-                  initializedOnCreate = false;
+                  initializedOnCreate,
+                  initializedOnStart = false;
 
   private final String DEFAULT_SERVER_URL = "https://example.org";
 
@@ -167,16 +168,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   @Override
   public void onStart(@NonNull LifecycleOwner owner) {
 
- //   InitWorker initWorker2 = new InitWorker();
- //   initWorker2.execute( () -> {
- //     if (getServerSet() && initializedOnCreate) {
-
- //     } else {
-
- //     }
-
- //   });
-
    // check if we're already registered, if not then register; this is needed for the case when the app is brought back on top
     if (!EventBus.getDefault().isRegistered(this)) {
       EventBus.getDefault().register(this);
@@ -188,20 +179,23 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     InitWorker initWorker = new InitWorker();
     initWorker.execute(() -> {
 
-      if (getServerSet() && initializedOnCreate) {
-        ApplicationDependencies.getRecipientCache().warmUp();
-        ApplicationDependencies.getFrameRateTracker().begin();
+      while(!initializedOnStart) {
 
-        // remove after testing
-        Log.i(TAG, "Began FrameTracker");
+        if (getServerSet() && initializedOnCreate) {
+          ApplicationDependencies.getRecipientCache().warmUp();
+          ApplicationDependencies.getFrameRateTracker().begin();
+          initializedOnStart = true;
 
-      } else {
-        Log.i(TAG, "Waiting for initialization to complete...");
-        try {
-          Thread.sleep(2000);
-        }
-        catch (InterruptedException e) {
-          e.printStackTrace();
+          // remove after testing
+          Log.i(TAG, "Began FrameTracker");
+
+        } else {
+          Log.i(TAG, "Waiting for initialization to complete...");
+          try {
+            Thread.sleep(2000);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
         }
       }
     });
@@ -216,12 +210,14 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     Log.i(TAG, "App is no longer visible.");
     KeyCachingService.onAppBackgrounded(this);
     MessageNotifier.setVisibleThread(-1);
-    if (initializedOnCreate) {
+    if (initializedOnStart) {
       ApplicationDependencies.getFrameRateTracker().end();
     }
 
     // unregister from Event Bus
     EventBus.getDefault().unregister(this);
+
+    initializedOnStart = false;
   }
 
   public ExpiringMessageManager getExpiringMessageManager() {
