@@ -23,6 +23,7 @@ import su.sres.securesms.migrations.DatabaseMigrationJob;
 import su.sres.securesms.migrations.LegacyMigrationJob;
 import su.sres.securesms.migrations.MigrationCompleteJob;
 import su.sres.securesms.migrations.RecipientSearchMigrationJob;
+import su.sres.securesms.migrations.StickerLaunchMigrationJob;
 import su.sres.securesms.migrations.UuidMigrationJob;
 
 import java.util.Arrays;
@@ -92,12 +93,13 @@ public final class JobManagerFactories {
 
             // Migrations
             put(AvatarMigrationJob.KEY,                    new AvatarMigrationJob.Factory());
+            put(CachedAttachmentsMigrationJob.KEY,         new CachedAttachmentsMigrationJob.Factory());
             put(DatabaseMigrationJob.KEY,                  new DatabaseMigrationJob.Factory());
             put(LegacyMigrationJob.KEY,                    new LegacyMigrationJob.Factory());
             put(MigrationCompleteJob.KEY,                  new MigrationCompleteJob.Factory());
             put(RecipientSearchMigrationJob.KEY,           new RecipientSearchMigrationJob.Factory());
+            put(StickerLaunchMigrationJob.KEY,             new StickerLaunchMigrationJob.Factory());
             put(UuidMigrationJob.KEY,                      new UuidMigrationJob.Factory());
-            put(CachedAttachmentsMigrationJob.KEY,         new CachedAttachmentsMigrationJob.Factory());
 
             // Dead jobs
             put("PushContentReceiveJob",                   new FailingJob.Factory());

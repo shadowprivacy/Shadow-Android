@@ -18,8 +18,12 @@ import com.melnykov.fab.FloatingActionButton;
 import com.nineoldandroids.animation.ArgbEvaluator;
 
 import su.sres.securesms.IntroPagerAdapter.IntroPage;
+import su.sres.securesms.database.model.Sticker;
+import su.sres.securesms.experienceupgrades.StickersIntroFragment;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
+import su.sres.securesms.util.DynamicNoActionBarTheme;
+import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -29,10 +33,16 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import java.util.Collections;
 import java.util.List;
 
-public class ExperienceUpgradeActivity extends BaseActionBarActivity implements TypingIndicatorIntroFragment.Controller, LinkPreviewsIntroFragment.Controller {
+public class ExperienceUpgradeActivity extends BaseActionBarActivity
+        implements TypingIndicatorIntroFragment.Controller,
+        LinkPreviewsIntroFragment.Controller,
+        StickersIntroFragment.Controller
+{
   private static final String TAG             = ExperienceUpgradeActivity.class.getSimpleName();
   private static final String DISMISS_ACTION  = "su.sres.securesms.ExperienceUpgradeActivity.DISMISS_ACTION";
   private static final int    NOTIFICATION_ID = 1339;
+
+  private final DynamicTheme dynamicTheme = new DynamicNoActionBarTheme();
 
   private enum ExperienceUpgrade {
     SIGNAL_REBRANDING(157,
@@ -86,6 +96,13 @@ public class ExperienceUpgradeActivity extends BaseActionBarActivity implements 
             R.string.ExperienceUpgradeActivity_introducing_link_previews,
             R.string.ExperienceUpgradeActivity_optional_link_previews_are_now_supported,
             R.string.ExperienceUpgradeActivity_optional_link_previews_are_now_supported,
+            null,
+            true),
+    STICKERS(580,
+            new IntroPage(0xFF2090EA, StickersIntroFragment.newInstance()),
+            R.string.ExperienceUpgradeActivity_introducing_stickers,
+            R.string.ExperienceUpgradeActivity_why_use_words_when_you_can_use_stickers,
+            R.string.ExperienceUpgradeActivity_why_use_words_when_you_can_use_stickers,
             null,
             true);
 
@@ -157,7 +174,7 @@ public class ExperienceUpgradeActivity extends BaseActionBarActivity implements 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setStatusBarColor(getResources().getColor(R.color.signal_primary_dark));
+    dynamicTheme.onCreate(this);
 
     final Optional<ExperienceUpgrade> upgrade = getExperienceUpgrade(this);
     if (!upgrade.isPresent()) {
@@ -180,6 +197,12 @@ public class ExperienceUpgradeActivity extends BaseActionBarActivity implements 
 
     getWindow().setBackgroundDrawable(new ColorDrawable(upgrade.get().getPage(0).backgroundColor));
     ServiceUtil.getNotificationManager(this).cancel(NOTIFICATION_ID);
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    dynamicTheme.onResume(this);
   }
 
   private void onContinue(Optional<ExperienceUpgrade> seenUpgrade) {
@@ -232,29 +255,9 @@ public class ExperienceUpgradeActivity extends BaseActionBarActivity implements 
     onContinue(Optional.of(ExperienceUpgrade.LINK_PREVIEWS));
   }
 
-  private final class OnPageChangeListener implements ViewPager.OnPageChangeListener {
-    private final ArgbEvaluator     evaluator = new ArgbEvaluator();
-    private final ExperienceUpgrade upgrade;
-
-    public OnPageChangeListener(ExperienceUpgrade upgrade) {
-      this.upgrade = upgrade;
-    }
-
-    @Override
-    public void onPageSelected(int position) {}
-
-    @Override
-    public void onPageScrollStateChanged(int state) {}
-
-    @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-      final int nextPosition = (position + 1) % upgrade.getPages().size();
-
-      final int color = (Integer)evaluator.evaluate(positionOffset,
-                                                    upgrade.getPage(position).backgroundColor,
-                                                    upgrade.getPage(nextPosition).backgroundColor);
-      getWindow().setBackgroundDrawable(new ColorDrawable(color));
-    }
+  @Override
+  public void onStickersFinished() {
+    onContinue(Optional.of(ExperienceUpgrade.STICKERS));
   }
 
   public static class AppUpgradeReceiver extends BroadcastReceiver {

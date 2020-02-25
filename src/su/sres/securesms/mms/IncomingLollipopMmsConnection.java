@@ -26,6 +26,7 @@ import androidx.annotation.Nullable;
 
 import android.os.Bundle;
 import android.telephony.SmsManager;
+import android.text.TextUtils;
 import su.sres.securesms.logging.Log;
 
 import com.google.android.mms.InvalidHeaderValueException;
@@ -97,6 +98,14 @@ public class IncomingLollipopMmsConnection extends LollipopMmsConnection impleme
         } else {
           Log.i(TAG, "Skipping 'append transaction id' as contentLocation already contains it");
         }
+      }
+
+      if (TextUtils.isEmpty(configOverrides.getString(SmsManager.MMS_CONFIG_USER_AGENT))) {
+        configOverrides.remove(SmsManager.MMS_CONFIG_USER_AGENT);
+      }
+
+      if (TextUtils.isEmpty(configOverrides.getString(SmsManager.MMS_CONFIG_UA_PROF_URL))) {
+        configOverrides.remove(SmsManager.MMS_CONFIG_UA_PROF_URL);
       }
 
       smsManager.downloadMultimediaMessage(getContext(),

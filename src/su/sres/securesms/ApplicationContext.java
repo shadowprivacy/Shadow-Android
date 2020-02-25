@@ -54,6 +54,7 @@ import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
+import su.sres.securesms.jobs.StickerPackDownloadJob;
 import su.sres.securesms.logging.AndroidLogger;
 import su.sres.securesms.logging.CustomSignalProtocolLogger;
 import su.sres.securesms.logging.Log;
@@ -75,8 +76,10 @@ import su.sres.securesms.revealable.ViewOnceMessageManager;
 import su.sres.securesms.service.RotateSenderCertificateListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
+import su.sres.securesms.stickers.BlessedPacks;
 import su.sres.securesms.util.FrameRateTracker;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.Util;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
 
 import org.webrtc.voiceengine.WebRtcAudioManager;
@@ -127,27 +130,30 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeSecurityProvider();
     initializeLogging();
     initializeCrashHandling();
-    initializeFirstEverAppLaunch();
+
 
     // register to Event Bus
     EventBus.getDefault().register(this);
 
       InitWorker initWorker = new InitWorker();
       initWorker.execute(() -> {
-                // checking at subsequent launches of the app, if the server is already known in prefs, then no need for delay, just initialize immediately
+
+        while(!initializedOnCreate) {
+
+          // checking at subsequent launches of the app, if the server is already known in prefs, then no need for delay, just initialize immediately
 //                if (!DatabaseFactory.getConfigDatabase(this).getConfigById(1).equals(DEFAULT_SERVER_URL)) {
-                if (!TextSecurePreferences.getShadowServerUrl(this).equals(DEFAULT_SERVER_URL)) {
-                  setServerSet(true);
-                  initializeOnCreate();
-                } else {
-                  Log.i(TAG, "Waiting for the server URL to be configured...");
-                  try {
-                    Thread.sleep(2000);
-                  }
-                  catch (InterruptedException e) {
-                    e.printStackTrace();
-                  }
-                }
+          if (!TextSecurePreferences.getShadowServerUrl(this).equals(DEFAULT_SERVER_URL)) {
+            setServerSet(true);
+            initializeOnCreate();
+          } else {
+            Log.i(TAG, "Waiting for the server URL to be configured...");
+            try {
+              Thread.sleep(2000);
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
+          }
+        }
          });
 
     NotificationChannels.create(this);
@@ -160,6 +166,16 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   @Override
   public void onStart(@NonNull LifecycleOwner owner) {
+
+ //   InitWorker initWorker2 = new InitWorker();
+ //   initWorker2.execute( () -> {
+ //     if (getServerSet() && initializedOnCreate) {
+
+ //     } else {
+
+ //     }
+
+ //   });
 
    // check if we're already registered, if not then register; this is needed for the case when the app is brought back on top
     if (!EventBus.getDefault().isRegistered(this)) {
@@ -175,6 +191,10 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
       if (getServerSet() && initializedOnCreate) {
         ApplicationDependencies.getRecipientCache().warmUp();
         ApplicationDependencies.getFrameRateTracker().begin();
+
+        // remove after testing
+        Log.i(TAG, "Began FrameTracker");
+
       } else {
         Log.i(TAG, "Waiting for initialization to complete...");
         try {
@@ -196,7 +216,9 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     Log.i(TAG, "App is no longer visible.");
     KeyCachingService.onAppBackgrounded(this);
     MessageNotifier.setVisibleThread(-1);
-    ApplicationDependencies.getFrameRateTracker().end();
+    if (initializedOnCreate) {
+      ApplicationDependencies.getFrameRateTracker().end();
+    }
 
     // unregister from Event Bus
     EventBus.getDefault().unregister(this);
@@ -284,6 +306,10 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
         TextSecurePreferences.setAppMigrationVersion(this, ApplicationMigrations.CURRENT_VERSION);
         TextSecurePreferences.setJobManagerVersion(this, JobManager.CURRENT_VERSION);
+        TextSecurePreferences.setLastExperienceVersionCode(this, Util.getCanonicalVersionCode());
+        TextSecurePreferences.setHasSeenStickerIntroTooltip(this, true);
+        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
+        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
       }
 
       Log.i(TAG, "Setting first install version to " + BuildConfig.CANONICAL_VERSION_CODE);
@@ -449,6 +475,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   private void initializeOnCreate() {
 
     initializeAppDependencies();
+    initializeFirstEverAppLaunch();
     initializeApplicationMigrations();
     initializeMessageRetrieval();
     initializeExpiringMessageManager();

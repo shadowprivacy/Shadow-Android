@@ -2,7 +2,13 @@ package su.sres.securesms.stickers;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+import android.content.Context;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.text.SpannableString;
+import android.text.style.ImageSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +18,9 @@ import android.widget.TextView;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 
 import su.sres.securesms.R;
+import su.sres.securesms.components.emoji.EmojiTextView;
 import su.sres.securesms.database.model.StickerPackRecord;
+import su.sres.securesms.jobmanager.Constraint;
 import su.sres.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.util.FeatureFlags;
@@ -179,15 +187,15 @@ final class StickerManagementAdapter extends SectionedRecyclerViewAdapter<String
 
     static class StickerViewHolder extends RecyclerView.ViewHolder {
 
-        private final ImageView cover;
-        private final TextView  title;
-        private final TextView  author;
-        private final View      badge;
-        private final View      divider;
-        private final View      actionButton;
-        private final ImageView actionButtonImage;
-        private final View      shareButton;
-        private final ImageView shareButtonImage;
+        private final ImageView     cover;
+        private final EmojiTextView title;
+        private final TextView      author;
+        private final View          divider;
+        private final View          actionButton;
+        private final ImageView     actionButtonImage;
+        private final View          shareButton;
+        private final ImageView     shareButtonImage;
+        private final CharSequence  blessedBadge;
 
         StickerViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -195,12 +203,12 @@ final class StickerManagementAdapter extends SectionedRecyclerViewAdapter<String
             this.cover             = itemView.findViewById(R.id.sticker_management_cover);
             this.title             = itemView.findViewById(R.id.sticker_management_title);
             this.author            = itemView.findViewById(R.id.sticker_management_author);
-            this.badge             = itemView.findViewById(R.id.sticker_management_blessed_badge);
             this.divider           = itemView.findViewById(R.id.sticker_management_divider);
             this.actionButton      = itemView.findViewById(R.id.sticker_management_action_button);
             this.actionButtonImage = itemView.findViewById(R.id.sticker_management_action_button_image);
             this.shareButton       = itemView.findViewById(R.id.sticker_management_share_button);
             this.shareButtonImage  = itemView.findViewById(R.id.sticker_management_share_button_image);
+            this.blessedBadge      = buildBlessedBadge(itemView.getContext());
         }
 
         void bind(@NonNull GlideRequests glideRequests,
@@ -211,7 +219,12 @@ final class StickerManagementAdapter extends SectionedRecyclerViewAdapter<String
             title.setText(stickerPack.getTitle().or(itemView.getResources().getString(R.string.StickerManagementAdapter_untitled)));
             author.setText(stickerPack.getAuthor().or(itemView.getResources().getString(R.string.StickerManagementAdapter_unknown)));
             divider.setVisibility(lastInList ? View.GONE : View.VISIBLE);
-            badge.setVisibility(BlessedPacks.contains(stickerPack.getPackId()) ? View.VISIBLE : View.GONE);
+
+            if (BlessedPacks.contains(stickerPack.getPackId())) {
+                title.setOverflowText(blessedBadge);
+            } else {
+                title.setOverflowText(null);
+            }
 
             glideRequests.load(new DecryptableUri(stickerPack.getCover().getUri()))
                     .transition(DrawableTransitionOptions.withCrossFade())
@@ -240,6 +253,17 @@ final class StickerManagementAdapter extends SectionedRecyclerViewAdapter<String
             actionButton.setOnClickListener(null);
             shareButton.setOnClickListener(null);
             itemView.setOnClickListener(null);
+        }
+
+        private static @NonNull CharSequence buildBlessedBadge(@NonNull Context context) {
+            SpannableString badgeSpan = new SpannableString("  ");
+            Drawable        badge     = ContextCompat.getDrawable(context, R.drawable.ic_check_circle_white_18dp);
+
+            badge.setBounds(0, 0, badge.getIntrinsicWidth(), badge.getIntrinsicHeight());
+            badge.setColorFilter(ContextCompat.getColor(context, R.color.core_blue), PorterDuff.Mode.MULTIPLY);
+            badgeSpan.setSpan(new ImageSpan(badge), 1, badgeSpan.length(), 0);
+
+            return badgeSpan;
         }
     }
 
