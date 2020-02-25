@@ -119,6 +119,8 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   private final String DEFAULT_SERVER_URL = "https://example.org";
 
+  final InitWorker initWorker = new InitWorker();
+
   public static ApplicationContext getInstance(Context context) {
     return (ApplicationContext)context.getApplicationContext();
   }
@@ -136,7 +138,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     // register to Event Bus
     EventBus.getDefault().register(this);
 
-      InitWorker initWorker = new InitWorker();
       initWorker.execute(() -> {
 
         while(!initializedOnCreate) {
@@ -176,7 +177,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     isAppVisible = true;
     Log.i(TAG, "App is now visible.");
 
-    InitWorker initWorker = new InitWorker();
     initWorker.execute(() -> {
 
       while(!initializedOnStart) {
@@ -184,10 +184,10 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         if (getServerSet() && initializedOnCreate) {
           ApplicationDependencies.getRecipientCache().warmUp();
           ApplicationDependencies.getFrameRateTracker().begin();
-          initializedOnStart = true;
-
           // remove after testing
           Log.i(TAG, "Began FrameTracker");
+
+          initializedOnStart = true;
 
         } else {
           Log.i(TAG, "Waiting for initialization to complete...");
@@ -210,9 +210,14 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     Log.i(TAG, "App is no longer visible.");
     KeyCachingService.onAppBackgrounded(this);
     MessageNotifier.setVisibleThread(-1);
-    if (initializedOnStart) {
-      ApplicationDependencies.getFrameRateTracker().end();
-    }
+
+    initWorker.execute(() -> {
+
+                ApplicationDependencies.getFrameRateTracker().end();
+
+                // remove after testing
+                Log.i(TAG, "End FrameTracker");
+            });
 
     // unregister from Event Bus
     EventBus.getDefault().unregister(this);
