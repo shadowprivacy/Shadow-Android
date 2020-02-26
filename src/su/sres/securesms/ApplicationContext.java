@@ -18,7 +18,6 @@ package su.sres.securesms;
 
 import android.annotation.SuppressLint;
 
-import androidx.annotation.Keep;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.camera.camera2.Camera2AppConfig;
 import androidx.camera.core.CameraX;
@@ -36,9 +35,6 @@ import com.google.android.gms.security.ProviderInstaller;
 
 import org.conscrypt.Conscrypt;
 
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-
 import org.signal.aesgcmprovider.AesGcmProvider;
 import su.sres.ringrtc.CallConnectionFactory;
 import su.sres.securesms.components.TypingStatusRepository;
@@ -48,7 +44,6 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.dependencies.ApplicationDependencyProvider;
 import su.sres.securesms.gcm.FcmJobService;
 import su.sres.securesms.insights.InsightsOptOut;
-import su.sres.securesms.events.ServerSetEvent;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
@@ -77,7 +72,6 @@ import su.sres.securesms.service.RotateSenderCertificateListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
 import su.sres.securesms.stickers.BlessedPacks;
-import su.sres.securesms.util.FrameRateTracker;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
@@ -99,7 +93,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Moxie Marlinspike
  */
-@Keep
+
 public class ApplicationContext extends MultiDexApplication implements DefaultLifecycleObserver {
 
   private static final String TAG = ApplicationContext.class.getSimpleName();
@@ -134,10 +128,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeLogging();
     initializeCrashHandling();
 
-
-    // register to Event Bus
-    EventBus.getDefault().register(this);
-
       initWorker.execute(() -> {
 
         while(!initializedOnCreate) {
@@ -169,11 +159,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   @Override
   public void onStart(@NonNull LifecycleOwner owner) {
 
-   // check if we're already registered, if not then register; this is needed for the case when the app is brought back on top
-    if (!EventBus.getDefault().isRegistered(this)) {
-      EventBus.getDefault().register(this);
-    }
-
     isAppVisible = true;
     Log.i(TAG, "App is now visible.");
 
@@ -184,8 +169,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         if (getServerSet() && initializedOnCreate) {
           ApplicationDependencies.getRecipientCache().warmUp();
           ApplicationDependencies.getFrameRateTracker().begin();
-          // remove after testing
-          Log.i(TAG, "Began FrameTracker");
 
           initializedOnStart = true;
 
@@ -212,15 +195,9 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     MessageNotifier.setVisibleThread(-1);
 
     initWorker.execute(() -> {
-
                 ApplicationDependencies.getFrameRateTracker().end();
 
-                // remove after testing
-                Log.i(TAG, "End FrameTracker");
             });
-
-    // unregister from Event Bus
-    EventBus.getDefault().unregister(this);
 
     initializedOnStart = false;
   }
@@ -310,7 +287,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         TextSecurePreferences.setLastExperienceVersionCode(this, Util.getCanonicalVersionCode());
         TextSecurePreferences.setHasSeenStickerIntroTooltip(this, true);
         ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
-        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
+       ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
       }
 
       Log.i(TAG, "Setting first install version to " + BuildConfig.CANONICAL_VERSION_CODE);
@@ -463,11 +440,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
     public void setServerSet(boolean flag) {
         isServerSet = flag;
-    }
-
-    @Subscribe
-    public void onServerSetEvent(ServerSetEvent event) {
-        initializeOnCreate();
     }
 
   private static class ProviderInitializationException extends RuntimeException {

@@ -1780,7 +1780,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
             if (stickersAvailable) {
                 inputPanel.showMediaKeyboardToggle(true);
                 inputPanel.setMediaKeyboardToggleMode(isSystemEmojiPreferred || keyboardMode == MediaKeyboardMode.STICKER);
-                if (stickerIntro) showStickerIntroductionTooltip();
+//                if (stickerIntro) showStickerIntroductionTooltip();
             }
 
             if (emojiDrawerStub.resolved()) {
