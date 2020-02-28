@@ -1,6 +1,6 @@
 # Shadow-Android
 
-This is part of the Shadow secure messenger project - an Android client being a modified version of Signal-Android by Open Whisper Systems https://github.com/signalapp/Signal-Android and aimed at corporate environments.
+This is part of the Shadow secure messenger project - an Android client being a modified version of Signal-Android by Open Whisper Systems https://github.com/signalapp/Signal-Android and aimed at corporate/team environments.
 
 ## Contributing Translations
 
@@ -33,10 +33,10 @@ The form and manner of this distribution makes it eligible for export under the 
 Original product:
 
 Copyright 2011 Whisper Systems
-Copyright 2013-2017 Open Whisper Systems
+Copyright 2013-2020 Open Whisper Systems
 
 Modified product:
 
-Copyright 2019 Sophisticated Research
+Copyright 2019-2020 Sophisticated Research
 
 Licensed under the GPLv3: http://www.gnu.org/licenses/gpl-3.0.html

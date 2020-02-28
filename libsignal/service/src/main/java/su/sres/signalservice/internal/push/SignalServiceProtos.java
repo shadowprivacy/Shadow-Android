@@ -29695,6 +29695,28 @@ public final class SignalServiceProtos {
      * @return The expireTimer.
      */
     int getExpireTimer();
+
+    /**
+     * <code>optional uint32 inboxPosition = 10;</code>
+     * @return Whether the inboxPosition field is set.
+     */
+    boolean hasInboxPosition();
+    /**
+     * <code>optional uint32 inboxPosition = 10;</code>
+     * @return The inboxPosition.
+     */
+    int getInboxPosition();
+
+    /**
+     * <code>optional bool archived = 11;</code>
+     * @return Whether the archived field is set.
+     */
+    boolean hasArchived();
+    /**
+     * <code>optional bool archived = 11;</code>
+     * @return The archived.
+     */
+    boolean getArchived();
   }
   /**
    * Protobuf type {@code signalservice.ContactDetails}
@@ -30571,6 +30593,74 @@ public final class SignalServiceProtos {
       expireTimer_ = 0;
     }
 
+    public static final int INBOXPOSITION_FIELD_NUMBER = 10;
+    private int inboxPosition_;
+    /**
+     * <code>optional uint32 inboxPosition = 10;</code>
+     * @return Whether the inboxPosition field is set.
+     */
+    @java.lang.Override
+    public boolean hasInboxPosition() {
+      return ((bitField0_ & 0x00000200) != 0);
+    }
+    /**
+     * <code>optional uint32 inboxPosition = 10;</code>
+     * @return The inboxPosition.
+     */
+    @java.lang.Override
+    public int getInboxPosition() {
+      return inboxPosition_;
+    }
+    /**
+     * <code>optional uint32 inboxPosition = 10;</code>
+     * @param value The inboxPosition to set.
+     */
+    private void setInboxPosition(int value) {
+      bitField0_ |= 0x00000200;
+      inboxPosition_ = value;
+    }
+    /**
+     * <code>optional uint32 inboxPosition = 10;</code>
+     */
+    private void clearInboxPosition() {
+      bitField0_ = (bitField0_ & ~0x00000200);
+      inboxPosition_ = 0;
+    }
+
+    public static final int ARCHIVED_FIELD_NUMBER = 11;
+    private boolean archived_;
+    /**
+     * <code>optional bool archived = 11;</code>
+     * @return Whether the archived field is set.
+     */
+    @java.lang.Override
+    public boolean hasArchived() {
+      return ((bitField0_ & 0x00000400) != 0);
+    }
+    /**
+     * <code>optional bool archived = 11;</code>
+     * @return The archived.
+     */
+    @java.lang.Override
+    public boolean getArchived() {
+      return archived_;
+    }
+    /**
+     * <code>optional bool archived = 11;</code>
+     * @param value The archived to set.
+     */
+    private void setArchived(boolean value) {
+      bitField0_ |= 0x00000400;
+      archived_ = value;
+    }
+    /**
+     * <code>optional bool archived = 11;</code>
+     */
+    private void clearArchived() {
+      bitField0_ = (bitField0_ & ~0x00000400);
+      archived_ = false;
+    }
+
     public static su.sres.signalservice.internal.push.SignalServiceProtos.ContactDetails parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -31096,6 +31186,78 @@ public final class SignalServiceProtos {
         return this;
       }
 
+      /**
+       * <code>optional uint32 inboxPosition = 10;</code>
+       * @return Whether the inboxPosition field is set.
+       */
+      @java.lang.Override
+      public boolean hasInboxPosition() {
+        return instance.hasInboxPosition();
+      }
+      /**
+       * <code>optional uint32 inboxPosition = 10;</code>
+       * @return The inboxPosition.
+       */
+      @java.lang.Override
+      public int getInboxPosition() {
+        return instance.getInboxPosition();
+      }
+      /**
+       * <code>optional uint32 inboxPosition = 10;</code>
+       * @param value The inboxPosition to set.
+       * @return This builder for chaining.
+       */
+      public Builder setInboxPosition(int value) {
+        copyOnWrite();
+        instance.setInboxPosition(value);
+        return this;
+      }
+      /**
+       * <code>optional uint32 inboxPosition = 10;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearInboxPosition() {
+        copyOnWrite();
+        instance.clearInboxPosition();
+        return this;
+      }
+
+      /**
+       * <code>optional bool archived = 11;</code>
+       * @return Whether the archived field is set.
+       */
+      @java.lang.Override
+      public boolean hasArchived() {
+        return instance.hasArchived();
+      }
+      /**
+       * <code>optional bool archived = 11;</code>
+       * @return The archived.
+       */
+      @java.lang.Override
+      public boolean getArchived() {
+        return instance.getArchived();
+      }
+      /**
+       * <code>optional bool archived = 11;</code>
+       * @param value The archived to set.
+       * @return This builder for chaining.
+       */
+      public Builder setArchived(boolean value) {
+        copyOnWrite();
+        instance.setArchived(value);
+        return this;
+      }
+      /**
+       * <code>optional bool archived = 11;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearArchived() {
+        copyOnWrite();
+        instance.clearArchived();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:signalservice.ContactDetails)
     }
     @java.lang.Override
@@ -31122,11 +31284,13 @@ public final class SignalServiceProtos {
               "blocked_",
               "expireTimer_",
               "uuid_",
+              "inboxPosition_",
+              "archived_",
             };
             java.lang.String info =
-                "\u0001\t\u0000\u0001\u0001\t\t\u0000\u0000\u0000\u0001\b\u0000\u0002\b\u0002\u0003" +
-                "\t\u0003\u0004\b\u0004\u0005\t\u0005\u0006\n\u0006\u0007\u0007\u0007\b\u000b\b\t" +
-                "\b\u0001";
+                "\u0001\u000b\u0000\u0001\u0001\u000b\u000b\u0000\u0000\u0000\u0001\b\u0000\u0002" +
+                "\b\u0002\u0003\t\u0003\u0004\b\u0004\u0005\t\u0005\u0006\n\u0006\u0007\u0007\u0007" +
+                "\b\u000b\b\t\b\u0001\n\u000b\t\u000b\u0007\n";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -31312,6 +31476,28 @@ public final class SignalServiceProtos {
      * @return The blocked.
      */
     boolean getBlocked();
+
+    /**
+     * <code>optional uint32 inboxPosition = 10;</code>
+     * @return Whether the inboxPosition field is set.
+     */
+    boolean hasInboxPosition();
+    /**
+     * <code>optional uint32 inboxPosition = 10;</code>
+     * @return The inboxPosition.
+     */
+    int getInboxPosition();
+
+    /**
+     * <code>optional bool archived = 11;</code>
+     * @return Whether the archived field is set.
+     */
+    boolean hasArchived();
+    /**
+     * <code>optional bool archived = 11;</code>
+     * @return The archived.
+     */
+    boolean getArchived();
   }
   /**
    * Protobuf type {@code signalservice.GroupDetails}
@@ -32723,6 +32909,74 @@ public final class SignalServiceProtos {
       blocked_ = false;
     }
 
+    public static final int INBOXPOSITION_FIELD_NUMBER = 10;
+    private int inboxPosition_;
+    /**
+     * <code>optional uint32 inboxPosition = 10;</code>
+     * @return Whether the inboxPosition field is set.
+     */
+    @java.lang.Override
+    public boolean hasInboxPosition() {
+      return ((bitField0_ & 0x00000080) != 0);
+    }
+    /**
+     * <code>optional uint32 inboxPosition = 10;</code>
+     * @return The inboxPosition.
+     */
+    @java.lang.Override
+    public int getInboxPosition() {
+      return inboxPosition_;
+    }
+    /**
+     * <code>optional uint32 inboxPosition = 10;</code>
+     * @param value The inboxPosition to set.
+     */
+    private void setInboxPosition(int value) {
+      bitField0_ |= 0x00000080;
+      inboxPosition_ = value;
+    }
+    /**
+     * <code>optional uint32 inboxPosition = 10;</code>
+     */
+    private void clearInboxPosition() {
+      bitField0_ = (bitField0_ & ~0x00000080);
+      inboxPosition_ = 0;
+    }
+
+    public static final int ARCHIVED_FIELD_NUMBER = 11;
+    private boolean archived_;
+    /**
+     * <code>optional bool archived = 11;</code>
+     * @return Whether the archived field is set.
+     */
+    @java.lang.Override
+    public boolean hasArchived() {
+      return ((bitField0_ & 0x00000100) != 0);
+    }
+    /**
+     * <code>optional bool archived = 11;</code>
+     * @return The archived.
+     */
+    @java.lang.Override
+    public boolean getArchived() {
+      return archived_;
+    }
+    /**
+     * <code>optional bool archived = 11;</code>
+     * @param value The archived to set.
+     */
+    private void setArchived(boolean value) {
+      bitField0_ |= 0x00000100;
+      archived_ = value;
+    }
+    /**
+     * <code>optional bool archived = 11;</code>
+     */
+    private void clearArchived() {
+      bitField0_ = (bitField0_ & ~0x00000100);
+      archived_ = false;
+    }
+
     public static su.sres.signalservice.internal.push.SignalServiceProtos.GroupDetails parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -33315,6 +33569,78 @@ public final class SignalServiceProtos {
         return this;
       }
 
+      /**
+       * <code>optional uint32 inboxPosition = 10;</code>
+       * @return Whether the inboxPosition field is set.
+       */
+      @java.lang.Override
+      public boolean hasInboxPosition() {
+        return instance.hasInboxPosition();
+      }
+      /**
+       * <code>optional uint32 inboxPosition = 10;</code>
+       * @return The inboxPosition.
+       */
+      @java.lang.Override
+      public int getInboxPosition() {
+        return instance.getInboxPosition();
+      }
+      /**
+       * <code>optional uint32 inboxPosition = 10;</code>
+       * @param value The inboxPosition to set.
+       * @return This builder for chaining.
+       */
+      public Builder setInboxPosition(int value) {
+        copyOnWrite();
+        instance.setInboxPosition(value);
+        return this;
+      }
+      /**
+       * <code>optional uint32 inboxPosition = 10;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearInboxPosition() {
+        copyOnWrite();
+        instance.clearInboxPosition();
+        return this;
+      }
+
+      /**
+       * <code>optional bool archived = 11;</code>
+       * @return Whether the archived field is set.
+       */
+      @java.lang.Override
+      public boolean hasArchived() {
+        return instance.hasArchived();
+      }
+      /**
+       * <code>optional bool archived = 11;</code>
+       * @return The archived.
+       */
+      @java.lang.Override
+      public boolean getArchived() {
+        return instance.getArchived();
+      }
+      /**
+       * <code>optional bool archived = 11;</code>
+       * @param value The archived to set.
+       * @return This builder for chaining.
+       */
+      public Builder setArchived(boolean value) {
+        copyOnWrite();
+        instance.setArchived(value);
+        return this;
+      }
+      /**
+       * <code>optional bool archived = 11;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearArchived() {
+        copyOnWrite();
+        instance.clearArchived();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:signalservice.GroupDetails)
     }
     @java.lang.Override
@@ -33342,11 +33668,13 @@ public final class SignalServiceProtos {
               "blocked_",
               "members_",
               su.sres.signalservice.internal.push.SignalServiceProtos.GroupDetails.Member.class,
+              "inboxPosition_",
+              "archived_",
             };
             java.lang.String info =
-                "\u0001\t\u0000\u0001\u0001\t\t\u0000\u0002\u0000\u0001\n\u0000\u0002\b\u0001\u0003" +
-                "\u001a\u0004\t\u0002\u0005\u0007\u0003\u0006\u000b\u0004\u0007\b\u0005\b\u0007\u0006" +
-                "\t\u001b";
+                "\u0001\u000b\u0000\u0001\u0001\u000b\u000b\u0000\u0002\u0000\u0001\n\u0000\u0002" +
+                "\b\u0001\u0003\u001a\u0004\t\u0002\u0005\u0007\u0003\u0006\u000b\u0004\u0007\b\u0005" +
+                "\b\u0007\u0006\t\u001b\n\u000b\u0007\u000b\u0007\b";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through

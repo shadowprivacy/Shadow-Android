@@ -120,16 +120,9 @@ dependencies {
     implementation 'org.conscrypt:conscrypt-android:2.0.0'
     implementation 'org.signal:aesgcmprovider:0.0.3'
 
-// additional classes for signal-service
-
-//    implementation 'com.googlecode.libphonenumber:libphonenumber:8.10.7'
-//    implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
-//    implementation 'org.signal:signal-metadata-java:0.1.0'
-//    implementation 'com.squareup.okhttp3:okhttp:3.12.1'
-
     implementation project(':libsignal-service')
 
-    implementation files('../libs/ringrtc-android-0.2.0.aar')
+    implementation files('libs/ringrtc-android-0.3.1.aar')
 
     implementation 'commons-validator:commons-validator:1.6'
     implementation "me.leolin:ShortcutBadger:1.1.16"
@@ -207,8 +200,8 @@ dependencyVerification {
     configuration = '(play|website)(Debug|Release)RuntimeClasspath'
 }
 
-def canonicalVersionCode = 584
-def canonicalVersionName = "4.52.4"
+def canonicalVersionCode = 586
+def canonicalVersionName = "4.53.1"
 
 def postFixSize = 10
 def abiPostFix = ['universal'   : 0,
@@ -351,33 +344,6 @@ android {
 
             output.versionCodeOverride = canonicalVersionCode * postFixSize + postFix
         }
-    }
-
-    sourceSets {
-        main {
-
-            manifest.srcFile '../AndroidManifest.xml'
-            java.srcDirs = ['../src']
-            resources.srcDirs = ['../src']
-            aidl.srcDirs = ['../src']
-            renderscript.srcDirs = ['../src']
-            res.srcDirs = ['../res']
-            assets.srcDirs = ['../assets']
-            jniLibs.srcDirs = ['../libs']
-            proto.srcDir '../protobuf'
-        }
-        androidTest {
-            java.srcDirs = ['../test/androidTest/java']
-        }
-        test {
-            java.srcDirs = ['../test/unitTest/java']
-            resources.srcDirs = ['../test/unitTest/resources']
-        }
-        staging {
-            res.srcDirs = ['../staging/res']
-        }
-
-        website.manifest.srcFile '../website/AndroidManifest.xml'
     }
 
     lintOptions {
