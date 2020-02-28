@@ -32,7 +32,7 @@ jint JNICALL Java_su_sres_securesms_util_FileUtils_getFileDescriptorOwner
   return stat_struct.st_uid;
 }
 
-JNIEXPORT jint JNICALL Java_org_thoughtcrime_securesms_util_FileUtils_createMemoryFileDescriptor
+JNIEXPORT jint JNICALL Java_su_sres_securesms_util_FileUtils_createMemoryFileDescriptor
   (JNIEnv *env, jclass clazz, jstring jname)
 {
   const char *name = env->GetStringUTFChars(jname, NULL);

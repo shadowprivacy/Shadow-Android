@@ -357,6 +357,12 @@ android {
             includeAndroidResources = true
         }
     }
+    externalNativeBuild {
+        ndkBuild {
+            path file('jni/Android.mk')
+        }
+    }
+    ndkVersion = '21.0.6113669'
 }
 
 def assembleWebsiteDescriptor = { variant, file ->
