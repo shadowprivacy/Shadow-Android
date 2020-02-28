@@ -25,11 +25,7 @@ obj/
 jni/libspeex/.deps/
 *.sh
 pkcs11.password
-libs/signal-service-android-*.aar
-libs/signal-service-java-*.jar
-libs/ringrtc-android-*.jar
-src/su/sres/securesms/backup/BackupProtos.java
-src/su/sres/securesms/devicelist/DeviceNameProtos.java
-res/values/firebase-messaging.xml
-res/raw/whisper.store
-witness-verifications.gradle
+app/libs/ringrtc-android-*.jar
+app/src/main/res/values/firebase-messaging.xml
+app/src/main/res/raw/whisper.store
+app/witness-verifications.gradle
