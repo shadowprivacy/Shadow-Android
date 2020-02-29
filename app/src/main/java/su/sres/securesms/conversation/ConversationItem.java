@@ -855,7 +855,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     if (current.isMms() && !current.isMmsNotification() && ((MediaMmsMessageRecord)current).getQuote() != null) {
       Quote quote = ((MediaMmsMessageRecord)current).getQuote();
       //noinspection ConstantConditions
-      quoteView.setQuote(glideRequests, quote.getId(), Recipient.live(quote.getAuthor()).get(), quote.getText(), quote.isOriginalMissing(), quote.getAttachment(), messageRecord.isViewOnce());
+      quoteView.setQuote(glideRequests, quote.getId(), Recipient.live(quote.getAuthor()).get(), quote.getText(), quote.isOriginalMissing(), quote.getAttachment());
       quoteView.setVisibility(View.VISIBLE);
       quoteView.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
 
@@ -1212,10 +1212,10 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     public void onClick(View view) {
       ViewOnceMessageView revealView = (ViewOnceMessageView) view;
 
-      if (eventListener != null && batchSelected.isEmpty() && messageRecord.isMms() && ViewOnceUtil.isViewable((MmsMessageRecord) messageRecord)) {
-        eventListener.onViewOnceMessageClicked((MmsMessageRecord) messageRecord);
-      } else if (batchSelected.isEmpty() && messageRecord.isMms() && revealView.requiresTapToDownload((MmsMessageRecord) messageRecord)) {
+      if (batchSelected.isEmpty() && messageRecord.isMms() && revealView.requiresTapToDownload((MmsMessageRecord) messageRecord)) {
         singleDownloadClickListener.onClick(view, ((MmsMessageRecord) messageRecord).getSlideDeck().getThumbnailSlide());
+      } else if (eventListener != null && batchSelected.isEmpty() && messageRecord.isMms()) {
+        eventListener.onViewOnceMessageClicked((MmsMessageRecord) messageRecord);
       } else {
         passthroughClickListener.onClick(view);
       }

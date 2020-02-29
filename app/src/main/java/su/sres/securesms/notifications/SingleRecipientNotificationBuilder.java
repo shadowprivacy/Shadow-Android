@@ -33,6 +33,7 @@ import su.sres.securesms.mms.Slide;
 import su.sres.securesms.mms.SlideDeck;
 import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -271,6 +272,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
                     .setBot(false)
                     .setName(Recipient.self().getDisplayName(context))
                     .setKey(Recipient.self().getId().serialize())
+                    .setIcon(AvatarUtil.getIconForNotification(context, Recipient.self()))
                     .build());
 
     if (threadRecipient.isGroup()) {

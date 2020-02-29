@@ -1067,7 +1067,9 @@ public class ConversationFragment extends Fragment
       }
 
       if (!ViewOnceUtil.isViewable(messageRecord)) {
-        Log.w(TAG, "View-once photo is not viewable!");
+          int stringRes = messageRecord.isOutgoing() ? R.string.ConversationFragment_outgoing_view_once_media_files_are_automatically_removed
+                : R.string.ConversationFragment_you_already_viewed_this_message;
+        Toast.makeText(requireContext(), stringRes, Toast.LENGTH_SHORT).show();
         return;
       }
 
@@ -1081,7 +1083,7 @@ public class ConversationFragment extends Fragment
                   .withMimeType(thumbnailSlide.getContentType())
                   .createForSingleSessionOnDisk(requireContext());
 
-          DatabaseFactory.getAttachmentDatabase(requireContext()).deleteAttachmentFilesForMessage(messageRecord.getId());
+            DatabaseFactory.getAttachmentDatabase(requireContext()).deleteAttachmentFilesForViewOnceMessage(messageRecord.getId());
 
           ApplicationContext.getInstance(requireContext())
                   .getViewOnceMessageManager()
@@ -1099,7 +1101,7 @@ public class ConversationFragment extends Fragment
         } else {
           Log.w(TAG, "Failed to open view-once photo. Showing a toast and deleting the attachments for the message just in case.");
           Toast.makeText(requireContext(), R.string.ConversationFragment_failed_to_open_message, Toast.LENGTH_SHORT).show();
-          SignalExecutors.BOUNDED.execute(() -> DatabaseFactory.getAttachmentDatabase(requireContext()).deleteAttachmentFilesForMessage(messageRecord.getId()));
+            SignalExecutors.BOUNDED.execute(() -> DatabaseFactory.getAttachmentDatabase(requireContext()).deleteAttachmentFilesForViewOnceMessage(messageRecord.getId()));
         }
       });
     }

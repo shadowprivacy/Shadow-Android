@@ -29,3 +29,4 @@ app/libs/ringrtc-android-*.jar
 app/src/main/res/values/firebase-messaging.xml
 app/src/main/res/raw/whisper.store
 app/witness-verifications.gradle
+app/.cxx

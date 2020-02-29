@@ -6,6 +6,8 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import androidx.annotation.ColorInt;
 
+import su.sres.securesms.util.ViewUtil;
+
 public class Outliner {
 
     private final float[] radii        = new float[8];
@@ -14,7 +16,7 @@ public class Outliner {
     private final Paint   outlinePaint = new Paint();
     {
         outlinePaint.setStyle(Paint.Style.STROKE);
-        outlinePaint.setStrokeWidth(1f);
+        outlinePaint.setStrokeWidth(ViewUtil.dpToPx(1));
         outlinePaint.setAntiAlias(true);
     }
 

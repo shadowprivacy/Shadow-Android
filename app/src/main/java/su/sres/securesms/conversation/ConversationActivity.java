@@ -2889,8 +2889,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                     messageRecord.getDateSent(),
                     author,
                     body,
-                    slideDeck,
-                    messageRecord.isViewOnce());
+                    slideDeck);
 
         } else if (messageRecord.isMms() && !((MmsMessageRecord) messageRecord).getLinkPreviews().isEmpty()) {
             LinkPreview linkPreview = ((MmsMessageRecord) messageRecord).getLinkPreviews().get(0);
@@ -2904,14 +2903,13 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                     messageRecord.getDateSent(),
                     author,
                     messageRecord.getBody(),
-                    slideDeck,
-                    messageRecord.isViewOnce());
+                    slideDeck);
 
         } else {
             SlideDeck slideDeck = messageRecord.isMms() ? ((MmsMessageRecord) messageRecord).getSlideDeck() : new SlideDeck();
 
-            if (messageRecord.isMms() && ((MmsMessageRecord) messageRecord).isViewOnce() && slideDeck.getSlides().size() > 0) {
-                Attachment attachment = new TombstoneAttachment(slideDeck.getSlides().get(0).getContentType(), true);
+            if (messageRecord.isMms() && ((MmsMessageRecord) messageRecord).isViewOnce()) {
+                Attachment attachment = new TombstoneAttachment(MediaUtil.VIEW_ONCE, true);
                 slideDeck = new SlideDeck();
                 slideDeck.addSlide(MediaUtil.getSlideForAttachment(this, attachment));
             }
@@ -2920,8 +2918,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                     messageRecord.getDateSent(),
                     author,
                     messageRecord.getBody(),
-                    slideDeck,
-                    messageRecord.isViewOnce());
+                    slideDeck);
         }
 
         inputPanel.clickOnComposeInput();

@@ -12,7 +12,6 @@ import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupReceiptDatabase.GroupReceiptInfo;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
@@ -203,7 +202,7 @@ public class PushGroupSendJob extends PushSendJob  {
         }
 
         if (message.isViewOnce()) {
-          DatabaseFactory.getAttachmentDatabase(context).deleteAttachmentFilesForMessage(messageId);
+          DatabaseFactory.getAttachmentDatabase(context).deleteAttachmentFilesForViewOnceMessage(messageId);
         }
 
       } else if (!networkFailures.isEmpty()) {
