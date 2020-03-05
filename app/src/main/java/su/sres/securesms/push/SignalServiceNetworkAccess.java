@@ -136,8 +136,8 @@ public class SignalServiceNetworkAccess {
     // taking the server URL from the config database
 //    this.uncensoredConfiguration = new SignalServiceConfiguration(new SignalServiceUrl[] {new SignalServiceUrl(DatabaseFactory.getConfigDatabase(context).getConfigById(1), new SignalServiceTrustStore(context))},
     this.uncensoredConfiguration = new SignalServiceConfiguration(new SignalServiceUrl[] {new SignalServiceUrl(TextSecurePreferences.getShadowServerUrl(context), new SignalServiceTrustStore(context))},
-                                                                  new SignalCdnUrl[] {new SignalCdnUrl(BuildConfig.SIGNAL_CDN_URL, new SignalServiceTrustStore(context))},
-            new SignalStorageUrl[] {new SignalStorageUrl(BuildConfig.STORAGE_URL, new SignalServiceTrustStore(context))});
+                                                                  new SignalCdnUrl[] {new SignalCdnUrl(TextSecurePreferences.getCloudUrl(context), new SignalServiceTrustStore(context))},
+            new SignalStorageUrl[] {new SignalStorageUrl(TextSecurePreferences.getStorageUrl(context), new SignalServiceTrustStore(context))});
 
     this.censoredCountries = this.censorshipConfiguration.keySet().toArray(new String[0]);
   }

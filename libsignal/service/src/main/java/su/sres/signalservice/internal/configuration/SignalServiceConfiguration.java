@@ -5,7 +5,7 @@ public class SignalServiceConfiguration {
 
   private final SignalServiceUrl[] signalServiceUrls;
   private final SignalCdnUrl[]     signalCdnUrls;
-  private final SignalStorageUrl[]          signalStorageUrls;
+  private final SignalStorageUrl[] signalStorageUrls;
 
 
   public SignalServiceConfiguration(SignalServiceUrl[] signalServiceUrls, SignalCdnUrl[] signalCdnUrls, SignalStorageUrl[] signalStorageUrls) {

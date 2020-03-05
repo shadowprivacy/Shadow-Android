@@ -6,7 +6,6 @@
 
 package su.sres.signalservice.api;
 
-
 import com.google.protobuf.ByteString;
 
 import org.whispersystems.libsignal.IdentityKey;
@@ -20,6 +19,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.signalservice.api.crypto.ProfileCipher;
 import su.sres.signalservice.api.crypto.ProfileCipherOutputStream;
+import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
 import su.sres.signalservice.api.messages.calls.TurnServerInfo;
 import su.sres.signalservice.api.messages.multidevice.DeviceInfo;
 import su.sres.signalservice.api.push.ContactTokenDetails;
@@ -446,6 +446,10 @@ public class SignalServiceAccountManager {
 
     public TurnServerInfo getTurnServerInfo() throws IOException {
         return this.pushServiceSocket.getTurnServerInfo();
+    }
+
+    public ConfigurationInfo getConfigurationInfo() throws IOException {
+        return this.pushServiceSocket.getConfigurationInfo();
     }
 
     public void setProfileName(byte[] key, String name)

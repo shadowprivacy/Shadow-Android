@@ -265,7 +265,7 @@
   <string name="ConversationFragment_failed_to_open_message">Не удалось открыть сообщение</string>
   <string name="ConversationFragment_you_can_swipe_to_the_right_reply">Вы можете провести вправо по любому сообщению, чтобы быстро ответить</string>
   <string name="ConversationFragment_you_can_swipe_to_the_left_reply">Вы можете провести влево по любому сообщению, чтобы быстро ответить</string>
-  <!-- Removed by excludeNonTranslatables <string name="ConversationFragment_view_once_message_are_not_stored_in_your_conversation_history">Одноразовые сообщения не сохраняются в истории вашего разговора</string> -->
+    <string name="ConversationFragment_outgoing_view_once_media_files_are_automatically_removed">Исходящие одноразовые медиа-файлы автоматически удаляются после того, как они были отправлены</string>
   <string name="ConversationFragment_you_already_viewed_this_message">Вы уже просмотрели это сообщение</string>
   <!--ConversationListActivity-->
   <string name="ConversationListActivity_there_is_no_browser_installed_on_your_device">На вашем устройстве не установлен браузер.</string>
@@ -699,7 +699,7 @@
 
   <!--RevealableMessageView-->
 
-  <string name="RevealableMessageView_view_photo">Просмотреть фотографию</string>
+  <string name="RevealableMessageView_view_photo">Просмотреть фото</string>
   <string name="RevealableMessageView_view_video">Просмотреть видео</string>
   <string name="RevealableMessageView_viewed">Просмотрено</string>
   <string name="RevealableMessageView_media">Медиа</string>
@@ -1610,5 +1610,9 @@
     <item quantity="many">%d других</item>
     <item quantity="other">%d других</item>
   </plurals>
+
+  <string name="configuration_load_unsuccessful">Загрузить конфигурацию не удалось. Приложение не сможет нормально работать. Обратитесь к системному администратору.</string>
+  <string name="app_will_restart_to_apply_config">Приложение перезапустится для применения новой конфигурации</string>
+
   <!--EOF-->
 </resources>

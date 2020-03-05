@@ -59,7 +59,7 @@ public class ServiceOutageDetectionJob extends BaseJob {
     }
 
     try {
-      InetAddress address = InetAddress.getByName(BuildConfig.SIGNAL_SERVICE_STATUS_URL);
+      InetAddress address = InetAddress.getByName(TextSecurePreferences.getStatusUrl(context));
       Log.i(TAG, "Received outage check address: " + address.getHostAddress());
 
       if (IP_SUCCESS.equals(address.getHostAddress())) {

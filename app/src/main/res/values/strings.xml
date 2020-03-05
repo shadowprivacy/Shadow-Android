@@ -1775,6 +1775,9 @@
         <item quantity="one">%d other</item>
         <item quantity="other">%d others</item>
     </plurals>
+
+    <string name="configuration_load_unsuccessful">Configuration load unsuccessful. The application cannot proceed normally. Contact your system administrator.</string>
+    <string name="app_will_restart_to_apply_config">The app will restart to apply the new configuration</string>
     <!-- EOF -->
 
 </resources>

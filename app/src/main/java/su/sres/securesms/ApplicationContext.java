@@ -286,12 +286,18 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         TextSecurePreferences.setJobManagerVersion(this, JobManager.CURRENT_VERSION);
         TextSecurePreferences.setLastExperienceVersionCode(this, Util.getCanonicalVersionCode());
         TextSecurePreferences.setHasSeenStickerIntroTooltip(this, true);
-        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
-       ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
+//        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
+//       ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
       }
 
       Log.i(TAG, "Setting first install version to " + BuildConfig.CANONICAL_VERSION_CODE);
       TextSecurePreferences.setFirstInstallVersion(this, BuildConfig.CANONICAL_VERSION_CODE);
+    }
+
+    if ((TextSecurePreferences.getFirstInstallVersion(this) != -1) && !TextSecurePreferences.getCloudUrl(this).equals("https://example.org")) {
+      Log.i(TAG, "The cloud URL was not set on the previous sticker manifest download. Proceeding with sticker pack download");
+      ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
+      ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
     }
   }
 

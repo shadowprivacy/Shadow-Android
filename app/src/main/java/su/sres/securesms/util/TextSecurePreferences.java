@@ -212,6 +212,12 @@ public class TextSecurePreferences {
 
   private static final String SHADOW_SERVER_URL = "pref_shadow_server_url";
 
+  private static final String STORAGE_URL = "pref_storage_url";
+  private static final String CLOUD_URL = "pref_cloud_url";
+  private static final String STATUS_URL = "pref_status_url";
+
+  private static final String UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY = "pref_unidentified_access_certificate_ca_public_key";
+
   public static boolean isScreenLockEnabled(@NonNull Context context) {
     return getBooleanPreference(context, SCREEN_LOCK, false);
   }
@@ -1346,6 +1352,38 @@ public class TextSecurePreferences {
 
   public static String getShadowServerUrl(Context context) {
     return getStringPreference(context, SHADOW_SERVER_URL, "https://example.org");
+  }
+
+  public static void setStatusUrl(Context context, String value) {
+    setStringPreference(context, STATUS_URL, value);
+  }
+
+  public static String getStatusUrl(Context context) {
+    return getStringPreference(context, STATUS_URL, "https://example.org");
+  }
+
+  public static void setCloudUrl(Context context, String value) {
+    setStringPreference(context, CLOUD_URL, value);
+  }
+
+  public static String getCloudUrl(Context context) {
+    return getStringPreference(context, CLOUD_URL, "https://example.org");
+  }
+
+  public static void setStorageUrl(Context context, String value) {
+    setStringPreference(context, STORAGE_URL, value);
+  }
+
+  public static String getStorageUrl(Context context) {
+    return getStringPreference(context, STORAGE_URL, "https://example.org");
+  }
+
+  public static void setUnidentifiedAccessCaPublicKey(Context context, byte[] value) {
+    setStringPreference(context, UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY, Base64.encodeBytes(value));
+  }
+
+  public static String getUnidentifiedAccessCaPublicKey(Context context) {
+    return getStringPreference(context, UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY, null);
   }
 
   // NEVER rename these -- they're persisted by name

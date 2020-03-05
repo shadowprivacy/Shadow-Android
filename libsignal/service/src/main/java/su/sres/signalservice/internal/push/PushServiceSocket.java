@@ -20,6 +20,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.crypto.UnidentifiedAccess;
 import su.sres.signalservice.api.messages.SignalServiceAttachment.ProgressListener;
 import su.sres.signalservice.api.messages.calls.TurnServerInfo;
+import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
 import su.sres.signalservice.api.messages.multidevice.DeviceInfo;
 import su.sres.signalservice.api.profiles.SignalServiceProfile;
 import su.sres.signalservice.api.push.ContactTokenDetails;
@@ -113,6 +114,7 @@ public class PushServiceSocket {
   private static final String WHO_AM_I                  = "/v1/accounts/whoami";
   private static final String SET_USERNAME_PATH         = "/v1/accounts/username/%s";
   private static final String DELETE_USERNAME_PATH      = "/v1/accounts/username";
+  private static final String CONFIGURATION_INFO        = "/v1/accounts/config";
 
   private static final String PREKEY_METADATA_PATH      = "/v2/keys/";
   private static final String PREKEY_PATH               = "/v2/keys/%s";
@@ -161,12 +163,12 @@ public class PushServiceSocket {
 
   public PushServiceSocket(SignalServiceConfiguration signalServiceConfiguration, CredentialsProvider credentialsProvider, String userAgent) {
     this.credentialsProvider = credentialsProvider;
-    this.userAgent           = userAgent;
+    this.userAgent                         = userAgent;
     this.serviceClients                    = createServiceConnectionHolders(signalServiceConfiguration.getSignalServiceUrls());
-    this.cdnClients          = createConnectionHolders(signalServiceConfiguration.getSignalCdnUrls());
+    this.cdnClients                        = createConnectionHolders(signalServiceConfiguration.getSignalCdnUrls());
     this.storageClients                    = createConnectionHolders(signalServiceConfiguration.getSignalStorageUrls());
     this.attachmentClient                  = createAttachmentClient();
-    this.random              = new SecureRandom();
+    this.random                            = new SecureRandom();
   }
 
   public void requestSmsVerificationCode(boolean androidSmsRetriever, Optional<String> captchaToken, Optional<String> challenge) throws IOException {
@@ -595,6 +597,11 @@ public class PushServiceSocket {
   public TurnServerInfo getTurnServerInfo() throws IOException {
     String response = makeServiceRequest(TURN_SERVER_INFO, "GET", null);
     return JsonUtil.fromJson(response, TurnServerInfo.class);
+  }
+
+  public ConfigurationInfo getConfigurationInfo() throws IOException {
+    String response = makeServiceRequest(CONFIGURATION_INFO, "GET", null);
+    return JsonUtil.fromJson(response, ConfigurationInfo.class);
   }
 
   public String getStorageAuth() throws IOException {

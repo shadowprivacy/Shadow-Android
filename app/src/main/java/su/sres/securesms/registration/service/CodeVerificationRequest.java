@@ -2,11 +2,13 @@ package su.sres.securesms.registration.service;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.ApplicationContext;
+import su.sres.securesms.R;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.PreKeyUtil;
 import su.sres.securesms.crypto.SessionUtil;
@@ -32,6 +34,7 @@ import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 import org.whispersystems.libsignal.util.KeyHelper;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
+import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
 import su.sres.signalservice.api.push.exceptions.RateLimitException;
 import su.sres.signalservice.internal.push.LockedException;
 
@@ -146,6 +149,29 @@ public final class CodeVerificationRequest {
         if (present) {
             accountManager.setGcmId(Optional.fromNullable(fcmToken));
         }
+
+        ConfigurationInfo configRequested = accountManager.getConfigurationInfo();
+
+        String statusUrl = configRequested.getStatusUri();
+        String storageUrl = configRequested.getStorageUri();
+        String cloudUrl = configRequested.getCloudUri();
+        byte[] unidentifiedDeliveryCaPublicKey = configRequested.getUnidentifiedDeliveryCaPublicKey();
+
+        if(cloudUrl != null &&
+           statusUrl != null &&
+           storageUrl != null &&
+           unidentifiedDeliveryCaPublicKey != null) {
+
+            TextSecurePreferences.setCloudUrl(context, cloudUrl);
+            TextSecurePreferences.setStatusUrl(context, statusUrl);
+            TextSecurePreferences.setCloudUrl(context, cloudUrl);
+            TextSecurePreferences.setUnidentifiedAccessCaPublicKey(context, unidentifiedDeliveryCaPublicKey);
+
+        } else {
+            Toast.makeText(context, R.string.configuration_load_unsuccessful, Toast.LENGTH_LONG);
+        }
+
+
 
         RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
         RecipientId       selfId            = recipientDatabase.getOrInsertFromE164(credentials.getE164number());
