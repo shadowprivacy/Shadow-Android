@@ -124,6 +124,7 @@ dependencies {
 
     implementation files('libs/ringrtc-android-0.3.1.aar')
 
+    implementation 'org.signal:argon2:13.0@aar'
     implementation 'commons-validator:commons-validator:1.6'
     implementation "me.leolin:ShortcutBadger:1.1.16"
     implementation 'se.emilsjolander:stickylistheaders:2.7.0'
@@ -200,8 +201,8 @@ dependencyVerification {
     configuration = '(play|website)(Debug|Release)RuntimeClasspath'
 }
 
-def canonicalVersionCode = 590
-def canonicalVersionName = "4.53.5"
+def canonicalVersionCode = 592
+def canonicalVersionName = "4.53.7"
 
 def postFixSize = 10
 def abiPostFix = ['universal'   : 0,

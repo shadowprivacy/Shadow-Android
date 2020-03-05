@@ -17,6 +17,7 @@ import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraintObserver;
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration;
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration2;
 import su.sres.securesms.jobmanager.migrations.RecipientIdJobMigration;
+import su.sres.securesms.migrations.Argon2TestMigrationJob;
 import su.sres.securesms.migrations.AvatarMigrationJob;
 import su.sres.securesms.migrations.CachedAttachmentsMigrationJob;
 import su.sres.securesms.migrations.DatabaseMigrationJob;
@@ -92,6 +93,7 @@ public final class JobManagerFactories {
             put(TypingSendJob.KEY,                         new TypingSendJob.Factory());
             put(UpdateApkJob.KEY,                          new UpdateApkJob.Factory());
             put(MarkerJob.KEY,                             new MarkerJob.Factory());
+            put(Argon2TestJob.KEY,                         new Argon2TestJob.Factory());
 
             // Migrations
             put(AvatarMigrationJob.KEY,                    new AvatarMigrationJob.Factory());
@@ -102,6 +104,7 @@ public final class JobManagerFactories {
             put(RecipientSearchMigrationJob.KEY,           new RecipientSearchMigrationJob.Factory());
             put(StickerLaunchMigrationJob.KEY,             new StickerLaunchMigrationJob.Factory());
             put(UuidMigrationJob.KEY,                      new UuidMigrationJob.Factory());
+            put(Argon2TestMigrationJob.KEY,                new Argon2TestMigrationJob.Factory());
 
             // Dead jobs
             put("PushContentReceiveJob",                   new FailingJob.Factory());

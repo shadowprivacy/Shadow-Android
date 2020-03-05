@@ -22,7 +22,6 @@ import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientExporter;
 import su.sres.securesms.util.ThemeUtil;
-import su.sres.securesms.util.ViewUtil;
 
 import java.util.Objects;
 
@@ -40,12 +39,12 @@ public final class AvatarImageView extends AppCompatImageView {
   static {
     LIGHT_THEME_OUTLINE_PAINT.setColor(Color.argb((int) (255 * 0.2), 0, 0, 0));
     LIGHT_THEME_OUTLINE_PAINT.setStyle(Paint.Style.STROKE);
-    LIGHT_THEME_OUTLINE_PAINT.setStrokeWidth(ViewUtil.dpToPx(1));
+    LIGHT_THEME_OUTLINE_PAINT.setStrokeWidth(1);
     LIGHT_THEME_OUTLINE_PAINT.setAntiAlias(true);
 
     DARK_THEME_OUTLINE_PAINT.setColor(Color.argb((int) (255 * 0.2), 255, 255, 255));
     DARK_THEME_OUTLINE_PAINT.setStyle(Paint.Style.STROKE);
-    DARK_THEME_OUTLINE_PAINT.setStrokeWidth(ViewUtil.dpToPx(1));
+    DARK_THEME_OUTLINE_PAINT.setStrokeWidth(1);
     DARK_THEME_OUTLINE_PAINT.setAntiAlias(true);
   }
 

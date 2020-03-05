@@ -27,9 +27,9 @@ public class UnidentifiedAccessUtil {
 
     private static final String TAG = UnidentifiedAccessUtil.class.getSimpleName();
 
-    public static CertificateValidator getCertificateValidator() {
+    public static CertificateValidator getCertificateValidator(Context context) {
         try {
-            ECPublicKey unidentifiedSenderTrustRoot = Curve.decodePoint(Base64.decode(BuildConfig.UNIDENTIFIED_SENDER_TRUST_ROOT), 0);
+            ECPublicKey unidentifiedSenderTrustRoot = Curve.decodePoint(Base64.decode(TextSecurePreferences.getUnidentifiedAccessCaPublicKey(context)), 0);
             return new CertificateValidator(unidentifiedSenderTrustRoot);
         } catch (InvalidKeyException | IOException e) {
             throw new AssertionError(e);

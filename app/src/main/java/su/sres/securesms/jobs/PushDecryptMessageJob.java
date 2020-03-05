@@ -152,7 +152,7 @@ public final class PushDecryptMessageJob extends BaseJob {
         try {
             SignalProtocolStore  axolotlStore = new SignalProtocolStoreImpl(context);
             SignalServiceAddress localAddress = new SignalServiceAddress(Optional.of(TextSecurePreferences.getLocalUuid(context)), Optional.of(TextSecurePreferences.getLocalNumber(context)));
-            SignalServiceCipher  cipher       = new SignalServiceCipher(localAddress, axolotlStore, UnidentifiedAccessUtil.getCertificateValidator());
+            SignalServiceCipher  cipher       = new SignalServiceCipher(localAddress, axolotlStore, UnidentifiedAccessUtil.getCertificateValidator(context));
 
             SignalServiceContent content = cipher.decrypt(envelope);
 
