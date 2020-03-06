@@ -39,6 +39,7 @@ import org.signal.aesgcmprovider.AesGcmProvider;
 import su.sres.ringrtc.CallConnectionFactory;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
+import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.dependencies.ApplicationDependencyProvider;
@@ -54,7 +55,7 @@ import su.sres.securesms.logging.AndroidLogger;
 import su.sres.securesms.logging.CustomSignalProtocolLogger;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.logging.PersistentLogger;
-import su.sres.securesms.logging.UncaughtExceptionLogger;
+import su.sres.securesms.logging.SignalUncaughtExceptionHandler;
 import su.sres.securesms.mediasend.camerax.CameraXUtil;
 import su.sres.securesms.migrations.ApplicationMigrations;
 import su.sres.securesms.notifications.MessageNotifier;
@@ -74,6 +75,7 @@ import su.sres.securesms.service.UpdateApkRefreshListener;
 import su.sres.securesms.stickers.BlessedPacks;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
 
 import org.webrtc.voiceengine.WebRtcAudioManager;
@@ -259,7 +261,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   private void initializeCrashHandling() {
     final Thread.UncaughtExceptionHandler originalHandler = Thread.getDefaultUncaughtExceptionHandler();
-    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionLogger(originalHandler));
+    Thread.setDefaultUncaughtExceptionHandler(new SignalUncaughtExceptionHandler(originalHandler));
   }
 
   private void initializeApplicationMigrations() {
@@ -418,10 +420,17 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   }
 
   private void initializeBlobProvider() {
-    AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
+      SignalExecutors.BOUNDED.execute(() -> {
       BlobProvider.getInstance().onSessionStart(this);
     });
   }
+
+    private void initializeCleanup() {
+        SignalExecutors.BOUNDED.execute(() -> {
+            int deleted = DatabaseFactory.getAttachmentDatabase(this).deleteAbandonedPreuploadedAttachments();
+            Log.i(TAG, "Deleted " + deleted + " abandoned attachments.");
+        });
+    }
 
   @SuppressLint("RestrictedApi")
   private void initializeCameraX() {
@@ -469,6 +478,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeRingRtc();
     initializePendingMessages();
     initializeBlobProvider();
+    initializeCleanup();
     initializeCameraX();
     ApplicationDependencies.getJobManager().beginJobLoop();
 

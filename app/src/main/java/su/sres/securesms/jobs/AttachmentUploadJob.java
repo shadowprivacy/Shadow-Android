@@ -116,7 +116,11 @@ public final class AttachmentUploadJob extends BaseJob {
     }
 
     @Override
-    public void onCanceled() { }
+    public void onFailure() {
+        if (isCanceled()) {
+            DatabaseFactory.getAttachmentDatabase(context).deleteAttachment(attachmentId);
+        }
+    }
 
     @Override
     protected boolean onShouldRetry(@NonNull Exception exception) {
@@ -136,6 +140,7 @@ public final class AttachmentUploadJob extends BaseJob {
                     .withWidth(attachment.getWidth())
                     .withHeight(attachment.getHeight())
                     .withCaption(attachment.getCaption())
+                    .withCancelationSignal(this::isCanceled)
                     .withListener((total, progress) -> {
                         EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress));
                         if (notification != null) {

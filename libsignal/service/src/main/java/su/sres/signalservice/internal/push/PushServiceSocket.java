@@ -45,6 +45,7 @@ import su.sres.signalservice.internal.configuration.SignalServiceConfiguration;
 import su.sres.signalservice.internal.configuration.SignalUrl;
 import su.sres.signalservice.internal.push.exceptions.MismatchedDevicesException;
 import su.sres.signalservice.internal.push.exceptions.StaleDevicesException;
+import su.sres.signalservice.internal.push.http.CancelationSignal;
 import su.sres.signalservice.internal.push.http.DigestingRequestBody;
 import su.sres.signalservice.internal.push.http.OutputStreamFactory;
 import su.sres.signalservice.internal.storage.protos.ReadOperation;
@@ -550,7 +551,7 @@ public class PushServiceSocket {
                   formAttributes.getCredential(), formAttributes.getDate(),
                   formAttributes.getSignature(), profileAvatar.getData(),
                   profileAvatar.getContentType(), profileAvatar.getDataLength(),
-                  profileAvatar.getOutputStreamFactory(), null);
+                  profileAvatar.getOutputStreamFactory(), null, null);
     }
   }
 
@@ -674,7 +675,8 @@ public class PushServiceSocket {
             uploadAttributes.getCredential(), uploadAttributes.getDate(),
             uploadAttributes.getSignature(), attachment.getData(),
             "application/octet-stream", attachment.getDataSize(),
-            attachment.getOutputStreamFactory(), attachment.getListener());
+            attachment.getOutputStreamFactory(), attachment.getListener(),
+            attachment.getCancelationSignal());
 
     return new Pair<>(id, digest);
   }
@@ -762,7 +764,8 @@ public class PushServiceSocket {
   private byte[] uploadToCdn(String path, String acl, String key, String policy, String algorithm,
                              String credential, String date, String signature,
                              InputStream data, String contentType, long length,
-                             OutputStreamFactory outputStreamFactory, ProgressListener progressListener)
+                             OutputStreamFactory outputStreamFactory, ProgressListener progressListener,
+                             CancelationSignal cancelationSignal)
       throws PushNetworkException, NonSuccessfulResponseCodeException
   {
     ConnectionHolder connectionHolder = getRandom(cdnClients, random);
@@ -772,7 +775,7 @@ public class PushServiceSocket {
                                                         .readTimeout(soTimeoutMillis, TimeUnit.MILLISECONDS)
                                                         .build();
 
-    DigestingRequestBody file = new DigestingRequestBody(data, outputStreamFactory, contentType, length, progressListener);
+    DigestingRequestBody file = new DigestingRequestBody(data, outputStreamFactory, contentType, length, progressListener, cancelationSignal);
 
     RequestBody requestBody = new MultipartBody.Builder()
         .setType(MultipartBody.FORM)

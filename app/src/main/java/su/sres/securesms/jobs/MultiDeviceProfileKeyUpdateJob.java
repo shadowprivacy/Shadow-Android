@@ -105,7 +105,7 @@ public class MultiDeviceProfileKeyUpdateJob extends BaseJob {
     }
 
     @Override
-    public void onCanceled() {
+    public void onFailure() {
         Log.w(TAG, "Profile key sync failed!");
     }
 

@@ -5,6 +5,7 @@ import androidx.annotation.VisibleForTesting;
 import android.text.TextUtils;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.jobmanager.JobLogger;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 
@@ -140,8 +141,8 @@ public class AttachmentDownloadJob extends BaseJob {
   }
 
   @Override
-  public void onCanceled() {
-    Log.w(TAG, "onCanceled() messageId: " + messageId + "  partRowId: " + partRowId + "  partUniqueId: " + partUniqueId + "  manual: " + manual);
+  public void onFailure() {
+    Log.w(TAG, JobLogger.format(this, "onFailure() messageId: " + messageId + "  partRowId: " + partRowId + "  partUniqueId: " + partUniqueId + "  manual: " + manual));
 
     final AttachmentId attachmentId = new AttachmentId(partRowId, partUniqueId);
     markFailed(messageId, attachmentId);

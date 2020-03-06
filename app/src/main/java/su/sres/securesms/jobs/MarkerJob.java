@@ -49,8 +49,7 @@ public final class MarkerJob extends BaseJob {
     }
 
     @Override
-    public void onCanceled() {
-    }
+    public void onFailure() { }
 
     public static final class Factory implements Job.Factory<MarkerJob> {
         @Override

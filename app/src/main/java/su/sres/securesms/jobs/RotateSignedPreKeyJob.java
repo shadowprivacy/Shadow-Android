@@ -71,7 +71,7 @@ public class RotateSignedPreKeyJob extends BaseJob  {
   }
 
   @Override
-  public void onCanceled() {
+  public void onFailure() {
     TextSecurePreferences.setSignedPreKeyFailureCount(context, TextSecurePreferences.getSignedPreKeyFailureCount(context) + 1);
   }
 

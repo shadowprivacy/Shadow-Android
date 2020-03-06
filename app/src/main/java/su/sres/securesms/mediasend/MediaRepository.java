@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore.Images;
@@ -17,18 +18,23 @@ import android.util.Pair;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.R;
+import su.sres.securesms.imageeditor.model.EditorModel;
+import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.permissions.Permissions;
+import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +43,8 @@ import java.util.Map;
  * Handles the retrieval of media present on the user's device.
  */
 class MediaRepository {
+
+    private static final String TAG = Log.tag(MediaRepository.class);
 
     /**
      * Retrieves a list of folders that contain media.
@@ -67,6 +75,14 @@ class MediaRepository {
 
     void getMostRecentItem(@NonNull Context context, @NonNull Callback<Optional<Media>> callback) {
         SignalExecutors.BOUNDED.execute(() -> callback.onComplete(getMostRecentItem(context)));
+    }
+
+    void renderMedia(@NonNull Context context,
+                     @NonNull List<Media> currentMedia,
+                     @NonNull Map<Media, EditorModel> modelsToRender,
+                     @NonNull Callback<LinkedHashMap<Media, Media>> callback)
+    {
+        SignalExecutors.BOUNDED.execute(() -> callback.onComplete(renderMedia(context, currentMedia, modelsToRender)));
     }
 
     @WorkerThread
@@ -229,6 +245,43 @@ class MediaRepository {
                 return m;
             }
         }).toList();
+    }
+
+    @WorkerThread
+    private LinkedHashMap<Media, Media> renderMedia(@NonNull Context context,
+                                                    @NonNull List<Media> currentMedia,
+                                                    @NonNull Map<Media, EditorModel> modelsToRender)
+    {
+        LinkedHashMap<Media, Media> updatedMedia = new LinkedHashMap<>(currentMedia.size());
+        ByteArrayOutputStream       outputStream = new ByteArrayOutputStream();
+
+        for (Media media : currentMedia) {
+            EditorModel modelToRender = modelsToRender.get(media);
+            if (modelToRender != null) {
+                Bitmap bitmap = modelToRender.render(context);
+                try {
+                    outputStream.reset();
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream);
+
+                    Uri uri = BlobProvider.getInstance()
+                            .forData(outputStream.toByteArray())
+                            .withMimeType(MediaUtil.IMAGE_JPEG)
+                            .createForSingleSessionOnDisk(context);
+
+                    Media updated = new Media(uri, MediaUtil.IMAGE_JPEG, media.getDate(), bitmap.getWidth(), bitmap.getHeight(), outputStream.size(), media.getBucketId(), media.getCaption());
+
+                    updatedMedia.put(media, updated);
+                } catch (IOException e) {
+                    Log.w(TAG, "Failed to render image. Using base image.");
+                    updatedMedia.put(media, media);
+                } finally {
+                    bitmap.recycle();
+                }
+            } else {
+                updatedMedia.put(media, media);
+            }
+        }
+        return updatedMedia;
     }
 
     @WorkerThread

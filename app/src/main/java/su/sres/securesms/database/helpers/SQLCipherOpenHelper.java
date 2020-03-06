@@ -15,6 +15,7 @@ import com.annimon.stream.Stream;
 import com.bumptech.glide.Glide;
 
 import su.sres.securesms.database.JobDatabase;
+import su.sres.securesms.database.KeyValueDatabase;
 import su.sres.securesms.logging.Log;
 
 import net.sqlcipher.database.SQLiteDatabase;
@@ -100,8 +101,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int STORAGE_SERVICE                  = 38;
   private static final int REACTIONS_UNREAD_INDEX           = 39;
   private static final int RESUMABLE_DOWNLOADS              = 40;
+  private static final int KEY_VALUE_STORE                  = 41;
+  private static final int ATTACHMENT_DISPLAY_ORDER         = 42;
 
-  private static final int    DATABASE_VERSION = 40;
+  private static final int    DATABASE_VERSION = 42;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -143,6 +146,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(SessionDatabase.CREATE_TABLE);
     db.execSQL(StickerDatabase.CREATE_TABLE);
     db.execSQL(StorageKeyDatabase.CREATE_TABLE);
+    db.execSQL(KeyValueDatabase.CREATE_TABLE);
 //    db.execSQL(ConfigDatabase.CREATE_TABLE);
 //    db.execSQL(ConfigDatabase.INITIALIZE_CONFIG);
     executeStatements(db, SearchDatabase.CREATE_TABLE);
@@ -685,6 +689,17 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       if (oldVersion < RESUMABLE_DOWNLOADS) {
         db.execSQL("ALTER TABLE part ADD COLUMN transfer_file TEXT DEFAULT NULL");
+      }
+
+      if (oldVersion < KEY_VALUE_STORE) {
+        db.execSQL("CREATE TABLE key_value (_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "key TEXT UNIQUE, " +
+                "value TEXT, " +
+                "type INTEGER)");
+      }
+
+      if (oldVersion < ATTACHMENT_DISPLAY_ORDER) {
+        db.execSQL("ALTER TABLE part ADD COLUMN display_order INTEGER DEFAULT 0");
       }
 
       db.setTransactionSuccessful();

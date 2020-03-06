@@ -104,7 +104,7 @@ public class UpdateApkJob extends BaseJob {
   }
 
   @Override
-  public void onCanceled() {
+  public void onFailure() {
     Log.w(TAG, "Update check failed");
   }
 

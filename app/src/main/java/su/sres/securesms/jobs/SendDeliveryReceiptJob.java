@@ -92,7 +92,7 @@ public class SendDeliveryReceiptJob extends BaseJob  {
     }
 
     @Override
-    public void onCanceled() {
+    public void onFailure() {
         Log.w(TAG, "Failed to send delivery receipt to: " + recipientId);
     }
     public static final class Factory implements Job.Factory<SendDeliveryReceiptJob> {

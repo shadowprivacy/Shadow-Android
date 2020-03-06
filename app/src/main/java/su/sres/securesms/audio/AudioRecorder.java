@@ -7,7 +7,6 @@ import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import androidx.annotation.NonNull;
 import su.sres.securesms.logging.Log;
-import android.util.Pair;
 
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.util.MediaUtil;
@@ -15,6 +14,7 @@ import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.ListenableFuture;
 import su.sres.securesms.util.concurrent.SettableFuture;
 import su.sres.securesms.util.concurrent.SignalExecutors;
+import org.whispersystems.libsignal.util.Pair;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;

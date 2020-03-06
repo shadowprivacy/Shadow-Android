@@ -38,6 +38,7 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.PlayServicesProblemActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.notifications.NotificationChannels;
+import su.sres.securesms.notifications.NotificationIds;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -110,7 +111,7 @@ public class FcmRefreshJob extends BaseJob {
   }
 
   @Override
-  public void onCanceled() {
+  public void onFailure() {
     Log.w(TAG, "GCM reregistration failed after retry attempt exhaustion!");
   }
 
@@ -135,7 +136,7 @@ public class FcmRefreshJob extends BaseJob {
     builder.setContentIntent(pendingIntent);
 
     ((NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE))
-        .notify(12, builder.build());
+            .notify(NotificationIds.FCM_FAILURE, builder.build());
   }
 
   public static final class Factory implements Job.Factory<FcmRefreshJob> {

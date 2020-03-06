@@ -34,8 +34,7 @@ public final class FailingJob extends Job {
     }
 
     @Override
-    public void onCanceled() {
-    }
+    public void onFailure() { }
 
     public static final class Factory implements Job.Factory<FailingJob> {
         @Override

@@ -94,7 +94,7 @@ public class RetrieveProfileJob extends BaseJob  {
   }
 
   @Override
-  public void onCanceled() {}
+  public void onFailure() {}
 
   private void handleIndividualRecipient(Recipient recipient) throws IOException {
     if (recipient.hasServiceIdentifier()) handlePhoneNumberRecipient(recipient);

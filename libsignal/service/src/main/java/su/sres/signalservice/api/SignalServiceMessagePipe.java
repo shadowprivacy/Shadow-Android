@@ -130,7 +130,7 @@ public class SignalServiceMessagePipe {
       }
 
       WebSocketRequestMessage requestMessage = WebSocketRequestMessage.newBuilder()
-                                                                      .setId(SecureRandom.getInstance("SHA1PRNG").nextLong())
+                                                                      .setId(new SecureRandom().nextLong())
                                                                       .setVerb("PUT")
                                                                       .setPath(String.format("/v1/messages/%s", list.getDestination()))
                                                                       .addAllHeaders(headers)
@@ -145,8 +145,6 @@ public class SignalServiceMessagePipe {
 
       if (Util.isEmpty(response.second())) return new SendMessageResponse(false);
       else                                 return JsonUtil.fromJson(response.second(), SendMessageResponse.class);
-    } catch (NoSuchAlgorithmException e) {
-      throw new AssertionError(e);
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
       throw new IOException(e);
     }
@@ -161,7 +159,7 @@ public class SignalServiceMessagePipe {
       }
 
       WebSocketRequestMessage requestMessage = WebSocketRequestMessage.newBuilder()
-                                                                      .setId(SecureRandom.getInstance("SHA1PRNG").nextLong())
+                                                                      .setId(new SecureRandom().nextLong())
                                                                       .setVerb("GET")
                                                                       .setPath(String.format("/v1/profile/%s", address.getIdentifier()))
                                                                       .addAllHeaders(headers)
@@ -174,8 +172,6 @@ public class SignalServiceMessagePipe {
       }
 
       return JsonUtil.fromJson(response.second(), SignalServiceProfile.class);
-    } catch (NoSuchAlgorithmException nsae) {
-      throw new AssertionError(nsae);
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
       throw new IOException(e);
     }

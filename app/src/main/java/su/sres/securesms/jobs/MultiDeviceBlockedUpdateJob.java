@@ -97,7 +97,7 @@ public class MultiDeviceBlockedUpdateJob extends BaseJob {
   }
 
   @Override
-  public void onCanceled() {
+  public void onFailure() {
   }
 
   public static final class Factory implements Job.Factory<MultiDeviceBlockedUpdateJob> {

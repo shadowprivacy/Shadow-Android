@@ -18,6 +18,7 @@ import su.sres.securesms.jobmanager.JobMigrator;
 import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
 import su.sres.securesms.jobs.FastJobStorage;
 import su.sres.securesms.jobs.JobManagerFactories;
+import su.sres.securesms.keyvalue.KeyValueStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.push.SecurityEventListener;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
@@ -117,6 +118,11 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     @Override
     public @NonNull FrameRateTracker provideFrameRateTracker() {
         return new FrameRateTracker(context);
+    }
+
+    @Override
+    public @NonNull KeyValueStore provideKeyValueStore() {
+        return new KeyValueStore(context);
     }
 
     private static class DynamicCredentialsProvider implements CredentialsProvider {

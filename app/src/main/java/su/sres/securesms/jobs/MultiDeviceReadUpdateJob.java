@@ -107,7 +107,7 @@ public class MultiDeviceReadUpdateJob extends BaseJob  {
 
 
   @Override
-  public void onCanceled() {
+  public void onFailure() {
 
   }
 

@@ -105,8 +105,7 @@ public class LocalBackupJob extends BaseJob {
   }
 
   @Override
-  public void onCanceled() {
-  }
+  public void onFailure() { }
 
   public static class Factory implements Job.Factory<LocalBackupJob> {
     @Override

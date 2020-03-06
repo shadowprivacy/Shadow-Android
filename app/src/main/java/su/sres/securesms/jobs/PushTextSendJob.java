@@ -133,7 +133,7 @@ public class PushTextSendJob extends PushSendJob  {
   }
 
   @Override
-  public void onCanceled() {
+  public void onFailure() {
     DatabaseFactory.getSmsDatabase(context).markAsSentFailed(messageId);
 
     long      threadId  = DatabaseFactory.getSmsDatabase(context).getThreadIdForMessage(messageId);

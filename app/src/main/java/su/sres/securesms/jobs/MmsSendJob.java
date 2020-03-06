@@ -7,6 +7,7 @@ import android.text.TextUtils;
 
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.jobmanager.JobLogger;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 import android.webkit.MimeTypeMap;
@@ -152,8 +153,8 @@ public final class MmsSendJob extends SendJob {
   }
 
   @Override
-  public void onCanceled() {
-    Log.i(TAG, "onCanceled() messageId: " + messageId);
+  public void onFailure() {
+    Log.i(TAG, JobLogger.format(this, "onFailure() messageId: " + messageId));
     DatabaseFactory.getMmsDatabase(context).markAsSentFailed(messageId);
     notifyMediaMessageDeliveryFailed(context, messageId);
   }

@@ -108,7 +108,7 @@ public class CameraXFragment extends Fragment implements CameraFragment {
 
         onOrientationChanged(getResources().getConfiguration().orientation);
 
-        viewModel.getMostRecentMediaItem(requireContext()).observe(this, this::presentRecentItemThumbnail);
+        viewModel.getMostRecentMediaItem().observe(this, this::presentRecentItemThumbnail);
         viewModel.getHudState().observe(this, this::presentHud);
     }
 

@@ -62,7 +62,7 @@ public class MultiDeviceProfileContentUpdateJob extends BaseJob {
 
 
     @Override
-    public void onCanceled() {
+    public void onFailure() {
         Log.w(TAG, "Did not succeed!");
     }
 
