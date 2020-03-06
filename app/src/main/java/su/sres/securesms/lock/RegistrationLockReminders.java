@@ -4,6 +4,7 @@ package su.sres.securesms.lock;
 import android.content.Context;
 import androidx.annotation.NonNull;
 
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import java.util.NavigableSet;

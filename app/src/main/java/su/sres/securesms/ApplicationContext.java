@@ -51,6 +51,7 @@ import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
 import su.sres.securesms.jobs.StickerPackDownloadJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.AndroidLogger;
 import su.sres.securesms.logging.CustomSignalProtocolLogger;
 import su.sres.securesms.logging.Log;
@@ -82,6 +83,7 @@ import org.webrtc.voiceengine.WebRtcAudioManager;
 import org.webrtc.voiceengine.WebRtcAudioUtils;
 import org.whispersystems.libsignal.logging.SignalProtocolLoggerProvider;
 
+import java.security.SecureRandom;
 import java.security.Security;
 import java.util.HashSet;
 import java.util.Set;
@@ -445,6 +447,16 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     }
   }
 
+  private void initializeMasterKey() {
+    // generate a random "master key"
+    byte[] masterKey = new byte[32];
+    SecureRandom random = new SecureRandom();
+    random.nextBytes(masterKey);
+
+    // set just a filler for now
+    SignalStore.kbsValues().setRegistrationLockMasterKey(masterKey);
+  }
+
   @Override
   protected void attachBaseContext(Context base) {
     super.attachBaseContext(DynamicLanguageContextWrapper.updateContext(base, TextSecurePreferences.getLanguage(base)));
@@ -480,6 +492,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeBlobProvider();
     initializeCleanup();
     initializeCameraX();
+    initializeMasterKey();
     ApplicationDependencies.getJobManager().beginJobLoop();
 
     initializedOnCreate = true;

@@ -12,22 +12,19 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.InvalidKeyException;
-import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
-import su.sres.signalservice.api.storage.SignalContactRecord;
 import su.sres.signalservice.api.storage.SignalStorageManifest;
 import su.sres.signalservice.api.storage.SignalStorageRecord;
 import su.sres.signalservice.api.storage.SignalStorageUtil;
-import su.sres.signalservice.internal.storage.protos.StorageRecord;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -72,7 +69,7 @@ public class StorageForcePushJob extends BaseJob {
     protected void onRun() throws IOException, RetryLaterException {
         if (!FeatureFlags.STORAGE_SERVICE) throw new AssertionError();
 
-        byte[] kbsMasterKey = TextSecurePreferences.getMasterKey(context);
+        byte[] kbsMasterKey = SignalStore.kbsValues().getMasterKey();
 
         if (kbsMasterKey == null) {
             Log.w(TAG, "No KBS master key is set! Must abort.");

@@ -17,8 +17,6 @@ import su.sres.signalservice.api.push.exceptions.NetworkFailureException;
 
 import java.io.IOException;
 
-
-
 public class RefreshAttributesJob extends BaseJob  {
 
   public static final String KEY = "RefreshAttributesJob";

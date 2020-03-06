@@ -19,6 +19,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.transport.RetryLaterException;
@@ -109,7 +110,7 @@ public class StorageSyncJob extends BaseJob {
         SignalServiceAccountManager accountManager     = ApplicationDependencies.getSignalServiceAccountManager();
         RecipientDatabase           recipientDatabase  = DatabaseFactory.getRecipientDatabase(context);
         StorageKeyDatabase          storageKeyDatabase = DatabaseFactory.getStorageKeyDatabase(context);
-        byte[]                      kbsMasterKey       = TextSecurePreferences.getMasterKey(context);
+        byte[]                      kbsMasterKey       = SignalStore.kbsValues().getMasterKey();
 
         if (kbsMasterKey == null) {
             Log.w(TAG, "No KBS master key is set! Must abort.");

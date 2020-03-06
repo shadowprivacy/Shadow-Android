@@ -1,6 +1,5 @@
 package su.sres.securesms.jobs;
 
-
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
@@ -8,17 +7,16 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
-import su.sres.signalservice.api.messages.multidevice.ConfigurationMessage;
 import su.sres.signalservice.api.messages.multidevice.KeysMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.storage.SignalStorageUtil;
-import su.sres.signalservice.internal.configuration.SignalStorageUrl;
 
 import java.io.IOException;
 
@@ -61,7 +59,7 @@ public class MultiDeviceKeysUpdateJob extends BaseJob {
 
         SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
 
-        byte[] masterKey         = TextSecurePreferences.getMasterKey(context);
+        byte[] masterKey         = SignalStore.kbsValues().getMasterKey();
         byte[] storageServiceKey = masterKey != null ? SignalStorageUtil.computeStorageServiceKey(masterKey)
                 : null;
 
