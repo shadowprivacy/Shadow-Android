@@ -18,7 +18,6 @@ import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
 
 public class ProfilePreference extends Preference {
 
@@ -65,7 +64,7 @@ public class ProfilePreference extends Preference {
     if (profileSubtextView == null) return;
 
     final Recipient self        = Recipient.self();
-    final String    profileName = TextSecurePreferences.getProfileName(getContext());
+    final String    profileName = TextSecurePreferences.getProfileName(getContext()).toString();
 
     GlideApp.with(getContext().getApplicationContext())
             .load(new ProfileContactPhoto(self.getId(), String.valueOf(TextSecurePreferences.getProfileAvatarId(getContext()))))

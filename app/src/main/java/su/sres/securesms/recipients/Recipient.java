@@ -22,7 +22,6 @@ import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.contacts.avatars.SystemContactPhoto;
 import su.sres.securesms.contacts.avatars.TransparentContactPhoto;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.RegisteredState;
@@ -34,6 +33,7 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.phonenumbers.NumberUtil;
 import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
+import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.Util;
@@ -82,7 +82,7 @@ public class Recipient {
   private final Uri                    systemContactPhoto;
   private final String                 customLabel;
   private final Uri                    contactUri;
-  private final String                 profileName;
+  private final ProfileName            profileName;
   private final String                 profileAvatar;
   private final boolean                profileSharing;
   private final String                 notificationChannel;
@@ -293,7 +293,7 @@ public class Recipient {
     this.systemContactPhoto     = null;
     this.customLabel            = null;
     this.contactUri             = null;
-    this.profileName            = null;
+    this.profileName            = ProfileName.EMPTY;
     this.profileAvatar          = null;
     this.profileSharing         = false;
     this.notificationChannel    = null;
@@ -381,7 +381,7 @@ public class Recipient {
 
   public @NonNull String getDisplayName(@NonNull Context context) {
     return Util.getFirstNonEmpty(getName(context),
-            getProfileName(),
+            getProfileName().toString(),
             getDisplayUsername(),
             e164,
             email,
@@ -516,7 +516,7 @@ public class Recipient {
     return defaultSubscriptionId;
   }
 
-  public @Nullable String getProfileName() {
+  public @NonNull ProfileName getProfileName() {
     return profileName;
   }
 

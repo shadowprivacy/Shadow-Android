@@ -24,7 +24,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import androidx.core.view.ViewCompat;
 import android.text.SpannableString;
 import android.text.Spanned;
-import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -39,7 +38,6 @@ import android.widget.TextView;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
@@ -383,8 +381,8 @@ public class WebRtcCallScreen extends FrameLayout implements RecipientForeverObs
     } else {
       this.name.setText(recipient.getName(getContext()));
 
-      if (recipient.getName(getContext()) == null && !TextUtils.isEmpty(recipient.getProfileName())) {
-        this.phoneNumber.setText(recipient.requireE164() + " (~" + recipient.getProfileName() + ")");
+      if (recipient.getName(getContext()) == null && !recipient.getProfileName().isEmpty()) {
+        this.phoneNumber.setText(recipient.requireE164() + " (~" + recipient.getProfileName().toString() + ")");
       } else {
         this.phoneNumber.setText(recipient.requireE164());
       }

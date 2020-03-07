@@ -5,13 +5,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import androidx.appcompat.app.AlertDialog;
-import android.text.TextUtils;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientExporter;
 import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.Util;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -120,8 +118,8 @@ public class GroupMembersDialog extends AsyncTask<Void, Void, List<Recipient>> {
 
       String name = recipient.toShortString(context);
 
-      if (recipient.getName(context) == null && !TextUtils.isEmpty(recipient.getProfileName())) {
-        name += " ~" + recipient.getProfileName();
+      if (recipient.getName(context) == null && !recipient.getProfileName().isEmpty()) {
+        name += " ~" + recipient.getProfileName().toString();
       }
 
       return name;

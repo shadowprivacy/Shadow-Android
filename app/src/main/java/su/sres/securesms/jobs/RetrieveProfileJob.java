@@ -5,8 +5,6 @@ import androidx.annotation.Nullable;
 
 import android.text.TextUtils;
 
-import su.sres.securesms.ApplicationContext;
-import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
@@ -15,28 +13,19 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.recipients.RecipientUtil;
-import su.sres.securesms.service.IncomingMessageObserver;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.ProfileUtil;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
-import org.whispersystems.libsignal.util.guava.Optional;
-import su.sres.signalservice.api.SignalServiceMessagePipe;
-import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.crypto.InvalidCiphertextException;
 import su.sres.signalservice.api.crypto.ProfileCipher;
-import su.sres.signalservice.api.crypto.UnidentifiedAccess;
-import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
 import su.sres.signalservice.api.profiles.SignalServiceProfile;
-import su.sres.signalservice.api.push.SignalServiceAddress;
-import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 
 import java.io.IOException;
 import java.util.List;
@@ -190,9 +179,9 @@ public class RetrieveProfileJob extends BaseJob  {
 
       String plaintextProfileName = ProfileUtil.decryptName(profileKey, profileName);
 
-      if (!Util.equals(plaintextProfileName, recipient.getProfileName())) {
+      if (!Util.equals(plaintextProfileName, recipient.getProfileName().serialize())) {
         Log.i(TAG, "Profile name updated. Writing new value.");
-        DatabaseFactory.getRecipientDatabase(context).setProfileName(recipient.getId(), plaintextProfileName);
+        DatabaseFactory.getRecipientDatabase(context).setProfileName(recipient.getId(), ProfileName.fromSerialized(plaintextProfileName));
       }
       if (TextUtils.isEmpty(plaintextProfileName)) {
         Log.i

@@ -1,18 +1,13 @@
 package su.sres.securesms.contacts.sync;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
-import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
-import su.sres.securesms.database.StorageKeyDatabase;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.SetUtil;
@@ -219,7 +214,7 @@ public final class StorageSyncHelper {
 
         return new SignalContactRecord.Builder(storageKey, new SignalServiceAddress(recipient.getUuid(), recipient.getE164()))
                 .setProfileKey(recipient.getProfileKey())
-                .setProfileName(recipient.getProfileName())
+                .setProfileName(recipient.getProfileName().serialize())
                 .setBlocked(recipient.isBlocked())
                 .setProfileSharingEnabled(recipient.isProfileSharing())
                 .setIdentityKey(recipient.getIdentityKey())

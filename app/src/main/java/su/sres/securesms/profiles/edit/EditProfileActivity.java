@@ -1,0 +1,47 @@
+package su.sres.securesms.profiles.edit;
+
+
+import android.annotation.SuppressLint;
+import android.os.Bundle;
+
+import androidx.navigation.NavGraph;
+import androidx.navigation.Navigation;
+
+import su.sres.securesms.BaseActionBarActivity;
+import su.sres.securesms.R;
+import su.sres.securesms.util.DynamicRegistrationTheme;
+import su.sres.securesms.util.DynamicTheme;
+
+@SuppressLint("StaticFieldLeak")
+public class EditProfileActivity extends BaseActionBarActivity implements EditProfileFragment.Controller {
+
+    public static final String NEXT_INTENT       = "next_intent";
+    public static final String EXCLUDE_SYSTEM    = "exclude_system";
+    public static final String DISPLAY_USERNAME  = "display_username";
+    public static final String NEXT_BUTTON_TEXT  = "next_button_text";
+
+    private final DynamicTheme dynamicTheme    = new DynamicRegistrationTheme();
+
+    @Override
+    public void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
+
+        dynamicTheme.onCreate(this);
+
+        setContentView(R.layout.profile_create_activity);
+
+        NavGraph graph = Navigation.findNavController(this, R.id.nav_host_fragment).getGraph();
+        Navigation.findNavController(this, R.id.nav_host_fragment).setGraph(graph, getIntent().getExtras());
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        dynamicTheme.onResume(this);
+    }
+
+    @Override
+    public void onProfileNameUploadCompleted() {
+        finish();
+    }
+}

@@ -38,8 +38,8 @@ import su.sres.securesms.preferences.NotificationsPreferenceFragment;
 import su.sres.securesms.preferences.SmsMmsPreferenceFragment;
 import su.sres.securesms.preferences.StoragePreferenceFragment;
 import su.sres.securesms.preferences.widgets.ProfilePreference;
+import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.service.KeyCachingService;
-import su.sres.securesms.usernames.ProfileEditActivityV2;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.FeatureFlags;
@@ -262,14 +262,12 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActionBarA
         private class ProfileClickListener implements Preference.OnPreferenceClickListener {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                if (FeatureFlags.USERNAMES) {
-                    requireActivity().startActivity(ProfileEditActivityV2.getLaunchIntent(requireContext()));
-                } else {
-                    Intent intent = new Intent(preference.getContext(), CreateProfileActivity.class);
-                    intent.putExtra(CreateProfileActivity.EXCLUDE_SYSTEM, true);
+                Intent intent = new Intent(preference.getContext(), EditProfileActivity.class);
+                intent.putExtra(EditProfileActivity.EXCLUDE_SYSTEM, true);
+                intent.putExtra(EditProfileActivity.DISPLAY_USERNAME, true);
+                intent.putExtra(EditProfileActivity.NEXT_BUTTON_TEXT, R.string.save);
 
-                    requireActivity().startActivity(intent);
-                }
+                requireActivity().startActivity(intent);
                 return true;
             }
         }

@@ -19,6 +19,7 @@ import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.Base64;
@@ -78,7 +79,6 @@ public class RecipientDatabase extends Database {
   private static final String SYSTEM_CONTACT_URI       = "system_contact_uri";
   private static final String SYSTEM_INFO_PENDING      = "system_info_pending";
   private static final String PROFILE_KEY              = "profile_key";
-  public  static final String SIGNAL_PROFILE_NAME      = "signal_profile_name";
   private static final String SIGNAL_PROFILE_AVATAR    = "signal_profile_avatar";
   private static final String PROFILE_SHARING          = "profile_sharing";
   private static final String UNIDENTIFIED_ACCESS_MODE = "unidentified_access_mode";
@@ -86,7 +86,11 @@ public class RecipientDatabase extends Database {
   private static final String UUID_SUPPORTED           = "uuid_supported";
   private static final String STORAGE_SERVICE_KEY      = "storage_service_key";
   private static final String DIRTY                    = "dirty";
+  private static final String PROFILE_GIVEN_NAME       = "signal_profile_name";
+  private static final String PROFILE_FAMILY_NAME      = "profile_family_name";
+  private static final String PROFILE_JOINED_NAME      = "profile_joined_name";
 
+  public  static final String SEARCH_PROFILE_NAME      = "search_signal_profile";
   private static final String SORT_NAME                = "sort_name";
   private static final String IDENTITY_STATUS          = "identity_status";
   private static final String IDENTITY_KEY             = "identity_key";
@@ -95,7 +99,7 @@ public class RecipientDatabase extends Database {
           UUID, USERNAME, PHONE, EMAIL, GROUP_ID,
           BLOCKED, MESSAGE_RINGTONE, CALL_RINGTONE, MESSAGE_VIBRATE, CALL_VIBRATE, MUTE_UNTIL, COLOR, SEEN_INVITE_REMINDER, DEFAULT_SUBSCRIPTION_ID, MESSAGE_EXPIRATION_TIME, REGISTERED,
           PROFILE_KEY, SYSTEM_DISPLAY_NAME, SYSTEM_PHOTO_URI, SYSTEM_PHONE_LABEL, SYSTEM_PHONE_TYPE, SYSTEM_CONTACT_URI,
-          SIGNAL_PROFILE_NAME, SIGNAL_PROFILE_AVATAR, PROFILE_SHARING, NOTIFICATION_CHANNEL,
+          PROFILE_GIVEN_NAME, PROFILE_FAMILY_NAME, SIGNAL_PROFILE_AVATAR, PROFILE_SHARING, NOTIFICATION_CHANNEL,
           UNIDENTIFIED_ACCESS_MODE,
           FORCE_SMS_SELECTION, UUID_SUPPORTED, STORAGE_SERVICE_KEY, DIRTY
   };
@@ -114,7 +118,8 @@ public class RecipientDatabase extends Database {
   };
 
   private static final String[]     ID_PROJECTION              = new String[]{ID};
-  public  static final String[]     SEARCH_PROJECTION          = new String[]{ID, SYSTEM_DISPLAY_NAME, SIGNAL_PROFILE_NAME, PHONE, EMAIL, SYSTEM_PHONE_LABEL, SYSTEM_PHONE_TYPE, REGISTERED, "COALESCE(" + SYSTEM_DISPLAY_NAME + ", " + SIGNAL_PROFILE_NAME + ", " + USERNAME + ") AS " + SORT_NAME};
+  private static final String[]     SEARCH_PROJECTION          = new String[]{ID, SYSTEM_DISPLAY_NAME, PHONE, EMAIL, SYSTEM_PHONE_LABEL, SYSTEM_PHONE_TYPE, REGISTERED, "COALESCE(" + PROFILE_JOINED_NAME + ", " + PROFILE_GIVEN_NAME + ") AS " + SEARCH_PROFILE_NAME, "COALESCE(" + SYSTEM_DISPLAY_NAME + ", " + PROFILE_JOINED_NAME + ", " + PROFILE_GIVEN_NAME + ", " + USERNAME + ") AS " + SORT_NAME};
+  public  static final String[]     SEARCH_PROJECTION_NAMES    = new String[]{ID, SYSTEM_DISPLAY_NAME, PHONE, EMAIL, SYSTEM_PHONE_LABEL, SYSTEM_PHONE_TYPE, REGISTERED, SEARCH_PROFILE_NAME, SORT_NAME};
 
   static final List<String> TYPED_RECIPIENT_PROJECTION = Stream.of(RECIPIENT_PROJECTION)
           .map(columnName -> TABLE_NAME + "." + columnName)
@@ -235,7 +240,9 @@ public class RecipientDatabase extends Database {
                   SYSTEM_CONTACT_URI       + " TEXT DEFAULT NULL, " +
                   SYSTEM_INFO_PENDING      + " INTEGER DEFAULT 0, " +
                   PROFILE_KEY              + " TEXT DEFAULT NULL, " +
-                  SIGNAL_PROFILE_NAME      + " TEXT DEFAULT NULL, " +
+                  PROFILE_GIVEN_NAME       + " TEXT DEFAULT NULL, " +
+                  PROFILE_FAMILY_NAME      + " TEXT DEFAULT NULL, " +
+                  PROFILE_JOINED_NAME      + " TEXT DEFAULT NULL, " +
                   SIGNAL_PROFILE_AVATAR    + " TEXT DEFAULT NULL, " +
                   PROFILE_SHARING          + " INTEGER DEFAULT 0, " +
                   UNIDENTIFIED_ACCESS_MODE + " INTEGER DEFAULT 0, " +
@@ -470,8 +477,12 @@ public class RecipientDatabase extends Database {
       values.put(UUID, contact.getAddress().getUuid().get().toString());
     }
 
+    ProfileName profileName = ProfileName.fromSerialized(contact.getProfileName().orNull());
+
     values.put(PHONE, contact.getAddress().getNumber().orNull());
-    values.put(SIGNAL_PROFILE_NAME, contact.getProfileName().orNull());
+    values.put(PROFILE_GIVEN_NAME, profileName.getGivenName());
+    values.put(PROFILE_FAMILY_NAME, profileName.getFamilyName());
+    values.put(PROFILE_JOINED_NAME, profileName.toString());
     values.put(PROFILE_KEY, contact.getProfileKey().orNull());
     // TODO [greyson] Username
     values.put(PROFILE_SHARING, contact.isProfileSharingEnabled() ? "1" : "0");
@@ -550,7 +561,8 @@ public class RecipientDatabase extends Database {
     String  systemContactPhoto     = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_PHOTO_URI));
     String  systemPhoneLabel       = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_PHONE_LABEL));
     String  systemContactUri       = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_CONTACT_URI));
-    String  signalProfileName      = cursor.getString(cursor.getColumnIndexOrThrow(SIGNAL_PROFILE_NAME));
+    String  profileGivenName       = cursor.getString(cursor.getColumnIndexOrThrow(PROFILE_GIVEN_NAME));
+    String  profileFamilyName      = cursor.getString(cursor.getColumnIndexOrThrow(PROFILE_FAMILY_NAME));
     String  signalProfileAvatar    = cursor.getString(cursor.getColumnIndexOrThrow(SIGNAL_PROFILE_AVATAR));
     boolean profileSharing         = cursor.getInt(cursor.getColumnIndexOrThrow(PROFILE_SHARING))      == 1;
     String  notificationChannel    = cursor.getString(cursor.getColumnIndexOrThrow(NOTIFICATION_CHANNEL));
@@ -605,7 +617,7 @@ public class RecipientDatabase extends Database {
             RegisteredState.fromId(registeredState),
             profileKey, systemDisplayName, systemContactPhoto,
             systemPhoneLabel, systemContactUri,
-            signalProfileName, signalProfileAvatar, profileSharing,
+            ProfileName.fromParts(profileGivenName, profileFamilyName), signalProfileAvatar, profileSharing,
             notificationChannel, UnidentifiedAccessMode.fromMode(unidentifiedAccessMode),
             forceSmsSelection, uuidSupported, InsightsBannerTier.fromId(insightsBannerTier),
             storageKey, identityKey, identityStatus);
@@ -750,9 +762,11 @@ public class RecipientDatabase extends Database {
     }
   }
 
-  public void setProfileName(@NonNull RecipientId id, @Nullable String profileName) {
+  public void setProfileName(@NonNull RecipientId id, @NonNull ProfileName profileName) {
     ContentValues contentValues = new ContentValues(1);
-    contentValues.put(SIGNAL_PROFILE_NAME, profileName);
+    contentValues.put(PROFILE_GIVEN_NAME, profileName.getGivenName());
+    contentValues.put(PROFILE_FAMILY_NAME, profileName.getFamilyName());
+    contentValues.put(PROFILE_JOINED_NAME, profileName.toString());
     if (update(id, contentValues)) {
       markDirty(id, DirtyState.UPDATE);
       Recipient.live(id).refresh();
@@ -1001,9 +1015,9 @@ public class RecipientDatabase extends Database {
             REGISTERED      + " = ? AND " +
             GROUP_ID        + " IS NULL AND " +
             "(" + SYSTEM_DISPLAY_NAME + " NOT NULL OR " + PROFILE_SHARING + " = ?) AND " +
-            "(" + SYSTEM_DISPLAY_NAME + " NOT NULL OR " + SIGNAL_PROFILE_NAME + " NOT NULL OR " + USERNAME + " NOT NULL)";
+            "(" + SYSTEM_DISPLAY_NAME + " NOT NULL OR " + SEARCH_PROFILE_NAME + " NOT NULL OR " + USERNAME + " NOT NULL)";
     String[] args      = new String[] { "0", String.valueOf(RegisteredState.REGISTERED.getId()), "1" };
-    String   orderBy   = SORT_NAME + ", " + SYSTEM_DISPLAY_NAME + ", " + SIGNAL_PROFILE_NAME + ", " + USERNAME + ", " + PHONE;
+    String   orderBy   = SORT_NAME + ", " + SYSTEM_DISPLAY_NAME + ", " + SEARCH_PROFILE_NAME + ", " + USERNAME + ", " + PHONE;
 
     return databaseHelper.getReadableDatabase().query(TABLE_NAME, SEARCH_PROJECTION, selection, args, null, null, orderBy);
   }
@@ -1019,11 +1033,11 @@ public class RecipientDatabase extends Database {
             "(" +
             PHONE               + " LIKE ? OR " +
             SYSTEM_DISPLAY_NAME + " LIKE ? OR " +
-            SIGNAL_PROFILE_NAME + " LIKE ? OR " +
+            SEARCH_PROFILE_NAME + " LIKE ? OR " +
             USERNAME            + " LIKE ?" +
             ")";
     String[] args      = new String[] { "0", String.valueOf(RegisteredState.REGISTERED.getId()), "1", query, query, query, query };
-    String   orderBy   = SORT_NAME + ", " + SYSTEM_DISPLAY_NAME + ", " + SIGNAL_PROFILE_NAME + ", " + PHONE;
+    String   orderBy   = SORT_NAME + ", " + SYSTEM_DISPLAY_NAME + ", " + SEARCH_PROFILE_NAME + ", " + PHONE;
 
     return databaseHelper.getReadableDatabase().query(TABLE_NAME, SEARCH_PROJECTION, selection, args, null, null, orderBy);
   }
@@ -1067,7 +1081,7 @@ public class RecipientDatabase extends Database {
     String   selection = BLOCKED + " = ? AND " +
             "(" +
             SYSTEM_DISPLAY_NAME + " LIKE ? OR " +
-            SIGNAL_PROFILE_NAME + " LIKE ? OR " +
+            SEARCH_PROFILE_NAME + " LIKE ? OR " +
             PHONE               + " LIKE ? OR " +
             EMAIL               + " LIKE ?" +
             ")";
@@ -1344,7 +1358,7 @@ public class RecipientDatabase extends Database {
     private final String                          systemContactPhoto;
     private final String                          systemPhoneLabel;
     private final String                          systemContactUri;
-    private final String                          signalProfileName;
+    private final ProfileName                     signalProfileName;
     private final String                          signalProfileAvatar;
     private final boolean                         profileSharing;
     private final String                          notificationChannel;
@@ -1376,7 +1390,7 @@ public class RecipientDatabase extends Database {
                       @Nullable String systemContactPhoto,
                       @Nullable String systemPhoneLabel,
                       @Nullable String systemContactUri,
-                      @Nullable String signalProfileName,
+                      @NonNull ProfileName signalProfileName,
                       @Nullable String signalProfileAvatar,
                       boolean profileSharing,
                       @Nullable String notificationChannel,
@@ -1518,7 +1532,7 @@ public class RecipientDatabase extends Database {
       return systemContactUri;
     }
 
-    public @Nullable String getProfileName() {
+    public @NonNull ProfileName getProfileName() {
       return signalProfileName;
     }
 

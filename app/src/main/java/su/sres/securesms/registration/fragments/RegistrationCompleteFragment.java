@@ -15,9 +15,9 @@ import androidx.fragment.app.FragmentActivity;
 // import androidx.navigation.ActivityNavigator;
 
 import su.sres.securesms.MainActivity;
-import su.sres.securesms.CreateProfileActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.profiles.edit.EditProfileActivity;
 
 public final class RegistrationCompleteFragment extends BaseRegistrationFragment {
 
@@ -37,8 +37,7 @@ public final class RegistrationCompleteFragment extends BaseRegistrationFragment
 
 // TODO consider removing the if clause
         if (!isReregister()) {
-            // TODO [greyson] Navigation
- //           activity.startActivity(getRoutedIntent(activity, CreateProfileActivity.class, new Intent(activity, MainActivity.class)));
+//            activity.startActivity(getRoutedIntent(activity, EditProfileActivity.class, new Intent(activity, MainActivity.class)));
             doRestart(activity);
         }
 
@@ -54,7 +53,7 @@ public final class RegistrationCompleteFragment extends BaseRegistrationFragment
 
     private void doRestart(FragmentActivity activity) {
         try {
-             Intent mStartActivity = getRoutedIntent(activity, CreateProfileActivity.class, new Intent(activity, MainActivity.class));
+             Intent mStartActivity = getRoutedIntent(activity, EditProfileActivity.class, new Intent(activity, MainActivity.class));
 
                         mStartActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                         //create a pending intent so the application is restarted after System.exit(0) was called.

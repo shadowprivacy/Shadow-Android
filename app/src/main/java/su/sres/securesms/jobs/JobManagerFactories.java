@@ -94,6 +94,7 @@ public final class JobManagerFactories {
             put(UpdateApkJob.KEY,                          new UpdateApkJob.Factory());
             put(MarkerJob.KEY,                             new MarkerJob.Factory());
             put(Argon2TestJob.KEY,                         new Argon2TestJob.Factory());
+            put(ProfileUploadJob.KEY,                      new ProfileUploadJob.Factory());
 
             // Migrations
             put(AvatarMigrationJob.KEY,                    new AvatarMigrationJob.Factory());

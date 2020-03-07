@@ -3,7 +3,6 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
@@ -52,7 +51,7 @@ public class RotateProfileKeyJob extends BaseJob  {
         SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
         byte[]                      profileKey     = ProfileKeyUtil.rotateProfileKey(context);
 
-        accountManager.setProfileName(profileKey, TextSecurePreferences.getProfileName(context));
+        accountManager.setProfileName(profileKey, TextSecurePreferences.getProfileName(context).serialize());
         accountManager.setProfileAvatar(profileKey, getProfileAvatar());
 
         ApplicationDependencies.getJobManager().add(new RefreshAttributesJob());

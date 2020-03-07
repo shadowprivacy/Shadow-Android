@@ -20,7 +20,6 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.sms.OutgoingTextMessage;
-import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SimpleTask;
@@ -68,7 +67,7 @@ public class InsightsRepository implements InsightsDashboardViewModel.Repository
     public void getUserAvatar(@NonNull Consumer<InsightsUserAvatar> avatarConsumer) {
         SimpleTask.run(() -> {
             Recipient     self          = Recipient.self().resolve();
-            String        name          = Optional.fromNullable(self.getName(context)).or(Optional.fromNullable(TextSecurePreferences.getProfileName(context))).or("");
+            String        name          = Optional.fromNullable(self.getName(context)).or(Optional.fromNullable(TextSecurePreferences.getProfileName(context).toString())).or("");
             MaterialColor fallbackColor = self.getColor();
 
             if (fallbackColor == ContactColors.UNKNOWN_COLOR && !TextUtils.isEmpty(name)) {

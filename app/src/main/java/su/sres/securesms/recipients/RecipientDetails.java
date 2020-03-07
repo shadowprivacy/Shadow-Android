@@ -14,6 +14,7 @@ import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
 import su.sres.securesms.database.RecipientDatabase.RegisteredState;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
 import su.sres.securesms.database.RecipientDatabase.VibrateState;
+import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -44,7 +45,7 @@ public class RecipientDetails {
     final boolean                blocked;
     final int                    expireMessages;
     final List<Recipient>        participants;
-    final String                 profileName;
+    final ProfileName            profileName;
     final Optional<Integer>      defaultSubscriptionId;
     final RegisteredState        registered;
     final byte[]                 profileKey;

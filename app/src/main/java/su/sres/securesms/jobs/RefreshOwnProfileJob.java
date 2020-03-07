@@ -10,6 +10,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.ProfileUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -74,11 +75,12 @@ public class RefreshOwnProfileJob extends BaseJob {
 
     private void setProfileName(@Nullable String encryptedName) {
         try {
-            byte[] profileKey    = ProfileKeyUtil.getProfileKey(context);
-            String plaintextName = ProfileUtil.decryptName(profileKey, encryptedName);
+            byte[]      profileKey    = ProfileKeyUtil.getProfileKey(context);
+            String      plaintextName = ProfileUtil.decryptName(profileKey, encryptedName);
+            ProfileName profileName   = ProfileName.fromSerialized(plaintextName);
 
-            DatabaseFactory.getRecipientDatabase(context).setProfileName(Recipient.self().getId(), plaintextName);
-            TextSecurePreferences.setProfileName(context, plaintextName);
+            DatabaseFactory.getRecipientDatabase(context).setProfileName(Recipient.self().getId(), profileName);
+            TextSecurePreferences.setProfileName(context, profileName);
         } catch (InvalidCiphertextException | IOException e) {
             Log.w(TAG, e);
         }

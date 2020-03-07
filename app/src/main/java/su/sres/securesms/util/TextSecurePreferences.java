@@ -20,6 +20,7 @@ import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.R;
 import su.sres.securesms.lock.RegistrationLockReminders;
 import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
+import su.sres.securesms.profiles.ProfileName;
 import org.whispersystems.libsignal.util.Medium;
 
 // import su.sres.signalservice.api.RegistrationLockData;
@@ -424,12 +425,12 @@ public class TextSecurePreferences {
     setStringPreference(context, PROFILE_KEY_PREF, key);
   }
 
-  public static void setProfileName(Context context, String name) {
-    setStringPreference(context, PROFILE_NAME_PREF, name);
+  public static void setProfileName(Context context, ProfileName name) {
+    setStringPreference(context, PROFILE_NAME_PREF, name.serialize());
   }
 
-  public static String getProfileName(Context context) {
-    return getStringPreference(context, PROFILE_NAME_PREF, null);
+  public static ProfileName getProfileName(Context context) {
+    return ProfileName.fromSerialized(getStringPreference(context, PROFILE_NAME_PREF, null));
   }
 
   public static void setProfileAvatarId(Context context, int id) {
