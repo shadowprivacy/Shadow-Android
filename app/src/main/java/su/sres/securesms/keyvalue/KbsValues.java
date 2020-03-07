@@ -7,7 +7,11 @@ package su.sres.securesms.keyvalue;
 // import su.sres.signalservice.internal.contacts.entities.TokenResponse;
 // import su.sres.signalservice.internal.registrationpin.PinStretcher;
 
+import androidx.annotation.Nullable;
+
 import java.io.IOException;
+
+import su.sres.signalservice.api.kbs.MasterKey;
 
 public final class KbsValues {
 
@@ -54,8 +58,13 @@ public final class KbsValues {
         editor.commit();
     }
 
-    public byte[] getMasterKey() {
-        return store.getBlob(REGISTRATION_LOCK_MASTER_KEY, null);
+    public @Nullable MasterKey getMasterKey() {
+        byte[] blob = store.getBlob(REGISTRATION_LOCK_MASTER_KEY, null);
+        if (blob != null) {
+            return new MasterKey(blob);
+        } else {
+            return null;
+        }
     }
 
 //    public @Nullable String getRegistrationLockToken() {

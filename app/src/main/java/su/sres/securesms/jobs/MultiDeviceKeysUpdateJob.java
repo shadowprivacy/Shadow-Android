@@ -13,10 +13,10 @@ import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
+import su.sres.signalservice.api.kbs.MasterKey;
 import su.sres.signalservice.api.messages.multidevice.KeysMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
-import su.sres.signalservice.api.storage.SignalStorageUtil;
 
 import java.io.IOException;
 
@@ -59,8 +59,8 @@ public class MultiDeviceKeysUpdateJob extends BaseJob {
 
         SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
 
-        byte[] masterKey         = SignalStore.kbsValues().getMasterKey();
-        byte[] storageServiceKey = masterKey != null ? SignalStorageUtil.computeStorageServiceKey(masterKey)
+        MasterKey masterKey      = SignalStore.kbsValues().getMasterKey();
+        byte[] storageServiceKey = masterKey != null ? masterKey.deriveStorageServiceKey()
                 : null;
 
         if (storageServiceKey == null) {

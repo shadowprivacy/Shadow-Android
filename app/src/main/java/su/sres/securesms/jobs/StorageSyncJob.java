@@ -29,11 +29,11 @@ import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
+import su.sres.signalservice.api.kbs.MasterKey;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.storage.SignalContactRecord;
 import su.sres.signalservice.api.storage.SignalStorageManifest;
 import su.sres.signalservice.api.storage.SignalStorageRecord;
-import su.sres.signalservice.api.storage.SignalStorageUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -110,14 +110,14 @@ public class StorageSyncJob extends BaseJob {
         SignalServiceAccountManager accountManager     = ApplicationDependencies.getSignalServiceAccountManager();
         RecipientDatabase           recipientDatabase  = DatabaseFactory.getRecipientDatabase(context);
         StorageKeyDatabase          storageKeyDatabase = DatabaseFactory.getStorageKeyDatabase(context);
-        byte[]                      kbsMasterKey       = SignalStore.kbsValues().getMasterKey();
+        MasterKey                   kbsMasterKey       = SignalStore.kbsValues().getMasterKey();
 
         if (kbsMasterKey == null) {
             Log.w(TAG, "No KBS master key is set! Must abort.");
             return false;
         }
 
-        byte[]                storageServiceKey    = SignalStorageUtil.computeStorageServiceKey(kbsMasterKey);
+        byte[]                storageServiceKey    = kbsMasterKey.deriveStorageServiceKey();
         boolean               needsMultiDeviceSync = false;
         long                  localManifestVersion = TextSecurePreferences.getStorageManifestVersion(context);
         SignalStorageManifest remoteManifest       = accountManager.getStorageManifest(storageServiceKey).or(new SignalStorageManifest(0, Collections.emptyList()));
