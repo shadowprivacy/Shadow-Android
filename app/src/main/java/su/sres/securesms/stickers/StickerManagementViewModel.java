@@ -10,7 +10,11 @@ import android.os.Handler;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.DatabaseContentProviders;
+import su.sres.securesms.database.model.StickerPackRecord;
+import su.sres.securesms.database.model.StickerRecord;
 import su.sres.securesms.stickers.StickerManagementRepository.PackResult;
+
+import java.util.List;
 
 final class StickerManagementViewModel extends ViewModel {
 
@@ -54,6 +58,10 @@ final class StickerManagementViewModel extends ViewModel {
 
     void onStickerPackInstallClicked(@NonNull String packId, @NonNull String packKey) {
         repository.installStickerPack(packId, packKey, false);
+    }
+
+    void onOrderChanged(List<StickerPackRecord> packsInOrder) {
+        repository.setPackOrder(packsInOrder);
     }
 
     @Override

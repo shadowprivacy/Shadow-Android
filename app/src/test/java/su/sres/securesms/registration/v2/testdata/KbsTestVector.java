@@ -1,4 +1,4 @@
-package su.sres.securesms.registration.v2;
+package su.sres.securesms.registration.v2.testdata;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

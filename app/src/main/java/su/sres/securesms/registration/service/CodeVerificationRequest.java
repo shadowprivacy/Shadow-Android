@@ -171,8 +171,6 @@ public final class CodeVerificationRequest {
             Toast.makeText(context, R.string.configuration_load_unsuccessful, Toast.LENGTH_LONG);
         }
 
-
-
         RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
         RecipientId       selfId            = recipientDatabase.getOrInsertFromE164(credentials.getE164number());
 

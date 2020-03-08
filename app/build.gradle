@@ -182,19 +182,11 @@ dependencies {
     testImplementation 'org.powermock:powermock-classloading-xstream:1.6.1'
 
     testImplementation 'androidx.test:core:1.2.0'
-    androidTestImplementation 'androidx.multidex:multidex:2.0.1'
-    androidTestImplementation 'androidx.multidex:multidex-instrumentation:2.0.0'
-    androidTestImplementation 'com.google.dexmaker:dexmaker:1.2'
-    androidTestImplementation 'com.google.dexmaker:dexmaker-mockito:1.2'
-    androidTestImplementation ('org.assertj:assertj-core:1.7.1') {
-        exclude group: 'org.hamcrest', module: 'hamcrest-core'
-    }
-    androidTestImplementation ('com.squareup.assertj:assertj-android:1.1.1') {
-        exclude group: 'org.hamcrest',        module: 'hamcrest-core'
-        exclude group: 'com.android.support', module: 'support-annotations'
-    }
     testImplementation 'org.robolectric:robolectric:4.2'
     testImplementation 'org.robolectric:shadows-multidex:4.2'
+
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 }
 
 dependencyVerification {
@@ -255,6 +247,8 @@ android {
                 universalApk true
             }
         }
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {

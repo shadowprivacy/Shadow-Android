@@ -59,7 +59,7 @@ public class MultiDeviceKeysUpdateJob extends BaseJob {
 
         SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
 
-        MasterKey masterKey      = SignalStore.kbsValues().getMasterKey();
+        MasterKey masterKey      = SignalStore.kbsValues().getOrCreateMasterKey();
         byte[] storageServiceKey = masterKey != null ? masterKey.deriveStorageServiceKey()
                 : null;
 

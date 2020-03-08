@@ -449,12 +449,12 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   private void initializeMasterKey() {
     // generate a random "master key"
-    byte[] masterKey = new byte[32];
-    SecureRandom random = new SecureRandom();
-    random.nextBytes(masterKey);
+//    byte[] masterKey = new byte[32];
+//    SecureRandom random = new SecureRandom();
+//    random.nextBytes(masterKey);
 
     // set just a filler for now
-    SignalStore.kbsValues().setRegistrationLockMasterKey(masterKey);
+    SignalStore.kbsValues().setRegistrationLockMasterKey(SignalStore.kbsValues().getOrCreateMasterKey());
   }
 
   @Override
