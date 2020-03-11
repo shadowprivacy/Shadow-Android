@@ -35,11 +35,10 @@ public final class RegistrationCompleteFragment extends BaseRegistrationFragment
 
         FragmentActivity activity = requireActivity();
 
-// TODO consider removing the if clause
-        if (!isReregister()) {
+//        if (!isReregister()) {
 //            activity.startActivity(getRoutedIntent(activity, EditProfileActivity.class, new Intent(activity, MainActivity.class)));
             doRestart(activity);
-        }
+//        }
 
 //        activity.finish();
 //        ActivityNavigator.applyPopAnimationsToPendingTransition(activity);
