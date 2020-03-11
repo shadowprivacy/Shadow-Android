@@ -167,7 +167,7 @@ public class Recipient {
       } else if (!recipient.isRegistered()) {
         db.markRegistered(recipient.getId());
 
-        if (FeatureFlags.UUIDS) {
+        if (FeatureFlags.uuids()) {
           Log.i(TAG, "No UUID! Scheduling a fetch.");
           ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(recipient, false));
         }
@@ -175,7 +175,7 @@ public class Recipient {
 
       return resolved(recipient.getId());
     } else if (uuid != null) {
-      if (FeatureFlags.UUIDS || e164 != null) {
+      if (FeatureFlags.uuids() || e164 != null) {
         RecipientId id = db.getOrInsertFromUuid(uuid);
         db.markRegistered(id, uuid);
 
@@ -193,7 +193,7 @@ public class Recipient {
       if (!recipient.isRegistered()) {
         db.markRegistered(recipient.getId());
 
-        if (FeatureFlags.UUIDS) {
+        if (FeatureFlags.uuids()) {
           Log.i(TAG, "No UUID! Scheduling a fetch.");
           ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(recipient, false));
         }
@@ -214,11 +214,17 @@ public class Recipient {
    */
   @WorkerThread
   public static @NonNull Recipient externalContact(@NonNull Context context, @NonNull String identifier) {
+    RecipientDatabase db = DatabaseFactory.getRecipientDatabase(context);
+    RecipientId       id = null;
     if (UuidUtil.isUuid(identifier)) {
       throw new UuidRecipientError();
+    } else if (NumberUtil.isValidEmail(identifier)) {
+      id = db.getOrInsertFromEmail(identifier);
     } else {
-      return external(context, identifier);
+      id = db.getOrInsertFromE164(identifier);
     }
+
+    return Recipient.resolved(id);
   }
 
   /**
@@ -239,7 +245,7 @@ public class Recipient {
     if (UuidUtil.isUuid(identifier)) {
       UUID uuid = UuidUtil.parseOrThrow(identifier);
 
-      if (FeatureFlags.UUIDS) {
+      if (FeatureFlags.uuids()) {
         id = db.getOrInsertFromUuid(uuid);
       } else {
         Optional<RecipientId> possibleId = db.getByUuid(uuid);
@@ -375,8 +381,8 @@ public class Recipient {
    */
   @Deprecated
   public @NonNull String toShortString(@NonNull Context context) {
-    if (FeatureFlags.PROFILE_DISPLAY) return getDisplayName(context);
-    else                    return Optional.fromNullable(getName(context)).or(getSmsAddress()).or("");
+    if (FeatureFlags.profileDisplay()) return getDisplayName(context);
+    else                               return Optional.fromNullable(getName(context)).or(getSmsAddress()).or("");
   }
 
   public @NonNull String getDisplayName(@NonNull Context context) {
@@ -400,7 +406,7 @@ public class Recipient {
   }
 
   public @NonNull Optional<String> getUsername() {
-    if (FeatureFlags.USERNAMES) {
+    if (FeatureFlags.usernames()) {
       return Optional.fromNullable(username);
     } else {
       return Optional.absent();
@@ -521,7 +527,7 @@ public class Recipient {
   }
 
   public @Nullable String getCustomLabel() {
-    if (FeatureFlags.PROFILE_DISPLAY) throw new AssertionError("This method should never be called if PROFILE_DISPLAY is enabled.");
+    if (FeatureFlags.profileDisplay()) throw new AssertionError("This method should never be called if PROFILE_DISPLAY is enabled.");
     return customLabel;
   }
 
@@ -647,10 +653,10 @@ public class Recipient {
    * @return True if this recipient can support receiving UUID-only messages, otherwise false.
    */
   public boolean isUuidSupported() {
-    if (FeatureFlags.USERNAMES) {
+    if (FeatureFlags.usernames()) {
       return true;
     } else {
-      return FeatureFlags.UUIDS && uuidSupported;
+      return FeatureFlags.uuids() && uuidSupported;
     }
   }
 

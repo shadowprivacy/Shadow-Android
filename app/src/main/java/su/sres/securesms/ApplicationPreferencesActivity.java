@@ -42,7 +42,6 @@ import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThemeUtil;
 

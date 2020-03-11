@@ -101,7 +101,7 @@ public class RetrieveProfileJob extends BaseJob  {
 
     setProfileName(recipient, profile.getName());
     setProfileAvatar(recipient, profile.getAvatar());
-    if (FeatureFlags.USERNAMES) setUsername(recipient, profile.getUsername());
+    if (FeatureFlags.usernames()) setUsername(recipient, profile.getUsername());
     setProfileCapabilities(recipient, profile.getCapabilities());
     setIdentityKey(recipient, profile.getIdentityKey());
     setUnidentifiedAccessMode(recipient, profile.getUnidentifiedAccess(), profile.isUnrestrictedUnidentifiedAccess());

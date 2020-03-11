@@ -51,15 +51,19 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.annimon.stream.Stream;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import su.sres.securesms.ApplicationContext;
+import su.sres.securesms.BuildConfig;
 import su.sres.securesms.R;
 import su.sres.securesms.contactshare.SimpleTextWatcher;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.logsubmit.util.Scrubber;
 import su.sres.securesms.util.BucketInfo;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -109,6 +113,7 @@ public class SubmitLogFragment extends Fragment {
   private static final String HEADER_POWER       = "========== POWER ==========";
   private static final String HEADER_THREADS     = "===== BLOCKED THREADS =====";
   private static final String HEADER_PERMISSIONS = "======= PERMISSIONS =======";
+  private static final String HEADER_FLAGS       = "====== FEATURE FLAGS ======";
   private static final String HEADER_LOGCAT      = "========== LOGCAT =========";
   private static final String HEADER_LOGGER      = "========== LOGGER =========";
 
@@ -407,6 +412,11 @@ public class SubmitLogFragment extends Fragment {
               .append(buildBlockedThreads())
               .append("\n\n\n");
 
+      stringBuilder.append(HEADER_FLAGS)
+              .append("\n\n")
+              .append(buildFlags())
+              .append("\n\n\n");
+
       stringBuilder.append(HEADER_PERMISSIONS)
               .append("\n\n")
               .append(buildPermissions(context))
@@ -545,17 +555,7 @@ public class SubmitLogFragment extends Fragment {
     builder.append("Refresh Rate : ").append(String.format(Locale.ENGLISH, "%.2f", FrameRateTracker.getDisplayRefreshRate(context))).append(" hz").append("\n");
     builder.append("Average FPS  : ").append(String.format(Locale.ENGLISH, "%.2f", ApplicationDependencies.getFrameRateTracker().getRunningAverageFps())).append("\n");
     builder.append("First Version: ").append(TextSecurePreferences.getFirstInstallVersion(context)).append("\n");
-    builder.append("App          : ");
-    try {
-      builder.append(pm.getApplicationLabel(pm.getApplicationInfo(context.getPackageName(), 0)))
-             .append(" ")
-             .append(pm.getPackageInfo(context.getPackageName(), 0).versionName)
-              .append(" (")
-              .append(Util.getManifestApkVersion(context))
-              .append(")\n");
-    } catch (PackageManager.NameNotFoundException nnfe) {
-      builder.append("Unknown\n");
-    }
+    builder.append("App          : ").append(BuildConfig.VERSION_NAME);
 
     return builder;
   }
@@ -619,6 +619,27 @@ public class SubmitLogFragment extends Fragment {
       out.append(pair.first()).append(": ");
       out.append(pair.second() ? "YES" : "NO");
       out.append("\n");
+    }
+
+    return out;
+  }
+
+  private static CharSequence buildFlags() {
+    StringBuilder        out          = new StringBuilder();
+    Map<String, Boolean> remote       = FeatureFlags.getRemoteValues();
+    Map<String, Boolean> forced       = FeatureFlags.getForcedValues();
+    int                  remoteLength = Stream.of(remote.keySet()).map(String::length).max(Integer::compareTo).orElse(0);
+    int                  forcedLength = Stream.of(forced.keySet()).map(String::length).max(Integer::compareTo).orElse(0);
+
+    out.append("-- Remote\n");
+    for (Map.Entry<String, Boolean> entry : remote.entrySet()) {
+      out.append(Util.rightPad(entry.getKey(), remoteLength)).append(": ").append(entry.getValue()).append("\n");
+    }
+    out.append("\n");
+
+    out.append("-- Forced\n");
+    for (Map.Entry<String, Boolean> entry : forced.entrySet()) {
+      out.append(Util.rightPad(entry.getKey(), forcedLength)).append(": ").append(entry.getValue()).append("\n");
     }
 
     return out;

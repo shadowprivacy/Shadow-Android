@@ -23,6 +23,7 @@ import su.sres.securesms.net.CompositeRequestController;
 import su.sres.securesms.net.ContentProxySafetyInterceptor;
 import su.sres.securesms.net.ContentProxySelector;
 import su.sres.securesms.net.RequestController;
+import su.sres.securesms.net.UserAgentInterceptor;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.stickers.StickerRemoteUri;
 import su.sres.securesms.stickers.StickerUrl;

@@ -55,7 +55,10 @@ public final class RegistrationCompleteFragment extends BaseRegistrationFragment
         try {
              Intent mStartActivity = getRoutedIntent(activity, EditProfileActivity.class, new Intent(activity, MainActivity.class));
 
-                        mStartActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            mStartActivity.putExtra(EditProfileActivity.SHOW_TOOLBAR, false);
+
+            mStartActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
                         //create a pending intent so the application is restarted after System.exit(0) was called.
                         // We use an AlarmManager to call this intent in 100ms
                         int mPendingIntentId = 223344;

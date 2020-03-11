@@ -2,15 +2,13 @@ package su.sres.securesms.profiles.edit;
 
 import android.Manifest;
 import android.animation.Animator;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.Selection;
+import android.text.Editable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewAnimationUtils;
@@ -25,8 +23,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
@@ -45,6 +43,7 @@ import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.util.BitmapDecodingException;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.FeatureFlags;
+import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.text.AfterTextChanged;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -54,11 +53,15 @@ import static su.sres.securesms.profiles.edit.EditProfileActivity.DISPLAY_USERNA
 import static su.sres.securesms.profiles.edit.EditProfileActivity.EXCLUDE_SYSTEM;
 import static su.sres.securesms.profiles.edit.EditProfileActivity.NEXT_BUTTON_TEXT;
 import static su.sres.securesms.profiles.edit.EditProfileActivity.NEXT_INTENT;
+import static su.sres.securesms.profiles.edit.EditProfileActivity.SHOW_TOOLBAR;
 
 public class EditProfileFragment extends Fragment {
 
-    private static final String TAG = Log.tag(EditProfileFragment.class);
+    private static final String TAG          = Log.tag(EditProfileFragment.class);
+    private static final String AVATAR_STATE = "avatar";
 
+    private Toolbar                toolbar;
+    private View                   title;
     private ImageView              avatar;
     private CircularProgressButton finishButton;
     private EditText               givenName;
@@ -113,7 +116,7 @@ public class EditProfileFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         initializeResources(view);
-        initializeViewModel(getArguments().getBoolean(EXCLUDE_SYSTEM, false));
+        initializeViewModel(requireArguments().getBoolean(EXCLUDE_SYSTEM, false), savedInstanceState != null);
         initializeProfileName();
         initializeProfileAvatar();
         initializeUsername();
@@ -122,7 +125,21 @@ public class EditProfileFragment extends Fragment {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putByteArray(AVATAR_STATE, viewModel.getAvatarSnapshot());
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(AVATAR_STATE)) {
+            viewModel.setAvatar(savedInstanceState.getByteArray(AVATAR_STATE));
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
     }
 
@@ -151,9 +168,7 @@ public class EditProfileFragment extends Fragment {
                 break;
             case AvatarSelection.REQUEST_CODE_CROP_IMAGE:
                 if (resultCode == Activity.RESULT_OK) {
-                    new AsyncTask<Void, Void, byte[]>() {
-                        @Override
-                        protected byte[] doInBackground(Void... params) {
+                    SimpleTask.run(() -> {
                             try {
                                 BitmapUtil.ScaleResult result = BitmapUtil.createScaledBytes(requireActivity(), AvatarSelection.getResultUri(data), new ProfileMediaConstraints());
                                 return result.getBitmap();
@@ -161,14 +176,12 @@ public class EditProfileFragment extends Fragment {
                                 Log.w(TAG, e);
                                 return null;
                             }
-                        }
-
-                        @Override
-                        protected void onPostExecute(byte[] result) {
-                            if (result != null) {
-                                viewModel.setAvatar(result);
+                            },
+                            (avatarBytes) -> {
+                                if (avatarBytes != null) {
+                                    viewModel.setAvatar(avatarBytes);
                                 GlideApp.with(EditProfileFragment.this)
-                                        .load(result)
+                                        .load(avatarBytes)
                                         .skipMemoryCache(true)
                                         .diskCacheStrategy(DiskCacheStrategy.NONE)
                                         .circleCrop()
@@ -177,21 +190,24 @@ public class EditProfileFragment extends Fragment {
                                 Toast.makeText(requireActivity(), R.string.CreateProfileActivity_error_setting_profile_photo, Toast.LENGTH_LONG).show();
                             }
                         }
-                    }.execute();
+                    );
                 }
                 break;
         }
     }
 
-    private void initializeViewModel(boolean excludeSystem) {
-        EditProfileRepository repository = new EditProfileRepository(requireContext(), excludeSystem);
-        EditProfileViewModel.Factory factory    = new EditProfileViewModel.Factory(repository);
+    private void initializeViewModel(boolean excludeSystem, boolean hasSavedInstanceState) {
+        EditProfileRepository        repository = new EditProfileRepository(requireContext(), excludeSystem);
+        EditProfileViewModel.Factory factory    = new EditProfileViewModel.Factory(repository, hasSavedInstanceState);
 
         viewModel = ViewModelProviders.of(this, factory).get(EditProfileViewModel.class);
     }
 
     private void initializeResources(@NonNull View view) {
+        Bundle arguments = requireArguments();
 
+        this.toolbar            = view.findViewById(R.id.toolbar);
+        this.title              = view.findViewById(R.id.title);
         this.avatar             = view.findViewById(R.id.avatar);
         this.givenName          = view.findViewById(R.id.given_name);
         this.familyName         = view.findViewById(R.id.family_name);
@@ -201,9 +217,9 @@ public class EditProfileFragment extends Fragment {
         this.username           = view.findViewById(R.id.profile_overview_username);
         this.usernameEditButton = view.findViewById(R.id.profile_overview_username_edit_button);
         this.usernameLabel      = view.findViewById(R.id.profile_overview_username_label);
-        this.nextIntent         = getArguments().getParcelable(NEXT_INTENT);
+        this.nextIntent         = arguments.getParcelable(NEXT_INTENT);
 
-        if (FeatureFlags.USERNAMES && getArguments().getBoolean(DISPLAY_USERNAME, false)) {
+        if (FeatureFlags.usernames() && arguments.getBoolean(DISPLAY_USERNAME, false)) {
             username.setVisibility(View.VISIBLE);
             usernameEditButton.setVisibility(View.VISIBLE);
             usernameLabel.setVisibility(View.VISIBLE);
@@ -215,8 +231,14 @@ public class EditProfileFragment extends Fragment {
                 .onAnyResult(this::startAvatarSelection)
                 .execute());
 
-        this.givenName.addTextChangedListener(new AfterTextChanged(s -> viewModel.setGivenName(s.toString())));
-        this.familyName.addTextChangedListener(new AfterTextChanged(s -> viewModel.setFamilyName(s.toString())));
+        this.givenName .addTextChangedListener(new AfterTextChanged(s -> {
+            trimInPlace(s);
+            viewModel.setGivenName(s.toString());
+        }));
+        this.familyName.addTextChangedListener(new AfterTextChanged(s -> {
+            trimInPlace(s);
+            viewModel.setFamilyName(s.toString());
+        }));
 
         this.finishButton.setOnClickListener(v -> {
             this.finishButton.setIndeterminateProgressMode(true);
@@ -224,24 +246,32 @@ public class EditProfileFragment extends Fragment {
             handleUpload();
         });
 
-        this.finishButton.setText(getArguments().getInt(NEXT_BUTTON_TEXT, R.string.CreateProfileActivity_next));
+        this.finishButton.setText(arguments.getInt(NEXT_BUTTON_TEXT, R.string.CreateProfileActivity_next));
 
         this.usernameEditButton.setOnClickListener(v -> {
             NavDirections action = EditProfileFragmentDirections.actionEditUsername();
             Navigation.findNavController(v).navigate(action);
         });
+
+        if (arguments.getBoolean(SHOW_TOOLBAR, true)) {
+            this.toolbar.setVisibility(View.VISIBLE);
+            this.toolbar.setNavigationOnClickListener(v -> requireActivity().finish());
+            this.title.setVisibility(View.GONE);
+        }
     }
 
     private void initializeProfileName() {
+        viewModel.givenName().observe(this, givenName -> updateFieldIfNeeded(this.givenName, givenName));
+
+        viewModel.familyName().observe(this, familyName -> updateFieldIfNeeded(this.familyName, familyName));
+
         viewModel.profileName().observe(this, profileName -> {
-
-            updateFieldIfNeeded(givenName, profileName.getGivenName());
-            updateFieldIfNeeded(familyName, profileName.getFamilyName());
-
-            finishButton.setEnabled(!profileName.isEmpty());
-            finishButton.setAlpha(!profileName.isEmpty() ? 1f : 0.5f);
-
             preview.setText(profileName.toString());
+
+            boolean validEntry = !profileName.isGivenNameEmpty();
+
+            finishButton.setEnabled(validEntry);
+            finishButton.setAlpha(validEntry ? 1f : 0.5f);
         });
     }
 
@@ -260,8 +290,11 @@ public class EditProfileFragment extends Fragment {
         viewModel.username().observe(this, this::onUsernameChanged);
     }
 
-    private void updateFieldIfNeeded(@NonNull EditText field, @NonNull String value) {
-        if (!field.getText().toString().equals(value)) {
+    private static void updateFieldIfNeeded(@NonNull EditText field, @NonNull String value) {
+        String fieldTrimmed = field.getText().toString().trim();
+        String valueTrimmed = value.trim();
+
+        if (!fieldTrimmed.equals(valueTrimmed)) {
 
             boolean setSelectionToEnd = field.getText().length() == 0;
 
@@ -273,13 +306,8 @@ public class EditProfileFragment extends Fragment {
         }
     }
 
-    @SuppressLint("SetTextI18n")
     private void onUsernameChanged(@NonNull Optional<String> username) {
-        if (username.isPresent()) {
-            this.username.setText("@" + username.get());
-        } else {
-            this.username.setText("");
-        }
+        this.username.setText(username.transform(s -> "@" + s).or(""));
     }
 
     private void startAvatarSelection() {
@@ -290,7 +318,11 @@ public class EditProfileFragment extends Fragment {
 
         viewModel.submitProfile(uploadResult -> {
             if (uploadResult == EditProfileRepository.UploadResult.SUCCESS) {
-                if (captureFile != null) captureFile.delete();
+                if (captureFile != null) {
+                    if (!captureFile.delete()) {
+                        Log.w(TAG, "Failed to delete capture file " + captureFile);
+                    }
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) handleFinishedLollipop();
                 else                                                       handleFinishedLegacy();
             } else {
@@ -343,6 +375,13 @@ public class EditProfileFragment extends Fragment {
 
         reveal.setVisibility(View.VISIBLE);
         animation.start();
+    }
+
+    private static void trimInPlace(Editable s) {
+        int trimmedLength = ProfileName.trimToFit(s.toString()).length();
+        if (s.length() > trimmedLength) {
+            s.delete(trimmedLength, s.length());
+        }
     }
 
     public interface Controller {

@@ -23,7 +23,6 @@ import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 import su.sres.securesms.profiles.ProfileName;
 import org.whispersystems.libsignal.util.Medium;
 
-// import su.sres.signalservice.api.RegistrationLockData;
 import su.sres.signalservice.api.util.UuidUtil;
 // import su.sres.signalservice.internal.registrationpin.PinStretcher;
 

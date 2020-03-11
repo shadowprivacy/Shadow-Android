@@ -715,7 +715,7 @@ public class ConversationFragment extends Fragment
       setLastSeen(loader.getLastSeen());
     }
 
-    if (FeatureFlags.MESSAGE_REQUESTS) {
+    if (FeatureFlags.messageRequests()) {
       if (!loader.hasSent() && !recipient.get().isSystemContact() && !recipient.get().isProfileSharing() && !recipient.get().isBlocked() && recipient.get().isRegistered()) {
         listener.onMessageRequest();
       } else {
@@ -997,8 +997,9 @@ public class ConversationFragment extends Fragment
 
       if (actionMode != null) return;
 
-      if (FeatureFlags.REACTION_SENDING &&
-              messageRecord.isSecure()      &&
+      if (FeatureFlags.reactionSending() &&
+              messageRecord.isSecure()       &&
+              !messageRecord.isUpdate()      &&
               ((ConversationAdapter) list.getAdapter()).getSelectedItems().isEmpty())
       {
         isReacting = true;

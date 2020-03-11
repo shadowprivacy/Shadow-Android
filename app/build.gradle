@@ -122,9 +122,9 @@ dependencies {
 
     implementation project(':libsignal-service')
 
-    implementation files('libs/ringrtc-android-0.3.1.aar')
+    implementation files('libs/ringrtc-android-0.3.3.aar')
 
-    implementation 'org.signal:argon2:13.0@aar'
+    implementation 'org.signal:argon2:13.1@aar'
     implementation 'commons-validator:commons-validator:1.6'
     implementation "me.leolin:ShortcutBadger:1.1.16"
     implementation 'se.emilsjolander:stickylistheaders:2.7.0'
@@ -193,8 +193,8 @@ dependencyVerification {
     configuration = '(play|website)(Debug|Release)RuntimeClasspath'
 }
 
-def canonicalVersionCode = 592
-def canonicalVersionName = "4.53.7"
+def canonicalVersionCode = 596
+def canonicalVersionName = "4.54.3"
 
 def postFixSize = 10
 def abiPostFix = ['universal'   : 0,
@@ -228,8 +228,7 @@ android {
 
         buildConfigField "String", "CONTENT_PROXY_HOST", "\"contentproxy.signal.org\""
         buildConfigField "int", "CONTENT_PROXY_PORT", "443"
-        buildConfigField "String", "USER_AGENT", "\"OWA\""
-        buildConfigField "boolean", "DEV_BUILD", "false"
+        buildConfigField "String", "SIGNAL_AGENT", "\"OWA\""
         buildConfigField "String[]", "LANGUAGES", "new String[]{\"" + autoResConfig().collect { s -> s.replace('-r', '_') }.join('", "') + '"}'
         buildConfigField "int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode"
 

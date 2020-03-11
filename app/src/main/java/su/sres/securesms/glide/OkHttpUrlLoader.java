@@ -10,6 +10,7 @@ import com.bumptech.glide.load.model.ModelLoaderFactory;
 import com.bumptech.glide.load.model.MultiModelLoaderFactory;
 
 import su.sres.securesms.net.ContentProxySelector;
+import su.sres.securesms.net.UserAgentInterceptor;
 
 import java.io.InputStream;
 
@@ -46,6 +47,7 @@ public class OkHttpUrlLoader implements ModelLoader<GlideUrl, InputStream> {
           if (internalClient == null) {
             internalClient = new OkHttpClient.Builder()
                     .proxySelector(new ContentProxySelector())
+                    .addInterceptor(new UserAgentInterceptor())
                                              .build();
           }
         }

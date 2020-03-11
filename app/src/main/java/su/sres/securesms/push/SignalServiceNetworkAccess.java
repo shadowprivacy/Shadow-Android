@@ -4,6 +4,7 @@ import android.content.Context;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.BuildConfig;
+import su.sres.securesms.net.UserAgentInterceptor;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.push.TrustStore;
@@ -12,11 +13,14 @@ import su.sres.signalservice.internal.configuration.SignalServiceConfiguration;
 import su.sres.signalservice.internal.configuration.SignalServiceUrl;
 import su.sres.signalservice.internal.configuration.SignalStorageUrl;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import okhttp3.CipherSuite;
 import okhttp3.ConnectionSpec;
+import okhttp3.Interceptor;
 import okhttp3.TlsVersion;
 
 public class SignalServiceNetworkAccess {
@@ -115,29 +119,31 @@ public class SignalServiceNetworkAccess {
     final SignalStorageUrl omanGoogleStorage     = new SignalStorageUrl("https://www.google.com.om/directory", SERVICE_REFLECTOR_HOST, trustStore, GMAIL_CONNECTION_SPEC);
     final SignalStorageUrl qatarGoogleStorage    = new SignalStorageUrl("https://www.google.com.qa/directory", SERVICE_REFLECTOR_HOST, trustStore, GMAIL_CONNECTION_SPEC);
 
+    final List<Interceptor> interceptors = Collections.singletonList(new UserAgentInterceptor());
+
     this.censorshipConfiguration = new HashMap<String, SignalServiceConfiguration>() {{
       put(COUNTRY_CODE_EGYPT, new SignalServiceConfiguration(new SignalServiceUrl[] {egyptGoogleService, baseGoogleService, baseAndroidService, mapsOneAndroidService, mapsTwoAndroidService, mailAndroidService},
               new SignalCdnUrl[] {egyptGoogleCdn, baseAndroidCdn, baseGoogleCdn, mapsOneAndroidCdn, mapsTwoAndroidCdn, mailAndroidCdn, mailAndroidCdn},
-              new SignalStorageUrl[] {egyptGoogleStorage, baseGoogleStorage, baseAndroidStorage, mapsOneAndroidStorage, mapsTwoAndroidStorage, mailAndroidStorage}));
+              new SignalStorageUrl[] {egyptGoogleStorage, baseGoogleStorage, baseAndroidStorage, mapsOneAndroidStorage, mapsTwoAndroidStorage, mailAndroidStorage}, interceptors));
 
       put(COUNTRY_CODE_UAE, new SignalServiceConfiguration(new SignalServiceUrl[] {uaeGoogleService, baseAndroidService, baseGoogleService, mapsOneAndroidService, mapsTwoAndroidService, mailAndroidService},
               new SignalCdnUrl[] {uaeGoogleCdn, baseAndroidCdn, baseGoogleCdn, mapsOneAndroidCdn, mapsTwoAndroidCdn, mailAndroidCdn},
-              new SignalStorageUrl[] {uaeGoogleStorage, baseGoogleStorage, baseAndroidStorage, mapsOneAndroidStorage, mapsTwoAndroidStorage, mailAndroidStorage}));
+              new SignalStorageUrl[] {uaeGoogleStorage, baseGoogleStorage, baseAndroidStorage, mapsOneAndroidStorage, mapsTwoAndroidStorage, mailAndroidStorage}, interceptors));
 
       put(COUNTRY_CODE_OMAN, new SignalServiceConfiguration(new SignalServiceUrl[] {omanGoogleService, baseAndroidService, baseGoogleService, mapsOneAndroidService, mapsTwoAndroidService, mailAndroidService},
               new SignalCdnUrl[] {omanGoogleCdn, baseAndroidCdn, baseGoogleCdn, mapsOneAndroidCdn, mapsTwoAndroidCdn, mailAndroidCdn},
-              new SignalStorageUrl[] {omanGoogleStorage, baseGoogleStorage, baseAndroidStorage, mapsOneAndroidStorage, mapsTwoAndroidStorage, mailAndroidStorage}));
+              new SignalStorageUrl[] {omanGoogleStorage, baseGoogleStorage, baseAndroidStorage, mapsOneAndroidStorage, mapsTwoAndroidStorage, mailAndroidStorage}, interceptors));
 
       put(COUNTRY_CODE_QATAR, new SignalServiceConfiguration(new SignalServiceUrl[] {qatarGoogleService, baseAndroidService, baseGoogleService, mapsOneAndroidService, mapsTwoAndroidService, mailAndroidService},
               new SignalCdnUrl[] {qatarGoogleCdn, baseAndroidCdn, baseGoogleCdn, mapsOneAndroidCdn, mapsTwoAndroidCdn, mailAndroidCdn},
-              new SignalStorageUrl[] {qatarGoogleStorage, baseGoogleStorage, baseAndroidStorage, mapsOneAndroidStorage, mapsTwoAndroidStorage, mailAndroidStorage}));
+              new SignalStorageUrl[] {qatarGoogleStorage, baseGoogleStorage, baseAndroidStorage, mapsOneAndroidStorage, mapsTwoAndroidStorage, mailAndroidStorage}, interceptors));
                   }};
 
     // taking the server URL from the config database
 //    this.uncensoredConfiguration = new SignalServiceConfiguration(new SignalServiceUrl[] {new SignalServiceUrl(DatabaseFactory.getConfigDatabase(context).getConfigById(1), new SignalServiceTrustStore(context))},
     this.uncensoredConfiguration = new SignalServiceConfiguration(new SignalServiceUrl[] {new SignalServiceUrl(TextSecurePreferences.getShadowServerUrl(context), new SignalServiceTrustStore(context))},
                                                                   new SignalCdnUrl[] {new SignalCdnUrl(TextSecurePreferences.getCloudUrl(context), new SignalServiceTrustStore(context))},
-            new SignalStorageUrl[] {new SignalStorageUrl(TextSecurePreferences.getStorageUrl(context), new SignalServiceTrustStore(context))});
+            new SignalStorageUrl[] {new SignalStorageUrl(TextSecurePreferences.getStorageUrl(context), new SignalServiceTrustStore(context))}, interceptors);
 
     this.censoredCountries = this.censorshipConfiguration.keySet().toArray(new String[0]);
   }

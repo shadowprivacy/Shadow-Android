@@ -14,8 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import androidx.lifecycle.ViewModelProviders;
-
 import su.sres.securesms.R;
 import su.sres.securesms.imageeditor.ColorableRenderer;
 import su.sres.securesms.imageeditor.ImageEditorView;
@@ -55,10 +53,9 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
 
     private EditorModel restoredModel;
 
-    @Nullable private EditorElement                currentSelection;
-    private int                          imageMaxHeight;
-    private int                          imageMaxWidth;
-    private ImageEditorFragmentViewModel viewModel;
+    @Nullable private EditorElement currentSelection;
+    private int           imageMaxHeight;
+    private int           imageMaxWidth;
 
     public static class Data {
         private final Bundle bundle;
@@ -124,10 +121,6 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
 
         StickerSearchRepository repository = new StickerSearchRepository(requireContext());
 
-        viewModel = ViewModelProviders.of(this, new ImageEditorFragmentViewModel.Factory(requireActivity().getApplication(), repository))
-                .get(ImageEditorFragmentViewModel.class);
-
-        viewModel.getStickersAvailability().observe(this, isAvailable -> imageEditorHud.setStickersAvailable(isAvailable));
     }
 
     @Nullable

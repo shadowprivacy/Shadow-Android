@@ -74,6 +74,7 @@ import su.sres.securesms.service.RotateSenderCertificateListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
 import su.sres.securesms.stickers.BlessedPacks;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SignalExecutors;
@@ -171,6 +172,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
       while(!initializedOnStart) {
 
         if (getServerSet() && initializedOnCreate) {
+          FeatureFlags.refresh();
           ApplicationDependencies.getRecipientCache().warmUp();
           ApplicationDependencies.getFrameRateTracker().begin();
 
@@ -492,6 +494,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeBlobProvider();
     initializeCleanup();
     initializeCameraX();
+    FeatureFlags.init();
     initializeMasterKey();
     ApplicationDependencies.getJobManager().beginJobLoop();
 

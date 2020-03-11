@@ -84,28 +84,29 @@ public class FullBackupExporter extends FullBackupBase {
       throws IOException
   {
     BackupFrameOutputStream outputStream = new BackupFrameOutputStream(output, passphrase);
-    outputStream.writeDatabaseVersion(input.getVersion());
+    int                     count        = 0;
 
-    List<String> tables = exportSchema(input, outputStream);
-    int          count  = 0;
+    try {
+      outputStream.writeDatabaseVersion(input.getVersion());
 
-    Stopwatch stopwatch = new Stopwatch("Backup");
+      List<String> tables = exportSchema(input, outputStream);
 
-    for (String table : tables) {
-      if (table.equals(MmsDatabase.TABLE_NAME)) {
-        count = exportTable(table, input, outputStream, FullBackupExporter::isNonExpiringMessage, null, count);
-      } else if (table.equals(GroupReceiptDatabase.TABLE_NAME)) {
-        count = exportTable(table, input, outputStream, cursor -> isForNonExpiringMessage(input, cursor.getLong(cursor.getColumnIndexOrThrow(GroupReceiptDatabase.MMS_ID))), null, count);
-      } else if (table.equals(AttachmentDatabase.TABLE_NAME)) {
-        count = exportTable(table, input, outputStream, cursor -> isForNonExpiringMessage(input, cursor.getLong(cursor.getColumnIndexOrThrow(AttachmentDatabase.MMS_ID))), cursor -> exportAttachment(attachmentSecret, cursor, outputStream), count);
-      } else if (table.equals(StickerDatabase.TABLE_NAME)) {
-        count = exportTable(table, input, outputStream, cursor -> true, cursor -> exportSticker(attachmentSecret, cursor, outputStream), count);
-      } else if (!BLACKLISTED_TABLES.contains(table) && !table.startsWith("sqlite_")) {
-        count = exportTable(table, input, outputStream, null, null, count);
+      Stopwatch stopwatch = new Stopwatch("Backup");
+
+      for (String table : tables) {
+        if (table.equals(MmsDatabase.TABLE_NAME)) {
+          count = exportTable(table, input, outputStream, FullBackupExporter::isNonExpiringMessage, null, count);
+        } else if (table.equals(GroupReceiptDatabase.TABLE_NAME)) {
+          count = exportTable(table, input, outputStream, cursor -> isForNonExpiringMessage(input, cursor.getLong(cursor.getColumnIndexOrThrow(GroupReceiptDatabase.MMS_ID))), null, count);
+        } else if (table.equals(AttachmentDatabase.TABLE_NAME)) {
+          count = exportTable(table, input, outputStream, cursor -> isForNonExpiringMessage(input, cursor.getLong(cursor.getColumnIndexOrThrow(AttachmentDatabase.MMS_ID))), cursor -> exportAttachment(attachmentSecret, cursor, outputStream), count);
+        } else if (table.equals(StickerDatabase.TABLE_NAME)) {
+          count = exportTable(table, input, outputStream, cursor -> true, cursor -> exportSticker(attachmentSecret, cursor, outputStream), count);
+        } else if (!BLACKLISTED_TABLES.contains(table) && !table.startsWith("sqlite_")) {
+          count = exportTable(table, input, outputStream, null, null, count);
+        }
+        stopwatch.split("table::" + table);
       }
-
-      stopwatch.split("table::" + table);
-    }
 
     for (BackupProtos.SharedPreference preference : IdentityKeyUtil.getBackupRecord(context)) {
       EventBus.getDefault().post(new BackupEvent(BackupEvent.Type.PROGRESS, ++count));
@@ -122,9 +123,11 @@ public class FullBackupExporter extends FullBackupBase {
     stopwatch.split("avatars");
     stopwatch.stop(TAG);
 
-    outputStream.writeEnd();
-    outputStream.close();
-    EventBus.getDefault().post(new BackupEvent(BackupEvent.Type.FINISHED, ++count));
+      outputStream.writeEnd();
+    } finally {
+      outputStream.close();
+      EventBus.getDefault().post(new BackupEvent(BackupEvent.Type.FINISHED, ++count));
+    }
   }
 
   private static List<String> exportSchema(@NonNull SQLiteDatabase input, @NonNull BackupFrameOutputStream outputStream)
