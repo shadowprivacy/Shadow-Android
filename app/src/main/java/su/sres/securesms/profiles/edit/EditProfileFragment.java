@@ -35,6 +35,7 @@ import com.dd.CircularProgressButton;
 import su.sres.securesms.R;
 import su.sres.securesms.avatar.AvatarSelection;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.permissions.Permissions;
@@ -323,6 +324,9 @@ public class EditProfileFragment extends Fragment {
                         Log.w(TAG, "Failed to delete capture file " + captureFile);
                     }
                 }
+
+                SignalStore.registrationValues().setRegistrationComplete();
+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) handleFinishedLollipop();
                 else                                                       handleFinishedLegacy();
             } else {

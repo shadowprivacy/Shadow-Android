@@ -349,8 +349,13 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
     }
 
     @Override
-    public void onMegaphoneToastRequested(int stringRes) {
-        Toast.makeText(requireContext(), stringRes, Toast.LENGTH_SHORT).show();
+    public void onMegaphoneNavigationRequested(@NonNull Intent intent, int requestCode) {
+        startActivityForResult(intent, requestCode);
+    }
+
+    @Override
+    public void onMegaphoneToastRequested(@NonNull String string) {
+        Snackbar.make(fab, string, Snackbar.LENGTH_SHORT).show();
     }
 
     @Override
@@ -473,7 +478,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
             megaphoneContainer.setVisibility(View.GONE);
 
             if (megaphone.getOnVisibleListener() != null) {
-                megaphone.getOnVisibleListener().onVisible(megaphone, this);
+                megaphone.getOnVisibleListener().onEvent(megaphone, this);
             }
         }
 

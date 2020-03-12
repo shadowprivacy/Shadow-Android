@@ -6,6 +6,7 @@ package su.sres.securesms.keyvalue;
 // import su.sres.signalservice.api.RegistrationLockData;
 // import su.sres.signalservice.internal.contacts.entities.TokenResponse;
 
+import androidx.annotation.CheckResult;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -20,6 +21,7 @@ public final class KbsValues {
     private static final String MASTER_KEY          = "kbs.registration_lock_master_key";
 //    private static final String TOKEN_RESPONSE      = "kbs.token_response";
 //    private static final String LOCK_LOCAL_PIN_HASH = "kbs.registration_lock_local_pin_hash";
+// private static final String KEYBOARD_TYPE       = "kbs.keyboard_type";
 
     private final KeyValueStore store;
 
@@ -35,6 +37,7 @@ public final class KbsValues {
 //                .remove(V2_LOCK_ENABLED)
 //                .remove(TOKEN_RESPONSE)
 //                .remove(LOCK_LOCAL_PIN_HASH)
+//    .remove(KEYBOARD_TYPE)
 //                .commit();
 //    }
 
@@ -116,4 +119,15 @@ public final class KbsValues {
 //            throw new AssertionError(e);
 //        }
  //   }
+
+//    public void setKeyboardType(@NonNull KbsKeyboardType keyboardType) {
+//        store.beginWrite()
+//                .putString(KEYBOARD_TYPE, keyboardType.getCode())
+//                .commit();
+//    }
+
+//    @CheckResult
+//    public @NonNull KbsKeyboardType getKeyboardType() {
+//        return KbsKeyboardType.fromCode(store.getString(KEYBOARD_TYPE, null));
+//    }
 }

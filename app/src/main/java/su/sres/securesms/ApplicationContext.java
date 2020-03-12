@@ -295,6 +295,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         TextSecurePreferences.setLastExperienceVersionCode(this, Util.getCanonicalVersionCode());
         TextSecurePreferences.setHasSeenStickerIntroTooltip(this, true);
         ApplicationDependencies.getMegaphoneRepository().onFirstEverAppLaunch();
+        SignalStore.registrationValues().onNewInstall();
 //        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
 //       ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
       }

@@ -70,7 +70,7 @@ class ConversationListViewModel extends ViewModel {
     }
 
     void onMegaphoneSnoozed(@NonNull Megaphone snoozed) {
-        megaphoneRepository.markSeen(snoozed);
+        megaphoneRepository.markSeen(snoozed.getEvent());
         megaphone.postValue(null);
     }
 

@@ -18,6 +18,7 @@ import androidx.preference.Preference;
 
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import android.widget.Toast;
 
@@ -173,6 +174,7 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
           break;
         case SUCCESS:
           TextSecurePreferences.setPushRegistered(getActivity(), false);
+          SignalStore.registrationValues().clearRegistrationComplete();
           initializePushMessagingToggle();
           break;
         }

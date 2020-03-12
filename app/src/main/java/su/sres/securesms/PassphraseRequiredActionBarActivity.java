@@ -10,12 +10,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.crypto.MasterSecretUtil;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
 import su.sres.securesms.migrations.ApplicationMigrationActivity;
 import su.sres.securesms.migrations.ApplicationMigrations;
+import su.sres.securesms.profiles.ProfileName;
+import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.registration.RegistrationNavigationActivity;
 import su.sres.securesms.service.KeyCachingService;
@@ -34,6 +37,7 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
   private static final int STATE_UI_BLOCKING_UPGRADE = 3;
   private static final int STATE_EXPERIENCE_UPGRADE  = 4;
   private static final int STATE_WELCOME_PUSH_SCREEN = 5;
+  private static final int STATE_CREATE_PROFILE_NAME = 6;
 
   private SignalServiceNetworkAccess networkAccess;
   private BroadcastReceiver          clearKeyReceiver;
@@ -148,6 +152,7 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
       case STATE_UI_BLOCKING_UPGRADE: return getUiBlockingUpgradeIntent();
       case STATE_WELCOME_PUSH_SCREEN: return getPushRegistrationIntent();
       case STATE_EXPERIENCE_UPGRADE:  return getExperienceUpgradeIntent();
+      case STATE_CREATE_PROFILE_NAME: return getCreateProfileNameIntent();
       default:                        return null;
     }
   }
@@ -163,9 +168,15 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
       return STATE_WELCOME_PUSH_SCREEN;
     } else if (ExperienceUpgradeActivity.isUpdate(this)) {
       return STATE_EXPERIENCE_UPGRADE;
+    } else if (userMustSetProfileName()) {
+      return STATE_CREATE_PROFILE_NAME;
     } else {
       return STATE_NORMAL;
     }
+  }
+
+  private boolean userMustSetProfileName() {
+    return !SignalStore.registrationValues().isRegistrationComplete() && TextSecurePreferences.getProfileName(this) == ProfileName.EMPTY;
   }
 
   private Intent getCreatePassphraseIntent() {
@@ -189,6 +200,10 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
 
   private Intent getPushRegistrationIntent() {
     return RegistrationNavigationActivity.newIntentForNewRegistration(this);
+  }
+
+  private Intent getCreateProfileNameIntent() {
+    return getRoutedIntent(EditProfileActivity.class, getIntent());
   }
 
   private Intent getRoutedIntent(Class<?> destination, @Nullable Intent nextIntent) {
