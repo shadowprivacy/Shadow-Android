@@ -14,6 +14,9 @@ import android.text.TextUtils;
 import su.sres.securesms.conversationlist.model.SearchResult;
 import su.sres.securesms.database.DatabaseContentProviders;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.megaphone.Megaphone;
+import su.sres.securesms.megaphone.MegaphoneRepository;
+import su.sres.securesms.megaphone.Megaphones;
 import su.sres.securesms.search.SearchRepository;
 import su.sres.securesms.util.Debouncer;
 import su.sres.securesms.util.Util;
@@ -21,19 +24,23 @@ import su.sres.securesms.util.Util;
 class ConversationListViewModel extends ViewModel {
 
     private final Application                   application;
+    private final MutableLiveData<Megaphone>    megaphone;
     private final MutableLiveData<SearchResult> searchResult;
     private final SearchRepository              searchRepository;
+    private final MegaphoneRepository           megaphoneRepository;
     private final Debouncer                     debouncer;
     private final ContentObserver               observer;
 
     private String lastQuery;
 
     private ConversationListViewModel(@NonNull Application application, @NonNull SearchRepository searchRepository) {
-        this.application      = application;
-        this.searchResult     = new MutableLiveData<>();
-        this.searchRepository = searchRepository;
-        this.debouncer        = new Debouncer(300);
-        this.observer         = new ContentObserver(new Handler()) {
+        this.application         = application;
+        this.megaphone           = new MutableLiveData<>();
+        this.searchResult        = new MutableLiveData<>();
+        this.searchRepository    = searchRepository;
+        this.megaphoneRepository = ApplicationDependencies.getMegaphoneRepository();
+        this.debouncer           = new Debouncer(300);
+        this.observer            = new ContentObserver(new Handler()) {
             @Override
             public void onChange(boolean selfChange) {
                 if (!TextUtils.isEmpty(getLastQuery())) {
@@ -47,6 +54,28 @@ class ConversationListViewModel extends ViewModel {
 
     @NonNull LiveData<SearchResult> getSearchResult() {
         return searchResult;
+    }
+
+    @NonNull LiveData<Megaphone> getMegaphone() {
+        return megaphone;
+    }
+
+    void onVisible() {
+        megaphoneRepository.getNextMegaphone(megaphone::postValue);
+    }
+
+    void onMegaphoneCompleted(@NonNull Megaphones.Event event) {
+        megaphone.postValue(null);
+        megaphoneRepository.markFinished(event);
+    }
+
+    void onMegaphoneSnoozed(@NonNull Megaphone snoozed) {
+        megaphoneRepository.markSeen(snoozed);
+        megaphone.postValue(null);
+    }
+
+    void onMegaphoneVisible(@NonNull Megaphone visible) {
+        megaphoneRepository.markVisible(visible.getEvent());
     }
 
     void updateQuery(String query) {

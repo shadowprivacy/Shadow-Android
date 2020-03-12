@@ -604,6 +604,7 @@ public class ConversationFragment extends Fragment
                               attachment.getWidth(),
                               attachment.getHeight(),
                               attachment.getSize(),
+                              0,
                               Optional.absent(),
                               Optional.fromNullable(attachment.getCaption())));
                     }

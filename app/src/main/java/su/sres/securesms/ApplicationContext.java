@@ -52,6 +52,7 @@ import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
 import su.sres.securesms.jobs.StickerPackDownloadJob;
 import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.logging.AndroidLogger;
 import su.sres.securesms.logging.CustomSignalProtocolLogger;
 import su.sres.securesms.logging.Log;
@@ -175,6 +176,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
           FeatureFlags.refresh();
           ApplicationDependencies.getRecipientCache().warmUp();
           ApplicationDependencies.getFrameRateTracker().begin();
+          ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
 
           initializedOnStart = true;
 
@@ -292,6 +294,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         TextSecurePreferences.setJobManagerVersion(this, JobManager.CURRENT_VERSION);
         TextSecurePreferences.setLastExperienceVersionCode(this, Util.getCanonicalVersionCode());
         TextSecurePreferences.setHasSeenStickerIntroTooltip(this, true);
+        ApplicationDependencies.getMegaphoneRepository().onFirstEverAppLaunch();
 //        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
 //       ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
       }

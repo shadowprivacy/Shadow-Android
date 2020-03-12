@@ -62,6 +62,7 @@ public class DatabaseFactory {
     private final StickerDatabase stickerDatabase;
     private final StorageKeyDatabase storageKeyDatabase;
     private final KeyValueDatabase      keyValueDatabase;
+    private final MegaphoneDatabase     megaphoneDatabase;
 
 // not used for now
 //  private final ConfigDatabase        configDatabase;
@@ -167,6 +168,10 @@ public class DatabaseFactory {
         return getInstance(context).keyValueDatabase;
     }
 
+    public static MegaphoneDatabase getMegaphoneDatabase(Context context) {
+        return getInstance(context).megaphoneDatabase;
+    }
+
     public static SQLiteDatabase getBackupDatabase(Context context) {
         return getInstance(context).databaseHelper.getReadableDatabase();
     }
@@ -205,6 +210,7 @@ public class DatabaseFactory {
         this.stickerDatabase = new StickerDatabase(context, databaseHelper, attachmentSecret);
         this.storageKeyDatabase = new StorageKeyDatabase(context, databaseHelper);
         this.keyValueDatabase     = new KeyValueDatabase(context, databaseHelper);
+        this.megaphoneDatabase    = new MegaphoneDatabase(context, databaseHelper);
         // not used for now
         // this.configDatabase       = new ConfigDatabase(context, databaseHelper);
     }

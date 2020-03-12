@@ -20,6 +20,7 @@ import su.sres.securesms.jobs.FastJobStorage;
 import su.sres.securesms.jobs.JobManagerFactories;
 import su.sres.securesms.keyvalue.KeyValueStore;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.push.SecurityEventListener;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
@@ -123,6 +124,11 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     @Override
     public @NonNull KeyValueStore provideKeyValueStore() {
         return new KeyValueStore(context);
+    }
+
+    @Override
+    public @NonNull MegaphoneRepository provideMegaphoneRepository() {
+        return new MegaphoneRepository(context);
     }
 
     private static class DynamicCredentialsProvider implements CredentialsProvider {

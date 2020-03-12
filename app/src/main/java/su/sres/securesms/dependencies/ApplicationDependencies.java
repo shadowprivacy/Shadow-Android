@@ -8,6 +8,7 @@ import su.sres.securesms.IncomingMessageProcessor;
 import su.sres.securesms.gcm.MessageRetriever;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.keyvalue.KeyValueStore;
+import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.IncomingMessageObserver;
@@ -39,6 +40,7 @@ public class ApplicationDependencies {
     private static JobManager                   jobManager;
     private static FrameRateTracker             frameRateTracker;
     private static KeyValueStore                keyValueStore;
+    private static MegaphoneRepository          megaphoneRepository;
 
     public static synchronized void init(@NonNull Application application, @NonNull Provider provider) {
         if (ApplicationDependencies.application != null || ApplicationDependencies.provider != null) {
@@ -157,6 +159,16 @@ public class ApplicationDependencies {
         return keyValueStore;
     }
 
+    public static synchronized @NonNull MegaphoneRepository getMegaphoneRepository() {
+        assertInitialization();
+
+        if (megaphoneRepository == null) {
+            megaphoneRepository = provider.provideMegaphoneRepository();
+        }
+
+        return megaphoneRepository;
+    }
+
     private static void assertInitialization() {
         if (application == null || provider == null) {
             throw new UninitializedException();
@@ -174,6 +186,7 @@ public class ApplicationDependencies {
         @NonNull JobManager provideJobManager();
         @NonNull FrameRateTracker provideFrameRateTracker();
         @NonNull KeyValueStore provideKeyValueStore();
+        @NonNull MegaphoneRepository provideMegaphoneRepository();
     }
 
     private static class UninitializedException extends IllegalStateException {

@@ -104,7 +104,6 @@ import su.sres.securesms.audio.AudioRecorder;
 import su.sres.securesms.audio.AudioSlidePlayer;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.components.AnimatingToggle;
-import su.sres.securesms.components.AttachmentTypeSelector;
 import su.sres.securesms.components.ComposeText;
 import su.sres.securesms.components.ConversationSearchBottomBar;
 import su.sres.securesms.components.HidingLinearLayout;
@@ -266,7 +265,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         InputPanel.MediaListener,
         ComposeText.CursorPositionChangedListener,
         ConversationSearchBottomBar.EventListener,
-        StickerKeyboardProvider.StickerEventListener {
+        StickerKeyboardProvider.StickerEventListener,
+        AttachmentKeyboard.Callback {
     private static final String TAG = ConversationActivity.class.getSimpleName();
 
     public static final String RECIPIENT_EXTRA = "recipient_id";
@@ -312,13 +312,13 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     private ConversationSearchBottomBar searchNav;
     private MenuItem searchViewItem;
     private FrameLayout messageRequestOverlay;
-    private   ConversationReactionOverlay reactionOverlay;
+    private ConversationReactionOverlay reactionOverlay;
 
-    private AttachmentTypeSelector attachmentTypeSelector;
     private AttachmentManager attachmentManager;
     private AudioRecorder audioRecorder;
     private BroadcastReceiver securityUpdateReceiver;
     private Stub<MediaKeyboard> emojiDrawerStub;
+    private Stub<AttachmentKeyboard> attachmentKeyboardStub;
     protected HidingLinearLayout quickAttachmentToggle;
     protected HidingLinearLayout inlineAttachmentToggle;
     private InputPanel inputPanel;
@@ -326,6 +326,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     private LinkPreviewViewModel linkPreviewViewModel;
     private ConversationSearchViewModel searchViewModel;
     private ConversationStickerViewModel stickerViewModel;
+    private ConversationViewModel viewModel;
     private InviteReminderModel inviteReminderModel;
 
     private LiveRecipient recipient;
@@ -394,6 +395,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         initializeLinkPreviewObserver();
         initializeSearchObserver();
         initializeStickerObserver();
+        initializeViewModel();
         initializeSecurity(recipient.get().isRegistered(), isDefaultSms).addListener(new AssertedSuccessListener<Boolean>() {
             @Override
             public void onSuccess(Boolean result) {
@@ -600,11 +602,11 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                     return;
                 }
 
-                long       expiresIn      = recipient.get().getExpireMessages() * 1000L;
-                int        subscriptionId = sendButton.getSelectedTransport().getSimSubscriptionId().or(-1);
-                boolean    initiating     = threadId == -1;
-                QuoteModel quote          = result.isViewOnce() ? null : inputPanel.getQuote().orNull();
-                SlideDeck  slideDeck      = new SlideDeck();
+                long expiresIn = recipient.get().getExpireMessages() * 1000L;
+                int subscriptionId = sendButton.getSelectedTransport().getSimSubscriptionId().or(-1);
+                boolean initiating = threadId == -1;
+                QuoteModel quote = result.isViewOnce() ? null : inputPanel.getQuote().orNull();
+                SlideDeck slideDeck = new SlideDeck();
 
                 for (Media mediaItem : result.getNonUploadedMedia()) {
                     if (MediaUtil.isVideoType(mediaItem.getMimeType())) {
@@ -887,7 +889,44 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
     }
 
-    //////// Event Handlers
+    @Override
+    public void onAttachmentMediaClicked(@NonNull Media media) {
+        linkPreviewViewModel.onUserCancel();
+        startActivityForResult(MediaSendActivity.buildEditorIntent(ConversationActivity.this, Collections.singletonList(media), recipient.get(), composeText.getTextTrimmed(), sendButton.getSelectedTransport()), MEDIA_SENDER);
+    }
+
+    @Override
+    public void onAttachmentSelectorClicked(@NonNull AttachmentKeyboardButton button) {
+        switch (button) {
+            case GALLERY:
+                AttachmentManager.selectGallery(this, MEDIA_SENDER, recipient.get(), composeText.getTextTrimmed(), sendButton.getSelectedTransport());
+                break;
+//                case GIF:
+//                    AttachmentManager.selectGif(this, PICK_GIF, !isSecureText, recipient.get().getColor().toConversationColor(this));
+//                    break;
+            case FILE:
+                AttachmentManager.selectDocument(this, PICK_DOCUMENT);
+                break;
+            case CONTACT:
+                AttachmentManager.selectContactInfo(this, PICK_CONTACT);
+                break;
+            case LOCATION:
+                AttachmentManager.selectLocation(this, PICK_LOCATION);
+                break;
+        }
+        // TODO [greyson] [attachment] Add these
+//    attachmentManager.capturePhoto(this, TAKE_PHOTO); break;
+    }
+
+    @Override
+    public void onAttachmentPermissionsRequested() {
+        Permissions.with(this)
+                .request(Manifest.permission.READ_EXTERNAL_STORAGE)
+                .onAllGranted(() -> viewModel.onAttachmentKeyboardOpen())
+                .execute();
+    }
+
+//////// Event Handlers
 
     private void handleSelectMessageExpiration() {
         if (isPushGroupConversation() && !isActiveGroup()) {
@@ -1214,10 +1253,17 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
     private void handleAddAttachment() {
         if (this.isMmsEnabled || isSecureText) {
-            if (attachmentTypeSelector == null) {
-                attachmentTypeSelector = new AttachmentTypeSelector(this, getSupportLoaderManager(), new AttachmentTypeListener());
+            viewModel.getRecentMedia().removeObservers(this);
+
+            if (attachmentKeyboardStub.resolved() && container.isInputOpen() && container.getCurrentInput() == attachmentKeyboardStub.get()) {
+                container.showSoftkey(composeText);
+            } else {
+                viewModel.getRecentMedia().observe(this, media -> attachmentKeyboardStub.get().onMediaChanged(media));
+                attachmentKeyboardStub.get().setCallback(this);
+                container.show(composeText, attachmentKeyboardStub.get());
+
+                viewModel.onAttachmentKeyboardOpen();
             }
-            attachmentTypeSelector.show(this, attachButton);
         } else {
             handleManualMmsRequired();
         }
@@ -1611,6 +1657,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         composeText = ViewUtil.findById(this, R.id.embedded_text_editor);
         charactersLeft = ViewUtil.findById(this, R.id.space_left);
         emojiDrawerStub = ViewUtil.findStubById(this, R.id.emoji_drawer_stub);
+        attachmentKeyboardStub = ViewUtil.findStubById(this, R.id.attachment_keyboard_stub);
         unblockButton = ViewUtil.findById(this, R.id.unblock_button);
         makeDefaultSmsButton = ViewUtil.findById(this, R.id.make_default_sms_button);
         registerButton = ViewUtil.findById(this, R.id.register_button);
@@ -1624,7 +1671,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         inputPanel = ViewUtil.findById(this, R.id.bottom_panel);
         searchNav = ViewUtil.findById(this, R.id.conversation_search_nav);
         messageRequestOverlay = ViewUtil.findById(this, R.id.fragment_overlay_container);
-        reactionOverlay        = ViewUtil.findById(this, R.id.conversation_reaction_scrubber);
+        reactionOverlay = ViewUtil.findById(this, R.id.conversation_reaction_scrubber);
 
         ImageButton quickCameraToggle = ViewUtil.findById(this, R.id.quick_camera_toggle);
         ImageButton inlineAttachmentButton = ViewUtil.findById(this, R.id.inline_attachment_button);
@@ -1635,7 +1682,6 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         inputPanel.setListener(this);
         inputPanel.setMediaListener(this);
 
-        attachmentTypeSelector = null;
         attachmentManager = new AttachmentManager(this, this);
         audioRecorder = new AudioRecorder(this);
         typingTextWatcher = new TypingStatusTextWatcher();
@@ -1778,6 +1824,10 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         });
     }
 
+    private void initializeViewModel() {
+        this.viewModel = ViewModelProviders.of(this, new ConversationViewModel.Factory()).get(ConversationViewModel.class);
+    }
+
     private void showStickerIntroductionTooltip() {
         TextSecurePreferences.setMediaKeyboardMode(this, MediaKeyboardMode.STICKER);
         inputPanel.setMediaKeyboardToggleMode(true);
@@ -1879,34 +1929,6 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
     //////// Helper Methods
 
-    private void addAttachment(int type) {
-        linkPreviewViewModel.onUserCancel();
-
-        Log.i(TAG, "Selected: " + type);
-        switch (type) {
-            case AttachmentTypeSelector.ADD_GALLERY:
-                AttachmentManager.selectGallery(this, MEDIA_SENDER, recipient.get(), composeText.getTextTrimmed(), sendButton.getSelectedTransport());
-                break;
-            case AttachmentTypeSelector.ADD_DOCUMENT:
-                AttachmentManager.selectDocument(this, PICK_DOCUMENT);
-                break;
-            case AttachmentTypeSelector.ADD_SOUND:
-                AttachmentManager.selectAudio(this, PICK_AUDIO);
-                break;
-            case AttachmentTypeSelector.ADD_CONTACT_INFO:
-                AttachmentManager.selectContactInfo(this, PICK_CONTACT);
-                break;
-            case AttachmentTypeSelector.ADD_LOCATION:
-                AttachmentManager.selectLocation(this, PICK_LOCATION);
-                break;
-            case AttachmentTypeSelector.TAKE_PHOTO:
-                attachmentManager.capturePhoto(this, TAKE_PHOTO);
-                break;
-//    case AttachmentTypeSelector.ADD_GIF:
-//      AttachmentManager.selectGif(this, PICK_GIF, !isSecureText, recipient.get().getColor().toConversationColor(this)); break;
-        }
-    }
-
     private ListenableFuture<Boolean> setMedia(@Nullable Uri uri, @NonNull MediaType mediaType) {
         return setMedia(uri, mediaType, 0, 0);
     }
@@ -1920,7 +1942,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
             openContactShareEditor(uri);
             return new SettableFuture<>(false);
         } else if (MediaType.IMAGE.equals(mediaType) || MediaType.GIF.equals(mediaType) || MediaType.VIDEO.equals(mediaType)) {
-            Media media = new Media(uri, MediaUtil.getMimeType(this, uri), 0, width, height, 0, Optional.absent(), Optional.absent());
+            Media media = new Media(uri, MediaUtil.getMimeType(this, uri), 0, width, height, 0, 0, Optional.absent(), Optional.absent());
             startActivityForResult(MediaSendActivity.buildEditorIntent(ConversationActivity.this, Collections.singletonList(media), recipient.get(), composeText.getTextTrimmed(), sendButton.getSelectedTransport()), MEDIA_SENDER);
             return new SettableFuture<>(false);
         } else {
@@ -2267,11 +2289,11 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     }
 
     private void sendMediaMessage(@NonNull MediaSendActivityResult result) {
-        long                 expiresIn     = recipient.get().getExpireMessages() * 1000L;
-        QuoteModel           quote         = result.isViewOnce() ? null : inputPanel.getQuote().orNull();
-        boolean              initiating    = threadId == -1;
-        OutgoingMediaMessage message       = new OutgoingMediaMessage(recipient.get(), new SlideDeck(), result.getBody(), System.currentTimeMillis(), -1, expiresIn, result.isViewOnce(), distributionType, quote, Collections.emptyList(), Collections.emptyList());
-        OutgoingMediaMessage secureMessage = new OutgoingSecureMediaMessage(message                                                                                                                                                                                      );
+        long expiresIn = recipient.get().getExpireMessages() * 1000L;
+        QuoteModel quote = result.isViewOnce() ? null : inputPanel.getQuote().orNull();
+        boolean initiating = threadId == -1;
+        OutgoingMediaMessage message = new OutgoingMediaMessage(recipient.get(), new SlideDeck(), result.getBody(), System.currentTimeMillis(), -1, expiresIn, result.isViewOnce(), distributionType, quote, Collections.emptyList(), Collections.emptyList());
+        OutgoingMediaMessage secureMessage = new OutgoingSecureMediaMessage(message);
 
         ApplicationContext.getInstance(this).getTypingStatusSender().onTypingStopped(threadId);
 
@@ -2514,7 +2536,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                 int subscriptionId = sendButton.getSelectedTransport().getSimSubscriptionId().or(-1);
                 long expiresIn = recipient.get().getExpireMessages() * 1000L;
                 boolean initiating = threadId == -1;
-                AudioSlide audioSlide     = new AudioSlide(ConversationActivity.this, result.first(), result.second(), MediaUtil.AUDIO_AAC, true);
+                AudioSlide audioSlide = new AudioSlide(ConversationActivity.this, result.first(), result.second(), MediaUtil.AUDIO_AAC, true);
                 SlideDeck slideDeck = new SlideDeck();
                 slideDeck.addSlide(audioSlide);
 
@@ -2633,7 +2655,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
     private void sendSticker(@NonNull StickerLocator stickerLocator, @NonNull Uri uri, long size, boolean clearCompose) {
         if (sendButton.getSelectedTransport().isSms()) {
-            Media media = new Media(uri, MediaUtil.IMAGE_WEBP, System.currentTimeMillis(), StickerSlide.WIDTH, StickerSlide.HEIGHT, size, Optional.absent(), Optional.absent());
+            Media media = new Media(uri, MediaUtil.IMAGE_WEBP, System.currentTimeMillis(), StickerSlide.WIDTH, StickerSlide.HEIGHT, size, 0, Optional.absent(), Optional.absent());
             Intent intent = MediaSendActivity.buildEditorIntent(this, Collections.singletonList(media), recipient.get(), composeText.getTextTrimmed(), sendButton.getSelectedTransport());
             startActivityForResult(intent, MEDIA_SENDER);
             return;
@@ -2659,20 +2681,6 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     }
 
     // Listeners
-
-    private class AttachmentTypeListener implements AttachmentTypeSelector.AttachmentClickedListener {
-        @Override
-        public void onClick(int type) {
-            addAttachment(type);
-        }
-
-        @Override
-        public void onQuickAttachment(Uri uri, String mimeType, String bucketId, long dateTaken, int width, int height, long size) {
-            linkPreviewViewModel.onUserCancel();
-            Media media = new Media(uri, mimeType, dateTaken, width, height, size, Optional.of(Media.ALL_MEDIA_BUCKET_ID), Optional.absent());
-            startActivityForResult(MediaSendActivity.buildEditorIntent(ConversationActivity.this, Collections.singletonList(media), recipient.get(), composeText.getTextTrimmed(), sendButton.getSelectedTransport()), MEDIA_SENDER);
-        }
-    }
 
     private class QuickCameraToggleListener implements OnClickListener {
         @Override
@@ -2829,8 +2837,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     public void handleReaction(@NonNull View maskTarget,
                                @NonNull MessageRecord messageRecord,
                                @NonNull Toolbar.OnMenuItemClickListener toolbarListener,
-                               @NonNull ConversationReactionOverlay.OnHideListener onHideListener)
-    {
+                               @NonNull ConversationReactionOverlay.OnHideListener onHideListener) {
         reactionOverlay.setOnToolbarItemClickedListener(toolbarListener);
         reactionOverlay.setOnHideListener(onHideListener);
         reactionOverlay.show(this, maskTarget, messageRecord);

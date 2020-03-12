@@ -29,7 +29,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -41,13 +40,16 @@ import androidx.annotation.MenuRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.snackbar.Snackbar;
 
 import androidx.annotation.PluralsRes;
+import androidx.annotation.StringRes;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.widget.TooltipCompat;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
@@ -57,7 +59,6 @@ import androidx.appcompat.view.ActionMode;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.ItemTouchHelper;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -77,7 +78,6 @@ import su.sres.securesms.MainNavigator;
 import su.sres.securesms.NewConversationActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.conversationlist.ConversationListAdapter.ItemClickListener;
-import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.components.RatingManager;
 import su.sres.securesms.components.SearchToolbar;
 import su.sres.securesms.components.recyclerview.DeleteItemAnimator;
@@ -93,9 +93,6 @@ import su.sres.securesms.components.reminder.ServiceOutageReminder;
 import su.sres.securesms.components.reminder.ShareReminder;
 import su.sres.securesms.components.reminder.SystemSmsImportReminder;
 import su.sres.securesms.components.reminder.UnauthorizedReminder;
-import su.sres.securesms.contacts.avatars.ContactColors;
-import su.sres.securesms.contacts.avatars.GeneratedContactPhoto;
-import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
 import su.sres.securesms.conversationlist.model.MessageResult;
 import su.sres.securesms.conversationlist.model.SearchResult;
 import su.sres.securesms.database.DatabaseFactory;
@@ -110,6 +107,10 @@ import su.sres.securesms.jobs.ServiceOutageDetectionJob;
 import su.sres.securesms.lock.RegistrationLockDialog;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediasend.MediaSendActivity;
+import su.sres.securesms.megaphone.Megaphone;
+import su.sres.securesms.megaphone.MegaphoneListener;
+import su.sres.securesms.megaphone.MegaphoneViewBuilder;
+import su.sres.securesms.megaphone.Megaphones;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.notifications.MarkReadReceiver;
 import su.sres.securesms.notifications.MessageNotifier;
@@ -137,7 +138,8 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         ActionMode.Callback,
         ItemClickListener,
         ConversationListSearchAdapter.EventListener,
-        MainNavigator.BackHandler
+        MainNavigator.BackHandler,
+        MegaphoneListener
 {
     private static final String TAG = Log.tag(ConversationListFragment.class);
 
@@ -163,6 +165,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
     private ConversationListAdapter       defaultAdapter;
     private ConversationListSearchAdapter searchAdapter;
     private StickyHeaderDecoration        searchAdapterDecoration;
+    private ViewGroup                     megaphoneContainer;
 
     public static ConversationListFragment newInstance() {
         return new ConversationListFragment();
@@ -181,16 +184,17 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        reminderView     = view.findViewById(R.id.reminder);
-        list             = view.findViewById(R.id.list);
-        fab              = view.findViewById(R.id.fab);
-        cameraFab        = view.findViewById(R.id.camera_fab);
-        emptyState       = view.findViewById(R.id.empty_state);
-        emptyImage       = view.findViewById(R.id.empty);
-        searchEmptyState = view.findViewById(R.id.search_no_results);
-        searchToolbar    = view.findViewById(R.id.search_toolbar);
-        searchAction     = view.findViewById(R.id.search_action);
-        toolbarShadow    = view.findViewById(R.id.conversation_list_toolbar_shadow);
+        reminderView       = view.findViewById(R.id.reminder);
+        list               = view.findViewById(R.id.list);
+        fab                = view.findViewById(R.id.fab);
+        cameraFab          = view.findViewById(R.id.camera_fab);
+        emptyState         = view.findViewById(R.id.empty_state);
+        emptyImage         = view.findViewById(R.id.empty);
+        searchEmptyState   = view.findViewById(R.id.search_no_results);
+        searchToolbar      = view.findViewById(R.id.search_toolbar);
+        searchAction       = view.findViewById(R.id.search_action);
+        toolbarShadow      = view.findViewById(R.id.conversation_list_toolbar_shadow);
+        megaphoneContainer = view.findViewById(R.id.megaphone_container);
 
         Toolbar toolbar = view.findViewById(getToolbarRes());
         toolbar.setVisibility(View.VISIBLE);
@@ -339,6 +343,26 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         });
     }
 
+    @Override
+    public void onMegaphoneNavigationRequested(@NonNull Intent intent) {
+        startActivity(intent);
+    }
+
+    @Override
+    public void onMegaphoneToastRequested(int stringRes) {
+        Toast.makeText(requireContext(), stringRes, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onMegaphoneSnooze(@NonNull Megaphone megaphone) {
+        viewModel.onMegaphoneSnoozed(megaphone);
+    }
+
+    @Override
+    public void onMegaphoneCompleted(@NonNull Megaphone megaphone) {
+        viewModel.onMegaphoneCompleted(megaphone.getEvent());
+    }
+
     private void initializeProfileIcon(@NonNull Recipient recipient) {
 
     ImageView icon = requireView().findViewById(R.id.toolbar_icon);
@@ -408,17 +432,52 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
     private void initializeViewModel() {
         viewModel = ViewModelProviders.of(this, new ConversationListViewModel.Factory()).get(ConversationListViewModel.class);
 
-        viewModel.getSearchResult().observe(this, result -> {
-            result = result != null ? result : SearchResult.EMPTY;
-            searchAdapter.updateResults(result);
+        viewModel.getSearchResult().observe(this, this::onSearchResultChanged);
+        viewModel.getMegaphone().observe(this, this::onMegaphoneChanged);
 
-            if (result.isEmpty() && activeAdapter == searchAdapter) {
-                searchEmptyState.setText(getString(R.string.SearchFragment_no_results, result.getQuery()));
-                searchEmptyState.setVisibility(View.VISIBLE);
-            } else {
-                searchEmptyState.setVisibility(View.GONE);
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(new DefaultLifecycleObserver() {
+            @Override
+            public void onStart(@NonNull LifecycleOwner owner) {
+                viewModel.onVisible();
             }
         });
+    }
+
+    private void onSearchResultChanged(@Nullable SearchResult result) {
+        result = result != null ? result : SearchResult.EMPTY;
+        searchAdapter.updateResults(result);
+
+        if (result.isEmpty() && activeAdapter == searchAdapter) {
+            searchEmptyState.setText(getString(R.string.SearchFragment_no_results, result.getQuery()));
+            searchEmptyState.setVisibility(View.VISIBLE);
+        } else {
+            searchEmptyState.setVisibility(View.GONE);
+        }
+    }
+
+    private void onMegaphoneChanged(@Nullable Megaphone megaphone) {
+        if (megaphone == null) {
+            megaphoneContainer.setVisibility(View.GONE);
+            megaphoneContainer.removeAllViews();
+            return;
+        }
+
+        View view = MegaphoneViewBuilder.build(requireContext(), megaphone, this);
+
+        megaphoneContainer.removeAllViews();
+
+        if (view != null) {
+            megaphoneContainer.addView(view);
+            megaphoneContainer.setVisibility(View.VISIBLE);
+        } else {
+            megaphoneContainer.setVisibility(View.GONE);
+
+            if (megaphone.getOnVisibleListener() != null) {
+                megaphone.getOnVisibleListener().onVisible(megaphone, this);
+            }
+        }
+
+        viewModel.onMegaphoneVisible(megaphone);
     }
 
     private void updateReminders() {
