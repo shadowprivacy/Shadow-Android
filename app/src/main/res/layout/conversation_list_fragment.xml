@@ -185,7 +185,7 @@
             android:layout_height="match_parent"
             app:layout_behavior=".util.views.SlideUpWithSnackbarBehavior">
 
-            <org.thoughtcrime.securesms.components.registration.PulsingFloatingActionButton
+            <su.sres.securesms.components.registration.PulsingFloatingActionButton
                 android:id="@+id/camera_fab"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -198,7 +198,7 @@
                 app:layout_constraintEnd_toEndOf="@id/fab"
                 app:srcCompat="@drawable/ic_camera_solid_24" />
 
-            <org.thoughtcrime.securesms.components.registration.PulsingFloatingActionButton
+            <su.sres.securesms.components.registration.PulsingFloatingActionButton
                 android:id="@+id/fab"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

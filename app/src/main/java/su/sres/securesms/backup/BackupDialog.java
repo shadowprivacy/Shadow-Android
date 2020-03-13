@@ -1,22 +1,26 @@
 package su.sres.securesms.backup;
 
-
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import su.sres.securesms.R;
 import su.sres.securesms.components.SwitchPreferenceCompat;
+import su.sres.securesms.registration.fragments.RestoreBackupFragment;
 import su.sres.securesms.service.LocalBackupListener;
 import su.sres.securesms.util.BackupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.util.text.AfterTextChanged;
 
 public class BackupDialog {
 
@@ -82,5 +86,35 @@ public class BackupDialog {
                    })
                    .create()
                    .show();
+  }
+  public static void showVerifyBackupPassphraseDialog(@NonNull Context context) {
+    View        view   = LayoutInflater.from(context).inflate(R.layout.enter_backup_passphrase_dialog, null);
+    EditText    prompt = view.findViewById(R.id.restore_passphrase_input);
+    AlertDialog dialog = new AlertDialog.Builder(context)
+            .setTitle(R.string.BackupDialog_enter_backup_passphrase_to_verify)
+            .setView(view)
+            .setPositiveButton(R.string.BackupDialog_verify, null)
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+
+    Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+    positiveButton.setEnabled(false);
+
+    RestoreBackupFragment.PassphraseAsYouTypeFormatter formatter = new RestoreBackupFragment.PassphraseAsYouTypeFormatter();
+
+    prompt.addTextChangedListener(new AfterTextChanged(editable -> {
+      formatter.afterTextChanged(editable);
+      positiveButton.setEnabled(editable.length() == BackupUtil.PASSPHRASE_LENGTH);
+    }));
+
+    positiveButton.setOnClickListener(v -> {
+      String passphrase = prompt.getText().toString();
+      if (passphrase.equals(BackupPassphrase.get(context))) {
+        Toast.makeText(context, R.string.BackupDialog_you_successfully_entered_your_backup_passphrase, Toast.LENGTH_SHORT).show();
+        dialog.dismiss();
+      } else {
+        Toast.makeText(context, R.string.BackupDialog_passphrase_was_not_correct, Toast.LENGTH_SHORT).show();
+      }
+    });
   }
 }

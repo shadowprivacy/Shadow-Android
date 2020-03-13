@@ -69,7 +69,7 @@ public final class Megaphones {
      */
     private static Map<Event, MegaphoneSchedule> buildDisplayOrder() {
         return new LinkedHashMap<Event, MegaphoneSchedule>() {{
-            put(Event.REACTIONS, new ForeverSchedule(FeatureFlags.reactionSending()));
+            put(Event.REACTIONS, new ForeverSchedule(true));
 //            put(Event.PINS_FOR_ALL, new PinsForAllSchedule());
         }};
     }
@@ -127,7 +127,7 @@ public final class Megaphones {
         return builder.setTitle(R.string.KbsMegaphone__introducing_pins)
                 .setBody(R.string.KbsMegaphone__your_registration_lock_is_now_called_a_pin)
                 .setButtonText(R.string.KbsMegaphone__update_pin, (megaphone, listener) -> {
-                    Intent intent = CreateKbsPinActivity.getIntentForPinUpdate(ApplicationDependencies.getApplication());
+                    Intent intent = CreateKbsPinActivity.getIntentForPinChangeFromSettings(ApplicationDependencies.getApplication());
 
                     listener.onMegaphoneNavigationRequested(intent, CreateKbsPinActivity.REQUEST_NEW_PIN);
                 })
@@ -171,5 +171,14 @@ public final class Megaphones {
             }
             throw new IllegalArgumentException("No event for key: " + key);
         }
+
+    public static boolean hasKey(@NonNull String key) {
+        for (Event event : values()) {
+            if (event.getKey().equals(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
     }
 }

@@ -2,7 +2,6 @@ package su.sres.securesms.registration.fragments;
 
 import android.os.Bundle;
 import android.text.Editable;
-import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,7 +26,9 @@ import java.util.concurrent.TimeUnit;
 
 public final class RegistrationLockFragment extends BaseRegistrationFragment {
 
-    private EditText               pinEntry;
+    private static final int MINIMUM_PIN_LENGTH = 4;
+
+    private EditText pinEntry;
     private CircularProgressButton pinButton;
 
     @Override
@@ -42,12 +43,12 @@ public final class RegistrationLockFragment extends BaseRegistrationFragment {
 
         setDebugLogSubmitMultiTapView(view.findViewById(R.id.verify_header));
 
-        pinEntry  = view.findViewById(R.id.pin);
+        pinEntry = view.findViewById(R.id.pin);
         pinButton = view.findViewById(R.id.pinButton);
 
         View clarificationLabel = view.findViewById(R.id.clarification_label);
-        View subHeader          = view.findViewById(R.id.verify_subheader);
-        View pinForgotButton    = view.findViewById(R.id.forgot_button);
+        View subHeader = view.findViewById(R.id.verify_subheader);
+        View pinForgotButton = view.findViewById(R.id.forgot_button);
 
         String code = getModel().getTextCodeEntered();
 
@@ -92,13 +93,19 @@ public final class RegistrationLockFragment extends BaseRegistrationFragment {
     private void handlePinEntry() {
         final String pin = pinEntry.getText().toString();
 
-        if (TextUtils.isEmpty(pin) || TextUtils.isEmpty(pin.replace(" ", ""))) {
+        int trimmedLength = pin.replace(" ", "").length();
+        if (trimmedLength == 0) {
             Toast.makeText(requireContext(), R.string.RegistrationActivity_you_must_enter_your_registration_lock_PIN, Toast.LENGTH_LONG).show();
             return;
         }
 
-        RegistrationViewModel model               = getModel();
-        RegistrationService   registrationService = RegistrationService.getInstance(model.getNumber().getE164Number(), model.getRegistrationSecret());
+        if (trimmedLength < MINIMUM_PIN_LENGTH) {
+            Toast.makeText(requireContext(), getString(R.string.RegistrationActivity_your_pin_has_at_least_d_digits_or_characters, MINIMUM_PIN_LENGTH), Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        RegistrationViewModel model = getModel();
+        RegistrationService registrationService = RegistrationService.getInstance(model.getNumber().getE164Number(), model.getRegistrationSecret());
 
         setSpinning(pinButton);
 

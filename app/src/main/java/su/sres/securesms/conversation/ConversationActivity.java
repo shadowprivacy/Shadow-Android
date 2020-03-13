@@ -893,6 +893,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     public void onAttachmentMediaClicked(@NonNull Media media) {
         linkPreviewViewModel.onUserCancel();
         startActivityForResult(MediaSendActivity.buildEditorIntent(ConversationActivity.this, Collections.singletonList(media), recipient.get(), composeText.getTextTrimmed(), sendButton.getSelectedTransport()), MEDIA_SENDER);
+        container.hideCurrentInput(composeText);
     }
 
     @Override
@@ -914,8 +915,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                 AttachmentManager.selectLocation(this, PICK_LOCATION);
                 break;
         }
-        // TODO [greyson] [attachment] Add these
-//    attachmentManager.capturePhoto(this, TAKE_PHOTO); break;
+        container.hideCurrentInput(composeText);
     }
 
     @Override

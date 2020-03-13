@@ -120,14 +120,14 @@ public final class KbsValues {
 //        }
  //   }
 
-//    public void setKeyboardType(@NonNull KbsKeyboardType keyboardType) {
+//    public void setKeyboardType(@NonNull PinKeyboardType keyboardType) {
 //        store.beginWrite()
 //                .putString(KEYBOARD_TYPE, keyboardType.getCode())
 //                .commit();
 //    }
 
 //    @CheckResult
-//    public @NonNull KbsKeyboardType getKeyboardType() {
-//        return KbsKeyboardType.fromCode(store.getString(KEYBOARD_TYPE, null));
+//    public @NonNull PinKeyboardType getKeyboardType() {
+//        return PinKeyboardType.fromCode(store.getString(KEYBOARD_TYPE, null));
 //    }
 }
