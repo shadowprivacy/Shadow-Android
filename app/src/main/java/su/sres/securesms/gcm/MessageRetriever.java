@@ -100,8 +100,7 @@ public class MessageRetriever {
      *         care of it.
      */
     public static boolean shouldIgnoreFetch(@NonNull Context context) {
-        return ApplicationContext.getInstance(context).isAppVisible() &&
-                !ApplicationDependencies.getSignalServiceNetworkAccess().isCensored(context);
+        return ApplicationContext.getInstance(context).isAppVisible();
     }
 
     private static String logSuffix(long startTime) {

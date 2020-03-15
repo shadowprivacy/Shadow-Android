@@ -25,15 +25,6 @@ public class AccountManagerFactory {
                                                                          @NonNull String number,
                                                                          @NonNull String password)
   {
-    if (new SignalServiceNetworkAccess(context).isCensored(number)) {
-      SignalExecutors.BOUNDED.execute(() -> {
-        try {
-          ProviderInstaller.installIfNeeded(context);
-        } catch (Throwable t) {
-          Log.w(TAG, t);
-        }
-      });
-    }
 
     return new SignalServiceAccountManager(new SignalServiceNetworkAccess(context).getConfiguration(number),
             uuid, number, password, BuildConfig.SIGNAL_AGENT);
@@ -46,15 +37,6 @@ public class AccountManagerFactory {
                                                                            @NonNull String number,
                                                                            @NonNull String password)
   {
-    if (new SignalServiceNetworkAccess(context).isCensored(number)) {
-      SignalExecutors.BOUNDED.execute(() -> {
-        try {
-          ProviderInstaller.installIfNeeded(context);
-        } catch (Throwable t) {
-          Log.w(TAG, t);
-        }
-      });
-    }
 
     return new SignalServiceAccountManager(new SignalServiceNetworkAccess(context).getConfiguration(number),
             null, number, password, BuildConfig.SIGNAL_AGENT);

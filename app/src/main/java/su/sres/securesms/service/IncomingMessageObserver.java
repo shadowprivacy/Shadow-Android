@@ -98,8 +98,8 @@ public class IncomingMessageObserver implements ConstraintObserver.Notifier {
         return TextSecurePreferences.isPushRegistered(context)      &&
                 TextSecurePreferences.isWebsocketRegistered(context) &&
                 (appVisible || isGcmDisabled)                        &&
-                networkConstraint.isMet()                       &&
-                !networkAccess.isCensored(context);
+                networkConstraint.isMet();
+
     }
 
     private synchronized void waitForConnectionNecessary() {

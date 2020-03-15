@@ -390,25 +390,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     }
   }
 
-  @SuppressLint("StaticFieldLeak")
-  private void initializeCircumvention() {
-    AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-      @Override
-      protected Void doInBackground(Void... params) {
-        if (new SignalServiceNetworkAccess(ApplicationContext.this).isCensored(ApplicationContext.this)) {
-          try {
-            ProviderInstaller.installIfNeeded(ApplicationContext.this);
-          } catch (Throwable t) {
-            Log.w(TAG, t);
-          }
-        }
-        return null;
-      }
-    };
-
-    task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-  }
-
   private void executePendingContactSync() {
     if (TextSecurePreferences.needsFullContactSync(this)) {
       ApplicationDependencies.getJobManager().add(new MultiDeviceContactUpdateJob(true));
@@ -492,7 +473,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeGcmCheck();
     initializeSignedPreKeyCheck();
     initializePeriodicTasks();
-    initializeCircumvention();
     initializeRingRtc();
     initializePendingMessages();
     initializeBlobProvider();

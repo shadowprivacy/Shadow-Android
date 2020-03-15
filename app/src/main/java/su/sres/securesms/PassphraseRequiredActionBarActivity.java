@@ -66,9 +66,6 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
   protected void onResume() {
     Log.d(TAG, "[" + Log.tag(getClass()) + "] onResume()");
     super.onResume();
-    if (networkAccess.isCensored(this)) {
-      ApplicationDependencies.getJobManager().add(new PushNotificationReceiveJob(this));
-    }
   }
 
   @Override
