@@ -30,7 +30,7 @@ public final class MessageRecordUtil {
     }
 
     public static boolean hasLocation(@NonNull MessageRecord messageRecord) {
-        return messageRecord.isMms() && !Stream.of(((MmsMessageRecord) messageRecord).getSlideDeck().getSlides())
+        return messageRecord.isMms() && Stream.of(((MmsMessageRecord) messageRecord).getSlideDeck().getSlides())
                 .anyMatch(Slide::hasLocation);
     }
 }

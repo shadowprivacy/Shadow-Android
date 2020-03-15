@@ -16,7 +16,6 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.R;
 import su.sres.securesms.database.model.ReactionRecord;
-import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.ThemeUtil;
@@ -30,10 +29,12 @@ import java.util.Map;
 
 public class ReactionsConversationView extends LinearLayout {
 
-    private static final int OUTER_MARGIN = ViewUtil.dpToPx(6);
+    // Normally 6dp, but we have 1dp left+right margin on the pills themselves
+    private static final int OUTER_MARGIN = ViewUtil.dpToPx(5);
 
     private boolean              outgoing;
     private List<ReactionRecord> records;
+    private int                  bubbleWidth;
 
     public ReactionsConversationView(Context context) {
         super(context);
@@ -55,16 +56,20 @@ public class ReactionsConversationView extends LinearLayout {
     }
 
     public void clear() {
+        this.records.clear();
+        this.bubbleWidth = 0;
         removeAllViews();
     }
 
     public void setReactions(@NonNull List<ReactionRecord> records, int bubbleWidth) {
-        if (records.equals(this.records)) {
+        if (records.equals(this.records) && this.bubbleWidth == bubbleWidth) {
             return;
         }
 
         this.records.clear();
         this.records.addAll(records);
+
+        this.bubbleWidth = bubbleWidth;
 
         List<Reaction> reactions = buildSortedReactionsList(records);
 

@@ -117,6 +117,7 @@ import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
+import su.sres.securesms.util.views.AdaptiveActionsToolbar;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
@@ -1214,6 +1215,7 @@ public class ConversationFragment extends Fragment
       }
 
       setCorrectMenuVisibility(menu);
+      AdaptiveActionsToolbar.adjustMenuActions(menu, 10, requireActivity().getWindow().getDecorView().getMeasuredWidth());
       listener.onMessageActionToolbarOpened();
       return true;
     }

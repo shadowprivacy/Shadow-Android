@@ -63,7 +63,8 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
             this.recipient.setText(reaction.getSender().getDisplayName(itemView.getContext()));
             this.emoji.setText(reaction.getEmoji());
 
-            if (reaction.getSender().equals(Recipient.self())) {
+            if (reaction.getSender().isLocalNumber()) {
+                this.avatar.setAvatar(GlideApp.with(avatar), null, false);
                 AvatarUtil.loadIconIntoImageView(reaction.getSender(), avatar);
             } else {
                 this.avatar.setAvatar(GlideApp.with(avatar), reaction.getSender(), false);

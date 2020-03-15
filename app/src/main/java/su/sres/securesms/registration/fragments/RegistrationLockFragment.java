@@ -21,6 +21,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.registration.service.CodeVerificationRequest;
 import su.sres.securesms.registration.service.RegistrationService;
 import su.sres.securesms.registration.viewmodel.RegistrationViewModel;
+import su.sres.securesms.util.ServiceUtil;
 
 import java.util.concurrent.TimeUnit;
 
@@ -83,6 +84,11 @@ public final class RegistrationLockFragment extends BaseRegistrationFragment {
             }
             return false;
         });
+
+        pinEntry.setFocusable(true);
+        if (pinEntry.requestFocus()) {
+            ServiceUtil.getInputMethodManager(pinEntry.getContext()).showSoftInput(pinEntry, 0);
+        }
 
         pinButton.setOnClickListener((v) -> {
             hideKeyboard(requireContext(), pinEntry);

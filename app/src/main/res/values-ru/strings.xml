@@ -49,6 +49,7 @@
   <string name="ApplicationPreferencesActivity_Off">Отключено</string>
   <string name="ApplicationPreferencesActivity_sms_mms_summary">SMS %1$s, MMS %2$s</string>
   <string name="ApplicationPreferencesActivity_privacy_summary">Блокировка экрана %1$s, Блокировка регистрации %2$s</string>
+    <string name="ApplicationPreferencesActivity_privacy_summary_screen_lock">Блокировка экрана %1$s</string>
   <string name="ApplicationPreferencesActivity_appearance_summary">Тема %1$s, Язык %2$s</string>
   <!--AppProtectionPreferenceFragment-->
   <plurals name="AppProtectionPreferenceFragment_minutes">
@@ -70,6 +71,8 @@
   <string name="AttachmentKeyboard_file">Файл</string>
   <string name="AttachmentKeyboard_contact">Контакт</string>
   <string name="AttachmentKeyboard_location">Место</string>
+  <string name="AttachmentKeyboard_Signal_needs_permission_to_show_your_photos_and_videos">Shadow требуется разрешение, чтобы показывать ваши недавние фото и видео.</string>
+  <string name="AttachmentKeyboard_give_access">Разрешить доступ</string>
 
   <!--AttachmentManager-->
   <string name="AttachmentManager_cant_open_media_selection">Не найдено приложение для выбора медиа-файлов.</string>
@@ -423,8 +426,12 @@
 
   <!-- InitialActivity -->
 
+  <string name="InitialActivity_registration">Регистрация</string>
   <string name="InitialActivity_you_must_specify_the_server_address_and_port">Укажите адрес и порт сервера</string>
   <string name="InitialActivity_invalid_URL">Некорректное URL</string>
+  <string name="InitialActivity_scan_qr_code">Отсканируйте QR-код, предоставленный вашим администратором</string>
+  <string name="InitialActivity_qr_code_invalid">Отсканированный QR-код недействителен. Обратитесь к своему администратору.</string>
+  <string name="InitialActivity_done">Готово</string>
 
   <!--InputPanel-->
   <string name="InputPanel_tap_and_hold_to_record_a_voice_message_release_to_send">Удерживайте, чтобы записать голосовое сообщение; отпустите, чтобы отправить</string>
@@ -517,6 +524,7 @@
 
   <!--Megaphones-->
   <string name="Megaphones_introducing_reactions">Представляем реакции</string>
+    <string name="Megaphones_tap_and_hold_any_message_to_quicky_share_how_you_feel">Нажмите и удерживайте любое сообщение, чтобы быстро ответить вашими чувствами.</string>
   <string name="Megaphones_remind_me_later">Напомните мне позже</string>
 
   <!--NotificationBarManager-->
@@ -626,7 +634,10 @@
   <string name="RatingManager_whoops_the_play_store_app_does_not_appear_to_be_installed">Похоже, приложение «Play Маркет» не установлено на вашем устройстве.</string>
 
   <!--ReactionsBottomSheetDialogFragment-->
+  <string name="ReactionsBottomSheetDialogFragment_all">Все %1$d</string>
+    <!-- Removed by excludeNonTranslatables <string name="ReactionsBottomSheetDialogFragment_you">%1$s (Вы)</string> -->
   <!--ReactionsConversationView-->
+    <string name="ReactionsConversationView_plus">+%1$d</string>
 
   <!--RecipientPreferencesActivity-->
   <string name="RecipientPreferenceActivity_block_this_contact_question">Заблокировать этот контакт?</string>
@@ -1535,6 +1546,8 @@
   <string name="preferences_chats__chat_backups">Резервные копии чатов</string>
   <string name="preferences_chats__backup_chats_to_external_storage">Осуществлять резервное копирование чатов во внешнее хранилище</string>
   <string name="preferences_chats__create_backup">Создать резервную копию</string>
+    <string name="preferences_chats__verify_backup_passphrase">Проверить парольную фразу резервной копии</string>
+    <string name="preferences_chats__test_your_backup_passphrase_and_verify_that_it_matches">Испытайте парольную фразу своей резервной копии и убедитесь, что она подходит</string>
   <string name="RegistrationActivity_enter_backup_passphrase">Введите парольную фразу резервной копии</string>
   <string name="RegistrationActivity_restore">Восстановить</string>
   <string name="RegistrationActivity_backup_failure_downgrade">Невозможно импортировать резервную копию из более новых версий Shadow</string>
@@ -1552,7 +1565,10 @@
   <string name="BackupDialog_disable_and_delete_all_local_backups">Отключить и удалить все локальные резервные копии?</string>
   <string name="BackupDialog_delete_backups_statement">Удалить резервные копии</string>
   <string name="BackupDialog_copied_to_clipboard">Скопировано в буфер обмена</string>
+    <string name="BackupDialog_enter_backup_passphrase_to_verify">Введите парольную фразу своей резервной копии, чтобы проверить её</string>
   <string name="BackupDialog_verify">Подтверждение</string>
+    <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">Вы успешно ввели парольную фразу своей резервной копии</string>
+    <string name="BackupDialog_passphrase_was_not_correct">Парольная фраза была неправильной</string>
   <string name="ChatsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">Shadow требуется разрешение на доступ к хранилищу для создания резервных копий, но оно было вами отклонено. Нажмите «Продолжить», чтобы перейти в настройки приложения, откройте «Разрешения» и включите «Хранилище».</string>
   <string name="ChatsPreferenceFragment_last_backup_s">Последняя резервная копия: %s</string>
   <string name="ChatsPreferenceFragment_in_progress">В процессе</string>
@@ -1582,6 +1598,7 @@
   <string name="preferences_app_protection__registration_lock_pin">PIN-код блокировки регистрации</string>
   <string name="preferences_app_protection__registration_lock">Блокировка регистрации</string>
   <string name="RegistrationActivity_you_must_enter_your_registration_lock_PIN">Вам необходимо ввести свой PIN-код блокировки регистрации</string>
+    <string name="RegistrationActivity_your_pin_has_at_least_d_digits_or_characters">Ваш PIN-код содержит не менее %d цифр или символов</string>
   <string name="RegistrationActivity_incorrect_registration_lock_pin">Неправильный PIN-код блокировки регистрации</string>
   <string name="RegistrationActivity_too_many_attempts">Слишком много попыток</string>
   <string name="RegistrationActivity_you_have_made_too_many_incorrect_registration_lock_pin_attempts_please_try_again_in_a_day">Вы неправильно ввели PIN-код слишком много раз. Пожалуйста, повторите попытку завтра.</string>
