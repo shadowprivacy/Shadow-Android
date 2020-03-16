@@ -17,11 +17,11 @@ public final class SignalStore {
 
     private SignalStore() {}
 
-    public static KbsValues kbsValues() {
+    public static @NonNull KbsValues kbsValues() {
         return new KbsValues(getStore());
     }
 
-    public static RegistrationValues registrationValues() {
+    public static @NonNull RegistrationValues registrationValues() {
         return new RegistrationValues(getStore());
     }
 

@@ -18,6 +18,7 @@ package su.sres.securesms.conversationlist;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -108,7 +109,7 @@ import su.sres.securesms.lock.RegistrationLockDialog;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediasend.MediaSendActivity;
 import su.sres.securesms.megaphone.Megaphone;
-import su.sres.securesms.megaphone.MegaphoneListener;
+import su.sres.securesms.megaphone.MegaphoneActionController;
 import su.sres.securesms.megaphone.MegaphoneViewBuilder;
 import su.sres.securesms.megaphone.Megaphones;
 import su.sres.securesms.mms.GlideApp;
@@ -139,7 +140,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         ItemClickListener,
         ConversationListSearchAdapter.EventListener,
         MainNavigator.BackHandler,
-        MegaphoneListener
+        MegaphoneActionController
 {
     private static final String TAG = Log.tag(ConversationListFragment.class);
 
@@ -359,13 +360,18 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
     }
 
     @Override
-    public void onMegaphoneSnooze(@NonNull Megaphone megaphone) {
-        viewModel.onMegaphoneSnoozed(megaphone);
+    public @NonNull Activity getMegaphoneActivity() {
+        return requireActivity();
     }
 
     @Override
-    public void onMegaphoneCompleted(@NonNull Megaphone megaphone) {
-        viewModel.onMegaphoneCompleted(megaphone.getEvent());
+    public void onMegaphoneSnooze(@NonNull Megaphones.Event event) {
+        viewModel.onMegaphoneSnoozed(event);
+    }
+
+    @Override
+    public void onMegaphoneCompleted(@NonNull Megaphones.Event event) {
+        viewModel.onMegaphoneCompleted(event);
     }
 
     private void initializeProfileIcon(@NonNull Recipient recipient) {
@@ -707,7 +713,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
 
     @Override
     public void onItemLongClick(ConversationListItem item) {
-        actionMode = ((AppCompatActivity)getActivity()).startSupportActionMode(ConversationListFragment.this);
+        actionMode = ((AppCompatActivity) getActivity()).startSupportActionMode(ConversationListFragment.this);
 
         defaultAdapter.initializeBatchMode(true);
         defaultAdapter.toggleThreadInBatchSet(item.getThreadId());

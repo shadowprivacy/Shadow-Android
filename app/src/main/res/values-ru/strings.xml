@@ -635,7 +635,6 @@
 
   <!--ReactionsBottomSheetDialogFragment-->
   <string name="ReactionsBottomSheetDialogFragment_all">Все %1$d</string>
-    <!-- Removed by excludeNonTranslatables <string name="ReactionsBottomSheetDialogFragment_you">%1$s (Вы)</string> -->
   <!--ReactionsConversationView-->
     <string name="ReactionsConversationView_plus">+%1$d</string>
 

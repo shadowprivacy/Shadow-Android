@@ -70,7 +70,6 @@ public final class Megaphones {
     private static Map<Event, MegaphoneSchedule> buildDisplayOrder() {
         return new LinkedHashMap<Event, MegaphoneSchedule>() {{
             put(Event.REACTIONS, new ForeverSchedule(true));
-//            put(Event.PINS_FOR_ALL, new PinsForAllSchedule());
         }};
     }
 
@@ -78,8 +77,6 @@ public final class Megaphones {
         switch (record.getEvent()) {
             case REACTIONS:
                 return buildReactionsMegaphone();
-//            case PINS_FOR_ALL:
-//                return buildPinsForAllMegaphone(context, record);
             default:
                 throw new IllegalArgumentException("Event not handled!");
         }
@@ -91,62 +88,8 @@ public final class Megaphones {
                 .build();
     }
 
-/**    private static @NonNull Megaphone buildPinsForAllMegaphone(@NonNull Context context, @NonNull MegaphoneRecord record) {
-        if (PinsForAllSchedule.shouldDisplayFullScreen(record.getFirstVisible(), System.currentTimeMillis())) {
-            return new Megaphone.Builder(Event.PINS_FOR_ALL, Megaphone.Style.FULLSCREEN)
-                    .setMandatory(true)
-                    .enableSnooze(null)
-                    .setOnVisibleListener((megaphone, listener) -> {
-                        if (new NetworkConstraint.Factory(ApplicationDependencies.getApplication()).create().isMet()) {
-                            listener.onMegaphoneNavigationRequested(KbsMigrationActivity.createIntent(), KbsMigrationActivity.REQUEST_NEW_PIN);
-                        }
-                    })
-                    .build();
-        } else {
-            Megaphone.Builder builder = new Megaphone.Builder(Event.PINS_FOR_ALL, Megaphone.Style.BASIC)
-                    .setMandatory(true)
-                    .setImage(R.drawable.kbs_pin_megaphone);
-
-            long daysRemaining = PinsForAllSchedule.getDaysRemaining(record.getFirstVisible(), System.currentTimeMillis());
-
-            if (PinUtil.userHasPin(ApplicationDependencies.getApplication())) {
- return buildPinsForAllMegaphoneForUserWithPin(builder.enableSnooze(null));
-            } else {
- return buildPinsForAllMegaphoneForUserWithoutPin(builder.enableSnooze(null));
-            }
-        }
-    }
-
- */
-
-/**    private static @NonNull Megaphone buildPinsForAllMegaphoneForUserWithPin(@NonNull Megaphone.Builder builder) {
-        return builder.setTitle(R.string.KbsMegaphone__introducing_pins)
-                .setBody(R.string.KbsMegaphone__your_registration_lock_is_now_called_a_pin)
-                .setButtonText(R.string.KbsMegaphone__update_pin, (megaphone, listener) -> {
-                    Intent intent = CreateKbsPinActivity.getIntentForPinChangeFromSettings(ApplicationDependencies.getApplication());
-
-                    listener.onMegaphoneNavigationRequested(intent, CreateKbsPinActivity.REQUEST_NEW_PIN);
-                })
-                .build();
-    }
-
- */
-
-/**    private static @NonNull Megaphone buildPinsForAllMegaphoneForUserWithoutPin(@NonNull Megaphone.Builder builder) {
-        return builder.setTitle(R.string.KbsMegaphone__create_a_pin)
-                .setBody(R.string.KbsMegaphone__pins_add_another_layer_of_security_to_your_signal_account)
-                .setButtonText(R.string.KbsMegaphone__create_pin, (megaphone, listener) -> {
-                    Intent intent = CreateKbsPinActivity.getIntentForPinCreate(ApplicationDependencies.getApplication());
-
-                    listener.onMegaphoneNavigationRequested(intent, CreateKbsPinActivity.REQUEST_NEW_PIN);
-                })
-                .build();
-    }
- */
-
     public enum Event {
     REACTIONS("reactions")
-//    , PINS_FOR_ALL("pins_for_all")
     ;
 
         private final String key;
