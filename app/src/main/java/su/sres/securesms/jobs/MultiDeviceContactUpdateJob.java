@@ -9,11 +9,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.ApplicationContext;
-import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
-import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -45,8 +43,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -204,14 +200,16 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
                         archived.contains(recipient.getId())));
             }
 
-            if (ProfileKeyUtil.hasProfileKey(context)) {
-                Recipient self = Recipient.self();
+            Recipient self       = Recipient.self();
+            byte[]    profileKey = self.getProfileKey();
+
+            if (profileKey != null) {
                 out.write(new DeviceContact(RecipientUtil.toSignalServiceAddress(context, self),
                         Optional.absent(),
                         Optional.absent(),
                         Optional.of(self.getColor().serialize()),
                         Optional.absent(),
-                        Optional.of(ProfileKeyUtil.getProfileKey(context)),
+                        Optional.of(profileKey),
                         false,
                         self.getExpireMessages() > 0 ? Optional.of(self.getExpireMessages()) : Optional.absent(),
                         Optional.fromNullable(inboxPositions.get(self.getId())),

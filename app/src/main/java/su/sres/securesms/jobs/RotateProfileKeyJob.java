@@ -3,7 +3,8 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.crypto.ProfileKeyUtil;
+import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -14,6 +15,8 @@ import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.util.StreamDetails;
+
+import su.sres.signalservice.internal.util.Util;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -48,9 +51,12 @@ public class RotateProfileKeyJob extends BaseJob  {
 
     @Override
     public void onRun() throws Exception {
-        SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
-        byte[]                      profileKey     = ProfileKeyUtil.rotateProfileKey(context);
+        SignalServiceAccountManager accountManager    = ApplicationDependencies.getSignalServiceAccountManager();
+        RecipientDatabase           recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+        byte[]                      profileKey        = Util.getSecretBytes(32);
+        Recipient                   self              = Recipient.self();
 
+        recipientDatabase.setProfileKey(self.getId(), profileKey);
         accountManager.setProfileName(profileKey, TextSecurePreferences.getProfileName(context).serialize());
         accountManager.setProfileAvatar(profileKey, getProfileAvatar());
 

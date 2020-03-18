@@ -431,7 +431,8 @@
   <string name="InitialActivity_invalid_URL">Некорректное URL</string>
   <string name="InitialActivity_scan_qr_code">Отсканируйте QR-код, предоставленный вашим администратором</string>
   <string name="InitialActivity_qr_code_invalid">Отсканированный QR-код недействителен. Обратитесь к своему администратору.</string>
-  <string name="InitialActivity_done">Готово</string>
+  <string name="InitialActivity_qr_code_unparseable">Ошибка чтения QR-кода. Обратитесь к своему администратору.</string>
+  <string name="InitialActivity_scan">Сканировать</string>
 
   <!--InputPanel-->
   <string name="InputPanel_tap_and_hold_to_record_a_voice_message_release_to_send">Удерживайте, чтобы записать голосовое сообщение; отпустите, чтобы отправить</string>

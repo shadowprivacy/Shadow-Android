@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
@@ -48,10 +49,12 @@ import su.sres.securesms.jobs.RefreshPreKeysJob;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.service.KeyCachingService;
+import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.Util;
 
 import java.io.File;
 import java.util.List;
@@ -106,8 +109,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int STICKER_PACK_ORDER               = 44;
   private static final int MEGAPHONES                       = 45;
   private static final int MEGAPHONE_FIRST_APPEARANCE       = 46;
+  private static final int PROFILE_KEY_TO_DB                = 47;
 
-  private static final int    DATABASE_VERSION = 46;
+  private static final int    DATABASE_VERSION = 47;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -725,6 +729,21 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       if (oldVersion < MEGAPHONE_FIRST_APPEARANCE) {
         db.execSQL("ALTER TABLE megaphone ADD COLUMN first_visible INTEGER DEFAULT 0");
+      }
+
+      if (oldVersion < PROFILE_KEY_TO_DB) {
+        String localNumber = TextSecurePreferences.getLocalNumber(context);
+        if (!TextUtils.isEmpty(localNumber)) {
+          String        encodedProfileKey = PreferenceManager.getDefaultSharedPreferences(context).getString("pref_profile_key", null);
+          byte[]        profileKey        = encodedProfileKey != null ? Base64.decodeOrThrow(encodedProfileKey) : Util.getSecretBytes(32);
+          ContentValues values            = new ContentValues(1);
+
+          values.put("profile_key", Base64.encodeBytes(profileKey));
+
+          if (db.update("recipient", values, "phone = ?", new String[]{localNumber}) == 0) {
+            throw new AssertionError("No rows updated!");
+          }
+        }
       }
 
       db.setTransactionSuccessful();

@@ -8,7 +8,6 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.database.RecipientDatabase.InsightsBannerTier;
-import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
 import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
 import su.sres.securesms.database.RecipientDatabase.RegisteredState;
@@ -91,7 +90,7 @@ public class RecipientDetails {
         this.profileName                     = isLocalNumber ? TextSecurePreferences.getProfileName(context) : settings.getProfileName();
         this.defaultSubscriptionId           = settings.getDefaultSubscriptionId();
         this.registered                      = settings.getRegistered();
-        this.profileKey                      = isLocalNumber ? ProfileKeyUtil.getProfileKey(context) : settings.getProfileKey();
+        this.profileKey                      = settings.getProfileKey();
         this.profileAvatar                   = settings.getProfileAvatar();
         this.profileSharing                  = settings.isProfileSharing();
         this.systemContact                   = systemContact;

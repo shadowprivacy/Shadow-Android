@@ -32,8 +32,10 @@ public class EditProfileActivity extends BaseActionBarActivity implements EditPr
         setContentView(R.layout.profile_create_activity);
 
         if (bundle == null) {
-            NavGraph graph = Navigation.findNavController(this, R.id.nav_host_fragment).getGraph();
-            Navigation.findNavController(this, R.id.nav_host_fragment).setGraph(graph, getIntent().getExtras());
+            Bundle   extras = getIntent().getExtras();
+            NavGraph graph  = Navigation.findNavController(this, R.id.nav_host_fragment).getGraph();
+
+            Navigation.findNavController(this, R.id.nav_host_fragment).setGraph(graph, extras != null ? extras : new Bundle());
         }
     }
 

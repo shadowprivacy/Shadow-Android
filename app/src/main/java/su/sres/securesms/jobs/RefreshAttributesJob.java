@@ -2,7 +2,6 @@ package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -10,6 +9,7 @@ import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
 
+import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
@@ -49,7 +49,7 @@ public class RefreshAttributesJob extends BaseJob  {
     int     registrationId              = TextSecurePreferences.getLocalRegistrationId(context);
     boolean fetchesMessages             = TextSecurePreferences.isFcmDisabled(context);
     String  pin                         = TextSecurePreferences.getRegistrationLockPin(context);
-    byte[]  unidentifiedAccessKey       = UnidentifiedAccessUtil.getSelfUnidentifiedAccessKey(context);
+    byte[]    unidentifiedAccessKey       = UnidentifiedAccessUtil.getSelfUnidentifiedAccessKey(ProfileKeyUtil.getProfileKey(context));
     boolean universalUnidentifiedAccess = TextSecurePreferences.isUniversalUnidentifiedAccess(context);
 
     SignalServiceAccountManager signalAccountManager = ApplicationDependencies.getSignalServiceAccountManager();

@@ -35,8 +35,10 @@ import com.dd.CircularProgressButton;
 import su.sres.securesms.R;
 import su.sres.securesms.avatar.AvatarSelection;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.megaphone.Megaphones;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.profiles.ProfileMediaConstraints;
@@ -326,6 +328,8 @@ public class EditProfileFragment extends Fragment {
                 }
 
                 SignalStore.registrationValues().setRegistrationComplete();
+
+                ApplicationDependencies.getMegaphoneRepository().markFinished(Megaphones.Event.PROFILE_NAMES_FOR_ALL);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) handleFinishedLollipop();
                 else                                                       handleFinishedLegacy();

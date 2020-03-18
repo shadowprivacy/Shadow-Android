@@ -7,7 +7,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.R;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.PreKeyUtil;
@@ -28,6 +27,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.service.DirectoryRefreshListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.IdentityKeyPair;
 import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
@@ -127,8 +127,15 @@ public final class CodeVerificationRequest {
 
     private static void verifyAccount(@NonNull Context context, @NonNull Credentials credentials, @NonNull String code, @Nullable String pin, @Nullable String fcmToken) throws IOException {
         int     registrationId              = KeyHelper.generateRegistrationId(false);
-        byte[]  unidentifiedAccessKey       = UnidentifiedAccessUtil.getSelfUnidentifiedAccessKey(context);
         boolean universalUnidentifiedAccess = TextSecurePreferences.isUniversalUnidentifiedAccess(context);
+        byte[]  profileKey                  = findExistingProfileKey(context, credentials.getE164number());
+
+        if (profileKey == null) {
+            profileKey = Util.getSecretBytes(32);
+            Log.i(TAG, "No profile key found, created a new one");
+        }
+
+        byte[] unidentifiedAccessKey = UnidentifiedAccessUtil.getSelfUnidentifiedAccessKey(profileKey);
 
         TextSecurePreferences.setLocalRegistrationId(context, registrationId);
         SessionUtil.archiveAllSessions(context);
@@ -179,6 +186,7 @@ public final class CodeVerificationRequest {
 
         TextSecurePreferences.setLocalNumber(context, credentials.getE164number());
         TextSecurePreferences.setLocalUuid(context, uuid);
+        recipientDatabase.setProfileKey(selfId, profileKey);
         ApplicationDependencies.getRecipientCache().clearSelf();
 
         TextSecurePreferences.setFcmToken(context, fcmToken);
@@ -196,6 +204,17 @@ public final class CodeVerificationRequest {
         TextSecurePreferences.setSignedPreKeyRegistered(context, true);
         TextSecurePreferences.setPromptedPushRegistration(context, true);
         TextSecurePreferences.setUnauthorizedReceived(context, false);
+    }
+
+    private static @Nullable byte[] findExistingProfileKey(@NonNull Context context, @NonNull String e164number) {
+        RecipientDatabase     recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+        Optional<RecipientId> recipient         = recipientDatabase.getByE164(e164number);
+
+        if (recipient.isPresent()) {
+            return Recipient.resolved(recipient.get()).getProfileKey();
+        }
+
+        return null;
     }
 
     public interface VerifyCallback {

@@ -457,7 +457,8 @@
     <string name="InitialActivity_invalid_URL">The URL is invalid</string>
     <string name="InitialActivity_scan_qr_code">Scan the registration QR-code provided by your administrator</string>
     <string name="InitialActivity_qr_code_invalid">The scanned QR-code is invalid. Refer to your administrator.</string>
-    <string name="InitialActivity_done">Done</string>
+    <string name="InitialActivity_qr_code_unparseable">Error parsing the QR-code. Refer to your administrator.</string>
+    <string name="InitialActivity_scan">Scan</string>
 
     <!-- InputPanel -->
     <string name="InputPanel_tap_and_hold_to_record_a_voice_message_release_to_send">Tap and hold to record a voice message, release to send</string>
@@ -1746,6 +1747,14 @@
     <string name="KbsLockFragment__you_have_d_attempts_remaining">You have %1$d attempts remaining. If you run out of attempts your account will be locked for %2$d days. After %3$d days of inactivity, you can re-register without your PIN. Your account will be wiped and all content deleted.</string>
     <string name="KbsLockFragment__forgot_your_pin">Forgot your PIN?</string>
     <string name="KbsLockFragment__for_your_privacy_and_security_there_is_no_way_to_recover">For your privacy and security, there is no way to recover your PIN. If you run out of attempts, you can re-verify with SMS after %1$d days of inactivity. In this case, your account will be wiped and all content deleted.</string>
+
+    <!-- Profile Names Megaphone -->
+    <string name="ProfileNamesMegaphone__add_a_profile_name">Add a profile name</string>
+    <string name="ProfileNamesMegaphone__this_will_be_displayed_when_you_start">This will be displayed when you start a new conversation or share it.</string>
+    <string name="ProfileNamesMegaphone__add_profile_name">Add Profile Name</string>
+    <string name="ProfileNamesMegaphone__confirm_your_profile_name">Confirm your Profile Name</string>
+    <string name="ProfileNamesMegaphone__your_profile_can_now_include">Your profile can now include an optional last name.</string>
+    <string name="ProfileNamesMegaphone__confirm_name">Confirm Name</string>
 
     <!-- transport_selection_list_item -->
     <string name="transport_selection_list_item__transport_icon">Transport icon</string>

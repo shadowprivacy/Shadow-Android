@@ -51,7 +51,7 @@ public final class FeatureFlags {
     private static final String MESSAGE_REQUESTS  = generateKey("messageRequests");
     private static final String USERNAMES         = generateKey("usernames");
     private static final String STORAGE_SERVICE   = generateKey("storageService");
-    private static final String REACTION_SENDING  = generateKey("reactionSending");
+    private static final String PROFILE_NAMES_MEGAPHONE_ENABLED = generateKey("profileNamesMegaphoneEnabled");
 
     /**
      * We will only store remote values for flags in this set. If you want a flag to be controllable
@@ -59,7 +59,7 @@ public final class FeatureFlags {
      */
 
     private static final Set<String> REMOTE_CAPABLE = Sets.newHashSet(
-//            PINS_MEGAPHONE_KILL_SWITCH
+            PROFILE_NAMES_MEGAPHONE_ENABLED
     );
 
     /**
@@ -151,9 +151,10 @@ public final class FeatureFlags {
         return getValue(STORAGE_SERVICE, false);
     }
 
-    /** Send support for reactions. */
-    public static synchronized boolean reactionSending() {
-        return getValue(REACTION_SENDING, false);
+    /** Safety switch for disabling profile names megaphone */
+    public static boolean profileNamesMegaphoneEnabled() {
+        return getValue(PROFILE_NAMES_MEGAPHONE_ENABLED, false) &&
+                TextSecurePreferences.getFirstInstallVersion(ApplicationDependencies.getApplication()) < 600;
     }
 
     /** Only for rendering debug info. */
