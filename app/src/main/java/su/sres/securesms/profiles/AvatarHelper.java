@@ -6,10 +6,16 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.util.MediaUtil;
+import su.sres.signalservice.api.util.StreamDetails;
+
+import java.io.ByteArrayInputStream;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,6 +60,26 @@ public class AvatarHelper {
       FileOutputStream out = new FileOutputStream(getAvatarFile(context, recipientId));
       out.write(data);
       out.close();
+    }
+  }
+
+  public static @NonNull StreamDetails avatarStream(@NonNull byte[] data) {
+    return new StreamDetails(new ByteArrayInputStream(data), MediaUtil.IMAGE_JPEG, data.length);
+  }
+
+  public static @Nullable StreamDetails getSelfProfileAvatarStream(@NonNull Context context) {
+    File avatarFile = getAvatarFile(context, Recipient.self().getId());
+
+    if (avatarFile.exists() && avatarFile.length() > 0) {
+      try {
+        FileInputStream stream = new FileInputStream(avatarFile);
+
+        return new StreamDetails(stream, MediaUtil.IMAGE_JPEG, avatarFile.length());
+      } catch (FileNotFoundException e) {
+        throw new AssertionError(e);
+      }
+    } else {
+      return null;
     }
   }
 

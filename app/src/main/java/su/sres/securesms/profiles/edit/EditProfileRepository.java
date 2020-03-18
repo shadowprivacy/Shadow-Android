@@ -20,17 +20,14 @@ import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.profiles.SystemProfileUtil;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.service.IncomingMessageObserver;
+import su.sres.securesms.util.ProfileUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.ListenableFuture;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import org.whispersystems.libsignal.util.guava.Optional;
-import su.sres.signalservice.api.SignalServiceMessagePipe;
-import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.profiles.SignalServiceProfile;
-import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -132,29 +129,14 @@ class EditProfileRepository {
     @WorkerThread
     private @NonNull Optional<String> getUsernameInternal() {
         try {
-            SignalServiceProfile profile = retrieveOwnProfile();
+            SignalServiceProfile profile = ProfileUtil.retrieveProfile(context, Recipient.self(), SignalServiceProfile.RequestType.PROFILE).getProfile();
+
             TextSecurePreferences.setLocalUsername(context, profile.getUsername());
             DatabaseFactory.getRecipientDatabase(context).setUsername(Recipient.self().getId(), profile.getUsername());
         } catch (IOException e) {
             Log.w(TAG, "Failed to retrieve username remotely! Using locally-cached version.");
         }
         return Optional.fromNullable(TextSecurePreferences.getLocalUsername(context));
-    }
-
-    private SignalServiceProfile retrieveOwnProfile() throws IOException {
-        SignalServiceAddress         address  = new SignalServiceAddress(TextSecurePreferences.getLocalUuid(context), TextSecurePreferences.getLocalNumber(context));
-        SignalServiceMessageReceiver receiver = ApplicationDependencies.getSignalServiceMessageReceiver();
-        SignalServiceMessagePipe     pipe     = IncomingMessageObserver.getPipe();
-
-        if (pipe != null) {
-            try {
-                return pipe.getProfile(address, Optional.absent());
-            } catch (IOException e) {
-                Log.w(TAG, e);
-            }
-        }
-
-        return receiver.retrieveProfile(address, Optional.absent());
     }
 
     public enum UploadResult {

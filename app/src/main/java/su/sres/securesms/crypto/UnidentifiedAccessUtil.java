@@ -1,6 +1,5 @@
 package su.sres.securesms.crypto;
 
-
 import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -8,6 +7,7 @@ import androidx.annotation.WorkerThread;
 
 import org.signal.libsignal.metadata.certificate.CertificateValidator;
 import org.signal.libsignal.metadata.certificate.InvalidCertificateException;
+import su.sres.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
@@ -42,7 +42,7 @@ public class UnidentifiedAccessUtil {
     {
         try {
             byte[] theirUnidentifiedAccessKey       = getTargetUnidentifiedAccessKey(recipient);
-            byte[] ourUnidentifiedAccessKey         = getSelfUnidentifiedAccessKey(ProfileKeyUtil.getProfileKey(context));
+            byte[] ourUnidentifiedAccessKey         = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
             byte[] ourUnidentifiedAccessCertificate = recipient.resolve().isUuidSupported() && Recipient.self().isUuidSupported()
                     ? TextSecurePreferences.getUnidentifiedAccessCertificate(context)
                     : TextSecurePreferences.getUnidentifiedAccessCertificateLegacy(context);
@@ -76,7 +76,7 @@ public class UnidentifiedAccessUtil {
     public static Optional<UnidentifiedAccessPair> getAccessForSync(@NonNull Context context) {
 
         try {
-            byte[] ourUnidentifiedAccessKey         = getSelfUnidentifiedAccessKey(ProfileKeyUtil.getProfileKey(context));
+            byte[] ourUnidentifiedAccessKey         = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
             byte[] ourUnidentifiedAccessCertificate = Recipient.self().isUuidSupported() ? TextSecurePreferences.getUnidentifiedAccessCertificate(context)
                     : TextSecurePreferences.getUnidentifiedAccessCertificateLegacy(context);
 
@@ -98,12 +98,8 @@ public class UnidentifiedAccessUtil {
         }
     }
 
-    public static @NonNull byte[] getSelfUnidentifiedAccessKey(@NonNull byte[] selfProfileKey) {
-        return UnidentifiedAccess.deriveAccessKeyFrom(selfProfileKey);
-    }
-
     private static @Nullable byte[] getTargetUnidentifiedAccessKey(@NonNull Recipient recipient) {
-        byte[] theirProfileKey = recipient.resolve().getProfileKey();
+        ProfileKey theirProfileKey = ProfileKeyUtil.profileKeyOrNull(recipient.resolve().getProfileKey());
 
         switch (recipient.resolve().getUnidentifiedAccessMode()) {
             case UNKNOWN:

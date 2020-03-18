@@ -6,6 +6,7 @@
 
 package su.sres.signalservice.api.messages.multidevice;
 
+import su.sres.zkgroup.profiles.ProfileKey;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.signalservice.api.messages.SignalServiceAttachmentStream;
@@ -18,7 +19,7 @@ public class DeviceContact {
   private final Optional<SignalServiceAttachmentStream> avatar;
   private final Optional<String>                        color;
   private final Optional<VerifiedMessage>               verified;
-  private final Optional<byte[]>                        profileKey;
+  private final Optional<ProfileKey>                    profileKey;
   private final boolean                                 blocked;
   private final Optional<Integer>                       expirationTimer;
   private final Optional<Integer> inboxPosition;
@@ -29,7 +30,7 @@ public class DeviceContact {
                        Optional<SignalServiceAttachmentStream> avatar,
                        Optional<String> color,
                        Optional<VerifiedMessage> verified,
-                       Optional<byte[]> profileKey,
+                       Optional<ProfileKey> profileKey,
                        boolean blocked,
                        Optional<Integer> expirationTimer,
                        Optional<Integer> inboxPosition,
@@ -67,7 +68,7 @@ public class DeviceContact {
     return verified;
   }
 
-  public Optional<byte[]> getProfileKey() {
+  public Optional<ProfileKey> getProfileKey() {
     return profileKey;
   }
 

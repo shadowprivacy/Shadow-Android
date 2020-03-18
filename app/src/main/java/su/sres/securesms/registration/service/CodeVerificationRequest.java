@@ -8,10 +8,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.R;
+import su.sres.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.PreKeyUtil;
+import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.SessionUtil;
-import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.RecipientDatabase;
@@ -27,13 +28,13 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.service.DirectoryRefreshListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.IdentityKeyPair;
 import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 import org.whispersystems.libsignal.util.KeyHelper;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
+import su.sres.signalservice.api.crypto.UnidentifiedAccess;
 import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
 import su.sres.signalservice.api.push.exceptions.RateLimitException;
 import su.sres.signalservice.internal.push.LockedException;
@@ -128,14 +129,14 @@ public final class CodeVerificationRequest {
     private static void verifyAccount(@NonNull Context context, @NonNull Credentials credentials, @NonNull String code, @Nullable String pin, @Nullable String fcmToken) throws IOException {
         int     registrationId              = KeyHelper.generateRegistrationId(false);
         boolean universalUnidentifiedAccess = TextSecurePreferences.isUniversalUnidentifiedAccess(context);
-        byte[]  profileKey                  = findExistingProfileKey(context, credentials.getE164number());
+        ProfileKey profileKey                  = findExistingProfileKey(context, credentials.getE164number());
 
         if (profileKey == null) {
-            profileKey = Util.getSecretBytes(32);
+            profileKey = ProfileKeyUtil.createNew();
             Log.i(TAG, "No profile key found, created a new one");
         }
 
-        byte[] unidentifiedAccessKey = UnidentifiedAccessUtil.getSelfUnidentifiedAccessKey(profileKey);
+        byte[] unidentifiedAccessKey = UnidentifiedAccess.deriveAccessKeyFrom(profileKey);
 
         TextSecurePreferences.setLocalRegistrationId(context, registrationId);
         SessionUtil.archiveAllSessions(context);
@@ -206,12 +207,12 @@ public final class CodeVerificationRequest {
         TextSecurePreferences.setUnauthorizedReceived(context, false);
     }
 
-    private static @Nullable byte[] findExistingProfileKey(@NonNull Context context, @NonNull String e164number) {
+    private static @Nullable ProfileKey findExistingProfileKey(@NonNull Context context, @NonNull String e164number) {
         RecipientDatabase     recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
         Optional<RecipientId> recipient         = recipientDatabase.getByE164(e164number);
 
         if (recipient.isPresent()) {
-            return Recipient.resolved(recipient.get()).getProfileKey();
+            return ProfileKeyUtil.profileKeyOrNull(Recipient.resolved(recipient.get()).getProfileKey());
         }
 
         return null;

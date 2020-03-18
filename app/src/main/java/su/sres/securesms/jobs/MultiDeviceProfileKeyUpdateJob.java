@@ -11,6 +11,7 @@ import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
+import su.sres.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -69,7 +70,7 @@ public class MultiDeviceProfileKeyUpdateJob extends BaseJob {
             return;
         }
 
-        Optional<byte[]> profileKey = Optional.of(ProfileKeyUtil.getProfileKey(context));
+        Optional<ProfileKey>       profileKey = Optional.of(ProfileKeyUtil.getSelfProfileKey());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DeviceContactsOutputStream out = new DeviceContactsOutputStream(baos);
 

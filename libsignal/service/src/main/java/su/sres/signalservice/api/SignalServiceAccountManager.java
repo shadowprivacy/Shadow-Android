@@ -8,6 +8,7 @@ package su.sres.signalservice.api;
 
 import com.google.protobuf.ByteString;
 
+import su.sres.zkgroup.profiles.ProfileKey;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.IdentityKeyPair;
 import org.whispersystems.libsignal.InvalidKeyException;
@@ -16,12 +17,14 @@ import org.whispersystems.libsignal.logging.Log;
 import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 import org.whispersystems.libsignal.util.guava.Optional;
+import su.sres.signalservice.FeatureFlags;
 
 import su.sres.signalservice.api.crypto.ProfileCipher;
 import su.sres.signalservice.api.crypto.ProfileCipherOutputStream;
 import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
 import su.sres.signalservice.api.messages.calls.TurnServerInfo;
 import su.sres.signalservice.api.messages.multidevice.DeviceInfo;
+import su.sres.signalservice.api.profiles.SignalServiceProfileWrite;
 import su.sres.signalservice.api.push.ContactTokenDetails;
 import su.sres.signalservice.api.push.SignedPreKeyEntity;
 import su.sres.signalservice.api.push.exceptions.NotFoundException;
@@ -49,6 +52,7 @@ import su.sres.signalservice.internal.util.Util;
 import su.sres.util.Base64;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -466,17 +470,23 @@ public class SignalServiceAccountManager {
         return this.pushServiceSocket.getConfigurationInfo();
     }
 
-    public void setProfileName(byte[] key, String name)
+    public void setProfileName(ProfileKey key, String name)
             throws IOException {
+        if (FeatureFlags.VERSIONED_PROFILES) {
+            throw new AssertionError();
+        }
         if (name == null) name = "";
 
-        String ciphertextName = Base64.encodeBytesWithoutPadding(new ProfileCipher(key).encryptName(name.getBytes("UTF-8"), ProfileCipher.NAME_PADDED_LENGTH));
+        String ciphertextName = Base64.encodeBytesWithoutPadding(new ProfileCipher(key).encryptName(name.getBytes(StandardCharsets.UTF_8), ProfileCipher.NAME_PADDED_LENGTH));
 
         this.pushServiceSocket.setProfileName(ciphertextName);
     }
 
-    public void setProfileAvatar(byte[] key, StreamDetails avatar)
+    public void setProfileAvatar(ProfileKey key, StreamDetails avatar)
             throws IOException {
+        if (FeatureFlags.VERSIONED_PROFILES) {
+            throw new AssertionError();
+        }
         ProfileAvatarData profileAvatarData = null;
 
         if (avatar != null) {
@@ -487,6 +497,33 @@ public class SignalServiceAccountManager {
         }
 
         this.pushServiceSocket.setProfileAvatar(profileAvatarData);
+    }
+
+    public void setVersionedProfile(ProfileKey profileKey, String name, StreamDetails avatar)
+            throws IOException
+    {
+        if (!FeatureFlags.VERSIONED_PROFILES) {
+            throw new AssertionError();
+        }
+
+        if (name == null) name = "";
+
+        byte[]            ciphertextName    = new ProfileCipher(profileKey).encryptName(name.getBytes(StandardCharsets.UTF_8), ProfileCipher.NAME_PADDED_LENGTH);
+        boolean           hasAvatar         = avatar != null;
+        ProfileAvatarData profileAvatarData = null;
+
+        if (hasAvatar) {
+            profileAvatarData = new ProfileAvatarData(avatar.getStream(),
+                    ProfileCipherOutputStream.getCiphertextLength(avatar.getLength()),
+                    avatar.getContentType(),
+                    new ProfileCipherOutputStreamFactory(profileKey));
+        }
+
+        this.pushServiceSocket.writeProfile(new SignalServiceProfileWrite(profileKey.getProfileKeyVersion().serialize(),
+                        ciphertextName,
+                        hasAvatar,
+                        profileKey.getCommitment().serialize()),
+                profileAvatarData);
     }
 
     public void setUsername(String username) throws IOException {

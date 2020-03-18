@@ -11,6 +11,7 @@ import android.util.Pair;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
+import su.sres.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.DatabaseAttachment;
@@ -19,6 +20,7 @@ import su.sres.securesms.attachments.TombstoneAttachment;
 import su.sres.securesms.attachments.UriAttachment;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.contactshare.ContactModelMapper;
+import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.SecurityEvent;
 import su.sres.securesms.crypto.storage.TextSecureSessionStore;
 import su.sres.securesms.database.AttachmentDatabase;
@@ -102,7 +104,6 @@ import su.sres.signalservice.api.messages.shared.SharedContact;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.io.IOException;
-import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -273,8 +274,8 @@ public final class PushProcessMessageJob extends BaseJob {
           handleUnknownGroupMessage(content, message.getGroupInfo().get());
         }
 
-        if (message.getProfileKey().isPresent() && message.getProfileKey().get().length == 32) {
-          handleProfileKey(content, message);
+        if (message.getProfileKey().isPresent()) {
+          handleProfileKey(content, message.getProfileKey().get());
         }
 
         if (content.isNeedsReceipt()) {
@@ -1181,13 +1182,15 @@ public final class PushProcessMessageJob extends BaseJob {
   }
 
   private void handleProfileKey(@NonNull SignalServiceContent content,
-                                @NonNull SignalServiceDataMessage message)
+                                @NonNull byte[] messageProfileKeyBytes)
   {
-    RecipientDatabase database  = DatabaseFactory.getRecipientDatabase(context);
-    Recipient         recipient = Recipient.externalPush(context, content.getSender());
+    RecipientDatabase database          = DatabaseFactory.getRecipientDatabase(context);
+    Recipient         recipient         = Recipient.externalPush(context, content.getSender());
+    ProfileKey        currentProfileKey = ProfileKeyUtil.profileKeyOrNull(recipient.getProfileKey());
+    ProfileKey        messageProfileKey = ProfileKeyUtil.profileKeyOrNull(messageProfileKeyBytes);
 
-    if (recipient.getProfileKey() == null || !MessageDigest.isEqual(recipient.getProfileKey(), message.getProfileKey().get())) {
-      database.setProfileKey(recipient.getId(), message.getProfileKey().get());
+    if (messageProfileKey != null && !messageProfileKey.equals(currentProfileKey)) {
+      database.setProfileKey(recipient.getId(), messageProfileKey);
       database.setUnidentifiedAccessMode(recipient.getId(), RecipientDatabase.UnidentifiedAccessMode.UNKNOWN);
       ApplicationDependencies.getJobManager().add(new RetrieveProfileJob(recipient));
     }

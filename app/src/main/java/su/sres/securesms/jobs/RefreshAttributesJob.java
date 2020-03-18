@@ -10,9 +10,9 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 
 import su.sres.securesms.crypto.ProfileKeyUtil;
-import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
+import su.sres.signalservice.api.crypto.UnidentifiedAccess;
 import su.sres.signalservice.api.push.exceptions.NetworkFailureException;
 
 import java.io.IOException;
@@ -49,7 +49,7 @@ public class RefreshAttributesJob extends BaseJob  {
     int     registrationId              = TextSecurePreferences.getLocalRegistrationId(context);
     boolean fetchesMessages             = TextSecurePreferences.isFcmDisabled(context);
     String  pin                         = TextSecurePreferences.getRegistrationLockPin(context);
-    byte[]    unidentifiedAccessKey       = UnidentifiedAccessUtil.getSelfUnidentifiedAccessKey(ProfileKeyUtil.getProfileKey(context));
+    byte[]    unidentifiedAccessKey       = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
     boolean universalUnidentifiedAccess = TextSecurePreferences.isUniversalUnidentifiedAccess(context);
 
     SignalServiceAccountManager signalAccountManager = ApplicationDependencies.getSignalServiceAccountManager();

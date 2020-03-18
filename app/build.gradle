@@ -229,6 +229,7 @@ android {
         buildConfigField "String", "CONTENT_PROXY_HOST", "\"contentproxy.signal.org\""
         buildConfigField "int", "CONTENT_PROXY_PORT", "443"
         buildConfigField "String", "SIGNAL_AGENT", "\"OWA\""
+        buildConfigField "String", "ZKGROUP_SERVER_PUBLIC_PARAMS", "\"\""
         buildConfigField "String[]", "LANGUAGES", "new String[]{\"" + autoResConfig().collect { s -> s.replace('-r', '_') }.join('", "') + '"}'
         buildConfigField "int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode"
 
@@ -295,9 +296,7 @@ android {
         staging {
             initWith debug
 
-            buildConfigField "String", "STORAGE_URL", "\"https://example.org\""
-            buildConfigField "String", "SIGNAL_CDN_URL", "\"https://example.org\""
-            buildConfigField "String", "UNIDENTIFIED_SENDER_TRUST_ROOT", "\"yourpublickeyhere\""
+            buildConfigField "String", "ZKGROUP_SERVER_PUBLIC_PARAMS", "\"\""
         }
 
         release {

@@ -3,8 +3,11 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.zkgroup.profiles.ProfileKey;
+import su.sres.zkgroup.profiles.ProfileKeyCredential;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -12,9 +15,12 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.ProfileUtil;
 import su.sres.securesms.util.TextSecurePreferences;
+import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.crypto.InvalidCiphertextException;
+import su.sres.signalservice.api.profiles.ProfileAndCredential;
 import su.sres.signalservice.api.profiles.SignalServiceProfile;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
@@ -58,11 +64,31 @@ public class RefreshOwnProfileJob extends BaseJob {
 
     @Override
     protected void onRun() throws Exception {
-        SignalServiceProfile profile = ProfileUtil.retrieveProfile(context, Recipient.self());
+        Recipient            self                 = Recipient.self();
+        ProfileAndCredential profileAndCredential = ProfileUtil.retrieveProfile(context, self, getRequestType(self));
+        SignalServiceProfile profile              = profileAndCredential.getProfile();
 
         setProfileName(profile.getName());
         setProfileAvatar(profile.getAvatar());
         setProfileCapabilities(profile.getCapabilities());
+        Optional<ProfileKeyCredential> profileKeyCredential = profileAndCredential.getProfileKeyCredential();
+        if (profileKeyCredential.isPresent()) {
+            setProfileKeyCredential(self, ProfileKeyUtil.getSelfProfileKey(), profileKeyCredential.get());
+        }
+    }
+
+    private void setProfileKeyCredential(@NonNull Recipient recipient,
+                                         @NonNull ProfileKey recipientProfileKey,
+                                         @NonNull ProfileKeyCredential credential)
+    {
+        RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+        recipientDatabase.setProfileKeyCredential(recipient.getId(), recipientProfileKey, credential);
+    }
+
+    private static SignalServiceProfile.RequestType getRequestType(@NonNull Recipient recipient) {
+        return FeatureFlags.VERSIONED_PROFILES && !recipient.hasProfileKeyCredential()
+                ? SignalServiceProfile.RequestType.PROFILE_AND_CREDENTIAL
+                : SignalServiceProfile.RequestType.PROFILE;
     }
 
     @Override
@@ -75,7 +101,7 @@ public class RefreshOwnProfileJob extends BaseJob {
 
     private void setProfileName(@Nullable String encryptedName) {
         try {
-            byte[]      profileKey    = ProfileKeyUtil.getProfileKey(context);
+            ProfileKey  profileKey    = ProfileKeyUtil.getSelfProfileKey();
             String      plaintextName = ProfileUtil.decryptName(profileKey, encryptedName);
             ProfileName profileName   = ProfileName.fromSerialized(plaintextName);
 
@@ -86,7 +112,7 @@ public class RefreshOwnProfileJob extends BaseJob {
         }
     }
 
-    private void setProfileAvatar(@Nullable String avatar) {
+    private static void setProfileAvatar(@Nullable String avatar) {
         ApplicationDependencies.getJobManager().add(new RetrieveProfileAvatarJob(Recipient.self(), avatar));
     }
 

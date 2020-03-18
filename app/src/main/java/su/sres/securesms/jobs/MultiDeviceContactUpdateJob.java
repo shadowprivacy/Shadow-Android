@@ -8,7 +8,9 @@ import android.provider.ContactsContract;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.ApplicationContext;
+import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
@@ -137,7 +139,7 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
                     getSystemAvatar(recipient.getContactUri()),
                     Optional.fromNullable(recipient.getColor().serialize()),
                     verifiedMessage,
-                    Optional.fromNullable(recipient.getProfileKey()),
+                    ProfileKeyUtil.profileKeyOptional(recipient.getProfileKey()),
                     recipient.isBlocked(),
                     recipient.getExpireMessages() > 0 ? Optional.of(recipient.getExpireMessages())
                             : Optional.absent(),
@@ -183,7 +185,7 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
                 Optional<VerifiedMessage> verified = getVerifiedMessage(recipient, identity);
                 Optional<String> name = Optional.fromNullable(recipient.getName(context));
                 Optional<String> color = Optional.of(recipient.getColor().serialize());
-                Optional<byte[]> profileKey = Optional.fromNullable(recipient.getProfileKey());
+                Optional<ProfileKey>                      profileKey    = ProfileKeyUtil.profileKeyOptional(recipient.getProfileKey());
                 boolean blocked = recipient.isBlocked();
                 Optional<Integer> expireTimer = recipient.getExpireMessages() > 0 ? Optional.of(recipient.getExpireMessages()) : Optional.absent();
                 Optional<Integer> inboxPosition = Optional.fromNullable(inboxPositions.get(recipient.getId()));
@@ -209,7 +211,7 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
                         Optional.absent(),
                         Optional.of(self.getColor().serialize()),
                         Optional.absent(),
-                        Optional.of(profileKey),
+                        ProfileKeyUtil.profileKeyOptionalOrThrow(self.getProfileKey()),
                         false,
                         self.getExpireMessages() > 0 ? Optional.of(self.getExpireMessages()) : Optional.absent(),
                         Optional.fromNullable(inboxPositions.get(self.getId())),

@@ -5,6 +5,9 @@ import androidx.annotation.Nullable;
 
 import android.text.TextUtils;
 
+import su.sres.zkgroup.profiles.ProfileKey;
+import su.sres.zkgroup.profiles.ProfileKeyCredential;
+import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
@@ -23,8 +26,10 @@ import su.sres.securesms.util.ProfileUtil;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
+import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.crypto.InvalidCiphertextException;
 import su.sres.signalservice.api.crypto.ProfileCipher;
+import su.sres.signalservice.api.profiles.ProfileAndCredential;
 import su.sres.signalservice.api.profiles.SignalServiceProfile;
 
 import java.io.IOException;
@@ -91,9 +96,11 @@ public class RetrieveProfileJob extends BaseJob  {
   }
 
   private void handlePhoneNumberRecipient(Recipient recipient) throws IOException {
-    SignalServiceProfile profile = ProfileUtil.retrieveProfile(context, recipient);
+    ProfileAndCredential profileAndCredential = ProfileUtil.retrieveProfile(context, recipient, getRequestType(recipient));
+    SignalServiceProfile profile              = profileAndCredential.getProfile();
+    ProfileKey           recipientProfileKey  = ProfileKeyUtil.profileKeyOrNull(recipient.getProfileKey());
 
-    if (recipient.getProfileKey() == null) {
+    if (recipientProfileKey == null) {
       Log.i(TAG, "No profile key available for " + recipient.getId());
     } else {
       Log.i(TAG, "Profile key available for " + recipient.getId());
@@ -105,6 +112,27 @@ public class RetrieveProfileJob extends BaseJob  {
     setProfileCapabilities(recipient, profile.getCapabilities());
     setIdentityKey(recipient, profile.getIdentityKey());
     setUnidentifiedAccessMode(recipient, profile.getUnidentifiedAccess(), profile.isUnrestrictedUnidentifiedAccess());
+
+    if (recipientProfileKey != null) {
+      Optional<ProfileKeyCredential> profileKeyCredential = profileAndCredential.getProfileKeyCredential();
+      if (profileKeyCredential.isPresent()) {
+        setProfileKeyCredential(recipient, recipientProfileKey, profileKeyCredential.get());
+      }
+    }
+  }
+
+  private void setProfileKeyCredential(@NonNull Recipient recipient,
+                                       @NonNull ProfileKey recipientProfileKey,
+                                       @NonNull ProfileKeyCredential credential)
+  {
+    RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+    recipientDatabase.setProfileKeyCredential(recipient.getId(), recipientProfileKey, credential);
+  }
+
+  private static SignalServiceProfile.RequestType getRequestType(@NonNull Recipient recipient) {
+    return FeatureFlags.VERSIONED_PROFILES && !recipient.hasProfileKeyCredential()
+            ? SignalServiceProfile.RequestType.PROFILE_AND_CREDENTIAL
+            : SignalServiceProfile.RequestType.PROFILE;
   }
 
   private void handleGroupRecipient(Recipient group) throws IOException {
@@ -140,7 +168,7 @@ public class RetrieveProfileJob extends BaseJob  {
 
   private void setUnidentifiedAccessMode(Recipient recipient, String unidentifiedAccessVerifier, boolean unrestrictedUnidentifiedAccess) {
     RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-    byte[]            profileKey        = recipient.getProfileKey();
+    ProfileKey        profileKey        = ProfileKeyUtil.profileKeyOrNull(recipient.getProfileKey());
 
     if (unrestrictedUnidentifiedAccess && unidentifiedAccessVerifier != null) {
       if (recipient.getUnidentifiedAccessMode() != UnidentifiedAccessMode.UNRESTRICTED) {
@@ -174,7 +202,7 @@ public class RetrieveProfileJob extends BaseJob  {
 
   private void setProfileName(Recipient recipient, String profileName) {
     try {
-      byte[] profileKey = recipient.getProfileKey();
+      ProfileKey profileKey = ProfileKeyUtil.profileKeyOrNull(recipient.getProfileKey());
       if (profileKey == null) return;
 
       String plaintextProfileName = ProfileUtil.decryptName(profileKey, profileName);

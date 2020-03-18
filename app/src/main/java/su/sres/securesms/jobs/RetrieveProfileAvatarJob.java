@@ -3,6 +3,8 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
+import su.sres.zkgroup.profiles.ProfileKey;
+import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -37,8 +39,8 @@ public class RetrieveProfileAvatarJob extends BaseJob  {
   private static final String KEY_PROFILE_AVATAR = "profile_avatar";
   private static final String KEY_RECIPIENT      = "recipient";
 
-  private String    profileAvatar;
-  private Recipient recipient;
+  private final String    profileAvatar;
+  private final Recipient recipient;
 
   public RetrieveProfileAvatarJob(Recipient recipient, String profileAvatar) {
     this(new Job.Parameters.Builder()
@@ -73,7 +75,7 @@ public class RetrieveProfileAvatarJob extends BaseJob  {
   @Override
   public void onRun() throws IOException {
     RecipientDatabase database   = DatabaseFactory.getRecipientDatabase(context);
-    byte[]            profileKey = recipient.resolve().getProfileKey();
+    ProfileKey        profileKey = ProfileKeyUtil.profileKeyOrNull(recipient.resolve().getProfileKey());
 
     if (profileKey == null) {
       Log.w(TAG, "Recipient profile key is gone!");

@@ -18,6 +18,7 @@ import su.sres.signalservice.api.storage.SignalContactRecord;
 import su.sres.signalservice.api.storage.SignalContactRecord.IdentityState;
 import su.sres.signalservice.api.storage.SignalStorageManifest;
 import su.sres.signalservice.api.storage.SignalStorageRecord;
+import su.sres.signalservice.api.util.OptionalUtil;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -362,7 +363,7 @@ public final class StorageSyncHelper {
         private final SignalContactRecord oldContact;
         private final SignalContactRecord newContact;
 
-        public ContactUpdate(@NonNull SignalContactRecord oldContact, @NonNull SignalContactRecord newContact) {
+        ContactUpdate(@NonNull SignalContactRecord oldContact, @NonNull SignalContactRecord newContact) {
             this.oldContact = oldContact;
             this.newContact = newContact;
         }
@@ -375,6 +376,10 @@ public final class StorageSyncHelper {
         public @NonNull
         SignalContactRecord getNewContact() {
             return newContact;
+        }
+
+        public boolean profileKeyChanged() {
+            return !OptionalUtil.byteArrayEquals(oldContact.getProfileKey(), newContact.getProfileKey());
         }
 
         @Override
@@ -494,7 +499,7 @@ public final class StorageSyncHelper {
         private final WriteOperationResult     writeResult;
         private final Map<RecipientId, byte[]> storageKeyUpdates;
 
-        public LocalWriteResult(WriteOperationResult writeResult, Map<RecipientId, byte[]> storageKeyUpdates) {
+        private LocalWriteResult(WriteOperationResult writeResult, Map<RecipientId, byte[]> storageKeyUpdates) {
             this.writeResult       = writeResult;
             this.storageKeyUpdates = storageKeyUpdates;
         }
