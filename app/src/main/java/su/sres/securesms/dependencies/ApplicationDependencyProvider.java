@@ -56,6 +56,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
 
     @Override
     public @NonNull SignalServiceAccountManager provideSignalServiceAccountManager() {
+        networkAccess.renewConfiguration(context);
         return new SignalServiceAccountManager(networkAccess.getConfiguration(context),
                 new DynamicCredentialsProvider(context),
                 BuildConfig.SIGNAL_AGENT);
@@ -63,6 +64,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
 
     @Override
     public @NonNull SignalServiceMessageSender provideSignalServiceMessageSender() {
+        networkAccess.renewConfiguration(context);
         return new SignalServiceMessageSender(networkAccess.getConfiguration(context),
                 new DynamicCredentialsProvider(context),
                 new SignalProtocolStoreImpl(context),
@@ -77,6 +79,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     public @NonNull SignalServiceMessageReceiver provideSignalServiceMessageReceiver() {
         SleepTimer sleepTimer = TextSecurePreferences.isFcmDisabled(context) ? new AlarmSleepTimer(context)
                 : new UptimeSleepTimer();
+        networkAccess.renewConfiguration(context);
         return new SignalServiceMessageReceiver(networkAccess.getConfiguration(context),
                 new DynamicCredentialsProvider(context),
                 BuildConfig.SIGNAL_AGENT,
@@ -121,10 +124,10 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
         return new FrameRateTracker(context);
     }
 
-    @Override
-    public @NonNull KeyValueStore provideKeyValueStore() {
-        return new KeyValueStore(context);
-    }
+//    @Override
+//    public @NonNull KeyValueStore provideKeyValueStore() {
+//        return new KeyValueStore(context);
+//    }
 
     @Override
     public @NonNull MegaphoneRepository provideMegaphoneRepository() {

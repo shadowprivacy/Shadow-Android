@@ -8,6 +8,7 @@ import su.sres.securesms.events.ReminderUpdateEvent;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -59,7 +60,7 @@ public class ServiceOutageDetectionJob extends BaseJob {
     }
 
     try {
-      InetAddress address = InetAddress.getByName(TextSecurePreferences.getStatusUrl(context));
+      InetAddress address = InetAddress.getByName(SignalStore.serviceConfigurationValues().getStatusUrl());
       Log.i(TAG, "Received outage check address: " + address.getHostAddress());
 
       if (IP_SUCCESS.equals(address.getHostAddress())) {

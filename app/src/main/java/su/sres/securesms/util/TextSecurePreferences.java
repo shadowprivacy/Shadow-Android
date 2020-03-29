@@ -207,13 +207,7 @@ public class TextSecurePreferences {
 
   private static final String HAS_SEEN_VIDEO_RECORDING_TOOLTIP = "camerax.fragment.has.dismissed.video.recording.tooltip";
 
-  private static final String SHADOW_SERVER_URL = "pref_shadow_server_url";
-
-  private static final String STORAGE_URL = "pref_storage_url";
-  private static final String CLOUD_URL = "pref_cloud_url";
-  private static final String STATUS_URL = "pref_status_url";
-
-  private static final String UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY = "pref_unidentified_access_certificate_ca_public_key";
+  private static final String HAS_STICKERS_DOWNLOADED = "pref_has_stickers_downloaded";
 
   public static boolean isScreenLockEnabled(@NonNull Context context) {
     return getBooleanPreference(context, SCREEN_LOCK, false);
@@ -1233,6 +1227,14 @@ public class TextSecurePreferences {
     setBooleanPreference(context, ARGON2_TESTED, tested);
   }
 
+  public static boolean areStickersDownloaded(Context context) {
+      return getBooleanPreference(context, HAS_STICKERS_DOWNLOADED, false);
+  }
+
+  public static void setStickersDownloaded(Context context, boolean done) {
+      setBooleanPreference(context, HAS_STICKERS_DOWNLOADED, done);
+  }
+
   public static void setBooleanPreference(Context context, String key, boolean value) {
     PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean(key, value).apply();
   }
@@ -1280,46 +1282,6 @@ public class TextSecurePreferences {
     } else {
       return defaultValues;
     }
-  }
-
-  public static void setShadowServerUrl(Context context, String value) {
-    setStringPreference(context, SHADOW_SERVER_URL, value);
-  }
-
-  public static String getShadowServerUrl(Context context) {
-    return getStringPreference(context, SHADOW_SERVER_URL, "https://example.org");
-  }
-
-  public static void setStatusUrl(Context context, String value) {
-    setStringPreference(context, STATUS_URL, value);
-  }
-
-  public static String getStatusUrl(Context context) {
-    return getStringPreference(context, STATUS_URL, "https://example.org");
-  }
-
-  public static void setCloudUrl(Context context, String value) {
-    setStringPreference(context, CLOUD_URL, value);
-  }
-
-  public static String getCloudUrl(Context context) {
-    return getStringPreference(context, CLOUD_URL, "https://example.org");
-  }
-
-  public static void setStorageUrl(Context context, String value) {
-    setStringPreference(context, STORAGE_URL, value);
-  }
-
-  public static String getStorageUrl(Context context) {
-    return getStringPreference(context, STORAGE_URL, "https://example.org");
-  }
-
-  public static void setUnidentifiedAccessCaPublicKey(Context context, byte[] value) {
-    setStringPreference(context, UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY, Base64.encodeBytes(value));
-  }
-
-  public static String getUnidentifiedAccessCaPublicKey(Context context) {
-    return getStringPreference(context, UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY, null);
   }
 
   // NEVER rename these -- they're persisted by name

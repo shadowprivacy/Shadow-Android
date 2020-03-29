@@ -454,7 +454,7 @@
 
     <string name="InitialActivity_registration">Registration</string>
     <string name="InitialActivity_you_must_specify_the_server_address_and_port">You must specify the server address and port</string>
-    <string name="InitialActivity_invalid_URL">The URL is invalid</string>
+    <string name="InitialActivity_invalid_URL">One or more URLs are invalid. Refer to your administrator.</string>
     <string name="InitialActivity_scan_qr_code">Scan the registration QR-code provided by your administrator</string>
     <string name="InitialActivity_qr_code_invalid">The scanned QR-code is invalid. Refer to your administrator.</string>
     <string name="InitialActivity_qr_code_unparseable">Error parsing the QR-code. Refer to your administrator.</string>

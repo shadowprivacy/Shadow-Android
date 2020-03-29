@@ -428,7 +428,7 @@
 
   <string name="InitialActivity_registration">Регистрация</string>
   <string name="InitialActivity_you_must_specify_the_server_address_and_port">Укажите адрес и порт сервера</string>
-  <string name="InitialActivity_invalid_URL">Некорректное URL</string>
+  <string name="InitialActivity_invalid_URL">Одно или несколько URL некорректны. Обратитесь к своему администратору.</string>
   <string name="InitialActivity_scan_qr_code">Отсканируйте QR-код, предоставленный вашим администратором</string>
   <string name="InitialActivity_qr_code_invalid">Отсканированный QR-код недействителен. Обратитесь к своему администратору.</string>
   <string name="InitialActivity_qr_code_unparseable">Ошибка чтения QR-кода. Обратитесь к своему администратору.</string>

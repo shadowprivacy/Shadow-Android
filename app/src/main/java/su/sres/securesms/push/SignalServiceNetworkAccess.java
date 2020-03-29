@@ -1,9 +1,11 @@
 package su.sres.securesms.push;
 
 import android.content.Context;
+
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.BuildConfig;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.net.UserAgentInterceptor;
 // import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.util.Base64;
@@ -21,50 +23,56 @@ import okhttp3.Interceptor;
 
 public class SignalServiceNetworkAccess {
 
-  @SuppressWarnings("unused")
-  private static final String TAG = SignalServiceNetworkAccess.class.getSimpleName();
+    @SuppressWarnings("unused")
+    private static final String TAG = SignalServiceNetworkAccess.class.getSimpleName();
 
-  private final SignalServiceConfiguration              Configuration;
-
-  public SignalServiceNetworkAccess(Context context) {
+    private SignalServiceConfiguration Configuration;
 
     final List<Interceptor> interceptors = Collections.singletonList(new UserAgentInterceptor());
     final byte[] zkGroupServerPublicParams;
 
-    try {
-      zkGroupServerPublicParams = Base64.decode(BuildConfig.ZKGROUP_SERVER_PUBLIC_PARAMS);
-    } catch (IOException e) {
-      throw new AssertionError(e);
+    public SignalServiceNetworkAccess(Context context) {
+
+//        final List<Interceptor> interceptors = Collections.singletonList(new UserAgentInterceptor());
+//        final byte[] zkGroupServerPublicParams;
+
+        try {
+            zkGroupServerPublicParams = Base64.decode(BuildConfig.ZKGROUP_SERVER_PUBLIC_PARAMS);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+
+        }
+
+
+/**        this.Configuration = new SignalServiceConfiguration(new SignalServiceUrl[]{new SignalServiceUrl(SignalStore.serviceConfigurationValues().getShadowUrl(), new SignalServiceTrustStore(context))},
+                new SignalCdnUrl[]{new SignalCdnUrl(SignalStore.serviceConfigurationValues().getCloudUrl(), new SignalServiceTrustStore(context))},
+                new SignalStorageUrl[]{new SignalStorageUrl(SignalStore.serviceConfigurationValues().getStorageUrl(), new SignalServiceTrustStore(context))}, interceptors,
+                zkGroupServerPublicParams); */
+
+        renewConfiguration(context, interceptors, zkGroupServerPublicParams);
+
 
     }
 
-    // taking the server URL from the config database
-//    this.uncensoredConfiguration = new SignalServiceConfiguration(new SignalServiceUrl[] {new SignalServiceUrl(DatabaseFactory.getConfigDatabase(context).getConfigById(1), new SignalServiceTrustStore(context))},
-    this.Configuration = new SignalServiceConfiguration(new SignalServiceUrl[] {new SignalServiceUrl(TextSecurePreferences.getShadowServerUrl(context), new SignalServiceTrustStore(context))},
-                                                                  new SignalCdnUrl[] {new SignalCdnUrl(TextSecurePreferences.getCloudUrl(context), new SignalServiceTrustStore(context))},
-            new SignalStorageUrl[] {new SignalStorageUrl(TextSecurePreferences.getStorageUrl(context), new SignalServiceTrustStore(context))}, interceptors,
-            zkGroupServerPublicParams);
+    public SignalServiceConfiguration getConfiguration(Context context) {
+        String localNumber = TextSecurePreferences.getLocalNumber(context);
+        return getConfiguration(localNumber);
+    }
 
-  }
+    public SignalServiceConfiguration getConfiguration(@Nullable String localNumber) {
+        return this.Configuration;
+    }
 
-  public SignalServiceConfiguration getConfiguration(Context context) {
-    String localNumber = TextSecurePreferences.getLocalNumber(context);
-    return getConfiguration(localNumber);
-  }
+    public void renewConfiguration(Context context, List<Interceptor> interceptors, byte[] zkGroupServerPublicParams) {
+        this.Configuration = new SignalServiceConfiguration(new SignalServiceUrl[]{new SignalServiceUrl(SignalStore.serviceConfigurationValues().getShadowUrl(), new SignalServiceTrustStore(context))},
+                new SignalCdnUrl[]{new SignalCdnUrl(SignalStore.serviceConfigurationValues().getCloudUrl(), new SignalServiceTrustStore(context))},
+                new SignalStorageUrl[]{new SignalStorageUrl(SignalStore.serviceConfigurationValues().getStorageUrl(), new SignalServiceTrustStore(context))}, interceptors,
+                zkGroupServerPublicParams);
+    }
 
-  public SignalServiceConfiguration getConfiguration(@Nullable String localNumber) {
- //    if (localNumber == null) return this.uncensoredConfiguration;
-     return this.Configuration;
-  }
+    public void renewConfiguration(Context context) {
+        renewConfiguration(context, interceptors, zkGroupServerPublicParams);
+    }
 
-/*  public boolean isCensored(Context context) {
-    return getConfiguration(context) != this.uncensoredConfiguration;
-  }
-
-  public boolean isCensored(String number) {
-    return getConfiguration(number) != this.uncensoredConfiguration;
-  }
-
- */
 
 }

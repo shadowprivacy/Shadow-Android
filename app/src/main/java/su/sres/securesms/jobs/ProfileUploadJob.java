@@ -4,6 +4,8 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
+import su.sres.securesms.push.SignalServiceNetworkAccess;
+import su.sres.signalservice.internal.configuration.SignalServiceConfiguration;
 import su.sres.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -45,6 +47,8 @@ public final class ProfileUploadJob extends BaseJob {
     protected void onRun() throws Exception {
         ProfileKey  profileKey  = ProfileKeyUtil.getSelfProfileKey();
         ProfileName profileName = TextSecurePreferences.getProfileName(context);
+
+        accountManager.updatePushServiceSocket(new SignalServiceNetworkAccess(context).getConfiguration(context));
 
         try (StreamDetails avatar = AvatarHelper.getSelfProfileAvatarStream(context)) {
             if (FeatureFlags.VERSIONED_PROFILES) {

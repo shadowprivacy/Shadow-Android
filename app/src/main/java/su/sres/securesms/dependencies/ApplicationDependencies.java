@@ -20,7 +20,8 @@ import su.sres.signalservice.api.SignalServiceMessageSender;
 
 /**
  * Location for storing and retrieving application-scoped singletons. Users must call
- * {@link #init(Application, Provider)} before using any of the methods, preferably early on in
+ * {@link #networkIndependentProviderInit(Application, NetworkIndependentProvider)} and
+ * {@link #networkDependentProviderInit(Provider)} before using any of the methods, preferably early on in
  * {@link Application#onCreate()}.
  *
  * All future application-scoped singletons should be written as normal objects, then placed here
@@ -30,6 +31,7 @@ public class ApplicationDependencies {
 
     private static Application application;
     private static Provider    provider;
+    private static NetworkIndependentProvider networkIndependentProvider;
 
     private static SignalServiceAccountManager  accountManager;
     private static SignalServiceMessageSender   messageSender;
@@ -42,22 +44,32 @@ public class ApplicationDependencies {
     private static KeyValueStore                keyValueStore;
     private static MegaphoneRepository          megaphoneRepository;
 
-    public static synchronized void init(@NonNull Application application, @NonNull Provider provider) {
-        if (ApplicationDependencies.application != null || ApplicationDependencies.provider != null) {
+    public static synchronized void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
+        if (ApplicationDependencies.application != null || ApplicationDependencies.networkIndependentProvider != null) {
             throw new IllegalStateException("Already initialized!");
         }
 
-        ApplicationDependencies.application = application;
+        ApplicationDependencies.application                = application;
+        ApplicationDependencies.networkIndependentProvider = networkIndependentProvider;
+    }
+
+    public static synchronized void networkDependentProviderInit(@NonNull Provider provider) {
+        if (ApplicationDependencies.provider != null) {
+            throw new IllegalStateException("Already initialized!");
+        }
+
         ApplicationDependencies.provider    = provider;
     }
 
+
     public static @NonNull Application getApplication() {
-        assertInitialization();
+        assertNetworkIndependentInitialization();
+        assertNetworkDependentInitialization();
         return application;
     }
 
     public static synchronized @NonNull SignalServiceAccountManager getSignalServiceAccountManager() {
-        assertInitialization();
+        assertNetworkDependentInitialization();
 
         if (accountManager == null) {
             accountManager = provider.provideSignalServiceAccountManager();
@@ -67,7 +79,7 @@ public class ApplicationDependencies {
     }
 
     public static synchronized @NonNull SignalServiceMessageSender getSignalServiceMessageSender() {
-        assertInitialization();
+        assertNetworkDependentInitialization();
 
         if (messageSender == null) {
             messageSender = provider.provideSignalServiceMessageSender();
@@ -80,7 +92,7 @@ public class ApplicationDependencies {
     }
 
     public static synchronized @NonNull SignalServiceMessageReceiver getSignalServiceMessageReceiver() {
-        assertInitialization();
+        assertNetworkDependentInitialization();
 
         if (messageReceiver == null) {
             messageReceiver = provider.provideSignalServiceMessageReceiver();
@@ -90,17 +102,17 @@ public class ApplicationDependencies {
     }
 
     public static synchronized void resetSignalServiceMessageReceiver() {
-        assertInitialization();
+        assertNetworkDependentInitialization();
         messageReceiver = null;
     }
 
     public static synchronized @NonNull SignalServiceNetworkAccess getSignalServiceNetworkAccess() {
-        assertInitialization();
+        assertNetworkDependentInitialization();
         return provider.provideSignalServiceNetworkAccess();
     }
 
     public static synchronized @NonNull IncomingMessageProcessor getIncomingMessageProcessor() {
-        assertInitialization();
+        assertNetworkDependentInitialization();
 
         if (incomingMessageProcessor == null) {
             incomingMessageProcessor = provider.provideIncomingMessageProcessor();
@@ -110,7 +122,7 @@ public class ApplicationDependencies {
     }
 
     public static synchronized @NonNull MessageRetriever getMessageRetriever() {
-        assertInitialization();
+        assertNetworkDependentInitialization();
 
         if (messageRetriever == null) {
             messageRetriever = provider.provideMessageRetriever();
@@ -120,7 +132,7 @@ public class ApplicationDependencies {
     }
 
     public static synchronized @NonNull LiveRecipientCache getRecipientCache() {
-        assertInitialization();
+        assertNetworkDependentInitialization();
 
         if (recipientCache == null) {
             recipientCache = provider.provideRecipientCache();
@@ -130,7 +142,7 @@ public class ApplicationDependencies {
     }
 
     public static synchronized @NonNull JobManager getJobManager() {
-        assertInitialization();
+        assertNetworkDependentInitialization();
 
         if (jobManager == null) {
             jobManager = provider.provideJobManager();
@@ -140,7 +152,7 @@ public class ApplicationDependencies {
     }
 
     public static synchronized @NonNull FrameRateTracker getFrameRateTracker() {
-        assertInitialization();
+        assertNetworkDependentInitialization();
 
         if (frameRateTracker == null) {
             frameRateTracker = provider.provideFrameRateTracker();
@@ -150,17 +162,17 @@ public class ApplicationDependencies {
     }
 
     public static synchronized @NonNull KeyValueStore getKeyValueStore() {
-        assertInitialization();
+        assertNetworkIndependentInitialization();
 
         if (keyValueStore == null) {
-            keyValueStore = provider.provideKeyValueStore();
+            keyValueStore = networkIndependentProvider.provideKeyValueStore();
         }
 
         return keyValueStore;
     }
 
     public static synchronized @NonNull MegaphoneRepository getMegaphoneRepository() {
-        assertInitialization();
+        assertNetworkDependentInitialization();
 
         if (megaphoneRepository == null) {
             megaphoneRepository = provider.provideMegaphoneRepository();
@@ -169,8 +181,14 @@ public class ApplicationDependencies {
         return megaphoneRepository;
     }
 
-    private static void assertInitialization() {
+    private static void assertNetworkDependentInitialization() {
         if (application == null || provider == null) {
+            throw new UninitializedException();
+        }
+    }
+
+    private static void assertNetworkIndependentInitialization() {
+        if (application == null || networkIndependentProvider == null) {
             throw new UninitializedException();
         }
     }
@@ -185,8 +203,12 @@ public class ApplicationDependencies {
         @NonNull LiveRecipientCache provideRecipientCache();
         @NonNull JobManager provideJobManager();
         @NonNull FrameRateTracker provideFrameRateTracker();
-        @NonNull KeyValueStore provideKeyValueStore();
+// moved to NetworkIndependent       @NonNull KeyValueStore provideKeyValueStore();
         @NonNull MegaphoneRepository provideMegaphoneRepository();
+    }
+
+    public interface NetworkIndependentProvider {
+        @NonNull KeyValueStore provideKeyValueStore();
     }
 
     private static class UninitializedException extends IllegalStateException {

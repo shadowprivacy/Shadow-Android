@@ -12,6 +12,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.Argon2TestJob;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.stickers.BlessedPacks;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.VersionTracker;
@@ -39,7 +40,7 @@ public class ApplicationMigrations {
 
     private static final int LEGACY_CANONICAL_VERSION = 455;
 
-    public static final int CURRENT_VERSION = 9;
+    public static final int CURRENT_VERSION = 10;
 
     private static final class Version {
         static final int LEGACY             = 1;
@@ -51,6 +52,7 @@ public class ApplicationMigrations {
         static final int CACHED_ATTACHMENTS = 7;
         static final int STICKERS_LAUNCH    = 8;
         static final int TEST_ARGON2        = 9;
+        static final int SWOON_STICKERS     = 10;
     }
 
     /**
@@ -191,13 +193,17 @@ public class ApplicationMigrations {
             jobs.put(Version.CACHED_ATTACHMENTS, new CachedAttachmentsMigrationJob());
         }
 
-        if (lastSeenVersion < Version.STICKERS_LAUNCH) {
-            jobs.put(Version.STICKERS_LAUNCH, new StickerLaunchMigrationJob());
-        }
+//        if (lastSeenVersion < Version.STICKERS_LAUNCH) {
+//            jobs.put(Version.STICKERS_LAUNCH, new StickerLaunchMigrationJob());
+//        }
 
         if (lastSeenVersion < Version.TEST_ARGON2) {
             jobs.put(Version.TEST_ARGON2, new Argon2TestMigrationJob());
         }
+
+//        if (lastSeenVersion < Version.SWOON_STICKERS) {
+//            jobs.put(Version.SWOON_STICKERS, new StickerAdditionMigrationJob(BlessedPacks.SWOON_HANDS, BlessedPacks.SWOON_FACES));
+//        }
 
         return jobs;
     }

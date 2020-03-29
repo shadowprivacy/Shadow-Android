@@ -88,22 +88,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/verify_header" />
 
-            <TextView
-                android:id="@+id/restart_memo"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="32dp"
-                android:layout_marginEnd="32dp"
-                android:gravity="center"
-                android:text="@string/app_will_restart_to_apply_config"
-                android:textSize="18sp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/code"
-                app:layout_constraintVertical_bias="0.23" />
-
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </ScrollView>

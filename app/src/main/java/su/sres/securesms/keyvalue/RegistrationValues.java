@@ -31,10 +31,10 @@ public final class RegistrationValues {
                 .commit();
     }
 
-    @CheckResult
+/**    @CheckResult
     public synchronized boolean pinWasRequiredAtRegistration() {
         return store.getBoolean(PIN_REQUIRED, false);
-    }
+    } */
 
     @CheckResult
     public synchronized boolean isRegistrationComplete() {

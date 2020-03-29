@@ -25,6 +25,10 @@ public final class SignalStore {
         return new RegistrationValues(getStore());
     }
 
+    public static @NonNull ServiceConfigurationValues serviceConfigurationValues() {
+        return new ServiceConfigurationValues(getStore());
+    }
+
     public static String getRemoteConfig() {
         return getStore().getString(REMOTE_CONFIG, null);
     }

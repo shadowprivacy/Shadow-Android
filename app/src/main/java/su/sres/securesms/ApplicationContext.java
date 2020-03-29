@@ -43,6 +43,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.dependencies.ApplicationDependencyProvider;
+import su.sres.securesms.dependencies.NetworkIndependentProvider;
 import su.sres.securesms.gcm.FcmJobService;
 import su.sres.securesms.insights.InsightsOptOut;
 import su.sres.securesms.jobmanager.JobManager;
@@ -91,6 +92,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static su.sres.securesms.keyvalue.ServiceConfigurationValues.EXAMPLE_URI;
+
 /**
  * Will be called once when the TextSecure process is created.
  *
@@ -113,11 +116,9 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   private volatile boolean isAppVisible;
 
-  private boolean isServerSet,
+  private boolean isServiceConfigurationSet,
                   initializedOnCreate,
                   initializedOnStart = false;
-
-  private final String DEFAULT_SERVER_URL = "https://example.org";
 
   final InitWorker initWorker = new InitWorker();
 
@@ -133,15 +134,16 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeSecurityProvider();
     initializeLogging();
     initializeCrashHandling();
+    initializeNetworkIndependentProvider();
 
       initWorker.execute(() -> {
 
         while(!initializedOnCreate) {
 
-          // checking at subsequent launches of the app, if the server is already known in prefs, then no need for delay, just initialize immediately
-//                if (!DatabaseFactory.getConfigDatabase(this).getConfigById(1).equals(DEFAULT_SERVER_URL)) {
-          if (!TextSecurePreferences.getShadowServerUrl(this).equals(DEFAULT_SERVER_URL)) {
-            setServerSet(true);
+          // checking at subsequent launches of the app, if the server is already known in SignalStore, then no need for delay, just initialize immediately
+
+          if (!SignalStore.serviceConfigurationValues().getShadowUrl().equals(EXAMPLE_URI)) {
+            setServiceConfigurationSet(true);
             initializeOnCreate();
           } else {
             Log.i(TAG, "Waiting for the server URL to be configured...");
@@ -172,7 +174,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
       while(!initializedOnStart) {
 
-        if (getServerSet() && initializedOnCreate) {
+        if (getServiceConfigurationSet() && initializedOnCreate) {
           FeatureFlags.refresh();
           ApplicationDependencies.getRecipientCache().warmUp();
           ApplicationDependencies.getFrameRateTracker().begin();
@@ -279,8 +281,12 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     this.incomingMessageObserver = new IncomingMessageObserver(this);
   }
 
-  private void initializeAppDependencies() {
-    ApplicationDependencies.init(this, new ApplicationDependencyProvider(this, new SignalServiceNetworkAccess(this)));
+  private void initializeNetworkDependentProvider() {
+    ApplicationDependencies.networkDependentProviderInit(new ApplicationDependencyProvider(this, new SignalServiceNetworkAccess(this)));
+  }
+
+  private void initializeNetworkIndependentProvider() {
+      ApplicationDependencies.networkIndependentProviderInit(this, new NetworkIndependentProvider(this));
   }
 
   private void initializeFirstEverAppLaunch() {
@@ -304,10 +310,14 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
       TextSecurePreferences.setFirstInstallVersion(this, BuildConfig.CANONICAL_VERSION_CODE);
     }
 
-    if ((TextSecurePreferences.getFirstInstallVersion(this) != -1) && !TextSecurePreferences.getCloudUrl(this).equals("https://example.org")) {
+    if ((TextSecurePreferences.getFirstInstallVersion(this) != -1) && !SignalStore.serviceConfigurationValues().getCloudUrl().equals(EXAMPLE_URI)) {
       Log.i(TAG, "The cloud URL was not set on the previous sticker manifest download. Proceeding with sticker pack download");
-      ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
-      ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
+
+//   moved to Code Verification stage
+//      ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
+//      ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
+//      ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forReference(BlessedPacks.SWOON_HANDS.getPackId(), BlessedPacks.SWOON_HANDS.getPackKey()));
+//      ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forReference(BlessedPacks.SWOON_FACES.getPackId(), BlessedPacks.SWOON_FACES.getPackKey()));
     }
   }
 
@@ -449,12 +459,12 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     super.attachBaseContext(DynamicLanguageContextWrapper.updateContext(base, TextSecurePreferences.getLanguage(base)));
   }
 
-    public boolean getServerSet() {
-        return isServerSet;
+    public boolean getServiceConfigurationSet() {
+        return isServiceConfigurationSet;
     }
 
-    public void setServerSet(boolean flag) {
-        isServerSet = flag;
+    public void setServiceConfigurationSet(boolean flag) {
+        isServiceConfigurationSet = flag;
     }
 
   private static class ProviderInitializationException extends RuntimeException {
@@ -462,7 +472,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   private void initializeOnCreate() {
 
-    initializeAppDependencies();
+    initializeNetworkDependentProvider();
     initializeFirstEverAppLaunch();
     initializeApplicationMigrations();
     initializeMessageRetrieval();

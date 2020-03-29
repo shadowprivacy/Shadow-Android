@@ -165,9 +165,11 @@ public class PushServiceSocket {
   private       long      soTimeoutMillis = TimeUnit.SECONDS.toMillis(30);
   private final Set<Call> connections     = new HashSet<>();
 
-  private final ServiceConnectionHolder[]  serviceClients;
-  private final ConnectionHolder[]         cdnClients;
-  private final ConnectionHolder[]         storageClients;
+  private           ServiceConnectionHolder[]  serviceClients;
+  private // final
+                    ConnectionHolder[]         cdnClients;
+  private // final
+                    ConnectionHolder[]         storageClients;
 
   private final CredentialsProvider credentialsProvider;
   private final String              signalAgent;
@@ -1201,6 +1203,12 @@ public class PushServiceSocket {
 
   private ConnectionHolder getRandom(ConnectionHolder[] connections, SecureRandom random) {
     return connections[random.nextInt(connections.length)];
+  }
+
+  public void renewNetworkConfiguration(SignalServiceConfiguration signalServiceConfiguration) {
+//    this.serviceClients                    = createServiceConnectionHolders(signalServiceConfiguration.getSignalServiceUrls(), signalServiceConfiguration.getNetworkInterceptors());
+    this.cdnClients                        = createConnectionHolders(signalServiceConfiguration.getSignalCdnUrls(), signalServiceConfiguration.getNetworkInterceptors());
+    this.storageClients                    = createConnectionHolders(signalServiceConfiguration.getSignalStorageUrls(), signalServiceConfiguration.getNetworkInterceptors());
   }
 
   private static class GcmRegistrationId {

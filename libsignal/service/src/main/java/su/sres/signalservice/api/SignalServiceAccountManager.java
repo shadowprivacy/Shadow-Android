@@ -565,4 +565,8 @@ public class SignalServiceAccountManager {
         return tokenMap;
     }
 
+    public void updatePushServiceSocket(SignalServiceConfiguration configuration) {
+        this.pushServiceSocket.renewNetworkConfiguration(configuration);
+    }
+
 }

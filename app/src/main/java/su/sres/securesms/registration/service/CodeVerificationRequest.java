@@ -8,6 +8,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.R;
+import su.sres.securesms.jobs.StickerPackDownloadJob;
+import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.stickers.BlessedPacks;
 import su.sres.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.PreKeyUtil;
@@ -163,17 +166,18 @@ public final class CodeVerificationRequest {
         String statusUrl = configRequested.getStatusUri();
         String storageUrl = configRequested.getStorageUri();
         String cloudUrl = configRequested.getCloudUri();
-        byte[] unidentifiedDeliveryCaPublicKey = configRequested.getUnidentifiedDeliveryCaPublicKey();
+        byte[] unidentifiedAccessCaPublicKey = configRequested.getUnidentifiedDeliveryCaPublicKey();
 
-        if(cloudUrl != null &&
+        if(
+           cloudUrl != null &&
            statusUrl != null &&
            storageUrl != null &&
-           unidentifiedDeliveryCaPublicKey != null) {
+           unidentifiedAccessCaPublicKey != null) {
 
-            TextSecurePreferences.setCloudUrl(context, cloudUrl);
-            TextSecurePreferences.setStatusUrl(context, statusUrl);
-            TextSecurePreferences.setCloudUrl(context, cloudUrl);
-            TextSecurePreferences.setUnidentifiedAccessCaPublicKey(context, unidentifiedDeliveryCaPublicKey);
+            SignalStore.serviceConfigurationValues().setCloudUrl(cloudUrl);
+            SignalStore.serviceConfigurationValues().setStorageUrl(storageUrl);
+            SignalStore.serviceConfigurationValues().setStatusUrl(statusUrl);
+            SignalStore.serviceConfigurationValues().setUnidentifiedAccessCaPublicKey(unidentifiedAccessCaPublicKey);
 
         } else {
             Toast.makeText(context, R.string.configuration_load_unsuccessful, Toast.LENGTH_LONG);
@@ -205,6 +209,10 @@ public final class CodeVerificationRequest {
         TextSecurePreferences.setSignedPreKeyRegistered(context, true);
         TextSecurePreferences.setPromptedPushRegistration(context, true);
         TextSecurePreferences.setUnauthorizedReceived(context, false);
+
+        loadStickers(context);
+        // remove after testing
+        Log.i(TAG, "Stickers download triggered");
     }
 
     private static @Nullable ProfileKey findExistingProfileKey(@NonNull Context context, @NonNull String e164number) {
@@ -216,6 +224,19 @@ public final class CodeVerificationRequest {
         }
 
         return null;
+    }
+
+    private static void loadStickers(Context context) {
+
+        if (!TextSecurePreferences.areStickersDownloaded(context)) {
+
+            ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
+            ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
+            ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forReference(BlessedPacks.SWOON_HANDS.getPackId(), BlessedPacks.SWOON_HANDS.getPackKey()));
+            ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forReference(BlessedPacks.SWOON_FACES.getPackId(), BlessedPacks.SWOON_FACES.getPackKey()));
+
+            TextSecurePreferences.setStickersDownloaded(context, true);
+        }
     }
 
     public interface VerifyCallback {

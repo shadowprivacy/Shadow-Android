@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
+import androidx.navigation.ActivityNavigator;
 // import androidx.navigation.ActivityNavigator;
 
 import su.sres.securesms.MainActivity;
@@ -35,22 +36,32 @@ public final class RegistrationCompleteFragment extends BaseRegistrationFragment
 
         FragmentActivity activity = requireActivity();
 
-//        if (!isReregister()) {
-//            activity.startActivity(getRoutedIntent(activity, EditProfileActivity.class, new Intent(activity, MainActivity.class)));
-            doRestart(activity);
-//        }
+        if (!isReregister()) {
+            final Intent main    = new Intent(activity, MainActivity.class);
+            final Intent profile = new Intent(activity, EditProfileActivity.class);
 
-//        activity.finish();
-//        ActivityNavigator.applyPopAnimationsToPendingTransition(activity);
+            profile.putExtra(EditProfileActivity.SHOW_TOOLBAR, false);
+
+            activity.startActivity(chainIntents(profile, main));
+
+        }
+
+        activity.finish();
+        ActivityNavigator.applyPopAnimationsToPendingTransition(activity);
     }
 
-    private static Intent getRoutedIntent(@NonNull Context context, Class<?> destination, @Nullable Intent nextIntent) {
+    private static Intent chainIntents(@NonNull Intent sourceIntent, @Nullable Intent nextIntent) {
+        if (nextIntent != null) sourceIntent.putExtra("next_intent", nextIntent);
+        return sourceIntent;
+    }
+
+/**    private static Intent getRoutedIntent(@NonNull Context context, Class<?> destination, @Nullable Intent nextIntent) {
         final Intent intent = new Intent(context, destination);
         if (nextIntent != null) intent.putExtra("next_intent", nextIntent);
         return intent;
-    }
+    }  */
 
-    private void doRestart(FragmentActivity activity) {
+/**    private void doRestart(FragmentActivity activity) {
         try {
              Intent mStartActivity = getRoutedIntent(activity, EditProfileActivity.class, new Intent(activity, MainActivity.class));
 
@@ -71,5 +82,5 @@ public final class RegistrationCompleteFragment extends BaseRegistrationFragment
         } catch (Exception ex) {
             Log.e(TAG, "Was not able to restart application");
         }
-    }
+    } */
 }

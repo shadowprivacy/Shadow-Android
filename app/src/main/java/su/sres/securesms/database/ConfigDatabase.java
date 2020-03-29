@@ -21,7 +21,7 @@ public class ConfigDatabase extends Database {
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " (" + _ID + " INTEGER PRIMARY KEY, " +
             SHADOW_URL + " TEXT NOT NULL)";
 
-    public static final String INITIALIZE_CONFIG = "INSERT INTO " + TABLE_NAME + " VALUES (1, 'https://example.org')";
+    public static final String INITIALIZE_CONFIG = "INSERT INTO " + TABLE_NAME + " VALUES (1, 'https://example.com')";
 
     public ConfigDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
         super(context, databaseHelper);
@@ -46,7 +46,7 @@ public class ConfigDatabase extends Database {
                 return cursor.getString(cursor.getColumnIndex(SHADOW_URL));
             }
 
-            else return "https://example.org";
+            else return "https://example.com";
 
         } finally {
             if (cursor != null) cursor.close();
