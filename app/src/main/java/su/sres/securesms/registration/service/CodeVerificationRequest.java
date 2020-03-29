@@ -180,7 +180,7 @@ public final class CodeVerificationRequest {
             SignalStore.serviceConfigurationValues().setUnidentifiedAccessCaPublicKey(unidentifiedAccessCaPublicKey);
 
         } else {
-            Toast.makeText(context, R.string.configuration_load_unsuccessful, Toast.LENGTH_LONG);
+            Toast.makeText(context, R.string.configuration_load_unsuccessful, Toast.LENGTH_LONG).show();
         }
 
         RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
