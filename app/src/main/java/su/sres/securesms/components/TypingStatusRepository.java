@@ -11,7 +11,6 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 
 import java.util.ArrayList;

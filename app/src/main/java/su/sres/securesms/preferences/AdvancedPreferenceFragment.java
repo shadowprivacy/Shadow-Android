@@ -4,10 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import androidx.annotation.NonNull;
@@ -25,11 +23,11 @@ import android.widget.Toast;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import su.sres.securesms.ApplicationPreferencesActivity;
-import su.sres.securesms.LogSubmitActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.registration.RegistrationNavigationActivity;
 import su.sres.securesms.contacts.ContactAccessor;
 import su.sres.securesms.contacts.ContactIdentityManager;
+import su.sres.securesms.logsubmit.SubmitDebugLogActivity;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -145,7 +143,7 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
   private class SubmitDebugLogListener implements Preference.OnPreferenceClickListener {
     @Override
     public boolean onPreferenceClick(Preference preference) {
-      final Intent intent = new Intent(getActivity(), LogSubmitActivity.class);
+      final Intent intent = new Intent(getActivity(), SubmitDebugLogActivity.class);
       startActivity(intent);
       return true;
     }

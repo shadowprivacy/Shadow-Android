@@ -33,7 +33,7 @@ import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.MessageDetailsActivity;
 import su.sres.securesms.PassphraseRequiredActionBarActivity;
 import su.sres.securesms.R;
-import su.sres.securesms.ShareActivity;
+import su.sres.securesms.sharing.ShareActivity;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.components.ConversationTypingView;
 import su.sres.securesms.components.TooltipPopup;
@@ -62,7 +62,9 @@ import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.text.HtmlCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -91,6 +93,7 @@ import su.sres.securesms.jobs.DirectoryRefreshJob;
 import su.sres.securesms.jobs.MultiDeviceViewOnceOpenJob;
 import su.sres.securesms.longmessage.LongMessageActivity;
 import su.sres.securesms.mediasend.Media;
+import su.sres.securesms.messagerequests.MessageRequestViewModel;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.PartAuthority;
@@ -103,12 +106,14 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.revealable.ViewOnceMessageActivity;
 import su.sres.securesms.revealable.ViewOnceUtil;
+import su.sres.securesms.sharing.ShareActivity;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.sms.OutgoingTextMessage;
 import su.sres.securesms.stickers.StickerLocator;
 import su.sres.securesms.stickers.StickerPackPreviewActivity;
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.FeatureFlags;
+import su.sres.securesms.util.HtmlUtil;
 import su.sres.securesms.util.SaveAttachmentTask;
 import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -165,6 +170,9 @@ public class ConversationFragment extends Fragment
   private View                        composeDivider;
   private View                        scrollToBottomButton;
   private TextView                    scrollDateHeader;
+  private ConversationBannerView      conversationBanner;
+  private ConversationBannerView      emptyConversationBanner;
+  private MessageRequestViewModel     messageRequestViewModel;
 
   @Override
   public void onCreate(Bundle icicle) {
@@ -175,10 +183,11 @@ public class ConversationFragment extends Fragment
   @Override
   public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle bundle) {
     final View view = inflater.inflate(R.layout.conversation_fragment, container, false);
-    list                 = ViewUtil.findById(view, android.R.id.list);
-    composeDivider       = ViewUtil.findById(view, R.id.compose_divider);
-    scrollToBottomButton = ViewUtil.findById(view, R.id.scroll_to_bottom_button);
-    scrollDateHeader     = ViewUtil.findById(view, R.id.scroll_date_header);
+    list                    = ViewUtil.findById(view, android.R.id.list);
+    composeDivider          = ViewUtil.findById(view, R.id.compose_divider);
+    scrollToBottomButton    = ViewUtil.findById(view, R.id.scroll_to_bottom_button);
+    scrollDateHeader        = ViewUtil.findById(view, R.id.scroll_date_header);
+    emptyConversationBanner = ViewUtil.findById(view, R.id.empty_conversation_banner);
 
     scrollToBottomButton.setOnClickListener(v -> scrollToBottom());
 
@@ -186,6 +195,10 @@ public class ConversationFragment extends Fragment
     list.setHasFixedSize(false);
     list.setLayoutManager(layoutManager);
     list.setItemAnimator(null);
+
+    if (FeatureFlags.messageRequests()) {
+      conversationBanner = (ConversationBannerView) inflater.inflate(R.layout.conversation_item_banner, container, false);
+    }
 
     topLoadMoreView    = (ViewSwitcher) inflater.inflate(R.layout.load_more_header, container, false);
     bottomLoadMoreView = (ViewSwitcher) inflater.inflate(R.layout.load_more_header, container, false);
@@ -196,11 +209,51 @@ public class ConversationFragment extends Fragment
 
     new ConversationItemSwipeCallback(
             messageRecord -> actionMode == null &&
-                    canReplyToMessage(isActionMessage(messageRecord), messageRecord),
+                    canReplyToMessage(isActionMessage(messageRecord), messageRecord, messageRequestViewModel.shouldShowMessageRequest()),
             this::handleReplyMessage
     ).attachToRecyclerView(list);
 
+    setupListLayoutListeners();
+
     return view;
+  }
+
+  private void setupListLayoutListeners() {
+    if (!FeatureFlags.messageRequests()) {
+      return;
+    }
+
+    list.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> setListVerticalTranslation());
+
+    list.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
+      @Override
+      public void onChildViewAttachedToWindow(@NonNull View view) {
+        setListVerticalTranslation();
+      }
+
+      @Override
+      public void onChildViewDetachedFromWindow(@NonNull View view) {
+        setListVerticalTranslation();
+      }
+    });
+  }
+
+  private void setListVerticalTranslation() {
+    int heightOfChildren = 0;
+    for (int i = 0; i < list.getChildCount(); i++) {
+      heightOfChildren += list.getChildAt(i).getMeasuredHeight();
+    }
+
+    Log.i(TAG, "Height of children: " + heightOfChildren + " my height: " + list.getMeasuredHeight());
+    if (heightOfChildren > list.getMeasuredHeight()) {
+      list.setTranslationY(0);
+      list.setOverScrollMode(RecyclerView.OVER_SCROLL_IF_CONTENT_SCROLLS);
+    } else {
+      list.setTranslationY(heightOfChildren - list.getMeasuredHeight());
+      list.setOverScrollMode(RecyclerView.OVER_SCROLL_NEVER);
+    }
+
+    listener.onListVerticalTranslationChanged(list.getTranslationY());
   }
 
   @Override
@@ -208,6 +261,7 @@ public class ConversationFragment extends Fragment
     super.onActivityCreated(bundle);
 
     initializeResources();
+    initializeMessageRequestViewModel();
     initializeListAdapter();
   }
 
@@ -244,6 +298,7 @@ public class ConversationFragment extends Fragment
     }
 
     initializeResources();
+    messageRequestViewModel.setConversationInfo(recipient.getId(), threadId);
     initializeListAdapter();
 
     if (threadId == -1) {
@@ -270,6 +325,80 @@ public class ConversationFragment extends Fragment
     scrollToLastSeenPosition(position);
   }
 
+  private void initializeMessageRequestViewModel() {
+    MessageRequestViewModel.Factory factory = new MessageRequestViewModel.Factory(requireContext());
+
+    messageRequestViewModel = ViewModelProviders.of(requireActivity(), factory).get(MessageRequestViewModel.class);
+    messageRequestViewModel.setConversationInfo(recipient.getId(), threadId);
+
+    listener.onMessageRequest(messageRequestViewModel);
+
+    messageRequestViewModel.getRecipientInfo().observe(getViewLifecycleOwner(), recipientInfo -> {
+      presentMessageRequestProfileView(requireContext(), recipientInfo, conversationBanner);
+      presentMessageRequestProfileView(requireContext(), recipientInfo, emptyConversationBanner);
+    });
+  }
+
+  private static void presentMessageRequestProfileView(@NonNull Context context, @NonNull MessageRequestViewModel.RecipientInfo recipientInfo, @Nullable ConversationBannerView conversationBanner) {
+
+    if (conversationBanner == null) {
+      return;
+    }
+
+    Recipient    recipient   = recipientInfo.getRecipient();
+    boolean      isSelf      = Recipient.self().equals(recipient);
+    int          memberCount = recipientInfo.getGroupMemberCount();
+    List<String> groups      = recipientInfo.getSharedGroups();
+
+    if (recipient != null) {
+      conversationBanner.setAvatar(GlideApp.with(context), recipient);
+
+      String title = isSelf ? context.getString(R.string.note_to_self) : recipient.getDisplayName(context);
+      conversationBanner.setTitle(title);
+
+      if (recipient.isGroup()) {
+        conversationBanner.setSubtitle(context.getResources().getQuantityString(R.plurals.MessageRequestProfileView_members, memberCount, memberCount));
+      } else if (isSelf) {
+        conversationBanner.setSubtitle(context.getString(R.string.ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation));
+      } else {
+        String subtitle = recipient.getUsername().or(recipient.getE164()).orNull();
+
+        if (subtitle == null || subtitle.equals(title)) {
+          conversationBanner.hideSubtitle();
+        } else {
+          conversationBanner.setSubtitle(subtitle);
+        }
+      }
+    }
+
+    if (groups.isEmpty() || isSelf) {
+      conversationBanner.hideDescription();
+    } else {
+      final String description;
+
+      switch (groups.size()) {
+        case 1:
+          description = context.getString(R.string.MessageRequestProfileView_member_of_one_group, HtmlUtil.bold(groups.get(0)));
+          break;
+        case 2:
+          description = context.getString(R.string.MessageRequestProfileView_member_of_two_groups, HtmlUtil.bold(groups.get(0)), HtmlUtil.bold(groups.get(1)));
+          break;
+        case 3:
+          description = context.getString(R.string.MessageRequestProfileView_member_of_many_groups, HtmlUtil.bold(groups.get(0)), HtmlUtil.bold(groups.get(1)), HtmlUtil.bold(groups.get(2)));
+          break;
+        default:
+          int others = groups.size() - 2;
+          description = context.getString(R.string.MessageRequestProfileView_member_of_many_groups,
+                  HtmlUtil.bold(groups.get(0)),
+                  HtmlUtil.bold(groups.get(1)),
+                  context.getResources().getQuantityString(R.plurals.MessageRequestProfileView_member_of_others, others, others));
+      }
+
+      conversationBanner.setDescription(HtmlCompat.fromHtml(description, 0));
+      conversationBanner.showDescription();
+    }
+  }
+
   private void initializeResources() {
     this.recipient         = Recipient.live(getActivity().getIntent().getParcelableExtra(ConversationActivity.RECIPIENT_EXTRA));
     this.threadId          = this.getActivity().getIntent().getLongExtra(ConversationActivity.THREAD_ID_EXTRA, -1);
@@ -291,6 +420,10 @@ public class ConversationFragment extends Fragment
 
       setLastSeen(lastSeen);
       getLoaderManager().restartLoader(0, Bundle.EMPTY, this);
+
+      emptyConversationBanner.setVisibility(View.GONE);
+    } else if (FeatureFlags.messageRequests() && threadId == -1) {
+      emptyConversationBanner.setVisibility(View.VISIBLE);
     }
   }
 
@@ -421,15 +554,16 @@ public class ConversationFragment extends Fragment
 
       menu.findItem(R.id.menu_context_forward).setVisible(!actionMessage && !sharedContact && !viewOnce);
       menu.findItem(R.id.menu_context_details).setVisible(!actionMessage);
-      menu.findItem(R.id.menu_context_reply).setVisible(canReplyToMessage(actionMessage, messageRecord));
+      menu.findItem(R.id.menu_context_reply).setVisible(canReplyToMessage(actionMessage, messageRecord, messageRequestViewModel.shouldShowMessageRequest()));
     }
     menu.findItem(R.id.menu_context_copy).setVisible(!actionMessage && hasText);
   }
 
-  private static boolean canReplyToMessage(boolean actionMessage, MessageRecord messageRecord) {
-    return !actionMessage             &&
-            !messageRecord.isPending() &&
-            !messageRecord.isFailed()  &&
+  private static boolean canReplyToMessage(boolean actionMessage, MessageRecord messageRecord, boolean isDisplayingMessageRequest) {
+    return !actionMessage              &&
+            !messageRecord.isPending()  &&
+            !messageRecord.isFailed()   &&
+            !isDisplayingMessageRequest &&
             messageRecord.isSecure();
   }
 
@@ -464,6 +598,7 @@ public class ConversationFragment extends Fragment
 
     if (this.threadId != threadId) {
       this.threadId = threadId;
+      messageRequestViewModel.setConversationInfo(recipient.getId(), threadId);
       initializeListAdapter();
     }
   }
@@ -607,7 +742,8 @@ public class ConversationFragment extends Fragment
                               attachment.getSize(),
                               0,
                               Optional.absent(),
-                              Optional.fromNullable(attachment.getCaption())));
+                              Optional.fromNullable(attachment.getCaption()),
+                              Optional.absent()));
                     }
                   };
 
@@ -699,8 +835,8 @@ public class ConversationFragment extends Fragment
 
   @Override
   public void onLoadFinished(@NonNull Loader<Cursor> cursorLoader, Cursor cursor) {
-    int  count    = cursor.getCount();
-    ConversationLoader loader = (ConversationLoader)cursorLoader;
+    int                count  = cursor.getCount();
+    ConversationLoader loader = (ConversationLoader) cursorLoader;
 
     ConversationAdapter adapter = getListAdapter();
     if (adapter == null) {
@@ -709,6 +845,8 @@ public class ConversationFragment extends Fragment
 
     if (cursor.getCount() >= PARTIAL_CONVERSATION_LIMIT && loader.hasLimit()) {
       adapter.setFooterView(topLoadMoreView);
+    } else if (FeatureFlags.messageRequests()) {
+      adapter.setFooterView(conversationBanner);
     } else {
       adapter.setFooterView(null);
     }
@@ -717,12 +855,8 @@ public class ConversationFragment extends Fragment
       setLastSeen(loader.getLastSeen());
     }
 
-    if (FeatureFlags.messageRequests()) {
-      if (!loader.hasSent() && !recipient.get().isSystemContact() && !recipient.get().isProfileSharing() && !recipient.get().isBlocked() && recipient.get().isRegistered()) {
-        listener.onMessageRequest();
-      } else {
-        clearHeaderIfNotTyping(adapter);
-      }
+    if (FeatureFlags.messageRequests() && !loader.hasPreMessageRequestMessages()) {
+      clearHeaderIfNotTyping(adapter);
     } else {
       if (!loader.hasSent() && !recipient.get().isSystemContact() && !recipient.get().isGroup() && recipient.get().getRegistered() == RecipientDatabase.RegisteredState.REGISTERED) {
         adapter.setHeaderView(unknownSenderView);
@@ -753,8 +887,10 @@ public class ConversationFragment extends Fragment
     if (firstLoad) {
       if (startingPosition >= 0) {
         scrollToStartingPosition(startingPosition);
-      } else {
+      } else if (loader.isMessageRequestAccepted()) {
         scrollToLastSeenPosition(lastSeenPosition);
+      } else if (FeatureFlags.messageRequests()) {
+        list.post(() -> getListLayoutManager().scrollToPosition(adapter.getItemCount() - 1));
       }
       firstLoad = false;
     } else if (previousOffset > 0) {
@@ -900,12 +1036,13 @@ public class ConversationFragment extends Fragment
     void handleReplyMessage(MessageRecord messageRecord);
     void onMessageActionToolbarOpened();
     void onForwardClicked();
-    void onMessageRequest();
+    void onMessageRequest(@NonNull MessageRequestViewModel viewModel);
     void handleReaction(@NonNull View maskTarget,
                         @NonNull MessageRecord messageRecord,
                         @NonNull Toolbar.OnMenuItemClickListener toolbarListener,
                         @NonNull ConversationReactionOverlay.OnHideListener onHideListener);
     void onCursorChanged();
+    void onListVerticalTranslationChanged(float translationY);
   }
 
   private class ConversationScrollListener extends OnScrollListener {
@@ -999,8 +1136,10 @@ public class ConversationFragment extends Fragment
 
       if (actionMode != null) return;
 
-      if (messageRecord.isSecure()       &&
-              !messageRecord.isUpdate()      &&
+      if (messageRecord.isSecure()                            &&
+              !messageRecord.isUpdate()                           &&
+              !recipient.get().isBlocked()                        &&
+              !messageRequestViewModel.shouldShowMessageRequest() &&
               ((ConversationAdapter) list.getAdapter()).getSelectedItems().isEmpty())
       {
         isReacting = true;

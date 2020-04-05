@@ -16,7 +16,6 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.database.ThreadDatabase;
-import su.sres.securesms.imageeditor.model.EditorModel;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.mms.OutgoingMediaMessage;
@@ -32,7 +31,6 @@ import su.sres.securesms.util.MessageUtil;
 import su.sres.securesms.util.SingleLiveEvent;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
-import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
 
@@ -52,9 +50,6 @@ import java.util.Objects;
 class MediaSendViewModel extends ViewModel {
 
     private static final String TAG = MediaSendViewModel.class.getSimpleName();
-
-    private static final int MAX_PUSH = 32;
-    private static final int MAX_SMS  = 1;
 
     private final Application                        application;
     private final MediaRepository                    repository;
@@ -122,11 +117,11 @@ class MediaSendViewModel extends ViewModel {
         this.transport = transport;
         if (transport.isSms()) {
             isSms            = true;
-            maxSelection     = MAX_SMS;
+            maxSelection     = MediaSendConstants.MAX_SMS;
             mediaConstraints = MediaConstraints.getMmsMediaConstraints(transport.getSimSubscriptionId().or(-1));
         } else {
             isSms            = false;
-            maxSelection     = MAX_PUSH;
+            maxSelection     = MediaSendConstants.MAX_PUSH;
             mediaConstraints = MediaConstraints.getPushMediaConstraints();
         }
 
@@ -152,7 +147,9 @@ class MediaSendViewModel extends ViewModel {
 
                 if (filteredMedia.size() != newMedia.size()) {
                     error.setValue(Error.ITEM_TOO_LARGE);
-                } else if (filteredMedia.size() > maxSelection) {
+                }
+
+                if (filteredMedia.size() > maxSelection) {
                     filteredMedia = filteredMedia.subList(0, maxSelection);
                     error.setValue(Error.TOO_MANY_ITEMS);
                 }
@@ -301,7 +298,7 @@ class MediaSendViewModel extends ViewModel {
         captionVisible = false;
 
         List<Media> uncaptioned = Stream.of(getSelectedMediaOrDefault())
-                .map(m -> new Media(m.getUri(), m.getMimeType(), m.getDate(), m.getWidth(), m.getHeight(), m.getSize(), m.getDuration(), m.getBucketId(), Optional.absent()))
+                .map(m -> new Media(m.getUri(), m.getMimeType(), m.getDate(), m.getWidth(), m.getHeight(), m.getSize(), m.getDuration(), m.getBucketId(), Optional.absent(), Optional.absent()))
                 .toList();
 
         selectedMedia.setValue(uncaptioned);
@@ -404,6 +401,10 @@ class MediaSendViewModel extends ViewModel {
         hudState.setValue(buildHudState());
     }
 
+    void onVideoBeginEdit(@NonNull Uri uri) {
+        cancelUpload(new Media(uri, "", 0, 0, 0, 0, 0, Optional.absent(), Optional.absent(), Optional.absent()));
+    }
+
     void onMediaCaptured(@NonNull Media media) {
         lastCameraCapture = Optional.of(media);
         List<Media> selected = selectedMedia.getValue();
@@ -448,7 +449,7 @@ class MediaSendViewModel extends ViewModel {
         savedDrawState.putAll(state);
     }
 
-    @NonNull LiveData<MediaSendActivityResult> onSendClicked(Map<Media, EditorModel> modelsToRender, @NonNull List<Recipient> recipients) {
+    @NonNull LiveData<MediaSendActivityResult> onSendClicked(Map<Media, MediaTransform> modelsToTransform, @NonNull List<Recipient> recipients) {
         if (isSms && recipients.size() > 0) {
             throw new IllegalStateException("Provided recipients to send to, but this is SMS!");
         }
@@ -462,8 +463,12 @@ class MediaSendViewModel extends ViewModel {
 
         Util.runOnMainDelayed(dialogRunnable, 250);
 
-        repository.renderMedia(application, initialMedia, modelsToRender, (oldToNew) -> {
+        MediaRepository.transformMedia(application, initialMedia, modelsToTransform, (oldToNew) -> {
             List<Media> updatedMedia = new ArrayList<>(oldToNew.values());
+
+            for (Media media : updatedMedia){
+                Log.w(TAG, media.getUri().toString() + " : " + media.getTransformProperties().transform(t->"" + t.isVideoTrim()).or("null"));
+            }
 
             if (isSms || MessageSender.isLocalSelfSend(application, recipient, isSms)) {
                 Log.i(TAG, "SMS or local self-send. Skipping pre-upload.");
@@ -476,7 +481,7 @@ class MediaSendViewModel extends ViewModel {
 
             if (splitMessage.getTextSlide().isPresent()) {
                 Slide slide = splitMessage.getTextSlide().get();
-                uploadRepository.startUpload(new Media(Objects.requireNonNull(slide.getUri()), slide.getContentType(), System.currentTimeMillis(), 0, 0, slide.getFileSize(), 0, Optional.absent(), Optional.absent()), recipient);
+                uploadRepository.startUpload(new Media(Objects.requireNonNull(slide.getUri()), slide.getContentType(), System.currentTimeMillis(), 0, 0, slide.getFileSize(), 0, Optional.absent(), Optional.absent(), Optional.absent()), recipient);
             }
 
             uploadRepository.applyMediaUpdates(oldToNew, recipient);

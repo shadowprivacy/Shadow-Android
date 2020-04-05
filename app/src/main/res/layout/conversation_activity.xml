@@ -78,6 +78,7 @@ xmlns:tools="http://schemas.android.com/tools"
             android:layout="@layout/conversation_activity_attachment_editor_stub" />
 
         <FrameLayout
+            android:id="@+id/conversation_activity_panel_parent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clipChildren="false"
@@ -86,6 +87,14 @@ xmlns:tools="http://schemas.android.com/tools"
             <include layout="@layout/conversation_input_panel" />
 
             <include layout="@layout/conversation_search_nav" />
+
+            <su.sres.securesms.messagerequests.MessageRequestsBottomView
+                android:id="@+id/conversation_activity_message_request_bottom_bar"
+                android:background="?android:attr/windowBackground"
+                android:visibility="gone"
+                android:clickable="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
 
         </FrameLayout>
 
@@ -141,15 +150,6 @@ xmlns:tools="http://schemas.android.com/tools"
     </LinearLayout>
 
     </su.sres.securesms.components.InputAwareLayout>
-
-    <FrameLayout
-        android:id="@+id/fragment_overlay_container"
-        android:visibility="gone"
-        android:focusableInTouchMode="true"
-        android:layout_marginTop="?attr/actionBarSize"
-        android:background="?conversation_background"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
 
     <include layout="@layout/conversation_reaction_scrubber" />
 

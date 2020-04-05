@@ -9,6 +9,7 @@ import android.text.TextUtils;
 
 import su.sres.securesms.WebRtcCallActivity;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.WebRtcCallService;
 import su.sres.securesms.util.concurrent.SimpleTask;
 
@@ -32,8 +33,8 @@ public class VoiceCallShare extends Activity {
           SimpleTask.run(() -> Recipient.external(this, destination), recipient -> {
             if (!TextUtils.isEmpty(destination)) {
               Intent serviceIntent = new Intent(this, WebRtcCallService.class);
-              serviceIntent.setAction(WebRtcCallService.ACTION_OUTGOING_CALL);
-              serviceIntent.putExtra(WebRtcCallService.EXTRA_REMOTE_RECIPIENT, recipient.getId());
+              serviceIntent.setAction(WebRtcCallService.ACTION_OUTGOING_CALL)
+                      .putExtra(WebRtcCallService.EXTRA_REMOTE_PEER, new RemotePeer(recipient.getId()));
               startService(serviceIntent);
 
               Intent activityIntent = new Intent(this, WebRtcCallActivity.class);

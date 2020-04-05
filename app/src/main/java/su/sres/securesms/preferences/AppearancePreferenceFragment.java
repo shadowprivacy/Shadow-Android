@@ -7,6 +7,7 @@ import androidx.preference.ListPreference;
 
 import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import java.util.Arrays;

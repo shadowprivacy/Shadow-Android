@@ -32,6 +32,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import su.sres.securesms.AppInitialization;
 import su.sres.securesms.R;
 import su.sres.securesms.backup.BackupPassphrase;
 import su.sres.securesms.backup.FullBackupBase;
@@ -210,6 +211,7 @@ public final class RestoreBackupFragment extends BaseRegistrationFragment {
                     BackupPassphrase.set(context, passphrase);
                     TextSecurePreferences.setBackupEnabled(context, true);
                     LocalBackupListener.schedule(context);
+                    AppInitialization.onPostBackupRestore(context);
 
                     Log.i(TAG, "Backup restore complete.");
                     return BackupImportResult.SUCCESS;

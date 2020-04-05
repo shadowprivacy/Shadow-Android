@@ -112,7 +112,8 @@ public class MediaPreviewViewModel extends ViewModel {
                 mediaRecord.getAttachment().getSize(),
                 0,
                 Optional.absent(),
-                Optional.fromNullable(mediaRecord.getAttachment().getCaption()));
+                Optional.fromNullable(mediaRecord.getAttachment().getCaption()),
+                Optional.absent());
     }
 
     public LiveData<PreviewData> getPreviewData() {

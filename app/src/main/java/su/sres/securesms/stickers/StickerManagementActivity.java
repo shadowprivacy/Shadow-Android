@@ -12,8 +12,7 @@ import android.view.MenuItem;
 
 import su.sres.securesms.PassphraseRequiredActionBarActivity;
 import su.sres.securesms.R;
-import su.sres.securesms.ShareActivity;
-import su.sres.securesms.logging.Log;
+import su.sres.securesms.sharing.ShareActivity;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.util.DynamicTheme;
 

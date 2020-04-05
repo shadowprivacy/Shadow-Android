@@ -85,10 +85,7 @@ public final class RegistrationLockFragment extends BaseRegistrationFragment {
             return false;
         });
 
-        pinEntry.setFocusable(true);
-        if (pinEntry.requestFocus()) {
-            ServiceUtil.getInputMethodManager(pinEntry.getContext()).showSoftInput(pinEntry, 0);
-        }
+        enableAndFocusPinEntry();
 
         pinButton.setOnClickListener((v) -> {
             hideKeyboard(requireContext(), pinEntry);
@@ -97,6 +94,8 @@ public final class RegistrationLockFragment extends BaseRegistrationFragment {
     }
 
     private void handlePinEntry() {
+        pinEntry.setEnabled(false);
+
         final String pin = pinEntry.getText().toString();
 
         int trimmedLength = pin.replace(" ", "").length();
@@ -126,6 +125,7 @@ public final class RegistrationLockFragment extends BaseRegistrationFragment {
 
             @Override
             public void onIncorrectRegistrationLockPin(long timeRemaining) {
+                enableAndFocusPinEntry();
                 cancelSpinning(pinButton);
 
                 pinEntry.setText("");
@@ -158,5 +158,14 @@ public final class RegistrationLockFragment extends BaseRegistrationFragment {
                 .setMessage(getString(R.string.RegistrationActivity_registration_of_this_phone_number_will_be_possible_without_your_registration_lock_pin_after_seven_days_have_passed, (TimeUnit.MILLISECONDS.toDays(timeRemainingMs) + 1)))
                 .setPositiveButton(android.R.string.ok, null)
                 .show();
+    }
+
+    private void enableAndFocusPinEntry() {
+        pinEntry.setEnabled(true);
+        pinEntry.setFocusable(true);
+
+        if (pinEntry.requestFocus()) {
+            ServiceUtil.getInputMethodManager(pinEntry.getContext()).showSoftInput(pinEntry, 0);
+        }
     }
 }

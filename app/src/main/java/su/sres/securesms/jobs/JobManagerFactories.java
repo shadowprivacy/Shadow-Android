@@ -3,6 +3,7 @@ package su.sres.securesms.jobs;
 import android.app.Application;
 import androidx.annotation.NonNull;
 
+import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.jobmanager.Constraint;
 import su.sres.securesms.jobmanager.ConstraintObserver;
 import su.sres.securesms.jobmanager.Job;
@@ -17,6 +18,7 @@ import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraintObserver;
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration;
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration2;
 import su.sres.securesms.jobmanager.migrations.RecipientIdJobMigration;
+import su.sres.securesms.jobmanager.migrations.SendReadReceiptsJobMigration;
 import su.sres.securesms.migrations.Argon2TestMigrationJob;
 import su.sres.securesms.migrations.AvatarMigrationJob;
 import su.sres.securesms.migrations.CachedAttachmentsMigrationJob;
@@ -25,6 +27,7 @@ import su.sres.securesms.migrations.LegacyMigrationJob;
 import su.sres.securesms.migrations.MigrationCompleteJob;
 import su.sres.securesms.migrations.RecipientSearchMigrationJob;
 import su.sres.securesms.migrations.StickerLaunchMigrationJob;
+import su.sres.securesms.migrations.StickerAdditionMigrationJob;
 import su.sres.securesms.migrations.UuidMigrationJob;
 
 import java.util.Arrays;
@@ -39,12 +42,14 @@ public final class JobManagerFactories {
             put(AttachmentCopyJob.KEY,                     new AttachmentCopyJob.Factory());
             put(AttachmentDownloadJob.KEY,                 new AttachmentDownloadJob.Factory());
             put(AttachmentUploadJob.KEY,                   new AttachmentUploadJob.Factory());
+            put(AttachmentMarkUploadedJob.KEY,             new AttachmentMarkUploadedJob.Factory());
             put(AttachmentCompressionJob.KEY,              new AttachmentCompressionJob.Factory());
             put(AvatarDownloadJob.KEY,                     new AvatarDownloadJob.Factory());
             put(CleanPreKeysJob.KEY,                       new CleanPreKeysJob.Factory());
             put(CreateSignedPreKeyJob.KEY,                 new CreateSignedPreKeyJob.Factory());
             put(DirectoryRefreshJob.KEY,                   new DirectoryRefreshJob.Factory());
             put(FcmRefreshJob.KEY,                         new FcmRefreshJob.Factory());
+            put(LeaveGroupJob.KEY,                         new LeaveGroupJob.Factory());
             put(LocalBackupJob.KEY,                        new LocalBackupJob.Factory());
             put(MmsDownloadJob.KEY,                        new MmsDownloadJob.Factory());
             put(MmsReceiveJob.KEY,                         new MmsReceiveJob.Factory());
@@ -54,6 +59,7 @@ public final class JobManagerFactories {
             put(MultiDeviceContactUpdateJob.KEY,           new MultiDeviceContactUpdateJob.Factory());
             put(MultiDeviceGroupUpdateJob.KEY,             new MultiDeviceGroupUpdateJob.Factory());
             put(MultiDeviceKeysUpdateJob.KEY,              new MultiDeviceKeysUpdateJob.Factory());
+            put(MultiDeviceMessageRequestResponseJob.KEY,  new MultiDeviceMessageRequestResponseJob.Factory());
             put(MultiDeviceProfileContentUpdateJob.KEY,    new MultiDeviceProfileContentUpdateJob.Factory());
             put(MultiDeviceProfileKeyUpdateJob.KEY,        new MultiDeviceProfileKeyUpdateJob.Factory());
             put(MultiDeviceReadUpdateJob.KEY,              new MultiDeviceReadUpdateJob.Factory());
@@ -98,6 +104,7 @@ public final class JobManagerFactories {
             put(ProfileUploadJob.KEY,                      new ProfileUploadJob.Factory());
 
             // Migrations
+            put(Argon2TestMigrationJob.KEY,                new Argon2TestMigrationJob.Factory());
             put(AvatarMigrationJob.KEY,                    new AvatarMigrationJob.Factory());
             put(CachedAttachmentsMigrationJob.KEY,         new CachedAttachmentsMigrationJob.Factory());
             put(DatabaseMigrationJob.KEY,                  new DatabaseMigrationJob.Factory());
@@ -105,8 +112,8 @@ public final class JobManagerFactories {
             put(MigrationCompleteJob.KEY,                  new MigrationCompleteJob.Factory());
             put(RecipientSearchMigrationJob.KEY,           new RecipientSearchMigrationJob.Factory());
             put(StickerLaunchMigrationJob.KEY,             new StickerLaunchMigrationJob.Factory());
+            put(StickerAdditionMigrationJob.KEY,           new StickerAdditionMigrationJob.Factory());
             put(UuidMigrationJob.KEY,                      new UuidMigrationJob.Factory());
-            put(Argon2TestMigrationJob.KEY,                new Argon2TestMigrationJob.Factory());
 
             // Dead jobs
             put("PushContentReceiveJob",                   new FailingJob.Factory());
@@ -134,6 +141,7 @@ public final class JobManagerFactories {
     public static List<JobMigration> getJobMigrations(@NonNull Application application) {
         return Arrays.asList(new RecipientIdJobMigration(application),
                 new RecipientIdFollowUpJobMigration(),
-                new RecipientIdFollowUpJobMigration2());
+                new RecipientIdFollowUpJobMigration2(),
+                new SendReadReceiptsJobMigration(DatabaseFactory.getMmsSmsDatabase(application)));
     }
 }

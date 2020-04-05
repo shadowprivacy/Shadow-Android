@@ -12,6 +12,7 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.stickers.BlessedPacks;
 import su.sres.securesms.util.Hex;
 import org.whispersystems.libsignal.InvalidMessageException;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
@@ -101,7 +102,7 @@ public class StickerPackDownloadJob extends BaseJob  {
 
     @Override
     protected void onRun() throws IOException, InvalidMessageException {
-        if (isReferencePack && !DatabaseFactory.getAttachmentDatabase(context).containsStickerPackId(packId)) {
+        if (isReferencePack && !DatabaseFactory.getAttachmentDatabase(context).containsStickerPackId(packId) && !BlessedPacks.contains(packId)) {
             Log.w(TAG, "There are no attachments with the requested packId present for this reference pack. Skipping.");
             return;
         }

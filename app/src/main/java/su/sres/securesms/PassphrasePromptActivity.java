@@ -55,6 +55,7 @@ import su.sres.securesms.components.AnimatingToggle;
 import su.sres.securesms.crypto.InvalidPassphraseException;
 import su.sres.securesms.crypto.MasterSecret;
 import su.sres.securesms.crypto.MasterSecretUtil;
+import su.sres.securesms.logsubmit.SubmitDebugLogActivity;
 import su.sres.securesms.util.DynamicIntroTheme;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -164,7 +165,7 @@ public class PassphrasePromptActivity extends PassphraseActivity {
   }
 
   private void handleLogSubmit() {
-    Intent intent = new Intent(this, LogSubmitActivity.class);
+    Intent intent = new Intent(this, SubmitDebugLogActivity.class);
     startActivity(intent);
   }
 

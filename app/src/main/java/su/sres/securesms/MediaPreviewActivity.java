@@ -64,6 +64,7 @@ import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.sharing.ShareActivity;
 import su.sres.securesms.util.AttachmentUtil;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.SaveAttachmentTask;

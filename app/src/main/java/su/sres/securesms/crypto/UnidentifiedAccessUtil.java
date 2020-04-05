@@ -7,6 +7,8 @@ import androidx.annotation.WorkerThread;
 
 import org.signal.libsignal.metadata.certificate.CertificateValidator;
 import org.signal.libsignal.metadata.certificate.InvalidCertificateException;
+
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.logging.Log;
@@ -27,11 +29,16 @@ public class UnidentifiedAccessUtil {
 
     private static final String TAG = UnidentifiedAccessUtil.class.getSimpleName();
 
-    public static CertificateValidator getCertificateValidator(Context context) {
+    public static CertificateValidator getCertificateValidator() {
         try {
-            ECPublicKey unidentifiedSenderTrustRoot = Curve.decodePoint(Base64.decode(TextSecurePreferences.getUnidentifiedAccessCaPublicKey(context)), 0);
-            return new CertificateValidator(unidentifiedSenderTrustRoot);
-        } catch (InvalidKeyException | IOException e) {
+            byte[] unidentifiedAccessCaPublicKey = SignalStore.serviceConfigurationValues().getUnidentifiedAccessCaPublicKey();
+            if (unidentifiedAccessCaPublicKey != null) {
+                ECPublicKey unidentifiedSenderTrustRoot = Curve.decodePoint(unidentifiedAccessCaPublicKey, 0);
+                return new CertificateValidator(unidentifiedSenderTrustRoot);
+            } else {
+                return null;
+            }
+        } catch (InvalidKeyException | NullPointerException e) {
             throw new AssertionError(e);
         }
     }

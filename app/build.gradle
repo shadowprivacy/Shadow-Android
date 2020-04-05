@@ -122,7 +122,7 @@ dependencies {
 
     implementation project(':libsignal-service')
 
-    implementation files('libs/ringrtc-android-0.3.3.aar')
+    implementation files('libs/ringrtc-android-1.0.2.aar')
 
     implementation 'org.signal:argon2:13.1@aar'
     implementation 'commons-validator:commons-validator:1.6'
@@ -194,8 +194,8 @@ dependencyVerification {
     configuration = '(play|website)(Debug|Release)RuntimeClasspath'
 }
 
-def canonicalVersionCode = 604
-def canonicalVersionName = "4.55.7"
+def canonicalVersionCode = 606
+def canonicalVersionName = "4.56.0"
 
 def postFixSize = 10
 def abiPostFix = ['universal'   : 0,

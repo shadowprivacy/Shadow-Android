@@ -43,6 +43,7 @@ import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.WebRtcCallService;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -176,8 +177,8 @@ public class WebRtcCallActivity extends Activity {
 
   private void handleSetMuteVideo(boolean muted) {
     Intent intent = new Intent(this, WebRtcCallService.class);
-    intent.setAction(WebRtcCallService.ACTION_SET_MUTE_VIDEO);
-    intent.putExtra(WebRtcCallService.EXTRA_MUTE, muted);
+    intent.setAction(WebRtcCallService.ACTION_SET_ENABLE_VIDEO);
+    intent.putExtra(WebRtcCallService.EXTRA_ENABLE, !muted);
     startService(intent);
   }
 
@@ -201,7 +202,7 @@ public class WebRtcCallActivity extends Activity {
                    callScreen.setActiveCall(event.getRecipient(), getString(R.string.RedPhone_answering), event.getLocalRenderer());
 
                    Intent intent = new Intent(this, WebRtcCallService.class);
-                   intent.setAction(WebRtcCallService.ACTION_ANSWER_CALL);
+                   intent.setAction(WebRtcCallService.ACTION_ACCEPT_CALL);
                    startService(intent);
                  })
                  .onAnyDenied(this::handleDenyCall)
@@ -253,16 +254,19 @@ public class WebRtcCallActivity extends Activity {
   private void handleCallBusy(@NonNull WebRtcViewModel event) {
     callScreen.setActiveCall(event.getRecipient(), getString(R.string.RedPhone_busy), event.getLocalRenderer());
 
+    EventBus.getDefault().removeStickyEvent(WebRtcViewModel.class);
     delayedFinish(BUSY_SIGNAL_DELAY_FINISH);
   }
 
   private void handleCallConnected(@NonNull WebRtcViewModel event) {
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_IGNORE_CHEEK_PRESSES);
     callScreen.setActiveCall(event.getRecipient(), getString(R.string.RedPhone_connected), "", event.getLocalRenderer(), event.getRemoteRenderer());
+    EventBus.getDefault().removeStickyEvent(WebRtcViewModel.class);
   }
 
   private void handleRecipientUnavailable(@NonNull WebRtcViewModel event) {
     callScreen.setActiveCall(event.getRecipient(), getString(R.string.RedPhone_recipient_unavailable), event.getLocalRenderer());
+    EventBus.getDefault().removeStickyEvent(WebRtcViewModel.class);
     delayedFinish();
   }
 
@@ -307,8 +311,8 @@ public class WebRtcCallActivity extends Activity {
         }
 
         Intent intent = new Intent(WebRtcCallActivity.this, WebRtcCallService.class);
-        intent.putExtra(WebRtcCallService.EXTRA_REMOTE_RECIPIENT, recipient.getId());
-        intent.setAction(WebRtcCallService.ACTION_OUTGOING_CALL);
+        intent.setAction(WebRtcCallService.ACTION_OUTGOING_CALL)
+                .putExtra(WebRtcCallService.EXTRA_REMOTE_PEER, new RemotePeer(recipient.getId()));
         startService(intent);
       }
     });

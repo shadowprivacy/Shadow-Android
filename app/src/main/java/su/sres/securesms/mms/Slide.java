@@ -157,6 +157,25 @@ public abstract class Slide {
                                                          @Nullable BlurHash       blurHash,
                                                          boolean        voiceNote,
                                                          boolean        quote)
+
+  {
+    return constructAttachmentFromUri(context, uri, defaultMime, size, width, height, hasThumbnail, fileName, caption, stickerLocator, blurHash, voiceNote, quote, null);
+  }
+
+  protected static Attachment constructAttachmentFromUri(@NonNull  Context        context,
+                                                         @NonNull  Uri            uri,
+                                                         @NonNull  String         defaultMime,
+                                                         long           size,
+                                                         int            width,
+                                                         int            height,
+                                                         boolean        hasThumbnail,
+                                                         @Nullable String         fileName,
+                                                         @Nullable String         caption,
+                                                         @Nullable StickerLocator stickerLocator,
+                                                         @Nullable BlurHash       blurHash,
+                                                         boolean        voiceNote,
+                                                         boolean        quote,
+                                                         @Nullable AttachmentDatabase.TransformProperties transformProperties)
   {
     String                 resolvedType    = Optional.fromNullable(MediaUtil.getMimeType(context, uri)).or(defaultMime);
     String                 fastPreflightId = String.valueOf(new SecureRandom().nextLong());
@@ -174,7 +193,7 @@ public abstract class Slide {
             caption,
             stickerLocator,
             blurHash,
-            null);
+            transformProperties);
   }
 
   public @NonNull Optional<String> getFileType(@NonNull Context context) {

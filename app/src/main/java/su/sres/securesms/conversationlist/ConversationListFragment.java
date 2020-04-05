@@ -66,6 +66,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -116,9 +117,11 @@ import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.notifications.MarkReadReceiver;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.permissions.Permissions;
+import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.util.AvatarUtil;
+import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -134,6 +137,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import static android.app.Activity.RESULT_OK;
 
 public class ConversationListFragment extends MainFragment implements LoaderManager.LoaderCallbacks<Cursor>,
         ActionMode.Callback,
@@ -142,6 +146,10 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         MainNavigator.BackHandler,
         MegaphoneActionController
 {
+    public static final short MESSAGE_REQUESTS_REQUEST_CODE_CREATE_NAME = 32562;
+    public static final short PROFILE_NAMES_REQUEST_CODE_CREATE_NAME    = 18473;
+    public static final short PROFILE_NAMES_REQUEST_CODE_CONFIRM_NAME   = 19563;
+
     private static final String TAG = Log.tag(ConversationListFragment.class);
 
     private static final int[] EMPTY_IMAGES = new int[] { R.drawable.empty_inbox_1,
@@ -309,7 +317,28 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
     }
 
     @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+            if (resultCode != RESULT_OK) {
+                return;
+            }
+
+            boolean isProfileCreatedRequestCode = requestCode == MESSAGE_REQUESTS_REQUEST_CODE_CREATE_NAME ||
+                    requestCode ==PROFILE_NAMES_REQUEST_CODE_CREATE_NAME;
+
+            if (isProfileCreatedRequestCode) {
+                Snackbar.make(fab, R.string.ConversationListFragment__your_profile_name_has_been_created, Snackbar.LENGTH_LONG).show();
+
+                if (requestCode == MESSAGE_REQUESTS_REQUEST_CODE_CREATE_NAME) {
+                    viewModel.onMegaphoneCompleted(Megaphones.Event.MESSAGE_REQUESTS);
+                }
+            } else if (requestCode == PROFILE_NAMES_REQUEST_CODE_CONFIRM_NAME) {
+                Snackbar.make(fab, R.string.ConversationListFragment__your_profile_name_has_been_saved, Snackbar.LENGTH_LONG).show();
+            }
+        }
+
+    @Override
     public void onConversationClicked(@NonNull ThreadRecord threadRecord) {
+        hideKeyboard();
         getNavigator().goToConversation(threadRecord.getRecipient().getId(),
                 threadRecord.getThreadId(),
                 threadRecord.getDistributionType(),
@@ -322,6 +351,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         SimpleTask.run(getViewLifecycleOwner().getLifecycle(), () -> {
             return DatabaseFactory.getThreadDatabase(getContext()).getThreadIdIfExistsFor(contact);
         }, threadId -> {
+            hideKeyboard();
             getNavigator().goToConversation(contact.getId(),
                     threadId,
                     ThreadDatabase.DistributionTypes.DEFAULT,
@@ -336,6 +366,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
             int startingPosition = DatabaseFactory.getMmsSmsDatabase(getContext()).getMessagePositionInConversation(message.threadId, message.receivedTimestampMs);
             return Math.max(0, startingPosition);
         }, startingPosition -> {
+            hideKeyboard();
             getNavigator().goToConversation(message.conversationRecipient.getId(),
                     message.threadId,
                     ThreadDatabase.DistributionTypes.DEFAULT,
@@ -372,6 +403,11 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
     @Override
     public void onMegaphoneCompleted(@NonNull Megaphones.Event event) {
         viewModel.onMegaphoneCompleted(event);
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager imm = ServiceUtil.getInputMethodManager(requireContext());
+        imm.hideSoftInputFromWindow(requireView().getWindowToken(), 0);
     }
 
     private void initializeProfileIcon(@NonNull Recipient recipient) {

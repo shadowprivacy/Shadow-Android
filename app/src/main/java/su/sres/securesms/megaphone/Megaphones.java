@@ -9,9 +9,11 @@ import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.R;
+import su.sres.securesms.conversationlist.ConversationListFragment;
 import su.sres.securesms.database.model.MegaphoneRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.messagerequests.MessageRequestMegaphoneActivity;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.util.FeatureFlags;
@@ -42,7 +44,7 @@ public final class Megaphones {
 
     private static final MegaphoneSchedule ALWAYS         = new ForeverSchedule(true);
     private static final MegaphoneSchedule NEVER          = new ForeverSchedule(false);
-    private static final MegaphoneSchedule EVERY_TWO_DAYS = new RecurringSchedule(TimeUnit.DAYS.toMillis(2));
+    static final MegaphoneSchedule EVERY_TWO_DAYS = new RecurringSchedule(TimeUnit.DAYS.toMillis(2));
 
     private Megaphones() {}
 
@@ -82,7 +84,8 @@ public final class Megaphones {
     private static Map<Event, MegaphoneSchedule> buildDisplayOrder() {
         return new LinkedHashMap<Event, MegaphoneSchedule>() {{
             put(Event.REACTIONS, ALWAYS);
-            put(Event.PROFILE_NAMES_FOR_ALL, FeatureFlags.profileNamesMegaphoneEnabled() ? EVERY_TWO_DAYS : NEVER);
+            put(Event.PROFILE_NAMES_FOR_ALL, FeatureFlags.profileNamesMegaphone() ? EVERY_TWO_DAYS : NEVER);
+            put(Event.MESSAGE_REQUESTS, shouldShowMessageRequestsMegaphone() ? ALWAYS : NEVER);
         }};
     }
 
@@ -92,6 +95,8 @@ public final class Megaphones {
                 return buildReactionsMegaphone();
             case PROFILE_NAMES_FOR_ALL:
                 return buildProfileNamesMegaphone(context);
+            case MESSAGE_REQUESTS:
+                return buildMessageRequestsMegaphone(context);
             default:
                 throw new IllegalArgumentException("Event not handled!");
         }
@@ -104,31 +109,53 @@ public final class Megaphones {
     }
 
     private static @NonNull Megaphone buildProfileNamesMegaphone(@NonNull Context context) {
+        short requestCode  = TextSecurePreferences.getProfileName(context) != ProfileName.EMPTY
+                ? ConversationListFragment.PROFILE_NAMES_REQUEST_CODE_CONFIRM_NAME
+                : ConversationListFragment.PROFILE_NAMES_REQUEST_CODE_CREATE_NAME;
+
         Megaphone.Builder builder = new Megaphone.Builder(Event.PROFILE_NAMES_FOR_ALL, Megaphone.Style.BASIC)
                 .enableSnooze(null)
                 .setImage(R.drawable.profile_megaphone);
 
-        Megaphone.EventListener eventListener = (megaphone, listener) -> {
-            listener.onMegaphoneSnooze(Event.PROFILE_NAMES_FOR_ALL);
-            listener.onMegaphoneNavigationRequested(new Intent(context, EditProfileActivity.class));
-        };
-
         if (TextSecurePreferences.getProfileName(ApplicationDependencies.getApplication()) == ProfileName.EMPTY) {
             return builder.setTitle(R.string.ProfileNamesMegaphone__add_a_profile_name)
                     .setBody(R.string.ProfileNamesMegaphone__this_will_be_displayed_when_you_start)
-                    .setActionButton(R.string.ProfileNamesMegaphone__add_profile_name, eventListener)
+                    .setActionButton(R.string.ProfileNamesMegaphone__add_profile_name, (megaphone, listener) -> {
+                        listener.onMegaphoneSnooze(Event.PROFILE_NAMES_FOR_ALL);
+                        listener.onMegaphoneNavigationRequested(new Intent(context, EditProfileActivity.class), requestCode);
+                    })
                     .build();
         } else {
             return builder.setTitle(R.string.ProfileNamesMegaphone__confirm_your_profile_name)
                     .setBody(R.string.ProfileNamesMegaphone__your_profile_can_now_include)
-                    .setActionButton(R.string.ProfileNamesMegaphone__confirm_name, eventListener)
+                    .setActionButton(R.string.ProfileNamesMegaphone__confirm_name, (megaphone, listener) -> {
+                        listener.onMegaphoneCompleted(Event.PROFILE_NAMES_FOR_ALL);
+                        listener.onMegaphoneNavigationRequested(new Intent(context, EditProfileActivity.class), requestCode);
+                    })
                     .build();
         }
     }
 
+    private static @NonNull Megaphone buildMessageRequestsMegaphone(@NonNull Context context) {
+        return new Megaphone.Builder(Event.MESSAGE_REQUESTS, Megaphone.Style.FULLSCREEN)
+                .disableSnooze()
+                .setMandatory(true)
+                .setOnVisibleListener(((megaphone, listener) -> {
+                    listener.onMegaphoneNavigationRequested(new Intent(context, MessageRequestMegaphoneActivity.class),
+                            ConversationListFragment.MESSAGE_REQUESTS_REQUEST_CODE_CREATE_NAME);
+                }))
+                .build();
+    }
+
+    private static boolean shouldShowMessageRequestsMegaphone() {
+        boolean userHasAProfileName = TextSecurePreferences.getProfileName(ApplicationDependencies.getApplication()) != ProfileName.EMPTY;
+        return FeatureFlags.messageRequests() && !userHasAProfileName;
+    }
+
     public enum Event {
         REACTIONS("reactions"),
-        PROFILE_NAMES_FOR_ALL("profile_names");
+        PROFILE_NAMES_FOR_ALL("profile_names"),
+        MESSAGE_REQUESTS("message_requests");
 
         private final String key;
 

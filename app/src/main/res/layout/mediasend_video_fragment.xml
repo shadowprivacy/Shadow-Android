@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<su.sres.securesms.video.VideoPlayer
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="@color/grey_400_transparent"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-</su.sres.securesms.video.VideoPlayer>
+    <su.sres.securesms.video.VideoPlayer
+        android:id="@+id/video_player"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/grey_400_transparent" />
+
+    <su.sres.securesms.scribbles.VideoEditorHud
+        android:id="@+id/video_editor_hud"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+</FrameLayout>

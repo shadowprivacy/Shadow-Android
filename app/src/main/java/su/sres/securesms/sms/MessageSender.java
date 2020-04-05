@@ -50,6 +50,7 @@ import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.jobs.AttachmentCompressionJob;
+import su.sres.securesms.jobs.AttachmentMarkUploadedJob;
 import su.sres.securesms.jobs.MmsSendJob;
 import su.sres.securesms.jobs.PushGroupSendJob;
 import su.sres.securesms.jobs.PushMediaSendJob;
@@ -436,15 +437,22 @@ public class MessageSender {
   private static void sendLocalMediaSelf(Context context, long messageId) {
     try {
       ExpiringMessageManager expirationManager  = ApplicationContext.getInstance(context).getExpiringMessageManager();
-      AttachmentDatabase     attachmentDatabase = DatabaseFactory.getAttachmentDatabase(context);
       MmsDatabase            mmsDatabase        = DatabaseFactory.getMmsDatabase(context);
       MmsSmsDatabase         mmsSmsDatabase     = DatabaseFactory.getMmsSmsDatabase(context);
       OutgoingMediaMessage   message            = mmsDatabase.getOutgoingMessage(messageId);
       SyncMessageId          syncId             = new SyncMessageId(Recipient.self().getId(), message.getSentTimeMillis());
 
-      for (Attachment attachment : message.getAttachments()) {
-        attachmentDatabase.markAttachmentUploaded(messageId, attachment);
-      }
+      List<AttachmentCompressionJob> compressionJobs = Stream.of(message.getAttachments())
+              .map(a -> AttachmentCompressionJob.fromAttachment((DatabaseAttachment) a, false, -1))
+              .toList();
+
+      List<AttachmentMarkUploadedJob> fakeUploadJobs = Stream.of(message.getAttachments())
+              .map(a -> new AttachmentMarkUploadedJob(messageId, ((DatabaseAttachment) a).getAttachmentId()))
+              .toList();
+
+      ApplicationDependencies.getJobManager().startChain(compressionJobs)
+              .then(fakeUploadJobs)
+              .enqueue();
 
       mmsDatabase.markAsSent(messageId, true);
       mmsDatabase.markUnidentified(messageId, true);

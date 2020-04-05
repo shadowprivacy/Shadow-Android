@@ -359,6 +359,7 @@
   <string name="DozeReminder_this_device_does_not_support_play_services_tap_to_disable_system_battery">Это устройство не поддерживает Службы Google Play. Нажмите для отключения оптимизации энергопотребления, которая не позволяет Shadow получать сообщения, когда он неактивен.</string>
   <!--ShareActivity-->
   <string name="ShareActivity_share_with">Поделиться с</string>
+  <string name="ShareActivity_multiple_attachments_are_only_supported">Несколько вложений поддерживаются только для изображений и видео</string>
   <!--ExperienceUpgradeActivity-->
   <string name="ExperienceUpgradeActivity_welcome_to_signal_dgaf">Добро пожаловать в Shadow.</string>
   <string name="ExperienceUpgradeActivity_textsecure_is_now_called_signal">TextSecure и RedPhone объединились в одно приложение для приватного общения в любых ситуациях: Shadow</string>
@@ -1522,6 +1523,15 @@
   <string name="SecondInviteReminder__description">Пригласить %1$s</string>
   <string name="InsightsReminder__view_insights">Просмотреть выводы</string>
   <string name="InsightsReminder__invite">Пригласить</string>
+
+    <!--Profile Names Megaphone-->
+    <string name="ProfileNamesMegaphone__add_a_profile_name">Добавьте имя профиля</string>
+    <string name="ProfileNamesMegaphone__this_will_be_displayed_when_you_start">Оно будет показано, если вы начнёте новый разговор или когда вы поделитесь им.</string>
+    <string name="ProfileNamesMegaphone__add_profile_name">Добавить имя профиля</string>
+    <string name="ProfileNamesMegaphone__confirm_your_profile_name">Подтвердите имя вашего профиля</string>
+    <string name="ProfileNamesMegaphone__your_profile_can_now_include">Ваш профиль теперь может содержать необязательную фамилию.</string>
+    <string name="ProfileNamesMegaphone__confirm_name">Проверьте имя</string>
+
   <!--transport_selection_list_item-->
   <string name="transport_selection_list_item__transport_icon">Значок транспорта</string>
   <string name="ConversationListFragment_loading">Загружаем…</string>

@@ -31,6 +31,7 @@ import su.sres.securesms.database.MmsSmsColumns;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.ThreadDatabase.Extra;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.ExpirationUtil;
 import su.sres.securesms.util.MediaUtil;
 
@@ -77,7 +78,11 @@ public class ThreadRecord extends DisplayRecord {
 
   @Override
   public SpannableString getDisplayBody(@NonNull Context context) {
-    if (isGroupUpdate()) {
+    if (getGroupAddedBy() != null) {
+      return emphasisAdded(context.getString(R.string.ThreadRecord_s_added_you_to_the_group, Recipient.live(getGroupAddedBy()).get().getDisplayName(context)));
+    } else if (!isMessageRequestAccepted()) {
+      return emphasisAdded(context.getString(R.string.ThreadRecord_message_request));
+    } else if (isGroupUpdate()) {
       return emphasisAdded(context.getString(R.string.ThreadRecord_group_updated));
     } else if (isGroupQuit()) {
       return emphasisAdded(context.getString(R.string.ThreadRecord_left_the_group));
@@ -180,5 +185,15 @@ public class ThreadRecord extends DisplayRecord {
 
   public long getLastSeen() {
     return lastSeen;
+  }
+
+  public @Nullable RecipientId getGroupAddedBy() {
+    if (extra != null && extra.getGroupAddedBy() != null) return RecipientId.from(extra.getGroupAddedBy());
+    else                                                  return null;
+  }
+
+  public boolean isMessageRequestAccepted() {
+    if (extra != null) return extra.isMessageRequestAccepted();
+    else               return true;
   }
 }

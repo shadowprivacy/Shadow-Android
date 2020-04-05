@@ -44,6 +44,7 @@ import su.sres.securesms.mms.Slide;
 import su.sres.securesms.mms.SlideDeck;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -703,8 +704,24 @@ public class ThreadDatabase extends Database {
   }
 
   private @Nullable Extra getExtrasFor(MessageRecord record) {
+    boolean     messageRequestAccepted = RecipientUtil.isMessageRequestAccepted(context, record.getThreadId());
+    RecipientId threadRecipientId      = getRecipientIdForThreadId(record.getThreadId());
+
+    if (!messageRequestAccepted && threadRecipientId != null) {
+      boolean isPushGroup = Recipient.resolved(threadRecipientId).isPushGroup();
+      if (isPushGroup) {
+        RecipientId recipientId = DatabaseFactory.getMmsSmsDatabase(context).getGroupAddedBy(record.getThreadId());
+
+        if (recipientId != null) {
+          return Extra.forGroupMessageRequest(recipientId);
+        }
+      }
+
+      return Extra.forMessageRequest();
+    }
+
     if (record.isMms() && ((MmsMessageRecord) record).isViewOnce()) {
-      return Extra.forRevealableMessage();
+      return Extra.forRevealable();
     } else if (record.isMms() && ((MmsMessageRecord) record).getSlideDeck().getStickerSlide() != null) {
       return Extra.forSticker();
     } else if (record.isMms() && ((MmsMessageRecord) record).getSlideDeck().getSlides().size() > 1) {
@@ -829,28 +846,42 @@ public class ThreadDatabase extends Database {
     @JsonProperty private final boolean isRevealable;
     @JsonProperty private final boolean isSticker;
     @JsonProperty private final boolean isAlbum;
+    @JsonProperty private final boolean isMessageRequestAccepted;
+    @JsonProperty private final String  groupAddedBy;
 
     public Extra(@JsonProperty("isRevealable") boolean isRevealable,
                  @JsonProperty("isSticker") boolean isSticker,
-                 @JsonProperty("isAlbum") boolean isAlbum)
+                 @JsonProperty("isAlbum") boolean isAlbum,
+                 @JsonProperty("isMessageRequestAccepted") boolean isMessageRequestAccepted,
+                 @JsonProperty("groupAddedBy") String groupAddedBy)
+
     {
-      this.isRevealable = isRevealable;
-      this.isSticker    = isSticker;
-      this.isAlbum      = isAlbum;
+      this.isRevealable             = isRevealable;
+      this.isSticker                = isSticker;
+      this.isAlbum                  = isAlbum;
+      this.isMessageRequestAccepted = isMessageRequestAccepted;
+      this.groupAddedBy             = groupAddedBy;
     }
 
-    public static @NonNull Extra forRevealableMessage() {
-      return new Extra(true, false, false);
+    public static @NonNull Extra forRevealable() {
+      return new Extra(true, false, false, true, null);
     }
 
     public static @NonNull Extra forSticker() {
-      return new Extra(false, true, false);
+      return new Extra(false, true, false, true, null);
     }
 
     public static @NonNull Extra forAlbum() {
-      return new Extra(false, false, true);
+      return new Extra(false, false, true, true, null);
     }
 
+    public static @NonNull Extra forMessageRequest() {
+      return new Extra(false, false, false, false, null);
+    }
+
+    public static @NonNull Extra forGroupMessageRequest(RecipientId recipientId) {
+      return new Extra(false, false, false, false, recipientId.serialize());
+    }
 
     public boolean isRevealable() {
       return isRevealable;
@@ -862,6 +893,14 @@ public class ThreadDatabase extends Database {
 
     public boolean isAlbum() {
       return isAlbum;
+    }
+
+    public boolean isMessageRequestAccepted() {
+      return isMessageRequestAccepted;
+    }
+
+    public @Nullable String getGroupAddedBy() {
+      return groupAddedBy;
     }
   }
 }

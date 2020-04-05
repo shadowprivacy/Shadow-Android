@@ -8,7 +8,6 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcel;
 import android.service.chooser.ChooserTarget;
 import android.service.chooser.ChooserTargetService;
 import androidx.annotation.NonNull;
@@ -16,7 +15,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.view.ContextThemeWrapper;
 
 import su.sres.securesms.R;
-import su.sres.securesms.ShareActivity;
+import su.sres.securesms.sharing.ShareActivity;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.ThreadRecord;

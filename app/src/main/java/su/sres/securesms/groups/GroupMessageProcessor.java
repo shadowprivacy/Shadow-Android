@@ -25,6 +25,7 @@ import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.sms.IncomingGroupMessage;
 import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.util.Base64;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.GroupUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
@@ -98,6 +99,13 @@ public class GroupMessageProcessor {
 
     database.create(id, group.getName().orNull(), members,
             avatar != null && avatar.isPointer() ? avatar.asPointer() : null, null);
+
+    Recipient sender = Recipient.externalPush(context, content.getSender());
+
+    if (FeatureFlags.messageRequests() && (sender.isSystemContact() || sender.isProfileSharing())) {
+      Log.i(TAG, "Auto-enabling profile sharing because 'adder' is trusted. contact: " + sender.isSystemContact() + ", profileSharing: " + sender.isProfileSharing());
+      DatabaseFactory.getRecipientDatabase(context).setProfileSharing(Recipient.external(context, id).getId(), true);
+    }
 
     return storeMessage(context, content, group, builder.build(), outgoing);
   }
@@ -281,11 +289,11 @@ public class GroupMessageProcessor {
     GroupContext.Member.Builder member = GroupContext.Member.newBuilder();
 
     if (address.getUuid().isPresent()) {
-      member = member.setUuid(address.getUuid().get().toString());
+      member.setUuid(address.getUuid().get().toString());
     }
 
     if (address.getNumber().isPresent()) {
-      member = member.setE164(address.getNumber().get());
+      member.setE164(address.getNumber().get());
     }
 
     return member.build();

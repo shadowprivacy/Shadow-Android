@@ -77,8 +77,10 @@ import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.IdentityUtil;
+import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThemeUtil;
+import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.ListenableFuture;
 import su.sres.securesms.util.concurrent.SignalExecutors;
@@ -234,6 +236,13 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
     this.avatar.setBackgroundColor(recipient.getColor().toActionBarColor(this));
     this.toolbarLayout.setTitle(recipient.toShortString(this));
     this.toolbarLayout.setContentScrimColor(recipient.getColor().toActionBarColor(this));
+    if (recipient.getUuid().isPresent()) {
+      toolbarLayout.setOnLongClickListener(v -> {
+        Util.copyToClipboard(this, recipient.getUuid().get().toString());
+        ServiceUtil.getVibrator(this).vibrate(200);
+        return true;
+      });
+    }
   }
 
   @Override

@@ -25,6 +25,7 @@ import su.sres.securesms.WebRtcCallActivity;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.WebRtcCallService;
 import su.sres.securesms.util.concurrent.SimpleTask;
 
@@ -144,8 +145,8 @@ public class CommunicationActions {
             .withPermanentDenialDialog(activity.getString(R.string.ConversationActivity_signal_needs_the_microphone_and_camera_permissions_in_order_to_call_s, recipient.getDisplayName(activity)))
             .onAllGranted(() -> {
               Intent intent = new Intent(activity, WebRtcCallService.class);
-              intent.setAction(WebRtcCallService.ACTION_OUTGOING_CALL);
-              intent.putExtra(WebRtcCallService.EXTRA_REMOTE_RECIPIENT, recipient.getId());
+              intent.setAction(WebRtcCallService.ACTION_OUTGOING_CALL)
+                      .putExtra(WebRtcCallService.EXTRA_REMOTE_PEER, new RemotePeer(recipient.getId()));
               activity.startService(intent);
 
               Intent activityIntent = new Intent(activity, WebRtcCallActivity.class);

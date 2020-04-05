@@ -12,7 +12,6 @@ import su.sres.securesms.R;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.reactions.ReactionsLoader.Reaction;
-import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.AvatarUtil;
 
 import java.util.Collections;
@@ -60,13 +59,14 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
         }
 
         void bind(@NonNull Reaction reaction) {
-            this.recipient.setText(reaction.getSender().getDisplayName(itemView.getContext()));
             this.emoji.setText(reaction.getEmoji());
 
             if (reaction.getSender().isLocalNumber()) {
+                this.recipient.setText(R.string.ReactionsRecipientAdapter_you);
                 this.avatar.setAvatar(GlideApp.with(avatar), null, false);
                 AvatarUtil.loadIconIntoImageView(reaction.getSender(), avatar);
             } else {
+                this.recipient.setText(reaction.getSender().getDisplayName(itemView.getContext()));
                 this.avatar.setAvatar(GlideApp.with(avatar), reaction.getSender(), false);
             }
         }

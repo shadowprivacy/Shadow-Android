@@ -26,6 +26,7 @@ import su.sres.securesms.InviteActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThemeUtil;
 
@@ -75,8 +76,8 @@ public class CameraContactSelectionFragment extends Fragment implements CameraCo
 
     @Override
     public @Nullable View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        int            theme          = TextSecurePreferences.getTheme(inflater.getContext()).equals("light") ? R.style.TextSecure_LightTheme
-                : R.style.TextSecure_DarkTheme;
+        int            theme          = DynamicTheme.isDarkTheme(inflater.getContext()) ? R.style.TextSecure_DarkTheme
+                : R.style.TextSecure_LightTheme;
         return ThemeUtil.getThemedInflater(inflater.getContext(), inflater, theme)
                 .inflate(R.layout.camera_contact_selection_fragment, container, false);
     }

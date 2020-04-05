@@ -184,8 +184,7 @@
             android:name=".preferences.MmsPreferencesActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
-        <activity
-            android:name=".ShareActivity"
+        <activity android:name=".sharing.ShareActivity"
             android:theme="@style/TextSecure.LightNoActionBar"
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
@@ -205,6 +204,13 @@
                 <data android:mimeType="application/*" />
                 <data android:mimeType="text/*" />
                 <data android:mimeType="*/*" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="image/*" />
+                <data android:mimeType="video/*" />
             </intent-filter>
 
             <meta-data
@@ -394,8 +400,7 @@
             android:label="@string/AndroidManifest__linked_devices"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
-        <activity
-            android:name=".LogSubmitActivity"
+        <activity android:name=".logsubmit.SubmitDebugLogActivity"
             android:label="@string/AndroidManifest__log_submit"
             android:windowSoftInputMode="stateHidden"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
@@ -500,6 +505,11 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".messagerequests.MessageRequestMegaphoneActivity"
+            android:theme="@style/TextSecure.LightRegistrationTheme"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
         <activity
             android:name=".contactshare.ContactShareEditActivity"

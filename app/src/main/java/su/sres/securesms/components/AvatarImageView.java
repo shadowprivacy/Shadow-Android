@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.provider.ContactsContract;
 import android.util.AttributeSet;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
@@ -15,6 +16,7 @@ import androidx.appcompat.widget.AppCompatImageView;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import su.sres.securesms.R;
+import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.contacts.avatars.ContactColors;
 import su.sres.securesms.contacts.avatars.ContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
@@ -48,10 +50,11 @@ public final class AvatarImageView extends AppCompatImageView {
     DARK_THEME_OUTLINE_PAINT.setAntiAlias(true);
   }
 
-  private int             size;
-  private boolean         inverted;
-  private Paint           outlinePaint;
-  private OnClickListener listener;
+  private int                             size;
+  private boolean                         inverted;
+  private Paint                           outlinePaint;
+  private OnClickListener                 listener;
+  private Recipient.FallbackPhotoProvider fallbackPhotoProvider;
 
   private @Nullable RecipientContactPhoto recipientContactPhoto;
   private @NonNull  Drawable              unknownRecipientDrawable;
@@ -92,7 +95,6 @@ public final class AvatarImageView extends AppCompatImageView {
     float radius = Math.min(cx, cy) - (outlinePaint.getStrokeWidth() / 2f);
 
     canvas.translate(getPaddingLeft(), getPaddingTop());
-
     canvas.drawCircle(cx, cy, radius, outlinePaint);
   }
 
@@ -100,6 +102,10 @@ public final class AvatarImageView extends AppCompatImageView {
   public void setOnClickListener(OnClickListener listener) {
     this.listener = listener;
     super.setOnClickListener(listener);
+  }
+
+  public void setFallbackPhotoProvider(Recipient.FallbackPhotoProvider fallbackPhotoProvider) {
+    this.fallbackPhotoProvider = fallbackPhotoProvider;
   }
 
   public void setAvatar(@NonNull GlideRequests requestManager, @Nullable Recipient recipient, boolean quickContactEnabled) {
@@ -111,8 +117,8 @@ public final class AvatarImageView extends AppCompatImageView {
         recipientContactPhoto = photo;
 
         Drawable fallbackContactPhotoDrawable = size == SIZE_SMALL
-                ? photo.recipient.getSmallFallbackContactPhotoDrawable(getContext(), inverted)
-                : photo.recipient.getFallbackContactPhotoDrawable(getContext(), inverted);
+                ? photo.recipient.getSmallFallbackContactPhotoDrawable(getContext(), inverted, fallbackPhotoProvider)
+                : photo.recipient.getFallbackContactPhotoDrawable(getContext(), inverted, fallbackPhotoProvider);
 
         if (photo.contactPhoto != null) {
           requestManager.load(photo.contactPhoto)
@@ -125,11 +131,18 @@ public final class AvatarImageView extends AppCompatImageView {
           setImageDrawable(fallbackContactPhotoDrawable);
         }
       }
+
       setAvatarClickHandler(recipient, quickContactEnabled);
     } else {
       recipientContactPhoto = null;
       requestManager.clear(this);
-      setImageDrawable(unknownRecipientDrawable);
+      if (fallbackPhotoProvider != null) {
+        setImageDrawable(fallbackPhotoProvider.getPhotoForRecipientWithoutName()
+                .asDrawable(getContext(), MaterialColor.STEEL.toAvatarColor(getContext()), inverted));
+      } else {
+        setImageDrawable(unknownRecipientDrawable);
+      }
+
       super.setOnClickListener(listener);
     }
   }

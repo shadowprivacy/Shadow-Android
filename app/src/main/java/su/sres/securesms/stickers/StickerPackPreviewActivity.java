@@ -5,8 +5,6 @@ import androidx.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Point;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -19,23 +17,16 @@ import android.widget.Toast;
 
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.PassphraseRequiredActionBarActivity;
 import su.sres.securesms.R;
-import su.sres.securesms.ShareActivity;
-import su.sres.securesms.database.model.StickerRecord;
-import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.jobs.StickerPackDownloadJob;
+import su.sres.securesms.sharing.ShareActivity;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
 import su.sres.securesms.mms.GlideApp;
-import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.stickers.StickerManifest.Sticker;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
-import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.ThemeUtil;
-import su.sres.securesms.util.concurrent.SimpleTask;
+
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 

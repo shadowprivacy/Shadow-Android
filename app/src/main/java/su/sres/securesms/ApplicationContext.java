@@ -36,7 +36,7 @@ import com.google.android.gms.security.ProviderInstaller;
 import org.conscrypt.Conscrypt;
 
 import org.signal.aesgcmprovider.AesGcmProvider;
-import su.sres.ringrtc.CallConnectionFactory;
+import su.sres.ringrtc.CallManager;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.database.DatabaseFactory;
@@ -45,15 +45,12 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.dependencies.ApplicationDependencyProvider;
 import su.sres.securesms.dependencies.NetworkIndependentProvider;
 import su.sres.securesms.gcm.FcmJobService;
-import su.sres.securesms.insights.InsightsOptOut;
-import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
-import su.sres.securesms.jobs.StickerPackDownloadJob;
+import su.sres.securesms.jobs.RefreshPreKeysJob;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.logging.AndroidLogger;
 import su.sres.securesms.logging.CustomSignalProtocolLogger;
 import su.sres.securesms.logging.Log;
@@ -65,6 +62,7 @@ import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.ringrtc.RingRtcLogger;
 import su.sres.securesms.service.DirectoryRefreshListener;
 import su.sres.securesms.service.ExpiringMessageManager;
@@ -75,10 +73,8 @@ import su.sres.securesms.revealable.ViewOnceMessageManager;
 import su.sres.securesms.service.RotateSenderCertificateListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
-import su.sres.securesms.stickers.BlessedPacks;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
 
@@ -157,6 +153,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
          });
 
     NotificationChannels.create(this);
+    RefreshPreKeysJob.scheduleIfNecessary();
     ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
 
     if (Build.VERSION.SDK_INT < 21) {
@@ -175,7 +172,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
       while(!initializedOnStart) {
 
         if (getServiceConfigurationSet() && initializedOnCreate) {
-          FeatureFlags.refresh();
+          FeatureFlags.refreshIfNecessary();
           ApplicationDependencies.getRecipientCache().warmUp();
           ApplicationDependencies.getFrameRateTracker().begin();
           ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
@@ -294,16 +291,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
       if (!SQLCipherOpenHelper.databaseFileExists(this)) {
         Log.i(TAG, "First ever app launch!");
 
-        InsightsOptOut.userRequestedOptOut(this);
-
-        TextSecurePreferences.setAppMigrationVersion(this, ApplicationMigrations.CURRENT_VERSION);
-        TextSecurePreferences.setJobManagerVersion(this, JobManager.CURRENT_VERSION);
-        TextSecurePreferences.setLastExperienceVersionCode(this, Util.getCanonicalVersionCode());
-        TextSecurePreferences.setHasSeenStickerIntroTooltip(this, true);
-        ApplicationDependencies.getMegaphoneRepository().onFirstEverAppLaunch();
-        SignalStore.registrationValues().onNewInstall();
-//        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
-//       ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
+        AppInitialization.onFirstEverAppLaunch(this);
       }
 
       Log.i(TAG, "Setting first install version to " + BuildConfig.CANONICAL_VERSION_CODE);
@@ -313,11 +301,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     if ((TextSecurePreferences.getFirstInstallVersion(this) != -1) && !SignalStore.serviceConfigurationValues().getCloudUrl().equals(EXAMPLE_URI)) {
       Log.i(TAG, "The cloud URL was not set on the previous sticker manifest download. Proceeding with sticker pack download");
 
-//   moved to Code Verification stage
-//      ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
-//      ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
-//      ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forReference(BlessedPacks.SWOON_HANDS.getPackId(), BlessedPacks.SWOON_HANDS.getPackKey()));
-//      ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forReference(BlessedPacks.SWOON_FACES.getPackId(), BlessedPacks.SWOON_FACES.getPackKey()));
     }
   }
 
@@ -394,9 +377,9 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         WebRtcAudioManager.setBlacklistDeviceForOpenSLESUsage(true);
       }
 
-      CallConnectionFactory.initialize(this, new RingRtcLogger());
+        CallManager.initialize(this, new RingRtcLogger());
     } catch (UnsatisfiedLinkError e) {
-      Log.w(TAG, e);
+        throw new AssertionError("Unable to load ringrtc library", e);
     }
   }
 
