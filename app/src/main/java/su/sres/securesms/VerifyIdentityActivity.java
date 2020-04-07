@@ -43,6 +43,7 @@ import android.text.Html;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.logging.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -596,6 +597,8 @@ public class VerifyIdentityActivity extends PassphraseRequiredActionBarActivity 
                       .setVerified(params[0].getId(),
                                           remoteIdentity,
                                           VerifiedStatus.DEFAULT);
+
+              ApplicationDependencies.getJobManager().add(new StorageSyncJob());
             }
 
             ApplicationDependencies.getJobManager()

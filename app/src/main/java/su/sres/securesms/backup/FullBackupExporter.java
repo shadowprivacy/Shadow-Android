@@ -23,6 +23,7 @@ import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupReceiptDatabase;
 import su.sres.securesms.database.JobDatabase;
+import su.sres.securesms.database.KeyValueDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.MmsSmsColumns;
 import su.sres.securesms.database.OneTimePreKeyDatabase;
@@ -73,7 +74,8 @@ public class FullBackupExporter extends FullBackupBase {
           SearchDatabase.MMS_FTS_TABLE_NAME,
           JobDatabase.JOBS_TABLE_NAME,
           JobDatabase.CONSTRAINTS_TABLE_NAME,
-          JobDatabase.DEPENDENCIES_TABLE_NAME
+          JobDatabase.DEPENDENCIES_TABLE_NAME,
+          KeyValueDatabase.TABLE_NAME
   );
 
   public static void export(@NonNull Context context,

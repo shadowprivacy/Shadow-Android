@@ -18,14 +18,21 @@ import androidx.navigation.Navigation;
 import com.dd.CircularProgressButton;
 
 import su.sres.securesms.R;
+import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.jobs.StorageSyncJob;
+import su.sres.securesms.logging.Log;
 import su.sres.securesms.registration.service.CodeVerificationRequest;
 import su.sres.securesms.registration.service.RegistrationService;
 import su.sres.securesms.registration.viewmodel.RegistrationViewModel;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.ServiceUtil;
+import su.sres.securesms.util.concurrent.SimpleTask;
 
 import java.util.concurrent.TimeUnit;
 
 public final class RegistrationLockFragment extends BaseRegistrationFragment {
+
+    private static final String TAG = Log.tag(RegistrationLockFragment.class);
 
     private static final int MINIMUM_PIN_LENGTH = 4;
 
@@ -118,9 +125,7 @@ public final class RegistrationLockFragment extends BaseRegistrationFragment {
 
             @Override
             public void onSuccessfulRegistration() {
-                cancelSpinning(pinButton);
-
-                Navigation.findNavController(requireView()).navigate(RegistrationLockFragmentDirections.actionSuccessfulRegistration());
+                handleSuccessfulPinEntry();
             }
 
             @Override
@@ -166,6 +171,29 @@ public final class RegistrationLockFragment extends BaseRegistrationFragment {
 
         if (pinEntry.requestFocus()) {
             ServiceUtil.getInputMethodManager(pinEntry.getContext()).showSoftInput(pinEntry, 0);
+        }
+    }
+
+    private void handleSuccessfulPinEntry() {
+
+        if (FeatureFlags.storageServiceRestore()) {
+            long startTime = System.currentTimeMillis();
+            SimpleTask.run(() -> {
+                return ApplicationDependencies.getJobManager().runSynchronously(new StorageSyncJob(), TimeUnit.SECONDS.toMillis(10));
+            }, result -> {
+                long elapsedTime = System.currentTimeMillis() - startTime;
+
+                if (result.isPresent()) {
+                    Log.i(TAG, "Storage Service restore completed: " + result.get().name() + ". (Took " + elapsedTime + " ms)");
+                } else {
+                    Log.i(TAG, "Storage Service restore failed to complete in the allotted time. (" + elapsedTime + " ms elapsed)");
+                }
+                cancelSpinning(pinButton);
+                Navigation.findNavController(requireView()).navigate(RegistrationLockFragmentDirections.actionSuccessfulRegistration());
+            });
+        } else {
+            cancelSpinning(pinButton);
+            Navigation.findNavController(requireView()).navigate(RegistrationLockFragmentDirections.actionSuccessfulRegistration());
         }
     }
 }

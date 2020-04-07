@@ -36,6 +36,7 @@ import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
 import su.sres.signalservice.api.messages.multidevice.BlockedListMessage;
 import su.sres.signalservice.api.messages.multidevice.ConfigurationMessage;
 import su.sres.signalservice.api.messages.multidevice.MessageRequestResponseMessage;
+import su.sres.signalservice.api.messages.multidevice.KeysMessage;
 import su.sres.signalservice.api.messages.multidevice.ViewOnceOpenMessage;
 import su.sres.signalservice.api.messages.multidevice.ReadMessage;
 import su.sres.signalservice.api.messages.multidevice.SentTranscriptMessage;
@@ -307,6 +308,8 @@ public class SignalServiceMessageSender {
       content = createMultiDeviceFetchTypeContent(message.getFetchType().get());
     } else if (message.getMessageRequestResponse().isPresent()) {
       content = createMultiDeviceMessageRequestResponseContent(message.getMessageRequestResponse().get());
+    } else if (message.getKeys().isPresent()) {
+      content = createMultiDeviceSyncKeysContent(message.getKeys().get());
     } else if (message.getVerified().isPresent()) {
       sendMessage(message.getVerified().get(), unidentifiedAccess);
       return;
@@ -863,7 +866,21 @@ public class SignalServiceMessageSender {
     return container.setSyncMessage(syncMessage).build().toByteArray();
   }
 
-    private byte[] createMultiDeviceVerifiedContent(VerifiedMessage verifiedMessage, byte[] nullMessage) {
+  private byte[] createMultiDeviceSyncKeysContent(KeysMessage keysMessage) {
+    Content.Builder          container   = Content.newBuilder();
+    SyncMessage.Builder      syncMessage = createSyncMessageBuilder();
+    SyncMessage.Keys.Builder builder     = SyncMessage.Keys.newBuilder();
+
+    if (keysMessage.getStorageService().isPresent()) {
+      builder.setStorageService(ByteString.copyFrom(keysMessage.getStorageService().get().serialize()));
+    } else {
+      Log.w(TAG, "Invalid keys message!");
+    }
+
+    return container.setSyncMessage(syncMessage.setKeys(builder)).build().toByteArray();
+  }
+
+  private byte[] createMultiDeviceVerifiedContent(VerifiedMessage verifiedMessage, byte[] nullMessage) {
     Content.Builder     container              = Content.newBuilder();
     SyncMessage.Builder syncMessage            = createSyncMessageBuilder();
     Verified.Builder    verifiedMessageBuilder = Verified.newBuilder();

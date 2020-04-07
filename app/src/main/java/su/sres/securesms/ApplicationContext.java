@@ -50,6 +50,7 @@ import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
 import su.sres.securesms.jobs.RefreshPreKeysJob;
+import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.AndroidLogger;
 import su.sres.securesms.logging.CustomSignalProtocolLogger;
@@ -58,6 +59,7 @@ import su.sres.securesms.logging.PersistentLogger;
 import su.sres.securesms.logging.SignalUncaughtExceptionHandler;
 import su.sres.securesms.mediasend.camerax.CameraXUtil;
 import su.sres.securesms.migrations.ApplicationMigrations;
+import su.sres.securesms.migrations.StorageServiceMigrationJob;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.providers.BlobProvider;
@@ -153,7 +155,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
          });
 
     NotificationChannels.create(this);
-    RefreshPreKeysJob.scheduleIfNecessary();
     ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
 
     if (Build.VERSION.SDK_INT < 21) {
@@ -474,6 +475,8 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     FeatureFlags.init();
     initializeMasterKey();
     ApplicationDependencies.getJobManager().beginJobLoop();
+    StorageSyncJob.scheduleIfNecessary();
+    RefreshPreKeysJob.scheduleIfNecessary();
 
     initializedOnCreate = true;
   }

@@ -14,6 +14,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.kbs.MasterKey;
+import su.sres.signalservice.api.storage.StorageKey;
 import su.sres.signalservice.api.messages.multidevice.KeysMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
@@ -57,15 +58,8 @@ public class MultiDeviceKeysUpdateJob extends BaseJob {
             return;
         }
 
-        SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
-
-        MasterKey masterKey      = SignalStore.kbsValues().getOrCreateMasterKey();
-        byte[] storageServiceKey = masterKey != null ? masterKey.deriveStorageServiceKey()
-                : null;
-
-        if (storageServiceKey == null) {
-            Log.w(TAG, "Syncing a null storage service key.");
-        }
+        SignalServiceMessageSender messageSender     = ApplicationDependencies.getSignalServiceMessageSender();
+        StorageKey                 storageServiceKey = SignalStore.storageServiceValues().getOrCreateStorageMasterKey().deriveStorageServiceKey();
 
         messageSender.sendMessage(SignalServiceSyncMessage.forKeys(new KeysMessage(Optional.fromNullable(storageServiceKey))),
                 UnidentifiedAccessUtil.getAccessForSync(context));

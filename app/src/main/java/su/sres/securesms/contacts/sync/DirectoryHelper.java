@@ -8,6 +8,8 @@ import androidx.annotation.WorkerThread;
 import su.sres.securesms.database.RecipientDatabase.RegisteredState;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.StorageSyncJob;
+import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.FeatureFlags;
 
@@ -15,17 +17,22 @@ import java.io.IOException;
 
 public class DirectoryHelper {
 
+  private static final String TAG = Log.tag(DirectoryHelper.class);
+
   @WorkerThread
   public static void refreshDirectory(@NonNull Context context, boolean notifyOfNewUsers) throws IOException {
+    if (!SignalStore.storageServiceValues().hasFirstStorageSyncCompleted()) {
+      Log.i(TAG, "First storage sync has not completed. Skipping.");
+      return;
+    }
+
     if (FeatureFlags.uuids()) {
       // TODO [greyson] Create a DirectoryHelperV2 when appropriate.
       DirectoryHelperV1.refreshDirectory(context, notifyOfNewUsers);
     } else {
       DirectoryHelperV1.refreshDirectory(context, notifyOfNewUsers);
     }
-    if (FeatureFlags.storageService()) {
-      ApplicationDependencies.getJobManager().add(new StorageSyncJob());
-    }
+    ApplicationDependencies.getJobManager().add(new StorageSyncJob());
   }
 
     @WorkerThread
@@ -38,7 +45,7 @@ public class DirectoryHelper {
       } else {
         newRegisteredState = DirectoryHelperV1.refreshDirectoryFor(context, recipient, notifyOfNewUsers);
       }
-      if (FeatureFlags.storageService() && newRegisteredState != originalRegisteredState) {
+      if (newRegisteredState != originalRegisteredState) {
         ApplicationDependencies.getJobManager().add(new StorageSyncJob());
       }
 

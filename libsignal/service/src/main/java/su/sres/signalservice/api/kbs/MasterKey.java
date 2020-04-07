@@ -1,5 +1,6 @@
 package su.sres.signalservice.api.kbs;
 
+import su.sres.signalservice.api.storage.StorageKey;
 import su.sres.signalservice.internal.util.Hex;
 import su.sres.util.StringUtil;
 
@@ -30,8 +31,8 @@ public final class MasterKey {
         return Hex.toStringCondensed(derive("Registration Lock"));
     }
 
-    public byte[] deriveStorageServiceKey() {
-        return derive("Storage Service Encryption");
+    public StorageKey deriveStorageServiceKey() {
+        return new StorageKey(derive("Storage Service Encryption"));
     }
 
     private byte[] derive(String keyName) {

@@ -31,6 +31,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.service.DirectoryRefreshListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.IdentityKeyPair;
 import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
@@ -109,7 +110,7 @@ public final class CodeVerificationRequest {
                     callback.onError();
                 }
             }
-        }.execute();
+        }.executeOnExecutor(SignalExecutors.UNBOUNDED);
     }
 
     private static void handleSuccessfulRegistration(@NonNull Context context, @Nullable String pin) {

@@ -20,6 +20,7 @@ import su.sres.securesms.jobs.MultiDeviceBlockedUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceMessageRequestResponseJob;
 import su.sres.securesms.jobs.RotateProfileKeyJob;
 import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.mms.OutgoingGroupMediaMessage;
@@ -86,6 +87,7 @@ public class RecipientUtil {
         }
 
         ApplicationDependencies.getJobManager().add(new MultiDeviceBlockedUpdateJob());
+        ApplicationDependencies.getJobManager().add(new StorageSyncJob());
     }
 
     @WorkerThread
@@ -96,6 +98,7 @@ public class RecipientUtil {
 
         DatabaseFactory.getRecipientDatabase(context).setBlocked(recipient.getId(), false);
         ApplicationDependencies.getJobManager().add(new MultiDeviceBlockedUpdateJob());
+        ApplicationDependencies.getJobManager().add(new StorageSyncJob());
 
         if (FeatureFlags.messageRequests()) {
             ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(recipient.getId()));

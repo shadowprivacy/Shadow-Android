@@ -49,7 +49,7 @@ public final class FeatureFlags {
     private static final String UUIDS                      = "android.uuids";
     private static final String MESSAGE_REQUESTS           = "android.messageRequests";
     private static final String USERNAMES                  = "android.usernames";
-    private static final String STORAGE_SERVICE            = "android.storageService";
+    private static final String STORAGE_SERVICE            = "android.storageService.2";
     private static final String PROFILE_NAMES_MEGAPHONE    = "android.profileNamesMegaphone";
     private static final String VIDEO_TRIMMING             = "android.videoTrimming";
 
@@ -61,7 +61,8 @@ public final class FeatureFlags {
     private static final Set<String> REMOTE_CAPABLE = Sets.newHashSet(
             VIDEO_TRIMMING,
             PROFILE_NAMES_MEGAPHONE,
-            MESSAGE_REQUESTS
+            MESSAGE_REQUESTS,
+            STORAGE_SERVICE
     );
 
     /**
@@ -82,7 +83,8 @@ public final class FeatureFlags {
      * more burden on the reader to ensure that the app experience remains consistent.
      */
     private static final Set<String> HOT_SWAPPABLE = Sets.newHashSet(
-            VIDEO_TRIMMING
+            VIDEO_TRIMMING,
+            STORAGE_SERVICE
     );
 
     /**
@@ -140,7 +142,7 @@ public final class FeatureFlags {
         SignalStore.remoteConfigValues().setPendingConfig(mapToJson(result.getDisk()));
         REMOTE_VALUES.clear();
         REMOTE_VALUES.putAll(result.getMemory());
-        triggerFlagChangeListeners(result.getChanges());
+        triggerFlagChangeListeners(result.getMemoryChanges());
 
         SignalStore.remoteConfigValues().setLastFetchTime(System.currentTimeMillis());
 
@@ -172,11 +174,6 @@ public final class FeatureFlags {
         return value;
     }
 
-    /** Storage service. */
-    public static boolean storageService() {
-        return getValue(STORAGE_SERVICE, false);
-    }
-
     /** Safety switch for disabling profile names megaphone */
     public static boolean profileNamesMegaphone() {
         return getValue(PROFILE_NAMES_MEGAPHONE, false) &&
@@ -186,6 +183,16 @@ public final class FeatureFlags {
     /** Allow trimming videos. */
     public static boolean videoTrimming() {
         return getValue(VIDEO_TRIMMING, false);
+    }
+
+    /** Whether or not we can actually restore data on a new installation. NOT remote-configurable. */
+    public static boolean storageServiceRestore() {
+        return false;
+    }
+
+    /** Whether or not we sync to the storage service. */
+    public static boolean storageService() {
+        return getValue(STORAGE_SERVICE, false);
     }
 
     /** Only for rendering debug info. */
@@ -242,6 +249,17 @@ public final class FeatureFlags {
                         } else {
                             newMemory.remove(key);
                         }
+                    }
+                });
+
+        Stream.of(allKeys)
+                .filterNot(remoteCapable::contains)
+                .filterNot(key -> sticky.contains(key) && localDisk.get(key) == Boolean.TRUE)
+                .forEach(key -> {
+                    newDisk.remove(key);
+
+                    if (hotSwap.contains(key)) {
+                        newMemory.remove(key);
                     }
                 });
 
@@ -341,12 +359,12 @@ public final class FeatureFlags {
     static final class UpdateResult {
         private final Map<String, Boolean> memory;
         private final Map<String, Boolean> disk;
-        private final Map<String, Change>  changes;
+        private final Map<String, Change> memoryChanges;
 
-        UpdateResult(@NonNull Map<String, Boolean> memory, @NonNull Map<String, Boolean> disk, @NonNull Map<String, Change> changes) {
-            this.memory  = memory;
-            this.disk    = disk;
-            this.changes = changes;
+        UpdateResult(@NonNull Map<String, Boolean> memory, @NonNull Map<String, Boolean> disk, @NonNull Map<String, Change> memoryChanges) {
+            this.memory        = memory;
+            this.disk          = disk;
+            this.memoryChanges = memoryChanges;
         }
 
         public @NonNull Map<String, Boolean> getMemory() {
@@ -357,8 +375,8 @@ public final class FeatureFlags {
             return disk;
         }
 
-        public @NonNull Map<String, Change> getChanges() {
-            return changes;
+        public @NonNull Map<String, Change> getMemoryChanges() {
+            return memoryChanges;
         }
     }
 

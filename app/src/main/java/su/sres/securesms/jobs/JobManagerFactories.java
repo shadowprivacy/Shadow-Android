@@ -27,6 +27,8 @@ import su.sres.securesms.migrations.LegacyMigrationJob;
 import su.sres.securesms.migrations.MigrationCompleteJob;
 import su.sres.securesms.migrations.RecipientSearchMigrationJob;
 import su.sres.securesms.migrations.StickerLaunchMigrationJob;
+import su.sres.securesms.migrations.StorageKeyRotationMigrationJob;
+import su.sres.securesms.migrations.StorageServiceMigrationJob;
 import su.sres.securesms.migrations.StickerAdditionMigrationJob;
 import su.sres.securesms.migrations.UuidMigrationJob;
 
@@ -113,6 +115,8 @@ public final class JobManagerFactories {
             put(RecipientSearchMigrationJob.KEY,           new RecipientSearchMigrationJob.Factory());
             put(StickerLaunchMigrationJob.KEY,             new StickerLaunchMigrationJob.Factory());
             put(StickerAdditionMigrationJob.KEY,           new StickerAdditionMigrationJob.Factory());
+            put(StorageKeyRotationMigrationJob.KEY,        new StorageKeyRotationMigrationJob.Factory());
+            put(StorageServiceMigrationJob.KEY,            new StorageServiceMigrationJob.Factory());
             put(UuidMigrationJob.KEY,                      new UuidMigrationJob.Factory());
 
             // Dead jobs
