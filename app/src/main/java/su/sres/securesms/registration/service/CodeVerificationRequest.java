@@ -61,7 +61,7 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.UUID;
 
-import static su.sres.securesms.InitialActivity.TRUST_STORE_FILE_NAME;
+import static su.sres.securesms.InitialActivity.TRUSTSTORE_FILE_NAME;
 
 public final class CodeVerificationRequest {
 
@@ -216,7 +216,7 @@ public final class CodeVerificationRequest {
 
                 keyStoreInputStream.close();
 
-                try (FileOutputStream fos = context.openFileOutput(TRUST_STORE_FILE_NAME, Context.MODE_PRIVATE)) {
+                try (FileOutputStream fos = context.openFileOutput(TRUSTSTORE_FILE_NAME, Context.MODE_PRIVATE)) {
                     shadowStore.store(fos, shadowStorePassword);
                 }
 
