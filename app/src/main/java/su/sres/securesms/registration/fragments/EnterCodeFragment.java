@@ -14,14 +14,18 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.R;
 
 import su.sres.securesms.components.registration.VerificationCodeView;
 import su.sres.securesms.components.registration.VerificationPinKeyboard;
+import su.sres.securesms.events.ServerCertErrorEvent;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.registration.service.CodeVerificationRequest;
@@ -48,6 +52,7 @@ public final class EnterCodeFragment extends BaseRegistrationFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        EventBus.getDefault().register(this);
 
         setDebugLogSubmitMultiTapView(view.findViewById(R.id.verify_header));
 
@@ -161,6 +166,12 @@ public final class EnterCodeFragment extends BaseRegistrationFragment {
 
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
+    }
+
     private void sendEmailToSupport() {
         Intent intent = new Intent(Intent.ACTION_SENDTO);
         intent.setData(Uri.parse("mailto:"));
@@ -180,5 +191,10 @@ public final class EnterCodeFragment extends BaseRegistrationFragment {
 
     private static String getAndroidVersion() {
         return String.format("%s (%s, %s)", Build.VERSION.RELEASE, Build.VERSION.INCREMENTAL, Build.DISPLAY);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onEventServerCertError(ServerCertErrorEvent event) {
+        Toast.makeText(getActivity(), event.message, Toast.LENGTH_LONG).show();
     }
 }

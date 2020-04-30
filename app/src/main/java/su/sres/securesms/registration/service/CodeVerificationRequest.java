@@ -2,15 +2,17 @@ package su.sres.securesms.registration.service;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.R;
+import su.sres.securesms.events.ServerCertErrorEvent;
 import su.sres.securesms.jobs.StickerPackDownloadJob;
 import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.push.SignalServiceTrustStore;
 import su.sres.securesms.stickers.BlessedPacks;
+import su.sres.signalservice.api.push.TrustStore;
 import su.sres.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.PreKeyUtil;
@@ -32,24 +34,40 @@ import su.sres.securesms.service.DirectoryRefreshListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.concurrent.SignalExecutors;
+
+import org.greenrobot.eventbus.EventBus;
 import org.whispersystems.libsignal.IdentityKeyPair;
 import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 import org.whispersystems.libsignal.util.KeyHelper;
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.crypto.UnidentifiedAccess;
 import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
 import su.sres.signalservice.api.push.exceptions.RateLimitException;
 import su.sres.signalservice.internal.push.LockedException;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.UUID;
+
+import static su.sres.securesms.InitialActivity.TRUST_STORE_FILE_NAME;
 
 public final class CodeVerificationRequest {
 
     private static final String TAG = Log.tag(CodeVerificationRequest.class);
+
+    private static final String CLOUD_SERVER_CERT_ALIAS = "cloudcert";
 
     private enum Result {
         SUCCESS,
@@ -71,8 +89,7 @@ public final class CodeVerificationRequest {
                               @Nullable String fcmToken,
                               @NonNull String code,
                               @Nullable String pin,
-                              @NonNull VerifyCallback callback)
-    {
+                              @NonNull VerifyCallback callback) {
         new AsyncTask<Void, Void, Result>() {
 
             private volatile long timeRemaining;
@@ -131,9 +148,9 @@ public final class CodeVerificationRequest {
     }
 
     private static void verifyAccount(@NonNull Context context, @NonNull Credentials credentials, @NonNull String code, @Nullable String pin, @Nullable String fcmToken) throws IOException {
-        int     registrationId              = KeyHelper.generateRegistrationId(false);
+        int registrationId = KeyHelper.generateRegistrationId(false);
         boolean universalUnidentifiedAccess = TextSecurePreferences.isUniversalUnidentifiedAccess(context);
-        ProfileKey profileKey                  = findExistingProfileKey(context, credentials.getE164number());
+        ProfileKey profileKey = findExistingProfileKey(context, credentials.getE164number());
 
         if (profileKey == null) {
             profileKey = ProfileKeyUtil.createNew();
@@ -151,8 +168,8 @@ public final class CodeVerificationRequest {
 
         UUID uuid = accountManager.verifyAccountWithCode(code, null, registrationId, !present, pin, unidentifiedAccessKey, universalUnidentifiedAccess);
 
-        IdentityKeyPair    identityKey  = IdentityKeyUtil.getIdentityKeyPair(context);
-        List<PreKeyRecord> records      = PreKeyUtil.generatePreKeys(context);
+        IdentityKeyPair identityKey = IdentityKeyUtil.getIdentityKeyPair(context);
+        List<PreKeyRecord> records = PreKeyUtil.generatePreKeys(context);
         SignedPreKeyRecord signedPreKey = PreKeyUtil.generateSignedPreKey(context, identityKey, true);
 
         accountManager = AccountManagerFactory.createAuthenticated(context, uuid, credentials.getE164number(), credentials.getPassword());
@@ -169,56 +186,83 @@ public final class CodeVerificationRequest {
         String cloudUrl = configRequested.getCloudUri();
         byte[] unidentifiedAccessCaPublicKey = configRequested.getUnidentifiedDeliveryCaPublicKey();
 
-        if(
-           cloudUrl != null &&
-           statusUrl != null &&
-           storageUrl != null &&
-           unidentifiedAccessCaPublicKey != null) {
+        byte[] cloudCertBytes = accountManager.getSystemCerts().getSystemCertificate();
+
+        if (
+                cloudUrl != null &&
+                        statusUrl != null &&
+                        storageUrl != null &&
+                        unidentifiedAccessCaPublicKey != null &&
+                        cloudCertBytes != null) {
 
             SignalStore.serviceConfigurationValues().setCloudUrl(cloudUrl);
             SignalStore.serviceConfigurationValues().setStorageUrl(storageUrl);
             SignalStore.serviceConfigurationValues().setStatusUrl(statusUrl);
             SignalStore.serviceConfigurationValues().setUnidentifiedAccessCaPublicKey(unidentifiedAccessCaPublicKey);
 
+            TrustStore trustStore = new SignalServiceTrustStore(context);
+            char[] shadowStorePassword = trustStore.getKeyStorePassword().toCharArray();
+            KeyStore shadowStore;
+
+            try (InputStream keyStoreInputStream = trustStore.getKeyStoreInputStream()) {
+                shadowStore = KeyStore.getInstance("BKS");
+                shadowStore.load(keyStoreInputStream, shadowStorePassword);
+
+                CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+                InputStream cloudCertInputStream = new ByteArrayInputStream(cloudCertBytes);
+                X509Certificate cloudCert = (X509Certificate) certFactory.generateCertificate(cloudCertInputStream);
+
+                shadowStore.setCertificateEntry(CLOUD_SERVER_CERT_ALIAS, cloudCert);
+
+                keyStoreInputStream.close();
+
+                try (FileOutputStream fos = context.openFileOutput(TRUST_STORE_FILE_NAME, Context.MODE_PRIVATE)) {
+                    shadowStore.store(fos, shadowStorePassword);
+                }
+
+            } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException e) {
+                Log.w(TAG, "Exception occurred while trying to import the cloud certificate");
+                EventBus.getDefault().post(new ServerCertErrorEvent(R.string.certificate_load_unsuccessful));
+            }
+
         } else {
-            Toast.makeText(context, R.string.configuration_load_unsuccessful, Toast.LENGTH_LONG).show();
+            EventBus.getDefault().post(new ServerCertErrorEvent(R.string.certificate_load_unsuccessful));
         }
 
-        RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-        RecipientId       selfId            = recipientDatabase.getOrInsertFromE164(credentials.getE164number());
+            RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+            RecipientId selfId = recipientDatabase.getOrInsertFromE164(credentials.getE164number());
 
-        recipientDatabase.setProfileSharing(selfId, true);
-        recipientDatabase.markRegistered(selfId, uuid);
+            recipientDatabase.setProfileSharing(selfId, true);
+            recipientDatabase.markRegistered(selfId, uuid);
 
-        TextSecurePreferences.setLocalNumber(context, credentials.getE164number());
-        TextSecurePreferences.setLocalUuid(context, uuid);
-        recipientDatabase.setProfileKey(selfId, profileKey);
-        ApplicationDependencies.getRecipientCache().clearSelf();
+            TextSecurePreferences.setLocalNumber(context, credentials.getE164number());
+            TextSecurePreferences.setLocalUuid(context, uuid);
+            recipientDatabase.setProfileKey(selfId, profileKey);
+            ApplicationDependencies.getRecipientCache().clearSelf();
 
-        TextSecurePreferences.setFcmToken(context, fcmToken);
-        TextSecurePreferences.setFcmDisabled(context, !present);
-        TextSecurePreferences.setWebsocketRegistered(context, true);
+            TextSecurePreferences.setFcmToken(context, fcmToken);
+            TextSecurePreferences.setFcmDisabled(context, !present);
+            TextSecurePreferences.setWebsocketRegistered(context, true);
 
-        DatabaseFactory.getIdentityDatabase(context)
-                .saveIdentity(selfId,
-                        identityKey.getPublicKey(), IdentityDatabase.VerifiedStatus.VERIFIED,
-                        true, System.currentTimeMillis(), true);
+            DatabaseFactory.getIdentityDatabase(context)
+                           .saveIdentity(selfId,
+                            identityKey.getPublicKey(), IdentityDatabase.VerifiedStatus.VERIFIED,
+                            true, System.currentTimeMillis(), true);
 
-        TextSecurePreferences.setVerifying(context, false);
-        TextSecurePreferences.setPushRegistered(context, true);
-        TextSecurePreferences.setPushServerPassword(context, credentials.getPassword());
-        TextSecurePreferences.setSignedPreKeyRegistered(context, true);
-        TextSecurePreferences.setPromptedPushRegistration(context, true);
-        TextSecurePreferences.setUnauthorizedReceived(context, false);
+            TextSecurePreferences.setVerifying(context, false);
+            TextSecurePreferences.setPushRegistered(context, true);
+            TextSecurePreferences.setPushServerPassword(context, credentials.getPassword());
+            TextSecurePreferences.setSignedPreKeyRegistered(context, true);
+            TextSecurePreferences.setPromptedPushRegistration(context, true);
+            TextSecurePreferences.setUnauthorizedReceived(context, false);
 
-        loadStickers(context);
-        // remove after testing
-        Log.i(TAG, "Stickers download triggered");
+            loadStickers(context);
     }
 
-    private static @Nullable ProfileKey findExistingProfileKey(@NonNull Context context, @NonNull String e164number) {
-        RecipientDatabase     recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-        Optional<RecipientId> recipient         = recipientDatabase.getByE164(e164number);
+    private static @Nullable
+    ProfileKey findExistingProfileKey(@NonNull Context context, @NonNull String e164number) {
+        RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+        Optional<RecipientId> recipient = recipientDatabase.getByE164(e164number);
 
         if (recipient.isPresent()) {
             return ProfileKeyUtil.profileKeyOrNull(Recipient.resolved(recipient.get()).getProfileKey());

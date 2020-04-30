@@ -8,6 +8,7 @@ package su.sres.signalservice.api;
 
 import com.google.protobuf.ByteString;
 
+import su.sres.signalservice.api.messages.calls.SystemCertificates;
 import su.sres.zkgroup.profiles.ProfileKey;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.IdentityKeyPair;
@@ -16,7 +17,6 @@ import org.whispersystems.libsignal.ecc.ECPublicKey;
 import org.whispersystems.libsignal.logging.Log;
 import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
-import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.FeatureFlags;
 
@@ -510,6 +510,10 @@ public class SignalServiceAccountManager {
 
     public ConfigurationInfo getConfigurationInfo() throws IOException {
         return this.pushServiceSocket.getConfigurationInfo();
+    }
+
+    public SystemCertificates getSystemCerts() throws IOException {
+        return this.pushServiceSocket.getSystemCerts();
     }
 
     public void setProfileName(ProfileKey key, String name)

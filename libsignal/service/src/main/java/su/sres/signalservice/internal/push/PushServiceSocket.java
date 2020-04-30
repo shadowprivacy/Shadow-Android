@@ -9,6 +9,7 @@ package su.sres.signalservice.internal.push;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import su.sres.signalservice.api.messages.calls.SystemCertificates;
 import su.sres.zkgroup.ServerPublicParams;
 import su.sres.zkgroup.VerificationFailedException;
 import su.sres.zkgroup.profiles.ProfileKey;
@@ -79,8 +80,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Collections;
@@ -95,7 +94,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Call;
@@ -129,6 +127,7 @@ public class PushServiceSocket {
   private static final String SET_USERNAME_PATH         = "/v1/accounts/username/%s";
   private static final String DELETE_USERNAME_PATH      = "/v1/accounts/username";
   private static final String CONFIGURATION_INFO        = "/v1/accounts/config";
+  private static final String SYSTEM_CERTS_PATH         = "/v1/accounts/cert";
 
   private static final String PREKEY_METADATA_PATH      = "/v2/keys/";
   private static final String PREKEY_PATH               = "/v2/keys/%s";
@@ -685,6 +684,11 @@ public class PushServiceSocket {
   public ConfigurationInfo getConfigurationInfo() throws IOException {
     String response = makeServiceRequest(CONFIGURATION_INFO, "GET", null);
     return JsonUtil.fromJson(response, ConfigurationInfo.class);
+  }
+
+  public su.sres.signalservice.api.messages.calls.SystemCertificates getSystemCerts() throws IOException {
+        String response = makeServiceRequest(SYSTEM_CERTS_PATH, "GET", null);
+        return JsonUtil.fromJson(response, SystemCertificates.class);
   }
 
   public String getStorageAuth() throws IOException {

@@ -6,6 +6,7 @@
 
 package su.sres.signalservice.api.push;
 
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 /**
@@ -13,7 +14,7 @@ import java.io.InputStream;
  * its associated password.
  */
 public interface TrustStore {
-  public InputStream getKeyStoreInputStream();
+  public InputStream getKeyStoreInputStream() throws FileNotFoundException;
   public String getKeyStorePassword();
 }
 

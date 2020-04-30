@@ -450,11 +450,15 @@
 
   <string name="InitialActivity_registration">Регистрация</string>
   <string name="InitialActivity_you_must_specify_the_server_address_and_port">Укажите адрес и порт сервера</string>
-  <string name="InitialActivity_invalid_URL">Одно или несколько URL некорректны. Обратитесь к своему администратору.</string>
+  <string name="InitialActivity_invalid_URL">URL некорректна. Обратитесь к своему администратору.</string>
   <string name="InitialActivity_scan_qr_code">Отсканируйте QR-код, предоставленный вашим администратором</string>
   <string name="InitialActivity_qr_code_invalid">Отсканированный QR-код недействителен. Обратитесь к своему администратору.</string>
   <string name="InitialActivity_qr_code_unparseable">Ошибка чтения QR-кода. Обратитесь к своему администратору.</string>
   <string name="InitialActivity_scan">Сканировать</string>
+    <string name="InitialActivity_error_obtaining_the_server_certificate">Ошибка получения сертификата сервера. Обратитесь к своему администратору.</string>
+    <string name="InitialActivity_server_certificate_validity_error">Сертификат сервера истек или еще не вступил в силу. Обратитесь к своему администратору.</string>
+    <string name="InitialActivity_server_pub_key_hash_mismatch">Отпечаток открытого ключа сервера не совпадает. Обратитесь к своему администратору.</string>
+    <string name="InitialActivity_server_certificate_import_error">Ошибка импорта сертификата сервера. Обратитесь к своему администратору.</string>
 
   <!--InputPanel-->
   <string name="InputPanel_tap_and_hold_to_record_a_voice_message_release_to_send">Удерживайте, чтобы записать голосовое сообщение; отпустите, чтобы отправить</string>
@@ -1707,6 +1711,7 @@
   <string name="Recipient_unknown">Неизвестный</string>
 
   <string name="configuration_load_unsuccessful">Загрузить конфигурацию не удалось. Приложение не сможет нормально работать. Обратитесь к системному администратору.</string>
+    <string name="certificate_load_unsuccessful">Загрузить сертификат не удалось. Приложение не сможет нормально работать. Обратитесь к системному администратору.</string>
   <string name="app_will_restart_to_apply_config">Приложение перезапустится для применения новой конфигурации</string>
 
   <!--EOF-->

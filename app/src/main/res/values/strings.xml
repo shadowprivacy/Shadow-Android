@@ -475,11 +475,15 @@
 
     <string name="InitialActivity_registration">Registration</string>
     <string name="InitialActivity_you_must_specify_the_server_address_and_port">You must specify the server address and port</string>
-    <string name="InitialActivity_invalid_URL">One or more URLs are invalid. Refer to your administrator.</string>
+    <string name="InitialActivity_invalid_URL">The URL is invalid. Refer to your administrator.</string>
     <string name="InitialActivity_scan_qr_code">Scan the registration QR-code provided by your administrator</string>
     <string name="InitialActivity_qr_code_invalid">The scanned QR-code is invalid. Refer to your administrator.</string>
     <string name="InitialActivity_qr_code_unparseable">Error parsing the QR-code. Refer to your administrator.</string>
     <string name="InitialActivity_scan">Scan</string>
+    <string name="InitialActivity_error_obtaining_the_server_certificate">Error obtaining the server certificate. Refer to your administrator.</string>
+    <string name="InitialActivity_server_certificate_validity_error">The server certificate is expired or not yet valid. Refer to your administrator.</string>
+    <string name="InitialActivity_server_pub_key_hash_mismatch">The server\'s public key hash is invalid. Refer to your administrator.</string>
+    <string name="InitialActivity_server_certificate_import_error">Error importing the server certificate. Refer to your administrator.</string>
 
     <!-- InputPanel -->
     <string name="InputPanel_tap_and_hold_to_record_a_voice_message_release_to_send">Tap and hold to record a voice message, release to send</string>
@@ -1929,6 +1933,7 @@
     <string name="Recipient_unknown">Unknown</string>
 
     <string name="configuration_load_unsuccessful">Configuration load unsuccessful. The application cannot proceed normally. Contact your system administrator.</string>
+    <string name="certificate_load_unsuccessful">Certificate load unsuccessful. The application cannot proceed normally. Contact your system administrator.</string>
     <string name="app_will_restart_to_apply_config">The app will restart to apply the new configuration</string>
     <!-- EOF -->
 

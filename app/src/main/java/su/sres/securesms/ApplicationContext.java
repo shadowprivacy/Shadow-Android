@@ -114,7 +114,8 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   private volatile boolean isAppVisible;
 
-  private boolean isServiceConfigurationSet,
+  private boolean
+//          isServiceConfigurationSet,
                   initializedOnCreate,
                   initializedOnStart = false;
 
@@ -138,10 +139,9 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
         while(!initializedOnCreate) {
 
-          // checking at subsequent launches of the app, if the server is already known in SignalStore, then no need for delay, just initialize immediately
+          // checking at subsequent launches of the app, if the server is already known as set in SignalStore, then no need for delay, just initialize immediately
 
-          if (!SignalStore.serviceConfigurationValues().getShadowUrl().equals(EXAMPLE_URI)) {
-            setServiceConfigurationSet(true);
+          if (SignalStore.registrationValues().isServerSet()) {
             initializeOnCreate();
           } else {
             Log.i(TAG, "Waiting for the server URL to be configured...");
@@ -172,7 +172,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
       while(!initializedOnStart) {
 
-        if (getServiceConfigurationSet() && initializedOnCreate) {
+        if (SignalStore.registrationValues().isServerSet() && initializedOnCreate) {
           FeatureFlags.refreshIfNecessary();
           ApplicationDependencies.getRecipientCache().warmUp();
           ApplicationDependencies.getFrameRateTracker().begin();
@@ -297,11 +297,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
       Log.i(TAG, "Setting first install version to " + BuildConfig.CANONICAL_VERSION_CODE);
       TextSecurePreferences.setFirstInstallVersion(this, BuildConfig.CANONICAL_VERSION_CODE);
-    }
-
-    if ((TextSecurePreferences.getFirstInstallVersion(this) != -1) && !SignalStore.serviceConfigurationValues().getCloudUrl().equals(EXAMPLE_URI)) {
-      Log.i(TAG, "The cloud URL was not set on the previous sticker manifest download. Proceeding with sticker pack download");
-
     }
   }
 
@@ -442,14 +437,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   protected void attachBaseContext(Context base) {
     super.attachBaseContext(DynamicLanguageContextWrapper.updateContext(base, TextSecurePreferences.getLanguage(base)));
   }
-
-    public boolean getServiceConfigurationSet() {
-        return isServiceConfigurationSet;
-    }
-
-    public void setServiceConfigurationSet(boolean flag) {
-        isServiceConfigurationSet = flag;
-    }
 
   private static class ProviderInitializationException extends RuntimeException {
   }

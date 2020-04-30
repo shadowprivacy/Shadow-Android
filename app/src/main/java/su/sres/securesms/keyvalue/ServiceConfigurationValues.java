@@ -11,6 +11,7 @@ public final class ServiceConfigurationValues {
     private static final String STORAGE_URL = "service_configuration.storage_url";
     private static final String STATUS_URL = "service_configuration.status_url";
     private static final String UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY = "service_configuration.unidentified_access_ca_public_key";
+//    private static final String SERVER_CERT_PUBLIC_KEY = "service_configuration.server_cert_public_key";
 
     public static final String EXAMPLE_URI = "https://example.com";
 
@@ -50,6 +51,12 @@ public final class ServiceConfigurationValues {
                 .commit();
     }
 
+//    public synchronized void setServerCaPublicKey(byte[] serverCaPublicKey) {
+//        store.beginWrite()
+//                .putBlob(SERVER_CERT_PUBLIC_KEY, serverCaPublicKey)
+//                .commit();
+//    }
+
     public @Nullable
     String getShadowUrl() {
         return store.getString(SHADOW_SERVICE_URL, EXAMPLE_URI);
@@ -74,4 +81,9 @@ public final class ServiceConfigurationValues {
     byte[] getUnidentifiedAccessCaPublicKey() {
         return store.getBlob(UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY, null);
     }
+
+//    public @Nullable
+//    byte[] getServerCaPublicKey() {
+//        return store.getBlob(SERVER_CERT_PUBLIC_KEY, null);
+//    }
 }
