@@ -137,6 +137,8 @@
     <string name="CommunicationActions_start_voice_call">Start voice call?</string>
     <string name="CommunicationActions_cancel">Cancel</string>
     <string name="CommunicationActions_call">Call</string>
+    <string name="CommunicationActions_insecure_call">Insecure call</string>
+    <string name="CommunicationActions_carrier_charges_may_apply">Carrier charges may apply. The number you are calling is not registered with Shadow. This call will be placed through your mobile carrier, not over the internet.</string>
 
     <!-- ConfirmIdentityDialog -->
     <string name="ConfirmIdentityDialog_your_safety_number_with_s_has_changed">Your safety number with %1$s has changed. This could either mean that someone is trying to intercept your communication, or that %2$s simply reinstalled Shadow.</string>
@@ -354,6 +356,12 @@
     <string name="CustomDefaultPreference_using_custom">Using custom: %s</string>
     <string name="CustomDefaultPreference_using_default">Using default: %s</string>
     <string name="CustomDefaultPreference_none">None</string>
+
+    <!-- AvatarSelectionBottomSheetDialogFragment -->
+    <string name="AvatarSelectionBottomSheetDialogFragment__choose_photo">Choose photo</string>
+    <string name="AvatarSelectionBottomSheetDialogFragment__take_photo">Take photo</string>
+    <string name="AvatarSelectionBottomSheetDialogFragment__choose_from_gallery">Choose from gallery</string>
+    <string name="AvatarSelectionBottomSheetDialogFragment__remove_photo">Remove photo</string>
 
     <!-- DateUtils -->
     <string name="DateUtils_just_now">Now</string>
@@ -1425,6 +1433,36 @@
     <string name="MessageRequestsMegaphone__add_name">Add name</string>
     <string name="MessageRequestsMegaphone__you_can_now_choose_whether_to_accept">You can now choose whether to accept a new conversation. You’ll see options to \"Accept,\" \"Delete,\" or \"Block.\"</string>
 
+    <!-- HelpFragment -->
+    <string name="HelpFragment__help">Help</string>
+    <string name="HelpFragment__have_you_read_our_faq_yet">Have you read our FAQ yet?</string>
+    <string name="HelpFragment__next">Next</string>
+    <string name="HelpFragment__contact_us">Contact us</string>
+    <string name="HelpFragment__tell_us_whats_going_on">Tell us what\'s going on</string>
+    <string name="HelpFragment__include_debug_log">Include debug log.</string>
+    <string name="HelpFragment__whats_this">What\'s this?</string>
+    <string name="HelpFragment__how_do_you_feel">How do you feel? (Optional)</string>
+    <string name="HelpFragment__emoji_5" translatable="false">emoji_5</string>
+    <string name="HelpFragment__emoji_4" translatable="false">emoji_4</string>
+    <string name="HelpFragment__emoji_3" translatable="false">emoji_3</string>
+    <string name="HelpFragment__emoji_2" translatable="false">emoji_2</string>
+    <string name="HelpFragment__emoji_1" translatable="false">emoji_1</string>
+    <string name="HelpFragment__link__debug_info" translatable="false">https://support.signal.org/hc/articles/360007318591</string>
+    <string name="HelpFragment__link__faq" translatable="false">https://support.signal.org</string>
+    <string name="HelpFragment__support_info">Support Info</string>
+    <string name="HelpFragment__subject">Subject:</string>
+    <string name="HelpFragment__signal_android_support_request">Shadow Android Support Request</string>
+    <string name="HelpFragment__device_info">Device info:</string>
+    <string name="HelpFragment__android_version">Android version:</string>
+    <string name="HelpFragment__signal_version">Shadow version:</string>
+    <string name="HelpFragment__locale">Locale:</string>
+    <string name="HelpFragment__debug_log">Debug Log:</string>
+    <string name="HelpFragment__na">n/a</string>
+    <string name="HelpFragment__could_not_upload_logs">Could not upload logs</string>
+    <string name="HelpFragment__signal_support">Shadow Support</string>
+    <string name="HelpFragment__please_be_as_descriptive_as_possible">Please be as descriptive as possible to help us understand the issue.</string>
+    <string name="HelpFragment__no_email_app_found">No email app found.</string>
+
     <!-- arrays.xml -->
     <string name="arrays__import_export">Import</string>
     <string name="arrays__use_default">Use default</string>
@@ -1511,6 +1549,7 @@
     <string name="preferences__fast">Fast</string>
     <string name="preferences__normal">Normal</string>
     <string name="preferences__slow">Slow</string>
+    <string name="preferences__help">Help</string>
     <string name="preferences__advanced">Advanced</string>
     <string name="preferences__privacy">Privacy</string>
     <string name="preferences__mms_user_agent">MMS User Agent</string>

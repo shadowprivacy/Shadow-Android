@@ -27,6 +27,7 @@ import su.sres.signalservice.api.storage.StorageKey;
 import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
 import su.sres.signalservice.api.messages.calls.TurnServerInfo;
 import su.sres.signalservice.api.messages.multidevice.DeviceInfo;
+import su.sres.signalservice.api.profiles.SignalServiceProfile;
 import su.sres.signalservice.api.profiles.SignalServiceProfileWrite;
 import su.sres.signalservice.api.push.ContactTokenDetails;
 import su.sres.signalservice.api.push.SignedPreKeyEntity;
@@ -200,13 +201,15 @@ public class SignalServiceAccountManager {
      * @throws IOException
      */
     public UUID verifyAccountWithCode(String verificationCode, String signalingKey, int signalProtocolRegistrationId, boolean fetchesMessages, String pin,
-                                      byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess)
+                                      byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess,
+                                      SignalServiceProfile.Capabilities capabilities)
             throws IOException {
         return this.pushServiceSocket.verifyAccountCode(verificationCode, signalingKey,
                 signalProtocolRegistrationId,
                 fetchesMessages, pin,
                 unidentifiedAccessKey,
-                unrestrictedUnidentifiedAccess);
+                unrestrictedUnidentifiedAccess,
+                capabilities);
     }
 
     /**
@@ -221,10 +224,12 @@ public class SignalServiceAccountManager {
      * @throws IOException
      */
     public void setAccountAttributes(String signalingKey, int signalProtocolRegistrationId, boolean fetchesMessages, String pin,
-                                     byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess)
+                                     byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess,
+                                     SignalServiceProfile.Capabilities capabilities)
             throws IOException {
         this.pushServiceSocket.setAccountAttributes(signalingKey, signalProtocolRegistrationId, fetchesMessages, pin,
-                unidentifiedAccessKey, unrestrictedUnidentifiedAccess);
+                unidentifiedAccessKey, unrestrictedUnidentifiedAccess,
+                capabilities);
     }
 
     /**

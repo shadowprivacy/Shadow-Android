@@ -1,9 +1,11 @@
 package su.sres.securesms.scribbles;
 
+import android.animation.Animator;
 import android.content.Context;
 import android.net.Uri;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.animation.OvershootInterpolator;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
@@ -101,12 +103,43 @@ public final class VideoEditorHud extends LinearLayout {
         });
     }
 
-    public void playing() {
-        playOverlay.setVisibility(INVISIBLE);
+    public void showPlayButton() {
+        playOverlay.setVisibility(VISIBLE);
+        playOverlay.animate()
+                .setListener(null)
+                .alpha(1)
+                .scaleX(1).scaleY(1)
+                .setInterpolator(new OvershootInterpolator())
+                .start();
     }
 
-    public void stopped() {
-        playOverlay.setVisibility(VISIBLE);
+    public void fadePlayButton() {
+        playOverlay.animate()
+                .setListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        playOverlay.setVisibility(GONE);
+                    }
+
+                    @Override
+                    public void onAnimationStart(Animator animation) {}
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {}
+
+                    @Override
+                    public void onAnimationRepeat(Animator animation) {}
+                })
+                .alpha(0)
+                .scaleX(0.8f).scaleY(0.8f)
+                .start();
+    }
+
+    public void hidePlayButton() {
+        playOverlay.setVisibility(GONE);
+        playOverlay.setAlpha(0);
+        playOverlay.setScaleX(0.8f);
+        playOverlay.setScaleY(0.8f);
     }
 
     @RequiresApi(api = 23)

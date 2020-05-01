@@ -14,6 +14,7 @@ import su.sres.securesms.push.SignalServiceTrustStore;
 import su.sres.securesms.stickers.BlessedPacks;
 import su.sres.signalservice.api.push.TrustStore;
 import su.sres.zkgroup.profiles.ProfileKey;
+import su.sres.securesms.AppCapabilities;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.PreKeyUtil;
 import su.sres.securesms.crypto.ProfileKeyUtil;
@@ -166,7 +167,8 @@ public final class CodeVerificationRequest {
 
         boolean present = fcmToken != null;
 
-        UUID uuid = accountManager.verifyAccountWithCode(code, null, registrationId, !present, pin, unidentifiedAccessKey, universalUnidentifiedAccess);
+        UUID uuid = accountManager.verifyAccountWithCode(code, null, registrationId, !present, pin, unidentifiedAccessKey, universalUnidentifiedAccess,
+                AppCapabilities.getCapabilities());
 
         IdentityKeyPair identityKey = IdentityKeyUtil.getIdentityKeyPair(context);
         List<PreKeyRecord> records = PreKeyUtil.generatePreKeys(context);

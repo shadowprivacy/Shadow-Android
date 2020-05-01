@@ -51,7 +51,6 @@ import androidx.annotation.Nullable;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.graphics.drawable.IconCompat;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SearchView;
@@ -137,7 +136,6 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.DraftDatabase;
 import su.sres.securesms.database.DraftDatabase.Draft;
 import su.sres.securesms.database.DraftDatabase.Drafts;
-import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
 import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
@@ -153,10 +151,10 @@ import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.database.model.StickerRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.ReminderUpdateEvent;
+import su.sres.securesms.groups.GroupManager;
 import su.sres.securesms.insights.InsightsLauncher;
 import su.sres.securesms.invites.InviteReminderModel;
 import su.sres.securesms.invites.InviteReminderRepository;
-import su.sres.securesms.jobs.LeaveGroupJob;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.linkpreview.LinkPreviewRepository;
 import su.sres.securesms.linkpreview.LinkPreviewViewModel;
@@ -179,7 +177,6 @@ import su.sres.securesms.mms.ImageSlide;
 import su.sres.securesms.mms.LocationSlide;
 import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.mms.OutgoingExpirationUpdateMessage;
-import su.sres.securesms.mms.OutgoingGroupMediaMessage;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.OutgoingSecureMediaMessage;
 import su.sres.securesms.mms.QuoteId;
@@ -219,7 +216,6 @@ import su.sres.securesms.util.DynamicDarkToolbarTheme;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.MessageUtil;
@@ -1155,24 +1151,17 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         builder.setIconAttribute(R.attr.dialog_info_icon);
         builder.setCancelable(true);
         builder.setMessage(getString(R.string.ConversationActivity_are_you_sure_you_want_to_leave_this_group));
-        builder.setPositiveButton(R.string.yes, (dialog, which) -> {
-            Recipient groupRecipient = getRecipient();
-            long threadId = DatabaseFactory.getThreadDatabase(this).getThreadIdFor(groupRecipient);
-            Optional<OutgoingGroupMediaMessage> leaveMessage = GroupUtil.createGroupLeaveMessage(this, groupRecipient);
-
-            if (threadId != -1 && leaveMessage.isPresent()) {
-                ApplicationDependencies.getJobManager().add(LeaveGroupJob.create(groupRecipient));
-
-                GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(this);
-                String groupId = groupRecipient.requireGroupId();
-                groupDatabase.setActive(groupId, false);
-                groupDatabase.remove(groupId, Recipient.self().getId());
-
-                initializeEnabledCheck();
-            } else {
-                Toast.makeText(this, R.string.ConversationActivity_error_leaving_group, Toast.LENGTH_LONG).show();
-            }
-        });
+        builder.setPositiveButton(R.string.yes, (dialog, which) ->
+                SimpleTask.run(
+                        getLifecycle(),
+                        () -> GroupManager.leaveGroup(ConversationActivity.this, getRecipient()),
+                        (success) -> {
+                            if (success) {
+                                initializeEnabledCheck();
+                            } else {
+                                Toast.makeText(ConversationActivity.this, R.string.ConversationActivity_error_leaving_group, Toast.LENGTH_LONG).show();
+                            }
+                        }));
 
         builder.setNegativeButton(R.string.no, null);
         builder.show();
@@ -1222,16 +1211,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         if (isSecure) {
             CommunicationActions.startVoiceCall(this, recipient);
         } else {
-            try {
-                Intent dialIntent = new Intent(Intent.ACTION_DIAL,
-                        Uri.parse("tel:" + recipient.requireSmsAddress()));
-                startActivity(dialIntent);
-            } catch (ActivityNotFoundException anfe) {
-                Log.w(TAG, anfe);
-                Dialogs.showAlertDialog(this,
-                        getString(R.string.ConversationActivity_calls_not_supported),
-                        getString(R.string.ConversationActivity_this_device_does_not_appear_to_support_dial_actions));
-            }
+            CommunicationActions.startInsecureCall(this, recipient);
         }
     }
 
@@ -1242,7 +1222,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     }
 
     private void handleDisplayGroupRecipients() {
-        new GroupMembersDialog(this, getRecipient()).display();
+        new GroupMembersDialog(this, getRecipient(), getLifecycle()).display();
     }
 
     private void handleAddToContacts() {

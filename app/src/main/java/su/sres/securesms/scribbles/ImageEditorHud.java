@@ -2,16 +2,15 @@ package su.sres.securesms.scribbles;
 
 import android.content.Context;
 import android.graphics.Color;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import androidx.annotation.MainThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import su.sres.securesms.R;
 import su.sres.securesms.scribbles.widget.ColorPaletteAdapter;
@@ -41,6 +40,7 @@ public final class ImageEditorHud extends LinearLayout {
     private View                     saveButton;
     private View                     deleteButton;
     private View                     confirmButton;
+    private View                     doneButton;
     private VerticalSlideColorPicker colorPicker;
     private RecyclerView             colorPalette;
 
@@ -82,12 +82,13 @@ public final class ImageEditorHud extends LinearLayout {
         drawButton       = findViewById(R.id.scribble_draw_button);
         highlightButton  = findViewById(R.id.scribble_highlight_button);
         textButton       = findViewById(R.id.scribble_text_button);
-        stickerButton = findViewById(R.id.scribble_sticker_button);
+        stickerButton    = findViewById(R.id.scribble_sticker_button);
         undoButton       = findViewById(R.id.scribble_undo_button);
         saveButton       = findViewById(R.id.scribble_save_button);
         deleteButton     = findViewById(R.id.scribble_delete_button);
         confirmButton    = findViewById(R.id.scribble_confirm_button);
         colorPicker      = findViewById(R.id.scribble_color_picker);
+        doneButton       = findViewById(R.id.scribble_done_button);
 
         cropAspectLock.setOnClickListener(v -> {
             eventListener.onCropAspectLock(!eventListener.isCropAspectLocked());
@@ -123,6 +124,7 @@ public final class ImageEditorHud extends LinearLayout {
         }
 
         allViews.add(stickerButton);
+        allViews.add(doneButton);
     }
 
     private void setVisibleViewsWhenInMode(Mode mode, View... views) {
@@ -154,6 +156,20 @@ public final class ImageEditorHud extends LinearLayout {
         textButton.setOnClickListener(v -> setMode(Mode.TEXT));
         stickerButton.setOnClickListener(v -> setMode(Mode.INSERT_STICKER));
         saveButton.setOnClickListener(v -> eventListener.onSave());
+        doneButton.setOnClickListener(v -> eventListener.onDone());
+    }
+
+    public void setUpForAvatarEditing() {
+        visibilityModeMap.get(Mode.NONE).add(doneButton);
+        visibilityModeMap.get(Mode.NONE).remove(saveButton);
+        visibilityModeMap.get(Mode.CROP).remove(cropAspectLock);
+
+        if (currentMode == Mode.NONE) {
+            doneButton.setVisibility(View.VISIBLE);
+            saveButton.setVisibility(View.GONE);
+        } else if (currentMode == Mode.CROP) {
+            cropAspectLock.setVisibility(View.GONE);
+        }
     }
 
     public void setColorPalette(@NonNull Set<Integer> colors) {
@@ -252,7 +268,7 @@ public final class ImageEditorHud extends LinearLayout {
         DRAW,
         HIGHLIGHT,
         MOVE_DELETE,
-        INSERT_STICKER
+        INSERT_STICKER,
     }
 
     public interface EventListener {
@@ -266,6 +282,7 @@ public final class ImageEditorHud extends LinearLayout {
         void onCropAspectLock(boolean locked);
         boolean isCropAspectLocked();
         void onRequestFullScreen(boolean fullScreen, boolean hideKeyboard);
+        void onDone();
     }
 
     private static final EventListener NULL_EVENT_LISTENER = new EventListener() {
@@ -309,6 +326,10 @@ public final class ImageEditorHud extends LinearLayout {
 
         @Override
         public void onRequestFullScreen(boolean fullScreen, boolean hideKeyboard) {
+        }
+
+        @Override
+        public void onDone() {
         }
     };
 }

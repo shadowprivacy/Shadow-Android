@@ -45,6 +45,6 @@
         android:fontFamily="sans-serif-medium"
         android:maxLines="2"
         android:ellipsize="end"
-        tools:text="@string/RevealableMessageView_photo" />
+        tools:text="@string/RevealableMessageView_view_photo" />
 
 </merge>

@@ -2,10 +2,8 @@ package su.sres.securesms.profiles.edit;
 
 import android.Manifest;
 import android.animation.Animator;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
@@ -31,26 +29,30 @@ import androidx.navigation.Navigation;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.dd.CircularProgressButton;
+import com.google.android.gms.common.util.IOUtils;
 
 import su.sres.securesms.R;
-import su.sres.securesms.avatar.AvatarSelection;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.mediasend.AvatarSelectionActivity;
+import su.sres.securesms.mediasend.AvatarSelectionBottomSheetDialogFragment;
+import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.megaphone.Megaphones;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.permissions.Permissions;
-import su.sres.securesms.profiles.ProfileMediaConstraints;
 import su.sres.securesms.profiles.ProfileName;
-import su.sres.securesms.util.BitmapDecodingException;
-import su.sres.securesms.util.BitmapUtil;
+import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.text.AfterTextChanged;
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+
+import static android.app.Activity.RESULT_OK;
 
 import static su.sres.securesms.profiles.edit.EditProfileActivity.DISPLAY_USERNAME;
 import static su.sres.securesms.profiles.edit.EditProfileActivity.EXCLUDE_SYSTEM;
@@ -60,8 +62,9 @@ import static su.sres.securesms.profiles.edit.EditProfileActivity.SHOW_TOOLBAR;
 
 public class EditProfileFragment extends Fragment {
 
-    private static final String TAG          = Log.tag(EditProfileFragment.class);
-    private static final String AVATAR_STATE = "avatar";
+    private static final String TAG                        = Log.tag(EditProfileFragment.class);
+    private static final String AVATAR_STATE               = "avatar";
+    private static final short  REQUEST_CODE_SELECT_AVATAR = 31726;
 
     private Toolbar                toolbar;
     private View                   title;
@@ -76,7 +79,6 @@ public class EditProfileFragment extends Fragment {
     private TextView               username;
 
     private Intent nextIntent;
-    private File captureFile;
 
     private EditProfileViewModel viewModel;
 
@@ -150,52 +152,38 @@ public class EditProfileFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        switch (requestCode) {
-            case AvatarSelection.REQUEST_CODE_AVATAR:
-                if (resultCode == Activity.RESULT_OK) {
-                    Uri outputFile = Uri.fromFile(new File(requireActivity().getCacheDir(), "cropped"));
-                    Uri inputFile  = (data != null ? data.getData() : null);
+        if (requestCode == REQUEST_CODE_SELECT_AVATAR && resultCode == RESULT_OK) {
 
-                    if (inputFile == null && captureFile != null) {
-                        inputFile = Uri.fromFile(captureFile);
-                    }
+            if (data != null && data.getBooleanExtra("delete", false)) {
+                viewModel.setAvatar(null);
+                avatar.setImageDrawable(new ResourceContactPhoto(R.drawable.ic_camera_solid_white_24).asDrawable(requireActivity(), getResources().getColor(R.color.grey_400)));
+                return;
+            }
 
-                    if (data != null && data.getBooleanExtra("delete", false)) {
-                        viewModel.setAvatar(null);
-                        avatar.setImageDrawable(new ResourceContactPhoto(R.drawable.ic_camera_solid_white_24).asDrawable(requireActivity(), getResources().getColor(R.color.grey_400)));
-                    } else {
-                        AvatarSelection.circularCropImage(this, inputFile, outputFile, R.string.CropImageActivity_profile_avatar);
-                    }
+            SimpleTask.run(() -> {
+                try {
+                    Media       result = data.getParcelableExtra(AvatarSelectionActivity.EXTRA_MEDIA);
+                    InputStream stream = BlobProvider.getInstance().getStream(requireContext(), result.getUri());
+
+                    return IOUtils.readInputStreamFully(stream);
+                } catch (IOException ioException) {
+                    Log.w(TAG, ioException);
+                    return null;
                 }
-
-                break;
-            case AvatarSelection.REQUEST_CODE_CROP_IMAGE:
-                if (resultCode == Activity.RESULT_OK) {
-                    SimpleTask.run(() -> {
-                            try {
-                                BitmapUtil.ScaleResult result = BitmapUtil.createScaledBytes(requireActivity(), AvatarSelection.getResultUri(data), new ProfileMediaConstraints());
-                                return result.getBitmap();
-                            } catch (BitmapDecodingException e) {
-                                Log.w(TAG, e);
-                                return null;
-                            }
-                            },
-                            (avatarBytes) -> {
-                                if (avatarBytes != null) {
-                                    viewModel.setAvatar(avatarBytes);
-                                GlideApp.with(EditProfileFragment.this)
-                                        .load(avatarBytes)
-                                        .skipMemoryCache(true)
-                                        .diskCacheStrategy(DiskCacheStrategy.NONE)
-                                        .circleCrop()
-                                        .into(avatar);
-                            } else {
-                                Toast.makeText(requireActivity(), R.string.CreateProfileActivity_error_setting_profile_photo, Toast.LENGTH_LONG).show();
-                            }
+                    },
+                    (avatarBytes) -> {
+                        if (avatarBytes != null) {
+                            viewModel.setAvatar(avatarBytes);
+                            GlideApp.with(EditProfileFragment.this)
+                                    .load(avatarBytes)
+                                    .skipMemoryCache(true)
+                                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                                    .circleCrop()
+                                    .into(avatar);
+                        } else {
+                            Toast.makeText(requireActivity(), R.string.CreateProfileActivity_error_setting_profile_photo, Toast.LENGTH_LONG).show();
                         }
-                    );
-                }
-                break;
+                    });
         }
     }
 
@@ -314,18 +302,13 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void startAvatarSelection() {
-        captureFile = AvatarSelection.startAvatarSelection(this, viewModel.hasAvatar(), true);
+        AvatarSelectionBottomSheetDialogFragment.create(viewModel.hasAvatar(), true, REQUEST_CODE_SELECT_AVATAR).show(getChildFragmentManager(), null);
     }
 
     private void handleUpload() {
 
         viewModel.submitProfile(uploadResult -> {
             if (uploadResult == EditProfileRepository.UploadResult.SUCCESS) {
-                if (captureFile != null) {
-                    if (!captureFile.delete()) {
-                        Log.w(TAG, "Failed to delete capture file " + captureFile);
-                    }
-                }
 
                 SignalStore.registrationValues().setRegistrationComplete();
 

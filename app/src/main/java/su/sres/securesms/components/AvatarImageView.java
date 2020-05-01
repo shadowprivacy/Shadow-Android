@@ -21,9 +21,11 @@ import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.contacts.avatars.ContactColors;
 import su.sres.securesms.contacts.avatars.ContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
+import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientExporter;
+import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.ThemeUtil;
 
 import java.util.Objects;
@@ -107,6 +109,15 @@ public final class AvatarImageView extends AppCompatImageView {
 
   public void setFallbackPhotoProvider(Recipient.FallbackPhotoProvider fallbackPhotoProvider) {
     this.fallbackPhotoProvider = fallbackPhotoProvider;
+  }
+
+  public void setRecipient(@NonNull Recipient recipient) {
+    if (recipient.isLocalNumber()) {
+      setAvatar(GlideApp.with(this), null, false);
+      AvatarUtil.loadIconIntoImageView(recipient, this);
+    } else {
+      setAvatar(GlideApp.with(this), recipient, false);
+    }
   }
 
   public void setAvatar(@NonNull GlideRequests requestManager, @Nullable Recipient recipient, boolean quickContactEnabled) {

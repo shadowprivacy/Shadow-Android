@@ -238,10 +238,11 @@ public class PushServiceSocket {
   }
 
   public UUID verifyAccountCode(String verificationCode, String signalingKey, int registrationId, boolean fetchesMessages, String pin,
-                                byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess)
+                                byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess,
+                                SignalServiceProfile.Capabilities capabilities)
       throws IOException
   {
-    AccountAttributes     signalingKeyEntity = new AccountAttributes(signalingKey, registrationId, fetchesMessages, pin, unidentifiedAccessKey, unrestrictedUnidentifiedAccess);
+    AccountAttributes     signalingKeyEntity = new AccountAttributes(signalingKey, registrationId, fetchesMessages, pin, unidentifiedAccessKey, unrestrictedUnidentifiedAccess, capabilities);
     String                requestBody        = JsonUtil.toJson(signalingKeyEntity);
     String                responseBody       = makeServiceRequest(String.format(VERIFY_ACCOUNT_CODE_PATH, verificationCode), "PUT", requestBody);
     VerifyAccountResponse response           = JsonUtil.fromJson(responseBody, VerifyAccountResponse.class);
@@ -255,11 +256,12 @@ public class PushServiceSocket {
   }
 
   public void setAccountAttributes(String signalingKey, int registrationId, boolean fetchesMessages, String pin,
-                                   byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess)
+                                   byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess,
+                                   SignalServiceProfile.Capabilities capabilities)
           throws IOException
   {
     AccountAttributes accountAttributes = new AccountAttributes(signalingKey, registrationId, fetchesMessages, pin,
-            unidentifiedAccessKey, unrestrictedUnidentifiedAccess);
+            unidentifiedAccessKey, unrestrictedUnidentifiedAccess, capabilities);
     makeServiceRequest(SET_ACCOUNT_ATTRIBUTES, "PUT", JsonUtil.toJson(accountAttributes));
   }
 

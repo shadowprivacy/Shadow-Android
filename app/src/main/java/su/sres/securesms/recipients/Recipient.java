@@ -90,7 +90,8 @@ public class Recipient {
   private final String                 notificationChannel;
   private final UnidentifiedAccessMode unidentifiedAccessMode;
   private final boolean                forceSmsSelection;
-  private final boolean                uuidSupported;
+  private final Capability             uuidCapability;
+  private final Capability             groupsV2Capability;
   private final InsightsBannerTier     insightsBannerTier;
   private final byte[]                 storageKey;
   private final byte[]                 identityKey;
@@ -321,7 +322,8 @@ public class Recipient {
     this.notificationChannel    = null;
     this.unidentifiedAccessMode = UnidentifiedAccessMode.DISABLED;
     this.forceSmsSelection      = false;
-    this.uuidSupported          = false;
+    this.uuidCapability         = Capability.UNKNOWN;
+    this.groupsV2Capability     = Capability.UNKNOWN;
     this.storageKey             = null;
     this.identityKey            = null;
     this.identityStatus         = VerifiedStatus.DEFAULT;
@@ -361,7 +363,8 @@ public class Recipient {
     this.notificationChannel    = details.notificationChannel;
     this.unidentifiedAccessMode = details.unidentifiedAccessMode;
     this.forceSmsSelection      = details.forceSmsSelection;
-    this.uuidSupported          = details.uuidSuported;
+    this.uuidCapability         = details.uuidCapability;
+    this.groupsV2Capability     = details.groupsV2Capability;
     this.storageKey             = details.storageKey;
     this.identityKey            = details.identityKey;
     this.identityStatus         = details.identityStatus;
@@ -681,8 +684,12 @@ public class Recipient {
     if (FeatureFlags.usernames()) {
       return true;
     } else {
-      return FeatureFlags.uuids() && uuidSupported;
+      return FeatureFlags.uuids() && uuidCapability == Capability.SUPPORTED;
     }
+  }
+
+  public Capability getGroupsV2Capability() {
+    return groupsV2Capability;
   }
 
   public @Nullable byte[] getProfileKey() {
@@ -758,6 +765,34 @@ public class Recipient {
     if (o == null || getClass() != o.getClass()) return false;
     Recipient recipient = (Recipient) o;
     return id.equals(recipient.id);
+  }
+
+  public enum Capability {
+    UNKNOWN(0),
+    SUPPORTED(1),
+    NOT_SUPPORTED(-1);
+
+    private final int value;
+
+    Capability(int value) {
+      this.value = value;
+    }
+
+    public int serialize() {
+      return value;
+    }
+
+    public static Capability deserialize(int value) {
+      switch (value) {
+        case  1 : return SUPPORTED;
+        case -1 : return NOT_SUPPORTED;
+        default : return UNKNOWN;
+      }
+    }
+
+    public static Capability fromBoolean(boolean supported) {
+      return supported ? SUPPORTED : NOT_SUPPORTED;
+    }
   }
 
   @Override

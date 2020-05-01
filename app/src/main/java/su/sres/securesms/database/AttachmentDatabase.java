@@ -525,13 +525,14 @@ public class AttachmentDatabase extends Database {
             //noinspection ResultOfMethodCallIgnored
             dataInfo.file.delete();
 
-            if (transferFile != null) {
-                //noinspection ResultOfMethodCallIgnored
-                transferFile.delete();
-            }
         } else {
             notifyConversationListeners(DatabaseFactory.getMmsDatabase(context).getThreadIdForMessage(mmsId));
             notifyConversationListListeners();
+        }
+
+        if (transferFile != null) {
+            //noinspection ResultOfMethodCallIgnored
+            transferFile.delete();
         }
 
         thumbnailExecutor.submit(new ThumbnailFetchCallable(attachmentId, STANDARD_THUMB_TIME));

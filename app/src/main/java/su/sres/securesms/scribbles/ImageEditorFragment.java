@@ -6,13 +6,14 @@ import android.graphics.Bitmap;
 import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 
 import su.sres.securesms.R;
 import su.sres.securesms.imageeditor.ColorableRenderer;
@@ -46,7 +47,8 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
 
     private static final String TAG = Log.tag(ImageEditorFragment.class);
 
-    private static final String KEY_IMAGE_URI = "image_uri";
+    private static final String KEY_IMAGE_URI      = "image_uri";
+    private static final String KEY_IS_AVATAR_MODE = "avatar_mode";
 
     private static final int SELECT_OLD_STICKER_REQUEST_CODE = 123;
     private static final int SELECT_NEW_STICKER_REQUEST_CODE = 124;
@@ -88,6 +90,12 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     private ImageEditorHud  imageEditorHud;
     private ImageEditorView imageEditorView;
 
+    public static ImageEditorFragment newInstanceForAvatar(@NonNull Uri imageUri) {
+        ImageEditorFragment fragment = newInstance(imageUri);
+        fragment.requireArguments().putBoolean(KEY_IS_AVATAR_MODE, true);
+        return fragment;
+    }
+
     public static ImageEditorFragment newInstance(@NonNull Uri imageUri) {
         Bundle args = new Bundle();
         args.putParcelable(KEY_IMAGE_URI, imageUri);
@@ -120,7 +128,6 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
         imageMaxHeight = mediaConstraints.getImageMaxHeight(requireContext());
 
         StickerSearchRepository repository = new StickerSearchRepository(requireContext());
-
     }
 
     @Nullable
@@ -132,6 +139,8 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        boolean isAvatarMode = requireArguments().getBoolean(KEY_IS_AVATAR_MODE, false);
 
         imageEditorHud  = view.findViewById(R.id.scribble_hud);
         imageEditorView = view.findViewById(R.id.image_editor_view);
@@ -150,10 +159,15 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
         }
 
         if (editorModel == null) {
-            editorModel = new EditorModel();
+            editorModel = isAvatarMode ? EditorModel.createForCircleEditing() : EditorModel.create();
             EditorElement image = new EditorElement(new UriGlideRenderer(imageUri, true, imageMaxWidth, imageMaxHeight));
             image.getFlags().setSelectable(false).persist();
             editorModel.addElement(image);
+        }
+
+        if (isAvatarMode) {
+            imageEditorHud.setUpForAvatarEditing();
+            imageEditorHud.enterMode(ImageEditorHud.Mode.CROP);
         }
 
         imageEditorView.setModel(editorModel);
@@ -381,6 +395,11 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
         controller.onRequestFullScreen(fullScreen, hideKeyboard);
     }
 
+    @Override
+    public void onDone() {
+        controller.onDoneEditing();
+    }
+
     private void refreshUniqueColors() {
         imageEditorHud.setColorPalette(imageEditorView.getModel().getUniqueColorsIgnoringAlpha());
     }
@@ -439,5 +458,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
         void onTouchEventsNeeded(boolean needed);
 
         void onRequestFullScreen(boolean fullScreen, boolean hideKeyboard);
+
+        void onDoneEditing();
     }
 }

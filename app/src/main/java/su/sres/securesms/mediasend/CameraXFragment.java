@@ -25,7 +25,6 @@ import androidx.annotation.RequiresApi;
 import androidx.camera.core.CameraX;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageProxy;
-import androidx.camera.core.impl.utils.executor.CameraXExecutors;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
@@ -45,10 +44,8 @@ import su.sres.securesms.util.MemoryFileDescriptor;
 import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThemeUtil;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.video.VideoUtil;
-
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.FileDescriptor;
@@ -61,7 +58,8 @@ import java.io.IOException;
 @RequiresApi(21)
 public class CameraXFragment extends Fragment implements CameraFragment {
 
-    private static final String TAG = Log.tag(CameraXFragment.class);
+    private static final String TAG              = Log.tag(CameraXFragment.class);
+    private static final String IS_VIDEO_ENABLED = "is_video_enabled";
 
     private CameraXView          camera;
     private ViewGroup            controlsContainer;
@@ -70,8 +68,22 @@ public class CameraXFragment extends Fragment implements CameraFragment {
     private View                 selfieFlash;
     private MemoryFileDescriptor videoFileDescriptor;
 
+    public static CameraXFragment newInstanceForAvatarCapture() {
+        CameraXFragment fragment = new CameraXFragment();
+        Bundle          args     = new Bundle();
+
+        args.putBoolean(IS_VIDEO_ENABLED, false);
+        fragment.setArguments(args);
+
+        return fragment;
+    }
+
     public static CameraXFragment newInstance() {
-        return new CameraXFragment();
+        CameraXFragment fragment = new CameraXFragment();
+
+        fragment.setArguments(new Bundle());
+
+        return fragment;
     }
 
     @Override
@@ -124,7 +136,6 @@ public class CameraXFragment extends Fragment implements CameraFragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         closeVideoFileDescriptor();
     }
 
@@ -207,7 +218,6 @@ public class CameraXFragment extends Fragment implements CameraFragment {
                 flashButton.setFlash(camera.getFlash());
             });
 
-
             GestureDetector gestureDetector = new GestureDetector(requireContext(), new GestureDetector.SimpleOnGestureListener() {
                 @Override
                 public boolean onDoubleTap(MotionEvent e) {
@@ -253,7 +263,6 @@ public class CameraXFragment extends Fragment implements CameraFragment {
                         new CameraXVideoCaptureHelper.Callback() {
                             @Override
                             public void onVideoRecordStarted() {
-
                                 hideAndDisableControlsForVideoRecording(captureButton, flashButton, flipButton, outAnimation);
                             }
 
@@ -286,9 +295,10 @@ public class CameraXFragment extends Fragment implements CameraFragment {
     }
 
     private boolean isVideoRecordingSupported(@NonNull Context context) {
-        return Build.VERSION.SDK_INT >= 26                  &&
-                MediaConstraints.isVideoTranscodeAvailable() &&
-                CameraXUtil.isMixedModeSupported(context)    &&
+        return Build.VERSION.SDK_INT >= 26                           &&
+                requireArguments().getBoolean(IS_VIDEO_ENABLED, true) &&
+                MediaConstraints.isVideoTranscodeAvailable()          &&
+                CameraXUtil.isMixedModeSupported(context)             &&
                 VideoUtil.getMaxVideoDurationInSeconds(context, viewModel.getMediaConstraints()) > 0;
     }
 
@@ -343,7 +353,6 @@ public class CameraXFragment extends Fragment implements CameraFragment {
     }
 
     private void onCaptureClicked() {
-
         Stopwatch stopwatch = new Stopwatch("Capture");
 
         CameraXSelfieFlashHelper flashHelper = new CameraXSelfieFlashHelper(

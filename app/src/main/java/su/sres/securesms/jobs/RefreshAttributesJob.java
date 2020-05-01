@@ -9,6 +9,7 @@ import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
 
+import su.sres.securesms.AppCapabilities;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
@@ -54,7 +55,8 @@ public class RefreshAttributesJob extends BaseJob  {
 
     SignalServiceAccountManager signalAccountManager = ApplicationDependencies.getSignalServiceAccountManager();
     signalAccountManager.setAccountAttributes(null, registrationId, fetchesMessages, pin,
-            unidentifiedAccessKey, universalUnidentifiedAccess);
+            unidentifiedAccessKey, universalUnidentifiedAccess,
+            AppCapabilities.getCapabilities());
 
   }
 

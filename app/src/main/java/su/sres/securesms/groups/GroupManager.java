@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -46,6 +47,13 @@ public final class GroupManager {
     }
 
     return results;
+  }
+
+  @WorkerThread
+  public static boolean leaveGroup(@NonNull Context context, @NonNull Recipient groupRecipient) {
+    String groupId = groupRecipient.requireGroupId();
+
+    return V1GroupManager.leaveGroup(context, groupId, groupRecipient);
   }
 
   public static class GroupActionResult {

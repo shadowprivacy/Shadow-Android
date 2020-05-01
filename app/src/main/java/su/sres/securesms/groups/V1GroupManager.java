@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
 import com.google.protobuf.ByteString;
 
@@ -15,7 +16,9 @@ import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.ThreadDatabase;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupManager.GroupActionResult;
+import su.sres.securesms.jobs.LeaveGroupJob;
 import su.sres.securesms.mms.OutgoingGroupMediaMessage;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.recipients.Recipient;
@@ -26,6 +29,7 @@ import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.TextSecurePreferences;
+import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.util.InvalidNumberException;
 import su.sres.signalservice.internal.push.SignalServiceProtos.GroupContext;
 
@@ -125,6 +129,23 @@ final class V1GroupManager {
             return new GroupActionResult(groupRecipient, threadId);
         } catch (IOException e) {
             throw new AssertionError(e);
+        }
+    }
+
+    @WorkerThread
+    static boolean leaveGroup(@NonNull Context context, @NonNull String groupId, @NonNull Recipient groupRecipient) {
+        long                                threadId     = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(groupRecipient);
+        Optional<OutgoingGroupMediaMessage> leaveMessage = GroupUtil.createGroupLeaveMessage(context, groupRecipient);
+
+        if (threadId != -1 && leaveMessage.isPresent()) {
+            ApplicationDependencies.getJobManager().add(LeaveGroupJob.create(groupRecipient));
+
+            GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
+            groupDatabase.setActive(groupId, false);
+            groupDatabase.remove(groupId, Recipient.self().getId());
+            return true;
+        } else {
+            return false;
         }
     }
 }
