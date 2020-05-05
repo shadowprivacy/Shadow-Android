@@ -1,6 +1,6 @@
 package su.sres.signalservice.api.crypto;
 
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKey;
 
 import java.io.IOException;
 import java.io.OutputStream;

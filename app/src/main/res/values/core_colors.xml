@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="core_blue">#2090ea</color>
+    <color name="core_ultramarine">#30b34d</color>
+    <color name="core_ultramarine_light">#66FF99</color>
+    <color name="core_ultramarine_dark">#194B19</color>
+    <color name="core_ultramarine_icon">#30b34d</color>
+    <color name="core_ultramarine_33">#B8FDB6</color>
+    <color name="core_ultramarine_50">#30b34d</color>
     <color name="core_green">#4caf50</color>
-    <color name="core_yellow">#ffd624</color> <!-- new -->
+    <color name="core_yellow">#ffd624</color>
     <color name="core_red">#f44336</color>
-    <color name="core_red_highlight">#ef5350</color> <!-- extra -->
+    <color name="core_red_highlight">#ef5350</color>
 
     <color name="core_white">#ffffff</color>
 

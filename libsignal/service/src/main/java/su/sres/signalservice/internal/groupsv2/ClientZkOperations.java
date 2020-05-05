@@ -1,7 +1,7 @@
 package su.sres.signalservice.internal.groupsv2;
 
-import su.sres.zkgroup.ServerPublicParams;
-import su.sres.zkgroup.profiles.ClientZkProfileOperations;
+import org.signal.zkgroup.ServerPublicParams;
+import org.signal.zkgroup.profiles.ClientZkProfileOperations;
 
 public final class ClientZkOperations {
 

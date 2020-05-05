@@ -76,6 +76,7 @@ import su.sres.securesms.qr.ScanningThread;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.DynamicDarkActionBarTheme;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
@@ -598,7 +599,7 @@ public class VerifyIdentityActivity extends PassphraseRequiredActionBarActivity 
                                           remoteIdentity,
                                           VerifiedStatus.DEFAULT);
 
-              ApplicationDependencies.getJobManager().add(new StorageSyncJob());
+              StorageSyncHelper.scheduleSyncForDataChange();
             }
 
             ApplicationDependencies.getJobManager()

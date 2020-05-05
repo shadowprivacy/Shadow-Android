@@ -100,7 +100,7 @@
             android:id="@+id/contact_filter"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/signal_primary"
+            android:background="@color/core_ultramarine"
             android:elevation="4dp"
             android:minHeight="?attr/actionBarSize"
             app:searchTextStyle="@style/TextSecure.TitleTextStyle.Light" />
@@ -129,11 +129,10 @@
 
             <Button
                 android:id="@+id/send_sms_button"
-                style="@style/Widget.AppCompat.Button.Borderless"
+                style="@style/Button.Borderless"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:enabled="false"
-                android:textColor="@color/signal_primary"
                 tools:text="Send to 0 friends" />
 
         </LinearLayout>

@@ -4,6 +4,7 @@ import android.os.AsyncTask;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
+import su.sres.securesms.logging.Log;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -30,21 +31,13 @@ public class CallRequestController implements RequestController {
 
                 call.cancel();
 
-                if (stream != null) {
-                    Util.close(stream);
-                }
-
                 canceled = true;
             }
         });
     }
 
     public synchronized void setStream(@NonNull InputStream stream) {
-        if (canceled) {
-            Util.close(stream);
-        } else {
-            this.stream = stream;
-        }
+        this.stream = stream;
         notifyAll();
     }
 

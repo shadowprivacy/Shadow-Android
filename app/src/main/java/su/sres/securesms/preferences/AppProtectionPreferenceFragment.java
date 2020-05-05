@@ -17,13 +17,20 @@ import su.sres.securesms.PassphraseChangeActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.SwitchPreferenceCompat;
 import su.sres.securesms.crypto.MasterSecretUtil;
+import su.sres.securesms.database.Database;
+import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceConfigurationUpdateJob;
 import su.sres.securesms.jobs.RefreshAttributesJob;
+import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.lock.RegistrationLockDialog;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.KeyCachingService;
+import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 
 import java.util.Locale;
@@ -174,11 +181,16 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
   private class ReadReceiptToggleListener implements Preference.OnPreferenceChangeListener {
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
-      boolean enabled = (boolean)newValue;
-      ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(enabled,
-              TextSecurePreferences.isTypingIndicatorsEnabled(requireContext()),
-              TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(getContext()),
-              TextSecurePreferences.isLinkPreviewsEnabled(getContext())));
+      SignalExecutors.BOUNDED.execute(() -> {
+        boolean enabled = (boolean)newValue;
+        DatabaseFactory.getRecipientDatabase(getContext()).markNeedsSync(Recipient.self().getId());
+        StorageSyncHelper.scheduleSyncForDataChange();
+        ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(enabled,
+                TextSecurePreferences.isTypingIndicatorsEnabled(requireContext()),
+                TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(getContext()),
+                TextSecurePreferences.isLinkPreviewsEnabled(getContext())));
+
+      });
 
       return true;
     }
@@ -187,15 +199,19 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
   private class TypingIndicatorsToggleListener implements Preference.OnPreferenceChangeListener {
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
-      boolean enabled = (boolean)newValue;
-      ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(TextSecurePreferences.isReadReceiptsEnabled(requireContext()),
-              enabled,
-              TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(getContext()),
-              TextSecurePreferences.isLinkPreviewsEnabled(getContext())));
+      SignalExecutors.BOUNDED.execute(() -> {
+        boolean enabled = (boolean)newValue;
+        DatabaseFactory.getRecipientDatabase(getContext()).markNeedsSync(Recipient.self().getId());
+        StorageSyncHelper.scheduleSyncForDataChange();
+        ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(TextSecurePreferences.isReadReceiptsEnabled(requireContext()),
+                enabled,
+                TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(getContext()),
+                TextSecurePreferences.isLinkPreviewsEnabled(getContext())));
 
-      if (!enabled) {
-        ApplicationContext.getInstance(requireContext()).getTypingStatusRepository().clear();
-      }
+        if (!enabled) {
+          ApplicationContext.getInstance(requireContext()).getTypingStatusRepository().clear();
+        }
+      });
 
       return true;
     }
@@ -204,11 +220,15 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
   private class LinkPreviewToggleListener implements Preference.OnPreferenceChangeListener {
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
-      boolean enabled = (boolean)newValue;
-      ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(TextSecurePreferences.isReadReceiptsEnabled(requireContext()),
-              TextSecurePreferences.isTypingIndicatorsEnabled(requireContext()),
-              TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(requireContext()),
-              enabled));
+      SignalExecutors.BOUNDED.execute(() -> {
+        boolean enabled = (boolean)newValue;
+        DatabaseFactory.getRecipientDatabase(getContext()).markNeedsSync(Recipient.self().getId());
+        StorageSyncHelper.scheduleSyncForDataChange();
+        ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(TextSecurePreferences.isReadReceiptsEnabled(requireContext()),
+                TextSecurePreferences.isTypingIndicatorsEnabled(requireContext()),
+                TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(requireContext()),
+                enabled));
+      });
 
       return true;
     }
@@ -306,10 +326,14 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
       boolean enabled = (boolean) newValue;
-      ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(TextSecurePreferences.isReadReceiptsEnabled(getContext()),
-              TextSecurePreferences.isTypingIndicatorsEnabled(getContext()),
-              enabled,
-              TextSecurePreferences.isLinkPreviewsEnabled(getContext())));
+      SignalExecutors.BOUNDED.execute(() -> {
+        DatabaseFactory.getRecipientDatabase(getContext()).markNeedsSync(Recipient.self().getId());
+        StorageSyncHelper.scheduleSyncForDataChange();
+        ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(TextSecurePreferences.isReadReceiptsEnabled(getContext()),
+                TextSecurePreferences.isTypingIndicatorsEnabled(getContext()),
+                enabled,
+                TextSecurePreferences.isLinkPreviewsEnabled(getContext())));
+      });
 
       return true;
     }

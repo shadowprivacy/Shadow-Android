@@ -2,7 +2,7 @@ package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
 
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
@@ -17,6 +17,8 @@ import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.util.StreamDetails;
+
+import java.util.UUID;
 
 public class RotateProfileKeyJob extends BaseJob  {
 
@@ -55,11 +57,12 @@ public class RotateProfileKeyJob extends BaseJob  {
         recipientDatabase.setProfileKey(self.getId(), profileKey);
         try (StreamDetails avatarStream = AvatarHelper.getSelfProfileAvatarStream(context)) {
             if (FeatureFlags.VERSIONED_PROFILES) {
-                accountManager.setVersionedProfile(profileKey,
-                        TextSecurePreferences.getProfileName(context).serialize(),
+                accountManager.setVersionedProfile(self.getUuid().get(),
+                        profileKey,
+                        Recipient.self().getProfileName().serialize(),
                         avatarStream);
             } else {
-                accountManager.setProfileName(profileKey, TextSecurePreferences.getProfileName(context).serialize());
+                accountManager.setProfileName(profileKey, Recipient.self().getProfileName().serialize());
                 accountManager.setProfileAvatar(profileKey, avatarStream);
             }
         }

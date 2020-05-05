@@ -13,7 +13,7 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.push.SignalServiceTrustStore;
 import su.sres.securesms.stickers.BlessedPacks;
 import su.sres.signalservice.api.push.TrustStore;
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.AppCapabilities;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.PreKeyUtil;

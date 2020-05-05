@@ -1,10 +1,12 @@
 package su.sres.securesms.jobs;
 
+import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.zkgroup.profiles.ProfileKey;
-import su.sres.zkgroup.profiles.ProfileKeyCredential;
+import org.signal.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKeyCredential;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
@@ -64,6 +66,11 @@ public class RefreshOwnProfileJob extends BaseJob {
 
     @Override
     protected void onRun() throws Exception {
+        if (!TextSecurePreferences.isPushRegistered(context) || TextUtils.isEmpty(TextSecurePreferences.getLocalNumber(context))) {
+            Log.w(TAG, "Not yet registered!");
+            return;
+        }
+
         Recipient            self                 = Recipient.self();
         ProfileAndCredential profileAndCredential = ProfileUtil.retrieveProfile(context, self, getRequestType(self));
         SignalServiceProfile profile              = profileAndCredential.getProfile();
@@ -106,7 +113,6 @@ public class RefreshOwnProfileJob extends BaseJob {
             ProfileName profileName   = ProfileName.fromSerialized(plaintextName);
 
             DatabaseFactory.getRecipientDatabase(context).setProfileName(Recipient.self().getId(), profileName);
-            TextSecurePreferences.setProfileName(context, profileName);
         } catch (InvalidCiphertextException | IOException e) {
             Log.w(TAG, e);
         }

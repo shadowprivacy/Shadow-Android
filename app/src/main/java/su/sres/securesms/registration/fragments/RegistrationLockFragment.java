@@ -19,7 +19,7 @@ import com.dd.CircularProgressButton;
 
 import su.sres.securesms.R;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.jobs.StorageSyncJob;
+import su.sres.securesms.jobs.StorageAccountRestoreJob;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.registration.service.CodeVerificationRequest;
 import su.sres.securesms.registration.service.RegistrationService;
@@ -179,14 +179,14 @@ public final class RegistrationLockFragment extends BaseRegistrationFragment {
         if (FeatureFlags.storageServiceRestore()) {
             long startTime = System.currentTimeMillis();
             SimpleTask.run(() -> {
-                return ApplicationDependencies.getJobManager().runSynchronously(new StorageSyncJob(), TimeUnit.SECONDS.toMillis(10));
+                return ApplicationDependencies.getJobManager().runSynchronously(new StorageAccountRestoreJob(), StorageAccountRestoreJob.LIFESPAN);
             }, result -> {
                 long elapsedTime = System.currentTimeMillis() - startTime;
 
                 if (result.isPresent()) {
-                    Log.i(TAG, "Storage Service restore completed: " + result.get().name() + ". (Took " + elapsedTime + " ms)");
+                    Log.i(TAG, "Storage Service account restore completed: " + result.get().name() + ". (Took " + elapsedTime + " ms)");
                 } else {
-                    Log.i(TAG, "Storage Service restore failed to complete in the allotted time. (" + elapsedTime + " ms elapsed)");
+                    Log.i(TAG, "Storage Service account restore failed to complete in the allotted time. (" + elapsedTime + " ms elapsed)");
                 }
                 cancelSpinning(pinButton);
                 Navigation.findNavController(requireView()).navigate(RegistrationLockFragmentDirections.actionSuccessfulRegistration());

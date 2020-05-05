@@ -4,8 +4,8 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.zkgroup.InvalidInputException;
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.InvalidInputException;
+import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.recipients.Recipient;
@@ -21,7 +21,7 @@ public final class ProfileKeyUtil {
   private ProfileKeyUtil() {
   }
 
-  /** @deprecated Use strongly typed {@link su.sres.zkgroup.profiles.ProfileKey}
+  /** @deprecated Use strongly typed {@link org.signal.zkgroup.profiles.ProfileKey}
    * from {@link #getSelfProfileKey()}
    * or {@code getSelfProfileKey().serialize()} if you need the bytes. */
   @Deprecated

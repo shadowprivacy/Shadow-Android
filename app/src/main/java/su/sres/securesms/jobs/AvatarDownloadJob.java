@@ -7,6 +7,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupDatabase.GroupRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -14,7 +15,6 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.AttachmentStreamUriLoader.AttachmentModel;
 import su.sres.securesms.util.BitmapDecodingException;
 import su.sres.securesms.util.BitmapUtil;
-import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.Hex;
 import org.whispersystems.libsignal.InvalidMessageException;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -36,9 +36,9 @@ public class AvatarDownloadJob extends BaseJob {
 
   private static final String KEY_GROUP_ID = "group_id";
 
-  private byte[] groupId;
+  private @NonNull GroupId groupId;
 
-  public AvatarDownloadJob(@NonNull byte[] groupId) {
+  public AvatarDownloadJob(@NonNull GroupId groupId) {
     this(new Job.Parameters.Builder()
                     .addConstraint(NetworkConstraint.KEY)
                     .setMaxAttempts(10)
@@ -46,7 +46,7 @@ public class AvatarDownloadJob extends BaseJob {
             groupId);
   }
 
-  private AvatarDownloadJob(@NonNull Job.Parameters parameters, @NonNull byte[] groupId) {
+  private AvatarDownloadJob(@NonNull Job.Parameters parameters, @NonNull GroupId groupId) {
     super(parameters);
 
     this.groupId = groupId;
@@ -54,7 +54,7 @@ public class AvatarDownloadJob extends BaseJob {
 
   @Override
   public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_GROUP_ID, GroupUtil.getEncodedId(groupId, false)).build();
+    return new Data.Builder().putString(KEY_GROUP_ID, groupId.toString()).build();
   }
 
   @Override
@@ -64,9 +64,8 @@ public class AvatarDownloadJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException {
-    String                encodeId   = GroupUtil.getEncodedId(groupId, false);
     GroupDatabase         database   = DatabaseFactory.getGroupDatabase(context);
-    Optional<GroupRecord> record     = database.getGroup(encodeId);
+    Optional<GroupRecord> record     = database.getGroup(groupId);
     File                  attachment = null;
 
     try {
@@ -94,7 +93,7 @@ public class AvatarDownloadJob extends BaseJob {
         InputStream                    inputStream = receiver.retrieveAttachment(pointer, attachment, MAX_AVATAR_SIZE);
         Bitmap                         avatar      = BitmapUtil.createScaledBitmap(context, new AttachmentModel(attachment, key, 0, digest), 500, 500);
 
-        database.updateAvatar(encodeId, avatar);
+        database.updateAvatar(groupId, avatar);
         inputStream.close();
       }
     } catch (BitmapDecodingException | NonSuccessfulResponseCodeException | InvalidMessageException e) {
@@ -117,11 +116,7 @@ public class AvatarDownloadJob extends BaseJob {
   public static final class Factory implements Job.Factory<AvatarDownloadJob> {
     @Override
     public @NonNull AvatarDownloadJob create(@NonNull Parameters parameters, @NonNull Data data) {
-      try {
-        return new AvatarDownloadJob(parameters, GroupUtil.getDecodedId(data.getString(KEY_GROUP_ID)));
-      } catch (IOException e) {
-        throw new AssertionError(e);
-      }
+      return new AvatarDownloadJob(parameters, GroupId.parse(data.getString(KEY_GROUP_ID)));
     }
   }
 }

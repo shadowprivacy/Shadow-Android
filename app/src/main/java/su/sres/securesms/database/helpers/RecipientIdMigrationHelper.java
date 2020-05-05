@@ -9,10 +9,10 @@ import androidx.annotation.Nullable;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.phonenumbers.NumberUtil;
 import su.sres.securesms.util.DelimiterUtil;
-import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.Util;
 
 import java.util.HashSet;
@@ -153,7 +153,7 @@ public class RecipientIdMigrationHelper {
         try (Cursor cursor = db.query("recipient_preferences", null, null, null, null, null, null)) {
             while (cursor != null && cursor.moveToNext()) {
                 String  address = cursor.getString(cursor.getColumnIndexOrThrow("recipient_ids"));
-                boolean isGroup = GroupUtil.isEncodedGroup(address);
+                boolean isGroup = GroupId.isEncodedGroup(address);
                 boolean isEmail = !isGroup && NumberUtil.isValidEmail(address);
                 boolean isPhone = !isGroup && !isEmail;
 

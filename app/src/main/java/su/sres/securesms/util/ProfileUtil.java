@@ -6,8 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
-import su.sres.zkgroup.VerificationFailedException;
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.VerificationFailedException;
+import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;

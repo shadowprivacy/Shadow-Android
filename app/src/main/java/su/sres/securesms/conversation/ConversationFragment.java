@@ -339,10 +339,11 @@ public class ConversationFragment extends Fragment
       return;
     }
 
-    Recipient    recipient   = recipientInfo.getRecipient();
-    boolean      isSelf      = Recipient.self().equals(recipient);
-    int          memberCount = recipientInfo.getGroupMemberCount();
-    List<String> groups      = recipientInfo.getSharedGroups();
+      Recipient    recipient          = recipientInfo.getRecipient();
+      boolean      isSelf             = Recipient.self().equals(recipient);
+      int          memberCount        = recipientInfo.getGroupMemberCount();
+      int          pendingMemberCount = recipientInfo.getGroupPendingMemberCount();
+      List<String> groups             = recipientInfo.getSharedGroups();
 
     if (recipient != null) {
       conversationBanner.setAvatar(GlideApp.with(context), recipient);
@@ -351,7 +352,14 @@ public class ConversationFragment extends Fragment
       conversationBanner.setTitle(title);
 
       if (recipient.isGroup()) {
-        conversationBanner.setSubtitle(context.getResources().getQuantityString(R.plurals.MessageRequestProfileView_members, memberCount, memberCount));
+          if (pendingMemberCount > 0) {
+              conversationBanner.setSubtitle(context.getResources()
+                      .getQuantityString(R.plurals.MessageRequestProfileView_members_and_invited, memberCount,
+                              memberCount, pendingMemberCount));
+          } else {
+              conversationBanner.setSubtitle(context.getResources().getQuantityString(R.plurals.MessageRequestProfileView_members, memberCount,
+                      memberCount));
+          }
       } else if (isSelf) {
         conversationBanner.setSubtitle(context.getString(R.string.ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation));
       } else {
@@ -1018,7 +1026,7 @@ public class ConversationFragment extends Fragment
       TooltipPopup.forTarget(requireActivity().findViewById(R.id.menu_context_reply))
               .setText(text)
               .setTextColor(getResources().getColor(R.color.core_white))
-              .setBackgroundTint(getResources().getColor(R.color.core_blue))
+              .setBackgroundTint(getResources().getColor(R.color.core_ultramarine))
               .show(TooltipPopup.POSITION_BELOW);
 
       TextSecurePreferences.setHasSeenSwipeToReplyTooltip(requireContext(), true);

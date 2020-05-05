@@ -6,8 +6,8 @@
 
 package su.sres.signalservice.api.messages.multidevice;
 
-import su.sres.zkgroup.InvalidInputException;
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.InvalidInputException;
+import org.signal.zkgroup.profiles.ProfileKey;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.InvalidMessageException;

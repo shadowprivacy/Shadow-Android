@@ -10,13 +10,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import su.sres.signalservice.api.messages.calls.SystemCertificates;
-import su.sres.zkgroup.ServerPublicParams;
-import su.sres.zkgroup.VerificationFailedException;
-import su.sres.zkgroup.profiles.ProfileKey;
-import su.sres.zkgroup.profiles.ProfileKeyCredential;
-import su.sres.zkgroup.profiles.ProfileKeyCredentialRequest;
-import su.sres.zkgroup.profiles.ProfileKeyCredentialRequestContext;
-import su.sres.zkgroup.profiles.ProfileKeyVersion;
+import org.signal.zkgroup.ServerPublicParams;
+import org.signal.zkgroup.VerificationFailedException;
+import org.signal.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKeyCredential;
+import org.signal.zkgroup.profiles.ProfileKeyCredentialRequest;
+import org.signal.zkgroup.profiles.ProfileKeyCredentialRequestContext;
+import org.signal.zkgroup.profiles.ProfileKeyVersion;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.ecc.ECPublicKey;
 import org.whispersystems.libsignal.logging.Log;
@@ -546,7 +546,7 @@ public class PushServiceSocket {
     }
 
     try {
-      ProfileKeyVersion                  profileKeyIdentifier = profileKey.getProfileKeyVersion();
+      ProfileKeyVersion                  profileKeyIdentifier = profileKey.getProfileKeyVersion(target);
       ProfileKeyCredentialRequestContext requestContext       = clientZkOperations.getProfileOperations().createProfileKeyCredentialRequestContext(random, target, profileKey);
       ProfileKeyCredentialRequest        request              = requestContext.getRequest();
 
@@ -582,7 +582,7 @@ public class PushServiceSocket {
     makeServiceRequest(String.format(PROFILE_PATH, "name/" + (name == null ? "" : URLEncoder.encode(name))), "PUT", "");
   }
 
-  public void setProfileAvatar(ProfileAvatarData profileAvatar)
+  public Optional<String> setProfileAvatar(ProfileAvatarData profileAvatar)
       throws NonSuccessfulResponseCodeException, PushNetworkException
   {
     if (FeatureFlags.VERSIONED_PROFILES) {
@@ -606,10 +606,17 @@ public class PushServiceSocket {
                   formAttributes.getSignature(), profileAvatar.getData(),
                   profileAvatar.getContentType(), profileAvatar.getDataLength(),
                   profileAvatar.getOutputStreamFactory(), null, null);
+
+      return Optional.of(formAttributes.getKey());
     }
+
+    return Optional.absent();
   }
 
-  public void writeProfile(SignalServiceProfileWrite signalServiceProfileWrite, ProfileAvatarData profileAvatar)
+  /**
+   * @return The avatar URL path, if one was written.
+   */
+  public Optional<String> writeProfile(SignalServiceProfileWrite signalServiceProfileWrite, ProfileAvatarData profileAvatar)
           throws NonSuccessfulResponseCodeException, PushNetworkException
   {
     if (!FeatureFlags.VERSIONED_PROFILES) {
@@ -635,7 +642,11 @@ public class PushServiceSocket {
               formAttributes.getSignature(), profileAvatar.getData(),
               profileAvatar.getContentType(), profileAvatar.getDataLength(),
               profileAvatar.getOutputStreamFactory(), null, null);
+
+      return Optional.of(formAttributes.getKey());
     }
+
+    return Optional.absent();
   }
 
   public void setUsername(String username) throws IOException {

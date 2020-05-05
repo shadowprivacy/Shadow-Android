@@ -1,6 +1,5 @@
 package su.sres.securesms.contacts.avatars;
 
-
 import android.content.Context;
 import android.net.Uri;
 import androidx.annotation.NonNull;
@@ -8,6 +7,7 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.util.Conversions;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -16,12 +16,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 
-public class GroupRecordContactPhoto implements ContactPhoto {
+public final class GroupRecordContactPhoto implements ContactPhoto {
 
-  private final String groupId;
-  private final long   avatarId;
+  private final GroupId groupId;
+  private final long    avatarId;
 
-  public GroupRecordContactPhoto(@NonNull String groupId, long avatarId) {
+  public GroupRecordContactPhoto(@NonNull GroupId groupId, long avatarId) {
     this.groupId  = groupId;
     this.avatarId = avatarId;
   }
@@ -50,13 +50,13 @@ public class GroupRecordContactPhoto implements ContactPhoto {
 
   @Override
   public void updateDiskCacheKey(@NonNull MessageDigest messageDigest) {
-    messageDigest.update(groupId.getBytes());
+    messageDigest.update(groupId.toString().getBytes());
     messageDigest.update(Conversions.longToByteArray(avatarId));
   }
 
   @Override
   public boolean equals(Object other) {
-    if (other == null || !(other instanceof GroupRecordContactPhoto)) return false;
+    if (!(other instanceof GroupRecordContactPhoto)) return false;
 
     GroupRecordContactPhoto that = (GroupRecordContactPhoto)other;
     return this.groupId.equals(that.groupId) && this.avatarId == that.avatarId;

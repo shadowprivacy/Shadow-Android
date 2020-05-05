@@ -9,7 +9,7 @@ package su.sres.signalservice.api;
 import com.google.protobuf.ByteString;
 
 import su.sres.signalservice.api.messages.calls.SystemCertificates;
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKey;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.IdentityKeyPair;
 import org.whispersystems.libsignal.InvalidKeyException;
@@ -23,6 +23,7 @@ import su.sres.signalservice.FeatureFlags;
 import su.sres.signalservice.api.crypto.ProfileCipher;
 import su.sres.signalservice.api.crypto.ProfileCipherOutputStream;
 import su.sres.signalservice.api.push.exceptions.NoContentException;
+import su.sres.signalservice.api.storage.StorageId;
 import su.sres.signalservice.api.storage.StorageKey;
 import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
 import su.sres.signalservice.api.messages.calls.TurnServerInfo;
@@ -310,6 +311,18 @@ public class SignalServiceAccountManager {
         return activeTokens;
     }
 
+    public Optional<SignalStorageManifest> getStorageManifest(StorageKey storageKey) throws IOException {
+        try {
+            String          authToken       = this.pushServiceSocket.getStorageAuth();
+            StorageManifest storageManifest = this.pushServiceSocket.getStorageManifest(authToken);
+
+            return Optional.of(SignalStorageModels.remoteToLocalStorageManifest(storageManifest, storageKey));
+        } catch (InvalidKeyException | NotFoundException e) {
+            Log.w(TAG, "Error while fetching manifest.", e);
+            return Optional.absent();
+        }
+    }
+
     public long getStorageManifestVersion() throws IOException {
         try {
             String authToken = this.pushServiceSocket.getStorageAuth();
@@ -331,40 +344,44 @@ public class SignalServiceAccountManager {
                 return Optional.absent();
             }
 
-            byte[]         rawRecord      = SignalStorageCipher.decrypt(storageKey.deriveManifestKey(storageManifest.getVersion()), storageManifest.getValue().toByteArray());
-            ManifestRecord manifestRecord = ManifestRecord.parseFrom(rawRecord);
-            List<byte[]>   keys           = new ArrayList<>(manifestRecord.getKeysCount());
-
-            for (ByteString key : manifestRecord.getKeysList()) {
-                keys.add(key.toByteArray());
-            }
-
-            return Optional.of(new SignalStorageManifest(manifestRecord.getVersion(), keys));
+            return Optional.of(SignalStorageModels.remoteToLocalStorageManifest(storageManifest, storageKey));
         } catch (NoContentException e) {
             return Optional.absent();
         }
     }
 
-    public List<SignalStorageRecord> readStorageRecords(StorageKey storageKey, List<byte[]> storageKeys) throws IOException, InvalidKeyException {
-        ReadOperation.Builder operation = ReadOperation.newBuilder();
-
-        for (byte[] key : storageKeys) {
-            operation.addReadKey(ByteString.copyFrom(key));
+    public List<SignalStorageRecord> readStorageRecords(StorageKey storageKey, List<StorageId> storageKeys) throws IOException, InvalidKeyException {
+        if (storageKeys.isEmpty()) {
+            return Collections.emptyList();
         }
 
-        String                    authToken = this.pushServiceSocket.getStorageAuth();
-        StorageItems              items     = this.pushServiceSocket.readStorageItems(authToken, operation.build());
-        List<SignalStorageRecord> result    = new ArrayList<>(items.getItemsCount());
+        List<SignalStorageRecord> result    = new ArrayList<>();
+        ReadOperation.Builder     operation = ReadOperation.newBuilder();
+        Map<ByteString, Integer>  typeMap   = new HashMap<>();
+
+        for (StorageId key : storageKeys) {
+            typeMap.put(ByteString.copyFrom(key.getRaw()), key.getType());
+
+            if (StorageId.isKnownType(key.getType())) {
+                operation.addReadKey(ByteString.copyFrom(key.getRaw()));
+            } else {
+                result.add(SignalStorageRecord.forUnknown(key));
+            }
+        }
+
+        String       authToken = this.pushServiceSocket.getStorageAuth();
+        StorageItems items     = this.pushServiceSocket.readStorageItems(authToken, operation.build());
 
         if (items.getItemsCount() != storageKeys.size()) {
             Log.w(TAG, "Failed to find all remote keys! Requested: " + storageKeys.size() + ", Found: " + items.getItemsCount());
         }
 
         for (StorageItem item : items.getItemsList()) {
-            if (item.hasKey()) {
-                result.add(SignalStorageModels.remoteToLocalStorageRecord(item, storageKey));
+            Integer type = typeMap.get(item.getKey());
+            if (type != null) {
+                result.add(SignalStorageModels.remoteToLocalStorageRecord(item, type, storageKey));
             } else {
-                Log.w(TAG, "Encountered a StorageItem with no key! Skipping.");
+                Log.w(TAG, "No type found! Skipping.");
             }
         }
 
@@ -406,8 +423,11 @@ public class SignalServiceAccountManager {
         {
         ManifestRecord.Builder manifestRecordBuilder = ManifestRecord.newBuilder().setVersion(manifest.getVersion());
 
-        for (byte[] key : manifest.getStorageKeys()) {
-            manifestRecordBuilder.addKeys(ByteString.copyFrom(key));
+            for (StorageId id : manifest.getStorageIds()) {
+                ManifestRecord.Identifier idProto = ManifestRecord.Identifier.newBuilder()
+                        .setRaw(ByteString.copyFrom(id.getRaw()))
+                        .setType(ManifestRecord.Identifier.Type.forNumber(id.getType())).build();
+                manifestRecordBuilder.addIdentifiers(idProto);
         }
 
             String             authToken       = this.pushServiceSocket.getStorageAuth();
@@ -437,13 +457,13 @@ public class SignalServiceAccountManager {
             StorageManifestKey conflictKey       = storageKey.deriveManifestKey(conflict.get().getVersion());
             byte[]             rawManifestRecord = SignalStorageCipher.decrypt(conflictKey, conflict.get().getValue().toByteArray());
             ManifestRecord     record            = ManifestRecord.parseFrom(rawManifestRecord);
-            List<byte[]>       keys              = new ArrayList<>(record.getKeysCount());
+            List<StorageId>    ids               = new ArrayList<>(record.getIdentifiersCount());
 
-            for (ByteString key : record.getKeysList()) {
-                keys.add(key.toByteArray());
+            for (ManifestRecord.Identifier id : record.getIdentifiersList()) {
+                ids.add(StorageId.forType(id.getRaw().toByteArray(), id.getType().getNumber()));
             }
 
-            SignalStorageManifest conflictManifest = new SignalStorageManifest(record.getVersion(), keys);
+            SignalStorageManifest conflictManifest = new SignalStorageManifest(record.getVersion(), ids);
 
             return Optional.of(conflictManifest);
         } else {
@@ -533,7 +553,7 @@ public class SignalServiceAccountManager {
         this.pushServiceSocket.setProfileName(ciphertextName);
     }
 
-    public void setProfileAvatar(ProfileKey key, StreamDetails avatar)
+    public Optional<String> setProfileAvatar(ProfileKey key, StreamDetails avatar)
             throws IOException {
         if (FeatureFlags.VERSIONED_PROFILES) {
             throw new AssertionError();
@@ -547,10 +567,13 @@ public class SignalServiceAccountManager {
                     new ProfileCipherOutputStreamFactory(key));
         }
 
-        this.pushServiceSocket.setProfileAvatar(profileAvatarData);
+        return this.pushServiceSocket.setProfileAvatar(profileAvatarData);
     }
 
-    public void setVersionedProfile(ProfileKey profileKey, String name, StreamDetails avatar)
+    /**
+     * @return The avatar URL path, if one was written.
+     */
+    public Optional<String> setVersionedProfile(UUID uuid, ProfileKey profileKey, String name, StreamDetails avatar)
             throws IOException
     {
         if (!FeatureFlags.VERSIONED_PROFILES) {
@@ -570,10 +593,10 @@ public class SignalServiceAccountManager {
                     new ProfileCipherOutputStreamFactory(profileKey));
         }
 
-        this.pushServiceSocket.writeProfile(new SignalServiceProfileWrite(profileKey.getProfileKeyVersion().serialize(),
+        return this.pushServiceSocket.writeProfile(new SignalServiceProfileWrite(profileKey.getProfileKeyVersion(uuid).serialize(),
                         ciphertextName,
                         hasAvatar,
-                        profileKey.getCommitment().serialize()),
+                        profileKey.getCommitment(uuid).serialize()),
                 profileAvatarData);
     }
 

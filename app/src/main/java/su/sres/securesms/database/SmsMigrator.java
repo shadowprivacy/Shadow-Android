@@ -27,6 +27,7 @@ import com.annimon.stream.Stream;
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteStatement;
 
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -231,7 +232,7 @@ public class SmsMigrator {
 
             List<RecipientId> recipientIds = Stream.of(ourRecipients).map(Recipient::getId).toList();
 
-            String      ourGroupId          = DatabaseFactory.getGroupDatabase(context).getOrCreateGroupForMembers(recipientIds, true);
+            GroupId     ourGroupId          = DatabaseFactory.getGroupDatabase(context).getOrCreateGroupForMembers(recipientIds, true);
             RecipientId ourGroupRecipientId = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(ourGroupId);
             Recipient   ourGroupRecipient   = Recipient.resolved(ourGroupRecipientId);
             long        ourThreadId         = threadDatabase.getThreadIdFor(ourGroupRecipient, ThreadDatabase.DistributionTypes.CONVERSATION);

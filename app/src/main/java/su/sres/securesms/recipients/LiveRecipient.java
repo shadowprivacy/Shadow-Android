@@ -19,7 +19,6 @@ import su.sres.securesms.database.GroupDatabase.GroupRecord;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -197,7 +196,7 @@ public final class LiveRecipient {
             List<Recipient> members  = Stream.of(groupRecord.get().getMembers()).filterNot(RecipientId::isUnknown).map(this::fetchRecipientFromDisk).toList();
             Optional<Long>  avatarId = Optional.absent();
 
-            if (settings.getGroupId() != null && !GroupUtil.isMmsGroup(settings.getGroupId()) && title == null) {
+            if (settings.getGroupId() != null && !settings.getGroupId().isMmsGroup() && title == null) {
                 title = unnamedGroupName;
             }
 

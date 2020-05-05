@@ -9,7 +9,7 @@ import org.signal.libsignal.metadata.certificate.CertificateValidator;
 import org.signal.libsignal.metadata.certificate.InvalidCertificateException;
 
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;

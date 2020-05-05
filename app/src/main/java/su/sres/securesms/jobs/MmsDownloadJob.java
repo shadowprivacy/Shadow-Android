@@ -19,6 +19,7 @@ import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessagingDatabase.InsertResult;
 import su.sres.securesms.database.MmsDatabase;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.mms.ApnUnavailableException;
 import su.sres.securesms.mms.CompatMmsConnection;
 import su.sres.securesms.mms.IncomingMediaMessage;
@@ -177,11 +178,11 @@ public class MmsDownloadJob extends BaseJob {
                                  int subscriptionId, @Nullable RecipientId notificationFrom)
           throws MmsException
   {
-    MmsDatabase      database    = DatabaseFactory.getMmsDatabase(context);
-    Optional<String> group       = Optional.absent();
-    Set<RecipientId> members     = new HashSet<>();
-    String           body        = null;
-    List<Attachment> attachments = new LinkedList<>();
+    MmsDatabase       database    = DatabaseFactory.getMmsDatabase(context);
+    Optional<GroupId> group       = Optional.absent();
+    Set<RecipientId>  members     = new HashSet<>();
+    String            body        = null;
+    List<Attachment>  attachments = new LinkedList<>();
 
     RecipientId from = null;
 

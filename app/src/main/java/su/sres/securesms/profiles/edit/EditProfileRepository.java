@@ -20,6 +20,7 @@ import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.profiles.SystemProfileUtil;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.ProfileUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -47,7 +48,7 @@ class EditProfileRepository {
     }
 
     void getCurrentProfileName(@NonNull Consumer<ProfileName> profileNameConsumer) {
-        ProfileName storedProfileName = TextSecurePreferences.getProfileName(context);
+        ProfileName storedProfileName = Recipient.self().getProfileName();
         if (!storedProfileName.isEmpty()) {
             profileNameConsumer.accept(storedProfileName);
         } else if (!excludeSystem) {
@@ -102,12 +103,10 @@ class EditProfileRepository {
 
     void uploadProfile(@NonNull ProfileName profileName, @Nullable byte[] avatar, @NonNull Consumer<UploadResult> uploadResultConsumer) {
         SimpleTask.run(() -> {
-            TextSecurePreferences.setProfileName(context, profileName);
             DatabaseFactory.getRecipientDatabase(context).setProfileName(Recipient.self().getId(), profileName);
 
             try {
                 AvatarHelper.setAvatar(context, Recipient.self().getId(), avatar);
-                TextSecurePreferences.setProfileAvatarId(context, new SecureRandom().nextInt());
             } catch (IOException e) {
                 return UploadResult.ERROR_FILE_IO;
             }

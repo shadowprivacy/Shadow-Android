@@ -6,11 +6,11 @@
 
 package su.sres.signalservice.api;
 
-import su.sres.zkgroup.ServerPublicParams;
-import su.sres.zkgroup.VerificationFailedException;
-import su.sres.zkgroup.profiles.ClientZkProfileOperations;
-import su.sres.zkgroup.profiles.ProfileKey;
-import su.sres.zkgroup.profiles.ProfileKeyCredential;
+import org.signal.zkgroup.ServerPublicParams;
+import org.signal.zkgroup.VerificationFailedException;
+import org.signal.zkgroup.profiles.ClientZkProfileOperations;
+import org.signal.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKeyCredential;
 import org.whispersystems.libsignal.InvalidMessageException;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.FeatureFlags;
@@ -99,7 +99,7 @@ public class SignalServiceMessageReceiver {
     this.signalAgent          = signalAgent;
     this.connectivityListener = listener;
     this.sleepTimer           = timer;
-    this.clientZkProfile      = new ClientZkProfileOperations(new ServerPublicParams(urls.getZkGroupServerPublicParams()));
+    this.clientZkProfile      = FeatureFlags.ZK_GROUPS ? new ClientZkProfileOperations(new ServerPublicParams(urls.getZkGroupServerPublicParams())) : null;
   }
 
   /**

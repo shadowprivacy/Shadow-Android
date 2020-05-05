@@ -19,6 +19,7 @@ import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration;
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration2;
 import su.sres.securesms.jobmanager.migrations.RecipientIdJobMigration;
 import su.sres.securesms.jobmanager.migrations.SendReadReceiptsJobMigration;
+import su.sres.securesms.migrations.AvatarIdRemovalMigrationJob;
 import su.sres.securesms.migrations.PassingMigrationJob;
 import su.sres.securesms.migrations.AvatarMigrationJob;
 import su.sres.securesms.migrations.CachedAttachmentsMigrationJob;
@@ -83,6 +84,7 @@ public final class JobManagerFactories {
             put(RefreshPreKeysJob.KEY,                     new RefreshPreKeysJob.Factory());
             put(RemoteConfigRefreshJob.KEY,                new RemoteConfigRefreshJob.Factory());
             put(RequestGroupInfoJob.KEY,                   new RequestGroupInfoJob.Factory());
+            put(StorageAccountRestoreJob.KEY,              new StorageAccountRestoreJob.Factory());
             put(RetrieveProfileAvatarJob.KEY,              new RetrieveProfileAvatarJob.Factory());
             put(RetrieveProfileJob.KEY,                    new RetrieveProfileJob.Factory());
             put(RotateCertificateJob.KEY,                  new RotateCertificateJob.Factory());
@@ -105,6 +107,7 @@ public final class JobManagerFactories {
             put(ProfileUploadJob.KEY,                      new ProfileUploadJob.Factory());
 
             // Migrations
+            put(AvatarIdRemovalMigrationJob.KEY,           new AvatarIdRemovalMigrationJob.Factory());
             put(AvatarMigrationJob.KEY,                    new AvatarMigrationJob.Factory());
             put(CachedAttachmentsMigrationJob.KEY,         new CachedAttachmentsMigrationJob.Factory());
             put(DatabaseMigrationJob.KEY,                  new DatabaseMigrationJob.Factory());

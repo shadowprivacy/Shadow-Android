@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="su.sres.securesms">
 
-    <uses-sdk tools:overrideLibrary="androidx.camera.core,androidx.camera.camera2" />
+    <uses-sdk tools:overrideLibrary="androidx.camera.core,androidx.camera.camera2,androidx.camera.lifecycle" />
 
     <permission
         android:name="su.sres.securesms.ACCESS_SECRETS"
@@ -307,12 +307,6 @@
         <activity
             android:name=".migrations.ApplicationMigrationActivity"
             android:theme="@style/NoAnimation.Theme.AppCompat.Light.DarkActionBar"
-            android:launchMode="singleTask"
-            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
-
-        <activity
-            android:name=".ExperienceUpgradeActivity"
-            android:theme="@style/TextSecure.LightNoActionBar"
             android:launchMode="singleTask"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
@@ -809,17 +803,6 @@
         <receiver android:name=".notifications.DeleteNotificationReceiver">
             <intent-filter>
                 <action android:name="su.sres.securesms.DELETE_NOTIFICATION" />
-            </intent-filter>
-        </receiver>
-
-        <receiver android:name=".ExperienceUpgradeActivity$AppUpgradeReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-                <data android:scheme="package" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="su.sres.securesms.ExperienceUpgradeActivity.DISMISS_ACTION" />
             </intent-filter>
         </receiver>
 

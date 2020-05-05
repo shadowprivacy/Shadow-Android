@@ -14,7 +14,6 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
-import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -96,13 +95,13 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
                         members.add(RecipientUtil.toSignalServiceAddress(context, Recipient.resolved(member)));
                     }
 
-                    RecipientId recipientId = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(GroupUtil.getEncodedId(record.getId(), record.isMms()));
+                    RecipientId               recipientId     = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(record.getId());
                     Recipient recipient = Recipient.resolved(recipientId);
                     Optional<Integer> expirationTimer = recipient.getExpireMessages() > 0 ? Optional.of(recipient.getExpireMessages()) : Optional.absent();
                     Map<RecipientId, Integer> inboxPositions = DatabaseFactory.getThreadDatabase(context).getInboxPositions();
                     Set<RecipientId> archived = DatabaseFactory.getThreadDatabase(context).getArchivedRecipients();
 
-                    out.write(new DeviceGroup(record.getId(),
+                    out.write(new DeviceGroup(record.getId().getDecodedId(),
                             Optional.fromNullable(record.getTitle()),
                             members,
                             getAvatar(record.getAvatar()),

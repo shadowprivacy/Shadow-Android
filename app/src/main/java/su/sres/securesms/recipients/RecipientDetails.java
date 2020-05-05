@@ -13,6 +13,7 @@ import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
 import su.sres.securesms.database.RecipientDatabase.RegisteredState;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
 import su.sres.securesms.database.RecipientDatabase.VibrateState;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -29,7 +30,7 @@ public class RecipientDetails {
     final String                 username;
     final String                 e164;
     final String                 email;
-    final String                 groupId;
+    final GroupId                groupId;
     final String                 name;
     final String                 customLabel;
     final Uri                    systemContactPhoto;
@@ -59,7 +60,7 @@ public class RecipientDetails {
     final Recipient.Capability   uuidCapability;
     final Recipient.Capability   groupsV2Capability;
     final InsightsBannerTier     insightsBannerTier;
-    final byte[]                 storageKey;
+    final byte[]                 storageId;
     final byte[]                 identityKey;
     final VerifiedStatus         identityStatus;
 
@@ -89,7 +90,7 @@ public class RecipientDetails {
         this.blocked                         = settings.isBlocked();
         this.expireMessages                  = settings.getExpireMessages();
         this.participants                    = participants == null ? new LinkedList<>() : participants;
-        this.profileName                     = isLocalNumber ? TextSecurePreferences.getProfileName(context) : settings.getProfileName();
+        this.profileName                     = settings.getProfileName();
         this.defaultSubscriptionId           = settings.getDefaultSubscriptionId();
         this.registered                      = settings.getRegistered();
         this.profileKey                      = settings.getProfileKey();
@@ -104,7 +105,7 @@ public class RecipientDetails {
         this.uuidCapability                  = settings.getUuidCapability();
         this.groupsV2Capability              = settings.getGroupsV2Capability();
         this.insightsBannerTier              = settings.getInsightsBannerTier();
-        this.storageKey                      = settings.getStorageKey();
+        this.storageId                       = settings.getStorageId();
         this.identityKey                     = settings.getIdentityKey();
         this.identityStatus                  = settings.getIdentityStatus();
 
@@ -150,7 +151,7 @@ public class RecipientDetails {
         this.name                   = null;
         this.uuidCapability         = Recipient.Capability.UNKNOWN;
         this.groupsV2Capability     = Recipient.Capability.UNKNOWN;
-        this.storageKey             = null;
+        this.storageId              = null;
         this.identityKey            = null;
         this.identityStatus         = VerifiedStatus.DEFAULT;
     }

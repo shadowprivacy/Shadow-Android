@@ -8,13 +8,13 @@ package su.sres.signalservice.api;
 
 import com.google.protobuf.ByteString;
 
-import su.sres.zkgroup.VerificationFailedException;
-import su.sres.zkgroup.profiles.ClientZkProfileOperations;
-import su.sres.zkgroup.profiles.ProfileKey;
-import su.sres.zkgroup.profiles.ProfileKeyCredential;
-import su.sres.zkgroup.profiles.ProfileKeyCredentialRequest;
-import su.sres.zkgroup.profiles.ProfileKeyCredentialRequestContext;
-import su.sres.zkgroup.profiles.ProfileKeyVersion;
+import org.signal.zkgroup.VerificationFailedException;
+import org.signal.zkgroup.profiles.ClientZkProfileOperations;
+import org.signal.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKeyCredential;
+import org.signal.zkgroup.profiles.ProfileKeyCredentialRequest;
+import org.signal.zkgroup.profiles.ProfileKeyCredentialRequestContext;
+import org.signal.zkgroup.profiles.ProfileKeyVersion;
 import org.whispersystems.libsignal.InvalidVersionException;
 import org.whispersystems.libsignal.util.Hex;
 import org.whispersystems.libsignal.util.Pair;
@@ -188,8 +188,9 @@ public class SignalServiceMessagePipe {
               .addAllHeaders(headers);
 
       if (FeatureFlags.VERSIONED_PROFILES && requestType == SignalServiceProfile.RequestType.PROFILE_AND_CREDENTIAL && uuid.isPresent() && profileKey.isPresent()) {
-        ProfileKeyVersion                  profileKeyIdentifier = profileKey.get().getProfileKeyVersion();
+
         UUID                               target               = uuid.get();
+        ProfileKeyVersion                  profileKeyIdentifier = profileKey.get().getProfileKeyVersion(target);
         requestContext       = clientZkProfile.createProfileKeyCredentialRequestContext(random, target, profileKey.get());
         ProfileKeyCredentialRequest        request              = requestContext.getRequest();
 

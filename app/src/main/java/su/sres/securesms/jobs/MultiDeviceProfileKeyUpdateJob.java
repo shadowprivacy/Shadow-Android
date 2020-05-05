@@ -11,7 +11,7 @@ import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.TextSecurePreferences;
 

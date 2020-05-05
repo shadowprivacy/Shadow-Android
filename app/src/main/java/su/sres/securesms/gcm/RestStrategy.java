@@ -5,6 +5,7 @@ import androidx.annotation.WorkerThread;
 
 import su.sres.securesms.IncomingMessageProcessor;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobmanager.JobTracker;
 import su.sres.securesms.jobs.MarkerJob;
@@ -73,7 +74,7 @@ public class RestStrategy implements MessageRetriever.Strategy {
 
         jobManager.addListener(markerJob.getId(), new JobTracker.JobListener() {
             @Override
-            public void onStateChanged(@NonNull JobTracker.JobState jobState) {
+            public void onStateChanged(@NonNull Job job, @NonNull JobTracker.JobState jobState) {
                 if (jobState.isComplete()) {
                     jobManager.removeListener(this);
                     latch.countDown();

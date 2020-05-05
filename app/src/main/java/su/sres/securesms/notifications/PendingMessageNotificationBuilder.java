@@ -3,7 +3,6 @@ package su.sres.securesms.notifications;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import androidx.core.app.NotificationCompat;
 
 import su.sres.securesms.MainActivity;
 import su.sres.securesms.R;
@@ -19,9 +18,9 @@ public class PendingMessageNotificationBuilder extends AbstractNotificationBuild
     // TODO [greyson] Navigation
     Intent intent = new Intent(context, MainActivity.class);
 
-    setSmallIcon(R.drawable.icon_notification);
-    setColor(context.getResources().getColor(R.color.textsecure_primary));
-    setCategory(NotificationCompat.CATEGORY_MESSAGE);
+    setSmallIcon(R.drawable.ic_notification);
+    setSmallIcon(R.drawable.ic_notification);
+    setColor(context.getResources().getColor(R.color.core_ultramarine));
 
     setContentTitle(context.getString(R.string.MessageNotifier_you_may_have_new_messages));
     setContentText(context.getString(R.string.MessageNotifier_open_signal_to_check_for_recent_notifications));

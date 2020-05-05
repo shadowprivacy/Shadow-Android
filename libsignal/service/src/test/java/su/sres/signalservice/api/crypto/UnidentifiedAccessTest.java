@@ -3,8 +3,8 @@ package su.sres.signalservice.api.crypto;
 import junit.framework.TestCase;
 
 import org.conscrypt.OpenSSLProvider;
-import su.sres.zkgroup.InvalidInputException;
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.InvalidInputException;
+import org.signal.zkgroup.profiles.ProfileKey;
 
 import java.security.Security;
 import java.util.Arrays;

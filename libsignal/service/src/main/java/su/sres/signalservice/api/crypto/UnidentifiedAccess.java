@@ -2,7 +2,7 @@ package su.sres.signalservice.api.crypto;
 
 import org.signal.libsignal.metadata.certificate.InvalidCertificateException;
 import org.signal.libsignal.metadata.certificate.SenderCertificate;
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKey;
 import org.whispersystems.libsignal.util.ByteUtil;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;

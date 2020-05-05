@@ -1,6 +1,6 @@
 package su.sres.signalservice.internal.push.http;
 
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.signalservice.api.crypto.DigestingOutputStream;
 import su.sres.signalservice.api.crypto.ProfileCipherOutputStream;
 

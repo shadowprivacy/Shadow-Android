@@ -3,8 +3,8 @@ package su.sres.signalservice.api.crypto;
 import junit.framework.TestCase;
 
 import org.conscrypt.Conscrypt;
-import su.sres.zkgroup.InvalidInputException;
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.InvalidInputException;
+import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.signalservice.internal.util.Util;
 
 import java.io.ByteArrayInputStream;

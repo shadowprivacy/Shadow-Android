@@ -11,6 +11,7 @@ import com.google.protobuf.ByteString;
 import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.OutgoingGroupMediaMessage;
 import su.sres.securesms.recipients.Recipient;
@@ -26,42 +27,16 @@ import java.util.List;
 
 import static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContext;
 
-public class GroupUtil {
+public final class GroupUtil {
 
-  private static final String ENCODED_SIGNAL_GROUP_PREFIX = "__textsecure_group__!";
-  private static final String ENCODED_MMS_GROUP_PREFIX    = "__signal_mms_group__!";
-  private static final String TAG                         = GroupUtil.class.getSimpleName();
-
-  public static String getEncodedId(byte[] groupId, boolean mms) {
-    return (mms ? ENCODED_MMS_GROUP_PREFIX  : ENCODED_SIGNAL_GROUP_PREFIX) + Hex.toStringCondensed(groupId);
+  private GroupUtil() {
   }
 
-  public static byte[] getDecodedId(String groupId) throws IOException {
-    if (!isEncodedGroup(groupId)) {
-      throw new IOException("Invalid encoding");
-    }
+  private static final String TAG = Log.tag(GroupUtil.class);
 
-    return Hex.fromStringCondensed(groupId.split("!", 2)[1]);
-  }
-
-  public static byte[] getDecodedIdOrThrow(String groupId) {
-    try {
-      return getDecodedId(groupId);
-    } catch (IOException e) {
-      throw new AssertionError(e);
-    }
-  }
-
-  public static boolean isEncodedGroup(@NonNull String groupId) {
-    return groupId.startsWith(ENCODED_SIGNAL_GROUP_PREFIX) || groupId.startsWith(ENCODED_MMS_GROUP_PREFIX);
-  }
-
-  public static boolean isMmsGroup(@NonNull String groupId) {
-    return groupId.startsWith(ENCODED_MMS_GROUP_PREFIX);
-  }
   @WorkerThread
   public static Optional<OutgoingGroupMediaMessage> createGroupLeaveMessage(@NonNull Context context, @NonNull Recipient groupRecipient) {
-    String        encodedGroupId = groupRecipient.requireGroupId();
+    GroupId       encodedGroupId = groupRecipient.requireGroupId();
     GroupDatabase groupDatabase  = DatabaseFactory.getGroupDatabase(context);
 
     if (!groupDatabase.isActive(encodedGroupId)) {
@@ -69,13 +44,7 @@ public class GroupUtil {
       return Optional.absent();
     }
 
-    ByteString decodedGroupId;
-    try {
-      decodedGroupId = ByteString.copyFrom(getDecodedId(encodedGroupId));
-    } catch (IOException e) {
-      Log.w(TAG, "Failed to decode group ID.", e);
-      return Optional.absent();
-    }
+    ByteString decodedGroupId = ByteString.copyFrom(encodedGroupId.getDecodedId());
 
     GroupContext groupContext = GroupContext.newBuilder()
             .setId(decodedGroupId)

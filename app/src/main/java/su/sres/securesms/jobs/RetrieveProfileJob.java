@@ -5,8 +5,8 @@ import androidx.annotation.Nullable;
 
 import android.text.TextUtils;
 
-import su.sres.zkgroup.profiles.ProfileKey;
-import su.sres.zkgroup.profiles.ProfileKeyCredential;
+import org.signal.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKeyCredential;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;

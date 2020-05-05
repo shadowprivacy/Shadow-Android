@@ -2,14 +2,13 @@ package su.sres.securesms.migrations;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.phonenumbers.NumberUtil;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.Util;
 
 import java.io.File;
@@ -83,7 +82,7 @@ public class AvatarMigrationJob extends MigrationJob {
     }
 
     private static boolean isValidFileName(@NonNull String name) {
-        return NUMBER_PATTERN.matcher(name).matches() || GroupUtil.isEncodedGroup(name) || NumberUtil.isValidEmail(name);
+        return NUMBER_PATTERN.matcher(name).matches() || GroupId.isEncodedGroup(name) || NumberUtil.isValidEmail(name);
     }
 
     public static class Factory implements Job.Factory<AvatarMigrationJob> {

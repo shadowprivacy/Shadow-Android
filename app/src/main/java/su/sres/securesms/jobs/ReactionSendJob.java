@@ -21,7 +21,6 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.transport.RetryLaterException;
-import su.sres.securesms.util.GroupUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
@@ -217,7 +216,7 @@ public class ReactionSendJob extends BaseJob {
                 .withReaction(buildReaction(context, reaction, remove, targetAuthor, targetSentTimestamp));
 
         if (conversationRecipient.isGroup()) {
-            dataMessage.asGroupMessage(new SignalServiceGroup(GroupUtil.getDecodedId(conversationRecipient.requireGroupId())));
+            dataMessage.asGroupMessage(new SignalServiceGroup(conversationRecipient.requireGroupId().getDecodedId()));
         }
 
 

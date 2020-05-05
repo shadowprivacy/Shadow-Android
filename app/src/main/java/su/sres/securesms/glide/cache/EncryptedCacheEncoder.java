@@ -1,6 +1,5 @@
 package su.sres.securesms.glide.cache;
 
-
 import androidx.annotation.NonNull;
 
 import com.bumptech.glide.load.Encoder;
@@ -13,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.SocketException;
 
 public class EncryptedCacheEncoder extends EncryptedCoder implements Encoder<InputStream> {
 
@@ -42,7 +42,11 @@ public class EncryptedCacheEncoder extends EncryptedCoder implements Encoder<Inp
 
       return true;
     } catch (IOException e) {
-      Log.w(TAG, e);
+      if (e instanceof SocketException) {
+        Log.d(TAG, "Socket exception. Likely a cancellation.");
+      } else {
+        Log.w(TAG, e);
+      }
       return false;
     } finally {
       byteArrayPool.put(buffer);

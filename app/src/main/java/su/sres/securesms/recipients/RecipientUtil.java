@@ -7,6 +7,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import com.annimon.stream.Stream;
+
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.database.DatabaseFactory;
@@ -14,14 +16,15 @@ import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.RecipientDatabase.RegisteredState;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.database.ThreadDatabase;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobs.DirectoryRefreshJob;
 import su.sres.securesms.jobs.LeaveGroupJob;
 import su.sres.securesms.jobs.MultiDeviceBlockedUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceMessageRequestResponseJob;
 import su.sres.securesms.jobs.RotateProfileKeyJob;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.mms.OutgoingGroupMediaMessage;
 import su.sres.securesms.util.GroupUtil;
@@ -81,13 +84,13 @@ public class RecipientUtil {
             leaveGroup(context, recipient);
         }
 
-        if (resolved.isSystemContact() || resolved.isProfileSharing()) {
+        if (resolved.isSystemContact() || resolved.isProfileSharing() || isProfileSharedViaGroup(context,resolved)) {
             ApplicationDependencies.getJobManager().add(new RotateProfileKeyJob());
             DatabaseFactory.getRecipientDatabase(context).setProfileSharing(resolved.getId(), false);
         }
 
         ApplicationDependencies.getJobManager().add(new MultiDeviceBlockedUpdateJob());
-        ApplicationDependencies.getJobManager().add(new StorageSyncJob());
+        StorageSyncHelper.scheduleSyncForDataChange();
     }
 
     @WorkerThread
@@ -98,7 +101,7 @@ public class RecipientUtil {
 
         DatabaseFactory.getRecipientDatabase(context).setBlocked(recipient.getId(), false);
         ApplicationDependencies.getJobManager().add(new MultiDeviceBlockedUpdateJob());
-        ApplicationDependencies.getJobManager().add(new StorageSyncJob());
+        StorageSyncHelper.scheduleSyncForDataChange();
 
         if (FeatureFlags.messageRequests()) {
             ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(recipient.getId()));
@@ -121,7 +124,7 @@ public class RecipientUtil {
                 ApplicationDependencies.getJobManager().add(LeaveGroupJob.create(recipient));
 
                 GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
-                String        groupId       = resolved.requireGroupId();
+                GroupId       groupId       = resolved.requireGroupId();
                 groupDatabase.setActive(groupId, false);
                 groupDatabase.remove(groupId, Recipient.self().getId());
             } else {
@@ -228,5 +231,11 @@ public class RecipientUtil {
     @WorkerThread
     private static boolean noSecureMessagesInThread(@NonNull Context context, long threadId) {
         return DatabaseFactory.getMmsSmsDatabase(context).getSecureConversationCount(threadId) == 0;
+    }
+
+    @WorkerThread
+    private static boolean isProfileSharedViaGroup(@NonNull Context context, @NonNull Recipient recipient) {
+        return Stream.of(DatabaseFactory.getGroupDatabase(context).getGroupsContainingMember(recipient.getId()))
+                .anyMatch(group -> Recipient.resolved(group.getRecipientId()).isProfileSharing());
     }
 }

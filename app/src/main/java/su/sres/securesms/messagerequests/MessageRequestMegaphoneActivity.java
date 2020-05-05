@@ -14,6 +14,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.megaphone.Megaphones;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.profiles.edit.EditProfileActivity;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -53,7 +54,7 @@ public class MessageRequestMegaphoneActivity extends PassphraseRequiredActionBar
 
         if (requestCode == EDIT_PROFILE_REQUEST_CODE &&
                 resultCode == RESULT_OK                  &&
-                TextSecurePreferences.getProfileName(this) != ProfileName.EMPTY) {
+                Recipient.self().getProfileName() != ProfileName.EMPTY) {
             ApplicationDependencies.getMegaphoneRepository().markFinished(Megaphones.Event.MESSAGE_REQUESTS);
             setResult(RESULT_OK);
             finish();

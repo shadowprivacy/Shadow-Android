@@ -36,13 +36,13 @@ import su.sres.securesms.database.PushDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.ThreadDatabase;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.migrations.LegacyMigrationJob;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.phonenumbers.NumberUtil;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.DelimiterUtil;
-import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.Hex;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.MediaUtil;
@@ -1275,7 +1275,7 @@ public class ClassicOpenHelper extends SQLiteOpenHelper {
           while (cursor != null && cursor.moveToNext()) {
             String address = cursor.getString(cursor.getColumnIndexOrThrow("recipient_ids"));
 
-            if (!TextUtils.isEmpty(address) && !GroupUtil.isEncodedGroup(address) && !NumberUtil.isValidEmail(address)) {
+            if (!TextUtils.isEmpty(address) && !GroupId.isEncodedGroup(address) && !NumberUtil.isValidEmail(address)) {
               Uri lookup = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(address));
 
               try (Cursor contactCursor = context.getContentResolver().query(lookup, new String[] {ContactsContract.PhoneLookup.DISPLAY_NAME,

@@ -19,7 +19,7 @@ package su.sres.securesms;
 import android.annotation.SuppressLint;
 
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.camera.camera2.Camera2AppConfig;
+import androidx.camera.camera2.Camera2Config;
 import androidx.camera.core.CameraX;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
@@ -75,6 +75,7 @@ import su.sres.securesms.revealable.ViewOnceMessageManager;
 import su.sres.securesms.service.RotateSenderCertificateListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
+import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.concurrent.SignalExecutors;
@@ -415,7 +416,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     if (CameraXUtil.isSupported()) {
       new Thread(() -> {
         try {
-          CameraX.init(this, Camera2AppConfig.create(this));
+          CameraX.initialize(this, Camera2Config.defaultConfig());
         } catch (Throwable t) {
           Log.w(TAG, "Failed to initialize CameraX.");
         }
@@ -462,7 +463,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     FeatureFlags.init();
     initializeMasterKey();
     ApplicationDependencies.getJobManager().beginJobLoop();
-    StorageSyncJob.scheduleIfNecessary();
+    StorageSyncHelper.scheduleRoutineSync();
     RefreshPreKeysJob.scheduleIfNecessary();
 
     initializedOnCreate = true;

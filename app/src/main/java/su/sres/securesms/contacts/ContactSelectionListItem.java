@@ -13,12 +13,12 @@ import android.widget.TextView;
 import su.sres.securesms.R;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.components.FromTextView;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.ViewUtil;
 
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -107,7 +107,7 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
 
   @SuppressLint("SetTextI18n")
   private void setText(@Nullable Recipient recipient, int type, String name, String number, String label) {
-    if (number == null || number.isEmpty() || GroupUtil.isEncodedGroup(number)) {
+    if (number == null || number.isEmpty() || GroupId.isEncodedGroup(number)) {
       this.nameView.setEnabled(false);
       this.numberView.setText("");
       this.labelView.setVisibility(View.GONE);

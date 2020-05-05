@@ -12,7 +12,6 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
-import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
@@ -88,7 +87,7 @@ public class TypingSendJob extends BaseJob  {
 
         if (recipient.isGroup()) {
             recipients = DatabaseFactory.getGroupDatabase(context).getGroupMembers(recipient.requireGroupId(), false);
-            groupId    = Optional.of(GroupUtil.getDecodedId(recipient.requireGroupId()));
+            groupId    = Optional.of(recipient.requireGroupId().getDecodedId());
         }
 
         recipients = Stream.of(recipients).map(Recipient::resolve).toList();

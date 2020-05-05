@@ -29,13 +29,13 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.PushDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.transport.RetryLaterException;
-import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.state.SignalProtocolStore;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -137,7 +137,7 @@ public final class PushDecryptMessageJob extends BaseJob {
         // TODO [greyson] Navigation
         NotificationManagerCompat.from(context).notify(494949,
                 new NotificationCompat.Builder(context, NotificationChannels.getMessagesChannel(context))
-                        .setSmallIcon(R.drawable.icon_notification)
+                        .setSmallIcon(R.drawable.ic_notification)
                         .setPriority(NotificationCompat.PRIORITY_HIGH)
                         .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                         .setContentTitle(context.getString(R.string.PushDecryptJob_new_locked_message))
@@ -233,7 +233,7 @@ public final class PushDecryptMessageJob extends BaseJob {
 
         return new PushProcessMessageJob.ExceptionMetadata(sender,
                 e.getSenderDevice(),
-                e.getGroup().transform(g -> GroupUtil.getEncodedId(g.getGroupId(), false)).orNull());
+                e.getGroup().transform(g -> GroupId.v1(g.getGroupId())).orNull());
     }
 
     private static PushProcessMessageJob.ExceptionMetadata toExceptionMetadata(@NonNull ProtocolException e) throws NoSenderException {

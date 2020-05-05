@@ -31,10 +31,10 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -77,6 +77,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.annimon.stream.Stream;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -211,7 +213,7 @@ import su.sres.securesms.stickers.StickerSearchRepository;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.CharacterCalculator.CharacterState;
 import su.sres.securesms.util.CommunicationActions;
-import su.sres.securesms.util.Dialogs;
+import su.sres.securesms.util.DrawableUtil;
 import su.sres.securesms.util.DynamicDarkToolbarTheme;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
@@ -264,6 +266,9 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         ConversationSearchBottomBar.EventListener,
         StickerKeyboardProvider.StickerEventListener,
         AttachmentKeyboard.Callback {
+
+    private static final int SHORTCUT_ICON_SIZE = Build.VERSION.SDK_INT >= 26 ? ViewUtil.dpToPx(72) : ViewUtil.dpToPx(48 + 16 * 2);
+
     private static final String TAG = ConversationActivity.class.getSimpleName();
 
     public static final String RECIPIENT_EXTRA = "recipient_id";
@@ -435,9 +440,10 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
             return;
         }
 
-        if (!Util.isEmpty(composeText) || attachmentManager.isAttachmentPresent()) {
+        if (!Util.isEmpty(composeText) || attachmentManager.isAttachmentPresent() || inputPanel.getQuote().isPresent()) {
             saveDraft();
             attachmentManager.clear(glideRequests, false);
+            inputPanel.clearQuote();
             silentlySetComposeText("");
         }
 
@@ -1092,47 +1098,58 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     private void handleAddShortcut() {
         Log.i(TAG, "Creating home screen shortcut for recipient " + recipient.get().getId());
 
-        new AsyncTask<Void, Void, IconCompat>() {
+        final Context context = getApplicationContext();
+        final Recipient recipient = this.recipient.get();
 
-            @Override
-            protected IconCompat doInBackground(Void... voids) {
-                Context context = getApplicationContext();
-                IconCompat icon = null;
+        GlideApp.with(this)
+                .asBitmap()
+                .load(recipient.getContactPhoto())
+                .error(recipient.getFallbackContactPhoto().asDrawable(this, recipient.getColor().toAvatarColor(this), false))
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                        if (errorDrawable == null) {
+                            throw new AssertionError();
+                        }
 
-                if (recipient.get().getContactPhoto() != null) {
-                    try {
-                        Bitmap bitmap = BitmapFactory.decodeStream(recipient.get().getContactPhoto().openInputStream(context));
-                        bitmap = BitmapUtil.createScaledBitmap(bitmap, 300, 300);
-                        icon = IconCompat.createWithAdaptiveBitmap(bitmap);
-                    } catch (IOException e) {
-                        Log.w(TAG, "Failed to decode contact photo during shortcut creation. Falling back to generic icon.", e);
+                        Log.w(TAG, "Utilizing fallback photo for shortcut for recipient " + recipient.getId());
+
+                        SimpleTask.run(() -> DrawableUtil.toBitmap(errorDrawable, SHORTCUT_ICON_SIZE, SHORTCUT_ICON_SIZE),
+                                bitmap -> addIconToHomeScreen(context, bitmap, recipient));
                     }
-                }
 
-                if (icon == null) {
-                    icon = IconCompat.createWithResource(context, recipient.get().isGroup() ? R.mipmap.ic_group_shortcut
-                            : R.mipmap.ic_person_shortcut);
-                }
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        SimpleTask.run(() -> BitmapUtil.createScaledBitmap(resource, SHORTCUT_ICON_SIZE, SHORTCUT_ICON_SIZE),
+                                bitmap -> addIconToHomeScreen(context, bitmap, recipient));
+                    }
 
-                return icon;
-            }
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                    }
+                });
 
-            @Override
-            protected void onPostExecute(IconCompat icon) {
-                Context context = getApplicationContext();
-                String name = recipient.get().getDisplayName(ConversationActivity.this);
+    }
 
-                ShortcutInfoCompat shortcutInfo = new ShortcutInfoCompat.Builder(context, recipient.get().getId().serialize() + '-' + System.currentTimeMillis())
-                        .setShortLabel(name)
-                        .setIcon(icon)
-                        .setIntent(ShortcutLauncherActivity.createIntent(context, recipient.getId()))
-                        .build();
+    private static void addIconToHomeScreen(@NonNull Context context,
+                                            @NonNull Bitmap bitmap,
+                                            @NonNull Recipient recipient)
+    {
+        IconCompat icon = IconCompat.createWithAdaptiveBitmap(bitmap);
+        String     name = recipient.isLocalNumber() ? context.getString(R.string.note_to_self)
+                : recipient.getDisplayName(context);
 
-                if (ShortcutManagerCompat.requestPinShortcut(context, shortcutInfo, null)) {
-                    Toast.makeText(context, getString(R.string.ConversationActivity_added_to_home_screen), Toast.LENGTH_LONG).show();
-                }
-            }
-        }.execute();
+        ShortcutInfoCompat shortcutInfoCompat = new ShortcutInfoCompat.Builder(context, recipient.getId().serialize() + '-' + System.currentTimeMillis())
+                .setShortLabel(name)
+                .setIcon(icon)
+                .setIntent(ShortcutLauncherActivity.createIntent(context, recipient.getId()))
+                .build();
+
+        if (ShortcutManagerCompat.requestPinShortcut(context, shortcutInfoCompat, null)) {
+            Toast.makeText(context, context.getString(R.string.ConversationActivity_added_to_home_screen), Toast.LENGTH_LONG).show();
+        }
+
+        bitmap.recycle();
     }
 
     private void handleSearch() {
@@ -1169,7 +1186,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
     private void handleEditPushGroup() {
         Intent intent = new Intent(ConversationActivity.this, GroupCreateActivity.class);
-        intent.putExtra(GroupCreateActivity.GROUP_ID_EXTRA, recipient.get().requireGroupId());
+        intent.putExtra(GroupCreateActivity.GROUP_ID_EXTRA, recipient.get().requireGroupId().toString());
         startActivityForResult(intent, GROUP_EDIT);
     }
 
@@ -1833,7 +1850,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         inputPanel.setMediaKeyboardToggleMode(true);
 
         TooltipPopup.forTarget(inputPanel.getMediaKeyboardToggleAnchorView())
-                .setBackgroundTint(getResources().getColor(R.color.core_blue))
+                .setBackgroundTint(getResources().getColor(R.color.core_ultramarine))
                 .setTextColor(getResources().getColor(R.color.core_white))
                 .setText(R.string.ConversationActivity_new_say_it_with_stickers)
                 .setOnDismissListener(() -> {

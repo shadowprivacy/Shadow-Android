@@ -1,6 +1,5 @@
 package su.sres.securesms.jobs;
 
-
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
@@ -8,18 +7,13 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
-import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
-import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
-import su.sres.signalservice.api.kbs.MasterKey;
-import su.sres.signalservice.api.messages.multidevice.KeysMessage;
 import su.sres.signalservice.api.messages.multidevice.MessageRequestResponseMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
@@ -100,7 +94,7 @@ public class MultiDeviceMessageRequestResponseJob extends BaseJob {
         MessageRequestResponseMessage response;
 
         if (recipient.isGroup()) {
-            response = MessageRequestResponseMessage.forGroup(GroupUtil.getDecodedId(recipient.getGroupId().get()), localToRemoteType(type));
+            response = MessageRequestResponseMessage.forGroup(recipient.getGroupId().get().getDecodedId(), localToRemoteType(type));
         } else {
             response = MessageRequestResponseMessage.forIndividual(RecipientUtil.toSignalServiceAddress(context, recipient), localToRemoteType(type));
         }

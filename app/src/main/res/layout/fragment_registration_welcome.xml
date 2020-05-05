@@ -39,7 +39,7 @@
         app:layout_constraintStart_toStartOf="@+id/welcome_continue_button" /> -->
 
 <!--            android:text="@string/RegistrationActivity_terms_and_privacy"
-        android:textColor="@color/signal_primary" -->
+        android:textColor="@color/core_ultramarine" -->
 
     <com.dd.CircularProgressButton
         android:id="@+id/welcome_continue_button"

@@ -6,7 +6,7 @@
 
 package su.sres.signalservice.api.messages.multidevice;
 
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKey;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.signalservice.api.messages.SignalServiceAttachmentStream;

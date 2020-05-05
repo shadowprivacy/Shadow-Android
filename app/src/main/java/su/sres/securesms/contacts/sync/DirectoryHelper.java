@@ -11,6 +11,7 @@ import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.FeatureFlags;
 
 import java.io.IOException;
@@ -21,10 +22,6 @@ public class DirectoryHelper {
 
   @WorkerThread
   public static void refreshDirectory(@NonNull Context context, boolean notifyOfNewUsers) throws IOException {
-    if (!SignalStore.storageServiceValues().hasFirstStorageSyncCompleted()) {
-      Log.i(TAG, "First storage sync has not completed. Skipping.");
-      return;
-    }
 
     if (FeatureFlags.uuids()) {
       // TODO [greyson] Create a DirectoryHelperV2 when appropriate.
@@ -32,7 +29,7 @@ public class DirectoryHelper {
     } else {
       DirectoryHelperV1.refreshDirectory(context, notifyOfNewUsers);
     }
-    ApplicationDependencies.getJobManager().add(new StorageSyncJob());
+    StorageSyncHelper.scheduleSyncForDataChange();
   }
 
     @WorkerThread
@@ -46,7 +43,7 @@ public class DirectoryHelper {
         newRegisteredState = DirectoryHelperV1.refreshDirectoryFor(context, recipient, notifyOfNewUsers);
       }
       if (newRegisteredState != originalRegisteredState) {
-        ApplicationDependencies.getJobManager().add(new StorageSyncJob());
+        StorageSyncHelper.scheduleSyncForDataChange();
       }
 
       return newRegisteredState;

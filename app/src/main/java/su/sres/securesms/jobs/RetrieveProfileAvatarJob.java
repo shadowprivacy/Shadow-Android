@@ -3,7 +3,7 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
-import su.sres.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
@@ -47,7 +47,6 @@ public class RetrieveProfileAvatarJob extends BaseJob  {
                     .setQueue("RetrieveProfileAvatarJob::" + recipient.getId().toQueueKey())
                     .addConstraint(NetworkConstraint.KEY)
                     .setLifespan(TimeUnit.HOURS.toMillis(1))
-                    .setMaxInstances(1)
                     .build(),
             recipient,
             profileAvatar);
@@ -120,10 +119,6 @@ public class RetrieveProfileAvatarJob extends BaseJob  {
     }
 
     database.setProfileAvatar(recipient.getId(), profileAvatar);
-
-    if (recipient.isLocalNumber()) {
-      TextSecurePreferences.setProfileAvatarId(context, Util.getSecureRandom().nextInt());
-    }
   }
 
   @Override

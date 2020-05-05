@@ -5,9 +5,9 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.PointerAttachment;
 import su.sres.securesms.contactshare.Contact;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.GroupUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
 import su.sres.signalservice.api.messages.SignalServiceGroup;
@@ -19,7 +19,7 @@ import java.util.List;
 public class IncomingMediaMessage {
 
   private final RecipientId from;
-  private final String      groupId;
+  private final GroupId     groupId;
   private final String      body;
   private final boolean     push;
   private final long        sentTimeMillis;
@@ -35,7 +35,7 @@ public class IncomingMediaMessage {
   private final List<LinkPreview> linkPreviews   = new LinkedList<>();
 
   public IncomingMediaMessage(@NonNull RecipientId from,
-                              Optional<String> groupId,
+                              Optional<GroupId> groupId,
                               String body,
                               long sentTimeMillis,
                               List<Attachment> attachments,
@@ -86,7 +86,7 @@ public class IncomingMediaMessage {
     this.quote            = quote.orNull();
     this.unidentified     = unidentified;
 
-    if (group.isPresent()) this.groupId = GroupUtil.getEncodedId(group.get().getGroupId(), false);
+    if (group.isPresent()) this.groupId = GroupId.v1(group.get().getGroupId());
     else                   this.groupId = null;
 
     this.attachments.addAll(PointerAttachment.forPointers(attachments));
@@ -114,7 +114,7 @@ public class IncomingMediaMessage {
     return from;
   }
 
-  public String getGroupId() {
+  public GroupId getGroupId() {
     return groupId;
   }
 

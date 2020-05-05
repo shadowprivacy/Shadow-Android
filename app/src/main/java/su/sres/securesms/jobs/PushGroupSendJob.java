@@ -18,6 +18,7 @@ import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.documents.NetworkFailure;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
@@ -31,8 +32,6 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.transport.UndeliverableMessageException;
-import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.GroupUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
@@ -244,7 +243,7 @@ public class PushGroupSendJob extends PushSendJob  {
     rotateSenderCertificateIfNecessary();
 
     SignalServiceMessageSender                 messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-    String                                     groupId            = groupRecipient.requireGroupId();
+    GroupId                                    groupId            = groupRecipient.requireGroupId();
     Optional<byte[]>                           profileKey         = getProfileKey(groupRecipient);
     Optional<Quote>                            quote              = getQuoteFor(message);
     Optional<SignalServiceDataMessage.Sticker> sticker            = getStickerFor(message);
@@ -269,7 +268,7 @@ public class PushGroupSendJob extends PushSendJob  {
       List<SignalServiceAddress> members          = Stream.of(groupContext.getMembersList())
               .map(m -> new SignalServiceAddress(UuidUtil.parseOrNull(m.getUuid()), m.getE164()))
               .toList();
-      SignalServiceGroup         group            = new SignalServiceGroup(type, GroupUtil.getDecodedId(groupId), groupContext.getName(), members, avatar);
+      SignalServiceGroup         group            = new SignalServiceGroup(type, groupId.getDecodedId(), groupContext.getName(), members, avatar);
       SignalServiceDataMessage   groupDataMessage = SignalServiceDataMessage.newBuilder()
               .withTimestamp(message.getSentTimeMillis())
               .withExpiration(groupRecipient.getExpireMessages())
@@ -279,7 +278,7 @@ public class PushGroupSendJob extends PushSendJob  {
       return messageSender.sendMessage(addresses, unidentifiedAccess, isRecipientUpdate, groupDataMessage);
     } else {
 
-      SignalServiceGroup       group        = new SignalServiceGroup(GroupUtil.getDecodedId(groupId));
+      SignalServiceGroup       group        = new SignalServiceGroup(groupId.getDecodedId());
       SignalServiceDataMessage groupMessage = SignalServiceDataMessage.newBuilder()
                                                                       .withTimestamp(message.getSentTimeMillis())
                                                                       .asGroupMessage(group)
@@ -299,7 +298,7 @@ public class PushGroupSendJob extends PushSendJob  {
     }
   }
 
-  private @NonNull List<RecipientId> getGroupMessageRecipients(String groupId, long messageId) {
+  private @NonNull List<RecipientId> getGroupMessageRecipients(@NonNull GroupId groupId, long messageId) {
     List<GroupReceiptInfo> destinations = DatabaseFactory.getGroupReceiptDatabase(context).getGroupReceiptInfo(messageId);
     if (!destinations.isEmpty()) return Stream.of(destinations).map(GroupReceiptInfo::getRecipientId).toList();
 

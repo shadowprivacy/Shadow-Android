@@ -13,7 +13,6 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
-import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
@@ -78,7 +77,7 @@ public class MultiDeviceBlockedUpdateJob extends BaseJob {
 
       while ((recipient = reader.getNext()) != null) {
         if (recipient.isPushGroup()) {
-          blockedGroups.add(GroupUtil.getDecodedId(recipient.requireGroupId()));
+          blockedGroups.add(recipient.requireGroupId().getDecodedId());
         } else if (recipient.hasServiceIdentifier()) {
           blockedIndividuals.add(RecipientUtil.toSignalServiceAddress(context, recipient));
         }

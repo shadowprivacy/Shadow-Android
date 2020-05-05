@@ -4,7 +4,10 @@ import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.contacts.sync.StorageSyncHelper;
+import su.sres.securesms.database.ThreadDatabase;
+import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.storage.StorageSyncHelper;
+import su.sres.securesms.storage.StorageSyncModels;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.StorageKeyDatabase;
@@ -16,12 +19,10 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.transport.RetryLaterException;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.InvalidKeyException;
 import su.sres.signalservice.api.SignalServiceAccountManager;
-import su.sres.signalservice.api.kbs.MasterKey;
+import su.sres.signalservice.api.storage.StorageId;
 import su.sres.signalservice.api.storage.StorageKey;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.storage.SignalStorageManifest;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -76,16 +78,18 @@ public class StorageForcePushJob extends BaseJob {
         RecipientDatabase           recipientDatabase  = DatabaseFactory.getRecipientDatabase(context);
         StorageKeyDatabase          storageKeyDatabase = DatabaseFactory.getStorageKeyDatabase(context);
 
-        long                     currentVersion = accountManager.getStorageManifestVersion();
-        Map<RecipientId, byte[]> oldStorageKeys = recipientDatabase.getAllStorageSyncKeysMap();
+        long                        currentVersion = accountManager.getStorageManifestVersion();
+        Map<RecipientId, StorageId> oldStorageKeys = recipientDatabase.getContactStorageSyncIdsMap();
 
-        long                      newVersion     = currentVersion + 1;
-        Map<RecipientId, byte[]>  newStorageKeys = generateNewKeys(oldStorageKeys);
-        List<SignalStorageRecord> inserts        = Stream.of(oldStorageKeys.keySet())
+        long                        newVersion         = currentVersion + 1;
+        Map<RecipientId, StorageId> newStorageKeys     = generateNewKeys(oldStorageKeys);
+        Set<RecipientId>            archivedRecipients = DatabaseFactory.getThreadDatabase(context).getArchivedRecipients();
+        List<SignalStorageRecord>   inserts            = Stream.of(oldStorageKeys.keySet())
                 .map(recipientDatabase::getRecipientSettings)
                 .withoutNulls()
-                .map(s -> StorageSyncHelper.localToRemoteRecord(s, Objects.requireNonNull(newStorageKeys.get(s.getId()))))
+                .map(s -> StorageSyncModels.localToRemoteRecord(s, Objects.requireNonNull(newStorageKeys.get(s.getId())).getRaw(), archivedRecipients))
                 .toList();
+        inserts.add(StorageSyncHelper.buildAccountRecord(context, StorageId.forAccount(Recipient.self().fresh().getStorageServiceId())));
 
         SignalStorageManifest manifest = new SignalStorageManifest(newVersion, new ArrayList<>(newStorageKeys.values()));
 
@@ -110,7 +114,7 @@ public class StorageForcePushJob extends BaseJob {
 
         Log.i(TAG, "Force push succeeded. Updating local manifest version to: " + newVersion);
         TextSecurePreferences.setStorageManifestVersion(context, newVersion);
-        recipientDatabase.applyStorageSyncKeyUpdates(newStorageKeys);
+        recipientDatabase.applyStorageIdUpdates(newStorageKeys);
         storageKeyDatabase.deleteAll();
     }
 
@@ -123,11 +127,11 @@ public class StorageForcePushJob extends BaseJob {
     public void onFailure() {
     }
 
-    private static @NonNull Map<RecipientId, byte[]> generateNewKeys(@NonNull Map<RecipientId, byte[]> oldKeys) {
-        Map<RecipientId, byte[]> out = new HashMap<>();
+    private static @NonNull Map<RecipientId, StorageId> generateNewKeys(@NonNull Map<RecipientId, StorageId> oldKeys) {
+        Map<RecipientId, StorageId> out = new HashMap<>();
 
-        for (Map.Entry<RecipientId, byte[]> entry : oldKeys.entrySet()) {
-            out.put(entry.getKey(), StorageSyncHelper.generateKey());
+        for (Map.Entry<RecipientId, StorageId> entry : oldKeys.entrySet()) {
+            out.put(entry.getKey(), entry.getValue().withNewBytes(StorageSyncHelper.generateKey()));
         }
 
         return out;
