@@ -19,8 +19,6 @@ package su.sres.securesms;
 import android.annotation.SuppressLint;
 
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.camera.camera2.Camera2Config;
-import androidx.camera.core.CameraX;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
@@ -50,28 +48,24 @@ import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
 import su.sres.securesms.jobs.RefreshPreKeysJob;
-import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.AndroidLogger;
 import su.sres.securesms.logging.CustomSignalProtocolLogger;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.logging.PersistentLogger;
 import su.sres.securesms.logging.SignalUncaughtExceptionHandler;
-import su.sres.securesms.mediasend.camerax.CameraXUtil;
 import su.sres.securesms.migrations.ApplicationMigrations;
-import su.sres.securesms.migrations.StorageServiceMigrationJob;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
-import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.revealable.ViewOnceMessageManager;
 import su.sres.securesms.ringrtc.RingRtcLogger;
 import su.sres.securesms.service.DirectoryRefreshListener;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.service.IncomingMessageObserver;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.service.LocalBackupListener;
-import su.sres.securesms.revealable.ViewOnceMessageManager;
 import su.sres.securesms.service.RotateSenderCertificateListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
@@ -411,19 +405,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         });
     }
 
-  @SuppressLint("RestrictedApi")
-  private void initializeCameraX() {
-    if (CameraXUtil.isSupported()) {
-      new Thread(() -> {
-        try {
-          CameraX.initialize(this, Camera2Config.defaultConfig());
-        } catch (Throwable t) {
-          Log.w(TAG, "Failed to initialize CameraX.");
-        }
-      }, "signal-camerax-initialization").start();
-    }
-  }
-
   private void initializeMasterKey() {
     // generate a random "master key"
 //    byte[] masterKey = new byte[32];
@@ -459,7 +440,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializePendingMessages();
     initializeBlobProvider();
     initializeCleanup();
-    initializeCameraX();
     FeatureFlags.init();
     initializeMasterKey();
     ApplicationDependencies.getJobManager().beginJobLoop();

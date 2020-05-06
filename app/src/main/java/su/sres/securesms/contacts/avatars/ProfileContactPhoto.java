@@ -30,13 +30,12 @@ public class ProfileContactPhoto implements ContactPhoto {
 
   @Override
   public @NonNull InputStream openInputStream(Context context) throws IOException {
-    return AvatarHelper.getInputStreamFor(context, recipient.getId());
+    return AvatarHelper.getAvatar(context, recipient.getId());
   }
 
   @Override
   public @Nullable Uri getUri(@NonNull Context context) {
-    File avatarFile = AvatarHelper.getAvatarFile(context, recipient.getId());
-    return avatarFile.exists() ? Uri.fromFile(avatarFile) : null;
+    return null;
   }
 
   @Override
@@ -71,12 +70,6 @@ public class ProfileContactPhoto implements ContactPhoto {
       return 0;
     }
 
-    File avatarFile = AvatarHelper.getAvatarFile(ApplicationDependencies.getApplication(), recipient.getId());
-
-    if (avatarFile.exists()) {
-      return avatarFile.lastModified();
-    } else {
-      return 0;
-    }
+    return AvatarHelper.getLastModified(ApplicationDependencies.getApplication(), recipient.getId());
   }
 }

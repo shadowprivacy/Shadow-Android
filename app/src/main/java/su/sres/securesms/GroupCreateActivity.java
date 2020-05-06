@@ -20,6 +20,7 @@ package su.sres.securesms;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -63,6 +64,7 @@ import su.sres.securesms.mediasend.AvatarSelectionBottomSheetDialogFragment;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
 import su.sres.securesms.mms.GlideApp;
+import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.BitmapUtil;
@@ -76,6 +78,7 @@ import su.sres.securesms.util.task.ProgressDialogAsyncTask;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.util.InvalidNumberException;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -102,7 +105,6 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
 
   private static final short REQUEST_CODE_SELECT_AVATAR = 26165;
   private static final int   PICK_CONTACT               = 1;
-  public static final  int   AVATAR_SIZE                = 210;
 
   private EditText     groupName;
   private ListView     lv;
@@ -322,7 +324,7 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
                 .skipMemoryCache(true)
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .centerCrop()
-                .override(AVATAR_SIZE, AVATAR_SIZE)
+                .override(AvatarHelper.AVATAR_DIMENSIONS, AvatarHelper.AVATAR_DIMENSIONS)
                 .into(new SimpleTarget<Bitmap>() {
                   @Override
                   public void onResourceReady(@NonNull Bitmap resource, Transition<? super Bitmap> transition) {
@@ -364,7 +366,7 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
 
       memberAddresses.add(Recipient.self().getId());
 
-      GroupId     groupId          = DatabaseFactory.getGroupDatabase(activity).getOrCreateGroupForMembers(memberAddresses, true);
+      GroupId.Mms groupId          = DatabaseFactory.getGroupDatabase(activity).getOrCreateMmsGroupForMembers(memberAddresses);
       RecipientId groupRecipientId = DatabaseFactory.getRecipientDatabase(activity).getOrInsertFromGroupId(groupId);
       Recipient   groupRecipient   = Recipient.resolved(groupRecipientId);
       long        threadId         = DatabaseFactory.getThreadDatabase(activity).getThreadIdFor(groupRecipient, ThreadDatabase.DistributionTypes.DEFAULT);
@@ -550,16 +552,22 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
     @Override
     protected Optional<GroupData> doInBackground(GroupId... groupIds) {
       final GroupDatabase         db               = DatabaseFactory.getGroupDatabase(activity);
-      final List<Recipient>       recipients       = db.getGroupMembers(groupIds[0], false);
+      final List<Recipient>       recipients       = db.getGroupMembers(groupIds[0], GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
       final Optional<GroupRecord> group            = db.getGroup(groupIds[0]);
       final Set<Recipient>        existingContacts = new HashSet<>(recipients.size());
       existingContacts.addAll(recipients);
 
       if (group.isPresent()) {
+        Bitmap avatar = null;
+        try {
+          avatar = BitmapFactory.decodeStream(AvatarHelper.getAvatar(getContext(), group.get().getRecipientId()));
+        } catch (IOException e) {
+          Log.w(TAG, "Failed to read avatar.");
+        }
         return Optional.of(new GroupData(groupIds[0],
                                          existingContacts,
-                                         BitmapUtil.fromByteArray(group.get().getAvatar()),
-                                         group.get().getAvatar(),
+                avatar,
+                BitmapUtil.toByteArray(avatar),
                                          group.get().getTitle()));
       } else {
         return Optional.absent();

@@ -8,9 +8,10 @@ import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.util.GroupUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
-import su.sres.signalservice.api.messages.SignalServiceGroup;
+import su.sres.signalservice.api.messages.SignalServiceGroupContext;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -68,7 +69,7 @@ public class IncomingMediaMessage {
                               boolean viewOnce,
                               boolean unidentified,
                               Optional<String> body,
-                              Optional<SignalServiceGroup> group,
+                              Optional<SignalServiceGroupContext> group,
                               Optional<List<SignalServiceAttachment>> attachments,
                               Optional<QuoteModel> quote,
                               Optional<List<Contact>> sharedContacts,
@@ -86,7 +87,7 @@ public class IncomingMediaMessage {
     this.quote            = quote.orNull();
     this.unidentified     = unidentified;
 
-    if (group.isPresent()) this.groupId = GroupId.v1(group.get().getGroupId());
+    if (group.isPresent()) this.groupId = GroupUtil.idFromGroupContext(group.get());
     else                   this.groupId = null;
 
     this.attachments.addAll(PointerAttachment.forPointers(attachments));

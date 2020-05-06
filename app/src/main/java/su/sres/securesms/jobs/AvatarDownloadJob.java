@@ -13,6 +13,7 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.AttachmentStreamUriLoader.AttachmentModel;
+import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.util.BitmapDecodingException;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.Hex;
@@ -36,9 +37,9 @@ public class AvatarDownloadJob extends BaseJob {
 
   private static final String KEY_GROUP_ID = "group_id";
 
-  private @NonNull GroupId groupId;
+  private @NonNull GroupId.V1 groupId;
 
-  public AvatarDownloadJob(@NonNull GroupId groupId) {
+  public AvatarDownloadJob(@NonNull GroupId.V1 groupId) {
     this(new Job.Parameters.Builder()
                     .addConstraint(NetworkConstraint.KEY)
                     .setMaxAttempts(10)
@@ -46,7 +47,7 @@ public class AvatarDownloadJob extends BaseJob {
             groupId);
   }
 
-  private AvatarDownloadJob(@NonNull Job.Parameters parameters, @NonNull GroupId groupId) {
+  private AvatarDownloadJob(@NonNull Job.Parameters parameters, @NonNull GroupId.V1 groupId) {
     super(parameters);
 
     this.groupId = groupId;
@@ -90,13 +91,14 @@ public class AvatarDownloadJob extends BaseJob {
 
         SignalServiceMessageReceiver   receiver    = ApplicationDependencies.getSignalServiceMessageReceiver();
         SignalServiceAttachmentPointer pointer     = new SignalServiceAttachmentPointer(avatarId, contentType, key, Optional.of(0), Optional.absent(), 0, 0, digest, fileName, false, Optional.absent(), Optional.absent());
-        InputStream                    inputStream = receiver.retrieveAttachment(pointer, attachment, MAX_AVATAR_SIZE);
-        Bitmap                         avatar      = BitmapUtil.createScaledBitmap(context, new AttachmentModel(attachment, key, 0, digest), 500, 500);
+        InputStream                    inputStream = receiver.retrieveAttachment(pointer, attachment, AvatarHelper.AVATAR_DOWNLOAD_FAILSAFE_MAX_SIZE);
 
-        database.updateAvatar(groupId, avatar);
+        AvatarHelper.setAvatar(context, record.get().getRecipientId(), inputStream);
+        DatabaseFactory.getGroupDatabase(context).onAvatarUpdated(groupId, true);
+
         inputStream.close();
       }
-    } catch (BitmapDecodingException | NonSuccessfulResponseCodeException | InvalidMessageException e) {
+    } catch (NonSuccessfulResponseCodeException | InvalidMessageException e) {
       Log.w(TAG, e);
     } finally {
       if (attachment != null)
@@ -116,7 +118,7 @@ public class AvatarDownloadJob extends BaseJob {
   public static final class Factory implements Job.Factory<AvatarDownloadJob> {
     @Override
     public @NonNull AvatarDownloadJob create(@NonNull Parameters parameters, @NonNull Data data) {
-      return new AvatarDownloadJob(parameters, GroupId.parse(data.getString(KEY_GROUP_ID)));
+      return new AvatarDownloadJob(parameters, GroupId.parse(data.getString(KEY_GROUP_ID)).requireV1());
     }
   }
 }

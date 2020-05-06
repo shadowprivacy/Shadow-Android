@@ -11,6 +11,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -104,7 +105,7 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
                     out.write(new DeviceGroup(record.getId().getDecodedId(),
                             Optional.fromNullable(record.getTitle()),
                             members,
-                            getAvatar(record.getAvatar()),
+                            getAvatar(record.getRecipientId()),
                             record.isActive(),
                             expirationTimer,
                             Optional.of(recipient.getColor().serialize()),
@@ -154,13 +155,13 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
     }
 
 
-    private Optional<SignalServiceAttachmentStream> getAvatar(@Nullable byte[] avatar) {
-        if (avatar == null) return Optional.absent();
+    private Optional<SignalServiceAttachmentStream> getAvatar(@NonNull RecipientId recipientId) throws IOException {
+        if (!AvatarHelper.hasAvatar(context, recipientId)) return Optional.absent();
 
         return Optional.of(SignalServiceAttachment.newStreamBuilder()
-                .withStream(new ByteArrayInputStream(avatar))
+                .withStream(AvatarHelper.getAvatar(context, recipientId))
                 .withContentType("image/*")
-                .withLength(avatar.length)
+                .withLength(AvatarHelper.getAvatarLength(context, recipientId))
                 .build());
     }
 

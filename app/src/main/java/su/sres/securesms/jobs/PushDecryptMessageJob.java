@@ -29,13 +29,13 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.PushDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.transport.RetryLaterException;
+import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.state.SignalProtocolStore;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -233,7 +233,7 @@ public final class PushDecryptMessageJob extends BaseJob {
 
         return new PushProcessMessageJob.ExceptionMetadata(sender,
                 e.getSenderDevice(),
-                e.getGroup().transform(g -> GroupId.v1(g.getGroupId())).orNull());
+                e.getGroup().transform(GroupUtil::idFromGroupContext).orNull());
     }
 
     private static PushProcessMessageJob.ExceptionMetadata toExceptionMetadata(@NonNull ProtocolException e) throws NoSenderException {

@@ -89,6 +89,7 @@ import su.sres.securesms.MainActivity;
 import su.sres.securesms.ExpirationDialog;
 import su.sres.securesms.GroupCreateActivity;
 import su.sres.securesms.GroupMembersDialog;
+import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.mediaoverview.MediaOverviewActivity;
 import su.sres.securesms.MuteDialog;
 import su.sres.securesms.PassphraseRequiredActionBarActivity;
@@ -1621,7 +1622,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
                 if (params[0].isGroup()) {
                     recipients.addAll(DatabaseFactory.getGroupDatabase(ConversationActivity.this)
-                            .getGroupMembers(params[0].requireGroupId(), false));
+                            .getGroupMembers(params[0].requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF));
                 } else {
                     recipients.add(params[0]);
                 }

@@ -32,6 +32,7 @@ import su.sres.signalservice.api.messages.SignalServiceContent;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.messages.SignalServiceGroup;
 import su.sres.signalservice.api.messages.SignalServiceGroup.Type;
+import su.sres.signalservice.api.messages.SignalServiceGroupContext;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.util.Collections;
@@ -44,22 +45,29 @@ import static su.sres.securesms.database.GroupDatabase.GroupRecord;
 import static su.sres.signalservice.internal.push.SignalServiceProtos.AttachmentPointer;
 import static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContext;
 
-public class GroupMessageProcessor {
+public final class GroupV1MessageProcessor {
 
-  private static final String TAG = GroupMessageProcessor.class.getSimpleName();
+  private static final String TAG = Log.tag(GroupV1MessageProcessor.class);
 
   public static @Nullable Long process(@NonNull Context context,
                                        @NonNull SignalServiceContent content,
                                        @NonNull SignalServiceDataMessage message,
                                        boolean outgoing)
   {
-    if (!message.getGroupInfo().isPresent() || message.getGroupInfo().get().getGroupId() == null) {
+    SignalServiceGroupContext    signalServiceGroupContext = message.getGroupContext().get();
+    Optional<SignalServiceGroup> groupV1                   = signalServiceGroupContext.getGroupV1();
+
+    if (signalServiceGroupContext.getGroupV2().isPresent()) {
+      throw new AssertionError("Cannot process GV2");
+    }
+
+    if (!groupV1.isPresent() || groupV1.get().getGroupId() == null) {
       Log.w(TAG, "Received group message with no id! Ignoring...");
       return null;
     }
 
     GroupDatabase         database = DatabaseFactory.getGroupDatabase(context);
-    SignalServiceGroup    group    = message.getGroupInfo().get();
+    SignalServiceGroup    group    = groupV1.get();
     GroupId               id       = GroupId.v1(group.getGroupId());
     Optional<GroupRecord> record   = database.getGroup(id);
 
@@ -83,7 +91,7 @@ public class GroupMessageProcessor {
                                                   boolean outgoing)
   {
     GroupDatabase        database = DatabaseFactory.getGroupDatabase(context);
-    GroupId              id       = GroupId.v1(group.getGroupId());
+    GroupId.V1           id       = GroupId.v1(group.getGroupId());
     GroupContext.Builder builder  = createGroupContext(group);
     builder.setType(GroupContext.Type.UPDATE);
 
@@ -117,7 +125,7 @@ public class GroupMessageProcessor {
   {
 
     GroupDatabase database = DatabaseFactory.getGroupDatabase(context);
-    GroupId       id       = GroupId.v1(group.getGroupId());
+    GroupId.V1    id       = GroupId.v1(group.getGroupId());
 
     Set<RecipientId> recordMembers  = new HashSet<>(groupRecord.getMembers());
     Set<RecipientId> messageMembers = new HashSet<>();
@@ -276,7 +284,7 @@ public class GroupMessageProcessor {
               .map(a -> a.getNumber().get())
               .toList());
       builder.addAllMembers(Stream.of(group.getMembers().get())
-              .map(GroupMessageProcessor::createMember)
+              .map(GroupV1MessageProcessor::createMember)
               .toList());
     }
 

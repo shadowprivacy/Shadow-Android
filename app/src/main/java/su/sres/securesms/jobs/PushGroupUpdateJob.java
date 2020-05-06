@@ -12,6 +12,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -79,16 +80,16 @@ public class PushGroupUpdateJob extends BaseJob  {
     Optional<GroupRecord>   record        = groupDatabase.getGroup(groupId);
     SignalServiceAttachment avatar        = null;
 
-    if (record == null) {
+    if (record == null || !record.isPresent()) {
       Log.w(TAG, "No information for group record info request: " + groupId.toString());
       return;
     }
 
-    if (record.get().getAvatar() != null) {
+    if (AvatarHelper.hasAvatar(context, record.get().getRecipientId())) {
       avatar = SignalServiceAttachmentStream.newStreamBuilder()
                                             .withContentType("image/jpeg")
-                                            .withStream(new ByteArrayInputStream(record.get().getAvatar()))
-                                            .withLength(record.get().getAvatar().length)
+              .withStream(AvatarHelper.getAvatar(context, record.get().getRecipientId()))
+              .withLength(AvatarHelper.getAvatarLength(context, record.get().getRecipientId()))
                                             .build();
     }
 

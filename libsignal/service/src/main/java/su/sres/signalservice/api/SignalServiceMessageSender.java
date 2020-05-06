@@ -27,6 +27,8 @@ import su.sres.signalservice.api.messages.SignalServiceAttachmentPointer;
 import su.sres.signalservice.api.messages.SignalServiceAttachmentStream;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.messages.SignalServiceGroup;
+import su.sres.signalservice.api.messages.SignalServiceGroupContext;
+import su.sres.signalservice.api.messages.SignalServiceGroupV2;
 import su.sres.signalservice.api.messages.SignalServiceReceiptMessage;
 import su.sres.signalservice.api.messages.SignalServiceTypingMessage;
 import su.sres.signalservice.api.messages.calls.AnswerMessage;
@@ -64,6 +66,7 @@ import su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage;
 import su.sres.signalservice.internal.push.SignalServiceProtos.Content;
 import su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage;
 import su.sres.signalservice.internal.push.SignalServiceProtos.GroupContext;
+import su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2;
 import su.sres.signalservice.internal.push.SignalServiceProtos.NullMessage;
 import su.sres.signalservice.internal.push.SignalServiceProtos.ReceiptMessage;
 import su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage;
@@ -452,8 +455,15 @@ public class SignalServiceMessageSender {
       builder.setBody(message.getBody().get());
     }
 
-    if (message.getGroupInfo().isPresent()) {
-      builder.setGroup(createGroupContent(message.getGroupInfo().get()));
+    if (message.getGroupContext().isPresent()) {
+      SignalServiceGroupContext groupContext = message.getGroupContext().get();
+      if (groupContext.getGroupV1().isPresent()) {
+        builder.setGroup(createGroupContent(groupContext.getGroupV1().get()));
+      }
+
+      if (groupContext.getGroupV2().isPresent()) {
+        builder.setGroupV2(createGroupContent(groupContext.getGroupV2().get()));
+      }
     }
 
     if (message.isEndSession()) {
@@ -961,6 +971,19 @@ public class SignalServiceMessageSender {
       }
     } else {
       builder.setType(GroupContext.Type.DELIVER);
+    }
+
+    return builder.build();
+  }
+
+  private static GroupContextV2 createGroupContent(SignalServiceGroupV2 group) {
+    GroupContextV2.Builder builder = GroupContextV2.newBuilder()
+            .setMasterKey(ByteString.copyFrom(group.getMasterKey().serialize()))
+            .setRevision(group.getRevision());
+
+    byte[] signedGroupChange = group.getSignedGroupChange();
+    if (signedGroupChange != null) {
+      builder.setGroupChange(ByteString.copyFrom(signedGroupChange));
     }
 
     return builder.build();

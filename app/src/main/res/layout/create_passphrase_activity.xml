@@ -25,7 +25,7 @@
       android:layout_centerHorizontal="true"
       android:layout_marginBottom="20dp"
       android:contentDescription="@string/PassphrasePromptActivity_watermark_content_description"
-      app:srcCompat="@drawable/ic_notification"/>
+      app:srcCompat="@drawable/icon_dialog"/>
   <!--    app:srcCompat="@drawable/ic_launcher_foreground" -->
 
 

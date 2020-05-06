@@ -25,8 +25,9 @@ import net.sqlcipher.database.SQLiteDatabaseHook;
 import net.sqlcipher.database.SQLiteOpenHelper;
 
 import su.sres.securesms.storage.StorageSyncHelper;
+import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.profiles.ProfileName;
-import su.sres.securesms.storage.StorageSyncHelper;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.crypto.DatabaseSecret;
 import su.sres.securesms.crypto.MasterSecret;
 import su.sres.securesms.database.AttachmentDatabase;
@@ -52,12 +53,16 @@ import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.util.Base64;
+import su.sres.securesms.util.FileUtils;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
 
 public class SQLCipherOpenHelper extends SQLiteOpenHelper {
@@ -117,8 +122,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int GROUPS_V2_RECIPIENT_CAPABILITY   = 51;
   private static final int TRANSFER_FILE_CLEANUP            = 52;
   private static final int PROFILE_DATA_MIGRATION           = 53;
+  private static final int AVATAR_LOCATION_MIGRATION        = 54;
+  private static final int GROUPS_V2                        = 55;
 
-  private static final int    DATABASE_VERSION = 53;
+  private static final int    DATABASE_VERSION = 55;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -802,6 +809,55 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
           db.execSQL("UPDATE recipient SET signal_profile_name = ?, profile_family_name = ?, profile_joined_name = ? WHERE phone = ?",
                   new String[] { profileName.getGivenName(), profileName.getFamilyName(), profileName.toString(), localNumber });
         }
+      }
+
+      if (oldVersion < AVATAR_LOCATION_MIGRATION) {
+        File   oldAvatarDirectory = new File(context.getFilesDir(), "avatars");
+        File[] results            = oldAvatarDirectory.listFiles();
+
+        if (results != null) {
+          Log.i(TAG, "Preparing to migrate " + results.length + " avatars.");
+
+          for (File file : results) {
+            if (Util.isLong(file.getName())) {
+              try {
+                AvatarHelper.setAvatar(context, RecipientId.from(file.getName()), new FileInputStream(file));
+              } catch(IOException e) {
+                Log.w(TAG, "Failed to copy file " + file.getName() + "! Skipping.");
+              }
+            } else {
+              Log.w(TAG, "Invalid avatar name '" + file.getName() + "'! Skipping.");
+            }
+          }
+        } else {
+          Log.w(TAG, "No avatar directory files found.");
+        }
+
+        if (!FileUtils.deleteDirectory(oldAvatarDirectory)) {
+          Log.w(TAG, "Failed to delete avatar directory.");
+        }
+
+        try (Cursor cursor = db.rawQuery("SELECT recipient_id, avatar FROM groups", null)) {
+          while (cursor != null && cursor.moveToNext()) {
+            RecipientId recipientId = RecipientId.from(cursor.getLong(cursor.getColumnIndexOrThrow("recipient_id")));
+            byte[]      avatar      = cursor.getBlob(cursor.getColumnIndexOrThrow("avatar"));
+
+            try {
+              AvatarHelper.setAvatar(context, recipientId, avatar != null ? new ByteArrayInputStream(avatar) : null);
+            } catch (IOException e) {
+              Log.w(TAG, "Failed to copy avatar for " + recipientId + "! Skipping.", e);
+            }
+          }
+        }
+
+        db.execSQL("UPDATE groups SET avatar_id = 0 WHERE avatar IS NULL");
+        db.execSQL("UPDATE groups SET avatar = NULL");
+      }
+
+      if (oldVersion < GROUPS_V2) {
+        db.execSQL("ALTER TABLE groups ADD COLUMN master_key");
+        db.execSQL("ALTER TABLE groups ADD COLUMN revision");
+        db.execSQL("ALTER TABLE groups ADD COLUMN decrypted_group");
       }
 
       db.setTransactionSuccessful();

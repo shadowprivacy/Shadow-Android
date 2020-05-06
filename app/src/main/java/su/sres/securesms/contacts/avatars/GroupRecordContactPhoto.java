@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.groups.GroupId;
+import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.util.Conversions;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -31,11 +32,11 @@ public final class GroupRecordContactPhoto implements ContactPhoto {
     GroupDatabase                       groupDatabase = DatabaseFactory.getGroupDatabase(context);
     Optional<GroupDatabase.GroupRecord> groupRecord   = groupDatabase.getGroup(groupId);
 
-    if (groupRecord.isPresent() && groupRecord.get().getAvatar() != null) {
-      return new ByteArrayInputStream(groupRecord.get().getAvatar());
+    if (!groupRecord.isPresent() || !AvatarHelper.hasAvatar(context, groupRecord.get().getRecipientId())) {
+      throw new IOException("No avatar for group: " + groupId);
     }
 
-    throw new IOException("Couldn't load avatar for group: " + groupId);
+    return AvatarHelper.getAvatar(context, groupRecord.get().getRecipientId());
   }
 
   @Override

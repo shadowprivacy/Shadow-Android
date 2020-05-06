@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModelProviders;
 import su.sres.securesms.R;
 import su.sres.securesms.TransportOptions;
 import su.sres.securesms.imageeditor.model.EditorModel;
+import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.scribbles.ImageEditorFragment;
 import su.sres.securesms.util.MediaUtil;
@@ -27,7 +28,7 @@ import java.util.Collections;
 
 public class AvatarSelectionActivity extends AppCompatActivity implements CameraFragment.Controller, ImageEditorFragment.Controller, MediaPickerFolderFragment.Controller, MediaPickerItemFragment.Controller {
 
-    private static final Point AVATAR_DIMENSIONS = new Point(1024, 1024);
+    private static final Point AVATAR_DIMENSIONS = new Point(AvatarHelper.AVATAR_DIMENSIONS, AvatarHelper.AVATAR_DIMENSIONS);
 
     private static final String IMAGE_CAPTURE = "IMAGE_CAPTURE";
     private static final String IMAGE_EDITOR  = "IMAGE_EDITOR";

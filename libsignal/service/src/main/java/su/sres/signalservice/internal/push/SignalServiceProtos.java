@@ -5221,6 +5221,17 @@ public final class SignalServiceProtos {
     su.sres.signalservice.internal.push.SignalServiceProtos.GroupContext getGroup();
 
     /**
+     * <code>optional .signalservice.GroupContextV2 groupV2 = 15;</code>
+     * @return Whether the groupV2 field is set.
+     */
+    boolean hasGroupV2();
+    /**
+     * <code>optional .signalservice.GroupContextV2 groupV2 = 15;</code>
+     * @return The groupV2.
+     */
+    su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 getGroupV2();
+
+    /**
      * <code>optional uint32 flags = 4;</code>
      * @return Whether the flags field is set.
      */
@@ -14571,6 +14582,64 @@ public final class SignalServiceProtos {
       bitField0_ = (bitField0_ & ~0x00000002);
     }
 
+    public static final int GROUPV2_FIELD_NUMBER = 15;
+    private su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 groupV2_;
+    /**
+     * <code>optional .signalservice.GroupContextV2 groupV2 = 15;</code>
+     */
+    @java.lang.Override
+    public boolean hasGroupV2() {
+      return ((bitField0_ & 0x00000004) != 0);
+    }
+    /**
+     * <code>optional .signalservice.GroupContextV2 groupV2 = 15;</code>
+     */
+    @java.lang.Override
+    public su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 getGroupV2() {
+      return groupV2_ == null ? su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2.getDefaultInstance() : groupV2_;
+    }
+    /**
+     * <code>optional .signalservice.GroupContextV2 groupV2 = 15;</code>
+     */
+    private void setGroupV2(su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      groupV2_ = value;
+      bitField0_ |= 0x00000004;
+      }
+    /**
+     * <code>optional .signalservice.GroupContextV2 groupV2 = 15;</code>
+     */
+    private void setGroupV2(
+        su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2.Builder builderForValue) {
+      groupV2_ = builderForValue.build();
+      bitField0_ |= 0x00000004;
+    }
+    /**
+     * <code>optional .signalservice.GroupContextV2 groupV2 = 15;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeGroupV2(su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      if (groupV2_ != null &&
+          groupV2_ != su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2.getDefaultInstance()) {
+        groupV2_ =
+          su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2.newBuilder(groupV2_).mergeFrom(value).buildPartial();
+      } else {
+        groupV2_ = value;
+      }
+      bitField0_ |= 0x00000004;
+    }
+    /**
+     * <code>optional .signalservice.GroupContextV2 groupV2 = 15;</code>
+     */
+    private void clearGroupV2() {  groupV2_ = null;
+      bitField0_ = (bitField0_ & ~0x00000004);
+    }
+
     public static final int FLAGS_FIELD_NUMBER = 4;
     private int flags_;
     /**
@@ -14579,7 +14648,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasFlags() {
-      return ((bitField0_ & 0x00000004) != 0);
+      return ((bitField0_ & 0x00000008) != 0);
     }
     /**
      * <code>optional uint32 flags = 4;</code>
@@ -14594,14 +14663,14 @@ public final class SignalServiceProtos {
      * @param value The flags to set.
      */
     private void setFlags(int value) {
-      bitField0_ |= 0x00000004;
+      bitField0_ |= 0x00000008;
       flags_ = value;
     }
     /**
      * <code>optional uint32 flags = 4;</code>
      */
     private void clearFlags() {
-      bitField0_ = (bitField0_ & ~0x00000004);
+      bitField0_ = (bitField0_ & ~0x00000008);
       flags_ = 0;
     }
 
@@ -14613,7 +14682,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasExpireTimer() {
-      return ((bitField0_ & 0x00000008) != 0);
+      return ((bitField0_ & 0x00000010) != 0);
     }
     /**
      * <code>optional uint32 expireTimer = 5;</code>
@@ -14628,14 +14697,14 @@ public final class SignalServiceProtos {
      * @param value The expireTimer to set.
      */
     private void setExpireTimer(int value) {
-      bitField0_ |= 0x00000008;
+      bitField0_ |= 0x00000010;
       expireTimer_ = value;
     }
     /**
      * <code>optional uint32 expireTimer = 5;</code>
      */
     private void clearExpireTimer() {
-      bitField0_ = (bitField0_ & ~0x00000008);
+      bitField0_ = (bitField0_ & ~0x00000010);
       expireTimer_ = 0;
     }
 
@@ -14647,7 +14716,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasProfileKey() {
-      return ((bitField0_ & 0x00000010) != 0);
+      return ((bitField0_ & 0x00000020) != 0);
     }
     /**
      * <code>optional bytes profileKey = 6;</code>
@@ -14665,14 +14734,14 @@ public final class SignalServiceProtos {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000020;
       profileKey_ = value;
     }
     /**
      * <code>optional bytes profileKey = 6;</code>
      */
     private void clearProfileKey() {
-      bitField0_ = (bitField0_ & ~0x00000010);
+      bitField0_ = (bitField0_ & ~0x00000020);
       profileKey_ = getDefaultInstance().getProfileKey();
     }
 
@@ -14684,7 +14753,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasTimestamp() {
-      return ((bitField0_ & 0x00000020) != 0);
+      return ((bitField0_ & 0x00000040) != 0);
     }
     /**
      * <code>optional uint64 timestamp = 7;</code>
@@ -14699,14 +14768,14 @@ public final class SignalServiceProtos {
      * @param value The timestamp to set.
      */
     private void setTimestamp(long value) {
-      bitField0_ |= 0x00000020;
+      bitField0_ |= 0x00000040;
       timestamp_ = value;
     }
     /**
      * <code>optional uint64 timestamp = 7;</code>
      */
     private void clearTimestamp() {
-      bitField0_ = (bitField0_ & ~0x00000020);
+      bitField0_ = (bitField0_ & ~0x00000040);
       timestamp_ = 0L;
     }
 
@@ -14717,7 +14786,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasQuote() {
-      return ((bitField0_ & 0x00000040) != 0);
+      return ((bitField0_ & 0x00000080) != 0);
     }
     /**
      * <code>optional .signalservice.DataMessage.Quote quote = 8;</code>
@@ -14734,7 +14803,7 @@ public final class SignalServiceProtos {
         throw new NullPointerException();
       }
       quote_ = value;
-      bitField0_ |= 0x00000040;
+      bitField0_ |= 0x00000080;
       }
     /**
      * <code>optional .signalservice.DataMessage.Quote quote = 8;</code>
@@ -14742,7 +14811,7 @@ public final class SignalServiceProtos {
     private void setQuote(
         su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Quote.Builder builderForValue) {
       quote_ = builderForValue.build();
-      bitField0_ |= 0x00000040;
+      bitField0_ |= 0x00000080;
     }
     /**
      * <code>optional .signalservice.DataMessage.Quote quote = 8;</code>
@@ -14759,13 +14828,13 @@ public final class SignalServiceProtos {
       } else {
         quote_ = value;
       }
-      bitField0_ |= 0x00000040;
+      bitField0_ |= 0x00000080;
     }
     /**
      * <code>optional .signalservice.DataMessage.Quote quote = 8;</code>
      */
     private void clearQuote() {  quote_ = null;
-      bitField0_ = (bitField0_ & ~0x00000040);
+      bitField0_ = (bitField0_ & ~0x00000080);
     }
 
     public static final int CONTACT_FIELD_NUMBER = 9;
@@ -15021,7 +15090,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasSticker() {
-      return ((bitField0_ & 0x00000080) != 0);
+      return ((bitField0_ & 0x00000100) != 0);
     }
     /**
      * <code>optional .signalservice.DataMessage.Sticker sticker = 11;</code>
@@ -15038,7 +15107,7 @@ public final class SignalServiceProtos {
         throw new NullPointerException();
       }
       sticker_ = value;
-      bitField0_ |= 0x00000080;
+      bitField0_ |= 0x00000100;
       }
     /**
      * <code>optional .signalservice.DataMessage.Sticker sticker = 11;</code>
@@ -15046,7 +15115,7 @@ public final class SignalServiceProtos {
     private void setSticker(
         su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Sticker.Builder builderForValue) {
       sticker_ = builderForValue.build();
-      bitField0_ |= 0x00000080;
+      bitField0_ |= 0x00000100;
     }
     /**
      * <code>optional .signalservice.DataMessage.Sticker sticker = 11;</code>
@@ -15063,13 +15132,13 @@ public final class SignalServiceProtos {
       } else {
         sticker_ = value;
       }
-      bitField0_ |= 0x00000080;
+      bitField0_ |= 0x00000100;
     }
     /**
      * <code>optional .signalservice.DataMessage.Sticker sticker = 11;</code>
      */
     private void clearSticker() {  sticker_ = null;
-      bitField0_ = (bitField0_ & ~0x00000080);
+      bitField0_ = (bitField0_ & ~0x00000100);
     }
 
     public static final int REQUIREDPROTOCOLVERSION_FIELD_NUMBER = 12;
@@ -15080,7 +15149,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasRequiredProtocolVersion() {
-      return ((bitField0_ & 0x00000100) != 0);
+      return ((bitField0_ & 0x00000200) != 0);
     }
     /**
      * <code>optional uint32 requiredProtocolVersion = 12;</code>
@@ -15095,14 +15164,14 @@ public final class SignalServiceProtos {
      * @param value The requiredProtocolVersion to set.
      */
     private void setRequiredProtocolVersion(int value) {
-      bitField0_ |= 0x00000100;
+      bitField0_ |= 0x00000200;
       requiredProtocolVersion_ = value;
     }
     /**
      * <code>optional uint32 requiredProtocolVersion = 12;</code>
      */
     private void clearRequiredProtocolVersion() {
-      bitField0_ = (bitField0_ & ~0x00000100);
+      bitField0_ = (bitField0_ & ~0x00000200);
       requiredProtocolVersion_ = 0;
     }
 
@@ -15114,7 +15183,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasIsViewOnce() {
-      return ((bitField0_ & 0x00000200) != 0);
+      return ((bitField0_ & 0x00000400) != 0);
     }
     /**
      * <code>optional bool isViewOnce = 14;</code>
@@ -15129,14 +15198,14 @@ public final class SignalServiceProtos {
      * @param value The isViewOnce to set.
      */
     private void setIsViewOnce(boolean value) {
-      bitField0_ |= 0x00000200;
+      bitField0_ |= 0x00000400;
       isViewOnce_ = value;
     }
     /**
      * <code>optional bool isViewOnce = 14;</code>
      */
     private void clearIsViewOnce() {
-      bitField0_ = (bitField0_ & ~0x00000200);
+      bitField0_ = (bitField0_ & ~0x00000400);
       isViewOnce_ = false;
     }
 
@@ -15147,7 +15216,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasReaction() {
-      return ((bitField0_ & 0x00000400) != 0);
+      return ((bitField0_ & 0x00000800) != 0);
     }
     /**
      * <code>optional .signalservice.DataMessage.Reaction reaction = 16;</code>
@@ -15164,7 +15233,7 @@ public final class SignalServiceProtos {
         throw new NullPointerException();
       }
       reaction_ = value;
-      bitField0_ |= 0x00000400;
+      bitField0_ |= 0x00000800;
       }
     /**
      * <code>optional .signalservice.DataMessage.Reaction reaction = 16;</code>
@@ -15172,7 +15241,7 @@ public final class SignalServiceProtos {
     private void setReaction(
         su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Reaction.Builder builderForValue) {
       reaction_ = builderForValue.build();
-      bitField0_ |= 0x00000400;
+      bitField0_ |= 0x00000800;
     }
     /**
      * <code>optional .signalservice.DataMessage.Reaction reaction = 16;</code>
@@ -15189,13 +15258,13 @@ public final class SignalServiceProtos {
       } else {
         reaction_ = value;
       }
-      bitField0_ |= 0x00000400;
+      bitField0_ |= 0x00000800;
     }
     /**
      * <code>optional .signalservice.DataMessage.Reaction reaction = 16;</code>
      */
     private void clearReaction() {  reaction_ = null;
-      bitField0_ = (bitField0_ & ~0x00000400);
+      bitField0_ = (bitField0_ & ~0x00000800);
     }
 
     public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage parseFrom(
@@ -15494,6 +15563,53 @@ public final class SignalServiceProtos {
        */
       public Builder clearGroup() {  copyOnWrite();
         instance.clearGroup();
+        return this;
+      }
+
+      /**
+       * <code>optional .signalservice.GroupContextV2 groupV2 = 15;</code>
+       */
+      @java.lang.Override
+      public boolean hasGroupV2() {
+        return instance.hasGroupV2();
+      }
+      /**
+       * <code>optional .signalservice.GroupContextV2 groupV2 = 15;</code>
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 getGroupV2() {
+        return instance.getGroupV2();
+      }
+      /**
+       * <code>optional .signalservice.GroupContextV2 groupV2 = 15;</code>
+       */
+      public Builder setGroupV2(su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 value) {
+        copyOnWrite();
+        instance.setGroupV2(value);
+        return this;
+        }
+      /**
+       * <code>optional .signalservice.GroupContextV2 groupV2 = 15;</code>
+       */
+      public Builder setGroupV2(
+          su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2.Builder builderForValue) {
+        copyOnWrite();
+        instance.setGroupV2(builderForValue);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.GroupContextV2 groupV2 = 15;</code>
+       */
+      public Builder mergeGroupV2(su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 value) {
+        copyOnWrite();
+        instance.mergeGroupV2(value);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.GroupContextV2 groupV2 = 15;</code>
+       */
+      public Builder clearGroupV2() {  copyOnWrite();
+        instance.clearGroupV2();
         return this;
       }
 
@@ -16087,13 +16203,14 @@ public final class SignalServiceProtos {
               "sticker_",
               "requiredProtocolVersion_",
               "isViewOnce_",
+              "groupV2_",
               "reaction_",
             };
             java.lang.String info =
-                "\u0001\u000e\u0000\u0001\u0001\u0010\u000e\u0000\u0003\u0000\u0001\b\u0000\u0002" +
-                "\u001b\u0003\t\u0001\u0004\u000b\u0002\u0005\u000b\u0003\u0006\n\u0004\u0007\u0003" +
-                "\u0005\b\t\u0006\t\u001b\n\u001b\u000b\t\u0007\f\u000b\b\u000e\u0007\t\u0010\t\n" +
-                "";
+                "\u0001\u000f\u0000\u0001\u0001\u0010\u000f\u0000\u0003\u0000\u0001\b\u0000\u0002" +
+                "\u001b\u0003\t\u0001\u0004\u000b\u0003\u0005\u000b\u0004\u0006\n\u0005\u0007\u0003" +
+                "\u0006\b\t\u0007\t\u001b\n\u001b\u000b\t\b\f\u000b\t\u000e\u0007\n\u000f\t\u0002" +
+                "\u0010\t\u000b";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -30421,6 +30538,445 @@ public final class SignalServiceProtos {
     private static volatile com.google.protobuf.Parser<GroupContext> PARSER;
 
     public static com.google.protobuf.Parser<GroupContext> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface GroupContextV2OrBuilder extends
+      // @@protoc_insertion_point(interface_extends:signalservice.GroupContextV2)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>optional bytes masterKey = 1;</code>
+     * @return Whether the masterKey field is set.
+     */
+    boolean hasMasterKey();
+    /**
+     * <code>optional bytes masterKey = 1;</code>
+     * @return The masterKey.
+     */
+    com.google.protobuf.ByteString getMasterKey();
+
+    /**
+     * <code>optional uint32 revision = 2;</code>
+     * @return Whether the revision field is set.
+     */
+    boolean hasRevision();
+    /**
+     * <code>optional uint32 revision = 2;</code>
+     * @return The revision.
+     */
+    int getRevision();
+
+    /**
+     * <code>optional bytes groupChange = 3;</code>
+     * @return Whether the groupChange field is set.
+     */
+    boolean hasGroupChange();
+    /**
+     * <code>optional bytes groupChange = 3;</code>
+     * @return The groupChange.
+     */
+    com.google.protobuf.ByteString getGroupChange();
+  }
+  /**
+   * Protobuf type {@code signalservice.GroupContextV2}
+   */
+  public  static final class GroupContextV2 extends
+      com.google.protobuf.GeneratedMessageLite<
+          GroupContextV2, GroupContextV2.Builder> implements
+      // @@protoc_insertion_point(message_implements:signalservice.GroupContextV2)
+      GroupContextV2OrBuilder {
+    private GroupContextV2() {
+      masterKey_ = com.google.protobuf.ByteString.EMPTY;
+      groupChange_ = com.google.protobuf.ByteString.EMPTY;
+    }
+    private int bitField0_;
+    public static final int MASTERKEY_FIELD_NUMBER = 1;
+    private com.google.protobuf.ByteString masterKey_;
+    /**
+     * <code>optional bytes masterKey = 1;</code>
+     * @return Whether the masterKey field is set.
+     */
+    @java.lang.Override
+    public boolean hasMasterKey() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>optional bytes masterKey = 1;</code>
+     * @return The masterKey.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString getMasterKey() {
+      return masterKey_;
+    }
+    /**
+     * <code>optional bytes masterKey = 1;</code>
+     * @param value The masterKey to set.
+     */
+    private void setMasterKey(com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+      masterKey_ = value;
+    }
+    /**
+     * <code>optional bytes masterKey = 1;</code>
+     */
+    private void clearMasterKey() {
+      bitField0_ = (bitField0_ & ~0x00000001);
+      masterKey_ = getDefaultInstance().getMasterKey();
+    }
+
+    public static final int REVISION_FIELD_NUMBER = 2;
+    private int revision_;
+    /**
+     * <code>optional uint32 revision = 2;</code>
+     * @return Whether the revision field is set.
+     */
+    @java.lang.Override
+    public boolean hasRevision() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>optional uint32 revision = 2;</code>
+     * @return The revision.
+     */
+    @java.lang.Override
+    public int getRevision() {
+      return revision_;
+    }
+    /**
+     * <code>optional uint32 revision = 2;</code>
+     * @param value The revision to set.
+     */
+    private void setRevision(int value) {
+      bitField0_ |= 0x00000002;
+      revision_ = value;
+    }
+    /**
+     * <code>optional uint32 revision = 2;</code>
+     */
+    private void clearRevision() {
+      bitField0_ = (bitField0_ & ~0x00000002);
+      revision_ = 0;
+    }
+
+    public static final int GROUPCHANGE_FIELD_NUMBER = 3;
+    private com.google.protobuf.ByteString groupChange_;
+    /**
+     * <code>optional bytes groupChange = 3;</code>
+     * @return Whether the groupChange field is set.
+     */
+    @java.lang.Override
+    public boolean hasGroupChange() {
+      return ((bitField0_ & 0x00000004) != 0);
+    }
+    /**
+     * <code>optional bytes groupChange = 3;</code>
+     * @return The groupChange.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString getGroupChange() {
+      return groupChange_;
+    }
+    /**
+     * <code>optional bytes groupChange = 3;</code>
+     * @param value The groupChange to set.
+     */
+    private void setGroupChange(com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+      groupChange_ = value;
+    }
+    /**
+     * <code>optional bytes groupChange = 3;</code>
+     */
+    private void clearGroupChange() {
+      bitField0_ = (bitField0_ & ~0x00000004);
+      groupChange_ = getDefaultInstance().getGroupChange();
+    }
+
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 prototype) {
+      return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code signalservice.GroupContextV2}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2, Builder> implements
+        // @@protoc_insertion_point(builder_implements:signalservice.GroupContextV2)
+        su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2OrBuilder {
+      // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+
+      /**
+       * <code>optional bytes masterKey = 1;</code>
+       * @return Whether the masterKey field is set.
+       */
+      @java.lang.Override
+      public boolean hasMasterKey() {
+        return instance.hasMasterKey();
+      }
+      /**
+       * <code>optional bytes masterKey = 1;</code>
+       * @return The masterKey.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getMasterKey() {
+        return instance.getMasterKey();
+      }
+      /**
+       * <code>optional bytes masterKey = 1;</code>
+       * @param value The masterKey to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMasterKey(com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setMasterKey(value);
+        return this;
+      }
+      /**
+       * <code>optional bytes masterKey = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMasterKey() {
+        copyOnWrite();
+        instance.clearMasterKey();
+        return this;
+      }
+
+      /**
+       * <code>optional uint32 revision = 2;</code>
+       * @return Whether the revision field is set.
+       */
+      @java.lang.Override
+      public boolean hasRevision() {
+        return instance.hasRevision();
+      }
+      /**
+       * <code>optional uint32 revision = 2;</code>
+       * @return The revision.
+       */
+      @java.lang.Override
+      public int getRevision() {
+        return instance.getRevision();
+      }
+      /**
+       * <code>optional uint32 revision = 2;</code>
+       * @param value The revision to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRevision(int value) {
+        copyOnWrite();
+        instance.setRevision(value);
+        return this;
+      }
+      /**
+       * <code>optional uint32 revision = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRevision() {
+        copyOnWrite();
+        instance.clearRevision();
+        return this;
+      }
+
+      /**
+       * <code>optional bytes groupChange = 3;</code>
+       * @return Whether the groupChange field is set.
+       */
+      @java.lang.Override
+      public boolean hasGroupChange() {
+        return instance.hasGroupChange();
+      }
+      /**
+       * <code>optional bytes groupChange = 3;</code>
+       * @return The groupChange.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getGroupChange() {
+        return instance.getGroupChange();
+      }
+      /**
+       * <code>optional bytes groupChange = 3;</code>
+       * @param value The groupChange to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGroupChange(com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setGroupChange(value);
+        return this;
+      }
+      /**
+       * <code>optional bytes groupChange = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearGroupChange() {
+        copyOnWrite();
+        instance.clearGroupChange();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:signalservice.GroupContextV2)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "bitField0_",
+              "masterKey_",
+              "revision_",
+              "groupChange_",
+            };
+            java.lang.String info =
+                "\u0001\u0003\u0000\u0001\u0001\u0003\u0003\u0000\u0000\u0000\u0001\n\u0000\u0002" +
+                "\u000b\u0001\u0003\n\u0002";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2> parser = PARSER;
+          if (parser == null) {
+            synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:signalservice.GroupContextV2)
+    private static final su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 DEFAULT_INSTANCE;
+    static {
+      GroupContextV2 defaultInstance = new GroupContextV2();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        GroupContextV2.class, defaultInstance);
+    }
+
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2 getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<GroupContextV2> PARSER;
+
+    public static com.google.protobuf.Parser<GroupContextV2> parser() {
       return DEFAULT_INSTANCE.getParserForType();
     }
   }

@@ -31,7 +31,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-/**
+/*
  * This class represents an encrypted Signal Service envelope.
  *
  * The envelope contains the wrapping information, such as the sender, the

@@ -6,6 +6,7 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -86,7 +87,7 @@ public class TypingSendJob extends BaseJob  {
         Optional<byte[]> groupId    = Optional.absent();
 
         if (recipient.isGroup()) {
-            recipients = DatabaseFactory.getGroupDatabase(context).getGroupMembers(recipient.requireGroupId(), false);
+            recipients = DatabaseFactory.getGroupDatabase(context).getGroupMembers(recipient.requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
             groupId    = Optional.of(recipient.requireGroupId().getDecodedId());
         }
 

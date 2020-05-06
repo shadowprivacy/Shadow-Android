@@ -54,4 +54,8 @@ public class ModernEncryptingPartOutputStream {
     }
   }
 
+  public static long getPlaintextLength(long cipherTextLength) {
+    return cipherTextLength - 32;
+  }
+
 }

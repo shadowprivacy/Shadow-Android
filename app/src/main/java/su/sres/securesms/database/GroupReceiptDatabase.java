@@ -10,6 +10,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.recipients.RecipientId;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class GroupReceiptDatabase extends Database {
     super(context, databaseHelper);
   }
 
-  public void insert(List<RecipientId> recipientIds, long mmsId, int status, long timestamp) {
+  public void insert(Collection<RecipientId> recipientIds, long mmsId, int status, long timestamp) {
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
 
     for (RecipientId recipientId : recipientIds) {
