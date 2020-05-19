@@ -16,20 +16,16 @@
  */
 package su.sres.securesms;
 
-import android.annotation.SuppressLint;
-
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import android.content.Context;
-import android.os.AsyncTask;
+import android.content.Intent;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.multidex.MultiDexApplication;
-
-import com.google.android.gms.security.ProviderInstaller;
 
 import org.conscrypt.Conscrypt;
 
@@ -61,6 +57,7 @@ import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.revealable.ViewOnceMessageManager;
 import su.sres.securesms.ringrtc.RingRtcLogger;
+import su.sres.securesms.service.CertificateRefreshService;
 import su.sres.securesms.service.DirectoryRefreshListener;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.service.IncomingMessageObserver;
@@ -79,13 +76,11 @@ import org.webrtc.voiceengine.WebRtcAudioManager;
 import org.webrtc.voiceengine.WebRtcAudioUtils;
 import org.whispersystems.libsignal.logging.SignalProtocolLoggerProvider;
 
-import java.security.SecureRandom;
 import java.security.Security;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import static su.sres.securesms.keyvalue.ServiceConfigurationValues.EXAMPLE_URI;
 
 /**
  * Will be called once when the TextSecure process is created.
@@ -110,9 +105,8 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   private volatile boolean isAppVisible;
 
   private boolean
-//          isServiceConfigurationSet,
-                  initializedOnCreate,
-                  initializedOnStart = false;
+                  initializedOnCreate = false,
+                  initializedOnStart  = false;
 
   final InitWorker initWorker = new InitWorker();
 
@@ -125,6 +119,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     super.onCreate();
 
     Log.i(TAG, "onCreate()");
+
     initializeSecurityProvider();
     initializeLogging();
     initializeCrashHandling();
@@ -135,7 +130,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         while(!initializedOnCreate) {
 
           // checking at subsequent launches of the app, if the server is already known as set in SignalStore, then no need for delay, just initialize immediately
-
           if (SignalStore.registrationValues().isServerSet()) {
             initializeOnCreate();
           } else {
@@ -172,6 +166,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
           ApplicationDependencies.getRecipientCache().warmUp();
           ApplicationDependencies.getFrameRateTracker().begin();
           ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
+          checkCertificateRefresh();
 
           initializedOnStart = true;
 
@@ -447,5 +442,22 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     RefreshPreKeysJob.scheduleIfNecessary();
 
     initializedOnCreate = true;
+  }
+
+  private void checkCertificateRefresh() {
+      if (TextSecurePreferences.isPushRegistered(this) && !CertificateRefreshService.isServiceCreated()) {
+
+          UUID uuid = TextSecurePreferences.getLocalUuid(this);
+          String e164number = TextSecurePreferences.getLocalNumber(this);
+          String password = TextSecurePreferences.getPushServerPassword(this);
+
+          Intent intent = new Intent(this, CertificateRefreshService.class);
+          intent.putExtra("UUID", uuid.toString())
+                  .putExtra("e164number", e164number)
+                  .putExtra("password", password);
+          startService(intent);
+      } else {
+          Log.i(TAG, "The cert refresh service is already running or the client is not registered");
+      }
   }
 }

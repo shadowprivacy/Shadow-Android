@@ -622,6 +622,10 @@
             </intent-filter>
         </service>
 
+        <service android:name=".service.CertificateRefreshService"
+                 android:exported="false">
+        </service>
+
         <receiver
             android:name=".service.SmsListener"
             android:permission="android.permission.BROADCAST_SMS"

@@ -1,6 +1,7 @@
 package su.sres.securesms.registration.service;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 
 import androidx.annotation.NonNull;
@@ -11,7 +12,9 @@ import su.sres.securesms.events.ServerCertErrorEvent;
 import su.sres.securesms.jobs.StickerPackDownloadJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.push.SignalServiceTrustStore;
+import su.sres.securesms.service.CertificateRefreshService;
 import su.sres.securesms.stickers.BlessedPacks;
+import su.sres.signalservice.api.messages.calls.SystemCertificates;
 import su.sres.signalservice.api.push.TrustStore;
 import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.AppCapabilities;
@@ -58,17 +61,17 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.UUID;
 
 import static su.sres.securesms.InitialActivity.TRUSTSTORE_FILE_NAME;
+import static su.sres.securesms.service.CertificateRefreshService.CERT_ALIASES;
 
 public final class CodeVerificationRequest {
 
     private static final String TAG = Log.tag(CodeVerificationRequest.class);
-
-    private static final String CLOUD_SERVER_CERT_ALIAS = "cloudcert";
 
     private enum Result {
         SUCCESS,
@@ -188,14 +191,23 @@ public final class CodeVerificationRequest {
         String cloudUrl = configRequested.getCloudUri();
         byte[] unidentifiedAccessCaPublicKey = configRequested.getUnidentifiedDeliveryCaPublicKey();
 
-        byte[] cloudCertBytes = accountManager.getSystemCerts().getSystemCertificate();
+        SystemCertificates systemCerts = accountManager.getSystemCerts();
 
+        byte[] cloudCertABytes = systemCerts.getCloudCertA();
+        byte[] cloudCertBBytes = systemCerts.getCloudCertB();
+        byte[] storageCertABytes = systemCerts.getStorageCertA();
+        byte[] storageCertBBytes = systemCerts.getStorageCertB();
+
+
+        // if no cloud certificate at all is received from the server, registration will fail; same thing for storage, but as long as storage is not in place this is relaxed
         if (
-                cloudUrl != null &&
-                        statusUrl != null &&
-                        storageUrl != null &&
-                        unidentifiedAccessCaPublicKey != null &&
-                        cloudCertBytes != null) {
+                        cloudUrl   != null                                         &&
+                        statusUrl  != null                                         &&
+                        storageUrl != null                                         &&
+                        unidentifiedAccessCaPublicKey != null                      &&
+                        ((cloudCertABytes != null) || (cloudCertBBytes != null))
+//                   && ((storageCertABytes != null) || (storageCertBBytes != null))
+        ) {
 
             SignalStore.serviceConfigurationValues().setCloudUrl(cloudUrl);
             SignalStore.serviceConfigurationValues().setStorageUrl(storageUrl);
@@ -211,10 +223,76 @@ public final class CodeVerificationRequest {
                 shadowStore.load(keyStoreInputStream, shadowStorePassword);
 
                 CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-                InputStream cloudCertInputStream = new ByteArrayInputStream(cloudCertBytes);
-                X509Certificate cloudCert = (X509Certificate) certFactory.generateCertificate(cloudCertInputStream);
 
-                shadowStore.setCertificateEntry(CLOUD_SERVER_CERT_ALIAS, cloudCert);
+                    // if no cert is present, just skip to the next one
+                    if (cloudCertABytes != null) {
+
+                        InputStream cloudCertAInputStream = new ByteArrayInputStream(cloudCertABytes);
+                        X509Certificate cloudCertA = (X509Certificate) certFactory.generateCertificate(cloudCertAInputStream);
+
+                        // at registration we don't allow expired certs, those will be caught by CertificateException below; not yet valid is OK
+                        try {
+                            cloudCertA.checkValidity();
+                        }  catch (CertificateNotYetValidException e) {
+                            Log.i(TAG, "cloudCertA not yet valid, adding anyway");
+                        }
+
+                        shadowStore.setCertificateEntry(CERT_ALIASES[0], cloudCertA);
+                        Log.i(TAG, "cloudCertA added");
+                    } else {
+                        Log.i(TAG, "cloudCertA is missing. Skipping");
+                    }
+
+                if (cloudCertBBytes != null) {
+
+                    InputStream cloudCertBInputStream = new ByteArrayInputStream(cloudCertBBytes);
+                    X509Certificate cloudCertB = (X509Certificate) certFactory.generateCertificate(cloudCertBInputStream);
+
+                    try {
+                        cloudCertB.checkValidity();
+                    }  catch (CertificateNotYetValidException e) {
+                        Log.i(TAG, "cloudCertB not yet valid, adding anyway");
+                    }
+
+                    shadowStore.setCertificateEntry(CERT_ALIASES[1], cloudCertB);
+                    Log.i(TAG, "cloudCertB added");
+                } else {
+                    Log.i(TAG, "cloudCertB is missing. Skipping");
+                }
+
+                if (storageCertABytes != null) {
+
+                    InputStream storageCertAInputStream = new ByteArrayInputStream(storageCertABytes);
+                    X509Certificate storageCertA = (X509Certificate) certFactory.generateCertificate(storageCertAInputStream);
+
+                    try {
+                        storageCertA.checkValidity();
+                    }  catch (CertificateNotYetValidException e) {
+                        Log.i(TAG, "storageCertA not yet valid, adding anyway");
+                    }
+
+                    shadowStore.setCertificateEntry(CERT_ALIASES[4], storageCertA);
+                    Log.i(TAG, "storageCertA added");
+                } else {
+                    Log.i(TAG, "storageCertA is missing. Skipping");
+                }
+
+                if (storageCertBBytes != null) {
+
+                    InputStream storageCertBInputStream = new ByteArrayInputStream(storageCertBBytes);
+                    X509Certificate storageCertB = (X509Certificate) certFactory.generateCertificate(storageCertBInputStream);
+
+                    try {
+                        storageCertB.checkValidity();
+                    }  catch (CertificateNotYetValidException e) {
+                        Log.i(TAG, "storageCertB not yet valid, adding anyway");
+                    }
+
+                    shadowStore.setCertificateEntry(CERT_ALIASES[5], storageCertB);
+                    Log.i(TAG, "storageCertB added");
+                } else {
+                    Log.i(TAG, "storageCertB is missing. Skipping");
+                }
 
                 keyStoreInputStream.close();
 
@@ -223,9 +301,19 @@ public final class CodeVerificationRequest {
                 }
 
             } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException e) {
-                Log.w(TAG, "Exception occurred while trying to import the cloud certificate");
+                Log.w(TAG, "Exception occurred while trying to import a certificate");
                 EventBus.getDefault().post(new ServerCertErrorEvent(R.string.certificate_load_unsuccessful));
             }
+
+            //  We do not want to update the cert version here; should be done within the refresh procedure. Thus each new registration will have ver 1 initially.
+            //  SignalStore.serviceConfigurationValues().setCurrentCertVer(accountManager.getCertVer().getCertsVersion());
+
+            // launching the certs refresh service from here
+            Intent intent = new Intent(context, CertificateRefreshService.class);
+            intent.putExtra("UUID", uuid.toString())
+                  .putExtra("e164number", credentials.getE164number())
+                  .putExtra("password", credentials.getPassword());
+            context.startService(intent);
 
         } else {
             EventBus.getDefault().post(new ServerCertErrorEvent(R.string.certificate_load_unsuccessful));

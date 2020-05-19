@@ -22,6 +22,7 @@ import su.sres.signalservice.FeatureFlags;
 
 import su.sres.signalservice.api.crypto.ProfileCipher;
 import su.sres.signalservice.api.crypto.ProfileCipherOutputStream;
+import su.sres.signalservice.api.messages.calls.SystemCertificatesVersion;
 import su.sres.signalservice.api.push.exceptions.NoContentException;
 import su.sres.signalservice.api.storage.StorageId;
 import su.sres.signalservice.api.storage.StorageKey;
@@ -539,6 +540,10 @@ public class SignalServiceAccountManager {
 
     public SystemCertificates getSystemCerts() throws IOException {
         return this.pushServiceSocket.getSystemCerts();
+    }
+
+    public SystemCertificatesVersion getCertVer() throws IOException {
+        return this.pushServiceSocket.getCertVer();
     }
 
     public void setProfileName(ProfileKey key, String name)

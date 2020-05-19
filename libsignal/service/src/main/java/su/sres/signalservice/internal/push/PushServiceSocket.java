@@ -28,6 +28,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.FeatureFlags;
 import su.sres.signalservice.api.crypto.UnidentifiedAccess;
 import su.sres.signalservice.api.messages.SignalServiceAttachment.ProgressListener;
+import su.sres.signalservice.api.messages.calls.SystemCertificatesVersion;
 import su.sres.signalservice.api.messages.calls.TurnServerInfo;
 import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
 import su.sres.signalservice.api.messages.multidevice.DeviceInfo;
@@ -127,6 +128,7 @@ public class PushServiceSocket {
   private static final String SET_USERNAME_PATH         = "/v1/accounts/username/%s";
   private static final String DELETE_USERNAME_PATH      = "/v1/accounts/username";
   private static final String CONFIGURATION_INFO        = "/v1/accounts/config";
+  private static final String CERTIFICATE_VERSION_PATH  = "/v1/accounts/certver";
   private static final String SYSTEM_CERTS_PATH         = "/v1/accounts/cert";
 
   private static final String PREKEY_METADATA_PATH      = "/v2/keys/";
@@ -702,6 +704,11 @@ public class PushServiceSocket {
   public su.sres.signalservice.api.messages.calls.SystemCertificates getSystemCerts() throws IOException {
         String response = makeServiceRequest(SYSTEM_CERTS_PATH, "GET", null);
         return JsonUtil.fromJson(response, SystemCertificates.class);
+  }
+
+  public SystemCertificatesVersion getCertVer() throws IOException {
+    String response = makeServiceRequest(CERTIFICATE_VERSION_PATH, "GET", null);
+    return JsonUtil.fromJson(response, SystemCertificatesVersion.class);
   }
 
   public String getStorageAuth() throws IOException {

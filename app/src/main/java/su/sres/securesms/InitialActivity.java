@@ -78,7 +78,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
     private static final String NULL_HASH = "sha256/null";
 
     public static final String TRUSTSTORE_FILE_NAME = "shadow.store";
-    private static final String SHADOW_SERVER_CERT_ALIAS = "shadowcert";
+    private static final String SHADOW_SERVER_CERT_ALIAS_A = "shadow_a";
 
 
     private InitialActivity.InitializationFragment initializationFragment = new InitialActivity.InitializationFragment();
@@ -407,7 +407,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
             KeyStore shadowStore = KeyStore.getInstance("BKS");
             shadowStore.load(null, shadowStorePassword.toCharArray());
-            shadowStore.setCertificateEntry(SHADOW_SERVER_CERT_ALIAS, shadowcert);
+            shadowStore.setCertificateEntry(SHADOW_SERVER_CERT_ALIAS_A, shadowcert);
 
             return new Pair<>(shadowStore, shadowStorePassword);
         }
