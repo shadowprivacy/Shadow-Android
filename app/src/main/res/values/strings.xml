@@ -458,6 +458,7 @@
     <string name="InitialActivity_server_certificate_validity_error">The server certificate is expired or not yet valid. Refer to your administrator.</string>
     <string name="InitialActivity_server_pub_key_hash_mismatch">The server\'s public key hash is invalid. Refer to your administrator.</string>
     <string name="InitialActivity_server_certificate_import_error">Error importing the server certificate. Refer to your administrator.</string>
+    <string name="InitialActivity_server_certificate_CN_error">Server common name mismatch. Contact your administrator immediately.</string>
 
     <!-- InputPanel -->
     <string name="InputPanel_tap_and_hold_to_record_a_voice_message_release_to_send">Tap and hold to record a voice message, release to send</string>

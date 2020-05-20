@@ -46,7 +46,7 @@ public class CertificateRefreshService extends Service {
     private Timer     serviceTimer;
     private TimerTask serviceTimerTask;
 
-    private final long cycle = 43200000L;
+    private final long cycle = 21600000L;
 
     public final static String[] CERT_ALIASES = {
             "cloud_a",
@@ -162,6 +162,13 @@ public class CertificateRefreshService extends Service {
 
                         try {
                             trustStoreEntry.checkValidity();
+
+                            // removing certs which are still valid but not present in the most current set
+                            if (receivedCertBytes[i] == null) {
+                                Log.i(TAG, CERT_ALIASES[i] + " not present in the most current set. Removing.");
+                                shadowStore.deleteEntry(CERT_ALIASES[i]);
+                            }
+
                         } catch (CertificateNotYetValidException e) {
                             Log.i(TAG, CERT_ALIASES[i] + " not yet valid. That is fine!");
                         }

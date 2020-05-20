@@ -34,15 +34,17 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
-import java.util.Date;
 import java.util.List;
 
 import java.security.cert.Certificate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -253,6 +255,18 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
                                     try {
                                         candidateCert.checkValidity();
 
+                                        String commonName = extractCommonName(candidateCert.getSubjectDN());
+
+                                        Pattern pattern = Pattern.compile("://(.*?):");
+                                        Matcher matcher = pattern.matcher(SignalStore.serviceConfigurationValues().getShadowUrl());
+
+                                        if (matcher.find()) {
+
+                                            if (!commonName.equals(matcher.group(1))) {
+                                                throw new CertificateInvalidCNException();
+                                            }
+                                        }
+
                                         try {
                                             hash = "sha256/" + calculatePublicKeyHash(candidateCert.getPublicKey().getEncoded());
 
@@ -286,6 +300,9 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
                                     } catch (CertificateExpiredException | CertificateNotYetValidException e) {
                                         Log.w(TAG, "The server certificate is expired or not yet valid");
                                         EventBus.getDefault().post(new ServerCertErrorEvent(R.string.InitialActivity_server_certificate_validity_error));
+                                    } catch (CertificateInvalidCNException e) {
+                                        Log.w(TAG, "The server certificate's CN is invalid");
+                                        EventBus.getDefault().post(new ServerCertErrorEvent(R.string.InitialActivity_server_certificate_CN_error));
                                     }
 
 
@@ -417,6 +434,23 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
             return Base64.encodeBytes(messageDigest.digest(key));
         }
 
+        private String extractCommonName (Principal principal) {
+            int start = principal.getName().indexOf("CN");
+            String tmpName, name = "";
+            if (start > 0) {
+                tmpName = principal.getName().substring(start+3);
+                int end = tmpName.indexOf(",");
+                if (end > 0) {
+                    name = tmpName.substring(0, end);
+                }
+                else {
+                    name = tmpName;
+                }
+            }
+
+            return name;
+        }
+
         @Subscribe(threadMode = ThreadMode.MAIN)
         public void onEventServerCertError(ServerCertErrorEvent event) {
             Toast.makeText(getActivity(), event.message, Toast.LENGTH_LONG).show();
@@ -428,6 +462,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
             SignalStore.registrationValues().setServerSet(true);
             callback.onServiceConfigurationSet();
         }
+
     }
 
     public static class VerifyScanFragment extends Fragment {
@@ -479,4 +514,5 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
     private static class UnsafeOkHttpClientException extends Exception {}
 
     private static class ServerCertProbeException extends Exception {}
+    private static class CertificateInvalidCNException extends Exception {}
 }
