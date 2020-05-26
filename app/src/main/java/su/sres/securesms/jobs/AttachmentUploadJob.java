@@ -26,12 +26,15 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.service.GenericForegroundService;
 import su.sres.securesms.service.NotificationController;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.MediaMetadataRetrieverUtil;
 import su.sres.securesms.util.MediaUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
 import su.sres.signalservice.api.messages.SignalServiceAttachmentPointer;
+import su.sres.signalservice.api.push.exceptions.ResumeLocationInvalidException;
+import su.sres.signalservice.internal.push.http.ResumableUploadSpec;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,6 +51,8 @@ public final class AttachmentUploadJob extends BaseJob {
 
     @SuppressWarnings("unused")
     private static final String TAG = Log.tag(AttachmentUploadJob.class);
+
+    private static final long UPLOAD_REUSE_THRESHOLD = TimeUnit.DAYS.toMillis(3);
 
     private static final String KEY_ROW_ID    = "row_id";
     private static final String KEY_UNIQUE_ID = "unique_id";
@@ -88,6 +93,18 @@ public final class AttachmentUploadJob extends BaseJob {
 
     @Override
     public void onRun() throws Exception {
+        final ResumableUploadSpec resumableUploadSpec;
+        if (FeatureFlags.attachmentsV3()) {
+            Data inputData = requireInputData();
+            if (!inputData.hasString(ResumableUploadSpecJob.KEY_RESUME_SPEC)) {
+                throw new ResumeLocationInvalidException("V3 Attachment upload requires a ResumableUploadSpec");
+            }
+
+            resumableUploadSpec = ResumableUploadSpec.deserialize(inputData.getString(ResumableUploadSpecJob.KEY_RESUME_SPEC));
+        } else {
+            resumableUploadSpec = null;
+        }
+
         SignalServiceMessageSender messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
         AttachmentDatabase         database           = DatabaseFactory.getAttachmentDatabase(context);
         DatabaseAttachment         databaseAttachment = database.getAttachment(attachmentId);
@@ -96,14 +113,22 @@ public final class AttachmentUploadJob extends BaseJob {
             throw new InvalidAttachmentException("Cannot find the specified attachment.");
         }
 
+        long timeSinceUpload = System.currentTimeMillis() - databaseAttachment.getUploadTimestamp();
+        if (timeSinceUpload < UPLOAD_REUSE_THRESHOLD) {
+            Log.i(TAG, "We can re-use an already-uploaded file. It was uploaded " + timeSinceUpload + " ms ago. Skipping.");
+            return;
+        } else if (databaseAttachment.getUploadTimestamp() > 0) {
+            Log.i(TAG, "This file was previously-uploaded, but too long ago to be re-used. Age: " + timeSinceUpload + " ms");
+        }
+
         Log.i(TAG, "Uploading attachment for message " + databaseAttachment.getMmsId() + " with ID " + databaseAttachment.getAttachmentId());
 
         try (NotificationController notification = getNotificationForAttachment(databaseAttachment)) {
-            SignalServiceAttachment        localAttachment  = getAttachmentFor(databaseAttachment, notification);
+            SignalServiceAttachment        localAttachment  = getAttachmentFor(databaseAttachment, notification, resumableUploadSpec);
             SignalServiceAttachmentPointer remoteAttachment = messageSender.uploadAttachment(localAttachment.asStream());
             Attachment                     attachment       = PointerAttachment.forPointer(Optional.of(remoteAttachment), null, databaseAttachment.getFastPreflightId()).get();
 
-            database.updateAttachmentAfterUpload(databaseAttachment.getAttachmentId(), attachment);
+            database.updateAttachmentAfterUpload(databaseAttachment.getAttachmentId(), attachment, remoteAttachment.getUploadTimestamp());
         }
     }
 
@@ -124,10 +149,12 @@ public final class AttachmentUploadJob extends BaseJob {
 
     @Override
     protected boolean onShouldRetry(@NonNull Exception exception) {
+        if (exception instanceof ResumeLocationInvalidException) return false;
+
         return exception instanceof IOException;
     }
 
-    private @NonNull SignalServiceAttachment getAttachmentFor(Attachment attachment, @Nullable NotificationController notification) throws InvalidAttachmentException {
+    private @NonNull SignalServiceAttachment getAttachmentFor(Attachment attachment, @Nullable NotificationController notification, @Nullable ResumableUploadSpec resumableUploadSpec) throws InvalidAttachmentException {
         try {
             if (attachment.getDataUri() == null || attachment.getSize() == 0) throw new IOException("Assertion failed, outgoing attachment has no data!");
             InputStream is = PartAuthority.getAttachmentStream(context, attachment.getDataUri());
@@ -139,8 +166,10 @@ public final class AttachmentUploadJob extends BaseJob {
                     .withVoiceNote(attachment.isVoiceNote())
                     .withWidth(attachment.getWidth())
                     .withHeight(attachment.getHeight())
+                    .withUploadTimestamp(System.currentTimeMillis())
                     .withCaption(attachment.getCaption())
                     .withCancelationSignal(this::isCanceled)
+                    .withResumableUploadSpec(resumableUploadSpec)
                     .withListener((total, progress) -> {
                         EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress));
                         if (notification != null) {

@@ -15,13 +15,14 @@ public class MaterialColors {
           MaterialColor.CRIMSON,
           MaterialColor.VERMILLION,
           MaterialColor.VIOLET,
-          MaterialColor.BLUE,
           MaterialColor.INDIGO,
+          MaterialColor.TAUPE,
+          MaterialColor.ULTRAMARINE,
+          MaterialColor.BLUE,
+          MaterialColor.TEAL,
           MaterialColor.FOREST,
           MaterialColor.WINTERGREEN,
-          MaterialColor.TEAL,
           MaterialColor.BURLAP,
-          MaterialColor.TAUPE,
           MaterialColor.STEEL
   )));
 
@@ -61,9 +62,6 @@ public class MaterialColors {
 
       return results;
     }
-
   }
-
-
 }
 

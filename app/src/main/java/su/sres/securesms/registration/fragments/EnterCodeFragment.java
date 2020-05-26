@@ -31,6 +31,7 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.registration.service.CodeVerificationRequest;
 import su.sres.securesms.registration.service.RegistrationService;
 import su.sres.securesms.registration.viewmodel.RegistrationViewModel;
+import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.concurrent.AssertedSuccessListener;
 
 import java.util.Locale;
@@ -173,16 +174,14 @@ public final class EnterCodeFragment extends BaseRegistrationFragment {
     }
 
     private void sendEmailToSupport() {
-        Intent intent = new Intent(Intent.ACTION_SENDTO);
-        intent.setData(Uri.parse("mailto:"));
-        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{ getString(R.string.RegistrationActivity_support_email) });
-        intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.RegistrationActivity_code_support_subject));
-        intent.putExtra(Intent.EXTRA_TEXT, getString(R.string.RegistrationActivity_code_support_body,
-                getDevice(),
-                getAndroidVersion(),
-                BuildConfig.VERSION_NAME,
-                Locale.getDefault()));
-        startActivity(intent);
+        CommunicationActions.openEmail(requireContext(),
+                getString(R.string.RegistrationActivity_support_email),
+                getString(R.string.RegistrationActivity_code_support_subject),
+                getString(R.string.RegistrationActivity_code_support_body,
+                        getDevice(),
+                        getAndroidVersion(),
+                        BuildConfig.VERSION_NAME,
+                        Locale.getDefault()));
     }
 
     private static String getDevice() {

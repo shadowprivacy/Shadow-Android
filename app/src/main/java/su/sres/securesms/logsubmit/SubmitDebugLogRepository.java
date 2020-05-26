@@ -14,6 +14,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.logsubmit.util.Scrubber;
 import su.sres.securesms.net.UserAgentInterceptor;
+import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -88,7 +89,7 @@ public class SubmitDebugLogRepository {
         }
 
         try {
-            OkHttpClient client   = new OkHttpClient.Builder().addInterceptor(new UserAgentInterceptor()).build();
+            OkHttpClient client   = new OkHttpClient.Builder().addInterceptor(new UserAgentInterceptor()).dns(SignalServiceNetworkAccess.DNS).build();
             Response     response = client.newCall(new Request.Builder().url(API_ENDPOINT).get().build()).execute();
             ResponseBody body     = response.body();
 

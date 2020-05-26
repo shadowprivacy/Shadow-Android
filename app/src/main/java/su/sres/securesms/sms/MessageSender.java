@@ -21,6 +21,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
@@ -36,6 +37,9 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.AttachmentCopyJob;
 import su.sres.securesms.jobs.AttachmentUploadJob;
+import su.sres.securesms.jobs.ProfileKeySendJob;
+import su.sres.securesms.jobs.RemoteDeleteSendJob;
+import su.sres.securesms.jobs.ResumableUploadSpecJob;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.ApplicationContext;
@@ -65,6 +69,8 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.util.ParcelUtil;
 import su.sres.securesms.util.TextSecurePreferences;
+
+import org.greenrobot.eventbus.EventBus;
 import org.whispersystems.libsignal.util.guava.Preconditions;
 
 import java.io.IOException;
@@ -77,6 +83,11 @@ import java.util.List;
 public class MessageSender {
 
   private static final String TAG = MessageSender.class.getSimpleName();
+
+  @WorkerThread
+  public static void sendProfileKey(final Context context, final long threadId) {
+    ApplicationDependencies.getJobManager().add(ProfileKeySendJob.create(context, threadId));
+  }
 
   public static long send(final Context context,
                           final OutgoingTextMessage message,
@@ -99,6 +110,7 @@ public class MessageSender {
     long messageId = database.insertMessageOutbox(allocatedThreadId, message, forceSms, System.currentTimeMillis(), insertListener);
 
     sendTextMessage(context, recipient, forceSms, keyExchange, messageId);
+    onMessageSent();
 
     return allocatedThreadId;
   }
@@ -125,6 +137,7 @@ public class MessageSender {
       long      messageId = database.insertMessageOutbox(message, allocatedThreadId, forceSms, insertListener);
 
       sendMediaMessage(context, recipient, forceSms, messageId, Collections.emptyList());
+      onMessageSent();
 
       return allocatedThreadId;
     } catch (MmsException e) {
@@ -163,6 +176,7 @@ public class MessageSender {
       attachmentDatabase.updateMessageId(attachmentIds, messageId);
 
       sendMediaMessage(context, recipient, false, messageId, jobIds);
+      onMessageSent();
 
       return allocatedThreadId;
     } catch (MmsException e) {
@@ -240,6 +254,7 @@ public class MessageSender {
         }
       }
 
+      onMessageSent();
       mmsDatabase.setTransactionSuccessful();
     } catch (MmsException e) {
       Log.w(TAG, "Failed to send messages.", e);
@@ -261,15 +276,17 @@ public class MessageSender {
       AttachmentDatabase attachmentDatabase = DatabaseFactory.getAttachmentDatabase(context);
       DatabaseAttachment databaseAttachment = attachmentDatabase.insertAttachmentForPreUpload(attachment);
 
-      Job compressionJob = AttachmentCompressionJob.fromAttachment(databaseAttachment, false, -1);
-      Job uploadJob      = new AttachmentUploadJob(databaseAttachment.getAttachmentId());
+      Job compressionJob         = AttachmentCompressionJob.fromAttachment(databaseAttachment, false, -1);
+      Job resumableUploadSpecJob = new ResumableUploadSpecJob();
+      Job uploadJob              = new AttachmentUploadJob(databaseAttachment.getAttachmentId());
 
       ApplicationDependencies.getJobManager()
               .startChain(compressionJob)
+              .then(resumableUploadSpecJob)
               .then(uploadJob)
               .enqueue();
 
-      return new PreUploadResult(databaseAttachment.getAttachmentId(), Arrays.asList(compressionJob.getId(), uploadJob.getId()));
+      return new PreUploadResult(databaseAttachment.getAttachmentId(), Arrays.asList(compressionJob.getId(), resumableUploadSpecJob.getId(), uploadJob.getId()));
     } catch (MmsException e) {
       Log.w(TAG, "preUploadPushAttachment() - Failed to upload!", e);
       return null;
@@ -284,6 +301,7 @@ public class MessageSender {
 
     try {
       ApplicationDependencies.getJobManager().add(ReactionSendJob.create(context, messageId, isMms, reaction, false));
+      onMessageSent();
     } catch (NoSuchMessageException e) {
       Log.w(TAG, "[sendNewReaction] Could not find message! Ignoring.");
     }
@@ -296,14 +314,29 @@ public class MessageSender {
 
     try {
       ApplicationDependencies.getJobManager().add(ReactionSendJob.create(context, messageId, isMms, reaction, true));
+      onMessageSent();
     } catch (NoSuchMessageException e) {
       Log.w(TAG, "[sendReactionRemoval] Could not find message! Ignoring.");
+    }
+  }
+
+  public static void sendRemoteDelete(@NonNull Context context, long messageId, boolean isMms) {
+    MessagingDatabase db = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
+    db.markAsRemoteDelete(messageId);
+    db.markAsSending(messageId);
+
+    try {
+      ApplicationDependencies.getJobManager().add(RemoteDeleteSendJob.create(context, messageId, isMms));
+      onMessageSent();
+    } catch (NoSuchMessageException e) {
+      Log.w(TAG, "[sendNewReaction] Could not find message! Ignoring.");
     }
   }
 
   public static void resendGroupMessage(Context context, MessageRecord messageRecord, RecipientId filterRecipientId) {
     if (!messageRecord.isMms()) throw new AssertionError("Not Group");
     sendGroupPush(context, messageRecord.getRecipient(), messageRecord.getId(), filterRecipientId, Collections.emptyList());
+    onMessageSent();
   }
 
   public static void resend(Context context, MessageRecord messageRecord) {
@@ -317,6 +350,12 @@ public class MessageSender {
     } else {
       sendTextMessage(context, recipient, forceSms, keyExchange, messageId);
     }
+
+    onMessageSent();
+  }
+
+  public static void onMessageSent() {
+    EventBus.getDefault().postSticky(MessageSentEvent.INSTANCE);
   }
 
   private static void sendMediaMessage(Context context, Recipient recipient, boolean forceSms, long messageId, @NonNull Collection<String> uploadJobIds)
@@ -536,5 +575,9 @@ public class MessageSender {
       dest.writeParcelable(attachmentId, flags);
       ParcelUtil.writeStringCollection(dest, jobIds);
     }
+  }
+
+  public enum MessageSentEvent {
+    INSTANCE
   }
 }

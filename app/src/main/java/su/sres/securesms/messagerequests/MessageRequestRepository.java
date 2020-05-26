@@ -18,6 +18,7 @@ import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
+import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -79,6 +80,7 @@ final class MessageRequestRepository {
                 ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(liveRecipient.getId()));
             }
 
+            MessageSender.sendProfileKey(context, threadId);
             onMessageRequestAccepted.run();
         });
     }

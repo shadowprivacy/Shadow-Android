@@ -1,7 +1,6 @@
 package su.sres.securesms.conversation;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -17,8 +16,6 @@ import android.widget.TextView;
 import su.sres.securesms.BindableConversationItem;
 import su.sres.securesms.R;
 import su.sres.securesms.VerifyIdentityActivity;
-import su.sres.securesms.crypto.IdentityKeyParcelable;
-import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.logging.Log;
@@ -268,12 +265,7 @@ public class ConversationUpdateItem extends LinearLayout
         @Override
         public void onSuccess(Optional<IdentityRecord> result) {
           if (result.isPresent()) {
-            Intent intent = new Intent(getContext(), VerifyIdentityActivity.class);
-            intent.putExtra(VerifyIdentityActivity.RECIPIENT_EXTRA, sender.getId());
-            intent.putExtra(VerifyIdentityActivity.IDENTITY_EXTRA, new IdentityKeyParcelable(result.get().getIdentityKey()));
-            intent.putExtra(VerifyIdentityActivity.VERIFIED_EXTRA, result.get().getVerifiedStatus() == IdentityDatabase.VerifiedStatus.VERIFIED);
-
-            getContext().startActivity(intent);
+            getContext().startActivity(VerifyIdentityActivity.newIntent(getContext(), result.get()));
           }
         }
 

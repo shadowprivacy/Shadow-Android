@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
@@ -32,7 +33,7 @@ public class StorageAccountRestoreJob extends BaseJob {
 
     public static String KEY = "StorageAccountRestoreJob";
 
-    public static long LIFESPAN = TimeUnit.SECONDS.toMillis(10);
+    public static long LIFESPAN = TimeUnit.SECONDS.toMillis(20);
 
     private static final String TAG = Log.tag(StorageAccountRestoreJob.class);
 
@@ -63,12 +64,13 @@ public class StorageAccountRestoreJob extends BaseJob {
     @Override
     protected void onRun() throws Exception {
         SignalServiceAccountManager accountManager    = ApplicationDependencies.getSignalServiceAccountManager();
-        StorageKey                  storageServiceKey = SignalStore.storageServiceValues().getOrCreateStorageMasterKey().deriveStorageServiceKey();
+        StorageKey                  storageServiceKey = SignalStore.storageServiceValues().getOrCreateStorageKey();
 
         Optional<SignalStorageManifest> manifest = accountManager.getStorageManifest(storageServiceKey);
 
         if (!manifest.isPresent()) {
-            Log.w(TAG, "Manifest did not exist or was undecryptable (bad key). Not restoring.");
+            Log.w(TAG, "Manifest did not exist or was undecryptable (bad key). Not restoring. Force-pushing.");
+            ApplicationDependencies.getJobManager().add(new StorageForcePushJob());
             return;
         }
 
@@ -96,16 +98,13 @@ public class StorageAccountRestoreJob extends BaseJob {
         StorageId selfStorageId = StorageId.forAccount(Recipient.self().getStorageServiceId());
         StorageSyncHelper.applyAccountStorageSyncUpdates(context, selfStorageId, accountRecord);
 
+        JobManager jobManager = ApplicationDependencies.getJobManager();
+
         if (accountRecord.getAvatarUrlPath().isPresent()) {
-            RetrieveProfileAvatarJob avatarJob = new RetrieveProfileAvatarJob(Recipient.self(), accountRecord.getAvatarUrlPath().get());
-            try {
-                avatarJob.setContext(context);
-                avatarJob.onRun();
-            } catch (IOException e) {
-                Log.w(TAG, "Failed to download avatar. Scheduling for later.");
-                ApplicationDependencies.getJobManager().add(avatarJob);
-            }
+            jobManager.runSynchronously(new RetrieveProfileAvatarJob(Recipient.self(), accountRecord.getAvatarUrlPath().get()), LIFESPAN/2);
         }
+
+        jobManager.runSynchronously(new RefreshAttributesJob(), LIFESPAN/2);
     }
 
     @Override

@@ -92,7 +92,6 @@ import su.sres.securesms.components.reminder.PushRegistrationReminder;
 import su.sres.securesms.components.reminder.Reminder;
 import su.sres.securesms.components.reminder.ReminderView;
 import su.sres.securesms.components.reminder.ServiceOutageReminder;
-import su.sres.securesms.components.reminder.ShareReminder;
 import su.sres.securesms.components.reminder.SystemSmsImportReminder;
 import su.sres.securesms.components.reminder.UnauthorizedReminder;
 import su.sres.securesms.conversationlist.model.MessageResult;
@@ -106,7 +105,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.ReminderUpdateEvent;
 import su.sres.securesms.insights.InsightsLauncher;
 import su.sres.securesms.jobs.ServiceOutageDetectionJob;
-import su.sres.securesms.lock.RegistrationLockDialog;
+import su.sres.securesms.lock.RegistrationLockV1Dialog;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediasend.MediaSendActivity;
 import su.sres.securesms.megaphone.Megaphone;
@@ -117,9 +116,9 @@ import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.notifications.MarkReadReceiver;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.permissions.Permissions;
-import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.KeyCachingService;
+import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.StickyHeaderDecoration;
@@ -239,7 +238,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         initializeSearchListener();
 
         RatingManager.showRatingDialogIfNecessary(requireContext());
-        RegistrationLockDialog.showReminderIfNecessary(requireContext());
+        RegistrationLockV1Dialog.showReminderIfNecessary(requireContext());
 
         TooltipCompat.setTooltipText(searchAction, getText(R.string.SearchToolbar_search_for_conversations_contacts_and_messages));
     }
@@ -304,6 +303,10 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
 
     @Override
     public boolean onBackPressed() {
+        return closeSearchIfOpen();
+    }
+
+    private boolean closeSearchIfOpen() {
         if (searchToolbar.isVisible() || activeAdapter == searchAdapter) {
             activeAdapter = defaultAdapter;
             list.removeItemDecoration(searchAdapterDecoration);
@@ -816,6 +819,12 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEvent(ReminderUpdateEvent event) {
         updateReminders();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
+    public void onEvent(MessageSender.MessageSentEvent event) {
+        EventBus.getDefault().removeStickyEvent(event);
+        closeSearchIfOpen();
     }
 
     protected @IdRes int getToolbarRes() {

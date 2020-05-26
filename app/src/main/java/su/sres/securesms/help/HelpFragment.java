@@ -27,6 +27,7 @@ import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiImageView;
+import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.IntentUtils;
 import su.sres.securesms.util.text.AfterTextChanged;
 
@@ -148,19 +149,10 @@ public class HelpFragment extends Fragment {
                 .map(view -> Feeling.getByViewId(view.getId()))
                 .findFirst().orElse(null);
 
-        Spanned body = getEmailBody(debugLog, feeling);
-
-        Intent intent = new Intent(Intent.ACTION_SENDTO);
-        intent.setData(Uri.parse("mailto:"));
-        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{getString(R.string.RegistrationActivity_support_email)});
-        intent.putExtra(Intent.EXTRA_SUBJECT, getEmailSubject());
-        intent.putExtra(Intent.EXTRA_TEXT, body.toString());
-
-        if (IntentUtils.isResolvable(requireContext(), intent)) {
-            startActivity(intent);
-        } else {
-            Toast.makeText(requireContext(), R.string.HelpFragment__no_email_app_found, Toast.LENGTH_LONG).show();
-        }
+        CommunicationActions.openEmail(requireContext(),
+                getString(R.string.RegistrationActivity_support_email),
+                getEmailSubject(),
+                getEmailBody(debugLog, feeling).toString());
     }
 
     private String getEmailSubject() {

@@ -16,6 +16,7 @@ import su.sres.securesms.net.UserAgentInterceptor;
 import java.io.InputStream;
 
 import okhttp3.OkHttpClient;
+import su.sres.securesms.push.SignalServiceNetworkAccess;
 
 public class ChunkedImageUrlLoader implements ModelLoader<ChunkedImageUrl, InputStream> {
 
@@ -46,6 +47,7 @@ public class ChunkedImageUrlLoader implements ModelLoader<ChunkedImageUrl, Input
                     .addInterceptor(new UserAgentInterceptor())
                     .addNetworkInterceptor(new ContentProxySafetyInterceptor())
                     .addNetworkInterceptor(new PaddedHeadersInterceptor())
+                    .dns(SignalServiceNetworkAccess.DNS)
                     .build();
         }
 

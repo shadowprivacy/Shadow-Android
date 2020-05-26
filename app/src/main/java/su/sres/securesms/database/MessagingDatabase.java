@@ -16,7 +16,7 @@ import su.sres.securesms.database.documents.Document;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.documents.IdentityKeyMismatchList;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
-import su.sres.securesms.database.model.DatabaseProtos.ReactionList;
+import su.sres.securesms.database.model.databaseprotos.ReactionList;
 import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.insights.InsightsConstants;
 import su.sres.securesms.logging.Log;
@@ -50,6 +50,9 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
 
   public abstract void markAsSent(long messageId, boolean secure);
   public abstract void markUnidentified(long messageId, boolean unidentified);
+
+  public abstract void markAsSending(long messageId);
+  public abstract void markAsRemoteDelete(long messageId);
 
   final int getInsecureMessagesSentForThread(long threadId) {
     SQLiteDatabase db         = databaseHelper.getReadableDatabase();

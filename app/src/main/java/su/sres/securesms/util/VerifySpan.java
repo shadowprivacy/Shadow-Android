@@ -1,13 +1,11 @@
 package su.sres.securesms.util;
 
 import android.content.Context;
-import android.content.Intent;
 import androidx.annotation.NonNull;
 import android.text.style.ClickableSpan;
 import android.view.View;
 
 import su.sres.securesms.VerifyIdentityActivity;
-import su.sres.securesms.crypto.IdentityKeyParcelable;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.recipients.RecipientId;
 import org.whispersystems.libsignal.IdentityKey;
@@ -32,10 +30,6 @@ public class VerifySpan extends ClickableSpan {
 
   @Override
   public void onClick(@NonNull View widget) {
-    Intent intent = new Intent(context, VerifyIdentityActivity.class);
-    intent.putExtra(VerifyIdentityActivity.RECIPIENT_EXTRA, recipientId);
-    intent.putExtra(VerifyIdentityActivity.IDENTITY_EXTRA, new IdentityKeyParcelable(identityKey));
-    intent.putExtra(VerifyIdentityActivity.VERIFIED_EXTRA, false);
-    context.startActivity(intent);
+    context.startActivity(VerifyIdentityActivity.newIntent(context, recipientId, identityKey, false));
   }
 }

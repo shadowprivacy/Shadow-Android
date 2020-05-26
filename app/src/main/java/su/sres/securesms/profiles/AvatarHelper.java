@@ -1,6 +1,5 @@
 package su.sres.securesms.profiles;
 
-
 import android.content.Context;
 
 import androidx.annotation.NonNull;
@@ -81,7 +80,8 @@ public class AvatarHelper {
    * Whether or not an avatar is present for the given recipient.
    */
   public static boolean hasAvatar(@NonNull Context context, @NonNull RecipientId recipientId) {
-    return getAvatarFile(context, recipientId).exists();
+    File avatarFile = getAvatarFile(context, recipientId);
+    return avatarFile.exists() && avatarFile.length() > 0;
   }
 
   /**

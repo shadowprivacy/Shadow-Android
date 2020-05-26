@@ -15,6 +15,7 @@ import su.sres.securesms.giph.model.GiphyImage;
 import su.sres.securesms.giph.model.GiphyResponse;
 import su.sres.securesms.net.ContentProxySelector;
 import su.sres.securesms.net.UserAgentInterceptor;
+import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.util.AsyncLoader;
 import su.sres.securesms.util.JsonUtils;
 
@@ -42,6 +43,7 @@ public abstract class GiphyLoader extends AsyncLoader<List<GiphyImage>> {
     this.client       = new OkHttpClient.Builder()
             .proxySelector(new ContentProxySelector())
             .addInterceptor(new UserAgentInterceptor())
+            .dns(SignalServiceNetworkAccess.DNS)
             .build();
   }
 

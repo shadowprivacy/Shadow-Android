@@ -44,6 +44,7 @@ import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.providers.BlobProvider;
+import su.sres.securesms.registration.RegistrationUtil;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.text.AfterTextChanged;
@@ -310,7 +311,7 @@ public class EditProfileFragment extends Fragment {
         viewModel.submitProfile(uploadResult -> {
             if (uploadResult == EditProfileRepository.UploadResult.SUCCESS) {
 
-                SignalStore.registrationValues().setRegistrationComplete();
+                RegistrationUtil.markRegistrationPossiblyComplete();
 
                 ApplicationDependencies.getMegaphoneRepository().markFinished(Megaphones.Event.PROFILE_NAMES_FOR_ALL);
 

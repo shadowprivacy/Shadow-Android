@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import su.sres.securesms.R;
 import su.sres.securesms.components.OutlinedThumbnailView;
+import su.sres.securesms.components.ThumbnailView;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.util.MediaUtil;
@@ -72,9 +73,9 @@ class AttachmentKeyboardMediaAdapter extends RecyclerView.Adapter<AttachmentKeyb
 
     static class MediaViewHolder extends RecyclerView.ViewHolder {
 
-        private final OutlinedThumbnailView image;
-        private final TextView              duration;
-        private final View                  videoIcon;
+        private final ThumbnailView image;
+        private final TextView      duration;
+        private final View          videoIcon;
 
         public MediaViewHolder(@NonNull View itemView) {
             super(itemView);

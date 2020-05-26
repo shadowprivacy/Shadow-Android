@@ -28,6 +28,8 @@ import org.whispersystems.libsignal.InvalidMessageException;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.messages.SignalServiceAttachmentPointer;
+import su.sres.signalservice.api.messages.SignalServiceAttachmentRemoteId;
+import su.sres.signalservice.api.push.exceptions.MissingConfigurationException;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
@@ -169,7 +171,7 @@ public class AttachmentDownloadJob extends BaseJob {
       InputStream                    stream          = messageReceiver.retrieveAttachment(pointer, attachmentFile, MAX_ATTACHMENT_SIZE, (total, progress) -> EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress)));
 
       database.insertAttachmentsForPlaceholder(messageId, attachmentId, stream);
-    } catch (InvalidPartException | NonSuccessfulResponseCodeException | InvalidMessageException | MmsException e) {
+    } catch (InvalidPartException | NonSuccessfulResponseCodeException | InvalidMessageException | MmsException | MissingConfigurationException e) {
       Log.w(TAG, "Experienced exception while trying to download an attachment.", e);
       markFailed(messageId, attachmentId);
     }
@@ -185,13 +187,8 @@ public class AttachmentDownloadJob extends BaseJob {
     }
 
     try {
-      long   id    = Long.parseLong(attachment.getLocation());
-      byte[] key   = Base64.decode(attachment.getKey());
-      String relay = null;
-
-      if (TextUtils.isEmpty(attachment.getRelay())) {
-        relay = attachment.getRelay();
-      }
+      final SignalServiceAttachmentRemoteId remoteId = SignalServiceAttachmentRemoteId.from(attachment.getLocation());
+      final byte[]                          key      = Base64.decode(attachment.getKey());
 
       if (attachment.getDigest() != null) {
         Log.i(TAG, "Downloading attachment with digest: " + Hex.toString(attachment.getDigest()));
@@ -199,29 +196,19 @@ public class AttachmentDownloadJob extends BaseJob {
         Log.i(TAG, "Downloading attachment with no digest...");
       }
 
-      return new SignalServiceAttachmentPointer(id, null, key,
+      return new SignalServiceAttachmentPointer(attachment.getCdnNumber(), remoteId, null, key,
                                                 Optional.of(Util.toIntExact(attachment.getSize())),
                                                 Optional.absent(),
                                                 0, 0,
                                                 Optional.fromNullable(attachment.getDigest()),
                                                 Optional.fromNullable(attachment.getFileName()),
                                                 attachment.isVoiceNote(),
-              Optional.absent(),
-              Optional.fromNullable(attachment.getBlurHash()).transform(BlurHash::getHash));
+                                                Optional.absent(),
+                                                Optional.fromNullable(attachment.getBlurHash()).transform(BlurHash::getHash),
+                                                attachment.getUploadTimestamp());
 
     } catch (IOException | ArithmeticException e) {
       Log.w(TAG, e);
-      throw new InvalidPartException(e);
-    }
-  }
-
-  private File createTempFile() throws InvalidPartException {
-    try {
-      File file = File.createTempFile("push-attachment", "tmp", context.getCacheDir());
-      file.deleteOnExit();
-
-      return file;
-    } catch (IOException e) {
       throw new InvalidPartException(e);
     }
   }

@@ -8,8 +8,15 @@ package su.sres.signalservice.api;
 
 import com.google.protobuf.ByteString;
 
+import su.sres.signalservice.api.groupsv2.ClientZkOperations;
+import su.sres.signalservice.api.groupsv2.GroupsV2Api;
+import su.sres.signalservice.api.groupsv2.GroupsV2Authorization;
+import su.sres.signalservice.api.groupsv2.GroupsV2Operations;
 import su.sres.signalservice.api.messages.calls.SystemCertificates;
+
+import org.signal.zkgroup.VerificationFailedException;
 import org.signal.zkgroup.profiles.ProfileKey;
+import org.signal.zkgroup.profiles.ProfileKeyCredential;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.IdentityKeyPair;
 import org.whispersystems.libsignal.InvalidKeyException;
@@ -24,6 +31,8 @@ import su.sres.signalservice.api.crypto.ProfileCipher;
 import su.sres.signalservice.api.crypto.ProfileCipherOutputStream;
 import su.sres.signalservice.api.messages.calls.SystemCertificatesVersion;
 import su.sres.signalservice.api.push.exceptions.NoContentException;
+import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
+import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.storage.StorageId;
 import su.sres.signalservice.api.storage.StorageKey;
 import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
@@ -46,6 +55,7 @@ import su.sres.signalservice.internal.crypto.ProvisioningCipher;
 import su.sres.signalservice.internal.push.ProfileAvatarData;
 import su.sres.signalservice.internal.push.PushServiceSocket;
 import su.sres.signalservice.internal.push.RemoteConfigResponse;
+import su.sres.signalservice.internal.push.VerifyAccountResponse;
 import su.sres.signalservice.internal.push.http.ProfileCipherOutputStreamFactory;
 import su.sres.signalservice.internal.storage.protos.ManifestRecord;
 import su.sres.signalservice.internal.storage.protos.ReadOperation;
@@ -88,6 +98,7 @@ public class SignalServiceAccountManager {
     private final PushServiceSocket pushServiceSocket;
     private final CredentialsProvider credentials;
     private final String userAgent;
+    private final GroupsV2Operations groupsV2Operations;
 
     /**
      * Construct a SignalServiceAccountManager.
@@ -102,16 +113,21 @@ public class SignalServiceAccountManager {
                                        UUID uuid, String e164, String password,
                                        String signalAgent)
     {
-        this(configuration, new StaticCredentialsProvider(uuid, e164, password, null), signalAgent);
+        this(configuration,
+                new StaticCredentialsProvider(uuid, e164, password, null),
+                signalAgent,
+                new GroupsV2Operations(ClientZkOperations.create(configuration)));
     }
 
     public SignalServiceAccountManager(SignalServiceConfiguration configuration,
                                        CredentialsProvider credentialsProvider,
-                                       String signalAgent)
+                                       String signalAgent,
+                                       GroupsV2Operations groupsV2Operations)
     {
-        this.pushServiceSocket = new PushServiceSocket(configuration, credentialsProvider, signalAgent);
-        this.credentials = credentialsProvider;
-        this.userAgent         = signalAgent;
+        this.groupsV2Operations = groupsV2Operations;
+        this.pushServiceSocket  = new PushServiceSocket(configuration, credentialsProvider, signalAgent, groupsV2Operations.getProfileOperations());
+        this.credentials        = credentialsProvider;
+        this.userAgent          = signalAgent;
     }
 
     public byte[] getSenderCertificate() throws IOException {
@@ -126,7 +142,7 @@ public class SignalServiceAccountManager {
         if (pin.isPresent()) {
             this.pushServiceSocket.setPin(pin.get());
         } else {
-            this.pushServiceSocket.removePin();
+            this.pushServiceSocket.removeRegistrationLockV1();
         }
     }
 
@@ -202,9 +218,9 @@ public class SignalServiceAccountManager {
      * @return The UUID of the user that was registered.
      * @throws IOException
      */
-    public UUID verifyAccountWithCode(String verificationCode, String signalingKey, int signalProtocolRegistrationId, boolean fetchesMessages, String pin,
-                                      byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess,
-                                      SignalServiceProfile.Capabilities capabilities)
+    public VerifyAccountResponse verifyAccountWithCode(String verificationCode, String signalingKey, int signalProtocolRegistrationId, boolean fetchesMessages, String pin,
+                                                       byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess,
+                                                       SignalServiceProfile.Capabilities capabilities)
             throws IOException {
         return this.pushServiceSocket.verifyAccountCode(verificationCode, signalingKey,
                 signalProtocolRegistrationId,
@@ -605,6 +621,12 @@ public class SignalServiceAccountManager {
                 profileAvatarData);
     }
 
+    public Optional<ProfileKeyCredential> resolveProfileKeyCredential(UUID uuid, ProfileKey profileKey)
+            throws NonSuccessfulResponseCodeException, PushNetworkException, VerificationFailedException
+    {
+        return this.pushServiceSocket.retrieveProfile(uuid, profileKey, Optional.absent()).getProfileKeyCredential();
+    }
+
     public void setUsername(String username) throws IOException {
         this.pushServiceSocket.setUsername(username);
     }
@@ -646,6 +668,14 @@ public class SignalServiceAccountManager {
 
     public void updatePushServiceSocket(SignalServiceConfiguration configuration) {
         this.pushServiceSocket.renewNetworkConfiguration(configuration);
+    }
+
+    public GroupsV2Api getGroupsV2Api() {
+        return new GroupsV2Api(pushServiceSocket, groupsV2Operations);
+    }
+
+    public GroupsV2Authorization createGroupsV2Authorization(UUID self) {
+        return new GroupsV2Authorization(self, pushServiceSocket, groupsV2Operations.getAuthOperations());
     }
 
 }

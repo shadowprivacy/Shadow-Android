@@ -6,11 +6,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import org.signal.zkgroup.VerificationFailedException;
+import org.signal.zkgroup.groups.UuidCiphertext;
+
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 
+import su.sres.signalservice.api.groupsv2.InvalidGroupStateException;
 import su.sres.signalservice.api.util.InvalidNumberException;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -50,10 +55,17 @@ public final class GroupManager {
   }
 
   @WorkerThread
-  public static boolean leaveGroup(@NonNull Context context, @NonNull Recipient groupRecipient) {
-    GroupId groupId = groupRecipient.requireGroupId();
+  public static boolean leaveGroup(@NonNull Context context, @NonNull GroupId.Push groupId) {
+    return V1GroupManager.leaveGroup(context, groupId.requireV1());
+  }
 
-    return V1GroupManager.leaveGroup(context, groupId.requireV1(), groupRecipient);
+  @WorkerThread
+  public static void cancelInvites(@NonNull Context context,
+                                   @NonNull GroupId.V2 groupId,
+                                   @NonNull Collection<UuidCiphertext> uuidCipherTexts)
+          throws InvalidGroupStateException, VerificationFailedException, IOException
+  {
+    throw new AssertionError("NYI"); // TODO: GV2 allow invite cancellation
   }
 
   public static class GroupActionResult {

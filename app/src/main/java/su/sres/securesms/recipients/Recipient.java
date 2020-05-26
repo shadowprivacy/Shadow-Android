@@ -270,7 +270,7 @@ public class Recipient {
         }
       }
     } else if (GroupId.isEncodedGroup(identifier)) {
-      id = db.getOrInsertFromGroupId(GroupId.parse(identifier));
+      id = db.getOrInsertFromGroupId(GroupId.parseOrThrow(identifier));
     } else if (NumberUtil.isValidEmail(identifier)) {
       id = db.getOrInsertFromEmail(identifier);
     } else {
@@ -412,10 +412,18 @@ public class Recipient {
   }
 
   public @NonNull MaterialColor getColor() {
-    if      (isGroupInternal()) return MaterialColor.GROUP;
-    else if (color != null)     return color;
-    else if (name != null)      return ContactColors.generateFor(name);
-    else                        return ContactColors.UNKNOWN_COLOR;
+    if (isGroupInternal()) {
+      return MaterialColor.GROUP;
+    } else if (color != null) {
+      return color;
+    } else if (name != null) {
+      Log.i(TAG, "Saving color for " + id);
+      MaterialColor color = ContactColors.generateFor(name);
+      DatabaseFactory.getRecipientDatabase(ApplicationDependencies.getApplication()).setColor(id, color);
+      return color;
+    } else {
+      return ContactColors.UNKNOWN_COLOR;
+    }
   }
 
   public @NonNull Optional<UUID> getUuid() {
@@ -444,6 +452,16 @@ public class Recipient {
 
   public @NonNull Optional<String> getSmsAddress() {
     return Optional.fromNullable(e164).or(Optional.fromNullable(email));
+  }
+
+  public @NonNull UUID requireUuid() {
+    UUID resolved = resolving ? resolve().uuid : uuid;
+
+    if (resolved == null) {
+      throw new MissingAddressError();
+    }
+
+    return resolved;
   }
 
   public @NonNull String requireE164() {
@@ -574,6 +592,11 @@ public class Recipient {
     return groupId != null && groupId.isPush();
   }
 
+  public boolean isPushV2Group() {
+    GroupId groupId = resolve().groupId;
+    return groupId != null && groupId.isV2();
+  }
+
   public @NonNull List<Recipient> getParticipants() {
     return new ArrayList<>(participants);
   }
@@ -606,8 +629,8 @@ public class Recipient {
   public @Nullable ContactPhoto getContactPhoto() {
     if      (localNumber)                                    return null;
     else if (isGroupInternal() && groupAvatarId.isPresent()) return new GroupRecordContactPhoto(groupId, groupAvatarId.get());
-    else if (systemContactPhoto != null)                     return new SystemContactPhoto(id, systemContactPhoto, 0);
     else if (profileAvatar != null)                          return new ProfileContactPhoto(this, profileAvatar);
+    else if (systemContactPhoto != null)                     return new SystemContactPhoto(id, systemContactPhoto, 0);
     else                                                     return null;
   }
 

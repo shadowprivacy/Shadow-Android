@@ -4,6 +4,8 @@ import androidx.lifecycle.Lifecycle;
 import android.os.AsyncTask;
 import androidx.annotation.NonNull;
 
+import java.util.concurrent.Executor;
+
 import su.sres.securesms.util.Util;
 
 public class SimpleTask {
@@ -38,7 +40,15 @@ public class SimpleTask {
      * the main thread. Essentially {@link AsyncTask}, but lambda-compatible.
      */
     public static <E> void run(@NonNull BackgroundTask<E> backgroundTask, @NonNull ForegroundTask<E> foregroundTask) {
-        SignalExecutors.BOUNDED.execute(() -> {
+        run(SignalExecutors.BOUNDED, backgroundTask, foregroundTask);
+    }
+
+    /**
+     * Runs a task on the specified {@link Executor} and passes the result of the computation to a
+     * task that is run on the main thread. Essentially {@link AsyncTask}, but lambda-compatible.
+     */
+    public static <E> void run(@NonNull Executor executor, @NonNull BackgroundTask<E> backgroundTask, @NonNull ForegroundTask<E> foregroundTask) {
+        executor.execute(() -> {
             final E result = backgroundTask.run();
             Util.runOnMain(() -> foregroundTask.run(result));
         });

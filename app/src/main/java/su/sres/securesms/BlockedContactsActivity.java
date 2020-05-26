@@ -25,20 +25,18 @@ import su.sres.securesms.preferences.BlockedContactListItem;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 
 public class BlockedContactsActivity extends PassphraseRequiredActionBarActivity {
 
-  private final DynamicTheme    dynamicTheme    = new DynamicTheme();
-  private final DynamicLanguage dynamicLanguage = new DynamicLanguage();
+  private final DynamicTheme dynamicTheme = new DynamicTheme();
 
   @Override
   public void onPreCreate() {
     dynamicTheme.onCreate(this);
-    dynamicLanguage.onCreate(this);
   }
-
 
   @Override
   public void onCreate(Bundle bundle, boolean ready) {
@@ -51,16 +49,12 @@ public class BlockedContactsActivity extends PassphraseRequiredActionBarActivity
   public void onResume() {
     super.onResume();
     dynamicTheme.onResume(this);
-    dynamicLanguage.onResume(this);
   }
 
   @Override
-  public boolean onOptionsItemSelected(MenuItem item) {
-    switch (item.getItemId()) {
-      case android.R.id.home: finish(); return true;
-    }
-
-    return false;
+  public boolean onSupportNavigateUp() {
+    onBackPressed();
+    return true;
   }
 
   public static class BlockedContactsFragment
@@ -76,14 +70,14 @@ public class BlockedContactsActivity extends PassphraseRequiredActionBarActivity
     @Override
     public void onCreate(Bundle bundle) {
       super.onCreate(bundle);
-      setListAdapter(new BlockedContactAdapter(getActivity(), GlideApp.with(this), null));
-      getLoaderManager().initLoader(0, null, this);
+      setListAdapter(new BlockedContactAdapter(requireActivity(), GlideApp.with(this), null));
+      LoaderManager.getInstance(this).initLoader(0, null, this);
     }
 
     @Override
     public void onStart() {
       super.onStart();
-      getLoaderManager().restartLoader(0, null, this);
+      LoaderManager.getInstance(this).restartLoader(0, null, this);
     }
 
     @Override
@@ -114,10 +108,10 @@ public class BlockedContactsActivity extends PassphraseRequiredActionBarActivity
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
       Recipient recipient = ((BlockedContactListItem)view).getRecipient();
-      Intent    intent    = new Intent(getActivity(), RecipientPreferenceActivity.class);
-      intent.putExtra(RecipientPreferenceActivity.RECIPIENT_ID, recipient.getId());
-
-      startActivity(intent);
+      BlockUnblockDialog.showUnblockFor(requireContext(), getLifecycle(), recipient, () -> {
+        RecipientUtil.unblock(requireContext(), recipient);
+        LoaderManager.getInstance(this).restartLoader(0, null, this);
+      });
     }
 
     private static class BlockedContactAdapter extends CursorAdapter {
@@ -143,7 +137,5 @@ public class BlockedContactsActivity extends PassphraseRequiredActionBarActivity
         ((BlockedContactListItem) view).set(glideRequests, recipient);
       }
     }
-
   }
-
 }

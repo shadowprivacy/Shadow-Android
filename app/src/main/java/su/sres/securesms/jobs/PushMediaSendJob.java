@@ -44,6 +44,7 @@ import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 public class PushMediaSendJob extends PushSendJob  {
 
@@ -71,12 +72,11 @@ public class PushMediaSendJob extends PushSendJob  {
         throw new AssertionError();
       }
 
-      MmsDatabase          database                    = DatabaseFactory.getMmsDatabase(context);
-      OutgoingMediaMessage message                     = database.getOutgoingMessage(messageId);
-      JobManager.Chain     compressAndUploadAttachment = createCompressingAndUploadAttachmentsChain(jobManager, message);
+      MmsDatabase          database            = DatabaseFactory.getMmsDatabase(context);
+      OutgoingMediaMessage message             = database.getOutgoingMessage(messageId);
+      Set<String> attachmentUploadIds = enqueueCompressingAndUploadAttachmentsChains(jobManager, message);
 
-      compressAndUploadAttachment.then(new PushMediaSendJob(messageId, recipient))
-              .enqueue();
+      jobManager.add(new PushMediaSendJob(messageId, recipient), attachmentUploadIds);
 
     } catch (NoSuchMessageException | MmsException e) {
       Log.w(TAG, "Failed to enqueue message.", e);

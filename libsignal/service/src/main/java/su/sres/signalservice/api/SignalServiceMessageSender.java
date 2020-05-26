@@ -8,6 +8,7 @@ package su.sres.signalservice.api;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
+import org.signal.zkgroup.profiles.ClientZkProfileOperations;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.SessionBuilder;
 import org.whispersystems.libsignal.SignalProtocolAddress;
@@ -24,6 +25,7 @@ import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SendMessageResult;
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
 import su.sres.signalservice.api.messages.SignalServiceAttachmentPointer;
+import su.sres.signalservice.api.messages.SignalServiceAttachmentRemoteId;
 import su.sres.signalservice.api.messages.SignalServiceAttachmentStream;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.messages.SignalServiceGroup;
@@ -48,12 +50,14 @@ import su.sres.signalservice.api.messages.multidevice.VerifiedMessage;
 import su.sres.signalservice.api.messages.shared.SharedContact;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.AuthorizationFailedException;
+import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 import su.sres.signalservice.api.util.CredentialsProvider;
 import su.sres.signalservice.internal.configuration.SignalServiceConfiguration;
 import su.sres.signalservice.internal.crypto.PaddingInputStream;
-import su.sres.signalservice.internal.push.AttachmentUploadAttributes;
+import su.sres.signalservice.internal.push.AttachmentV2UploadAttributes;
+import su.sres.signalservice.internal.push.AttachmentV3UploadAttributes;
 import su.sres.signalservice.internal.push.MismatchedDevices;
 import su.sres.signalservice.internal.push.OutgoingPushMessage;
 import su.sres.signalservice.internal.push.OutgoingPushMessageList;
@@ -76,6 +80,7 @@ import su.sres.signalservice.internal.push.StaleDevices;
 import su.sres.signalservice.internal.push.exceptions.MismatchedDevicesException;
 import su.sres.signalservice.internal.push.exceptions.StaleDevicesException;
 import su.sres.signalservice.internal.push.http.AttachmentCipherOutputStreamFactory;
+import su.sres.signalservice.internal.push.http.ResumableUploadSpec;
 import su.sres.signalservice.internal.util.StaticCredentialsProvider;
 import su.sres.signalservice.internal.util.Util;
 
@@ -109,6 +114,7 @@ public class SignalServiceMessageSender {
   private final AtomicReference<Optional<SignalServiceMessagePipe>> pipe;
   private final AtomicReference<Optional<SignalServiceMessagePipe>> unidentifiedPipe;
   private final AtomicBoolean                                       isMultiDevice;
+  private final AtomicBoolean                                       attachmentsV3;
 
 
   /**
@@ -127,11 +133,13 @@ public class SignalServiceMessageSender {
                                     SignalProtocolStore store,
                                     String signalAgent,
                                     boolean isMultiDevice,
+                                    boolean attachmentsV3,
                                     Optional<SignalServiceMessagePipe> pipe,
                                     Optional<SignalServiceMessagePipe> unidentifiedPipe,
-                                    Optional<EventListener> eventListener)
+                                    Optional<EventListener> eventListener,
+                                    ClientZkProfileOperations clientZkProfileOperations)
   {
-    this(urls, new StaticCredentialsProvider(uuid, e164, password, null), store, signalAgent, isMultiDevice, pipe, unidentifiedPipe, eventListener);
+    this(urls, new StaticCredentialsProvider(uuid, e164, password, null), store, signalAgent, isMultiDevice, attachmentsV3, pipe, unidentifiedPipe, eventListener, clientZkProfileOperations);
   }
 
     public SignalServiceMessageSender(SignalServiceConfiguration urls,
@@ -139,16 +147,19 @@ public class SignalServiceMessageSender {
                                       SignalProtocolStore store,
                                       String signalAgent,
                                       boolean isMultiDevice,
+                                      boolean attachmentsV3,
                                       Optional<SignalServiceMessagePipe> pipe,
                                       Optional<SignalServiceMessagePipe> unidentifiedPipe,
-                                      Optional<EventListener> eventListener)
+                                      Optional<EventListener> eventListener,
+                                      ClientZkProfileOperations clientZkProfileOperations)
     {
-        this.socket           = new PushServiceSocket(urls, credentialsProvider, signalAgent);
+        this.socket           = new PushServiceSocket(urls, credentialsProvider, signalAgent, clientZkProfileOperations);
         this.store            = store;
         this.localAddress     = new SignalServiceAddress(credentialsProvider.getUuid(), credentialsProvider.getE164());
         this.pipe             = new AtomicReference<>(pipe);
         this.unidentifiedPipe = new AtomicReference<>(unidentifiedPipe);
         this.isMultiDevice    = new AtomicBoolean(isMultiDevice);
+        this.attachmentsV3    = new AtomicBoolean(attachmentsV3);
         this.eventListener    = eventListener;
     }
 
@@ -334,46 +345,57 @@ public class SignalServiceMessageSender {
     socket.cancelInFlightRequests();
   }
 
-  public void setMessagePipe(SignalServiceMessagePipe pipe, SignalServiceMessagePipe unidentifiedPipe) {
+  public void update(SignalServiceMessagePipe pipe, SignalServiceMessagePipe unidentifiedPipe, boolean isMultiDevice, boolean attachmentsV3) {
     this.pipe.set(Optional.fromNullable(pipe));
     this.unidentifiedPipe.set(Optional.fromNullable(unidentifiedPipe));
-  }
 
-  public void setIsMultiDevice(boolean isMultiDevice) {
     this.isMultiDevice.set(isMultiDevice);
+    this.attachmentsV3.set(attachmentsV3);
   }
 
   public SignalServiceAttachmentPointer uploadAttachment(SignalServiceAttachmentStream attachment) throws IOException {
-    byte[]             attachmentKey    = Util.getSecretBytes(64);
+    byte[]             attachmentKey    = attachment.getResumableUploadSpec().transform(ResumableUploadSpec::getSecretKey).or(() -> Util.getSecretBytes(64));
+    byte[]             attachmentIV     = attachment.getResumableUploadSpec().transform(ResumableUploadSpec::getIV).or(() -> Util.getSecretBytes(16));
     long               paddedLength     = PaddingInputStream.getPaddedSize(attachment.getLength());
     InputStream        dataStream       = new PaddingInputStream(attachment.getInputStream(), attachment.getLength());
     long               ciphertextLength = AttachmentCipherOutputStream.getCiphertextLength(paddedLength);
     PushAttachmentData attachmentData   = new PushAttachmentData(attachment.getContentType(),
             dataStream,
             ciphertextLength,
-            new AttachmentCipherOutputStreamFactory(attachmentKey),
+            new AttachmentCipherOutputStreamFactory(attachmentKey, attachmentIV),
             attachment.getListener(),
-            attachment.getCancelationSignal());
+            attachment.getCancelationSignal(),
+            attachment.getResumableUploadSpec().orNull());
 
-    AttachmentUploadAttributes uploadAttributes = null;
+    if (attachmentsV3.get()) {
+      return uploadAttachmentV3(attachment, attachmentKey, attachmentData);
+    } else {
+      return uploadAttachmentV2(attachment, attachmentKey, attachmentData);
+    }
+  }
 
-    if (pipe.get().isPresent()) {
+  private SignalServiceAttachmentPointer uploadAttachmentV2(SignalServiceAttachmentStream attachment, byte[] attachmentKey, PushAttachmentData attachmentData) throws NonSuccessfulResponseCodeException, PushNetworkException {
+    AttachmentV2UploadAttributes v2UploadAttributes = null;
+    Optional<SignalServiceMessagePipe> localPipe          = pipe.get();
+
+    if (localPipe.isPresent()) {
       Log.d(TAG, "Using pipe to retrieve attachment upload attributes...");
       try {
-        uploadAttributes = pipe.get().get().getAttachmentUploadAttributes();
+        v2UploadAttributes = localPipe.get().getAttachmentV2UploadAttributes();
       } catch (IOException e) {
         Log.w(TAG, "Failed to retrieve attachment upload attributes using pipe. Falling back...");
       }
     }
 
-    if (uploadAttributes == null) {
+    if (v2UploadAttributes == null) {
       Log.d(TAG, "Not using pipe to retrieve attachment upload attributes...");
-      uploadAttributes = socket.getAttachmentUploadAttributes();
+      v2UploadAttributes = socket.getAttachmentV2UploadAttributes();
     }
 
-    Pair<Long, byte[]> attachmentIdAndDigest = socket.uploadAttachment(attachmentData, uploadAttributes);
+    Pair<Long, byte[]> attachmentIdAndDigest = socket.uploadAttachment(attachmentData, v2UploadAttributes);
 
-    return new SignalServiceAttachmentPointer(attachmentIdAndDigest.first(),
+    return new SignalServiceAttachmentPointer(0,
+            new SignalServiceAttachmentRemoteId(attachmentIdAndDigest.first()),
             attachment.getContentType(),
             attachmentKey,
             Optional.of(Util.toIntExact(attachment.getLength())),
@@ -383,7 +405,47 @@ public class SignalServiceMessageSender {
             attachment.getFileName(),
             attachment.getVoiceNote(),
             attachment.getCaption(),
-            attachment.getBlurHash());
+            attachment.getBlurHash(),
+            attachment.getUploadTimestamp());
+  }
+
+  public ResumableUploadSpec getResumableUploadSpec() throws IOException {
+    AttachmentV3UploadAttributes v3UploadAttributes = null;
+    Optional<SignalServiceMessagePipe> localPipe          = pipe.get();
+
+    if (localPipe.isPresent()) {
+      Log.d(TAG, "Using pipe to retrieve attachment upload attributes...");
+      try {
+        v3UploadAttributes = localPipe.get().getAttachmentV3UploadAttributes();
+      } catch (IOException e) {
+        Log.w(TAG, "Failed to retrieve attachment upload attributes using pipe. Falling back...");
+      }
+    }
+
+    if (v3UploadAttributes == null) {
+      Log.d(TAG, "Not using pipe to retrieve attachment upload attributes...");
+      v3UploadAttributes = socket.getAttachmentV3UploadAttributes();
+    }
+
+    return socket.getResumableUploadSpec(v3UploadAttributes);
+  }
+
+  private SignalServiceAttachmentPointer uploadAttachmentV3(SignalServiceAttachmentStream attachment, byte[] attachmentKey, PushAttachmentData attachmentData) throws IOException {
+    byte[] digest = socket.uploadAttachment(attachmentData);
+    return new SignalServiceAttachmentPointer(attachmentData.getResumableUploadSpec().getCdnNumber(),
+            new SignalServiceAttachmentRemoteId(attachmentData.getResumableUploadSpec().getCdnKey()),
+            attachment.getContentType(),
+            attachmentKey,
+            Optional.of(Util.toIntExact(attachment.getLength())),
+            attachment.getPreview(),
+            attachment.getWidth(),
+            attachment.getHeight(),
+            Optional.of(digest),
+            attachment.getFileName(),
+            attachment.getVoiceNote(),
+            attachment.getCaption(),
+            attachment.getBlurHash(),
+            attachment.getUploadTimestamp());
   }
 
   private void sendMessage(VerifiedMessage message, Optional<UnidentifiedAccessPair> unidentifiedAccess)
@@ -449,6 +511,13 @@ public class SignalServiceMessageSender {
 
     if (!pointers.isEmpty()) {
       builder.addAllAttachments(pointers);
+
+      for (AttachmentPointer pointer : pointers) {
+        if (pointer.getAttachmentIdentifierCase() == AttachmentPointer.AttachmentIdentifierCase.CDNKEY || pointer.getCdnNumber() != 0) {
+          builder.setRequiredProtocolVersion(Math.max(DataMessage.ProtocolVersion.CDN_SELECTOR_ATTACHMENTS_VALUE, builder.getRequiredProtocolVersion()));
+          break;
+        }
+      }
     }
 
     if (message.getBody().isPresent()) {
@@ -577,6 +646,13 @@ public class SignalServiceMessageSender {
 
       builder.setReaction(reactionBuilder.build());
       builder.setRequiredProtocolVersion(Math.max(DataMessage.ProtocolVersion.REACTIONS_VALUE, builder.getRequiredProtocolVersion()));
+    }
+
+    if (message.getRemoteDelete().isPresent()) {
+      DataMessage.Delete delete = DataMessage.Delete.newBuilder()
+              .setTargetSentTimestamp(message.getRemoteDelete().get().getTargetSentTimestamp())
+              .build();
+      builder.setDelete(delete);
     }
 
     builder.setTimestamp(message.getTimestamp());
@@ -1201,11 +1277,19 @@ public class SignalServiceMessageSender {
   private AttachmentPointer createAttachmentPointer(SignalServiceAttachmentPointer attachment) {
 
     AttachmentPointer.Builder builder = AttachmentPointer.newBuilder()
+                                                         .setCdnNumber(attachment.getCdnNumber())
                                                          .setContentType(attachment.getContentType())
-                                                         .setId(attachment.getId())
                                                          .setKey(ByteString.copyFrom(attachment.getKey()))
                                                          .setDigest(ByteString.copyFrom(attachment.getDigest().get()))
                                                          .setSize(attachment.getSize().get());
+
+    if (attachment.getRemoteId().getV2().isPresent()) {
+      builder.setCdnId(attachment.getRemoteId().getV2().get());
+    }
+
+    if (attachment.getRemoteId().getV3().isPresent()) {
+      builder.setCdnKey(attachment.getRemoteId().getV3().get());
+    }
 
     if (attachment.getFileName().isPresent()) {
       builder.setFileName(attachment.getFileName().get());
@@ -1240,8 +1324,7 @@ public class SignalServiceMessageSender {
   private AttachmentPointer createAttachmentPointer(SignalServiceAttachmentStream attachment)
                    throws IOException
   {
-    SignalServiceAttachmentPointer pointer = uploadAttachment(attachment);
-    return createAttachmentPointer(pointer);
+    return createAttachmentPointer(uploadAttachment(attachment));
   }
 
   private OutgoingPushMessageList getEncryptedMessages(PushServiceSocket            socket,

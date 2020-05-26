@@ -29,6 +29,8 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.PushDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.groups.BadGroupIdException;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
@@ -226,14 +228,23 @@ public final class PushDecryptMessageJob extends BaseJob {
         }
     }
 
-    private static PushProcessMessageJob.ExceptionMetadata toExceptionMetadata(@NonNull UnsupportedDataMessageException e) throws NoSenderException {
+    private static PushProcessMessageJob.ExceptionMetadata toExceptionMetadata(@NonNull UnsupportedDataMessageException e)
+            throws NoSenderException
+    {
         String sender = e.getSender();
 
         if (sender == null) throw new NoSenderException();
 
+        GroupId groupId = null;
+        try {
+            groupId = GroupUtil.idFromGroupContext(e.getGroup().orNull());
+        } catch (BadGroupIdException ex) {
+            Log.w(TAG, "Bad group id found in unsupported data message", ex);
+        }
+
         return new PushProcessMessageJob.ExceptionMetadata(sender,
                 e.getSenderDevice(),
-                e.getGroup().transform(GroupUtil::idFromGroupContext).orNull());
+                groupId);
     }
 
     private static PushProcessMessageJob.ExceptionMetadata toExceptionMetadata(@NonNull ProtocolException e) throws NoSenderException {

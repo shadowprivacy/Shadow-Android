@@ -8,6 +8,7 @@ public final class ServiceConfigurationValues {
 
     private static final String SHADOW_SERVICE_URL = "service_confifuration.shadow_service_url";
     private static final String CLOUD_URL = "service_configuration.cloud_url";
+    private static final String CLOUD2_URL = "service_configuration.cloud2_url";
     private static final String STORAGE_URL = "service_configuration.storage_url";
     private static final String STATUS_URL = "service_configuration.status_url";
     private static final String UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY = "service_configuration.unidentified_access_ca_public_key";
@@ -31,6 +32,12 @@ public final class ServiceConfigurationValues {
     public synchronized void setCloudUrl(String cloudUrl) {
         store.beginWrite()
                 .putString(CLOUD_URL, cloudUrl)
+                .commit();
+    }
+
+    public synchronized void setCloud2Url(String cloud2Url) {
+        store.beginWrite()
+                .putString(CLOUD2_URL, cloud2Url)
                 .commit();
     }
 
@@ -66,6 +73,11 @@ public final class ServiceConfigurationValues {
     public @Nullable
     String getCloudUrl() {
         return store.getString(CLOUD_URL, EXAMPLE_URI);
+    }
+
+    public @Nullable
+    String getCloud2Url() {
+        return store.getString(CLOUD2_URL, EXAMPLE_URI);
     }
 
     public @Nullable

@@ -12,7 +12,6 @@ import com.bumptech.glide.request.FutureTarget;
 
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.UriAttachment;
-import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.giph.model.ChunkedImageUrl;
@@ -23,7 +22,6 @@ import su.sres.securesms.net.CompositeRequestController;
 import su.sres.securesms.net.ContentProxySafetyInterceptor;
 import su.sres.securesms.net.ContentProxySelector;
 import su.sres.securesms.net.RequestController;
-import su.sres.securesms.net.UserAgentInterceptor;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.stickers.StickerRemoteUri;
 import su.sres.securesms.stickers.StickerUrl;

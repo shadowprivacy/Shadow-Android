@@ -8,15 +8,19 @@ import su.sres.securesms.IncomingMessageProcessor;
 import su.sres.securesms.gcm.MessageRetriever;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.keyvalue.KeyValueStore;
+import su.sres.securesms.logging.Log;
 import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.IncomingMessageObserver;
+import su.sres.securesms.util.EarlyMessageCache;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.SignalServiceMessageSender;
+import su.sres.signalservice.api.groupsv2.GroupsV2Operations;
 
 /**
  * Location for storing and retrieving application-scoped singletons. Users must call
@@ -28,6 +32,8 @@ import su.sres.signalservice.api.SignalServiceMessageSender;
  * to manage their singleton-ness.
  */
 public class ApplicationDependencies {
+
+    private static final String TAG = ApplicationDependencies.class.getSimpleName();
 
     private static Application application;
     private static Provider    provider;
@@ -43,6 +49,8 @@ public class ApplicationDependencies {
     private static FrameRateTracker             frameRateTracker;
     private static KeyValueStore                keyValueStore;
     private static MegaphoneRepository          megaphoneRepository;
+    private static GroupsV2Operations           groupsV2Operations;
+    private static EarlyMessageCache                 earlyMessageCache;
 
     public static synchronized void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
         if (ApplicationDependencies.application != null || ApplicationDependencies.networkIndependentProvider != null) {
@@ -55,10 +63,15 @@ public class ApplicationDependencies {
 
     public static synchronized void networkDependentProviderInit(@NonNull Provider provider) {
         if (ApplicationDependencies.provider != null) {
+            // remove after testing
+            Log.w (TAG, "Network-dependent provider already initialized");
             throw new IllegalStateException("Already initialized!");
         }
 
+        // remove after testing
+        Log.w (TAG, "Initializing network-dependent provider...");
         ApplicationDependencies.provider    = provider;
+
     }
 
 
@@ -78,14 +91,27 @@ public class ApplicationDependencies {
         return accountManager;
     }
 
+    public static synchronized @NonNull GroupsV2Operations getGroupsV2Operations() {
+        assertNetworkDependentInitialization();
+
+        if (groupsV2Operations == null) {
+            groupsV2Operations = provider.provideGroupsV2Operations();
+        }
+
+        return groupsV2Operations;
+    }
+
     public static synchronized @NonNull SignalServiceMessageSender getSignalServiceMessageSender() {
         assertNetworkDependentInitialization();
 
         if (messageSender == null) {
             messageSender = provider.provideSignalServiceMessageSender();
         } else {
-            messageSender.setMessagePipe(IncomingMessageObserver.getPipe(), IncomingMessageObserver.getUnidentifiedPipe());
-            messageSender.setIsMultiDevice(TextSecurePreferences.isMultiDevice(application));
+            messageSender.update(
+                    IncomingMessageObserver.getPipe(),
+                    IncomingMessageObserver.getUnidentifiedPipe(),
+                    TextSecurePreferences.isMultiDevice(application),
+                    FeatureFlags.attachmentsV3());
         }
 
         return messageSender;
@@ -181,8 +207,27 @@ public class ApplicationDependencies {
         return megaphoneRepository;
     }
 
+    public static synchronized @NonNull EarlyMessageCache getEarlyMessageCache() {
+        assertNetworkDependentInitialization();
+
+        if (earlyMessageCache == null) {
+            earlyMessageCache = provider.provideEarlyMessageCache();
+        }
+
+        return earlyMessageCache;
+    }
+
     private static void assertNetworkDependentInitialization() {
         if (application == null || provider == null) {
+
+            // remove after testing
+            if (application == null) {
+                Log.w(TAG, "Application is null");
+            }
+            if (provider == null) {
+                Log.w(TAG, "Provider is null");
+            }
+
             throw new UninitializedException();
         }
     }
@@ -194,6 +239,8 @@ public class ApplicationDependencies {
     }
 
     public interface Provider {
+        @NonNull
+        GroupsV2Operations provideGroupsV2Operations();
         @NonNull SignalServiceAccountManager provideSignalServiceAccountManager();
         @NonNull SignalServiceMessageSender provideSignalServiceMessageSender();
         @NonNull SignalServiceMessageReceiver provideSignalServiceMessageReceiver();
@@ -205,6 +252,7 @@ public class ApplicationDependencies {
         @NonNull FrameRateTracker provideFrameRateTracker();
 // moved to NetworkIndependent       @NonNull KeyValueStore provideKeyValueStore();
         @NonNull MegaphoneRepository provideMegaphoneRepository();
+        @NonNull EarlyMessageCache provideEarlyMessageCache();
     }
 
     public interface NetworkIndependentProvider {

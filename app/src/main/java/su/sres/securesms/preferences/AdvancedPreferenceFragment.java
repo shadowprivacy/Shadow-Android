@@ -28,7 +28,6 @@ import su.sres.securesms.registration.RegistrationNavigationActivity;
 import su.sres.securesms.contacts.ContactAccessor;
 import su.sres.securesms.contacts.ContactIdentityManager;
 import su.sres.securesms.logsubmit.SubmitDebugLogActivity;
-import su.sres.securesms.service.CertificateRefreshService;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -174,10 +173,6 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
         case SUCCESS:
           TextSecurePreferences.setPushRegistered(getActivity(), false);
           SignalStore.registrationValues().clearRegistrationComplete();
-          // stopping the cert refresh service if it's running
-          if (!CertificateRefreshService.isServiceCreated()) {
-            getActivity().stopService(new Intent(getActivity(), CertificateRefreshService.class));
-          }
           initializePushMessagingToggle();
           break;
         }

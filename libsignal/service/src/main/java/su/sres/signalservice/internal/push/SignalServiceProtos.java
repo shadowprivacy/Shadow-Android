@@ -5357,6 +5357,17 @@ public final class SignalServiceProtos {
      * @return The reaction.
      */
     su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Reaction getReaction();
+
+    /**
+     * <code>optional .signalservice.DataMessage.Delete delete = 17;</code>
+     * @return Whether the delete field is set.
+     */
+    boolean hasDelete();
+    /**
+     * <code>optional .signalservice.DataMessage.Delete delete = 17;</code>
+     * @return The delete.
+     */
+    su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete getDelete();
   }
   /**
    * Protobuf type {@code signalservice.DataMessage}
@@ -5491,12 +5502,16 @@ public final class SignalServiceProtos {
        * <code>REACTIONS = 4;</code>
        */
       REACTIONS(4),
+      /**
+       * <code>CDN_SELECTOR_ATTACHMENTS = 5;</code>
+       */
+      CDN_SELECTOR_ATTACHMENTS(5),
       ;
 
       /**
-       * <code>CURRENT = 4;</code>
+       * <code>CURRENT = 5;</code>
        */
-      public static final ProtocolVersion CURRENT = REACTIONS;
+      public static final ProtocolVersion CURRENT = CDN_SELECTOR_ATTACHMENTS;
       /**
        * <code>INITIAL = 0;</code>
        */
@@ -5518,9 +5533,13 @@ public final class SignalServiceProtos {
        */
       public static final int REACTIONS_VALUE = 4;
       /**
-       * <code>CURRENT = 4;</code>
+       * <code>CDN_SELECTOR_ATTACHMENTS = 5;</code>
        */
-      public static final int CURRENT_VALUE = 4;
+      public static final int CDN_SELECTOR_ATTACHMENTS_VALUE = 5;
+      /**
+       * <code>CURRENT = 5;</code>
+       */
+      public static final int CURRENT_VALUE = 5;
 
 
       @java.lang.Override
@@ -5545,6 +5564,7 @@ public final class SignalServiceProtos {
           case 2: return VIEW_ONCE;
           case 3: return VIEW_ONCE_VIDEO;
           case 4: return REACTIONS;
+          case 5: return CDN_SELECTOR_ATTACHMENTS;
           default: return null;
         }
       }
@@ -14341,6 +14361,272 @@ public final class SignalServiceProtos {
       }
     }
 
+    public interface DeleteOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:signalservice.DataMessage.Delete)
+        com.google.protobuf.MessageLiteOrBuilder {
+
+      /**
+       * <code>optional uint64 targetSentTimestamp = 1;</code>
+       * @return Whether the targetSentTimestamp field is set.
+       */
+      boolean hasTargetSentTimestamp();
+      /**
+       * <code>optional uint64 targetSentTimestamp = 1;</code>
+       * @return The targetSentTimestamp.
+       */
+      long getTargetSentTimestamp();
+    }
+    /**
+     * Protobuf type {@code signalservice.DataMessage.Delete}
+     */
+    public  static final class Delete extends
+        com.google.protobuf.GeneratedMessageLite<
+            Delete, Delete.Builder> implements
+        // @@protoc_insertion_point(message_implements:signalservice.DataMessage.Delete)
+        DeleteOrBuilder {
+      private Delete() {
+      }
+      private int bitField0_;
+      public static final int TARGETSENTTIMESTAMP_FIELD_NUMBER = 1;
+      private long targetSentTimestamp_;
+      /**
+       * <code>optional uint64 targetSentTimestamp = 1;</code>
+       * @return Whether the targetSentTimestamp field is set.
+       */
+      @java.lang.Override
+      public boolean hasTargetSentTimestamp() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>optional uint64 targetSentTimestamp = 1;</code>
+       * @return The targetSentTimestamp.
+       */
+      @java.lang.Override
+      public long getTargetSentTimestamp() {
+        return targetSentTimestamp_;
+      }
+      /**
+       * <code>optional uint64 targetSentTimestamp = 1;</code>
+       * @param value The targetSentTimestamp to set.
+       */
+      private void setTargetSentTimestamp(long value) {
+        bitField0_ |= 0x00000001;
+        targetSentTimestamp_ = value;
+      }
+      /**
+       * <code>optional uint64 targetSentTimestamp = 1;</code>
+       */
+      private void clearTargetSentTimestamp() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        targetSentTimestamp_ = 0L;
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+
+      public static Builder newBuilder() {
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
+      }
+      public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete prototype) {
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+      }
+
+      /**
+       * Protobuf type {@code signalservice.DataMessage.Delete}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageLite.Builder<
+            su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete, Builder> implements
+          // @@protoc_insertion_point(builder_implements:signalservice.DataMessage.Delete)
+          su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.DeleteOrBuilder {
+        // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete.newBuilder()
+        private Builder() {
+          super(DEFAULT_INSTANCE);
+        }
+
+
+        /**
+         * <code>optional uint64 targetSentTimestamp = 1;</code>
+         * @return Whether the targetSentTimestamp field is set.
+         */
+        @java.lang.Override
+        public boolean hasTargetSentTimestamp() {
+          return instance.hasTargetSentTimestamp();
+        }
+        /**
+         * <code>optional uint64 targetSentTimestamp = 1;</code>
+         * @return The targetSentTimestamp.
+         */
+        @java.lang.Override
+        public long getTargetSentTimestamp() {
+          return instance.getTargetSentTimestamp();
+        }
+        /**
+         * <code>optional uint64 targetSentTimestamp = 1;</code>
+         * @param value The targetSentTimestamp to set.
+         * @return This builder for chaining.
+         */
+        public Builder setTargetSentTimestamp(long value) {
+          copyOnWrite();
+          instance.setTargetSentTimestamp(value);
+          return this;
+        }
+        /**
+         * <code>optional uint64 targetSentTimestamp = 1;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearTargetSentTimestamp() {
+          copyOnWrite();
+          instance.clearTargetSentTimestamp();
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:signalservice.DataMessage.Delete)
+      }
+      @java.lang.Override
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      protected final java.lang.Object dynamicMethod(
+          com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+          java.lang.Object arg0, java.lang.Object arg1) {
+        switch (method) {
+          case NEW_MUTABLE_INSTANCE: {
+            return new su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete();
+          }
+          case NEW_BUILDER: {
+            return new Builder();
+          }
+          case BUILD_MESSAGE_INFO: {
+              java.lang.Object[] objects = new java.lang.Object[] {
+                "bitField0_",
+                "targetSentTimestamp_",
+              };
+              java.lang.String info =
+                  "\u0001\u0001\u0000\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0001\u0003\u0000";
+              return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+          }
+          // fall through
+          case GET_DEFAULT_INSTANCE: {
+            return DEFAULT_INSTANCE;
+          }
+          case GET_PARSER: {
+            com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete> parser = PARSER;
+            if (parser == null) {
+              synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete.class) {
+                parser = PARSER;
+                if (parser == null) {
+                  parser =
+                      new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete>(
+                          DEFAULT_INSTANCE);
+                  PARSER = parser;
+                }
+              }
+            }
+            return parser;
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return (byte) 1;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          return null;
+        }
+        }
+        throw new UnsupportedOperationException();
+      }
+
+
+      // @@protoc_insertion_point(class_scope:signalservice.DataMessage.Delete)
+      private static final su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete DEFAULT_INSTANCE;
+      static {
+        Delete defaultInstance = new Delete();
+        // New instances are implicitly immutable so no need to make
+        // immutable.
+        DEFAULT_INSTANCE = defaultInstance;
+        com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+          Delete.class, defaultInstance);
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static volatile com.google.protobuf.Parser<Delete> PARSER;
+
+      public static com.google.protobuf.Parser<Delete> parser() {
+        return DEFAULT_INSTANCE.getParserForType();
+      }
+    }
+
     private int bitField0_;
     public static final int BODY_FIELD_NUMBER = 1;
     private java.lang.String body_;
@@ -15267,6 +15553,64 @@ public final class SignalServiceProtos {
       bitField0_ = (bitField0_ & ~0x00000800);
     }
 
+    public static final int DELETE_FIELD_NUMBER = 17;
+    private su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete delete_;
+    /**
+     * <code>optional .signalservice.DataMessage.Delete delete = 17;</code>
+     */
+    @java.lang.Override
+    public boolean hasDelete() {
+      return ((bitField0_ & 0x00001000) != 0);
+    }
+    /**
+     * <code>optional .signalservice.DataMessage.Delete delete = 17;</code>
+     */
+    @java.lang.Override
+    public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete getDelete() {
+      return delete_ == null ? su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete.getDefaultInstance() : delete_;
+    }
+    /**
+     * <code>optional .signalservice.DataMessage.Delete delete = 17;</code>
+     */
+    private void setDelete(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      delete_ = value;
+      bitField0_ |= 0x00001000;
+      }
+    /**
+     * <code>optional .signalservice.DataMessage.Delete delete = 17;</code>
+     */
+    private void setDelete(
+        su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete.Builder builderForValue) {
+      delete_ = builderForValue.build();
+      bitField0_ |= 0x00001000;
+    }
+    /**
+     * <code>optional .signalservice.DataMessage.Delete delete = 17;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeDelete(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      if (delete_ != null &&
+          delete_ != su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete.getDefaultInstance()) {
+        delete_ =
+          su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete.newBuilder(delete_).mergeFrom(value).buildPartial();
+      } else {
+        delete_ = value;
+      }
+      bitField0_ |= 0x00001000;
+    }
+    /**
+     * <code>optional .signalservice.DataMessage.Delete delete = 17;</code>
+     */
+    private void clearDelete() {  delete_ = null;
+      bitField0_ = (bitField0_ & ~0x00001000);
+    }
+
     public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -16170,6 +16514,53 @@ public final class SignalServiceProtos {
         return this;
       }
 
+      /**
+       * <code>optional .signalservice.DataMessage.Delete delete = 17;</code>
+       */
+      @java.lang.Override
+      public boolean hasDelete() {
+        return instance.hasDelete();
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.Delete delete = 17;</code>
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete getDelete() {
+        return instance.getDelete();
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.Delete delete = 17;</code>
+       */
+      public Builder setDelete(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete value) {
+        copyOnWrite();
+        instance.setDelete(value);
+        return this;
+        }
+      /**
+       * <code>optional .signalservice.DataMessage.Delete delete = 17;</code>
+       */
+      public Builder setDelete(
+          su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete.Builder builderForValue) {
+        copyOnWrite();
+        instance.setDelete(builderForValue);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.Delete delete = 17;</code>
+       */
+      public Builder mergeDelete(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete value) {
+        copyOnWrite();
+        instance.mergeDelete(value);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.Delete delete = 17;</code>
+       */
+      public Builder clearDelete() {  copyOnWrite();
+        instance.clearDelete();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:signalservice.DataMessage)
     }
     @java.lang.Override
@@ -16205,12 +16596,13 @@ public final class SignalServiceProtos {
               "isViewOnce_",
               "groupV2_",
               "reaction_",
+              "delete_",
             };
             java.lang.String info =
-                "\u0001\u000f\u0000\u0001\u0001\u0010\u000f\u0000\u0003\u0000\u0001\b\u0000\u0002" +
+                "\u0001\u0010\u0000\u0001\u0001\u0011\u0010\u0000\u0003\u0000\u0001\b\u0000\u0002" +
                 "\u001b\u0003\t\u0001\u0004\u000b\u0003\u0005\u000b\u0004\u0006\n\u0005\u0007\u0003" +
                 "\u0006\b\t\u0007\t\u001b\n\u001b\u000b\t\b\f\u000b\t\u000e\u0007\n\u000f\t\u0002" +
-                "\u0010\t\u000b";
+                "\u0010\t\u000b\u0011\t\f";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -27445,15 +27837,32 @@ public final class SignalServiceProtos {
       com.google.protobuf.MessageLiteOrBuilder {
 
     /**
-     * <code>optional fixed64 id = 1;</code>
-     * @return Whether the id field is set.
+     * <code>optional fixed64 cdnId = 1;</code>
+     * @return Whether the cdnId field is set.
      */
-    boolean hasId();
+    boolean hasCdnId();
     /**
-     * <code>optional fixed64 id = 1;</code>
-     * @return The id.
+     * <code>optional fixed64 cdnId = 1;</code>
+     * @return The cdnId.
      */
-    long getId();
+    long getCdnId();
+
+    /**
+     * <code>optional string cdnKey = 15;</code>
+     * @return Whether the cdnKey field is set.
+     */
+    boolean hasCdnKey();
+    /**
+     * <code>optional string cdnKey = 15;</code>
+     * @return The cdnKey.
+     */
+    java.lang.String getCdnKey();
+    /**
+     * <code>optional string cdnKey = 15;</code>
+     * @return The bytes for cdnKey.
+     */
+    com.google.protobuf.ByteString
+        getCdnKeyBytes();
 
     /**
      * <code>optional string contentType = 2;</code>
@@ -27599,6 +28008,38 @@ public final class SignalServiceProtos {
      */
     com.google.protobuf.ByteString
         getBlurHashBytes();
+
+    /**
+     * <code>optional uint64 uploadTimestamp = 13;</code>
+     * @return Whether the uploadTimestamp field is set.
+     */
+    boolean hasUploadTimestamp();
+    /**
+     * <code>optional uint64 uploadTimestamp = 13;</code>
+     * @return The uploadTimestamp.
+     */
+    long getUploadTimestamp();
+
+    /**
+     * <pre>
+     * Next ID: 16
+     * </pre>
+     *
+     * <code>optional uint32 cdnNumber = 14;</code>
+     * @return Whether the cdnNumber field is set.
+     */
+    boolean hasCdnNumber();
+    /**
+     * <pre>
+     * Next ID: 16
+     * </pre>
+     *
+     * <code>optional uint32 cdnNumber = 14;</code>
+     * @return The cdnNumber.
+     */
+    int getCdnNumber();
+
+    public su.sres.signalservice.internal.push.SignalServiceProtos.AttachmentPointer.AttachmentIdentifierCase getAttachmentIdentifierCase();
   }
   /**
    * Protobuf type {@code signalservice.AttachmentPointer}
@@ -27693,38 +28134,153 @@ public final class SignalServiceProtos {
     }
 
     private int bitField0_;
-    public static final int ID_FIELD_NUMBER = 1;
-    private long id_;
+    private int attachmentIdentifierCase_ = 0;
+    private java.lang.Object attachmentIdentifier_;
+    public enum AttachmentIdentifierCase {
+      CDNID(1),
+      CDNKEY(15),
+      ATTACHMENTIDENTIFIER_NOT_SET(0);
+      private final int value;
+      private AttachmentIdentifierCase(int value) {
+        this.value = value;
+      }
+      /**
+       * @deprecated Use {@link #forNumber(int)} instead.
+       */
+      @java.lang.Deprecated
+      public static AttachmentIdentifierCase valueOf(int value) {
+        return forNumber(value);
+      }
+
+      public static AttachmentIdentifierCase forNumber(int value) {
+        switch (value) {
+          case 1: return CDNID;
+          case 15: return CDNKEY;
+          case 0: return ATTACHMENTIDENTIFIER_NOT_SET;
+          default: return null;
+        }
+      }
+      public int getNumber() {
+        return this.value;
+      }
+    };
+
+    @java.lang.Override
+    public AttachmentIdentifierCase
+    getAttachmentIdentifierCase() {
+      return AttachmentIdentifierCase.forNumber(
+          attachmentIdentifierCase_);
+    }
+
+    private void clearAttachmentIdentifier() {
+      attachmentIdentifierCase_ = 0;
+      attachmentIdentifier_ = null;
+    }
+
+    public static final int CDNID_FIELD_NUMBER = 1;
     /**
-     * <code>optional fixed64 id = 1;</code>
-     * @return Whether the id field is set.
+     * <code>optional fixed64 cdnId = 1;</code>
+     * @return Whether the cdnId field is set.
      */
     @java.lang.Override
-    public boolean hasId() {
-      return ((bitField0_ & 0x00000001) != 0);
+    public boolean hasCdnId() {
+      return attachmentIdentifierCase_ == 1;
     }
     /**
-     * <code>optional fixed64 id = 1;</code>
-     * @return The id.
+     * <code>optional fixed64 cdnId = 1;</code>
+     * @return The cdnId.
      */
     @java.lang.Override
-    public long getId() {
-      return id_;
+    public long getCdnId() {
+      if (attachmentIdentifierCase_ == 1) {
+        return (java.lang.Long) attachmentIdentifier_;
+      }
+      return 0L;
     }
     /**
-     * <code>optional fixed64 id = 1;</code>
-     * @param value The id to set.
+     * <code>optional fixed64 cdnId = 1;</code>
+     * @param value The cdnId to set.
      */
-    private void setId(long value) {
-      bitField0_ |= 0x00000001;
-      id_ = value;
+    private void setCdnId(long value) {
+      attachmentIdentifierCase_ = 1;
+      attachmentIdentifier_ = value;
     }
     /**
-     * <code>optional fixed64 id = 1;</code>
+     * <code>optional fixed64 cdnId = 1;</code>
      */
-    private void clearId() {
-      bitField0_ = (bitField0_ & ~0x00000001);
-      id_ = 0L;
+    private void clearCdnId() {
+      if (attachmentIdentifierCase_ == 1) {
+        attachmentIdentifierCase_ = 0;
+        attachmentIdentifier_ = null;
+      }
+    }
+
+    public static final int CDNKEY_FIELD_NUMBER = 15;
+    /**
+     * <code>optional string cdnKey = 15;</code>
+     * @return Whether the cdnKey field is set.
+     */
+    @java.lang.Override
+    public boolean hasCdnKey() {
+      return attachmentIdentifierCase_ == 15;
+    }
+    /**
+     * <code>optional string cdnKey = 15;</code>
+     * @return The cdnKey.
+     */
+    @java.lang.Override
+    public java.lang.String getCdnKey() {
+      java.lang.String ref = "";
+      if (attachmentIdentifierCase_ == 15) {
+        ref = (java.lang.String) attachmentIdentifier_;
+      }
+      return ref;
+    }
+    /**
+     * <code>optional string cdnKey = 15;</code>
+     * @return The bytes for cdnKey.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getCdnKeyBytes() {
+      java.lang.String ref = "";
+      if (attachmentIdentifierCase_ == 15) {
+        ref = (java.lang.String) attachmentIdentifier_;
+      }
+      return com.google.protobuf.ByteString.copyFromUtf8(ref);
+    }
+    /**
+     * <code>optional string cdnKey = 15;</code>
+     * @param value The cdnKey to set.
+     */
+    private void setCdnKey(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  attachmentIdentifierCase_ = 15;
+      attachmentIdentifier_ = value;
+    }
+    /**
+     * <code>optional string cdnKey = 15;</code>
+     */
+    private void clearCdnKey() {
+      if (attachmentIdentifierCase_ == 15) {
+        attachmentIdentifierCase_ = 0;
+        attachmentIdentifier_ = null;
+      }
+    }
+    /**
+     * <code>optional string cdnKey = 15;</code>
+     * @param value The bytes for cdnKey to set.
+     */
+    private void setCdnKeyBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  attachmentIdentifierCase_ = 15;
+      attachmentIdentifier_ = value.toStringUtf8();
     }
 
     public static final int CONTENTTYPE_FIELD_NUMBER = 2;
@@ -27735,7 +28291,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasContentType() {
-      return ((bitField0_ & 0x00000002) != 0);
+      return ((bitField0_ & 0x00000004) != 0);
     }
     /**
      * <code>optional string contentType = 2;</code>
@@ -27763,14 +28319,14 @@ public final class SignalServiceProtos {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  bitField0_ |= 0x00000004;
       contentType_ = value;
     }
     /**
      * <code>optional string contentType = 2;</code>
      */
     private void clearContentType() {
-      bitField0_ = (bitField0_ & ~0x00000002);
+      bitField0_ = (bitField0_ & ~0x00000004);
       contentType_ = getDefaultInstance().getContentType();
     }
     /**
@@ -27782,7 +28338,7 @@ public final class SignalServiceProtos {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  bitField0_ |= 0x00000004;
       contentType_ = value.toStringUtf8();
     }
 
@@ -27794,7 +28350,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasKey() {
-      return ((bitField0_ & 0x00000004) != 0);
+      return ((bitField0_ & 0x00000008) != 0);
     }
     /**
      * <code>optional bytes key = 3;</code>
@@ -27812,14 +28368,14 @@ public final class SignalServiceProtos {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  bitField0_ |= 0x00000008;
       key_ = value;
     }
     /**
      * <code>optional bytes key = 3;</code>
      */
     private void clearKey() {
-      bitField0_ = (bitField0_ & ~0x00000004);
+      bitField0_ = (bitField0_ & ~0x00000008);
       key_ = getDefaultInstance().getKey();
     }
 
@@ -27831,7 +28387,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasSize() {
-      return ((bitField0_ & 0x00000008) != 0);
+      return ((bitField0_ & 0x00000010) != 0);
     }
     /**
      * <code>optional uint32 size = 4;</code>
@@ -27846,14 +28402,14 @@ public final class SignalServiceProtos {
      * @param value The size to set.
      */
     private void setSize(int value) {
-      bitField0_ |= 0x00000008;
+      bitField0_ |= 0x00000010;
       size_ = value;
     }
     /**
      * <code>optional uint32 size = 4;</code>
      */
     private void clearSize() {
-      bitField0_ = (bitField0_ & ~0x00000008);
+      bitField0_ = (bitField0_ & ~0x00000010);
       size_ = 0;
     }
 
@@ -27865,7 +28421,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasThumbnail() {
-      return ((bitField0_ & 0x00000010) != 0);
+      return ((bitField0_ & 0x00000020) != 0);
     }
     /**
      * <code>optional bytes thumbnail = 5;</code>
@@ -27883,14 +28439,14 @@ public final class SignalServiceProtos {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000020;
       thumbnail_ = value;
     }
     /**
      * <code>optional bytes thumbnail = 5;</code>
      */
     private void clearThumbnail() {
-      bitField0_ = (bitField0_ & ~0x00000010);
+      bitField0_ = (bitField0_ & ~0x00000020);
       thumbnail_ = getDefaultInstance().getThumbnail();
     }
 
@@ -27902,7 +28458,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasDigest() {
-      return ((bitField0_ & 0x00000020) != 0);
+      return ((bitField0_ & 0x00000040) != 0);
     }
     /**
      * <code>optional bytes digest = 6;</code>
@@ -27920,14 +28476,14 @@ public final class SignalServiceProtos {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000020;
+  bitField0_ |= 0x00000040;
       digest_ = value;
     }
     /**
      * <code>optional bytes digest = 6;</code>
      */
     private void clearDigest() {
-      bitField0_ = (bitField0_ & ~0x00000020);
+      bitField0_ = (bitField0_ & ~0x00000040);
       digest_ = getDefaultInstance().getDigest();
     }
 
@@ -27939,7 +28495,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasFileName() {
-      return ((bitField0_ & 0x00000040) != 0);
+      return ((bitField0_ & 0x00000080) != 0);
     }
     /**
      * <code>optional string fileName = 7;</code>
@@ -27967,14 +28523,14 @@ public final class SignalServiceProtos {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000040;
+  bitField0_ |= 0x00000080;
       fileName_ = value;
     }
     /**
      * <code>optional string fileName = 7;</code>
      */
     private void clearFileName() {
-      bitField0_ = (bitField0_ & ~0x00000040);
+      bitField0_ = (bitField0_ & ~0x00000080);
       fileName_ = getDefaultInstance().getFileName();
     }
     /**
@@ -27986,7 +28542,7 @@ public final class SignalServiceProtos {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000040;
+  bitField0_ |= 0x00000080;
       fileName_ = value.toStringUtf8();
     }
 
@@ -27998,7 +28554,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasFlags() {
-      return ((bitField0_ & 0x00000080) != 0);
+      return ((bitField0_ & 0x00000100) != 0);
     }
     /**
      * <code>optional uint32 flags = 8;</code>
@@ -28013,14 +28569,14 @@ public final class SignalServiceProtos {
      * @param value The flags to set.
      */
     private void setFlags(int value) {
-      bitField0_ |= 0x00000080;
+      bitField0_ |= 0x00000100;
       flags_ = value;
     }
     /**
      * <code>optional uint32 flags = 8;</code>
      */
     private void clearFlags() {
-      bitField0_ = (bitField0_ & ~0x00000080);
+      bitField0_ = (bitField0_ & ~0x00000100);
       flags_ = 0;
     }
 
@@ -28032,7 +28588,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasWidth() {
-      return ((bitField0_ & 0x00000100) != 0);
+      return ((bitField0_ & 0x00000200) != 0);
     }
     /**
      * <code>optional uint32 width = 9;</code>
@@ -28047,14 +28603,14 @@ public final class SignalServiceProtos {
      * @param value The width to set.
      */
     private void setWidth(int value) {
-      bitField0_ |= 0x00000100;
+      bitField0_ |= 0x00000200;
       width_ = value;
     }
     /**
      * <code>optional uint32 width = 9;</code>
      */
     private void clearWidth() {
-      bitField0_ = (bitField0_ & ~0x00000100);
+      bitField0_ = (bitField0_ & ~0x00000200);
       width_ = 0;
     }
 
@@ -28066,7 +28622,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasHeight() {
-      return ((bitField0_ & 0x00000200) != 0);
+      return ((bitField0_ & 0x00000400) != 0);
     }
     /**
      * <code>optional uint32 height = 10;</code>
@@ -28081,14 +28637,14 @@ public final class SignalServiceProtos {
      * @param value The height to set.
      */
     private void setHeight(int value) {
-      bitField0_ |= 0x00000200;
+      bitField0_ |= 0x00000400;
       height_ = value;
     }
     /**
      * <code>optional uint32 height = 10;</code>
      */
     private void clearHeight() {
-      bitField0_ = (bitField0_ & ~0x00000200);
+      bitField0_ = (bitField0_ & ~0x00000400);
       height_ = 0;
     }
 
@@ -28100,7 +28656,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasCaption() {
-      return ((bitField0_ & 0x00000400) != 0);
+      return ((bitField0_ & 0x00000800) != 0);
     }
     /**
      * <code>optional string caption = 11;</code>
@@ -28128,14 +28684,14 @@ public final class SignalServiceProtos {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000400;
+  bitField0_ |= 0x00000800;
       caption_ = value;
     }
     /**
      * <code>optional string caption = 11;</code>
      */
     private void clearCaption() {
-      bitField0_ = (bitField0_ & ~0x00000400);
+      bitField0_ = (bitField0_ & ~0x00000800);
       caption_ = getDefaultInstance().getCaption();
     }
     /**
@@ -28147,7 +28703,7 @@ public final class SignalServiceProtos {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000400;
+  bitField0_ |= 0x00000800;
       caption_ = value.toStringUtf8();
     }
 
@@ -28159,7 +28715,7 @@ public final class SignalServiceProtos {
      */
     @java.lang.Override
     public boolean hasBlurHash() {
-      return ((bitField0_ & 0x00000800) != 0);
+      return ((bitField0_ & 0x00001000) != 0);
     }
     /**
      * <code>optional string blurHash = 12;</code>
@@ -28187,14 +28743,14 @@ public final class SignalServiceProtos {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000800;
+  bitField0_ |= 0x00001000;
       blurHash_ = value;
     }
     /**
      * <code>optional string blurHash = 12;</code>
      */
     private void clearBlurHash() {
-      bitField0_ = (bitField0_ & ~0x00000800);
+      bitField0_ = (bitField0_ & ~0x00001000);
       blurHash_ = getDefaultInstance().getBlurHash();
     }
     /**
@@ -28206,8 +28762,92 @@ public final class SignalServiceProtos {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000800;
+  bitField0_ |= 0x00001000;
       blurHash_ = value.toStringUtf8();
+    }
+
+    public static final int UPLOADTIMESTAMP_FIELD_NUMBER = 13;
+    private long uploadTimestamp_;
+    /**
+     * <code>optional uint64 uploadTimestamp = 13;</code>
+     * @return Whether the uploadTimestamp field is set.
+     */
+    @java.lang.Override
+    public boolean hasUploadTimestamp() {
+      return ((bitField0_ & 0x00002000) != 0);
+    }
+    /**
+     * <code>optional uint64 uploadTimestamp = 13;</code>
+     * @return The uploadTimestamp.
+     */
+    @java.lang.Override
+    public long getUploadTimestamp() {
+      return uploadTimestamp_;
+    }
+    /**
+     * <code>optional uint64 uploadTimestamp = 13;</code>
+     * @param value The uploadTimestamp to set.
+     */
+    private void setUploadTimestamp(long value) {
+      bitField0_ |= 0x00002000;
+      uploadTimestamp_ = value;
+    }
+    /**
+     * <code>optional uint64 uploadTimestamp = 13;</code>
+     */
+    private void clearUploadTimestamp() {
+      bitField0_ = (bitField0_ & ~0x00002000);
+      uploadTimestamp_ = 0L;
+    }
+
+    public static final int CDNNUMBER_FIELD_NUMBER = 14;
+    private int cdnNumber_;
+    /**
+     * <pre>
+     * Next ID: 16
+     * </pre>
+     *
+     * <code>optional uint32 cdnNumber = 14;</code>
+     * @return Whether the cdnNumber field is set.
+     */
+    @java.lang.Override
+    public boolean hasCdnNumber() {
+      return ((bitField0_ & 0x00004000) != 0);
+    }
+    /**
+     * <pre>
+     * Next ID: 16
+     * </pre>
+     *
+     * <code>optional uint32 cdnNumber = 14;</code>
+     * @return The cdnNumber.
+     */
+    @java.lang.Override
+    public int getCdnNumber() {
+      return cdnNumber_;
+    }
+    /**
+     * <pre>
+     * Next ID: 16
+     * </pre>
+     *
+     * <code>optional uint32 cdnNumber = 14;</code>
+     * @param value The cdnNumber to set.
+     */
+    private void setCdnNumber(int value) {
+      bitField0_ |= 0x00004000;
+      cdnNumber_ = value;
+    }
+    /**
+     * <pre>
+     * Next ID: 16
+     * </pre>
+     *
+     * <code>optional uint32 cdnNumber = 14;</code>
+     */
+    private void clearCdnNumber() {
+      bitField0_ = (bitField0_ & ~0x00004000);
+      cdnNumber_ = 0;
     }
 
     public static su.sres.signalservice.internal.push.SignalServiceProtos.AttachmentPointer parseFrom(
@@ -28304,40 +28944,109 @@ public final class SignalServiceProtos {
         super(DEFAULT_INSTANCE);
       }
 
+      @java.lang.Override
+      public AttachmentIdentifierCase
+          getAttachmentIdentifierCase() {
+        return instance.getAttachmentIdentifierCase();
+      }
+
+      public Builder clearAttachmentIdentifier() {
+        copyOnWrite();
+        instance.clearAttachmentIdentifier();
+        return this;
+      }
+
 
       /**
-       * <code>optional fixed64 id = 1;</code>
-       * @return Whether the id field is set.
+       * <code>optional fixed64 cdnId = 1;</code>
+       * @return Whether the cdnId field is set.
        */
       @java.lang.Override
-      public boolean hasId() {
-        return instance.hasId();
+      public boolean hasCdnId() {
+        return instance.hasCdnId();
       }
       /**
-       * <code>optional fixed64 id = 1;</code>
-       * @return The id.
+       * <code>optional fixed64 cdnId = 1;</code>
+       * @return The cdnId.
        */
       @java.lang.Override
-      public long getId() {
-        return instance.getId();
+      public long getCdnId() {
+        return instance.getCdnId();
       }
       /**
-       * <code>optional fixed64 id = 1;</code>
-       * @param value The id to set.
+       * <code>optional fixed64 cdnId = 1;</code>
+       * @param value The cdnId to set.
        * @return This builder for chaining.
        */
-      public Builder setId(long value) {
+      public Builder setCdnId(long value) {
         copyOnWrite();
-        instance.setId(value);
+        instance.setCdnId(value);
         return this;
       }
       /**
-       * <code>optional fixed64 id = 1;</code>
+       * <code>optional fixed64 cdnId = 1;</code>
        * @return This builder for chaining.
        */
-      public Builder clearId() {
+      public Builder clearCdnId() {
         copyOnWrite();
-        instance.clearId();
+        instance.clearCdnId();
+        return this;
+      }
+
+      /**
+       * <code>optional string cdnKey = 15;</code>
+       * @return Whether the cdnKey field is set.
+       */
+      @java.lang.Override
+      public boolean hasCdnKey() {
+        return instance.hasCdnKey();
+      }
+      /**
+       * <code>optional string cdnKey = 15;</code>
+       * @return The cdnKey.
+       */
+      @java.lang.Override
+      public java.lang.String getCdnKey() {
+        return instance.getCdnKey();
+      }
+      /**
+       * <code>optional string cdnKey = 15;</code>
+       * @return The bytes for cdnKey.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getCdnKeyBytes() {
+        return instance.getCdnKeyBytes();
+      }
+      /**
+       * <code>optional string cdnKey = 15;</code>
+       * @param value The cdnKey to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCdnKey(
+          java.lang.String value) {
+        copyOnWrite();
+        instance.setCdnKey(value);
+        return this;
+      }
+      /**
+       * <code>optional string cdnKey = 15;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearCdnKey() {
+        copyOnWrite();
+        instance.clearCdnKey();
+        return this;
+      }
+      /**
+       * <code>optional string cdnKey = 15;</code>
+       * @param value The bytes for cdnKey to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCdnKeyBytes(
+          com.google.protobuf.ByteString value) {
+        copyOnWrite();
+        instance.setCdnKeyBytes(value);
         return this;
       }
 
@@ -28821,6 +29530,94 @@ public final class SignalServiceProtos {
         return this;
       }
 
+      /**
+       * <code>optional uint64 uploadTimestamp = 13;</code>
+       * @return Whether the uploadTimestamp field is set.
+       */
+      @java.lang.Override
+      public boolean hasUploadTimestamp() {
+        return instance.hasUploadTimestamp();
+      }
+      /**
+       * <code>optional uint64 uploadTimestamp = 13;</code>
+       * @return The uploadTimestamp.
+       */
+      @java.lang.Override
+      public long getUploadTimestamp() {
+        return instance.getUploadTimestamp();
+      }
+      /**
+       * <code>optional uint64 uploadTimestamp = 13;</code>
+       * @param value The uploadTimestamp to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUploadTimestamp(long value) {
+        copyOnWrite();
+        instance.setUploadTimestamp(value);
+        return this;
+      }
+      /**
+       * <code>optional uint64 uploadTimestamp = 13;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUploadTimestamp() {
+        copyOnWrite();
+        instance.clearUploadTimestamp();
+        return this;
+      }
+
+      /**
+       * <pre>
+       * Next ID: 16
+       * </pre>
+       *
+       * <code>optional uint32 cdnNumber = 14;</code>
+       * @return Whether the cdnNumber field is set.
+       */
+      @java.lang.Override
+      public boolean hasCdnNumber() {
+        return instance.hasCdnNumber();
+      }
+      /**
+       * <pre>
+       * Next ID: 16
+       * </pre>
+       *
+       * <code>optional uint32 cdnNumber = 14;</code>
+       * @return The cdnNumber.
+       */
+      @java.lang.Override
+      public int getCdnNumber() {
+        return instance.getCdnNumber();
+      }
+      /**
+       * <pre>
+       * Next ID: 16
+       * </pre>
+       *
+       * <code>optional uint32 cdnNumber = 14;</code>
+       * @param value The cdnNumber to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCdnNumber(int value) {
+        copyOnWrite();
+        instance.setCdnNumber(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * Next ID: 16
+       * </pre>
+       *
+       * <code>optional uint32 cdnNumber = 14;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearCdnNumber() {
+        copyOnWrite();
+        instance.clearCdnNumber();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:signalservice.AttachmentPointer)
     }
     @java.lang.Override
@@ -28837,8 +29634,9 @@ public final class SignalServiceProtos {
         }
         case BUILD_MESSAGE_INFO: {
             java.lang.Object[] objects = new java.lang.Object[] {
+              "attachmentIdentifier_",
+              "attachmentIdentifierCase_",
               "bitField0_",
-              "id_",
               "contentType_",
               "key_",
               "size_",
@@ -28850,11 +29648,14 @@ public final class SignalServiceProtos {
               "height_",
               "caption_",
               "blurHash_",
+              "uploadTimestamp_",
+              "cdnNumber_",
             };
             java.lang.String info =
-                "\u0001\f\u0000\u0001\u0001\f\f\u0000\u0000\u0000\u0001\u0005\u0000\u0002\b\u0001" +
-                "\u0003\n\u0002\u0004\u000b\u0003\u0005\n\u0004\u0006\n\u0005\u0007\b\u0006\b\u000b" +
-                "\u0007\t\u000b\b\n\u000b\t\u000b\b\n\f\b\u000b";
+                "\u0001\u000f\u0001\u0001\u0001\u000f\u000f\u0000\u0000\u0000\u00018\u0000\u0002\b" +
+                "\u0002\u0003\n\u0003\u0004\u000b\u0004\u0005\n\u0005\u0006\n\u0006\u0007\b\u0007" +
+                "\b\u000b\b\t\u000b\t\n\u000b\n\u000b\b\u000b\f\b\f\r\u0003\r\u000e\u000b\u000e\u000f" +
+                ";\u0000";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through

@@ -2,8 +2,11 @@ package su.sres.securesms.profiles.edit;
 
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.navigation.NavGraph;
 import androidx.navigation.Navigation;
 
@@ -19,9 +22,15 @@ public class EditProfileActivity extends BaseActionBarActivity implements EditPr
     public static final String EXCLUDE_SYSTEM    = "exclude_system";
     public static final String DISPLAY_USERNAME  = "display_username";
     public static final String NEXT_BUTTON_TEXT  = "next_button_text";
-    public static final String SHOW_TOOLBAR = "show_back_arrow";
+    public static final String SHOW_TOOLBAR      = "show_back_arrow";
 
     private final DynamicTheme dynamicTheme    = new DynamicRegistrationTheme();
+
+    public static @NonNull Intent getIntent(@NonNull Context context, boolean showToolbar) {
+        Intent intent = new Intent(context, EditProfileActivity.class);
+        intent.putExtra(EditProfileActivity.SHOW_TOOLBAR, showToolbar);
+        return intent;
+    }
 
     @Override
     public void onCreate(Bundle bundle) {

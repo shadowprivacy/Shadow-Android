@@ -2,11 +2,9 @@ package su.sres.securesms.attachments;
 
 import android.net.Uri;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.blurhash.BlurHash;
-import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.AttachmentDatabase.TransformProperties;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.stickers.StickerLocator;
@@ -24,13 +22,14 @@ public class DatabaseAttachment extends Attachment {
   public DatabaseAttachment(AttachmentId attachmentId, long mmsId,
                             boolean hasData, boolean hasThumbnail,
                             String contentType, int transferProgress, long size,
-                            String fileName, String location, String key, String relay,
+                            String fileName, int cdnNumber, String location, String key, String relay,
                             byte[] digest, String fastPreflightId, boolean voiceNote,
                             int width, int height, boolean quote, @Nullable String caption,
                             @Nullable StickerLocator stickerLocator, @Nullable BlurHash blurHash,
-                            @Nullable TransformProperties transformProperties, int displayOrder)
+                            @Nullable TransformProperties transformProperties, int displayOrder,
+                            long uploadTimestamp)
   {
-    super(contentType, transferProgress, size, fileName, location, key, relay, digest, fastPreflightId, voiceNote, width, height, quote, caption, stickerLocator, blurHash, transformProperties);
+    super(contentType, transferProgress, size, fileName, cdnNumber, location, key, relay, digest, fastPreflightId, voiceNote, width, height, quote, uploadTimestamp, caption, stickerLocator, blurHash, transformProperties);
     this.attachmentId = attachmentId;
     this.hasData      = hasData;
     this.hasThumbnail = hasThumbnail;

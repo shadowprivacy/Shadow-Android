@@ -12,13 +12,11 @@ import su.sres.securesms.crypto.storage.SignalProtocolStoreImpl;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.events.ReminderUpdateEvent;
 import su.sres.securesms.gcm.MessageRetriever;
-import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobmanager.JobMigrator;
 import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
 import su.sres.securesms.jobs.FastJobStorage;
 import su.sres.securesms.jobs.JobManagerFactories;
-import su.sres.securesms.keyvalue.KeyValueStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.push.SecurityEventListener;
@@ -26,12 +24,16 @@ import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.IncomingMessageObserver;
 import su.sres.securesms.util.AlarmSleepTimer;
+import su.sres.securesms.util.EarlyMessageCache;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.SignalServiceMessageSender;
+import su.sres.signalservice.api.groupsv2.ClientZkOperations;
+import su.sres.signalservice.api.groupsv2.GroupsV2Operations;
 import su.sres.signalservice.api.util.CredentialsProvider;
 import su.sres.signalservice.api.util.SleepTimer;
 import su.sres.signalservice.api.util.UptimeSleepTimer;
@@ -54,12 +56,24 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
         this.networkAccess = networkAccess;
     }
 
+    private @NonNull
+    ClientZkOperations provideClientZkOperations() {
+        return ClientZkOperations.create(networkAccess.getConfiguration(context));
+    }
+
+    @Override
+    public @NonNull
+    GroupsV2Operations provideGroupsV2Operations() {
+        return new GroupsV2Operations(provideClientZkOperations());
+    }
+
     @Override
     public @NonNull SignalServiceAccountManager provideSignalServiceAccountManager() {
         networkAccess.renewConfiguration(context);
         return new SignalServiceAccountManager(networkAccess.getConfiguration(context),
                 new DynamicCredentialsProvider(context),
-                BuildConfig.SIGNAL_AGENT);
+                BuildConfig.SIGNAL_AGENT,
+                provideGroupsV2Operations());
     }
 
     @Override
@@ -70,9 +84,11 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
                 new SignalProtocolStoreImpl(context),
                 BuildConfig.SIGNAL_AGENT,
                 TextSecurePreferences.isMultiDevice(context),
+                FeatureFlags.attachmentsV3(),
                 Optional.fromNullable(IncomingMessageObserver.getPipe()),
                 Optional.fromNullable(IncomingMessageObserver.getUnidentifiedPipe()),
-                Optional.of(new SecurityEventListener(context)));
+                Optional.of(new SecurityEventListener(context)),
+                provideClientZkOperations().getProfileOperations());
     }
 
     @Override
@@ -84,7 +100,8 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
                 new DynamicCredentialsProvider(context),
                 BuildConfig.SIGNAL_AGENT,
                 new PipeConnectivityListener(),
-                sleepTimer);
+                sleepTimer,
+                provideClientZkOperations().getProfileOperations());
     }
 
     @Override
@@ -132,6 +149,11 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     @Override
     public @NonNull MegaphoneRepository provideMegaphoneRepository() {
         return new MegaphoneRepository(context);
+    }
+
+    @Override
+    public @NonNull EarlyMessageCache provideEarlyMessageCache() {
+        return new EarlyMessageCache();
     }
 
     private static class DynamicCredentialsProvider implements CredentialsProvider {

@@ -36,6 +36,8 @@ import android.text.style.BackgroundColorSpan;
 import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
+import android.text.style.StyleSpan;
 import android.text.style.URLSpan;
 import android.text.util.Linkify;
 import android.util.AttributeSet;
@@ -55,7 +57,6 @@ import su.sres.securesms.logging.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -522,7 +523,14 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     bodyText.setFocusable(false);
     bodyText.setTextSize(TypedValue.COMPLEX_UNIT_SP, TextSecurePreferences.getMessageBodyTextSize(context));
 
-    if (isCaptionlessMms(messageRecord)) {
+    if (messageRecord.isRemoteDelete()) {
+      String deletedMessage = context.getString(R.string.ConversationItem_this_message_was_deleted);
+      SpannableString italics = new SpannableString(deletedMessage);
+      italics.setSpan(new RelativeSizeSpan(0.9f), 0, deletedMessage.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+      italics.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC), 0, deletedMessage.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+      bodyText.setText(italics);
+    } else if (isCaptionlessMms(messageRecord)) {
       bodyText.setVisibility(View.GONE);
     } else {
       Spannable styledText = linkifyMessageBody(messageRecord.getDisplayBody(getContext()), batchSelected.isEmpty());
@@ -910,10 +918,6 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     if (current.getReactions().isEmpty()) {
       reactionsView.clear();
       return;
-    }
-
-    if (bodyBubble.getWidth() != 0) {
-      setReactionsWithWidth(current, bodyBubble.getWidth());
     }
 
     bodyBubble.setOnSizeChangedListener((width, height) -> setReactionsWithWidth(current, width));

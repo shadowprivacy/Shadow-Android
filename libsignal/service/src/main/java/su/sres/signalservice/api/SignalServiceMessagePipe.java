@@ -26,7 +26,8 @@ import su.sres.signalservice.api.profiles.ProfileAndCredential;
 import su.sres.signalservice.api.profiles.SignalServiceProfile;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.util.CredentialsProvider;
-import su.sres.signalservice.internal.push.AttachmentUploadAttributes;
+import su.sres.signalservice.internal.push.AttachmentV2UploadAttributes;
+import su.sres.signalservice.internal.push.AttachmentV3UploadAttributes;
 import su.sres.signalservice.internal.push.OutgoingPushMessageList;
 import su.sres.signalservice.internal.push.SendMessageResponse;
 import su.sres.signalservice.internal.util.JsonUtil;
@@ -221,7 +222,7 @@ public class SignalServiceMessagePipe {
     }
   }
 
-  public AttachmentUploadAttributes getAttachmentUploadAttributes() throws IOException {
+  public AttachmentV2UploadAttributes getAttachmentV2UploadAttributes() throws IOException {
     try {
       WebSocketRequestMessage requestMessage = WebSocketRequestMessage.newBuilder()
               .setId(new SecureRandom().nextLong())
@@ -235,7 +236,27 @@ public class SignalServiceMessagePipe {
         throw new IOException("Non-successful response: " + response.first());
       }
 
-      return JsonUtil.fromJson(response.second(), AttachmentUploadAttributes.class);
+      return JsonUtil.fromJson(response.second(), AttachmentV2UploadAttributes.class);
+    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+      throw new IOException(e);
+    }
+  }
+
+  public AttachmentV3UploadAttributes getAttachmentV3UploadAttributes() throws IOException {
+    try {
+      WebSocketRequestMessage requestMessage = WebSocketRequestMessage.newBuilder()
+              .setId(new SecureRandom().nextLong())
+              .setVerb("GET")
+              .setPath("/v3/attachments/form/upload")
+              .build();
+
+      Pair<Integer, String> response = websocket.sendRequest(requestMessage).get(10, TimeUnit.SECONDS);
+
+      if (response.first() < 200 || response.first() >= 300) {
+        throw new IOException("Non-successful response: " + response.first());
+      }
+
+      return JsonUtil.fromJson(response.second(), AttachmentV3UploadAttributes.class);
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
       throw new IOException(e);
     }

@@ -248,6 +248,7 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
       }
       glideRequests.load(new DecryptableUri(imageVideoSlides.get(0).getThumbnailUri()))
                    .centerCrop()
+                   .override(getContext().getResources().getDimensionPixelSize(R.dimen.quote_thumb_size))
                    .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                    .into(thumbnailView);
     } else if (!documentSlides.isEmpty()){

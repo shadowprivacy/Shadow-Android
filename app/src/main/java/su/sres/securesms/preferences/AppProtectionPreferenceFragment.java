@@ -17,14 +17,12 @@ import su.sres.securesms.PassphraseChangeActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.SwitchPreferenceCompat;
 import su.sres.securesms.crypto.MasterSecretUtil;
-import su.sres.securesms.database.Database;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceConfigurationUpdateJob;
 import su.sres.securesms.jobs.RefreshAttributesJob;
-import su.sres.securesms.jobs.StorageSyncJob;
-import su.sres.securesms.lock.RegistrationLockDialog;
+import su.sres.securesms.lock.RegistrationLockV1Dialog;
+import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.storage.StorageSyncHelper;
@@ -41,6 +39,8 @@ import java.util.concurrent.TimeUnit;
 import mobi.upod.timedurationpicker.TimeDurationPickerDialog;
 
 public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment  {
+
+  private static final String TAG = Log.tag(AppProtectionPreferenceFragment.class);
 
   private static final String PREFERENCE_CATEGORY_BLOCKED        = "preference_category_blocked";
   private static final String PREFERENCE_UNIDENTIFIED_LEARN_MORE = "pref_unidentified_learn_more";
@@ -160,9 +160,9 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
       SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
 
       if (((SwitchPreferenceCompat)preference).isChecked()) {
-        RegistrationLockDialog.showRegistrationUnlockPrompt(getContext(), (SwitchPreferenceCompat)preference, accountManager);
+        RegistrationLockV1Dialog.showRegistrationUnlockPrompt(getContext(), (SwitchPreferenceCompat)preference, accountManager);
       } else {
-        RegistrationLockDialog.showRegistrationLockPrompt(getContext(), (SwitchPreferenceCompat)preference, accountManager);
+        RegistrationLockV1Dialog.showRegistrationLockPrompt(getContext(), (SwitchPreferenceCompat)preference, accountManager);
       }
 
       return true;

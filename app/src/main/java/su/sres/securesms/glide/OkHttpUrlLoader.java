@@ -15,6 +15,7 @@ import su.sres.securesms.net.UserAgentInterceptor;
 import java.io.InputStream;
 
 import okhttp3.OkHttpClient;
+import su.sres.securesms.push.SignalServiceNetworkAccess;
 
 /**
  * A simple model loader for fetching media over http/https using OkHttp.
@@ -48,7 +49,8 @@ public class OkHttpUrlLoader implements ModelLoader<GlideUrl, InputStream> {
             internalClient = new OkHttpClient.Builder()
                     .proxySelector(new ContentProxySelector())
                     .addInterceptor(new UserAgentInterceptor())
-                                             .build();
+                    .dns(SignalServiceNetworkAccess.DNS)
+                    .build();
           }
         }
       }

@@ -1,7 +1,6 @@
 package su.sres.securesms.registration.service;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.AsyncTask;
 
 import androidx.annotation.NonNull;
@@ -9,10 +8,10 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.R;
 import su.sres.securesms.events.ServerCertErrorEvent;
+import su.sres.securesms.jobs.CertificateRefreshJob;
 import su.sres.securesms.jobs.StickerPackDownloadJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.push.SignalServiceTrustStore;
-import su.sres.securesms.service.CertificateRefreshService;
 import su.sres.securesms.stickers.BlessedPacks;
 import su.sres.signalservice.api.messages.calls.SystemCertificates;
 import su.sres.signalservice.api.push.TrustStore;
@@ -50,7 +49,9 @@ import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.crypto.UnidentifiedAccess;
 import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
 import su.sres.signalservice.api.push.exceptions.RateLimitException;
+import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.push.LockedException;
+import su.sres.signalservice.internal.push.VerifyAccountResponse;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
@@ -67,7 +68,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static su.sres.securesms.InitialActivity.TRUSTSTORE_FILE_NAME;
-import static su.sres.securesms.service.CertificateRefreshService.CERT_ALIASES;
+import static su.sres.securesms.jobs.CertificateRefreshJob.CERT_ALIASES;
 
 public final class CodeVerificationRequest {
 
@@ -168,10 +169,12 @@ public final class CodeVerificationRequest {
 
         SignalServiceAccountManager accountManager = AccountManagerFactory.createUnauthenticated(context, credentials.getE164number(), credentials.getPassword());
 
-        boolean present = fcmToken != null;
+        boolean hasFcm = fcmToken != null;
 
-        UUID uuid = accountManager.verifyAccountWithCode(code, null, registrationId, !present, pin, unidentifiedAccessKey, universalUnidentifiedAccess,
-                AppCapabilities.getCapabilities());
+        VerifyAccountResponse response = accountManager.verifyAccountWithCode(code, null, registrationId, !hasFcm, pin, unidentifiedAccessKey, universalUnidentifiedAccess,
+                AppCapabilities.getCapabilities(true));
+
+        UUID    uuid   = UuidUtil.parseOrThrow(response.getUuid());
 
         IdentityKeyPair identityKey = IdentityKeyUtil.getIdentityKeyPair(context);
         List<PreKeyRecord> records = PreKeyUtil.generatePreKeys(context);
@@ -180,7 +183,7 @@ public final class CodeVerificationRequest {
         accountManager = AccountManagerFactory.createAuthenticated(context, uuid, credentials.getE164number(), credentials.getPassword());
         accountManager.setPreKeys(identityKey.getPublicKey(), signedPreKey, records);
 
-        if (present) {
+        if (hasFcm) {
             accountManager.setGcmId(Optional.fromNullable(fcmToken));
         }
 
@@ -210,6 +213,7 @@ public final class CodeVerificationRequest {
         ) {
 
             SignalStore.serviceConfigurationValues().setCloudUrl(cloudUrl);
+            SignalStore.serviceConfigurationValues().setCloud2Url(cloudUrl);
             SignalStore.serviceConfigurationValues().setStorageUrl(storageUrl);
             SignalStore.serviceConfigurationValues().setStatusUrl(statusUrl);
             SignalStore.serviceConfigurationValues().setUnidentifiedAccessCaPublicKey(unidentifiedAccessCaPublicKey);
@@ -224,24 +228,24 @@ public final class CodeVerificationRequest {
 
                 CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
 
-                    // if no cert is present, just skip to the next one
-                    if (cloudCertABytes != null) {
+                // if no cert is present, just skip to the next one
+                if (cloudCertABytes != null) {
 
-                        InputStream cloudCertAInputStream = new ByteArrayInputStream(cloudCertABytes);
-                        X509Certificate cloudCertA = (X509Certificate) certFactory.generateCertificate(cloudCertAInputStream);
+                    InputStream cloudCertAInputStream = new ByteArrayInputStream(cloudCertABytes);
+                    X509Certificate cloudCertA = (X509Certificate) certFactory.generateCertificate(cloudCertAInputStream);
 
-                        // at registration we don't allow expired certs, those will be caught by CertificateException below; not yet valid is OK
-                        try {
-                            cloudCertA.checkValidity();
-                        }  catch (CertificateNotYetValidException e) {
-                            Log.i(TAG, "cloudCertA not yet valid, adding anyway");
-                        }
-
-                        shadowStore.setCertificateEntry(CERT_ALIASES[0], cloudCertA);
-                        Log.i(TAG, "cloudCertA added");
-                    } else {
-                        Log.i(TAG, "cloudCertA is missing. Skipping");
+                    // at registration we don't allow expired certs, those will be caught by CertificateException below; not yet valid is OK
+                    try {
+                        cloudCertA.checkValidity();
+                    } catch (CertificateNotYetValidException e) {
+                        Log.i(TAG, "cloudCertA not yet valid, adding anyway");
                     }
+
+                    shadowStore.setCertificateEntry(CERT_ALIASES[0], cloudCertA);
+                    Log.i(TAG, "cloudCertA added");
+                } else {
+                    Log.i(TAG, "cloudCertA is missing. Skipping");
+                }
 
                 if (cloudCertBBytes != null) {
 
@@ -250,7 +254,7 @@ public final class CodeVerificationRequest {
 
                     try {
                         cloudCertB.checkValidity();
-                    }  catch (CertificateNotYetValidException e) {
+                    } catch (CertificateNotYetValidException e) {
                         Log.i(TAG, "cloudCertB not yet valid, adding anyway");
                     }
 
@@ -267,7 +271,7 @@ public final class CodeVerificationRequest {
 
                     try {
                         storageCertA.checkValidity();
-                    }  catch (CertificateNotYetValidException e) {
+                    } catch (CertificateNotYetValidException e) {
                         Log.i(TAG, "storageCertA not yet valid, adding anyway");
                     }
 
@@ -284,7 +288,7 @@ public final class CodeVerificationRequest {
 
                     try {
                         storageCertB.checkValidity();
-                    }  catch (CertificateNotYetValidException e) {
+                    } catch (CertificateNotYetValidException e) {
                         Log.i(TAG, "storageCertB not yet valid, adding anyway");
                     }
 
@@ -305,16 +309,6 @@ public final class CodeVerificationRequest {
                 EventBus.getDefault().post(new ServerCertErrorEvent(R.string.certificate_load_unsuccessful));
             }
 
-            //  We do not want to update the cert version here; should be done within the refresh procedure. Thus each new registration will have ver 1 initially.
-            //  SignalStore.serviceConfigurationValues().setCurrentCertVer(accountManager.getCertVer().getCertsVersion());
-
-            // launching the certs refresh service from here
-            Intent intent = new Intent(context, CertificateRefreshService.class);
-            intent.putExtra("UUID", uuid.toString())
-                  .putExtra("e164number", credentials.getE164number())
-                  .putExtra("password", credentials.getPassword());
-            context.startService(intent);
-
         } else {
             EventBus.getDefault().post(new ServerCertErrorEvent(R.string.certificate_load_unsuccessful));
         }
@@ -331,7 +325,7 @@ public final class CodeVerificationRequest {
             ApplicationDependencies.getRecipientCache().clearSelf();
 
             TextSecurePreferences.setFcmToken(context, fcmToken);
-            TextSecurePreferences.setFcmDisabled(context, !present);
+            TextSecurePreferences.setFcmDisabled(context, !hasFcm);
             TextSecurePreferences.setWebsocketRegistered(context, true);
 
             DatabaseFactory.getIdentityDatabase(context)
@@ -345,6 +339,8 @@ public final class CodeVerificationRequest {
             TextSecurePreferences.setSignedPreKeyRegistered(context, true);
             TextSecurePreferences.setPromptedPushRegistration(context, true);
             TextSecurePreferences.setUnauthorizedReceived(context, false);
+
+            CertificateRefreshJob.scheduleIfNecessary();
 
             loadStickers(context);
     }

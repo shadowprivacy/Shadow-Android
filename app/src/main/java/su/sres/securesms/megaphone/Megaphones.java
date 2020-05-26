@@ -11,7 +11,6 @@ import com.annimon.stream.Stream;
 import su.sres.securesms.R;
 import su.sres.securesms.conversationlist.ConversationListFragment;
 import su.sres.securesms.database.model.MegaphoneRecord;
-import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.messagerequests.MessageRequestMegaphoneActivity;
 import su.sres.securesms.profiles.ProfileName;
@@ -19,7 +18,6 @@ import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.TextSecurePreferences;
 
 import java.util.LinkedHashMap;
 import java.util.List;

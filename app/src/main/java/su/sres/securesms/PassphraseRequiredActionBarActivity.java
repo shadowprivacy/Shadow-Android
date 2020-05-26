@@ -31,6 +31,7 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
   private static final String TAG = PassphraseRequiredActionBarActivity.class.getSimpleName();
 
   public static final String LOCALE_EXTRA = "locale_extra";
+  public static final String NEXT_INTENT_EXTRA = "next_intent";
 
   private static final int STATE_NORMAL              = 0;
   private static final int STATE_CREATE_PASSPHRASE   = 1;
@@ -170,7 +171,7 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
   }
 
   private boolean userMustSetProfileName() {
-    return !SignalStore.registrationValues().isRegistrationComplete() && Recipient.self().getProfileName() == ProfileName.EMPTY;
+    return !SignalStore.registrationValues().isRegistrationComplete() && Recipient.self().getProfileName().isEmpty();
   }
 
   private Intent getCreatePassphraseIntent() {
@@ -225,5 +226,13 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
       context.unregisterReceiver(clearKeyReceiver);
       clearKeyReceiver = null;
     }
+  }
+
+  /**
+   * Puts an extra in {@code intent} so that {@code nextIntent} will be shown after it.
+   */
+  public static @NonNull Intent chainIntent(@NonNull Intent intent, @NonNull Intent nextIntent) {
+    intent.putExtra(NEXT_INTENT_EXTRA, nextIntent);
+    return intent;
   }
 }

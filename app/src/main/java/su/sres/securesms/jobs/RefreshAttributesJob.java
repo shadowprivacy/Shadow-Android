@@ -47,6 +47,11 @@ public class RefreshAttributesJob extends BaseJob  {
 
   @Override
   public void onRun() throws IOException {
+    if (!TextSecurePreferences.isPushRegistered(context)) {
+      Log.w(TAG, "Not yet registered. Skipping.");
+      return;
+    }
+
     int     registrationId              = TextSecurePreferences.getLocalRegistrationId(context);
     boolean fetchesMessages             = TextSecurePreferences.isFcmDisabled(context);
     String  pin                         = TextSecurePreferences.getRegistrationLockPin(context);
@@ -56,7 +61,9 @@ public class RefreshAttributesJob extends BaseJob  {
     SignalServiceAccountManager signalAccountManager = ApplicationDependencies.getSignalServiceAccountManager();
     signalAccountManager.setAccountAttributes(null, registrationId, fetchesMessages, pin,
             unidentifiedAccessKey, universalUnidentifiedAccess,
-            AppCapabilities.getCapabilities());
+
+            // dummy true instead of checking whether the client has a PIN
+            AppCapabilities.getCapabilities(true));
 
   }
 

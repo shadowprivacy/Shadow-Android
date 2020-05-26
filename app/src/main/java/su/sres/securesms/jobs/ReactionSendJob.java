@@ -22,12 +22,13 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.transport.RetryLaterException;
 import org.whispersystems.libsignal.util.guava.Optional;
+
+import su.sres.securesms.util.GroupUtil;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SendMessageResult;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
-import su.sres.signalservice.api.messages.SignalServiceGroup;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.io.IOException;
@@ -216,7 +217,7 @@ public class ReactionSendJob extends BaseJob {
                 .withReaction(buildReaction(context, reaction, remove, targetAuthor, targetSentTimestamp));
 
         if (conversationRecipient.isGroup()) {
-            dataMessage.asGroupMessage(new SignalServiceGroup(conversationRecipient.requireGroupId().getDecodedId()));
+            GroupUtil.setDataMessageGroupContext(context, dataMessage, conversationRecipient.requireGroupId().requirePush());
         }
 
 

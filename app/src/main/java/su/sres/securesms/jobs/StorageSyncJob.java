@@ -86,10 +86,10 @@ public class StorageSyncJob extends BaseJob {
 
     @Override
     protected void onRun() throws IOException, RetryLaterException {
-        if (!FeatureFlags.storageService()) {
-            Log.i(TAG, "Not enabled. Skipping.");
-            return;
-        }
+ //       if (!FeatureFlags.pinsForAll()) {
+ //           Log.i(TAG, "Not enabled. Skipping.");
+ //           return;
+ //       }
 
         if (!TextSecurePreferences.isPushRegistered(context)) {
             Log.i(TAG, "Not registered. Skipping.");
@@ -127,7 +127,7 @@ public class StorageSyncJob extends BaseJob {
         SignalServiceAccountManager accountManager     = ApplicationDependencies.getSignalServiceAccountManager();
         RecipientDatabase           recipientDatabase  = DatabaseFactory.getRecipientDatabase(context);
         StorageKeyDatabase          storageKeyDatabase = DatabaseFactory.getStorageKeyDatabase(context);
-        StorageKey                  storageServiceKey  = SignalStore.storageServiceValues().getOrCreateStorageMasterKey().deriveStorageServiceKey();
+        StorageKey                  storageServiceKey  = SignalStore.storageServiceValues().getOrCreateStorageKey();
 
         boolean                         needsMultiDeviceSync  = false;
         long                            localManifestVersion  = TextSecurePreferences.getStorageManifestVersion(context);

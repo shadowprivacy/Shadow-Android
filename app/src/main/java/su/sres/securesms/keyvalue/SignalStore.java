@@ -1,10 +1,10 @@
 package su.sres.securesms.keyvalue;
 
 import androidx.annotation.NonNull;
+import androidx.preference.PreferenceDataStore;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.SignalUncaughtExceptionHandler;
-import su.sres.securesms.util.FeatureFlags;
 
 /**
  * Simple, encrypted key-value store.
@@ -13,6 +13,7 @@ public final class SignalStore {
 
     private static final String LAST_PREKEY_REFRESH_TIME      = "last_prekey_refresh_time";
     private static final String MESSAGE_REQUEST_ENABLE_TIME   = "message_request_enable_time";
+    private static final String LAST_CERT_REFRESH_TIME        = "last_cert_refresh_time";
 
     private SignalStore() {}
 
@@ -48,12 +49,25 @@ public final class SignalStore {
         putLong(LAST_PREKEY_REFRESH_TIME, time);
     }
 
+    public static long getLastCertRefreshTime() {
+        return getStore().getLong(LAST_CERT_REFRESH_TIME, 0);
+    }
+
+    public static void setLastCertRefreshTime(long time) {
+        putLong(LAST_CERT_REFRESH_TIME, time);
+    }
+
     public static long getMessageRequestEnableTime() {
         return getStore().getLong(MESSAGE_REQUEST_ENABLE_TIME, 0);
     }
 
     public static void setMessageRequestEnableTime(long time) {
         putLong(MESSAGE_REQUEST_ENABLE_TIME, time);
+    }
+
+    public static @NonNull
+    PreferenceDataStore getPreferenceDataStore() {
+        return new SignalPreferenceDataStore(getStore());
     }
 
     /**

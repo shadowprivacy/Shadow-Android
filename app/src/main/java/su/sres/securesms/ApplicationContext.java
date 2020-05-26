@@ -21,7 +21,6 @@ import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
@@ -39,6 +38,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.dependencies.ApplicationDependencyProvider;
 import su.sres.securesms.dependencies.NetworkIndependentProvider;
 import su.sres.securesms.gcm.FcmJobService;
+import su.sres.securesms.jobs.CertificateRefreshJob;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
@@ -57,7 +57,6 @@ import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.revealable.ViewOnceMessageManager;
 import su.sres.securesms.ringrtc.RingRtcLogger;
-import su.sres.securesms.service.CertificateRefreshService;
 import su.sres.securesms.service.DirectoryRefreshListener;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.service.IncomingMessageObserver;
@@ -79,7 +78,6 @@ import org.whispersystems.libsignal.logging.SignalProtocolLoggerProvider;
 import java.security.Security;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -125,6 +123,9 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeCrashHandling();
     initializeNetworkIndependentProvider();
 
+    // remove after testing
+      Log.w(TAG, "initializedOnCreate = " + initializedOnCreate);
+
       initWorker.execute(() -> {
 
         while(!initializedOnCreate) {
@@ -166,7 +167,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
           ApplicationDependencies.getRecipientCache().warmUp();
           ApplicationDependencies.getFrameRateTracker().begin();
           ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
-          checkCertificateRefresh();
 
           initializedOnStart = true;
 
@@ -407,7 +407,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 //    random.nextBytes(masterKey);
 
     // set just a filler for now
-    SignalStore.kbsValues().setRegistrationLockMasterKey(SignalStore.kbsValues().getOrCreateMasterKey());
+    SignalStore.kbsValues().setKbsMasterKey(SignalStore.kbsValues().getOrCreateMasterKey());
   }
 
   @Override
@@ -440,24 +440,16 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     ApplicationDependencies.getJobManager().beginJobLoop();
     StorageSyncHelper.scheduleRoutineSync();
     RefreshPreKeysJob.scheduleIfNecessary();
+    launchCertificateRefresh();
 
     initializedOnCreate = true;
   }
 
-  private void checkCertificateRefresh() {
-      if (TextSecurePreferences.isPushRegistered(this) && !CertificateRefreshService.isServiceCreated()) {
-
-          UUID uuid = TextSecurePreferences.getLocalUuid(this);
-          String e164number = TextSecurePreferences.getLocalNumber(this);
-          String password = TextSecurePreferences.getPushServerPassword(this);
-
-          Intent intent = new Intent(this, CertificateRefreshService.class);
-          intent.putExtra("UUID", uuid.toString())
-                  .putExtra("e164number", e164number)
-                  .putExtra("password", password);
-          startService(intent);
+  private void launchCertificateRefresh() {
+      if (TextSecurePreferences.isPushRegistered(this)) {
+          CertificateRefreshJob.scheduleIfNecessary();
       } else {
-          Log.i(TAG, "The cert refresh service is already running or the client is not registered");
+          Log.i(TAG, "The client is not registered. Certificate refresh will not be triggered.");
       }
   }
 }

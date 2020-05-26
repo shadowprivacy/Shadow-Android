@@ -1,8 +1,5 @@
 package su.sres.securesms.registration.fragments;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -17,6 +14,7 @@ import androidx.navigation.ActivityNavigator;
 
 import su.sres.securesms.MainActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.profiles.edit.EditProfileActivity;
 
@@ -38,9 +36,7 @@ public final class RegistrationCompleteFragment extends BaseRegistrationFragment
 
         if (!isReregister()) {
             final Intent main    = new Intent(activity, MainActivity.class);
-            final Intent profile = new Intent(activity, EditProfileActivity.class);
-
-            profile.putExtra(EditProfileActivity.SHOW_TOOLBAR, false);
+            final Intent profile = EditProfileActivity.getIntent(activity, false);
 
             activity.startActivity(chainIntents(profile, main));
 

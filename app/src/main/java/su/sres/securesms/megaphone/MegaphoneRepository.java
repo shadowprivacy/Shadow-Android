@@ -2,7 +2,7 @@ package su.sres.securesms.megaphone;
 
 import android.content.Context;
 
-import androidx.annotation.MainThread;
+import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
@@ -46,7 +46,7 @@ public class MegaphoneRepository {
     /**
      * Marks any megaphones a new user shouldn't see as "finished".
      */
-    @MainThread
+    @AnyThread
     public void onFirstEverAppLaunch() {
         executor.execute(() -> {
             database.markFinished(Event.REACTIONS);
@@ -55,12 +55,12 @@ public class MegaphoneRepository {
         });
     }
 
-    @MainThread
+    @AnyThread
     public void onAppForegrounded() {
         executor.execute(() -> enabled = true);
     }
 
-    @MainThread
+    @AnyThread
     public void getNextMegaphone(@NonNull Callback<Megaphone> callback) {
         executor.execute(() -> {
             if (enabled) {
@@ -72,7 +72,7 @@ public class MegaphoneRepository {
         });
     }
 
-    @MainThread
+    @AnyThread
     public void markVisible(@NonNull Megaphones.Event event) {
         long time = System.currentTimeMillis();
 
@@ -84,7 +84,7 @@ public class MegaphoneRepository {
         });
     }
 
-    @MainThread
+    @AnyThread
     public void markSeen(@NonNull Event event) {
         long lastSeen = System.currentTimeMillis();
 
@@ -98,7 +98,7 @@ public class MegaphoneRepository {
         });
     }
 
-    @MainThread
+    @AnyThread
     public void markFinished(@NonNull Event event) {
         executor.execute(() -> {
             database.markFinished(event);

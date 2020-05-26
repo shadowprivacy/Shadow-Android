@@ -14,6 +14,7 @@ public final class SignalServiceMetadataProtobufSerializer {
                 .setSenderDevice(metadata.getSenderDevice())
                 .setNeedsReceipt(metadata.isNeedsReceipt())
                 .setTimestamp(metadata.getTimestamp())
+                .setServerTimestamp(metadata.getServerTimestamp())
                 .build();
     }
 
@@ -21,6 +22,7 @@ public final class SignalServiceMetadataProtobufSerializer {
         return new SignalServiceMetadata(SignalServiceAddressProtobufSerializer.fromProtobuf(metadata.getAddress()),
                 metadata.getSenderDevice(),
                 metadata.getTimestamp(),
+                metadata.getServerTimestamp(),
                 metadata.getNeedsReceipt());
     }
 }
