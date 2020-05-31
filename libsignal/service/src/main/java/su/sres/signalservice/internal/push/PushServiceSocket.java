@@ -613,7 +613,7 @@ public class PushServiceSocket {
   public void retrieveProfileAvatar(String path, File destination, long maxSizeBytes)
           throws NonSuccessfulResponseCodeException, PushNetworkException {
       try {
-          downloadFromCdn(destination, 0, path, maxSizeBytes, null);
+          downloadFromCdn(destination, 0, PROFILE_BUCKET_PATH + path, maxSizeBytes, null);
       } catch (MissingConfigurationException e) {
           throw new AssertionError(e);
       }
