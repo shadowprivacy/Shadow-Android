@@ -1,5 +1,8 @@
 package su.sres.securesms.registration;
 
+import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.jobs.DirectoryRefreshJob;
+import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
@@ -17,10 +20,14 @@ public final class RegistrationUtil {
      * requirements are met.
      */
     public static void markRegistrationPossiblyComplete() {
-        if (!Recipient.self().getProfileName().isEmpty()) {
+        if (!SignalStore.registrationValues().isRegistrationComplete() && !Recipient.self().getProfileName().isEmpty()) {
             Log.i(TAG, "Marking registration completed.", new Throwable());
             SignalStore.registrationValues().setRegistrationComplete();
-            StorageSyncHelper.scheduleSyncForDataChange();
+            ApplicationDependencies.getJobManager().startChain(new StorageSyncJob())
+                    .then(new DirectoryRefreshJob(false))
+                    .enqueue();
+        } else if (!SignalStore.registrationValues().isRegistrationComplete()) {
+            Log.i(TAG, "Registration is not yet complete.", new Throwable());
         }
     }
 }

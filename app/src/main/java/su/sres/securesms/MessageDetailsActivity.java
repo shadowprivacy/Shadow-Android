@@ -62,6 +62,8 @@ import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.ExpirationUtil;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.util.concurrent.SignalExecutors;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.lang.ref.WeakReference;
@@ -440,8 +442,8 @@ public class MessageDetailsActivity extends PassphraseRequiredActionBarActivity 
     }
 
     private void onResendClicked(View v) {
-      MessageSender.resend(MessageDetailsActivity.this, messageRecord);
       resendButton.setVisibility(View.GONE);
+      SignalExecutors.BOUNDED.execute(() -> MessageSender.resend(MessageDetailsActivity.this, messageRecord));
     }
 
   }

@@ -16,6 +16,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 import org.signal.zkgroup.profiles.ProfileKey;
 import org.signal.zkgroup.profiles.ProfileKeyCredential;
 import su.sres.securesms.color.MaterialColor;
+import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.storage.StorageSyncHelper.RecordUpdate;
 import su.sres.securesms.storage.StorageSyncModels;
@@ -396,9 +397,9 @@ public class RecipientDatabase extends Database {
     try (Cursor cursor = database.query(table, RECIPIENT_FULL_PROJECTION, query, args, null, null, null)) {
 
       if (cursor != null && cursor.moveToNext()) {
-        return getRecipientSettings(cursor);
+        return getRecipientSettings(context, cursor);
       } else {
-        throw new MissingRecipientError(id);
+          throw new MissingRecipientException(id);
       }
     }
   }
@@ -684,7 +685,7 @@ public class RecipientDatabase extends Database {
 
     try (Cursor cursor = db.query(table, RECIPIENT_FULL_PROJECTION, query, args, null, null, null)) {
       while (cursor != null && cursor.moveToNext()) {
-        out.add(getRecipientSettings(cursor));
+        out.add(getRecipientSettings(context, cursor));
       }
     }
 
@@ -725,7 +726,7 @@ public class RecipientDatabase extends Database {
     return out;
   }
 
-  private static @NonNull RecipientSettings getRecipientSettings(@NonNull Cursor cursor) {
+  private static @NonNull RecipientSettings getRecipientSettings(@NonNull Context context, @NonNull Cursor cursor) {
     long    id                         = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
     UUID    uuid                       = UuidUtil.parseOrNull(cursor.getString(cursor.getColumnIndexOrThrow(UUID)));
     String  username                   = cursor.getString(cursor.getColumnIndexOrThrow(USERNAME));
@@ -806,7 +807,8 @@ public class RecipientDatabase extends Database {
             profileKey, profileKeyCredential,
             systemDisplayName, systemContactPhoto,
             systemPhoneLabel, systemContactUri,
-            ProfileName.fromParts(profileGivenName, profileFamilyName), signalProfileAvatar, profileSharing,
+            ProfileName.fromParts(profileGivenName, profileFamilyName), signalProfileAvatar,
+            AvatarHelper.hasAvatar(context, RecipientId.from(id)), profileSharing,
             notificationChannel, UnidentifiedAccessMode.fromMode(unidentifiedAccessMode),
             forceSmsSelection,
             Recipient.Capability.deserialize(uuidCapabilityValue),
@@ -1171,11 +1173,8 @@ public class RecipientDatabase extends Database {
 
   @Deprecated
   public void setRegistered(@NonNull RecipientId id, RegisteredState registeredState) {
-    ContentValues contentValues = new ContentValues(2);
+    ContentValues contentValues = new ContentValues(1);
     contentValues.put(REGISTERED, registeredState.getId());
-    if (registeredState == RegisteredState.REGISTERED) {
-      contentValues.put(STORAGE_SERVICE_ID, Base64.encodeBytes(StorageSyncHelper.generateKey()));
-    }
 
     if (update(id, contentValues)) {
       if (registeredState == RegisteredState.REGISTERED) {
@@ -1455,11 +1454,12 @@ public class RecipientDatabase extends Database {
   }
 
   void markDirty(@NonNull RecipientId recipientId, @NonNull DirtyState dirtyState) {
+    Log.d(TAG, "Attempting to mark " + recipientId + " with dirty state " + dirtyState, new Throwable());
 
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(DIRTY, dirtyState.getId());
 
-    String   query = ID + " = ? AND (" + UUID + " NOT NULL OR " + PHONE + " NOT NULL) AND ";
+    String   query = ID + " = ? AND (" + UUID + " NOT NULL OR " + PHONE + " NOT NULL OR " + GROUP_ID + " NOT NULL) AND ";
     String[] args  = new String[] { recipientId.serialize(), String.valueOf(dirtyState.id) };
 
     switch (dirtyState) {
@@ -1656,6 +1656,7 @@ public class RecipientDatabase extends Database {
     private final String                          systemContactUri;
     private final ProfileName                     signalProfileName;
     private final String                          signalProfileAvatar;
+    private final boolean                         hasProfileImage;
     private final boolean                         profileSharing;
     private final String                          notificationChannel;
     private final UnidentifiedAccessMode          unidentifiedAccessMode;
@@ -1692,6 +1693,7 @@ public class RecipientDatabase extends Database {
                       @Nullable String systemContactUri,
                       @NonNull ProfileName signalProfileName,
                       @Nullable String signalProfileAvatar,
+                      boolean hasProfileImage,
                       boolean profileSharing,
                       @Nullable String notificationChannel,
                       @NonNull UnidentifiedAccessMode unidentifiedAccessMode,
@@ -1728,6 +1730,7 @@ public class RecipientDatabase extends Database {
       this.systemContactUri = systemContactUri;
       this.signalProfileName = signalProfileName;
       this.signalProfileAvatar = signalProfileAvatar;
+      this.hasProfileImage        = hasProfileImage;
       this.profileSharing = profileSharing;
       this.notificationChannel = notificationChannel;
       this.unidentifiedAccessMode = unidentifiedAccessMode;
@@ -1852,6 +1855,10 @@ public class RecipientDatabase extends Database {
       return signalProfileAvatar;
     }
 
+    public boolean hasProfileImage() {
+      return hasProfileImage;
+    }
+
     public boolean isProfileSharing() {
       return profileSharing;
     }
@@ -1931,8 +1938,8 @@ public class RecipientDatabase extends Database {
     }
   }
 
-  public static class MissingRecipientError extends AssertionError {
-    public MissingRecipientError(@Nullable RecipientId id) {
+    public static class MissingRecipientException extends IllegalStateException {
+        public MissingRecipientException(@Nullable RecipientId id) {
       super("Failed to find recipient with ID: " + id);
     }
   }

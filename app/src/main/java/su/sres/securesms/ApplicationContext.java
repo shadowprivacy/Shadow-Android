@@ -43,6 +43,7 @@ import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
+import su.sres.securesms.jobs.RefreshAttributesJob;
 import su.sres.securesms.jobs.RefreshPreKeysJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.AndroidLogger;
@@ -55,6 +56,7 @@ import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
+import su.sres.securesms.registration.RegistrationUtil;
 import su.sres.securesms.revealable.ViewOnceMessageManager;
 import su.sres.securesms.ringrtc.RingRtcLogger;
 import su.sres.securesms.service.DirectoryRefreshListener;
@@ -67,6 +69,7 @@ import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
 import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.FeatureFlags;
+import su.sres.securesms.util.PlayServicesUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
@@ -410,6 +413,21 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     SignalStore.kbsValues().setKbsMasterKey(SignalStore.kbsValues().getOrCreateMasterKey());
   }
 
+    private void initializePlayServicesCheck() {
+        if (TextSecurePreferences.isFcmDisabled(this)) {
+            PlayServicesUtil.PlayServicesStatus status = PlayServicesUtil.getPlayServicesStatus(this);
+
+            if (status == PlayServicesUtil.PlayServicesStatus.SUCCESS) {
+                Log.i(TAG, "Play Services are newly-available. Updating to use FCM.");
+
+                TextSecurePreferences.setFcmDisabled(this, false);
+                ApplicationDependencies.getJobManager().startChain(new FcmRefreshJob())
+                        .then(new RefreshAttributesJob())
+                        .enqueue();
+            }
+        }
+    }
+
   @Override
   protected void attachBaseContext(Context base) {
     super.attachBaseContext(DynamicLanguageContextWrapper.updateContext(base, TextSecurePreferences.getLanguage(base)));
@@ -435,10 +453,12 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializePendingMessages();
     initializeBlobProvider();
     initializeCleanup();
+      initializePlayServicesCheck();
     FeatureFlags.init();
     initializeMasterKey();
     ApplicationDependencies.getJobManager().beginJobLoop();
     StorageSyncHelper.scheduleRoutineSync();
+      RegistrationUtil.markRegistrationPossiblyComplete();
     RefreshPreKeysJob.scheduleIfNecessary();
     launchCertificateRefresh();
 

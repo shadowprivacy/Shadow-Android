@@ -467,7 +467,7 @@
 
     <string name="PendingMembersActivity_cancel_invite">Cancel invite</string>
     <string name="PendingMembersActivity_cancel_invites">Cancel invites</string>
-    <plurals name="PendingMembersActivity_cancel_invites">
+    <plurals name="PendingMembersActivity_cancel_d_invites">
         <item quantity="one">Cancel invite</item>
         <item quantity="other">Cancel %1$d invites</item>
     </plurals>

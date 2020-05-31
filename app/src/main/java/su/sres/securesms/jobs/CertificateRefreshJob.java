@@ -16,7 +16,6 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -25,9 +24,7 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.push.AccountManagerFactory;
 import su.sres.securesms.push.SignalServiceTrustStore;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.messages.calls.SystemCertificates;
 import su.sres.signalservice.api.push.TrustStore;
@@ -42,10 +39,6 @@ public class CertificateRefreshJob extends BaseJob {
     private static final String TAG = CertificateRefreshJob.class.getSimpleName();
 
     private static final long REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(1);
-
-    private static final String KEY_UUID           = "uuid";
-    private static final String KEY_E164NUMBER     = "e164number";
-    private static final String KEY_PASSWORD       = "password";
 
     public final static String[] CERT_ALIASES = {
             "cloud_a",
