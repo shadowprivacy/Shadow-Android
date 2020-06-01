@@ -1300,7 +1300,7 @@
   <string name="log_submit_activity__button_submit">Отправить</string>
   <string name="log_submit_activity__button_got_it">Понятно</string>
   <string name="log_submit_activity__button_compose_email">Написать письмо</string>
-  <string name="log_submit_activity__this_log_will_be_posted_online">Этот журнал будет опубликован в интернете, чтобы разработчики смогли его просмотреть. Вы можете изучить и отредактировать его перед отправкой.</string>
+  <string name="log_submit_activity__this_log_will_be_posted_online">Этот отчёт будет загружен на сервер, чтобы специалисты техподдержки могли его просмотреть. Вы можете изучить и отредактировать его перед отправкой.</string>
   <string name="log_submit_activity__loading_logs">Загружаем журналы…</string>
   <string name="log_submit_activity__uploading_logs">Выгрузка журналов…</string>
   <string name="log_submit_activity__choose_email_app">Выберите приложение электронной почты</string>
@@ -1422,7 +1422,7 @@
   <string name="HelpFragment__help">Помощь</string>
   <string name="HelpFragment__have_you_read_our_faq_yet">Вы уже прочитали наши ЧаВО?</string>
   <string name="HelpFragment__next">Далее</string>
-  <string name="HelpFragment__contact_us">Связаться с нами</string>
+  <string name="HelpFragment__contact_us">Связаться с поддержкой</string>
   <string name="HelpFragment__tell_us_whats_going_on">Расскажите нам, что происходит</string>
   <string name="HelpFragment__include_debug_log">Добавить журнал отладки.</string>
   <string name="HelpFragment__whats_this">Что это?</string>
@@ -1796,7 +1796,7 @@
   <string name="RegistrationActivity_please_enter_the_verification_code_sent_to_s">Пожалуйста, введите код подтверждения, отправленный на %s.</string>
   <string name="RegistrationActivity_wrong_number">Ошиблись номером?</string>
   <string name="RegistrationActivity_call_me_instead_available_in">Позвоните мне вместо SMS \n (доступно через %1$02d:%2$02d)</string>
-  <string name="RegistrationActivity_contact_signal_support">Связаться с поддержкой Shadow</string>
+  <string name="RegistrationActivity_contact_signal_support">Связаться с поддержкой</string>
   <string name="RegistrationActivity_code_support_subject">Регистрация в Shadow - код подтверждения для Android</string>
   <string name="RegistrationActivity_code_support_body">Тема: Регистрация в Shadow - код подтверждения для Android\nИнформация об устройстве: %1$s\nВерсия Android: %2$s\n Версия Shadow: %3$s\nРегион: %4$s</string>
   <string name="BackupUtil_never">Никогда</string>

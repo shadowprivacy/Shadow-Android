@@ -166,6 +166,7 @@ public class PushServiceSocket {
   private static final String UUID_ACK_MESSAGE_PATH     = "/v1/messages/uuid/%s";
   private static final String ATTACHMENT_V2_PATH        = "/v2/attachments/form/upload";
   private static final String ATTACHMENT_V3_PATH        = "/v3/attachments/form/upload";
+  private static final String DEBUG_LOG_PATH            = "/v2/debuglogs/form/upload";
 
   private static final String PROFILE_PATH              = "/v1/profile/%s";
   private static final String PROFILE_USERNAME_PATH     = "/v1/profile/username/%s";
@@ -838,6 +839,17 @@ public class PushServiceSocket {
       throw new NonSuccessfulResponseCodeException("Unable to parse entity");
     }
   }
+
+    public AttachmentV2UploadAttributes getDebugLogUploadAttributes() throws NonSuccessfulResponseCodeException, PushNetworkException {
+        String response = makeServiceRequest(DEBUG_LOG_PATH, "GET", null);
+
+        try {
+            return JsonUtil.fromJson(response, AttachmentV2UploadAttributes.class);
+        } catch (IOException e) {
+            Log.w(TAG, e);
+            throw new NonSuccessfulResponseCodeException("Unable to parse entity");
+        }
+    }
 
     public byte[] uploadGroupV2Avatar(byte[] avatarCipherText, AvatarUploadAttributes uploadAttributes)
             throws IOException

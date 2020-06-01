@@ -22,6 +22,7 @@ import com.dd.CircularProgressButton;
 
 import su.sres.securesms.PassphraseRequiredActionBarActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
@@ -233,7 +234,7 @@ public class SubmitDebugLogActivity extends PassphraseRequiredActionBarActivity 
                     ShareCompat.IntentBuilder.from(this)
                             .setText(url)
                             .setType("text/plain")
-                            .setEmailTo(new String[] { "support@signal.org" })
+                            .setEmailTo(new String[] { SignalStore.serviceConfigurationValues().getSupportEmail() })
                             .startChooser();
                 });
 

@@ -27,8 +27,8 @@ import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiImageView;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.CommunicationActions;
-import su.sres.securesms.util.IntentUtils;
 import su.sres.securesms.util.text.AfterTextChanged;
 
 import java.util.ArrayList;
@@ -150,7 +150,7 @@ public class HelpFragment extends Fragment {
                 .findFirst().orElse(null);
 
         CommunicationActions.openEmail(requireContext(),
-                getString(R.string.RegistrationActivity_support_email),
+                SignalStore.serviceConfigurationValues().getSupportEmail(),
                 getEmailSubject(),
                 getEmailBody(debugLog, feeling).toString());
     }

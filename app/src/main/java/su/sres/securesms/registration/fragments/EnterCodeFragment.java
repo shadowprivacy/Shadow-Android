@@ -26,6 +26,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.components.registration.VerificationCodeView;
 import su.sres.securesms.components.registration.VerificationPinKeyboard;
 import su.sres.securesms.events.ServerCertErrorEvent;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.registration.service.CodeVerificationRequest;
@@ -175,7 +176,7 @@ public final class EnterCodeFragment extends BaseRegistrationFragment {
 
     private void sendEmailToSupport() {
         CommunicationActions.openEmail(requireContext(),
-                getString(R.string.RegistrationActivity_support_email),
+                SignalStore.serviceConfigurationValues().getSupportEmail(),
                 getString(R.string.RegistrationActivity_code_support_subject),
                 getString(R.string.RegistrationActivity_code_support_body,
                         getDevice(),

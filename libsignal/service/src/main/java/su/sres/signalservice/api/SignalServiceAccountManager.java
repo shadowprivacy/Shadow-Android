@@ -52,6 +52,7 @@ import su.sres.signalservice.api.util.CredentialsProvider;
 import su.sres.signalservice.api.util.StreamDetails;
 import su.sres.signalservice.internal.configuration.SignalServiceConfiguration;
 import su.sres.signalservice.internal.crypto.ProvisioningCipher;
+import su.sres.signalservice.internal.push.AttachmentV2UploadAttributes;
 import su.sres.signalservice.internal.push.ProfileAvatarData;
 import su.sres.signalservice.internal.push.PushServiceSocket;
 import su.sres.signalservice.internal.push.RemoteConfigResponse;
@@ -560,6 +561,10 @@ public class SignalServiceAccountManager {
 
     public SystemCertificatesVersion getCertVer() throws IOException {
         return this.pushServiceSocket.getCertVer();
+    }
+
+    public AttachmentV2UploadAttributes getDebugLogUploadAttributes() throws IOException {
+            return this.pushServiceSocket.getDebugLogUploadAttributes();
     }
 
     public void setProfileName(ProfileKey key, String name)

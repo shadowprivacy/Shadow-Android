@@ -14,6 +14,7 @@ public final class ServiceConfigurationValues {
     private static final String UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY = "service_configuration.unidentified_access_ca_public_key";
 //    private static final String SERVER_CERT_PUBLIC_KEY = "service_configuration.server_cert_public_key";
     private static final String CURRENT_CERT_VERSION = "service_configuration.current_cert_version";
+    private static final String SUPPORT_EMAIL        = "service_configuration.support_email";
 
     public static final String EXAMPLE_URI = "https://example.com";
 
@@ -65,6 +66,13 @@ public final class ServiceConfigurationValues {
                 .commit();
     }
 
+    public synchronized void setSupportEmail(String supportEmail) {
+        store.beginWrite()
+                .putString(SUPPORT_EMAIL, supportEmail)
+                .commit();
+    }
+
+
     public @Nullable
     String getShadowUrl() {
         return store.getString(SHADOW_SERVICE_URL, EXAMPLE_URI);
@@ -95,8 +103,13 @@ public final class ServiceConfigurationValues {
         return store.getBlob(UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY, null);
     }
 
-    public @Nullable
-    int getCurrentCertVer() {
+    public int getCurrentCertVer() {
         return store.getInteger(CURRENT_CERT_VERSION, 1);
     }
+
+    public @Nullable
+    String getSupportEmail() {
+        return store.getString(SUPPORT_EMAIL, "example@example.com");
+    }
+
 }

@@ -8,24 +8,28 @@ import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.logsubmit.util.Scrubber;
 import su.sres.securesms.net.UserAgentInterceptor;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
+import su.sres.securesms.push.SignalServiceTrustStore;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -33,7 +37,10 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
+import su.sres.signalservice.api.SignalServiceAccountManager;
+import su.sres.signalservice.api.util.Tls12SocketFactory;
+import su.sres.signalservice.internal.push.AttachmentV2UploadAttributes;
+import su.sres.signalservice.internal.util.BlacklistingTrustManager;
 
 /**
  * Handles retrieving, scrubbing, and uploading of all debug logs.
@@ -49,7 +56,9 @@ public class SubmitDebugLogRepository {
     private static final char   TITLE_DECORATION = '=';
     private static final int    MIN_DECORATIONS  = 5;
     private static final int    SECTION_SPACING  = 3;
-    private static final String API_ENDPOINT     = "https://debuglogs.org";
+    private static final String DEBUG_LOGS_PATH = "/debuglogs/";
+
+    private final SignalServiceAccountManager accountManager;
 
     /** Ordered list of log sections. */
     private static final List<LogSection> SECTIONS = new ArrayList<LogSection>() {{
@@ -71,6 +80,7 @@ public class SubmitDebugLogRepository {
     public SubmitDebugLogRepository() {
         this.context  = ApplicationDependencies.getApplication();
         this.executor = SignalExecutors.SERIAL;
+        this.accountManager = ApplicationDependencies.getSignalServiceAccountManager();
     }
 
     public void getLogLines(@NonNull Callback<List<LogLine>> callback) {
@@ -89,38 +99,42 @@ public class SubmitDebugLogRepository {
         }
 
         try {
-            OkHttpClient client   = new OkHttpClient.Builder().addInterceptor(new UserAgentInterceptor()).dns(SignalServiceNetworkAccess.DNS).build();
-            Response     response = client.newCall(new Request.Builder().url(API_ENDPOINT).get().build()).execute();
-            ResponseBody body     = response.body();
 
-            if (!response.isSuccessful() || body == null) {
-                throw new IOException("Unsuccessful response: " + response);
-            }
+            String cloudUrl = accountManager.getConfigurationInfo().getCloudUri() + DEBUG_LOGS_PATH;
 
-            JSONObject            json   = new JSONObject(body.string());
-            String                url    = json.getString("url");
-            JSONObject            fields = json.getJSONObject("fields");
-            String                item   = fields.getString("key");
-            MultipartBody.Builder post   = new MultipartBody.Builder();
-            Iterator<String>      keys   = fields.keys();
+            TrustManager[] trustManagers = BlacklistingTrustManager.createFor(new SignalServiceTrustStore(context));
+            SSLContext context = SSLContext.getInstance("TLS");
+            context.init(null, trustManagers, null);
 
-            post.addFormDataPart("Content-Type", "text/plain");
+            OkHttpClient client   = new OkHttpClient.Builder()
+                    .addInterceptor(new UserAgentInterceptor())
+                    .dns(SignalServiceNetworkAccess.DNS)
+                    .sslSocketFactory(new Tls12SocketFactory(context.getSocketFactory()), (X509TrustManager)trustManagers[0])
+                    .build();
 
-            while (keys.hasNext()) {
-                String key = keys.next();
-                post.addFormDataPart(key, fields.getString(key));
-            }
+            AttachmentV2UploadAttributes debugLogUploadAttributes = accountManager.getDebugLogUploadAttributes();
 
-            post.addFormDataPart("file", "file", RequestBody.create(MediaType.parse("text/plain"), bodyBuilder.toString()));
+            RequestBody requestBody   = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("acl", debugLogUploadAttributes.getAcl())
+                    .addFormDataPart("key", debugLogUploadAttributes.getKey())
+                    .addFormDataPart("policy", debugLogUploadAttributes.getPolicy())
+                    .addFormDataPart("x-amz-algorithm", debugLogUploadAttributes.getAlgorithm())
+                    .addFormDataPart("x-amz-credential", debugLogUploadAttributes.getCredential())
+                    .addFormDataPart("x-amz-date", debugLogUploadAttributes.getDate())
+                    .addFormDataPart("x-amz-signature", debugLogUploadAttributes.getSignature())
+                    .addFormDataPart("Content-Type", "text/plain")
+                    .addFormDataPart("file", "file", RequestBody.create(MediaType.parse("text/plain"), bodyBuilder.toString()))
+                    .build();
 
-            Response postResponse = client.newCall(new Request.Builder().url(url).post(post.build()).build()).execute();
+            Response postResponse = client.newCall(new Request.Builder().url(cloudUrl).post(requestBody).build()).execute();
 
             if (!postResponse.isSuccessful()) {
                 throw new IOException("Bad response: " + postResponse);
             }
 
-            return Optional.of(API_ENDPOINT + "/" + item);
-        } catch (IOException | JSONException e) {
+            return Optional.of(cloudUrl + debugLogUploadAttributes.getKey());
+        } catch (IOException | NoSuchAlgorithmException | KeyManagementException e) {
             Log.w(TAG, "Error during upload.", e);
             return Optional.absent();
         }

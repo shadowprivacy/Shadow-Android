@@ -18,8 +18,10 @@ public class ConfigurationInfo {
 
     @JsonProperty
     @JsonDeserialize(using = SenderCertificate.ByteArrayDesieralizer.class)
-//    @JsonSerialize(using = SenderCertificate.ByteArraySerializer.class)
     private byte[] unidentifiedDeliveryCaPublicKey;
+
+    @JsonProperty
+    private String supportEmail;
 
     public String getCloudUri() {
         return cloudUri;
@@ -36,4 +38,10 @@ public class ConfigurationInfo {
     public byte[] getUnidentifiedDeliveryCaPublicKey() {
         return unidentifiedDeliveryCaPublicKey;
     }
+
+    public String getSupportEmail() {
+        return supportEmail;
+    }
+
+
 }

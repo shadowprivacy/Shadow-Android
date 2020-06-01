@@ -1376,7 +1376,7 @@
     <string name="log_submit_activity__button_submit">Submit</string>
     <string name="log_submit_activity__button_got_it">Got it</string>
     <string name="log_submit_activity__button_compose_email">Compose email</string>
-    <string name="log_submit_activity__this_log_will_be_posted_online">This log will be posted publicly online for contributors to view, you may examine and edit it before submitting.</string>
+    <string name="log_submit_activity__this_log_will_be_posted_online">This log will be uploaded to the server for technical support to view, you may examine and edit it before submitting.</string>
     <string name="log_submit_activity__loading_logs">Loading logs…</string>
     <string name="log_submit_activity__uploading_logs">Uploading logs…</string>
     <string name="log_submit_activity__choose_email_app">Choose email app</string>
@@ -1516,7 +1516,7 @@
     <string name="HelpFragment__help">Help</string>
     <string name="HelpFragment__have_you_read_our_faq_yet">Have you read our FAQ yet?</string>
     <string name="HelpFragment__next">Next</string>
-    <string name="HelpFragment__contact_us">Contact us</string>
+    <string name="HelpFragment__contact_us">Contact support</string>
     <string name="HelpFragment__tell_us_whats_going_on">Tell us what\'s going on</string>
     <string name="HelpFragment__include_debug_log">Include debug log.</string>
     <string name="HelpFragment__whats_this">What\'s this?</string>
@@ -1996,8 +1996,7 @@
     <string name="RegistrationActivity_please_enter_the_verification_code_sent_to_s">Please enter the verification code sent to %s.</string>
     <string name="RegistrationActivity_wrong_number">Wrong number?</string>
     <string name="RegistrationActivity_call_me_instead_available_in">Call me instead \n (Available in %1$02d:%2$02d)</string>
-    <string name="RegistrationActivity_contact_signal_support">Contact Shadow Support</string>
-    <string name="RegistrationActivity_support_email" translatable="false">info@sres.su</string>
+    <string name="RegistrationActivity_contact_signal_support">Contact Support</string>
     <string name="RegistrationActivity_code_support_subject">Shadow Registration - Verification Code for Android</string>
     <string name="RegistrationActivity_code_support_body">Subject: Shadow Registration - Verification Code for Android\nDevice info: %1$s\nAndroid version: %2$s\nShadow version: %3$s\nLocale: %4$s</string>
     <string name="BackupUtil_never">Never</string>

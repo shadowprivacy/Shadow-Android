@@ -189,10 +189,11 @@ public final class CodeVerificationRequest {
 
         ConfigurationInfo configRequested = accountManager.getConfigurationInfo();
 
-        String statusUrl = configRequested.getStatusUri();
-        String storageUrl = configRequested.getStorageUri();
-        String cloudUrl = configRequested.getCloudUri();
+        String statusUrl                     = configRequested.getStatusUri();
+        String storageUrl                    = configRequested.getStorageUri();
+        String cloudUrl                      = configRequested.getCloudUri();
         byte[] unidentifiedAccessCaPublicKey = configRequested.getUnidentifiedDeliveryCaPublicKey();
+        String supportEmail                  = configRequested.getSupportEmail();
 
         SystemCertificates systemCerts = accountManager.getSystemCerts();
 
@@ -217,6 +218,7 @@ public final class CodeVerificationRequest {
             SignalStore.serviceConfigurationValues().setStorageUrl(storageUrl);
             SignalStore.serviceConfigurationValues().setStatusUrl(statusUrl);
             SignalStore.serviceConfigurationValues().setUnidentifiedAccessCaPublicKey(unidentifiedAccessCaPublicKey);
+            SignalStore.serviceConfigurationValues().setSupportEmail(supportEmail);
 
             TrustStore trustStore = new SignalServiceTrustStore(context);
             char[] shadowStorePassword = trustStore.getKeyStorePassword().toCharArray();
