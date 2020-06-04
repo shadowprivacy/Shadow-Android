@@ -126,26 +126,28 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeCrashHandling();
     initializeNetworkIndependentProvider();
 
-    // remove after testing
-      Log.w(TAG, "initializedOnCreate = " + initializedOnCreate);
+      // checking at subsequent launches of the app, if the server is already known as set in SignalStore, then no need for delay, just initialize immediately
+      if (SignalStore.registrationValues().isServerSet()) {
+          initializeOnCreate();
+      } else {
 
-      initWorker.execute(() -> {
+          initWorker.execute(() -> {
 
-        while(!initializedOnCreate) {
+              while (!initializedOnCreate) {
 
-          // checking at subsequent launches of the app, if the server is already known as set in SignalStore, then no need for delay, just initialize immediately
-          if (SignalStore.registrationValues().isServerSet()) {
-            initializeOnCreate();
-          } else {
-            Log.i(TAG, "Waiting for the server URL to be configured...");
-            try {
-              Thread.sleep(2000);
-            } catch (InterruptedException e) {
-              e.printStackTrace();
-            }
-          }
-        }
-         });
+                  if (SignalStore.registrationValues().isServerSet()) {
+                      initializeOnCreate();
+                  } else {
+                      Log.i(TAG, "Waiting for the server URL to be configured...");
+                      try {
+                          Thread.sleep(2000);
+                      } catch (InterruptedException e) {
+                          e.printStackTrace();
+                      }
+                  }
+              }
+          });
+      }
 
     NotificationChannels.create(this);
     ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
