@@ -31,18 +31,9 @@
 
     <fragment
         android:id="@+id/enterPhoneNumberFragment"
-        android:name="su.sres.securesms.registration.fragments.EnterPhoneNumberFragment"
+        android:name="su.sres.securesms.registration.fragments.EnterUserLoginFragment"
         android:label="fragment_enter_phone_number"
-        tools:layout="@layout/fragment_registration_enter_phone_number">
-
-        <action
-            android:id="@+id/action_pickCountry"
-            app:destination="@id/countryPickerFragment"
-            app:enterAnim="@anim/nav_default_enter_anim"
-            app:exitAnim="@anim/nav_default_exit_anim"
-            app:launchSingleTop="true"
-            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
-            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+        tools:layout="@layout/fragment_registration_enter_user_login">
 
         <action
             android:id="@+id/action_enterVerificationCode"
@@ -59,19 +50,6 @@
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim" />  -->
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/countryPickerFragment"
-        android:name="su.sres.securesms.registration.fragments.CountryPickerFragment"
-        android:label="fragment_country_picker"
-        tools:layout="@layout/fragment_registration_country_picker">
-
-        <action
-            android:id="@+id/action_countrySelected"
-            app:popUpTo="@id/countryPickerFragment"
-            app:popUpToInclusive="true" />
 
     </fragment>
 

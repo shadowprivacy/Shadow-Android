@@ -8,6 +8,7 @@ package su.sres.signalservice.api;
 
 import com.google.protobuf.ByteString;
 
+import su.sres.signalservice.api.storage.protos.DirectoryResponse;
 import su.sres.signalservice.api.groupsv2.ClientZkOperations;
 import su.sres.signalservice.api.groupsv2.GroupsV2Api;
 import su.sres.signalservice.api.groupsv2.GroupsV2Authorization;
@@ -327,6 +328,11 @@ public class SignalServiceAccountManager {
         }
 
         return activeTokens;
+    }
+
+    public DirectoryResponse getDirectoryResponse(long directoryVersion) throws IOException {
+
+        return this.pushServiceSocket.getDirectoryResponse(directoryVersion);
     }
 
     public Optional<SignalStorageManifest> getStorageManifest(StorageKey storageKey) throws IOException {

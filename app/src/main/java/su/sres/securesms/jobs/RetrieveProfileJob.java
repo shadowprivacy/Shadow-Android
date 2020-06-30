@@ -35,6 +35,7 @@ import su.sres.signalservice.api.profiles.SignalServiceProfile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Retrieves a users profile and sets the appropriate local fields.
@@ -120,6 +121,7 @@ public class RetrieveProfileJob extends BaseJob  {
       Log.i(TAG, "Profile key available for " + recipient.getId());
     }
 
+ //   setUuid(recipient, profile.getUuid());
     setProfileName(recipient, profile.getName());
     setProfileAvatar(recipient, profile.getAvatar());
     if (FeatureFlags.usernames()) setUsername(recipient, profile.getUsername());
@@ -248,6 +250,23 @@ public class RetrieveProfileJob extends BaseJob  {
   private void setUsername(Recipient recipient, @Nullable String username) {
     DatabaseFactory.getRecipientDatabase(context).setUsername(recipient.getId(), username);
   }
+
+  // maybe later...
+/*  private void setUuid(Recipient recipient, UUID uuid) {
+    if (uuid !=null && !recipient.getUuid().isPresent()) {
+      DatabaseFactory.getRecipientDatabase(context).setUuid(recipient.getId(), uuid);
+    } else {
+
+      if(uuid == null) {
+        Log.i(TAG, "UUID is null");
+      }
+
+      if (recipient.getUuid().isPresent()) {
+        Log.i(TAG, "Recipient UUID is present");
+      }
+
+    }
+  } */
 
   private void setProfileCapabilities(@NonNull Recipient recipient, @Nullable SignalServiceProfile.Capabilities capabilities) {
     if (capabilities == null) {

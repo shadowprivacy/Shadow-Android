@@ -84,7 +84,7 @@ public final class EnterCodeFragment extends BaseRegistrationFragment {
 
             keyboard.displayProgress();
 
-            RegistrationService registrationService = RegistrationService.getInstance(model.getNumber().getE164Number(), model.getRegistrationSecret());
+            RegistrationService registrationService = RegistrationService.getInstance(model.getUserLogin(), model.getRegistrationSecret());
 
             registrationService.verifyAccount(requireActivity(), model.getFcmToken(), code, null,
                     new CodeVerificationRequest.VerifyCallback() {
@@ -129,6 +129,19 @@ public final class EnterCodeFragment extends BaseRegistrationFragment {
                         }
 
                         @Override
+                        public void onRetryAfter() {
+                            Toast.makeText(requireContext(), R.string.RegistrationActivity_retry_after, Toast.LENGTH_LONG).show();
+                            keyboard.displayFailure().addListener(new AssertedSuccessListener<Boolean>() {
+                                @Override
+                                public void onSuccess(Boolean result) {
+
+                                    verificationCodeView.clear();
+                                    keyboard.displayKeyboard();
+                                }
+                            });
+                        }
+
+                        @Override
                         public void onError() {
                             Toast.makeText(requireContext(), R.string.RegistrationActivity_error_connecting_to_service, Toast.LENGTH_LONG).show();
                             keyboard.displayFailure().addListener(new AssertedSuccessListener<Boolean>() {
@@ -164,7 +177,7 @@ public final class EnterCodeFragment extends BaseRegistrationFragment {
     public void onResume() {
         super.onResume();
 
-        getModel().getLiveNumber().observe(this, (s) -> header.setText(requireContext().getString(R.string.RegistrationActivity_enter_the_code_we_sent_to_s)));
+        getModel().getLiveUserLogin().observe(this, (s) -> header.setText(requireContext().getString(R.string.RegistrationActivity_enter_the_code_we_sent_to_s)));
 
     }
 

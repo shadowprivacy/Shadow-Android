@@ -207,6 +207,10 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
         public void onAuthenticationFailure() {
             Log.w(TAG, "onAuthenticationFailure()");
             TextSecurePreferences.setUnauthorizedReceived(context, true);
+
+            // this is to prevent unauthorized clients from sending messages and to trigger the unregistered reminder instantly
+            TextSecurePreferences.setPushRegistered(context, false);
+
             EventBus.getDefault().post(new ReminderUpdateEvent());
         }
     }

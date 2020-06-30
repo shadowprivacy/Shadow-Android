@@ -726,7 +726,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
         if (isSingleConversation()) {
             if (isSecureText) inflater.inflate(R.menu.conversation_callable_secure, menu);
-            else inflater.inflate(R.menu.conversation_callable_insecure, menu);
+        //    else inflater.inflate(R.menu.conversation_callable_insecure, menu);
         } else if (isGroupConversation()) {
             inflater.inflate(R.menu.conversation_group_options, menu);
 
@@ -756,9 +756,9 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
             inflater.inflate(R.menu.conversation_muted, menu);
         else inflater.inflate(R.menu.conversation_unmuted, menu);
 
-        if (isSingleConversation() && getRecipient().getContactUri() == null) {
-            inflater.inflate(R.menu.conversation_add_to_contacts, menu);
-        }
+//        if (isSingleConversation() && getRecipient().getContactUri() == null) {
+//            inflater.inflate(R.menu.conversation_add_to_contacts, menu);
+//        }
 
         if (recipient != null && recipient.get().isLocalNumber()) {
             if (isSecureText) {
@@ -871,9 +871,9 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
             case R.id.menu_search:
                 handleSearch();
                 return true;
-            case R.id.menu_add_to_contacts:
-                handleAddToContacts();
-                return true;
+//            case R.id.menu_add_to_contacts:
+//                handleAddToContacts();
+//                return true;
             case R.id.menu_reset_secure_session:
                 handleResetSecureSession();
                 return true;
@@ -1513,14 +1513,16 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                 Log.i(TAG, "Resolved registered state: " + registeredState);
                 boolean signalEnabled = TextSecurePreferences.isPushRegistered(context);
 
-                if (registeredState == RegisteredState.UNKNOWN) {
+        // should not be UNKNOWN
+                /*        if (registeredState == RegisteredState.UNKNOWN) {
+
                     try {
                         Log.i(TAG, "Refreshing directory for user: " + recipient.getId().serialize());
                         registeredState = DirectoryHelper.refreshDirectoryFor(context, recipient, false);
                     } catch (IOException e) {
                         Log.w(TAG, e);
                     }
-                }
+                } */
 
                 Log.i(TAG, "Returning registered state...");
                 return new boolean[]{registeredState == RegisteredState.REGISTERED && signalEnabled,
@@ -1708,7 +1710,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         composeText.setOnEditorActionListener(sendButtonListener);
         composeText.setCursorPositionChangedListener(this);
         attachButton.setOnClickListener(new AttachButtonListener());
-        attachButton.setOnLongClickListener(new AttachButtonLongClickListener());
+//        attachButton.setOnLongClickListener(new AttachButtonLongClickListener());
         sendButton.setOnClickListener(sendButtonListener);
         sendButton.setEnabled(true);
         sendButton.addOnTransportChangedListener((newTransport, manuallySelected) -> {
@@ -1724,7 +1726,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         titleView.setOnClickListener(v -> handleConversationSettings());
         titleView.setOnLongClickListener(v -> handleDisplayQuickContact());
         unblockButton.setOnClickListener(v -> handleUnblock());
-        makeDefaultSmsButton.setOnClickListener(v -> handleMakeDefaultSms());
+//        makeDefaultSmsButton.setOnClickListener(v -> handleMakeDefaultSms());
         registerButton.setOnClickListener(v -> handleRegisterForSignal());
 
         composeText.setOnKeyListener(composeKeyPressedListener);

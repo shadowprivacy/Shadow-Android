@@ -23,7 +23,6 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.AttachmentDownloadJob;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
-import su.sres.securesms.jobs.DirectoryRefreshJob;
 import su.sres.securesms.jobs.PushDecryptMessageJob;
 import su.sres.securesms.jobs.RefreshAttributesJob;
 import su.sres.securesms.logging.Log;
@@ -35,7 +34,6 @@ import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.VersionTracker;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -155,7 +153,7 @@ public class LegacyMigrationJob extends MigrationJob {
         }
 
         if (lastSeenVersion < CONTACTS_ACCOUNT_VERSION) {
-            ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
+//            ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
         }
 
         if (lastSeenVersion < MEDIA_DOWNLOAD_CONTROLS_VERSION) {
@@ -164,11 +162,11 @@ public class LegacyMigrationJob extends MigrationJob {
 
         if (lastSeenVersion < REDPHONE_SUPPORT_VERSION) {
             ApplicationDependencies.getJobManager().add(new RefreshAttributesJob());
-            ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
+ //           ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
         }
 
         if (lastSeenVersion < PROFILES) {
-            ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
+ //           ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
         }
 
         if (lastSeenVersion < SCREENSHOTS) {

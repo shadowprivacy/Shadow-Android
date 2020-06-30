@@ -13,8 +13,8 @@ public final class RegistrationService {
         this.credentials = credentials;
     }
 
-    public static RegistrationService getInstance(@NonNull String e164number, @NonNull String password) {
-        return new RegistrationService(new Credentials(e164number, password));
+    public static RegistrationService getInstance(@NonNull String userLogin, @NonNull String password) {
+        return new RegistrationService(new Credentials(userLogin, password));
     }
 
     /**

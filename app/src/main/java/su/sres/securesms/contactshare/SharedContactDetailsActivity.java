@@ -20,12 +20,9 @@ import android.widget.TextView;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.PassphraseRequiredActionBarActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.database.RecipientDatabase;
-import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.jobs.DirectoryRefreshJob;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.LiveRecipient;
@@ -248,8 +245,9 @@ public class SharedContactDetailsActivity extends PassphraseRequiredActionBarAct
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
 
-    if (requestCode == CODE_ADD_EDIT_CONTACT && contact != null) {
-      ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
-    }
+    // Supposedly we need it here no more
+/*    if (requestCode == CODE_ADD_EDIT_CONTACT && contact != null) {
+      ApplicationDependencies.getJobManager().add(new DirectorySyncJob(false));
+    } */
   }
 }

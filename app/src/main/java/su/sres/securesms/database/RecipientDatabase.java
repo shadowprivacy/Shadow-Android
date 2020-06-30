@@ -60,13 +60,13 @@ public class RecipientDatabase extends Database {
 
   private static final String TAG = RecipientDatabase.class.getSimpleName();
 
-  static final String TABLE_NAME               = "recipient";
+  static final String TABLE_NAME                       = "recipient";
   public  static final String ID                       = "_id";
   private static final String UUID                     = "uuid";
   private static final String USERNAME                 = "username";
   public  static final String PHONE                    = "phone";
   public  static final String EMAIL                    = "email";
-  static final String GROUP_ID                 = "group_id";
+  static final String GROUP_ID                         = "group_id";
   private static final String GROUP_TYPE               = "group_type";
   private static final String BLOCKED                  = "blocked";
   private static final String MESSAGE_RINGTONE         = "message_ringtone";
@@ -341,8 +341,8 @@ public class RecipientDatabase extends Database {
     return getOrInsertByColumn(UUID, uuid.toString()).recipientId;
   }
 
-  public @NonNull RecipientId getOrInsertFromE164(@NonNull String e164) {
-    return getOrInsertByColumn(PHONE, e164).recipientId;
+  public @NonNull RecipientId getOrInsertFromUserLogin(@NonNull String userLogin) {
+    return getOrInsertByColumn(PHONE, userLogin).recipientId;
   }
 
   public @NonNull RecipientId getOrInsertFromEmail(@NonNull String email) {
@@ -1065,6 +1065,18 @@ public class RecipientDatabase extends Database {
     }
   }
 
+  // reserved for future use for now
+  public void setUuid(@NonNull RecipientId id, @NonNull UUID uuid) {
+      ContentValues contentValues = new ContentValues(1);
+      contentValues.put(UUID, uuid.toString());
+      if (update(id, contentValues)) {
+          markDirty(id, DirtyState.UPDATE);
+          Recipient.live(id).refresh();
+
+          StorageSyncHelper.scheduleSyncForDataChange();
+      }
+  }
+
   public void setUsername(@NonNull RecipientId id, @Nullable String username) {
     if (username != null) {
       Optional<RecipientId> existingUsername = getByUsername(username);
@@ -1091,16 +1103,16 @@ public class RecipientDatabase extends Database {
     }
   }
 
-  public Set<String> getAllPhoneNumbers() {
+  public Set<String> getAllUserLogins() {
     SQLiteDatabase db      = databaseHelper.getReadableDatabase();
     Set<String>    results = new HashSet<>();
 
     try (Cursor cursor = db.query(TABLE_NAME, new String[] { PHONE }, null, null, null, null, null)) {
       while (cursor != null && cursor.moveToNext()) {
-        String number = cursor.getString(cursor.getColumnIndexOrThrow(PHONE));
+        String userLogin = cursor.getString(cursor.getColumnIndexOrThrow(PHONE));
 
-        if (!TextUtils.isEmpty(number)) {
-          results.add(number);
+        if (!TextUtils.isEmpty(userLogin)) {
+          results.add(userLogin);
         }
       }
     }
@@ -1515,6 +1527,15 @@ public class RecipientDatabase extends Database {
         return Optional.absent();
       }
     }
+  }
+
+  // this one is hard removal and should not be used, otherwise there are problems with old chats
+  public int removeByUserLogin(String value) {
+      SQLiteDatabase db    = databaseHelper.getWritableDatabase();
+      String         whereClause = PHONE + " = ?";
+      String[]       args  = new String[] { value };
+
+      return db.delete(TABLE_NAME, whereClause, args);
   }
 
   private @NonNull GetOrInsertResult getOrInsertByColumn(@NonNull String column, String value) {

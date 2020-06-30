@@ -188,6 +188,8 @@
   <string name="ConversationItem_download_more">  Скачать больше</string>
   <string name="ConversationItem_pending">  Ожидание</string>
     <string name="ConversationItem_this_message_was_deleted">Это сообщение было удалено.</string>
+  <string name="ConversationItem_not_sent_recipient_inactive">Не отправлено. Получатель отключен.</string>
+
 
   <!--ConversationActivity-->
   <string name="ConversationActivity_reset_secure_session_question">Сбросить защищенный сеанс?</string>
@@ -832,12 +834,11 @@
   <string name="RedPhone_number_not_registered">Номер не зарегистрирован!</string>
   <string name="RedPhone_the_number_you_dialed_does_not_support_secure_voice">Вызываемый номер не поддерживает защищённые звонки!</string>
   <string name="RedPhone_got_it">Понятно</string>
-  <!--RegistrationActivity-->
-  <string name="RegistrationActivity_select_your_country">Выберите вашу страну</string>
-  <string name="RegistrationActivity_you_must_specify_your_country_code">Необходимо указать код страны</string>
-  <string name="RegistrationActivity_you_must_specify_your_phone_number">Необходимо указать номер телефона</string>
-  <string name="RegistrationActivity_invalid_number">Неверный номер</string>
-  <string name="RegistrationActivity_the_number_you_specified_s_is_invalid">Указанный вами номер (%s) недействителен.</string>
+
+    <!--RegistrationActivity-->
+  <string name="RegistrationActivity_you_must_specify_the_user_login">Необходимо указать логин пользователя</string>
+  <string name="RegistrationActivity_invalid_user_login">Некорректный логин</string>
+  <string name="RegistrationActivity_the_login_you_specified_s_is_invalid">Указанный вами логин (%s) некорректен.</string>
   <string name="RegistrationActivity_missing_google_play_services">Отсутствуют Службы Google Play</string>
   <string name="RegistrationActivity_this_device_is_missing_google_play_services">На устройстве отсутствуют Службы Google Play. Вы можете продолжить использование Shadow, но надёжность или производительность могут снизиться.\n\nЕсли вы не продвинутый пользователь, не используете стороннюю прошивку Android, либо считаете, что видите это сообщение по ошибке, обратитесь к системному администратору для помощи с устранением неполадок.</string>
   <string name="RegistrationActivity_i_understand">Я понимаю</string>
@@ -863,16 +864,14 @@
   <string name="RegistrationActivity_continue_d_attempts_left">Продолжить (осталось %d попыток)</string>
   <string name="RegistrationActivity_continue_last_attempt">Продолжить (последняя попытка!)</string>
   <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">Общайтесь\nбез тревог</string>
-  <string name="RegistrationActivity_enter_your_phone_number_to_get_started">Введите свой номер телефона, чтобы начать</string>
-  <string name="RegistrationActivity_enter_server_address">Введите адрес и порт сервера</string>
-  <string name="RegistrationActivity_you_will_receive_a_verification_code">Обратитесь к администратору для получения проверочного кода.</string>
+  <string name="RegistrationActivity_enter_your_user_login_to_get_started">Введите ваш логин</string>
+  <string name="RegistrationActivity_you_will_receive_a_verification_code">Подготовьте проверочный код, полученный от администратора.</string>
   <string name="RegistrationActivity_enter_the_code_we_sent_to_s">Введите код, полученный от администратора</string>
-  <string name="RegistrationActivity_phone_number_description">Номер телефона</string>
+  <string name="RegistrationActivity_user_login_description">Логин</string>
   <string name="RegistrationActivity_country_code_description">Код страны</string>
   <string name="RegistrationActivity_call">Позвонить</string>
-  <string name="RegistrationActivity_phone_number">Номер телефона</string>
-  <string name="RegistrationActivity_shadowUrl">Адрес сервера</string>
-  <string name="RegistrationActivity_shadowPort">Порт</string>
+  <string name="RegistrationActivity_user_login">Логин</string>
+  <string name="RegistrationActivity_retry_after">Сервер не смог обработать ваш запрос из-за перегрузки. Повторите попытку немного позднее.</string>
 
   <!--RevealableMessageView-->
 
@@ -1112,7 +1111,7 @@
   </plurals>
   <!--UnauthorizedReminder-->
   <string name="UnauthorizedReminder_device_no_longer_registered">Устройство больше не зарегистрировано</string>
-  <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">Это может быть вызвано тем, что вы зарегистрировали свой номер телефона в Shadow на другом устройстве. Нажмите для повторной регистрации.</string>
+  <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">Это может быть вызвано тем, что администратор отключил вашу учетную запись. Нажмите для повторной регистрации.</string>
   <!--VideoPlayer-->
   <string name="VideoPlayer_error_playing_video">Ошибка при воспроизведении видео</string>
   <!--WebRtcCallActivity-->
@@ -1192,6 +1191,7 @@
   <string name="conversation_activity__quick_attachment_drawer_record_and_send_audio_description">Записать и отправить аудио-вложение</string>
   <string name="conversation_activity__quick_attachment_drawer_lock_record_description">Зафиксировать запись аудиосообщения</string>
   <string name="conversation_activity__enable_signal_for_sms">Использовать Shadow для SMS</string>
+    <string name="conversation_activity__this_user_is_inaccessible">Этот получатель недоступен</string>
   <!--conversation_input_panel-->
   <string name="conversation_input_panel__slide_to_cancel">Проведите для отмены</string>
   <string name="conversation_input_panel__cancel">Отменить</string>

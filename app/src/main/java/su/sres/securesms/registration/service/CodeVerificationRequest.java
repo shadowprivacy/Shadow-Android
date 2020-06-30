@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import su.sres.securesms.R;
 import su.sres.securesms.events.ServerCertErrorEvent;
 import su.sres.securesms.jobs.CertificateRefreshJob;
+import su.sres.securesms.jobs.DirectorySyncJob;
 import su.sres.securesms.jobs.StickerPackDownloadJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.push.SignalServiceTrustStore;
@@ -26,7 +27,6 @@ import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.JobManager;
-import su.sres.securesms.jobs.DirectoryRefreshJob;
 import su.sres.securesms.jobs.RotateCertificateJob;
 import su.sres.securesms.lock.RegistrationLockReminders;
 import su.sres.securesms.logging.Log;
@@ -49,6 +49,7 @@ import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.crypto.UnidentifiedAccess;
 import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
 import su.sres.signalservice.api.push.exceptions.RateLimitException;
+import su.sres.signalservice.api.push.exceptions.RetryAfterException;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.push.LockedException;
 import su.sres.signalservice.internal.push.VerifyAccountResponse;
@@ -78,6 +79,7 @@ public final class CodeVerificationRequest {
         SUCCESS,
         PIN_LOCKED,
         RATE_LIMITED,
+        RETRY_AFTER,
         ERROR
     }
 
@@ -111,6 +113,9 @@ public final class CodeVerificationRequest {
                 } catch (RateLimitException e) {
                     Log.w(TAG, e);
                     return Result.RATE_LIMITED;
+                } catch (RetryAfterException e) {
+                    Log.w(TAG, e);
+                    return Result.RETRY_AFTER;
                 } catch (IOException e) {
                     Log.w(TAG, e);
                     return Result.ERROR;
@@ -128,7 +133,9 @@ public final class CodeVerificationRequest {
                     callback.onIncorrectRegistrationLockPin(timeRemaining);
                 } else if (result == Result.RATE_LIMITED) {
                     callback.onTooManyAttempts();
-                } else if (result == Result.ERROR) {
+                }  else if (result == Result.RETRY_AFTER) {
+                    callback.onRetryAfter();
+                }  else if (result == Result.ERROR) {
                     callback.onError();
                 }
             }
@@ -145,7 +152,8 @@ public final class CodeVerificationRequest {
         }
 
         JobManager jobManager = ApplicationDependencies.getJobManager();
-        jobManager.add(new DirectoryRefreshJob(false));
+        // jobManager.add(new DirectoryRefreshJob(false));
+        jobManager.add(new DirectorySyncJob(false));
         jobManager.add(new RotateCertificateJob(context));
 
         DirectoryRefreshListener.schedule(context);
@@ -172,7 +180,8 @@ public final class CodeVerificationRequest {
         boolean hasFcm = fcmToken != null;
 
         VerifyAccountResponse response = accountManager.verifyAccountWithCode(code, null, registrationId, !hasFcm, pin, unidentifiedAccessKey, universalUnidentifiedAccess,
-                AppCapabilities.getCapabilities(true));
+                    AppCapabilities.getCapabilities(true));
+
 
         UUID    uuid   = UuidUtil.parseOrThrow(response.getUuid());
 
@@ -316,7 +325,7 @@ public final class CodeVerificationRequest {
         }
 
             RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-            RecipientId selfId = recipientDatabase.getOrInsertFromE164(credentials.getE164number());
+            RecipientId selfId = recipientDatabase.getOrInsertFromUserLogin(credentials.getE164number());
 
             recipientDatabase.setProfileSharing(selfId, true);
             recipientDatabase.markRegistered(selfId, uuid);
@@ -382,6 +391,8 @@ public final class CodeVerificationRequest {
         void onIncorrectRegistrationLockPin(long timeRemaining);
 
         void onTooManyAttempts();
+
+        void onRetryAfter();
 
         void onError();
     }

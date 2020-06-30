@@ -12,7 +12,11 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
 
 import okhttp3.Dns;
+import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import su.sres.signalservice.api.push.exceptions.RetryAfterException;
+import su.sres.signalservice.api.storage.protos.DirectoryResponse;
+import su.sres.signalservice.api.storage.protos.DirectoryUpdate;
 import su.sres.signalservice.api.groupsv2.CredentialResponse;
 import su.sres.signalservice.api.messages.SignalServiceAttachmentRemoteId;
 import su.sres.signalservice.api.messages.calls.SystemCertificates;
@@ -161,6 +165,7 @@ public class PushServiceSocket {
 
   private static final String DIRECTORY_TOKENS_PATH     = "/v1/directory/tokens";
   private static final String DIRECTORY_VERIFY_PATH     = "/v1/directory/%s";
+  private static final String DIRECTORY_PLAIN_PATH      = "/v1/dirplain/download/%s";
   private static final String MESSAGE_PATH              = "/v1/messages/%s";
   private static final String SENDER_ACK_MESSAGE_PATH   = "/v1/messages/%s/%d";
   private static final String UUID_ACK_MESSAGE_PATH     = "/v1/messages/uuid/%s";
@@ -233,7 +238,7 @@ public class PushServiceSocket {
 
         makeServiceRequest(path, "GET", null, NO_HEADERS, new ResponseCodeHandler() {
             @Override
-            public void handle(int responseCode) throws NonSuccessfulResponseCodeException {
+            public void handle(int responseCode, Headers responseHeaders) throws NonSuccessfulResponseCodeException {
                 if (responseCode == 402) {
                     throw new CaptchaRequiredException();
                 }
@@ -253,7 +258,7 @@ public class PushServiceSocket {
 
         makeServiceRequest(path, "GET", null, headers, new ResponseCodeHandler() {
             @Override
-            public void handle(int responseCode) throws NonSuccessfulResponseCodeException {
+            public void handle(int responseCode, Headers responseHeaders) throws NonSuccessfulResponseCodeException {
                 if (responseCode == 402) {
                     throw new CaptchaRequiredException();
                 }
@@ -280,7 +285,15 @@ public class PushServiceSocket {
   {
     AccountAttributes     signalingKeyEntity = new AccountAttributes(signalingKey, registrationId, fetchesMessages, pin, unidentifiedAccessKey, unrestrictedUnidentifiedAccess, capabilities);
     String                requestBody        = JsonUtil.toJson(signalingKeyEntity);
-    String                responseBody       = makeServiceRequest(String.format(VERIFY_ACCOUNT_CODE_PATH, verificationCode), "PUT", requestBody);
+    String                responseBody       = makeServiceRequest(String.format(VERIFY_ACCOUNT_CODE_PATH, verificationCode), "PUT", requestBody, NO_HEADERS,
+                                                                  new ResponseCodeHandler() {
+                                                                      @Override
+                                                                      public void handle(int responseCode, Headers responseHeaders) throws NonSuccessfulResponseCodeException {
+                                                                         if (responseCode == 503 && responseHeaders.get("Retry-After") != null) {
+                                                                             throw new RetryAfterException();
+                                                                         }
+                                                                      }
+                                                                   });
 
       return JsonUtil.fromJson(responseBody, VerifyAccountResponse.class);
   }
@@ -697,7 +710,7 @@ public class PushServiceSocket {
   public void setUsername(String username) throws IOException {
     makeServiceRequest(String.format(SET_USERNAME_PATH, username), "PUT", "", NO_HEADERS, new ResponseCodeHandler() {
       @Override
-      public void handle(int responseCode) throws NonSuccessfulResponseCodeException {
+      public void handle(int responseCode, Headers responseHeaders) throws NonSuccessfulResponseCodeException {
         switch (responseCode) {
           case 400: throw new UsernameMalformedException();
           case 409: throw new UsernameTakenException();
@@ -724,6 +737,13 @@ public class PushServiceSocket {
       throw new NonSuccessfulResponseCodeException("Unable to parse entity");
     }
   }
+
+    public DirectoryResponse getDirectoryResponse(long directoryVersion)
+            throws IOException
+    {
+            ResponseBody responseBody = makePlainDirectoryRequest(String.format(DIRECTORY_PLAIN_PATH, String.valueOf(directoryVersion)), "GET", null);
+            return DirectoryResponse.parseFrom(responseBody.bytes());
+    }
 
   public ContactTokenDetails getContactTokenDetails(String contactToken) throws IOException {
     try {
@@ -1256,6 +1276,12 @@ public class PushServiceSocket {
     }
   }
 
+  private ResponseBody makePlainDirectoryRequest (String urlFragment, String method, String jsonBody)
+          throws NonSuccessfulResponseCodeException, PushNetworkException
+  {
+     return makeServiceBodyRequest(urlFragment, method, jsonRequestBody(jsonBody), NO_HEADERS, NO_HANDLER, Optional.<UnidentifiedAccess>absent());
+  }
+
     private static RequestBody jsonRequestBody(String jsonBody) {
         return jsonBody != null
                 ? RequestBody.create(MediaType.parse("application/json"), jsonBody)
@@ -1281,8 +1307,9 @@ public class PushServiceSocket {
         int          responseCode    = response.code();
         String       responseMessage = response.message();
         ResponseBody responseBody    = response.body();
+        Headers      responseHeaders = response.headers();
 
-      responseCodeHandler.handle(responseCode);
+      responseCodeHandler.handle(responseCode, responseHeaders);
 
       switch (responseCode) {
       case 413:
@@ -1668,12 +1695,12 @@ public class PushServiceSocket {
   }
 
     private interface ResponseCodeHandler {
-        void handle(int responseCode) throws NonSuccessfulResponseCodeException, PushNetworkException;
+        void handle(int responseCode, Headers responseHeaders) throws NonSuccessfulResponseCodeException, PushNetworkException;
     }
 
     private static class EmptyResponseCodeHandler implements ResponseCodeHandler {
         @Override
-        public void handle(int responseCode) { }
+        public void handle(int responseCode, Headers responseHeaders) { }
     }
 
     public CredentialResponse retrieveGroupsV2Credentials(int today)

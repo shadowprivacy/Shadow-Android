@@ -1367,7 +1367,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
       } else if (!messageRecord.isOutgoing() && messageRecord.isIdentityMismatchFailure()) {
         handleApproveIdentity();
       } else if (messageRecord.isPendingInsecureSmsFallback()) {
-        handleMessageApproval();
+    //    handleMessageApproval();
       }
     }
   }

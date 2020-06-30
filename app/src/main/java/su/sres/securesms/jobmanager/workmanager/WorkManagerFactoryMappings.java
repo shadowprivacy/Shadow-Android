@@ -8,7 +8,7 @@ import su.sres.securesms.jobs.AttachmentUploadJob;
 import su.sres.securesms.jobs.AvatarGroupsV1DownloadJob;
 import su.sres.securesms.jobs.CleanPreKeysJob;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
-import su.sres.securesms.jobs.DirectoryRefreshJob;
+import su.sres.securesms.jobs.DirectorySyncJob;
 import su.sres.securesms.jobs.FailingJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.LocalBackupJob;
@@ -57,7 +57,8 @@ public class WorkManagerFactoryMappings {
         put("AvatarDownloadJob", AvatarGroupsV1DownloadJob.KEY);
         put("CleanPreKeysJob", CleanPreKeysJob.KEY);
         put("CreateSignedPreKeyJob", CreateSignedPreKeyJob.KEY);
-        put("DirectoryRefreshJob", DirectoryRefreshJob.KEY);
+     //   put("DirectoryRefreshJob", DirectoryRefreshJob.KEY);
+        put("DirectorySyncJob", DirectorySyncJob.KEY);
         put("FcmRefreshJob", FcmRefreshJob.KEY);
         put("LocalBackupJob", LocalBackupJob.KEY);
         put("MmsDownloadJob", MmsDownloadJob.KEY);

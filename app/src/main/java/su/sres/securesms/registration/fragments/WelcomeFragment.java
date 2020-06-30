@@ -60,7 +60,7 @@ public final class WelcomeFragment extends BaseRegistrationFragment {
                 return;
             }
 
-            initializeNumber();
+ //           initializeNumber();
 
             Log.i(TAG, "Skipping restore because this is a reregistration.");
             model.setWelcomeSkippedOnRestore();
@@ -112,7 +112,7 @@ public final class WelcomeFragment extends BaseRegistrationFragment {
 
             TextSecurePreferences.setHasSeenWelcomeScreen(requireContext(), true);
 
-            initializeNumber();
+ //           initializeNumber();
 
             cancelSpinning(continueButton);
 
@@ -127,7 +127,7 @@ public final class WelcomeFragment extends BaseRegistrationFragment {
         });
     }
 
-    @SuppressLint("MissingPermission")
+/*    @SuppressLint("MissingPermission")
     private void initializeNumber() {
         Optional<Phonenumber.PhoneNumber> localNumber = Optional.absent();
 
@@ -144,7 +144,7 @@ public final class WelcomeFragment extends BaseRegistrationFragment {
                 getModel().onNumberDetected(PhoneNumberUtil.getInstance().getCountryCodeForRegion(simCountryIso.get()), 0);
             }
         }
-    }
+    } */
 
 /*    private void onTermsClicked() {
         CommunicationActions.openBrowserLink(requireContext(), RegistrationConstants.TERMS_AND_CONDITIONS_URL);

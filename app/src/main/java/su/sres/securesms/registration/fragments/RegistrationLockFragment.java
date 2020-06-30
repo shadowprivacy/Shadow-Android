@@ -117,7 +117,7 @@ public final class RegistrationLockFragment extends BaseRegistrationFragment {
         }
 
         RegistrationViewModel model = getModel();
-        RegistrationService registrationService = RegistrationService.getInstance(model.getNumber().getE164Number(), model.getRegistrationSecret());
+        RegistrationService registrationService = RegistrationService.getInstance(model.getUserLogin(), model.getRegistrationSecret());
 
         setSpinning(pinButton);
 
@@ -147,6 +147,9 @@ public final class RegistrationLockFragment extends BaseRegistrationFragment {
                         .setPositiveButton(android.R.string.ok, null)
                         .show();
             }
+
+            @Override
+            public void onRetryAfter() {}
 
             @Override
             public void onError() {

@@ -201,6 +201,7 @@
     <string name="ConversationItem_download_more">&#160; Download More</string>
     <string name="ConversationItem_pending">&#160; Pending</string>
     <string name="ConversationItem_this_message_was_deleted">This message was deleted.</string>
+    <string name="ConversationItem_not_sent_recipient_inactive">Send failed. The recipient\'s account is disabled.</string>
 
     <!-- ConversationActivity -->
     <string name="ConversationActivity_reset_secure_session_question">Reset secure session?</string>
@@ -849,12 +850,9 @@
     <string name="RedPhone_got_it">Got it</string>
 
     <!-- RegistrationActivity -->
-    <string name="RegistrationActivity_select_your_country">Select your country</string>
-    <string name="RegistrationActivity_you_must_specify_your_country_code">You must specify your country code</string>
-    <string name="RegistrationActivity_you_must_specify_your_phone_number">You must specify your phone number</string>
-    <string name="RegistrationActivity_invalid_number">Invalid number</string>
-    <string name="RegistrationActivity_the_number_you_specified_s_is_invalid">The number you
-        specified (%s) is invalid.
+    <string name="RegistrationActivity_you_must_specify_the_user_login">You must specify the user login</string>
+    <string name="RegistrationActivity_invalid_user_login">Invalid login</string>
+    <string name="RegistrationActivity_the_login_you_specified_s_is_invalid">The login you specified (%s) is invalid.
     </string>
     <string name="RegistrationActivity_missing_google_play_services">Missing Google Play Services</string>
     <string name="RegistrationActivity_this_device_is_missing_google_play_services">This device is missing Google Play Services. You can still use Shadow, but this configuration may result in reduced reliability or performance.\n\nIf you are not an advanced user, are not running an aftermarket Android ROM, or believe that you are seeing this in error, please contact your system administrator for help troubleshooting.</string>
@@ -877,16 +875,15 @@
     <string name="RegistrationActivity_next">Next</string>
     <string name="RegistrationActivity_continue">Continue</string>
     <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">Communicate\nwithout anxiety</string>
-    <string name="RegistrationActivity_enter_your_phone_number_to_get_started">Enter your phone number to get started</string>
+    <string name="RegistrationActivity_enter_your_user_login_to_get_started">Enter your login</string>
     <string name="RegistrationActivity_enter_server_address">Enter your server address and port</string>
-    <string name="RegistrationActivity_you_will_receive_a_verification_code">Refer to your administrator for the verification code.</string>
+    <string name="RegistrationActivity_you_will_receive_a_verification_code">Prepare the verification code received from your administrator.</string>
     <string name="RegistrationActivity_enter_the_code_we_sent_to_s">Enter the code obtained from your administrator</string>
-    <string name="RegistrationActivity_phone_number_description">Phone number</string>
-    <string name="RegistrationActivity_country_code_description">Country code</string>
+    <string name="RegistrationActivity_user_login_description">Login</string>
     <string name="RegistrationActivity_call">Call</string>
-    <string name="RegistrationActivity_phone_number">Phone number</string>
-    <string name="RegistrationActivity_shadowUrl">Server address</string>
-    <string name="RegistrationActivity_shadowPort">Port</string>
+    <string name="RegistrationActivity_user_login">Login</string>
+    <string name="RegistrationActivity_retry_after">The server was busy and could not process your request. Please try again a while later.</string>
+
 
     <!-- RevealableMessageView -->
     <string name="RevealableMessageView_view_photo">View Photo</string>
@@ -1152,7 +1149,7 @@
 
     <!-- UnauthorizedReminder -->
     <string name="UnauthorizedReminder_device_no_longer_registered">Device no longer registered</string>
-    <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">This is likely because you registered your phone number with Shadow on a different device. Tap to re-register.</string>
+    <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">This is likely because your administrator disabled your account.</string>
 
     <!-- VideoPlayer -->
     <string name="VideoPlayer_error_playing_video">Error playing video</string>
@@ -1249,6 +1246,7 @@
     <string name="conversation_activity__quick_attachment_drawer_record_and_send_audio_description">Record and send audio attachment</string>
     <string name="conversation_activity__quick_attachment_drawer_lock_record_description">Lock recording of audio attachment</string>
     <string name="conversation_activity__enable_signal_for_sms">Enable Shadow for SMS</string>
+    <string name="conversation_activity__this_user_is_inaccessible">This recipient is inaccessible</string>
 
     <!-- conversation_input_panel -->
     <string name="conversation_input_panel__slide_to_cancel">Slide to cancel</string>

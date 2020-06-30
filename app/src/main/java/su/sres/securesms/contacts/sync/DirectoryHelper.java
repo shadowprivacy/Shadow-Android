@@ -32,7 +32,8 @@ public class DirectoryHelper {
     StorageSyncHelper.scheduleSyncForDataChange();
   }
 
-    @WorkerThread
+    // should not be used as of now
+/*    @WorkerThread
     public static RegisteredState refreshDirectoryFor (@NonNull Context context, @NonNull Recipient recipient, boolean notifyOfNewUsers) throws IOException {
       RegisteredState originalRegisteredState = recipient.resolve().getRegistered();
       RegisteredState newRegisteredState      = null;
@@ -47,7 +48,7 @@ public class DirectoryHelper {
       }
 
       return newRegisteredState;
-    }
+    } */
 }
 
 

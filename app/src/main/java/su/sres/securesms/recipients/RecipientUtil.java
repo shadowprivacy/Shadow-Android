@@ -10,14 +10,11 @@ import androidx.annotation.WorkerThread;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.R;
-import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
-import su.sres.securesms.database.RecipientDatabase.RegisteredState;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.jobs.DirectoryRefreshJob;
 import su.sres.securesms.jobs.LeaveGroupJob;
 import su.sres.securesms.jobs.MultiDeviceBlockedUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceMessageRequestResponseJob;
@@ -30,8 +27,6 @@ import su.sres.securesms.mms.OutgoingGroupMediaMessage;
 import su.sres.securesms.util.GroupUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.push.SignalServiceAddress;
-
-import java.io.IOException;
 
 public class RecipientUtil {
 
@@ -51,15 +46,17 @@ public class RecipientUtil {
         }
 
         if (FeatureFlags.uuids() && !recipient.getUuid().isPresent()) {
+
+            // this won't be the case, since all recipients will have UUIDs
             Log.i(TAG, recipient.getId() + " is missing a UUID...");
-            try {
+       /*     try {
                 RegisteredState state = DirectoryHelper.refreshDirectoryFor(context, recipient, false);
                 recipient = Recipient.resolved(recipient.getId());
                 Log.i(TAG, "Successfully performed a UUID fetch for " + recipient.getId() + ". Registered: " + state);
             } catch (IOException e) {
                 Log.w(TAG, "Failed to fetch a UUID for " + recipient.getId() + ". Scheduling a future fetch and building an address without one.");
                 ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(recipient, false));
-            }
+            } */
         }
 
         return new SignalServiceAddress(Optional.fromNullable(recipient.getUuid().orNull()), Optional.fromNullable(recipient.resolve().getE164().orNull()));

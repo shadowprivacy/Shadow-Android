@@ -5,61 +5,31 @@
 
 package su.sres.securesms.contacts.sync;
 
-import android.Manifest;
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.annotation.SuppressLint;
-import android.content.ContentResolver;
 import android.content.Context;
-import android.content.OperationApplicationException;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.RemoteException;
-import android.provider.ContactsContract;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
-import com.annimon.stream.Collectors;
-import com.annimon.stream.Stream;
-
-import su.sres.securesms.R;
-import su.sres.securesms.contacts.ContactAccessor;
-import su.sres.securesms.crypto.SessionUtil;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MessagingDatabase.InsertResult;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.RegisteredState;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
+import su.sres.securesms.jobs.RotateProfileKeyJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.notifications.MessageNotifier;
-import su.sres.securesms.notifications.NotificationChannels;
-import su.sres.securesms.permissions.Permissions;
-import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.sms.IncomingJoinedMessage;
-import su.sres.securesms.util.ProfileUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
+
+import su.sres.signalservice.api.storage.protos.DirectoryResponse;
+import su.sres.signalservice.api.storage.protos.DirectoryUpdate;
 import su.sres.signalservice.api.SignalServiceAccountManager;
-import su.sres.signalservice.api.profiles.SignalServiceProfile;
 import su.sres.signalservice.api.push.ContactTokenDetails;
-import su.sres.signalservice.api.util.UuidUtil;
-import su.sres.signalservice.api.push.exceptions.NotFoundException;
 
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,54 +40,108 @@ class DirectoryHelperV1 {
     @WorkerThread
     static void refreshDirectory(@NonNull Context context, boolean notifyOfNewUsers) throws IOException {
         if (TextUtils.isEmpty(TextSecurePreferences.getLocalNumber(context))) return;
-        if (!Permissions.hasAll(context, Manifest.permission.WRITE_CONTACTS)) return;
 
-        List<RecipientId> newlyActiveUsers = refreshDirectory(context, ApplicationDependencies.getSignalServiceAccountManager());
+        refreshDirectory(context, ApplicationDependencies.getSignalServiceAccountManager());
 
+        // TODO: deal with this later
         if (TextSecurePreferences.isMultiDevice(context)) {
             ApplicationDependencies.getJobManager().add(new MultiDeviceContactUpdateJob());
         }
 
-        if (notifyOfNewUsers) notifyNewUsers(context, newlyActiveUsers);
+        // if (notifyOfNewUsers) notifyNewUsers(context, newlyActiveUsers);
     }
 
-    @SuppressLint("CheckResult")
-    private static @NonNull List<RecipientId> refreshDirectory(@NonNull Context context, @NonNull SignalServiceAccountManager accountManager) throws IOException {
+    private static void refreshDirectory(@NonNull Context context, @NonNull SignalServiceAccountManager accountManager) throws IOException {
         if (TextUtils.isEmpty(TextSecurePreferences.getLocalNumber(context))) {
-            // return new LinkedList<>();
-            return Collections.emptyList();
+            return;
         }
 
-        if (!Permissions.hasAll(context, Manifest.permission.WRITE_CONTACTS)) {
-            // return new LinkedList<>();
-            return Collections.emptyList();
+        RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+        PlainDirectoryResult directoryResult = getDirectoryResult(context, accountManager);
+
+        long remoteVersion = directoryResult.version;
+
+        if (directoryResult.isUpdate) {
+
+            int inserted = 0,
+                removed = 0;
+
+            if (directoryResult.isFullUpdate) {
+                // perform full update
+
+                Set<String> currentUserLogins = recipientDatabase.getAllUserLogins();
+                Set<String> userLoginsToInsert = directoryResult.getUserLogins();
+
+                for(String userLogin : currentUserLogins) {
+
+                    RecipientId id = recipientDatabase.getOrInsertFromUserLogin(userLogin);
+
+                    if (!userLoginsToInsert.contains(userLogin)) {
+                        recipientDatabase.markUnregistered(id);
+                        recipientDatabase.setProfileSharing(id, false);
+                        removed++;
+                    }
+                }
+
+                for(String userLogin : userLoginsToInsert) {
+
+                    RecipientId id = recipientDatabase.getOrInsertFromUserLogin(userLogin);
+                    recipientDatabase.markRegistered(id);
+                    recipientDatabase.setProfileSharing(id, true);
+                    inserted++;
+                }
+
+                Log.i(TAG, String.format("Full update to version %s successful. Inserted %s entries, removed %s entries", remoteVersion, inserted, removed));
+
+            } else {
+                // perform incremental update
+
+                Map<String, String> incrementalUpdate = directoryResult.updateContents.get();
+
+                for (Map.Entry<String, String> entry : incrementalUpdate.entrySet()) {
+
+                    String userLogin = entry.getKey();
+
+                    // this will effectively skip an empty incremental update
+                    if (userLogin.equals("")) continue;
+
+                    RecipientId id = recipientDatabase.getOrInsertFromUserLogin(userLogin);
+
+                    if (entry.getValue().equals("-1")) {
+                        recipientDatabase.markUnregistered(id);
+                        recipientDatabase.setProfileSharing(id, false);
+                        removed++;
+                    } else {
+
+                        recipientDatabase.markRegistered(id);
+                        recipientDatabase.setProfileSharing(id, true);
+                        inserted++;
+                    }
+                }
+
+                Log.i(TAG, String.format("Incremental update to version %s successful. Inserted %s entries, removed %s entries", remoteVersion, inserted, removed));
+            }
+
+            SignalStore.serviceConfigurationValues().setCurrentDirVer(remoteVersion);
+            if(removed > 0) ApplicationDependencies.getJobManager().add(new RotateProfileKeyJob());
         }
-
-        RecipientDatabase recipientDatabase                       = DatabaseFactory.getRecipientDatabase(context);
-        Set<String>       allRecipientNumbers                     = recipientDatabase.getAllPhoneNumbers();
-        Stream<String>    eligibleRecipientDatabaseContactNumbers = Stream.of(allRecipientNumbers);
-        Stream<String>    eligibleSystemDatabaseContactNumbers    = Stream.of(ContactAccessor.getInstance().getAllContactsWithNumbers(context));
-        Set<String>       eligibleContactNumbers                  = Stream.concat(eligibleRecipientDatabaseContactNumbers, eligibleSystemDatabaseContactNumbers).collect(Collectors.toSet());
-        Set<String>       storedNumbers                           = Stream.of(allRecipientNumbers).collect(Collectors.toSet());
-        DirectoryResult   directoryResult                         = getDirectoryResult(context, accountManager, recipientDatabase, storedNumbers, eligibleContactNumbers);
-
-        return directoryResult.getNewlyActiveRecipients();
     }
 
-    @WorkerThread
+    // this returns whether the recipient is registered or not, should not be used as of now
+/*    @WorkerThread
     static RegisteredState refreshDirectoryFor(@NonNull Context context, @NonNull Recipient recipient, boolean notifyOfNewUsers) throws IOException {
         RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
 
-        if (recipient.getUuid().isPresent() && !recipient.getE164().isPresent()) {
-            boolean isRegistered = isUuidRegistered(context, recipient);
+        if (recipient.getUuid().isPresent() && !recipient.getE164().isPresent()) {  // if UUID is there, but the phone number is not
+            boolean isRegistered = isUuidRegistered(context, recipient);            // if the profile can be retrieved, this is  true
             if (isRegistered) {
-                recipientDatabase.markRegistered(recipient.getId(), recipient.getUuid().get());
+                recipientDatabase.markRegistered(recipient.getId(), recipient.getUuid().get());    // sets the UUID and sets the user as registered
             } else {
-                recipientDatabase.markUnregistered(recipient.getId());
+                recipientDatabase.markUnregistered(recipient.getId());                             // removes the UUID and sets the user as unregistered
             }
 
             return isRegistered ? RegisteredState.REGISTERED : RegisteredState.NOT_REGISTERED;
-        }
+        } // the following is enacted if there's no UUID or the phone number is present (this is our case)
         return getRegisteredState(context, ApplicationDependencies.getSignalServiceAccountManager(), recipientDatabase, recipient);
     }
 
@@ -174,7 +198,7 @@ class DirectoryHelperV1 {
     private static void notifyNewUsers(@NonNull  Context context,
                                        @NonNull  List<RecipientId> newUsers)
     {
-        if (!TextSecurePreferences.isNewContactsNotificationEnabled(context)) return;
+//        if (!TextSecurePreferences.isNewContactsNotificationEnabled(context)) return;
 
         for (RecipientId newUser: newUsers) {
             Recipient recipient = Recipient.resolved(newUser);
@@ -222,65 +246,18 @@ class DirectoryHelperV1 {
             Log.w(TAG, "Failed to create account!");
             return Optional.absent();
         }
-    }
+    } */
 
-    private static DirectoryResult getDirectoryResult(@NonNull Context context,
-                                                      @NonNull SignalServiceAccountManager accountManager,
-                                                      @NonNull RecipientDatabase recipientDatabase,
-                                                      @NonNull Set<String> locallyStoredNumbers,
-                                                      @NonNull Set<String> eligibleContactNumbers)
+    private static PlainDirectoryResult getDirectoryResult(@NonNull Context context, @NonNull SignalServiceAccountManager accountManager)
             throws IOException
     {
-        FuzzyPhoneNumberHelper.InputResult  inputResult   = FuzzyPhoneNumberHelper.generateInput(eligibleContactNumbers, locallyStoredNumbers);
-        List<ContactTokenDetails>           activeTokens  = accountManager.getContacts(inputResult.getNumbers());
-        Set<String>                         activeNumbers = Stream.of(activeTokens).map(ContactTokenDetails::getNumber).collect(Collectors.toSet());
-        FuzzyPhoneNumberHelper.OutputResult outputResult  = FuzzyPhoneNumberHelper.generateOutput(activeNumbers, inputResult);
+        DirectoryResponse directoryResponse = accountManager.getDirectoryResponse(SignalStore.serviceConfigurationValues().getCurrentDirVer());
 
-        if (inputResult.getFuzzies().size() > 0) {
-            Log.i(TAG, "[getDirectoryResult] Got a fuzzy number result.");
-        }
-
-        if (outputResult.getRewrites().size() > 0) {
-            Log.i(TAG, "[getDirectoryResult] Need to rewrite some numbers.");
-        }
-
-        recipientDatabase.updatePhoneNumbers(outputResult.getRewrites());
-
-        List<RecipientId> activeIds   = new LinkedList<>();
-        List<RecipientId> inactiveIds = new LinkedList<>();
-
-        Set<String> inactiveContactNumbers = new HashSet<>(inputResult.getNumbers());
-        inactiveContactNumbers.removeAll(outputResult.getRewrites().keySet());
-
-        for (String number : outputResult.getNumbers()) {
-            activeIds.add(recipientDatabase.getOrInsertFromE164(number));
-            inactiveContactNumbers.remove(number);
-        }
-
-        for (String inactiveContactNumber : inactiveContactNumbers) {
-            inactiveIds.add(recipientDatabase.getOrInsertFromE164(inactiveContactNumber));
-        }
-
-        Set<RecipientId>  currentActiveIds = new HashSet<>(recipientDatabase.getRegistered());
-        Set<RecipientId>  contactIds       = new HashSet<>(recipientDatabase.getSystemContacts());
-        List<RecipientId> newlyActiveIds   = Stream.of(activeIds)
-                .filter(id -> !currentActiveIds.contains(id))
-                .filter(contactIds::contains)
-                .toList();
-
-        recipientDatabase.setRegistered(activeIds, inactiveIds);
-        updateContactsDatabase(context, activeIds, true, outputResult.getRewrites());
-
-        Set<String> activeContactNumbers = Stream.of(activeIds).map(Recipient::resolved).filter(Recipient::hasSmsAddress).map(Recipient::requireSmsAddress).collect(Collectors.toSet());
-
-        if (TextSecurePreferences.hasSuccessfullyRetrievedDirectory(context)) {
-            return new DirectoryResult(activeContactNumbers, newlyActiveIds);
-        } else {
             TextSecurePreferences.setHasSuccessfullyRetrievedDirectory(context, true);
-            return new DirectoryResult(activeContactNumbers);
-        }
+            return new PlainDirectoryResult(directoryResponse);
     }
 
+    // in short, this sets the recipient registered if it has a e164 number and is registered on the server or resolved through fuzzy, and sets unregistered otherwise
     private static RegisteredState getRegisteredState(@NonNull Context                     context,
                                                       @NonNull SignalServiceAccountManager accountManager,
                                                       @NonNull RecipientDatabase           recipientDatabase,
@@ -288,14 +265,14 @@ class DirectoryHelperV1 {
             throws IOException
     {
         boolean                       activeUser    = recipient.resolve().getRegistered() == RegisteredState.REGISTERED;
-        boolean                       systemContact = recipient.isSystemContact();
+  //      boolean                       systemContact = recipient.isSystemContact();
         Optional<ContactTokenDetails> details       = Optional.absent();
-        Map<String, String>           rewrites      = new HashMap<>();
+ //       Map<String, String>           rewrites      = new HashMap<>();
 
         if (recipient.hasE164()) {
-            FuzzyPhoneNumberHelper.InputResult inputResult = FuzzyPhoneNumberHelper.generateInput(Collections.singletonList(recipient.requireE164()), recipientDatabase.getAllPhoneNumbers());
+  //          FuzzyPhoneNumberHelper.InputResult inputResult = FuzzyPhoneNumberHelper.generateInput(Collections.singletonList(recipient.requireE164()), recipientDatabase.getAllPhoneNumbers());
 
-            if (inputResult.getNumbers().size() > 1) {
+   /*         if (inputResult.getNumbers().size() > 1) {
                 Log.i(TAG, "[getRegisteredState] Got a fuzzy number result.");
 
                 List<ContactTokenDetails>           detailList   = accountManager.getContacts(inputResult.getNumbers());
@@ -314,25 +291,25 @@ class DirectoryHelperV1 {
                 details = Optional.of(detail);
 
                 recipientDatabase.updatePhoneNumbers(outputResult.getRewrites());
-            } else {
-                details = accountManager.getContact(recipient.requireE164());
-            }
+            } else { */
+                details = accountManager.getContact(recipient.requireE164()); // checks if the recipient is registered on the server
+        //    }
         }
 
         if (details.isPresent()) {
             recipientDatabase.setRegistered(recipient.getId(), RegisteredState.REGISTERED);
 
-            if (Permissions.hasAll(context, Manifest.permission.WRITE_CONTACTS)) {
-                updateContactsDatabase(context, Util.asList(recipient.getId()), false, rewrites);
-            }
+    //        if (Permissions.hasAll(context, Manifest.permission.WRITE_CONTACTS)) {
+    //            updateContactsDatabase(context, Util.asList(recipient.getId()), false, rewrites);
+    //        }
 
             if (!activeUser && TextSecurePreferences.isMultiDevice(context)) {
                 ApplicationDependencies.getJobManager().add(new MultiDeviceContactUpdateJob());
             }
 
-            if (!activeUser && systemContact && !TextSecurePreferences.getNeedsSqlCipherMigration(context)) {
-                notifyNewUsers(context, Collections.singletonList(recipient.getId()));
-            }
+    //        if (!activeUser && systemContact && !TextSecurePreferences.getNeedsSqlCipherMigration(context)) {
+    //            notifyNewUsers(context, Collections.singletonList(recipient.getId()));
+    //        }
 
             return RegisteredState.REGISTERED;
         } else {
@@ -341,7 +318,7 @@ class DirectoryHelperV1 {
         }
     }
 
-    private static boolean isValidContactNumber(@Nullable String number) {
+/*    private static boolean isValidContactNumber(@Nullable String number) {
         return !TextUtils.isEmpty(number) && !UuidUtil.isUuid(number);
     }
 
@@ -353,32 +330,51 @@ class DirectoryHelperV1 {
         } catch (NotFoundException e) {
             return false;
         }
+    } */
+
+    private static class PlainDirectoryResult {
+
+        private Optional<Map<String, String>> updateContents;
+        private boolean isUpdate;
+        private boolean isFullUpdate;
+        private long version;
+
+        PlainDirectoryResult(DirectoryResponse directoryResponse) {
+           DirectoryResponse.StatusOrUpdateCase responseType = directoryResponse.getStatusOrUpdateCase();
+
+           version = directoryResponse.getVersion();
+
+           switch (responseType) {
+
+               case DIRECTORY_UPDATE:
+                   isUpdate = true;
+                   DirectoryUpdate directoryUpdate = directoryResponse.getDirectoryUpdate();
+                   DirectoryUpdate.Type updateType = directoryUpdate.getType();
+                   updateContents = Optional.of(directoryUpdate.getDirectoryEntryMap());
+
+                  switch (updateType) {
+                      case FULL:
+                          isFullUpdate = true;
+                          break;
+                      default:
+                          isFullUpdate = false;
+                   }
+
+                   break;
+
+               default:
+                   isUpdate = false;
+                   isFullUpdate = false;
+                   updateContents = Optional.absent();
+           }
+        }
+
+        Set<String> getUserLogins() {
+            return updateContents.get().keySet();
+        }
     }
 
-    private static class DirectoryResult {
-
-        private final Set<String>       numbers;
-        private final List<RecipientId> newlyActiveRecipients;
-
-        DirectoryResult(@NonNull Set<String> numbers) {
-            this(numbers, Collections.emptyList());
-        }
-
-        DirectoryResult(@NonNull Set<String> numbers, @NonNull List<RecipientId> newlyActiveRecipients) {
-            this.numbers               = numbers;
-            this.newlyActiveRecipients = newlyActiveRecipients;
-        }
-
-        Set<String> getNumbers() {
-            return numbers;
-        }
-
-        List<RecipientId> getNewlyActiveRecipients() {
-            return newlyActiveRecipients;
-        }
-    }
-
-    private static class AccountHolder {
+/*    private static class AccountHolder {
 
         private final boolean fresh;
         private final Account account;
@@ -396,7 +392,5 @@ class DirectoryHelperV1 {
         public Account getAccount() {
             return account;
         }
-
-    }
-
+    } */
 }

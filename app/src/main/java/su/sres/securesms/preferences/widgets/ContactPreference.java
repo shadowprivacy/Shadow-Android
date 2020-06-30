@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.ImageView;
 
 import su.sres.securesms.R;
+import su.sres.securesms.util.TextSecurePreferences;
 
 public class ContactPreference extends Preference {
 
@@ -60,11 +61,13 @@ public class ContactPreference extends Preference {
 
   public void setState(boolean secure, boolean blocked) {
     this.secure = secure;
+    boolean registered = TextSecurePreferences.isPushRegistered(getContext());
 
-    if (secureCallButton != null)  secureCallButton.setVisibility(secure && !blocked ? View.VISIBLE : View.GONE);
-    if (secureVideoButton != null) secureVideoButton.setVisibility(secure && !blocked ? View.VISIBLE : View.GONE);
-    if (callButton != null)        callButton.setVisibility(secure || blocked ? View.GONE : View.VISIBLE);
-    if (messageButton != null)     messageButton.setVisibility(blocked ? View.GONE : View.VISIBLE);
+    if (secureCallButton != null)  secureCallButton.setVisibility(secure && !blocked && registered ? View.VISIBLE : View.GONE);
+    if (secureVideoButton != null) secureVideoButton.setVisibility(secure && !blocked && registered ? View.VISIBLE : View.GONE);
+//    if (callButton != null)        callButton.setVisibility(secure || blocked ? View.GONE : View.VISIBLE);
+    if (callButton != null) callButton.setVisibility(View.GONE);
+    if (messageButton != null)     messageButton.setVisibility(secure && !blocked && registered ? View.VISIBLE : View.GONE);
 
     int color;
 
@@ -86,7 +89,7 @@ public class ContactPreference extends Preference {
     if (this.messageButton != null)     this.messageButton.setOnClickListener(v -> listener.onMessageClicked());
     if (this.secureCallButton != null)  this.secureCallButton.setOnClickListener(v -> listener.onSecureCallClicked());
     if (this.secureVideoButton != null) this.secureVideoButton.setOnClickListener(v -> listener.onSecureVideoClicked());
-    if (this.callButton != null)        this.callButton.setOnClickListener(v -> listener.onInSecureCallClicked());
+//    if (this.callButton != null)        this.callButton.setOnClickListener(v -> listener.onInSecureCallClicked());
   }
 
   public interface Listener {

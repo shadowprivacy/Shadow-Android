@@ -12,8 +12,8 @@ public final class ServiceConfigurationValues {
     private static final String STORAGE_URL = "service_configuration.storage_url";
     private static final String STATUS_URL = "service_configuration.status_url";
     private static final String UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY = "service_configuration.unidentified_access_ca_public_key";
-//    private static final String SERVER_CERT_PUBLIC_KEY = "service_configuration.server_cert_public_key";
     private static final String CURRENT_CERT_VERSION = "service_configuration.current_cert_version";
+    private static final String CURRENT_DIR_VERSION = "service_configuration.current_dir_version";
     private static final String SUPPORT_EMAIL        = "service_configuration.support_email";
 
     public static final String EXAMPLE_URI = "https://example.com";
@@ -66,6 +66,12 @@ public final class ServiceConfigurationValues {
                 .commit();
     }
 
+    public synchronized void setCurrentDirVer(long dirVer) {
+        store.beginWrite()
+                .putLong(CURRENT_DIR_VERSION, dirVer)
+                .commit();
+    }
+
     public synchronized void setSupportEmail(String supportEmail) {
         store.beginWrite()
                 .putString(SUPPORT_EMAIL, supportEmail)
@@ -105,6 +111,10 @@ public final class ServiceConfigurationValues {
 
     public int getCurrentCertVer() {
         return store.getInteger(CURRENT_CERT_VERSION, 1);
+    }
+
+    public long getCurrentDirVer() {
+        return store.getLong(CURRENT_DIR_VERSION, 0);
     }
 
     public @Nullable

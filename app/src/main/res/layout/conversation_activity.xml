@@ -119,7 +119,7 @@ xmlns:tools="http://schemas.android.com/tools"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:padding="20dp"
-            android:text="@string/conversation_activity__enable_signal_for_sms"
+            android:text="@string/conversation_activity__this_user_is_inaccessible"
             android:visibility="gone" />
 
         <TextView

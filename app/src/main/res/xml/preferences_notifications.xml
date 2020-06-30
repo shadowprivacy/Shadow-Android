@@ -96,11 +96,11 @@
 
     <PreferenceCategory android:layout="@layout/preference_divider"/>
 
-    <PreferenceCategory android:title="@string/preferences_notifications__events">
+<!--    <PreferenceCategory android:title="@string/preferences_notifications__events">
         <su.sres.securesms.components.SwitchPreferenceCompat
             android:key="pref_enable_new_contacts_notifications"
             android:title="@string/preferences_events__contact_joined_signal"
             android:defaultValue="true" />
-    </PreferenceCategory>
+    </PreferenceCategory> -->
 
 </PreferenceScreen>

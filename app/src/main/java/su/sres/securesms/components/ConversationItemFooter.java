@@ -98,7 +98,7 @@ public class ConversationItemFooter extends LinearLayout {
     if (messageRecord.isFailed()) {
       dateView.setText(R.string.ConversationItem_error_not_delivered);
     } else if (messageRecord.isPendingInsecureSmsFallback()) {
-      dateView.setText(R.string.ConversationItem_click_to_approve_unencrypted);
+      dateView.setText(R.string.ConversationItem_not_sent_recipient_inactive);
     } else {
       dateView.setText(DateUtils.getExtendedRelativeTimeSpanString(getContext(), locale, messageRecord.getTimestamp()));
     }

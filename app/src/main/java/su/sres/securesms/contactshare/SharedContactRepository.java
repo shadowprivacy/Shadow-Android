@@ -199,7 +199,8 @@ public class SharedContactRepository {
         int    cursorType   = cursor.getInt(cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.TYPE));
         String cursorLabel  = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.LABEL));
 
-        String number    = ContactUtil.getNormalizedPhoneNumber(context, cursorNumber);
+     //   String number    = ContactUtil.getNormalizedPhoneNumber(context, cursorNumber);
+        String number    = cursorNumber;
         Phone  existing  = numberMap.get(number);
         Phone  candidate = new Phone(number, phoneTypeFromContactType(cursorType), cursorLabel);
 
@@ -270,12 +271,12 @@ public class SharedContactRepository {
       return systemAvatar;
     }
 
-    for (Phone phoneNumber : phoneNumbers) {
+ /*   for (Phone phoneNumber : phoneNumbers) {
       AvatarInfo recipientAvatar = getRecipientAvatarInfo(PhoneNumberFormatter.get(context).format(phoneNumber.getNumber()));
       if (recipientAvatar != null) {
         return recipientAvatar;
       }
-    }
+    }  */
     return null;
   }
 

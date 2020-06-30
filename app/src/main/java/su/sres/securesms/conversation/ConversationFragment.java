@@ -37,6 +37,7 @@ import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.components.ConversationTypingView;
 import su.sres.securesms.components.TooltipPopup;
 import su.sres.securesms.components.recyclerview.SmoothScrollingLinearLayoutManager;
+import su.sres.securesms.jobs.DirectorySyncJob;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.logging.Log;
 
@@ -88,7 +89,6 @@ import su.sres.securesms.database.model.MediaMmsMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.jobs.DirectoryRefreshJob;
 import su.sres.securesms.jobs.MultiDeviceViewOnceOpenJob;
 import su.sres.securesms.longmessage.LongMessageActivity;
 import su.sres.securesms.mediasend.Media;
@@ -1310,7 +1310,8 @@ public class ConversationFragment extends Fragment
     super.onActivityResult(requestCode, resultCode, data);
 
     if (requestCode == CODE_ADD_EDIT_CONTACT && getContext() != null) {
-      ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
+      // ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
+      ApplicationDependencies.getJobManager().add(new DirectorySyncJob(false));
     }
   }
 

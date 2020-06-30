@@ -14,7 +14,7 @@ import su.sres.securesms.util.Util;
 public final class RegistrationViewModel extends ViewModel {
 
     private final String                           secret;
-    private final MutableLiveData<NumberViewState> number;
+    private final MutableLiveData<String>          userLogin;
     private final MutableLiveData<String>          textCodeEntered;
 // captcha off
     //    private final MutableLiveData<String>          captchaToken;
@@ -26,7 +26,7 @@ public final class RegistrationViewModel extends ViewModel {
     public RegistrationViewModel(@NonNull SavedStateHandle savedStateHandle) {
         secret = loadValue(savedStateHandle, "REGISTRATION_SECRET", Util.getSecret(18));
 
-        number                        = savedStateHandle.getLiveData("NUMBER", NumberViewState.INITIAL);
+        userLogin                     = savedStateHandle.getLiveData("USER_LOGIN", "");
         textCodeEntered               = savedStateHandle.getLiveData("TEXT_CODE_ENTERED", "");
 // captcha off
         //        captchaToken                  = savedStateHandle.getLiveData("CAPTCHA");
@@ -43,13 +43,13 @@ public final class RegistrationViewModel extends ViewModel {
         return savedStateHandle.get(key);
     }
 
-    public @NonNull NumberViewState getNumber() {
+    public @NonNull String getUserLogin() {
         //noinspection ConstantConditions Live data was given an initial value
-        return number.getValue();
+        return userLogin.getValue();
     }
 
-    public @NonNull LiveData<NumberViewState> getLiveNumber() {
-        return number;
+    public @NonNull LiveData<String> getLiveUserLogin() {
+        return userLogin;
     }
 
     public @NonNull String getTextCodeEntered() {
@@ -79,20 +79,16 @@ public final class RegistrationViewModel extends ViewModel {
         captchaToken.setValue(null);
     }  */
 
-    public void onCountrySelected(@Nullable String selectedCountryName, int countryCode) {
+/*    public void onCountrySelected(@Nullable String selectedCountryName, int countryCode) {
         setViewState(getNumber().toBuilder()
                 .selectedCountryDisplayName(selectedCountryName)
                 .countryCode(countryCode).build());
-    }
+    } */
 
-    public void setNationalNumber(long number) {
-        NumberViewState numberViewState = getNumber().toBuilder().nationalNumber(number).build();
-        setViewState(numberViewState);
-    }
 
-    private void setViewState(NumberViewState numberViewState) {
-        if (!numberViewState.equals(getNumber())) {
-            number.setValue(numberViewState);
+    public void setViewState(String userLoginViewState) {
+        if (!userLoginViewState.equals(getUserLogin())) {
+            userLogin.setValue(userLoginViewState);
         }
     }
 
@@ -101,12 +97,12 @@ public final class RegistrationViewModel extends ViewModel {
         textCodeEntered.setValue(code);
     }
 
-    public void onNumberDetected(int countryCode, long nationalNumber) {
+/*    public void onNumberDetected(int countryCode, long nationalNumber) {
         setViewState(getNumber().toBuilder()
                 .countryCode(countryCode)
                 .nationalNumber(nationalNumber)
                 .build());
-    }
+    } */
 
     public String getFcmToken() {
         return fcmToken.getValue();

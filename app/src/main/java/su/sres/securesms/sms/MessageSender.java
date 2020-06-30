@@ -455,13 +455,15 @@ public class MessageSender {
     } else if (destination.resolve().getRegistered() == RecipientDatabase.RegisteredState.NOT_REGISTERED) {
       return false;
     } else {
-      try {
-        RecipientDatabase.RegisteredState state = DirectoryHelper.refreshDirectoryFor(context, destination, false);
-        return state == RecipientDatabase.RegisteredState.REGISTERED;
-      } catch (IOException e1) {
-        Log.w(TAG, e1);
+
+ // we don't need this, since all recipients in the db will be registered
+ //     try {
+ //       RecipientDatabase.RegisteredState state = DirectoryHelper.refreshDirectoryFor(context, destination, false);
+ //       return state == RecipientDatabase.RegisteredState.REGISTERED;
+ //     } catch (IOException e1) {
+ //       Log.w(TAG, e1);
         return false;
-      }
+ //     }
     }
   }
 

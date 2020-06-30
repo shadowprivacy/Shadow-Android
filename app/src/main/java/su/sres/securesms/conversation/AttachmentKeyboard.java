@@ -72,7 +72,7 @@ public class AttachmentKeyboard extends FrameLayout implements InputAwareLayout.
 
         buttonAdapter.setButtons(Arrays.asList(
                 AttachmentKeyboardButton.GALLERY,
-                AttachmentKeyboardButton.GIF,
+//                AttachmentKeyboardButton.GIF,
                 AttachmentKeyboardButton.FILE,
                 AttachmentKeyboardButton.CONTACT,
                 AttachmentKeyboardButton.LOCATION

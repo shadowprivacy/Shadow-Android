@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -13,7 +14,6 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobMigration.JobData;
 import su.sres.securesms.jobmanager.migrations.RecipientIdJobMigration.NewSerializableSyncMessageId;
 import su.sres.securesms.jobmanager.migrations.RecipientIdJobMigration.OldSerializableSyncMessageId;
-import su.sres.securesms.jobs.DirectoryRefreshJob;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceReadUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceVerifiedUpdateJob;
@@ -215,7 +215,7 @@ public class RecipientIdJobMigrationTest {
         new PushGroupUpdateJob.Factory().create(mock(Job.Parameters.class), converted.getData());
     }
 
-    @Test
+/*    @Test
     public void migrate_directoryRefreshJob_null() throws Exception {
         JobData testData = new JobData("DirectoryRefreshJob", "DirectoryRefreshJob", new Data.Builder().putString("address", null).putBoolean("notify_of_new_users", true).build());
 
@@ -246,7 +246,7 @@ public class RecipientIdJobMigrationTest {
         assertFalse(converted.getData().hasString("address"));
 
         new DirectoryRefreshJob.Factory().create(mock(Job.Parameters.class), converted.getData());
-    }
+    } */
 
     @Test
     public void migrate_retrieveProfileAvatarJob() throws Exception {

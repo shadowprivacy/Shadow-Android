@@ -67,7 +67,7 @@ public class UuidMigrationJob extends MigrationJob {
     }
 
     private static void ensureSelfRecipientExists(@NonNull Context context) {
-        DatabaseFactory.getRecipientDatabase(context).getOrInsertFromE164(TextSecurePreferences.getLocalNumber(context));
+        DatabaseFactory.getRecipientDatabase(context).getOrInsertFromUserLogin(TextSecurePreferences.getLocalNumber(context));
     }
 
     private static void fetchOwnUuid(@NonNull Context context) throws IOException {

@@ -6,66 +6,29 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    tools:context=".registration.fragments.EnterPhoneNumberFragment">
+    tools:context=".registration.fragments.EnterUserLoginFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="0dp">
 
-        <FrameLayout
-            android:id="@+id/country_spinner_frame"
-            android:layout_width="match_parent"
+
+        <su.sres.securesms.components.LabeledEditText
+            android:id="@+id/user_login"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
-            android:layout_marginTop="24dp"
-            android:layout_marginEnd="32dp"
-            android:background="@drawable/labeled_edit_text_background_inactive"
-
+            android:layout_marginStart="30dp"
+            android:layout_marginEnd="30dp"
+            android:layout_weight="3"
+            app:labeledEditText_background="@color/white"
+            app:labeledEditText_label="@string/RegistrationActivity_user_login"
+            app:labeledEditText_textLayout="@layout/phone_text"
+            app:layout_constraintBottom_toTopOf="@+id/cancel_button"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/verify_subheader">
-
-            <Spinner
-                android:id="@+id/country_spinner"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:textAlignment="viewStart" />
-
-        </FrameLayout>
-
-        <LinearLayout
-            android:id="@+id/linearLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="32dp"
-            android:layoutDirection="ltr"
-            android:orientation="horizontal"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/country_spinner_frame">
-
-            <su.sres.securesms.components.LabeledEditText
-                android:id="@+id/country_code"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="12dp"
-                android:layout_weight="1"
-                app:labeledEditText_background="@color/white"
-                app:labeledEditText_textLayout="@layout/country_code_text" />
-
-            <su.sres.securesms.components.LabeledEditText
-                android:id="@+id/number"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="3"
-                app:labeledEditText_background="@color/white"
-                app:labeledEditText_label="Phone Number"
-                app:labeledEditText_textLayout="@layout/phone_text" />
-        </LinearLayout>
+            app:layout_constraintTop_toBottomOf="@+id/verify_subheader"
+            app:layout_constraintVertical_bias="0.124" />
 
         <TextView
             android:id="@+id/verify_header"
@@ -77,7 +40,7 @@
             android:layout_marginTop="40dp"
             android:layout_marginEnd="32dp"
             android:gravity="center"
-            android:text="@string/RegistrationActivity_enter_your_phone_number_to_get_started"
+            android:text="@string/RegistrationActivity_enter_your_user_login_to_get_started"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
@@ -118,16 +81,16 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="32dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="80dp"
             android:layout_marginEnd="32dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="208dp"
             app:cpb_textIdle="@string/RegistrationActivity_next"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/linearLayout"
-            app:layout_constraintVertical_bias="0" />
+            app:layout_constraintTop_toBottomOf="@+id/user_login"
+            app:layout_constraintVertical_bias="0.0" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

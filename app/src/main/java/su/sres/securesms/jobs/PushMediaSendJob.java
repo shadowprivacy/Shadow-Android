@@ -161,7 +161,8 @@ public class PushMediaSendJob extends PushSendJob  {
       warn(TAG, "Failure", ifae);
       database.markAsPendingInsecureSmsFallback(messageId);
       notifyMediaMessageDeliveryFailed(context, messageId);
-      ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
+      // ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
+      ApplicationDependencies.getJobManager().add(new DirectorySyncJob(false));
     } catch (UntrustedIdentityException uie) {
       warn(TAG, "Failure", uie);
       database.addMismatchedIdentity(messageId, Recipient.external(context, uie.getIdentifier()).getId(), uie.getIdentityKey());

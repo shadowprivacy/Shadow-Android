@@ -52,7 +52,8 @@ public final class JobManagerFactories {
             put(CertificateRefreshJob.KEY,                 new CertificateRefreshJob.Factory());
             put(CleanPreKeysJob.KEY,                       new CleanPreKeysJob.Factory());
             put(CreateSignedPreKeyJob.KEY,                 new CreateSignedPreKeyJob.Factory());
-            put(DirectoryRefreshJob.KEY,                   new DirectoryRefreshJob.Factory());
+            // put(DirectoryRefreshJob.KEY,                   new DirectoryRefreshJob.Factory());
+            put(DirectorySyncJob.KEY,                      new DirectorySyncJob.Factory());
             put(FcmRefreshJob.KEY,                         new FcmRefreshJob.Factory());
             put(LeaveGroupJob.KEY,                         new LeaveGroupJob.Factory());
             put(LocalBackupJob.KEY,                        new LocalBackupJob.Factory());

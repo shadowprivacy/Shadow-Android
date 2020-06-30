@@ -29,16 +29,15 @@ import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
 import su.sres.securesms.database.RecipientDatabase.VibrateState;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.jobs.DirectoryRefreshJob;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.phonenumbers.NumberUtil;
-import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
+
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.util.UuidUtil;
 
@@ -151,11 +150,13 @@ public class Recipient {
    */
   @WorkerThread
   public static @NonNull Recipient externalPush(@NonNull Context context, @Nullable UUID uuid, @Nullable String e164) {
+
     RecipientDatabase     db       = DatabaseFactory.getRecipientDatabase(context);
     Optional<RecipientId> uuidUser = uuid != null ? db.getByUuid(uuid) : Optional.absent();
     Optional<RecipientId> e164User = e164 != null ? db.getByE164(e164) : Optional.absent();
 
     if (uuidUser.isPresent()) {
+
       Recipient recipient = resolved(uuidUser.get());
 
       if (e164 != null && !recipient.getE164().isPresent() && !e164User.isPresent()) {
@@ -164,24 +165,31 @@ public class Recipient {
 
       return resolved(recipient.getId());
     } else if (e164User.isPresent()) {
+
       Recipient recipient = resolved(e164User.get());
 
+   // we need not mark incomings as registered here
       if (uuid != null && !recipient.getUuid().isPresent()) {
-        db.markRegistered(recipient.getId(), uuid);
+
+ //       db.markRegistered(recipient.getId(), uuid);
+
       } else if (!recipient.isRegistered()) {
-        db.markRegistered(recipient.getId());
+  //      db.markRegistered(recipient.getId());
 
         if (FeatureFlags.uuids()) {
           Log.i(TAG, "No UUID! Scheduling a fetch.");
-          ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(recipient, false));
+       // TODO: should not be the case when all recipients have UUIDs, but this needs check
+          //   ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(recipient, false));
         }
       }
 
       return resolved(recipient.getId());
     } else if (uuid != null) {
+
       if (FeatureFlags.uuids() || e164 != null) {
         RecipientId id = db.getOrInsertFromUuid(uuid);
-        db.markRegistered(id, uuid);
+  // same here, we do not have to mark the incoming as registered
+        //      db.markRegistered(id, uuid);
 
       if (e164 != null) {
         db.setPhoneNumber(id, e164);
@@ -192,14 +200,17 @@ public class Recipient {
         throw new UuidRecipientError();
       }
     } else if (e164 != null) {
-      Recipient recipient = resolved(db.getOrInsertFromE164(e164));
+
+      Recipient recipient = resolved(db.getOrInsertFromUserLogin(e164));
 
       if (!recipient.isRegistered()) {
-        db.markRegistered(recipient.getId());
+   // same here, should not be marked as registered
+        //     db.markRegistered(recipient.getId());
 
         if (FeatureFlags.uuids()) {
           Log.i(TAG, "No UUID! Scheduling a fetch.");
-          ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(recipient, false));
+            // TODO: should be the case when all recipients have UUIDs, but needs check
+          // ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(recipient, false));
         }
       }
 
@@ -225,7 +236,7 @@ public class Recipient {
     } else if (NumberUtil.isValidEmail(identifier)) {
       id = db.getOrInsertFromEmail(identifier);
     } else {
-      id = db.getOrInsertFromE164(identifier);
+      id = db.getOrInsertFromUserLogin(identifier);
     }
 
     return Recipient.resolved(id);
@@ -275,8 +286,8 @@ public class Recipient {
     } else if (NumberUtil.isValidEmail(identifier)) {
       id = db.getOrInsertFromEmail(identifier);
     } else {
-      String e164 = PhoneNumberFormatter.get(context).format(identifier);
-      id = db.getOrInsertFromE164(e164);
+//      String e164 = PhoneNumberFormatter.get(context).format(identifier);
+      id = db.getOrInsertFromUserLogin(identifier);
     }
 
     return Recipient.resolved(id);
