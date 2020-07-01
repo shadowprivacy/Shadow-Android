@@ -112,16 +112,16 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
       this.numberView.setText("");
       this.labelView.setVisibility(View.GONE);
     } else if (type == ContactRepository.PUSH_TYPE) {
-      this.numberView.setText(number);
+//      this.numberView.setText(number);
       this.nameView.setEnabled(true);
       this.labelView.setVisibility(View.GONE);
     } else if (type == ContactRepository.NEW_USERNAME_TYPE) {
-      this.numberView.setText("@" + number);
+//      this.numberView.setText("@" + number);
       this.nameView.setEnabled(true);
       this.labelView.setText(label);
       this.labelView.setVisibility(View.VISIBLE);
     } else {
-      this.numberView.setText(number);
+//      this.numberView.setText(number);
       this.nameView.setEnabled(true);
       this.labelView.setText(label != null && !label.equals("null") ? label : "");
       this.labelView.setVisibility(View.VISIBLE);
