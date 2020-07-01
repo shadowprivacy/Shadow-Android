@@ -1638,7 +1638,7 @@
   <!--conversation_list_fragment-->
   <string name="conversation_list_fragment__fab_content_description">Новый разговор</string>
   <string name="conversation_list_fragment__open_camera_description">Открыть камеру</string>
-  <string name="conversation_list_fragment__give_your_inbox_something_to_write_home_about_get_started_by_messaging_a_friend">Начните свое общение с друзьями.</string>
+  <string name="conversation_list_fragment__give_your_inbox_something_to_write_home_about_get_started_by_messaging_a_friend">Начните общаться с другими пользователями.</string>
   <!--conversation_secure_verified-->
   <string name="conversation_secure_verified__menu_reset_secure_session">Сбросить защищённый сеанс</string>
   <!--conversation_muted-->

@@ -85,7 +85,7 @@ public class ContactRepository {
 
     @WorkerThread
     public Cursor querySignalContacts(@NonNull String query) {
-        Cursor cursor = TextUtils.isEmpty(query) ? recipientDatabase.getSignalContacts()
+        Cursor cursor = TextUtils.isEmpty(query) ? recipientDatabase.getShadowContacts()
                 : recipientDatabase.querySignalContacts(query);
 
 

@@ -1289,11 +1289,12 @@ public class RecipientDatabase extends Database {
     }
   }
 
-  public @Nullable Cursor getSignalContacts() {
-    String   selection = BLOCKED         + " = ? AND " +
+  public @Nullable Cursor getShadowContacts() {
+// we include the phone not null clause to include all registered directory entries; with plain directory there are essentially no non-Shadow contacts, all contacts are system-internal
+      String   selection = BLOCKED         + " = ? AND " +
             REGISTERED      + " = ? AND " +
             GROUP_ID        + " IS NULL AND " +
-            "(" + SYSTEM_DISPLAY_NAME + " NOT NULL OR " + SEARCH_PROFILE_NAME + " NOT NULL OR " + USERNAME + " NOT NULL)";
+            "(" + SYSTEM_DISPLAY_NAME + " NOT NULL OR " + SEARCH_PROFILE_NAME + " NOT NULL OR " + USERNAME + " NOT NULL OR " + PHONE + " NOT NULL)";
     String[] args      = new String[] { "0", String.valueOf(RegisteredState.REGISTERED.getId()) };
     String   orderBy   = SORT_NAME + ", " + SYSTEM_DISPLAY_NAME + ", " + SEARCH_PROFILE_NAME + ", " + USERNAME + ", " + PHONE;
 

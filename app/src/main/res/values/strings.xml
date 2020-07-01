@@ -1759,7 +1759,7 @@
     <!-- conversation_list_fragment -->
     <string name="conversation_list_fragment__fab_content_description">New conversation</string>
     <string name="conversation_list_fragment__open_camera_description">Open Camera</string>
-    <string name="conversation_list_fragment__give_your_inbox_something_to_write_home_about_get_started_by_messaging_a_friend">Give your inbox something to write home about. Get started by messaging a friend.</string>
+    <string name="conversation_list_fragment__give_your_inbox_something_to_write_home_about_get_started_by_messaging_a_friend">Get started by messaging another user.</string>
 
 
     <!-- conversation_secure_verified -->
