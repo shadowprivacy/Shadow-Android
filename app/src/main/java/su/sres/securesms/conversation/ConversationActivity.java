@@ -311,7 +311,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     private InputAwareLayout container;
     protected Stub<ReminderView> reminderView;
     private Stub<UnverifiedBannerView> unverifiedBannerView;
-    private Stub<GroupShareProfileView> groupShareProfileView;
+//    private Stub<GroupShareProfileView> groupShareProfileView;
     private TypingStatusTextWatcher typingTextWatcher;
     private ConversationSearchBottomBar searchNav;
     private MenuItem searchViewItem;
@@ -492,7 +492,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         titleView.setTitle(glideRequests, recipientSnapshot);
         setActionBarColor(recipientSnapshot.getColor());
         setBlockedUserState(recipientSnapshot, isSecureText, isDefaultSms);
-        setGroupShareProfileReminder(recipientSnapshot);
+//        setGroupShareProfileReminder(recipientSnapshot);
         calculateCharactersRemaining();
 
         MessageNotifier.setVisibleThread(threadId);
@@ -1682,7 +1682,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         container                = ViewUtil.findById(this, R.id.layout_container);
         reminderView             = ViewUtil.findStubById(this, R.id.reminder_stub);
         unverifiedBannerView     = ViewUtil.findStubById(this, R.id.unverified_banner_stub);
-        groupShareProfileView    = ViewUtil.findStubById(this, R.id.group_share_profile_view_stub);
+//        groupShareProfileView    = ViewUtil.findStubById(this, R.id.group_share_profile_view_stub);
         quickAttachmentToggle    = ViewUtil.findById(this, R.id.quick_attachment_toggle);
         inlineAttachmentToggle   = ViewUtil.findById(this, R.id.inline_attachment_container);
         inputPanel               = ViewUtil.findById(this, R.id.bottom_panel);
@@ -1903,7 +1903,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         titleView.setVerified(identityRecords.isVerified());
         setBlockedUserState(recipient, isSecureText, isDefaultSms);
         setActionBarColor(recipient.getColor());
-        setGroupShareProfileReminder(recipient);
+//        setGroupShareProfileReminder(recipient);
 //    updateReminders();
         updateDefaultSubscriptionId(recipient.getDefaultSubscriptionId());
         initializeSecurity(isSecureText, isDefaultSms);
@@ -2108,7 +2108,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         }
     }
 
-    private void setGroupShareProfileReminder(@NonNull Recipient recipient) {
+/*    private void setGroupShareProfileReminder(@NonNull Recipient recipient) {
         if (FeatureFlags.messageRequests()) {
             return;
         }
@@ -2119,7 +2119,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         } else if (groupShareProfileView.resolved()) {
             groupShareProfileView.get().setVisibility(View.GONE);
         }
-    }
+    } */
 
     private void calculateCharactersRemaining() {
         String messageBody = composeText.getTextTrimmed();
@@ -3017,22 +3017,22 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
             switch (displayState) {
                 case DISPLAY_MESSAGE_REQUEST:
                     messageRequestBottomView.setVisibility(View.VISIBLE);
-                    if (groupShareProfileView.resolved()) {
-                        groupShareProfileView.get().setVisibility(View.GONE);
-                    }
+ //                   if (groupShareProfileView.resolved()) {
+ //                       groupShareProfileView.get().setVisibility(View.GONE);
+ //                   }
                     break;
                 case DISPLAY_LEGACY:
-                    if (recipient.get().isGroup()) {
-                        groupShareProfileView.get().setRecipient(recipient.get());
-                        groupShareProfileView.get().setVisibility(View.VISIBLE);
-                    }
+//                    if (recipient.get().isGroup()) {
+//                        groupShareProfileView.get().setRecipient(recipient.get());
+//                        groupShareProfileView.get().setVisibility(View.VISIBLE);
+//                    }
                     messageRequestBottomView.setVisibility(View.GONE);
                     break;
                 case DISPLAY_NONE:
                     messageRequestBottomView.setVisibility(View.GONE);
-                    if (groupShareProfileView.resolved()) {
-                        groupShareProfileView.get().setVisibility(View.GONE);
-                    }
+//                    if (groupShareProfileView.resolved()) {
+//                        groupShareProfileView.get().setVisibility(View.GONE);
+//                    }
                     break;
             }
         }
