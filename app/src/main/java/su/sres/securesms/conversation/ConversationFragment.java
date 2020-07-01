@@ -166,7 +166,7 @@ public class ConversationFragment extends Fragment
   private ViewSwitcher                topLoadMoreView;
   private ViewSwitcher                bottomLoadMoreView;
   private ConversationTypingView      typingView;
-  private UnknownSenderView           unknownSenderView;
+//  private UnknownSenderView           unknownSenderView;
   private View                        composeDivider;
   private View                        scrollToBottomButton;
   private TextView                    scrollDateHeader;
@@ -409,7 +409,7 @@ public class ConversationFragment extends Fragment
     this.lastSeen          = this.getActivity().getIntent().getLongExtra(ConversationActivity.LAST_SEEN_EXTRA, -1);
     this.startingPosition  = this.getActivity().getIntent().getIntExtra(ConversationActivity.STARTING_POSITION_EXTRA, -1);
     this.firstLoad         = true;
-    this.unknownSenderView = new UnknownSenderView(getActivity(), recipient.get(), threadId);
+//    this.unknownSenderView = new UnknownSenderView(getActivity(), recipient.get(), threadId);
 
     OnScrollListener scrollListener = new ConversationScrollListener(getActivity());
     list.addOnScrollListener(scrollListener);
@@ -866,7 +866,7 @@ public class ConversationFragment extends Fragment
       clearHeaderIfNotTyping(adapter);
     } else {
       if (!loader.hasSent() && !recipient.get().isSystemContact() && !recipient.get().isGroup() && recipient.get().getRegistered() == RecipientDatabase.RegisteredState.REGISTERED) {
-        adapter.setHeaderView(unknownSenderView);
+ //       adapter.setHeaderView(unknownSenderView);
       } else {
         clearHeaderIfNotTyping(adapter);
       }
