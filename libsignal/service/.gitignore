@@ -4,3 +4,4 @@ src/main/java/su/sres/signalservice/internal/push/ProvisioningProtos.java
 src/main/java/su/sres/signalservice/internal/push/SignalServiceProtos.java
 src/main/java/su/sres/signalservice/internal/websocket/WebSocketProtos.java
 src/main/java/su/sres/signalservice/internal/sticker/StickerProtos.java
+src/main/java/su/sres/signalservice/api/storage/protos/*
