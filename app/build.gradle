@@ -292,7 +292,6 @@ dependencies {
     implementation files('libs/ringrtc-android-1.3.1.aar')
 
     implementation 'org.signal:argon2:13.1@aar'
-    implementation 'commons-validator:commons-validator:1.6'
     implementation 'org.apache.commons:commons-csv:1.8'
     implementation "me.leolin:ShortcutBadger:1.1.16"
     implementation 'se.emilsjolander:stickylistheaders:2.7.0'
@@ -345,6 +344,8 @@ dependencies {
     flipperImplementation 'com.facebook.flipper:flipper:0.32.2'
     flipperImplementation 'com.facebook.soloader:soloader:0.8.2'
 
+    releaseImplementation 'com.facebook.flipper:flipper-noop:0.49.0'
+
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.assertj:assertj-core:3.11.1'
     testImplementation 'org.mockito:mockito-core:1.9.5'
@@ -393,7 +394,7 @@ def assembleWebsiteDescriptor = { variant, file ->
     }
 }
 
-def signProductionRelease = { variant ->
+ def signProductionRelease = { variant ->
     variant.outputs.collect { output ->
         String apkName    = output.outputFile.name
         File   inputFile  = new File(output.outputFile.path)
@@ -426,9 +427,9 @@ task signProductionWebsiteRelease {
 
 tasks.whenTaskAdded { task ->
 
-    if (task.name.equals("assemblePlayRelease")) {
-        task.finalizedBy signProductionPlayRelease
-    }
+//    if (task.name.equals("assemblePlayRelease")) {
+//        task.finalizedBy signProductionPlayRelease
+//    }
 
     if (task.name.equals("assembleWebsiteRelease")) {
         task.finalizedBy signProductionWebsiteRelease

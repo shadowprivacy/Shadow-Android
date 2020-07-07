@@ -22,7 +22,6 @@ import android.widget.Toast;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.commons.csv.CSVParser;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -64,6 +63,7 @@ import su.sres.securesms.qr.ScanListener;
 import su.sres.securesms.qr.ScanningThread;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.util.validator.UrlValidator;
 import su.sres.securesms.util.ViewUtil;
 
 public class InitialActivity extends AppCompatActivity implements OnClickListener, ScanListener, ServiceConfigurationSetupListener {

@@ -8,8 +8,6 @@ import com.facebook.flipper.plugins.inspector.InspectorFlipperPlugin;
 import com.facebook.flipper.plugins.sharedpreferences.SharedPreferencesFlipperPlugin;
 import com.facebook.soloader.SoLoader;
 
-import su.sres.securesms.database.FlipperSqlCipherAdapter;
-
 public class FlipperApplicationContext extends ApplicationContext {
 
     @Override
