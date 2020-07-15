@@ -1239,7 +1239,7 @@
   <string name="change_passphrase_activity__new_passphrase">Новая парольная фраза</string>
   <string name="change_passphrase_activity__repeat_new_passphrase"> Повторите новую парольную фразу</string>
   <!--contact_selection_activity-->
-  <string name="contact_selection_activity__enter_name_or_number">Введите имя или номер</string>
+  <string name="contact_selection_activity__enter_name_or_number">Введите имя</string>
   <string name="contact_selection_activity__invite_to_signal">Пригласить в Shadow</string>
     <string name="contact_selection_activity__new_group">Новая группа</string>
 
@@ -1459,7 +1459,7 @@
   <string name="registration_activity__verify_your_number">Подтвердите свой номер</string>
   <string name="registration_activity__please_enter_your_mobile_number_to_receive_a_verification_code_carrier_rates_may_apply">Пожалуйста, введите свой номер мобильного телефона для получения кода подтверждения. Вашим оператором может взиматься плата за входящее SMS.</string>
   <!--recipients_panel-->
-  <string name="recipients_panel__to"><small>Введите имя или номер</small></string>
+  <string name="recipients_panel__to"><small>Введите имя</small></string>
   <string name="recipients_panel__add_members">Добавить участников</string>
   <!--unknown_sender_view-->
   <string name="unknown_sender_view__the_sender_is_not_in_your_contact_list">Отправителя нет в вашем списке контактов</string>

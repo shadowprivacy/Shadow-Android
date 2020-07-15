@@ -1299,7 +1299,7 @@
     <string name="change_passphrase_activity__repeat_new_passphrase">Repeat new passphrase</string>
 
     <!-- contact_selection_activity -->
-    <string name="contact_selection_activity__enter_name_or_number">Enter name or number</string>
+    <string name="contact_selection_activity__enter_name_or_number">Enter name</string>
     <string name="contact_selection_activity__invite_to_signal">Invite to Shadow</string>
     <string name="contact_selection_activity__new_group">New group</string>
 
@@ -1555,7 +1555,7 @@
     <string name="registration_activity__please_enter_your_mobile_number_to_receive_a_verification_code_carrier_rates_may_apply">Please enter your mobile number</string>
 
     <!-- recipients_panel -->
-    <string name="recipients_panel__to"><small>Enter a name or number</small></string>
+    <string name="recipients_panel__to"><small>Enter a name</small></string>
     <string name="recipients_panel__add_members">Add members</string>
 
     <!-- unknown_sender_view -->

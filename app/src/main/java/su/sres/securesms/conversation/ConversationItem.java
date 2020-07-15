@@ -928,6 +928,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
       return;
     }
 
+    setReactionsWithWidth(current, bodyBubble.getWidth());
     bodyBubble.setOnSizeChangedListener((width, height) -> setReactionsWithWidth(current, width));
   }
 
