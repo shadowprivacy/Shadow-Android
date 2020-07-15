@@ -117,8 +117,7 @@ public final class ServiceConfigurationValues {
         return store.getLong(CURRENT_DIR_VERSION, 0);
     }
 
-    public @Nullable
-    String getSupportEmail() {
+    public String getSupportEmail() {
         return store.getString(SUPPORT_EMAIL, "example@example.com");
     }
 

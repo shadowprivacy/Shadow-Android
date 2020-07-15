@@ -415,21 +415,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     SignalStore.kbsValues().setKbsMasterKey(SignalStore.kbsValues().getOrCreateMasterKey());
   }
 
-    private void initializePlayServicesCheck() {
-        if (TextSecurePreferences.isFcmDisabled(this)) {
-            PlayServicesUtil.PlayServicesStatus status = PlayServicesUtil.getPlayServicesStatus(this);
-
-            if (status == PlayServicesUtil.PlayServicesStatus.SUCCESS) {
-                Log.i(TAG, "Play Services are newly-available. Updating to use FCM.");
-
-                TextSecurePreferences.setFcmDisabled(this, false);
-                ApplicationDependencies.getJobManager().startChain(new FcmRefreshJob())
-                        .then(new RefreshAttributesJob())
-                        .enqueue();
-            }
-        }
-    }
-
   @Override
   protected void attachBaseContext(Context base) {
     super.attachBaseContext(DynamicLanguageContextWrapper.updateContext(base, TextSecurePreferences.getLanguage(base)));
@@ -455,7 +440,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializePendingMessages();
     initializeBlobProvider();
     initializeCleanup();
-      initializePlayServicesCheck();
     FeatureFlags.init();
     initializeMasterKey();
     ApplicationDependencies.getJobManager().beginJobLoop();

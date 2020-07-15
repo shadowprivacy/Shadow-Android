@@ -2367,15 +2367,15 @@ public final class SignalServiceProtos {
     int getIceUpdateCount();
 
     /**
-     * <code>optional .signalservice.CallMessage.Hangup hangup = 4;</code>
-     * @return Whether the hangup field is set.
+     * <code>optional .signalservice.CallMessage.Hangup legacyHangup = 4;</code>
+     * @return Whether the legacyHangup field is set.
      */
-    boolean hasHangup();
+    boolean hasLegacyHangup();
     /**
-     * <code>optional .signalservice.CallMessage.Hangup hangup = 4;</code>
-     * @return The hangup.
+     * <code>optional .signalservice.CallMessage.Hangup legacyHangup = 4;</code>
+     * @return The legacyHangup.
      */
-    su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup getHangup();
+    su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup getLegacyHangup();
 
     /**
      * <code>optional .signalservice.CallMessage.Busy busy = 5;</code>
@@ -2387,6 +2387,47 @@ public final class SignalServiceProtos {
      * @return The busy.
      */
     su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Busy getBusy();
+
+    /**
+     * <pre>
+     * 6 is reserved.
+     * </pre>
+     *
+     * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
+     * @return Whether the hangup field is set.
+     */
+    boolean hasHangup();
+    /**
+     * <pre>
+     * 6 is reserved.
+     * </pre>
+     *
+     * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
+     * @return The hangup.
+     */
+    su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup getHangup();
+
+    /**
+     * <code>optional bool multiRing = 8;</code>
+     * @return Whether the multiRing field is set.
+     */
+    boolean hasMultiRing();
+    /**
+     * <code>optional bool multiRing = 8;</code>
+     * @return The multiRing.
+     */
+    boolean getMultiRing();
+
+    /**
+     * <code>optional uint32 destinationDeviceId = 9;</code>
+     * @return Whether the destinationDeviceId field is set.
+     */
+    boolean hasDestinationDeviceId();
+    /**
+     * <code>optional uint32 destinationDeviceId = 9;</code>
+     * @return The destinationDeviceId.
+     */
+    int getDestinationDeviceId();
   }
   /**
    * Protobuf type {@code signalservice.CallMessage}
@@ -2430,6 +2471,17 @@ public final class SignalServiceProtos {
        */
       com.google.protobuf.ByteString
           getDescriptionBytes();
+
+      /**
+       * <code>optional .signalservice.CallMessage.Offer.Type type = 3;</code>
+       * @return Whether the type field is set.
+       */
+      boolean hasType();
+      /**
+       * <code>optional .signalservice.CallMessage.Offer.Type type = 3;</code>
+       * @return The type.
+       */
+      su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Offer.Type getType();
     }
     /**
      * Protobuf type {@code signalservice.CallMessage.Offer}
@@ -2442,6 +2494,99 @@ public final class SignalServiceProtos {
       private Offer() {
         description_ = "";
       }
+      /**
+       * Protobuf enum {@code signalservice.CallMessage.Offer.Type}
+       */
+      public enum Type
+          implements com.google.protobuf.Internal.EnumLite {
+        /**
+         * <code>OFFER_AUDIO_CALL = 0;</code>
+         */
+        OFFER_AUDIO_CALL(0),
+        /**
+         * <code>OFFER_VIDEO_CALL = 1;</code>
+         */
+        OFFER_VIDEO_CALL(1),
+        /**
+         * <code>OFFER_NEED_PERMISSION = 2;</code>
+         */
+        OFFER_NEED_PERMISSION(2),
+        ;
+
+        /**
+         * <code>OFFER_AUDIO_CALL = 0;</code>
+         */
+        public static final int OFFER_AUDIO_CALL_VALUE = 0;
+        /**
+         * <code>OFFER_VIDEO_CALL = 1;</code>
+         */
+        public static final int OFFER_VIDEO_CALL_VALUE = 1;
+        /**
+         * <code>OFFER_NEED_PERMISSION = 2;</code>
+         */
+        public static final int OFFER_NEED_PERMISSION_VALUE = 2;
+
+
+        @java.lang.Override
+        public final int getNumber() {
+          return value;
+        }
+
+        /**
+         * @param value The number of the enum to look for.
+         * @return The enum associated with the given number.
+         * @deprecated Use {@link #forNumber(int)} instead.
+         */
+        @java.lang.Deprecated
+        public static Type valueOf(int value) {
+          return forNumber(value);
+        }
+
+        public static Type forNumber(int value) {
+          switch (value) {
+            case 0: return OFFER_AUDIO_CALL;
+            case 1: return OFFER_VIDEO_CALL;
+            case 2: return OFFER_NEED_PERMISSION;
+            default: return null;
+          }
+        }
+
+        public static com.google.protobuf.Internal.EnumLiteMap<Type>
+            internalGetValueMap() {
+          return internalValueMap;
+        }
+        private static final com.google.protobuf.Internal.EnumLiteMap<
+            Type> internalValueMap =
+              new com.google.protobuf.Internal.EnumLiteMap<Type>() {
+                @java.lang.Override
+                public Type findValueByNumber(int number) {
+                  return Type.forNumber(number);
+                }
+              };
+
+        public static com.google.protobuf.Internal.EnumVerifier 
+            internalGetVerifier() {
+          return TypeVerifier.INSTANCE;
+        }
+
+        private static final class TypeVerifier implements 
+             com.google.protobuf.Internal.EnumVerifier { 
+                static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new TypeVerifier();
+                @java.lang.Override
+                public boolean isInRange(int number) {
+                  return Type.forNumber(number) != null;
+                }
+              };
+
+        private final int value;
+
+        private Type(int value) {
+          this.value = value;
+        }
+
+        // @@protoc_insertion_point(enum_scope:signalservice.CallMessage.Offer.Type)
+      }
+
       private int bitField0_;
       public static final int ID_FIELD_NUMBER = 1;
       private long id_;
@@ -2534,6 +2679,44 @@ public final class SignalServiceProtos {
   }
   bitField0_ |= 0x00000002;
         description_ = value.toStringUtf8();
+      }
+
+      public static final int TYPE_FIELD_NUMBER = 3;
+      private int type_;
+      /**
+       * <code>optional .signalservice.CallMessage.Offer.Type type = 3;</code>
+       * @return Whether the type field is set.
+       */
+      @java.lang.Override
+      public boolean hasType() {
+        return ((bitField0_ & 0x00000004) != 0);
+      }
+      /**
+       * <code>optional .signalservice.CallMessage.Offer.Type type = 3;</code>
+       * @return The type.
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Offer.Type getType() {
+        su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Offer.Type result = su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Offer.Type.forNumber(type_);
+        return result == null ? su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Offer.Type.OFFER_AUDIO_CALL : result;
+      }
+      /**
+       * <code>optional .signalservice.CallMessage.Offer.Type type = 3;</code>
+       * @param value The type to set.
+       */
+      private void setType(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Offer.Type value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000004;
+        type_ = value.getNumber();
+      }
+      /**
+       * <code>optional .signalservice.CallMessage.Offer.Type type = 3;</code>
+       */
+      private void clearType() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        type_ = 0;
       }
 
       public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Offer parseFrom(
@@ -2724,6 +2907,42 @@ public final class SignalServiceProtos {
           return this;
         }
 
+        /**
+         * <code>optional .signalservice.CallMessage.Offer.Type type = 3;</code>
+         * @return Whether the type field is set.
+         */
+        @java.lang.Override
+        public boolean hasType() {
+          return instance.hasType();
+        }
+        /**
+         * <code>optional .signalservice.CallMessage.Offer.Type type = 3;</code>
+         * @return The type.
+         */
+        @java.lang.Override
+        public su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Offer.Type getType() {
+          return instance.getType();
+        }
+        /**
+         * <code>optional .signalservice.CallMessage.Offer.Type type = 3;</code>
+         * @param value The enum numeric value on the wire for type to set.
+         * @return This builder for chaining.
+         */
+        public Builder setType(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Offer.Type value) {
+          copyOnWrite();
+          instance.setType(value);
+          return this;
+        }
+        /**
+         * <code>optional .signalservice.CallMessage.Offer.Type type = 3;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearType() {
+          copyOnWrite();
+          instance.clearType();
+          return this;
+        }
+
         // @@protoc_insertion_point(builder_scope:signalservice.CallMessage.Offer)
       }
       @java.lang.Override
@@ -2743,10 +2962,12 @@ public final class SignalServiceProtos {
                 "bitField0_",
                 "id_",
                 "description_",
+                "type_",
+                su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Offer.Type.internalGetVerifier(),
               };
               java.lang.String info =
-                  "\u0001\u0002\u0000\u0001\u0001\u0002\u0002\u0000\u0000\u0000\u0001\u0003\u0000\u0002" +
-                  "\b\u0001";
+                  "\u0001\u0003\u0000\u0001\u0001\u0003\u0003\u0000\u0000\u0000\u0001\u0003\u0000\u0002" +
+                  "\b\u0001\u0003\f\u0002";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through
@@ -4102,6 +4323,28 @@ public final class SignalServiceProtos {
        * @return The id.
        */
       long getId();
+
+      /**
+       * <code>optional .signalservice.CallMessage.Hangup.Type type = 2;</code>
+       * @return Whether the type field is set.
+       */
+      boolean hasType();
+      /**
+       * <code>optional .signalservice.CallMessage.Hangup.Type type = 2;</code>
+       * @return The type.
+       */
+      su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.Type getType();
+
+      /**
+       * <code>optional uint32 deviceId = 3;</code>
+       * @return Whether the deviceId field is set.
+       */
+      boolean hasDeviceId();
+      /**
+       * <code>optional uint32 deviceId = 3;</code>
+       * @return The deviceId.
+       */
+      int getDeviceId();
     }
     /**
      * Protobuf type {@code signalservice.CallMessage.Hangup}
@@ -4113,6 +4356,108 @@ public final class SignalServiceProtos {
         HangupOrBuilder {
       private Hangup() {
       }
+      /**
+       * Protobuf enum {@code signalservice.CallMessage.Hangup.Type}
+       */
+      public enum Type
+          implements com.google.protobuf.Internal.EnumLite {
+        /**
+         * <code>HANGUP_NORMAL = 0;</code>
+         */
+        HANGUP_NORMAL(0),
+        /**
+         * <code>HANGUP_ACCEPTED = 1;</code>
+         */
+        HANGUP_ACCEPTED(1),
+        /**
+         * <code>HANGUP_DECLINED = 2;</code>
+         */
+        HANGUP_DECLINED(2),
+        /**
+         * <code>HANGUP_BUSY = 3;</code>
+         */
+        HANGUP_BUSY(3),
+        ;
+
+        /**
+         * <code>HANGUP_NORMAL = 0;</code>
+         */
+        public static final int HANGUP_NORMAL_VALUE = 0;
+        /**
+         * <code>HANGUP_ACCEPTED = 1;</code>
+         */
+        public static final int HANGUP_ACCEPTED_VALUE = 1;
+        /**
+         * <code>HANGUP_DECLINED = 2;</code>
+         */
+        public static final int HANGUP_DECLINED_VALUE = 2;
+        /**
+         * <code>HANGUP_BUSY = 3;</code>
+         */
+        public static final int HANGUP_BUSY_VALUE = 3;
+
+
+        @java.lang.Override
+        public final int getNumber() {
+          return value;
+        }
+
+        /**
+         * @param value The number of the enum to look for.
+         * @return The enum associated with the given number.
+         * @deprecated Use {@link #forNumber(int)} instead.
+         */
+        @java.lang.Deprecated
+        public static Type valueOf(int value) {
+          return forNumber(value);
+        }
+
+        public static Type forNumber(int value) {
+          switch (value) {
+            case 0: return HANGUP_NORMAL;
+            case 1: return HANGUP_ACCEPTED;
+            case 2: return HANGUP_DECLINED;
+            case 3: return HANGUP_BUSY;
+            default: return null;
+          }
+        }
+
+        public static com.google.protobuf.Internal.EnumLiteMap<Type>
+            internalGetValueMap() {
+          return internalValueMap;
+        }
+        private static final com.google.protobuf.Internal.EnumLiteMap<
+            Type> internalValueMap =
+              new com.google.protobuf.Internal.EnumLiteMap<Type>() {
+                @java.lang.Override
+                public Type findValueByNumber(int number) {
+                  return Type.forNumber(number);
+                }
+              };
+
+        public static com.google.protobuf.Internal.EnumVerifier 
+            internalGetVerifier() {
+          return TypeVerifier.INSTANCE;
+        }
+
+        private static final class TypeVerifier implements 
+             com.google.protobuf.Internal.EnumVerifier { 
+                static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new TypeVerifier();
+                @java.lang.Override
+                public boolean isInRange(int number) {
+                  return Type.forNumber(number) != null;
+                }
+              };
+
+        private final int value;
+
+        private Type(int value) {
+          this.value = value;
+        }
+
+        // @@protoc_insertion_point(enum_scope:signalservice.CallMessage.Hangup.Type)
+      }
+
       private int bitField0_;
       public static final int ID_FIELD_NUMBER = 1;
       private long id_;
@@ -4146,6 +4491,78 @@ public final class SignalServiceProtos {
       private void clearId() {
         bitField0_ = (bitField0_ & ~0x00000001);
         id_ = 0L;
+      }
+
+      public static final int TYPE_FIELD_NUMBER = 2;
+      private int type_;
+      /**
+       * <code>optional .signalservice.CallMessage.Hangup.Type type = 2;</code>
+       * @return Whether the type field is set.
+       */
+      @java.lang.Override
+      public boolean hasType() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <code>optional .signalservice.CallMessage.Hangup.Type type = 2;</code>
+       * @return The type.
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.Type getType() {
+        su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.Type result = su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.Type.forNumber(type_);
+        return result == null ? su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.Type.HANGUP_NORMAL : result;
+      }
+      /**
+       * <code>optional .signalservice.CallMessage.Hangup.Type type = 2;</code>
+       * @param value The type to set.
+       */
+      private void setType(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.Type value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000002;
+        type_ = value.getNumber();
+      }
+      /**
+       * <code>optional .signalservice.CallMessage.Hangup.Type type = 2;</code>
+       */
+      private void clearType() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        type_ = 0;
+      }
+
+      public static final int DEVICEID_FIELD_NUMBER = 3;
+      private int deviceId_;
+      /**
+       * <code>optional uint32 deviceId = 3;</code>
+       * @return Whether the deviceId field is set.
+       */
+      @java.lang.Override
+      public boolean hasDeviceId() {
+        return ((bitField0_ & 0x00000004) != 0);
+      }
+      /**
+       * <code>optional uint32 deviceId = 3;</code>
+       * @return The deviceId.
+       */
+      @java.lang.Override
+      public int getDeviceId() {
+        return deviceId_;
+      }
+      /**
+       * <code>optional uint32 deviceId = 3;</code>
+       * @param value The deviceId to set.
+       */
+      private void setDeviceId(int value) {
+        bitField0_ |= 0x00000004;
+        deviceId_ = value;
+      }
+      /**
+       * <code>optional uint32 deviceId = 3;</code>
+       */
+      private void clearDeviceId() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        deviceId_ = 0;
       }
 
       public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup parseFrom(
@@ -4279,6 +4696,78 @@ public final class SignalServiceProtos {
           return this;
         }
 
+        /**
+         * <code>optional .signalservice.CallMessage.Hangup.Type type = 2;</code>
+         * @return Whether the type field is set.
+         */
+        @java.lang.Override
+        public boolean hasType() {
+          return instance.hasType();
+        }
+        /**
+         * <code>optional .signalservice.CallMessage.Hangup.Type type = 2;</code>
+         * @return The type.
+         */
+        @java.lang.Override
+        public su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.Type getType() {
+          return instance.getType();
+        }
+        /**
+         * <code>optional .signalservice.CallMessage.Hangup.Type type = 2;</code>
+         * @param value The enum numeric value on the wire for type to set.
+         * @return This builder for chaining.
+         */
+        public Builder setType(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.Type value) {
+          copyOnWrite();
+          instance.setType(value);
+          return this;
+        }
+        /**
+         * <code>optional .signalservice.CallMessage.Hangup.Type type = 2;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearType() {
+          copyOnWrite();
+          instance.clearType();
+          return this;
+        }
+
+        /**
+         * <code>optional uint32 deviceId = 3;</code>
+         * @return Whether the deviceId field is set.
+         */
+        @java.lang.Override
+        public boolean hasDeviceId() {
+          return instance.hasDeviceId();
+        }
+        /**
+         * <code>optional uint32 deviceId = 3;</code>
+         * @return The deviceId.
+         */
+        @java.lang.Override
+        public int getDeviceId() {
+          return instance.getDeviceId();
+        }
+        /**
+         * <code>optional uint32 deviceId = 3;</code>
+         * @param value The deviceId to set.
+         * @return This builder for chaining.
+         */
+        public Builder setDeviceId(int value) {
+          copyOnWrite();
+          instance.setDeviceId(value);
+          return this;
+        }
+        /**
+         * <code>optional uint32 deviceId = 3;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearDeviceId() {
+          copyOnWrite();
+          instance.clearDeviceId();
+          return this;
+        }
+
         // @@protoc_insertion_point(builder_scope:signalservice.CallMessage.Hangup)
       }
       @java.lang.Override
@@ -4297,9 +4786,13 @@ public final class SignalServiceProtos {
               java.lang.Object[] objects = new java.lang.Object[] {
                 "bitField0_",
                 "id_",
+                "type_",
+                su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.Type.internalGetVerifier(),
+                "deviceId_",
               };
               java.lang.String info =
-                  "\u0001\u0001\u0000\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0001\u0003\u0000";
+                  "\u0001\u0003\u0000\u0001\u0001\u0003\u0003\u0000\u0000\u0000\u0001\u0003\u0000\u0002" +
+                  "\f\u0001\u0003\u000b\u0002";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through
@@ -4594,61 +5087,61 @@ public final class SignalServiceProtos {
       iceUpdate_.remove(index);
     }
 
-    public static final int HANGUP_FIELD_NUMBER = 4;
-    private su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup hangup_;
+    public static final int LEGACYHANGUP_FIELD_NUMBER = 4;
+    private su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup legacyHangup_;
     /**
-     * <code>optional .signalservice.CallMessage.Hangup hangup = 4;</code>
+     * <code>optional .signalservice.CallMessage.Hangup legacyHangup = 4;</code>
      */
     @java.lang.Override
-    public boolean hasHangup() {
+    public boolean hasLegacyHangup() {
       return ((bitField0_ & 0x00000004) != 0);
     }
     /**
-     * <code>optional .signalservice.CallMessage.Hangup hangup = 4;</code>
+     * <code>optional .signalservice.CallMessage.Hangup legacyHangup = 4;</code>
      */
     @java.lang.Override
-    public su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup getHangup() {
-      return hangup_ == null ? su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.getDefaultInstance() : hangup_;
+    public su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup getLegacyHangup() {
+      return legacyHangup_ == null ? su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.getDefaultInstance() : legacyHangup_;
     }
     /**
-     * <code>optional .signalservice.CallMessage.Hangup hangup = 4;</code>
+     * <code>optional .signalservice.CallMessage.Hangup legacyHangup = 4;</code>
      */
-    private void setHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
+    private void setLegacyHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
       if (value == null) {
         throw new NullPointerException();
       }
-      hangup_ = value;
+      legacyHangup_ = value;
       bitField0_ |= 0x00000004;
       }
     /**
-     * <code>optional .signalservice.CallMessage.Hangup hangup = 4;</code>
+     * <code>optional .signalservice.CallMessage.Hangup legacyHangup = 4;</code>
      */
-    private void setHangup(
+    private void setLegacyHangup(
         su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.Builder builderForValue) {
-      hangup_ = builderForValue.build();
+      legacyHangup_ = builderForValue.build();
       bitField0_ |= 0x00000004;
     }
     /**
-     * <code>optional .signalservice.CallMessage.Hangup hangup = 4;</code>
+     * <code>optional .signalservice.CallMessage.Hangup legacyHangup = 4;</code>
      */
     @java.lang.SuppressWarnings({"ReferenceEquality"})
-    private void mergeHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
+    private void mergeLegacyHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
       if (value == null) {
         throw new NullPointerException();
       }
-      if (hangup_ != null &&
-          hangup_ != su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.getDefaultInstance()) {
-        hangup_ =
-          su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.newBuilder(hangup_).mergeFrom(value).buildPartial();
+      if (legacyHangup_ != null &&
+          legacyHangup_ != su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.getDefaultInstance()) {
+        legacyHangup_ =
+          su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.newBuilder(legacyHangup_).mergeFrom(value).buildPartial();
       } else {
-        hangup_ = value;
+        legacyHangup_ = value;
       }
       bitField0_ |= 0x00000004;
     }
     /**
-     * <code>optional .signalservice.CallMessage.Hangup hangup = 4;</code>
+     * <code>optional .signalservice.CallMessage.Hangup legacyHangup = 4;</code>
      */
-    private void clearHangup() {  hangup_ = null;
+    private void clearLegacyHangup() {  legacyHangup_ = null;
       bitField0_ = (bitField0_ & ~0x00000004);
     }
 
@@ -4708,6 +5201,156 @@ public final class SignalServiceProtos {
      */
     private void clearBusy() {  busy_ = null;
       bitField0_ = (bitField0_ & ~0x00000008);
+    }
+
+    public static final int HANGUP_FIELD_NUMBER = 7;
+    private su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup hangup_;
+    /**
+     * <pre>
+     * 6 is reserved.
+     * </pre>
+     *
+     * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
+     */
+    @java.lang.Override
+    public boolean hasHangup() {
+      return ((bitField0_ & 0x00000010) != 0);
+    }
+    /**
+     * <pre>
+     * 6 is reserved.
+     * </pre>
+     *
+     * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
+     */
+    @java.lang.Override
+    public su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup getHangup() {
+      return hangup_ == null ? su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.getDefaultInstance() : hangup_;
+    }
+    /**
+     * <pre>
+     * 6 is reserved.
+     * </pre>
+     *
+     * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
+     */
+    private void setHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      hangup_ = value;
+      bitField0_ |= 0x00000010;
+      }
+    /**
+     * <pre>
+     * 6 is reserved.
+     * </pre>
+     *
+     * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
+     */
+    private void setHangup(
+        su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.Builder builderForValue) {
+      hangup_ = builderForValue.build();
+      bitField0_ |= 0x00000010;
+    }
+    /**
+     * <pre>
+     * 6 is reserved.
+     * </pre>
+     *
+     * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      if (hangup_ != null &&
+          hangup_ != su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.getDefaultInstance()) {
+        hangup_ =
+          su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.newBuilder(hangup_).mergeFrom(value).buildPartial();
+      } else {
+        hangup_ = value;
+      }
+      bitField0_ |= 0x00000010;
+    }
+    /**
+     * <pre>
+     * 6 is reserved.
+     * </pre>
+     *
+     * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
+     */
+    private void clearHangup() {  hangup_ = null;
+      bitField0_ = (bitField0_ & ~0x00000010);
+    }
+
+    public static final int MULTIRING_FIELD_NUMBER = 8;
+    private boolean multiRing_;
+    /**
+     * <code>optional bool multiRing = 8;</code>
+     * @return Whether the multiRing field is set.
+     */
+    @java.lang.Override
+    public boolean hasMultiRing() {
+      return ((bitField0_ & 0x00000020) != 0);
+    }
+    /**
+     * <code>optional bool multiRing = 8;</code>
+     * @return The multiRing.
+     */
+    @java.lang.Override
+    public boolean getMultiRing() {
+      return multiRing_;
+    }
+    /**
+     * <code>optional bool multiRing = 8;</code>
+     * @param value The multiRing to set.
+     */
+    private void setMultiRing(boolean value) {
+      bitField0_ |= 0x00000020;
+      multiRing_ = value;
+    }
+    /**
+     * <code>optional bool multiRing = 8;</code>
+     */
+    private void clearMultiRing() {
+      bitField0_ = (bitField0_ & ~0x00000020);
+      multiRing_ = false;
+    }
+
+    public static final int DESTINATIONDEVICEID_FIELD_NUMBER = 9;
+    private int destinationDeviceId_;
+    /**
+     * <code>optional uint32 destinationDeviceId = 9;</code>
+     * @return Whether the destinationDeviceId field is set.
+     */
+    @java.lang.Override
+    public boolean hasDestinationDeviceId() {
+      return ((bitField0_ & 0x00000040) != 0);
+    }
+    /**
+     * <code>optional uint32 destinationDeviceId = 9;</code>
+     * @return The destinationDeviceId.
+     */
+    @java.lang.Override
+    public int getDestinationDeviceId() {
+      return destinationDeviceId_;
+    }
+    /**
+     * <code>optional uint32 destinationDeviceId = 9;</code>
+     * @param value The destinationDeviceId to set.
+     */
+    private void setDestinationDeviceId(int value) {
+      bitField0_ |= 0x00000040;
+      destinationDeviceId_ = value;
+    }
+    /**
+     * <code>optional uint32 destinationDeviceId = 9;</code>
+     */
+    private void clearDestinationDeviceId() {
+      bitField0_ = (bitField0_ & ~0x00000040);
+      destinationDeviceId_ = 0;
     }
 
     public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage parseFrom(
@@ -5000,49 +5643,49 @@ public final class SignalServiceProtos {
       }
 
       /**
-       * <code>optional .signalservice.CallMessage.Hangup hangup = 4;</code>
+       * <code>optional .signalservice.CallMessage.Hangup legacyHangup = 4;</code>
        */
       @java.lang.Override
-      public boolean hasHangup() {
-        return instance.hasHangup();
+      public boolean hasLegacyHangup() {
+        return instance.hasLegacyHangup();
       }
       /**
-       * <code>optional .signalservice.CallMessage.Hangup hangup = 4;</code>
+       * <code>optional .signalservice.CallMessage.Hangup legacyHangup = 4;</code>
        */
       @java.lang.Override
-      public su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup getHangup() {
-        return instance.getHangup();
+      public su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup getLegacyHangup() {
+        return instance.getLegacyHangup();
       }
       /**
-       * <code>optional .signalservice.CallMessage.Hangup hangup = 4;</code>
+       * <code>optional .signalservice.CallMessage.Hangup legacyHangup = 4;</code>
        */
-      public Builder setHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
+      public Builder setLegacyHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
         copyOnWrite();
-        instance.setHangup(value);
+        instance.setLegacyHangup(value);
         return this;
         }
       /**
-       * <code>optional .signalservice.CallMessage.Hangup hangup = 4;</code>
+       * <code>optional .signalservice.CallMessage.Hangup legacyHangup = 4;</code>
        */
-      public Builder setHangup(
+      public Builder setLegacyHangup(
           su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.Builder builderForValue) {
         copyOnWrite();
-        instance.setHangup(builderForValue);
+        instance.setLegacyHangup(builderForValue);
         return this;
       }
       /**
-       * <code>optional .signalservice.CallMessage.Hangup hangup = 4;</code>
+       * <code>optional .signalservice.CallMessage.Hangup legacyHangup = 4;</code>
        */
-      public Builder mergeHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
+      public Builder mergeLegacyHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
         copyOnWrite();
-        instance.mergeHangup(value);
+        instance.mergeLegacyHangup(value);
         return this;
       }
       /**
-       * <code>optional .signalservice.CallMessage.Hangup hangup = 4;</code>
+       * <code>optional .signalservice.CallMessage.Hangup legacyHangup = 4;</code>
        */
-      public Builder clearHangup() {  copyOnWrite();
-        instance.clearHangup();
+      public Builder clearLegacyHangup() {  copyOnWrite();
+        instance.clearLegacyHangup();
         return this;
       }
 
@@ -5093,6 +5736,149 @@ public final class SignalServiceProtos {
         return this;
       }
 
+      /**
+       * <pre>
+       * 6 is reserved.
+       * </pre>
+       *
+       * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
+       */
+      @java.lang.Override
+      public boolean hasHangup() {
+        return instance.hasHangup();
+      }
+      /**
+       * <pre>
+       * 6 is reserved.
+       * </pre>
+       *
+       * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup getHangup() {
+        return instance.getHangup();
+      }
+      /**
+       * <pre>
+       * 6 is reserved.
+       * </pre>
+       *
+       * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
+       */
+      public Builder setHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
+        copyOnWrite();
+        instance.setHangup(value);
+        return this;
+        }
+      /**
+       * <pre>
+       * 6 is reserved.
+       * </pre>
+       *
+       * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
+       */
+      public Builder setHangup(
+          su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.Builder builderForValue) {
+        copyOnWrite();
+        instance.setHangup(builderForValue);
+        return this;
+      }
+      /**
+       * <pre>
+       * 6 is reserved.
+       * </pre>
+       *
+       * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
+       */
+      public Builder mergeHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
+        copyOnWrite();
+        instance.mergeHangup(value);
+        return this;
+      }
+      /**
+       * <pre>
+       * 6 is reserved.
+       * </pre>
+       *
+       * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
+       */
+      public Builder clearHangup() {  copyOnWrite();
+        instance.clearHangup();
+        return this;
+      }
+
+      /**
+       * <code>optional bool multiRing = 8;</code>
+       * @return Whether the multiRing field is set.
+       */
+      @java.lang.Override
+      public boolean hasMultiRing() {
+        return instance.hasMultiRing();
+      }
+      /**
+       * <code>optional bool multiRing = 8;</code>
+       * @return The multiRing.
+       */
+      @java.lang.Override
+      public boolean getMultiRing() {
+        return instance.getMultiRing();
+      }
+      /**
+       * <code>optional bool multiRing = 8;</code>
+       * @param value The multiRing to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMultiRing(boolean value) {
+        copyOnWrite();
+        instance.setMultiRing(value);
+        return this;
+      }
+      /**
+       * <code>optional bool multiRing = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMultiRing() {
+        copyOnWrite();
+        instance.clearMultiRing();
+        return this;
+      }
+
+      /**
+       * <code>optional uint32 destinationDeviceId = 9;</code>
+       * @return Whether the destinationDeviceId field is set.
+       */
+      @java.lang.Override
+      public boolean hasDestinationDeviceId() {
+        return instance.hasDestinationDeviceId();
+      }
+      /**
+       * <code>optional uint32 destinationDeviceId = 9;</code>
+       * @return The destinationDeviceId.
+       */
+      @java.lang.Override
+      public int getDestinationDeviceId() {
+        return instance.getDestinationDeviceId();
+      }
+      /**
+       * <code>optional uint32 destinationDeviceId = 9;</code>
+       * @param value The destinationDeviceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDestinationDeviceId(int value) {
+        copyOnWrite();
+        instance.setDestinationDeviceId(value);
+        return this;
+      }
+      /**
+       * <code>optional uint32 destinationDeviceId = 9;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDestinationDeviceId() {
+        copyOnWrite();
+        instance.clearDestinationDeviceId();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:signalservice.CallMessage)
     }
     @java.lang.Override
@@ -5114,12 +5900,15 @@ public final class SignalServiceProtos {
               "answer_",
               "iceUpdate_",
               su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.IceUpdate.class,
-              "hangup_",
+              "legacyHangup_",
               "busy_",
+              "hangup_",
+              "multiRing_",
+              "destinationDeviceId_",
             };
             java.lang.String info =
-                "\u0001\u0005\u0000\u0001\u0001\u0005\u0005\u0000\u0001\u0000\u0001\t\u0000\u0002" +
-                "\t\u0001\u0003\u001b\u0004\t\u0002\u0005\t\u0003";
+                "\u0001\b\u0000\u0001\u0001\t\b\u0000\u0001\u0000\u0001\t\u0000\u0002\t\u0001\u0003" +
+                "\u001b\u0004\t\u0002\u0005\t\u0003\u0007\t\u0004\b\u0007\u0005\t\u000b\u0006";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through

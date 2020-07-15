@@ -28,11 +28,19 @@ import su.sres.securesms.database.MmsSmsColumns;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.documents.NetworkFailure;
+import su.sres.securesms.database.model.databaseprotos.DecryptedGroupV2Context;
+import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.ExpirationUtil;
 import su.sres.securesms.util.GroupUtil;
+import su.sres.signalservice.api.util.UuidUtil;
+import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * The base class for message record models that are displayed in
@@ -43,6 +51,8 @@ import java.util.List;
  *
  */
 public abstract class MessageRecord extends DisplayRecord {
+
+  private static final String TAG = Log.tag(MessageRecord.class);
 
   private final Recipient                 individualRecipient;
   private final int                       recipientDeviceId;
@@ -96,10 +106,12 @@ public abstract class MessageRecord extends DisplayRecord {
 
   @Override
   public SpannableString getDisplayBody(@NonNull Context context) {
-    if (isGroupUpdate() && isOutgoing()) {
+    if (isGroupUpdate() && isGroupV2()) {
+      return new SpannableString(getGv2Description(context));
+    } else if (isGroupUpdate() && isOutgoing()) {
       return new SpannableString(context.getString(R.string.MessageRecord_you_updated_group));
     } else if (isGroupUpdate()) {
-      return new SpannableString(GroupUtil.getDescription(context, getBody()).toString(getIndividualRecipient()));
+      return new SpannableString(GroupUtil.getDescription(context, getBody(), false).toString(getIndividualRecipient()));
     } else if (isGroupQuit() && isOutgoing()) {
       return new SpannableString(context.getString(R.string.MessageRecord_left_group));
     } else if (isGroupQuit()) {
@@ -132,6 +144,56 @@ public abstract class MessageRecord extends DisplayRecord {
     }
 
     return new SpannableString(getBody());
+  }
+
+  private @NonNull String getGv2Description(@NonNull Context context) {
+    if (!isGroupUpdate() || !isGroupV2()) {
+      throw new AssertionError();
+    }
+    try {
+      ShortStringDescriptionStrategy descriptionStrategy     = new ShortStringDescriptionStrategy(context);
+      byte[]                         decoded                 = Base64.decode(getBody());
+      DecryptedGroupV2Context        decryptedGroupV2Context = DecryptedGroupV2Context.parseFrom(decoded);
+      GroupsV2UpdateMessageProducer  updateMessageProducer   = new GroupsV2UpdateMessageProducer(context, descriptionStrategy, Recipient.self().getUuid().get());
+
+      if (decryptedGroupV2Context.hasChange() && decryptedGroupV2Context.getGroupState().getVersion() > 0) {
+        DecryptedGroupChange change  = decryptedGroupV2Context.getChange();
+        List<String>         strings = updateMessageProducer.describeChange(change);
+        StringBuilder        result  = new StringBuilder();
+
+        for (int i = 0; i < strings.size(); i++) {
+          if (i > 0) result.append('\n');
+          result.append(strings.get(i));
+        }
+
+        return result.toString();
+      } else {
+        return updateMessageProducer.describeNewGroup(decryptedGroupV2Context.getGroupState());
+      }
+    } catch (IOException e) {
+      Log.w(TAG, "GV2 Message update detail could not be read", e);
+      return context.getString(R.string.MessageRecord_group_updated);
+    }
+  }
+
+  /**
+   * Describes a UUID by it's corresponding recipient's {@link Recipient#toShortString}.
+   */
+  private static class ShortStringDescriptionStrategy implements GroupsV2UpdateMessageProducer.DescribeMemberStrategy {
+
+    private final Context context;
+
+    ShortStringDescriptionStrategy(@NonNull Context context) {
+      this.context = context;
+    }
+
+    @Override
+    public @NonNull String describe(@NonNull UUID uuid) {
+      if (UuidUtil.UNKNOWN_UUID.equals(uuid)) {
+        return context.getString(R.string.MessageRecord_unknown);
+      }
+      return Recipient.resolved(RecipientId.from(uuid, null)).toShortString(context);
+    }
   }
 
   public long getId() {

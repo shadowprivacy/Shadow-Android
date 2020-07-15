@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.media.MediaInput;
 import su.sres.securesms.video.VideoUtil;
 
 import java.io.FileNotFoundException;
@@ -62,7 +63,7 @@ final class AudioTrackConverter {
 
     static @Nullable
     AudioTrackConverter create(
-            final @NonNull VideoInput input,
+            final @NonNull MediaInput input,
             final long timeFrom,
             final long timeTo,
             final int audioBitrate) throws IOException {

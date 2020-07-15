@@ -15,7 +15,7 @@ import su.sres.securesms.mms.MediaStream;
 import su.sres.securesms.util.MemoryFileDescriptor;
 import su.sres.securesms.video.videoconverter.EncodingException;
 import su.sres.securesms.video.videoconverter.MediaConverter;
-import su.sres.securesms.video.videoconverter.VideoInput;
+import su.sres.securesms.media.MediaInput;
 
 import java.io.Closeable;
 import java.io.FileDescriptor;
@@ -129,7 +129,7 @@ public final class InMemoryTranscoder implements Closeable {
 
         final MediaConverter converter = new MediaConverter();
 
-        converter.setInput(new VideoInput.MediaDataSourceVideoInput(dataSource));
+        converter.setInput(new MediaInput.MediaDataSourceMediaInput(dataSource));
         converter.setOutput(memoryFileFileDescriptor);
         converter.setVideoResolution(outputFormat);
         converter.setVideoBitrate(targetVideoBitRate);

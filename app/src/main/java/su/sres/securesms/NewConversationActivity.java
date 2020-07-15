@@ -27,6 +27,7 @@ import android.widget.Toast;
 import su.sres.securesms.conversation.ConversationActivity;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.ThreadDatabase;
+import su.sres.securesms.groups.ui.creategroup.CreateGroupActivity;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -53,7 +54,7 @@ import java.util.UUID;
  *
  */
 public class NewConversationActivity extends ContactSelectionActivity
-        implements ContactSelectionListFragment.InviteCallback
+        implements ContactSelectionListFragment.ListCallback
 {
 
   @SuppressWarnings("unused")
@@ -114,7 +115,7 @@ public class NewConversationActivity extends ContactSelectionActivity
   }
 
   private void handleCreateGroup() {
-    startActivity(new Intent(this, GroupCreateActivity.class));
+    startActivity(CreateGroupActivity.newIntent(this));
   }
 
   private void handleInvite() {
@@ -122,10 +123,10 @@ public class NewConversationActivity extends ContactSelectionActivity
   }
 
   @Override
-  protected boolean onPrepareOptionsPanel(View view, Menu menu) {
-    MenuInflater inflater = this.getMenuInflater();
+  public boolean onPrepareOptionsMenu(Menu menu) {
     menu.clear();
-    inflater.inflate(R.menu.new_conversation_activity, menu);
+    getMenuInflater().inflate(R.menu.new_conversation_activity, menu);
+
     super.onPrepareOptionsMenu(menu);
     return true;
   }
@@ -133,5 +134,12 @@ public class NewConversationActivity extends ContactSelectionActivity
   @Override
   public void onInvite() {
     handleInvite();
+    finish();
+  }
+
+  @Override
+  public void onNewGroup() {
+    handleCreateGroup();
+    finish();
   }
 }

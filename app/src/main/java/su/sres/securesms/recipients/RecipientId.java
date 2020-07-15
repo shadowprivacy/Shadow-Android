@@ -1,17 +1,23 @@
 package su.sres.securesms.recipients;
 
+import android.annotation.SuppressLint;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.DelimiterUtil;
 import su.sres.securesms.util.Util;
+import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 public class RecipientId implements Parcelable, Comparable<RecipientId> {
@@ -36,6 +42,26 @@ public class RecipientId implements Parcelable, Comparable<RecipientId> {
         } catch (NumberFormatException e) {
             throw new InvalidStringRecipientIdError();
         }
+    }
+
+    @AnyThread
+    public static @NonNull RecipientId from(@NonNull SignalServiceAddress address) {
+        return from(address.getUuid().orNull(), address.getNumber().orNull());
+    }
+
+    /**
+     * Always supply both {@param uuid} and {@param userLogin} if you have both.
+     */
+    @AnyThread
+    @SuppressLint("WrongThread")
+    public static @NonNull RecipientId from(@Nullable UUID uuid, @Nullable String userLogin) {
+        RecipientId recipientId = RecipientIdCache.INSTANCE.get(uuid, userLogin);
+
+        if (recipientId == null) {
+            recipientId = Recipient.externalPush(ApplicationDependencies.getApplication(), uuid, userLogin).getId();
+        }
+
+        return recipientId;
     }
 
     private RecipientId(long id) {

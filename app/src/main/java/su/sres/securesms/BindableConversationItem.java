@@ -8,6 +8,7 @@ import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
@@ -45,5 +46,6 @@ public interface BindableConversationItem extends Unbindable {
     void onMessageSharedContactClicked(@NonNull List<Recipient> choices);
     void onInviteSharedContactClicked(@NonNull List<Recipient> choices);
     void onReactionClicked(long messageId, boolean isMms);
+    void onGroupMemberAvatarClicked(@NonNull RecipientId recipientId, @NonNull GroupId groupId);
   }
 }

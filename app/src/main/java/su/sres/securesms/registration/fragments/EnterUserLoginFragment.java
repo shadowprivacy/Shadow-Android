@@ -147,15 +147,16 @@ public final class EnterUserLoginFragment extends BaseRegistrationFragment {
 
             task.addOnSuccessListener(none -> {
                 Log.i(TAG, "Successfully registered SMS listener.");
-                requestVerificationCode(userLogin, RegistrationCodeRequest.Mode.SMS_FCM_WITH_LISTENER);
+                requestVerificationCode(userLogin, RegistrationCodeRequest.Mode.SMS_WITH_LISTENER);
             });
 
             task.addOnFailureListener(e -> {
                 Log.w(TAG, "Failed to register SMS listener.", e);
-                requestVerificationCode(userLogin, RegistrationCodeRequest.Mode.SMS_FCM_NO_LISTENER);
+                requestVerificationCode(userLogin, RegistrationCodeRequest.Mode.SMS_WITHOUT_LISTENER);
             });
         } else {
-            requestVerificationCode(userLogin, RegistrationCodeRequest.Mode.SMS_NO_FCM);
+            Log.i(TAG, "FCM is not supported, using no SMS listener");
+            requestVerificationCode(userLogin, RegistrationCodeRequest.Mode.SMS_WITHOUT_LISTENER);
         }
     }
 

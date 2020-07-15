@@ -9,10 +9,13 @@ import androidx.core.util.Consumer;
 import com.annimon.stream.Stream;
 import com.google.protobuf.ByteString;
 
+import su.sres.securesms.groups.GroupChangeBusyException;
+import su.sres.securesms.groups.GroupChangeFailedException;
+import su.sres.securesms.groups.GroupInsufficientRightsException;
+import su.sres.securesms.groups.GroupNotAMemberException;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedPendingMember;
 import org.signal.zkgroup.InvalidInputException;
-import org.signal.zkgroup.VerificationFailedException;
 import org.signal.zkgroup.groups.UuidCiphertext;
 import org.signal.zkgroup.util.UUIDUtil;
 import su.sres.securesms.database.DatabaseFactory;
@@ -23,13 +26,11 @@ import su.sres.securesms.groups.GroupProtoUtil;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.concurrent.SignalExecutors;
-import su.sres.signalservice.api.groupsv2.InvalidGroupStateException;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.Executor;
 
 /**
@@ -104,7 +105,7 @@ final class PendingMemberRepository {
         try {
             GroupManager.cancelInvites(context, groupId, uuidCipherTexts);
             return true;
-        } catch (InvalidGroupStateException | VerificationFailedException | IOException e) {
+        } catch (GroupChangeFailedException | GroupInsufficientRightsException | IOException | GroupNotAMemberException | GroupChangeBusyException e) {
             Log.w(TAG, e);
             return false;
         }

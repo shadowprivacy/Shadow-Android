@@ -6,32 +6,25 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
-import com.google.protobuf.ByteString;
-
 import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.groups.BadGroupIdException;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.mms.OutgoingGroupMediaMessage;
+import su.sres.securesms.mms.MessageGroupContext;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.messages.SignalServiceGroup;
 import su.sres.signalservice.api.messages.SignalServiceGroupContext;
 import su.sres.signalservice.api.messages.SignalServiceGroupV2;
-import su.sres.signalservice.api.push.SignalServiceAddress;
-import su.sres.signalservice.api.util.UuidUtil;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-
-import static su.sres.signalservice.internal.push.SignalServiceProtos.GroupContext;
 
 public final class GroupUtil {
 
@@ -49,6 +42,9 @@ public final class GroupUtil {
     if (groupContext.getGroupV1().isPresent()) {
       return GroupId.v1(groupContext.getGroupV1().get().getGroupId());
     } else if (groupContext.getGroupV2().isPresent()) {
+      if (!FeatureFlags.ZK_GROUPS) {
+        throw new BadGroupIdException();
+      }
       return GroupId.v2(groupContext.getGroupV2().get().getMasterKey());
     } else {
       throw new AssertionError();
@@ -75,24 +71,18 @@ public final class GroupUtil {
     return Optional.absent();
   }
 
-  @WorkerThread
-  public static Optional<OutgoingGroupMediaMessage> createGroupLeaveMessage(@NonNull Context context, @NonNull Recipient groupRecipient) {
-    GroupId       encodedGroupId = groupRecipient.requireGroupId();
-    GroupDatabase groupDatabase  = DatabaseFactory.getGroupDatabase(context);
-
-    if (!groupDatabase.isActive(encodedGroupId)) {
-      Log.w(TAG, "Group has already been left.");
-      return Optional.absent();
+  public static @NonNull GroupDescription getDescription(@NonNull Context context, @Nullable String encodedGroup, boolean isV2) {
+    if (encodedGroup == null) {
+      return new GroupDescription(context, null);
     }
 
-    ByteString decodedGroupId = ByteString.copyFrom(encodedGroupId.getDecodedId());
-
-    GroupContext groupContext = GroupContext.newBuilder()
-            .setId(decodedGroupId)
-            .setType(GroupContext.Type.QUIT)
-            .build();
-
-    return Optional.of(new OutgoingGroupMediaMessage(groupRecipient, groupContext, null, System.currentTimeMillis(), 0, false, null, Collections.emptyList(), Collections.emptyList()));
+    try {
+      MessageGroupContext groupContext = new MessageGroupContext(encodedGroup, isV2);
+      return new GroupDescription(context, groupContext);
+    } catch (IOException e) {
+      Log.w(TAG, e);
+      return new GroupDescription(context, null);
+    }
   }
 
   @WorkerThread
@@ -113,41 +103,21 @@ public final class GroupUtil {
     }
   }
 
-  public static @NonNull GroupDescription getDescription(@NonNull Context context, @Nullable String encodedGroup) {
-    if (encodedGroup == null) {
-      return new GroupDescription(context, null);
-    }
-
-    try {
-      GroupContext  groupContext = GroupContext.parseFrom(Base64.decode(encodedGroup));
-      return new GroupDescription(context, groupContext);
-    } catch (IOException e) {
-      Log.w(TAG, e);
-      return new GroupDescription(context, null);
-    }
-  }
-
   public static class GroupDescription {
 
-    @NonNull  private final Context         context;
-    @Nullable private final GroupContext    groupContext;
-    @Nullable private final List<Recipient> members;
+    @NonNull  private final Context             context;
+    @Nullable private final MessageGroupContext groupContext;
+    @Nullable private final List<RecipientId>   members;
 
-    public GroupDescription(@NonNull Context context, @Nullable GroupContext groupContext) {
+    GroupDescription(@NonNull Context context, @Nullable MessageGroupContext groupContext) {
       this.context      = context.getApplicationContext();
       this.groupContext = groupContext;
 
-      if (groupContext == null || groupContext.getMembersList().isEmpty()) {
+      if (groupContext == null) {
         this.members = null;
       } else {
-        this.members = new LinkedList<>();
-
-        for (GroupContext.Member member : groupContext.getMembersList()) {
-          Recipient recipient = Recipient.externalPush(context, new SignalServiceAddress(UuidUtil.parseOrNull(member.getUuid()), member.getE164()));
-          if (!recipient.isLocalNumber()) {
-            this.members.add(recipient);
-          }
-        }
+        List<RecipientId> membersList = groupContext.getMembersListExcludingSelf();
+        this.members = membersList.isEmpty() ? null : membersList;
       }
     }
 
@@ -178,31 +148,31 @@ public final class GroupUtil {
 
     public void addObserver(RecipientForeverObserver listener) {
       if (this.members != null) {
-        for (Recipient member : this.members) {
-          member.live().observeForever(listener);
+        for (RecipientId member : this.members) {
+          Recipient.live(member).observeForever(listener);
         }
       }
     }
 
     public void removeObserver(RecipientForeverObserver listener) {
       if (this.members != null) {
-        for (Recipient member : this.members) {
-          member.live().removeForeverObserver(listener);
+        for (RecipientId member : this.members) {
+          Recipient.live(member).removeForeverObserver(listener);
         }
       }
     }
 
-    private String toString(List<Recipient> recipients) {
-      String result = "";
+    private String toString(List<RecipientId> recipients) {
+      StringBuilder result = new StringBuilder();
 
-      for (int i=0;i<recipients.size();i++) {
-        result += recipients.get(i).toShortString(context);
+      for (int i = 0; i < recipients.size(); i++) {
+        result.append(Recipient.live(recipients.get(i)).get().toShortString(context));
 
       if (i != recipients.size() -1 )
-        result += ", ";
+        result.append(", ");
     }
 
-    return result;
+      return result.toString();
     }
   }
 }

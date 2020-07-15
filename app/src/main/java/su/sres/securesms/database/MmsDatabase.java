@@ -61,7 +61,7 @@ import su.sres.securesms.mms.IncomingMediaMessage;
 import su.sres.securesms.mms.MessageGroupContext;
 import su.sres.securesms.mms.MmsException;
 import su.sres.securesms.mms.OutgoingExpirationUpdateMessage;
-import su.sres.securesms.mms.OutgoingGroupMediaMessage;
+import su.sres.securesms.mms.OutgoingGroupUpdateMessage;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.OutgoingSecureMediaMessage;
 import su.sres.securesms.mms.QuoteModel;
@@ -820,7 +820,7 @@ public class MmsDatabase extends MessagingDatabase {
                 }
 
                 if (body != null && (Types.isGroupQuit(outboxType) || Types.isGroupUpdate(outboxType))) {
-                    return new OutgoingGroupMediaMessage(recipient, new MessageGroupContext(body, Types.isGroupV2(outboxType)), attachments, timestamp, 0, false, quote, contacts, previews);
+                    return new OutgoingGroupUpdateMessage(recipient, new MessageGroupContext(body, Types.isGroupV2(outboxType)), attachments, timestamp, 0, false, quote, contacts, previews);
                 } else if (Types.isExpirationTimerUpdate(outboxType)) {
                     return new OutgoingExpirationUpdateMessage(recipient, timestamp, expiresIn);
                 }
@@ -937,7 +937,7 @@ public class MmsDatabase extends MessagingDatabase {
         contentValues.put(THREAD_ID, threadId);
         contentValues.put(CONTENT_LOCATION, contentLocation);
         contentValues.put(STATUS, Status.DOWNLOAD_INITIALIZED);
-        contentValues.put(DATE_RECEIVED, generatePduCompatTimestamp());
+        contentValues.put(DATE_RECEIVED, retrieved.isPushMessage() ? System.currentTimeMillis() : generatePduCompatTimestamp());
         contentValues.put(PART_COUNT, retrieved.getAttachments().size());
         contentValues.put(SUBSCRIPTION_ID, retrieved.getSubscriptionId());
         contentValues.put(EXPIRES_IN, retrieved.getExpiresIn());
@@ -1075,13 +1075,13 @@ public class MmsDatabase extends MessagingDatabase {
         if (forceSms) type |= Types.MESSAGE_FORCE_SMS_BIT;
 
         if (message.isGroup()) {
-            OutgoingGroupMediaMessage outgoingGroupMediaMessage = (OutgoingGroupMediaMessage) message;
-            if (outgoingGroupMediaMessage.isV2Group()) {
-                MessageGroupContext.GroupV2Properties groupV2Properties = outgoingGroupMediaMessage.requireGroupV2Properties();
+            OutgoingGroupUpdateMessage outgoingGroupUpdateMessage = (OutgoingGroupUpdateMessage) message;
+            if (outgoingGroupUpdateMessage.isV2Group()) {
+                MessageGroupContext.GroupV2Properties groupV2Properties = outgoingGroupUpdateMessage.requireGroupV2Properties();
                 type |= Types.GROUP_V2_BIT;
                 if (groupV2Properties.isUpdate()) type |= Types.GROUP_UPDATE_BIT;
             } else {
-                MessageGroupContext.GroupV1Properties properties = outgoingGroupMediaMessage.requireGroupV1Properties();
+                MessageGroupContext.GroupV1Properties properties = outgoingGroupUpdateMessage.requireGroupV1Properties();
                 if      (properties.isUpdate()) type |= Types.GROUP_UPDATE_BIT;
                 else if (properties.isQuit())   type |= Types.GROUP_QUIT_BIT;
             }
@@ -1121,17 +1121,21 @@ public class MmsDatabase extends MessagingDatabase {
         long messageId = insertMediaMessage(message.getBody(), message.getAttachments(), quoteAttachments, message.getSharedContacts(), message.getLinkPreviews(), contentValues, insertListener);
 
         if (message.getRecipient().isGroup()) {
-            OutgoingGroupMediaMessage outgoingGroupMediaMessage = (message instanceof OutgoingGroupMediaMessage) ? (OutgoingGroupMediaMessage) message : null;
+            OutgoingGroupUpdateMessage outgoingGroupUpdateMessage = (message instanceof OutgoingGroupUpdateMessage) ? (OutgoingGroupUpdateMessage) message : null;
 
             GroupReceiptDatabase receiptDatabase   = DatabaseFactory.getGroupReceiptDatabase(context);
             RecipientDatabase    recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
             Set<RecipientId>     members           = new HashSet<>();
 
-            if (outgoingGroupMediaMessage != null && outgoingGroupMediaMessage.isV2Group()) {
-                MessageGroupContext.GroupV2Properties groupV2Properties = outgoingGroupMediaMessage.requireGroupV2Properties();
+            if (outgoingGroupUpdateMessage != null && outgoingGroupUpdateMessage.isV2Group()) {
+                MessageGroupContext.GroupV2Properties groupV2Properties = outgoingGroupUpdateMessage.requireGroupV2Properties();
                 members.addAll(Stream.of(groupV2Properties.getActiveMembers()).map(recipientDatabase::getOrInsertFromUuid).toList());
                 if (groupV2Properties.isUpdate()) {
-                    members.addAll(Stream.of(groupV2Properties.getPendingMembers()).map(recipientDatabase::getOrInsertFromUuid).toList());
+                    members.addAll(Stream.concat(Stream.of(groupV2Properties.getPendingMembers()),
+                            Stream.of(groupV2Properties.getRemovedMembers()))
+                            .distinct()
+                            .map(recipientDatabase::getOrInsertFromUuid)
+                            .toList());
                 }
                 members.remove(Recipient.self().getId());
             } else {
@@ -1356,7 +1360,7 @@ public class MmsDatabase extends MessagingDatabase {
             cursor = db.query(TABLE_NAME, new String[]{ID}, where, new String[]{threadId + ""}, null, null, null);
 
             while (cursor != null && cursor.moveToNext()) {
-                Log.i("MmsDatabase", "Trimming: " + cursor.getLong(0));
+                Log.i(TAG, "Trimming: " + cursor.getLong(0));
                 delete(cursor.getLong(0));
             }
 

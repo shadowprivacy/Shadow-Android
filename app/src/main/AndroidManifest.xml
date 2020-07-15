@@ -147,7 +147,9 @@
             android:theme="@style/TextSecure.LightTheme.WebRTCCall"
             android:excludeFromRecents="true"
             android:screenOrientation="portrait"
-            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|fontScale"
+            android:supportsPictureInPicture="true"
+            android:windowSoftInputMode="stateAlwaysHidden"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
             android:launchMode="singleTask" />
 
         <activity
@@ -301,6 +303,9 @@
         <activity android:name=".groups.ui.pendingmemberinvites.PendingMemberInvitesActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
             android:theme="@style/TextSecure.LightNoActionBar" />
+
+        <activity android:name=".groups.ui.managegroup.ManageGroupActivity"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
         <activity
             android:name=".DatabaseMigrationActivity"
@@ -488,8 +493,7 @@
 
         <activity android:name=".profiles.edit.EditProfileActivity"
             android:theme="@style/TextSecure.LightRegistrationTheme"
-            android:windowSoftInputMode="stateVisible"
-            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".ClearProfileAvatarActivity"
@@ -554,6 +558,12 @@
             android:theme="@style/TextSecure.LightNoActionBar"
             android:launchMode="singleTask"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
+
+        <activity android:name=".groups.ui.creategroup.CreateGroupActivity"
+            android:theme="@style/TextSecure.LightNoActionBar" />
+
+        <activity android:name=".groups.ui.creategroup.details.AddGroupDetailsActivity"
+            android:theme="@style/TextSecure.LightNoActionBar" />
 
         <service
             android:enabled="true"

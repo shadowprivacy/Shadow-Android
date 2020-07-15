@@ -11,6 +11,7 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import su.sres.securesms.groups.ui.GroupChangeErrorCallback;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
@@ -38,9 +39,9 @@ public class MessageRequestViewModel extends ViewModel {
     private LiveRecipient liveRecipient;
     private long          threadId;
 
-    @SuppressWarnings("CodeBlock2Expr")
     private final RecipientForeverObserver recipientObserver = recipient -> {
         loadMessageRequestAccepted(recipient);
+        loadMemberCount();
         this.recipient.setValue(recipient);
     };
 
@@ -89,10 +90,11 @@ public class MessageRequestViewModel extends ViewModel {
     }
 
     @MainThread
-    public void onAccept() {
+    public void onAccept(@NonNull GroupChangeErrorCallback error) {
         repository.acceptMessageRequest(liveRecipient, threadId, () -> {
             status.postValue(Status.ACCEPTED);
-        });
+                },
+                error);
     }
 
     @MainThread

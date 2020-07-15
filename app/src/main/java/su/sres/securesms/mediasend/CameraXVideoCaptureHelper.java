@@ -3,7 +3,6 @@ package su.sres.securesms.mediasend;
 import android.Manifest;
 import android.content.Context;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.Size;
 import android.view.ViewGroup;
 import android.view.animation.LinearInterpolator;
@@ -19,6 +18,7 @@ import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.ValueAnimator;
 
 import su.sres.securesms.R;
+import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediasend.camerax.CameraXView;
 import su.sres.securesms.mediasend.camerax.VideoCapture;
 import su.sres.securesms.permissions.Permissions;

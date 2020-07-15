@@ -26,7 +26,8 @@ public class EmojiPageView extends FrameLayout implements VariationSelectorListe
 
   public EmojiPageView(@NonNull Context context,
                        @NonNull EmojiEventListener emojiSelectionListener,
-                       @NonNull VariationSelectorListener variationSelectorListener)
+                       @NonNull VariationSelectorListener variationSelectorListener,
+                       boolean allowVariations)
   {
     super(context);
     final View view = LayoutInflater.from(getContext()).inflate(R.layout.emoji_grid_layout, this, true);
@@ -41,7 +42,8 @@ public class EmojiPageView extends FrameLayout implements VariationSelectorListe
   adapter        = new EmojiPageViewGridAdapter(EmojiProvider.getInstance(context),
           popup,
           emojiSelectionListener,
-          this);
+          this,
+          allowVariations);
 
   recyclerView.setLayoutManager(layoutManager);
     recyclerView.setAdapter(adapter);
@@ -84,7 +86,11 @@ public class EmojiPageView extends FrameLayout implements VariationSelectorListe
     }
   }
 
-        private static class ScrollDisabler implements RecyclerView.OnItemTouchListener {
+  public void setRecyclerNestedScrollingEnabled(boolean enabled) {
+    recyclerView.setNestedScrollingEnabled(enabled);
+  }
+
+  private static class ScrollDisabler implements RecyclerView.OnItemTouchListener {
 
     @Override
         public boolean onInterceptTouchEvent(@NonNull RecyclerView recyclerView, @NonNull MotionEvent motionEvent) {

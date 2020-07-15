@@ -6,8 +6,12 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.IncomingMessageProcessor;
 import su.sres.securesms.gcm.MessageRetriever;
+import su.sres.securesms.groups.GroupsV2Authorization;
+import su.sres.securesms.groups.GroupsV2AuthorizationMemoryValueCache;
+import su.sres.securesms.groups.v2.processing.GroupsV2StateProcessor;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.keyvalue.KeyValueStore;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
@@ -49,8 +53,10 @@ public class ApplicationDependencies {
     private static FrameRateTracker             frameRateTracker;
     private static KeyValueStore                keyValueStore;
     private static MegaphoneRepository          megaphoneRepository;
+    private static GroupsV2Authorization groupsV2Authorization;
+    private static GroupsV2StateProcessor       groupsV2StateProcessor;
     private static GroupsV2Operations           groupsV2Operations;
-    private static EarlyMessageCache                 earlyMessageCache;
+    private static EarlyMessageCache            earlyMessageCache;
 
     public static synchronized void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
         if (ApplicationDependencies.application != null || ApplicationDependencies.networkIndependentProvider != null) {
@@ -91,6 +97,17 @@ public class ApplicationDependencies {
         return accountManager;
     }
 
+    public static synchronized @NonNull GroupsV2Authorization getGroupsV2Authorization() {
+        assertNetworkDependentInitialization();
+
+        if (groupsV2Authorization == null) {
+            GroupsV2Authorization.ValueCache authCache = new GroupsV2AuthorizationMemoryValueCache(SignalStore.groupsV2AuthorizationCache());
+            groupsV2Authorization = new GroupsV2Authorization(getSignalServiceAccountManager().getGroupsV2Api(), authCache);
+        }
+
+        return groupsV2Authorization;
+    }
+
     public static synchronized @NonNull GroupsV2Operations getGroupsV2Operations() {
         assertNetworkDependentInitialization();
 
@@ -99,6 +116,17 @@ public class ApplicationDependencies {
         }
 
         return groupsV2Operations;
+    }
+
+    public static synchronized @NonNull
+    GroupsV2StateProcessor getGroupsV2StateProcessor() {
+        assertNetworkDependentInitialization();
+
+        if (groupsV2StateProcessor == null) {
+            groupsV2StateProcessor = new GroupsV2StateProcessor(application);
+        }
+
+        return groupsV2StateProcessor;
     }
 
     public static synchronized @NonNull SignalServiceMessageSender getSignalServiceMessageSender() {

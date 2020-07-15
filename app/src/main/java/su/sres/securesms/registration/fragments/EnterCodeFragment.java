@@ -33,6 +33,7 @@ import su.sres.securesms.registration.service.CodeVerificationRequest;
 import su.sres.securesms.registration.service.RegistrationService;
 import su.sres.securesms.registration.viewmodel.RegistrationViewModel;
 import su.sres.securesms.util.CommunicationActions;
+import su.sres.securesms.util.SupportEmailUtil;
 import su.sres.securesms.util.concurrent.AssertedSuccessListener;
 
 import java.util.Locale;
@@ -66,14 +67,6 @@ public final class EnterCodeFragment extends BaseRegistrationFragment {
         connectKeyboard(verificationCodeView, keyboard);
 
         setOnCodeFullyEnteredListener(verificationCodeView);
-
-
-/*        getModel().getSuccessfulCodeRequestAttempts().observe(this, (attempts) -> {
-            if (attempts >= 3) {
-
-                scrollView.postDelayed(() -> scrollView.smoothScrollTo(0, noCodeReceivedHelp.getBottom()), 15000);
-            }
-        }); */
     }
 
     private void setOnCodeFullyEnteredListener(VerificationCodeView verificationCodeView) {
@@ -188,22 +181,16 @@ public final class EnterCodeFragment extends BaseRegistrationFragment {
     }
 
     private void sendEmailToSupport() {
-        CommunicationActions.openEmail(requireContext(),
-                SignalStore.serviceConfigurationValues().getSupportEmail(),
+
+        String body = SupportEmailUtil.generateSupportEmailBody(requireContext(),
                 getString(R.string.RegistrationActivity_code_support_subject),
-                getString(R.string.RegistrationActivity_code_support_body,
-                        getDevice(),
-                        getAndroidVersion(),
-                        BuildConfig.VERSION_NAME,
-                        Locale.getDefault()));
-    }
+                null,
+                null);
 
-    private static String getDevice() {
-        return String.format("%s %s (%s)", Build.MANUFACTURER, Build.MODEL, Build.PRODUCT);
-    }
-
-    private static String getAndroidVersion() {
-        return String.format("%s (%s, %s)", Build.VERSION.RELEASE, Build.VERSION.INCREMENTAL, Build.DISPLAY);
+        CommunicationActions.openEmail(requireContext(),
+                SupportEmailUtil.getSupportEmailAddress(),
+                getString(R.string.RegistrationActivity_code_support_subject),
+                body);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

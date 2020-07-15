@@ -111,6 +111,10 @@ public abstract class DisplayRecord {
     return SmsDatabase.Types.isGroupUpdate(type);
   }
 
+  public boolean isGroupV2() {
+    return SmsDatabase.Types.isGroupV2(type);
+  }
+
   public boolean isGroupQuit() {
     return SmsDatabase.Types.isGroupQuit(type);
   }

@@ -43,6 +43,8 @@ import su.sres.securesms.util.StickyHeaderDecoration.StickyHeaderAdapter;
 import su.sres.securesms.util.Util;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -69,7 +71,26 @@ public class ContactSelectionListAdapter extends CursorRecyclerViewAdapter<ViewH
   private final ItemClickListener clickListener;
   private final GlideRequests     glideRequests;
 
-  private final Set<SelectedContact> selectedContacts = new HashSet<>();
+  private final SelectedContactSet selectedContacts = new SelectedContactSet();
+
+  public void clearSelectedContacts() {
+    selectedContacts.clear();
+  }
+
+  public boolean isSelectedContact(@NonNull SelectedContact contact) {
+    return selectedContacts.contains(contact);
+  }
+
+  public void addSelectedContact(@NonNull SelectedContact contact) {
+    if (!selectedContacts.add(contact)) {
+      Log.i(TAG, "Contact was already selected, possibly by another identifier");
+    }
+  }
+
+  public void removeFromSelectedContacts(@NonNull SelectedContact selectedContact) {
+    int removed = selectedContacts.remove(selectedContact);
+    Log.i(TAG, String.format(Locale.US, "Removed %d selected contacts that matched", removed));
+  }
 
   public abstract static class ViewHolder extends RecyclerView.ViewHolder {
 
@@ -226,8 +247,12 @@ public class ContactSelectionListAdapter extends CursorRecyclerViewAdapter<ViewH
     return getHeaderString(position);
   }
 
-  public Set<SelectedContact> getSelectedContacts() {
-    return selectedContacts;
+  public List<SelectedContact> getSelectedContacts() {
+    return selectedContacts.getContacts();
+  }
+
+  public int getSelectedContactsCount() {
+    return selectedContacts.size();
   }
 
   private CharSequence getSpannedHeaderString(int position) {

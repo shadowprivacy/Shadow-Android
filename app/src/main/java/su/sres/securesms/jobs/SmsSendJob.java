@@ -12,7 +12,6 @@ import android.telephony.SmsManager;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkOrCellServiceConstraint;
-import su.sres.securesms.jobmanager.impl.CellServiceConstraint;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
@@ -39,12 +38,12 @@ public class SmsSendJob extends SendJob {
   private long messageId;
   private int  runAttempt;
 
-  public SmsSendJob(Context context, long messageId, @NonNull Recipient destination) {
-    this(context, messageId, destination, 0);
+  public SmsSendJob(long messageId, @NonNull Recipient destination) {
+    this(messageId, destination, 0);
   }
 
-  public SmsSendJob(Context context, long messageId, @NonNull Recipient destination, int runAttempt) {
-    this(constructParameters(context, destination), messageId, runAttempt);
+  public SmsSendJob(long messageId, @NonNull Recipient destination, int runAttempt) {
+    this(constructParameters(destination), messageId, runAttempt);
   }
 
   private SmsSendJob(@NonNull Job.Parameters parameters, long messageId, int runAttempt) {
@@ -228,13 +227,11 @@ public class SmsSendJob extends SendJob {
     }
   }
 
-  private static Job.Parameters constructParameters(@NonNull Context context, @NonNull Recipient destination) {
-    String constraint = TextSecurePreferences.isWifiSmsEnabled(context) ? NetworkOrCellServiceConstraint.KEY
-            : CellServiceConstraint.KEY;
+  private static Job.Parameters constructParameters(@NonNull Recipient destination) {
     return new Job.Parameters.Builder()
             .setMaxAttempts(MAX_ATTEMPTS)
             .setQueue(destination.getId().toQueueKey())
-            .addConstraint(constraint)
+            .addConstraint(NetworkOrCellServiceConstraint.KEY)
             .build();
   }
 

@@ -145,6 +145,16 @@ public class SignalServiceDataMessage {
             group.get().getGroupV1().get().getType() != SignalServiceGroup.Type.DELIVER;
   }
 
+  public boolean isGroupV2Message() {
+    return group.isPresent() &&
+            group.get().getGroupV2().isPresent();
+  }
+
+  public boolean isGroupV2Update() {
+    return isGroupV2Message() &&
+            !body.isPresent();
+  }
+
   public int getExpiresInSeconds() {
     return expiresInSeconds;
   }

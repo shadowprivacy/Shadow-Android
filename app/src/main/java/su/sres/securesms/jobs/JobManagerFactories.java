@@ -8,13 +8,13 @@ import su.sres.securesms.jobmanager.Constraint;
 import su.sres.securesms.jobmanager.ConstraintObserver;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobMigration;
-import su.sres.securesms.jobmanager.impl.CellServiceConstraint;
 import su.sres.securesms.jobmanager.impl.CellServiceConstraintObserver;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.jobmanager.impl.NetworkConstraintObserver;
 import su.sres.securesms.jobmanager.impl.NetworkOrCellServiceConstraint;
 import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraint;
 import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraintObserver;
+import su.sres.securesms.jobmanager.migrations.PushProcessMessageQueueJobMigration;
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration;
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration2;
 import su.sres.securesms.jobmanager.migrations.RecipientIdJobMigration;
@@ -91,6 +91,8 @@ public final class JobManagerFactories {
             put(RequestGroupInfoJob.KEY,                   new RequestGroupInfoJob.Factory());
             put(ResumableUploadSpecJob.KEY,                new ResumableUploadSpecJob.Factory());
             put(StorageAccountRestoreJob.KEY,              new StorageAccountRestoreJob.Factory());
+            put(RequestGroupV2InfoJob.KEY,                 new RequestGroupV2InfoJob.Factory());
+            put(GroupV2UpdateSelfProfileKeyJob.KEY,        new GroupV2UpdateSelfProfileKeyJob.Factory());
             put(RetrieveProfileAvatarJob.KEY,              new RetrieveProfileAvatarJob.Factory());
             put(RetrieveProfileJob.KEY,                    new RetrieveProfileJob.Factory());
             put(RotateCertificateJob.KEY,                  new RotateCertificateJob.Factory());
@@ -141,10 +143,10 @@ public final class JobManagerFactories {
 
     public static Map<String, Constraint.Factory> getConstraintFactories(@NonNull Application application) {
         return new HashMap<String, Constraint.Factory>() {{
-            put(CellServiceConstraint.KEY,          new CellServiceConstraint.Factory(application));
-            put(NetworkConstraint.KEY,              new NetworkConstraint.Factory(application));
-            put(NetworkOrCellServiceConstraint.KEY, new NetworkOrCellServiceConstraint.Factory(application));
-            put(SqlCipherMigrationConstraint.KEY,   new SqlCipherMigrationConstraint.Factory(application));
+            put(NetworkConstraint.KEY,                     new NetworkConstraint.Factory(application));
+            put(NetworkOrCellServiceConstraint.KEY,        new NetworkOrCellServiceConstraint.Factory(application));
+            put(NetworkOrCellServiceConstraint.LEGACY_KEY, new NetworkOrCellServiceConstraint.Factory(application));
+            put(SqlCipherMigrationConstraint.KEY,          new SqlCipherMigrationConstraint.Factory(application));
         }};
     }
 
@@ -158,6 +160,7 @@ public final class JobManagerFactories {
         return Arrays.asList(new RecipientIdJobMigration(application),
                 new RecipientIdFollowUpJobMigration(),
                 new RecipientIdFollowUpJobMigration2(),
-                new SendReadReceiptsJobMigration(DatabaseFactory.getMmsSmsDatabase(application)));
+                new SendReadReceiptsJobMigration(DatabaseFactory.getMmsSmsDatabase(application)),
+                new PushProcessMessageQueueJobMigration(application));
     }
 }

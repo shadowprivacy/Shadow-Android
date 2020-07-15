@@ -10,10 +10,8 @@ import org.signal.libsignal.metadata.certificate.InvalidCertificateException;
 
 import su.sres.securesms.keyvalue.SignalStore;
 import org.signal.zkgroup.profiles.ProfileKey;
-import su.sres.securesms.BuildConfig;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.InvalidKeyException;
@@ -22,8 +20,6 @@ import org.whispersystems.libsignal.ecc.ECPublicKey;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.crypto.UnidentifiedAccess;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
-
-import java.io.IOException;
 
 public class UnidentifiedAccessUtil {
 
@@ -50,9 +46,7 @@ public class UnidentifiedAccessUtil {
         try {
             byte[] theirUnidentifiedAccessKey       = getTargetUnidentifiedAccessKey(recipient);
             byte[] ourUnidentifiedAccessKey         = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
-            byte[] ourUnidentifiedAccessCertificate = recipient.resolve().isUuidSupported() && Recipient.self().isUuidSupported()
-                    ? TextSecurePreferences.getUnidentifiedAccessCertificate(context)
-                    : TextSecurePreferences.getUnidentifiedAccessCertificateLegacy(context);
+            byte[] ourUnidentifiedAccessCertificate = TextSecurePreferences.getUnidentifiedAccessCertificate(context);
 
             if (TextSecurePreferences.isUniversalUnidentifiedAccess(context)) {
                 ourUnidentifiedAccessKey = Util.getSecretBytes(16);
@@ -84,8 +78,7 @@ public class UnidentifiedAccessUtil {
 
         try {
             byte[] ourUnidentifiedAccessKey         = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
-            byte[] ourUnidentifiedAccessCertificate = Recipient.self().isUuidSupported() ? TextSecurePreferences.getUnidentifiedAccessCertificate(context)
-                    : TextSecurePreferences.getUnidentifiedAccessCertificateLegacy(context);
+            byte[] ourUnidentifiedAccessCertificate = TextSecurePreferences.getUnidentifiedAccessCertificate(context);
 
             if (TextSecurePreferences.isUniversalUnidentifiedAccess(context)) {
                 ourUnidentifiedAccessKey = Util.getSecretBytes(16);

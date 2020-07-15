@@ -16,6 +16,8 @@ import net.sqlcipher.database.SQLiteDatabase;
 import org.signal.zkgroup.profiles.ProfileKey;
 import org.signal.zkgroup.profiles.ProfileKeyCredential;
 import su.sres.securesms.color.MaterialColor;
+import su.sres.securesms.crypto.ProfileKeyUtil;
+import su.sres.securesms.groups.v2.ProfileKeySet;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.storage.StorageSyncHelper.RecordUpdate;
@@ -29,6 +31,7 @@ import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.Base64;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.Util;
@@ -47,10 +50,12 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -485,7 +490,7 @@ public class RecipientDatabase extends Database {
     try {
 
       for (SignalContactRecord insert : contactInserts) {
-        ContentValues values = getValuesForStorageContact(insert);
+        ContentValues values = validateContactValuesForInsert(getValuesForStorageContact(insert));
         long          id     = db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
 
         if (id < 0) {
@@ -506,7 +511,6 @@ public class RecipientDatabase extends Database {
             IdentityKey identityKey = new IdentityKey(insert.getIdentityKey().get(), 0);
 
             DatabaseFactory.getIdentityDatabase(context).updateIdentityAfterSync(recipientId, identityKey, StorageSyncModels.remoteToLocalIdentityStatus(insert.getIdentityState()));
-            IdentityUtil.markIdentityVerified(context, Recipient.resolved(recipientId), true, true);
           } catch (InvalidKeyException e) {
             Log.w(TAG, "Failed to process identity key during insert! Skipping.", e);
           }
@@ -974,6 +978,30 @@ public class RecipientDatabase extends Database {
       Recipient.live(id).refresh();
       StorageSyncHelper.scheduleSyncForDataChange();
       return true;
+    }
+    return false;
+  }
+
+  /**
+   * Sets the profile key iff currently null.
+   * <p>
+   * If it sets it, it also clears out the profile key credential and resets the unidentified access mode.
+   * @return true iff changed.
+   */
+  public boolean setProfileKeyIfAbsent(@NonNull RecipientId id, @NonNull ProfileKey profileKey) {
+    SQLiteDatabase database    = databaseHelper.getWritableDatabase();
+    String         selection   = ID + " = ? AND " + PROFILE_KEY + " is NULL";
+    String[]       args        = new String[]{id.serialize()};
+    ContentValues  valuesToSet = new ContentValues(3);
+
+    valuesToSet.put(PROFILE_KEY, Base64.encodeBytes(profileKey.serialize()));
+    valuesToSet.putNull(PROFILE_KEY_CREDENTIAL);
+    valuesToSet.put(UNIDENTIFIED_ACCESS_MODE, UnidentifiedAccessMode.UNKNOWN.getMode());
+
+    if (database.update(TABLE_NAME, valuesToSet, selection, args) > 0) {
+      markDirty(id, DirtyState.UPDATE);
+      Recipient.live(id).refresh();
+      return true;
     } else {
       return false;
     }
@@ -1008,6 +1036,56 @@ public class RecipientDatabase extends Database {
       markDirty(id, DirtyState.UPDATE);
       Recipient.live(id).refresh();
     }
+  }
+
+  /**
+   * Fills in gaps (nulls) in profile key knowledge from new profile keys.
+   * <p>
+   * If from authoritative source, this will overwrite local, otherwise it will only write to the
+   * database if missing.
+   */
+  public Collection<RecipientId> persistProfileKeySet(@NonNull ProfileKeySet profileKeySet) {
+    Map<UUID, ProfileKey> profileKeys              = profileKeySet.getProfileKeys();
+    Map<UUID, ProfileKey> authoritativeProfileKeys = profileKeySet.getAuthoritativeProfileKeys();
+    int                   totalKeys                = profileKeys.size() + authoritativeProfileKeys.size();
+
+    if (totalKeys == 0) {
+      return Collections.emptyList();
+    }
+
+    Log.i(TAG, String.format(Locale.US, "Persisting %d Profile keys, %d of which are authoritative", totalKeys, authoritativeProfileKeys.size()));
+
+    HashSet<RecipientId> updated = new HashSet<>(totalKeys);
+    RecipientId          selfId  = Recipient.self().getId();
+
+    for (Map.Entry<UUID, ProfileKey> entry : profileKeys.entrySet()) {
+      RecipientId recipientId = getOrInsertFromUuid(entry.getKey());
+
+      if (setProfileKeyIfAbsent(recipientId, entry.getValue())) {
+        Log.i(TAG, "Learned new profile key");
+        updated.add(recipientId);
+      }
+    }
+
+    for (Map.Entry<UUID, ProfileKey> entry : authoritativeProfileKeys.entrySet()) {
+      RecipientId recipientId = getOrInsertFromUuid(entry.getKey());
+
+      if (selfId.equals(recipientId)) {
+        Log.i(TAG, "Seen authoritative update for self");
+        if (!entry.getValue().equals(ProfileKeyUtil.getSelfProfileKey())) {
+          Log.w(TAG, "Seen authoritative update for self that didn't match local, scheduling storage sync");
+          StorageSyncHelper.scheduleSyncForDataChange();
+        }
+      } else {
+        Log.i(TAG, String.format("Profile key from owner %s", recipientId));
+        if (setProfileKey(recipientId, entry.getValue())) {
+          Log.i(TAG, "Learned new profile key from owner");
+          updated.add(recipientId);
+        }
+      }
+    }
+
+    return updated;
   }
 
   public void setProfileName(@NonNull RecipientId id, @NonNull ProfileName profileName) {
@@ -1290,18 +1368,30 @@ public class RecipientDatabase extends Database {
   }
 
   public @Nullable Cursor getShadowContacts() {
+    return getShadowContacts(true);
+  }
+
+  public @Nullable Cursor getShadowContacts(boolean includeSelf) {
 // we include the phone not null clause to include all registered directory entries; with plain directory there are essentially no non-Shadow contacts, all contacts are system-internal
       String   selection = BLOCKED         + " = ? AND " +
             REGISTERED      + " = ? AND " +
             GROUP_ID        + " IS NULL AND " +
-            "(" + SYSTEM_DISPLAY_NAME + " NOT NULL OR " + SEARCH_PROFILE_NAME + " NOT NULL OR " + USERNAME + " NOT NULL OR " + PHONE + " NOT NULL)";
-    String[] args      = new String[] { "0", String.valueOf(RegisteredState.REGISTERED.getId()) };
+            "(" + SORT_NAME + " NOT NULL OR " + USERNAME + " NOT NULL OR " + PHONE + " NOT NULL)";
+
+    String[] args;
+
+    if (includeSelf) {
+      args = new String[] { "0", String.valueOf(RegisteredState.REGISTERED.getId()) };
+    } else {
+      selection += " AND " + ID + " != ?";
+      args       = new String[] { "0", String.valueOf(RegisteredState.REGISTERED.getId()), String.valueOf(Recipient.self().getId().toLong()) };
+    }
     String   orderBy   = SORT_NAME + ", " + SYSTEM_DISPLAY_NAME + ", " + SEARCH_PROFILE_NAME + ", " + USERNAME + ", " + PHONE;
 
     return databaseHelper.getReadableDatabase().query(TABLE_NAME, SEARCH_PROJECTION, selection, args, null, null, orderBy);
   }
 
-  public @Nullable Cursor querySignalContacts(@NonNull String query) {
+  public @Nullable Cursor querySignalContacts(@NonNull String query, boolean includeSelf) {
     query = TextUtils.isEmpty(query) ? "*" : query;
     query = "%" + query + "%";
 
@@ -1309,12 +1399,19 @@ public class RecipientDatabase extends Database {
             REGISTERED      + " = ? AND " +
             GROUP_ID        + " IS NULL AND " +
             "(" +
-            PHONE               + " LIKE ? OR " +
-            SYSTEM_DISPLAY_NAME + " LIKE ? OR " +
-            SEARCH_PROFILE_NAME + " LIKE ? OR " +
-            USERNAME            + " LIKE ?" +
+            PHONE     + " LIKE ? OR " +
+            SORT_NAME + " LIKE ? OR " +
+            USERNAME  + " LIKE ?" +
             ")";
-    String[] args      = new String[] { "0", String.valueOf(RegisteredState.REGISTERED.getId()), query, query, query, query };
+    String[] args;
+
+    if (includeSelf) {
+      args = new String[]{"0", String.valueOf(RegisteredState.REGISTERED.getId()), query, query, query};
+    } else {
+      selection += " AND " + ID + " != ?";
+      args       = new String[] { "0", String.valueOf(RegisteredState.REGISTERED.getId()), query, query, query, String.valueOf(Recipient.self().getId().toLong()) };
+    }
+
     String   orderBy   = SORT_NAME + ", " + SYSTEM_DISPLAY_NAME + ", " + SEARCH_PROFILE_NAME + ", " + PHONE;
 
     return databaseHelper.getReadableDatabase().query(TABLE_NAME, SEARCH_PROJECTION, selection, args, null, null, orderBy);
@@ -1358,10 +1455,10 @@ public class RecipientDatabase extends Database {
 
     String   selection = BLOCKED + " = ? AND " +
             "(" +
-            SYSTEM_DISPLAY_NAME + " LIKE ? OR " +
-            SEARCH_PROFILE_NAME + " LIKE ? OR " +
-            PHONE               + " LIKE ? OR " +
-            EMAIL               + " LIKE ?" +
+            SORT_NAME + " LIKE ? OR " +
+            USERNAME  + " LIKE ? OR " +
+            PHONE     + " LIKE ? OR " +
+            EMAIL     + " LIKE ?" +
             ")";
     String[] args      = new String[] { "0", query, query, query, query };
 
@@ -1467,7 +1564,7 @@ public class RecipientDatabase extends Database {
   }
 
   void markDirty(@NonNull RecipientId recipientId, @NonNull DirtyState dirtyState) {
-    Log.d(TAG, "Attempting to mark " + recipientId + " with dirty state " + dirtyState, new Throwable());
+    Log.d(TAG, "Attempting to mark " + recipientId + " with dirty state " + dirtyState);
 
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(DIRTY, dirtyState.getId());
@@ -1565,6 +1662,17 @@ public class RecipientDatabase extends Database {
       } else {
         return new GetOrInsertResult(RecipientId.from(id), true);
       }
+    }
+  }
+
+  private static ContentValues validateContactValuesForInsert(ContentValues values) {
+    if (!FeatureFlags.uuids()            &&
+            values.getAsString(UUID) != null &&
+            values.getAsString(PHONE) == null)
+    {
+      throw new UuidRecipientError();
+    } else {
+      return values;
     }
   }
 
@@ -1974,5 +2082,8 @@ public class RecipientDatabase extends Database {
       this.recipientId  = recipientId;
       this.neededInsert = neededInsert;
     }
+  }
+
+  private static class UuidRecipientError extends AssertionError {
   }
 }

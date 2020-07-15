@@ -8,10 +8,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.SystemClock;
-import android.util.Log;
 
 import java.util.concurrent.ConcurrentSkipListSet;
 
+import su.sres.securesms.logging.Log;
 import su.sres.signalservice.api.util.SleepTimer;
 
 /**

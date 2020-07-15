@@ -13,14 +13,15 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import su.sres.storageservice.protos.groups.AccessControl;
-import su.sres.storageservice.protos.groups.DisappearingMessagesTimer;
 import su.sres.storageservice.protos.groups.Member;
+import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 import su.sres.storageservice.protos.groups.local.DecryptedMember;
 import su.sres.storageservice.protos.groups.local.DecryptedModifyMemberRole;
 import su.sres.storageservice.protos.groups.local.DecryptedPendingMember;
 import su.sres.storageservice.protos.groups.local.DecryptedPendingMemberRemoval;
 import su.sres.storageservice.protos.groups.local.DecryptedString;
+import su.sres.storageservice.protos.groups.local.DecryptedTimer;
 import su.sres.signalservice.api.util.UuidUtil;
 
 import java.util.Arrays;
@@ -491,6 +492,84 @@ public final class GroupsV2UpdateMessageProducerTest {
                 "Alice changed who can edit group membership to \"All members\".")));
     }
 
+    // Group state without a change record
+
+    @Test
+    public void you_created_a_group() {
+        DecryptedGroup group = newGroupBy(you, 0)
+                .build();
+
+        assertThat(producer.describeNewGroup(group), is("You created the group."));
+    }
+
+    @Test
+    public void alice_created_a_group() {
+        DecryptedGroup group = newGroupBy(alice, 0)
+                .member(you)
+                .build();
+
+        assertThat(producer.describeNewGroup(group), is("Alice added you to the group."));
+    }
+
+    @Test
+    public void alice_created_a_group_above_zero() {
+        DecryptedGroup group = newGroupBy(alice, 1)
+                .member(you)
+                .build();
+
+        assertThat(producer.describeNewGroup(group), is("You joined the group."));
+    }
+
+    @Test
+    public void you_were_invited_to_a_group() {
+        DecryptedGroup group = newGroupBy(alice, 0)
+                .invite(bob, you)
+                .build();
+
+        assertThat(producer.describeNewGroup(group), is("Bob invited you to the group."));
+    }
+
+    @Test
+    public void describe_a_group_you_are_not_in() {
+        DecryptedGroup group = newGroupBy(alice, 1)
+                .build();
+
+        assertThat(producer.describeNewGroup(group), is("Group updated."));
+    }
+
+    private GroupStateBuilder newGroupBy(UUID foundingMember, int revision) {
+        return new GroupStateBuilder(foundingMember, revision);
+    }
+
+    private static class GroupStateBuilder {
+
+        private final DecryptedGroup.Builder builder;
+
+        GroupStateBuilder(@NonNull UUID foundingMember, int version) {
+            builder = DecryptedGroup.newBuilder()
+                    .setVersion(version)
+                    .addMembers(DecryptedMember.newBuilder()
+                            .setUuid(UuidUtil.toByteString(foundingMember)));
+        }
+
+        GroupStateBuilder invite(@NonNull UUID inviter, @NonNull UUID invitee) {
+            builder.addPendingMembers(DecryptedPendingMember.newBuilder()
+                    .setUuid(UuidUtil.toByteString(invitee))
+                    .setAddedByUuid(UuidUtil.toByteString(inviter)));
+            return this;
+        }
+
+        GroupStateBuilder member(@NonNull UUID member) {
+            builder.addMembers(DecryptedMember.newBuilder()
+                    .setUuid(UuidUtil.toByteString(member)));
+            return this;
+        }
+
+        public DecryptedGroup build() {
+            return builder.build();
+        }
+    }
+
     private static class ChangeBuilder {
 
         private final DecryptedGroupChange.Builder builder;
@@ -538,7 +617,7 @@ public final class GroupsV2UpdateMessageProducerTest {
         }
 
         ChangeBuilder promote(@NonNull UUID pendingMember) {
-            builder.addPromotePendingMembers(UuidUtil.toByteString(pendingMember));
+            builder.addPromotePendingMembers(DecryptedMember.newBuilder().setUuid(UuidUtil.toByteString(pendingMember)));
             return this;
         }
 
@@ -555,7 +634,7 @@ public final class GroupsV2UpdateMessageProducerTest {
         }
 
         ChangeBuilder timer(int duration) {
-            builder.setNewTimer(DisappearingMessagesTimer.newBuilder()
+            builder.setNewTimer(DecryptedTimer.newBuilder()
                     .setDuration(duration));
             return this;
         }
@@ -575,11 +654,11 @@ public final class GroupsV2UpdateMessageProducerTest {
         }
     }
 
-    private ChangeBuilder changeBy(@NonNull UUID groupEditor) {
+    private static ChangeBuilder changeBy(@NonNull UUID groupEditor) {
         return new ChangeBuilder(groupEditor);
     }
 
-    private @NonNull GroupsV2UpdateMessageProducer.DescribeMemberStrategy createDescriber(@NonNull Map<UUID, String> map) {
+    private static @NonNull GroupsV2UpdateMessageProducer.DescribeMemberStrategy createDescriber(@NonNull Map<UUID, String> map) {
         return uuid -> {
             String name = map.get(uuid);
             assertNotNull(name);

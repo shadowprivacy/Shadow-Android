@@ -10,6 +10,8 @@ import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 
+import su.sres.securesms.BuildConfig;
+import su.sres.securesms.util.AppSignatureUtil;
 import su.sres.securesms.util.ByteUnit;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -61,6 +63,8 @@ public class LogSectionSystemInfo implements LogSection {
         } catch (PackageManager.NameNotFoundException nnfe) {
             builder.append("Unknown\n");
         }
+
+        builder.append("Package      : ").append(BuildConfig.APPLICATION_ID).append(" (").append(getSigningString(context)).append(")");
 
         return builder;
     }
@@ -134,5 +138,9 @@ public class LogSectionSystemInfo implements LogSection {
 
     private static @NonNull String getScreenRefreshRate(@NonNull Context context) {
         return String.format(Locale.ENGLISH, "%.2f hz", ServiceUtil.getWindowManager(context).getDefaultDisplay().getRefreshRate());
+    }
+
+    private static String getSigningString(@NonNull Context context) {
+        return AppSignatureUtil.getAppSignature(context).or("Unknown");
     }
 }

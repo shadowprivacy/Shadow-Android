@@ -28,7 +28,7 @@ import su.sres.securesms.database.RecipientDatabase.VibrateState;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-import org.whispersystems.libsignal.logging.Log;
+import su.sres.securesms.logging.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +38,7 @@ import java.util.Set;
 
 public class NotificationChannels {
 
-  private static final String TAG = NotificationChannels.class.getSimpleName();
+  private static final String TAG = Log.tag(NotificationChannels.class);
 
   private static class Version {
     static final int MESSAGES_CATEGORY      = 2;

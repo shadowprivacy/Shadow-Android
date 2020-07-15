@@ -15,7 +15,7 @@ import androidx.annotation.RequiresApi;
 import su.sres.securesms.R;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.VideoSlide;
-import su.sres.securesms.video.DecryptableUriVideoInput;
+import su.sres.securesms.media.DecryptableUriMediaInput;
 import su.sres.securesms.video.videoconverter.VideoThumbnailsRangeSelectorView;
 
 import java.io.IOException;
@@ -69,7 +69,7 @@ public final class VideoEditorHud extends LinearLayout {
             return;
         }
 
-        videoTimeLine.setInput(DecryptableUriVideoInput.createForUri(getContext(), uri));
+        videoTimeLine.setInput(DecryptableUriMediaInput.createForUri(getContext(), uri));
 
         videoTimeLine.setOnRangeChangeListener(new VideoThumbnailsRangeSelectorView.OnRangeChangeListener() {
 

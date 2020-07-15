@@ -1,6 +1,9 @@
 package su.sres.securesms.logging;
 
-public class AndroidLogger extends Log.Logger {
+import android.annotation.SuppressLint;
+
+@SuppressLint("LogNotShadow")
+public final class AndroidLogger extends Log.Logger {
 
   @Override
   public void v(String tag, String message, Throwable t) {

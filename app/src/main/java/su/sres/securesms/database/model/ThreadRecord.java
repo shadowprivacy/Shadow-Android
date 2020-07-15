@@ -79,7 +79,9 @@ public class ThreadRecord extends DisplayRecord {
   @Override
   public SpannableString getDisplayBody(@NonNull Context context) {
     if (getGroupAddedBy() != null) {
-      return emphasisAdded(context.getString(R.string.ThreadRecord_s_added_you_to_the_group, Recipient.live(getGroupAddedBy()).get().getDisplayName(context)));
+      return emphasisAdded(context.getString(isGv2Invite() ? R.string.ThreadRecord_s_invited_you_to_the_group
+                      : R.string.ThreadRecord_s_added_you_to_the_group,
+              Recipient.live(getGroupAddedBy()).get().getDisplayName(context)));
     } else if (!isMessageRequestAccepted()) {
       return emphasisAdded(context.getString(R.string.ThreadRecord_message_request));
     } else if (isGroupUpdate()) {
@@ -192,6 +194,10 @@ public class ThreadRecord extends DisplayRecord {
   public @Nullable RecipientId getGroupAddedBy() {
     if (extra != null && extra.getGroupAddedBy() != null) return RecipientId.from(extra.getGroupAddedBy());
     else                                                  return null;
+  }
+
+  public boolean isGv2Invite() {
+    return extra != null && extra.isGv2Invite();
   }
 
   public boolean isMessageRequestAccepted() {

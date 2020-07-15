@@ -12,6 +12,7 @@ import androidx.fragment.app.FragmentManager;
 import su.sres.securesms.conversation.ConversationActivity;
 import su.sres.securesms.conversationlist.ConversationListArchiveFragment;
 import su.sres.securesms.conversationlist.ConversationListFragment;
+import su.sres.securesms.groups.ui.creategroup.CreateGroupActivity;
 import su.sres.securesms.insights.InsightsLauncher;
 import su.sres.securesms.recipients.RecipientId;
 
@@ -55,8 +56,8 @@ public class MainNavigator {
         return false;
     }
 
-    public void goToConversation(@NonNull RecipientId recipientId, long threadId, int distributionType, long lastSeen, int startingPosition) {
-        Intent intent = ConversationActivity.buildIntent(activity, recipientId, threadId, distributionType, lastSeen, startingPosition);
+    public void goToConversation(@NonNull RecipientId recipientId, long threadId, int distributionType, int startingPosition) {
+        Intent intent = ConversationActivity.buildIntent(activity, recipientId, threadId, distributionType, startingPosition);
 
         activity.startActivity(intent);
         activity.overridePendingTransition(R.anim.slide_from_end, R.anim.fade_scale_out);
@@ -77,8 +78,7 @@ public class MainNavigator {
     }
 
     public void goToGroupCreation() {
-        Intent intent = new Intent(activity, GroupCreateActivity.class);
-        activity.startActivity(intent);
+        activity.startActivity(CreateGroupActivity.newIntent(activity));
     }
 
     public void goToInvite() {

@@ -79,6 +79,7 @@ import su.sres.securesms.MainFragment;
 import su.sres.securesms.MainNavigator;
 import su.sres.securesms.NewConversationActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.conversation.ConversationFragment;
 import su.sres.securesms.conversationlist.ConversationListAdapter.ItemClickListener;
 import su.sres.securesms.components.RatingManager;
 import su.sres.securesms.components.SearchToolbar;
@@ -265,6 +266,13 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        // TODO [greyson] Re-enable when we figure out how to invalidate the cache after a system theme change
+//    ConversationFragment.prepare(requireContext());
+    }
+
+    @Override
     public void onPause() {
         super.onPause();
 
@@ -344,7 +352,6 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         getNavigator().goToConversation(threadRecord.getRecipient().getId(),
                 threadRecord.getThreadId(),
                 threadRecord.getDistributionType(),
-                threadRecord.getLastSeen(),
                 -1);
     }
 
@@ -357,7 +364,6 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
             getNavigator().goToConversation(contact.getId(),
                     threadId,
                     ThreadDatabase.DistributionTypes.DEFAULT,
-                    -1,
                     -1);
         });
     }
@@ -372,7 +378,6 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
             getNavigator().goToConversation(message.conversationRecipient.getId(),
                     message.threadId,
                     ThreadDatabase.DistributionTypes.DEFAULT,
-                    -1,
                     startingPosition);
         });
     }
@@ -690,8 +695,8 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         actionMode.setTitle(String.valueOf(defaultAdapter.getBatchSelections().size()));
     }
 
-    private void handleCreateConversation(long threadId, Recipient recipient, int distributionType, long lastSeen) {
-        getNavigator().goToConversation(recipient.getId(), threadId, distributionType, lastSeen, -1);
+    private void handleCreateConversation(long threadId, Recipient recipient, int distributionType) {
+        getNavigator().goToConversation(recipient.getId(), threadId, distributionType, -1);
     }
 
     @Override
@@ -725,8 +730,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
     @Override
     public void onItemClick(ConversationListItem item) {
         if (actionMode == null) {
-            handleCreateConversation(item.getThreadId(), item.getRecipient(),
-                    item.getDistributionType(), item.getLastSeen());
+            handleCreateConversation(item.getThreadId(), item.getRecipient(), item.getDistributionType());
         } else {
             ConversationListAdapter adapter = (ConversationListAdapter)list.getAdapter();
             adapter.toggleThreadInBatchSet(item.getThreadId());
