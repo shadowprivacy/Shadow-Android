@@ -36,25 +36,10 @@ public class ApplicationMigrations {
 
     private static final MutableLiveData<Boolean> UI_BLOCKING_MIGRATION_RUNNING = new MutableLiveData<>();
 
-    private static final int LEGACY_CANONICAL_VERSION = 455;
-
     public static final int CURRENT_VERSION = 14;
 
     private static final class Version {
-        static final int LEGACY             = 1;
-        static final int RECIPIENT_ID       = 2;
-        static final int RECIPIENT_SEARCH   = 3;
-        static final int RECIPIENT_CLEANUP  = 4;
-        static final int AVATAR_MIGRATION   = 5;
-        static final int UUIDS              = 6;
-        static final int CACHED_ATTACHMENTS = 7;
-        static final int STICKERS_LAUNCH    = 8;
-//        static final int TEST_ARGON2        = 9;
-        static final int SWOON_STICKERS     = 10;
-        static final int STORAGE_SERVICE    = 11;
-        static final int STORAGE_KEY_ROTATE = 12;
-        static final int REMOVE_AVATAR_ID   = 13;
-        static final int STORAGE_CAPABILITY = 14;
+
     }
 
     /**
@@ -63,10 +48,6 @@ public class ApplicationMigrations {
      * executing before we add the migration jobs.
      */
     public static void onApplicationCreate(@NonNull Context context, @NonNull JobManager jobManager) {
-        if (isLegacyUpdate(context)) {
-            Log.i(TAG, "Detected the need for a legacy update. Last seen canonical version: " + VersionTracker.getLastSeenVersion(context));
-            TextSecurePreferences.setAppMigrationVersion(context, 0);
-        }
 
         if (!isUpdate(context)) {
             Log.d(TAG, "Not an update. Skipping.");
@@ -161,74 +142,12 @@ public class ApplicationMigrations {
      * current version.
      */
     public static boolean isUpdate(@NonNull Context context) {
-        return isLegacyUpdate(context) || TextSecurePreferences.getAppMigrationVersion(context) < CURRENT_VERSION;
+        return TextSecurePreferences.getAppMigrationVersion(context) < CURRENT_VERSION;
     }
 
     private static LinkedHashMap<Integer, MigrationJob> getMigrationJobs(@NonNull Context context, int lastSeenVersion) {
         LinkedHashMap<Integer, MigrationJob> jobs = new LinkedHashMap<>();
 
-        if (lastSeenVersion < Version.LEGACY) {
-            jobs.put(Version.LEGACY, new LegacyMigrationJob());
-        }
-
-        if (lastSeenVersion < Version.RECIPIENT_ID) {
-            jobs.put(Version.RECIPIENT_ID, new DatabaseMigrationJob());
-        }
-
-        if (lastSeenVersion < Version.RECIPIENT_SEARCH) {
-            jobs.put(Version.RECIPIENT_SEARCH, new RecipientSearchMigrationJob());
-        }
-
-        if (lastSeenVersion < Version.RECIPIENT_CLEANUP) {
-            jobs.put(Version.RECIPIENT_CLEANUP, new DatabaseMigrationJob());
-        }
-
-        if (lastSeenVersion < Version.AVATAR_MIGRATION) {
-            jobs.put(Version.AVATAR_MIGRATION, new AvatarMigrationJob());
-        }
-
-        if (lastSeenVersion < Version.UUIDS) {
-            jobs.put(Version.UUIDS, new UuidMigrationJob());
-        }
-
-        if (lastSeenVersion < Version.CACHED_ATTACHMENTS) {
-            jobs.put(Version.CACHED_ATTACHMENTS, new CachedAttachmentsMigrationJob());
-        }
-
-//        if (lastSeenVersion < Version.STICKERS_LAUNCH) {
-//            jobs.put(Version.STICKERS_LAUNCH, new StickerLaunchMigrationJob());
-//        }
-
-        // This migration only triggered a test we aren't interested in any more.
-        // if (lastSeenVersion < Version.TEST_ARGON2) {
-        // jobs.put(Version.TEST_ARGON2, new Argon2TestMigrationJob());
-        // }
-
-//        if (lastSeenVersion < Version.SWOON_STICKERS) {
-//            jobs.put(Version.SWOON_STICKERS, new StickerAdditionMigrationJob(BlessedPacks.SWOON_HANDS, BlessedPacks.SWOON_FACES));
-//        }
-
-        if (lastSeenVersion < Version.STORAGE_SERVICE) {
-            jobs.put(Version.STORAGE_SERVICE, new StorageServiceMigrationJob());
-        }
-
-        // Superceded by StorageCapabilityMigrationJob
-//    if (lastSeenVersion < Version.STORAGE_KEY_ROTATE) {
-//      jobs.put(Version.STORAGE_KEY_ROTATE, new StorageCapabilityMigrationJob());
-//    }
-
-        if (lastSeenVersion < Version.REMOVE_AVATAR_ID) {
-            jobs.put(Version.REMOVE_AVATAR_ID, new AvatarIdRemovalMigrationJob());
-        }
-
-        if (lastSeenVersion < Version.STORAGE_CAPABILITY) {
-            jobs.put(Version.STORAGE_CAPABILITY, new StorageCapabilityMigrationJob());
-        }
-
         return jobs;
-    }
-
-    private static boolean isLegacyUpdate(@NonNull Context context) {
-        return VersionTracker.getLastSeenVersion(context) < LEGACY_CANONICAL_VERSION;
     }
 }

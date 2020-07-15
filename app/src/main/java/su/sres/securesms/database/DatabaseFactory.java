@@ -27,12 +27,7 @@ import su.sres.securesms.crypto.AttachmentSecret;
 import su.sres.securesms.crypto.AttachmentSecretProvider;
 import su.sres.securesms.crypto.DatabaseSecret;
 import su.sres.securesms.crypto.DatabaseSecretProvider;
-import su.sres.securesms.crypto.MasterSecret;
-import su.sres.securesms.database.helpers.ClassicOpenHelper;
-import su.sres.securesms.database.helpers.SQLCipherMigrationHelper;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
-import su.sres.securesms.migrations.LegacyMigrationJob;
-import su.sres.securesms.util.TextSecurePreferences;
 
 public class DatabaseFactory {
 
@@ -222,29 +217,6 @@ public class DatabaseFactory {
         this.megaphoneDatabase    = new MegaphoneDatabase(context, databaseHelper);
         // not used for now
         // this.configDatabase       = new ConfigDatabase(context, databaseHelper);
-    }
-
-    public void onApplicationLevelUpgrade(@NonNull Context context, @NonNull MasterSecret masterSecret,
-                                          int fromVersion, LegacyMigrationJob.DatabaseUpgradeListener listener) {
-        databaseHelper.getWritableDatabase();
-
-        ClassicOpenHelper legacyOpenHelper = null;
-
-        if (fromVersion < LegacyMigrationJob.ASYMMETRIC_MASTER_SECRET_FIX_VERSION) {
-            legacyOpenHelper = new ClassicOpenHelper(context);
-            legacyOpenHelper.onApplicationLevelUpgrade(context, masterSecret, fromVersion, listener);
-        }
-
-        if (fromVersion < LegacyMigrationJob.SQLCIPHER && TextSecurePreferences.getNeedsSqlCipherMigration(context)) {
-            if (legacyOpenHelper == null) {
-                legacyOpenHelper = new ClassicOpenHelper(context);
-            }
-
-            SQLCipherMigrationHelper.migrateCiphertext(context, masterSecret,
-                    legacyOpenHelper.getWritableDatabase(),
-                    databaseHelper.getWritableDatabase(),
-                    listener);
-        }
     }
 
     public void triggerDatabaseAccess() {

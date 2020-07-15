@@ -24,7 +24,6 @@ import su.sres.securesms.migrations.PassingMigrationJob;
 import su.sres.securesms.migrations.AvatarMigrationJob;
 import su.sres.securesms.migrations.CachedAttachmentsMigrationJob;
 import su.sres.securesms.migrations.DatabaseMigrationJob;
-import su.sres.securesms.migrations.LegacyMigrationJob;
 import su.sres.securesms.migrations.MigrationCompleteJob;
 import su.sres.securesms.migrations.RecipientSearchMigrationJob;
 import su.sres.securesms.migrations.StickerLaunchMigrationJob;
@@ -119,7 +118,6 @@ public final class JobManagerFactories {
             put(AvatarMigrationJob.KEY,                    new AvatarMigrationJob.Factory());
             put(CachedAttachmentsMigrationJob.KEY,         new CachedAttachmentsMigrationJob.Factory());
             put(DatabaseMigrationJob.KEY,                  new DatabaseMigrationJob.Factory());
-            put(LegacyMigrationJob.KEY,                    new LegacyMigrationJob.Factory());
             put(MigrationCompleteJob.KEY,                  new MigrationCompleteJob.Factory());
             put(RecipientSearchMigrationJob.KEY,           new RecipientSearchMigrationJob.Factory());
             put(StickerLaunchMigrationJob.KEY,             new StickerLaunchMigrationJob.Factory());
@@ -135,9 +133,7 @@ public final class JobManagerFactories {
             put("AttachmentUploadJob",                     new FailingJob.Factory());
             put("MmsSendJob",                              new FailingJob.Factory());
             put("RefreshUnidentifiedDeliveryAbilityJob",   new FailingJob.Factory());
-            put("Argon2TestJob",                           new FailingJob.Factory());
-            put("Argon2TestMigrationJob",                  new PassingMigrationJob.Factory());
-            put("StorageCapabilityMigrationJob",          new PassingMigrationJob.Factory());
+
         }};
     }
 
