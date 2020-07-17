@@ -437,9 +437,9 @@ tasks.whenTaskAdded { task ->
 //        task.finalizedBy signProductionPlayRelease
 //    }
 
-    if (task.name.equals("assembleWebsiteRelease")) {
-        task.finalizedBy signProductionWebsiteRelease
-    }
+//    if (task.name.equals("assembleWebsiteRelease")) {
+//        task.finalizedBy signProductionWebsiteRelease
+//    }
 }
 
 def getLastCommitTimestamp() {

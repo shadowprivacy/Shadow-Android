@@ -891,7 +891,7 @@
     <!--WebRtcCallActivity-->
     <string name="WebRtcCallActivity__tap_here_to_turn_on_your_video">Нажмите здесь, чтобы включить своё видео</string>
     <string name="WebRtcCallActivity__to_call_s_signal_needs_access_to_your_camera">Чтобы позвонить %1$s, Shadow необходим доступ к вашей камере</string>
-    <string name="WebRtcCallActivity__signal_s">Signal %1$s</string>
+    <string name="WebRtcCallActivity__signal_s">Shadow %1$s</string>
     <string name="WebRtcCallActivity__calling">Соединяемся…</string>
     <!--WebRtcCallView-->
     <string name="WebRtcCallView__signal_voice_call">Голосовой звонок Shadow…</string>
