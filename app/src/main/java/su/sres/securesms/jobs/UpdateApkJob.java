@@ -163,7 +163,7 @@ public class UpdateApkJob extends BaseJob {
     downloadRequest.setTitle("Downloading Shadow update");
     downloadRequest.setDescription("Downloading Shadow " + versionName);
     downloadRequest.setVisibleInDownloadsUi(false);
-    downloadRequest.setDestinationInExternalFilesDir(context, null, "signal-update.apk");
+    downloadRequest.setDestinationInExternalFilesDir(context, null, "shadow-update.apk");
 
     downloadRequest.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
 
@@ -216,7 +216,7 @@ public class UpdateApkJob extends BaseJob {
     }
 
     for (File file : directory.listFiles()) {
-      if (file.getName().startsWith("signal-update")) {
+      if (file.getName().startsWith("shadow-update")) {
         if (file.delete()) {
           Log.d(TAG, "Deleted " + file.getName());
         }
