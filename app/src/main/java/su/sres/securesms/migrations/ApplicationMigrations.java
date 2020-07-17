@@ -106,10 +106,10 @@ public class ApplicationMigrations {
                         EventBus.getDefault().unregister(this);
 
                         VersionTracker.updateLastSeenVersion(context);
-                        UI_BLOCKING_MIGRATION_RUNNING.setValue(false);
+                        UI_BLOCKING_MIGRATION_RUNNING.postValue(false);
                     } else if (event.getVersion() >= uiVersion) {
                         Log.i(TAG, "Version is >= the UI-blocking version. Posting 'false'.");
-                        UI_BLOCKING_MIGRATION_RUNNING.setValue(false);
+                        UI_BLOCKING_MIGRATION_RUNNING.postValue(false);
                     }
                 }
             });
@@ -117,7 +117,7 @@ public class ApplicationMigrations {
             Log.d(TAG, "No migrations.");
             TextSecurePreferences.setAppMigrationVersion(context, CURRENT_VERSION);
             VersionTracker.updateLastSeenVersion(context);
-            UI_BLOCKING_MIGRATION_RUNNING.setValue(false);
+            UI_BLOCKING_MIGRATION_RUNNING.postValue(false);
         }
     }
 
