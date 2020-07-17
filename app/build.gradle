@@ -84,8 +84,8 @@ protobuf {
     }
 }
 
-def canonicalVersionCode = 640
-def canonicalVersionName = "4.60.9"
+def canonicalVersionCode = 1
+def canonicalVersionName = "1.0.0"
 
 def postFixSize = 10
 def abiPostFix = ['universal'   : 0,
@@ -213,7 +213,7 @@ android {
 
         website {
             dimension "none"
-            ext.websiteUpdateUrl = "https://updates.signal.org/android"
+            ext.websiteUpdateUrl = "https://shadowupdate.sres.su/android"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "\"$ext.websiteUpdateUrl\""
         }
@@ -443,7 +443,6 @@ tasks.whenTaskAdded { task ->
 }
 
 def getLastCommitTimestamp() {
-    try {
         new ByteArrayOutputStream().withStream { os ->
             def result = exec {
                 executable = 'git'
@@ -453,9 +452,4 @@ def getLastCommitTimestamp() {
 
             return os.toString() + "000"
         }
-    }
-
-    catch (org.gradle.process.internal.ExecException e) {
-        return System.currentTimeMillis()
-    }
 }
