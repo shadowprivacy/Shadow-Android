@@ -213,7 +213,7 @@ android {
 
         website {
             dimension "none"
-            ext.websiteUpdateUrl = "https://shadowupdate.sres.su/android"
+            ext.websiteUpdateUrl = "https://shadowupdate.sres.su:19080/android"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "\"$ext.websiteUpdateUrl\""
         }
