@@ -152,7 +152,6 @@ public class CertificateRefreshJob extends BaseJob {
                         }
                     }
 
-                    SignalStore.setLastCertRefreshTime(System.currentTimeMillis());
                     Log.i(TAG, "Certificates imported successfully. Proceeding to cleanup.");
 
                     for (int i = 0; i < 6; i++) {
@@ -199,6 +198,8 @@ public class CertificateRefreshJob extends BaseJob {
             } else {
                 Log.i(TAG, "No change in the certificates version. Skipping.");
             }
+
+            SignalStore.setLastCertRefreshTime(System.currentTimeMillis());
 
         } catch (IOException e) {
             Log.w(TAG, "IOException while trying to refresh certificates. Skipping.");
