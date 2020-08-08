@@ -17,11 +17,9 @@ import okhttp3.HttpUrl;
 import su.sres.signalservice.api.groupsv2.GroupsV2AuthorizationString;
 import su.sres.signalservice.api.push.exceptions.RetryAfterException;
 import su.sres.signalservice.api.storage.protos.DirectoryResponse;
-import su.sres.signalservice.api.storage.protos.DirectoryUpdate;
 import su.sres.signalservice.api.groupsv2.CredentialResponse;
 import su.sres.signalservice.api.messages.SignalServiceAttachmentRemoteId;
 import su.sres.signalservice.api.messages.calls.SystemCertificates;
-import org.signal.zkgroup.ServerPublicParams;
 import org.signal.zkgroup.VerificationFailedException;
 import org.signal.zkgroup.profiles.ClientZkProfileOperations;
 import org.signal.zkgroup.profiles.ProfileKey;
@@ -187,7 +185,7 @@ public class PushServiceSocket {
   private static final String ATTACHMENT_UPLOAD_PATH    = "attachments/";
   private static final String AVATAR_UPLOAD_PATH        = "";
 
-  private static final String PROFILE_BUCKET_PATH    = "profiles/";
+  private static final String PROFILE_BUCKET_PATH        = "profiles/";
 
   private static final String STICKER_MANIFEST_PATH     = "stickers/%s/manifest.proto";
   private static final String STICKER_PATH              = "stickers/%s/full/%d";
@@ -196,6 +194,8 @@ public class PushServiceSocket {
   private static final String GROUPSV2_GROUP            = "/v1/groups/";
   private static final String GROUPSV2_GROUP_CHANGES    = "/v1/groups/logs/%s";
   private static final String GROUPSV2_AVATAR_REQUEST   = "/v1/groups/avatar/form";
+
+  private static final String LICENSE_DOWNLOAD_PATH     = "/v1/accounts/license";
 
   private static final Map<String, String> NO_HEADERS = Collections.emptyMap();
   private static final ResponseCodeHandler NO_HANDLER = new EmptyResponseCodeHandler();
@@ -744,8 +744,18 @@ public class PushServiceSocket {
     public DirectoryResponse getDirectoryResponse(long directoryVersion)
             throws IOException
     {
-            ResponseBody responseBody = makePlainDirectoryRequest(String.format(DIRECTORY_PLAIN_PATH, String.valueOf(directoryVersion)), "GET", null);
-            return DirectoryResponse.parseFrom(responseBody.bytes());
+            try (ResponseBody responseBody = makePlainDirectoryRequest(String.format(DIRECTORY_PLAIN_PATH, String.valueOf(directoryVersion)), "GET", null)) {
+               return DirectoryResponse.parseFrom(responseBody.bytes());
+            }
+    }
+
+
+    public byte[] getLicense(String filename)
+            throws IOException
+    {
+        try (ResponseBody responseBody = makeLicenseRequest(LICENSE_DOWNLOAD_PATH, "GET", null, filename)) {
+          return responseBody.bytes();
+        }
     }
 
   public ContactTokenDetails getContactTokenDetails(String contactToken) throws IOException {
@@ -1285,6 +1295,27 @@ public class PushServiceSocket {
      return makeServiceBodyRequest(urlFragment, method, jsonRequestBody(jsonBody), NO_HEADERS, NO_HANDLER, Optional.<UnidentifiedAccess>absent());
   }
 
+    private ResponseBody makeLicenseRequest (String urlFragment, String method, String jsonBody, String filename)
+            throws NonSuccessfulResponseCodeException, PushNetworkException
+    {
+        return makeServiceBodyRequest(urlFragment,
+                                      method,
+                                      jsonRequestBody(jsonBody),
+                                      NO_HEADERS,
+                                      new ResponseCodeHandler() {
+                                          @Override
+                                          public void handle(int responseCode, Headers responseHeaders) throws NonSuccessfulResponseCodeException {
+
+                                              String cdHeader = responseHeaders.get("Content-Disposition");
+                                              String contents = "attachment; filename=\"" + filename + "\"";
+
+                                              if (cdHeader == null) throw new NonSuccessfulResponseCodeException("Bad response: no Content-Disposition header");
+                                              if(!contents.equals(cdHeader)) throw new NonSuccessfulResponseCodeException("Bad response: invalid Content-Disposition header");
+                                          }
+                                      },
+                                      Optional.<UnidentifiedAccess>absent());
+    }
+
     private static RequestBody jsonRequestBody(String jsonBody) {
         return jsonBody != null
                 ? RequestBody.create(MediaType.parse("application/json"), jsonBody)
@@ -1315,7 +1346,7 @@ public class PushServiceSocket {
       responseCodeHandler.handle(responseCode, responseHeaders);
 
       switch (responseCode) {
-      case 413:
+      case 429:
         throw new RateLimitException("Rate limit exceeded: " + responseCode);
       case 401:
       case 403:

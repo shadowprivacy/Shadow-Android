@@ -8,7 +8,6 @@ import androidx.annotation.NonNull;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
@@ -16,14 +15,13 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.registration.PushChallengeRequest;
 import su.sres.securesms.util.TextSecurePreferences;
 
-import su.sres.securesms.util.concurrent.SignalExecutors;
-
 public class FcmService extends FirebaseMessagingService {
 
   private static final String TAG = FcmService.class.getSimpleName();
 
   @Override
   public void onMessageReceived(RemoteMessage remoteMessage) {
+
     Log.i(TAG, "FCM message... Delay: " + (System.currentTimeMillis() - remoteMessage.getSentTime()));
     String challenge = remoteMessage.getData().get("challenge");
     if (challenge != null) {

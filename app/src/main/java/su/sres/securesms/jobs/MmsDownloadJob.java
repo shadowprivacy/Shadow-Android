@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 
 import com.google.android.mms.pdu_alt.CharacterSets;
@@ -115,8 +116,8 @@ public class MmsDownloadJob extends BaseJob {
         throw new MmsException("Notification content location was null.");
       }
 
-      if (!TextSecurePreferences.isPushRegistered(context)) {
-        throw new MmsException("Not registered");
+      if (!TextSecurePreferences.isPushRegistered(context) || !SignalStore.serviceConfigurationValues().isLicensed()) {
+        throw new MmsException("Not registered or no valid activation");
       }
 
       database.markDownloadState(messageId, MmsDatabase.Status.DOWNLOAD_CONNECTING);

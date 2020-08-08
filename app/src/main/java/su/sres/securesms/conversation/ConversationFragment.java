@@ -1261,7 +1261,6 @@ public class ConversationFragment extends Fragment {
     super.onActivityResult(requestCode, resultCode, data);
 
     if (requestCode == CODE_ADD_EDIT_CONTACT && getContext() != null) {
-      // ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
       ApplicationDependencies.getJobManager().add(new DirectorySyncJob(false));
     }
   }

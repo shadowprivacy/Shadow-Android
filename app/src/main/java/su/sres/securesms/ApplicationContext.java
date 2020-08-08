@@ -39,6 +39,7 @@ import su.sres.securesms.dependencies.ApplicationDependencyProvider;
 import su.sres.securesms.dependencies.NetworkIndependentProvider;
 import su.sres.securesms.gcm.FcmJobService;
 import su.sres.securesms.jobs.CertificateRefreshJob;
+import su.sres.securesms.jobs.LicenseManagementJob;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
@@ -444,9 +445,10 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeMasterKey();
     ApplicationDependencies.getJobManager().beginJobLoop();
     StorageSyncHelper.scheduleRoutineSync();
-      RegistrationUtil.markRegistrationPossiblyComplete();
+    RegistrationUtil.markRegistrationPossiblyComplete();
     RefreshPreKeysJob.scheduleIfNecessary();
     launchCertificateRefresh();
+    launchLicenseRefresh();
 
     initializedOnCreate = true;
   }
@@ -456,6 +458,14 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
           CertificateRefreshJob.scheduleIfNecessary();
       } else {
           Log.i(TAG, "The client is not registered. Certificate refresh will not be triggered.");
+      }
+  }
+
+  private void launchLicenseRefresh() {
+      if (TextSecurePreferences.isPushRegistered(this)) {
+          LicenseManagementJob.scheduleIfNecessary();
+      } else {
+          Log.i(TAG, "The client is not registered. License refresh will not be triggered.");
       }
   }
 }

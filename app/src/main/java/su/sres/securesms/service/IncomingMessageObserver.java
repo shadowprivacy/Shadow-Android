@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat;
 import su.sres.securesms.jobmanager.ConstraintObserver;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.jobmanager.impl.NetworkConstraintObserver;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.ApplicationContext;
@@ -95,9 +96,10 @@ public class IncomingMessageObserver implements ConstraintObserver.Notifier {
         Log.d(TAG, String.format("Network requirement: %s, app visible: %s, gcm disabled: %b",
                 networkConstraint.isMet(), appVisible, isGcmDisabled));
 
-        return TextSecurePreferences.isPushRegistered(context)      &&
-                TextSecurePreferences.isWebsocketRegistered(context) &&
-                (appVisible || isGcmDisabled)                        &&
+        return TextSecurePreferences.isPushRegistered(context)        &&
+                SignalStore.serviceConfigurationValues().isLicensed() &&
+                TextSecurePreferences.isWebsocketRegistered(context)  &&
+                (appVisible || isGcmDisabled)                         &&
                 networkConstraint.isMet();
 
     }

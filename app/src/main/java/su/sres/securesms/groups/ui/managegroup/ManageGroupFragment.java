@@ -217,9 +217,9 @@ public class ManageGroupFragment extends Fragment {
         blockGroup.setOnClickListener(v -> viewModel.blockAndLeave(requireActivity()));
 
         addMembers.setOnClickListener(v -> {
-            Intent intent = new Intent(requireActivity(), PushContactSelectionActivity.class);
-            intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, ContactsCursorLoader.DisplayMode.FLAG_PUSH);
-            startActivityForResult(intent, PICK_CONTACT);
+                Intent intent = new Intent(requireActivity(), PushContactSelectionActivity.class);
+                intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, ContactsCursorLoader.DisplayMode.FLAG_PUSH);
+                startActivityForResult(intent, PICK_CONTACT);
         });
 
         viewModel.getMembershipRights().observe(getViewLifecycleOwner(), r -> {

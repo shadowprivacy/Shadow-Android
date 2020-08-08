@@ -37,7 +37,7 @@
   <string name="ApplicationPreferencesActivity_unregistering">Отмена регистрации</string>
   <string name="ApplicationPreferencesActivity_unregistering_from_signal_messages_and_calls">Отменяем регистрацию в Shadow…</string>
   <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls">Отключить сообщения и звонки через Shadow?</string>
-  <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls_by_unregistering">Отключить сообщения и звонки через Shadow, отменив регистрацию на сервере. Вам нужно будет заново зарегистрировать свой номер телефона, чтобы воспользоваться ими в будущем.</string>
+  <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls_by_unregistering">Отключить сообщения и звонки через Shadow, отменив регистрацию на сервере. Вам нужно будет заново зарегистрироваться, чтобы воспользоваться ими в будущем.</string>
   <string name="ApplicationPreferencesActivity_error_connecting_to_server">Ошибка подключения к серверу!</string>
   <string name="ApplicationPreferencesActivity_sms_enabled">SMS включены</string>
   <string name="ApplicationPreferencesActivity_touch_to_change_your_default_sms_app">Нажмите, чтобы изменить приложение для SMS по умолчанию</string>
@@ -426,7 +426,7 @@
   <string name="GroupCreateActivity_group_name_hint">Название группы</string>
   <string name="GroupCreateActivity_actionbar_mms_title">Новая MMS-группа</string>
   <string name="GroupCreateActivity_contacts_dont_support_push">Вы выбрали контакт, который не поддерживает группы Shadow, поэтому эта группа будет преобразована в MMS.</string>
-  <string name="GroupCreateActivity_youre_not_registered_for_signal">Вы не зарегистрированы для передачи сообщений и звонков через Shadow, поэтому группы Shadow отключены. Пожалуйста, попробуйте зарегистрироваться через Настройки &gt; Расширенные.</string>
+  <string name="GroupCreateActivity_youre_not_registered_for_signal">Вы не зарегистрированы для передачи сообщений и звонков через Shadow, или отсутствует действующий ключ активации, поэтому группы Shadow отключены.</string>
   <string name="GroupCreateActivity_contacts_no_members">Вам нужен как минимум один человек в вашей группе!</string>
   <string name="GroupCreateActivity_contacts_invalid_number">Один из участников имеет номер, который не может быть прочитан корректно. Пожалуйста, исправьте или удалите этот контакт и попробуйте еще раз.</string>
   <string name="GroupCreateActivity_avatar_content_description">Аватар группы</string>
@@ -924,7 +924,7 @@
   <string name="RegistrationActivity_next">Далее</string>
   <string name="RegistrationActivity_continue">Продолжить</string>
   <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">Общайтесь\nбез тревог</string>
-  <string name="RegistrationActivity_enter_your_user_login_to_get_started">Введите ваш логин</string>
+  <string name="RegistrationActivity_enter_your_user_login_to_get_started">Введите логин, полученный от администратора</string>
   <string name="RegistrationActivity_you_will_receive_a_verification_code">Подготовьте проверочный код, полученный от администратора.</string>
   <string name="RegistrationActivity_enter_the_code_we_sent_to_s">Введите код, полученный от администратора</string>
   <string name="RegistrationActivity_user_login_description">Логин</string>
@@ -1181,6 +1181,11 @@
   <!--UnauthorizedReminder-->
   <string name="UnauthorizedReminder_device_no_longer_registered">Устройство больше не зарегистрировано</string>
   <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">Это может быть вызвано тем, что администратор отключил вашу учетную запись. Нажмите для повторной регистрации.</string>
+
+    <!-- LicenseInvalidReminder -->
+    <string name="LicenseInvalidReminder_no_valid_license">Отсутствует действующий ключ активации</string>
+    <string name="LicenseInvalidReminder_contact_your_administrator">Для решения проблемы обратитесь к системному администратору</string>
+
   <!--VideoPlayer-->
   <string name="VideoPlayer_error_playing_video">Ошибка при воспроизведении видео</string>
   <!--WebRtcCallActivity-->
@@ -1491,6 +1496,7 @@
   <string name="AndroidManifest__change_passphrase">Изменить парольную фразу</string>
   <string name="AndroidManifest__verify_safety_number">Подтвердить код безопасности</string>
   <string name="AndroidManifest__log_submit">Отправить журнал отладки</string>
+  <string name="AndroidManifest__license_info">Сведения об активации</string>
   <string name="AndroidManifest__media_preview">Предпросмотр медиа</string>
   <string name="AndroidManifest__message_details">Подробности сообщения</string>
   <string name="AndroidManifest__linked_devices">Привязанные устройства</string>
@@ -1646,6 +1652,7 @@
   <string name="preferences__signal_messages_and_calls">Звонки и сообщения Shadow</string>
   <string name="preferences__free_private_messages_and_calls">Бесплатные приватные сообщения и звонки пользователям Shadow</string>
   <string name="preferences__submit_debug_log">Отправить журнал отладки</string>
+  <string name="preferences__license_info">Сведения об активации</string>
   <string name="preferences__support_wifi_calling">Совместимость с Wi-Fi звонками</string>
   <string name="preferences__enable_if_your_device_supports_sms_mms_delivery_over_wifi">Включите, если ваше устройство отправляет и принимает SMS и MMS через WiFi (включайте, только если «Звонки по WiFi» включены на вашем устройстве)</string>
   <string name="preferences__incognito_keyboard">Инкогнито-клавиатура</string>
@@ -1961,6 +1968,22 @@
   <string name="configuration_load_unsuccessful">Загрузить конфигурацию не удалось. Приложение не сможет нормально работать. Обратитесь к системному администратору.</string>
     <string name="certificate_load_unsuccessful">Загрузить сертификат не удалось. Приложение не сможет нормально работать. Обратитесь к системному администратору.</string>
   <string name="app_will_restart_to_apply_config">Приложение перезапустится для применения новой конфигурации</string>
+
+  <!-- LicenseInfoActivity -->
+
+  <string name="LicenseInfoActivity_title">Сведения об активации:</string>
+  <string name="LicenseInfoActivity_status_active">Статус активации: Активна</string>
+  <string name="LicenseInfoActivity_status_expired">Статус активации: Истекла</string>
+  <string name="LicenseInfoActivity_status_nyv">Статус активации: Ещё не активна</string>
+  <string name="LicenseInfoActivity_status_nokey">Статус активации: Ключ отсутствует</string>
+  <string name="LicenseInfoActivity_status_uncertain">Статус активации: Не определен</string>
+  <string name="LicenseInfoActivity_status_invalid">Статус активации: Недействительна</string>
+  <string name="LicenseInfoActivity_valid_from">Действительна с: %s</string>
+  <string name="LicenseInfoActivity_valid_thru">Действительна по: %s</string>
+  <string name="LicenseInfoActivity_serial">Серийный номер: %s</string>
+  <string name="LicenseInfoActivity_psid">ID платформы: %s</string>
+  <string name="LicenseInfoActivity_na">Н/Д</string>
+  <string name="LicenseInfoActivity_summary">Текущий статус и срок действия</string>
 
   <!--EOF-->
 </resources>

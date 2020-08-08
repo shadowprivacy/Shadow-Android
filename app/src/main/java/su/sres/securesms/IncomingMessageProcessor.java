@@ -12,6 +12,7 @@ import su.sres.securesms.database.PushDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.PushDecryptMessageJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.signalservice.api.messages.SignalServiceEnvelope;
@@ -75,6 +76,9 @@ public class IncomingMessageProcessor {
          *         one was created. Otherwise null.
          */
         public @Nullable String processEnvelope(@NonNull SignalServiceEnvelope envelope) {
+
+            if(!SignalStore.serviceConfigurationValues().isLicensed()) return null;
+
             if (envelope.hasSource()) {
                 Recipient.externalPush(context, envelope.getSourceAddress());
             }

@@ -79,6 +79,7 @@ import su.sres.securesms.MainFragment;
 import su.sres.securesms.MainNavigator;
 import su.sres.securesms.NewConversationActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.components.reminder.LicenseInvalidReminder;
 import su.sres.securesms.conversation.ConversationFragment;
 import su.sres.securesms.conversationlist.ConversationListAdapter.ItemClickListener;
 import su.sres.securesms.components.RatingManager;
@@ -106,6 +107,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.ReminderUpdateEvent;
 import su.sres.securesms.insights.InsightsLauncher;
 import su.sres.securesms.jobs.ServiceOutageDetectionJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.lock.RegistrationLockV1Dialog;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediasend.MediaSendActivity;
@@ -281,7 +283,6 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         EventBus.getDefault().unregister(this);
     }
 
-
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
         MenuInflater inflater = requireActivity().getMenuInflater();
@@ -298,7 +299,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         super.onOptionsItemSelected(item);
 
         switch (item.getItemId()) {
-            case R.id.menu_new_group:         handleCreateGroup();     return true;
+            case R.id.menu_new_group:         handleCreateGroup(getActivity());     return true;
             case R.id.menu_settings:          handleDisplaySettings(); return true;
             case R.id.menu_clear_passphrase:  handleClearPassphrase(); return true;
             case R.id.menu_mark_all_read:     handleMarkAllRead();     return true;
@@ -540,6 +541,8 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         SimpleTask.run(getViewLifecycleOwner().getLifecycle(), () -> {
             if (UnauthorizedReminder.isEligible(context)) {
                 return Optional.of(new UnauthorizedReminder(context));
+            } else if (LicenseInvalidReminder.isEligible()) {
+                return Optional.of(new LicenseInvalidReminder(context));
             } else if (ExpiredBuildReminder.isEligible()) {
                 return Optional.of(new ExpiredBuildReminder(context));
             } else if (ServiceOutageReminder.isEligible(context)) {
@@ -569,8 +572,10 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         });
     }
 
-    private void handleCreateGroup() {
-        getNavigator().goToGroupCreation();
+    private void handleCreateGroup(Context context) {
+        if(TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed()) {
+            getNavigator().goToGroupCreation();
+        }
     }
 
     private void handleDisplaySettings() {

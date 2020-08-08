@@ -23,6 +23,7 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.LiveGroup;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.groups.ui.GroupErrors;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -92,7 +93,7 @@ final class RecipientDialogViewModel extends ViewModel {
     }
 
     void onSecureCallClicked(@NonNull FragmentActivity activity) {
-        recipientDialogRepository.getRecipient(recipient -> CommunicationActions.startVoiceCall(activity, recipient));
+        recipientDialogRepository.getRecipient(recipient -> CommunicationActions.startVoiceCall(activity, recipient, SignalStore.serviceConfigurationValues().isLicensed()));
     }
 
     void onBlockClicked(@NonNull FragmentActivity activity) {

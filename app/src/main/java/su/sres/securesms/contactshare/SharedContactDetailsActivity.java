@@ -23,6 +23,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import su.sres.securesms.PassphraseRequiredActionBarActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.LiveRecipient;
@@ -217,7 +218,7 @@ public class SharedContactDetailsActivity extends PassphraseRequiredActionBarAct
       });
 
       callButtonView.setOnClickListener(v -> {
-        ContactUtil.selectRecipientThroughDialog(this, pushUsers, dynamicLanguage.getCurrentLocale(), recipient -> CommunicationActions.startVoiceCall(this, recipient));
+        ContactUtil.selectRecipientThroughDialog(this, pushUsers, dynamicLanguage.getCurrentLocale(), recipient -> CommunicationActions.startVoiceCall(this, recipient, SignalStore.serviceConfigurationValues().isLicensed()));
       });
     } else if (!systemUsers.isEmpty()) {
       inviteButtonView.setVisibility(View.VISIBLE);

@@ -55,6 +55,7 @@ public final class JobManagerFactories {
             put(DirectorySyncJob.KEY,                      new DirectorySyncJob.Factory());
             put(FcmRefreshJob.KEY,                         new FcmRefreshJob.Factory());
             put(LeaveGroupJob.KEY,                         new LeaveGroupJob.Factory());
+            put(LicenseManagementJob.KEY,                  new LicenseManagementJob.Factory());
             put(LocalBackupJob.KEY,                        new LocalBackupJob.Factory());
             put(MmsDownloadJob.KEY,                        new MmsDownloadJob.Factory());
             put(MmsReceiveJob.KEY,                         new MmsReceiveJob.Factory());

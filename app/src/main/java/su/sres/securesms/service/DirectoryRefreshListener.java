@@ -5,6 +5,7 @@ import android.content.Intent;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.DirectorySyncJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import java.util.concurrent.TimeUnit;
@@ -20,8 +21,7 @@ public class DirectoryRefreshListener extends PersistentAlarmManagerListener {
 
   @Override
   protected long onAlarm(Context context, long scheduledTime) {
-    if (scheduledTime != 0 && TextSecurePreferences.isPushRegistered(context)) {
-      // ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(true));
+    if (scheduledTime != 0 && TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed()) {
         ApplicationDependencies.getJobManager().add(new DirectorySyncJob(true));
     }
 

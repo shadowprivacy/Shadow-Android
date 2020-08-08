@@ -408,6 +408,11 @@
             android:windowSoftInputMode="stateHidden"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
+        <activity android:name=".preferences.LicenseInfoActivity"
+            android:label="@string/AndroidManifest__license_info"
+            android:windowSoftInputMode="stateHidden"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
+
         <activity
             android:name=".MediaPreviewActivity"
             android:label="@string/AndroidManifest__media_preview"

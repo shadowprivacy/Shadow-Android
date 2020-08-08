@@ -39,7 +39,7 @@
     <string name="ApplicationPreferencesActivity_unregistering">Unregistering</string>
     <string name="ApplicationPreferencesActivity_unregistering_from_signal_messages_and_calls">Unregistering from Shadow messages and calls…</string>
     <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls">Disable Shadow messages and calls?</string>
-    <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls_by_unregistering">Disable Shadow messages and calls by unregistering from the server. You will need to re-register your phone number to use them again in the future.</string>
+    <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls_by_unregistering">Disable Shadow messages and calls by unregistering from the server. You will need to re-register to use them again in the future.</string>
     <string name="ApplicationPreferencesActivity_error_connecting_to_server">Error connecting to server!</string>
     <string name="ApplicationPreferencesActivity_sms_enabled">SMS Enabled</string>
     <string name="ApplicationPreferencesActivity_touch_to_change_your_default_sms_app">Touch to change your default SMS app</string>
@@ -436,7 +436,7 @@
     <string name="GroupCreateActivity_group_name_hint">Group name</string>
     <string name="GroupCreateActivity_actionbar_mms_title">New MMS group</string>
     <string name="GroupCreateActivity_contacts_dont_support_push">You have selected a contact that doesn\'t support Shadow groups, so this group will be MMS.</string>
-    <string name="GroupCreateActivity_youre_not_registered_for_signal">You\'re not registered for Shadow messages and calls, so Shadow groups are disabled. Please try registering in Settings &gt; Advanced.</string>
+    <string name="GroupCreateActivity_youre_not_registered_for_signal">You\'re not registered for Shadow messages and calls or there is no valid activation key, so Shadow groups are disabled.</string>
     <string name="GroupCreateActivity_contacts_no_members">You need at least one person in your group!</string>
     <string name="GroupCreateActivity_contacts_invalid_number">One of the members of your group has a number that can\'t be read correctly. Please fix or remove that contact and try again.</string>
     <string name="GroupCreateActivity_avatar_content_description">Group avatar</string>
@@ -947,8 +947,7 @@
     <string name="RegistrationActivity_next">Next</string>
     <string name="RegistrationActivity_continue">Continue</string>
     <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">Communicate\nwithout anxiety</string>
-    <string name="RegistrationActivity_enter_your_user_login_to_get_started">Enter your login</string>
-    <string name="RegistrationActivity_enter_server_address">Enter your server address and port</string>
+    <string name="RegistrationActivity_enter_your_user_login_to_get_started">Enter the login obtained from your administrator</string>
     <string name="RegistrationActivity_you_will_receive_a_verification_code">Prepare the verification code received from your administrator.</string>
     <string name="RegistrationActivity_enter_the_code_we_sent_to_s">Enter the code obtained from your administrator</string>
     <string name="RegistrationActivity_user_login_description">Login</string>
@@ -1232,6 +1231,10 @@
     <!-- UnauthorizedReminder -->
     <string name="UnauthorizedReminder_device_no_longer_registered">Device no longer registered</string>
     <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">This is likely because your administrator disabled your account.</string>
+
+    <!-- LicenseInvalidReminder -->
+    <string name="LicenseInvalidReminder_no_valid_license">No valid activation key</string>
+    <string name="LicenseInvalidReminder_contact_your_administrator">Contact your system administrator for resolution</string>
 
     <!-- VideoPlayer -->
     <string name="VideoPlayer_error_playing_video">Error playing video</string>
@@ -1593,6 +1596,7 @@
     <string name="AndroidManifest__change_passphrase">Change passphrase</string>
     <string name="AndroidManifest__verify_safety_number">Verify safety number</string>
     <string name="AndroidManifest__log_submit">Submit debug log</string>
+    <string name="AndroidManifest__license_info">Activation information</string>
     <string name="AndroidManifest__media_preview">Media preview</string>
     <string name="AndroidManifest__message_details">Message details</string>
     <string name="AndroidManifest__linked_devices">Linked devices</string>
@@ -1761,6 +1765,7 @@
     <string name="preferences__signal_messages_and_calls">Shadow messages and calls</string>
     <string name="preferences__free_private_messages_and_calls">Free private messages and calls to Shadow users</string>
     <string name="preferences__submit_debug_log">Submit debug log</string>
+    <string name="preferences__license_info">Activation information</string>
     <string name="preferences__support_wifi_calling">\'WiFi Calling\' compatibility mode</string>
     <string name="preferences__enable_if_your_device_supports_sms_mms_delivery_over_wifi">Enable if your device uses SMS/MMS delivery over WiFi (only enable when \'WiFi Calling\' is enabled on your device)</string>
     <string name="preferences__incognito_keyboard">Incognito keyboard</string>
@@ -2161,6 +2166,23 @@
     <string name="configuration_load_unsuccessful">Configuration load unsuccessful. The application cannot proceed normally. Contact your system administrator.</string>
     <string name="certificate_load_unsuccessful">Certificate load unsuccessful. The application cannot proceed normally. Contact your system administrator.</string>
     <string name="app_will_restart_to_apply_config">The app will restart to apply the new configuration</string>
+
+    <!-- LicenseInfoActivity -->
+
+    <string name="LicenseInfoActivity_title">Activation Information:</string>
+    <string name="LicenseInfoActivity_status_active">Activation status: Active</string>
+    <string name="LicenseInfoActivity_status_expired">Activation Status: Expired</string>
+    <string name="LicenseInfoActivity_status_nyv">Activation Status: Not yet valid</string>
+    <string name="LicenseInfoActivity_status_nokey">Activation Status: No key</string>
+    <string name="LicenseInfoActivity_status_uncertain">Activation Status: Uncertain</string>
+    <string name="LicenseInfoActivity_status_invalid">Activation Status: Invalid</string>
+    <string name="LicenseInfoActivity_valid_from">Valid From: %s</string>
+    <string name="LicenseInfoActivity_valid_thru">Valid Until: %s</string>
+    <string name="LicenseInfoActivity_serial">Serial Number: %s</string>
+    <string name="LicenseInfoActivity_psid">Platform ID: %s</string>
+    <string name="LicenseInfoActivity_na">N/A</string>
+    <string name="LicenseInfoActivity_summary">Current status and validity period</string>
+
     <!-- EOF -->
 
 </resources>

@@ -40,6 +40,7 @@ import su.sres.securesms.jobs.AttachmentUploadJob;
 import su.sres.securesms.jobs.ProfileKeySendJob;
 import su.sres.securesms.jobs.RemoteDeleteSendJob;
 import su.sres.securesms.jobs.ResumableUploadSpecJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.ApplicationContext;
@@ -200,6 +201,10 @@ public class MessageSender {
     List<String>               preUploadJobIds        = Stream.of(preUploadResults).map(PreUploadResult::getJobIds).flatMap(Stream::of).toList();
     List<Long>                 messageIds             = new ArrayList<>(messages.size());
     List<String>               messageDependsOnIds    = new ArrayList<>(preUploadJobIds);
+
+    boolean isEligible = TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed();
+
+    if(!isEligible) return;
 
     mmsDatabase.beginTransaction();
     try {
@@ -363,6 +368,10 @@ public class MessageSender {
 
   private static void sendMediaMessage(Context context, Recipient recipient, boolean forceSms, long messageId, @NonNull Collection<String> uploadJobIds)
   {
+      boolean isEligible = TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed();
+
+      if (!isEligible) return;
+
     if (isLocalSelfSend(context, recipient, forceSms)) {
       sendLocalMediaSelf(context, messageId);
     } else if (isGroupPushSend(recipient)) {
@@ -425,7 +434,7 @@ public class MessageSender {
   }
 
   private static boolean isPushTextSend(Context context, Recipient recipient, boolean keyExchange) {
-    if (!TextSecurePreferences.isPushRegistered(context)) {
+    if (!TextSecurePreferences.isPushRegistered(context) || !SignalStore.serviceConfigurationValues().isLicensed()) {
       return false;
     }
 
@@ -437,7 +446,7 @@ public class MessageSender {
   }
 
   private static boolean isPushMediaSend(Context context, Recipient recipient) {
-    if (!TextSecurePreferences.isPushRegistered(context)) {
+    if (!TextSecurePreferences.isPushRegistered(context) || !SignalStore.serviceConfigurationValues().isLicensed()) {
       return false;
     }
 
@@ -475,6 +484,7 @@ public class MessageSender {
             recipient.isLocalNumber()                       &&
             !forceSms                                       &&
             TextSecurePreferences.isPushRegistered(context) &&
+            SignalStore.serviceConfigurationValues().isLicensed() &&
             !TextSecurePreferences.isMultiDevice(context);
   }
 

@@ -27,8 +27,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/verify_subheader"
-            app:layout_constraintVertical_bias="0.124" />
+            app:layout_constraintTop_toBottomOf="@+id/verify_header"
+            app:layout_constraintVertical_bias="0.25" />
 
         <TextView
             android:id="@+id/verify_header"
@@ -45,19 +45,6 @@
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/verify_subheader"
-            style="@style/Signal.Text.Body.Registration"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="32dp"
-            android:gravity="center"
-            android:text="@string/RegistrationActivity_you_will_receive_a_verification_code"
-            app:layout_constraintTop_toBottomOf="@+id/verify_header"
-            tools:layout_editor_absoluteX="0dp" />
 
         <Button
             android:id="@+id/cancel_button"

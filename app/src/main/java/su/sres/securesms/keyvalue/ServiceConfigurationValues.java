@@ -15,6 +15,8 @@ public final class ServiceConfigurationValues {
     private static final String CURRENT_CERT_VERSION = "service_configuration.current_cert_version";
     private static final String CURRENT_DIR_VERSION = "service_configuration.current_dir_version";
     private static final String SUPPORT_EMAIL        = "service_configuration.support_email";
+    private static final String IS_LICENSED          = "service_configuration.is_licensed";
+    private static final String LICENSE              = "service_configuration.license";
 
     public static final String EXAMPLE_URI = "https://example.com";
 
@@ -78,6 +80,23 @@ public final class ServiceConfigurationValues {
                 .commit();
     }
 
+    public synchronized void setLicensed(boolean isLicensed) {
+        store.beginWrite()
+                .putBoolean(IS_LICENSED, isLicensed)
+                .commit();
+    }
+
+    public synchronized void storeLicense(byte [] license) {
+        store.beginWrite()
+                .putBlob(LICENSE, license)
+                .commit();
+    }
+
+    public synchronized void removeLicense() {
+        store.beginWrite()
+                .remove(LICENSE)
+                .commit();
+    }
 
     public @Nullable
     String getShadowUrl() {
@@ -119,6 +138,14 @@ public final class ServiceConfigurationValues {
 
     public String getSupportEmail() {
         return store.getString(SUPPORT_EMAIL, "example@example.com");
+    }
+
+    public boolean isLicensed() {
+        return store.getBoolean(IS_LICENSED, false);
+    }
+
+    public @Nullable byte [] retrieveLicense() {
+        return store.getBlob(LICENSE, null);
     }
 
 }

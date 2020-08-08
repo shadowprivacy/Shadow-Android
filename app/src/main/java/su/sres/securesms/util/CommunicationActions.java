@@ -39,7 +39,10 @@ public class CommunicationActions {
 
   private static final String TAG = Log.tag(CommunicationActions.class);
 
-  public static void startVoiceCall(@NonNull FragmentActivity activity, @NonNull Recipient recipient) {
+  public static void startVoiceCall(@NonNull FragmentActivity activity, @NonNull Recipient recipient, boolean isEligible) {
+
+    if (!isEligible) return;
+
     if (TelephonyUtil.isAnyPstnLineBusy(activity)) {
       Toast.makeText(activity,
               R.string.CommunicationActions_a_cellular_call_is_already_in_progress,
@@ -65,7 +68,10 @@ public class CommunicationActions {
     });
   }
 
-  public static void startVideoCall(@NonNull FragmentActivity activity, @NonNull Recipient recipient) {
+  public static void startVideoCall(@NonNull FragmentActivity activity, @NonNull Recipient recipient, boolean isEligible) {
+
+    if (!isEligible) return;
+
     if (TelephonyUtil.isAnyPstnLineBusy(activity)) {
       Toast.makeText(activity,
               R.string.CommunicationActions_a_cellular_call_is_already_in_progress,

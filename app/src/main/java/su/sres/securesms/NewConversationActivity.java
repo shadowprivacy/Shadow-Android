@@ -16,36 +16,22 @@
  */
 package su.sres.securesms;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Toast;
 
 import su.sres.securesms.conversation.ConversationActivity;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.groups.ui.creategroup.CreateGroupActivity;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import org.whispersystems.libsignal.util.guava.Optional;
-import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
-import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.UsernameUtil;
-import su.sres.securesms.util.concurrent.SignalExecutors;
-import su.sres.securesms.util.concurrent.SimpleTask;
-import org.whispersystems.libsignal.util.guava.Optional;
-import su.sres.signalservice.api.profiles.SignalServiceProfile;
-import su.sres.signalservice.api.util.UuidUtil;
-
-import java.io.IOException;
-import java.util.UUID;
-
+import su.sres.securesms.util.TextSecurePreferences;
 
 /**
  * Activity container for starting a new conversation.
@@ -102,7 +88,7 @@ public class NewConversationActivity extends ContactSelectionActivity
     switch (item.getItemId()) {
     case android.R.id.home:   super.onBackPressed(); return true;
     case R.id.menu_refresh:   handleManualRefresh(); return true;
-    case R.id.menu_new_group: handleCreateGroup();   return true;
+    case R.id.menu_new_group: handleCreateGroup(this);   return true;
 //    case R.id.menu_invite:    handleInvite();        return true;
     }
 
@@ -114,8 +100,10 @@ public class NewConversationActivity extends ContactSelectionActivity
     onRefresh();
   }
 
-  private void handleCreateGroup() {
-    startActivity(CreateGroupActivity.newIntent(this));
+  private void handleCreateGroup(Context context) {
+    if(TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed()) {
+      startActivity(CreateGroupActivity.newIntent(this));
+    }
   }
 
   private void handleInvite() {
@@ -139,7 +127,7 @@ public class NewConversationActivity extends ContactSelectionActivity
 
   @Override
   public void onNewGroup() {
-    handleCreateGroup();
+    handleCreateGroup(this);
     finish();
   }
 }

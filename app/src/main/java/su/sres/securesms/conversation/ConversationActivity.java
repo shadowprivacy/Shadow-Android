@@ -101,6 +101,7 @@ import su.sres.securesms.groups.ui.LeaveGroupDialog;
 import su.sres.securesms.groups.ui.managegroup.ManageGroupActivity;
 import su.sres.securesms.groups.ui.pendingmemberinvites.PendingMemberInvitesActivity;
 import su.sres.securesms.jobs.RequestGroupV2InfoJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.mediaoverview.MediaOverviewActivity;
 import su.sres.securesms.MuteDialog;
 import su.sres.securesms.PassphraseRequiredActionBarActivity;
@@ -138,6 +139,7 @@ import su.sres.securesms.components.reminder.ExpiredBuildReminder;
 import su.sres.securesms.components.reminder.ReminderView;
 import su.sres.securesms.components.reminder.ServiceOutageReminder;
 import su.sres.securesms.components.reminder.UnauthorizedReminder;
+import su.sres.securesms.components.reminder.LicenseInvalidReminder;
 import su.sres.securesms.contacts.ContactAccessor;
 import su.sres.securesms.contacts.ContactAccessor.ContactData;
 import su.sres.securesms.contactshare.Contact;
@@ -892,8 +894,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
             case R.id.menu_distribution_conversation:
                 handleDistributionConversationEnabled(item);
                 return true;
-            case R.id.menu_edit_group:                handleEditPushGroupV1();                           return true;
-            case R.id.menu_manage_group:              handleManagePushGroup();                           return true;
+            case R.id.menu_edit_group:                handleEditPushGroupV1(this);               return true;
+            case R.id.menu_manage_group:              handleManagePushGroup(this);               return true;
             case R.id.menu_pending_members:           handlePendingMembers();                            return true;
             case R.id.menu_leave:
                 handleLeavePushGroup();
@@ -1202,12 +1204,16 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                 this::initializeEnabledCheck);
     }
 
-    private void handleEditPushGroupV1() {
-        startActivityForResult(GroupCreateActivity.newEditGroupIntent(ConversationActivity.this, recipient.get().requireGroupId().requireV1()), GROUP_EDIT);
+    private void handleEditPushGroupV1(Context context) {
+        if(TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed()) {
+            startActivityForResult(GroupCreateActivity.newEditGroupIntent(ConversationActivity.this, recipient.get().requireGroupId().requireV1()), GROUP_EDIT);
+        }
     }
 
-    private void handleManagePushGroup() {
-        startActivityForResult(ManageGroupActivity.newIntent(ConversationActivity.this, recipient.get().requireGroupId()), GROUP_EDIT);
+    private void handleManagePushGroup(Context context) {
+        if(TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed()) {
+            startActivityForResult(ManageGroupActivity.newIntent(ConversationActivity.this, recipient.get().requireGroupId()), GROUP_EDIT);
+        }
     }
 
     private void handlePendingMembers() {
@@ -1250,7 +1256,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         if (recipient == null) return;
 
         if (isSecure) {
-            CommunicationActions.startVoiceCall(this, recipient);
+            CommunicationActions.startVoiceCall(this, recipient, SignalStore.serviceConfigurationValues().isLicensed());
         } else {
             CommunicationActions.startInsecureCall(this, recipient);
         }
@@ -1259,7 +1265,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     private void handleVideo(final Recipient recipient) {
         if (recipient == null) return;
 
-        CommunicationActions.startVideoCall(this, recipient);
+        CommunicationActions.startVideoCall(this, recipient, SignalStore.serviceConfigurationValues().isLicensed());
     }
 
     private void handleDisplayGroupRecipients() {
@@ -1583,6 +1589,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
         if (UnauthorizedReminder.isEligible(this)) {
             reminderView.get().showReminder(new UnauthorizedReminder(this));
+        } else if(LicenseInvalidReminder.isEligible()) {
+            reminderView.get().showReminder(new LicenseInvalidReminder(this));
         } else if (ExpiredBuildReminder.isEligible()) {
             reminderView.get().showReminder(new ExpiredBuildReminder(this));
         } else if (ServiceOutageReminder.isEligible(this)) {
@@ -2236,7 +2244,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
     @SuppressWarnings("SimplifiableIfStatement")
     private boolean isSelfConversation() {
-        if (!TextSecurePreferences.isPushRegistered(this)) return false;
+        if (!TextSecurePreferences.isPushRegistered(this) || !SignalStore.serviceConfigurationValues().isLicensed()) return false;
         if (recipient.get().isGroup()) return false;
 
         return recipient.get().isLocalNumber();

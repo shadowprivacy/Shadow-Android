@@ -41,6 +41,7 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
 
   private static final String PUSH_MESSAGING_PREF   = "pref_toggle_push_messaging";
   private static final String SUBMIT_DEBUG_LOG_PREF = "pref_submit_debug_logs";
+  private static final String LICENSE_INFO = "pref_license_info";
 
   private static final int PICK_IDENTITY_CONTACT = 1;
 
@@ -50,9 +51,13 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
 
     initializeIdentitySelection();
 
-   Preference submitDebugLog = this.findPreference(SUBMIT_DEBUG_LOG_PREF);
-   submitDebugLog.setOnPreferenceClickListener(new SubmitDebugLogListener());
-   submitDebugLog.setSummary(getVersion(getActivity()));
+    Preference submitDebugLog = this.findPreference(SUBMIT_DEBUG_LOG_PREF);
+    submitDebugLog.setOnPreferenceClickListener(new SubmitDebugLogListener());
+    submitDebugLog.setSummary(getVersion(getActivity()));
+
+    Preference licenseInfo = this.findPreference(LICENSE_INFO);
+    licenseInfo.setOnPreferenceClickListener(new LicenseInfoListener());
+    licenseInfo.setSummary(R.string.LicenseInfoActivity_summary);
   }
 
   @Override
@@ -144,6 +149,15 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
     @Override
     public boolean onPreferenceClick(Preference preference) {
       final Intent intent = new Intent(getActivity(), SubmitDebugLogActivity.class);
+      startActivity(intent);
+      return true;
+    }
+  }
+
+  private class LicenseInfoListener implements Preference.OnPreferenceClickListener {
+    @Override
+    public boolean onPreferenceClick(Preference preference) {
+      final Intent intent = new Intent(getActivity(), LicenseInfoActivity.class);
       startActivity(intent);
       return true;
     }

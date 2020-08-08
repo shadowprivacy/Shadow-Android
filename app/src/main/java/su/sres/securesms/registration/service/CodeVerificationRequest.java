@@ -10,6 +10,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.events.ServerCertErrorEvent;
 import su.sres.securesms.jobs.CertificateRefreshJob;
 import su.sres.securesms.jobs.DirectorySyncJob;
+import su.sres.securesms.jobs.LicenseManagementJob;
 import su.sres.securesms.jobs.StickerPackDownloadJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.push.SignalServiceTrustStore;
@@ -352,6 +353,7 @@ public final class CodeVerificationRequest {
             TextSecurePreferences.setUnauthorizedReceived(context, false);
 
             CertificateRefreshJob.scheduleIfNecessary();
+            LicenseManagementJob.scheduleIfNecessary();
 
             loadStickers(context);
     }

@@ -18,7 +18,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.6.3'
+        classpath 'com.android.tools.build:gradle:4.0.1'
         classpath 'androidx.navigation:navigation-safe-args-gradle-plugin:2.1.0'
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.10'
     }
@@ -96,8 +96,8 @@ def abiPostFix = ['universal'   : 0,
 
 android {
     flavorDimensions "none"
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
+    compileSdkVersion 29
+    buildToolsVersion '29.0.2'
     useLibrary 'org.apache.http.legacy'
 
     dexOptions {
@@ -123,6 +123,7 @@ android {
         buildConfigField "String", "ZKGROUP_SERVER_PUBLIC_PARAMS", "\"\""
         buildConfigField "String[]", "LANGUAGES", "new String[]{\"" + autoResConfig().collect { s -> s.replace('-r', '_') }.join('", "') + '"}'
         buildConfigField "int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode"
+        buildConfigField "String", "LICENSE_URL", "\"https://shadowupdate.sres.su:48700/license/android\""
 
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
@@ -145,6 +146,7 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+        coreLibraryDesugaringEnabled true
     }
 
     packagingOptions {
@@ -252,6 +254,8 @@ android {
 
 dependencies {
     lintChecks project(':lintchecks')
+
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.0.10'
 
     implementation('androidx.appcompat:appcompat:1.1.0-beta01') {
         force = true

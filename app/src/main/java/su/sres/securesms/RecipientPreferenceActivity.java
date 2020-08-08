@@ -39,6 +39,7 @@ import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -699,12 +700,12 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
 
       @Override
       public void onSecureCallClicked() {
-        CommunicationActions.startVoiceCall(getActivity(), recipient.get());
+        CommunicationActions.startVoiceCall(getActivity(), recipient.get(), SignalStore.serviceConfigurationValues().isLicensed());
       }
 
       @Override
       public void onSecureVideoClicked() {
-        CommunicationActions.startVideoCall(getActivity(), recipient.get());
+        CommunicationActions.startVideoCall(getActivity(), recipient.get(), SignalStore.serviceConfigurationValues().isLicensed());
       }
 
       @Override

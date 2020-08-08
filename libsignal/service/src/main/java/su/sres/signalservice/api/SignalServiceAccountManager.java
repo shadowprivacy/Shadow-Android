@@ -334,6 +334,11 @@ public class SignalServiceAccountManager {
         return this.pushServiceSocket.getDirectoryResponse(directoryVersion);
     }
 
+    public byte [] getLicense(String filename) throws IOException {
+
+        return this.pushServiceSocket.getLicense(filename);
+    }
+
     public Optional<SignalStorageManifest> getStorageManifest(StorageKey storageKey) throws IOException {
         try {
             String          authToken       = this.pushServiceSocket.getStorageAuth();

@@ -31,6 +31,7 @@ import androidx.core.content.ContextCompat;
 import android.text.TextUtils;
 
 import su.sres.securesms.conversation.ConversationActivity;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -144,7 +145,7 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
   }
 
   private boolean isSignalGroup() {
-    return TextSecurePreferences.isPushRegistered(this) && !getAdapter().hasNonPushMembers();
+    return TextSecurePreferences.isPushRegistered(this) && !getAdapter().hasNonPushMembers() && SignalStore.serviceConfigurationValues().isLicensed();
   }
 
   private void disableSignalGroupViews(int reasonResId) {
@@ -163,9 +164,9 @@ public class GroupCreateActivity extends PassphraseRequiredActionBarActivity
 
   @SuppressWarnings("ConstantConditions")
   private void updateViewState() {
-    if (!TextSecurePreferences.isPushRegistered(this)) {
+    if (!TextSecurePreferences.isPushRegistered(this) || !SignalStore.serviceConfigurationValues().isLicensed()) {
       disableSignalGroupViews(R.string.GroupCreateActivity_youre_not_registered_for_signal);
-      getSupportActionBar().setTitle(R.string.GroupCreateActivity_actionbar_mms_title);
+//      getSupportActionBar().setTitle(R.string.GroupCreateActivity_actionbar_mms_title);
     } else if (getAdapter().hasNonPushMembers()) {
       disableSignalGroupViews(R.string.GroupCreateActivity_contacts_dont_support_push);
       getSupportActionBar().setTitle(R.string.GroupCreateActivity_actionbar_mms_title);
