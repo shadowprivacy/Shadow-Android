@@ -1440,7 +1440,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     }
 
     private void initializeEnabledCheck() {
-        boolean enabled = !(isPushGroupConversation() && !isActiveGroup());
+        boolean enabled = !(isPushGroupConversation() && !isActiveGroup()) && SignalStore.serviceConfigurationValues().isLicensed();
         inputPanel.setEnabled(enabled);
         sendButton.setEnabled(enabled);
         attachButton.setEnabled(enabled);

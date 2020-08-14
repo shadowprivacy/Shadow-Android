@@ -202,10 +202,6 @@ public class MessageSender {
     List<Long>                 messageIds             = new ArrayList<>(messages.size());
     List<String>               messageDependsOnIds    = new ArrayList<>(preUploadJobIds);
 
-    boolean isEligible = TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed();
-
-    if(!isEligible) return;
-
     mmsDatabase.beginTransaction();
     try {
       OutgoingSecureMediaMessage primaryMessage   = messages.get(0);
@@ -368,9 +364,6 @@ public class MessageSender {
 
   private static void sendMediaMessage(Context context, Recipient recipient, boolean forceSms, long messageId, @NonNull Collection<String> uploadJobIds)
   {
-      boolean isEligible = TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed();
-
-      if (!isEligible) return;
 
     if (isLocalSelfSend(context, recipient, forceSms)) {
       sendLocalMediaSelf(context, messageId);
@@ -434,7 +427,7 @@ public class MessageSender {
   }
 
   private static boolean isPushTextSend(Context context, Recipient recipient, boolean keyExchange) {
-    if (!TextSecurePreferences.isPushRegistered(context) || !SignalStore.serviceConfigurationValues().isLicensed()) {
+    if (!TextSecurePreferences.isPushRegistered(context)) {
       return false;
     }
 
@@ -446,7 +439,7 @@ public class MessageSender {
   }
 
   private static boolean isPushMediaSend(Context context, Recipient recipient) {
-    if (!TextSecurePreferences.isPushRegistered(context) || !SignalStore.serviceConfigurationValues().isLicensed()) {
+    if (!TextSecurePreferences.isPushRegistered(context)) {
       return false;
     }
 
@@ -484,7 +477,6 @@ public class MessageSender {
             recipient.isLocalNumber()                       &&
             !forceSms                                       &&
             TextSecurePreferences.isPushRegistered(context) &&
-            SignalStore.serviceConfigurationValues().isLicensed() &&
             !TextSecurePreferences.isMultiDevice(context);
   }
 

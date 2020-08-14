@@ -50,7 +50,7 @@ public class SendButton extends AppCompatImageButton
     TransportOptions transportOptions = new TransportOptions(getContext(), media);
     transportOptions.addOnTransportChangedListener(this);
 
-    setOnLongClickListener(this);
+//    setOnLongClickListener(this);
 
     return transportOptions;
   }
