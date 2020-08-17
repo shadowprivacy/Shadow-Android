@@ -12,8 +12,9 @@ public final class ServiceConfigurationValues {
     private static final String STORAGE_URL = "service_configuration.storage_url";
     private static final String STATUS_URL = "service_configuration.status_url";
     private static final String UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY = "service_configuration.unidentified_access_ca_public_key";
+    private static final String ZK_PUBLIC_KEY                     = "service_configuration.zk_public_key";
     private static final String CURRENT_CERT_VERSION = "service_configuration.current_cert_version";
-    private static final String CURRENT_DIR_VERSION = "service_configuration.current_dir_version";
+    private static final String CURRENT_DIR_VERSION  = "service_configuration.current_dir_version";
     private static final String SUPPORT_EMAIL        = "service_configuration.support_email";
     private static final String IS_LICENSED          = "service_configuration.is_licensed";
     private static final String LICENSE              = "service_configuration.license";
@@ -59,6 +60,12 @@ public final class ServiceConfigurationValues {
     public synchronized void setUnidentifiedAccessCaPublicKey(byte[] unidentifiedAccessCaPublicKey) {
         store.beginWrite()
                 .putBlob(UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY, unidentifiedAccessCaPublicKey)
+                .commit();
+    }
+
+    public synchronized void setZkPublicKey(byte[] zkPublicKey) {
+        store.beginWrite()
+                .putBlob(ZK_PUBLIC_KEY, zkPublicKey)
                 .commit();
     }
 
@@ -128,6 +135,11 @@ public final class ServiceConfigurationValues {
         return store.getBlob(UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY, null);
     }
 
+    public @Nullable
+    byte[] getZkPublicKey() {
+        return store.getBlob(ZK_PUBLIC_KEY, null);
+    }
+
     public int getCurrentCertVer() {
         return store.getInteger(CURRENT_CERT_VERSION, 1);
     }
@@ -147,5 +159,4 @@ public final class ServiceConfigurationValues {
     public @Nullable byte [] retrieveLicense() {
         return store.getBlob(LICENSE, null);
     }
-
 }

@@ -203,6 +203,7 @@ public final class CodeVerificationRequest {
         String storageUrl                    = configRequested.getStorageUri();
         String cloudUrl                      = configRequested.getCloudUri();
         byte[] unidentifiedAccessCaPublicKey = configRequested.getUnidentifiedDeliveryCaPublicKey();
+        byte[] zkPublicKey                   = configRequested.getZkPublicKey();
         String supportEmail                  = configRequested.getSupportEmail();
 
         SystemCertificates systemCerts = accountManager.getSystemCerts();
@@ -211,7 +212,6 @@ public final class CodeVerificationRequest {
         byte[] cloudCertBBytes = systemCerts.getCloudCertB();
         byte[] storageCertABytes = systemCerts.getStorageCertA();
         byte[] storageCertBBytes = systemCerts.getStorageCertB();
-
 
         // if no cloud certificate at all is received from the server, registration will fail; same thing for storage, but as long as storage is not in place this is relaxed
         if (
@@ -228,6 +228,7 @@ public final class CodeVerificationRequest {
             SignalStore.serviceConfigurationValues().setStorageUrl(storageUrl);
             SignalStore.serviceConfigurationValues().setStatusUrl(statusUrl);
             SignalStore.serviceConfigurationValues().setUnidentifiedAccessCaPublicKey(unidentifiedAccessCaPublicKey);
+            SignalStore.serviceConfigurationValues().setZkPublicKey(zkPublicKey);
             SignalStore.serviceConfigurationValues().setSupportEmail(supportEmail);
 
             TrustStore trustStore = new SignalServiceTrustStore(context);
