@@ -23,6 +23,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.jobmanager.JobLogger;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
@@ -170,7 +171,8 @@ public class PushGroupSendJob extends PushSendJob  {
       else if (!existingNetworkFailures.isEmpty()) target = Stream.of(existingNetworkFailures).map(nf -> nf.getRecipientId(context)).toList();
       else                                         target = getGroupMessageRecipients(groupRecipient.requireGroupId(), messageId);
 
-      List<SendMessageResult>   results                  = deliver(message, groupRecipient, target);
+      List<SendMessageResult>   results = deliver(message, groupRecipient, target);
+      Log.i(TAG, JobLogger.format(this, "Finished send."));
       List<NetworkFailure>      networkFailures          = Stream.of(results).filter(SendMessageResult::isNetworkFailure).map(result -> new NetworkFailure(Recipient.externalPush(context, result.getAddress()).getId())).toList();
       List<IdentityKeyMismatch> identityMismatches       = Stream.of(results).filter(result -> result.getIdentityFailure() != null).map(result -> new IdentityKeyMismatch(Recipient.externalPush(context, result.getAddress()).getId(), result.getIdentityFailure().getIdentityKey())).toList();
       Set<RecipientId>          successIds               = Stream.of(results).filter(result -> result.getSuccess() != null).map(SendMessageResult::getAddress).map(a -> Recipient.externalPush(context, a).getId()).collect(Collectors.toSet());
@@ -304,6 +306,7 @@ public class PushGroupSendJob extends PushSendJob  {
                 .asGroupMessage(group)
                 .build();
 
+        Log.i(TAG, JobLogger.format(this, "Beginning update send."));
         return messageSender.sendMessage(addresses, unidentifiedAccess, isRecipientUpdate, groupDataMessage);
       }
     } else {
@@ -325,6 +328,7 @@ public class PushGroupSendJob extends PushSendJob  {
               .withPreviews(previews)
               .build();
 
+      Log.i(TAG, JobLogger.format(this, "Beginning message send."));
       return messageSender.sendMessage(addresses, unidentifiedAccess, isRecipientUpdate, groupMessage);
     }
   }

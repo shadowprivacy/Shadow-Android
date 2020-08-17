@@ -305,6 +305,7 @@
             android:theme="@style/TextSecure.LightNoActionBar" />
 
         <activity android:name=".groups.ui.managegroup.ManageGroupActivity"
+            android:windowSoftInputMode="stateAlwaysHidden"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
         <activity
@@ -420,6 +421,11 @@
             android:launchMode="singleTask"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
+        <activity android:name=".AvatarPreviewActivity"
+            android:label="@string/AndroidManifest__media_preview"
+            android:windowSoftInputMode="stateHidden"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+
         <activity
             android:name=".mediaoverview.MediaOverviewActivity"
             android:theme="@style/TextSecure.LightNoActionBar"
@@ -498,7 +504,7 @@
 
         <activity android:name=".profiles.edit.EditProfileActivity"
             android:theme="@style/TextSecure.LightRegistrationTheme"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="stateVisible|adjustResize" />
 
         <activity
             android:name=".ClearProfileAvatarActivity"
@@ -582,7 +588,7 @@
             android:name="su.sres.securesms.service.KeyCachingService" />
         <service
             android:enabled="true"
-            android:name="su.sres.securesms.service.IncomingMessageObserver$ForegroundService" />
+            android:name="su.sres.securesms.messages.IncomingMessageObserver$ForegroundService" />
 
         <service
             android:name=".service.QuickResponseService"
@@ -635,7 +641,9 @@
 
         <service android:name=".service.GenericForegroundService" />
 
-        <service android:name=".gcm.FcmService">
+        <service android:name=".gcm.FcmFetchService" />
+
+        <service android:name=".gcm.FcmReceiveService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>

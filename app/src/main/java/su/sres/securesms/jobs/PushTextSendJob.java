@@ -14,7 +14,6 @@ import su.sres.securesms.database.model.SmsMessageRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.service.ExpiringMessageManager;
@@ -118,7 +117,7 @@ public class PushTextSendJob extends PushSendJob  {
     } catch (InsecureFallbackApprovalException e) {
       warn(TAG, "Failure", e);
       database.markAsPendingInsecureSmsFallback(record.getId());
-      MessageNotifier.notifyMessageDeliveryFailed(context, record.getRecipient(), record.getThreadId());
+      ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, record.getRecipient(), record.getThreadId());
       // ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
       ApplicationDependencies.getJobManager().add(new DirectorySyncJob(false));
     } catch (UntrustedIdentityException e) {
@@ -144,7 +143,7 @@ public class PushTextSendJob extends PushSendJob  {
     Recipient recipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
 
     if (threadId != -1 && recipient != null) {
-      MessageNotifier.notifyMessageDeliveryFailed(context, recipient, threadId);
+      ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, recipient, threadId);
     }
   }
 

@@ -6,6 +6,7 @@ import androidx.annotation.WorkerThread;
 import android.text.TextUtils;
 
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobLogger;
@@ -41,7 +42,6 @@ import su.sres.securesms.mms.MmsException;
 import su.sres.securesms.mms.MmsSendResult;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.PartAuthority;
-import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.transport.InsecureFallbackApprovalException;
 import su.sres.securesms.transport.UndeliverableMessageException;
@@ -333,7 +333,7 @@ public final class MmsSendJob extends SendJob {
     Recipient recipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
 
     if (recipient != null) {
-      MessageNotifier.notifyMessageDeliveryFailed(context, recipient, threadId);
+      ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, recipient, threadId);
     }
   }
 

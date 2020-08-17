@@ -11,6 +11,7 @@ import com.google.protobuf.ByteString;
 import su.sres.securesms.database.model.databaseprotos.DecryptedGroupV2Context;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.push.SignalServiceProtos;
+import su.sres.storageservice.protos.groups.GroupChange;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 import su.sres.storageservice.protos.groups.local.DecryptedMember;
@@ -29,19 +30,19 @@ public final class GroupProtoUtil {
     private GroupProtoUtil() {
     }
 
-    public static int findVersionWeWereAdded(@NonNull DecryptedGroup group, @NonNull UUID uuid)
+    public static int findRevisionWeWereAdded(@NonNull DecryptedGroup group, @NonNull UUID uuid)
             throws GroupNotAMemberException
     {
         ByteString bytes = UuidUtil.toByteString(uuid);
         for (DecryptedMember decryptedMember : group.getMembersList()) {
             if (decryptedMember.getUuid().equals(bytes)) {
-                return decryptedMember.getJoinedAtVersion();
+                return decryptedMember.getJoinedAtRevision();
             }
         }
         for (DecryptedPendingMember decryptedMember : group.getPendingMembersList()) {
             if (decryptedMember.getUuid().equals(bytes)) {
                 // Assume latest, we don't have any information about when pending members were invited
-                return group.getVersion();
+                return group.getRevision();
             }
         }
         throw new GroupNotAMemberException();
@@ -49,16 +50,20 @@ public final class GroupProtoUtil {
 
     public static DecryptedGroupV2Context createDecryptedGroupV2Context(@NonNull GroupMasterKey masterKey,
                                                                         @NonNull DecryptedGroup decryptedGroup,
-                                                                        @Nullable DecryptedGroupChange plainGroupChange)
+                                                                        @Nullable DecryptedGroupChange plainGroupChange,
+                                                                        @Nullable GroupChange signedServerChange)
     {
-        int version = plainGroupChange != null ? plainGroupChange.getVersion() : decryptedGroup.getVersion();
-        SignalServiceProtos.GroupContextV2 groupContext = SignalServiceProtos.GroupContextV2.newBuilder()
+        int revision = plainGroupChange != null ? plainGroupChange.getRevision() : decryptedGroup.getRevision();
+        SignalServiceProtos.GroupContextV2.Builder contextBuilder = SignalServiceProtos.GroupContextV2.newBuilder()
                 .setMasterKey(ByteString.copyFrom(masterKey.serialize()))
-                .setRevision(version)
-                .build();
+                .setRevision(revision);
+
+        if (signedServerChange != null) {
+            contextBuilder.setGroupChange(signedServerChange.toByteString());
+        }
 
         DecryptedGroupV2Context.Builder builder = DecryptedGroupV2Context.newBuilder()
-                .setContext(groupContext)
+                .setContext(contextBuilder.build())
                 .setGroupState(decryptedGroup);
 
         if (plainGroupChange != null) {

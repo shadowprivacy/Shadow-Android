@@ -32,6 +32,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import su.sres.securesms.ApplicationContext;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.MainActivity;
@@ -41,7 +42,6 @@ import su.sres.securesms.crypto.InvalidPassphraseException;
 import su.sres.securesms.crypto.MasterSecret;
 import su.sres.securesms.crypto.MasterSecretUtil;
 import su.sres.securesms.migrations.ApplicationMigrations;
-import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.ServiceUtil;
@@ -115,7 +115,7 @@ public class KeyCachingService extends Service {
         @Override
         protected Void doInBackground(Void... params) {
           if (!ApplicationMigrations.isUpdate(KeyCachingService.this)) {
-            MessageNotifier.updateNotification(KeyCachingService.this);
+            ApplicationDependencies.getMessageNotifier().updateNotification(KeyCachingService.this);
           }
           return null;
         }
@@ -189,7 +189,7 @@ public class KeyCachingService extends Service {
     new AsyncTask<Void, Void, Void>() {
       @Override
       protected Void doInBackground(Void... params) {
-        MessageNotifier.updateNotification(KeyCachingService.this);
+        ApplicationDependencies.getMessageNotifier().updateNotification(KeyCachingService.this);
         return null;
       }
     }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);

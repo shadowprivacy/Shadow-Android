@@ -26,6 +26,7 @@ import androidx.core.app.NotificationManagerCompat;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 
 import java.util.LinkedList;
@@ -66,7 +67,7 @@ public class AndroidAutoHeardReceiver extends BroadcastReceiver {
             messageIdsCollection.addAll(messageIds);
           }
 
-          MessageNotifier.updateNotification(context);
+          ApplicationDependencies.getMessageNotifier().updateNotification(context);
           MarkReadReceiver.process(context, messageIdsCollection);
 
           return null;

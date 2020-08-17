@@ -19,7 +19,6 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.PartProgressEvent;
 import su.sres.securesms.mms.MmsException;
-import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.util.AttachmentUtil;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.Hex;
@@ -110,7 +109,7 @@ public class AttachmentDownloadJob extends BaseJob {
   @Override
   public void onRun() throws IOException {
     doWork();
-    MessageNotifier.updateNotification(context, 0);
+    ApplicationDependencies.getMessageNotifier().updateNotification(context, 0);
   }
 
   public void doWork() throws IOException {

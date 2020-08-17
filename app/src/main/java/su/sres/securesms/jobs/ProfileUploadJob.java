@@ -57,7 +57,7 @@ public final class ProfileUploadJob extends BaseJob {
         accountManager.updatePushServiceSocket(new SignalServiceNetworkAccess(context).getConfiguration(context));
 
         try (StreamDetails avatar = AvatarHelper.getSelfProfileAvatarStream(context)) {
-            if (FeatureFlags.VERSIONED_PROFILES) {
+            if (FeatureFlags.versionedProfiles()) {
                 avatarPath = accountManager.setVersionedProfile(Recipient.self().getUuid().get(), profileKey, profileName.serialize(), avatar).orNull();
             } else {
                 accountManager.setProfileName(profileKey, profileName.serialize());

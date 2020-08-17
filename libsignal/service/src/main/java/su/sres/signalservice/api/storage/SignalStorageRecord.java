@@ -88,7 +88,7 @@ public class SignalStorageRecord implements SignalRecord {
     }
 
     public boolean isUnknown() {
-        return !contact.isPresent() && !groupV1.isPresent() && !account.isPresent();
+        return !contact.isPresent() && !groupV1.isPresent() && !groupV2.isPresent() && !account.isPresent();
     }
 
     @Override
@@ -98,11 +98,12 @@ public class SignalStorageRecord implements SignalRecord {
         SignalStorageRecord that = (SignalStorageRecord) o;
         return Objects.equals(id, that.id) &&
                 Objects.equals(contact, that.contact) &&
-                Objects.equals(groupV1, that.groupV1);
+                Objects.equals(groupV1, that.groupV1) &&
+                Objects.equals(groupV2, that.groupV2);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, contact, groupV1);
+        return Objects.hash(id, contact, groupV1, groupV2);
     }
 }

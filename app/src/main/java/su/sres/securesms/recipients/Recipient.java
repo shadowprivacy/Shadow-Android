@@ -201,7 +201,11 @@ public class Recipient {
 
         return resolved(id);
       } else {
-        throw new UuidRecipientError();
+        if (!FeatureFlags.uuids() && FeatureFlags.groupsV2()) {
+          throw new RuntimeException(new UuidRecipientError());
+        } else {
+          throw new UuidRecipientError();
+        }
       }
     } else if (e164 != null) {
 
@@ -282,7 +286,11 @@ public class Recipient {
         if (possibleId.isPresent()) {
           id = possibleId.get();
         } else {
-          throw new UuidRecipientError();
+          if (!FeatureFlags.uuids() && FeatureFlags.groupsV2()) {
+            throw new RuntimeException(new UuidRecipientError());
+          } else {
+            throw new UuidRecipientError();
+          }
         }
       }
     } else if (GroupId.isEncodedGroup(identifier)) {

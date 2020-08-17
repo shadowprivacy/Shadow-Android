@@ -7,11 +7,11 @@ import androidx.annotation.NonNull;
 
 import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.BuildConfig;
-import su.sres.securesms.IncomingMessageProcessor;
+import su.sres.securesms.messages.IncomingMessageProcessor;
 import su.sres.securesms.crypto.storage.SignalProtocolStoreImpl;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.events.ReminderUpdateEvent;
-import su.sres.securesms.gcm.MessageRetriever;
+import su.sres.securesms.messages.BackgroundMessageRetriever;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobmanager.JobMigrator;
 import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
@@ -19,10 +19,14 @@ import su.sres.securesms.jobs.FastJobStorage;
 import su.sres.securesms.jobs.JobManagerFactories;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.megaphone.MegaphoneRepository;
+import su.sres.securesms.messages.InitialMessageRetriever;
+import su.sres.securesms.notifications.DefaultMessageNotifier;
+import su.sres.securesms.notifications.MessageNotifier;
+import su.sres.securesms.notifications.OptimizedMessageNotifier;
 import su.sres.securesms.push.SecurityEventListener;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
-import su.sres.securesms.service.IncomingMessageObserver;
+import su.sres.securesms.messages.IncomingMessageObserver;
 import su.sres.securesms.util.AlarmSleepTimer;
 import su.sres.securesms.util.EarlyMessageCache;
 import su.sres.securesms.util.FeatureFlags;
@@ -115,8 +119,8 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     }
 
     @Override
-    public @NonNull MessageRetriever provideMessageRetriever() {
-        return new MessageRetriever();
+    public @NonNull BackgroundMessageRetriever provideBackgroundMessageRetriever() {
+        return new BackgroundMessageRetriever();
     }
 
     @Override
@@ -154,6 +158,17 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     @Override
     public @NonNull EarlyMessageCache provideEarlyMessageCache() {
         return new EarlyMessageCache();
+    }
+
+    @Override
+    public @NonNull InitialMessageRetriever provideInitialMessageRetriever() {
+        return new InitialMessageRetriever();
+    }
+
+    @Override
+    public @NonNull
+    MessageNotifier provideMessageNotifier() {
+        return new OptimizedMessageNotifier(new DefaultMessageNotifier());
     }
 
     private static class DynamicCredentialsProvider implements CredentialsProvider {

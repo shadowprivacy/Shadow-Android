@@ -4,8 +4,8 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.gcm.MessageRetriever;
-import su.sres.securesms.gcm.RestStrategy;
+import su.sres.securesms.messages.BackgroundMessageRetriever;
+import su.sres.securesms.messages.RestStrategy;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -13,8 +13,6 @@ import su.sres.securesms.logging.Log;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
-
-
 
 public class PushNotificationReceiveJob extends BaseJob {
 
@@ -48,8 +46,8 @@ public class PushNotificationReceiveJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException {
-    MessageRetriever retriever = ApplicationDependencies.getMessageRetriever();
-    boolean          result    = retriever.retrieveMessages(context, new RestStrategy());
+    BackgroundMessageRetriever retriever = ApplicationDependencies.getBackgroundMessageRetriever();
+    boolean                    result    = retriever.retrieveMessages(context, new RestStrategy());
 
     if (result) {
       Log.i(TAG, "Successfully pulled messages.");

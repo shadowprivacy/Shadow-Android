@@ -3,6 +3,8 @@ package su.sres.securesms.jobs;
 import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -27,7 +29,6 @@ import su.sres.securesms.mms.IncomingMediaMessage;
 import su.sres.securesms.mms.MmsException;
 import su.sres.securesms.mms.MmsRadioException;
 import su.sres.securesms.mms.PartParser;
-import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -94,7 +95,7 @@ public class MmsDownloadJob extends BaseJob {
   public void onAdded() {
     if (automatic && KeyCachingService.isLocked(context)) {
       DatabaseFactory.getMmsDatabase(context).markIncomingNotificationReceived(threadId);
-      MessageNotifier.updateNotification(context);
+      ApplicationDependencies.getMessageNotifier().updateNotification(context);
     }
   }
 
@@ -168,7 +169,7 @@ public class MmsDownloadJob extends BaseJob {
 
     if (automatic) {
       database.markIncomingNotificationReceived(threadId);
-      MessageNotifier.updateNotification(context, threadId);
+      ApplicationDependencies.getMessageNotifier().updateNotification(context, threadId);
     }
   }
 
@@ -228,7 +229,7 @@ public class MmsDownloadJob extends BaseJob {
 
           attachments.add(new UriAttachment(uri, Util.toIsoString(part.getContentType()),
                                             AttachmentDatabase.TRANSFER_PROGRESS_DONE,
-                  part.getData().length, name, false, false, null, null, null, null));
+                  part.getData().length, name, false, false, null, null, null, null, null));
         }
       }
     }
@@ -243,7 +244,7 @@ public class MmsDownloadJob extends BaseJob {
 
     if (insertResult.isPresent()) {
       database.delete(messageId);
-      MessageNotifier.updateNotification(context, insertResult.get().getThreadId());
+      ApplicationDependencies.getMessageNotifier().updateNotification(context, insertResult.get().getThreadId());
     }
   }
 
@@ -255,7 +256,7 @@ public class MmsDownloadJob extends BaseJob {
 
     if (automatic) {
       db.markIncomingNotificationReceived(threadId);
-      MessageNotifier.updateNotification(context, threadId);
+      ApplicationDependencies.getMessageNotifier().updateNotification(context, threadId);
     }
   }
 

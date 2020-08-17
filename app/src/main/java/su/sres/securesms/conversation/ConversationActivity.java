@@ -59,6 +59,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -99,7 +100,6 @@ import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.groups.ui.GroupErrors;
 import su.sres.securesms.groups.ui.LeaveGroupDialog;
 import su.sres.securesms.groups.ui.managegroup.ManageGroupActivity;
-import su.sres.securesms.groups.ui.pendingmemberinvites.PendingMemberInvitesActivity;
 import su.sres.securesms.jobs.RequestGroupV2InfoJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.mediaoverview.MediaOverviewActivity;
@@ -200,7 +200,6 @@ import su.sres.securesms.mms.SlideDeck;
 import su.sres.securesms.mms.StickerSlide;
 import su.sres.securesms.mms.VideoSlide;
 import su.sres.securesms.notifications.MarkReadReceiver;
-import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.providers.BlobProvider;
@@ -504,7 +503,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
             ApplicationDependencies.getJobManager().add(new RequestGroupV2InfoJob(recipientSnapshot.getGroupId().get().requireV2()));
         }
 
-        MessageNotifier.setVisibleThread(threadId);
+        ApplicationDependencies.getMessageNotifier().setVisibleThread(threadId);
         markThreadAsRead();
 
     }
@@ -512,7 +511,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     @Override
     protected void onPause() {
         super.onPause();
-        MessageNotifier.setVisibleThread(-1L);
+        ApplicationDependencies.getMessageNotifier().clearVisibleThread();
         if (isFinishing()) overridePendingTransition(R.anim.fade_scale_in, R.anim.slide_to_end);
         inputPanel.onPause();
 
@@ -770,36 +769,31 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
         if (recipient != null && recipient.get().isLocalNumber()) {
             if (isSecureText) {
-                menu.findItem(R.id.menu_call_secure).setVisible(false);
-                menu.findItem(R.id.menu_video_secure).setVisible(false);
+                hideMenuItem(menu, R.id.menu_call_secure);
+                hideMenuItem(menu, R.id.menu_video_secure);
             } else {
-                menu.findItem(R.id.menu_call_insecure).setVisible(false);
+                hideMenuItem(menu, R.id.menu_call_insecure);
             }
 
-            MenuItem muteItem = menu.findItem(R.id.menu_mute_notifications);
-
-            if (muteItem != null) {
-                muteItem.setVisible(false);
-            }
+            hideMenuItem(menu, R.id.menu_mute_notifications);
         }
 
         if (recipient != null && recipient.get().isBlocked()) {
             if (isSecureText) {
-                menu.findItem(R.id.menu_call_secure).setVisible(false);
-                menu.findItem(R.id.menu_video_secure).setVisible(false);
-
-                if (menu.findItem(R.id.menu_expiring_messages) != null) {
-                    menu.findItem(R.id.menu_expiring_messages).setVisible(false);
-                }
-
-                if (menu.findItem(R.id.menu_expiring_messages_off) != null) {
-                    menu.findItem(R.id.menu_expiring_messages_off).setVisible(false);
-                }
+                hideMenuItem(menu, R.id.menu_call_secure);
+                hideMenuItem(menu, R.id.menu_video_secure);
+                hideMenuItem(menu, R.id.menu_expiring_messages);
+                hideMenuItem(menu, R.id.menu_expiring_messages_off);
             } else {
-                menu.findItem(R.id.menu_call_insecure).setVisible(false);
+                hideMenuItem(menu, R.id.menu_call_insecure);
             }
 
-            menu.findItem(R.id.menu_mute_notifications).setVisible(false);
+            hideMenuItem(menu, R.id.menu_mute_notifications);
+        }
+
+        if (isActiveV2Group()) {
+            hideMenuItem(menu, R.id.menu_mute_notifications);
+            hideMenuItem(menu, R.id.menu_conversation_settings);
         }
 
         searchViewItem = menu.findItem(R.id.menu_search);
@@ -895,8 +889,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                 handleDistributionConversationEnabled(item);
                 return true;
             case R.id.menu_edit_group:                handleEditPushGroupV1(this);               return true;
-            case R.id.menu_manage_group:              handleManagePushGroup(this);               return true;
-            case R.id.menu_pending_members:           handlePendingMembers();                            return true;
+            case R.id.menu_group_settings:            handleManagePushGroup(this);               return true;
             case R.id.menu_leave:
                 handleLeavePushGroup();
                 return true;
@@ -920,6 +913,28 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         }
 
         return false;
+    }
+
+    @Override
+    public boolean onMenuOpened(int featureId, Menu menu) {
+        if (menu == null) {
+            return super.onMenuOpened(featureId, null);
+        }
+
+        if (!SignalStore.uiHints().hasSeenGroupSettingsMenuToast()) {
+            MenuItem settingsMenuItem = menu.findItem(R.id.menu_group_settings);
+
+            if (settingsMenuItem != null && settingsMenuItem.isVisible()) {
+                Toast toast = Toast.makeText(this, R.string.ConversationActivity__more_options_now_in_group_settings, Toast.LENGTH_SHORT);
+
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                toast.show();
+
+                SignalStore.uiHints().markHasSeenGroupSettingsMenuToast();
+            }
+        }
+
+        return super.onMenuOpened(featureId, menu);
     }
 
     @Override
@@ -1043,6 +1058,13 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     }
 
     private void handleConversationSettings() {
+        if (FeatureFlags.newGroupUI() && isGroupConversation()) {
+            startActivitySceneTransition(ManageGroupActivity.newIntent(this, getRecipient().requireGroupId()),
+                    titleView.findViewById(R.id.contact_photo_image),
+                    "avatar");
+            return;
+        }
+
         if (isInMessageRequest()) return;
 
         Intent intent = RecipientPreferenceActivity.getLaunchIntent(this, recipient.getId());
@@ -1214,10 +1236,6 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         if(TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed()) {
             startActivityForResult(ManageGroupActivity.newIntent(ConversationActivity.this, recipient.get().requireGroupId()), GROUP_EDIT);
         }
-    }
-
-    private void handlePendingMembers() {
-        startActivity(PendingMemberInvitesActivity.newIntent(ConversationActivity.this, recipient.get().requireGroupId().requireV2()));
     }
 
     private void handleDistributionBroadcastEnabled(MenuItem item) {
@@ -2296,7 +2314,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                 Context context = ConversationActivity.this;
                 List<MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context).setRead(params[0], false);
 
-                MessageNotifier.updateNotification(context);
+                ApplicationDependencies.getMessageNotifier().updateNotification(context);
                 MarkReadReceiver.process(context, messageIds);
 
                 return null;
@@ -2326,7 +2344,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
         if (refreshFragment) {
             fragment.reload(recipient.get(), threadId);
-            MessageNotifier.setVisibleThread(threadId);
+            ApplicationDependencies.getMessageNotifier().setVisibleThread(threadId);
         }
 
         fragment.scrollToBottom();
@@ -3112,6 +3130,12 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         }
 
         invalidateOptionsMenu();
+    }
+
+    private static void hideMenuItem(@NonNull Menu menu, @IdRes int menuItem) {
+        if (menu.findItem(menuItem) != null) {
+            menu.findItem(menuItem).setVisible(false);
+        }
     }
 
     private class UnverifiedDismissedListener implements UnverifiedBannerView.DismissListener {

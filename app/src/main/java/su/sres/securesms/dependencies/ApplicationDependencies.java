@@ -2,10 +2,11 @@ package su.sres.securesms.dependencies;
 
 import android.app.Application;
 
+import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.IncomingMessageProcessor;
-import su.sres.securesms.gcm.MessageRetriever;
+import su.sres.securesms.messages.BackgroundMessageRetriever;
+import su.sres.securesms.messages.IncomingMessageProcessor;
 import su.sres.securesms.groups.GroupsV2Authorization;
 import su.sres.securesms.groups.GroupsV2AuthorizationMemoryValueCache;
 import su.sres.securesms.groups.v2.processing.GroupsV2StateProcessor;
@@ -14,9 +15,11 @@ import su.sres.securesms.keyvalue.KeyValueStore;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.megaphone.MegaphoneRepository;
+import su.sres.securesms.messages.InitialMessageRetriever;
+import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
-import su.sres.securesms.service.IncomingMessageObserver;
+import su.sres.securesms.messages.IncomingMessageObserver;
 import su.sres.securesms.util.EarlyMessageCache;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
@@ -47,7 +50,7 @@ public class ApplicationDependencies {
     private static SignalServiceMessageSender   messageSender;
     private static SignalServiceMessageReceiver messageReceiver;
     private static IncomingMessageProcessor     incomingMessageProcessor;
-    private static MessageRetriever             messageRetriever;
+    private static BackgroundMessageRetriever   backgroundMessageRetriever;
     private static LiveRecipientCache           recipientCache;
     private static JobManager                   jobManager;
     private static FrameRateTracker             frameRateTracker;
@@ -57,6 +60,8 @@ public class ApplicationDependencies {
     private static GroupsV2StateProcessor       groupsV2StateProcessor;
     private static GroupsV2Operations           groupsV2Operations;
     private static EarlyMessageCache            earlyMessageCache;
+    private static InitialMessageRetriever      initialMessageRetriever;
+    private static MessageNotifier              messageNotifier;
 
     public static synchronized void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
         if (ApplicationDependencies.application != null || ApplicationDependencies.networkIndependentProvider != null) {
@@ -67,17 +72,14 @@ public class ApplicationDependencies {
         ApplicationDependencies.networkIndependentProvider = networkIndependentProvider;
     }
 
+    @MainThread
     public static synchronized void networkDependentProviderInit(@NonNull Provider provider) {
         if (ApplicationDependencies.provider != null) {
-            // remove after testing
-            Log.w (TAG, "Network-dependent provider already initialized");
             throw new IllegalStateException("Already initialized!");
         }
 
-        // remove after testing
-        Log.w (TAG, "Initializing network-dependent provider...");
-        ApplicationDependencies.provider    = provider;
-
+        ApplicationDependencies.provider        = provider;
+        ApplicationDependencies.messageNotifier = provider.provideMessageNotifier();
     }
 
 
@@ -175,14 +177,14 @@ public class ApplicationDependencies {
         return incomingMessageProcessor;
     }
 
-    public static synchronized @NonNull MessageRetriever getMessageRetriever() {
+    public static synchronized @NonNull BackgroundMessageRetriever getBackgroundMessageRetriever() {
         assertNetworkDependentInitialization();
 
-        if (messageRetriever == null) {
-            messageRetriever = provider.provideMessageRetriever();
+        if (backgroundMessageRetriever == null) {
+            backgroundMessageRetriever = provider.provideBackgroundMessageRetriever();
         }
 
-        return messageRetriever;
+        return backgroundMessageRetriever;
     }
 
     public static synchronized @NonNull LiveRecipientCache getRecipientCache() {
@@ -245,6 +247,21 @@ public class ApplicationDependencies {
         return earlyMessageCache;
     }
 
+    public static synchronized @NonNull InitialMessageRetriever getInitialMessageRetriever() {
+        assertNetworkDependentInitialization();
+
+        if (initialMessageRetriever == null) {
+            initialMessageRetriever = provider.provideInitialMessageRetriever();
+        }
+
+        return initialMessageRetriever;
+    }
+
+    public static synchronized @NonNull MessageNotifier getMessageNotifier() {
+        assertNetworkDependentInitialization();
+        return messageNotifier;
+    }
+
     private static void assertNetworkDependentInitialization() {
         if (application == null || provider == null) {
 
@@ -274,13 +291,14 @@ public class ApplicationDependencies {
         @NonNull SignalServiceMessageReceiver provideSignalServiceMessageReceiver();
         @NonNull SignalServiceNetworkAccess provideSignalServiceNetworkAccess();
         @NonNull IncomingMessageProcessor provideIncomingMessageProcessor();
-        @NonNull MessageRetriever provideMessageRetriever();
+        @NonNull BackgroundMessageRetriever provideBackgroundMessageRetriever();
         @NonNull LiveRecipientCache provideRecipientCache();
         @NonNull JobManager provideJobManager();
         @NonNull FrameRateTracker provideFrameRateTracker();
-// moved to NetworkIndependent       @NonNull KeyValueStore provideKeyValueStore();
         @NonNull MegaphoneRepository provideMegaphoneRepository();
         @NonNull EarlyMessageCache provideEarlyMessageCache();
+        @NonNull InitialMessageRetriever provideInitialMessageRetriever();
+        @NonNull MessageNotifier provideMessageNotifier();
     }
 
     public interface NetworkIndependentProvider {

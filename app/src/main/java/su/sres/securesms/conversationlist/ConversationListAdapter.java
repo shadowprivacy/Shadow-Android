@@ -37,8 +37,10 @@ import su.sres.securesms.util.Conversions;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -59,9 +61,9 @@ class ConversationListAdapter extends CursorRecyclerViewAdapter<ConversationList
   private final @Nullable ItemClickListener clickListener;
   private final @NonNull  MessageDigest     digest;
 
-  private final Set<Long> batchSet  = Collections.synchronizedSet(new HashSet<Long>());
-  private       boolean   batchMode = false;
-  private final Set<Long> typingSet = new HashSet<>();
+  private final Map<Long, ThreadRecord> batchSet  = Collections.synchronizedMap(new HashMap<>());
+  private       boolean                 batchMode = false;
+  private final Set<Long>               typingSet = new HashSet<>();
 
   protected static class ViewHolder extends RecyclerView.ViewHolder {
     public <V extends View & BindableConversationListItem> ViewHolder(final @NonNull V itemView)
@@ -143,7 +145,7 @@ class ConversationListAdapter extends CursorRecyclerViewAdapter<ConversationList
 
   @Override
   public void onBindItemViewHolder(ViewHolder viewHolder, @NonNull Cursor cursor) {
-    viewHolder.getItem().bind(getThreadRecord(cursor), glideRequests, locale, typingSet, batchSet, batchMode);
+    viewHolder.getItem().bind(getThreadRecord(cursor), glideRequests, locale, typingSet, batchSet.keySet(), batchMode);
   }
 
   @Override
@@ -169,16 +171,20 @@ class ConversationListAdapter extends CursorRecyclerViewAdapter<ConversationList
     return threadDatabase.readerFor(cursor).getCurrent();
   }
 
-  void toggleThreadInBatchSet(long threadId) {
-    if (batchSet.contains(threadId)) {
-      batchSet.remove(threadId);
-    } else if (threadId != -1) {
-      batchSet.add(threadId);
+  void toggleThreadInBatchSet(@NonNull ThreadRecord thread) {
+    if (batchSet.containsKey(thread.getThreadId())) {
+      batchSet.remove(thread.getThreadId());
+    } else if (thread.getThreadId() != -1) {
+      batchSet.put(thread.getThreadId(), thread);
     }
   }
 
-  Set<Long> getBatchSelections() {
-    return batchSet;
+  @NonNull Set<Long> getBatchSelectionIds() {
+    return batchSet.keySet();
+  }
+
+  @NonNull Set<ThreadRecord> getBatchSelection() {
+    return new HashSet<>(batchSet.values());
   }
 
   void initializeBatchMode(boolean toggle) {
@@ -193,8 +199,10 @@ class ConversationListAdapter extends CursorRecyclerViewAdapter<ConversationList
 
   void selectAllThreads() {
     for (int i = 0; i < getItemCount(); i++) {
-      long threadId = getThreadRecord(getCursorAtPositionOrThrow(i)).getThreadId();
-      if (threadId != -1) batchSet.add(threadId);
+      ThreadRecord record = getThreadRecord(getCursorAtPositionOrThrow(i));
+      if (record.getThreadId() != -1) {
+        batchSet.put(record.getThreadId(), record);
+      }
     }
     this.notifyDataSetChanged();
   }

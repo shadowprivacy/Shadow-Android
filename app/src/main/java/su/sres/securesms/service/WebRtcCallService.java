@@ -33,7 +33,6 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.DoNotDisturbUtil;
-import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.ringrtc.CallState;
@@ -59,7 +58,6 @@ import su.sres.securesms.webrtc.locks.LockManager;
 import org.webrtc.EglBase;
 import org.webrtc.IceCandidate;
 import org.webrtc.PeerConnection;
-import org.webrtc.SurfaceViewRenderer;
 import org.whispersystems.libsignal.IdentityKey;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessageSender;
@@ -429,6 +427,7 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
     }
 
     Log.i(TAG, "handleOutgoingCall():");
+    EventBus.getDefault().removeStickyEvent(WebRtcViewModel.class);
 
     initializeVideo();
 
@@ -452,7 +451,7 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
 
   private void insertMissedCall(@NonNull RemotePeer remotePeer, boolean signal) {
     Pair<Long, Long> messageAndThreadId = DatabaseFactory.getSmsDatabase(this).insertMissedCall(remotePeer.getId());
-    MessageNotifier.updateNotification(this, messageAndThreadId.second, signal);
+    ApplicationDependencies.getMessageNotifier().updateNotification(this, messageAndThreadId.second, signal);
   }
 
   private void handleDenyCall(Intent intent) {
@@ -1040,6 +1039,12 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
     RemotePeer remotePeer = getRemotePeer(intent);
 
     Log.i(TAG, "handleEndedReceivedOfferWhileActive(): call_id: " + remotePeer.getCallId());
+
+    if (activePeer == null) {
+      Log.w(TAG, "handleEndedReceivedOfferWhileActive(): ignoring call with null activePeer");
+      return;
+    }
+
     switch (activePeer.getState()) {
       case DIALING:
       case REMOTE_RINGING: setCallInProgressNotification(TYPE_OUTGOING_RINGING,    activePeer); break;

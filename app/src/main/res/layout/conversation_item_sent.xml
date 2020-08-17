@@ -49,22 +49,22 @@
                 android:id="@+id/quote_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/message_bubble_top_padding"
                 android:layout_marginStart="6dp"
+                android:layout_marginTop="@dimen/message_bubble_top_padding"
                 android:layout_marginEnd="6dp"
                 android:visibility="gone"
                 app:message_type="outgoing"
                 app:quote_colorPrimary="?attr/conversation_item_quote_text_color"
                 app:quote_colorSecondary="?attr/conversation_item_quote_text_color"
-                tools:visibility="visible"/>
+                tools:visibility="visible" />
 
             <ViewStub
                 android:id="@+id/shared_contact_view_stub"
-                android:layout="@layout/conversation_item_sent_shared_contact"
                 android:layout_width="@dimen/media_bubble_default_dimens"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/message_bubble_top_padding"
-                android:visibility="gone"/>
+                android:layout="@layout/conversation_item_sent_shared_contact"
+                android:visibility="gone" />
 
             <ViewStub
                 android:id="@+id/image_view_stub"
@@ -86,55 +86,55 @@
 
             <ViewStub
                 android:id="@+id/audio_view_stub"
-                android:layout="@layout/conversation_item_sent_audio"
-                android:layout_width="210dp"
+                android:layout_width="@dimen/message_audio_width"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/message_bubble_top_padding"
-                android:layout_marginBottom="@dimen/message_bubble_collapsed_footer_padding"
                 android:layout_marginStart="@dimen/message_bubble_horizontal_padding"
-                android:layout_marginEnd="@dimen/message_bubble_horizontal_padding" />
+                android:layout_marginTop="@dimen/message_bubble_top_padding_audio"
+                android:layout_marginEnd="@dimen/message_bubble_horizontal_padding"
+                android:layout_marginBottom="@dimen/message_bubble_collapsed_footer_padding"
+                android:layout="@layout/conversation_item_sent_audio" />
 
             <ViewStub
                 android:id="@+id/document_view_stub"
-                android:layout="@layout/conversation_item_sent_document"
                 android:layout_width="210dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/message_bubble_top_padding"
-                android:layout_marginBottom="@dimen/message_bubble_collapsed_footer_padding"
                 android:layout_marginStart="@dimen/message_bubble_horizontal_padding"
-                android:layout_marginEnd="@dimen/message_bubble_horizontal_padding" />
+                android:layout_marginTop="@dimen/message_bubble_top_padding"
+                android:layout_marginEnd="@dimen/message_bubble_horizontal_padding"
+                android:layout_marginBottom="@dimen/message_bubble_collapsed_footer_padding"
+                android:layout="@layout/conversation_item_sent_document" />
 
             <ViewStub
                 android:id="@+id/revealable_view_stub"
-                android:layout="@layout/conversation_item_sent_revealable"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/message_bubble_top_padding"
-                android:layout_marginBottom="@dimen/message_bubble_collapsed_footer_padding"
                 android:layout_marginStart="@dimen/message_bubble_horizontal_padding"
-                android:layout_marginEnd="@dimen/message_bubble_horizontal_padding" />
+                android:layout_marginTop="@dimen/message_bubble_top_padding"
+                android:layout_marginEnd="@dimen/message_bubble_horizontal_padding"
+                android:layout_marginBottom="@dimen/message_bubble_collapsed_footer_padding"
+                android:layout="@layout/conversation_item_sent_revealable" />
 
             <su.sres.securesms.components.emoji.EmojiTextView
                 android:id="@+id/conversation_item_body"
+                style="@style/Signal.Text.Body"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/message_bubble_top_padding"
                 android:layout_marginStart="@dimen/message_bubble_horizontal_padding"
+                android:layout_marginTop="@dimen/message_bubble_top_padding"
                 android:layout_marginEnd="@dimen/message_bubble_horizontal_padding"
                 android:layout_marginBottom="@dimen/message_bubble_collapsed_footer_padding"
-                style="@style/Signal.Text.Body"
+                android:ellipsize="end"
                 android:textColor="?conversation_item_sent_text_primary_color"
                 android:textColorLink="?conversation_item_sent_text_primary_color"
-                android:ellipsize="end"
-                app:scaleEmojis="true"
                 app:emoji_maxLength="1000"
-                tools:text="Mango pickle lorem ipsum"/>
+                app:scaleEmojis="true"
+                tools:text="Mango pickle lorem ipsum" />
 
             <View
                 android:id="@+id/group_sender_holder"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:visibility="gone"/>
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/group_message_sender"
@@ -152,29 +152,29 @@
                 android:id="@+id/conversation_item_footer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="-4dp"
                 android:layout_marginStart="@dimen/message_bubble_horizontal_padding"
+                android:layout_marginTop="-4dp"
                 android:layout_marginEnd="@dimen/message_bubble_horizontal_padding"
                 android:layout_marginBottom="@dimen/message_bubble_bottom_padding"
-                android:gravity="end"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                app:footer_text_color="?attr/conversation_item_sent_text_secondary_color"
-                app:footer_icon_color="?attr/conversation_item_sent_icon_color"/>
+                android:gravity="end"
+                app:footer_icon_color="?attr/conversation_item_sent_icon_color"
+                app:footer_text_color="?attr/conversation_item_sent_text_secondary_color" />
 
             <su.sres.securesms.components.ConversationItemFooter
                 android:id="@+id/conversation_item_sticker_footer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
                 android:layout_marginStart="@dimen/message_bubble_horizontal_padding"
+                android:layout_marginTop="6dp"
                 android:layout_marginEnd="@dimen/message_bubble_horizontal_padding"
-                android:gravity="end"
                 android:clipChildren="false"
                 android:clipToPadding="false"
+                android:gravity="end"
                 android:visibility="gone"
-                app:footer_text_color="?conversation_sticker_footer_text_color"
-                app:footer_icon_color="?conversation_sticker_footer_icon_color"/>
+                app:footer_icon_color="?conversation_sticker_footer_icon_color"
+                app:footer_text_color="?conversation_sticker_footer_text_color" />
 
         </su.sres.securesms.conversation.ConversationItemBodyBubble>
 

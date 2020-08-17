@@ -14,7 +14,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
-import su.sres.securesms.service.IncomingMessageObserver;
+import su.sres.securesms.messages.IncomingMessageObserver;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessagePipe;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;

@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.telephony.SmsMessage;
 
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraint;
@@ -12,7 +13,6 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessagingDatabase.InsertResult;
 import su.sres.securesms.database.SmsDatabase;
-import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.util.Base64;
@@ -81,7 +81,7 @@ public class SmsReceiveJob extends BaseJob {
       Optional<InsertResult> insertResult = storeMessage(message.get());
 
       if (insertResult.isPresent()) {
-        MessageNotifier.updateNotification(context, insertResult.get().getThreadId());
+        ApplicationDependencies.getMessageNotifier().updateNotification(context, insertResult.get().getThreadId());
       }
     } else if (message.isPresent()) {
       Log.w(TAG, "*** Received blocked SMS, ignoring...");

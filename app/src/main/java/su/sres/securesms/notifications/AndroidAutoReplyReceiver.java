@@ -27,6 +27,7 @@ import androidx.core.app.RemoteInput;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.sms.MessageSender;
@@ -84,7 +85,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
 
           List<MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context).setRead(replyThreadId, true);
 
-          MessageNotifier.updateNotification(context);
+          ApplicationDependencies.getMessageNotifier().updateNotification(context);
           MarkReadReceiver.process(context, messageIds);
 
           return null;

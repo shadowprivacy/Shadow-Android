@@ -4,6 +4,7 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.securesms.audio.AudioHash;
 import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.AttachmentDatabase.TransformProperties;
@@ -52,6 +53,9 @@ public abstract class Attachment {
   @Nullable
   private final BlurHash blurHash;
 
+  @Nullable
+  private final AudioHash audioHash;
+
   @NonNull
   private final TransformProperties transformProperties;
 
@@ -59,7 +63,7 @@ public abstract class Attachment {
                     int cdnNumber, @Nullable String location, @Nullable String key, @Nullable String relay,
                     @Nullable byte[] digest, @Nullable String fastPreflightId, boolean voiceNote,
                     int width, int height, boolean quote, long uploadTimestamp, @Nullable String caption,
-                    @Nullable StickerLocator stickerLocator, @Nullable BlurHash blurHash,
+                    @Nullable StickerLocator stickerLocator, @Nullable BlurHash blurHash, @Nullable AudioHash audioHash,
                     @Nullable TransformProperties transformProperties)
   {
     this.contentType         = contentType;
@@ -80,6 +84,7 @@ public abstract class Attachment {
     this.stickerLocator      = stickerLocator;
     this.caption             = caption;
     this.blurHash            = blurHash;
+    this.audioHash           = audioHash;
     this.transformProperties = transformProperties != null ? transformProperties : TransformProperties.empty();
   }
 
@@ -171,6 +176,11 @@ public abstract class Attachment {
 
   public @Nullable BlurHash getBlurHash() {
     return blurHash;
+  }
+
+  public @Nullable
+  AudioHash getAudioHash() {
+    return audioHash;
   }
 
   public @Nullable String getCaption() {

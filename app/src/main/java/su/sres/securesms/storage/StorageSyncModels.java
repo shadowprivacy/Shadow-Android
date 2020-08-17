@@ -2,12 +2,16 @@ package su.sres.securesms.storage;
 
 import androidx.annotation.NonNull;
 
+import org.signal.zkgroup.groups.GroupMasterKey;
+
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.storage.SignalContactRecord;
 import su.sres.signalservice.api.storage.SignalGroupV1Record;
+import su.sres.signalservice.api.storage.SignalGroupV2Record;
 import su.sres.signalservice.api.storage.SignalStorageRecord;
 import su.sres.signalservice.internal.storage.protos.ContactRecord.IdentityState;
 
@@ -29,6 +33,7 @@ public final class StorageSyncModels {
         switch (settings.getGroupType()) {
             case NONE:      return SignalStorageRecord.forContact(localToRemoteContact(settings, rawStorageId, archived));
             case SIGNAL_V1: return SignalStorageRecord.forGroupV1(localToRemoteGroupV1(settings, rawStorageId, archived));
+            case SIGNAL_V2: return SignalStorageRecord.forGroupV2(localToRemoteGroupV2(settings, rawStorageId, archived));
             default:        throw new AssertionError("Unsupported type!");
         }
     }
@@ -51,11 +56,41 @@ public final class StorageSyncModels {
     }
 
     private static @NonNull SignalGroupV1Record localToRemoteGroupV1(@NonNull RecipientSettings recipient, byte[] rawStorageId, @NonNull Set<RecipientId> archived) {
-        if (recipient.getGroupId() == null) {
+        GroupId groupId = recipient.getGroupId();
+
+        if (groupId == null) {
             throw new AssertionError("Must have a groupId!");
         }
 
-        return new SignalGroupV1Record.Builder(rawStorageId, recipient.getGroupId().getDecodedId())
+        if (!groupId.isV1()) {
+            throw new AssertionError("Group is not V1");
+        }
+
+        return new SignalGroupV1Record.Builder(rawStorageId, groupId.getDecodedId())
+                .setBlocked(recipient.isBlocked())
+                .setProfileSharingEnabled(recipient.isProfileSharing())
+                .setArchived(archived.contains(recipient.getId()))
+                .build();
+    }
+
+    private static @NonNull SignalGroupV2Record localToRemoteGroupV2(@NonNull RecipientSettings recipient, byte[] rawStorageId, @NonNull Set<RecipientId> archived) {
+        GroupId groupId = recipient.getGroupId();
+
+        if (groupId == null) {
+            throw new AssertionError("Must have a groupId!");
+        }
+
+        if (!groupId.isV2()) {
+            throw new AssertionError("Group is not V2");
+        }
+
+        GroupMasterKey groupMasterKey = recipient.getGroupMasterKey();
+
+        if (groupMasterKey == null) {
+            throw new AssertionError("Group master key not on recipient record");
+        }
+
+        return new SignalGroupV2Record.Builder(rawStorageId, groupMasterKey)
                 .setBlocked(recipient.isBlocked())
                 .setProfileSharingEnabled(recipient.isProfileSharing())
                 .setArchived(archived.contains(recipient.getId()))

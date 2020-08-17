@@ -20,7 +20,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.TypedArray;
@@ -41,6 +40,7 @@ import androidx.annotation.MenuRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.annimon.stream.Stream;
 import com.google.android.material.snackbar.Snackbar;
 
 import androidx.annotation.PluralsRes;
@@ -80,13 +80,11 @@ import su.sres.securesms.MainNavigator;
 import su.sres.securesms.NewConversationActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.reminder.LicenseInvalidReminder;
-import su.sres.securesms.conversation.ConversationFragment;
 import su.sres.securesms.conversationlist.ConversationListAdapter.ItemClickListener;
 import su.sres.securesms.components.RatingManager;
 import su.sres.securesms.components.SearchToolbar;
 import su.sres.securesms.components.recyclerview.DeleteItemAnimator;
 import su.sres.securesms.components.registration.PulsingFloatingActionButton;
-import su.sres.securesms.components.reminder.DefaultSmsReminder;
 import su.sres.securesms.components.reminder.DozeReminder;
 import su.sres.securesms.components.reminder.ExpiredBuildReminder;
 import su.sres.securesms.components.reminder.OutdatedBuildReminder;
@@ -117,11 +115,11 @@ import su.sres.securesms.megaphone.MegaphoneViewBuilder;
 import su.sres.securesms.megaphone.Megaphones;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.notifications.MarkReadReceiver;
-import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.sms.MessageSender;
+import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.StickyHeaderDecoration;
@@ -594,8 +592,43 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         SignalExecutors.BOUNDED.execute(() -> {
             List<MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context).setAllThreadsRead();
 
-            MessageNotifier.updateNotification(context);
+            ApplicationDependencies.getMessageNotifier().updateNotification(context);
             MarkReadReceiver.process(context, messageIds);
+        });
+    }
+
+    private void handleMarkSelectedAsRead() {
+        Context   context               = requireContext();
+        Set<Long> selectedConversations = new HashSet<>(defaultAdapter.getBatchSelectionIds());
+
+        SimpleTask.run(getViewLifecycleOwner().getLifecycle(), () -> {
+            List<MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context).setRead(selectedConversations, false);
+
+            ApplicationDependencies.getMessageNotifier().updateNotification(context);
+            MarkReadReceiver.process(context, messageIds);
+
+            return null;
+        }, none -> {
+            if (actionMode != null) {
+                actionMode.finish();
+                actionMode = null;
+            }
+        });
+    }
+
+    private void handleMarkSelectedAsUnread() {
+        Context   context               = requireContext();
+        Set<Long> selectedConversations = new HashSet<>(defaultAdapter.getBatchSelectionIds());
+
+        SimpleTask.run(getViewLifecycleOwner().getLifecycle(), () -> {
+            DatabaseFactory.getThreadDatabase(context).setForcedUnread(selectedConversations);
+            StorageSyncHelper.scheduleSyncForDataChange();
+            return null;
+        }, none -> {
+            if (actionMode != null) {
+                actionMode.finish();
+                actionMode = null;
+            }
         });
     }
 
@@ -609,7 +642,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
 
     @SuppressLint("StaticFieldLeak")
     private void handleArchiveAllSelected() {
-        Set<Long> selectedConversations = new HashSet<>(defaultAdapter.getBatchSelections());
+        Set<Long> selectedConversations = new HashSet<>(defaultAdapter.getBatchSelectionIds());
         int       count                 = selectedConversations.size();
         String    snackBarTitle         = getResources().getQuantityString(getArchivedSnackbarTitleRes(), count, count);
 
@@ -648,7 +681,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
 
     @SuppressLint("StaticFieldLeak")
     private void handleDeleteAllSelected() {
-        int                 conversationsCount = defaultAdapter.getBatchSelections().size();
+        int                 conversationsCount = defaultAdapter.getBatchSelectionIds().size();
         AlertDialog.Builder alert              = new AlertDialog.Builder(getActivity());
         alert.setIconAttribute(R.attr.dialog_alert_icon);
         alert.setTitle(getActivity().getResources().getQuantityString(R.plurals.ConversationListFragment_delete_selected_conversations,
@@ -658,7 +691,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         alert.setCancelable(true);
 
         alert.setPositiveButton(R.string.delete, (dialog, which) -> {
-            final Set<Long> selectedConversations = defaultAdapter.getBatchSelections();
+            final Set<Long> selectedConversations = defaultAdapter.getBatchSelectionIds();
 
             if (!selectedConversations.isEmpty()) {
                 new AsyncTask<Void, Void, Void>() {
@@ -675,7 +708,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
                     @Override
                     protected Void doInBackground(Void... params) {
                         DatabaseFactory.getThreadDatabase(getActivity()).deleteConversations(selectedConversations);
-                        MessageNotifier.updateNotification(getActivity());
+                        ApplicationDependencies.getMessageNotifier().updateNotification(getActivity());
                         return null;
                     }
 
@@ -697,7 +730,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
 
     private void handleSelectAllThreads() {
         defaultAdapter.selectAllThreads();
-        actionMode.setTitle(String.valueOf(defaultAdapter.getBatchSelections().size()));
+        actionMode.setTitle(String.valueOf(defaultAdapter.getBatchSelectionIds().size()));
     }
 
     private void handleCreateConversation(long threadId, Recipient recipient, int distributionType) {
@@ -738,12 +771,13 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
             handleCreateConversation(item.getThreadId(), item.getRecipient(), item.getDistributionType());
         } else {
             ConversationListAdapter adapter = (ConversationListAdapter)list.getAdapter();
-            adapter.toggleThreadInBatchSet(item.getThreadId());
+            adapter.toggleThreadInBatchSet(item.getThread());
 
-            if (adapter.getBatchSelections().size() == 0) {
+            if (adapter.getBatchSelectionIds().size() == 0) {
                 actionMode.finish();
             } else {
-                actionMode.setTitle(String.valueOf(defaultAdapter.getBatchSelections().size()));
+                actionMode.setTitle(String.valueOf(defaultAdapter.getBatchSelectionIds().size()));
+                setCorrectMenuVisibility(actionMode.getMenu());
             }
 
             adapter.notifyDataSetChanged();
@@ -755,7 +789,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         actionMode = ((AppCompatActivity) getActivity()).startSupportActionMode(ConversationListFragment.this);
 
         defaultAdapter.initializeBatchMode(true);
-        defaultAdapter.toggleThreadInBatchSet(item.getThreadId());
+        defaultAdapter.toggleThreadInBatchSet(item.getThread());
         defaultAdapter.notifyDataSetChanged();
     }
 
@@ -787,15 +821,18 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
 
     @Override
     public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+        setCorrectMenuVisibility(menu);
         return false;
     }
 
     @Override
     public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.menu_select_all:       handleSelectAllThreads();   return true;
-            case R.id.menu_delete_selected:  handleDeleteAllSelected();  return true;
-            case R.id.menu_archive_selected: handleArchiveAllSelected(); return true;
+            case R.id.menu_select_all:       handleSelectAllThreads();     return true;
+            case R.id.menu_delete_selected:  handleDeleteAllSelected();    return true;
+            case R.id.menu_archive_selected: handleArchiveAllSelected();   return true;
+            case R.id.menu_mark_as_read:     handleMarkSelectedAsRead();   return true;
+            case R.id.menu_mark_as_unread:   handleMarkSelectedAsUnread(); return true;
         }
 
         return false;
@@ -834,6 +871,18 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
     public void onEvent(MessageSender.MessageSentEvent event) {
         EventBus.getDefault().removeStickyEvent(event);
         closeSearchIfOpen();
+    }
+
+    private void setCorrectMenuVisibility(@NonNull Menu menu) {
+        boolean hasUnread = Stream.of(defaultAdapter.getBatchSelection()).anyMatch(thread -> !thread.isRead());
+
+        if (hasUnread) {
+            menu.findItem(R.id.menu_mark_as_unread).setVisible(false);
+            menu.findItem(R.id.menu_mark_as_read).setVisible(true);
+        } else {
+            menu.findItem(R.id.menu_mark_as_unread).setVisible(true);
+            menu.findItem(R.id.menu_mark_as_read).setVisible(false);
+        }
     }
 
     protected @IdRes int getToolbarRes() {
@@ -876,7 +925,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
 
                 if (unreadCount > 0) {
                     List<MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(getActivity()).setRead(threadId, false);
-                    MessageNotifier.updateNotification(getActivity());
+                    ApplicationDependencies.getMessageNotifier().updateNotification(getActivity());
                     MarkReadReceiver.process(getActivity(), messageIds);
                 }
             }
@@ -887,7 +936,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
 
                 if (unreadCount > 0) {
                     DatabaseFactory.getThreadDatabase(getActivity()).incrementUnread(threadId, unreadCount);
-                    MessageNotifier.updateNotification(getActivity());
+                    ApplicationDependencies.getMessageNotifier().updateNotification(getActivity());
                 }
             }
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, threadId);

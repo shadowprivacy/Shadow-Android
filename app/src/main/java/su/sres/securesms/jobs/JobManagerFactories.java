@@ -14,6 +14,8 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraintObserver;
 import su.sres.securesms.jobmanager.impl.NetworkOrCellServiceConstraint;
 import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraint;
 import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraintObserver;
+import su.sres.securesms.jobmanager.impl.WebsocketDrainedConstraint;
+import su.sres.securesms.jobmanager.impl.WebsocketDrainedConstraintObserver;
 import su.sres.securesms.jobmanager.migrations.PushProcessMessageQueueJobMigration;
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration;
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration2;
@@ -92,6 +94,7 @@ public final class JobManagerFactories {
             put(ResumableUploadSpecJob.KEY,                new ResumableUploadSpecJob.Factory());
             put(StorageAccountRestoreJob.KEY,              new StorageAccountRestoreJob.Factory());
             put(RequestGroupV2InfoJob.KEY,                 new RequestGroupV2InfoJob.Factory());
+            put(WakeGroupV2Job.KEY,                        new WakeGroupV2Job.Factory());
             put(GroupV2UpdateSelfProfileKeyJob.KEY,        new GroupV2UpdateSelfProfileKeyJob.Factory());
             put(RetrieveProfileAvatarJob.KEY,              new RetrieveProfileAvatarJob.Factory());
             put(RetrieveProfileJob.KEY,                    new RetrieveProfileJob.Factory());
@@ -144,13 +147,15 @@ public final class JobManagerFactories {
             put(NetworkOrCellServiceConstraint.KEY,        new NetworkOrCellServiceConstraint.Factory(application));
             put(NetworkOrCellServiceConstraint.LEGACY_KEY, new NetworkOrCellServiceConstraint.Factory(application));
             put(SqlCipherMigrationConstraint.KEY,          new SqlCipherMigrationConstraint.Factory(application));
+            put(WebsocketDrainedConstraint.KEY,            new WebsocketDrainedConstraint.Factory());
         }};
     }
 
     public static List<ConstraintObserver> getConstraintObservers(@NonNull Application application) {
         return Arrays.asList(CellServiceConstraintObserver.getInstance(application),
                 new NetworkConstraintObserver(application),
-                new SqlCipherMigrationConstraintObserver());
+                new SqlCipherMigrationConstraintObserver(),
+                new WebsocketDrainedConstraintObserver());
     }
 
     public static List<JobMigration> getJobMigrations(@NonNull Application application) {

@@ -21,8 +21,9 @@ import android.widget.LinearLayout;
 import su.sres.securesms.R;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.ViewUtil;
+import su.sres.securesms.util.views.DarkOverflowToolbar;
 
-public class ContactFilterToolbar extends Toolbar {
+public class ContactFilterToolbar extends DarkOverflowToolbar {
   private   OnFilterChangedListener listener;
 
   private EditText        searchText;

@@ -30,13 +30,12 @@ The form and manner of this distribution makes it eligible for export under the 
 
 ## License
 
-Original product:
+Signal Messenger:
 
-Copyright 2011 Whisper Systems
-Copyright 2013-2020 Open Whisper Systems
+Copyright 2013-2020 Signal
 
-Modified product:
+Shadow Messenger:
 
-Copyright 2019-2020 Sophisticated Research
+Copyright 2019-2020 Anton Alipov, sole trader
 
 Licensed under the GPLv3: http://www.gnu.org/licenses/gpl-3.0.html

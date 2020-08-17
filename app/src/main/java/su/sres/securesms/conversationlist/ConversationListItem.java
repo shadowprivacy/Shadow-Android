@@ -22,9 +22,12 @@ import android.graphics.Typeface;
 import android.graphics.drawable.RippleDrawable;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
+import android.text.Spannable;
 import android.text.SpannableString;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import android.text.TextUtils;
 import android.text.style.StyleSpan;
 import android.util.AttributeSet;
 import android.view.View;
@@ -40,6 +43,9 @@ import su.sres.securesms.components.DeliveryStatusView;
 import su.sres.securesms.components.FromTextView;
 import su.sres.securesms.components.ThumbnailView;
 import su.sres.securesms.components.TypingIndicatorView;
+import su.sres.securesms.database.MmsSmsColumns;
+import su.sres.securesms.database.SmsDatabase;
+import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.LiveRecipient;
@@ -47,6 +53,8 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
 import su.sres.securesms.conversationlist.model.MessageResult;
 import su.sres.securesms.util.DateUtils;
+import su.sres.securesms.util.ExpirationUtil;
+import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.SearchUtil;
 import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.ViewUtil;
@@ -83,6 +91,7 @@ public class ConversationListItem extends RelativeLayout
   private TextView            unreadIndicator;
   private long                lastSeen;
   private ThreadRecord        thread;
+  private boolean             batchMode;
 
   private int             unreadCount;
   private AvatarImageView contactPhotoImage;
@@ -92,7 +101,7 @@ public class ConversationListItem extends RelativeLayout
 
   private final RecipientForeverObserver groupAddedByObserver = adder -> {
     if (isAttachedToWindow() && subjectView != null && thread != null) {
-      subjectView.setText(thread.getDisplayBody(getContext()));
+      subjectView.setText(getThreadDisplayBody(getContext(), thread));
     }
   };
 
@@ -162,7 +171,7 @@ public class ConversationListItem extends RelativeLayout
 
       this.fromView.setText(SearchUtil.getHighlightedSpan(locale, () -> new StyleSpan(Typeface.BOLD), name, highlightSubstring));
     } else {
-      this.fromView.setText(recipient.get(), unreadCount == 0);
+      this.fromView.setText(recipient.get(), thread.isRead());
     }
 
     if (typingThreads.contains(threadId)) {
@@ -175,24 +184,24 @@ public class ConversationListItem extends RelativeLayout
       this.typingView.stopAnimation();
 
       this.subjectView.setVisibility(VISIBLE);
-      this.subjectView.setText(getTrimmedSnippet(thread.getDisplayBody(getContext())));
+      this.subjectView.setText(getTrimmedSnippet(getThreadDisplayBody(getContext(), thread)));
 
       if (thread.getGroupAddedBy() != null) {
         groupAddedBy = Recipient.live(thread.getGroupAddedBy());
         groupAddedBy.observeForever(groupAddedByObserver);
       }
 
-      this.subjectView.setTypeface(unreadCount == 0 ? LIGHT_TYPEFACE : BOLD_TYPEFACE);
-      this.subjectView.setTextColor(unreadCount == 0 ? ThemeUtil.getThemedColor(getContext(), R.attr.conversation_list_item_subject_color)
+      this.subjectView.setTypeface(thread.isRead() ? LIGHT_TYPEFACE : BOLD_TYPEFACE);
+      this.subjectView.setTextColor(thread.isRead() ? ThemeUtil.getThemedColor(getContext(), R.attr.conversation_list_item_subject_color)
               : ThemeUtil.getThemedColor(getContext(), R.attr.conversation_list_item_unread_color));
     }
 
     if (thread.getDate() > 0) {
       CharSequence date = DateUtils.getBriefRelativeTimeSpanString(getContext(), locale, thread.getDate());
       dateView.setText(date);
-      dateView.setTypeface(unreadCount == 0 ? LIGHT_TYPEFACE : BOLD_TYPEFACE);
-      dateView.setTextColor(unreadCount == 0 ? ThemeUtil.getThemedColor(getContext(), R.attr.conversation_list_item_date_color)
-                                             : ThemeUtil.getThemedColor(getContext(), R.attr.conversation_list_item_unread_color));
+      dateView.setTypeface(thread.isRead() ? LIGHT_TYPEFACE : BOLD_TYPEFACE);
+      dateView.setTextColor(thread.isRead() ? ThemeUtil.getThemedColor(getContext(), R.attr.conversation_list_item_date_color)
+              : ThemeUtil.getThemedColor(getContext(), R.attr.conversation_list_item_unread_color));
     }
 
     if (thread.isArchived()) {
@@ -203,10 +212,10 @@ public class ConversationListItem extends RelativeLayout
 
     setStatusIcons(thread);
     setThumbnailSnippet(thread);
-    setBatchState(batchMode);
+    setBatchMode(batchMode);
     setRippleColor(recipient.get());
     setUnreadIndicator(thread);
-    this.contactPhotoImage.setAvatar(glideRequests, recipient.get(), true);
+    this.contactPhotoImage.setAvatar(glideRequests, recipient.get(), !batchMode);
   }
 
   public void bind(@NonNull  Recipient     contact,
@@ -233,9 +242,9 @@ public class ConversationListItem extends RelativeLayout
     alertView.setNone();
     thumbnailView.setVisibility(GONE);
 
-    setBatchState(false);
+    setBatchMode(false);
     setRippleColor(contact);
-    contactPhotoImage.setAvatar(glideRequests, recipient.get(), true);
+    contactPhotoImage.setAvatar(glideRequests, recipient.get(), !batchMode);
   }
 
   public void bind(@NonNull  MessageResult messageResult,
@@ -261,9 +270,9 @@ public class ConversationListItem extends RelativeLayout
     alertView.setNone();
     thumbnailView.setVisibility(GONE);
 
-    setBatchState(false);
+    setBatchMode(false);
     setRippleColor(recipient.get());
-    contactPhotoImage.setAvatar(glideRequests, recipient.get(), true);
+    contactPhotoImage.setAvatar(glideRequests, recipient.get(), !batchMode);
   }
 
   @Override
@@ -271,7 +280,8 @@ public class ConversationListItem extends RelativeLayout
     if (this.recipient != null) {
       this.recipient.removeForeverObserver(this);
       this.recipient = null;
-      contactPhotoImage.setAvatar(glideRequests, null, true);
+      setBatchMode(false);
+      contactPhotoImage.setAvatar(glideRequests, null, !batchMode);
     }
     if (this.groupAddedBy != null) {
       this.groupAddedBy.removeForeverObserver(groupAddedByObserver);
@@ -279,8 +289,9 @@ public class ConversationListItem extends RelativeLayout
     }
   }
 
-  private void setBatchState(boolean batch) {
-    setSelected(batch && selectedThreads.contains(threadId));
+  private void setBatchMode(boolean batchMode) {
+    this.batchMode = batchMode;
+    setSelected(batchMode && selectedThreads.contains(thread.getThreadId()));
   }
 
   public Recipient getRecipient() {
@@ -289,6 +300,10 @@ public class ConversationListItem extends RelativeLayout
 
   public long getThreadId() {
     return threadId;
+  }
+
+  public @NonNull ThreadRecord getThread() {
+    return thread;
   }
 
   public int getUnreadCount() {
@@ -303,7 +318,7 @@ public class ConversationListItem extends RelativeLayout
     return lastSeen;
   }
 
-  private @NonNull CharSequence getTrimmedSnippet(@NonNull CharSequence snippet) {
+  private static @NonNull CharSequence getTrimmedSnippet(@NonNull CharSequence snippet) {
     return snippet.length() <= MAX_SNIPPET_LENGTH ? snippet
             : snippet.subSequence(0, MAX_SNIPPET_LENGTH);
   }
@@ -315,9 +330,7 @@ public class ConversationListItem extends RelativeLayout
 
       LayoutParams subjectParams = (RelativeLayout.LayoutParams)this.subjectContainer .getLayoutParams();
       subjectParams.addRule(RelativeLayout.LEFT_OF, R.id.thumbnail);
-      if (VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN_MR1) {
-        subjectParams.addRule(RelativeLayout.START_OF, R.id.thumbnail);
-      }
+      subjectParams.addRule(RelativeLayout.START_OF, R.id.thumbnail);
       this.subjectContainer.setLayoutParams(subjectParams);
       this.post(new ThumbnailPositioner(thumbnailView, archivedView, deliveryStatusIndicator, dateView));
     } else {
@@ -325,9 +338,7 @@ public class ConversationListItem extends RelativeLayout
 
       LayoutParams subjectParams = (RelativeLayout.LayoutParams)this.subjectContainer.getLayoutParams();
       subjectParams.addRule(RelativeLayout.LEFT_OF, R.id.status);
-      if (VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN_MR1) {
-        subjectParams.addRule(RelativeLayout.START_OF, R.id.status);
-      }
+      subjectParams.addRule(RelativeLayout.START_OF, R.id.status);
       this.subjectContainer.setLayoutParams(subjectParams);
     }
   }
@@ -360,20 +371,112 @@ public class ConversationListItem extends RelativeLayout
   }
 
   private void setUnreadIndicator(ThreadRecord thread) {
-    if (thread.isOutgoing() || thread.getUnreadCount() == 0) {
+    if ((thread.isOutgoing() && !thread.isForcedUnread()) || thread.isRead()) {
       unreadIndicator.setVisibility(View.GONE);
       return;
     }
 
-    unreadIndicator.setText(String.valueOf(unreadCount));
+    unreadIndicator.setText(unreadCount > 0 ? String.valueOf(unreadCount) : " ");
     unreadIndicator.setVisibility(View.VISIBLE);
   }
 
   @Override
   public void onRecipientChanged(@NonNull Recipient recipient) {
     fromView.setText(recipient, unreadCount == 0);
-    contactPhotoImage.setAvatar(glideRequests, recipient, true);
+    contactPhotoImage.setAvatar(glideRequests, recipient, !batchMode);
     setRippleColor(recipient);
+  }
+
+  private static SpannableString getThreadDisplayBody(@NonNull Context context, @NonNull ThreadRecord thread) {
+    if (thread.getGroupAddedBy() != null) {
+      return emphasisAdded(context.getString(thread.isGv2Invite() ? R.string.ThreadRecord_s_invited_you_to_the_group
+                      : R.string.ThreadRecord_s_added_you_to_the_group,
+              Recipient.live(thread.getGroupAddedBy()).get().getDisplayName(context)));
+    } else if (!thread.isMessageRequestAccepted()) {
+      return emphasisAdded(context.getString(R.string.ThreadRecord_message_request));
+    } else if (SmsDatabase.Types.isGroupUpdate(thread.getType())) {
+      return emphasisAdded(context.getString(R.string.ThreadRecord_group_updated));
+    } else if (SmsDatabase.Types.isGroupQuit(thread.getType())) {
+      return emphasisAdded(context.getString(R.string.ThreadRecord_left_the_group));
+    } else if (SmsDatabase.Types.isKeyExchangeType(thread.getType())) {
+      return emphasisAdded(context.getString(R.string.ConversationListItem_key_exchange_message));
+    } else if (SmsDatabase.Types.isFailedDecryptType(thread.getType())) {
+      return emphasisAdded(context.getString(R.string.MessageDisplayHelper_bad_encrypted_message));
+    } else if (SmsDatabase.Types.isNoRemoteSessionType(thread.getType())) {
+      return emphasisAdded(context.getString(R.string.MessageDisplayHelper_message_encrypted_for_non_existing_session));
+    } else if (SmsDatabase.Types.isEndSessionType(thread.getType())) {
+      return emphasisAdded(context.getString(R.string.ThreadRecord_secure_session_reset));
+    } else if (MmsSmsColumns.Types.isLegacyType(thread.getType())) {
+      return emphasisAdded(context.getString(R.string.MessageRecord_message_encrypted_with_a_legacy_protocol_version_that_is_no_longer_supported));
+    } else if (MmsSmsColumns.Types.isDraftMessageType(thread.getType())) {
+      String draftText = context.getString(R.string.ThreadRecord_draft);
+      return emphasisAdded(draftText + " " + thread.getBody(), 0, draftText.length());
+    } else if (SmsDatabase.Types.isOutgoingCall(thread.getType())) {
+      return emphasisAdded(context.getString(su.sres.securesms.R.string.ThreadRecord_called));
+    } else if (SmsDatabase.Types.isIncomingCall(thread.getType())) {
+      return emphasisAdded(context.getString(su.sres.securesms.R.string.ThreadRecord_called_you));
+    } else if (SmsDatabase.Types.isMissedCall(thread.getType())) {
+      return emphasisAdded(context.getString(su.sres.securesms.R.string.ThreadRecord_missed_call));
+    } else if (SmsDatabase.Types.isJoinedType(thread.getType())) {
+      return emphasisAdded(context.getString(R.string.ThreadRecord_s_is_on_signal, thread.getRecipient().toShortString(context)));
+    } else if (SmsDatabase.Types.isExpirationTimerUpdate(thread.getType())) {
+      int seconds = (int)(thread.getExpiresIn() / 1000);
+      if (seconds <= 0) {
+        return emphasisAdded(context.getString(R.string.ThreadRecord_disappearing_messages_disabled));
+      }
+      String time = ExpirationUtil.getExpirationDisplayValue(context, seconds);
+      return emphasisAdded(context.getString(R.string.ThreadRecord_disappearing_message_time_updated_to_s, time));
+    } else if (SmsDatabase.Types.isIdentityUpdate(thread.getType())) {
+      if (thread.getRecipient().isGroup()) {
+        return emphasisAdded(context.getString(R.string.ThreadRecord_safety_number_changed));
+      } else {
+        return emphasisAdded(context.getString(R.string.ThreadRecord_your_safety_number_with_s_has_changed, thread.getRecipient().toShortString(context)));
+      }
+    } else if (SmsDatabase.Types.isIdentityVerified(thread.getType())) {
+      return emphasisAdded(context.getString(R.string.ThreadRecord_you_marked_verified));
+    } else if (SmsDatabase.Types.isIdentityDefault(thread.getType())) {
+      return emphasisAdded(context.getString(R.string.ThreadRecord_you_marked_unverified));
+    } else if (SmsDatabase.Types.isUnsupportedMessageType(thread.getType())) {
+      return emphasisAdded(context.getString(R.string.ThreadRecord_message_could_not_be_processed));
+    } else {
+      if (TextUtils.isEmpty(thread.getBody())) {
+        ThreadDatabase.Extra extra = thread.getExtra();
+        if (extra != null && extra.isSticker()) {
+          return new SpannableString(emphasisAdded(context.getString(R.string.ThreadRecord_sticker)));
+        } else if (extra != null && extra.isViewOnce()) {
+          return new SpannableString(emphasisAdded(getViewOnceDescription(context, thread.getContentType())));
+        } else if (extra != null && extra.isRemoteDelete()) {
+          return new SpannableString(emphasisAdded(context.getString(R.string.ThreadRecord_this_message_was_deleted)));
+        } else {
+          return new SpannableString(emphasisAdded(context.getString(R.string.ThreadRecord_media_message)));
+        }
+      } else {
+        return new SpannableString(thread.getBody());
+      }
+    }
+  }
+
+  private static @NonNull SpannableString emphasisAdded(String sequence) {
+    return emphasisAdded(sequence, 0, sequence.length());
+  }
+
+  private static @NonNull SpannableString emphasisAdded(String sequence, int start, int end) {
+    SpannableString spannable = new SpannableString(sequence);
+    spannable.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC),
+            start,
+            end,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+    return spannable;
+  }
+
+  private static String getViewOnceDescription(@NonNull Context context, @Nullable String contentType) {
+    if (MediaUtil.isViewOnceType(contentType)) {
+      return context.getString(R.string.ThreadRecord_view_once_media);
+    } else if (MediaUtil.isVideoType(contentType)) {
+      return context.getString(R.string.ThreadRecord_view_once_video);
+    } else {
+      return context.getString(R.string.ThreadRecord_view_once_photo);
+    }
   }
 
   private static class ThumbnailPositioner implements Runnable {
@@ -398,14 +501,10 @@ public class ConversationListItem extends RelativeLayout
           (archivedView.getWidth() + deliveryStatusView.getWidth()) > dateView.getWidth())
       {
         thumbnailParams.addRule(RelativeLayout.LEFT_OF, R.id.status);
-        if (VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN_MR1) {
-          thumbnailParams.addRule(RelativeLayout.START_OF, R.id.status);
-        }
+        thumbnailParams.addRule(RelativeLayout.START_OF, R.id.status);
       } else {
         thumbnailParams.addRule(RelativeLayout.LEFT_OF, R.id.date);
-        if (VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN_MR1) {
-          thumbnailParams.addRule(RelativeLayout.START_OF, R.id.date);
-        }
+        thumbnailParams.addRule(RelativeLayout.START_OF, R.id.date);
       }
 
       thumbnailView.setLayoutParams(thumbnailParams);

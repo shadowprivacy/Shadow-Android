@@ -6,6 +6,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
+import su.sres.securesms.jobmanager.JobTracker;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
@@ -66,6 +67,7 @@ public class StorageAccountRestoreJob extends BaseJob {
         SignalServiceAccountManager accountManager    = ApplicationDependencies.getSignalServiceAccountManager();
         StorageKey                  storageServiceKey = SignalStore.storageServiceValues().getOrCreateStorageKey();
 
+        Log.i(TAG, "Retrieving manifest...");
         Optional<SignalStorageManifest> manifest = accountManager.getStorageManifest(storageServiceKey);
 
         if (!manifest.isPresent()) {
@@ -81,6 +83,7 @@ public class StorageAccountRestoreJob extends BaseJob {
             return;
         }
 
+        Log.i(TAG, "Retrieving account record...");
         List<SignalStorageRecord> records = accountManager.readStorageRecords(storageServiceKey, Collections.singletonList(accountId.get()));
         SignalStorageRecord       record  = records.size() > 0 ? records.get(0) : null;
 
@@ -95,16 +98,33 @@ public class StorageAccountRestoreJob extends BaseJob {
             return;
         }
 
+        Log.i(TAG, "Applying changes locally...");
         StorageId selfStorageId = StorageId.forAccount(Recipient.self().getStorageServiceId());
-        StorageSyncHelper.applyAccountStorageSyncUpdates(context, selfStorageId, accountRecord);
+        StorageSyncHelper.applyAccountStorageSyncUpdates(context, selfStorageId, accountRecord, false);
 
         JobManager jobManager = ApplicationDependencies.getJobManager();
 
         if (accountRecord.getAvatarUrlPath().isPresent()) {
-            jobManager.runSynchronously(new RetrieveProfileAvatarJob(Recipient.self(), accountRecord.getAvatarUrlPath().get()), LIFESPAN/2);
+            Log.i(TAG,  "Fetching avatar...");
+            Optional<JobTracker.JobState> state = jobManager.runSynchronously(new RetrieveProfileAvatarJob(Recipient.self(), accountRecord.getAvatarUrlPath().get()), LIFESPAN/2);
+
+            if (state.isPresent()) {
+                Log.i(TAG, "Avatar retrieved successfully. " + state.get());
+            } else {
+                Log.w(TAG, "Avatar retrieval did not complete in time (or otherwise failed).");
+            }
+        } else {
+            Log.i(TAG, "No avatar present. Not fetching.");
         }
 
-        jobManager.runSynchronously(new RefreshAttributesJob(), LIFESPAN/2);
+        Log.i(TAG,  "Refreshing attributes...");
+        Optional<JobTracker.JobState> state = jobManager.runSynchronously(new RefreshAttributesJob(), LIFESPAN/2);
+
+        if (state.isPresent()) {
+            Log.i(TAG, "Attributes refreshed successfully. " + state.get());
+        } else {
+            Log.w(TAG, "Attribute refresh did not complete in time (or otherwise failed).");
+        }
     }
 
     @Override

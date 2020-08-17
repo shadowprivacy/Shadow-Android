@@ -33,7 +33,7 @@ public final class DecryptedGroupUtilTest {
                 .setEditor(editor)
                 .build();
 
-        UUID parsed = DecryptedGroupUtil.editorUuid(groupChange);
+        UUID parsed = DecryptedGroupUtil.editorUuid(groupChange).get();
 
         assertEquals(uuid, parsed);
     }

@@ -17,7 +17,7 @@ import android.text.TextUtils;
 import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.SwitchPreferenceCompat;
-import su.sres.securesms.notifications.MessageNotifier;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -223,7 +223,7 @@ public class NotificationsPreferenceFragment extends ListSummaryPreferenceFragme
       new AsyncTask<Void, Void, Void>() {
         @Override
         protected Void doInBackground(Void... params) {
-          MessageNotifier.updateNotification(getActivity());
+          ApplicationDependencies.getMessageNotifier().updateNotification(getActivity());
           return null;
         }
       }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);

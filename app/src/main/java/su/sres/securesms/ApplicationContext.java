@@ -44,7 +44,6 @@ import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
-import su.sres.securesms.jobs.RefreshAttributesJob;
 import su.sres.securesms.jobs.RefreshPreKeysJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.AndroidLogger;
@@ -52,8 +51,8 @@ import su.sres.securesms.logging.CustomSignalProtocolLogger;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.logging.PersistentLogger;
 import su.sres.securesms.logging.SignalUncaughtExceptionHandler;
+import su.sres.securesms.messages.InitialMessageRetriever;
 import su.sres.securesms.migrations.ApplicationMigrations;
-import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
@@ -62,7 +61,7 @@ import su.sres.securesms.revealable.ViewOnceMessageManager;
 import su.sres.securesms.ringrtc.RingRtcLogger;
 import su.sres.securesms.service.DirectoryRefreshListener;
 import su.sres.securesms.service.ExpiringMessageManager;
-import su.sres.securesms.service.IncomingMessageObserver;
+import su.sres.securesms.messages.IncomingMessageObserver;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.service.LocalBackupListener;
 import su.sres.securesms.service.RotateSenderCertificateListener;
@@ -173,6 +172,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
           ApplicationDependencies.getRecipientCache().warmUp();
           ApplicationDependencies.getFrameRateTracker().begin();
           ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
+          catchUpOnMessages();
 
           initializedOnStart = true;
 
@@ -196,7 +196,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     isAppVisible = false;
     Log.i(TAG, "App is no longer visible.");
     KeyCachingService.onAppBackgrounded(this);
-    MessageNotifier.setVisibleThread(-1);
+    ApplicationDependencies.getMessageNotifier().clearVisibleThread();
 
     initWorker.execute(() -> {
                 ApplicationDependencies.getFrameRateTracker().end();
@@ -414,6 +414,36 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
     // set just a filler for now
     SignalStore.kbsValues().setKbsMasterKey(SignalStore.kbsValues().getOrCreateMasterKey());
+  }
+
+  private void catchUpOnMessages() {
+    InitialMessageRetriever retriever = ApplicationDependencies.getInitialMessageRetriever();
+
+    if (retriever.isCaughtUp()) {
+      return;
+    }
+
+    SignalExecutors.UNBOUNDED.execute(() -> {
+      long startTime = System.currentTimeMillis();
+
+      switch (retriever.begin(TimeUnit.SECONDS.toMillis(60))) {
+        case SUCCESS:
+          Log.i(TAG, "Successfully caught up on messages. " + (System.currentTimeMillis() - startTime) + " ms");
+          break;
+        case FAILURE_TIMEOUT:
+          Log.w(TAG, "Did not finish catching up due to a timeout. " + (System.currentTimeMillis() - startTime) + " ms");
+          break;
+        case FAILURE_ERROR:
+          Log.w(TAG, "Did not finish catching up due to an error. " + (System.currentTimeMillis() - startTime) + " ms");
+          break;
+        case SKIPPED_ALREADY_CAUGHT_UP:
+          Log.i(TAG, "Already caught up. " + (System.currentTimeMillis() - startTime) + " ms");
+          break;
+        case SKIPPED_ALREADY_RUNNING:
+          Log.i(TAG, "Already in the process of catching up. " + (System.currentTimeMillis() - startTime) + " ms");
+          break;
+      }
+    });
   }
 
   @Override

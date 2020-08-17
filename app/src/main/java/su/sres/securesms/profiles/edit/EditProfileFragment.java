@@ -133,10 +133,6 @@ public class EditProfileFragment extends Fragment {
         initializeProfileAvatar();
         initializeProfileName();
         initializeUsername();
-
-        if (groupId == null) {
-            requireActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
-        }
     }
 
     @Override
@@ -246,6 +242,7 @@ public class EditProfileFragment extends Fragment {
 
         if (isEditingGroup) {
             givenName.setHint(R.string.EditProfileFragment__group_name);
+            givenName.requestFocus();
             toolbar.setTitle(R.string.EditProfileFragment__edit_group_name_and_photo);
             preview.setVisibility(View.GONE);
             familyName.setVisibility(View.GONE);

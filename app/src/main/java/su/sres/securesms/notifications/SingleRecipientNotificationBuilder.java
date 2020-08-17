@@ -174,7 +174,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
       replyAction = new Action.Builder(R.drawable.ic_reply_white_36dp,
               actionName,
                                        wearableReplyIntent)
-          .addRemoteInput(new RemoteInput.Builder(MessageNotifier.EXTRA_REMOTE_REPLY)
+              .addRemoteInput(new RemoteInput.Builder(DefaultMessageNotifier.EXTRA_REMOTE_REPLY)
                   .setLabel(label).build())
           .build();
     }
@@ -182,7 +182,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     Action wearableReplyAction = new Action.Builder(R.drawable.ic_reply,
             actionName,
                                                     wearableReplyIntent)
-        .addRemoteInput(new RemoteInput.Builder(MessageNotifier.EXTRA_REMOTE_REPLY)
+            .addRemoteInput(new RemoteInput.Builder(DefaultMessageNotifier.EXTRA_REMOTE_REPLY)
                 .setLabel(label).build())
         .build();
 

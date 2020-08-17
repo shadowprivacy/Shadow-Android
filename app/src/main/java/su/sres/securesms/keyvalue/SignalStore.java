@@ -20,6 +20,8 @@ public final class SignalStore {
 
     public static void onFirstEverAppLaunch() {
         registrationValues().onFirstEverAppLaunch();
+        uiHints().onFirstEverAppLaunch();
+        tooltips().onFirstEverAppLaunch();
     }
 
     public static @NonNull KbsValues kbsValues() {
@@ -40,6 +42,14 @@ public final class SignalStore {
 
     public static @NonNull StorageServiceValues storageServiceValues() {
         return new StorageServiceValues(getStore());
+    }
+
+    public static @NonNull UiHints uiHints() {
+        return new UiHints(getStore());
+    }
+
+    public static @NonNull TooltipValues tooltips() {
+        return new TooltipValues(getStore());
     }
 
     public static @NonNull GroupsV2AuthorizationSignalStoreCache groupsV2AuthorizationCache() {

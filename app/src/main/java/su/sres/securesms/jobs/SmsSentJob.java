@@ -9,12 +9,10 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.logging.Log;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.model.SmsMessageRecord;
-import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.service.SmsDeliveryListener;
 
 public class SmsSentJob extends BaseJob {
@@ -108,7 +106,7 @@ public class SmsSentJob extends BaseJob {
           break;
         default:
           database.markAsSentFailed(messageId);
-          MessageNotifier.notifyMessageDeliveryFailed(context, record.getRecipient(), record.getThreadId());
+          ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, record.getRecipient(), record.getThreadId());
       }
     } catch (NoSuchMessageException e) {
       Log.w(TAG, e);

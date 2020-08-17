@@ -2,7 +2,12 @@ package su.sres.securesms;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.view.ContextThemeWrapper;
+
 import androidx.appcompat.app.AlertDialog;
+
+
+import su.sres.securesms.util.DynamicTheme;
 
 public class ClearProfileAvatarActivity extends Activity {
 
@@ -19,22 +24,22 @@ public class ClearProfileAvatarActivity extends Activity {
     }
 
     @Override
-  public void onResume() {
-    super.onResume();
+    public void onResume() {
+        super.onResume();
 
         int titleId = getIntent().getIntExtra(ARG_TITLE, R.string.ClearProfileActivity_remove_profile_photo);
 
-    new AlertDialog.Builder(this)
-            .setTitle(titleId)
-        .setNegativeButton(android.R.string.cancel, (dialog, which) -> finish())
-        .setPositiveButton(R.string.ClearProfileActivity_remove, (dialog, which) -> {
-          Intent result = new Intent();
-          result.putExtra("delete", true);
-          setResult(Activity.RESULT_OK, result);
-          finish();
-        })
-            .setOnCancelListener(dialog -> finish())
-            .show();
-  }
+        new AlertDialog.Builder(new ContextThemeWrapper(this, DynamicTheme.isDarkTheme(this) ? R.style.TextSecure_DarkTheme : R.style.TextSecure_LightTheme))
+                .setMessage(titleId)
+                .setNegativeButton(android.R.string.cancel, (dialog, which) -> finish())
+                .setPositiveButton(R.string.ClearProfileActivity_remove, (dialog, which) -> {
+                    Intent result = new Intent();
+                    result.putExtra("delete", true);
+                    setResult(Activity.RESULT_OK, result);
+                    finish();
+                })
+                .setOnCancelListener(dialog -> finish())
+                .show();
+    }
 
 }

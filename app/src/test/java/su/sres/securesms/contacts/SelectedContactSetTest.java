@@ -3,7 +3,7 @@ package su.sres.securesms.contacts;
 import org.junit.Test;
 import su.sres.securesms.recipients.RecipientId;
 
-import static edu.emory.mathcs.backport.java.util.Collections.singletonList;
+import static java.util.Collections.singletonList;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
@@ -92,13 +92,13 @@ public final class SelectedContactSetTest {
         SelectedContact contact1       = SelectedContact.forPhone(RecipientId.from(1), "+1-555-000-0000");
         SelectedContact contact2       = SelectedContact.forUsername(RecipientId.from(2), "@alice");
         SelectedContact contact3       = SelectedContact.forUsername(null, "@bob");
-        SelectedContact contact2Remove = SelectedContact.forUsername(RecipientId.from(1), "@alice");
+        SelectedContact contact2Remove = SelectedContact.forUsername(RecipientId.from(1), "@bob");
 
         assertTrue(selectedContactSet.add(contact1));
         assertTrue(selectedContactSet.add(contact2));
         assertTrue(selectedContactSet.add(contact3));
         assertEquals(2, selectedContactSet.remove(contact2Remove));
 
-        assertThat(selectedContactSet.getContacts(), is(singletonList(contact3)));
+        assertThat(selectedContactSet.getContacts(), is(singletonList(contact2)));
     }
 }

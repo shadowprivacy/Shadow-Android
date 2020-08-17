@@ -22,7 +22,6 @@ import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.ExpirationUtil;
 import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 
@@ -153,7 +152,6 @@ public class ConversationTitleView extends RelativeLayout {
   }
 
   private void setGroupRecipientTitle(Recipient recipient) {
-    String localNumber = TextSecurePreferences.getLocalNumber(getContext());
 
     if (FeatureFlags.profileDisplay()) {
       this.title.setText(recipient.getDisplayName(getContext()));
@@ -162,8 +160,9 @@ public class ConversationTitleView extends RelativeLayout {
     }
 
     this.subtitle.setText(Stream.of(recipient.getParticipants())
-            .filterNot(Recipient::isLocalNumber)
-            .map(r -> r.toShortString(getContext()))
+            .sorted((a, b) -> Boolean.compare(a.isLocalNumber(), b.isLocalNumber()))
+            .map(r -> r.isLocalNumber() ? getResources().getString(R.string.ConversationTitleView_you)
+                    : r.getDisplayName(getContext()))
                                 .collect(Collectors.joining(", ")));
 
     updateSubtitleVisibility();

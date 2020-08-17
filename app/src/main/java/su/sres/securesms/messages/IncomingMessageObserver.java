@@ -1,4 +1,4 @@
-package su.sres.securesms.service;
+package su.sres.securesms.messages;
 
 import android.app.Service;
 import androidx.lifecycle.DefaultLifecycleObserver;
@@ -20,7 +20,7 @@ import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.R;
-import su.sres.securesms.IncomingMessageProcessor.Processor;
+import su.sres.securesms.messages.IncomingMessageProcessor.Processor;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
@@ -71,6 +71,8 @@ public class IncomingMessageObserver implements ConstraintObserver.Notifier {
                 onAppBackgrounded();
             }
         });
+
+        ApplicationDependencies.getInitialMessageRetriever().addListener(this::onInitialRetrievalComplete);
     }
 
     @Override
@@ -90,6 +92,10 @@ public class IncomingMessageObserver implements ConstraintObserver.Notifier {
         notifyAll();
     }
 
+    private synchronized void onInitialRetrievalComplete() {
+        notifyAll();
+    }
+
     private synchronized boolean isConnectionNecessary() {
         boolean isGcmDisabled = TextSecurePreferences.isFcmDisabled(context);
 
@@ -100,7 +106,8 @@ public class IncomingMessageObserver implements ConstraintObserver.Notifier {
                 SignalStore.serviceConfigurationValues().isLicensed() &&
                 TextSecurePreferences.isWebsocketRegistered(context)  &&
                 (appVisible || isGcmDisabled)                         &&
-                networkConstraint.isMet();
+                networkConstraint.isMet()                             &&
+                ApplicationDependencies.getInitialMessageRetriever().isCaughtUp();
 
     }
 
@@ -157,7 +164,7 @@ public class IncomingMessageObserver implements ConstraintObserver.Notifier {
                             Log.i(TAG, "Reading message...");
                             localPipe.read(REQUEST_TIMEOUT_MINUTES, TimeUnit.MINUTES,
                                     envelope -> {
-                                        Log.i(TAG, "Retrieved envelope! " + envelope.getSourceIdentifier());
+                                        Log.i(TAG, "Retrieved envelope! " + envelope.getTimestamp());
                                         try (Processor processor = ApplicationDependencies.getIncomingMessageProcessor().acquire()) {
                                             processor.processEnvelope(envelope);
                                         }

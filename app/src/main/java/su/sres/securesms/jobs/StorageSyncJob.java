@@ -26,7 +26,6 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.storage.StorageSyncValidations;
 import su.sres.securesms.transport.RetryLaterException;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.InvalidKeyException;
@@ -177,7 +176,7 @@ public class StorageSyncJob extends BaseJob {
                     Log.i(TAG, "[Remote Newer] After resolving the conflict, all changes are local. No remote writes needed.");
                 }
 
-                recipientDatabase.applyStorageSyncUpdates(mergeResult.getLocalContactInserts(), mergeResult.getLocalContactUpdates(), mergeResult.getLocalGroupV1Inserts(), mergeResult.getLocalGroupV1Updates());
+                recipientDatabase.applyStorageSyncUpdates(mergeResult.getLocalContactInserts(), mergeResult.getLocalContactUpdates(), mergeResult.getLocalGroupV1Inserts(), mergeResult.getLocalGroupV1Updates(), mergeResult.getLocalGroupV2Inserts(), mergeResult.getLocalGroupV2Updates());
                 storageKeyDatabase.applyStorageSyncUpdates(mergeResult.getLocalUnknownInserts(), mergeResult.getLocalUnknownDeletes());
                 StorageSyncHelper.applyAccountStorageSyncUpdates(context, mergeResult.getLocalAccountUpdate());
                 needsMultiDeviceSync = true;
@@ -271,7 +270,11 @@ public class StorageSyncJob extends BaseJob {
                 case ManifestRecord.Identifier.Type.GROUPV2_VALUE:
                     RecipientSettings settings = recipientDatabase.getByStorageId(id.getRaw());
                     if (settings != null) {
-                        records.add(StorageSyncModels.localToRemoteRecord(settings, archivedRecipients));
+                        if (settings.getGroupType() == RecipientDatabase.GroupType.SIGNAL_V2 && settings.getGroupMasterKey() == null) {
+                            Log.w(TAG, "Missing master key on gv2 recipient");
+                        } else {
+                            records.add(StorageSyncModels.localToRemoteRecord(settings, archivedRecipients));
+                        }
 
                     } else {
                         Log.w(TAG, "Missing local recipient model! Type: " + id.getType());

@@ -3,7 +3,10 @@ package su.sres.securesms.scribbles;
 import android.Manifest;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Point;
+import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -13,15 +16,19 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import su.sres.securesms.R;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.imageeditor.ColorableRenderer;
 import su.sres.securesms.imageeditor.ImageEditorView;
 import su.sres.securesms.imageeditor.Renderer;
 import su.sres.securesms.imageeditor.model.EditorElement;
 import su.sres.securesms.imageeditor.model.EditorModel;
+import su.sres.securesms.imageeditor.renderers.FaceBlurRenderer;
 import su.sres.securesms.imageeditor.renderers.MultiLineTextRenderer;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediasend.MediaSendPageFragment;
 import su.sres.securesms.mms.MediaConstraints;
@@ -29,15 +36,18 @@ import su.sres.securesms.mms.PushMediaConstraints;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.scribbles.widget.VerticalSlideColorPicker;
-import su.sres.securesms.stickers.StickerSearchRepository;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.ParcelUtil;
 import su.sres.securesms.util.SaveAttachmentTask;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
+import su.sres.securesms.util.views.SimpleProgressDialog;
+import org.whispersystems.libsignal.util.Pair;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Collections;
+import java.util.List;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -53,6 +63,8 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     private static final int SELECT_STICKER_REQUEST_CODE = 124;
 
     private EditorModel restoredModel;
+
+    private Pair<Uri, FaceDetectionResult> cachedFaceDetection;
 
     @Nullable private EditorElement currentSelection;
     private int           imageMaxHeight;
@@ -84,10 +96,10 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
         }
     }
 
-    private Uri             imageUri;
-    private Controller      controller;
-    private ImageEditorHud  imageEditorHud;
-    private ImageEditorView imageEditorView;
+    private Uri              imageUri;
+    private Controller       controller;
+    private ImageEditorHud   imageEditorHud;
+    private ImageEditorView  imageEditorView;
 
     public static ImageEditorFragment newInstanceForAvatar(@NonNull Uri imageUri) {
         ImageEditorFragment fragment = newInstance(imageUri);
@@ -168,6 +180,11 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
         }
 
         imageEditorView.setModel(editorModel);
+
+        if (!SignalStore.tooltips().hasSeenBlurHudIconTooltip()) {
+            imageEditorHud.showBlurHudTooltip();
+            SignalStore.tooltips().markBlurHudIconTooltipSeen();
+        }
 
         refreshUniqueColors();
     }
@@ -279,12 +296,18 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
             }
 
             case DRAW: {
-                imageEditorView.startDrawing(0.01f, Paint.Cap.ROUND);
+                imageEditorView.startDrawing(0.01f, Paint.Cap.ROUND, false);
                 break;
             }
 
             case HIGHLIGHT: {
-                imageEditorView.startDrawing(0.03f, Paint.Cap.SQUARE);
+                imageEditorView.startDrawing(0.03f, Paint.Cap.SQUARE, false);
+                break;
+            }
+
+            case BLUR: {
+                imageEditorView.startDrawing(0.052f, Paint.Cap.ROUND, true);
+                imageEditorHud.setBlurFacesToggleEnabled(imageEditorView.getModel().hasFaceRenderer());
                 break;
             }
 
@@ -317,9 +340,66 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     }
 
     @Override
+    public void onBlurFacesToggled(boolean enabled) {
+        EditorModel   model     = imageEditorView.getModel();
+        EditorElement mainImage = model.getMainImage();
+        if (mainImage == null) {
+            imageEditorHud.hideBlurToast();
+            return;
+        }
+
+        if (!enabled) {
+            model.clearFaceRenderers();
+            imageEditorHud.hideBlurToast();
+            return;
+        }
+
+        Matrix inverseCropPosition = model.getInverseCropPosition();
+
+        if (cachedFaceDetection != null) {
+            if (cachedFaceDetection.first().equals(getUri()) && cachedFaceDetection.second().position.equals(inverseCropPosition)) {
+                renderFaceBlurs(cachedFaceDetection.second());
+                imageEditorHud.showBlurToast();
+                return;
+            } else {
+                cachedFaceDetection = null;
+            }
+        }
+
+        AlertDialog progress = SimpleProgressDialog.show(requireContext());
+        mainImage.getFlags().setChildrenVisible(false);
+
+        SimpleTask.run(getLifecycle(), () -> {
+            if (mainImage.getRenderer() != null) {
+                Bitmap bitmap = ((UriGlideRenderer) mainImage.getRenderer()).getBitmap();
+                if (bitmap != null) {
+                    FaceDetector detector = new FirebaseFaceDetector();
+
+                    Point size = model.getOutputSizeMaxWidth(1000);
+                    Bitmap render = model.render(ApplicationDependencies.getApplication(), size);
+                    try {
+                        return new FaceDetectionResult(detector.detect(render), new Point(render.getWidth(), render.getHeight()), inverseCropPosition);
+                    } finally {
+                        render.recycle();
+                        mainImage.getFlags().reset();
+                    }
+                }
+            }
+
+            return new FaceDetectionResult(Collections.emptyList(), new Point(0, 0), new Matrix());
+        }, result -> {
+            mainImage.getFlags().reset();
+            renderFaceBlurs(result);
+            progress.dismiss();
+            imageEditorHud.showBlurToast();
+        });
+    }
+
+    @Override
     public void onUndo() {
         imageEditorView.getModel().undo();
         refreshUniqueColors();
+        imageEditorHud.setBlurFacesToggleEnabled(imageEditorView.getModel().hasFaceRenderer());
     }
 
     @Override
@@ -396,6 +476,29 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
         imageEditorHud.setUndoAvailability(undoAvailable);
     }
 
+    private void renderFaceBlurs(@NonNull FaceDetectionResult result) {
+        List<RectF> faces = result.rects;
+        Point       size  = result.imageSize;
+
+        if (faces.isEmpty()) {
+            cachedFaceDetection = null;
+            return;
+        }
+
+        imageEditorView.getModel().pushUndoPoint();
+
+        for (RectF face : faces) {
+            FaceBlurRenderer faceBlurRenderer = new FaceBlurRenderer(face, size);
+            EditorElement element = new EditorElement(faceBlurRenderer, EditorModel.Z_MASK);
+            element.getLocalMatrix().set(result.position);
+            imageEditorView.getModel().addElementWithoutPushUndo(element);
+        }
+
+        imageEditorView.invalidate();
+
+        cachedFaceDetection = new Pair<>(getUri(), result);
+    }
+
     private final ImageEditorView.TapListener selectionListener = new ImageEditorView.TapListener() {
 
         @Override
@@ -448,5 +551,17 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
         void onRequestFullScreen(boolean fullScreen, boolean hideKeyboard);
 
         void onDoneEditing();
+    }
+
+    private static class FaceDetectionResult {
+        private final List<RectF> rects;
+        private final Point       imageSize;
+        private final Matrix      position;
+
+        private FaceDetectionResult(@NonNull List<RectF> rects, @NonNull Point imageSize, @NonNull Matrix position) {
+            this.rects     = rects;
+            this.imageSize = imageSize;
+            this.position  = new Matrix(position);
+        }
     }
 }

@@ -9,16 +9,16 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.notifications.MessageNotifier;
+import su.sres.securesms.messages.BackgroundMessageRetriever;
+import su.sres.securesms.messages.RestStrategy;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 
 /**
- * Pulls down messages. Used when we fail to pull down messages in {@link FcmService}.
+ * Pulls down messages. Used when we fail to pull down messages in {@link FcmReceiveService}.
  */
 @RequiresApi(26)
 public class FcmJobService extends JobService {
@@ -41,15 +41,15 @@ public class FcmJobService extends JobService {
     public boolean onStartJob(JobParameters params) {
         Log.d(TAG, "onStartJob()");
 
-        if (MessageRetriever.shouldIgnoreFetch(this)) {
+        if (BackgroundMessageRetriever.shouldIgnoreFetch(this)) {
             Log.i(TAG, "App is foregrounded. No need to run.");
             return false;
         }
 
         SignalExecutors.UNBOUNDED.execute(() -> {
-            Context          context   = getApplicationContext();
-            MessageRetriever retriever = ApplicationDependencies.getMessageRetriever();
-            boolean          success   = retriever.retrieveMessages(context, new RestStrategy(), new RestStrategy());
+            Context                    context   = getApplicationContext();
+            BackgroundMessageRetriever retriever = ApplicationDependencies.getBackgroundMessageRetriever();
+            boolean                    success   = retriever.retrieveMessages(context, new RestStrategy(), new RestStrategy());
 
             if (success) {
                 Log.i(TAG, "Successfully retrieved messages.");

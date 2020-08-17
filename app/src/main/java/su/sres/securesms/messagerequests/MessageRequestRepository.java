@@ -21,7 +21,6 @@ import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.jobs.MultiDeviceMessageRequestResponseJob;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.MarkReadReceiver;
-import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -120,7 +119,7 @@ final class MessageRequestRepository {
 
                 List<MessagingDatabase.MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context)
                         .setEntireThreadRead(threadId);
-                MessageNotifier.updateNotification(context);
+                ApplicationDependencies.getMessageNotifier().updateNotification(context);
                 MarkReadReceiver.process(context, messageIds);
 
                 if (TextSecurePreferences.isMultiDevice(context)) {
@@ -190,7 +189,7 @@ final class MessageRequestRepository {
 
             List<MessagingDatabase.MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context)
                     .setEntireThreadRead(threadId);
-            MessageNotifier.updateNotification(context);
+            ApplicationDependencies.getMessageNotifier().updateNotification(context);
             MarkReadReceiver.process(context, messageIds);
 
             if (TextSecurePreferences.isMultiDevice(context)) {
