@@ -92,7 +92,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
 
         if (timeSinceLastRefresh > REFRESH_INTERVAL) {
             Log.i(TAG, "Scheduling a service configuration refresh. Time since last schedule: " + timeSinceLastRefresh + " ms");
-            ApplicationDependencies.getJobManager().add(new CertificateRefreshJob());
+            ApplicationDependencies.getJobManager().add(new ServiceConfigRefreshJob());
         } else {
             Log.i(TAG, "Holdtime not expired. Skipping.");
         }
