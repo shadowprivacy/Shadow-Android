@@ -22,7 +22,7 @@ public class ConfigurationInfo {
 
     @JsonProperty
     @JsonDeserialize(using = SenderCertificate.ByteArrayDesieralizer.class)
-    private byte[] zkPublicKey;
+    private byte[] serverZkPublic;
 
     @JsonProperty
     private String supportEmail;
@@ -44,7 +44,7 @@ public class ConfigurationInfo {
     }
 
     public byte[] getZkPublicKey() {
-        return zkPublicKey;
+        return serverZkPublic;
     }
 
     public String getSupportEmail() {

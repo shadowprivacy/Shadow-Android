@@ -14,6 +14,7 @@ public final class SignalStore {
     private static final String LAST_PREKEY_REFRESH_TIME      = "last_prekey_refresh_time";
     private static final String MESSAGE_REQUEST_ENABLE_TIME   = "message_request_enable_time";
     private static final String LAST_CERT_REFRESH_TIME        = "last_cert_refresh_time";
+    private static final String LAST_SERVCONF_REFRESH_TIME    = "last_service_config_refresh_time";
     private static final String LAST_LICENSE_REFRESH_TIME     = "last_license_refresh_time";
 
     private SignalStore() {}
@@ -70,6 +71,14 @@ public final class SignalStore {
 
     public static void setLastCertRefreshTime(long time) {
         putLong(LAST_CERT_REFRESH_TIME, time);
+    }
+
+    public static long getLastServiceConfigRefreshTime() {
+        return getStore().getLong(LAST_SERVCONF_REFRESH_TIME, 0);
+    }
+
+    public static void setLastServiceConfigRefreshTime(long time) {
+        putLong(LAST_SERVCONF_REFRESH_TIME, time);
     }
 
     public static long getLastLicenseRefreshTime() {

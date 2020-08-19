@@ -92,6 +92,7 @@ public final class JobManagerFactories {
             put(RemoteDeleteSendJob.KEY,                   new RemoteDeleteSendJob.Factory());
             put(RequestGroupInfoJob.KEY,                   new RequestGroupInfoJob.Factory());
             put(ResumableUploadSpecJob.KEY,                new ResumableUploadSpecJob.Factory());
+            put(ServiceConfigRefreshJob.KEY,               new ServiceConfigRefreshJob.Factory());
             put(StorageAccountRestoreJob.KEY,              new StorageAccountRestoreJob.Factory());
             put(RequestGroupV2InfoJob.KEY,                 new RequestGroupV2InfoJob.Factory());
             put(WakeGroupV2Job.KEY,                        new WakeGroupV2Job.Factory());

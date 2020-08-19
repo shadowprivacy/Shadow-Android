@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Open Whisper Systems, modifications (C) 2019 Sophisticated Research
+ * Copyright (C) 2013 Open Whisper Systems, modifications (C) 2020 Anton Alipov, sole trader
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,6 +45,7 @@ import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
 import su.sres.securesms.jobs.RefreshPreKeysJob;
+import su.sres.securesms.jobs.ServiceConfigRefreshJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.AndroidLogger;
 import su.sres.securesms.logging.CustomSignalProtocolLogger;
@@ -479,6 +480,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     RefreshPreKeysJob.scheduleIfNecessary();
     launchCertificateRefresh();
     launchLicenseRefresh();
+    launchServiceConfigRefresh();
 
     initializedOnCreate = true;
   }
@@ -497,5 +499,13 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
       } else {
           Log.i(TAG, "The client is not registered. License refresh will not be triggered.");
       }
+  }
+
+  private void launchServiceConfigRefresh() {
+    if (TextSecurePreferences.isPushRegistered(this)) {
+      ServiceConfigRefreshJob.scheduleIfNecessary();
+    } else {
+      Log.i(TAG, "The client is not registered. Service configuration refresh will not be triggered.");
+    }
   }
 }

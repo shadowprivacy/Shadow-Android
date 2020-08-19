@@ -219,6 +219,7 @@ public final class CodeVerificationRequest {
                         statusUrl  != null                                         &&
                         storageUrl != null                                         &&
                         unidentifiedAccessCaPublicKey != null                      &&
+                        zkPublicKey != null                                        &&
                         ((cloudCertABytes != null) || (cloudCertBBytes != null))
 //                   && ((storageCertABytes != null) || (storageCertBBytes != null))
         ) {
