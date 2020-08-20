@@ -39,15 +39,8 @@ public class SignalServiceNetworkAccess {
 
     final List<Interceptor> interceptors = Collections.singletonList(new UserAgentInterceptor());
     final Optional<Dns>     dns          = Optional.of(DNS);
-    final byte[] zkGroupServerPublicParams;
 
     public SignalServiceNetworkAccess(Context context) {
-
-        try {
-            zkGroupServerPublicParams = Base64.decode(BuildConfig.ZKGROUP_SERVER_PUBLIC_PARAMS);
-        } catch (IOException e) {
-            throw new AssertionError(e);
-        }
 
 
 /**        this.Configuration = new SignalServiceConfiguration(new SignalServiceUrl[]{new SignalServiceUrl(SignalStore.serviceConfigurationValues().getShadowUrl(), new SignalServiceTrustStore(context))},
@@ -55,8 +48,7 @@ public class SignalServiceNetworkAccess {
                 new SignalStorageUrl[]{new SignalStorageUrl(SignalStore.serviceConfigurationValues().getStorageUrl(), new SignalServiceTrustStore(context))}, interceptors,
                 zkGroupServerPublicParams); */
 
-        renewConfiguration(context, interceptors, dns, zkGroupServerPublicParams);
-
+        renewConfiguration(context, interceptors, dns);
 
     }
 
@@ -69,17 +61,17 @@ public class SignalServiceNetworkAccess {
         return this.Configuration;
     }
 
-    public void renewConfiguration(Context context, List<Interceptor> interceptors, Optional<Dns> dns, byte[] zkGroupServerPublicParams) {
+    public void renewConfiguration(Context context, List<Interceptor> interceptors, Optional<Dns> dns) {
         this.Configuration = new SignalServiceConfiguration(new SignalServiceUrl[]{new SignalServiceUrl(SignalStore.serviceConfigurationValues().getShadowUrl(), new SignalServiceTrustStore(context))},
                 makeSignalCdnUrlMapFor(new SignalCdnUrl[] {new SignalCdnUrl(SignalStore.serviceConfigurationValues().getCloudUrl(), new SignalServiceTrustStore(context))},
                                        new SignalCdnUrl[] {new SignalCdnUrl(SignalStore.serviceConfigurationValues().getCloud2Url(), new SignalServiceTrustStore(context))}),
                 new SignalStorageUrl[]{new SignalStorageUrl(SignalStore.serviceConfigurationValues().getStorageUrl(), new SignalServiceTrustStore(context))}, interceptors,
                 dns,
-                zkGroupServerPublicParams);
+                SignalStore.serviceConfigurationValues().getZkPublicKey());
     }
 
     public void renewConfiguration(Context context) {
-        renewConfiguration(context, interceptors, dns, zkGroupServerPublicParams);
+        renewConfiguration(context, interceptors, dns);
     }
 
     private static Map<Integer, SignalCdnUrl[]> makeSignalCdnUrlMapFor(SignalCdnUrl[] cdn0Urls, SignalCdnUrl[] cdn2Urls) {

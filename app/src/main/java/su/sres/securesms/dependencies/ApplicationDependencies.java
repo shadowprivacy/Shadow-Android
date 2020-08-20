@@ -74,6 +74,7 @@ public class ApplicationDependencies {
 
     @MainThread
     public static synchronized void networkDependentProviderInit(@NonNull Provider provider) {
+
         if (ApplicationDependencies.provider != null) {
             throw new IllegalStateException("Already initialized!");
         }
@@ -264,15 +265,6 @@ public class ApplicationDependencies {
 
     private static void assertNetworkDependentInitialization() {
         if (application == null || provider == null) {
-
-            // remove after testing
-            if (application == null) {
-                Log.w(TAG, "Application is null");
-            }
-            if (provider == null) {
-                Log.w(TAG, "Provider is null");
-            }
-
             throw new UninitializedException();
         }
     }

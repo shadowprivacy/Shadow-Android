@@ -173,7 +173,11 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
           ApplicationDependencies.getRecipientCache().warmUp();
           ApplicationDependencies.getFrameRateTracker().begin();
           ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
-          catchUpOnMessages();
+
+          // the if clause is to prevent creation of message receiver until we have the cloud URL in store
+          if (TextSecurePreferences.isPushRegistered(this)) {
+            catchUpOnMessages();
+          }
 
           initializedOnStart = true;
 
@@ -197,11 +201,14 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     isAppVisible = false;
     Log.i(TAG, "App is no longer visible.");
     KeyCachingService.onAppBackgrounded(this);
-    ApplicationDependencies.getMessageNotifier().clearVisibleThread();
+
+    // the if clause is to prevent crash when going out of focus in unprovisioned state
+    if (initializedOnCreate) {
+      ApplicationDependencies.getMessageNotifier().clearVisibleThread();
+    }
 
     initWorker.execute(() -> {
                 ApplicationDependencies.getFrameRateTracker().end();
-
             });
 
     initializedOnStart = false;

@@ -137,7 +137,7 @@ public final class ServiceConfigurationValues {
 
     public @Nullable
     byte[] getZkPublicKey() {
-        return store.getBlob(ZK_PUBLIC_KEY, null);
+        return store.getBlob(ZK_PUBLIC_KEY, new byte[161]);
     }
 
     public int getCurrentCertVer() {
@@ -153,7 +153,8 @@ public final class ServiceConfigurationValues {
     }
 
     public boolean isLicensed() {
-        return store.getBoolean(IS_LICENSED, false);
+       // return store.getBoolean(IS_LICENSED, false);
+        return true;
     }
 
     public @Nullable byte [] retrieveLicense() {
