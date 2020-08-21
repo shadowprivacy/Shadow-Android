@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -79,8 +80,10 @@ import su.sres.securesms.util.DynamicDarkToolbarTheme;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.IdentityUtil;
+import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThemeUtil;
+import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.ListenableFuture;
 import su.sres.securesms.util.concurrent.SimpleTask;
@@ -737,8 +740,12 @@ public class RecipientPreferenceActivity extends PassphraseRequiredActionBarActi
             }
 
             @Override
-            public void onInSecureCallClicked() {
-                CommunicationActions.startInsecureCall(requireActivity(), recipient.get());
+            public void onLongClick() {
+                if (recipient.get().hasE164()) {
+                    Util.copyToClipboard(requireContext(), recipient.get().requireE164());
+                    ServiceUtil.getVibrator(requireContext()).vibrate(250);
+                    Toast.makeText(requireContext(), R.string.RecipientBottomSheet_copied_to_clipboard, Toast.LENGTH_SHORT).show();
+                }
             }
         }
 

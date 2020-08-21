@@ -86,10 +86,6 @@ public class StorageSyncJob extends BaseJob {
 
     @Override
     protected void onRun() throws IOException, RetryLaterException {
- //       if (!FeatureFlags.pinsForAll()) {
- //           Log.i(TAG, "Not enabled. Skipping.");
- //           return;
- //       }
 
         if (!TextSecurePreferences.isPushRegistered(context)) {
             Log.i(TAG, "Not registered. Skipping.");

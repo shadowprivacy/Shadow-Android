@@ -24,6 +24,7 @@ import androidx.lifecycle.ViewModelProviders;
 import su.sres.securesms.R;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.groups.GroupId;
+import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.util.ThemeUtil;
 
 public class CustomNotificationsDialogFragment extends DialogFragment {
@@ -101,7 +102,7 @@ public class CustomNotificationsDialogFragment extends DialogFragment {
 
         Toolbar toolbar = view.findViewById(R.id.custom_notifications_toolbar);
 
-        toolbar.setNavigationOnClickListener(v -> requireActivity().finish());
+        toolbar.setNavigationOnClickListener(v -> dismissAllowingStateLoss());
 
         CompoundButton.OnCheckedChangeListener onCustomNotificationsSwitchCheckChangedListener = (buttonView, isChecked) -> {
             viewModel.setHasCustomNotifications(isChecked);
@@ -122,6 +123,11 @@ public class CustomNotificationsDialogFragment extends DialogFragment {
             soundSelector.setVisibility(hasCustomNotifications ? View.VISIBLE : View.GONE);
             vibrateSwitch.setVisibility(hasCustomNotifications ? View.VISIBLE : View.GONE);
         });
+
+        if (!NotificationChannels.supported()) {
+            customNotificationsSwitch.setVisibility(View.GONE);
+            view.findViewById(R.id.custom_notifications_enable_label).setVisibility(View.GONE);
+        }
 
         CompoundButton.OnCheckedChangeListener onVibrateSwitchCheckChangedListener = (buttonView, isChecked) -> {
             viewModel.setMessageVibrate(isChecked ? RecipientDatabase.VibrateState.ENABLED : RecipientDatabase.VibrateState.DISABLED);

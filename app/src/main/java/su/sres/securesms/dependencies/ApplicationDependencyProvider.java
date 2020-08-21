@@ -33,6 +33,8 @@ import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
+
+import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.SignalServiceMessageSender;
@@ -92,7 +94,8 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
                 Optional.fromNullable(IncomingMessageObserver.getPipe()),
                 Optional.fromNullable(IncomingMessageObserver.getUnidentifiedPipe()),
                 Optional.of(new SecurityEventListener(context)),
-                provideClientZkOperations().getProfileOperations());
+                provideClientZkOperations().getProfileOperations(),
+                SignalExecutors.UNBOUNDED);
     }
 
     @Override

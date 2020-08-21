@@ -57,7 +57,7 @@ public final class FeatureFlags {
     private static final String REMOTE_DELETE              = "android.remoteDelete";
     private static final String PROFILE_FOR_CALLING        = "android.profileForCalling";
     private static final String CALLING_PIP                = "android.callingPip";
-    private static final String NEW_GROUP_UI               = "android.newGroupUI";
+    private static final String NEW_GROUP_UI_KILL_SWITCH   = "android.newGroupUI.KillSwitch";
     private static final String VERSIONED_PROFILES         = "android.versionedProfiles";
     private static final String GROUPS_V2                  = "android.groupsv2";
     private static final String GROUPS_V2_CREATE           = "android.groupsv2.create";
@@ -76,12 +76,11 @@ public final class FeatureFlags {
             REMOTE_DELETE,
             PROFILE_FOR_CALLING,
             CALLING_PIP,
-            NEW_GROUP_UI,
+            NEW_GROUP_UI_KILL_SWITCH,
             VERSIONED_PROFILES,
             GROUPS_V2,
             GROUPS_V2_CREATE,
             GROUPS_V2_CAPACITY,
-            NEW_GROUP_UI,
             GROUPS_V2_INTERNAL_TEST
     );
 
@@ -127,10 +126,18 @@ public final class FeatureFlags {
      */
     private static final Map<String, OnFlagChange> FLAG_CHANGE_LISTENERS = new HashMap<String, OnFlagChange>() {{
         put(MESSAGE_REQUESTS,   (change) -> SignalStore.setMessageRequestEnableTime(change == Change.ENABLED ? System.currentTimeMillis() : 0));
-        put(VERSIONED_PROFILES, (change) -> ApplicationDependencies.getJobManager().add(new ProfileUploadJob()));
-        put(GROUPS_V2,          (change) -> ApplicationDependencies.getJobManager().startChain(new RefreshAttributesJob())
-                .then(new RefreshOwnProfileJob())
-                .enqueue());
+        put(VERSIONED_PROFILES, (change) -> {
+            if (change == Change.ENABLED) {
+                ApplicationDependencies.getJobManager().add(new ProfileUploadJob());
+            }
+        });
+        put(GROUPS_V2, (change) -> {
+            if (change == Change.ENABLED) {
+                ApplicationDependencies.getJobManager().startChain(new RefreshAttributesJob())
+                        .then(new RefreshOwnProfileJob())
+                        .enqueue();
+            }
+        });
     }};
 
     private static final Map<String, Object> REMOTE_VALUES = new TreeMap<>();
@@ -227,7 +234,7 @@ public final class FeatureFlags {
 
     /** New group UI elements. */
     public static boolean newGroupUI() {
-        return getBoolean(NEW_GROUP_UI, false);
+        return !getBoolean(NEW_GROUP_UI_KILL_SWITCH, false);
     }
 
     /** Read and write versioned profile information. */

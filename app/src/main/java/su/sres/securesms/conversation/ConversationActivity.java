@@ -251,6 +251,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -284,13 +285,13 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
     private static final String TAG = ConversationActivity.class.getSimpleName();
 
-    public static final String RECIPIENT_EXTRA = "recipient_id";
-    public static final String THREAD_ID_EXTRA = "thread_id";
-    public static final String TEXT_EXTRA = "draft_text";
-    public static final String MEDIA_EXTRA = "media_list";
-    public static final String STICKER_EXTRA = "sticker_extra";
-    public static final String DISTRIBUTION_TYPE_EXTRA = "distribution_type";
-    public static final String STARTING_POSITION_EXTRA = "starting_position";
+    public static final String RECIPIENT_EXTRA                   = "recipient_id";
+    public static final String THREAD_ID_EXTRA                   = "thread_id";
+    public static final String TEXT_EXTRA                        = "draft_text";
+    public static final String MEDIA_EXTRA                       = "media_list";
+    public static final String STICKER_EXTRA                     = "sticker_extra";
+    public static final String DISTRIBUTION_TYPE_EXTRA           = "distribution_type";
+    public static final String STARTING_POSITION_EXTRA           = "starting_position";
 
     private static final int PICK_GALLERY = 1;
     private static final int PICK_DOCUMENT = 2;
@@ -341,6 +342,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     private ConversationStickerViewModel stickerViewModel;
     private ConversationViewModel viewModel;
     private InviteReminderModel inviteReminderModel;
+    private ConversationGroupViewModel   groupViewModel;
 
     private LiveRecipient recipient;
     private long threadId;
@@ -359,7 +361,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                        @NonNull RecipientId recipientId,
                        long threadId,
                        int distributionType,
-                       int startingPosition) {
+                       int startingPosition)
+    {
         Intent intent = new Intent(context, ConversationActivity.class);
         intent.putExtra(ConversationActivity.RECIPIENT_EXTRA, recipientId);
         intent.putExtra(ConversationActivity.THREAD_ID_EXTRA, threadId);
@@ -406,6 +409,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         initializeSearchObserver();
         initializeStickerObserver();
         initializeViewModel();
+        initializeGroupViewModel();
+        initializeEnabledCheck();
         initializeSecurity(recipient.get().isRegistered(), isDefaultSms).addListener(new AssertedSuccessListener<Boolean>() {
             @Override
             public void onSuccess(Boolean result) {
@@ -486,7 +491,6 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         dynamicLanguage.onResume(this);
 
         EventBus.getDefault().register(this);
-        initializeEnabledCheck();
         initializeMmsEnabledCheck();
         initializeIdentityRecords();
         composeText.setTransport(sendButton.getSelectedTransport());
@@ -706,8 +710,13 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         MenuInflater inflater = this.getMenuInflater();
         menu.clear();
 
+        ConversationGroupViewModel.GroupActiveState groupActiveState = groupViewModel.getGroupActiveState().getValue();
+        boolean isActiveGroup             = groupActiveState != null && groupActiveState.isActiveGroup();
+        boolean isActiveV2Group           = groupActiveState != null && groupActiveState.isActiveV2Group();
+        boolean isInActiveGroup           = groupActiveState != null && !groupActiveState.isActiveGroup();
+
         if (isInMessageRequest()) {
-            if (isActiveGroup()) {
+            if (isActiveGroup) {
                 inflater.inflate(R.menu.conversation_message_requests_group, menu);
             }
 
@@ -722,11 +731,15 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
         if (isSecureText) {
             if (recipient.get().getExpireMessages() > 0) {
-                inflater.inflate(R.menu.conversation_expiring_on, menu);
+                if (!isInActiveGroup) {
+                    inflater.inflate(R.menu.conversation_expiring_on, menu);
+                }
 
                 titleView.showExpiring(recipient);
             } else {
-                inflater.inflate(R.menu.conversation_expiring_off, menu);
+                if (!isInActiveGroup) {
+                    inflater.inflate(R.menu.conversation_expiring_off, menu);
+                }
                 titleView.clearExpiring();
             }
         }
@@ -744,9 +757,9 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
                 } else {
                     menu.findItem(R.id.menu_distribution_conversation).setChecked(true);
                 }
-            } else if (isActiveV2Group()) {
+            } else if (isActiveV2Group || isActiveGroup && FeatureFlags.newGroupUI()) {
                 inflater.inflate(R.menu.conversation_push_group_v2_options, menu);
-            } else if (isActiveGroup()) {
+            } else if (isActiveGroup) {
                 inflater.inflate(R.menu.conversation_push_group_options, menu);
             }
         }
@@ -759,9 +772,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
             inflater.inflate(R.menu.conversation_insecure, menu);
         }
 
-        if (recipient != null && recipient.get().isMuted())
-            inflater.inflate(R.menu.conversation_muted, menu);
-        else inflater.inflate(R.menu.conversation_unmuted, menu);
+        if (recipient != null && recipient.get().isMuted()) inflater.inflate(R.menu.conversation_muted, menu);
+        else                                                inflater.inflate(R.menu.conversation_unmuted, menu);
 
 //        if (isSingleConversation() && getRecipient().getContactUri() == null) {
 //            inflater.inflate(R.menu.conversation_add_to_contacts, menu);
@@ -791,8 +803,14 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
             hideMenuItem(menu, R.id.menu_mute_notifications);
         }
 
-        if (isActiveV2Group()) {
+        if (FeatureFlags.newGroupUI()) {
+            hideMenuItem(menu, R.id.menu_group_recipients);
+        }
+
+        if (isActiveV2Group) {
             hideMenuItem(menu, R.id.menu_mute_notifications);
+            hideMenuItem(menu, R.id.menu_conversation_settings);
+        } else if (isActiveGroup) {
             hideMenuItem(menu, R.id.menu_conversation_settings);
         }
 
@@ -1058,10 +1076,8 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     }
 
     private void handleConversationSettings() {
-        if (FeatureFlags.newGroupUI() && isGroupConversation()) {
-            startActivitySceneTransition(ManageGroupActivity.newIntent(this, getRecipient().requireGroupId()),
-                    titleView.findViewById(R.id.contact_photo_image),
-                    "avatar");
+        if (FeatureFlags.newGroupUI() && isPushGroupConversation()) {
+            handleManagePushGroup(this);
             return;
         }
 
@@ -1223,7 +1239,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         LeaveGroupDialog.handleLeavePushGroup(ConversationActivity.this,
                 getLifecycle(),
                 getRecipient().requireGroupId().requirePush(),
-                this::initializeEnabledCheck);
+                null);
     }
 
     private void handleEditPushGroupV1(Context context) {
@@ -1234,7 +1250,9 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
     private void handleManagePushGroup(Context context) {
         if(TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed()) {
-            startActivityForResult(ManageGroupActivity.newIntent(ConversationActivity.this, recipient.get().requireGroupId()), GROUP_EDIT);
+            startActivityForResult(ManageGroupActivity.newIntent(ConversationActivity.this, recipient.get().requireGroupId().requirePush()),
+                    GROUP_EDIT,
+                    ManageGroupActivity.createTransitionBundle(this, titleView.findViewById(R.id.contact_photo_image)));
         }
     }
 
@@ -1340,7 +1358,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     }
 
     private void handleUnverifiedRecipients() {
-        List<Recipient> unverifiedRecipients = identityRecords.getUnverifiedRecipients(this);
+        List<Recipient>      unverifiedRecipients = identityRecords.getUnverifiedRecipients();
         List<IdentityRecord> unverifiedRecords = identityRecords.getUnverifiedRecords();
         String message = IdentityUtil.getUnverifiedSendDialogDescription(this, unverifiedRecipients);
 
@@ -1363,7 +1381,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     }
 
     private void handleUntrustedRecipients() {
-        List<Recipient> untrustedRecipients = identityRecords.getUntrustedRecipients(this);
+        List<Recipient>      untrustedRecipients = identityRecords.getUntrustedRecipients();
         List<IdentityRecord> untrustedRecords = identityRecords.getUntrustedRecords();
         String untrustedMessage = IdentityUtil.getUntrustedSendDialogDescription(this, untrustedRecipients);
 
@@ -1458,10 +1476,12 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     }
 
     private void initializeEnabledCheck() {
-        boolean enabled = !(isPushGroupConversation() && !isActiveGroup()) && SignalStore.serviceConfigurationValues().isLicensed();
-        inputPanel.setEnabled(enabled);
-        sendButton.setEnabled(enabled);
-        attachButton.setEnabled(enabled);
+        groupViewModel.getGroupActiveState().observe(this, state -> {
+            boolean enabled = state == null || !(isPushGroupConversation() && !state.isActiveGroup());
+            inputPanel.setEnabled(enabled);
+            sendButton.setEnabled(enabled);
+            attachButton.setEnabled(enabled);
+        });
     }
 
     private ListenableFuture<Boolean> initializeDraftFromDatabase() {
@@ -1668,25 +1688,24 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
             protected @NonNull
             Pair<IdentityRecordList, String> doInBackground(Recipient... params) {
                 IdentityDatabase identityDatabase = DatabaseFactory.getIdentityDatabase(ConversationActivity.this);
-                IdentityRecordList identityRecordList = new IdentityRecordList();
-                List<Recipient> recipients = new LinkedList<>();
+                List<Recipient>                     recipients;
 
                 if (params[0].isGroup()) {
-                    recipients.addAll(DatabaseFactory.getGroupDatabase(ConversationActivity.this)
-                            .getGroupMembers(params[0].requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF));
+                    recipients = DatabaseFactory.getGroupDatabase(ConversationActivity.this)
+                            .getGroupMembers(params[0].requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
                 } else {
-                    recipients.add(params[0]);
+                    recipients = Collections.singletonList(params[0]);
                 }
 
-                for (Recipient recipient : recipients) {
-                    Log.i(TAG, "Loading identity for: " + recipient.getId());
-                    identityRecordList.add(identityDatabase.getIdentity(recipient.getId()));
-                }
+                long               startTime          =  System.currentTimeMillis();
+                IdentityRecordList identityRecordList = identityDatabase.getIdentities(recipients);
+
+                Log.i(TAG, String.format(Locale.US, "Loaded %d identities in %d ms", recipients.size(), System.currentTimeMillis() - startTime));
 
                 String message = null;
 
                 if (identityRecordList.isUnverified()) {
-                    message = IdentityUtil.getUnverifiedBannerDescription(ConversationActivity.this, identityRecordList.getUnverifiedRecipients(ConversationActivity.this));
+                    message = IdentityUtil.getUnverifiedBannerDescription(ConversationActivity.this, identityRecordList.getUnverifiedRecipients());
                 }
 
                 return new Pair<>(identityRecordList, message);
@@ -1895,6 +1914,12 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         this.viewModel = ViewModelProviders.of(this, new ConversationViewModel.Factory()).get(ConversationViewModel.class);
     }
 
+    private void initializeGroupViewModel() {
+        groupViewModel = ViewModelProviders.of(this, new ConversationGroupViewModel.Factory()).get(ConversationGroupViewModel.class);
+        recipient.observe(this, groupViewModel::onRecipientChange);
+        groupViewModel.getGroupActiveState().observe(this, unused -> invalidateOptionsMenu());
+    }
+
     private void showStickerIntroductionTooltip() {
         TextSecurePreferences.setMediaKeyboardMode(this, MediaKeyboardMode.STICKER);
         inputPanel.setMediaKeyboardToggleMode(true);
@@ -1991,6 +2016,10 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
         if (searchViewItem == null || !searchViewItem.isActionViewExpanded()) {
             invalidateOptionsMenu();
+        }
+
+        if (groupViewModel != null) {
+            groupViewModel.onRecipientChange(recipient);
         }
     }
 
@@ -2251,13 +2280,6 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
         Optional<GroupRecord> record = DatabaseFactory.getGroupDatabase(this).getGroup(getRecipient().getId());
         return record.isPresent() && record.get().isActive();
-    }
-
-    private boolean isActiveV2Group() {
-        if (!isGroupConversation()) return false;
-
-        Optional<GroupRecord> record = DatabaseFactory.getGroupDatabase(this).getGroup(getRecipient().getId());
-        return record.isPresent() && record.get().isActive() && record.get().isV2Group();
     }
 
     @SuppressWarnings("SimplifiableIfStatement")

@@ -88,7 +88,7 @@ public class NewConversationActivity extends ContactSelectionActivity
     switch (item.getItemId()) {
       case android.R.id.home:   super.onBackPressed();   return true;
       case R.id.menu_refresh:   handleManualRefresh();   return true;
-      case R.id.menu_new_group: handleCreateGroup(this, true); return true;
+      case R.id.menu_new_group: handleCreateGroup(this); return true;
 //      case R.id.menu_invite:    handleInvite();          return true;
     }
 
@@ -100,9 +100,9 @@ public class NewConversationActivity extends ContactSelectionActivity
     onRefresh();
   }
 
-  private void handleCreateGroup(Context context, boolean forceV1) {
+  private void handleCreateGroup(Context context) {
     if(TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed()) {
-      startActivity(CreateGroupActivity.newIntent(this, forceV1));
+      startActivity(CreateGroupActivity.newIntent(this));
     }
   }
 
@@ -127,7 +127,7 @@ public class NewConversationActivity extends ContactSelectionActivity
 
   @Override
   public void onNewGroup(boolean forceV1) {
-    handleCreateGroup(this, forceV1);
+    handleCreateGroup(this);
     finish();
   }
 }

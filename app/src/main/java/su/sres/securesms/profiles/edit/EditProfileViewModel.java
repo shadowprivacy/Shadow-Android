@@ -38,10 +38,8 @@ class EditProfileViewModel extends ViewModel {
         repository.getCurrentUsername(internalUsername::postValue);
         if (!hasInstanceState) {
             if (groupId != null) {
-                repository.getCurrentDisplayName(value -> {
-                    givenName.setValue(value);
-                    originalDisplayName.setValue(value);
-                });
+                repository.getCurrentDisplayName(originalDisplayName::setValue);
+                repository.getCurrentName(givenName::setValue);
             } else {
                 repository.getCurrentProfileName(name -> {
                     givenName.setValue(name.getGivenName());
@@ -121,7 +119,8 @@ class EditProfileViewModel extends ViewModel {
         String oldDisplayName = isGroup() ? originalDisplayName.getValue() : null;
 
         repository.uploadProfile(profileName,
-                Objects.equals(oldDisplayName, displayName) ? null : displayName,
+                displayName,
+                !Objects.equals(oldDisplayName, displayName),
                 newAvatar,
                 oldAvatar != newAvatar,
                 uploadResultConsumer);

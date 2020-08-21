@@ -31,8 +31,11 @@ import su.sres.signalservice.internal.push.OutgoingPushMessageList;
 import su.sres.signalservice.internal.push.SendMessageResponse;
 import su.sres.signalservice.internal.util.JsonUtil;
 import su.sres.signalservice.internal.util.Util;
+import su.sres.signalservice.internal.util.concurrent.FutureTransformers;
+import su.sres.signalservice.internal.util.concurrent.ListenableFuture;
 import su.sres.signalservice.internal.websocket.WebSocketConnection;
 
+import su.sres.signalservice.internal.websocket.WebsocketResponse;
 import su.sres.util.Base64;
 
 import java.io.IOException;
@@ -41,6 +44,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -156,11 +160,10 @@ public class SignalServiceMessagePipe {
     }
   }
 
-  public SendMessageResponse send(OutgoingPushMessageList list, Optional<UnidentifiedAccess> unidentifiedAccess) throws IOException {
-    try {
-      List<String> headers = new LinkedList<String>() {{
-        add("content-type:application/json");
-      }};
+  public Future<SendMessageResponse> send(OutgoingPushMessageList list, Optional<UnidentifiedAccess> unidentifiedAccess) throws IOException {
+    List<String> headers = new LinkedList<String>() {{
+      add("content-type:application/json");
+    }};
 
       if (unidentifiedAccess.isPresent()) {
         headers.add("Unidentified-Access-Key:" + Base64.encodeBytes(unidentifiedAccess.get().getUnidentifiedAccessKey()));
@@ -174,17 +177,19 @@ public class SignalServiceMessagePipe {
                                                                       .setBody(ByteString.copyFrom(JsonUtil.toJson(list).getBytes()))
                                                                       .build();
 
-      Pair<Integer, String> response = websocket.sendRequest(requestMessage).get(10, TimeUnit.SECONDS);
+    ListenableFuture<WebsocketResponse> response = websocket.sendRequest(requestMessage);
 
-      if (response.first() < 200 || response.first() >= 300) {
-        throw new IOException("Non-successful response: " + response.first());
+    return FutureTransformers.map(response, value -> {
+      if (value.getStatus() < 200 || value.getStatus() >= 300) {
+        throw new IOException("Non-successful response: " + value.getStatus());
       }
 
-      if (Util.isEmpty(response.second())) return new SendMessageResponse(false);
-      else                                 return JsonUtil.fromJson(response.second(), SendMessageResponse.class);
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new IOException(e);
-    }
+      if (Util.isEmpty(value.getBody())) {
+        return new SendMessageResponse(false);
+      } else {
+        return JsonUtil.fromJson(value.getBody(), SendMessageResponse.class);
+      }
+    });
   }
 
   public ProfileAndCredential getProfile(SignalServiceAddress address,
@@ -230,13 +235,13 @@ public class SignalServiceMessagePipe {
 
       WebSocketRequestMessage requestMessage = builder.build();
 
-      Pair<Integer, String> response = websocket.sendRequest(requestMessage).get(10, TimeUnit.SECONDS);
+      WebsocketResponse response = websocket.sendRequest(requestMessage).get(10, TimeUnit.SECONDS);
 
-      if (response.first() < 200 || response.first() >= 300) {
-        throw new IOException("Non-successful response: " + response.first());
+      if (response.getStatus() < 200 || response.getStatus() >= 300) {
+        throw new IOException("Non-successful response: " + response.getStatus());
       }
 
-      SignalServiceProfile signalServiceProfile = JsonUtil.fromJson(response.second(), SignalServiceProfile.class);
+      SignalServiceProfile signalServiceProfile = JsonUtil.fromJson(response.getBody(), SignalServiceProfile.class);
       ProfileKeyCredential profileKeyCredential = requestContext != null && signalServiceProfile.getProfileKeyCredentialResponse() != null
               ? clientZkProfile.receiveProfileKeyCredential(requestContext, signalServiceProfile.getProfileKeyCredentialResponse())
               : null;
@@ -255,13 +260,13 @@ public class SignalServiceMessagePipe {
               .setPath("/v2/attachments/form/upload")
               .build();
 
-      Pair<Integer, String> response = websocket.sendRequest(requestMessage).get(10, TimeUnit.SECONDS);
+      WebsocketResponse response = websocket.sendRequest(requestMessage).get(10, TimeUnit.SECONDS);
 
-      if (response.first() < 200 || response.first() >= 300) {
-        throw new IOException("Non-successful response: " + response.first());
+      if (response.getStatus() < 200 || response.getStatus() >= 300) {
+        throw new IOException("Non-successful response: " + response.getStatus());
       }
 
-      return JsonUtil.fromJson(response.second(), AttachmentV2UploadAttributes.class);
+      return JsonUtil.fromJson(response.getBody(), AttachmentV2UploadAttributes.class);
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
       throw new IOException(e);
     }
@@ -275,13 +280,13 @@ public class SignalServiceMessagePipe {
               .setPath("/v3/attachments/form/upload")
               .build();
 
-      Pair<Integer, String> response = websocket.sendRequest(requestMessage).get(10, TimeUnit.SECONDS);
+      WebsocketResponse response = websocket.sendRequest(requestMessage).get(10, TimeUnit.SECONDS);
 
-      if (response.first() < 200 || response.first() >= 300) {
-        throw new IOException("Non-successful response: " + response.first());
+      if (response.getStatus() < 200 || response.getStatus() >= 300) {
+        throw new IOException("Non-successful response: " + response.getStatus());
       }
 
-      return JsonUtil.fromJson(response.second(), AttachmentV3UploadAttributes.class);
+      return JsonUtil.fromJson(response.getBody(), AttachmentV3UploadAttributes.class);
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
       throw new IOException(e);
     }

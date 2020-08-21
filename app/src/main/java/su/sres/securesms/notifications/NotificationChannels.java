@@ -402,6 +402,9 @@ public class NotificationChannels {
   @TargetApi(26)
   @WorkerThread
   public static synchronized void ensureCustomChannelConsistency(@NonNull Context context) {
+    if (!supported()) {
+      return;
+    }
     Log.d(TAG, "ensureCustomChannelConsistency()");
     NotificationManager notificationManager = ServiceUtil.getNotificationManager(context);
     RecipientDatabase   db                  = DatabaseFactory.getRecipientDatabase(context);

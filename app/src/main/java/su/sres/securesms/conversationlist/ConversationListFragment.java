@@ -29,7 +29,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -44,7 +43,6 @@ import com.annimon.stream.Stream;
 import com.google.android.material.snackbar.Snackbar;
 
 import androidx.annotation.PluralsRes;
-import androidx.annotation.StringRes;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.widget.TooltipCompat;
@@ -106,7 +104,6 @@ import su.sres.securesms.events.ReminderUpdateEvent;
 import su.sres.securesms.insights.InsightsLauncher;
 import su.sres.securesms.jobs.ServiceOutageDetectionJob;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.lock.RegistrationLockV1Dialog;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediasend.MediaSendActivity;
 import su.sres.securesms.megaphone.Megaphone;
@@ -129,6 +126,8 @@ import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.task.SnackbarAsyncTask;
+
+import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Collections;
@@ -239,7 +238,6 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         initializeSearchListener();
 
         RatingManager.showRatingDialogIfNecessary(requireContext());
-        RegistrationLockV1Dialog.showReminderIfNecessary(requireContext());
 
         TooltipCompat.setTooltipText(searchAction, getText(R.string.SearchToolbar_search_for_conversations_contacts_and_messages));
     }

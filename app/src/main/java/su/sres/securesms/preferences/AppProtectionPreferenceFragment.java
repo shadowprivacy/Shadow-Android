@@ -21,7 +21,6 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceConfigurationUpdateJob;
 import su.sres.securesms.jobs.RefreshAttributesJob;
-import su.sres.securesms.lock.RegistrationLockV1Dialog;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.KeyCachingService;
@@ -29,12 +28,9 @@ import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.concurrent.SignalExecutors;
-import su.sres.signalservice.api.SignalServiceAccountManager;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
-
-
 
 import mobi.upod.timedurationpicker.TimeDurationPickerDialog;
 
@@ -149,21 +145,6 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
 
         initializeScreenLockTimeoutSummary();
       }, 0).show();
-
-      return true;
-    }
-  }
-
-  private class AccountLockClickListener implements Preference.OnPreferenceClickListener {
-    @Override
-    public boolean onPreferenceClick(Preference preference) {
-      SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
-
-      if (((SwitchPreferenceCompat)preference).isChecked()) {
-        RegistrationLockV1Dialog.showRegistrationUnlockPrompt(getContext(), (SwitchPreferenceCompat)preference, accountManager);
-      } else {
-        RegistrationLockV1Dialog.showRegistrationLockPrompt(getContext(), (SwitchPreferenceCompat)preference, accountManager);
-      }
 
       return true;
     }

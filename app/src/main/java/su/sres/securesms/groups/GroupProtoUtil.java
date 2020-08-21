@@ -9,6 +9,7 @@ import androidx.annotation.WorkerThread;
 import com.google.protobuf.ByteString;
 
 import su.sres.securesms.database.model.databaseprotos.DecryptedGroupV2Context;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.push.SignalServiceProtos;
 import su.sres.storageservice.protos.groups.GroupChange;
@@ -87,6 +88,17 @@ public final class GroupProtoUtil {
         }
 
         return Recipient.externalPush(context, uuid, null);
+    }
+
+    @WorkerThread
+    public static @NonNull RecipientId uuidByteStringToRecipientId(@NonNull ByteString uuidByteString) {
+        UUID uuid = UUIDUtil.deserialize(uuidByteString.toByteArray());
+
+        if (uuid.equals(GroupsV2Operations.UNKNOWN_UUID)) {
+            return RecipientId.UNKNOWN;
+        }
+
+        return RecipientId.from(uuid, null);
     }
 
     public static boolean isMember(@NonNull UUID uuid, @NonNull List<DecryptedMember> membersList) {

@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.LiveGroup;
+import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.recipients.Recipient;
 
 public final class CustomNotificationsViewModel extends ViewModel {
@@ -27,7 +28,7 @@ public final class CustomNotificationsViewModel extends ViewModel {
     private CustomNotificationsViewModel(@NonNull GroupId groupId, @NonNull CustomNotificationsRepository repository) {
         this.liveGroup              = new LiveGroup(groupId);
         this.repository             = repository;
-        this.hasCustomNotifications = Transformations.map(liveGroup.getGroupRecipient(), recipient -> recipient.getNotificationChannel() != null);
+        this.hasCustomNotifications = Transformations.map(liveGroup.getGroupRecipient(), recipient -> recipient.getNotificationChannel() != null || !NotificationChannels.supported());
         this.isVibrateEnabled       = Transformations.map(liveGroup.getGroupRecipient(), Recipient::getMessageVibrate);
         this.notificationSound      = Transformations.map(liveGroup.getGroupRecipient(), Recipient::getMessageRingtone);
 

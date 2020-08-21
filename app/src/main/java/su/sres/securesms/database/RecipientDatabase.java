@@ -1018,24 +1018,26 @@ public class RecipientDatabase extends Database {
   public void setExpireMessages(@NonNull RecipientId id, int expiration) {
     ContentValues values = new ContentValues(1);
     values.put(MESSAGE_EXPIRATION_TIME, expiration);
-    update(id, values);
-    Recipient.live(id).refresh();
+    if (update(id, values)) {
+      Recipient.live(id).refresh();
+    }
   }
   public void setUnidentifiedAccessMode(@NonNull RecipientId id, @NonNull UnidentifiedAccessMode unidentifiedAccessMode) {
     ContentValues values = new ContentValues(1);
     values.put(UNIDENTIFIED_ACCESS_MODE, unidentifiedAccessMode.getMode());
     if (update(id, values)) {
       markDirty(id, DirtyState.UPDATE);
+      Recipient.live(id).refresh();
     }
-    Recipient.live(id).refresh();
   }
 
   public void setCapabilities(@NonNull RecipientId id, @NonNull SignalServiceProfile.Capabilities capabilities) {
     ContentValues values = new ContentValues(2);
     values.put(UUID_CAPABILITY,      Recipient.Capability.fromBoolean(capabilities.isUuid()).serialize());
     values.put(GROUPS_V2_CAPABILITY, Recipient.Capability.fromBoolean(capabilities.isGv2()).serialize());
-    update(id, values);
-    Recipient.live(id).refresh();
+    if (update(id, values)) {
+      Recipient.live(id).refresh();
+    }
   }
 
   /**

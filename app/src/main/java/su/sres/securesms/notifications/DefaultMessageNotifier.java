@@ -46,8 +46,8 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;
 import su.sres.securesms.database.MmsSmsColumns;
 import su.sres.securesms.database.MmsSmsDatabase;
+import su.sres.securesms.database.ThreadBodyUtil;
 import su.sres.securesms.database.ThreadDatabase;
-import su.sres.securesms.database.model.MediaMmsMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
@@ -77,7 +77,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import me.leolin.shortcutbadger.ShortcutBadger;
-
 
 /**
  * Handles posting system notifications for new messages.
@@ -518,21 +517,13 @@ public class DefaultMessageNotifier implements MessageNotifier {
                 } else if (record.isMms() && !((MmsMessageRecord) record).getSharedContacts().isEmpty()) {
                     Contact contact = ((MmsMessageRecord) record).getSharedContacts().get(0);
                     body = ContactUtil.getStringSummary(context, contact);
-                } else if (record.isMms() && ((MmsMessageRecord) record).getSlideDeck().getStickerSlide() != null) {
-                    body = SpanUtil.italic(context.getString(R.string.MessageNotifier_sticker));
-                    slideDeck = ((MmsMessageRecord) record).getSlideDeck();
                 } else if (record.isMms() && ((MmsMessageRecord) record).isViewOnce()) {
                     body = SpanUtil.italic(context.getString(getViewOnceDescription((MmsMessageRecord) record)));
                 } else if (record.isRemoteDelete()) {
                     body = SpanUtil.italic(context.getString(R.string.MessageNotifier_this_message_was_deleted));;
-                } else if (record.isMms() && TextUtils.isEmpty(body) && !((MmsMessageRecord) record).getSlideDeck().getSlides().isEmpty()) {
-                    body = SpanUtil.italic(context.getString(R.string.MessageNotifier_media_message));
-                    slideDeck = ((MediaMmsMessageRecord) record).getSlideDeck();
                 } else if (record.isMms() && !record.isMmsNotification() && !((MmsMessageRecord) record).getSlideDeck().getSlides().isEmpty()) {
-                    String message = context.getString(R.string.MessageNotifier_media_message_with_text, body);
-                    int italicLength = message.length() - body.length();
-                    body = SpanUtil.italic(message, italicLength);
-                    slideDeck = ((MediaMmsMessageRecord) record).getSlideDeck();
+                    body      = ThreadBodyUtil.getFormattedBodyFor(context, record);
+                    slideDeck = ((MmsMessageRecord) record).getSlideDeck();
                 }
 
                 if (threadRecipients == null || !threadRecipients.isMuted()) {

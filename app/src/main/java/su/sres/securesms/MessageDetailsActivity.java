@@ -34,6 +34,8 @@ import su.sres.securesms.conversation.ConversationItem;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
+
+import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -271,7 +273,9 @@ public class MessageDetailsActivity extends PassphraseRequiredActionBarActivity 
     }
     toFrom.setText(toFromRes);
     conversationItem.bind(messageRecord, Optional.absent(), Optional.absent(), glideRequests, dynamicLanguage.getCurrentLocale(), new HashSet<>(), recipient, null, false);
+    Parcelable state = recipientsList.onSaveInstanceState();
     recipientsList.setAdapter(new MessageDetailsRecipientAdapter(this, glideRequests, messageRecord, recipients, isPushGroup));
+    recipientsList.onRestoreInstanceState(state);
   }
 
   private void inflateMessageViewIfAbsent(MessageRecord messageRecord) {
@@ -279,9 +283,9 @@ public class MessageDetailsActivity extends PassphraseRequiredActionBarActivity 
       if (messageRecord.isGroupAction()) {
         conversationItem = (ConversationItem) inflater.inflate(R.layout.conversation_item_update, itemParent, false);
       } else if (messageRecord.isOutgoing()) {
-        conversationItem = (ConversationItem) inflater.inflate(R.layout.conversation_item_sent, itemParent, false);
+        conversationItem = (ConversationItem) inflater.inflate(R.layout.conversation_item_sent_multimedia, itemParent, false);
       } else {
-        conversationItem = (ConversationItem) inflater.inflate(R.layout.conversation_item_received, itemParent, false);
+        conversationItem = (ConversationItem) inflater.inflate(R.layout.conversation_item_received_multimedia, itemParent, false);
       }
       itemParent.addView(conversationItem);
     }

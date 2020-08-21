@@ -7,7 +7,6 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/conversation_item_background"
     android:focusable="true"
     android:nextFocusLeft="@+id/container"
     android:nextFocusRight="@+id/embedded_text_editor"

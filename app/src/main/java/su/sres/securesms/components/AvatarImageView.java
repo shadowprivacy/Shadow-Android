@@ -20,10 +20,12 @@ import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.contacts.avatars.ContactColors;
 import su.sres.securesms.contacts.avatars.ContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
+import su.sres.securesms.groups.ui.managegroup.ManageGroupActivity;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.AvatarUtil;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.ThemeUtil;
 
 import java.util.Objects;
@@ -157,9 +159,16 @@ public final class AvatarImageView extends AppCompatImageView {
     }
   }
 
-  private void setAvatarClickHandler(final Recipient recipient, boolean quickContactEnabled) {
+  private void setAvatarClickHandler(@NonNull final Recipient recipient, boolean quickContactEnabled) {
     if (quickContactEnabled) {
-      super.setOnClickListener(v -> getContext().startActivity(RecipientPreferenceActivity.getLaunchIntent(getContext(), recipient.getId())));
+      super.setOnClickListener(v -> {
+        if (FeatureFlags.newGroupUI() && recipient.isPushGroup()) {
+          getContext().startActivity(ManageGroupActivity.newIntent(getContext(), recipient.requireGroupId().requirePush()),
+                  ManageGroupActivity.createTransitionBundle(getContext(), this));
+        } else {
+          getContext().startActivity(RecipientPreferenceActivity.getLaunchIntent(getContext(), recipient.getId()));
+        }
+      });
     } else {
       super.setOnClickListener(listener);
       setClickable(listener != null);

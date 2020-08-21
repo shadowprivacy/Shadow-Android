@@ -26,6 +26,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 
 import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
+import su.sres.securesms.database.identity.IdentityRecordList;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.Base64;
@@ -36,6 +37,7 @@ import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
+import java.util.List;
 
 public class IdentityDatabase extends Database {
 
@@ -112,6 +114,31 @@ public class IdentityDatabase extends Database {
     return Optional.absent();
   }
 
+  public @NonNull IdentityRecordList getIdentities(@NonNull List<Recipient> recipients) {
+    IdentityRecordList identityRecordList = new IdentityRecordList();
+    SQLiteDatabase     database           = databaseHelper.getReadableDatabase();
+    String[]           selectionArgs      = new String[1];
+
+    database.beginTransaction();
+    try {
+      for (Recipient recipient : recipients) {
+        selectionArgs[0] = recipient.getId().serialize();
+
+        try (Cursor cursor = database.query(TABLE_NAME, null, RECIPIENT_ID + " = ?", selectionArgs, null, null, null)) {
+          if (cursor.moveToFirst()) {
+            identityRecordList.add(getIdentityRecord(cursor));
+          }
+        } catch (InvalidKeyException | IOException e) {
+          throw new AssertionError(e);
+        }
+      }
+    } finally {
+      database.endTransaction();
+    }
+
+    return identityRecordList;
+  }
+
   public void saveIdentity(@NonNull RecipientId recipientId, IdentityKey identityKey, VerifiedStatus verifiedStatus,
                            boolean firstUse, long timestamp, boolean nonBlockingApproval)
   {
@@ -182,7 +209,7 @@ public class IdentityDatabase extends Database {
     }
   }
 
-  private IdentityRecord getIdentityRecord(@NonNull Cursor cursor) throws IOException, InvalidKeyException {
+  private static @NonNull IdentityRecord getIdentityRecord(@NonNull Cursor cursor) throws IOException, InvalidKeyException {
     long        recipientId         = cursor.getLong(cursor.getColumnIndexOrThrow(RECIPIENT_ID));
     String      serializedIdentity  = cursor.getString(cursor.getColumnIndexOrThrow(IDENTITY_KEY));
     long        timestamp           = cursor.getLong(cursor.getColumnIndexOrThrow(TIMESTAMP));

@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,10 +21,16 @@ import su.sres.securesms.R;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.ThemeUtil;
+import su.sres.securesms.util.Util;
 
 import java.util.Objects;
 
+/**
+ * A bottom sheet that shows some simple recipient details, as well as some actions (like calling,
+ * etc).
+ */
 public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogFragment {
 
     private static final String ARGS_RECIPIENT_ID = "RECIPIENT_ID";
@@ -110,6 +117,12 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
                     .trim();
             usernameNumber.setText(usernameNumberString);
             usernameNumber.setVisibility(TextUtils.isEmpty(usernameNumberString) ? View.GONE : View.VISIBLE);
+            usernameNumber.setOnLongClickListener(v -> {
+                Util.copyToClipboard(v.getContext(), usernameNumber.getText().toString());
+                ServiceUtil.getVibrator(v.getContext()).vibrate(250);
+                Toast.makeText(v.getContext(), R.string.RecipientBottomSheet_copied_to_clipboard, Toast.LENGTH_SHORT).show();
+                return true;
+            });
 
             boolean blocked = recipient.isBlocked();
             blockButton.setVisibility(blocked ? View.GONE : View.VISIBLE);
