@@ -11,6 +11,7 @@ import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -50,7 +51,8 @@ public class RemoteConfigRefreshJob extends BaseJob {
             Log.w(TAG, "Not registered. Skipping.");
             return;
         }
-        Map<String, Object> config = ApplicationDependencies.getSignalServiceAccountManager().getRemoteConfig();
+//        Map<String, Object> config = ApplicationDependencies.getSignalServiceAccountManager().getRemoteConfig();
+        Map<String, Object> config = Collections.emptyMap();
         FeatureFlags.update(config);
     }
 
