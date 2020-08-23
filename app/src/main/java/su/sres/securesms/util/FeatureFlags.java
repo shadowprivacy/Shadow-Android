@@ -196,7 +196,7 @@ public final class FeatureFlags {
 
     /** MessageRequest stuff */
     public static synchronized boolean messageRequests() {
-        return getBoolean(MESSAGE_REQUESTS, false);
+        return getBoolean(MESSAGE_REQUESTS, true);
     }
 
     /** Creating usernames, sending messages by username. Requires {@link #uuids()}. */
@@ -208,7 +208,7 @@ public final class FeatureFlags {
 
     /** Safety switch for disabling profile names megaphone */
     public static boolean profileNamesMegaphone() {
-        return getBoolean(PROFILE_NAMES_MEGAPHONE, false) &&
+        return getBoolean(PROFILE_NAMES_MEGAPHONE, true) &&
                 TextSecurePreferences.getFirstInstallVersion(ApplicationDependencies.getApplication()) < 600;
     }
 
