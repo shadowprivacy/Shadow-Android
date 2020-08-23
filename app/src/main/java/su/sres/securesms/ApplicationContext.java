@@ -482,7 +482,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     FeatureFlags.init();
     initializeMasterKey();
     ApplicationDependencies.getJobManager().beginJobLoop();
-    StorageSyncHelper.scheduleRoutineSync();
+//    StorageSyncHelper.scheduleRoutineSync();
     RegistrationUtil.markRegistrationPossiblyComplete();
     RefreshPreKeysJob.scheduleIfNecessary();
     launchCertificateRefresh();

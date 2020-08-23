@@ -2,21 +2,14 @@ package su.sres.securesms.migrations;
 
 import androidx.annotation.NonNull;
 
-import com.annimon.stream.Stream;
-
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.MultiDeviceKeysUpdateJob;
-import su.sres.securesms.jobs.StickerPackDownloadJob;
 import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.stickers.BlessedPacks;
 import su.sres.securesms.util.TextSecurePreferences;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class StorageServiceMigrationJob extends MigrationJob {
 

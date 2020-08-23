@@ -1064,7 +1064,7 @@ public class RecipientDatabase extends Database {
     if (update(updateQuery, valuesToSet)) {
       markDirty(id, DirtyState.UPDATE);
       Recipient.live(id).refresh();
-      StorageSyncHelper.scheduleSyncForDataChange();
+//      StorageSyncHelper.scheduleSyncForDataChange();
       return true;
     }
     return false;
@@ -1161,8 +1161,8 @@ public class RecipientDatabase extends Database {
       if (selfId.equals(recipientId)) {
         Log.i(TAG, "Seen authoritative update for self");
         if (!entry.getValue().equals(ProfileKeyUtil.getSelfProfileKey())) {
-          Log.w(TAG, "Seen authoritative update for self that didn't match local, scheduling storage sync");
-          StorageSyncHelper.scheduleSyncForDataChange();
+//          Log.w(TAG, "Seen authoritative update for self that didn't match local, scheduling storage sync");
+//          StorageSyncHelper.scheduleSyncForDataChange();
         }
       } else {
         Log.i(TAG, String.format("Profile key from owner %s", recipientId));
@@ -1184,7 +1184,7 @@ public class RecipientDatabase extends Database {
     if (update(id, contentValues)) {
       markDirty(id, DirtyState.UPDATE);
       Recipient.live(id).refresh();
-      StorageSyncHelper.scheduleSyncForDataChange();
+//      StorageSyncHelper.scheduleSyncForDataChange();
     }
   }
 
@@ -1196,7 +1196,7 @@ public class RecipientDatabase extends Database {
 
       if (id.equals(Recipient.self().getId())) {
         markDirty(id, DirtyState.UPDATE);
-        StorageSyncHelper.scheduleSyncForDataChange();
+ //       StorageSyncHelper.scheduleSyncForDataChange();
       }
     }
   }
@@ -1207,7 +1207,7 @@ public class RecipientDatabase extends Database {
     if (update(id, contentValues)) {
       markDirty(id, DirtyState.UPDATE);
       Recipient.live(id).refresh();
-      StorageSyncHelper.scheduleSyncForDataChange();
+//      StorageSyncHelper.scheduleSyncForDataChange();
     }
   }
 
@@ -1227,7 +1227,7 @@ public class RecipientDatabase extends Database {
       markDirty(id, DirtyState.UPDATE);
       Recipient.live(id).refresh();
 
-      StorageSyncHelper.scheduleSyncForDataChange();
+//      StorageSyncHelper.scheduleSyncForDataChange();
     }
   }
 
@@ -1239,7 +1239,7 @@ public class RecipientDatabase extends Database {
           markDirty(id, DirtyState.UPDATE);
           Recipient.live(id).refresh();
 
-          StorageSyncHelper.scheduleSyncForDataChange();
+//          StorageSyncHelper.scheduleSyncForDataChange();
       }
   }
 
@@ -1257,7 +1257,7 @@ public class RecipientDatabase extends Database {
     contentValues.put(USERNAME, username);
     if (update(id, contentValues)) {
       Recipient.live(id).refresh();
-      StorageSyncHelper.scheduleSyncForDataChange();
+ //     StorageSyncHelper.scheduleSyncForDataChange();
     }
   }
 

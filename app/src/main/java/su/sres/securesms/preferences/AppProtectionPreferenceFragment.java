@@ -165,7 +165,7 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
       SignalExecutors.BOUNDED.execute(() -> {
         boolean enabled = (boolean)newValue;
         DatabaseFactory.getRecipientDatabase(getContext()).markNeedsSync(Recipient.self().getId());
-        StorageSyncHelper.scheduleSyncForDataChange();
+//        StorageSyncHelper.scheduleSyncForDataChange();
         ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(enabled,
                 TextSecurePreferences.isTypingIndicatorsEnabled(requireContext()),
                 TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(getContext()),
@@ -183,7 +183,7 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
       SignalExecutors.BOUNDED.execute(() -> {
         boolean enabled = (boolean)newValue;
         DatabaseFactory.getRecipientDatabase(getContext()).markNeedsSync(Recipient.self().getId());
-        StorageSyncHelper.scheduleSyncForDataChange();
+//        StorageSyncHelper.scheduleSyncForDataChange();
         ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(TextSecurePreferences.isReadReceiptsEnabled(requireContext()),
                 enabled,
                 TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(getContext()),
@@ -204,7 +204,7 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
       SignalExecutors.BOUNDED.execute(() -> {
         boolean enabled = (boolean)newValue;
         DatabaseFactory.getRecipientDatabase(getContext()).markNeedsSync(Recipient.self().getId());
-        StorageSyncHelper.scheduleSyncForDataChange();
+//        StorageSyncHelper.scheduleSyncForDataChange();
         ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(TextSecurePreferences.isReadReceiptsEnabled(requireContext()),
                 TextSecurePreferences.isTypingIndicatorsEnabled(requireContext()),
                 TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(requireContext()),
@@ -309,7 +309,7 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
       boolean enabled = (boolean) newValue;
       SignalExecutors.BOUNDED.execute(() -> {
         DatabaseFactory.getRecipientDatabase(getContext()).markNeedsSync(Recipient.self().getId());
-        StorageSyncHelper.scheduleSyncForDataChange();
+//        StorageSyncHelper.scheduleSyncForDataChange();
         ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(TextSecurePreferences.isReadReceiptsEnabled(getContext()),
                 TextSecurePreferences.isTypingIndicatorsEnabled(getContext()),
                 enabled,

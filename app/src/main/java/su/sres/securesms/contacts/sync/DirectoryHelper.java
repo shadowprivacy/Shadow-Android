@@ -5,12 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
-import su.sres.securesms.database.RecipientDatabase.RegisteredState;
-import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.jobs.StorageSyncJob;
-import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.FeatureFlags;
 
@@ -29,7 +24,7 @@ public class DirectoryHelper {
     } else {
       DirectoryHelperV1.refreshDirectory(context, notifyOfNewUsers);
     }
-    StorageSyncHelper.scheduleSyncForDataChange();
+ //   StorageSyncHelper.scheduleSyncForDataChange();
   }
 
     // should not be used as of now

@@ -844,7 +844,7 @@ public final class PushProcessMessageJob extends BaseJob {
         ApplicationDependencies.getJobManager().add(new RefreshOwnProfileJob());
         break;
       case STORAGE_MANIFEST:
-        StorageSyncHelper.scheduleSyncForDataChange();
+//        StorageSyncHelper.scheduleSyncForDataChange();
         break;
       default:
         Log.w(TAG, "Received a fetch message for an unknown type.");

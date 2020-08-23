@@ -620,7 +620,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
 
         SimpleTask.run(getViewLifecycleOwner().getLifecycle(), () -> {
             DatabaseFactory.getThreadDatabase(context).setForcedUnread(selectedConversations);
-            StorageSyncHelper.scheduleSyncForDataChange();
+ //           StorageSyncHelper.scheduleSyncForDataChange();
             return null;
         }, none -> {
             if (actionMode != null) {

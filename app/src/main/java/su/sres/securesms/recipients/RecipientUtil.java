@@ -83,7 +83,7 @@ public class RecipientUtil {
         }
 
         ApplicationDependencies.getJobManager().add(new MultiDeviceBlockedUpdateJob());
-        StorageSyncHelper.scheduleSyncForDataChange();
+//        StorageSyncHelper.scheduleSyncForDataChange();
     }
 
     @WorkerThread
@@ -94,7 +94,7 @@ public class RecipientUtil {
 
         DatabaseFactory.getRecipientDatabase(context).setBlocked(recipient.getId(), false);
         ApplicationDependencies.getJobManager().add(new MultiDeviceBlockedUpdateJob());
-        StorageSyncHelper.scheduleSyncForDataChange();
+//        StorageSyncHelper.scheduleSyncForDataChange();
 
         if (FeatureFlags.messageRequests()) {
             ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(recipient.getId()));

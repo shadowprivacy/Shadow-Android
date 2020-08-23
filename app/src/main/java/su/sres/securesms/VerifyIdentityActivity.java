@@ -630,7 +630,7 @@ public class VerifyIdentityActivity extends PassphraseRequiredActionBarActivity 
                                           remoteIdentity,
                                           VerifiedStatus.DEFAULT);
 
-              StorageSyncHelper.scheduleSyncForDataChange();
+      //        StorageSyncHelper.scheduleSyncForDataChange();
             }
 
             ApplicationDependencies.getJobManager()

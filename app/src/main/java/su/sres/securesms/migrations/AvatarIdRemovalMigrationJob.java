@@ -5,12 +5,8 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.jobmanager.JobManager;
-import su.sres.securesms.jobs.MultiDeviceKeysUpdateJob;
 import su.sres.securesms.jobs.RefreshOwnProfileJob;
-import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.util.TextSecurePreferences;
 
 /**
  * We just want to make sure that the user has a profile avatar set in the RecipientDatabase, so

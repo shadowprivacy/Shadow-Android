@@ -580,7 +580,7 @@ public class ThreadDatabase extends Database {
     Recipient recipient = getRecipientForThreadId(threadId);
     if (recipient != null) {
       DatabaseFactory.getRecipientDatabase(context).markNeedsSync(recipient.getId());
-      StorageSyncHelper.scheduleSyncForDataChange();
+//      StorageSyncHelper.scheduleSyncForDataChange();
     }
   }
 
@@ -595,7 +595,7 @@ public class ThreadDatabase extends Database {
     Recipient recipient = getRecipientForThreadId(threadId);
     if (recipient != null) {
       DatabaseFactory.getRecipientDatabase(context).markNeedsSync(recipient.getId());
-      StorageSyncHelper.scheduleSyncForDataChange();
+//      StorageSyncHelper.scheduleSyncForDataChange();
     }
   }
 

@@ -22,10 +22,10 @@ public final class RegistrationUtil {
         if (!SignalStore.registrationValues().isRegistrationComplete() && !Recipient.self().getProfileName().isEmpty()) {
             Log.i(TAG, "Marking registration completed.", new Throwable());
             SignalStore.registrationValues().setRegistrationComplete();
-            ApplicationDependencies.getJobManager().startChain(new StorageSyncJob())
-                    // .then(new DirectoryRefreshJob(false))
-                    .then(new DirectorySyncJob(false))
-                    .enqueue();
+         //   ApplicationDependencies.getJobManager().startChain(new StorageSyncJob())
+         //                                          .then(new DirectorySyncJob(false))
+            ApplicationDependencies.getJobManager().startChain(new DirectorySyncJob(false))
+                                                   .enqueue();
         } else if (!SignalStore.registrationValues().isRegistrationComplete()) {
             Log.i(TAG, "Registration is not yet complete.", new Throwable());
         }
