@@ -1890,7 +1890,7 @@
   <string name="Permissions_continue">Продолжить</string>
   <string name="Permissions_not_now">Не сейчас</string>
   <string name="ConversationListActivity_signal_needs_contacts_permission_in_order_to_search_your_contacts_but_it_has_been_permanently_denied">Shadow требуется разрешение на доступ к контактам для поиска в ваших контактах, но оно было вами отклонено. Нажмите «Продолжить», чтобы перейти в настройки приложения, откройте «Разрешения» и включите «Контакты».</string>
-  <string name="conversation_activity__enable_signal_messages">ВКЛЮЧИТЬ СООБЩЕНИЯ SHADOW</string>
+  <string name="conversation_activity__enable_signal_messages">ЭТОТ ЧАТ НЕДОСТУПЕН</string>
   <string name="SQLCipherMigrationHelper_migrating_signal_database">Миграция базы данных Shadow</string>
   <string name="PushDecryptJob_new_locked_message">Новое заблокированное сообщение</string>
   <string name="PushDecryptJob_unlock_to_view_pending_messages">Разблокируйте для просмотра ожидающих сообщений</string>
