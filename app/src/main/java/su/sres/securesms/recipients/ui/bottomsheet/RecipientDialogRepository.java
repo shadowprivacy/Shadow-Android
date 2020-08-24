@@ -7,9 +7,12 @@ import androidx.annotation.Nullable;
 import androidx.core.util.Consumer;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.groups.GroupChangeBusyException;
 import su.sres.securesms.groups.GroupChangeFailedException;
@@ -102,6 +105,22 @@ final class RecipientDialogRepository {
                         error.onError(GroupChangeFailureReason.OTHER);
                     }
                     return false;
+                },
+                onComplete::accept);
+    }
+
+    void getGroupMembership(@NonNull Consumer<List<RecipientId>> onComplete) {
+        SimpleTask.run(SignalExecutors.UNBOUNDED,
+                () -> {
+                    GroupDatabase                   groupDatabase   = DatabaseFactory.getGroupDatabase(context);
+                    List<GroupDatabase.GroupRecord> groupRecords    = groupDatabase.getPushGroupsContainingMember(recipientId);
+                    ArrayList<RecipientId>          groupRecipients = new ArrayList<>(groupRecords.size());
+
+                    for (GroupDatabase.GroupRecord groupRecord : groupRecords) {
+                        groupRecipients.add(groupRecord.getRecipientId());
+                    }
+
+                    return groupRecipients;
                 },
                 onComplete::accept);
     }

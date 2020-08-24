@@ -366,7 +366,7 @@
     <string name="CreateProfileActivity_problem_setting_profile">Problem setting profile</string>
     <string name="CreateProfileActivity_profile_photo">Profile photo</string>
     <string name="CreateProfileActivity_set_up_your_profile">Set up your profile</string>
-    <string name="CreateProfileActivity_signal_profiles_are_end_to_end_encrypted">Shadow profiles are end-to-end encrypted, and the Shadow service never has access to this information.</string>
+    <string name="CreateProfileActivity_signal_profiles_are_end_to_end_encrypted">Your profile is end-to-end encrypted. It will be visible to your contacts, when you initiate or accept new conversations, and when you join new groups.</string>
     <string name="CreateProfileActivity_set_avatar_description">Set avatar</string>
 
     <!-- CustomDefaultPreference -->
@@ -451,6 +451,13 @@
     <string name="GroupCreateActivity_loading_group_details">Loading group details…</string>
     <string name="GroupCreateActivity_youre_already_in_the_group">You\'re already in the group.</string>
     <string name="GroupCreateActivity_remove_member_description">Remove member</string>
+
+    <!-- AddToGroupActivity -->
+    <string name="AddToGroupActivity_add_member">Add member?</string>
+    <string name="AddToGroupActivity_add_s_to_s">Add \"%1$s\" to \"%2$s\"?</string>
+    <string name="AddToGroupActivity_s_added_to_s">\"%1$s\" added to \"%2$s\".</string>
+    <string name="AddToGroupActivity_add_to_group">Add to group</string>
+    <string name="AddToGroupActivity_add_to_groups">Add to groups</string>
 
     <!-- GroupShareProfileView -->
     <string name="GroupShareProfileView_share_your_profile_name_and_photo_with_this_group">Share your profile name and photo with this group?</string>
@@ -829,11 +836,11 @@
     <string name="MessageRequestBottomView_delete">Delete</string>
     <string name="MessageRequestBottomView_block">Block</string>
     <string name="MessageRequestBottomView_unblock">Unblock</string>
-    <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_they_wont_know_youve_seen_their_messages_until_you_accept">Do you want to let %1$s message you? They won\'t know you\'ve seen their messages until you accept.</string>
-    <string name="MessageRequestBottomView_do_you_want_to_join_the_group_s_they_wont_know_youve_seen_their_messages_until_you_accept">Do you want to join the group %1$s? They won\'t know you\'ve seen their messages until you accept.</string>
+    <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_they_wont_know_youve_seen_their_messages_until_you_accept">Let %1$s message you? They won\'t know you\'ve seen their message until you accept.</string>
+    <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_wont_receive_any_messages_until_you_unblock_them">Let %1$s message you? You won\'t receive any messages until you unblock them.</string>
+    <string name="MessageRequestBottomView_do_you_want_to_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">Join this group? They won\'t know you\'ve seen their messages until you accept.</string>
     <string name="MessageRequestBottomView_you_were_invited_to_join_the_group_s">You were invited to join the group %1$s. Do you want to let members of this group message you?</string>
-    <string name="MessageRequestBottomView_unblock_s_to_message_and_call_each_other">Unblock %1$s to message and call each other.</string>
-    <string name="MessageRequestBottomView_unblock_to_allow_group_members_to_add_you_to_this_group_again">Unblock to allow group members to add you to this group again.</string>
+    <string name="MessageRequestBottomView_unblock_this_group_and_share_your_name_and_photo_with_its_members">Unblock this group? You won\'t receive any messages until you unblock them.</string>
     <string name="MessageRequestProfileView_member_of_one_group">Member of %1$s</string>
     <string name="MessageRequestProfileView_member_of_two_groups">Member of %1$s and %2$s</string>
     <string name="MessageRequestProfileView_member_of_many_groups">Member of %1$s, %2$s, and %3$s</string>
@@ -1375,6 +1382,12 @@
     <!-- contact_selection_list_fragment -->
     <string name="contact_selection_list_fragment__signal_needs_access_to_your_contacts_in_order_to_display_them">Shadow needs access to your contacts in order to display them.</string>
     <string name="contact_selection_list_fragment__show_contacts">Show Contacts</string>
+
+    <!-- contact_selection_list_item -->
+    <plurals name="contact_selection_list_item__number_of_members">
+        <item quantity="one">%1$d member</item>
+        <item quantity="other">%1$d members</item>
+    </plurals>
 
     <!-- conversation_activity -->
     <string name="conversation_activity__type_message_push">Shadow message</string>
@@ -2198,6 +2211,8 @@
     <string name="RecipientBottomSheet_call">Call</string>
     <string name="RecipientBottomSheet_block">Block</string>
     <string name="RecipientBottomSheet_unblock">Unblock</string>
+    <string name="RecipientBottomSheet_add_to_a_group">Add to a group</string>
+    <string name="RecipientBottomSheet_add_to_another_group">Add to another group</string>
     <string name="RecipientBottomSheet_view_safety_number">View safety number</string>
     <string name="RecipientBottomSheet_make_group_admin">Make group admin</string>
     <string name="RecipientBottomSheet_remove_as_admin">Remove as admin</string>

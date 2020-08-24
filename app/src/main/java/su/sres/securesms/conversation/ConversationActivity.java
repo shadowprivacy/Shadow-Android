@@ -803,7 +803,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
             hideMenuItem(menu, R.id.menu_mute_notifications);
         }
 
-        if (FeatureFlags.newGroupUI()) {
+        if (FeatureFlags.newGroupUI() && isPushGroupConversation()) {
             hideMenuItem(menu, R.id.menu_group_recipients);
         }
 
@@ -925,9 +925,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
             case R.id.menu_expiring_messages:
                 handleSelectMessageExpiration();
                 return true;
-            case android.R.id.home:
-                onBackPressed();
-                return true;
+            case android.R.id.home:                   onNavigateUp();                                    return true;
         }
 
         return false;
@@ -1477,7 +1475,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
 
     private void initializeEnabledCheck() {
         groupViewModel.getGroupActiveState().observe(this, state -> {
-            boolean enabled = state == null || !(isPushGroupConversation() && !state.isActiveGroup());
+            boolean enabled = (state == null || !(isPushGroupConversation() && !state.isActiveGroup())) && SignalStore.serviceConfigurationValues().isLicensed();
             inputPanel.setEnabled(enabled);
             sendButton.setEnabled(enabled);
             attachButton.setEnabled(enabled);
@@ -2000,7 +1998,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
             return;
         }
 
-        ApplicationDependencies.getJobManager().add(RetrieveProfileJob.forRecipient(recipient.get()));
+        RetrieveProfileJob.enqueueAsync(recipient.getId());
     }
 
     private void onRecipientChanged(@NonNull Recipient recipient) {

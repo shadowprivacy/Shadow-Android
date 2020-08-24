@@ -38,6 +38,7 @@ import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
 
+import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.util.UuidUtil;
 
@@ -457,10 +458,13 @@ public class Recipient {
       return MaterialColor.GROUP;
     } else if (color != null) {
       return color;
-    } else if (name != null) {
-      Log.i(TAG, "Saving color for " + id);
-      MaterialColor color = ContactColors.generateFor(name);
-      DatabaseFactory.getRecipientDatabase(ApplicationDependencies.getApplication()).setColor(id, color);
+    } else if (name != null || profileSharing) {
+      Log.w(TAG, "Had no color for " + id + "! Saving a new one.");
+
+      Context       context = ApplicationDependencies.getApplication();
+      MaterialColor color   = ContactColors.generateFor(getDisplayName(context));
+
+      SignalExecutors.BOUNDED.execute(() -> DatabaseFactory.getRecipientDatabase(context).setColorIfNotSet(id, color));
       return color;
     } else {
       return ContactColors.UNKNOWN_COLOR;

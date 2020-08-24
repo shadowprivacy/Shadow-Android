@@ -43,7 +43,6 @@ import su.sres.securesms.mms.SlideDeck;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
-import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -436,14 +435,23 @@ public class ThreadDatabase extends Database {
     }
 
     Cursor cursor = cursors.size() > 1 ? new MergeCursor(cursors.toArray(new Cursor[cursors.size()])) : cursors.get(0);
-    setNotifyConverationListListeners(cursor);
+    setNotifyConversationListListeners(cursor);
     return cursor;
   }
 
   public Cursor getRecentConversationList(int limit, boolean includeInactiveGroups) {
+    return getRecentConversationList(limit, includeInactiveGroups, false);
+  }
+
+  public Cursor getRecentConversationList(int limit, boolean includeInactiveGroups, boolean groupsOnly) {
     SQLiteDatabase db    = databaseHelper.getReadableDatabase();
     String         query = !includeInactiveGroups ? MESSAGE_COUNT + " != 0 AND (" + GroupDatabase.TABLE_NAME + "." + GroupDatabase.ACTIVE + " IS NULL OR " + GroupDatabase.TABLE_NAME + "." + GroupDatabase.ACTIVE + " = 1)"
             : MESSAGE_COUNT + " != 0";
+
+    if (groupsOnly) {
+      query += " AND " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.GROUP_ID + " NOT NULL";
+    }
+
     return db.rawQuery(createQuery(query, limit), null);
   }
 
@@ -545,7 +553,7 @@ public class ThreadDatabase extends Database {
     String         query  = createQuery(ARCHIVED + " = ? AND " + MESSAGE_COUNT + " != 0", 0);
     Cursor         cursor = db.rawQuery(query, new String[]{archived});
 
-    setNotifyConverationListListeners(cursor);
+    setNotifyConversationListListeners(cursor);
 
     return cursor;
   }

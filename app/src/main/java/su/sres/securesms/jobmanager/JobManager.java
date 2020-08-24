@@ -40,7 +40,7 @@ public class JobManager implements ConstraintObserver.Notifier {
 
   private static final String TAG = JobManager.class.getSimpleName();
 
-  public static final int CURRENT_VERSION = 6;
+  public static final int CURRENT_VERSION = 7;
 
   private final Application     application;
   private final Configuration   configuration;
@@ -200,6 +200,13 @@ public class JobManager implements ConstraintObserver.Notifier {
    */
   public void cancel(@NonNull String id) {
     executor.execute(() -> jobController.cancelJob(id));
+  }
+
+  /**
+   * Cancels all jobs in the specified queue. See {@link #cancel(String)} for details.
+   */
+  public void cancelAllInQueue(@NonNull String queue) {
+    executor.execute(() -> jobController.cancelAllInQueue(queue));
   }
 
   /**

@@ -153,8 +153,7 @@ public final class ServiceConfigurationValues {
     }
 
     public boolean isLicensed() {
-       // return store.getBoolean(IS_LICENSED, false);
-        return true;
+       return store.getBoolean(IS_LICENSED, false);
     }
 
     public @Nullable byte [] retrieveLicense() {

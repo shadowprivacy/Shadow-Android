@@ -20,6 +20,7 @@ import su.sres.securesms.jobmanager.migrations.PushProcessMessageQueueJobMigrati
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration;
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration2;
 import su.sres.securesms.jobmanager.migrations.RecipientIdJobMigration;
+import su.sres.securesms.jobmanager.migrations.RetrieveProfileJobMigration;
 import su.sres.securesms.jobmanager.migrations.SendReadReceiptsJobMigration;
 import su.sres.securesms.migrations.AvatarIdRemovalMigrationJob;
 import su.sres.securesms.migrations.PassingMigrationJob;
@@ -164,6 +165,7 @@ public final class JobManagerFactories {
                 new RecipientIdFollowUpJobMigration(),
                 new RecipientIdFollowUpJobMigration2(),
                 new SendReadReceiptsJobMigration(DatabaseFactory.getMmsSmsDatabase(application)),
-                new PushProcessMessageQueueJobMigration(application));
+                new PushProcessMessageQueueJobMigration(application),
+                new RetrieveProfileJobMigration());
     }
 }

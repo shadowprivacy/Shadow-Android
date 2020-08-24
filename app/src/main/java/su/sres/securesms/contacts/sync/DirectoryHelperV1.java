@@ -269,32 +269,7 @@ class DirectoryHelperV1 {
         Optional<ContactTokenDetails> details       = Optional.absent();
  //       Map<String, String>           rewrites      = new HashMap<>();
 
-        if (recipient.hasE164()) {
-  //          FuzzyPhoneNumberHelper.InputResult inputResult = FuzzyPhoneNumberHelper.generateInput(Collections.singletonList(recipient.requireE164()), recipientDatabase.getAllPhoneNumbers());
-
-   /*         if (inputResult.getNumbers().size() > 1) {
-                Log.i(TAG, "[getRegisteredState] Got a fuzzy number result.");
-
-                List<ContactTokenDetails>           detailList   = accountManager.getContacts(inputResult.getNumbers());
-                Collection<String>                  registered   = Stream.of(detailList).map(ContactTokenDetails::getNumber).collect(Collectors.toSet());
-                FuzzyPhoneNumberHelper.OutputResult outputResult = FuzzyPhoneNumberHelper.generateOutput(registered, inputResult);
-                String                              finalNumber  = recipient.requireE164();
-                ContactTokenDetails                 detail       = new ContactTokenDetails();
-
-                if (outputResult.getRewrites().size() > 0 && outputResult.getRewrites().containsKey(finalNumber)) {
-                    Log.i(TAG, "[getRegisteredState] Need to rewrite a number.");
-                    finalNumber = outputResult.getRewrites().get(finalNumber);
-                    rewrites    = outputResult.getRewrites();
-                }
-
-                detail.setNumber(finalNumber);
-                details = Optional.of(detail);
-
-                recipientDatabase.updatePhoneNumbers(outputResult.getRewrites());
-            } else { */
-                details = accountManager.getContact(recipient.requireE164()); // checks if the recipient is registered on the server
-        //    }
-        }
+        if (recipient.hasE164()) details = accountManager.getContact(recipient.requireE164()); // checks if the recipient is registered on the server
 
         if (details.isPresent()) {
             recipientDatabase.setRegistered(recipient.getId(), RegisteredState.REGISTERED);
@@ -318,17 +293,20 @@ class DirectoryHelperV1 {
         }
     }
 
-/*    private static boolean isValidContactNumber(@Nullable String number) {
-        return !TextUtils.isEmpty(number) && !UuidUtil.isUuid(number);
-    }
-
+/*
     private static boolean isUuidRegistered(@NonNull Context context, @NonNull Recipient recipient) throws IOException {
 
         try {
-            ProfileUtil.retrieveProfile(context, recipient, SignalServiceProfile.RequestType.PROFILE);
+             ProfileUtil.retrieveProfile(context, recipient, SignalServiceProfile.RequestType.PROFILE).get(10, TimeUnit.SECONDS);
             return true;
-        } catch (NotFoundException e) {
-            return false;
+        } catch (ExecutionException e) {
+      if (e.getCause() instanceof NotFoundException) {
+        return false;
+      } else {
+        throw new IOException(e);
+      }
+    } catch (InterruptedException | TimeoutException e) {
+      throw new IOException(e);
         }
     } */
 

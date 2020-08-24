@@ -25,6 +25,44 @@ public class SignalExecutors {
     }
 
     /**
+     * ThreadPoolExecutor will only create a new thread if the provided queue returns false from
+     * offer(). That means if you give it an unbounded queue, it'll only ever create 1 thread, no
+     * matter how long the queue gets.
+     *
+     * But if you bound the queue and submit more runnables than there are threads, your task is
+     * rejected and throws an exception.
+     *
+     * So we make a queue that will always return false if it's non-empty to ensure new threads get
+     * created. Then, if a task gets rejected, we simply add it to the queue.
+     */
+    public static ExecutorService newCachedBoundedExecutor(final String name, int minThreads, int maxThreads) {
+        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(minThreads,
+                maxThreads,
+                30,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>() {
+                    @Override
+                    public boolean offer(Runnable runnable) {
+                        if (isEmpty()) {
+                            return super.offer(runnable);
+                        } else {
+                            return false;
+                        }
+                    }
+                }, new NumberedThreadFactory(name));
+
+        threadPool.setRejectedExecutionHandler((runnable, executor) -> {
+            try {
+                executor.getQueue().put(runnable);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        return threadPool;
+    }
+
+    /**
      * Returns an executor that prioritizes newer work. This is the opposite of a traditional executor,
      * which processor work in FIFO order.
      */

@@ -8,6 +8,7 @@ package su.sres.signalservice.api;
 
 import com.google.protobuf.ByteString;
 
+import su.sres.signalservice.api.profiles.ProfileAndCredential;
 import su.sres.signalservice.api.storage.protos.DirectoryResponse;
 import su.sres.signalservice.api.groupsv2.ClientZkOperations;
 import su.sres.signalservice.api.groupsv2.GroupsV2Api;
@@ -82,6 +83,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static su.sres.signalservice.internal.push.ProvisioningProtos.ProvisionMessage;
 import static su.sres.signalservice.internal.push.ProvisioningProtos.ProvisioningVersion;
@@ -633,9 +637,22 @@ public class SignalServiceAccountManager {
     }
 
     public Optional<ProfileKeyCredential> resolveProfileKeyCredential(UUID uuid, ProfileKey profileKey)
-            throws NonSuccessfulResponseCodeException, PushNetworkException, VerificationFailedException
+            throws NonSuccessfulResponseCodeException, PushNetworkException
     {
-        return this.pushServiceSocket.retrieveVersionedProfileAndCredential(uuid, profileKey, Optional.absent()).getProfileKeyCredential();
+        try {
+            ProfileAndCredential credential = this.pushServiceSocket.retrieveVersionedProfileAndCredential(uuid, profileKey, Optional.absent()).get(10, TimeUnit.SECONDS);
+            return credential.getProfileKeyCredential();
+        } catch (InterruptedException | TimeoutException e) {
+            throw new PushNetworkException(e);
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof NonSuccessfulResponseCodeException) {
+                throw (NonSuccessfulResponseCodeException) e.getCause();
+            } else if (e.getCause() instanceof PushNetworkException) {
+                throw (PushNetworkException) e.getCause();
+            } else {
+                throw new PushNetworkException(e);
+            }
+        }
     }
 
     public void setUsername(String username) throws IOException {

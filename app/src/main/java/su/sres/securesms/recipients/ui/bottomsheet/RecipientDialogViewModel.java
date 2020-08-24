@@ -23,6 +23,7 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.LiveGroup;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.groups.ui.GroupErrors;
+import su.sres.securesms.groups.ui.addtogroup.AddToGroupsActivity;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -165,6 +166,10 @@ final class RecipientDialogViewModel extends ViewModel {
                                 })
                         .setNegativeButton(android.R.string.cancel, (dialog, which) -> {})
                         .show());
+    }
+
+    void onAddToGroupButton(@NonNull Activity activity) {
+        recipientDialogRepository.getGroupMembership(existingGroups -> activity.startActivity(AddToGroupsActivity.newIntent(activity, recipientDialogRepository.getRecipientId(), existingGroups)));
     }
 
     @WorkerThread

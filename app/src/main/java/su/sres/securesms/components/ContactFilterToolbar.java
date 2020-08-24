@@ -5,6 +5,7 @@ import android.content.res.TypedArray;
 import android.graphics.Rect;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.widget.TextViewCompat;
 
@@ -23,15 +24,15 @@ import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.views.DarkOverflowToolbar;
 
-public class ContactFilterToolbar extends DarkOverflowToolbar {
+public final class ContactFilterToolbar extends DarkOverflowToolbar {
   private   OnFilterChangedListener listener;
 
-  private EditText        searchText;
-  private AnimatingToggle toggle;
-  private ImageView       keyboardToggle;
-  private ImageView       dialpadToggle;
-  private ImageView       clearToggle;
-  private LinearLayout    toggleContainer;
+  private final EditText        searchText;
+  private final AnimatingToggle toggle;
+  private final ImageView       keyboardToggle;
+  private final ImageView       dialpadToggle;
+  private final ImageView       clearToggle;
+  private final LinearLayout    toggleContainer;
 
   public ContactFilterToolbar(Context context) {
     this(context, null);
@@ -45,12 +46,12 @@ public class ContactFilterToolbar extends DarkOverflowToolbar {
     super(context, attrs, defStyleAttr);
     inflate(context, R.layout.contact_filter_toolbar, this);
 
-    this.searchText      = ViewUtil.findById(this, R.id.search_view);
-    this.toggle          = ViewUtil.findById(this, R.id.button_toggle);
-    this.keyboardToggle  = ViewUtil.findById(this, R.id.search_keyboard);
-    this.dialpadToggle   = ViewUtil.findById(this, R.id.search_dialpad);
-    this.clearToggle     = ViewUtil.findById(this, R.id.search_clear);
-    this.toggleContainer = ViewUtil.findById(this, R.id.toggle_container);
+    this.searchText      = findViewById(R.id.search_view);
+    this.toggle          = findViewById(R.id.button_toggle);
+    this.keyboardToggle  = findViewById(R.id.search_keyboard);
+    this.dialpadToggle   = findViewById(R.id.search_dialpad);
+    this.clearToggle     = findViewById(R.id.search_clear);
+    this.toggleContainer = findViewById(R.id.toggle_container);
 
     this.keyboardToggle.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -103,11 +104,11 @@ public class ContactFilterToolbar extends DarkOverflowToolbar {
     setLogo(null);
     setContentInsetStartWithNavigation(0);
     expandTapArea(toggleContainer, dialpadToggle);
-    styleSearchText(searchText, context, attrs, defStyleAttr);
+    applyAttributes(searchText, context, attrs, defStyleAttr);
     searchText.requestFocus();
   }
 
-  private void styleSearchText(@NonNull EditText searchText,
+  private void applyAttributes(@NonNull EditText searchText,
                                @NonNull Context context,
                                @NonNull AttributeSet attrs,
                                int defStyle)
@@ -121,6 +122,11 @@ public class ContactFilterToolbar extends DarkOverflowToolbar {
     if (styleResource != -1) {
       TextViewCompat.setTextAppearance(searchText, styleResource);
     }
+
+    if (!attributes.getBoolean(R.styleable.ContactFilterToolbar_showDialpad, true)) {
+      dialpadToggle.setVisibility(GONE);
+    }
+
     attributes.recycle();
   }
 
@@ -131,6 +137,10 @@ public class ContactFilterToolbar extends DarkOverflowToolbar {
 
   public void setOnFilterChangedListener(OnFilterChangedListener listener) {
     this.listener = listener;
+  }
+
+  public void setHint(@StringRes int hint) {
+    searchText.setHint(hint);
   }
 
   private void notifyListener() {

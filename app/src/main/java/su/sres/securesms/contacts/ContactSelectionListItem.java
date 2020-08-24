@@ -67,7 +67,7 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
                   String number,
                   String label,
                   int color,
-                  boolean multiSelect)
+                  boolean checkboxVisible)
   {
     this.glideRequests = glideRequests;
     this.number        = number;
@@ -91,8 +91,7 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
 
     setText(recipientSnapshot, type, name, number, label);
 
-    if (multiSelect) this.checkBox.setVisibility(View.VISIBLE);
-    else             this.checkBox.setVisibility(View.GONE);
+    this.checkBox.setVisibility(checkboxVisible ? View.VISIBLE : View.GONE);
   }
 
   public void setChecked(boolean selected) {
@@ -114,9 +113,13 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
 
   @SuppressLint("SetTextI18n")
   private void setText(@Nullable Recipient recipient, int type, String name, String number, String label) {
-    if (number == null || number.isEmpty() || GroupId.isEncodedGroup(number)) {
+    if (number == null || number.isEmpty()) {
       this.nameView.setEnabled(false);
       this.numberView.setText("");
+      this.labelView.setVisibility(View.GONE);
+    } else if (recipient != null && recipient.isGroup()) {
+      this.nameView.setEnabled(false);
+      this.numberView.setText(getGroupMemberCount(recipient));
       this.labelView.setVisibility(View.GONE);
     } else if (type == ContactRepository.PUSH_TYPE) {
 //      this.numberView.setText(number);
@@ -151,6 +154,14 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
     return chipName;
   }
 
+  private String getGroupMemberCount(@NonNull Recipient recipient) {
+    if (!recipient.isGroup()) {
+      throw new AssertionError();
+    }
+    int memberCount = recipient.getParticipants().size();
+    return getContext().getResources().getQuantityString(R.plurals.contact_selection_list_item__number_of_members, memberCount, memberCount);
+  }
+
   public @Nullable LiveRecipient getRecipient() {
     return recipient;
   }
@@ -167,5 +178,8 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
   public void onRecipientChanged(@NonNull Recipient recipient) {
     contactPhotoImage.setAvatar(glideRequests, recipient, false);
     nameView.setText(recipient);
+    if (recipient.isGroup()) {
+      numberView.setText(getGroupMemberCount(recipient));
+    }
   }
 }

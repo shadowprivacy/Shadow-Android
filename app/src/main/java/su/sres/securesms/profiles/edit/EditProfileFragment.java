@@ -45,6 +45,7 @@ import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.registration.RegistrationUtil;
+import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.StringUtil;
 import su.sres.securesms.util.concurrent.SimpleTask;
@@ -254,6 +255,7 @@ public class EditProfileFragment extends Fragment {
                 trimInPlace(s, false);
                 viewModel.setFamilyName(s.toString());
             }));
+
         }
 
         this.finishButton.setOnClickListener(v -> {

@@ -340,11 +340,11 @@ public class MmsDatabase extends MessagingDatabase {
 
     public boolean incrementReceiptCount(SyncMessageId messageId, long timestamp, boolean deliveryReceipt) {
         SQLiteDatabase database = databaseHelper.getWritableDatabase();
-        Cursor cursor = null;
         boolean found = false;
 
-        try {
-            cursor = database.query(TABLE_NAME, new String[]{ID, THREAD_ID, MESSAGE_BOX, RECIPIENT_ID}, DATE_SENT + " = ?", new String[]{String.valueOf(messageId.getTimetamp())}, null, null, null, null);
+        try (Cursor cursor = database.query(TABLE_NAME, new String[] {ID, THREAD_ID, MESSAGE_BOX, RECIPIENT_ID, DELIVERY_RECEIPT_COUNT, READ_RECEIPT_COUNT},
+                DATE_SENT + " = ?", new String[] {String.valueOf(messageId.getTimetamp())},
+                null, null, null, null)) {
 
             while (cursor.moveToNext()) {
                 if (Types.isOutgoingMessageType(cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_BOX)))) {
@@ -356,6 +356,7 @@ public class MmsDatabase extends MessagingDatabase {
                         long id = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
                         long threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID));
                         int status = deliveryReceipt ? GroupReceiptDatabase.STATUS_DELIVERED : GroupReceiptDatabase.STATUS_READ;
+                        boolean isFirstIncrement = cursor.getLong(cursor.getColumnIndexOrThrow(columnName)) == 0;
 
                         found = true;
 
@@ -365,7 +366,12 @@ public class MmsDatabase extends MessagingDatabase {
 
                         DatabaseFactory.getGroupReceiptDatabase(context).update(ourRecipientId, id, status, timestamp);
                         DatabaseFactory.getThreadDatabase(context).update(threadId, false);
-                        notifyConversationListeners(threadId);
+
+                        if (isFirstIncrement) {
+                            notifyConversationListeners(threadId);
+                        } else {
+                            notifyVerboseConversationListeners(threadId);
+                        }
                     }
                 }
             }
@@ -375,9 +381,6 @@ public class MmsDatabase extends MessagingDatabase {
                 return true;
             }
             return found;
-        } finally {
-            if (cursor != null)
-                cursor.close();
         }
     }
 
@@ -428,9 +431,19 @@ public class MmsDatabase extends MessagingDatabase {
     }
 
     public Cursor getMessage(long messageId) {
-        Cursor cursor = rawQuery(RAW_ID_WHERE, new String[]{messageId + ""});
-        setNotifyConverationListeners(cursor, getThreadIdForMessage(messageId));
+        Cursor cursor = internalGetMessage(messageId);
+        setNotifyConversationListeners(cursor, getThreadIdForMessage(messageId));
         return cursor;
+    }
+
+    public Cursor getVerboseMessage(long messageId) {
+        Cursor cursor = internalGetMessage(messageId);
+        setNotifyVerboseConversationListeners(cursor, getThreadIdForMessage(messageId));
+        return cursor;
+    }
+
+    private Cursor internalGetMessage(long messageId) {
+        return rawQuery(RAW_ID_WHERE, new String[] {messageId + ""});
     }
 
     public MessageRecord getMessageRecord(long messageId) throws NoSuchMessageException {

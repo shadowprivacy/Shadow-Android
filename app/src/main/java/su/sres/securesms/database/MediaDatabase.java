@@ -93,7 +93,7 @@ public class MediaDatabase extends Database {
         String query = sorting.applyToQuery(applyEqualityOperator(threadId, GALLERY_MEDIA_QUERY));
         String[] args = {threadId + ""};
         Cursor cursor = database.rawQuery(query, args);
-        setNotifyConverationListeners(cursor, threadId);
+        setNotifyConversationListeners(cursor, threadId);
         return cursor;
     }
 
@@ -103,7 +103,7 @@ public class MediaDatabase extends Database {
         String query = sorting.applyToQuery(applyEqualityOperator(threadId, DOCUMENT_MEDIA_QUERY));
         String[] args = {threadId + ""};
         Cursor cursor = database.rawQuery(query, args);
-        setNotifyConverationListeners(cursor, threadId);
+        setNotifyConversationListeners(cursor, threadId);
         return cursor;
     }
 
@@ -113,7 +113,7 @@ public class MediaDatabase extends Database {
         String query = sorting.applyToQuery(applyEqualityOperator(threadId, AUDIO_MEDIA_QUERY));
         String[] args = {threadId + ""};
         Cursor cursor = database.rawQuery(query, args);
-        setNotifyConverationListeners(cursor, threadId);
+        setNotifyConversationListeners(cursor, threadId);
         return cursor;
     }
 
@@ -123,7 +123,7 @@ public class MediaDatabase extends Database {
         String query = sorting.applyToQuery(applyEqualityOperator(threadId, ALL_MEDIA_QUERY));
         String[] args = {threadId + ""};
         Cursor cursor = database.rawQuery(query, args);
-        setNotifyConverationListeners(cursor, threadId);
+        setNotifyConversationListeners(cursor, threadId);
         return cursor;
     }
 

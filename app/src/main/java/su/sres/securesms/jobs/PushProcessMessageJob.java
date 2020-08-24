@@ -82,7 +82,6 @@ import su.sres.securesms.sms.OutgoingEncryptedMessage;
 import su.sres.securesms.sms.OutgoingEndSessionMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
 import su.sres.securesms.stickers.StickerLocator;
-import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.GroupUtil;
@@ -1461,7 +1460,7 @@ public final class PushProcessMessageJob extends BaseJob {
 
     if (messageProfileKey != null) {
       if (database.setProfileKey(recipient.getId(), messageProfileKey)) {
-        ApplicationDependencies.getJobManager().add(RetrieveProfileJob.forRecipient(recipient));
+        ApplicationDependencies.getJobManager().add(RetrieveProfileJob.forRecipient(recipient.getId()));
       }
     } else {
       Log.w(TAG, "Ignored invalid profile key seen in message");
@@ -1782,8 +1781,15 @@ public final class PushProcessMessageJob extends BaseJob {
       } else {
         return sender.isBlocked();
       }
-    } else if (content.getCallMessage().isPresent() || content.getTypingMessage().isPresent()) {
+    } else if (content.getCallMessage().isPresent()) {
       return sender.isBlocked();
+    } else if (content.getTypingMessage().isPresent()) {
+      if (content.getTypingMessage().get().getGroupId().isPresent()) {
+        GroupId groupId = GroupId.push(content.getTypingMessage().get().getGroupId().get());
+        return Recipient.externalGroup(context, groupId).isBlocked();
+      } else {
+        return sender.isBlocked();
+      }
     }
 
     return false;

@@ -18,6 +18,7 @@ import org.signal.zkgroup.groups.GroupMasterKey;
 import org.signal.zkgroup.profiles.ProfileKey;
 import org.signal.zkgroup.profiles.ProfileKeyCredential;
 import su.sres.securesms.color.MaterialColor;
+import su.sres.securesms.contacts.avatars.ContactColors;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.groups.v2.ProfileKeySet;
 import su.sres.securesms.jobs.RequestGroupV2InfoJob;
@@ -516,10 +517,11 @@ public class RecipientDatabase extends Database {
     try {
 
       for (SignalContactRecord insert : contactInserts) {
-        ContentValues values = validateContactValuesForInsert(getValuesForStorageContact(insert));
+        ContentValues values = validateContactValuesForInsert(getValuesForStorageContact(insert, true));
         long          id     = db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
 
         if (id < 0) {
+          values = validateContactValuesForInsert(getValuesForStorageContact(insert, false));
           Log.w(TAG, "Failed to insert! It's likely that these were newly-registered users that were missed in the merge. Doing an update instead.");
 
           if (insert.getAddress().getNumber().isPresent()) {
@@ -548,7 +550,7 @@ public class RecipientDatabase extends Database {
       }
 
       for (RecordUpdate<SignalContactRecord> update : contactUpdates) {
-        ContentValues values      = getValuesForStorageContact(update.getNew());
+        ContentValues values      = getValuesForStorageContact(update.getNew(), false);
         int           updateCount = db.update(TABLE_NAME, values, STORAGE_SERVICE_ID + " = ?", new String[]{Base64.encodeBytes(update.getOld().getId().getRaw())});
 
         if (updateCount < 1) {
@@ -705,7 +707,7 @@ public class RecipientDatabase extends Database {
     }
   }
 
-  private static @NonNull ContentValues getValuesForStorageContact(@NonNull SignalContactRecord contact) {
+  private static @NonNull ContentValues getValuesForStorageContact(@NonNull SignalContactRecord contact, boolean isInsert) {
     ContentValues values = new ContentValues();
 
     if (contact.getAddress().getUuid().isPresent()) {
@@ -725,6 +727,11 @@ public class RecipientDatabase extends Database {
     values.put(BLOCKED, contact.isBlocked() ? "1" : "0");
     values.put(STORAGE_SERVICE_ID, Base64.encodeBytes(contact.getId().getRaw()));
     values.put(DIRTY, DirtyState.CLEAN.getId());
+
+    if (contact.isProfileSharingEnabled() && isInsert) {
+      values.put(COLOR, ContactColors.generateFor(profileName.toString()).serialize());
+    }
+
     return values;
   }
 
@@ -925,6 +932,23 @@ public class RecipientDatabase extends Database {
     if (update(id, values)) {
       Recipient.live(id).refresh();
     }
+  }
+
+  public void setColorIfNotSet(@NonNull RecipientId id, @NonNull MaterialColor color) {
+    if (setColorIfNotSetInternal(id, color)) {
+      Recipient.live(id).refresh();
+    }
+  }
+
+  private boolean setColorIfNotSetInternal(@NonNull RecipientId id, @NonNull MaterialColor color) {
+    SQLiteDatabase db    = databaseHelper.getWritableDatabase();
+    String         query = ID + " = ? AND " + COLOR + " IS NULL";
+    String[]       args  = new String[]{ id.serialize() };
+
+    ContentValues values = new ContentValues();
+    values.put(COLOR, color.serialize());
+
+    return db.update(TABLE_NAME, values, query, args) > 0;
   }
 
   public void setDefaultSubscriptionId(@NonNull RecipientId id, int defaultSubscriptionId) {
@@ -1204,7 +1228,10 @@ public class RecipientDatabase extends Database {
   public void setProfileSharing(@NonNull RecipientId id, @SuppressWarnings("SameParameterValue") boolean enabled) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(PROFILE_SHARING, enabled ? 1 : 0);
-    if (update(id, contentValues)) {
+    boolean profiledUpdated = update(id, contentValues);
+    boolean colorUpdated    = enabled && setColorIfNotSetInternal(id, ContactColors.generateFor(Recipient.resolved(id).getDisplayName(context)));
+
+    if (profiledUpdated || colorUpdated) {
       markDirty(id, DirtyState.UPDATE);
       Recipient.live(id).refresh();
 //      StorageSyncHelper.scheduleSyncForDataChange();
@@ -1792,7 +1819,10 @@ public class RecipientDatabase extends Database {
       refreshQualifyingValues.put(SYSTEM_PHONE_TYPE, systemPhoneType);
       refreshQualifyingValues.put(SYSTEM_CONTACT_URI, systemContactUri);
 
-      if (update(id, refreshQualifyingValues)) {
+      boolean updatedValues = update(id, refreshQualifyingValues);
+      boolean updatedColor  = displayName != null && setColorIfNotSetInternal(id, ContactColors.generateFor(displayName));
+
+      if (updatedValues || updatedColor) {
         pendingContactInfoMap.put(id, new PendingContactInfo(displayName, photoUri, systemPhoneLabel, systemContactUri));
       }
 

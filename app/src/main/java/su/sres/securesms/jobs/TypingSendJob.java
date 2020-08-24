@@ -15,6 +15,8 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
+
+import su.sres.signalservice.api.CancelationException;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
 import su.sres.signalservice.api.messages.SignalServiceTypingMessage;
@@ -41,12 +43,16 @@ public class TypingSendJob extends BaseJob  {
 
     public TypingSendJob(long threadId, boolean typing) {
         this(new Job.Parameters.Builder()
-                        .setQueue("TYPING_" + threadId)
+                        .setQueue(getQueue(threadId))
                         .setMaxAttempts(1)
                         .setLifespan(TimeUnit.SECONDS.toMillis(5))
                         .build(),
                 threadId,
                 typing);
+    }
+
+    public static String getQueue(long threadId) {
+        return "TYPING_" + threadId;
     }
 
     private TypingSendJob(@NonNull Job.Parameters parameters, long threadId, boolean typing) {
@@ -102,7 +108,16 @@ public class TypingSendJob extends BaseJob  {
         List<Optional<UnidentifiedAccessPair>> unidentifiedAccess = Stream.of(recipients).map(r -> UnidentifiedAccessUtil.getAccessFor(context, r)).toList();
         SignalServiceTypingMessage             typingMessage      = new SignalServiceTypingMessage(typing ? Action.STARTED : Action.STOPPED, System.currentTimeMillis(), groupId);
 
-        messageSender.sendTyping(addresses, unidentifiedAccess, typingMessage);
+        if (isCanceled()) {
+            Log.w(TAG, "Canceled before send!");
+            return;
+        }
+
+        try {
+            messageSender.sendTyping(addresses, unidentifiedAccess, typingMessage, this::isCanceled);
+        } catch (CancelationException e) {
+            Log.w(TAG, "Canceled during send!");
+        }
     }
 
     @Override
