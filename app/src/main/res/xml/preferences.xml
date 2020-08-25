@@ -29,9 +29,9 @@
         android:title="@string/preferences__storage"
         android:icon="?attr/data_and_storage_icon"/>
 
-    <Preference android:key="preference_category_devices"
+<!--    <Preference android:key="preference_category_devices"
                 android:title="@string/preferences__linked_devices"
-        android:icon="?attr/linked_devices_icon"/>
+        android:icon="?attr/linked_devices_icon"/> -->
 
     <Preference android:key="preference_category_help"
         android:title="@string/preferences__help"

@@ -222,7 +222,7 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
 
     if (TextSecurePreferences.isPasswordDisabled(context) && !TextSecurePreferences.isScreenLockEnabled(context)) {
         return context.getString(privacySummaryResId, offRes);
-    } else {          
+    } else {
         return context.getString(privacySummaryResId, onRes);
     }
   }
