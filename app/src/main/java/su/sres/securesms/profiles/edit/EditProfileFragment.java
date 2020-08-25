@@ -248,7 +248,7 @@ public class EditProfileFragment extends Fragment {
             preview.setVisibility(View.GONE);
             familyName.setVisibility(View.GONE);
             familyName.setEnabled(false);
-            view.findViewById(R.id.description_text).setVisibility(View.GONE);
+ //           view.findViewById(R.id.description_text).setVisibility(View.GONE);
             view.<ImageView>findViewById(R.id.avatar_placeholder).setImageResource(R.drawable.ic_group_outline_40);
         } else {
             this.familyName.addTextChangedListener(new AfterTextChanged(s -> {
