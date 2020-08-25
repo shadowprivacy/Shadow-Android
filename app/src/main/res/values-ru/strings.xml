@@ -48,8 +48,7 @@
   <string name="ApplicationPreferencesActivity_off">отключена</string>
   <string name="ApplicationPreferencesActivity_Off">Отключено</string>
   <string name="ApplicationPreferencesActivity_sms_mms_summary">SMS %1$s, MMS %2$s</string>
-  <string name="ApplicationPreferencesActivity_privacy_summary">Блокировка экрана %1$s, блокировка регистрации %2$s</string>
-    <string name="ApplicationPreferencesActivity_privacy_summary_screen_lock">Блокировка экрана %1$s</string>
+  <string name="ApplicationPreferencesActivity_privacy_summary">Блокировка экрана %1$s</string>
   <string name="ApplicationPreferencesActivity_appearance_summary">Тема %1$s, язык %2$s</string>
   <!--AppProtectionPreferenceFragment-->
   <plurals name="AppProtectionPreferenceFragment_minutes">
