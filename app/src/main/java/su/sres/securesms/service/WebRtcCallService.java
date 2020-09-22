@@ -1488,7 +1488,7 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
     Callable<List<PeerConnection.IceServer>> callable = () -> {
       LinkedList<PeerConnection.IceServer> results = new LinkedList<>();
 
-      results.add(new PeerConnection.IceServer("stun:stun1.l.google.com:19302"));
+//      results.add(new PeerConnection.IceServer("stun:stun1.l.google.com:19302"));
       try {
         TurnServerInfo turnServerInfo = accountManager.getTurnServerInfo();
 
