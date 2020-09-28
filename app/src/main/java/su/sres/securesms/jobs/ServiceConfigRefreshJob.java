@@ -109,13 +109,16 @@ public class ServiceConfigRefreshJob extends BaseJob {
             byte[] unidentifiedAccessCaPublicKey = configRequested.getUnidentifiedDeliveryCaPublicKey();
             byte[] zkPublicKey                   = configRequested.getZkPublicKey();
             String supportEmail                  = configRequested.getSupportEmail();
+            String fcmSenderId                   = configRequested.getFcmSenderId();
+            String oldFcmSenderId                = SignalStore.serviceConfigurationValues().getFcmSenderId();
 
             if (
                             cloudUrl                      != null &&
                             statusUrl                     != null &&
                             storageUrl                    != null &&
                             unidentifiedAccessCaPublicKey != null &&
-                            zkPublicKey != null) {
+                            zkPublicKey                   != null &&
+                            fcmSenderId                   != null) {
 
                 SignalStore.serviceConfigurationValues().setCloudUrl(cloudUrl);
                 SignalStore.serviceConfigurationValues().setCloud2Url(cloudUrl);
@@ -124,6 +127,11 @@ public class ServiceConfigRefreshJob extends BaseJob {
                 SignalStore.serviceConfigurationValues().setUnidentifiedAccessCaPublicKey(unidentifiedAccessCaPublicKey);
                 SignalStore.serviceConfigurationValues().setZkPublicKey(zkPublicKey);
                 SignalStore.serviceConfigurationValues().setSupportEmail(supportEmail);
+
+                if (!fcmSenderId.equals(oldFcmSenderId)) {
+                    SignalStore.serviceConfigurationValues().setFcmSenderId(fcmSenderId);
+                    ApplicationDependencies.getJobManager().add(new FcmRefreshJob());
+                }
 
                 Log.i(TAG, "Successfully updated service configuration");
 

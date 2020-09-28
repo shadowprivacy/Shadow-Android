@@ -1,14 +1,17 @@
 package su.sres.securesms.gcm;
 
 import androidx.annotation.WorkerThread;
+
 import android.text.TextUtils;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import java.util.concurrent.CountDownLatch;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class FcmUtil {
@@ -20,23 +23,18 @@ public final class FcmUtil {
      */
     @WorkerThread
     public static Optional<String> getToken() {
-        CountDownLatch          latch = new CountDownLatch(1);
         AtomicReference<String> token = new AtomicReference<>(null);
 
-        FirebaseInstanceId.getInstance().getInstanceId().addOnCompleteListener(task -> {
-            if (task.isSuccessful() && task.getResult() != null && !TextUtils.isEmpty(task.getResult().getToken())) {
-                token.set(task.getResult().getToken());
-            } else {
-                Log.w(TAG, "Failed to get the token.", task.getException());
-            }
-
-            latch.countDown();
-        });
-
         try {
-            latch.await();
-        } catch (InterruptedException e) {
-            Log.w(TAG, "Was interrupted while waiting for the token.");
+            String fcmSenderId = SignalStore.serviceConfigurationValues().getFcmSenderId();
+
+            if (fcmSenderId.equals("null")) {
+                Log.e(TAG, "FCM sender ID is null");
+            } else {
+                token.set(FirebaseInstanceId.getInstance().getToken(fcmSenderId, "FCM"));
+            }
+        } catch (IOException e) {
+            Log.w(TAG, "Failed to get the token.", e);
         }
 
         return Optional.fromNullable(token.get());

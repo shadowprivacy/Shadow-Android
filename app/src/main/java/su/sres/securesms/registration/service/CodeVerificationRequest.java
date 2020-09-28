@@ -10,6 +10,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.events.ServerCertErrorEvent;
 import su.sres.securesms.jobs.CertificateRefreshJob;
 import su.sres.securesms.jobs.DirectorySyncJob;
+import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.LicenseManagementJob;
 import su.sres.securesms.jobs.StickerPackDownloadJob;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -205,6 +206,8 @@ public final class CodeVerificationRequest {
         byte[] unidentifiedAccessCaPublicKey = configRequested.getUnidentifiedDeliveryCaPublicKey();
         byte[] zkPublicKey                   = configRequested.getZkPublicKey();
         String supportEmail                  = configRequested.getSupportEmail();
+        String fcmSenderId                   = configRequested.getFcmSenderId();
+        String oldFcmSenderId                = SignalStore.serviceConfigurationValues().getFcmSenderId();
 
         SystemCertificates systemCerts = accountManager.getSystemCerts();
 
@@ -215,11 +218,12 @@ public final class CodeVerificationRequest {
 
         // if no cloud certificate at all is received from the server, registration will fail; same thing for storage, but as long as storage is not in place this is relaxed
         if (
-                        cloudUrl   != null                                         &&
-                        statusUrl  != null                                         &&
-                        storageUrl != null                                         &&
+                        cloudUrl                      != null                      &&
+                        statusUrl                     != null                      &&
+                        storageUrl                    != null                      &&
                         unidentifiedAccessCaPublicKey != null                      &&
-                        zkPublicKey != null                                        &&
+                        zkPublicKey                   != null                      &&
+                        fcmSenderId                   != null                      &&
                         ((cloudCertABytes != null) || (cloudCertBBytes != null))
 //                   && ((storageCertABytes != null) || (storageCertBBytes != null))
         ) {
@@ -231,6 +235,12 @@ public final class CodeVerificationRequest {
             SignalStore.serviceConfigurationValues().setUnidentifiedAccessCaPublicKey(unidentifiedAccessCaPublicKey);
             SignalStore.serviceConfigurationValues().setZkPublicKey(zkPublicKey);
             SignalStore.serviceConfigurationValues().setSupportEmail(supportEmail);
+
+            // upon the initial registration the sender ID would have been already set from the QR code, but this is for subsequent re-registrations
+            if (!fcmSenderId.equals(oldFcmSenderId)) {
+                SignalStore.serviceConfigurationValues().setFcmSenderId(fcmSenderId);
+                ApplicationDependencies.getJobManager().add(new FcmRefreshJob());
+            }
 
             TrustStore trustStore = new SignalServiceTrustStore(context);
             char[] shadowStorePassword = trustStore.getKeyStorePassword().toCharArray();

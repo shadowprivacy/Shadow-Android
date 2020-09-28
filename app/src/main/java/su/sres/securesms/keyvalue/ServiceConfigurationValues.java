@@ -6,20 +6,21 @@ import androidx.annotation.Nullable;
 
 public final class ServiceConfigurationValues {
 
-    private static final String SHADOW_SERVICE_URL = "service_confifuration.shadow_service_url";
-    private static final String CLOUD_URL = "service_configuration.cloud_url";
-    private static final String CLOUD2_URL = "service_configuration.cloud2_url";
-    private static final String STORAGE_URL = "service_configuration.storage_url";
-    private static final String STATUS_URL = "service_configuration.status_url";
+    private static final String SHADOW_SERVICE_URL                = "service_confifuration.shadow_service_url";
+    private static final String CLOUD_URL                         = "service_configuration.cloud_url";
+    private static final String CLOUD2_URL                        = "service_configuration.cloud2_url";
+    private static final String FCM_SENDER_ID                     = "service_configuration.fcm_sender_id";
+    private static final String STORAGE_URL                       = "service_configuration.storage_url";
+    private static final String STATUS_URL                        = "service_configuration.status_url";
     private static final String UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY = "service_configuration.unidentified_access_ca_public_key";
     private static final String ZK_PUBLIC_KEY                     = "service_configuration.zk_public_key";
-    private static final String CURRENT_CERT_VERSION = "service_configuration.current_cert_version";
-    private static final String CURRENT_DIR_VERSION  = "service_configuration.current_dir_version";
-    private static final String SUPPORT_EMAIL        = "service_configuration.support_email";
-    private static final String IS_LICENSED          = "service_configuration.is_licensed";
-    private static final String LICENSE              = "service_configuration.license";
+    private static final String CURRENT_CERT_VERSION              = "service_configuration.current_cert_version";
+    private static final String CURRENT_DIR_VERSION               = "service_configuration.current_dir_version";
+    private static final String SUPPORT_EMAIL                     = "service_configuration.support_email";
+    private static final String IS_LICENSED                       = "service_configuration.is_licensed";
+    private static final String LICENSE                           = "service_configuration.license";
 
-    public static final String EXAMPLE_URI = "https://example.com";
+    public static final String EXAMPLE_URI                        = "https://example.com";
 
     private final KeyValueStore store;
 
@@ -105,6 +106,12 @@ public final class ServiceConfigurationValues {
                 .commit();
     }
 
+    public synchronized void setFcmSenderId(String senderId) {
+        store.beginWrite()
+                .putString(FCM_SENDER_ID, senderId)
+                .commit();
+    }
+
     public @Nullable
     String getShadowUrl() {
         return store.getString(SHADOW_SERVICE_URL, EXAMPLE_URI);
@@ -158,5 +165,9 @@ public final class ServiceConfigurationValues {
 
     public @Nullable byte [] retrieveLicense() {
         return store.getBlob(LICENSE, null);
+    }
+
+    public String getFcmSenderId() {
+        return store.getString(FCM_SENDER_ID, "null");
     }
 }

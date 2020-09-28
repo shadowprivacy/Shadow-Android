@@ -70,18 +70,15 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
     private static final String TAG = InitialActivity.class.getSimpleName();
 
-    private static final String SERVICE_URI_COLUMN = "SRVURL";
-    private static final String CLOUD_URI_COLUMN = "CLDURL";
-    private static final String STORAGE_URI_COLUMN = "STRURL";
-    private static final String UNIDENTIFIED_DELIVERY_CA_PUBLIC_KEY_COLUMN = "UDCA";
+    private static final String FCM_SENDER_ID_COLUMN          = "FCMSID";
     private static final String SERVER_PUBLIC_KEY_HASH_COLUMN = "SRVPKH";
+    private static final String SERVICE_URI_COLUMN            = "SRVURL";
 
     private static final String EXAMPLE_HASH = "sha256/example";
     private static final String NULL_HASH = "sha256/null";
 
     public static final String TRUSTSTORE_FILE_NAME = "shadow.store";
     private static final String SHADOW_SERVER_CERT_ALIAS_A = "shadow_a";
-
 
     private InitialActivity.InitializationFragment initializationFragment = new InitialActivity.InitializationFragment();
     private InitialActivity.VerifyScanFragment scanFragment = new InitialActivity.VerifyScanFragment();
@@ -168,10 +165,8 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
         private ApplicationContext app;
 
-        private String serviceUrl,
- //                      cloudUrl,
- //                      storageUrl,
- //                      unidentifiedDeliveryCaPublicKey,
+        private String fcmSenderId,
+                       serviceUrl,
                        serverPublicKeyHash;
 
         private View container;
@@ -209,7 +204,8 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
         void analyzeQrCode(String scanned) {
 
-            int serviceUrlIndex,
+            int fcmSenderIdIndex,
+                serviceUrlIndex,
                 serverPublicKeyHashIndex;
 
             try {
@@ -220,8 +216,9 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
                     Toast.makeText(getActivity(), R.string.InitialActivity_qr_code_invalid, Toast.LENGTH_LONG).show();
                 } else {
 
-                    serviceUrlIndex = csvHeaderList.indexOf(SERVICE_URI_COLUMN);
+                    serviceUrlIndex          = csvHeaderList.indexOf(SERVICE_URI_COLUMN);
                     serverPublicKeyHashIndex = csvHeaderList.indexOf(SERVER_PUBLIC_KEY_HASH_COLUMN);
+                    fcmSenderIdIndex         = csvHeaderList.indexOf(FCM_SENDER_ID_COLUMN);
 
                     List<CSVRecord> csvRecordList = qrparser.getRecords();
                     serviceUrl = csvRecordList.get(0).get(serviceUrlIndex);
@@ -232,12 +229,17 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
                         serverPublicKeyHash = EXAMPLE_HASH;
                     }
 
+                    if (fcmSenderIdIndex != -1) {
+                        fcmSenderId = csvRecordList.get(0).get(fcmSenderIdIndex);
+                    }
+
                     if (serviceUrl != null) {
 
                         if (validateServiceUrls(serviceUrl)) {
 
                             SignalStore.serviceConfigurationValues().setShadowUrl(serviceUrl);
-                            Log.i(TAG, "Server URL added to Signal Store");
+                            SignalStore.serviceConfigurationValues().setFcmSenderId(fcmSenderId);
+                            Log.i(TAG, "Server URL and Sender ID added to Signal Store");
 
                             new Thread(() -> {
 

@@ -33,6 +33,9 @@ public class ConfigurationInfo {
     @JsonProperty
     private String supportEmail;
 
+    @JsonProperty
+    private String fcmSenderId;
+
     public String getCloudUri() {
         return cloudUri;
     }
@@ -55,6 +58,10 @@ public class ConfigurationInfo {
 
     public String getSupportEmail() {
         return supportEmail;
+    }
+
+    public String getFcmSenderId() {
+        return fcmSenderId;
     }
 
     static class ByteArrayDeserializer extends JsonDeserializer<byte[]> {
