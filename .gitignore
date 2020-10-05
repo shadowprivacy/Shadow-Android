@@ -26,6 +26,4 @@ jni/libspeex/.deps/
 *.sh
 pkcs11.password
 app/libs/ringrtc-android-*.jar
-app/src/main/res/values/firebase-messaging.xml
-app/src/main/res/raw/whisper.store
 app/.cxx
