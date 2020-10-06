@@ -125,7 +125,42 @@ public class LicenseManagementJob extends BaseJob {
         byte [] candidateBytes = config.retrieveLicense();
 
         if(candidateBytes == null) {
-            // there's no license file locally, so download, validate and store it
+
+            // there's no license file locally, so suppose we are eligible for unconditional trial, let's check that
+            switch(config.getTrialStatus()) {
+                case 0:
+                   int duration = requestTrial(psid);
+                   if (duration != -1) {
+                       Log.i(TAG, "Trial request success. Setting trial in progress. Setting licensed as true");
+                       config.setTrialStatus(1);
+                       config.setTrialStartTime(System.currentTimeMillis());
+                       config.setTrialDuration(duration);
+                       config.setLicensed(true);
+                       SignalStore.setLastLicenseRefreshTime(System.currentTimeMillis());
+                       return;
+                   }
+                   // this is when we are requesting a trial already used in the past, e.g. after a reinstall
+                   else Log.i(TAG, "Trial request failure.");
+
+                   break;
+
+                case 1:
+                    if ((System.currentTimeMillis() > (config.getTrialStartTime() + TimeUnit.DAYS.toMillis(config.getTrialDuration())) ) || !validateTrial(psid) ) {
+                        Log.i(TAG, "Trial expired!");
+                        config.setTrialStatus(2);
+                        config.setLicensed(false);
+                    } else {
+                        Log.i(TAG, "Trial validation success. Continuing to use trial");
+                        SignalStore.setLastLicenseRefreshTime(System.currentTimeMillis());
+                        return;
+                    }
+
+                    break;
+
+                case 2: break;
+            }
+
+            // as there's no license file locally, so download, validate and store it
 
             byte[] licenseBytes = downloadLicense();
 
@@ -260,7 +295,7 @@ public class LicenseManagementJob extends BaseJob {
         String id = psid.replaceAll("/", "%2f");
 
         OkHttpClient client  = new OkHttpClient();
-        Request request = new Request.Builder().url(String.format("%s/allocate/%s/%s/%s",
+        Request request = new Request.Builder().url(String.format("%s/license/android/allocate/%s/%s/%s",
                                                                   BuildConfig.LICENSE_URL,
                                                                   license.getLicenseId().toString(),
                                                                   assignee,
@@ -283,11 +318,59 @@ public class LicenseManagementJob extends BaseJob {
         String id = psid.replaceAll("/", "%2f");
 
         OkHttpClient client  = new OkHttpClient();
-        Request request = new Request.Builder().url(String.format("%s/check/%s/%s",
+        Request request = new Request.Builder().url(String.format("%s/license/android/check/%s/%s",
                                                                   BuildConfig.LICENSE_URL,
                                                                   license.getLicenseId().toString(),
                                                                   id))
                                                .build();
+
+        try {
+            Response response = client.newCall(request).execute();
+            return response.code() == 200;
+        } catch (IOException e) {
+            throw new LicenseAllocationOrValidationException();
+            // here the job will fail by retryable exception
+        }
+    }
+
+    private int requestTrial(String psid) throws LicenseAllocationOrValidationException {
+
+        String id = psid.replaceAll("/", "%2f");
+
+        OkHttpClient client  = new OkHttpClient();
+        Request request = new Request.Builder().url(String.format("%s/trial/android/request/%s",
+                BuildConfig.LICENSE_URL,
+                id))
+                .build();
+
+        try {
+            Response response = client.newCall(request).execute();
+            if (response.code() == 200) {
+                if (response.body() != null) {                
+
+                    return Integer.parseInt(response.body().string());
+
+                } else throw new LicenseAllocationOrValidationException();
+
+            } else return -1;
+
+        } catch (IOException e) {
+            Log.i(TAG, e);
+
+            throw new LicenseAllocationOrValidationException();
+            // here the job will fail by retryable exception
+        }
+    }
+
+    private boolean validateTrial(String psid) throws LicenseAllocationOrValidationException {
+
+        String id = psid.replaceAll("/", "%2f");
+
+        OkHttpClient client  = new OkHttpClient();
+        Request request = new Request.Builder().url(String.format("%s/trial/android/check/%s",
+                BuildConfig.LICENSE_URL,
+                id))
+                .build();
 
         try {
             Response response = client.newCall(request).execute();

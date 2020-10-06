@@ -20,6 +20,10 @@ public final class ServiceConfigurationValues {
     private static final String IS_LICENSED                       = "service_configuration.is_licensed";
     private static final String LICENSE                           = "service_configuration.license";
 
+    private static final String TRIAL_STATUS                      = "service_configuration.trial_status";
+    private static final String TRIAL_START_TIME                  = "service_configuration.trial_start_time";
+    private static final String TRIAL_DURATION                    = "service_configuration.trial_duration";
+
     public static final String EXAMPLE_URI                        = "https://example.com";
 
     private final KeyValueStore store;
@@ -94,6 +98,24 @@ public final class ServiceConfigurationValues {
                 .commit();
     }
 
+    public synchronized void setTrialStatus(int status) {
+        store.beginWrite()
+                .putInteger(TRIAL_STATUS, status)
+                .commit();
+    }
+
+    public synchronized void setTrialStartTime(long timestamp) {
+        store.beginWrite()
+                .putLong(TRIAL_START_TIME, timestamp)
+                .commit();
+    }
+
+    public synchronized void setTrialDuration(int duration) {
+        store.beginWrite()
+                .putInteger(TRIAL_DURATION, duration)
+                .commit();
+    }
+
     public synchronized void storeLicense(byte [] license) {
         store.beginWrite()
                 .putBlob(LICENSE, license)
@@ -165,6 +187,18 @@ public final class ServiceConfigurationValues {
 
     public @Nullable byte [] retrieveLicense() {
         return store.getBlob(LICENSE, null);
+    }
+
+    public int getTrialStatus() {
+        return store.getInteger(TRIAL_STATUS, 0);
+    }
+
+    public long getTrialStartTime() {
+        return store.getLong(TRIAL_START_TIME, System.currentTimeMillis());
+    }
+
+    public int getTrialDuration() {
+        return store.getInteger(TRIAL_DURATION, 14);
     }
 
     public String getFcmSenderId() {

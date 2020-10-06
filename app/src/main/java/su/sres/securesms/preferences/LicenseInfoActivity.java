@@ -20,18 +20,22 @@ import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 
 import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
+import java.util.concurrent.TimeUnit;
 
 import su.sres.securesms.activation.License;
 import su.sres.securesms.BaseActionBarActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.jobs.LicenseManagementJob;
 import su.sres.securesms.jobs.LicenseManagementJob.NullPsidException;
+import su.sres.securesms.keyvalue.ServiceConfigurationValues;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.DynamicTheme;
+import su.sres.securesms.util.ExpirationUtil;
 
 public class LicenseInfoActivity extends BaseActionBarActivity {
 
@@ -57,6 +61,8 @@ public class LicenseInfoActivity extends BaseActionBarActivity {
         String psid = "null";
         String na = getString(R.string.LicenseInfoActivity_na);
 
+        ServiceConfigurationValues config = SignalStore.serviceConfigurationValues();
+
         try {
             psid = LicenseManagementJob.calculatePsid(Settings.Secure.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID));
         } catch (NullPsidException | NoSuchAlgorithmException e) {
@@ -65,13 +71,23 @@ public class LicenseInfoActivity extends BaseActionBarActivity {
 
         platformId.setText(String.format(getString(R.string.LicenseInfoActivity_psid), psid));
 
-        byte [] licenseBytes = SignalStore.serviceConfigurationValues().retrieveLicense();
+        byte [] licenseBytes = config.retrieveLicense();
 
         if (licenseBytes == null) {
-            status.setText(R.string.LicenseInfoActivity_status_nokey);
-            validFrom.setText(String.format(getString(R.string.LicenseInfoActivity_valid_from), na));
-            validUntil.setText(String.format(getString(R.string.LicenseInfoActivity_valid_thru), na));
-            serial.setText(String.format(getString(R.string.LicenseInfoActivity_serial), na));
+
+            if (config.getTrialStatus() == 1) {
+                int secondsLeft = Long.valueOf(TimeUnit.MILLISECONDS.toSeconds(config.getTrialStartTime() + TimeUnit.DAYS.toMillis(config.getTrialDuration()) - System.currentTimeMillis())).intValue();
+                status.setText(String.format(getString(R.string.LicenseInfoActivity_status_trial_active), ExpirationUtil.getExpirationAbbreviatedDisplayValue(this, secondsLeft)));
+                validFrom.setVisibility(View.INVISIBLE);
+                validUntil.setVisibility(View.INVISIBLE);
+                serial.setVisibility(View.INVISIBLE);
+            } else {
+                status.setText(R.string.LicenseInfoActivity_status_nokey);
+                validFrom.setText(String.format(getString(R.string.LicenseInfoActivity_valid_from), na));
+                validUntil.setText(String.format(getString(R.string.LicenseInfoActivity_valid_thru), na));
+                serial.setText(String.format(getString(R.string.LicenseInfoActivity_serial), na));
+            }
+
         } else {
 
             try {
@@ -85,7 +101,7 @@ public class LicenseInfoActivity extends BaseActionBarActivity {
                     status.setText(R.string.LicenseInfoActivity_status_expired);
                 } else if (license.getFeatures().get("Valid From").getLong() > System.currentTimeMillis()) {
                     status.setText(R.string.LicenseInfoActivity_status_nyv);
-                } else if (SignalStore.serviceConfigurationValues().isLicensed()) {
+                } else if (config.isLicensed()) {
                     status.setText(R.string.LicenseInfoActivity_status_active);
                 } else {
                     // there's the license file with seemingly good parameters, but we're not licensed still. Must be due to web-validation failure (license revoked etc)

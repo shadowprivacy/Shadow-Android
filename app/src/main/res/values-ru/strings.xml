@@ -2047,10 +2047,11 @@
   <string name="LicenseInfoActivity_title">Сведения об активации:</string>
   <string name="LicenseInfoActivity_status_active">Статус активации: Активна</string>
   <string name="LicenseInfoActivity_status_expired">Статус активации: Истекла</string>
+  <string name="LicenseInfoActivity_status_invalid">Статус активации: Недействительна</string>
   <string name="LicenseInfoActivity_status_nyv">Статус активации: Ещё не активна</string>
   <string name="LicenseInfoActivity_status_nokey">Статус активации: Ключ отсутствует</string>
+  <string name="LicenseInfoActivity_status_trial_active">Статус активации: Пробный период (осталось %s)</string>
   <string name="LicenseInfoActivity_status_uncertain">Статус активации: Не определен</string>
-  <string name="LicenseInfoActivity_status_invalid">Статус активации: Недействительна</string>
   <string name="LicenseInfoActivity_valid_from">Действительна с: %s</string>
   <string name="LicenseInfoActivity_valid_thru">Действительна по: %s</string>
   <string name="LicenseInfoActivity_serial">Серийный номер: %s</string>
