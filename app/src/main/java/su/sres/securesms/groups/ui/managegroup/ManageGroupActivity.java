@@ -22,7 +22,7 @@ public class ManageGroupActivity extends PassphraseRequiredActionBarActivity {
 
     private final DynamicTheme dynamicTheme = new DynamicNoActionBarTheme();
 
-    public static Intent newIntent(@NonNull Context context, @NonNull GroupId.Push groupId) {
+    public static Intent newIntent(@NonNull Context context, @NonNull GroupId groupId) {
         Intent intent = new Intent(context, ManageGroupActivity.class);
         intent.putExtra(GROUP_ID, groupId.toString());
         return intent;
@@ -44,6 +44,7 @@ public class ManageGroupActivity extends PassphraseRequiredActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState, boolean ready) {
         super.onCreate(savedInstanceState, ready);
+        getWindow().getDecorView().setSystemUiVisibility(getWindow().getDecorView().getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         setContentView(R.layout.group_manage_activity);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()

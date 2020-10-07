@@ -505,13 +505,14 @@ public final class PushProcessMessageJob extends BaseJob {
         RemotePeer remotePeer = new RemotePeer(Recipient.externalPush(context, content.getSender()).getId());
 
         intent.setAction(WebRtcCallService.ACTION_RECEIVE_OFFER)
-                .putExtra(WebRtcCallService.EXTRA_CALL_ID,           message.getId())
-                .putExtra(WebRtcCallService.EXTRA_REMOTE_PEER,       remotePeer)
-                .putExtra(WebRtcCallService.EXTRA_REMOTE_DEVICE,     content.getSenderDevice())
-                .putExtra(WebRtcCallService.EXTRA_OFFER_DESCRIPTION, message.getDescription())
-                .putExtra(WebRtcCallService.EXTRA_TIMESTAMP,         content.getTimestamp())
-                .putExtra(WebRtcCallService.EXTRA_OFFER_TYPE,        message.getType().getCode())
-                .putExtra(WebRtcCallService.EXTRA_MULTI_RING,        content.getCallMessage().get().isMultiRing());
+                .putExtra(WebRtcCallService.EXTRA_CALL_ID,                    message.getId())
+                .putExtra(WebRtcCallService.EXTRA_REMOTE_PEER,                remotePeer)
+                .putExtra(WebRtcCallService.EXTRA_REMOTE_DEVICE,              content.getSenderDevice())
+                .putExtra(WebRtcCallService.EXTRA_OFFER_DESCRIPTION,          message.getDescription())
+                .putExtra(WebRtcCallService.EXTRA_SERVER_RECEIVED_TIMESTAMP,  content.getServerReceivedTimestamp())
+                .putExtra(WebRtcCallService.EXTRA_SERVER_DELIVERED_TIMESTAMP, content.getServerDeliveredTimestamp())
+                .putExtra(WebRtcCallService.EXTRA_OFFER_TYPE,                 message.getType().getCode())
+                .putExtra(WebRtcCallService.EXTRA_MULTI_RING,                 content.getCallMessage().get().isMultiRing());
 
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent);
       else                                                context.startService(intent);
@@ -605,7 +606,7 @@ public final class PushProcessMessageJob extends BaseJob {
     IncomingTextMessage incomingTextMessage = new IncomingTextMessage(Recipient.externalPush(context, content.getSender()).getId(),
             content.getSenderDevice(),
             content.getTimestamp(),
-            content.getServerTimestamp(),
+            content.getServerReceivedTimestamp(),
             "", Optional.absent(), 0,
             content.isNeedsReceipt());
 
@@ -714,7 +715,7 @@ public final class PushProcessMessageJob extends BaseJob {
       Recipient            sender       = Recipient.externalPush(context, content.getSender());
       IncomingMediaMessage mediaMessage = new IncomingMediaMessage(sender.getId(),
               content.getTimestamp(),
-              content.getServerTimestamp(),
+              content.getServerReceivedTimestamp(),
               -1,
               expiresInSeconds * 1000L,
               true,
@@ -774,7 +775,7 @@ public final class PushProcessMessageJob extends BaseJob {
     Recipient     sender        = Recipient.externalPush(context, content.getSender());
     MessageRecord targetMessage = DatabaseFactory.getMmsSmsDatabase(context).getMessageFor(delete.getTargetSentTimestamp(), sender.getId());
 
-    if (targetMessage != null && RemoteDeleteUtil.isValidReceive(targetMessage, sender, content.getServerTimestamp())) {
+    if (targetMessage != null && RemoteDeleteUtil.isValidReceive(targetMessage, sender, content.getServerReceivedTimestamp())) {
       MessagingDatabase db = targetMessage.isMms() ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
       db.markAsRemoteDelete(targetMessage.getId());
       ApplicationDependencies.getMessageNotifier().updateNotification(context, targetMessage.getThreadId(), false);
@@ -783,7 +784,7 @@ public final class PushProcessMessageJob extends BaseJob {
       ApplicationDependencies.getEarlyMessageCache().store(sender.getId(), delete.getTargetSentTimestamp(), content);
     } else {
       Log.w(TAG, String.format(Locale.ENGLISH, "[handleRemoteDelete] Invalid remote delete! deleteTime: %d, targetTime: %d, deleteAuthor: %s, targetAuthor: %s",
-              content.getServerTimestamp(), targetMessage.getServerTimestamp(), sender.getId(), targetMessage.getRecipient().getId()));
+              content.getServerReceivedTimestamp(), targetMessage.getServerTimestamp(), sender.getId(), targetMessage.getRecipient().getId()));
     }
   }
 
@@ -1033,7 +1034,7 @@ public final class PushProcessMessageJob extends BaseJob {
       Optional<Attachment>        sticker        = getStickerAttachment(message.getSticker());
       IncomingMediaMessage        mediaMessage   = new IncomingMediaMessage(Recipient.externalPush(context, content.getSender()).getId(),
               message.getTimestamp(),
-              content.getServerTimestamp(),
+              content.getServerReceivedTimestamp(),
               -1,
               message.getExpiresInSeconds() * 1000L,
               false,
@@ -1254,7 +1255,7 @@ public final class PushProcessMessageJob extends BaseJob {
       IncomingTextMessage textMessage = new IncomingTextMessage(Recipient.externalPush(context, content.getSender()).getId(),
                                                                 content.getSenderDevice(),
                                                                 message.getTimestamp(),
-                                                                content.getServerTimestamp(),
+                                                                content.getServerReceivedTimestamp(),
                                                                 body,
                                                                 groupId,
                                                                 message.getExpiresInSeconds() * 1000L,

@@ -29,6 +29,7 @@ import su.sres.securesms.database.OneTimePreKeyDatabase;
 import su.sres.securesms.database.SearchDatabase;
 import su.sres.securesms.database.SessionDatabase;
 import su.sres.securesms.database.SignedPreKeyDatabase;
+import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.profiles.AvatarHelper;
@@ -39,7 +40,6 @@ import org.whispersystems.libsignal.kdf.HKDFv3;
 import org.whispersystems.libsignal.util.ByteUtil;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -95,7 +95,9 @@ public class FullBackupExporter extends FullBackupBase {
 
       for (String table : tables) {
         if (table.equals(MmsDatabase.TABLE_NAME)) {
-          count = exportTable(table, input, outputStream, FullBackupExporter::isNonExpiringMessage, null, count);
+          count = exportTable(table, input, outputStream, FullBackupExporter::isNonExpiringMmsMessage, null, count);
+        } else if (table.equals(SmsDatabase.TABLE_NAME)) {
+          count = exportTable(table, input, outputStream, FullBackupExporter::isNonExpiringSmsMessage, null, count);
         } else if (table.equals(GroupReceiptDatabase.TABLE_NAME)) {
           count = exportTable(table, input, outputStream, cursor -> isForNonExpiringMessage(input, cursor.getLong(cursor.getColumnIndexOrThrow(GroupReceiptDatabase.MMS_ID))), null, count);
         } else if (table.equals(AttachmentDatabase.TABLE_NAME)) {
@@ -282,9 +284,13 @@ public class FullBackupExporter extends FullBackupBase {
     return result;
   }
 
-  private static boolean isNonExpiringMessage(@NonNull Cursor cursor) {
+  private static boolean isNonExpiringMmsMessage(@NonNull Cursor cursor) {
     return cursor.getInt(cursor.getColumnIndexOrThrow(MmsSmsColumns.EXPIRES_IN)) <= 0 &&
             cursor.getInt(cursor.getColumnIndexOrThrow(MmsDatabase.VIEW_ONCE))    <= 0;
+  }
+
+  private static boolean isNonExpiringSmsMessage(@NonNull Cursor cursor) {
+    return cursor.getInt(cursor.getColumnIndexOrThrow(MmsSmsColumns.EXPIRES_IN)) <= 0;
   }
 
   private static boolean isForNonExpiringMessage(@NonNull SQLiteDatabase db, long mmsId) {

@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import android.app.Application;
 import android.content.Context;
 import android.text.TextUtils;
 
@@ -21,6 +22,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
@@ -30,6 +32,7 @@ import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.ProfileUtil;
+import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.IdentityKey;
@@ -55,7 +58,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -127,6 +129,36 @@ public class RetrieveProfileJob extends BaseJob  {
     }
   }
 
+  /**
+   * Will fetch some profiles to ensure we're decently up-to-date if we haven't done so within a
+   * certain time period.
+   */
+  public static void enqueueRoutineFetchIfNeccessary(Application application) {
+    long timeSinceRefresh = System.currentTimeMillis() - SignalStore.misc().getLastProfileRefreshTime();
+    if (timeSinceRefresh < TimeUnit.HOURS.toMillis(12)) {
+      Log.i(TAG, "Too soon to refresh. Did the last refresh " + timeSinceRefresh + " ms ago.");
+      return;
+    }
+
+    SignalExecutors.BOUNDED.execute(() -> {
+      RecipientDatabase db      = DatabaseFactory.getRecipientDatabase(application);
+      long              current = System.currentTimeMillis();
+
+      List<RecipientId> ids = db.getRecipientsForRoutineProfileFetch(current - TimeUnit.DAYS.toMillis(30),
+              current - TimeUnit.DAYS.toMillis(1),
+              50);
+
+      if (ids.size() > 0) {
+        Log.i(TAG, "Optimistically refreshing " + ids.size() + " eligible recipient(s).");
+        enqueue(ids);
+      } else {
+        Log.i(TAG, "No recipients to refresh.");
+      }
+
+      SignalStore.misc().setLastProfileRefreshTime(System.currentTimeMillis());
+    });
+  }
+
   private RetrieveProfileJob(@NonNull List<RecipientId> recipientIds) {
     this(new Job.Parameters.Builder()
                     .addConstraint(NetworkConstraint.KEY)
@@ -196,6 +228,9 @@ public class RetrieveProfileJob extends BaseJob  {
     for (Pair<Recipient, ProfileAndCredential> profile : profiles) {
       process(profile.first(), profile.second());
     }
+
+    Set<RecipientId> success = SetUtil.difference(recipientIds, retries);
+    DatabaseFactory.getRecipientDatabase(context).markProfilesFetched(success, System.currentTimeMillis());
 
     stopwatch.split("process");
 

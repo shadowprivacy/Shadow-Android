@@ -16,7 +16,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import su.sres.securesms.BlockUnblockDialog;
 import su.sres.securesms.R;
-import su.sres.securesms.RecipientPreferenceActivity;
 import su.sres.securesms.VerifyIdentityActivity;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.groups.GroupId;
@@ -28,6 +27,7 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
+import su.sres.securesms.recipients.ui.managerecipient.ManageRecipientActivity;
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.livedata.LiveDataUtil;
@@ -70,7 +70,10 @@ final class RecipientDialogViewModel extends ViewModel {
 
         recipient = Recipient.live(recipientDialogRepository.getRecipientId()).getLiveData();
 
-        recipientDialogRepository.getIdentity(identity::setValue);
+        boolean isSelf = recipientDialogRepository.getRecipientId().equals(Recipient.self().getId());
+        if (!isSelf) {
+            recipientDialogRepository.getIdentity(identity::postValue);
+        }
     }
 
     LiveData<Recipient> getRecipient() {
@@ -97,6 +100,10 @@ final class RecipientDialogViewModel extends ViewModel {
         recipientDialogRepository.getRecipient(recipient -> CommunicationActions.startVoiceCall(activity, recipient, SignalStore.serviceConfigurationValues().isLicensed()));
     }
 
+    void onSecureVideoCallClicked(@NonNull FragmentActivity activity) {
+        recipientDialogRepository.getRecipient(recipient -> CommunicationActions.startVideoCall(activity, recipient, true));
+    }
+
     void onBlockClicked(@NonNull FragmentActivity activity) {
         recipientDialogRepository.getRecipient(recipient -> BlockUnblockDialog.showBlockFor(activity, activity.getLifecycle(), recipient, () -> RecipientUtil.block(context, recipient)));
     }
@@ -110,12 +117,12 @@ final class RecipientDialogViewModel extends ViewModel {
     }
 
     void onAvatarClicked(@NonNull Activity activity) {
-        activity.startActivity(RecipientPreferenceActivity.getLaunchIntent(activity, recipientDialogRepository.getRecipientId()));
+        activity.startActivity(ManageRecipientActivity.newIntent(activity, recipientDialogRepository.getRecipientId()));
     }
 
     void onMakeGroupAdminClicked(@NonNull Activity activity) {
         new AlertDialog.Builder(activity)
-                .setMessage(context.getString(R.string.RecipientBottomSheet_s_will_be_able_to_edit_group, Objects.requireNonNull(recipient.getValue()).toShortString(context)))
+                .setMessage(context.getString(R.string.RecipientBottomSheet_s_will_be_able_to_edit_group, Objects.requireNonNull(recipient.getValue()).getDisplayName(context)))
                 .setPositiveButton(R.string.RecipientBottomSheet_make_group_admin,
                         (dialog, which) -> {
                             adminActionBusy.setValue(true);
@@ -133,7 +140,7 @@ final class RecipientDialogViewModel extends ViewModel {
 
     void onRemoveGroupAdminClicked(@NonNull Activity activity) {
         new AlertDialog.Builder(activity)
-                .setMessage(context.getString(R.string.RecipientBottomSheet_remove_s_as_group_admin, Objects.requireNonNull(recipient.getValue()).toShortString(context)))
+                .setMessage(context.getString(R.string.RecipientBottomSheet_remove_s_as_group_admin, Objects.requireNonNull(recipient.getValue()).getDisplayName(context)))
                 .setPositiveButton(R.string.RecipientBottomSheet_remove_as_admin,
                         (dialog, which) -> {
                             adminActionBusy.setValue(true);
@@ -152,7 +159,7 @@ final class RecipientDialogViewModel extends ViewModel {
     void onRemoveFromGroupClicked(@NonNull Activity activity, @NonNull Runnable onSuccess) {
         recipientDialogRepository.getGroupName(title ->
                 new AlertDialog.Builder(activity)
-                        .setMessage(context.getString(R.string.RecipientBottomSheet_remove_s_from_s, Objects.requireNonNull(recipient.getValue()).toShortString(context), title))
+                        .setMessage(context.getString(R.string.RecipientBottomSheet_remove_s_from_s, Objects.requireNonNull(recipient.getValue()).getDisplayName(context), title))
                         .setPositiveButton(R.string.RecipientBottomSheet_remove,
                                 (dialog, which) -> {
                                     adminActionBusy.setValue(true);

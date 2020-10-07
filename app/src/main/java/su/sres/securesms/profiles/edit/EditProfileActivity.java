@@ -33,6 +33,14 @@ public class EditProfileActivity extends BaseActionBarActivity implements EditPr
         return intent;
     }
 
+    public static @NonNull Intent getIntentForUserProfileEdit(@NonNull Context context) {
+        Intent intent = new Intent(context, EditProfileActivity.class);
+        intent.putExtra(EditProfileActivity.EXCLUDE_SYSTEM, true);
+        intent.putExtra(EditProfileActivity.DISPLAY_USERNAME, true);
+        intent.putExtra(EditProfileActivity.NEXT_BUTTON_TEXT, R.string.save);
+        return intent;
+    }
+
     public static @NonNull Intent getIntentForGroupProfile(@NonNull Context context, @NonNull GroupId.Push groupId) {
         Intent intent = new Intent(context, EditProfileActivity.class);
         intent.putExtra(EditProfileActivity.SHOW_TOOLBAR, true);

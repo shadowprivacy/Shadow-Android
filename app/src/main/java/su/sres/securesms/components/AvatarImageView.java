@@ -16,7 +16,6 @@ import androidx.fragment.app.FragmentActivity;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import su.sres.securesms.R;
-import su.sres.securesms.RecipientPreferenceActivity;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.contacts.avatars.ContactColors;
 import su.sres.securesms.contacts.avatars.ContactPhoto;
@@ -26,8 +25,8 @@ import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment;
+import su.sres.securesms.recipients.ui.managerecipient.ManageRecipientActivity;
 import su.sres.securesms.util.AvatarUtil;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.ThemeUtil;
 
 import java.util.Objects;
@@ -113,6 +112,9 @@ public final class AvatarImageView extends AppCompatImageView {
     this.fallbackPhotoProvider = fallbackPhotoProvider;
   }
 
+  /**
+   * Shows self as the actual profile picture.
+   */
   public void setRecipient(@NonNull Recipient recipient) {
     if (recipient.isLocalNumber()) {
       setAvatar(GlideApp.with(this), null, false);
@@ -120,6 +122,13 @@ public final class AvatarImageView extends AppCompatImageView {
     } else {
       setAvatar(GlideApp.with(this), recipient, false);
     }
+  }
+
+  /**
+   * Shows self as the note to self icon.
+   */
+  public void setAvatar(@Nullable Recipient recipient) {
+    setAvatar(GlideApp.with(this), recipient, false);
   }
 
   public void setAvatar(@NonNull GlideRequests requestManager, @Nullable Recipient recipient, boolean quickContactEnabled) {
@@ -165,7 +174,7 @@ public final class AvatarImageView extends AppCompatImageView {
     if (quickContactEnabled) {
       super.setOnClickListener(v -> {
         Context context = getContext();
-        if (FeatureFlags.newGroupUI() && recipient.isPushGroup()) {
+        if (recipient.isPushGroup()) {
           context.startActivity(ManageGroupActivity.newIntent(context, recipient.requireGroupId().requirePush()),
                   ManageGroupActivity.createTransitionBundle(context, this));
         } else {
@@ -173,7 +182,8 @@ public final class AvatarImageView extends AppCompatImageView {
             RecipientBottomSheetDialogFragment.create(recipient.getId(), null)
                     .show(((FragmentActivity) context).getSupportFragmentManager(), "BOTTOM");
           } else {
-            context.startActivity(RecipientPreferenceActivity.getLaunchIntent(context, recipient.getId()));
+            context.startActivity(ManageRecipientActivity.newIntent(context, recipient.getId()),
+                    ManageRecipientActivity.createTransitionBundle(context, this));
           }
         }
       });

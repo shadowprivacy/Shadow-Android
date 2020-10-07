@@ -1,8 +1,5 @@
 package su.sres.securesms.registration.fragments;
 
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,13 +17,11 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import su.sres.securesms.BuildConfig;
 import su.sres.securesms.R;
 
 import su.sres.securesms.components.registration.VerificationCodeView;
 import su.sres.securesms.components.registration.VerificationPinKeyboard;
 import su.sres.securesms.events.ServerCertErrorEvent;
-import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.registration.service.CodeVerificationRequest;
@@ -35,8 +30,6 @@ import su.sres.securesms.registration.viewmodel.RegistrationViewModel;
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.SupportEmailUtil;
 import su.sres.securesms.util.concurrent.AssertedSuccessListener;
-
-import java.util.Locale;
 
 public final class EnterCodeFragment extends BaseRegistrationFragment {
 

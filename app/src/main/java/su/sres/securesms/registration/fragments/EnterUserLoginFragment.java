@@ -226,6 +226,15 @@ public final class EnterUserLoginFragment extends BaseRegistrationFragment {
                     }
 
                     @Override
+                    public void onRateLimited() {
+                        Toast.makeText(register.getContext(), R.string.RegistrationActivity_rate_limited_to_service, Toast.LENGTH_LONG).show();
+                        cancelSpinning(register);
+                        enableAllEntries();
+                        model.getRequestLimiter().onUnsuccessfulRequest();
+                        model.updateLimiter();
+                    }
+
+                    @Override
                     public void onError() {
                         Toast.makeText(register.getContext(), R.string.RegistrationActivity_unable_to_connect_to_service, Toast.LENGTH_LONG).show();
                         cancelSpinning(register);

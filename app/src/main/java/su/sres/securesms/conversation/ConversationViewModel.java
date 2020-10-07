@@ -14,16 +14,16 @@ import androidx.paging.PagedList;
 
 import org.whispersystems.libsignal.util.Pair;
 
-import su.sres.securesms.conversation.ConversationDataSource.Invalidator;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mediasend.MediaRepository;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.securesms.util.livedata.LiveDataUtil;
+import su.sres.securesms.util.paging.Invalidator;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Objects;
 
 class ConversationViewModel extends ViewModel {
 
@@ -36,7 +36,7 @@ class ConversationViewModel extends ViewModel {
     private final MutableLiveData<Long>              threadId;
     private final LiveData<PagedList<MessageRecord>> messages;
     private final LiveData<ConversationData>         conversationMetadata;
-    private final Invalidator                        invalidator;
+    private final Invalidator invalidator;
 
     private int  jumpToPosition;
 
@@ -66,11 +66,15 @@ class ConversationViewModel extends ViewModel {
             final int startPosition;
             if (data.shouldJumpToMessage()) {
                 startPosition = data.getJumpToPosition();
-            } else {
+            } else if (data.isMessageRequestAccepted() && data.shouldScrollToLastSeen()) {
                 startPosition = data.getLastSeenPosition();
+            } else if (data.isMessageRequestAccepted()) {
+                startPosition = data.getLastScrolledPosition();
+            } else {
+                startPosition = data.getThreadSize();
             }
 
-            Log.d(TAG, "Starting at position " + startPosition + " :: " + data.getJumpToPosition() + " :: " + data.getLastSeenPosition());
+            Log.d(TAG, "Starting at position startPosition: " + startPosition + " jumpToPosition: " + jumpToPosition + " lastSeenPosition: " + data.getLastSeenPosition() + " lastScrolledPosition: " + data.getLastScrolledPosition());
 
             return Transformations.map(new LivePagedListBuilder<>(factory, config).setFetchExecutor(ConversationDataSource.EXECUTOR)
                             .setInitialLoadKey(Math.max(startPosition, 0))
@@ -80,9 +84,11 @@ class ConversationViewModel extends ViewModel {
 
         this.messages = Transformations.map(messagesForThreadId, Pair::second);
 
-        LiveData<Long> distinctThread = Transformations.distinctUntilChanged(threadId);
+        LiveData<DistinctConversationDataByThreadId> distinctData = LiveDataUtil.combineLatest(messagesForThreadId,
+                metadata,
+                (m, data) -> new DistinctConversationDataByThreadId(data));
 
-        conversationMetadata = Transformations.switchMap(distinctThread, thread -> metadata);
+        conversationMetadata = Transformations.map(Transformations.distinctUntilChanged(distinctData), DistinctConversationDataByThreadId::getConversationData);
     }
 
     void onAttachmentKeyboardOpen() {
@@ -127,6 +133,31 @@ class ConversationViewModel extends ViewModel {
         public @NonNull<T extends ViewModel> T create(@NonNull Class<T> modelClass) {
             //noinspection ConstantConditions
             return modelClass.cast(new ConversationViewModel());
+        }
+    }
+
+    private static class DistinctConversationDataByThreadId {
+        private final ConversationData conversationData;
+
+        private DistinctConversationDataByThreadId(@NonNull ConversationData conversationData) {
+            this.conversationData = conversationData;
+        }
+
+        public @NonNull ConversationData getConversationData() {
+            return conversationData;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            DistinctConversationDataByThreadId that = (DistinctConversationDataByThreadId) o;
+            return Objects.equals(conversationData.getThreadId(), that.conversationData.getThreadId());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(conversationData.getThreadId());
         }
     }
 }

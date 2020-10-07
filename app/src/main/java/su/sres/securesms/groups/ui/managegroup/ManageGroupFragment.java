@@ -27,15 +27,15 @@ import su.sres.securesms.MediaPreviewActivity;
 import su.sres.securesms.MuteDialog;
 import su.sres.securesms.PushContactSelectionActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.components.ThreadPhotoRailView;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
-import su.sres.securesms.contacts.avatars.GroupFallbackPhoto80;
+import su.sres.securesms.contacts.avatars.FallbackPhoto80dp;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.ui.GroupMemberListView;
 import su.sres.securesms.groups.ui.LeaveGroupDialog;
 import su.sres.securesms.groups.ui.managegroup.dialogs.GroupRightsDialog;
-import su.sres.securesms.groups.ui.notifications.CustomNotificationsDialogFragment;
 import su.sres.securesms.groups.ui.pendingmemberinvites.PendingMemberInvitesActivity;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediaoverview.MediaOverviewActivity;
@@ -45,6 +45,7 @@ import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment;
+import su.sres.securesms.recipients.ui.notifications.CustomNotificationsDialogFragment;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.LifecycleCursorWrapper;
 
@@ -79,8 +80,10 @@ public class ManageGroupFragment extends Fragment {
     private TextView                           editGroupAccessValue;
     private View                               editGroupMembershipRow;
     private TextView                           editGroupMembershipValue;
+    private View                               disappearingMessagesCard;
     private View                               disappearingMessagesRow;
     private TextView                           disappearingMessages;
+    private View                               blockAndLeaveCard;
     private TextView                           blockGroup;
     private TextView                           unblockGroup;
     private TextView                           leaveGroup;
@@ -95,7 +98,7 @@ public class ManageGroupFragment extends Fragment {
     private final Recipient.FallbackPhotoProvider fallbackPhotoProvider = new Recipient.FallbackPhotoProvider() {
         @Override
         public @NonNull FallbackContactPhoto getPhotoForGroup() {
-            return new GroupFallbackPhoto80();
+            return new FallbackPhoto80dp(R.drawable.ic_group_80, MaterialColor.ULTRAMARINE);
         }
     };
 
@@ -118,7 +121,7 @@ public class ManageGroupFragment extends Fragment {
 
         avatar                      = view.findViewById(R.id.group_avatar);
         toolbar                     = view.findViewById(R.id.toolbar);
-        groupName                   = view.findViewById(R.id.group_name);
+        groupName                   = view.findViewById(R.id.name);
         memberCountUnderAvatar      = view.findViewById(R.id.member_count);
         memberCountAboveList        = view.findViewById(R.id.member_count_2);
         groupMemberList             = view.findViewById(R.id.group_members);
@@ -133,8 +136,10 @@ public class ManageGroupFragment extends Fragment {
         editGroupAccessValue        = view.findViewById(R.id.edit_group_access_value);
         editGroupMembershipRow      = view.findViewById(R.id.edit_group_membership_row);
         editGroupMembershipValue    = view.findViewById(R.id.edit_group_membership_value);
+        disappearingMessagesCard    = view.findViewById(R.id.group_disappearing_messages_card);
         disappearingMessagesRow     = view.findViewById(R.id.disappearing_messages_row);
         disappearingMessages        = view.findViewById(R.id.disappearing_messages);
+        blockAndLeaveCard           = view.findViewById(R.id.group_block_and_leave_card);
         blockGroup                  = view.findViewById(R.id.blockGroup);
         unblockGroup                = view.findViewById(R.id.unblockGroup);
         leaveGroup                  = view.findViewById(R.id.leaveGroup);
@@ -154,8 +159,11 @@ public class ManageGroupFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
 
         Context                      context = requireContext();
-        GroupId.Push                 groupId = getPushGroupId();
+        GroupId                      groupId = getGroupId();
         ManageGroupViewModel.Factory factory = new ManageGroupViewModel.Factory(context, groupId);
+
+        disappearingMessagesCard.setVisibility(groupId.isPush() ? View.VISIBLE : View.GONE);
+        blockAndLeaveCard.setVisibility(groupId.isPush() ? View.VISIBLE : View.GONE);
 
         viewModel = ViewModelProviders.of(requireActivity(), factory).get(ManageGroupViewModel.class);
 
@@ -205,6 +213,8 @@ public class ManageGroupFragment extends Fragment {
                 activity.startActivity(AvatarPreviewActivity.intentFromRecipientId(activity, groupRecipient.getId()),
                         AvatarPreviewActivity.createTransitionBundle(activity, avatar));
             });
+            customNotificationsRow.setOnClickListener(v -> CustomNotificationsDialogFragment.create(groupRecipient.getId())
+                    .show(requireFragmentManager(), "CUSTOM_NOTIFICATIONS"));
         });
 
         viewModel.getGroupViewState().observe(getViewLifecycleOwner(), vs -> {
@@ -299,9 +309,6 @@ public class ManageGroupFragment extends Fragment {
 
         customNotificationsRow.setVisibility(View.VISIBLE);
 
-            customNotificationsRow.setOnClickListener(v -> CustomNotificationsDialogFragment.create(groupId)
-                    .show(requireFragmentManager(), "CUSTOM_NOTIFICATIONS"));
-
         //noinspection CodeBlock2Expr
         if (NotificationChannels.supported()) {
             viewModel.hasCustomNotifications().observe(getViewLifecycleOwner(), hasCustomNotifications -> {
@@ -321,15 +328,15 @@ public class ManageGroupFragment extends Fragment {
 
     public boolean onMenuItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.action_edit) {
-            startActivity(EditProfileActivity.getIntentForGroupProfile(requireActivity(), getPushGroupId()));
+            startActivity(EditProfileActivity.getIntentForGroupProfile(requireActivity(), getGroupId().requirePush()));
             return true;
         }
 
         return false;
     }
 
-    private GroupId.Push getPushGroupId() {
-        return GroupId.parseOrThrow(Objects.requireNonNull(requireArguments().getString(GROUP_ID))).requirePush();
+    private GroupId getGroupId() {
+        return GroupId.parseOrThrow(Objects.requireNonNull(requireArguments().getString(GROUP_ID)));
     }
 
     private void setMediaCursorFactory(@Nullable ManageGroupViewModel.CursorFactory cursorFactory) {

@@ -45,7 +45,7 @@ public class RefreshPreKeysJob extends BaseJob  {
   }
 
   public static void scheduleIfNecessary() {
-    long timeSinceLastRefresh = System.currentTimeMillis() - SignalStore.getLastPrekeyRefreshTime();
+    long timeSinceLastRefresh = System.currentTimeMillis() - SignalStore.misc().getLastPrekeyRefreshTime();
 
     if (timeSinceLastRefresh > REFRESH_INTERVAL) {
       Log.i(TAG, "Scheduling a prekey refresh. Time since last schedule: " + timeSinceLastRefresh + " ms");
@@ -83,7 +83,7 @@ public class RefreshPreKeysJob extends BaseJob  {
 
     if (availableKeys >= PREKEY_MINIMUM && TextSecurePreferences.isSignedPreKeyRegistered(context)) {
       Log.i(TAG, "Available keys sufficient.");
-      SignalStore.setLastPrekeyRefreshTime(System.currentTimeMillis());
+      SignalStore.misc().setLastPrekeyRefreshTime(System.currentTimeMillis());
       return;
     }
 
@@ -100,7 +100,7 @@ public class RefreshPreKeysJob extends BaseJob  {
 
     ApplicationDependencies.getJobManager().add(new CleanPreKeysJob());
 
-    SignalStore.setLastPrekeyRefreshTime(System.currentTimeMillis());
+    SignalStore.misc().setLastPrekeyRefreshTime(System.currentTimeMillis());
     Log.i(TAG, "Successfully refreshed prekeys.");
   }
 

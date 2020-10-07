@@ -1,6 +1,8 @@
 package su.sres.securesms.color;
 
 import android.content.Context;
+
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -52,7 +54,8 @@ public class MaterialColors {
       return null;
     }
 
-    public int[] asConversationColorArray(@NonNull Context context) {
+    public @ColorInt
+    int[] asConversationColorArray(@NonNull Context context) {
       int[] results = new int[colors.size()];
       int   index   = 0;
 

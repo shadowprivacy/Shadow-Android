@@ -14,6 +14,8 @@ import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.securesms.util.paging.Invalidator;
+import su.sres.securesms.util.paging.SizeFixResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,10 +65,6 @@ class ConversationDataSource extends PositionalDataSource<MessageRecord> {
         int                 totalCount     = db.getConversationCount(threadId);
         int                 effectiveCount = params.requestedStartPosition;
 
-        if  (totalCount == 0 || params.requestedStartPosition > totalCount) {
-
-        }
-
         try (MmsSmsDatabase.Reader reader = db.readerFor(db.getConversation(threadId, params.requestedStartPosition, params.requestedLoadSize))) {
             MessageRecord record;
             while ((record = reader.getNext()) != null && effectiveCount < totalCount && !isInvalid()) {
@@ -76,12 +74,12 @@ class ConversationDataSource extends PositionalDataSource<MessageRecord> {
         }
 
         if (!isInvalid()) {
-            SizeFixResult result = ensureMultipleOfPageSize(records, params.requestedStartPosition, params.pageSize, totalCount);
+            SizeFixResult<MessageRecord> result = SizeFixResult.ensureMultipleOfPageSize(records, params.requestedStartPosition, params.pageSize, totalCount);
 
-            callback.onResult(result.messages, params.requestedStartPosition, result.total);
+            callback.onResult(result.getItems(), params.requestedStartPosition, result.getTotal());
         }
 
-        Log.d(TAG, "[Initial Load] " + (System.currentTimeMillis() - start) + " ms" + (isInvalid() ? " -- invalidated" : ""));
+        Log.d(TAG, "[Initial Load] " + (System.currentTimeMillis() - start) + " ms | thread: " + threadId + ", start: " + params.requestedStartPosition + ", size: " + params.requestedLoadSize + (isInvalid() ? " -- invalidated" : ""));
     }
 
     @Override
@@ -100,62 +98,14 @@ class ConversationDataSource extends PositionalDataSource<MessageRecord> {
 
         callback.onResult(records);
 
-        Log.d(TAG, "[Update] " + (System.currentTimeMillis() - start) + " ms" + (isInvalid() ? " -- invalidated" : ""));
-    }
-
-    private static @NonNull SizeFixResult ensureMultipleOfPageSize(@NonNull List<MessageRecord> records,
-                                                                   int startPosition,
-                                                                   int pageSize,
-                                                                   int total)
-    {
-        if (records.size() + startPosition == total || (records.size() != 0 && records.size() % pageSize == 0)) {
-            return new SizeFixResult(records, total);
-        }
-
-        if (records.size() < pageSize) {
-            Log.w(TAG, "Hit a miscalculation where we don't have the full dataset, but it's smaller than a page size. records: " + records.size() + ", startPosition: " + startPosition + ", pageSize: " + pageSize + ", total: " + total);
-            return new SizeFixResult(records, records.size() + startPosition);
-        }
-
-        Log.w(TAG, "Hit a miscalculation where our data size isn't a multiple of the page size. records: " + records.size() + ", startPosition: " + startPosition + ", pageSize: " + pageSize + ", total: " + total);
-        int overflow = records.size() % pageSize;
-
-        return new SizeFixResult(records.subList(0, records.size() - overflow), total);
-    }
-
-    private static class SizeFixResult {
-        final List<MessageRecord> messages;
-        final int                 total;
-
-        private SizeFixResult(@NonNull List<MessageRecord> messages, int total) {
-            this.messages = messages;
-            this.total    = total;
-        }
-    }
-
-    interface DataUpdatedCallback {
-        void onDataUpdated();
-    }
-
-    static class Invalidator {
-        private Runnable callback;
-
-        synchronized void invalidate() {
-            if (callback != null) {
-                callback.run();
-            }
-        }
-
-        private synchronized void observe(@NonNull Runnable callback) {
-            this.callback = callback;
-        }
+        Log.d(TAG, "[Update] " + (System.currentTimeMillis() - start) + " ms | thread: " + threadId + ", start: " + params.startPosition + ", size: " + params.loadSize + (isInvalid() ? " -- invalidated" : ""));
     }
 
     static class Factory extends DataSource.Factory<Integer, MessageRecord> {
 
         private final Context             context;
         private final long                threadId;
-        private final Invalidator         invalidator;
+        private final Invalidator invalidator;
 
         Factory(Context context, long threadId, @NonNull Invalidator invalidator) {
             this.context     = context;

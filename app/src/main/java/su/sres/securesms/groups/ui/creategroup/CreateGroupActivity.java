@@ -13,7 +13,6 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.ContactSelectionActivity;
 import su.sres.securesms.ContactSelectionListFragment;
-import su.sres.securesms.GroupCreateActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.ContactsCursorLoader;
 import su.sres.securesms.groups.ui.creategroup.details.AddGroupDetailsActivity;
@@ -30,9 +29,6 @@ public class CreateGroupActivity extends ContactSelectionActivity {
     private View next;
 
     public static Intent newIntent(@NonNull Context context) {
-        if (!FeatureFlags.newGroupUI()) {
-            return new Intent(context, GroupCreateActivity.class);
-        }
 
         Intent intent = new Intent(context, CreateGroupActivity.class);
 

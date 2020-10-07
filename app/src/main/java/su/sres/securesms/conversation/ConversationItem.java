@@ -45,7 +45,6 @@ import android.util.AttributeSet;
 import su.sres.securesms.BindableConversationItem;
 import su.sres.securesms.ConfirmIdentityDialog;
 import su.sres.securesms.MediaPreviewActivity;
-import su.sres.securesms.MessageDetailsActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.LinkPreviewView;
 import su.sres.securesms.components.Outliner;
@@ -77,6 +76,7 @@ import su.sres.securesms.components.ConversationItemThumbnail;
 import su.sres.securesms.components.DocumentView;
 import su.sres.securesms.components.QuoteView;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.messagedetails.MessageDetailsActivity;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
 import su.sres.securesms.recipients.RecipientId;
@@ -86,7 +86,6 @@ import su.sres.securesms.components.StickerView;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MmsDatabase;
-import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.model.MediaMmsMessageRecord;
@@ -110,7 +109,6 @@ import su.sres.securesms.revealable.ViewOnceUtil;
 import su.sres.securesms.stickers.StickerUrl;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.DynamicTheme;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.LongClickCopySpan;
 import su.sres.securesms.util.LongClickMovementMethod;
 import su.sres.securesms.util.SearchUtil;
@@ -1002,20 +1000,8 @@ public class ConversationItem extends LinearLayout implements BindableConversati
   private void setGroupMessageStatus(MessageRecord messageRecord, Recipient recipient) {
     if (groupThread && !messageRecord.isOutgoing() && groupSender != null && groupSenderProfileName != null) {
 
-      if (FeatureFlags.profileDisplay()) {
-        groupSender.setText(recipient.getDisplayName(getContext()));
-        groupSenderProfileName.setVisibility(View.GONE);
-      } else {
-        groupSender.setText(recipient.toShortString(context));
-
-        if (recipient.getName(context) == null && !recipient.getProfileName().isEmpty()) {
-          groupSenderProfileName.setText("~" + recipient.getProfileName().toString());
-          groupSenderProfileName.setVisibility(View.VISIBLE);
-        } else {
-          groupSenderProfileName.setText(null);
-          groupSenderProfileName.setVisibility(View.GONE);
-        }
-      }
+      groupSender.setText(recipient.getDisplayName(getContext()));
+      groupSenderProfileName.setVisibility(View.GONE);
     }
   }
 
@@ -1387,13 +1373,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
       if (!shouldInterceptClicks(messageRecord) && parent != null) {
         parent.onClick(v);
       } else if (messageRecord.isFailed()) {
-        Intent intent = new Intent(context, MessageDetailsActivity.class);
-        intent.putExtra(MessageDetailsActivity.MESSAGE_ID_EXTRA, messageRecord.getId());
-        intent.putExtra(MessageDetailsActivity.THREAD_ID_EXTRA, messageRecord.getThreadId());
-        intent.putExtra(MessageDetailsActivity.TYPE_EXTRA, messageRecord.isMms() ? MmsSmsDatabase.MMS_TRANSPORT : MmsSmsDatabase.SMS_TRANSPORT);
-        intent.putExtra(MessageDetailsActivity.IS_PUSH_GROUP_EXTRA, groupThread && messageRecord.isPush());
-        intent.putExtra(MessageDetailsActivity.RECIPIENT_EXTRA, conversationRecipient.getId());
-        context.startActivity(intent);
+        context.startActivity(MessageDetailsActivity.getIntentForMessageDetails(context, messageRecord, conversationRecipient.getId(), messageRecord.getThreadId()));
       } else if (!messageRecord.isOutgoing() && messageRecord.isIdentityMismatchFailure()) {
         handleApproveIdentity();
       } else if (messageRecord.isPendingInsecureSmsFallback()) {

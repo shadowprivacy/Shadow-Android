@@ -1,6 +1,5 @@
 package su.sres.securesms.notifications;
 
-import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -24,9 +23,6 @@ public interface MessageNotifier {
 
   class ReminderReceiver extends BroadcastReceiver {
 
-    public static final String REMINDER_ACTION = "su.sres.securesms.MessageNotifier.REMINDER_ACTION";
-
-    @SuppressLint("StaticFieldLeak")
     @Override
     public void onReceive(final Context context, final Intent intent) {
       SignalExecutors.BOUNDED.execute(() -> {

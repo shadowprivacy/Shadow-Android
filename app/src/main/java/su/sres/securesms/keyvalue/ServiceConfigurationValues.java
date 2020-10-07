@@ -4,7 +4,7 @@ import androidx.annotation.CheckResult;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-public final class ServiceConfigurationValues {
+public final class ServiceConfigurationValues extends SignalStoreValues {
 
     private static final String SHADOW_SERVICE_URL                = "service_confifuration.shadow_service_url";
     private static final String CLOUD_URL                         = "service_configuration.cloud_url";
@@ -26,182 +26,151 @@ public final class ServiceConfigurationValues {
 
     public static final String EXAMPLE_URI                        = "https://example.com";
 
-    private final KeyValueStore store;
-
     ServiceConfigurationValues(@NonNull KeyValueStore store) {
-        this.store = store;
+        super(store);
     }
 
+    @Override
+    void onFirstEverAppLaunch() {}
+
     public synchronized void setShadowUrl(String shadowUrl) {
-        store.beginWrite()
-                .putString(SHADOW_SERVICE_URL, shadowUrl)
-                .commit();
+        putString(SHADOW_SERVICE_URL, shadowUrl);
     }
 
     public synchronized void setCloudUrl(String cloudUrl) {
-        store.beginWrite()
-                .putString(CLOUD_URL, cloudUrl)
-                .commit();
+        putString(CLOUD_URL, cloudUrl);
     }
 
     public synchronized void setCloud2Url(String cloud2Url) {
-        store.beginWrite()
-                .putString(CLOUD2_URL, cloud2Url)
-                .commit();
+        putString(CLOUD2_URL, cloud2Url);
     }
 
     public synchronized void setStorageUrl(String storageUrl) {
-        store.beginWrite()
-                .putString(STORAGE_URL, storageUrl)
-                .commit();
+        putString(STORAGE_URL, storageUrl);
     }
 
     public synchronized void setStatusUrl(String statusUrl) {
-        store.beginWrite()
-                .putString(STATUS_URL, statusUrl)
-                .commit();
+        putString(STATUS_URL, statusUrl);
     }
 
     public synchronized void setUnidentifiedAccessCaPublicKey(byte[] unidentifiedAccessCaPublicKey) {
-        store.beginWrite()
-                .putBlob(UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY, unidentifiedAccessCaPublicKey)
-                .commit();
+        putBlob(UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY, unidentifiedAccessCaPublicKey);
     }
 
     public synchronized void setZkPublicKey(byte[] zkPublicKey) {
-        store.beginWrite()
-                .putBlob(ZK_PUBLIC_KEY, zkPublicKey)
-                .commit();
+        putBlob(ZK_PUBLIC_KEY, zkPublicKey);
     }
 
     public synchronized void setCurrentCertVer(int certVer) {
-        store.beginWrite()
-                .putInteger(CURRENT_CERT_VERSION, certVer)
-                .commit();
+        putInteger(CURRENT_CERT_VERSION, certVer);
     }
 
     public synchronized void setCurrentDirVer(long dirVer) {
-        store.beginWrite()
-                .putLong(CURRENT_DIR_VERSION, dirVer)
-                .commit();
+       putLong(CURRENT_DIR_VERSION, dirVer);
     }
 
     public synchronized void setSupportEmail(String supportEmail) {
-        store.beginWrite()
-                .putString(SUPPORT_EMAIL, supportEmail)
-                .commit();
+        putString(SUPPORT_EMAIL, supportEmail);
     }
 
     public synchronized void setLicensed(boolean isLicensed) {
-        store.beginWrite()
-                .putBoolean(IS_LICENSED, isLicensed)
-                .commit();
+        putBoolean(IS_LICENSED, isLicensed);
     }
 
     public synchronized void setTrialStatus(int status) {
-        store.beginWrite()
-                .putInteger(TRIAL_STATUS, status)
-                .commit();
+        putInteger(TRIAL_STATUS, status);
     }
 
     public synchronized void setTrialStartTime(long timestamp) {
-        store.beginWrite()
-                .putLong(TRIAL_START_TIME, timestamp)
-                .commit();
+        putLong(TRIAL_START_TIME, timestamp);
     }
 
     public synchronized void setTrialDuration(int duration) {
-        store.beginWrite()
-                .putInteger(TRIAL_DURATION, duration)
-                .commit();
+        putInteger(TRIAL_DURATION, duration);
     }
 
     public synchronized void storeLicense(byte [] license) {
-        store.beginWrite()
-                .putBlob(LICENSE, license)
-                .commit();
+        putBlob(LICENSE, license);
     }
 
     public synchronized void removeLicense() {
-        store.beginWrite()
-                .remove(LICENSE)
-                .commit();
+        getStore().beginWrite()
+                  .remove(LICENSE)
+                  .commit();
     }
 
     public synchronized void setFcmSenderId(String senderId) {
-        store.beginWrite()
-                .putString(FCM_SENDER_ID, senderId)
-                .commit();
+        putString(FCM_SENDER_ID, senderId);
     }
 
     public @Nullable
     String getShadowUrl() {
-        return store.getString(SHADOW_SERVICE_URL, EXAMPLE_URI);
+        return getString(SHADOW_SERVICE_URL, EXAMPLE_URI);
     }
 
     public @Nullable
     String getCloudUrl() {
-        return store.getString(CLOUD_URL, EXAMPLE_URI);
+        return getString(CLOUD_URL, EXAMPLE_URI);
     }
 
     public @Nullable
     String getCloud2Url() {
-        return store.getString(CLOUD2_URL, EXAMPLE_URI);
+        return getString(CLOUD2_URL, EXAMPLE_URI);
     }
 
     public @Nullable
     String getStorageUrl() {
-        return store.getString(STORAGE_URL, EXAMPLE_URI);
+        return getString(STORAGE_URL, EXAMPLE_URI);
     }
 
     public @Nullable
     String getStatusUrl() {
-        return store.getString(STATUS_URL, EXAMPLE_URI);
+        return getString(STATUS_URL, EXAMPLE_URI);
     }
 
     public @Nullable
     byte[] getUnidentifiedAccessCaPublicKey() {
-        return store.getBlob(UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY, null);
+        return getBlob(UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY, null);
     }
 
     public @Nullable
     byte[] getZkPublicKey() {
-        return store.getBlob(ZK_PUBLIC_KEY, new byte[161]);
+        return getBlob(ZK_PUBLIC_KEY, new byte[161]);
     }
 
     public int getCurrentCertVer() {
-        return store.getInteger(CURRENT_CERT_VERSION, 1);
+        return getInteger(CURRENT_CERT_VERSION, 1);
     }
 
     public long getCurrentDirVer() {
-        return store.getLong(CURRENT_DIR_VERSION, 0);
+        return getLong(CURRENT_DIR_VERSION, 0);
     }
 
     public String getSupportEmail() {
-        return store.getString(SUPPORT_EMAIL, "example@example.com");
+        return getString(SUPPORT_EMAIL, "example@example.com");
     }
 
     public boolean isLicensed() {
-       return store.getBoolean(IS_LICENSED, false);
+       return getBoolean(IS_LICENSED, false);
     }
 
     public @Nullable byte [] retrieveLicense() {
-        return store.getBlob(LICENSE, null);
+        return getBlob(LICENSE, null);
     }
 
     public int getTrialStatus() {
-        return store.getInteger(TRIAL_STATUS, 0);
+        return getInteger(TRIAL_STATUS, 0);
     }
 
     public long getTrialStartTime() {
-        return store.getLong(TRIAL_START_TIME, System.currentTimeMillis());
+        return getLong(TRIAL_START_TIME, System.currentTimeMillis());
     }
 
     public int getTrialDuration() {
-        return store.getInteger(TRIAL_DURATION, 14);
+        return getInteger(TRIAL_DURATION, 14);
     }
 
     public String getFcmSenderId() {
-        return store.getString(FCM_SENDER_ID, "null");
+        return getString(FCM_SENDER_ID, "null");
     }
 }

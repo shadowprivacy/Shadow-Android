@@ -50,7 +50,7 @@ public class ConfirmIdentityDialog extends AlertDialog {
     super(context);
 
       Recipient       recipient       = Recipient.resolved(mismatch.getRecipientId(context));
-    String          name            = recipient.toShortString(context);
+      String          name            = recipient.getDisplayName(context);
       String          introduction    = context.getString(R.string.ConfirmIdentityDialog_your_safety_number_with_s_has_changed, name, name);
       SpannableString spannableString = new SpannableString(introduction + " " +
                                                             context.getString(R.string.ConfirmIdentityDialog_you_may_wish_to_verify_your_safety_number_with_this_contact));
@@ -174,7 +174,9 @@ public class ConfirmIdentityDialog extends AlertDialog {
                                                                        messageRecord.getDateSent(),
                                                                        legacy ? Base64.decode(messageRecord.getBody()) : null,
                                                                        !legacy ? Base64.decode(messageRecord.getBody()) : null,
-                                                                       0, null);
+                    0,
+                    0,
+                    null);
 
             long pushId = pushDatabase.insert(envelope);
 

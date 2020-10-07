@@ -88,7 +88,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
     }
 
     public static void scheduleIfNecessary() {
-        long timeSinceLastRefresh = System.currentTimeMillis() - SignalStore.getLastServiceConfigRefreshTime();
+        long timeSinceLastRefresh = System.currentTimeMillis() - SignalStore.misc().getLastServiceConfigRefreshTime();
 
         if (timeSinceLastRefresh > REFRESH_INTERVAL) {
             Log.i(TAG, "Scheduling a service configuration refresh. Time since last schedule: " + timeSinceLastRefresh + " ms");
@@ -139,7 +139,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
                 Log.w(TAG, "Failed to update service configuration as one or more parameters received are null");
             }
 
-            SignalStore.setLastServiceConfigRefreshTime(System.currentTimeMillis());
+            SignalStore.misc().setLastServiceConfigRefreshTime(System.currentTimeMillis());
 
         } catch (IOException e) {
             Log.w(TAG, "IOException while trying to refresh service configuration. Skipping.");

@@ -71,68 +71,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   @SuppressWarnings("unused")
   private static final String TAG = SQLCipherOpenHelper.class.getSimpleName();
 
-  private static final int RECIPIENT_CALL_RINGTONE_VERSION  = 2;
-  private static final int MIGRATE_PREKEYS_VERSION          = 3;
-  private static final int MIGRATE_SESSIONS_VERSION         = 4;
-  private static final int NO_MORE_IMAGE_THUMBNAILS_VERSION = 5;
-  private static final int ATTACHMENT_DIMENSIONS            = 6;
-  private static final int QUOTED_REPLIES                   = 7;
-  private static final int SHARED_CONTACTS                  = 8;
-  private static final int FULL_TEXT_SEARCH                 = 9;
-  private static final int BAD_IMPORT_CLEANUP               = 10;
-  private static final int QUOTE_MISSING                    = 11;
-  private static final int NOTIFICATION_CHANNELS            = 12;
-  private static final int SECRET_SENDER                    = 13;
-  private static final int ATTACHMENT_CAPTIONS              = 14;
-  private static final int ATTACHMENT_CAPTIONS_FIX          = 15;
-  private static final int PREVIEWS                         = 16;
-  private static final int CONVERSATION_SEARCH              = 17;
-  private static final int SELF_ATTACHMENT_CLEANUP          = 18;
-  private static final int RECIPIENT_FORCE_SMS_SELECTION    = 19;
-  private static final int JOBMANAGER_STRIKES_BACK          = 20;
-  private static final int STICKERS                         = 21;
-  private static final int REVEALABLE_MESSAGES              = 22;
-  private static final int VIEW_ONCE_ONLY                   = 23;
-  private static final int RECIPIENT_IDS                    = 24;
-  private static final int RECIPIENT_SEARCH                 = 25;
-  private static final int RECIPIENT_CLEANUP                = 26;
-  private static final int MMS_RECIPIENT_CLEANUP            = 27;
-  private static final int ATTACHMENT_HASHING               = 28;
-  private static final int NOTIFICATION_RECIPIENT_IDS       = 29;
-  private static final int BLUR_HASH                        = 30;
-  private static final int MMS_RECIPIENT_CLEANUP_2          = 31;
-  private static final int ATTACHMENT_TRANSFORM_PROPERTIES  = 32;
-  private static final int ATTACHMENT_CLEAR_HASHES          = 33;
-  private static final int ATTACHMENT_CLEAR_HASHES_2        = 34;
-  private static final int UUIDS                            = 35;
-  private static final int USERNAMES                        = 36;
-  private static final int REACTIONS                        = 37;
-  private static final int STORAGE_SERVICE                  = 38;
-  private static final int REACTIONS_UNREAD_INDEX           = 39;
-  private static final int RESUMABLE_DOWNLOADS              = 40;
-  private static final int KEY_VALUE_STORE                  = 41;
-  private static final int ATTACHMENT_DISPLAY_ORDER         = 42;
-  private static final int SPLIT_PROFILE_NAMES              = 43;
-  private static final int STICKER_PACK_ORDER               = 44;
-  private static final int MEGAPHONES                       = 45;
-  private static final int MEGAPHONE_FIRST_APPEARANCE       = 46;
-  private static final int PROFILE_KEY_TO_DB                = 47;
-  private static final int PROFILE_KEY_CREDENTIALS          = 48;
-  private static final int ATTACHMENT_FILE_INDEX            = 49;
-  private static final int STORAGE_SERVICE_ACTIVE           = 50;
-  private static final int GROUPS_V2_RECIPIENT_CAPABILITY   = 51;
-  private static final int TRANSFER_FILE_CLEANUP            = 52;
-  private static final int PROFILE_DATA_MIGRATION           = 53;
-  private static final int AVATAR_LOCATION_MIGRATION        = 54;
-  private static final int GROUPS_V2                        = 55;
-  private static final int ATTACHMENT_UPLOAD_TIMESTAMP      = 56;
-  private static final int ATTACHMENT_CDN_NUMBER            = 57;
-  private static final int JOB_INPUT_DATA                   = 58;
-  private static final int SERVER_TIMESTAMP                 = 59;
-  private static final int REMOTE_DELETE                    = 60;
-  private static final int COLOR_MIGRATION                  = 61;
+  private static final int SERVER_DELIVERED_TIMESTAMP       = 64;
 
-  private static final int    DATABASE_VERSION = 61;
+  private static final int    DATABASE_VERSION = 64;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -200,6 +141,13 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.beginTransaction();
 
     try {
+
+      if (oldVersion < SERVER_DELIVERED_TIMESTAMP) {
+        db.execSQL("ALTER TABLE thread ADD COLUMN last_scrolled INTEGER DEFAULT 0");
+        db.execSQL("ALTER TABLE recipient ADD COLUMN last_profile_fetch INTEGER DEFAULT 0");
+        db.execSQL("ALTER TABLE push ADD COLUMN server_delivered_timestamp INTEGER DEFAULT 0");
+      }
+
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();

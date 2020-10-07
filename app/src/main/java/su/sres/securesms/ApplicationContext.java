@@ -45,6 +45,7 @@ import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
 import su.sres.securesms.jobs.RefreshPreKeysJob;
+import su.sres.securesms.jobs.RetrieveProfileJob;
 import su.sres.securesms.jobs.ServiceConfigRefreshJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.AndroidLogger;
@@ -483,6 +484,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeMasterKey();
     ApplicationDependencies.getJobManager().beginJobLoop();
 //    StorageSyncHelper.scheduleRoutineSync();
+    RetrieveProfileJob.enqueueRoutineFetchIfNeccessary(this);
     RegistrationUtil.markRegistrationPossiblyComplete();
     RefreshPreKeysJob.scheduleIfNecessary();
     launchCertificateRefresh();

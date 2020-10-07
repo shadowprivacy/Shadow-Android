@@ -136,7 +136,7 @@ public class LicenseManagementJob extends BaseJob {
                        config.setTrialStartTime(System.currentTimeMillis());
                        config.setTrialDuration(duration);
                        config.setLicensed(true);
-                       SignalStore.setLastLicenseRefreshTime(System.currentTimeMillis());
+                       SignalStore.misc().setLastLicenseRefreshTime(System.currentTimeMillis());
                        return;
                    }
                    // this is when we are requesting a trial already used in the past, e.g. after a reinstall
@@ -151,7 +151,7 @@ public class LicenseManagementJob extends BaseJob {
                         config.setLicensed(false);
                     } else {
                         Log.i(TAG, "Trial validation success. Continuing to use trial");
-                        SignalStore.setLastLicenseRefreshTime(System.currentTimeMillis());
+                        SignalStore.misc().setLastLicenseRefreshTime(System.currentTimeMillis());
                         return;
                     }
 
@@ -171,7 +171,7 @@ public class LicenseManagementJob extends BaseJob {
                 LicenseStatus status = verifyLicenseFile(license);
 
                 if(status == LicenseStatus.CORRUPTED || status == LicenseStatus.EXPIRED || status == LicenseStatus.TAMPERED) {
-                    SignalStore.setLastLicenseRefreshTime(System.currentTimeMillis());
+                    SignalStore.misc().setLastLicenseRefreshTime(System.currentTimeMillis());
                     throw new InvalidLicenseFileException();
                     // here the job will fail by unretryable exception
                 } else if(status == LicenseStatus.NYV) {
@@ -190,7 +190,7 @@ public class LicenseManagementJob extends BaseJob {
                 }
             } else {
                 Log.w(TAG, "Failed to retrieve the license file");
-                SignalStore.setLastLicenseRefreshTime(System.currentTimeMillis());
+                SignalStore.misc().setLastLicenseRefreshTime(System.currentTimeMillis());
                 throw new AbsentLicenseFileException();
                 // here the job will fail by unretryable exception
             }
@@ -229,7 +229,7 @@ public class LicenseManagementJob extends BaseJob {
             }
         }
 
-        SignalStore.setLastLicenseRefreshTime(System.currentTimeMillis());
+        SignalStore.misc().setLastLicenseRefreshTime(System.currentTimeMillis());
     }
 
     @Override
@@ -238,7 +238,7 @@ public class LicenseManagementJob extends BaseJob {
     }
 
     public static void scheduleIfNecessary() {
-        long timeSinceLastRefresh = System.currentTimeMillis() - SignalStore.getLastLicenseRefreshTime();
+        long timeSinceLastRefresh = System.currentTimeMillis() - SignalStore.misc().getLastLicenseRefreshTime();
 
         if (timeSinceLastRefresh > REFRESH_INTERVAL) {
             Log.i(TAG, "Scheduling a license refresh. Time since last schedule: " + timeSinceLastRefresh + " ms");
@@ -251,7 +251,7 @@ public class LicenseManagementJob extends BaseJob {
     @Override
     public void onFailure() {
         Log.w(TAG, "License management cycle failed!");
-        SignalStore.setLastLicenseRefreshTime(System.currentTimeMillis());
+        SignalStore.misc().setLastLicenseRefreshTime(System.currentTimeMillis());
     }
 
     private @Nullable byte [] downloadLicense() throws IOException {
@@ -346,7 +346,7 @@ public class LicenseManagementJob extends BaseJob {
         try {
             Response response = client.newCall(request).execute();
             if (response.code() == 200) {
-                if (response.body() != null) {                
+                if (response.body() != null) {
 
                     return Integer.parseInt(response.body().string());
 

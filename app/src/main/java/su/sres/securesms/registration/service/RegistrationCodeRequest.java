@@ -15,6 +15,7 @@ import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.CaptchaRequiredException;
+import su.sres.signalservice.api.push.exceptions.RateLimitException;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -68,8 +69,10 @@ public final class RegistrationCodeRequest {
 
             protected void onPostExecute(@NonNull VerificationRequestResult result) {
 
-                if (result.exception.isPresent() && result.exception.get() instanceof CaptchaRequiredException) {
+                if (isCaptchaRequired(result)) {
                     callback.onNeedCaptcha();
+                } else if (isRateLimited(result)) {
+                    callback.onRateLimited();
                 } else if (result.exception.isPresent()) {
                     callback.onError();
                 } else {
@@ -83,6 +86,14 @@ public final class RegistrationCodeRequest {
         TextSecurePreferences.setVerifying(context, true);
 
         TextSecurePreferences.setPushRegistered(context, false);
+    }
+
+    private static boolean isCaptchaRequired(@NonNull VerificationRequestResult result) {
+        return result.exception.isPresent() && result.exception.get() instanceof CaptchaRequiredException;
+    }
+
+    private static boolean isRateLimited(@NonNull VerificationRequestResult result) {
+        return result.exception.isPresent() && result.exception.get() instanceof RateLimitException;
     }
 
     private static class VerificationRequestResult {
@@ -132,11 +143,11 @@ public final class RegistrationCodeRequest {
 
     public interface SmsVerificationCodeCallback {
 
-
-
         void onNeedCaptcha();
 
         void requestSent(@Nullable String fcmToken);
+
+        void onRateLimited();
 
         void onError();
     }

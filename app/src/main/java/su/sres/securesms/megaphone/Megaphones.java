@@ -148,8 +148,7 @@ public final class Megaphones {
     }
 
     private static boolean shouldShowMessageRequestsMegaphone() {
-        boolean userHasAProfileName = Recipient.self().getProfileName() != ProfileName.EMPTY;
-        return FeatureFlags.messageRequests() && !userHasAProfileName;
+        return Recipient.self().getProfileName() == ProfileName.EMPTY;
     }
 
     public enum Event {

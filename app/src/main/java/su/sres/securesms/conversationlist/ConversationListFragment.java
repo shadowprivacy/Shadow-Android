@@ -22,13 +22,11 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
-import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -46,12 +44,11 @@ import androidx.annotation.PluralsRes;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.widget.TooltipCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.lifecycle.ViewModelProviders;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.Loader;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ActionMode;
@@ -78,7 +75,6 @@ import su.sres.securesms.MainNavigator;
 import su.sres.securesms.NewConversationActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.reminder.LicenseInvalidReminder;
-import su.sres.securesms.conversationlist.ConversationListAdapter.ItemClickListener;
 import su.sres.securesms.components.RatingManager;
 import su.sres.securesms.components.SearchToolbar;
 import su.sres.securesms.components.recyclerview.DeleteItemAnimator;
@@ -92,12 +88,12 @@ import su.sres.securesms.components.reminder.ReminderView;
 import su.sres.securesms.components.reminder.ServiceOutageReminder;
 import su.sres.securesms.components.reminder.SystemSmsImportReminder;
 import su.sres.securesms.components.reminder.UnauthorizedReminder;
+import su.sres.securesms.conversationlist.model.Conversation;
 import su.sres.securesms.conversationlist.model.MessageResult;
 import su.sres.securesms.conversationlist.model.SearchResult;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;
 import su.sres.securesms.database.ThreadDatabase;
-import su.sres.securesms.database.loaders.ConversationListLoader;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.ReminderUpdateEvent;
@@ -116,9 +112,9 @@ import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.sms.MessageSender;
-import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.ServiceUtil;
+import su.sres.securesms.util.SnapToTopDataObserver;
 import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -127,20 +123,19 @@ import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.task.SnackbarAsyncTask;
 
-import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 
 import static android.app.Activity.RESULT_OK;
 
-public class ConversationListFragment extends MainFragment implements LoaderManager.LoaderCallbacks<Cursor>,
-        ActionMode.Callback,
-        ItemClickListener,
+public class ConversationListFragment extends MainFragment implements ActionMode.Callback,
+        ConversationListAdapter.OnConversationClickListener,
         ConversationListSearchAdapter.EventListener,
         MainNavigator.BackHandler,
         MegaphoneActionController
@@ -157,23 +152,25 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
             R.drawable.empty_inbox_4,
             R.drawable.empty_inbox_5 };
 
-    private ActionMode                    actionMode;
-    private RecyclerView                  list;
-    private ReminderView                  reminderView;
-    private View                          emptyState;
-    private ImageView                     emptyImage;
-    private TextView                      searchEmptyState;
-    private PulsingFloatingActionButton   fab;
-    private PulsingFloatingActionButton   cameraFab;
-    private SearchToolbar                 searchToolbar;
-    private ImageView                     searchAction;
-    private View                          toolbarShadow;
-    private ConversationListViewModel     viewModel;
-    private RecyclerView.Adapter          activeAdapter;
-    private ConversationListAdapter       defaultAdapter;
-    private ConversationListSearchAdapter searchAdapter;
-    private StickyHeaderDecoration        searchAdapterDecoration;
-    private ViewGroup                     megaphoneContainer;
+    private ActionMode                        actionMode;
+    private RecyclerView                      list;
+    private ReminderView                      reminderView;
+    private View                              emptyState;
+    private ImageView                         emptyImage;
+    private TextView                          searchEmptyState;
+    private PulsingFloatingActionButton       fab;
+    private PulsingFloatingActionButton       cameraFab;
+    private SearchToolbar                     searchToolbar;
+    private ImageView                         searchAction;
+    private View                              toolbarShadow;
+    private ConversationListViewModel         viewModel;
+    private RecyclerView.Adapter              activeAdapter;
+    private ConversationListAdapter defaultAdapter;
+    private ConversationListSearchAdapter     searchAdapter;
+    private StickyHeaderDecoration            searchAdapterDecoration;
+    private ViewGroup                         megaphoneContainer;
+    private SnapToTopDataObserver             snapToTopDataObserver;
+    private Drawable                          archiveDrawable;
 
     public static ConversationListFragment newInstance() {
         return new ConversationListFragment();
@@ -214,9 +211,11 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         reminderView.setOnDismissListener(this::updateReminders);
 
         list.setHasFixedSize(true);
-        list.setLayoutManager(new LinearLayoutManager(getActivity()));
+        list.setLayoutManager(new LinearLayoutManager(requireActivity()));
         list.setItemAnimator(new DeleteItemAnimator());
         list.addOnScrollListener(new ScrollListener());
+
+        snapToTopDataObserver = new SnapToTopDataObserver(list, null);
 
         new ItemTouchHelper(new ArchiveListenerCallback()).attachToRecyclerView(list);
 
@@ -247,7 +246,6 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         super.onResume();
 
 //        updateReminders();
-        list.getAdapter().notifyDataSetChanged();
         EventBus.getDefault().register(this);
 
         if (TextSecurePreferences.isSmsEnabled(requireContext())) {
@@ -257,9 +255,12 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         SimpleTask.run(getLifecycle(), Recipient::self, this::initializeProfileIcon);
 
         if (!searchToolbar.isVisible() && list.getAdapter() != defaultAdapter) {
-            activeAdapter = defaultAdapter;
             list.removeItemDecoration(searchAdapterDecoration);
-            list.setAdapter(defaultAdapter);
+            setAdapter(defaultAdapter);
+        }
+
+        if (activeAdapter != null) {
+            activeAdapter.notifyDataSetChanged();
         }
     }
 
@@ -313,9 +314,8 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
 
     private boolean closeSearchIfOpen() {
         if (searchToolbar.isVisible() || activeAdapter == searchAdapter) {
-            activeAdapter = defaultAdapter;
             list.removeItemDecoration(searchAdapterDecoration);
-            list.setAdapter(defaultAdapter);
+            setAdapter(defaultAdapter);
             searchToolbar.collapse();
             return true;
         }
@@ -350,6 +350,11 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
                 threadRecord.getThreadId(),
                 threadRecord.getDistributionType(),
                 -1);
+    }
+
+    @Override
+    public void onShowArchiveClick() {
+        getNavigator().goToArchiveList();
     }
 
     @Override
@@ -438,16 +443,14 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
 
                 if (trimmed.length() > 0) {
                     if (activeAdapter != searchAdapter) {
-                        activeAdapter = searchAdapter;
-                        list.setAdapter(searchAdapter);
+                        setAdapter(searchAdapter);
                         list.removeItemDecoration(searchAdapterDecoration);
                         list.addItemDecoration(searchAdapterDecoration);
                     }
                 } else {
                     if (activeAdapter != defaultAdapter) {
-                        activeAdapter = defaultAdapter;
                         list.removeItemDecoration(searchAdapterDecoration);
-                        list.setAdapter(defaultAdapter);
+                        setAdapter(defaultAdapter);
                     }
                 }
             }
@@ -455,19 +458,35 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
             @Override
             public void onSearchClosed() {
                 list.removeItemDecoration(searchAdapterDecoration);
-                list.setAdapter(defaultAdapter);
+                setAdapter(defaultAdapter);
             }
         });
     }
 
     private void initializeListAdapters() {
-        defaultAdapter          = new ConversationListAdapter      (requireContext(), GlideApp.with(this), Locale.getDefault(), null, this);
-        searchAdapter           = new ConversationListSearchAdapter(GlideApp.with(this), this, Locale.getDefault            ()            );
+        defaultAdapter          = new ConversationListAdapter(GlideApp.with(this), this);
+        searchAdapter           = new ConversationListSearchAdapter(GlideApp.with(this), this, Locale.getDefault());
         searchAdapterDecoration = new StickyHeaderDecoration(searchAdapter, false, false);
-        activeAdapter           = defaultAdapter;
+        setAdapter(defaultAdapter);
+    }
 
-        list.setAdapter(defaultAdapter);
-        LoaderManager.getInstance(this).restartLoader(0, null, this);
+    @SuppressWarnings("rawtypes")
+    private void setAdapter(@NonNull RecyclerView.Adapter adapter) {
+        RecyclerView.Adapter oldAdapter = activeAdapter;
+
+        activeAdapter = adapter;
+
+        if (oldAdapter == activeAdapter) {
+            return;
+        }
+
+        list.setAdapter(adapter);
+
+        if (adapter == defaultAdapter) {
+            defaultAdapter.registerAdapterDataObserver(snapToTopDataObserver);
+        } else {
+            defaultAdapter.unregisterAdapterDataObserver(snapToTopDataObserver);
+        }
     }
 
     private void initializeTypingObserver() {
@@ -480,11 +499,17 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         });
     }
 
+    protected boolean isArchived() {
+        return false;
+    }
+
     private void initializeViewModel() {
-        viewModel = ViewModelProviders.of(this, new ConversationListViewModel.Factory()).get(ConversationListViewModel.class);
+        viewModel = ViewModelProviders.of(this, new ConversationListViewModel.Factory(isArchived())).get(ConversationListViewModel.class);
 
         viewModel.getSearchResult().observe(this, this::onSearchResultChanged);
         viewModel.getMegaphone().observe(this, this::onMegaphoneChanged);
+
+        viewModel.getConversationList().observe(this, this::onSubmitList);
 
         ProcessLifecycleOwner.get().getLifecycle().addObserver(new DefaultLifecycleObserver() {
             @Override
@@ -735,14 +760,8 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         getNavigator().goToConversation(recipient.getId(), threadId, distributionType, -1);
     }
 
-    @Override
-    public @NonNull Loader<Cursor> onCreateLoader(int arg0, Bundle arg1) {
-        return new ConversationListLoader(getActivity(), null, false);
-    }
-
-    @Override
-    public void onLoadFinished(@NonNull Loader<Cursor> arg0, Cursor cursor) {
-        if (cursor == null || cursor.getCount() <= 0) {
+    private void onSubmitList(@NonNull ConversationListViewModel.ConversationList conversationList) {
+        if (conversationList.isEmpty()) {
             list.setVisibility(View.INVISIBLE);
             emptyState.setVisibility(View.VISIBLE);
             emptyImage.setImageResource(EMPTY_IMAGES[(int) (Math.random() * EMPTY_IMAGES.length)]);
@@ -755,45 +774,39 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
             cameraFab.stopPulse();
         }
 
-        defaultAdapter.changeCursor(cursor);
+        defaultAdapter.submitList(conversationList.getConversations());
+        defaultAdapter.updateArchived(conversationList.getArchivedCount());
+
+        onPostSubmitList();
+    }
+
+    protected void onPostSubmitList() {
     }
 
     @Override
-    public void onLoaderReset(@NonNull Loader<Cursor> arg0) {
-        defaultAdapter.changeCursor(null);
-    }
-
-    @Override
-    public void onItemClick(ConversationListItem item) {
+    public void onConversationClick(Conversation conversation) {
         if (actionMode == null) {
-            handleCreateConversation(item.getThreadId(), item.getRecipient(), item.getDistributionType());
+            handleCreateConversation(conversation.getThreadRecord().getThreadId(), conversation.getThreadRecord().getRecipient(), conversation.getThreadRecord().getDistributionType());
         } else {
-            ConversationListAdapter adapter = (ConversationListAdapter)list.getAdapter();
-            adapter.toggleThreadInBatchSet(item.getThread());
+            defaultAdapter.toggleConversationInBatchSet(conversation);
 
-            if (adapter.getBatchSelectionIds().size() == 0) {
+            if (defaultAdapter.getBatchSelectionIds().size() == 0) {
                 actionMode.finish();
             } else {
                 actionMode.setTitle(String.valueOf(defaultAdapter.getBatchSelectionIds().size()));
                 setCorrectMenuVisibility(actionMode.getMenu());
             }
-
-            adapter.notifyDataSetChanged();
         }
     }
 
     @Override
-    public void onItemLongClick(ConversationListItem item) {
+    public boolean onConversationLongClick(Conversation conversation) {
         actionMode = ((AppCompatActivity) getActivity()).startSupportActionMode(ConversationListFragment.this);
 
         defaultAdapter.initializeBatchMode(true);
-        defaultAdapter.toggleThreadInBatchSet(item.getThread());
-        defaultAdapter.notifyDataSetChanged();
-    }
+        defaultAdapter.toggleConversationInBatchSet(conversation);
 
-    @Override
-    public void onSwitchToArchive() {
-        getNavigator().goToArchiveList();
+        return true;
     }
 
     @Override
@@ -872,7 +885,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
     }
 
     private void setCorrectMenuVisibility(@NonNull Menu menu) {
-        boolean hasUnread = Stream.of(defaultAdapter.getBatchSelection()).anyMatch(thread -> !thread.isRead());
+        boolean hasUnread = Stream.of(defaultAdapter.getBatchSelection()).anyMatch(conversation -> !conversation.getThreadRecord().isRead());
 
         if (hasUnread) {
             menu.findItem(R.id.menu_mark_as_unread).setVisible(false);
@@ -978,7 +991,7 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
         }
 
         @Override
-        public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
+        public void onChildDraw(@NonNull Canvas canvas, @NonNull RecyclerView recyclerView,
                                 @NonNull RecyclerView.ViewHolder viewHolder,
                                 float dX, float dY, int actionState,
                                 boolean isCurrentlyActive)
@@ -986,28 +999,32 @@ public class ConversationListFragment extends MainFragment implements LoaderMana
             if (viewHolder.itemView instanceof ConversationListItemInboxZero) return;
             if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
                 View  itemView = viewHolder.itemView;
-                Paint p        = new Paint();
                 float alpha    = 1.0f - Math.abs(dX) / (float) viewHolder.itemView.getWidth();
 
                 if (dX > 0) {
-                    Bitmap icon = BitmapFactory.decodeResource(getResources(), getArchiveIconRes());
+                    Resources resources = getResources();
 
-                    if (alpha > 0) p.setColor(getResources().getColor(R.color.green_500));
-                    else           p.setColor(Color.WHITE);
+                    if (archiveDrawable == null) {
+                        archiveDrawable = ResourcesCompat.getDrawable(resources, getArchiveIconRes(), requireActivity().getTheme());
+                        Objects.requireNonNull(archiveDrawable).setBounds(0, 0, archiveDrawable.getIntrinsicWidth(), archiveDrawable.getIntrinsicHeight());
+                    }
 
-                    c.drawRect((float) itemView.getLeft(), (float) itemView.getTop(), dX,
-                            (float) itemView.getBottom(), p);
+                    canvas.save();
+                    canvas.clipRect(itemView.getLeft(), itemView.getTop(), dX, itemView.getBottom());
 
-                    c.drawBitmap(icon,
-                            (float) itemView.getLeft() + getResources().getDimension(R.dimen.conversation_list_fragment_archive_padding),
-                            (float) itemView.getTop() + ((float) itemView.getBottom() - (float) itemView.getTop() - icon.getHeight())/2,
-                            p);
+                    canvas.drawColor(alpha > 0 ? resources.getColor(R.color.green_500) : Color.WHITE);
+
+                    canvas.translate(itemView.getLeft() + resources.getDimension(R.dimen.conversation_list_fragment_archive_padding),
+                            itemView.getTop() + (itemView.getBottom() - itemView.getTop() - archiveDrawable.getIntrinsicHeight()) / 2f);
+
+                    archiveDrawable.draw(canvas);
+                    canvas.restore();
                 }
 
                 viewHolder.itemView.setAlpha(alpha);
                 viewHolder.itemView.setTranslationX(dX);
             } else {
-                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+                super.onChildDraw(canvas, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
             }
         }
     }

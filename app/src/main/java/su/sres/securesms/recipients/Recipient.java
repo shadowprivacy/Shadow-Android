@@ -88,6 +88,7 @@ public class Recipient {
   private final String                 profileAvatar;
   private final boolean                hasProfileImage;
   private final boolean                profileSharing;
+  private final long                   lastProfileFetch;
   private final String                 notificationChannel;
   private final UnidentifiedAccessMode unidentifiedAccessMode;
   private final boolean                forceSmsSelection;
@@ -342,6 +343,7 @@ public class Recipient {
     this.profileAvatar          = null;
     this.hasProfileImage        = false;
     this.profileSharing         = false;
+    this.lastProfileFetch       = 0;
     this.notificationChannel    = null;
     this.unidentifiedAccessMode = UnidentifiedAccessMode.DISABLED;
     this.forceSmsSelection      = false;
@@ -384,6 +386,7 @@ public class Recipient {
     this.profileAvatar          = details.profileAvatar;
     this.hasProfileImage        = details.hasProfileImage;
     this.profileSharing         = details.profileSharing;
+    this.lastProfileFetch       = details.lastProfileFetch;
     this.notificationChannel    = details.notificationChannel;
     this.unidentifiedAccessMode = details.unidentifiedAccessMode;
     this.forceSmsSelection      = details.forceSmsSelection;
@@ -411,22 +414,13 @@ public class Recipient {
       List<String> names = new LinkedList<>();
 
       for (Recipient recipient : participants) {
-        names.add(recipient.toShortString(context));
+        names.add(recipient.getDisplayName(context));
       }
 
       return Util.join(names, ", ");
     }
 
     return this.name;
-  }
-
-  /**
-   * TODO [UUID] -- Remove once UUID Feature Flag is removed
-   */
-  @Deprecated
-  public @NonNull String toShortString(@NonNull Context context) {
-    if (FeatureFlags.profileDisplay()) return getDisplayName(context);
-    else                               return Optional.fromNullable(getName(context)).or(getSmsAddress()).or("");
   }
 
   /**
@@ -606,17 +600,16 @@ public class Recipient {
     return profileName;
   }
 
-  public @Nullable String getCustomLabel() {
-    if (FeatureFlags.profileDisplay()) throw new AssertionError("This method should never be called if PROFILE_DISPLAY is enabled.");
-    return customLabel;
-  }
-
   public @Nullable String getProfileAvatar() {
     return profileAvatar;
   }
 
   public boolean isProfileSharing() {
     return profileSharing;
+  }
+
+  public long getLastProfileFetchTime() {
+    return lastProfileFetch;
   }
 
   public boolean isGroup() {

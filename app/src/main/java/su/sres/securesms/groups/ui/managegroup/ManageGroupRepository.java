@@ -40,10 +40,10 @@ final class ManageGroupRepository {
 
     private static final String TAG = Log.tag(ManageGroupRepository.class);
 
-    private final Context         context;
-    private final GroupId.Push    groupId;
+    private final Context context;
+    private final GroupId groupId;
 
-    ManageGroupRepository(@NonNull Context context, @NonNull GroupId.Push groupId) {
+    ManageGroupRepository(@NonNull Context context, @NonNull GroupId groupId) {
         this.context  = context;
         this.groupId  = groupId;
     }
@@ -145,7 +145,7 @@ final class ManageGroupRepository {
     void addMembers(@NonNull List<RecipientId> selected, @NonNull AddMembersResultCallback addMembersResultCallback, @NonNull GroupChangeErrorCallback error) {
         SignalExecutors.UNBOUNDED.execute(() -> {
             try {
-                GroupManager.addMembers(context, groupId, selected);
+                GroupManager.addMembers(context, groupId.requirePush(), selected);
                 addMembersResultCallback.onMembersAdded(selected.size());
             } catch (GroupInsufficientRightsException | GroupNotAMemberException e) {
                 Log.w(TAG, e);

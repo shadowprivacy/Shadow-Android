@@ -15,12 +15,10 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.ContactSelectionActivity;
 import su.sres.securesms.ContactSelectionListFragment;
-import su.sres.securesms.GroupCreateActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.ContactsCursorLoader;
 import su.sres.securesms.groups.ui.addtogroup.AddToGroupViewModel.Event;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.FeatureFlags;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.ArrayList;
@@ -44,10 +42,6 @@ public final class AddToGroupsActivity extends ContactSelectionActivity {
                                    @NonNull RecipientId recipientId,
                                    @NonNull List<RecipientId> currentGroupsMemberOf)
     {
-        if (!FeatureFlags.newGroupUI()) {
-            return new Intent(context, GroupCreateActivity.class);
-        }
-
         Intent intent = new Intent(context, AddToGroupsActivity.class);
 
         intent.putExtra(ContactSelectionListFragment.MULTI_SELECT, false);

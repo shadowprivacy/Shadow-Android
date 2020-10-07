@@ -2,6 +2,9 @@
 
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+    <style name="Theme.Signal.DayNight.NoActionBar" parent="TextSecure.LightNoActionBar">
+    </style>
+
     <style name="TextSecure.LightNoActionBar" parent="@style/TextSecure.BaseLightNoActionBar">
         <!-- leave empty to allow overriding -->
     </style>
@@ -178,6 +181,8 @@
         <item name="actionModeBackground">@color/core_grey_50</item>
         <item name="actionModeCloseDrawable">@drawable/ic_close_white_24dp</item>
         <item name="actionModeStyle">@style/TextSecure.ActionModeStyle</item>
+        <item name="android:textColor">@color/text_color_light_theme</item>
+        <item name="android:textColorSecondary">@color/text_color_secondary_light_theme</item>
         <item name="colorPrimary">@color/core_ultramarine</item>
         <item name="colorPrimaryDark">@color/core_ultramarine</item>
         <item name="colorAccent">@color/core_ultramarine</item>
@@ -433,6 +438,11 @@
         <item name="colorControlNormal">@color/core_grey_90</item>
 
         <item name="circular_progress_button_state">@drawable/progress_button_state_light</item>
+
+        <item name="recipient_message_circle_icon">@drawable/ic_message_outline_ultramarine_24</item>
+        <item name="recipient_call_circle_icon">@drawable/ic_phone_right_outline_ultramarine_24</item>
+        <item name="recipient_video_call_circle_icon">@drawable/ic_video_outline_ultramarine_24</item>
+        <item name="recipient_contact_button_color">@color/core_grey_02</item>
     </style>
 
     <style name="TextSecure.DarkTheme" parent="@style/TextSecure.BaseDarkTheme">
@@ -721,6 +731,11 @@
         <item name="colorControlNormal">@color/core_white</item>
 
         <item name="circular_progress_button_state">@drawable/progress_button_state_dark</item>
+
+        <item name="recipient_message_circle_icon">@drawable/ic_message_solid_ultramarine_light_24</item>
+        <item name="recipient_call_circle_icon">@drawable/ic_phone_right_solid_ultramarine_light_24</item>
+        <item name="recipient_video_call_circle_icon">@drawable/ic_video_solid_ultramarine_light_24</item>
+        <item name="recipient_contact_button_color">@color/core_grey_80</item>
     </style>
 
     <style name="Theme.Signal.AlertDialog.Light.Cornered" parent="Theme.AppCompat.Light.Dialog.Alert">

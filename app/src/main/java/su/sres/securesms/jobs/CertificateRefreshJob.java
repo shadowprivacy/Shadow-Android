@@ -96,7 +96,7 @@ public class CertificateRefreshJob extends BaseJob {
     }
 
     public static void scheduleIfNecessary() {
-        long timeSinceLastRefresh = System.currentTimeMillis() - SignalStore.getLastCertRefreshTime();
+        long timeSinceLastRefresh = System.currentTimeMillis() - SignalStore.misc().getLastCertRefreshTime();
 
         if (timeSinceLastRefresh > REFRESH_INTERVAL) {
             Log.i(TAG, "Scheduling a certificate refresh. Time since last schedule: " + timeSinceLastRefresh + " ms");
@@ -199,7 +199,7 @@ public class CertificateRefreshJob extends BaseJob {
                 Log.i(TAG, "No change in the certificates version. Skipping.");
             }
 
-            SignalStore.setLastCertRefreshTime(System.currentTimeMillis());
+            SignalStore.misc().setLastCertRefreshTime(System.currentTimeMillis());
 
         } catch (IOException e) {
             Log.w(TAG, "IOException while trying to refresh certificates. Skipping.");

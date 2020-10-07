@@ -17,14 +17,9 @@
 package su.sres.securesms.conversationlist;
 
 import android.annotation.SuppressLint;
-import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
-import android.view.ViewGroup;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.MenuRes;
@@ -35,22 +30,16 @@ import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.Toolbar;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
 
 import su.sres.securesms.R;
 import su.sres.securesms.components.registration.PulsingFloatingActionButton;
-import su.sres.securesms.conversationlist.ConversationListAdapter.ItemClickListener;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.loaders.ConversationListLoader;
 import su.sres.securesms.util.task.SnackbarAsyncTask;
 
-
-public class ConversationListArchiveFragment extends ConversationListFragment
-        implements LoaderManager.LoaderCallbacks<Cursor>, ActionMode.Callback, ItemClickListener
+public class ConversationListArchiveFragment extends ConversationListFragment implements ActionMode.Callback
 {
     private RecyclerView                list;
     private View                        emptyState;
@@ -86,16 +75,15 @@ public class ConversationListArchiveFragment extends ConversationListFragment
     }
 
     @Override
-    public @NonNull Loader<Cursor> onCreateLoader(int arg0, Bundle arg1) {
-        return new ConversationListLoader(getActivity(), null, true);
-    }
-
-    @Override
-    public void onLoadFinished(@NonNull Loader<Cursor> arg0, Cursor cursor) {
-        super.onLoadFinished(arg0, cursor);
+    protected void onPostSubmitList() {
 
         list.setVisibility(View.VISIBLE);
         emptyState.setVisibility(View.GONE);
+    }
+
+    @Override
+    protected boolean isArchived() {
+        return true;
     }
 
     @Override

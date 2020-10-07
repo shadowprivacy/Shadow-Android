@@ -297,7 +297,7 @@ dependencies {
     implementation project(':libsignal-service')
     implementation 'org.signal:zkgroup-android:0.7.0'
 
-    implementation files('libs/ringrtc-android-2.0.3.aar')
+    implementation files('libs/ringrtc-android-2.2.0.aar')
 
     implementation 'org.signal:argon2:13.1@aar'
     implementation 'org.apache.commons:commons-csv:1.8'
