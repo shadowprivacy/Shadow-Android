@@ -1,6 +1,6 @@
 # Shadow-Android
 
-This is part of the Shadow secure messenger project - an Android client being a modified version of Signal-Android by Open Whisper Systems https://github.com/signalapp/Signal-Android and aimed at corporate/team environments.
+This is part of the Shadow secure messenger project - an Android client being a modified version of Signal-Android https://github.com/signalapp/Signal-Android and aimed at corporate/team environments.
 
 ## Contributing Translations
 
@@ -15,8 +15,7 @@ If you need assistance with your own installations, please contact us for discus
 
 ## Documentation
 
-Some general documentation can be found here: https://github.com/signalapp/Signal-Android/wiki Not all of it may be relevant, however.
-Building instructions are coming soon.
+Refer to this page: https://shadowprivacy.com/documentation
 
 # Legal things
 ## Cryptography Notice
