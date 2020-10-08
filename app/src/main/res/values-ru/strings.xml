@@ -2063,6 +2063,7 @@
   <string name="LicenseInfoActivity_status_nyv">Статус активации: Ещё не активна</string>
   <string name="LicenseInfoActivity_status_nokey">Статус активации: Ключ отсутствует</string>
   <string name="LicenseInfoActivity_status_trial_active">Статус активации: Пробный период (осталось %s)</string>
+  <string name="LicenseInfoActivity_status_trial_expired">Статус активации: Пробный период (истёк)</string>
   <string name="LicenseInfoActivity_status_uncertain">Статус активации: Не определен</string>
   <string name="LicenseInfoActivity_valid_from">Действительна с: %s</string>
   <string name="LicenseInfoActivity_valid_thru">Действительна по: %s</string>

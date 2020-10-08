@@ -77,7 +77,13 @@ public class LicenseInfoActivity extends BaseActionBarActivity {
 
             if (config.getTrialStatus() == 1) {
                 int secondsLeft = Long.valueOf(TimeUnit.MILLISECONDS.toSeconds(config.getTrialStartTime() + TimeUnit.DAYS.toMillis(config.getTrialDuration()) - System.currentTimeMillis())).intValue();
-                status.setText(String.format(getString(R.string.LicenseInfoActivity_status_trial_active), ExpirationUtil.getExpirationAbbreviatedDisplayValue(this, secondsLeft)));
+
+                if (secondsLeft > 0) {
+                    status.setText(String.format(getString(R.string.LicenseInfoActivity_status_trial_active), ExpirationUtil.getExpirationAbbreviatedDisplayValue(this, secondsLeft)));
+                } else {
+                    status.setText(getString(R.string.LicenseInfoActivity_status_trial_expired));
+                }
+
                 validFrom.setVisibility(View.INVISIBLE);
                 validUntil.setVisibility(View.INVISIBLE);
                 serial.setVisibility(View.INVISIBLE);

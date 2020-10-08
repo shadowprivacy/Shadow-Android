@@ -2243,6 +2243,7 @@
     <string name="LicenseInfoActivity_status_nyv">Activation Status: Not yet valid</string>
     <string name="LicenseInfoActivity_status_nokey">Activation Status: No key</string>
     <string name="LicenseInfoActivity_status_trial_active">Activation Status: Trial (%s left)</string>
+    <string name="LicenseInfoActivity_status_trial_expired">Activation Status: Trial (expired)</string>
     <string name="LicenseInfoActivity_status_uncertain">Activation Status: Uncertain</string>
     <string name="LicenseInfoActivity_valid_from">Valid From: %s</string>
     <string name="LicenseInfoActivity_valid_thru">Valid Until: %s</string>
