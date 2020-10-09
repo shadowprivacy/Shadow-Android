@@ -174,6 +174,9 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
           ApplicationDependencies.getRecipientCache().warmUp();
           ApplicationDependencies.getFrameRateTracker().begin();
           ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
+          launchCertificateRefresh();
+          launchLicenseRefresh();
+          launchServiceConfigRefresh();
 
           // the if clause is to prevent creation of message receiver until we have the cloud URL in store
           if (TextSecurePreferences.isPushRegistered(this)) {
@@ -487,9 +490,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     RetrieveProfileJob.enqueueRoutineFetchIfNeccessary(this);
     RegistrationUtil.markRegistrationPossiblyComplete();
     RefreshPreKeysJob.scheduleIfNecessary();
-    launchCertificateRefresh();
-    launchLicenseRefresh();
-    launchServiceConfigRefresh();
 
     initializedOnCreate = true;
   }
