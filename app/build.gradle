@@ -84,8 +84,8 @@ protobuf {
     }
 }
 
-def canonicalVersionCode = 9
-def canonicalVersionName = "1.4.0"
+def canonicalVersionCode = 10
+def canonicalVersionName = "1.5.0"
 
 def postFixSize = 10
 def abiPostFix = ['universal'   : 0,
@@ -439,7 +439,7 @@ tasks.whenTaskAdded { task ->
 
 //    if (task.name.equals("assembleWebsiteRelease")) {
 //        task.finalizedBy signProductionWebsiteRelease
-//    }
+//   }
 }
 
 def getLastCommitTimestamp() {
