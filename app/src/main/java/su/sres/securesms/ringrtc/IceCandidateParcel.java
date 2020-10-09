@@ -4,7 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import androidx.annotation.NonNull;
 
-import su.sres.ringrtc.CallId;
+import org.signal.ringrtc.CallId;
 
 import org.webrtc.IceCandidate;
 import su.sres.signalservice.api.messages.calls.IceUpdateMessage;

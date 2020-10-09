@@ -18,11 +18,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.greenrobot.eventbus.EventBus;
-import su.sres.ringrtc.CallException;
-import su.sres.ringrtc.CallId;
-import su.sres.ringrtc.CallManager;
-import su.sres.ringrtc.CallManager.CallEvent;
-import su.sres.ringrtc.Remote;
+import org.signal.ringrtc.CallException;
+import org.signal.ringrtc.CallId;
+import org.signal.ringrtc.CallManager;
+import org.signal.ringrtc.CallManager.CallEvent;
+import org.signal.ringrtc.Remote;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.WebRtcCallActivity;
 import su.sres.securesms.components.webrtc.TextureViewRenderer;

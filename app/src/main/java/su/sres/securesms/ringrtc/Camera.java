@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.LinkedList;
 
-import su.sres.ringrtc.CameraControl;
+import org.signal.ringrtc.CameraControl;
 
 import su.sres.securesms.logging.Log;
 

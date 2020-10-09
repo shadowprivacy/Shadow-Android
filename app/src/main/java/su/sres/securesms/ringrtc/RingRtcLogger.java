@@ -2,7 +2,7 @@ package su.sres.securesms.ringrtc;
 
 import su.sres.securesms.logging.Log;
 
-public class RingRtcLogger implements su.sres.ringrtc.Log.Logger {
+public class RingRtcLogger implements org.signal.ringrtc.Log.Logger {
     @Override
     public void v(String tag, String message, Throwable t) {
         Log.v(tag, message, t);

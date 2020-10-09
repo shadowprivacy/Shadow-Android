@@ -29,7 +29,7 @@ import androidx.multidex.MultiDexApplication;
 import org.conscrypt.Conscrypt;
 
 import org.signal.aesgcmprovider.AesGcmProvider;
-import su.sres.ringrtc.CallManager;
+import org.signal.ringrtc.CallManager;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.database.DatabaseFactory;

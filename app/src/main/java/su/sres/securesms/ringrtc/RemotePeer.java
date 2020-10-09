@@ -4,8 +4,8 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import androidx.annotation.NonNull;
 
-import su.sres.ringrtc.CallId;
-import su.sres.ringrtc.Remote;
+import org.signal.ringrtc.CallId;
+import org.signal.ringrtc.Remote;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
