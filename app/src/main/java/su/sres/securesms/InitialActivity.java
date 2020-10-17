@@ -35,6 +35,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.SecureRandom;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
@@ -70,9 +71,9 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
     private static final String TAG = InitialActivity.class.getSimpleName();
 
-    private static final String FCM_SENDER_ID_COLUMN          = "FCMSID";
-    private static final String SERVER_PUBLIC_KEY_HASH_COLUMN = "SRVPKH";
-    private static final String SERVICE_URI_COLUMN            = "SRVURL";
+    private static final String FCM_SENDER_ID_COLUMN    = "FCMSID";
+    private static final String SERVER_CERT_HASH_COLUMN = "SRVCH";
+    private static final String SERVICE_URI_COLUMN      = "SRVURL";
 
     private static final String EXAMPLE_HASH = "sha256/example";
     private static final String NULL_HASH = "sha256/null";
@@ -167,7 +168,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
         private String fcmSenderId,
                        serviceUrl,
-                       serverPublicKeyHash;
+                       serverCertHash;
 
         private View container;
         private Button buttonScan;
@@ -206,7 +207,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
             int fcmSenderIdIndex,
                 serviceUrlIndex,
-                serverPublicKeyHashIndex;
+                serverCertHashIndex;
 
             try {
                 CSVParser qrparser = CSVParser.parse(scanned, CSVFormat.RFC4180.withHeader());
@@ -216,17 +217,17 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
                     Toast.makeText(getActivity(), R.string.InitialActivity_qr_code_invalid, Toast.LENGTH_LONG).show();
                 } else {
 
-                    serviceUrlIndex          = csvHeaderList.indexOf(SERVICE_URI_COLUMN);
-                    serverPublicKeyHashIndex = csvHeaderList.indexOf(SERVER_PUBLIC_KEY_HASH_COLUMN);
-                    fcmSenderIdIndex         = csvHeaderList.indexOf(FCM_SENDER_ID_COLUMN);
+                    serviceUrlIndex     = csvHeaderList.indexOf(SERVICE_URI_COLUMN);
+                    serverCertHashIndex = csvHeaderList.indexOf(SERVER_CERT_HASH_COLUMN);
+                    fcmSenderIdIndex    = csvHeaderList.indexOf(FCM_SENDER_ID_COLUMN);
 
                     List<CSVRecord> csvRecordList = qrparser.getRecords();
                     serviceUrl = csvRecordList.get(0).get(serviceUrlIndex);
 
-                    if (serverPublicKeyHashIndex != -1) {
-                        serverPublicKeyHash = csvRecordList.get(0).get(serverPublicKeyHashIndex);
+                    if (serverCertHashIndex != -1) {
+                        serverCertHash = csvRecordList.get(0).get(serverCertHashIndex);
                     } else {
-                        serverPublicKeyHash = EXAMPLE_HASH;
+                        serverCertHash = EXAMPLE_HASH;
                     }
 
                     if (fcmSenderIdIndex != -1) {
@@ -270,9 +271,9 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
                                         }
 
                                         try {
-                                            hash = "sha256/" + calculatePublicKeyHash(candidateCert.getPublicKey().getEncoded());
+                                            hash = "sha256/" + calculateCertHash(candidateCert.getEncoded());
 
-                                            if (hash.equals(serverPublicKeyHash)) {
+                                            if (hash.equals(serverCertHash)) {
 
                                                 try(FileOutputStream fos = getActivity().openFileOutput(TRUSTSTORE_FILE_NAME, Context.MODE_PRIVATE)) {
 
@@ -291,11 +292,11 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
                                                 }
 
                                             } else {
-                                                Log.w(TAG, "WARNING! Shadow server public key hash mismatch");
-                                                EventBus.getDefault().post(new ServerCertErrorEvent(R.string.InitialActivity_server_pub_key_hash_mismatch));
+                                                Log.w(TAG, "WARNING! Shadow server certificate hash mismatch");
+                                                EventBus.getDefault().post(new ServerCertErrorEvent(R.string.InitialActivity_server_cert_hash_mismatch));
                                             }
 
-                                        } catch (NoSuchAlgorithmException e) {
+                                        } catch (NoSuchAlgorithmException | CertificateEncodingException e) {
                                             Log.w(TAG, e);
                                         }
 
@@ -431,9 +432,9 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
             return new Pair<>(shadowStore, shadowStorePassword);
         }
 
-        private static String calculatePublicKeyHash(byte[] key) throws NoSuchAlgorithmException {
+        private static String calculateCertHash(byte[] cert) throws NoSuchAlgorithmException {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-            return Base64.encodeBytes(messageDigest.digest(key));
+            return Base64.encodeBytes(messageDigest.digest(cert));
         }
 
         private String extractCommonName (Principal principal) {

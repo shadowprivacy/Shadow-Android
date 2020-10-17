@@ -598,7 +598,7 @@
   <string name="InitialActivity_scan">Сканировать</string>
     <string name="InitialActivity_error_obtaining_the_server_certificate">Ошибка получения сертификата сервера. Обратитесь к своему администратору.</string>
     <string name="InitialActivity_server_certificate_validity_error">Сертификат сервера истек или еще не вступил в силу. Обратитесь к своему администратору.</string>
-    <string name="InitialActivity_server_pub_key_hash_mismatch">Отпечаток открытого ключа сервера не совпадает. Обратитесь к своему администратору.</string>
+    <string name="InitialActivity_server_cert_hash_mismatch">Отпечаток сертификата сервера не совпадает. Обратитесь к своему администратору.</string>
     <string name="InitialActivity_server_certificate_import_error">Ошибка импорта сертификата сервера. Обратитесь к своему администратору.</string>
     <string name="InitialActivity_server_certificate_CN_error">Ошибка общего имени сервера. Немедленно обратитесь к своему администратору.</string>
 
