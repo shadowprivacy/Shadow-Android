@@ -11,7 +11,6 @@ import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.cursoradapter.widget.CursorAdapter;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -29,7 +28,7 @@ import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 
-public class BlockedContactsActivity extends PassphraseRequiredActionBarActivity {
+public class BlockedContactsActivity extends PassphraseRequiredActivity {
 
   private final DynamicTheme dynamicTheme = new DynamicTheme();
 

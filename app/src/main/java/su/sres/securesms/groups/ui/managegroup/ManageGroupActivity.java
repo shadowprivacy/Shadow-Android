@@ -10,13 +10,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityOptionsCompat;
 
-import su.sres.securesms.PassphraseRequiredActionBarActivity;
+import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
 
-public class ManageGroupActivity extends PassphraseRequiredActionBarActivity {
+public class ManageGroupActivity extends PassphraseRequiredActivity {
 
     private static final String GROUP_ID = "GROUP_ID";
 

@@ -76,7 +76,6 @@ import su.sres.securesms.components.ConversationItemThumbnail;
 import su.sres.securesms.components.DocumentView;
 import su.sres.securesms.components.QuoteView;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.messagedetails.MessageDetailsActivity;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
 import su.sres.securesms.recipients.RecipientId;
@@ -1373,7 +1372,9 @@ public class ConversationItem extends LinearLayout implements BindableConversati
       if (!shouldInterceptClicks(messageRecord) && parent != null) {
         parent.onClick(v);
       } else if (messageRecord.isFailed()) {
-        context.startActivity(MessageDetailsActivity.getIntentForMessageDetails(context, messageRecord, conversationRecipient.getId(), messageRecord.getThreadId()));
+        if (eventListener != null) {
+          eventListener.onMessageWithErrorClicked(messageRecord);
+        }
       } else if (!messageRecord.isOutgoing() && messageRecord.isIdentityMismatchFailure()) {
         handleApproveIdentity();
       } else if (messageRecord.isPendingInsecureSmsFallback()) {

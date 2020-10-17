@@ -72,8 +72,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final String TAG = SQLCipherOpenHelper.class.getSimpleName();
 
   private static final int SERVER_DELIVERED_TIMESTAMP       = 64;
+  private static final int QUOTE_CLEANUP                    = 65;
 
-  private static final int    DATABASE_VERSION = 64;
+  private static final int    DATABASE_VERSION = 65;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -146,6 +147,39 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL("ALTER TABLE thread ADD COLUMN last_scrolled INTEGER DEFAULT 0");
         db.execSQL("ALTER TABLE recipient ADD COLUMN last_profile_fetch INTEGER DEFAULT 0");
         db.execSQL("ALTER TABLE push ADD COLUMN server_delivered_timestamp INTEGER DEFAULT 0");
+      }
+
+      if (oldVersion < QUOTE_CLEANUP) {
+        String query = "SELECT _data " +
+                "FROM (SELECT _data, MIN(quote) AS all_quotes " +
+                "FROM part " +
+                "WHERE _data NOT NULL AND data_hash NOT NULL " +
+                "GROUP BY _data) " +
+                "WHERE all_quotes = 1";
+
+        int count = 0;
+
+        try (Cursor cursor = db.rawQuery(query, null)) {
+          while (cursor != null && cursor.moveToNext()) {
+            String data = cursor.getString(cursor.getColumnIndexOrThrow("_data"));
+
+            if (new File(data).delete()) {
+              ContentValues values = new ContentValues();
+              values.putNull("_data");
+              values.putNull("data_random");
+              values.putNull("thumbnail");
+              values.putNull("thumbnail_random");
+              values.putNull("data_hash");
+              db.update("part", values, "_data = ?", new String[] { data });
+
+              count++;
+            } else {
+              Log.w(TAG, "[QuoteCleanup] Failed to delete " + data);
+            }
+          }
+        }
+
+        Log.i(TAG, "[QuoteCleanup] Cleaned up " + count + " quotes.");
       }
 
       db.setTransactionSuccessful();

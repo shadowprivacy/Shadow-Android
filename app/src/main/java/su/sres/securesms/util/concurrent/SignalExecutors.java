@@ -1,5 +1,7 @@
 package su.sres.securesms.util.concurrent;
 
+import android.os.HandlerThread;
+
 import androidx.annotation.NonNull;
 
 import java.util.concurrent.ExecutorService;
@@ -68,6 +70,12 @@ public class SignalExecutors {
      */
     public static ExecutorService newFixedLifoThreadExecutor(String name, int minThreads, int maxThreads) {
         return new ThreadPoolExecutor(minThreads, maxThreads, 0, TimeUnit.MILLISECONDS, new LinkedBlockingLifoQueue<>(), new NumberedThreadFactory(name));
+    }
+
+    public static HandlerThread getAndStartHandlerThread(@NonNull String name) {
+        HandlerThread handlerThread = new HandlerThread(name);
+        handlerThread.start();
+        return handlerThread;
     }
 
     /**

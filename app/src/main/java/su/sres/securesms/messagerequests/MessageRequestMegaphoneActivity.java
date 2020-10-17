@@ -8,7 +8,7 @@ import androidx.annotation.Nullable;
 
 import com.airbnb.lottie.LottieAnimationView;
 
-import su.sres.securesms.PassphraseRequiredActionBarActivity;
+import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.megaphone.Megaphones;
@@ -17,9 +17,8 @@ import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
-import su.sres.securesms.util.TextSecurePreferences;
 
-public class MessageRequestMegaphoneActivity extends PassphraseRequiredActionBarActivity {
+public class MessageRequestMegaphoneActivity extends PassphraseRequiredActivity {
 
     public static final short EDIT_PROFILE_REQUEST_CODE = 24563;
 

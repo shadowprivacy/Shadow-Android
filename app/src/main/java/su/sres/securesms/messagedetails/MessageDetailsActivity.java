@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 
-import su.sres.securesms.PassphraseRequiredActionBarActivity;
+import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.database.MmsSmsDatabase;
@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public final class MessageDetailsActivity extends PassphraseRequiredActionBarActivity {
+public final class MessageDetailsActivity extends PassphraseRequiredActivity {
 
     private static final String MESSAGE_ID_EXTRA = "message_id";
     private static final String THREAD_ID_EXTRA  = "thread_id";

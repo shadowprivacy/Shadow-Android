@@ -51,12 +51,12 @@ public final class FeatureFlags {
 
     private static final String UUIDS                      = "android.uuids";
     private static final String USERNAMES                  = "android.usernames";
-    private static final String PROFILE_NAMES_MEGAPHONE    = "android.profileNamesMegaphone";
     private static final String ATTACHMENTS_V3             = "android.attachmentsV3";
     private static final String REMOTE_DELETE              = "android.remoteDelete";
     private static final String PROFILE_FOR_CALLING        = "android.profileForCalling";
     private static final String CALLING_PIP                = "android.callingPip";
-    private static final String VERSIONED_PROFILES         = "android.versionedProfiles";
+    private static final String VERSIONED_PROFILES_1       = "android.versionedProfiles";
+    private static final String VERSIONED_PROFILES_2       = "android.versionedProfiles.2";
     private static final String GROUPS_V2                  = "android.groupsv2";
     private static final String GROUPS_V2_CREATE           = "android.groupsv2.create";
     private static final String GROUPS_V2_CAPACITY         = "android.groupsv2.capacity";
@@ -68,12 +68,12 @@ public final class FeatureFlags {
      */
 
     private static final Set<String> REMOTE_CAPABLE = Sets.newHashSet(
-            PROFILE_NAMES_MEGAPHONE,
             ATTACHMENTS_V3,
             REMOTE_DELETE,
             PROFILE_FOR_CALLING,
             CALLING_PIP,
-            VERSIONED_PROFILES,
+            VERSIONED_PROFILES_1,
+            VERSIONED_PROFILES_2,
             GROUPS_V2,
             GROUPS_V2_CREATE,
             GROUPS_V2_CAPACITY,
@@ -105,7 +105,8 @@ public final class FeatureFlags {
      * Flags in this set will stay true forever once they receive a true value from a remote config.
      */
     private static final Set<String> STICKY = Sets.newHashSet(
-            VERSIONED_PROFILES,
+            VERSIONED_PROFILES_1,
+            VERSIONED_PROFILES_2,
             GROUPS_V2
     );
 
@@ -121,7 +122,7 @@ public final class FeatureFlags {
      * desired test state.
      */
     private static final Map<String, OnFlagChange> FLAG_CHANGE_LISTENERS = new HashMap<String, OnFlagChange>() {{
-        put(VERSIONED_PROFILES, (change) -> {
+        put(VERSIONED_PROFILES_2, (change) -> {
             if (change == Change.ENABLED) {
                 ApplicationDependencies.getJobManager().add(new ProfileUploadJob());
             }
@@ -191,12 +192,6 @@ public final class FeatureFlags {
         return value;
     }
 
-    /** Safety switch for disabling profile names megaphone */
-    public static boolean profileNamesMegaphone() {
-        return getBoolean(PROFILE_NAMES_MEGAPHONE, true) &&
-                TextSecurePreferences.getFirstInstallVersion(ApplicationDependencies.getApplication()) < 600;
-    }
-
     /** Whether or not we use the attachments v3 form. */
     public static boolean attachmentsV3() {
         return getBoolean(ATTACHMENTS_V3, false);
@@ -219,7 +214,8 @@ public final class FeatureFlags {
 
     /** Read and write versioned profile information. */
     public static boolean versionedProfiles() {
-        return getBoolean(VERSIONED_PROFILES, false);
+        return getBoolean(VERSIONED_PROFILES_1, false) ||
+                getBoolean(VERSIONED_PROFILES_2, false);
     }
 
     /** Groups v2 send and receive. */

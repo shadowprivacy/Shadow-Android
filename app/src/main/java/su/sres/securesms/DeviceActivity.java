@@ -22,7 +22,6 @@ import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.permissions.Permissions;
-import su.sres.securesms.push.AccountManagerFactory;
 import su.sres.securesms.qr.ScanListener;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.DynamicLanguage;
@@ -41,7 +40,7 @@ import su.sres.signalservice.internal.push.DeviceLimitExceededException;
 
 import java.io.IOException;
 
-public class DeviceActivity extends PassphraseRequiredActionBarActivity
+public class DeviceActivity extends PassphraseRequiredActivity
     implements Button.OnClickListener, ScanListener, DeviceLinkFragment.LinkClickedListener
 {
 

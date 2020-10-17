@@ -1,6 +1,5 @@
 package su.sres.securesms.glide.cache;
 
-
 import android.graphics.Bitmap;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,7 +30,6 @@ public class EncryptedBitmapCacheDecoder extends EncryptedCoder implements Resou
   public boolean handles(@NonNull File source, @NonNull Options options)
       throws IOException
   {
-    Log.i(TAG, "Checking item for encrypted Bitmap cache decoder: " + source.toString());
 
     try (InputStream inputStream = createEncryptedInputStream(secret, source)) {
       return streamBitmapDecoder.handles(inputStream, options);
@@ -41,12 +39,10 @@ public class EncryptedBitmapCacheDecoder extends EncryptedCoder implements Resou
     }
   }
 
-  @Nullable
   @Override
-  public Resource<Bitmap> decode(@NonNull File source, int width, int height, @NonNull Options options)
+  public @Nullable Resource<Bitmap> decode(@NonNull File source, int width, int height, @NonNull Options options)
       throws IOException
   {
-    Log.i(TAG, "Encrypted Bitmap cache decoder running: " + source.toString());
     try (InputStream inputStream = createEncryptedInputStream(secret, source)) {
       return streamBitmapDecoder.decode(inputStream, width, height, options);
     }

@@ -4,7 +4,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -18,6 +17,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import su.sres.securesms.R;
+import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.giph.model.GiphyImage;
 import su.sres.securesms.giph.net.GiphyLoader;
 import su.sres.securesms.giph.util.InfiniteScrollListener;
@@ -28,7 +28,7 @@ import su.sres.securesms.util.ViewUtil;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class GiphyFragment extends Fragment implements LoaderManager.LoaderCallbacks<List<GiphyImage>>, GiphyAdapter.OnItemClickListener {
+public abstract class GiphyFragment extends LoggingFragment implements LoaderManager.LoaderCallbacks<List<GiphyImage>>, GiphyAdapter.OnItemClickListener {
 
   private static final String TAG = GiphyFragment.class.getSimpleName();
 

@@ -21,7 +21,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.PassphraseRequiredActionBarActivity;
+import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.CustomDefaultPreference;
 import su.sres.securesms.database.ApnDatabase;
@@ -41,7 +41,7 @@ public class MmsPreferencesFragment extends CorrectedPreferenceFragment {
   public void onCreate(Bundle paramBundle) {
     super.onCreate(paramBundle);
 
-    ((PassphraseRequiredActionBarActivity) getActivity()).getSupportActionBar()
+    ((PassphraseRequiredActivity) getActivity()).getSupportActionBar()
         .setTitle(R.string.preferences__advanced_mms_access_point_names);
   }
 

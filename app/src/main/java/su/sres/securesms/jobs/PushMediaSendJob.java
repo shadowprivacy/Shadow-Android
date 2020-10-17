@@ -22,6 +22,7 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.MmsException;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.transport.InsecureFallbackApprovalException;
@@ -165,8 +166,10 @@ public class PushMediaSendJob extends PushSendJob  {
       ApplicationDependencies.getJobManager().add(new DirectorySyncJob(false));
     } catch (UntrustedIdentityException uie) {
       warn(TAG, "Failure", uie);
-      database.addMismatchedIdentity(messageId, Recipient.external(context, uie.getIdentifier()).getId(), uie.getIdentityKey());
+      RecipientId recipientId = Recipient.external(context, uie.getIdentifier()).getId();
+      database.addMismatchedIdentity(messageId, recipientId, uie.getIdentityKey());
       database.markAsSentFailed(messageId);
+      RetrieveProfileJob.enqueue(recipientId);
     }
   }
 

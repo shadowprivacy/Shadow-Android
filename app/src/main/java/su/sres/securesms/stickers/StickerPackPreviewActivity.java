@@ -17,7 +17,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 
-import su.sres.securesms.PassphraseRequiredActionBarActivity;
+import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.sharing.ShareActivity;
 import su.sres.securesms.logging.Log;
@@ -34,7 +34,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
  * Shows the contents of a pack and allows the user to install it (if not installed) or remove it
  * (if installed). This is also the handler for sticker pack deep links.
  */
-public final class StickerPackPreviewActivity extends    PassphraseRequiredActionBarActivity
+public final class StickerPackPreviewActivity extends PassphraseRequiredActivity
         implements StickerRolloverTouchListener.RolloverEventListener,
         StickerRolloverTouchListener.RolloverStickerRetriever,
         StickerPackPreviewAdapter.EventListener

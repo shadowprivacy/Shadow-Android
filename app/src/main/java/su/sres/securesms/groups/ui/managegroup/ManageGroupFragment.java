@@ -16,7 +16,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.ViewCompat;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProviders;
 
@@ -26,6 +25,7 @@ import su.sres.securesms.AvatarPreviewActivity;
 import su.sres.securesms.MediaPreviewActivity;
 import su.sres.securesms.MuteDialog;
 import su.sres.securesms.PushContactSelectionActivity;
+import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.components.AvatarImageView;
@@ -53,7 +53,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-public class ManageGroupFragment extends Fragment {
+public class ManageGroupFragment extends LoggingFragment {
     private static final String GROUP_ID = "GROUP_ID";
 
     private static final String TAG = Log.tag(ManageGroupFragment.class);

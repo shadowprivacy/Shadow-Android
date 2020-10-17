@@ -1,6 +1,7 @@
 package su.sres.securesms.notifications;
 
 import android.content.Context;
+import android.os.Handler;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
@@ -8,25 +9,24 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.messages.InitialMessageRetriever;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.LeakyBucketLimiter;
 import su.sres.securesms.util.Throttler;
+import su.sres.securesms.util.concurrent.SignalExecutors;
 
 import java.util.concurrent.TimeUnit;
 
 /**
- * Wraps another {@link MessageNotifier} and throttles it while {@link InitialMessageRetriever} is
- * running.
+ * Uses a leaky-bucket strategy to limiting notification updates.
  */
 public class OptimizedMessageNotifier implements MessageNotifier {
 
-    private final MessageNotifier         wrapped;
-    private final Throttler               throttler;
-    private final InitialMessageRetriever retriever;
+    private final MessageNotifier    wrapped;
+    private final LeakyBucketLimiter limiter;
 
     @MainThread
     public OptimizedMessageNotifier(@NonNull MessageNotifier wrapped) {
-        this.wrapped   = wrapped;
-        this.throttler = new Throttler(TimeUnit.SECONDS.toMillis(5));
-        this.retriever = ApplicationDependencies.getInitialMessageRetriever();
+        this.wrapped = wrapped;
+        this.limiter = new LeakyBucketLimiter(5, 1000, new Handler(SignalExecutors.getAndStartHandlerThread("signal-notifier").getLooper()));
     }
 
     @Override
@@ -56,38 +56,22 @@ public class OptimizedMessageNotifier implements MessageNotifier {
 
     @Override
     public void updateNotification(@NonNull Context context) {
-        if (retriever.isCaughtUp()) {
-            wrapped.updateNotification(context);
-        } else {
-            throttler.publish(() -> wrapped.updateNotification(context));
-        }
+        limiter.run(() -> wrapped.updateNotification(context));
     }
 
     @Override
     public void updateNotification(@NonNull Context context, long threadId) {
-        if (retriever.isCaughtUp()) {
-            wrapped.updateNotification(context, threadId);
-        } else {
-            throttler.publish(() -> wrapped.updateNotification(context));
-        }
+        limiter.run(() -> wrapped.updateNotification(context, threadId));
     }
 
     @Override
     public void updateNotification(@NonNull Context context, long threadId, boolean signal) {
-        if (retriever.isCaughtUp()) {
-            wrapped.updateNotification(context, threadId, signal);
-        } else {
-            throttler.publish(() -> wrapped.updateNotification(context));
-        }
+        limiter.run(() -> wrapped.updateNotification(context, threadId, signal));
     }
 
     @Override
     public void updateNotification(@NonNull Context context, long threadId, boolean signal, int reminderCount) {
-        if (retriever.isCaughtUp()) {
-            wrapped.updateNotification(context, threadId, signal, reminderCount);
-        } else {
-            throttler.publish(() -> wrapped.updateNotification(context));
-        }
+        limiter.run(() -> wrapped.updateNotification(context, threadId, signal, reminderCount));
     }
 
     @Override

@@ -14,6 +14,7 @@ import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.crypto.UnidentifiedAccess;
+import su.sres.signalservice.api.profiles.SignalServiceProfile;
 import su.sres.signalservice.api.push.exceptions.NetworkFailureException;
 
 import java.io.IOException;
@@ -58,12 +59,18 @@ public class RefreshAttributesJob extends BaseJob  {
     byte[]    unidentifiedAccessKey       = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
     boolean universalUnidentifiedAccess = TextSecurePreferences.isUniversalUnidentifiedAccess(context);
 
+    // dummy true instead of checking whether the client has a PIN
+    SignalServiceProfile.Capabilities capabilities = AppCapabilities.getCapabilities(true);
+
+    Log.i(TAG, "Capabilities:" +
+            "\n    Storage? " + capabilities.isStorage() +
+            "\n    GV2? " + capabilities.isGv2() +
+            "\n    UUID? " + capabilities.isUuid())  ;
+
     SignalServiceAccountManager signalAccountManager = ApplicationDependencies.getSignalServiceAccountManager();
     signalAccountManager.setAccountAttributes(null, registrationId, fetchesMessages, pin,
             unidentifiedAccessKey, universalUnidentifiedAccess,
-
-            // dummy true instead of checking whether the client has a PIN
-            AppCapabilities.getCapabilities(true));
+            capabilities);
 
   }
 

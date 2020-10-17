@@ -2,10 +2,7 @@ package su.sres.securesms.help;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,7 +21,7 @@ import com.annimon.stream.Stream;
 import com.dd.CircularProgressButton;
 
 import su.sres.securesms.ApplicationPreferencesActivity;
-import su.sres.securesms.BuildConfig;
+import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiImageView;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -34,9 +31,8 @@ import su.sres.securesms.util.text.AfterTextChanged;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
-public class HelpFragment extends Fragment {
+public class HelpFragment extends LoggingFragment {
 
     private EditText               problem;
     private CheckBox               includeDebugLogs;

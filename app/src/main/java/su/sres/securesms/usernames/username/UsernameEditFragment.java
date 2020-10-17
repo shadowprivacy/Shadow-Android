@@ -1,7 +1,6 @@
 package su.sres.securesms.usernames.username;
 
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,18 +10,18 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.dd.CircularProgressButton;
 
+import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.contactshare.SimpleTextWatcher;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.UsernameUtil;
 
-public class UsernameEditFragment extends Fragment {
+public class UsernameEditFragment extends LoggingFragment {
 
     private static final float DISABLED_ALPHA = 0.5f;
 

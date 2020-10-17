@@ -12,7 +12,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -36,6 +35,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 
+import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
@@ -50,7 +50,7 @@ import java.io.ByteArrayOutputStream;
 /**
  * Camera capture implemented with the legacy camera API's. Should only be used if sdk < 21.
  */
-public class Camera1Fragment extends Fragment implements CameraFragment,
+public class Camera1Fragment extends LoggingFragment implements CameraFragment,
         TextureView.SurfaceTextureListener,
         Camera1Controller.EventListener
 {

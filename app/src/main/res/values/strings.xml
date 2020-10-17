@@ -187,7 +187,9 @@
     <string name="ContactShareEditActivity_invalid_contact">Selected contact was invalid</string>
 
     <!-- ConversationItem -->
-    <string name="ConversationItem_error_not_delivered">Send failed, tap for details</string>
+    <string name="ConversationItem_error_not_sent_tap_for_details">Not sent, tap for details</string>
+    <string name="ConversationItem_error_partially_not_delivered">Partially sent, tap for details</string>
+    <string name="ConversationItem_error_network_not_delivered">Send failed</string>
     <string name="ConversationItem_received_key_exchange_message_tap_to_process">Received key exchange message, tap to process.</string>
     <string name="ConversationItem_group_action_left">%1$s has left the group.</string>
     <string name="ConversationItem_click_to_approve_unencrypted">Send failed, tap for unsecured fallback</string>
@@ -347,8 +349,6 @@
         <item quantity="one">Moved conversation to inbox</item>
         <item quantity="other">Moved %d conversations to inbox</item>
     </plurals>
-    <string name="ConversationListFragment__your_profile_name_has_been_created">Your profile name has been created.</string>
-    <string name="ConversationListFragment__your_profile_name_has_been_saved">Your profile name has been saved.</string>
 
     <!-- ConversationListItem -->
     <string name="ConversationListItem_key_exchange_message">Key exchange message</string>
@@ -870,7 +870,6 @@
 
     <!-- DeviceProvisioningActivity -->
     <string name="DeviceProvisioningActivity_link_this_device">Link this device?</string>
-    <string name="DeviceProvisioningActivity_cancel">CANCEL</string>
     <string name="DeviceProvisioningActivity_continue">CONTINUE</string>
 
     <string name="DeviceProvisioningActivity_content_intro">It will be able to</string>
@@ -1076,7 +1075,6 @@
     <string name="SubmitDebugLogActivity_success">Success!</string>
     <string name="SubmitDebugLogActivity_copy_this_url_and_add_it_to_your_issue">Copy this URL and add it to your issue report or support email:\n\n<b>%1$s</b></string>
     <string name="SubmitDebugLogActivity_copied_to_clipboard">Copied to clipboard</string>
-    <string name="SubmitDebugLogActivity_ok">Ok</string>
     <string name="SubmitDebugLogActivity_share">Share</string>
 
     <!-- SupportEmailUtil -->
@@ -1149,7 +1147,7 @@
     <string name="UsernameEditFragment_encountered_a_network_error">Encountered a network error.</string>
     <string name="UsernameEditFragment_this_username_is_taken">This username is taken.</string>
     <string name="UsernameEditFragment_this_username_is_available">This username is available.</string>
-    <string name="UsernameEditFragment_usernames_can_only_include">Usernames can only include a-Z, 0-9, and underscores.</string>
+    <string name="UsernameEditFragment_usernames_can_only_include">Usernames can only include a–Z, 0–9, and underscores.</string>
     <string name="UsernameEditFragment_usernames_cannot_begin_with_a_number">Usernames cannot begin with a number.</string>
     <string name="UsernameEditFragment_username_is_invalid">Username is invalid.</string>
     <string name="UsernameEditFragment_usernames_must_be_between_a_and_b_characters">Usernames must be between %1$d and %2$d characters.</string>
@@ -1411,6 +1409,7 @@
     <string name="conversation_activity__quick_attachment_drawer_lock_record_description">Lock recording of audio attachment</string>
     <string name="conversation_activity__enable_signal_for_sms">Enable Shadow for SMS</string>
     <string name="conversation_activity__this_user_is_inaccessible">This recipient is inaccessible</string>
+    <string name="conversation_activity__message_could_not_be_sent">Message could not be sent. Check your connection and try again.</string>
 
     <!-- conversation_input_panel -->
     <string name="conversation_input_panel__slide_to_cancel">Slide to cancel</string>
@@ -1445,6 +1444,13 @@
 
     <!-- conversation_fragment -->
     <string name="conversation_fragment__scroll_to_the_bottom_content_description">Scroll to the bottom</string>
+
+    <!-- safety_number_change_dialog -->
+    <string name="safety_number_change_dialog__safety_number_changes">Safety Number Changes</string>
+    <string name="safety_number_change_dialog__send_anyway">Send anyway</string>
+    <string name="safety_number_change_dialog__the_following_people_may_have_reinstalled_or_changed_devices">The following people may have reinstalled or changed devices. Verify your safety number with them to ensure privacy.</string>
+    <string name="safety_number_change_dialog__view">View</string>
+    <string name="safety_number_change_dialog__previous_verified">Previous verified</string>
 
     <!-- device_add_fragment -->
     <string name="device_add_fragment__scan_the_qr_code_displayed_on_the_device_to_link">Scan the QR code displayed on the device to link</string>
@@ -2095,14 +2101,6 @@
     <!-- CalleeMustAcceptMessageRequestDialogFragment -->
     <string name="CalleeMustAcceptMessageRequestDialogFragment__okay">Okay</string>
     <string name="CalleeMustAcceptMessageRequestDialogFragment__s_will_get_a_message_request_from_you">%1$s will get a message request from you. You can call once your message request is accepted.</string>
-
-    <!-- Profile Names Megaphone -->
-    <string name="ProfileNamesMegaphone__add_a_profile_name">Add a profile name</string>
-    <string name="ProfileNamesMegaphone__this_will_be_displayed_when_you_start">This will be displayed when you start a new conversation or share it.</string>
-    <string name="ProfileNamesMegaphone__add_profile_name">Add Profile Name</string>
-    <string name="ProfileNamesMegaphone__confirm_your_profile_name">Confirm your Profile Name</string>
-    <string name="ProfileNamesMegaphone__your_profile_can_now_include">Your profile can now include an optional last name.</string>
-    <string name="ProfileNamesMegaphone__confirm_name">Confirm Name</string>
 
     <!-- transport_selection_list_item -->
     <string name="transport_selection_list_item__transport_icon">Transport icon</string>

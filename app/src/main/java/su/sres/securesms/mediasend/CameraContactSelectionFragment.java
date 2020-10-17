@@ -23,11 +23,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import su.sres.securesms.InviteActivity;
+import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.DynamicTheme;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThemeUtil;
 
 import java.util.List;
@@ -35,7 +35,7 @@ import java.util.List;
 /**
  * Fragment that selects Signal contacts. Intended to be used in the camera-first capture flow.
  */
-public class CameraContactSelectionFragment extends Fragment implements CameraContactAdapter.CameraContactListener {
+public class CameraContactSelectionFragment extends LoggingFragment implements CameraContactAdapter.CameraContactListener {
 
     private Controller                      controller;
     private MediaSendViewModel              mediaSendViewModel;

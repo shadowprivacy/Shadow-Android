@@ -15,6 +15,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.transport.InsecureFallbackApprovalException;
@@ -122,9 +123,11 @@ public class PushTextSendJob extends PushSendJob  {
       ApplicationDependencies.getJobManager().add(new DirectorySyncJob(false));
     } catch (UntrustedIdentityException e) {
       warn(TAG, "Failure", e);
-      database.addMismatchedIdentity(record.getId(), Recipient.external(context, e.getIdentifier()).getId(), e.getIdentityKey());
+      RecipientId recipientId = Recipient.external(context, e.getIdentifier()).getId();
+      database.addMismatchedIdentity(record.getId(), recipientId, e.getIdentityKey());
       database.markAsSentFailed(record.getId());
       database.markAsPush(record.getId());
+      RetrieveProfileJob.enqueue(recipientId);
     }
   }
 

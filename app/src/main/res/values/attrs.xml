@@ -139,6 +139,9 @@
     <attr name="conversation_scroll_to_bottom_background" format="reference" />
     <attr name="conversation_scroll_to_bottom_foreground_color" format="color" />
 
+    <attr name="safety_number_change_dialog_button_background" format="reference|color" />
+    <attr name="safety_number_change_dialog_button_text_color" format="color" />
+
     <attr name="tinted_circle_background" format="reference" />
 
     <attr name="dialog_info_icon" format="reference" />
@@ -280,9 +283,6 @@
     <attr name="megaphone_body_text_color" format="color"/>
     <attr name="megaphone_reactions_shade" format="color"/>
     <attr name="megaphone_reactions_close_tint" format="color"/>
-
-    <attr name="pending_member_background" format="color" />
-    <attr name="pending_member_empty_text_color" format="color" />
 
     <attr name="debuglog_color_none" format="color" />
     <attr name="debuglog_color_verbose" format="color" />

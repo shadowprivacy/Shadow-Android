@@ -20,7 +20,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
-import su.sres.securesms.PassphraseRequiredActionBarActivity;
+import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -42,7 +42,7 @@ import java.util.Map;
 
 import static su.sres.securesms.mms.DecryptableStreamUriLoader.*;
 
-public class SharedContactDetailsActivity extends PassphraseRequiredActionBarActivity {
+public class SharedContactDetailsActivity extends PassphraseRequiredActivity {
 
   private static final int    CODE_ADD_EDIT_CONTACT = 2323;
   private static final String KEY_CONTACT           = "contact";

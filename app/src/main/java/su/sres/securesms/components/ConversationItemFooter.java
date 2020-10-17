@@ -96,7 +96,16 @@ public class ConversationItemFooter extends LinearLayout {
     dateView.forceLayout();
 
     if (messageRecord.isFailed()) {
-      dateView.setText(R.string.ConversationItem_error_not_delivered);
+      int errorMsg;
+      if (messageRecord.hasFailedWithNetworkFailures()) {
+        errorMsg = R.string.ConversationItem_error_network_not_delivered;
+      } else if (messageRecord.getRecipient().isPushGroup() && messageRecord.isIdentityMismatchFailure()) {
+        errorMsg = R.string.ConversationItem_error_partially_not_delivered;
+      } else {
+        errorMsg = R.string.ConversationItem_error_not_sent_tap_for_details;
+      }
+
+      dateView.setText(errorMsg);
     } else if (messageRecord.isPendingInsecureSmsFallback()) {
       dateView.setText(R.string.ConversationItem_not_sent_recipient_inactive);
     } else {

@@ -27,8 +27,8 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.util.concurrent.TimeUnit;
 
+import su.sres.securesms.BaseActivity;
 import su.sres.securesms.activation.License;
-import su.sres.securesms.BaseActionBarActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.jobs.LicenseManagementJob;
 import su.sres.securesms.jobs.LicenseManagementJob.NullPsidException;
@@ -37,7 +37,7 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.ExpirationUtil;
 
-public class LicenseInfoActivity extends BaseActionBarActivity {
+public class LicenseInfoActivity extends BaseActivity {
 
     private static final String TAG = LicenseInfoActivity.class.getSimpleName();
 

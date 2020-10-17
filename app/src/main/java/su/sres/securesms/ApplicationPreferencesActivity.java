@@ -52,7 +52,7 @@ import su.sres.securesms.util.ThemeUtil;
  * @author Moxie Marlinspike
  */
 
-public class ApplicationPreferencesActivity extends PassphraseRequiredActionBarActivity
+public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
         implements SharedPreferences.OnSharedPreferenceChangeListener {
     @SuppressWarnings("unused")
     private static final String TAG = ApplicationPreferencesActivity.class.getSimpleName();

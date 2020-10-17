@@ -20,7 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.dd.CircularProgressButton;
 
-import su.sres.securesms.BaseActionBarActivity;
+import su.sres.securesms.BaseActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.DynamicTheme;
@@ -31,7 +31,7 @@ import su.sres.securesms.util.views.SimpleProgressDialog;
 
 import java.util.List;
 
-public class SubmitDebugLogActivity extends BaseActionBarActivity implements SubmitDebugLogAdapter.Listener {
+public class SubmitDebugLogActivity extends BaseActivity implements SubmitDebugLogAdapter.Listener {
 
     private RecyclerView            lineList;
     private SubmitDebugLogAdapter   adapter;
@@ -227,7 +227,7 @@ public class SubmitDebugLogActivity extends BaseActionBarActivity implements Sub
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle(R.string.SubmitDebugLogActivity_success)
                 .setCancelable(false)
-                .setNeutralButton(R.string.SubmitDebugLogActivity_ok, (d, w) -> finish())
+                .setNeutralButton(android.R.string.ok, (d, w) -> finish())
                 .setPositiveButton(R.string.SubmitDebugLogActivity_share, (d, w) -> {
                     ShareCompat.IntentBuilder.from(this)
                             .setText(url)

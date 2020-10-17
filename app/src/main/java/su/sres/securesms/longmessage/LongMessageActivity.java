@@ -21,7 +21,7 @@ import android.widget.Toast;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.PassphraseRequiredActionBarActivity;
+import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.components.ConversationItemFooter;
@@ -34,10 +34,9 @@ import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThemeUtil;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.views.Stub;
 
-public class LongMessageActivity extends PassphraseRequiredActionBarActivity {
+public class LongMessageActivity extends PassphraseRequiredActivity {
 
     private static final String KEY_CONVERSATION_RECIPIENT = "recipient_id";
     private static final String KEY_MESSAGE_ID             = "message_id";

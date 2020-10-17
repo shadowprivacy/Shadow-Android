@@ -31,7 +31,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import su.sres.securesms.PassphraseRequiredActionBarActivity;
+import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.TransportOptions;
@@ -85,7 +85,7 @@ import java.util.Map;
  * This activity is intended to be launched via {@link #startActivityForResult(Intent, int)}.
  * It will return the {@link Media} that the user decided to send.
  */
-public class MediaSendActivity extends PassphraseRequiredActionBarActivity implements MediaPickerFolderFragment.Controller,
+public class MediaSendActivity extends PassphraseRequiredActivity implements MediaPickerFolderFragment.Controller,
         MediaPickerItemFragment.Controller,
         ImageEditorFragment.Controller,
         MediaSendVideoFragment.Controller,

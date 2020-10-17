@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.ColorInt;
@@ -20,15 +19,13 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 import su.sres.securesms.logging.Log;
 import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import su.sres.securesms.PassphraseRequiredActionBarActivity;
+import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.util.DynamicDarkToolbarTheme;
 import su.sres.securesms.util.DynamicLanguage;
-import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.ViewUtil;
@@ -36,7 +33,7 @@ import su.sres.securesms.util.ViewUtil;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
-public class GiphyActivity extends PassphraseRequiredActionBarActivity
+public class GiphyActivity extends PassphraseRequiredActivity
     implements GiphyActivityToolbar.OnLayoutChangedListener,
                GiphyActivityToolbar.OnFilterChangedListener,
                GiphyAdapter.OnItemClickListener

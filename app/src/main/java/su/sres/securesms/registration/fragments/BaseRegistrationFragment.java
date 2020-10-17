@@ -10,20 +10,20 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.SavedStateViewModelFactory;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.dd.CircularProgressButton;
 
+import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.logsubmit.SubmitDebugLogActivity;
 import su.sres.securesms.registration.viewmodel.RegistrationViewModel;
 
 import static su.sres.securesms.registration.RegistrationNavigationActivity.RE_REGISTRATION_EXTRA;
 
-abstract class BaseRegistrationFragment extends Fragment {
+abstract class BaseRegistrationFragment extends LoggingFragment {
 
     private RegistrationViewModel model;
 

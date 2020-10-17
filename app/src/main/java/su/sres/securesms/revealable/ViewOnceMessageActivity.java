@@ -15,7 +15,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModelProviders;
 
-import su.sres.securesms.PassphraseRequiredActionBarActivity;
+import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
@@ -24,12 +24,11 @@ import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.mms.VideoSlide;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.util.MediaUtil;
-import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.video.VideoPlayer;
 
 import java.util.concurrent.TimeUnit;
 
-public class ViewOnceMessageActivity extends PassphraseRequiredActionBarActivity implements VideoPlayer.PlayerStateCallback {
+public class ViewOnceMessageActivity extends PassphraseRequiredActivity implements VideoPlayer.PlayerStateCallback {
 
     private static final String TAG = Log.tag(ViewOnceMessageActivity.class);
 

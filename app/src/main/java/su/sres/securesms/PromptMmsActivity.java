@@ -6,7 +6,7 @@ import android.widget.Button;
 
 import su.sres.securesms.preferences.MmsPreferencesActivity;
 
-public class PromptMmsActivity extends PassphraseRequiredActionBarActivity {
+public class PromptMmsActivity extends PassphraseRequiredActivity {
 
   @Override
   protected void onCreate(Bundle bundle, boolean ready) {

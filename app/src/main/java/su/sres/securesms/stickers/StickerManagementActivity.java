@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.MenuItem;
 
-import su.sres.securesms.PassphraseRequiredActionBarActivity;
+import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.sharing.ShareActivity;
 import su.sres.securesms.mms.GlideApp;
@@ -19,7 +19,7 @@ import su.sres.securesms.util.DynamicTheme;
 /**
  * Allows the user to view and manage (install, uninstall, etc) their stickers.
  */
-public final class StickerManagementActivity extends PassphraseRequiredActionBarActivity implements StickerManagementAdapter.EventListener {
+public final class StickerManagementActivity extends PassphraseRequiredActivity implements StickerManagementAdapter.EventListener {
 
     private final DynamicTheme dynamicTheme = new DynamicTheme();
 

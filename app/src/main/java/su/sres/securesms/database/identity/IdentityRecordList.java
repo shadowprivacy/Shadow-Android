@@ -7,6 +7,7 @@ import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
 import su.sres.securesms.recipients.Recipient;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +23,10 @@ public final class IdentityRecordList {
   public void replaceWith(@NonNull IdentityRecordList identityRecordList) {
     identityRecords.clear();
     identityRecords.addAll(identityRecordList.identityRecords);
+  }
+
+  public List<IdentityRecord> getIdentityRecords() {
+    return Collections.unmodifiableList(identityRecords);
   }
 
   public boolean isVerified() {

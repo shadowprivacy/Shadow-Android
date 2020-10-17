@@ -24,7 +24,6 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.appcompat.app.ActionBar;
@@ -35,7 +34,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import su.sres.securesms.ContactSelectionListFragment;
-import su.sres.securesms.PassphraseRequiredActionBarActivity;
+import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.SearchToolbar;
 import su.sres.securesms.contacts.ContactsCursorLoader.DisplayMode;
@@ -51,7 +50,6 @@ import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.views.SimpleProgressDialog;
 import org.whispersystems.libsignal.util.Pair;
@@ -67,7 +65,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Handles contact selection when necessary, but also serves as an entry point for when the contact
  * is known (such as choosing someone in a direct share).
  */
-public class ShareActivity extends PassphraseRequiredActionBarActivity
+public class ShareActivity extends PassphraseRequiredActivity
         implements ContactSelectionListFragment.OnContactSelectedListener, SwipeRefreshLayout.OnRefreshListener
 {
   private static final String TAG = ShareActivity.class.getSimpleName();

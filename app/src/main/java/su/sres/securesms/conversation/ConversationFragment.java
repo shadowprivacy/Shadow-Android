@@ -29,7 +29,8 @@ import android.text.ClipboardManager;
 import android.text.TextUtils;
 
 import su.sres.securesms.ApplicationContext;
-import su.sres.securesms.PassphraseRequiredActionBarActivity;
+import su.sres.securesms.LoggingFragment;
+import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.components.ConversationTypingView;
@@ -63,7 +64,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.text.HtmlCompat;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -135,7 +135,7 @@ import java.util.Locale;
 import java.util.Set;
 
 @SuppressLint("StaticFieldLeak")
-public class ConversationFragment extends Fragment {
+public class ConversationFragment extends LoggingFragment {
   private static final String TAG = ConversationFragment.class.getSimpleName();
 
   private static final int SCROLL_ANIMATION_THRESHOLD = 50;
@@ -180,7 +180,7 @@ public class ConversationFragment extends Fragment {
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
-    this.locale = (Locale) getArguments().getSerializable(PassphraseRequiredActionBarActivity.LOCALE_EXTRA);
+    this.locale = (Locale) getArguments().getSerializable(PassphraseRequiredActivity.LOCALE_EXTRA);
   }
 
   @Override
@@ -992,6 +992,7 @@ public class ConversationFragment extends Fragment {
                         @NonNull ConversationReactionOverlay.OnHideListener onHideListener);
     void onCursorChanged();
     void onListVerticalTranslationChanged(float translationY);
+    void onMessageWithErrorClicked(@NonNull MessageRecord messageRecord);
   }
 
   private class ConversationScrollListener extends OnScrollListener {
@@ -1251,6 +1252,11 @@ public class ConversationFragment extends Fragment {
       if (getContext() == null) return;
 
       RecipientBottomSheetDialogFragment.create(recipientId, groupId).show(requireFragmentManager(), "BOTTOM");
+    }
+
+    @Override
+    public void onMessageWithErrorClicked(@NonNull MessageRecord messageRecord) {
+      listener.onMessageWithErrorClicked(messageRecord);
     }
   }
 

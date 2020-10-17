@@ -1,5 +1,8 @@
 package su.sres.securesms.jobs;
 
+import android.net.Uri;
+import android.os.ParcelFileDescriptor;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -12,13 +15,12 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.profiles.AvatarHelper;
+import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-
 import org.whispersystems.libsignal.util.guava.Optional;
-
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
@@ -34,6 +36,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -60,14 +63,12 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
     }
 
     @Override
-    public @NonNull
-    String getFactoryKey() {
+    public @NonNull String getFactoryKey() {
         return KEY;
     }
 
     @Override
-    public @NonNull
-    Data serialize() {
+    public @NonNull Data serialize() {
         return Data.EMPTY;
     }
 
@@ -78,18 +79,23 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
             return;
         }
 
-        File contactDataFile = createTempFile("multidevice-contact-update");
-        GroupDatabase.Reader reader = null;
+        ParcelFileDescriptor[] pipe        = ParcelFileDescriptor.createPipe();
+        InputStream            inputStream = new ParcelFileDescriptor.AutoCloseInputStream(pipe[0]);
+        Uri                    uri         = BlobProvider.getInstance()
+                .forData(inputStream, 0)
+                .withFileName("multidevice-group-update")
+                .createForSingleSessionOnDiskAsync(context,
+                        () -> Log.i(TAG, "Write successful."),
+                        e  -> Log.w(TAG, "Error during write.", e));
 
-        GroupDatabase.GroupRecord record;
+        try (GroupDatabase.Reader reader = DatabaseFactory.getGroupDatabase(context).getGroups()) {
+            DeviceGroupsOutputStream out     = new DeviceGroupsOutputStream(new ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]));
+            boolean                  hasData = false;
 
-        try {
-            DeviceGroupsOutputStream out = new DeviceGroupsOutputStream(new FileOutputStream(contactDataFile));
-
-            reader = DatabaseFactory.getGroupDatabase(context).getGroups();
+            GroupDatabase.GroupRecord record;
 
             while ((record = reader.getNext()) != null) {
-                if (!record.isMms()) {
+                if (record.isV1Group()) {
                     List<SignalServiceAddress> members = new LinkedList<>();
 
                     for (RecipientId member : record.getMembers()) {
@@ -97,10 +103,10 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
                     }
 
                     RecipientId               recipientId     = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(record.getId());
-                    Recipient recipient = Recipient.resolved(recipientId);
-                    Optional<Integer> expirationTimer = recipient.getExpireMessages() > 0 ? Optional.of(recipient.getExpireMessages()) : Optional.absent();
-                    Map<RecipientId, Integer> inboxPositions = DatabaseFactory.getThreadDatabase(context).getInboxPositions();
-                    Set<RecipientId> archived = DatabaseFactory.getThreadDatabase(context).getArchivedRecipients();
+                    Recipient                 recipient       = Recipient.resolved(recipientId);
+                    Optional<Integer>         expirationTimer = recipient.getExpireMessages() > 0 ? Optional.of(recipient.getExpireMessages()) : Optional.absent();
+                    Map<RecipientId, Integer> inboxPositions  = DatabaseFactory.getThreadDatabase(context).getInboxPositions();
+                    Set<RecipientId>          archived        = DatabaseFactory.getThreadDatabase(context).getArchivedRecipients();
 
                     out.write(new DeviceGroup(record.getId().getDecodedId(),
                             Optional.fromNullable(record.getTitle()),
@@ -112,22 +118,25 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
                             recipient.isBlocked(),
                             Optional.fromNullable(inboxPositions.get(recipientId)),
                             archived.contains(recipientId)));
+
+                    hasData = true;
                 }
             }
 
             out.close();
 
-            if (contactDataFile.exists() && contactDataFile.length() > 0) {
-                sendUpdate(ApplicationDependencies.getSignalServiceMessageSender(), contactDataFile);
+            if (hasData) {
+                long length = BlobProvider.getInstance().calculateFileSize(context, uri);
+
+                sendUpdate(ApplicationDependencies.getSignalServiceMessageSender(),
+                        BlobProvider.getInstance().getStream(context, uri),
+                        length);
             } else {
                 Log.w(TAG, "No groups present for sync message...");
             }
-
         } finally {
-            if (contactDataFile != null) contactDataFile.delete();
-            if (reader != null) reader.close();
+            BlobProvider.getInstance().delete(context, uri);
         }
-
     }
 
     @Override
@@ -141,13 +150,13 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
 
     }
 
-    private void sendUpdate(SignalServiceMessageSender messageSender, File contactsFile)
-            throws IOException, UntrustedIdentityException {
-        FileInputStream contactsFileStream = new FileInputStream(contactsFile);
-        SignalServiceAttachmentStream attachmentStream = SignalServiceAttachment.newStreamBuilder()
-                .withStream(contactsFileStream)
+    private void sendUpdate(SignalServiceMessageSender messageSender, InputStream stream, long length)
+            throws IOException, UntrustedIdentityException
+    {
+        SignalServiceAttachmentStream attachmentStream   = SignalServiceAttachment.newStreamBuilder()
+                .withStream(stream)
                 .withContentType("application/octet-stream")
-                .withLength(contactsFile.length())
+                .withLength(length)
                 .build();
 
         messageSender.sendMessage(SignalServiceSyncMessage.forGroups(attachmentStream),
@@ -174,8 +183,7 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
 
     public static final class Factory implements Job.Factory<MultiDeviceGroupUpdateJob> {
         @Override
-        public @NonNull
-        MultiDeviceGroupUpdateJob create(@NonNull Parameters parameters, @NonNull Data data) {
+        public @NonNull MultiDeviceGroupUpdateJob create(@NonNull Parameters parameters, @NonNull Data data) {
             return new MultiDeviceGroupUpdateJob(parameters);
         }
     }

@@ -29,6 +29,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.dd.CircularProgressButton;
 
+import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.groups.ui.GroupMemberListView;
 import su.sres.securesms.mediasend.AvatarSelectionActivity;
@@ -46,7 +47,7 @@ import su.sres.securesms.util.text.AfterTextChanged;
 
 import java.util.Objects;
 
-public class AddGroupDetailsFragment extends Fragment {
+public class AddGroupDetailsFragment extends LoggingFragment {
 
     private static final int    AVATAR_PLACEHOLDER_INSET_DP = 18;
     private static final short  REQUEST_CODE_AVATAR         = 27621;

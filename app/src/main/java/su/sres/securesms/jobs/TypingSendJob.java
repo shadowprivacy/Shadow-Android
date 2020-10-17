@@ -10,6 +10,7 @@ import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -46,6 +47,8 @@ public class TypingSendJob extends BaseJob  {
                         .setQueue(getQueue(threadId))
                         .setMaxAttempts(1)
                         .setLifespan(TimeUnit.SECONDS.toMillis(5))
+                        .addConstraint(NetworkConstraint.KEY)
+                        .setMemoryOnly(true)
                         .build(),
                 threadId,
                 typing);

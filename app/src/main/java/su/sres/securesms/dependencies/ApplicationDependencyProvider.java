@@ -7,6 +7,15 @@ import androidx.annotation.NonNull;
 
 import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.BuildConfig;
+import su.sres.securesms.jobmanager.impl.FactoryJobPredicate;
+import su.sres.securesms.jobs.MarkerJob;
+import su.sres.securesms.jobs.PushDecryptMessageJob;
+import su.sres.securesms.jobs.PushGroupSendJob;
+import su.sres.securesms.jobs.PushMediaSendJob;
+import su.sres.securesms.jobs.PushProcessMessageJob;
+import su.sres.securesms.jobs.PushTextSendJob;
+import su.sres.securesms.jobs.ReactionSendJob;
+import su.sres.securesms.jobs.TypingSendJob;
 import su.sres.securesms.messages.IncomingMessageProcessor;
 import su.sres.securesms.crypto.storage.SignalProtocolStoreImpl;
 import su.sres.securesms.database.DatabaseFactory;
@@ -138,8 +147,10 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
                 .setJobFactories(JobManagerFactories.getJobFactories(context))
                 .setConstraintFactories(JobManagerFactories.getConstraintFactories(context))
                 .setConstraintObservers(JobManagerFactories.getConstraintObservers(context))
-                .setJobStorage(new FastJobStorage(DatabaseFactory.getJobDatabase(context)))
+                .setJobStorage(new FastJobStorage(DatabaseFactory.getJobDatabase(context), SignalExecutors.newCachedSingleThreadExecutor("signal-fast-job-storage")))
                 .setJobMigrator(new JobMigrator(TextSecurePreferences.getJobManagerVersion(context), JobManager.CURRENT_VERSION, JobManagerFactories.getJobMigrations(context)))
+                .addReservedJobRunner(new FactoryJobPredicate(PushDecryptMessageJob.KEY, PushProcessMessageJob.KEY, MarkerJob.KEY))
+                .addReservedJobRunner(new FactoryJobPredicate(PushTextSendJob.KEY, PushMediaSendJob.KEY, PushGroupSendJob.KEY, ReactionSendJob.KEY, TypingSendJob.KEY))
                 .build());
     }
 

@@ -11,7 +11,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -22,7 +21,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
@@ -31,6 +29,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.dd.CircularProgressButton;
 import com.google.android.gms.common.util.IOUtils;
 
+import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -65,7 +64,7 @@ import static su.sres.securesms.profiles.edit.EditProfileActivity.NEXT_BUTTON_TE
 import static su.sres.securesms.profiles.edit.EditProfileActivity.NEXT_INTENT;
 import static su.sres.securesms.profiles.edit.EditProfileActivity.SHOW_TOOLBAR;
 
-public class EditProfileFragment extends Fragment {
+public class EditProfileFragment extends LoggingFragment {
 
     private static final String TAG                        = Log.tag(EditProfileFragment.class);
     private static final String AVATAR_STATE               = "avatar";
@@ -340,8 +339,6 @@ public class EditProfileFragment extends Fragment {
             if (uploadResult == EditProfileRepository.UploadResult.SUCCESS) {
 
                 RegistrationUtil.markRegistrationPossiblyComplete();
-
-                ApplicationDependencies.getMegaphoneRepository().markFinished(Megaphones.Event.PROFILE_NAMES_FOR_ALL);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) handleFinishedLollipop();
                 else                                                       handleFinishedLegacy();

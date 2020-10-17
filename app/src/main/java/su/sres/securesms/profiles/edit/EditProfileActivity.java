@@ -9,14 +9,14 @@ import androidx.annotation.NonNull;
 import androidx.navigation.NavGraph;
 import androidx.navigation.Navigation;
 
-import su.sres.securesms.BaseActionBarActivity;
+import su.sres.securesms.BaseActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.util.DynamicRegistrationTheme;
 import su.sres.securesms.util.DynamicTheme;
 
 @SuppressLint("StaticFieldLeak")
-public class EditProfileActivity extends BaseActionBarActivity implements EditProfileFragment.Controller {
+public class EditProfileActivity extends BaseActivity implements EditProfileFragment.Controller {
 
     public static final String NEXT_INTENT      = "next_intent";
     public static final String EXCLUDE_SYSTEM   = "exclude_system";
