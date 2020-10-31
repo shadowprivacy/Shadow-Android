@@ -438,9 +438,10 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
         }
 
         private String extractCommonName (Principal principal) {
+
             int start = principal.getName().indexOf("CN");
             String tmpName, name = "";
-            if (start > 0) {
+            if (start >= 0) {
                 tmpName = principal.getName().substring(start+3);
                 int end = tmpName.indexOf(",");
                 if (end > 0) {
