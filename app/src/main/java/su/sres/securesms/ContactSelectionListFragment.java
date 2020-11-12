@@ -443,7 +443,7 @@ public final class ContactSelectionListFragment extends LoggingFragment
             @Override
             protected Boolean doInBackground(Void... voids) {
                 try {
-                    DirectoryHelper.refreshDirectory(context, false);
+                    DirectoryHelper.refreshDirectory(context);
                     return true;
                 } catch (IOException e) {
                     Log.w(TAG, e);

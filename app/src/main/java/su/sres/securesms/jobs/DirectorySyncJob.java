@@ -68,10 +68,7 @@ public class DirectorySyncJob extends BaseJob {
         Log.i(TAG, "DirectorySyncJob.onRun()");
 
         if (recipient == null) {
-            DirectoryHelper.refreshDirectory(context, notifyOfNewUsers);
-        } else {
-
-          //  DirectoryHelper.refreshDirectoryFor(context, recipient, notifyOfNewUsers);
+            DirectoryHelper.refreshDirectory(context);
         }
     }
 

@@ -37,7 +37,7 @@ public class RecipientSearchMigrationJob extends MigrationJob {
 
     @Override
     void performMigration() throws Exception {
-        DirectoryHelper.refreshDirectory(context, false);
+        DirectoryHelper.refreshDirectory(context);
     }
 
     @Override

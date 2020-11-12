@@ -333,9 +333,9 @@ public class SignalServiceAccountManager {
         return activeTokens;
     }
 
-    public DirectoryResponse getDirectoryResponse(long directoryVersion) throws IOException {
+    public DirectoryResponse getDirectoryResponse(long directoryVersion, boolean forceFull) throws IOException {
 
-        return this.pushServiceSocket.getDirectoryResponse(directoryVersion);
+        return this.pushServiceSocket.getDirectoryResponse(directoryVersion, forceFull);
     }
 
     public byte [] getLicense(String filename) throws IOException {
