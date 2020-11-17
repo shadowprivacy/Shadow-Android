@@ -16,17 +16,12 @@ import androidx.navigation.ActivityNavigator;
 import androidx.navigation.Navigation;
 
 import com.dd.CircularProgressButton;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-import com.google.i18n.phonenumbers.Phonenumber;
 
 import su.sres.securesms.R;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.registration.viewmodel.RegistrationViewModel;
-import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 public final class WelcomeFragment extends BaseRegistrationFragment {
 

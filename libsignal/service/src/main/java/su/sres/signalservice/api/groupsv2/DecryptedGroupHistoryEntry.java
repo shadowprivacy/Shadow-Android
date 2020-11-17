@@ -1,5 +1,7 @@
 package su.sres.signalservice.api.groupsv2;
 
+import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 
@@ -8,23 +10,25 @@ import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
  */
 public final class DecryptedGroupHistoryEntry {
 
-    private final DecryptedGroup       group;
-    private final DecryptedGroupChange change;
+    private final Optional<DecryptedGroup>       group;
+    private final Optional<DecryptedGroupChange> change;
 
-    DecryptedGroupHistoryEntry(DecryptedGroup group, DecryptedGroupChange change) {
-        if (group.getRevision() != change.getRevision()) {
-            throw new AssertionError();
+    DecryptedGroupHistoryEntry(Optional<DecryptedGroup> group, Optional<DecryptedGroupChange> change)
+            throws InvalidGroupStateException
+    {
+        if (group.isPresent() && change.isPresent() && group.get().getRevision() != change.get().getRevision()) {
+            throw new InvalidGroupStateException();
         }
 
         this.group  = group;
         this.change = change;
     }
 
-    public DecryptedGroup getGroup() {
+    public Optional<DecryptedGroup> getGroup() {
         return group;
     }
 
-    public DecryptedGroupChange getChange() {
+    public Optional<DecryptedGroupChange> getChange() {
         return change;
     }
 }

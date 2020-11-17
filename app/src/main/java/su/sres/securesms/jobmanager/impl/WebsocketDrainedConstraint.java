@@ -10,7 +10,7 @@ import su.sres.securesms.jobmanager.Constraint;
 
 /**
  * A constraint that is met once we have pulled down all messages from the websocket during initial
- * load. See {@link su.sres.securesms.messages.InitialMessageRetriever}.
+ * load. See {@link su.sres.securesms.messages.IncomingMessageObserver}.
  */
 public final class WebsocketDrainedConstraint implements Constraint {
 
@@ -21,7 +21,7 @@ public final class WebsocketDrainedConstraint implements Constraint {
 
     @Override
     public boolean isMet() {
-        return ApplicationDependencies.getInitialMessageRetriever().isCaughtUp();
+        return ApplicationDependencies.getIncomingMessageObserver().isWebsocketDrained();
     }
 
     @Override

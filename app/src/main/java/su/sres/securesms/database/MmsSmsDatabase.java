@@ -279,18 +279,6 @@ public class MmsSmsDatabase extends Database {
         else          return id;
     }
 
-    public @Nullable MessageRecord getMessageRecord(long messageId) {
-        try {
-            return DatabaseFactory.getSmsDatabase(context).getMessage(messageId);
-        } catch (NoSuchMessageException e1) {
-            try {
-                return DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId);
-            } catch (NoSuchMessageException e2) {
-                return null;
-            }
-        }
-    }
-
     public void incrementDeliveryReceiptCount(SyncMessageId syncMessageId, long timestamp) {
         DatabaseFactory.getSmsDatabase(context).incrementReceiptCount(syncMessageId, true);
         DatabaseFactory.getMmsDatabase(context).incrementReceiptCount(syncMessageId, timestamp, true);
@@ -387,6 +375,7 @@ public class MmsSmsDatabase extends Database {
                         "'" + AttachmentDatabase.CONTENT_LOCATION + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.CONTENT_LOCATION + ", " +
                         "'" + AttachmentDatabase.FAST_PREFLIGHT_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.FAST_PREFLIGHT_ID + ", " +
                         "'" + AttachmentDatabase.VOICE_NOTE + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.VOICE_NOTE + ", " +
+                        "'" + AttachmentDatabase.BORDERLESS + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.BORDERLESS + ", " +
                         "'" + AttachmentDatabase.WIDTH + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.WIDTH + ", " +
                         "'" + AttachmentDatabase.HEIGHT + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.HEIGHT + ", " +
                         "'" + AttachmentDatabase.QUOTE + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.QUOTE + ", " +

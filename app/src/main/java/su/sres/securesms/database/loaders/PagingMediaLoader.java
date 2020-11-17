@@ -10,6 +10,7 @@ import androidx.core.util.Pair;
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.MediaDatabase;
 import su.sres.securesms.database.MediaDatabase.Sorting;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.util.AsyncLoader;
@@ -34,7 +35,7 @@ public final class PagingMediaLoader extends AsyncLoader<Pair<Cursor, Integer>> 
 
   @Override
   public @Nullable Pair<Cursor, Integer> loadInBackground() {
-    Cursor cursor = DatabaseFactory.getMediaDatabase(getContext()).getGalleryMediaForThread(threadId, sorting);
+    Cursor cursor = DatabaseFactory.getMediaDatabase(getContext()).getGalleryMediaForThread(threadId, sorting, threadId == MediaDatabase.ALL_THREADS);
 
     while (cursor.moveToNext()) {
       AttachmentId attachmentId  = new AttachmentId(cursor.getLong(cursor.getColumnIndexOrThrow(AttachmentDatabase.ROW_ID)), cursor.getLong(cursor.getColumnIndexOrThrow(AttachmentDatabase.UNIQUE_ID)));

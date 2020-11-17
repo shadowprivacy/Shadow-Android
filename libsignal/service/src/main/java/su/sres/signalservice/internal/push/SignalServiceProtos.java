@@ -2504,13 +2504,13 @@ public final class SignalServiceProtos {
          */
         OFFER_AUDIO_CALL(0),
         /**
+         * <pre>
+         * 2 is reserved, removed OFFER_NEED_PERMISSION
+         * </pre>
+         *
          * <code>OFFER_VIDEO_CALL = 1;</code>
          */
         OFFER_VIDEO_CALL(1),
-        /**
-         * <code>OFFER_NEED_PERMISSION = 2;</code>
-         */
-        OFFER_NEED_PERMISSION(2),
         ;
 
         /**
@@ -2518,13 +2518,13 @@ public final class SignalServiceProtos {
          */
         public static final int OFFER_AUDIO_CALL_VALUE = 0;
         /**
+         * <pre>
+         * 2 is reserved, removed OFFER_NEED_PERMISSION
+         * </pre>
+         *
          * <code>OFFER_VIDEO_CALL = 1;</code>
          */
         public static final int OFFER_VIDEO_CALL_VALUE = 1;
-        /**
-         * <code>OFFER_NEED_PERMISSION = 2;</code>
-         */
-        public static final int OFFER_NEED_PERMISSION_VALUE = 2;
 
 
         @java.lang.Override
@@ -2546,7 +2546,6 @@ public final class SignalServiceProtos {
           switch (value) {
             case 0: return OFFER_AUDIO_CALL;
             case 1: return OFFER_VIDEO_CALL;
-            case 2: return OFFER_NEED_PERMISSION;
             default: return null;
           }
         }
@@ -4377,6 +4376,10 @@ public final class SignalServiceProtos {
          * <code>HANGUP_BUSY = 3;</code>
          */
         HANGUP_BUSY(3),
+        /**
+         * <code>HANGUP_NEED_PERMISSION = 4;</code>
+         */
+        HANGUP_NEED_PERMISSION(4),
         ;
 
         /**
@@ -4395,6 +4398,10 @@ public final class SignalServiceProtos {
          * <code>HANGUP_BUSY = 3;</code>
          */
         public static final int HANGUP_BUSY_VALUE = 3;
+        /**
+         * <code>HANGUP_NEED_PERMISSION = 4;</code>
+         */
+        public static final int HANGUP_NEED_PERMISSION_VALUE = 4;
 
 
         @java.lang.Override
@@ -4418,6 +4425,7 @@ public final class SignalServiceProtos {
             case 1: return HANGUP_ACCEPTED;
             case 2: return HANGUP_DECLINED;
             case 3: return HANGUP_BUSY;
+            case 4: return HANGUP_NEED_PERMISSION;
             default: return null;
           }
         }
@@ -28856,12 +28864,20 @@ public final class SignalServiceProtos {
        * <code>VOICE_MESSAGE = 1;</code>
        */
       VOICE_MESSAGE(1),
+      /**
+       * <code>BORDERLESS = 2;</code>
+       */
+      BORDERLESS(2),
       ;
 
       /**
        * <code>VOICE_MESSAGE = 1;</code>
        */
       public static final int VOICE_MESSAGE_VALUE = 1;
+      /**
+       * <code>BORDERLESS = 2;</code>
+       */
+      public static final int BORDERLESS_VALUE = 2;
 
 
       @java.lang.Override
@@ -28882,6 +28898,7 @@ public final class SignalServiceProtos {
       public static Flags forNumber(int value) {
         switch (value) {
           case 1: return VOICE_MESSAGE;
+          case 2: return BORDERLESS;
           default: return null;
         }
       }

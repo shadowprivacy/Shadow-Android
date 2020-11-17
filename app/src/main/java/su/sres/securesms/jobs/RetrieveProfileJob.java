@@ -101,24 +101,11 @@ public class RetrieveProfileJob extends BaseJob  {
    */
   @WorkerThread
   public static void enqueue(@NonNull Collection<RecipientId> recipientIds) {
-    Context context    = ApplicationDependencies.getApplication();
     JobManager jobManager = ApplicationDependencies.getJobManager();
-    List<RecipientId> combined   = new LinkedList<>();
 
-    for (RecipientId recipientId : recipientIds) {
-      Recipient recipient = Recipient.resolved(recipientId);
-
-      if (recipient.isLocalNumber()) {
-        jobManager.add(new RefreshOwnProfileJob());
-      } else if (recipient.isGroup()) {
-        List<Recipient> recipients = DatabaseFactory.getGroupDatabase(context).getGroupMembers(recipient.requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
-        combined.addAll(Stream.of(recipients).map(Recipient::getId).toList());
-      } else {
-        combined.add(recipientId);
-      }
+    for (Job job : forRecipients(recipientIds)) {
+      jobManager.add(job);
     }
-
-    jobManager.add(new RetrieveProfileJob(combined));
   }
 
   /**
@@ -138,6 +125,33 @@ public class RetrieveProfileJob extends BaseJob  {
     } else {
       return new RetrieveProfileJob(Collections.singletonList(recipientId));
     }
+  }
+
+  /**
+   * Works for any RecipientId, whether it's an individual, group, or yourself.
+   */
+  @WorkerThread
+  public static @NonNull List<Job> forRecipients(@NonNull Collection<RecipientId> recipientIds) {
+    Context           context    = ApplicationDependencies.getApplication();
+    List<RecipientId> combined   = new LinkedList<>();
+    List<Job>         jobs       = new LinkedList<>();
+
+    for (RecipientId recipientId : recipientIds) {
+      Recipient recipient = Recipient.resolved(recipientId);
+
+      if (recipient.isLocalNumber()) {
+        jobs.add(new RefreshOwnProfileJob());
+      } else if (recipient.isGroup()) {
+        List<Recipient> recipients = DatabaseFactory.getGroupDatabase(context).getGroupMembers(recipient.requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
+        combined.addAll(Stream.of(recipients).map(Recipient::getId).toList());
+      } else {
+        combined.add(recipientId);
+      }
+    }
+
+    jobs.add(new RetrieveProfileJob(combined));
+
+    return jobs;
   }
 
   /**
@@ -293,7 +307,7 @@ public class RetrieveProfileJob extends BaseJob  {
   }
 
   private static SignalServiceProfile.RequestType getRequestType(@NonNull Recipient recipient) {
-    return FeatureFlags.versionedProfiles() && !recipient.hasProfileKeyCredential()
+    return !recipient.hasProfileKeyCredential()
             ? SignalServiceProfile.RequestType.PROFILE_AND_CREDENTIAL
             : SignalServiceProfile.RequestType.PROFILE;
   }
@@ -360,11 +374,30 @@ public class RetrieveProfileJob extends BaseJob  {
       ProfileKey profileKey = ProfileKeyUtil.profileKeyOrNull(recipient.getProfileKey());
       if (profileKey == null) return;
 
-      String plaintextProfileName = ProfileUtil.decryptName(profileKey, profileName);
+      String plaintextProfileName = Util.emptyIfNull(ProfileUtil.decryptName(profileKey, profileName));
 
-      if (!Objects.equals(plaintextProfileName, recipient.getProfileName().serialize())) {
+      ProfileName remoteProfileName = ProfileName.fromSerialized(plaintextProfileName);
+      ProfileName localProfileName  = recipient.getProfileName();
+
+      if (!remoteProfileName.equals(localProfileName)) {
         Log.i(TAG, "Profile name updated. Writing new value.");
-        DatabaseFactory.getRecipientDatabase(context).setProfileName(recipient.getId(), ProfileName.fromSerialized(plaintextProfileName));
+        DatabaseFactory.getRecipientDatabase(context).setProfileName(recipient.getId(), remoteProfileName);
+
+        String remoteDisplayName = remoteProfileName.toString();
+        String localDisplayName  = localProfileName.toString();
+
+        if (!recipient.isBlocked()      &&
+                !recipient.isGroup()        &&
+                !recipient.isLocalNumber()  &&
+                !localDisplayName.isEmpty() &&
+                !remoteDisplayName.equals(localDisplayName))
+        {
+          Log.i(TAG, "Writing a profile name change event.");
+          DatabaseFactory.getSmsDatabase(context).insertProfileNameChangeMessages(recipient, remoteDisplayName, localDisplayName);
+        } else {
+          Log.i(TAG, String.format(Locale.US, "Name changed, but wasn't relevant to write an event. blocked: %s, group: %s, self: %s, firstSet: %s, displayChange: %s",
+                  recipient.isBlocked(), recipient.isGroup(), recipient.isLocalNumber(), localDisplayName.isEmpty(), !remoteDisplayName.equals(localDisplayName)));
+        }
       }
       if (TextUtils.isEmpty(plaintextProfileName)) {
         Log.i

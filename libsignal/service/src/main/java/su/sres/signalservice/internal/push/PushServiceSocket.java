@@ -39,7 +39,6 @@ import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import su.sres.signalservice.FeatureFlags;
 import su.sres.signalservice.api.crypto.UnidentifiedAccess;
 import su.sres.signalservice.api.messages.SignalServiceAttachment.ProgressListener;
 import su.sres.signalservice.api.messages.calls.SystemCertificatesVersion;
@@ -240,7 +239,7 @@ public class PushServiceSocket {
     }
 
     public void requestSmsVerificationCode(boolean androidSmsRetriever, Optional<String> captchaToken, Optional<String> challenge) throws IOException {
-        String path = String.format(CREATE_ACCOUNT_SMS_PATH, credentialsProvider.getE164(), androidSmsRetriever ? "android-ng" : "android");
+        String path = String.format(CREATE_ACCOUNT_SMS_PATH, credentialsProvider.getE164(), androidSmsRetriever ? "android-2020-01" : "android");
 
         if (captchaToken.isPresent()) {
             path += "&captcha=" + captchaToken.get();
@@ -683,43 +682,6 @@ public class PushServiceSocket {
         } catch (MissingConfigurationException e) {
             throw new AssertionError(e);
         }
-    }
-
-    public void setProfileName(String name) throws NonSuccessfulResponseCodeException, PushNetworkException {
-        if (FeatureFlags.DISALLOW_OLD_PROFILE_SETTING) {
-            throw new AssertionError();
-        }
-        makeServiceRequest(String.format(PROFILE_PATH, "name/" + (name == null ? "" : URLEncoder.encode(name))), "PUT", "");
-    }
-
-    public Optional<String> setProfileAvatar(ProfileAvatarData profileAvatar)
-            throws NonSuccessfulResponseCodeException, PushNetworkException {
-        if (FeatureFlags.DISALLOW_OLD_PROFILE_SETTING) {
-            throw new AssertionError();
-        }
-
-        String response = makeServiceRequest(String.format(PROFILE_PATH, "form/avatar"), "GET", null);
-        ProfileAvatarUploadAttributes formAttributes;
-
-        try {
-            formAttributes = JsonUtil.fromJson(response, ProfileAvatarUploadAttributes.class);
-        } catch (IOException e) {
-            Log.w(TAG, e);
-            throw new NonSuccessfulResponseCodeException("Unable to parse entity");
-        }
-
-        if (profileAvatar != null) {
-            uploadToCdn0(PROFILE_BUCKET_PATH, formAttributes.getAcl(), formAttributes.getKey(),
-                    formAttributes.getPolicy(), formAttributes.getAlgorithm(),
-                    formAttributes.getCredential(), formAttributes.getDate(),
-                    formAttributes.getSignature(), profileAvatar.getData(),
-                    profileAvatar.getContentType(), profileAvatar.getDataLength(),
-                    profileAvatar.getOutputStreamFactory(), null, null);
-
-            return Optional.of(formAttributes.getKey());
-        }
-
-        return Optional.absent();
     }
 
     /**

@@ -28,6 +28,7 @@ import su.sres.securesms.registration.RegistrationNavigationActivity;
 import su.sres.securesms.contacts.ContactAccessor;
 import su.sres.securesms.contacts.ContactIdentityManager;
 import su.sres.securesms.logsubmit.SubmitDebugLogActivity;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -39,9 +40,10 @@ import java.io.IOException;
 public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
   private static final String TAG = AdvancedPreferenceFragment.class.getSimpleName();
 
+  private static final String INTERNAL_PREF         = "pref_internal";
+  private static final String LICENSE_INFO          = "pref_license_info";
   private static final String PUSH_MESSAGING_PREF   = "pref_toggle_push_messaging";
   private static final String SUBMIT_DEBUG_LOG_PREF = "pref_submit_debug_logs";
-  private static final String LICENSE_INFO = "pref_license_info";
 
   private static final int PICK_IDENTITY_CONTACT = 1;
 
@@ -54,6 +56,22 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
     Preference submitDebugLog = this.findPreference(SUBMIT_DEBUG_LOG_PREF);
     submitDebugLog.setOnPreferenceClickListener(new SubmitDebugLogListener());
     submitDebugLog.setSummary(getVersion(getActivity()));
+
+    Preference internalPreference = this.findPreference(INTERNAL_PREF);
+    internalPreference.setVisible(FeatureFlags.internalUser());
+    internalPreference.setOnPreferenceClickListener(preference -> {
+      if (FeatureFlags.internalUser()) {
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .setCustomAnimations(R.anim.slide_from_end, R.anim.slide_to_start, R.anim.slide_from_start, R.anim.slide_to_end)
+                .replace(android.R.id.content, new InternalOptionsPreferenceFragment())
+                .addToBackStack(null)
+                .commit();
+        return true;
+      } else {
+        return false;
+      }
+    });
 
     Preference licenseInfo = this.findPreference(LICENSE_INFO);
     licenseInfo.setOnPreferenceClickListener(new LicenseInfoListener());

@@ -338,7 +338,7 @@ public class EditProfileFragment extends LoggingFragment {
         viewModel.submitProfile(uploadResult -> {
             if (uploadResult == EditProfileRepository.UploadResult.SUCCESS) {
 
-                RegistrationUtil.markRegistrationPossiblyComplete();
+                RegistrationUtil.maybeMarkRegistrationComplete(requireContext());
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) handleFinishedLollipop();
                 else                                                       handleFinishedLegacy();

@@ -27,6 +27,7 @@ import su.sres.securesms.migrations.PassingMigrationJob;
 import su.sres.securesms.migrations.CachedAttachmentsMigrationJob;
 import su.sres.securesms.migrations.DatabaseMigrationJob;
 import su.sres.securesms.migrations.MigrationCompleteJob;
+import su.sres.securesms.migrations.ProfileMigrationJob;
 import su.sres.securesms.migrations.RecipientSearchMigrationJob;
 import su.sres.securesms.migrations.StickerLaunchMigrationJob;
 import su.sres.securesms.migrations.StorageCapabilityMigrationJob;
@@ -53,7 +54,6 @@ public final class JobManagerFactories {
             put(CertificateRefreshJob.KEY,                 new CertificateRefreshJob.Factory());
             put(CleanPreKeysJob.KEY,                       new CleanPreKeysJob.Factory());
             put(CreateSignedPreKeyJob.KEY,                 new CreateSignedPreKeyJob.Factory());
-            // put(DirectoryRefreshJob.KEY,                   new DirectoryRefreshJob.Factory());
             put(DirectorySyncJob.KEY,                      new DirectorySyncJob.Factory());
             put(FcmRefreshJob.KEY,                         new FcmRefreshJob.Factory());
             put(LeaveGroupJob.KEY,                         new LeaveGroupJob.Factory());
@@ -80,6 +80,7 @@ public final class JobManagerFactories {
             put(PushDecryptMessageJob.KEY,                 new PushDecryptMessageJob.Factory());
             put(PushProcessMessageJob.KEY,                 new PushProcessMessageJob.Factory());
             put(PushGroupSendJob.KEY,                      new PushGroupSendJob.Factory());
+            put(PushGroupSilentUpdateSendJob.KEY,          new PushGroupSilentUpdateSendJob.Factory());
             put(PushGroupUpdateJob.KEY,                    new PushGroupUpdateJob.Factory());
             put(PushMediaSendJob.KEY,                      new PushMediaSendJob.Factory());
             put(PushNotificationReceiveJob.KEY,            new PushNotificationReceiveJob.Factory());
@@ -94,6 +95,7 @@ public final class JobManagerFactories {
             put(ResumableUploadSpecJob.KEY,                new ResumableUploadSpecJob.Factory());
             put(ServiceConfigRefreshJob.KEY,               new ServiceConfigRefreshJob.Factory());
             put(StorageAccountRestoreJob.KEY,              new StorageAccountRestoreJob.Factory());
+            put(RequestGroupV2InfoWorkerJob.KEY,           new RequestGroupV2InfoWorkerJob.Factory());
             put(RequestGroupV2InfoJob.KEY,                 new RequestGroupV2InfoJob.Factory());
             put(WakeGroupV2Job.KEY,                        new WakeGroupV2Job.Factory());
             put(GroupV2UpdateSelfProfileKeyJob.KEY,        new GroupV2UpdateSelfProfileKeyJob.Factory());
@@ -123,6 +125,7 @@ public final class JobManagerFactories {
             put(CachedAttachmentsMigrationJob.KEY,         new CachedAttachmentsMigrationJob.Factory());
             put(DatabaseMigrationJob.KEY,                  new DatabaseMigrationJob.Factory());
             put(MigrationCompleteJob.KEY,                  new MigrationCompleteJob.Factory());
+            put(ProfileMigrationJob.KEY,                   new ProfileMigrationJob.Factory());
             put(RecipientSearchMigrationJob.KEY,           new RecipientSearchMigrationJob.Factory());
             put(StickerLaunchMigrationJob.KEY,             new StickerLaunchMigrationJob.Factory());
             put(StickerAdditionMigrationJob.KEY,           new StickerAdditionMigrationJob.Factory());

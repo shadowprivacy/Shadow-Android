@@ -22,16 +22,25 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import androidx.appcompat.app.AlertDialog;
+
+import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.conversation.ConversationActivity;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.groups.ui.creategroup.CreateGroupActivity;
+import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import org.whispersystems.libsignal.util.guava.Optional;
+
+import java.io.IOException;
+
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.concurrent.SimpleTask;
+import su.sres.securesms.util.views.SimpleProgressDialog;
 
 /**
  * Activity container for starting a new conversation.
@@ -55,15 +64,37 @@ public class NewConversationActivity extends ContactSelectionActivity
 
   @Override
   public void onContactSelected(Optional<RecipientId> recipientId, String number) {
-    Recipient recipient;
     if (recipientId.isPresent()) {
-      recipient = Recipient.resolved(recipientId.get());
+      launch(Recipient.resolved(recipientId.get()));
     } else {
+      // is there a case when a recipientId would be absent?
       Log.i(TAG, "[onContactSelected] Maybe creating a new recipient.");
-      recipient = Recipient.external(this, number);
-    }
+      if (NetworkConstraint.isMet(this)) {
 
-    launch(recipient);
+        AlertDialog progress = SimpleProgressDialog.show(this);
+
+        SimpleTask.run(getLifecycle(), () -> {
+          Recipient resolved = Recipient.external(this, number);
+
+          if (!resolved.isRegistered()) {
+            Log.i(TAG, "[onContactSelected] Not registered. Doing a directory refresh.");
+            try {
+              DirectoryHelper.refreshDirectory(this);
+              resolved = Recipient.resolved(resolved.getId());
+            } catch (IOException e) {
+              Log.w(TAG, "[onContactSelected] Failed to refresh directory.");
+            }
+          }
+
+          return resolved;
+        }, resolved -> {
+          progress.dismiss();
+          launch(resolved);
+        });
+      } else {
+        launch(Recipient.external(this, number));
+      }
+    }
   }
 
   private void launch(Recipient recipient) {

@@ -17,7 +17,6 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.ProfileUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -93,7 +92,7 @@ public class RefreshOwnProfileJob extends BaseJob {
     }
 
     private static SignalServiceProfile.RequestType getRequestType(@NonNull Recipient recipient) {
-        return FeatureFlags.versionedProfiles() && !recipient.hasProfileKeyCredential()
+        return !recipient.hasProfileKeyCredential()
                 ? SignalServiceProfile.RequestType.PROFILE_AND_CREDENTIAL
                 : SignalServiceProfile.RequestType.PROFILE;
     }

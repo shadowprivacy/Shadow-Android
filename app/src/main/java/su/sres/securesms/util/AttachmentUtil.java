@@ -9,12 +9,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 import android.text.TextUtils;
+
+import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.model.MessageRecord;
+import su.sres.securesms.recipients.Recipient;
 
 import java.util.Collections;
 import java.util.Set;
@@ -30,7 +33,7 @@ public class AttachmentUtil {
       return true;
     }
 
-    if (isFromUnknownContact(context, attachment)) {
+    if (!isFromTrustedConversation(context, attachment)) {
       return false;
     }
 
@@ -105,18 +108,28 @@ public class AttachmentUtil {
   }
 
   @WorkerThread
-  private static boolean isFromUnknownContact(@NonNull Context context, @NonNull DatabaseAttachment attachment) {
-    try (Cursor messageCursor = DatabaseFactory.getMmsDatabase(context).getMessage(attachment.getMmsId())) {
-      final MessageRecord message = DatabaseFactory.getMmsDatabase(context).readerFor(messageCursor).getNext();
+  private static boolean isFromTrustedConversation(@NonNull Context context, @NonNull DatabaseAttachment attachment) {
+    try {
+      MessageRecord message = DatabaseFactory.getMmsDatabase(context).getMessageRecord(attachment.getMmsId());
 
-      if (message == null || (!message.getRecipient().isSystemContact()  &&
-              !message.getRecipient().isProfileSharing() &&
-              !message.isOutgoing()                      &&
-              !message.getRecipient().isLocalNumber())) {
-        return true;
+      Recipient individualRecipient = message.getRecipient();
+      Recipient threadRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(message.getThreadId());
+
+      if (threadRecipient != null && threadRecipient.isGroup()) {
+        return threadRecipient.isProfileSharing() || isTrustedIndividual(individualRecipient, message);
+      } else {
+        return isTrustedIndividual(individualRecipient, message);
       }
+    } catch (NoSuchMessageException e) {
+      Log.w(TAG, "Message could not be found! Assuming not a trusted contact.");
+      return false;
     }
+  }
 
-    return false;
+  private static boolean isTrustedIndividual(@NonNull Recipient recipient, @NonNull MessageRecord message) {
+    return recipient.isSystemContact()  ||
+            recipient.isProfileSharing() ||
+            message.isOutgoing()         ||
+            recipient.isLocalNumber();
   }
 }

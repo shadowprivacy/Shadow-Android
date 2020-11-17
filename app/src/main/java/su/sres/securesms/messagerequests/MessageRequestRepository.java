@@ -12,6 +12,7 @@ import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupChangeBusyException;
+import su.sres.securesms.groups.GroupChangeException;
 import su.sres.securesms.groups.GroupChangeFailedException;
 import su.sres.securesms.groups.GroupInsufficientRightsException;
 import su.sres.securesms.groups.GroupManager;
@@ -27,7 +28,6 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 
@@ -58,8 +58,8 @@ final class MessageRequestRepository {
 
     void getMemberCount(@NonNull RecipientId recipientId, @NonNull Consumer<GroupMemberCount> onMemberCountLoaded) {
         executor.execute(() -> {
-            GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
-            Optional<GroupDatabase.GroupRecord> groupRecord = groupDatabase.getGroup(recipientId);
+            GroupDatabase                       groupDatabase = DatabaseFactory.getGroupDatabase(context);
+            Optional<GroupDatabase.GroupRecord> groupRecord   = groupDatabase.getGroup(recipientId);
             onMemberCountLoaded.accept(groupRecord.transform(record -> {
                 if (record.isV2Group()) {
                     DecryptedGroup decryptedGroup = record.requireV2GroupProperties().getDecryptedGroup();
@@ -91,9 +91,8 @@ final class MessageRequestRepository {
     void acceptMessageRequest(@NonNull LiveRecipient liveRecipient,
                               long threadId,
                               @NonNull Runnable onMessageRequestAccepted,
-                              @NonNull GroupChangeErrorCallback mainThreadError)
+                              @NonNull GroupChangeErrorCallback error)
     {
-        GroupChangeErrorCallback error = e -> Util.runOnMain(() -> mainThreadError.onError(e));
         executor.execute(()-> {
             if (liveRecipient.get().isPushV2Group()) {
                 try {
@@ -104,12 +103,9 @@ final class MessageRequestRepository {
                     recipientDatabase.setProfileSharing(liveRecipient.getId(), true);
 
                     onMessageRequestAccepted.run();
-                } catch (GroupInsufficientRightsException e) {
+                } catch (GroupChangeException | IOException e) {
                     Log.w(TAG, e);
-                    error.onError(GroupChangeFailureReason.NO_RIGHTS);
-                } catch (GroupChangeBusyException | GroupChangeFailedException | GroupNotAMemberException | IOException e) {
-                    Log.w(TAG, e);
-                    error.onError(GroupChangeFailureReason.OTHER);
+                    error.onError(GroupChangeFailureReason.fromException(e));
                 }
             } else {
                 RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
@@ -131,27 +127,48 @@ final class MessageRequestRepository {
         });
     }
 
-    void deleteMessageRequest(@NonNull LiveRecipient recipient, long threadId, @NonNull Runnable onMessageRequestDeleted) {
+    void deleteMessageRequest(@NonNull LiveRecipient recipient,
+                              long threadId,
+                              @NonNull Runnable onMessageRequestDeleted,
+                              @NonNull GroupChangeErrorCallback error)
+    {
         executor.execute(() -> {
-            ThreadDatabase threadDatabase = DatabaseFactory.getThreadDatabase(context);
-            threadDatabase.deleteConversation(threadId);
+            Recipient resolved = recipient.resolve();
 
-            if (recipient.resolve().isGroup()) {
-                RecipientUtil.leaveGroup(context, recipient.get());
+            if (resolved.isGroup() && resolved.requireGroupId().isPush()) {
+                try {
+                    GroupManager.leaveGroupFromBlockOrMessageRequest(context, resolved.requireGroupId().requirePush());
+                } catch (GroupChangeException | IOException e) {
+                    Log.w(TAG, e);
+                    error.onError(GroupChangeFailureReason.fromException(e));
+                    return;
+                }
             }
 
             if (TextSecurePreferences.isMultiDevice(context)) {
                 ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forDelete(recipient.getId()));
             }
 
+            ThreadDatabase threadDatabase = DatabaseFactory.getThreadDatabase(context);
+            threadDatabase.deleteConversation(threadId);
+
             onMessageRequestDeleted.run();
         });
     }
 
-    void blockMessageRequest(@NonNull LiveRecipient liveRecipient, @NonNull Runnable onMessageRequestBlocked) {
+    void blockMessageRequest(@NonNull LiveRecipient liveRecipient,
+                             @NonNull Runnable onMessageRequestBlocked,
+                             @NonNull GroupChangeErrorCallback error)
+    {
         executor.execute(() -> {
             Recipient recipient = liveRecipient.resolve();
-            RecipientUtil.block(context, recipient);
+            try {
+                RecipientUtil.block(context, recipient);
+            } catch (GroupChangeException | IOException e) {
+                Log.w(TAG, e);
+                error.onError(GroupChangeFailureReason.fromException(e));
+                return;
+            }
             liveRecipient.refresh();
 
             if (TextSecurePreferences.isMultiDevice(context)) {
@@ -162,10 +179,20 @@ final class MessageRequestRepository {
         });
     }
 
-    void blockAndDeleteMessageRequest(@NonNull LiveRecipient liveRecipient, long threadId, @NonNull Runnable onMessageRequestBlocked) {
+    void blockAndDeleteMessageRequest(@NonNull LiveRecipient liveRecipient,
+                                      long threadId,
+                                      @NonNull Runnable onMessageRequestBlocked,
+                                      @NonNull GroupChangeErrorCallback error)
+    {
         executor.execute(() -> {
             Recipient recipient = liveRecipient.resolve();
-            RecipientUtil.block(context, recipient);
+            try{
+                RecipientUtil.block(context, recipient);
+            } catch (GroupChangeException | IOException e) {
+                Log.w(TAG, e);
+                error.onError(GroupChangeFailureReason.fromException(e));
+                return;
+            }
             liveRecipient.refresh();
 
             DatabaseFactory.getThreadDatabase(context).deleteConversation(threadId);

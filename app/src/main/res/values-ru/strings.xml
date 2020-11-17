@@ -192,8 +192,8 @@
   <string name="ConversationItem_download_more">  Скачать больше</string>
   <string name="ConversationItem_pending">  Ожидание</string>
     <string name="ConversationItem_this_message_was_deleted">Это сообщение было удалено.</string>
+  <string name="ConversationItem_you_deleted_this_message">Вы удалили это сообщение.</string>
   <string name="ConversationItem_not_sent_recipient_inactive">Не отправлено. Получатель отключен.</string>
-
 
   <!--ConversationActivity-->
   <string name="ConversationActivity_reset_secure_session_question">Сбросить защищенный сеанс?</string>
@@ -212,11 +212,13 @@
   <string name="ConversationActivity_this_device_does_not_appear_to_support_dial_actions">Это устройство, по-видимому, не поддерживает набор номера.</string>
   <string name="ConversationActivity_leave_group">Покинуть группу?</string>
   <string name="ConversationActivity_are_you_sure_you_want_to_leave_this_group">Вы действительно хотите покинуть эту группу?</string>
+  <string name="ConversationActivity_choose_new_admin">Выбрать нового администратора</string>
+  <string name="ConversationActivity_before_you_leave_you_must_choose_at_least_one_new_admin_for_this_group">Прежде чем покинуть эту группу, вы должны выбрать для неё как минимум одного нового администратора.</string>
+  <string name="ConversationActivity_choose_admin">Выбрать администратора</string>
   <string name="ConversationActivity_transport_insecure_sms">Незащищённое SMS</string>
   <string name="ConversationActivity_transport_insecure_mms">Незащищённое MMS</string>
   <string name="ConversationActivity_transport_signal">Shadow</string>
   <string name="ConversationActivity_lets_switch_to_signal">Давайте перейдём на Shadow %1$s</string>
-  <string name="ConversationActivity_error_leaving_group">Ошибка при выходе из группы</string>
   <string name="ConversationActivity_specify_recipient">Пожалуйста, выберите контакт</string>
   <string name="ConversationActivity_unblock_this_contact_question">Разблокировать этот контакт?</string>
   <string name="ConversationActivity_unblock_this_group_question">Разблокировать эту группу?</string>
@@ -226,6 +228,7 @@
   <string name="ConversationActivity_attachment_exceeds_size_limits">Вложение превышает предельный размер для того типа сообщения, которое вы отправляете.</string>
   <string name="ConversationActivity_quick_camera_unavailable">Камера недоступна</string>
   <string name="ConversationActivity_unable_to_record_audio">Не удалось записать аудио!</string>
+  <string name="ConversationActivity_you_cant_send_messages_to_this_group">Вы не можете отправлять сообщения в этой группе, потому что вы уже не являетесь её участником.</string>
   <string name="ConversationActivity_there_is_no_app_available_to_handle_this_link_on_your_device">На вашем устройстве нет приложения для открытия этой ссылки.</string>
   <string name="ConversationActivity_to_send_audio_messages_allow_signal_access_to_your_microphone">Для отправки аудиосообщений разрешите Shadow доступ к микрофону.</string>
   <string name="ConversationActivity_signal_requires_the_microphone_permission_in_order_to_send_audio_messages">Shadow требуется разрешение на доступ к микрофону для отправки аудиосообщений, но оно было вами отклонено. Нажмите «Продолжить», чтобы перейти в настройки приложения, откройте «Разрешения» и включите «Микрофон».</string>
@@ -310,6 +313,7 @@
   <string name="ConversationFragment_deleting_messages">Удаляем сообщения…</string>
     <string name="ConversationFragment_delete_for_me">Удалить для меня</string>
     <string name="ConversationFragment_delete_for_everyone">Удалить для всех</string>
+  <string name="ConversationFragment_this_message_will_be_permanently_deleted_for_everyone">Это сообщение будет навсегда удалено для всех в этом разговоре. Участники смогут увидеть, что вы удалили сообщение.</string>
   <string name="ConversationFragment_quoted_message_not_found">Исходное сообщение не найдено</string>
   <string name="ConversationFragment_quoted_message_no_longer_available">Исходное сообщение больше не доступно</string>
   <string name="ConversationFragment_failed_to_open_message">Не удалось открыть сообщение</string>
@@ -365,7 +369,7 @@
   <string name="CreateProfileActivity_problem_setting_profile">Ошибка при установке профиля</string>
   <string name="CreateProfileActivity_profile_photo">Фото профиля</string>
   <string name="CreateProfileActivity_set_up_your_profile">Настройте свой профиль</string>
-    <string name="CreateProfileActivity_signal_profiles_are_end_to_end_encrypted">Ваш профиль защищён сквозным шифрованием. Он становится виден вашим контактам, когда вы начинаете или принимаете новые разговоры и когда вы присоединяетесь к новым группам.</string>
+  <string name="CreateProfileActivity_signal_profiles_are_end_to_end_encrypted">Ваш профиль защищён сквозным шифрованием. Ваш профиль и его изменения становятся видны вашим контактам, когда вы начинаете или принимаете новые разговоры и когда вы присоединяетесь к новым группам.</string>
   <string name="CreateProfileActivity_set_avatar_description">Установить аватару</string>
   <!--CustomDefaultPreference-->
   <string name="CustomDefaultPreference_using_custom">Пользовательское: %s</string>
@@ -430,6 +434,11 @@
     <string name="AddToGroupActivity_add_to_group">Добавить в группу</string>
     <string name="AddToGroupActivity_add_to_groups">Добавить в группы</string>
 
+  <!--ChooseNewAdminActivity-->
+  <string name="ChooseNewAdminActivity_choose_new_admin">Выберите нового администратора</string>
+  <string name="ChooseNewAdminActivity_done">Готово</string>
+  <string name="ChooseNewAdminActivity_you_left">Вы покинули «%1$s».</string>
+
   <!--GroupShareProfileView-->
   <string name="GroupShareProfileView_share_your_profile_name_and_photo_with_this_group">Открыть ваше имя и фотографию этой группе?</string>
   <string name="GroupShareProfileView_do_you_want_to_make_your_profile_name_and_photo_visible_to_all_current_and_future_members_of_this_group">Вы хотите сделать имя и фотографию из своего профиля видимыми для всех текущих и будущих участников этой группы?</string>
@@ -441,6 +450,16 @@
     <string name="GroupManagement_access_level_anyone">Кто угодно</string>
     <string name="GroupManagement_access_level_all_members">Все участники</string>
     <string name="GroupManagement_access_level_only_admins">Только администраторы</string>
+  <!--GV2 invites sent-->
+  <plurals name="GroupManagement_invitation_sent">
+    <item quantity="one">Приглашение отправлено</item>
+    <item quantity="few">%d приглашения отправлено</item>
+    <item quantity="many">%d приглашений отправлено</item>
+    <item quantity="other">%d приглашений отправлено</item>
+  </plurals>
+  <string name="GroupManagement_invite_single_user">«%1$s» не может быть автоматически добавлен(-а) вами в эту группу.\n\nОн(-а) был(-а) приглашен(-а) присоединиться и не увидит никакие сообщения группы до того, как примет приглашение.</string>
+  <string name="GroupManagement_learn_more">Узнать больше</string>
+  <string name="GroupManagement_invite_multiple_users">Эти пользователи не могут быть автоматически добавлены вами в эту группу.\n\nОни были приглашены присоединиться к группе и не увидят никакие сообщения группы до того, как примут приглашение.</string>
 
     <!--PendingMembersActivity-->
     <string name="PendingMemberInvitesActivity_pending_group_invites">Приглашения в группу в ожидании</string>
@@ -491,8 +510,10 @@
     <!--ManageGroupActivity-->
     <string name="ManageGroupActivity_disappearing_messages">Исчезающие сообщения</string>
     <string name="ManageGroupActivity_pending_group_invites">Приглашения в группу в ожидании</string>
-    <string name="ManageGroupActivity_who_can_edit_group_membership">Кто может редактировать членство в группе</string>
-    <string name="ManageGroupActivity_who_can_edit_group_info">Кто может редактировать информацию группы</string>
+  <string name="ManageGroupActivity_add_members">Добавить участников</string>
+  <string name="ManageGroupActivity_edit_group_info">Редактировать информацию группы</string>
+  <string name="ManageGroupActivity_choose_who_can_edit_the_group_name_avatar_and_disappearing_messages">Выберите, кто может редактировать имя, аватар и время исчезновения сообщений группы.</string>
+  <string name="ManageGroupActivity_choose_who_can_add_or_invite_new_members">Выберите, кто может добавлять или приглашать новых участников.</string>
     <string name="ManageGroupActivity_block_group">Заблокировать группу</string>
   <string name="ManageGroupActivity_unblock_group">Разблокировать группу</string>
     <string name="ManageGroupActivity_leave_group">Покинуть группу</string>
@@ -501,7 +522,6 @@
     <string name="ManageGroupActivity_until_s">До %1$s</string>
     <string name="ManageGroupActivity_off">Отключено</string>
     <string name="ManageGroupActivity_on">Включено</string>
-    <string name="ManageGroupActivity_add_members">Добавить участников</string>
     <string name="ManageGroupActivity_view_all_members">Просмотреть всех участников</string>
   <string name="ManageGroupActivity_see_all">Просмотреть все</string>
   <string name="ManageGroupActivity_none">Нет</string>
@@ -521,9 +541,11 @@
     <string name="ManageGroupActivity_not_capable">Кто-то из тех, кого вы добавили, не поддерживает новые группы и должен(-на) обновить Shadow</string>
     <string name="ManageGroupActivity_failed_to_update_the_group">Не удалось обновить группу</string>
     <string name="ManageGroupActivity_youre_not_a_member_of_the_group">Вы не являетесь участником этой группы</string>
+  <string name="ManageGroupActivity_failed_to_update_the_group_please_retry_later">Не удалось обновить группу, пожалуйста, попробуйте позже</string>
+  <string name="ManageGroupActivity_failed_to_update_the_group_due_to_a_network_error_please_retry_later">Не удалось обновить группу из-за ошибки сети, пожалуйста, попробуйте позже</string>
     <string name="ManageGroupActivity_edit_name_and_picture">Редактировать имя и фото</string>
-    <string name="GroupManagement_choose_who_can_add_or_invite_new_members">Выберите, кто может добавлять или приглашать новых участников</string>
-    <string name="GroupManagement_choose_who_can_change_the_group_name_and_photo">Выберите, кто может изменять имя и фото группы</string>
+  <string name="ManageGroupActivity_legacy_group">Старая группа</string>
+  <string name="ManageGroupActivity_legacy_group_learn_more">Это Старая группа. Чтобы получить доступ к таким функциям, как администраторы групп, создайте Новую группу.</string>
     <plurals name="GroupMemberList_invited">
         <item quantity="one">%1$s пригласил(-а) 1 человека</item>
         <item quantity="few">%1$s пригласил(-а) %2$d людей</item>
@@ -532,6 +554,8 @@
     </plurals>
 
   <!--ManageRecipientActivity-->
+  <string name="ManageRecipientActivity_add_to_system_contacts">Добавить в системные контакты</string>
+  <string name="ManageRecipientActivity_this_person_is_in_your_contacts">Этот человек есть в ваших контактах</string>
   <string name="ManageRecipientActivity_disappearing_messages">Исчезающие сообщения</string>
   <string name="ManageRecipientActivity_chat_color">Цвет разговора</string>
   <string name="ManageRecipientActivity_block">Заблокировать</string>
@@ -633,6 +657,9 @@
   <!--Job-->
   <string name="Job_working_in_the_background">Работа в фоновом режиме…</string>
   <!--MessageDetailsRecipient-->
+
+  <!-- LearnMoreTextView -->
+  <string name="LearnMoreTextView_learn_more">Узнать больше</string>
 
   <!--LongMessageActivity-->
   <string name="LongMessageActivity_unable_to_find_message">Не удалось найти сообщение</string>
@@ -738,6 +765,7 @@
   <string name="MessageRecord_message_encrypted_with_a_legacy_protocol_version_that_is_no_longer_supported">Полученное сообщение зашифровано в старой версии Shadow, которая больше не поддерживается. Пожалуйста, попросите отправителя обновиться до последней версии и заново отправить сообщение.</string>
   <string name="MessageRecord_left_group">Вы покинули группу.</string>
   <string name="MessageRecord_you_updated_group">Вы обновили группу.</string>
+  <string name="MessageRecord_the_group_was_updated">Группа была обновлена.</string>
   <string name="MessageRecord_you_called">Вы звонили</string>
   <string name="MessageRecord_called_you">Контакт звонил</string>
   <string name="MessageRecord_missed_call">Пропущенный звонок</string>
@@ -750,6 +778,12 @@
   <string name="MessageRecord_s_disabled_disappearing_messages">%1$s отключил(-а) исчезающие сообщения.</string>
   <string name="MessageRecord_you_set_disappearing_message_time_to_s">Вы установили время исчезновения сообщений в %1$s.</string>
   <string name="MessageRecord_s_set_disappearing_message_time_to_s">%1$s установил(-а) время исчезновения сообщений в %2$s.</string>
+  <string name="MessageRecord_disappearing_message_time_set_to_s">Было установлено время исчезновения сообщений — %1$s.</string>
+
+  <!--Profile change updates-->
+  <string name="MessageRecord_changed_their_profile_name_to">%1$s изменил(-а) своё имя профиля на %2$s.</string>
+  <string name="MessageRecord_changed_their_profile_name_from_to">%1$s изменил(-а) своё имя профиля с %2$s на %3$s.</string>
+  <string name="MessageRecord_changed_their_profile">%1$s изменил(-а) свой профиль.</string>
 
     <!--GV2 specific-->
     <string name="MessageRecord_you_created_the_group">Вы создали группу.</string>
@@ -768,6 +802,8 @@
     <string name="MessageRecord_s_removed_you_from_the_group">%1$s удалил(-а) вас из группы.</string>
     <string name="MessageRecord_you_left_the_group">Вы покинули группу.</string>
     <string name="MessageRecord_s_left_the_group">%1$s покинул(-а) группу.</string>
+  <string name="MessageRecord_you_are_no_longer_in_the_group">Вы больше не состоите в группе.</string>
+  <string name="MessageRecord_s_is_no_longer_in_the_group">%1$s больше не состоит в группе.</string>
 
     <!--GV2 role change-->
     <string name="MessageRecord_you_made_s_an_admin">Вы сделали %1$s администратором.</string>
@@ -776,6 +812,10 @@
     <string name="MessageRecord_you_revoked_admin_privileges_from_s">Вы отозвали привилегии администратора у %1$s.</string>
     <string name="MessageRecord_s_revoked_your_admin_privileges">%1$s отозвал(-а) ваши привилегии администратора.</string>
     <string name="MessageRecord_s_revoked_admin_privileges_from_s">%1$s отозвал(-а) привилегии администратора у %2$s.</string>
+  <string name="MessageRecord_s_is_now_an_admin">%1$s теперь администратор.</string>
+  <string name="MessageRecord_you_are_now_an_admin">Вы теперь администратор.</string>
+  <string name="MessageRecord_s_is_no_longer_an_admin">%1$s больше не администратор.</string>
+  <string name="MessageRecord_you_are_no_longer_an_admin">Вы больше не администратор.</string>
 
     <!--GV2 invitations-->
     <string name="MessageRecord_you_invited_s_to_the_group">Вы пригласили %1$s в группу.</string>
@@ -786,6 +826,13 @@
         <item quantity="many">%1$s пригласил(-а) %2$d людей в группу.</item>
         <item quantity="other">%1$s пригласил(-а) %2$d людей в группу.</item>
     </plurals>
+  <string name="MessageRecord_you_were_invited_to_the_group">Вы были приглашены в группу.</string>
+  <plurals name="MessageRecord_d_people_were_invited_to_the_group">
+    <item quantity="one">1 человек был приглашён в группу.</item>
+    <item quantity="few">%1$d человека были приглашены в группу.</item>
+    <item quantity="many">%1$d человек было приглашено в группу.</item>
+    <item quantity="other">%1$d человек было приглашено в группу.</item>
+  </plurals>
 
     <!--GV2 invitation revokes-->
     <plurals name="MessageRecord_you_revoked_invites">
@@ -802,6 +849,13 @@
     </plurals>
     <string name="MessageRecord_someone_declined_an_invitation_to_the_group">Кто-то отклонил приглашение в группу.</string>
     <string name="MessageRecord_you_declined_the_invitation_to_the_group">Вы отклонили приглашение в группу.</string>
+  <string name="MessageRecord_your_invitation_to_the_group_was_revoked">Ваше приглашение в группу было отозвано.</string>
+  <plurals name="MessageRecord_d_invitations_were_revoked">
+    <item quantity="one">Одно приглашение в группу было отозвано.</item>
+    <item quantity="few">%1$d приглашения в группу были отозваны.</item>
+    <item quantity="many">%1$d приглашений в группу было отозвано.</item>
+    <item quantity="other">%1$d приглашений в группу было отозвано.</item>
+  </plurals>
 
     <!--GV2 invitation acceptance-->
     <string name="MessageRecord_you_accepted_invite">Вы приняли приглашение в группу.</string>
@@ -812,18 +866,22 @@
     <!--GV2 title change-->
     <string name="MessageRecord_you_changed_the_group_name_to_s">Вы изменили имя группы на «%1$s».</string>
     <string name="MessageRecord_s_changed_the_group_name_to_s">%1$s изменил(-а) имя группы на «%2$s».</string>
+  <string name="MessageRecord_the_group_name_has_changed_to_s">Имя группы было изменено на «%1$s».</string>
 
     <!--GV2 avatar change-->
-    <string name="MessageRecord_you_changed_the_group_avatar">Вы изменили аватар группы.</string>
-    <string name="MessageRecord_s_changed_the_group_avatar">%1$s изменил(-а) аватар группы.</string>
+    <string name="MessageRecord_you_changed_the_group_avatar">Вы изменили аватару группы.</string>
+    <string name="MessageRecord_s_changed_the_group_avatar">%1$s изменил(-а) аватару группы.</string>
+  <string name="MessageRecord_the_group_group_avatar_has_been_changed">Аватара группы была изменена.</string>
 
     <!--GV2 attribute access level change-->
     <string name="MessageRecord_you_changed_who_can_edit_group_info_to_s">Вы изменили, кто может редактировать информацию группы, на «%1$s».</string>
     <string name="MessageRecord_s_changed_who_can_edit_group_info_to_s">%1$s изменил(-а), кто может редактировать информацию группы, на «%2$s».</string>
+  <string name="MessageRecord_who_can_edit_group_info_has_been_changed_to_s">Список имеющих право редактировать информацию группы был изменен на «%1$s».</string>
 
     <!--GV2 membership access level change-->
     <string name="MessageRecord_you_changed_who_can_edit_group_membership_to_s">Вы изменили, кто может редактировать членство в группе, на «%1$s».</string>
     <string name="MessageRecord_s_changed_who_can_edit_group_membership_to_s">%1$s изменил(-а), кто может редактировать членство в группе, на «%2$s».</string>
+  <string name="MessageRecord_who_can_edit_group_membership_has_been_changed_to_s">Список имеющих право редактировать членство в группе был изменен на «%1$s».</string>
 
     <!--End of GV2 specific update messages-->
   <string name="MessageRecord_your_safety_number_with_s_has_changed">Ваш код безопасности с %s изменился.</string>
@@ -1081,6 +1139,7 @@
   <string name="ThreadRecord_view_once_video">Одноразовое видео</string>
   <string name="ThreadRecord_view_once_media">Одноразовое медиа</string>
     <string name="ThreadRecord_this_message_was_deleted">Это сообщение было удалено.</string>
+  <string name="ThreadRecord_you_deleted_this_message">Вы удалили это сообщение.</string>
   <string name="ThreadRecord_s_is_on_signal">%s теперь в Shadow!</string>
   <string name="ThreadRecord_disappearing_messages_disabled">Исчезающие сообщения отключены</string>
   <string name="ThreadRecord_disappearing_message_time_updated_to_s">Время исчезновения сообщений – %s</string>
@@ -1173,6 +1232,7 @@
   <string name="MediaPreviewActivity_media_delete_confirmation_title">Удалить сообщение?</string>
   <string name="MediaPreviewActivity_media_delete_confirmation_message">Это сообщение будет навсегда удалено.</string>
   <string name="MediaPreviewActivity_s_to_s">%1$s для %2$s</string>
+  <string name="MediaPreviewActivity_media_no_longer_available">Медиа больше не доступно.</string>
 
   <!--MessageNotifier-->
   <string name="MessageNotifier_d_new_messages_in_d_conversations">%1$d новых сообщений в %2$d разговорах</string>
@@ -1312,8 +1372,6 @@
   <string name="contact_selection_activity__invite_to_signal">Пригласить в Shadow</string>
     <string name="contact_selection_activity__new_group">Новая группа</string>
 
-  <!--temporary for internal testing-->
-
   <!--contact_filter_toolbar-->
   <string name="contact_filter_toolbar__clear_entered_text_description">Стереть введённый текст</string>
   <string name="contact_filter_toolbar__show_keyboard_description">Показать клавиатуру</string>
@@ -1330,6 +1388,7 @@
   <string name="ContactSelectionListFragment_s_is_not_a_signal_user">«%1$s» — не пользователь Shadow. Пожалуйста, проверьте имя пользователя и попробуйте ещё раз.</string>
   <string name="ContactSelectionListFragment_okay">Хорошо</string>
   <string name="ContactSelectionListFragment_the_group_is_full">Группа заполнена</string>
+  <string name="ContactSelectionListFragment_you_do_not_need_to_add_yourself_to_the_group">Вам не нужно добавлять самого себя в группу</string>
 
   <!--blocked_contacts_fragment-->
   <string name="blocked_contacts_fragment__no_blocked_contacts">Нет заблокированных контактов</string>
@@ -1446,6 +1505,8 @@
     <item quantity="other">%d недель</item>
   </plurals>
   <string name="expiration_weeks_abbreviated">%dн</string>
+  <string name="expiration_combined">%1$s %2$s</string>
+
   <!--unverified safety numbers-->
   <string name="IdentityUtil_unverified_banner_one">Ваш код безопасности с %s изменился и перестал считаться подтверждённым</string>
   <string name="IdentityUtil_unverified_banner_two">Ваши коды безопасности с %1$s и %2$s перестали считаться подтверждёнными</string>
@@ -1781,6 +1842,9 @@
   <string name="preferences_communication__sealed_sender_allow_from_anyone">Разрешить от всех</string>
   <string name="preferences_communication__sealed_sender_allow_from_anyone_description">Разрешить скрытого отправителя для входящих сообщений от людей, которых нет в ваших контактах и кому вы ещё не открывали свой профиль.</string>
   <string name="preferences_communication__sealed_sender_learn_more">Узнать больше</string>
+
+  <!--Internal only preferences-->
+
   <!--****************************************-->
   <!--menus-->
   <!--****************************************-->
@@ -1927,7 +1991,7 @@
   <string name="InsightsReminder__view_insights">Просмотреть выводы</string>
   <string name="InsightsReminder__invite">Пригласить</string>
 
-    <!--CalleeMustAcceptMessageRequestDialogFragment-->
+    <!--CalleeMustAcceptMessageRequestActivity-->
     <string name="CalleeMustAcceptMessageRequestDialogFragment__okay">Хорошо</string>
     <string name="CalleeMustAcceptMessageRequestDialogFragment__s_will_get_a_message_request_from_you">%1$s получит от вас запрос на общение. Вы сможете звонить после того, как ваш запрос на общение будет принят.</string>
 
@@ -2071,6 +2135,14 @@
   <string name="LicenseInfoActivity_psid">ID платформы: %s</string>
   <string name="LicenseInfoActivity_na">Н/Д</string>
   <string name="LicenseInfoActivity_summary">Текущий статус и срок действия</string>
+
+  <!--GroupsLearnMoreBottomSheetDialogFragment-->
+  <string name="GroupsLearnMore_legacy_vs_new_groups">Сравнение Старых и Новых групп</string>
+  <string name="GroupsLearnMore_what_are_legacy_groups">Что такое Старые группы?</string>
+  <string name="GroupsLearnMore_paragraph_1">Старые группы — это группы, которые несовместимы с функциями Новых групп, например администраторами и более подробными описаниями изменений в группе.</string>
+  <string name="GroupsLearnMore_how_do_i_use_new_groups">Как я могу использовать Новые группы?</string>
+  <string name="GroupsLearnMore_paragraph_2">Старые группы не могут быть преобразованы в Новые, но вы можете создать Новую группу с теми же участниками.</string>
+  <string name="GroupsLearnMore_paragraph_3">Чтобы создать Новую группу, все участники должны обновиться до новейшей версии Shadow.</string>
 
   <!--EOF-->
 </resources>

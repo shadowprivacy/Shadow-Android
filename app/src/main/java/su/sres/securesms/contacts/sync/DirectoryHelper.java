@@ -15,6 +15,7 @@ import su.sres.securesms.jobs.RotateProfileKeyJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.registration.RegistrationUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.storage.protos.DirectoryResponse;
@@ -36,7 +37,13 @@ public class DirectoryHelper {
   public static void refreshDirectory(@NonNull Context context) throws IOException {
 
     if (TextUtils.isEmpty(TextSecurePreferences.getLocalNumber(context))) {
-      Log.i(TAG, "Have not yet set our own login. Skipping.");
+      Log.w(TAG, "Have not yet set our own local number. Skipping.");
+      return;
+    }
+
+    if (!SignalStore.registrationValues().isRegistrationComplete()) {
+      Log.w(TAG, "Registration is not yet complete. Skipping, but running a routine to possibly mark it complete.");
+      RegistrationUtil.maybeMarkRegistrationComplete(context);
       return;
     }
 

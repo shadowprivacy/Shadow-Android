@@ -2,7 +2,7 @@ package su.sres.securesms.groups;
 
 import androidx.annotation.NonNull;
 
-public final class GroupChangeFailedException extends Exception {
+public final class GroupChangeFailedException extends GroupChangeException {
 
     GroupChangeFailedException() {
     }

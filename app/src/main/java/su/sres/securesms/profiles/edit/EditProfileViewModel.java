@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.profiles.ProfileName;
+import su.sres.securesms.util.StringUtil;
 import su.sres.securesms.util.livedata.LiveDataPair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -27,7 +28,7 @@ class EditProfileViewModel extends ViewModel {
     private final MutableLiveData<byte[]>           originalAvatar      = new MutableLiveData<>();
     private final MutableLiveData<Optional<String>> internalUsername    = new MutableLiveData<>();
     private final MutableLiveData<String>           originalDisplayName = new MutableLiveData<>();
-    private final LiveData<Boolean>                 isFormValid         = Transformations.map(givenName, name -> !name.isEmpty());
+    private final LiveData<Boolean>                 isFormValid         = Transformations.map(givenName, name -> !StringUtil.isVisuallyEmpty(name));
     private final EditProfileRepository repository;
     private final GroupId groupId;
 

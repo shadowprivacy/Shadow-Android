@@ -31,4 +31,20 @@ public class SignalServiceProfileWrite {
     public boolean hasAvatar() {
         return avatar;
     }
+
+    public void setName(byte[] name) {
+        this.name = name;
+    }
+
+    public void setCommitment(byte[] commitment) {
+        this.commitment = commitment;
+    }
+
+    public byte[] getName() {
+        return name;
+    }
+
+    public byte[] getCommitment() {
+        return commitment;
+    }
 }

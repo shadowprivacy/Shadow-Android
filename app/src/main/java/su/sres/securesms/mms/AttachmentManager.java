@@ -522,7 +522,18 @@ public class AttachmentManager {
   }
 
   public enum MediaType {
-    IMAGE, GIF, AUDIO, VIDEO, DOCUMENT, VCARD;
+    IMAGE(MediaUtil.IMAGE_JPEG),
+    GIF(MediaUtil.IMAGE_GIF),
+    AUDIO(MediaUtil.AUDIO_AAC),
+    VIDEO(MediaUtil.VIDEO_MP4),
+    DOCUMENT(MediaUtil.UNKNOWN),
+    VCARD(MediaUtil.VCARD);
+
+    private final String fallbackMimeType;
+
+    MediaType(String fallbackMimeType) {
+      this.fallbackMimeType = fallbackMimeType;
+    }
 
     public @NonNull Slide createSlide(@NonNull  Context  context,
                                       @NonNull  Uri      uri,
@@ -557,6 +568,10 @@ public class AttachmentManager {
       if (MediaUtil.isVcard(mimeType))     return VCARD;
 
       return DOCUMENT;
+    }
+
+    public String toFallbackMimeType() {
+      return fallbackMimeType;
     }
 
   }

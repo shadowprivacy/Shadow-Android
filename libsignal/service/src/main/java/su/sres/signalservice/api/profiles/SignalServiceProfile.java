@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.profiles.ProfileKeyCredentialResponse;
 import org.whispersystems.libsignal.logging.Log;
-import su.sres.signalservice.FeatureFlags;
+
 import su.sres.signalservice.internal.util.JsonUtil;
 
 import java.util.UUID;

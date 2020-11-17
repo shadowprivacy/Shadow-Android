@@ -9,10 +9,7 @@ import androidx.core.util.Consumer;
 import com.annimon.stream.Stream;
 import com.google.protobuf.ByteString;
 
-import su.sres.securesms.groups.GroupChangeBusyException;
-import su.sres.securesms.groups.GroupChangeFailedException;
-import su.sres.securesms.groups.GroupInsufficientRightsException;
-import su.sres.securesms.groups.GroupNotAMemberException;
+import su.sres.securesms.groups.GroupChangeException;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedPendingMember;
 import org.signal.zkgroup.InvalidInputException;
@@ -105,7 +102,7 @@ final class PendingMemberRepository {
         try {
             GroupManager.cancelInvites(context, groupId, uuidCipherTexts);
             return true;
-        } catch (GroupChangeFailedException | GroupInsufficientRightsException | IOException | GroupNotAMemberException | GroupChangeBusyException e) {
+        } catch (GroupChangeException | IOException e) {
             Log.w(TAG, e);
             return false;
         }

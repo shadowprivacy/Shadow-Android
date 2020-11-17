@@ -6,6 +6,7 @@ import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.messages.BackgroundMessageRetriever;
+import su.sres.securesms.messages.IncomingMessageObserver;
 import su.sres.securesms.messages.IncomingMessageProcessor;
 import su.sres.securesms.groups.GroupsV2Authorization;
 import su.sres.securesms.groups.GroupsV2AuthorizationMemoryValueCache;
@@ -13,13 +14,10 @@ import su.sres.securesms.groups.v2.processing.GroupsV2StateProcessor;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.keyvalue.KeyValueStore;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
 import su.sres.securesms.megaphone.MegaphoneRepository;
-import su.sres.securesms.messages.InitialMessageRetriever;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
-import su.sres.securesms.messages.IncomingMessageObserver;
 import su.sres.securesms.util.EarlyMessageCache;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
@@ -49,6 +47,7 @@ public class ApplicationDependencies {
     private static SignalServiceAccountManager  accountManager;
     private static SignalServiceMessageSender   messageSender;
     private static SignalServiceMessageReceiver messageReceiver;
+    private static IncomingMessageObserver      incomingMessageObserver;
     private static IncomingMessageProcessor     incomingMessageProcessor;
     private static BackgroundMessageRetriever   backgroundMessageRetriever;
     private static LiveRecipientCache           recipientCache;
@@ -60,7 +59,6 @@ public class ApplicationDependencies {
     private static GroupsV2StateProcessor       groupsV2StateProcessor;
     private static GroupsV2Operations           groupsV2Operations;
     private static EarlyMessageCache            earlyMessageCache;
-    private static InitialMessageRetriever      initialMessageRetriever;
     private static MessageNotifier              messageNotifier;
 
     public static synchronized void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
@@ -248,19 +246,19 @@ public class ApplicationDependencies {
         return earlyMessageCache;
     }
 
-    public static synchronized @NonNull InitialMessageRetriever getInitialMessageRetriever() {
-        assertNetworkDependentInitialization();
-
-        if (initialMessageRetriever == null) {
-            initialMessageRetriever = provider.provideInitialMessageRetriever();
-        }
-
-        return initialMessageRetriever;
-    }
-
     public static synchronized @NonNull MessageNotifier getMessageNotifier() {
         assertNetworkDependentInitialization();
+
         return messageNotifier;
+    }
+
+    public static synchronized @NonNull IncomingMessageObserver getIncomingMessageObserver() {
+        assertNetworkDependentInitialization();
+        if (incomingMessageObserver == null) {
+            incomingMessageObserver = provider.provideIncomingMessageObserver();
+        }
+
+        return incomingMessageObserver;
     }
 
     private static void assertNetworkDependentInitialization() {
@@ -289,8 +287,8 @@ public class ApplicationDependencies {
         @NonNull FrameRateTracker provideFrameRateTracker();
         @NonNull MegaphoneRepository provideMegaphoneRepository();
         @NonNull EarlyMessageCache provideEarlyMessageCache();
-        @NonNull InitialMessageRetriever provideInitialMessageRetriever();
         @NonNull MessageNotifier provideMessageNotifier();
+        @NonNull IncomingMessageObserver provideIncomingMessageObserver();
     }
 
     public interface NetworkIndependentProvider {

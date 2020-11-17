@@ -8,6 +8,7 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 
 import com.annimon.stream.Stream;
 
@@ -15,13 +16,28 @@ import su.sres.securesms.ContactSelectionActivity;
 import su.sres.securesms.ContactSelectionListFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.ContactsCursorLoader;
+import su.sres.securesms.contacts.sync.DirectoryHelper;
+import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.groups.GroupsV2CapabilityChecker;
 import su.sres.securesms.groups.ui.creategroup.details.AddGroupDetailsActivity;
+import su.sres.securesms.logging.Log;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.FeatureFlags;
+import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.concurrent.SimpleTask;
+import su.sres.securesms.util.views.SimpleProgressDialog;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
 public class CreateGroupActivity extends ContactSelectionActivity {
+
+    private static final String TAG = Log.tag(CreateGroupActivity.class);
 
     private static final int   MINIMUM_GROUP_SIZE       = 1;
     private static final short REQUEST_CODE_ADD_DETAILS = 17275;
@@ -110,10 +126,53 @@ public class CreateGroupActivity extends ContactSelectionActivity {
     }
 
     private void handleNextPressed() {
-        RecipientId[] ids = Stream.of(contactsFragment.getSelectedContacts())
-                .map(selectedContact -> selectedContact.getOrCreateRecipientId(this))
-                .toArray(RecipientId[]::new);
+        Stopwatch                              stopwatch         = new Stopwatch("Recipient Refresh");
+        SimpleProgressDialog.DismissibleDialog dismissibleDialog = SimpleProgressDialog.showDelayed(this);
 
-        startActivityForResult(AddGroupDetailsActivity.newIntent(this, ids), REQUEST_CODE_ADD_DETAILS);
+        SimpleTask.run(getLifecycle(), () -> {
+            List<RecipientId> ids = Stream.of(contactsFragment.getSelectedContacts())
+                    .map(selectedContact -> selectedContact.getOrCreateRecipientId(this))
+                    .toList();
+
+            List<Recipient> resolved = Recipient.resolvedList(ids);
+
+            stopwatch.split("resolve");
+
+            List<Recipient> registeredChecks = Stream.of(resolved)
+                    .filter(r -> r.getRegistered() == RecipientDatabase.RegisteredState.UNKNOWN)
+                    .toList();
+
+            Log.i(TAG, "Need to do " + registeredChecks.size() + " registration checks.");
+
+/*            for (Recipient recipient : registeredChecks) {
+                try {
+                    DirectoryHelper.refreshDirectoryFor(this, recipient, false);
+                } catch (IOException e) {
+                    Log.w(TAG, "Failed to refresh registered status for " + recipient.getId(), e);
+                }
+            }
+
+ */
+
+            stopwatch.split("registered");
+
+            if (FeatureFlags.groupsV2()) {
+                try {
+                    new GroupsV2CapabilityChecker().refreshCapabilitiesIfNecessary(resolved);
+                } catch (IOException e) {
+                    Log.w(TAG, "Failed to refresh all recipient capabilities.", e);
+                }
+            }
+
+            stopwatch.split("capabilities");
+
+            return ids;
+        }, ids -> {
+            dismissibleDialog.dismiss();
+
+            stopwatch.stop(TAG);
+
+            startActivityForResult(AddGroupDetailsActivity.newIntent(this, ids), REQUEST_CODE_ADD_DETAILS);
+        });
     }
 }

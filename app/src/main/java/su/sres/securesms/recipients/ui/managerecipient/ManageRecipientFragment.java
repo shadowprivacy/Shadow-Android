@@ -44,6 +44,7 @@ import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientExporter;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.ui.notifications.CustomNotificationsDialogFragment;
 import su.sres.securesms.util.DateUtils;
@@ -58,13 +59,18 @@ public class ManageRecipientFragment extends LoggingFragment {
     private static final String RECIPIENT_ID      = "RECIPIENT_ID";
     private static final String FROM_CONVERSATION = "FROM_CONVERSATION";
 
-    private static final int RETURN_FROM_MEDIA = 405;
+    private static final int REQUEST_CODE_RETURN_FROM_MEDIA = 405;
+    private static final int REQUEST_CODE_ADD_CONTACT       = 588;
+    private static final int REQUEST_CODE_VIEW_CONTACT      = 610;
 
     private ManageRecipientViewModel               viewModel;
     private GroupMemberListView                    sharedGroupList;
     private Toolbar                                toolbar;
     private TextView                               title;
     private TextView                               subtitle;
+    private View                                   contactRow;
+ //   private TextView                               contactText;
+ //   private ImageView                              contactIcon;
     private AvatarImageView                        avatar;
     private ThreadPhotoRailView                    threadPhotoRailView;
     private View                                   mediaCard;
@@ -113,6 +119,9 @@ public class ManageRecipientFragment extends LoggingFragment {
 
         avatar                      = view.findViewById(R.id.recipient_avatar);
         toolbar                     = view.findViewById(R.id.toolbar);
+        contactRow                  = view.findViewById(R.id.recipient_contact_row);
+       // contactText                 = view.findViewById(R.id.recipient_contact_text);
+       //  contactIcon                 = view.findViewById(R.id.recipient_contact_icon);
         title                       = view.findViewById(R.id.name);
         subtitle                    = view.findViewById(R.id.username_number);
         sharedGroupList             = view.findViewById(R.id.shared_group_list);
@@ -180,6 +189,7 @@ public class ManageRecipientFragment extends LoggingFragment {
             notificationsCard.setVisibility(View.GONE);
             groupMembershipCard.setVisibility(View.GONE);
             blockUnblockCard.setVisibility(View.GONE);
+            contactRow.setVisibility(View.GONE);
         } else {
             viewModel.getVisibleSharedGroups().observe(getViewLifecycleOwner(), members -> sharedGroupList.setMembers(members));
             viewModel.getSharedGroupsCountSummary().observe(getViewLifecycleOwner(), members -> groupsInCommonCount.setText(members));
@@ -200,6 +210,7 @@ public class ManageRecipientFragment extends LoggingFragment {
         viewModel.getRecipient().observe(getViewLifecycleOwner(), this::presentRecipient);
         viewModel.getMediaCursor().observe(getViewLifecycleOwner(), this::presentMediaCursor);
         viewModel.getMuteState().observe(getViewLifecycleOwner(), this::presentMuteState);
+        viewModel.getCanAddToAGroup().observe(getViewLifecycleOwner(), canAdd -> addToAGroup.setVisibility(canAdd ? View.VISIBLE : View.GONE));
 
         disappearingMessagesRow.setOnClickListener(v -> viewModel.handleExpirationSelection(requireContext()));
         block.setOnClickListener(v -> viewModel.onBlockClicked(requireActivity()));
@@ -242,12 +253,31 @@ public class ManageRecipientFragment extends LoggingFragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == RETURN_FROM_MEDIA) {
+        if (requestCode == REQUEST_CODE_RETURN_FROM_MEDIA) {
             applyMediaCursorFactory();
+        } else if (requestCode == REQUEST_CODE_ADD_CONTACT) {
+            // noop
+        } else if (requestCode == REQUEST_CODE_VIEW_CONTACT) {
+            // noop
         }
     }
 
     private void presentRecipient(@NonNull Recipient recipient) {
+        // [system contacts]
+        /* if (recipient.isSystemContact()) {
+            contactText.setText(R.string.ManageRecipientActivity_this_person_is_in_your_contacts);
+            contactIcon.setVisibility(View.VISIBLE);
+            contactRow.setOnClickListener(v -> {
+                startActivityForResult(new Intent(Intent.ACTION_VIEW, recipient.getContactUri()), REQUEST_CODE_VIEW_CONTACT);
+            });
+        } else {
+            contactText.setText(R.string.ManageRecipientActivity_add_to_system_contacts);
+            contactIcon.setVisibility(View.GONE);
+            contactRow.setOnClickListener(v -> {
+                startActivityForResult(RecipientExporter.export(recipient).asAddContactIntent(), REQUEST_CODE_ADD_CONTACT);
+            });
+        } */
+
         disappearingMessagesCard.setVisibility(recipient.isRegistered() ? View.VISIBLE : View.GONE);
         addToAGroup.setVisibility(recipient.isRegistered() ? View.VISIBLE : View.GONE);
 
@@ -289,7 +319,7 @@ public class ManageRecipientFragment extends LoggingFragment {
                 startActivityForResult(MediaPreviewActivity.intentFromMediaRecord(requireContext(),
                         mediaRecord,
                         ViewCompat.getLayoutDirection(threadPhotoRailView) == ViewCompat.LAYOUT_DIRECTION_LTR),
-                        RETURN_FROM_MEDIA));
+                        REQUEST_CODE_RETURN_FROM_MEDIA));
     }
 
     private void presentMuteState(@NonNull ManageRecipientViewModel.MuteState muteState) {

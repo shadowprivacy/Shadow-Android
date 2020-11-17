@@ -14,12 +14,9 @@ import java.util.Objects;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.IdentityDatabase;
-import su.sres.securesms.groups.GroupChangeBusyException;
-import su.sres.securesms.groups.GroupChangeFailedException;
+import su.sres.securesms.groups.GroupChangeException;
 import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.groups.GroupInsufficientRightsException;
 import su.sres.securesms.groups.GroupManager;
-import su.sres.securesms.groups.GroupNotAMemberException;
 import su.sres.securesms.groups.ui.GroupChangeErrorCallback;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.logging.Log;
@@ -78,12 +75,9 @@ final class RecipientDialogRepository {
                     try {
                         GroupManager.ejectFromGroup(context, Objects.requireNonNull(groupId).requireV2(), Recipient.resolved(recipientId));
                         return true;
-                    } catch (GroupInsufficientRightsException | GroupNotAMemberException e) {
+                    } catch (GroupChangeException | IOException e) {
                         Log.w(TAG, e);
-                        error.onError(GroupChangeFailureReason.NO_RIGHTS);
-                    } catch (GroupChangeFailedException | GroupChangeBusyException | IOException e) {
-                        Log.w(TAG, e);
-                        error.onError(GroupChangeFailureReason.OTHER);
+                        error.onError(GroupChangeFailureReason.fromException(e));
                     }
                     return false;
                 },
@@ -96,12 +90,9 @@ final class RecipientDialogRepository {
                     try {
                         GroupManager.setMemberAdmin(context, Objects.requireNonNull(groupId).requireV2(), recipientId, admin);
                         return true;
-                    } catch (GroupInsufficientRightsException | GroupNotAMemberException e) {
+                    } catch (GroupChangeException | IOException e) {
                         Log.w(TAG, e);
-                        error.onError(GroupChangeFailureReason.NO_RIGHTS);
-                    } catch (GroupChangeFailedException | GroupChangeBusyException | IOException e) {
-                        Log.w(TAG, e);
-                        error.onError(GroupChangeFailureReason.OTHER);
+                        error.onError(GroupChangeFailureReason.fromException(e));
                     }
                     return false;
                 },
@@ -122,6 +113,10 @@ final class RecipientDialogRepository {
                     return groupRecipients;
                 },
                 onComplete::accept);
+    }
+
+    public void getActiveGroupCount(@NonNull Consumer<Integer> onComplete) {
+        SignalExecutors.BOUNDED.execute(() -> onComplete.accept(DatabaseFactory.getGroupDatabase(context).getActiveGroupCount()));
     }
 
     interface RecipientCallback {

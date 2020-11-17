@@ -14,7 +14,8 @@ public final class Registry extends IssueRegistry {
     public List<Issue> getIssues() {
         return Arrays.asList(ShadowLogDetector.LOG_NOT_SHADOW,
                 ShadowLogDetector.LOG_NOT_APP,
-                ShadowLogDetector.INLINE_TAG);
+                ShadowLogDetector.INLINE_TAG,
+                VersionCodeDetector.VERSION_CODE_USAGE);
     }
 
     @Override

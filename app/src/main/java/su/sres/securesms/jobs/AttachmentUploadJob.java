@@ -94,15 +94,16 @@ public final class AttachmentUploadJob extends BaseJob {
 
     @Override
     public void onRun() throws Exception {
-        final ResumableUploadSpec resumableUploadSpec;
-        if (FeatureFlags.attachmentsV3()) {
-            Data inputData = requireInputData();
-            if (!inputData.hasString(ResumableUploadSpecJob.KEY_RESUME_SPEC)) {
-                throw new ResumeLocationInvalidException("V3 Attachment upload requires a ResumableUploadSpec");
-            }
+        Data inputData = getInputData();
+
+        ResumableUploadSpec resumableUploadSpec;
+
+        if (inputData != null && inputData.hasString(ResumableUploadSpecJob.KEY_RESUME_SPEC)) {
+            Log.d(TAG, "Using attachments V3");
 
             resumableUploadSpec = ResumableUploadSpec.deserialize(inputData.getString(ResumableUploadSpecJob.KEY_RESUME_SPEC));
         } else {
+            Log.d(TAG, "Using attachments V2");
             resumableUploadSpec = null;
         }
 
@@ -165,6 +166,7 @@ public final class AttachmentUploadJob extends BaseJob {
                     .withLength(attachment.getSize())
                     .withFileName(attachment.getFileName())
                     .withVoiceNote(attachment.isVoiceNote())
+                    .withBorderless(attachment.isBorderless())
                     .withWidth(attachment.getWidth())
                     .withHeight(attachment.getHeight())
                     .withUploadTimestamp(System.currentTimeMillis())

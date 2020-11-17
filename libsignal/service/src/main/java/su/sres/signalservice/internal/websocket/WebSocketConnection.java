@@ -151,6 +151,7 @@ public class WebSocketConnection extends WebSocketListener {
       keepAliveSender.shutdown();
       keepAliveSender = null;
     }
+    notifyAll();
   }
 
   public synchronized WebSocketRequestMessage readRequest(long timeoutMillis)

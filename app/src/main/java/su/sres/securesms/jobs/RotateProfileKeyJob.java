@@ -13,14 +13,11 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.util.StreamDetails;
 
 import java.util.List;
-import java.util.UUID;
 
 public class RotateProfileKeyJob extends BaseJob  {
 
@@ -29,9 +26,7 @@ public class RotateProfileKeyJob extends BaseJob  {
     public RotateProfileKeyJob() {
         this(new Job.Parameters.Builder()
                 .setQueue("__ROTATE_PROFILE_KEY__")
-                .addConstraint(NetworkConstraint.KEY)
-                .setMaxAttempts(25)
-                .setMaxInstances(1)
+                .setMaxInstances(2)
                 .build());
     }
 
@@ -50,24 +45,13 @@ public class RotateProfileKeyJob extends BaseJob  {
     }
 
     @Override
-    public void onRun() throws Exception {
-        SignalServiceAccountManager accountManager    = ApplicationDependencies.getSignalServiceAccountManager();
-        RecipientDatabase           recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-        ProfileKey                  profileKey        = ProfileKeyUtil.createNew();
-        Recipient                   self              = Recipient.self();
+    public void onRun() {
+        ProfileKey newProfileKey = ProfileKeyUtil.createNew();
+        Recipient  self          = Recipient.self();
 
-        recipientDatabase.setProfileKey(self.getId(), profileKey);
-        try (StreamDetails avatarStream = AvatarHelper.getSelfProfileAvatarStream(context)) {
-            if (FeatureFlags.versionedProfiles()) {
-                accountManager.setVersionedProfile(self.getUuid().get(),
-                        profileKey,
-                        Recipient.self().getProfileName().serialize(),
-                        avatarStream);
-            } else {
-                accountManager.setProfileName(profileKey, Recipient.self().getProfileName().serialize());
-                accountManager.setProfileAvatar(profileKey, avatarStream);
-            }
-        }
+        DatabaseFactory.getRecipientDatabase(context).setProfileKey(self.getId(), newProfileKey);
+
+        ApplicationDependencies.getJobManager().add(new ProfileUploadJob());
 
         ApplicationDependencies.getJobManager().add(new RefreshAttributesJob());
 
@@ -89,7 +73,7 @@ public class RotateProfileKeyJob extends BaseJob  {
 
     @Override
     protected boolean onShouldRetry(@NonNull Exception exception) {
-        return exception instanceof PushNetworkException;
+        return false;
     }
 
     public static final class Factory implements Job.Factory<RotateProfileKeyJob> {

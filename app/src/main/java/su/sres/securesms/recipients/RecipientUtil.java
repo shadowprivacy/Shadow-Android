@@ -1,7 +1,6 @@
 package su.sres.securesms.recipients;
 
 import android.content.Context;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -9,19 +8,22 @@ import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.database.ThreadDatabase;
+import su.sres.securesms.groups.GroupChangeBusyException;
+import su.sres.securesms.groups.GroupChangeException;
+import su.sres.securesms.groups.GroupChangeFailedException;
 import su.sres.securesms.groups.GroupManager;
 import su.sres.securesms.jobs.MultiDeviceBlockedUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceMessageRequestResponseJob;
 import su.sres.securesms.jobs.RotateProfileKeyJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.storage.StorageSyncHelper;
-import su.sres.securesms.util.FeatureFlags;
 import org.whispersystems.libsignal.util.guava.Optional;
+
+import java.io.IOException;
+
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 public class RecipientUtil {
@@ -41,19 +43,19 @@ public class RecipientUtil {
             throw new AssertionError(recipient.getId() + " - No UUID or phone number!");
         }
 
-        if (FeatureFlags.uuids() && !recipient.getUuid().isPresent()) {
+        // this won't be the case, since all recipients will have UUIDs
+   /*     if (!recipient.getUuid().isPresent()) {
 
-            // this won't be the case, since all recipients will have UUIDs
             Log.i(TAG, recipient.getId() + " is missing a UUID...");
-       /*     try {
+            try {
                 RegisteredState state = DirectoryHelper.refreshDirectoryFor(context, recipient, false);
                 recipient = Recipient.resolved(recipient.getId());
                 Log.i(TAG, "Successfully performed a UUID fetch for " + recipient.getId() + ". Registered: " + state);
             } catch (IOException e) {
                 Log.w(TAG, "Failed to fetch a UUID for " + recipient.getId() + ". Scheduling a future fetch and building an address without one.");
                 ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(recipient, false));
-            } */
-        }
+            }
+        } */
 
         return new SignalServiceAddress(Optional.fromNullable(recipient.getUuid().orNull()), Optional.fromNullable(recipient.resolve().getE164().orNull()));
     }
@@ -63,23 +65,48 @@ public class RecipientUtil {
         return resolved.isPushGroup() || resolved.hasServiceIdentifier();
     }
 
+    /**
+     * You can call this for non-groups and not have to handle any network errors.
+     */
     @WorkerThread
-    public static void block(@NonNull Context context, @NonNull Recipient recipient) {
+    public static void blockNonGroup(@NonNull Context context, @NonNull Recipient recipient) {
+        if (recipient.isGroup()) {
+            throw new AssertionError();
+        }
+
+        try {
+            block(context, recipient);
+        } catch (GroupChangeException | IOException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    /**
+     * You can call this for any type of recipient but must handle network errors that can occur from
+     * GV2.
+     * <p>
+     * GV2 operations can also take longer due to the network.
+     * */
+
+    @WorkerThread
+    public static void block(@NonNull Context context, @NonNull Recipient recipient)
+    throws GroupChangeBusyException, IOException, GroupChangeFailedException
+    {
         if (!isBlockable(recipient)) {
             throw new AssertionError("Recipient is not blockable!");
         }
 
-        Recipient resolved = recipient.resolve();
+        recipient = recipient.resolve();
 
-        DatabaseFactory.getRecipientDatabase(context).setBlocked(resolved.getId(), true);
-
-        if (resolved.isGroup()) {
-            leaveGroup(context, recipient);
+        if (recipient.isGroup() && recipient.getGroupId().get().isPush()) {
+            GroupManager.leaveGroupFromBlockOrMessageRequest(context, recipient.getGroupId().get().requirePush());
         }
 
-        if (resolved.isSystemContact() || resolved.isProfileSharing() || isProfileSharedViaGroup(context,resolved)) {
+        DatabaseFactory.getRecipientDatabase(context).setBlocked(recipient.getId(), true);
+
+        if (recipient.isSystemContact() || recipient.isProfileSharing() || isProfileSharedViaGroup(context, recipient)) {
             ApplicationDependencies.getJobManager().add(new RotateProfileKeyJob());
-            DatabaseFactory.getRecipientDatabase(context).setProfileSharing(resolved.getId(), false);
+            DatabaseFactory.getRecipientDatabase(context).setProfileSharing(recipient.getId(), false);
         }
 
         ApplicationDependencies.getJobManager().add(new MultiDeviceBlockedUpdateJob());
@@ -97,20 +124,6 @@ public class RecipientUtil {
 //        StorageSyncHelper.scheduleSyncForDataChange();
 
         ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(recipient.getId()));
-    }
-
-    @WorkerThread
-    public static void leaveGroup(@NonNull Context context, @NonNull Recipient recipient) {
-        Recipient resolved = recipient.resolve();
-
-        if (!resolved.isGroup()) {
-            throw new AssertionError("Not a group!");
-        }
-
-        if (!GroupManager.silentLeaveGroup(context, resolved.requireGroupId().requirePush())) {
-            Log.w(TAG, "Failed to leave group.");
-            Toast.makeText(context, R.string.RecipientPreferenceActivity_error_leaving_group, Toast.LENGTH_LONG).show();
-        }
     }
 
     /**
@@ -184,13 +197,13 @@ public class RecipientUtil {
 
     @WorkerThread
     private static boolean isMessageRequestAccepted(@NonNull Context context, long threadId, @NonNull Recipient threadRecipient) {
-        return threadRecipient.isLocalNumber()             ||
-                threadRecipient.isProfileSharing()          ||
-                threadRecipient.isSystemContact()           ||
-                threadRecipient.isForceSmsSelection()       ||
-                !threadRecipient.isRegistered()             ||
-                hasSentMessageInThread(context, threadId)   ||
-                noSecureMessagesInThread(context, threadId) ||
+        return threadRecipient.isLocalNumber()                       ||
+                threadRecipient.isProfileSharing()                    ||
+                threadRecipient.isSystemContact()                     ||
+                threadRecipient.isForceSmsSelection()                 ||
+                !threadRecipient.isRegistered()                       ||
+                hasSentMessageInThread(context, threadId)             ||
+                noSecureMessagesAndNoCallsInThread(context, threadId) ||
                 isPreMessageRequestThread(context, threadId);
     }
 
@@ -200,8 +213,9 @@ public class RecipientUtil {
     }
 
     @WorkerThread
-    private static boolean noSecureMessagesInThread(@NonNull Context context, long threadId) {
-        return DatabaseFactory.getMmsSmsDatabase(context).getSecureConversationCount(threadId) == 0;
+    private static boolean noSecureMessagesAndNoCallsInThread(@NonNull Context context, long threadId) {
+        return DatabaseFactory.getMmsSmsDatabase(context).getSecureConversationCount(threadId) == 0 &&
+                !DatabaseFactory.getThreadDatabase(context).hasReceivedAnyCallsSince(threadId, 0);
     }
 
     @WorkerThread

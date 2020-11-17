@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <su.sres.securesms.components.SwitchPreferenceCompat
                         android:defaultValue="false"
                         android:key="pref_toggle_push_messaging"
@@ -17,4 +18,8 @@
     <Preference android:key="pref_license_info"
                 android:title="@string/preferences__license_info"
                 android:persistent="false"/>
+
+    <Preference android:key="pref_internal"
+        android:title="@string/preferences__internal_preferences"
+        app:isPreferenceVisible="false" />
 </PreferenceScreen>

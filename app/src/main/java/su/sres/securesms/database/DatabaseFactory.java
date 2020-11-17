@@ -59,9 +59,6 @@ public class DatabaseFactory {
     private final KeyValueDatabase      keyValueDatabase;
     private final MegaphoneDatabase     megaphoneDatabase;
 
-// not used for now
-//  private final ConfigDatabase        configDatabase;
-
     public static DatabaseFactory getInstance(Context context) {
         synchronized (lock) {
             if (instance == null)
@@ -147,14 +144,6 @@ public class DatabaseFactory {
         return getInstance(context).stickerDatabase;
     }
 
-    /**
-     * not used for now
-     * <p>
-     * public static ConfigDatabase getConfigDatabase(Context context) {
-     * return getInstance(context).configDatabase;
-     * }
-     */
-
     public static StorageKeyDatabase getStorageKeyDatabase(Context context) {
         return getInstance(context).storageKeyDatabase;
     }
@@ -182,8 +171,8 @@ public class DatabaseFactory {
         }
     }
 
-    static SQLCipherOpenHelper getRawDatabase(Context context) {
-        return getInstance(context).databaseHelper;
+    public static boolean inTransaction(Context context) {
+        return getInstance(context).databaseHelper.getWritableDatabase().inTransaction();
     }
 
     private DatabaseFactory(@NonNull Context context) {

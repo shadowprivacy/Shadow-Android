@@ -88,6 +88,7 @@ import su.sres.securesms.components.reminder.ReminderView;
 import su.sres.securesms.components.reminder.ServiceOutageReminder;
 import su.sres.securesms.components.reminder.SystemSmsImportReminder;
 import su.sres.securesms.components.reminder.UnauthorizedReminder;
+import su.sres.securesms.conversation.ConversationFragment;
 import su.sres.securesms.conversationlist.model.Conversation;
 import su.sres.securesms.conversationlist.model.MessageResult;
 import su.sres.securesms.conversationlist.model.SearchResult;
@@ -265,8 +266,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     @Override
     public void onStart() {
         super.onStart();
-        // TODO [greyson] Re-enable when we figure out how to invalidate the cache after a system theme change
-//    ConversationFragment.prepare(requireContext());
+        ConversationFragment.prepare(requireContext());
     }
 
     @Override
@@ -322,13 +322,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-            if (resultCode != RESULT_OK) {
-                return;
-            }
-        }
-
-    @Override
     public void onConversationClicked(@NonNull ThreadRecord threadRecord) {
         hideKeyboard();
         getNavigator().goToConversation(threadRecord.getRecipient().getId(),
@@ -381,7 +374,9 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
     @Override
     public void onMegaphoneToastRequested(@NonNull String string) {
-        Snackbar.make(fab, string, Snackbar.LENGTH_LONG).show();
+        Snackbar.make(fab, string, Snackbar.LENGTH_LONG)
+                .setTextColor(Color.WHITE)
+                .show();
     }
 
     @Override

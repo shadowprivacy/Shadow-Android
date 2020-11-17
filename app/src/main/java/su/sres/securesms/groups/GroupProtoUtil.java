@@ -87,7 +87,7 @@ public final class GroupProtoUtil {
             return Recipient.UNKNOWN;
         }
 
-        return Recipient.externalPush(context, uuid, null);
+        return Recipient.externalPush(context, uuid, null, false);
     }
 
     @WorkerThread

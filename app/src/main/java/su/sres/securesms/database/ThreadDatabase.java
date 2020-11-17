@@ -41,15 +41,17 @@ import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.mms.SlideDeck;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientDetails;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
+import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.JsonUtils;
+import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.groupsv2.DecryptedGroupUtil;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 
-import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.Closeable;
@@ -172,14 +174,16 @@ public class ThreadDatabase extends Database {
       }
     }
 
-    ContentValues contentValues = new ContentValues(7);
-    contentValues.put(DATE, date - date % 1000);
+    ContentValues contentValues = new ContentValues();
+    if (!MmsSmsColumns.Types.isProfileChange(type)) {
+      contentValues.put(DATE, date - date % 1000);
+      contentValues.put(SNIPPET, body);
+      contentValues.put(SNIPPET_URI, attachment == null ? null : attachment.toString());
+      contentValues.put(SNIPPET_TYPE, type);
+      contentValues.put(SNIPPET_CONTENT_TYPE, contentType);
+      contentValues.put(SNIPPET_EXTRAS, extraSerialized);
+    }
     contentValues.put(MESSAGE_COUNT, count);
-    contentValues.put(SNIPPET, body);
-    contentValues.put(SNIPPET_URI, attachment == null ? null : attachment.toString());
-    contentValues.put(SNIPPET_TYPE, type);
-    contentValues.put(SNIPPET_CONTENT_TYPE, contentType);
-    contentValues.put(SNIPPET_EXTRAS, extraSerialized);
     contentValues.put(STATUS, status);
     contentValues.put(DELIVERY_RECEIPT_COUNT, deliveryReceiptCount);
     contentValues.put(READ_RECEIPT_COUNT, readReceiptCount);
@@ -189,13 +193,21 @@ public class ThreadDatabase extends Database {
       contentValues.put(ARCHIVED, 0);
     }
 
+    if (count != getConversationMessageCount(threadId)) {
+      contentValues.put(LAST_SCROLLED, 0);
+    }
+
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
     notifyConversationListListeners();
   }
 
   public void updateSnippet(long threadId, String snippet, @Nullable Uri attachment, long date, long type, boolean unarchive) {
-    ContentValues contentValues = new ContentValues(4);
+    if (MmsSmsColumns.Types.isProfileChange(type)) {
+      return;
+    }
+
+    ContentValues contentValues = new ContentValues();
 
     contentValues.put(DATE, date - date % 1000);
     contentValues.put(SNIPPET, snippet);
@@ -304,7 +316,11 @@ public class ThreadDatabase extends Database {
   }
 
   public boolean hasCalledSince(@NonNull Recipient recipient, long timestamp) {
-    return DatabaseFactory.getMmsSmsDatabase(context).hasReceivedAnyCallsSince(getThreadIdFor(recipient), timestamp);
+    return hasReceivedAnyCallsSince(getThreadIdFor(recipient), timestamp);
+  }
+
+  public boolean hasReceivedAnyCallsSince(long threadId, long timestamp) {
+    return DatabaseFactory.getMmsSmsDatabase(context).hasReceivedAnyCallsSince(threadId, timestamp);
   }
 
   public List<MarkedMessageInfo> setEntireThreadRead(long threadId) {
@@ -658,6 +674,17 @@ public class ThreadDatabase extends Database {
     }
   }
 
+  public int getConversationMessageCount(long threadId) {
+    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+
+    try (Cursor cursor = db.query(TABLE_NAME, new String[]{MESSAGE_COUNT}, ID_WHERE, new String[]{String.valueOf(threadId)}, null, null, null)) {
+      if (cursor != null && cursor.moveToFirst()) {
+        return CursorUtil.requireInt(cursor, MESSAGE_COUNT);
+      }
+    }
+    return 0;
+  }
+
   public void deleteConversation(long threadId) {
     DatabaseFactory.getSmsDatabase(context).deleteThread(threadId);
     DatabaseFactory.getMmsDatabase(context).deleteThread(threadId);
@@ -702,6 +729,20 @@ public class ThreadDatabase extends Database {
     }
   }
 
+  public long getOrCreateValidThreadId(@NonNull Recipient recipient, long candidateId) {
+    return getOrCreateValidThreadId(recipient, candidateId, DistributionTypes.DEFAULT);
+  }
+
+  public long getOrCreateValidThreadId(@NonNull Recipient recipient, long candidateId, int distributionType) {
+    if (candidateId != -1) {
+     // Optional<Long> remapped = RemappedRecords.getInstance().getThread(context, candidateId);
+     // return remapped.isPresent() ? remapped.get() : candidateId;
+      return candidateId;
+    } else {
+      return getThreadIdFor(recipient, distributionType);
+    }
+  }
+
   public long getThreadIdFor(@NonNull Recipient recipient) {
     return getThreadIdFor(recipient, DistributionTypes.DEFAULT);
   }
@@ -715,7 +756,7 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  public Long getThreadIdFor(@NonNull RecipientId recipientId) {
+  public @Nullable Long getThreadIdFor(@NonNull RecipientId recipientId) {
     SQLiteDatabase db            = databaseHelper.getReadableDatabase();
     String         where         = RECIPIENT_ID + " = ?";
     String[]       recipientsArg = new String[]{recipientId.serialize()};
@@ -772,12 +813,18 @@ public class ThreadDatabase extends Database {
   }
 
   public boolean update(long threadId, boolean unarchive) {
+    return update(threadId, unarchive, true);
+  }
+
+  public boolean update(long threadId, boolean unarchive, boolean allowDeletion) {
     MmsSmsDatabase mmsSmsDatabase = DatabaseFactory.getMmsSmsDatabase(context);
     long count                    = mmsSmsDatabase.getConversationCount(threadId);
 
     if (count == 0) {
-      deleteThread(threadId);
-      notifyConversationListListeners();
+      if (allowDeletion) {
+        deleteThread(threadId);
+        notifyConversationListListeners();
+      }
       return true;
     }
 
@@ -803,6 +850,81 @@ public class ThreadDatabase extends Database {
       if (reader != null)
         reader.close();
     }
+  }
+
+  /* @NonNull MergeResult merge(@NonNull RecipientId primaryRecipientId, @NonNull RecipientId secondaryRecipientId) {
+    if (!databaseHelper.getWritableDatabase().inTransaction()) {
+      throw new IllegalStateException("Must be in a transaction!");
+    }
+
+    Log.w(TAG, "Merging threads. Primary: " + primaryRecipientId + ", Secondary: " + secondaryRecipientId);
+
+    ThreadRecord primary   = getThreadRecord(getThreadIdFor(primaryRecipientId));
+    ThreadRecord secondary = getThreadRecord(getThreadIdFor(secondaryRecipientId));
+
+    if (primary != null && secondary == null) {
+      Log.w(TAG, "[merge] Only had a thread for primary. Returning that.");
+      return new MergeResult(primary.getThreadId(), false);
+    } else if (primary == null && secondary != null) {
+      Log.w(TAG, "[merge] Only had a thread for secondary. Updating it to have the recipientId of the primary.");
+
+      ContentValues values = new ContentValues();
+      values.put(RECIPIENT_ID, primaryRecipientId.serialize());
+
+      databaseHelper.getWritableDatabase().update(TABLE_NAME, values, ID_WHERE, SqlUtil.buildArgs(secondary.getThreadId()));
+      return new MergeResult(secondary.getThreadId(), false);
+    } else if (primary == null && secondary == null) {
+      Log.w(TAG, "[merge] No thread for either.");
+      return new MergeResult(-1, false);
+    } else {
+      Log.w(TAG, "[merge] Had a thread for both. Deleting the secondary and merging the attributes together.");
+
+      SQLiteDatabase db = databaseHelper.getWritableDatabase();
+
+      db.delete(TABLE_NAME, ID_WHERE, SqlUtil.buildArgs(secondary.getThreadId()));
+
+      if (primary.getExpiresIn() != secondary.getExpiresIn()) {
+        ContentValues values = new ContentValues();
+        if (primary.getExpiresIn() == 0) {
+          values.put(EXPIRES_IN, secondary.getExpiresIn());
+        } else if (secondary.getExpiresIn() == 0) {
+          values.put(EXPIRES_IN, primary.getExpiresIn());
+        } else {
+          values.put(EXPIRES_IN, Math.min(primary.getExpiresIn(), secondary.getExpiresIn()));
+        }
+
+        db.update(TABLE_NAME, values, ID_WHERE, SqlUtil.buildArgs(primary.getThreadId()));
+      }
+
+      ContentValues draftValues = new ContentValues();
+      draftValues.put(DraftDatabase.THREAD_ID, primary.getThreadId());
+      db.update(DraftDatabase.TABLE_NAME, draftValues, DraftDatabase.THREAD_ID + " = ?", SqlUtil.buildArgs(secondary.getThreadId()));
+
+      ContentValues searchValues = new ContentValues();
+      searchValues.put(SearchDatabase.THREAD_ID, primary.getThreadId());
+      db.update(SearchDatabase.SMS_FTS_TABLE_NAME, searchValues, SearchDatabase.THREAD_ID + " = ?", SqlUtil.buildArgs(secondary.getThreadId()));
+      db.update(SearchDatabase.MMS_FTS_TABLE_NAME, searchValues, SearchDatabase.THREAD_ID + " = ?", SqlUtil.buildArgs(secondary.getThreadId()));
+
+      RemappedRecords.getInstance().addThread(context, secondary.getThreadId(), primary.getThreadId());
+
+      return new MergeResult(primary.getThreadId(), true);
+    }
+  } */
+
+  private @Nullable ThreadRecord getThreadRecord(@Nullable Long threadId) {
+    if (threadId == null) {
+      return null;
+    }
+
+    String query = createQuery(TABLE_NAME + "." + ID + " = ?", 1);
+
+    try (Cursor cursor = databaseHelper.getReadableDatabase().rawQuery(query, SqlUtil.buildArgs(threadId))) {
+      if (cursor != null && cursor.moveToFirst()) {
+        return readerFor(cursor).getCurrent();
+      }
+    }
+
+    return null;
   }
 
   private @Nullable Uri getAttachmentUriFor(MessageRecord record) {
@@ -926,9 +1048,29 @@ public class ThreadDatabase extends Database {
     }
 
     public ThreadRecord getCurrent() {
-      RecipientId recipientId = RecipientId.from(cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.RECIPIENT_ID)));
-      Recipient   recipient   = Recipient.live(recipientId).get();
+      RecipientId       recipientId       = RecipientId.from(CursorUtil.requireLong(cursor, ThreadDatabase.RECIPIENT_ID));
+      RecipientDatabase.RecipientSettings recipientSettings = RecipientDatabase.getRecipientSettings(context, cursor);
 
+      Recipient recipient;
+
+      if (recipientSettings.getGroupId() != null) {
+        GroupDatabase.GroupRecord group = new GroupDatabase.Reader(cursor).getCurrent();
+
+        if (group != null) {
+          RecipientDetails details = new RecipientDetails(group.getTitle(),
+                  group.hasAvatar() ? Optional.of(group.getAvatarId()) : Optional.absent(),
+                  false,
+                  false,
+                  recipientSettings,
+                  null);
+          recipient = new Recipient(recipientId, details, false);
+        } else {
+          recipient = Recipient.live(recipientId).get();
+        }
+      } else {
+        RecipientDetails details = RecipientDetails.forIndividual(context, recipientSettings);
+        recipient = new Recipient(recipientId, details, false);
+      }
 
       int readReceiptCount = TextSecurePreferences.isReadReceiptsEnabled(context) ? cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.READ_RECEIPT_COUNT))
               : 0;
@@ -1116,6 +1258,16 @@ public class ThreadDatabase extends Database {
 
     public long getLastScrolled() {
       return lastScrolled;
+    }
+  }
+
+  static final class MergeResult {
+    final long    threadId;
+    final boolean neededMerge;
+
+    private MergeResult(long threadId, boolean neededMerge) {
+      this.threadId    = threadId;
+      this.neededMerge = neededMerge;
     }
   }
 }

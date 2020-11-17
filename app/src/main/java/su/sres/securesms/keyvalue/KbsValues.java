@@ -10,6 +10,7 @@ import su.sres.signalservice.api.kbs.MasterKey;
 public final class KbsValues extends SignalStoreValues {
 
     private static final String MASTER_KEY          = "kbs.registration_lock_master_key";
+    private static final String LAST_CREATE_FAILED_TIMESTAMP = "kbs.last_create_failed_timestamp";
 
     KbsValues(KeyValueStore store) {
         super(store);
@@ -57,5 +58,13 @@ public final class KbsValues extends SignalStoreValues {
     private synchronized @Nullable MasterKey getMasterKey() {
         byte[] blob = getBlob(MASTER_KEY, null);
         return blob != null ? new MasterKey(blob) : null;
+    }
+
+    // reserved for possible future use
+    public synchronized void resetMasterKey() {
+        getStore().beginWrite()
+                .putBlob(MASTER_KEY, MasterKey.createNew(new SecureRandom()).serialize())
+                .putLong(LAST_CREATE_FAILED_TIMESTAMP, -1)
+                .commit();
     }
 }

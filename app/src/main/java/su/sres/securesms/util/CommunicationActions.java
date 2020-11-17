@@ -27,7 +27,6 @@ import su.sres.securesms.R;
 import su.sres.securesms.WebRtcCallActivity;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.messagerequests.CalleeMustAcceptMessageRequestDialogFragment;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.ringrtc.RemotePeer;
@@ -204,16 +203,11 @@ public class CommunicationActions {
 
               MessageSender.onMessageSent();
 
-              if (FeatureFlags.profileForCalling() && recipient.resolve().getProfileKey() == null) {
-                CalleeMustAcceptMessageRequestDialogFragment.create(recipient.getId())
-                        .show(activity.getSupportFragmentManager(), null);
-              } else {
-                Intent activityIntent = new Intent(activity, WebRtcCallActivity.class);
+              Intent activityIntent = new Intent(activity, WebRtcCallActivity.class);
 
-                activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+              activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-                activity.startActivity(activityIntent);
-              }
+              activity.startActivity(activityIntent);
             })
             .execute();
   }
@@ -235,17 +229,12 @@ public class CommunicationActions {
 
               MessageSender.onMessageSent();
 
-              if (FeatureFlags.profileForCalling() && recipient.resolve().getProfileKey() == null) {
-                CalleeMustAcceptMessageRequestDialogFragment.create(recipient.getId())
-                        .show(activity.getSupportFragmentManager(), null);
-              } else {
-                Intent activityIntent = new Intent(activity, WebRtcCallActivity.class);
+              Intent activityIntent = new Intent(activity, WebRtcCallActivity.class);
 
-                activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        .putExtra(WebRtcCallActivity.EXTRA_ENABLE_VIDEO_IF_AVAILABLE, true);
+              activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                      .putExtra(WebRtcCallActivity.EXTRA_ENABLE_VIDEO_IF_AVAILABLE, true);
 
-                activity.startActivity(activityIntent);
-              }
+              activity.startActivity(activityIntent);
             })
             .execute();
 

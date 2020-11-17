@@ -1,21 +1,10 @@
 package su.sres.securesms.database.helpers;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.net.Uri;
-import android.os.Build;
-import android.os.SystemClock;
-import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
-import android.text.TextUtils;
 
-import com.annimon.stream.Stream;
-import com.bumptech.glide.Glide;
-
-import su.sres.securesms.contacts.avatars.ContactColorsLegacy;
 import su.sres.securesms.database.JobDatabase;
 import su.sres.securesms.database.KeyValueDatabase;
 import su.sres.securesms.database.MegaphoneDatabase;
@@ -25,12 +14,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteDatabaseHook;
 import net.sqlcipher.database.SQLiteOpenHelper;
 
-import su.sres.securesms.storage.StorageSyncHelper;
-import su.sres.securesms.profiles.AvatarHelper;
-import su.sres.securesms.profiles.ProfileName;
-import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.crypto.DatabaseSecret;
-import su.sres.securesms.crypto.MasterSecret;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DraftDatabase;
 import su.sres.securesms.database.GroupDatabase;
@@ -47,24 +31,8 @@ import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.StorageKeyDatabase;
 import su.sres.securesms.database.ThreadDatabase;
-import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.jobs.RefreshPreKeysJob;
-import su.sres.securesms.notifications.NotificationChannels;
-import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
-import su.sres.securesms.service.KeyCachingService;
-import su.sres.securesms.util.Base64;
-import su.sres.securesms.util.FileUtils;
-import su.sres.securesms.util.ServiceUtil;
-import su.sres.securesms.util.SqlUtil;
-import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.List;
 
 public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
@@ -73,8 +41,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
   private static final int SERVER_DELIVERED_TIMESTAMP       = 64;
   private static final int QUOTE_CLEANUP                    = 65;
+  private static final int BORDERLESS                       = 66;
 
-  private static final int    DATABASE_VERSION = 65;
+  private static final int    DATABASE_VERSION = 66;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -180,6 +149,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         }
 
         Log.i(TAG, "[QuoteCleanup] Cleaned up " + count + " quotes.");
+      }
+
+      if (oldVersion < BORDERLESS) {
+        db.execSQL("ALTER TABLE part ADD COLUMN borderless INTEGER DEFAULT 0");
       }
 
       db.setTransactionSuccessful();

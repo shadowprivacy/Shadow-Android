@@ -38,6 +38,7 @@ public interface MmsSmsColumns {
     protected static final long JOINED_TYPE                        = 4;
     protected static final long UNSUPPORTED_MESSAGE_TYPE           = 5;
     protected static final long INVALID_MESSAGE_TYPE               = 6;
+    protected static final long PROFILE_CHANGE_TYPE                = 7;
 
     protected static final long BASE_INBOX_TYPE                    = 20;
     protected static final long BASE_OUTBOX_TYPE                   = 21;
@@ -272,6 +273,10 @@ public interface MmsSmsColumns {
       }
 
       return BASE_INBOX_TYPE;
+    }
+
+    public static boolean isProfileChange(long type) {
+      return type == PROFILE_CHANGE_TYPE;
     }
 
     public static int translateToSystemBaseType(long type) {

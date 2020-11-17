@@ -3,12 +3,18 @@ package su.sres.securesms.util;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.android.collect.Sets;
+
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 public final class StringUtil {
 
-    private StringUtil() {
-    }
+    private static final Set<Character> WHITESPACE = Sets.newHashSet('\u200E',  // left-to-right mark
+            '\u200F',  // right-to-left mark
+            '\u2007'); // figure space
+
+    private StringUtil() {}
 
     /**
      * Trims a name string to fit into the byte length requirement.
@@ -27,5 +33,38 @@ public final class StringUtil {
         }
 
         return name;
+    }
+
+    /**
+     * @return True if the string is empty, or if it contains nothing but whitespace characters.
+     *         Accounts for various unicode whitespace characters.
+     */
+    public static boolean isVisuallyEmpty(@Nullable String value) {
+        if (value == null || value.length() == 0) {
+            return true;
+        }
+
+        for (int i = 0; i < value.length(); i++) {
+            if (!isVisuallyEmpty(value.charAt(i))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @return True if the character is invisible or whitespace. Accounts for various unicode
+     *         whitespace characters.
+     */
+    public static boolean isVisuallyEmpty(char c) {
+        return Character.isWhitespace(c) || WHITESPACE.contains(c);
+    }
+
+    /**
+     * @return A string representation of the provided unicode code point.
+     */
+    public static @NonNull String codePointToString(int codePoint) {
+        return new String(Character.toChars(codePoint));
     }
 }

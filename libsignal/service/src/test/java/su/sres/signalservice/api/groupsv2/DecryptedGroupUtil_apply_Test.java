@@ -1,6 +1,10 @@
 package su.sres.signalservice.api.groupsv2;
 
+import com.google.protobuf.ByteString;
+
 import org.junit.Test;
+
+import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.storageservice.protos.groups.AccessControl;
 import su.sres.storageservice.protos.groups.Member;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
@@ -171,6 +175,36 @@ public final class DecryptedGroupUtil_apply_Test {
     }
 
     @Test
+    public void apply_modify_admin_profile_keys() throws DecryptedGroupUtil.NotAbleToApplyChangeException {
+        UUID            adminUuid    = UUID.randomUUID();
+        ProfileKey      profileKey1  = randomProfileKey();
+        ProfileKey      profileKey2a = randomProfileKey();
+        ProfileKey      profileKey2b = randomProfileKey();
+        DecryptedMember member1      = member(UUID.randomUUID(), profileKey1);
+        DecryptedMember admin2a      = admin(adminUuid, profileKey2a);
+
+        DecryptedGroup newGroup = DecryptedGroupUtil.apply(DecryptedGroup.newBuilder()
+                        .setRevision(13)
+                        .addMembers(member1)
+                        .addMembers(admin2a)
+                        .build(),
+                DecryptedGroupChange.newBuilder()
+                        .setRevision(14)
+                        .addModifiedProfileKeys(DecryptedMember.newBuilder(DecryptedMember.newBuilder()
+                                .setUuid(UuidUtil.toByteString(adminUuid))
+                                .build())
+                                .setProfileKey(ByteString.copyFrom(profileKey2b.serialize())))
+                        .build());
+
+        assertEquals(DecryptedGroup.newBuilder()
+                        .setRevision(14)
+                        .addMembers(member1)
+                        .addMembers(admin(adminUuid, profileKey2b))
+                        .build(),
+                newGroup);
+    }
+
+    @Test
     public void apply_new_pending_member() throws DecryptedGroupUtil.NotAbleToApplyChangeException {
         DecryptedMember        member1 = member(UUID.randomUUID());
         DecryptedPendingMember pending = pendingMember(UUID.randomUUID());
@@ -265,6 +299,43 @@ public final class DecryptedGroupUtil_apply_Test {
                         .setRevision(11)
                         .addMembers(member1)
                         .addMembers(member2)
+                        .build(),
+                newGroup);
+    }
+
+    @Test
+    public void skip_promote_pending_member_by_direct_add() throws DecryptedGroupUtil.NotAbleToApplyChangeException {
+        ProfileKey             profileKey2  = randomProfileKey();
+        ProfileKey             profileKey3  = randomProfileKey();
+        DecryptedMember        member1      = member(UUID.randomUUID());
+        UUID                   pending2Uuid = UUID.randomUUID();
+        UUID                   pending3Uuid = UUID.randomUUID();
+        UUID                   pending4Uuid = UUID.randomUUID();
+        DecryptedPendingMember pending2     = pendingMember(pending2Uuid);
+        DecryptedPendingMember pending3     = pendingMember(pending3Uuid);
+        DecryptedPendingMember pending4     = pendingMember(pending4Uuid);
+        DecryptedMember        member2      = member(pending2Uuid, profileKey2);
+        DecryptedMember        member3      = member(pending3Uuid, profileKey3);
+
+        DecryptedGroup newGroup = DecryptedGroupUtil.apply(DecryptedGroup.newBuilder()
+                        .setRevision(10)
+                        .addMembers(member1)
+                        .addPendingMembers(pending2)
+                        .addPendingMembers(pending3)
+                        .addPendingMembers(pending4)
+                        .build(),
+                DecryptedGroupChange.newBuilder()
+                        .setRevision(11)
+                        .addNewMembers(member2)
+                        .addNewMembers(member3)
+                        .build());
+
+        assertEquals(DecryptedGroup.newBuilder()
+                        .setRevision(11)
+                        .addMembers(member1)
+                        .addMembers(member2)
+                        .addMembers(member3)
+                        .addPendingMembers(pending4)
                         .build(),
                 newGroup);
     }

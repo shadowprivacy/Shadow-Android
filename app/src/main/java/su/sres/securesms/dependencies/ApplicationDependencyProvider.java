@@ -16,6 +16,7 @@ import su.sres.securesms.jobs.PushProcessMessageJob;
 import su.sres.securesms.jobs.PushTextSendJob;
 import su.sres.securesms.jobs.ReactionSendJob;
 import su.sres.securesms.jobs.TypingSendJob;
+import su.sres.securesms.messages.IncomingMessageObserver;
 import su.sres.securesms.messages.IncomingMessageProcessor;
 import su.sres.securesms.crypto.storage.SignalProtocolStoreImpl;
 import su.sres.securesms.database.DatabaseFactory;
@@ -28,14 +29,12 @@ import su.sres.securesms.jobs.FastJobStorage;
 import su.sres.securesms.jobs.JobManagerFactories;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.megaphone.MegaphoneRepository;
-import su.sres.securesms.messages.InitialMessageRetriever;
 import su.sres.securesms.notifications.DefaultMessageNotifier;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.OptimizedMessageNotifier;
 import su.sres.securesms.push.SecurityEventListener;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
-import su.sres.securesms.messages.IncomingMessageObserver;
 import su.sres.securesms.util.AlarmSleepTimer;
 import su.sres.securesms.util.EarlyMessageCache;
 import su.sres.securesms.util.FeatureFlags;
@@ -175,14 +174,13 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     }
 
     @Override
-    public @NonNull InitialMessageRetriever provideInitialMessageRetriever() {
-        return new InitialMessageRetriever();
+    public @NonNull MessageNotifier provideMessageNotifier() {
+        return new OptimizedMessageNotifier(new DefaultMessageNotifier());
     }
 
     @Override
-    public @NonNull
-    MessageNotifier provideMessageNotifier() {
-        return new OptimizedMessageNotifier(new DefaultMessageNotifier());
+    public @NonNull IncomingMessageObserver provideIncomingMessageObserver() {
+        return new IncomingMessageObserver(context);
     }
 
     private static class DynamicCredentialsProvider implements CredentialsProvider {

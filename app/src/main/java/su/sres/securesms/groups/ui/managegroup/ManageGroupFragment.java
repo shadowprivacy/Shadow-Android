@@ -3,6 +3,7 @@ package su.sres.securesms.groups.ui.managegroup;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -22,6 +23,7 @@ import androidx.lifecycle.ViewModelProviders;
 import com.google.android.material.snackbar.Snackbar;
 
 import su.sres.securesms.AvatarPreviewActivity;
+import su.sres.securesms.MainActivity;
 import su.sres.securesms.MediaPreviewActivity;
 import su.sres.securesms.MuteDialog;
 import su.sres.securesms.PushContactSelectionActivity;
@@ -35,7 +37,9 @@ import su.sres.securesms.contacts.avatars.FallbackPhoto80dp;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.ui.GroupMemberListView;
 import su.sres.securesms.groups.ui.LeaveGroupDialog;
+import su.sres.securesms.groups.ui.managegroup.dialogs.GroupInviteSentDialog;
 import su.sres.securesms.groups.ui.managegroup.dialogs.GroupRightsDialog;
+import su.sres.securesms.groups.ui.managegroup.dialogs.GroupsLearnMoreBottomSheetDialogFragment;
 import su.sres.securesms.groups.ui.pendingmemberinvites.PendingMemberInvitesActivity;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediaoverview.MediaOverviewActivity;
@@ -48,6 +52,7 @@ import su.sres.securesms.recipients.ui.bottomsheet.RecipientBottomSheetDialogFra
 import su.sres.securesms.recipients.ui.notifications.CustomNotificationsDialogFragment;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.LifecycleCursorWrapper;
+import su.sres.securesms.util.views.LearnMoreTextView;
 
 import java.util.List;
 import java.util.Locale;
@@ -67,6 +72,7 @@ public class ManageGroupFragment extends LoggingFragment {
     private TextView                           pendingMembersCount;
     private Toolbar                            toolbar;
     private TextView                           groupName;
+    private LearnMoreTextView                  groupV1Indicator;
     private TextView                           memberCountUnderAvatar;
     private TextView                           memberCountAboveList;
     private AvatarImageView                    avatar;
@@ -122,6 +128,7 @@ public class ManageGroupFragment extends LoggingFragment {
         avatar                      = view.findViewById(R.id.group_avatar);
         toolbar                     = view.findViewById(R.id.toolbar);
         groupName                   = view.findViewById(R.id.name);
+        groupV1Indicator            = view.findViewById(R.id.manage_group_group_v1_indicator);
         memberCountUnderAvatar      = view.findViewById(R.id.member_count);
         memberCountAboveList        = view.findViewById(R.id.member_count_2);
         groupMemberList             = view.findViewById(R.id.group_members);
@@ -150,6 +157,9 @@ public class ManageGroupFragment extends LoggingFragment {
         customNotificationsButton   = view.findViewById(R.id.group_custom_notifications_button);
         customNotificationsRow      = view.findViewById(R.id.group_custom_notifications_row);
         toggleAllMembers            = view.findViewById(R.id.toggle_all_members);
+
+        groupV1Indicator.setOnLinkClickListener(v -> GroupsLearnMoreBottomSheetDialogFragment.show(requireFragmentManager()));
+        groupV1Indicator.setLearnMoreVisible(true);
 
         return view;
     }
@@ -205,6 +215,7 @@ public class ManageGroupFragment extends LoggingFragment {
 
         viewModel.getTitle().observe(getViewLifecycleOwner(), groupName::setText);
         viewModel.getMemberCountSummary().observe(getViewLifecycleOwner(), memberCountUnderAvatar::setText);
+        viewModel.getShowLegacyIndicator().observe(getViewLifecycleOwner(), showLegacyIndicators -> groupV1Indicator.setVisibility(showLegacyIndicators ? View.VISIBLE : View.GONE));
         viewModel.getFullMemberCountSummary().observe(getViewLifecycleOwner(), memberCountAboveList::setText);
         viewModel.getGroupRecipient().observe(getViewLifecycleOwner(), groupRecipient -> {
             avatar.setRecipient(groupRecipient);
@@ -233,10 +244,7 @@ public class ManageGroupFragment extends LoggingFragment {
         });
 
         leaveGroup.setVisibility(groupId.isPush() ? View.VISIBLE : View.GONE);
-        leaveGroup.setOnClickListener(v -> LeaveGroupDialog.handleLeavePushGroup(context,
-                getLifecycle(),
-                groupId.requirePush(),
-                null));
+        leaveGroup.setOnClickListener(v -> LeaveGroupDialog.handleLeavePushGroup(requireActivity(), groupId.requirePush(), () -> startActivity(new Intent(requireActivity(), MainActivity.class))));
 
         viewModel.getDisappearingMessageTimer().observe(getViewLifecycleOwner(), string -> disappearingMessages.setText(string));
 
@@ -318,6 +326,7 @@ public class ManageGroupFragment extends LoggingFragment {
         }
 
         viewModel.getSnackbarEvents().observe(getViewLifecycleOwner(), this::handleSnackbarEvent);
+        viewModel.getInvitedDialogEvents().observe(getViewLifecycleOwner(), this::handleInvitedDialogEvent);
 
         viewModel.getCanLeaveGroup().observe(getViewLifecycleOwner(), canLeave -> leaveGroup.setVisibility(canLeave ? View.VISIBLE : View.GONE));
         viewModel.getCanBlockGroup().observe(getViewLifecycleOwner(), canBlock -> {
@@ -362,7 +371,11 @@ public class ManageGroupFragment extends LoggingFragment {
     }
 
     private void handleSnackbarEvent(@NonNull ManageGroupViewModel.SnackbarEvent snackbarEvent) {
-        Snackbar.make(requireView(), buildSnackbarString(snackbarEvent), Snackbar.LENGTH_SHORT).show();
+        Snackbar.make(requireView(), buildSnackbarString(snackbarEvent), Snackbar.LENGTH_SHORT).setTextColor(Color.WHITE).show();
+    }
+
+    private void handleInvitedDialogEvent(@NonNull ManageGroupViewModel.InvitedDialogEvent invitedDialogEvent) {
+        GroupInviteSentDialog.showInvitesSent(requireContext(), invitedDialogEvent.getNewInvitedMembers());
     }
 
     private @NonNull String buildSnackbarString(@NonNull ManageGroupViewModel.SnackbarEvent snackbarEvent) {

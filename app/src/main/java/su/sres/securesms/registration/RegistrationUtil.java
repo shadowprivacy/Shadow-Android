@@ -1,11 +1,16 @@
 package su.sres.securesms.registration;
 
+import android.content.Context;
+
+import androidx.annotation.NonNull;
+
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.DirectorySyncJob;
 import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.TextSecurePreferences;
 
 public final class RegistrationUtil {
 
@@ -18,8 +23,11 @@ public final class RegistrationUtil {
      * path a user has taken. This will only truly mark registration as complete if all of the
      * requirements are met.
      */
-    public static void markRegistrationPossiblyComplete() {
-        if (!SignalStore.registrationValues().isRegistrationComplete() && !Recipient.self().getProfileName().isEmpty()) {
+    public static void maybeMarkRegistrationComplete(@NonNull Context context) {
+        if (!SignalStore.registrationValues().isRegistrationComplete() &&
+                TextSecurePreferences.isPushRegistered(context)        &&
+                !Recipient.self().getProfileName().isEmpty())
+        {
             Log.i(TAG, "Marking registration completed.", new Throwable());
             SignalStore.registrationValues().setRegistrationComplete();
          //   ApplicationDependencies.getJobManager().startChain(new StorageSyncJob())

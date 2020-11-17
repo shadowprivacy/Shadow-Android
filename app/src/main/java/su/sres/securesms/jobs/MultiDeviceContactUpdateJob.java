@@ -25,6 +25,7 @@ import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -259,14 +260,18 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
             throws UntrustedIdentityException, NetworkException
     {
         if (length > 0) {
-            SignalServiceAttachmentStream attachmentStream   = SignalServiceAttachment.newStreamBuilder()
-                    .withStream(stream)
-                    .withContentType("application/octet-stream")
-                    .withLength(length)
-                    .build();
 
             try {
-                messageSender.sendMessage(SignalServiceSyncMessage.forContacts(new ContactsMessage(attachmentStream, complete)),
+                SignalServiceAttachmentStream.Builder attachmentStream   = SignalServiceAttachment.newStreamBuilder()
+                        .withStream(stream)
+                        .withContentType("application/octet-stream")
+                        .withLength(length);
+
+                if (FeatureFlags.attachmentsV3()) {
+                    attachmentStream.withResumableUploadSpec(messageSender.getResumableUploadSpec());
+                }
+
+                messageSender.sendMessage(SignalServiceSyncMessage.forContacts(new ContactsMessage(attachmentStream.build(), complete)),
                         UnidentifiedAccessUtil.getAccessForSync(context));
             } catch (IOException ioe) {
                 throw new NetworkException(ioe);

@@ -3,7 +3,12 @@ package su.sres.securesms.groups;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
+
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.RetrieveProfileJob;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
@@ -12,13 +17,38 @@ import su.sres.securesms.recipients.RecipientId;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-final class GroupsV2CapabilityChecker {
+public final class GroupsV2CapabilityChecker {
 
     private static final String TAG = Log.tag(GroupsV2CapabilityChecker.class);
 
-    GroupsV2CapabilityChecker() {
+    public GroupsV2CapabilityChecker() {}
+
+    /**
+     * @param resolved A collection of resolved recipients.
+     */
+    @WorkerThread
+    public void refreshCapabilitiesIfNecessary(@NonNull Collection<Recipient> resolved) throws IOException {
+        List<RecipientId> needsRefresh = Stream.of(resolved)
+                .filter(r -> r.getGroupsV2Capability() != Recipient.Capability.SUPPORTED)
+                .map(Recipient::getId)
+                .toList();
+
+        if (needsRefresh.size() > 0) {
+            Log.d(TAG, "[refreshCapabilitiesIfNecessary] Need to refresh " + needsRefresh.size() + " recipients.");
+
+            List<Job>  jobs       = RetrieveProfileJob.forRecipients(needsRefresh);
+            JobManager jobManager = ApplicationDependencies.getJobManager();
+
+            for (Job job : jobs) {
+                if (!jobManager.runSynchronously(job, TimeUnit.SECONDS.toMillis(5000)).isPresent()) {
+                    throw new IOException("Recipient capability was not retrieved in time");
+                }
+            }
+        }
     }
 
     @WorkerThread
@@ -36,24 +66,15 @@ final class GroupsV2CapabilityChecker {
     boolean allSupportGroupsV2AndUuid(@NonNull Collection<RecipientId> recipientIds)
             throws IOException
     {
-        final HashSet<RecipientId> recipientIdsSet = new HashSet<>(recipientIds);
-
-        for (RecipientId recipientId : recipientIdsSet) {
-            Recipient            member         = Recipient.resolved(recipientId);
-            Recipient.Capability gv2Capability  = member.getGroupsV2Capability();
-            if (gv2Capability != Recipient.Capability.SUPPORTED) {
-                if (!ApplicationDependencies.getJobManager().runSynchronously(RetrieveProfileJob.forRecipient(member.getId()), TimeUnit.SECONDS.toMillis(1000)).isPresent()) {
-                    throw new IOException("Recipient capability was not retrieved in time");
-                }
-            }
-        }
+        Set<RecipientId> recipientIdsSet = new HashSet<>(recipientIds);
+        refreshCapabilitiesIfNecessary(Recipient.resolvedList(recipientIdsSet));
 
         boolean noSelfGV2Support = false;
         int     noGv2Count       = 0;
         int     noUuidCount      = 0;
 
-        for (RecipientId recipientId : recipientIdsSet) {
-            Recipient            member        = Recipient.resolved(recipientId);
+        for (RecipientId id : recipientIds) {
+            Recipient            member        = Recipient.resolved(id);
             Recipient.Capability gv2Capability = member.getGroupsV2Capability();
 
             if (gv2Capability != Recipient.Capability.SUPPORTED) {

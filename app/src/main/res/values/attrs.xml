@@ -17,6 +17,9 @@
     <attr name="attachment_keyboard_button_background" format="color|reference" />
     <attr name="attachment_keyboard_button_foreground" format="color" />
 
+    <attr name="secondary_background" format="reference" />
+    <attr name="secondary_background_bubble" format="reference" />
+
     <attr name="conversation_list_item_background" format="reference"/>
     <attr name="conversation_list_item_contact_color" format="reference|color"/>
     <attr name="conversation_list_item_subject_color" format="reference|color"/>
@@ -136,6 +139,7 @@
     <attr name="conversation_item_sticky_date_text_color" format="color" />
     <attr name="conversation_item_image_outline_color" format="color" />
     <attr name="conversation_item_reveal_viewed_background_color" format="color" />
+    <attr name="conversation_item_delete_for_everyone_text_color" format="color" />
     <attr name="conversation_scroll_to_bottom_background" format="reference" />
     <attr name="conversation_scroll_to_bottom_foreground_color" format="color" />
 
@@ -222,6 +226,8 @@
     <attr name="message_request_dialog_button_background" format="reference" />
     <attr name="message_request_text_color_primary" format="color" />
     <attr name="message_request_text_color_secondary" format="color" />
+
+    <attr name="dangerous_button_color" format="color" />
 
     <attr name="pref_icon_tint" format="color"/>
 
@@ -522,6 +528,11 @@
 
     <declare-styleable name="GroupMemberListView">
         <attr name="maxHeight" />
+        <attr name="selectable" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="PopupMenuView">
+        <attr name="background_tint" format="color" />
     </declare-styleable>
 
     <declare-styleable name="WebRtcAudioOutputToggleButtonState">

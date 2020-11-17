@@ -35,6 +35,7 @@ import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.BitmapDecodingException;
 import su.sres.securesms.util.BitmapUtil;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.Hex;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -136,6 +137,7 @@ public abstract class PushSendJob extends SendJob {
                                     .withLength(attachment.getSize())
                                     .withFileName(attachment.getFileName())
                                     .withVoiceNote(attachment.isVoiceNote())
+                                    .withBorderless(attachment.isBorderless())
                                     .withWidth(attachment.getWidth())
                                     .withHeight(attachment.getHeight())
                                     .withCaption(attachment.getCaption())
@@ -166,10 +168,16 @@ public abstract class PushSendJob extends SendJob {
     return new HashSet<>(Stream.of(attachments).map(a -> {
       AttachmentUploadJob attachmentUploadJob = new AttachmentUploadJob(((DatabaseAttachment) a).getAttachmentId());
 
-      jobManager.startChain(AttachmentCompressionJob.fromAttachment((DatabaseAttachment) a, false, -1))
-              .then(new ResumableUploadSpecJob())
-              .then(attachmentUploadJob)
-              .enqueue();
+      if (message.isGroup()) {
+        jobManager.startChain(AttachmentCompressionJob.fromAttachment((DatabaseAttachment) a, false, -1))
+                .then(attachmentUploadJob)
+                .enqueue();
+      } else {
+        jobManager.startChain(AttachmentCompressionJob.fromAttachment((DatabaseAttachment) a, false, -1))
+                .then(new ResumableUploadSpecJob())
+                .then(attachmentUploadJob)
+                .enqueue();
+      }
 
       return attachmentUploadJob.getId();
     })
@@ -206,6 +214,7 @@ public abstract class PushSendJob extends SendJob {
               Optional.fromNullable(attachment.getDigest()),
               Optional.fromNullable(attachment.getFileName()),
               attachment.isVoiceNote(),
+              attachment.isBorderless(),
               Optional.fromNullable(attachment.getCaption()),
               Optional.fromNullable(attachment.getBlurHash()).transform(BlurHash::getHash),
               attachment.getUploadTimestamp());
@@ -224,7 +233,7 @@ public abstract class PushSendJob extends SendJob {
     }
   }
 
-  protected Optional<SignalServiceDataMessage.Quote> getQuoteFor(OutgoingMediaMessage message) {
+  protected Optional<SignalServiceDataMessage.Quote> getQuoteFor(OutgoingMediaMessage message) throws IOException {
     if (message.getOutgoingQuote() == null) return Optional.absent();
 
     long                                                  quoteId             = message.getOutgoingQuote().getId();
@@ -251,13 +260,18 @@ public abstract class PushSendJob extends SendJob {
         }
 
         if (thumbnailData != null) {
-          thumbnail = SignalServiceAttachment.newStreamBuilder()
+          SignalServiceAttachment.Builder builder = SignalServiceAttachment.newStreamBuilder()
                   .withContentType(thumbnailType)
-                                             .withWidth(thumbnailData.getWidth())
-                                             .withHeight(thumbnailData.getHeight())
-                                             .withLength(thumbnailData.getBitmap().length)
-                                             .withStream(new ByteArrayInputStream(thumbnailData.getBitmap()))
-                                             .build();
+                  .withWidth(thumbnailData.getWidth())
+                  .withHeight(thumbnailData.getHeight())
+                  .withLength(thumbnailData.getBitmap().length)
+                  .withStream(new ByteArrayInputStream(thumbnailData.getBitmap()));
+
+          if (FeatureFlags.attachmentsV3()) {
+            builder.withResumableUploadSpec(ApplicationDependencies.getSignalServiceMessageSender().getResumableUploadSpec());
+          }
+
+          thumbnail = builder.build();
         }
 
         quoteAttachments.add(new SignalServiceDataMessage.Quote.QuotedAttachment(attachment.getContentType(),

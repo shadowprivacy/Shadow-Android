@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import su.sres.securesms.recipients.RecipientId;
+
 public final class SqlUtil {
     private SqlUtil() {}
 
@@ -37,6 +39,22 @@ public final class SqlUtil {
         }
 
         return false;
+    }
+
+    public static String[] buildArgs(Object... objects) {
+        String[] args = new String[objects.length];
+
+        for (int i = 0; i < objects.length; i++) {
+            if (objects[i] == null) {
+                throw new NullPointerException("Cannot have null arg!");
+            } else if (objects[i] instanceof RecipientId) {
+                args[i] = ((RecipientId) objects[i]).serialize();
+            } else {
+                args[i] = objects[i].toString();
+            }
+        }
+
+        return args;
     }
 
     /**

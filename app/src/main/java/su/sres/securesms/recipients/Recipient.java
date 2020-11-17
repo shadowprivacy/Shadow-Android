@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import com.annimon.stream.Stream;
+
 import su.sres.securesms.R;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.contacts.avatars.ContactColors;
@@ -29,6 +31,7 @@ import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
 import su.sres.securesms.database.RecipientDatabase.VibrateState;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
+import su.sres.securesms.jobs.DirectorySyncJob;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.phonenumbers.NumberUtil;
@@ -43,6 +46,7 @@ import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.util.UuidUtil;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,7 +57,7 @@ import static su.sres.securesms.database.RecipientDatabase.InsightsBannerTier;
 
 public class Recipient {
 
-  public static final Recipient UNKNOWN = new Recipient(RecipientId.UNKNOWN, new RecipientDetails());
+  public static final Recipient UNKNOWN = new Recipient(RecipientId.UNKNOWN, new RecipientDetails(), true);
 
   private static final FallbackPhotoProvider DEFAULT_FALLBACK_PHOTO_PROVIDER = new FallbackPhotoProvider();
   private static final String                TAG = Log.tag(Recipient.class);
@@ -121,12 +125,23 @@ public class Recipient {
     return live(id).resolve();
   }
 
+  @WorkerThread
+  public static @NonNull List<Recipient> resolvedList(@NonNull Collection<RecipientId> ids) {
+    List<Recipient> recipients = new ArrayList<>(ids.size());
+
+    for (RecipientId recipientId : ids) {
+      recipients.add(resolved(recipientId));
+    }
+
+    return recipients;
+  }
+
   /**
    * Returns a fully-populated {@link Recipient} and associates it with the provided username.
    */
   @WorkerThread
   public static @NonNull Recipient externalUsername(@NonNull Context context, @NonNull UUID uuid, @NonNull String username) {
-    Recipient recipient = externalPush(context, uuid, null);
+    Recipient recipient = externalPush(context, uuid, null, false);
     DatabaseFactory.getRecipientDatabase(context).setUsername(recipient.getId(), username);
     return recipient;
   }
@@ -134,11 +149,25 @@ public class Recipient {
   /**
    * Returns a fully-populated {@link Recipient} based off of a {@link SignalServiceAddress},
    * creating one in the database if necessary. Convenience overload of
-   * {@link #externalPush(Context, UUID, String)}
+   * {@link #externalPush(Context, UUID, String, boolean)}
    */
   @WorkerThread
   public static @NonNull Recipient externalPush(@NonNull Context context, @NonNull SignalServiceAddress signalServiceAddress) {
-    return externalPush(context, signalServiceAddress.getUuid().orNull(), signalServiceAddress.getNumber().orNull());
+    return externalPush(context, signalServiceAddress.getUuid().orNull(), signalServiceAddress.getNumber().orNull(), false);
+  }
+
+  /**
+   * Returns a fully-populated {@link Recipient} based off of a {@link SignalServiceAddress},
+   * creating one in the database if necessary. This should only used for high-trust sources,
+   * which are limited to:
+   * - Envelopes
+   * - UD Certs
+   * - CDS
+   * - Storage Service
+   */
+  @WorkerThread
+  public static @NonNull Recipient externalHighTrustPush(@NonNull Context context, @NonNull SignalServiceAddress signalServiceAddress) {
+    return externalPush(context, signalServiceAddress.getUuid().orNull(), signalServiceAddress.getNumber().orNull(), true);
   }
 
   /**
@@ -149,85 +178,21 @@ public class Recipient {
    * In particular, while we'll eventually get the UUID of a user created via a phone number
    * (through a directory sync), the only way we can store the phone number is by retrieving it from
    * sent messages and whatnot. So we should store it when available.
+   *
+   * @param highTrust This should only be set to true if the source of the E164-UUID pairing is one
+   *                  that can be trusted as accurate (like an envelope).
    */
   @WorkerThread
-  public static @NonNull Recipient externalPush(@NonNull Context context, @Nullable UUID uuid, @Nullable String e164) {
+  public static @NonNull Recipient externalPush(@NonNull Context context, @Nullable UUID uuid, @Nullable String e164, boolean highTrust) {
 
     if (UuidUtil.UNKNOWN_UUID.equals(uuid)) {
       throw new AssertionError();
     }
 
-    RecipientDatabase     db       = DatabaseFactory.getRecipientDatabase(context);
-    Optional<RecipientId> uuidUser = uuid != null ? db.getByUuid(uuid) : Optional.absent();
-    Optional<RecipientId> e164User = e164 != null ? db.getByE164(e164) : Optional.absent();
+    RecipientDatabase db          = DatabaseFactory.getRecipientDatabase(context);
+    RecipientId       recipientId = db.getAndPossiblyMerge(uuid, e164, highTrust);
 
-    if (uuidUser.isPresent()) {
-
-      Recipient recipient = resolved(uuidUser.get());
-
-      if (e164 != null && !recipient.getE164().isPresent() && !e164User.isPresent()) {
-        db.setPhoneNumber(recipient.getId(), e164);
-      }
-
-      return resolved(recipient.getId());
-    } else if (e164User.isPresent()) {
-
-      Recipient recipient = resolved(e164User.get());
-
-   // we need not mark incomings as registered here
-      if (uuid != null && !recipient.getUuid().isPresent()) {
-
- //       db.markRegistered(recipient.getId(), uuid);
-
-      } else if (!recipient.isRegistered()) {
-  //      db.markRegistered(recipient.getId());
-
-        if (FeatureFlags.uuids()) {
-          Log.i(TAG, "No UUID! Scheduling a fetch.");
-       // TODO: should not be the case when all recipients have UUIDs, but this needs check
-          //   ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(recipient, false));
-        }
-      }
-
-      return resolved(recipient.getId());
-    } else if (uuid != null) {
-
-      if (FeatureFlags.uuids() || e164 != null) {
-        RecipientId id = db.getOrInsertFromUuid(uuid);
-  // same here, we do not have to mark the incoming as registered
-        //      db.markRegistered(id, uuid);
-
-      if (e164 != null) {
-        db.setPhoneNumber(id, e164);
-      }
-
-        return resolved(id);
-      } else {
-        if (!FeatureFlags.uuids() && FeatureFlags.groupsV2()) {
-          throw new RuntimeException(new UuidRecipientError());
-        } else {
-          throw new UuidRecipientError();
-        }
-      }
-    } else if (e164 != null) {
-
-      Recipient recipient = resolved(db.getOrInsertFromUserLogin(e164));
-
-      if (!recipient.isRegistered()) {
-   // same here, should not be marked as registered
-        //     db.markRegistered(recipient.getId());
-
-        if (FeatureFlags.uuids()) {
-          Log.i(TAG, "No UUID! Scheduling a fetch.");
-            // TODO: should be the case when all recipients have UUIDs, but needs check
-          // ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(recipient, false));
-        }
-      }
-
-      return resolved(recipient.getId());
-    } else {
-      throw new AssertionError("You must provide either a UUID or phone number!");
-    }
+    return resolved(recipientId);
   }
 
   /**
@@ -268,7 +233,7 @@ public class Recipient {
    * or serialized groupId.
    *
    * If the identifier is a UUID of a Signal user, prefer using
-   * {@link #externalPush(Context, UUID, String)} or its overload, as this will let us associate
+   * {@link #externalPush(Context, UUID, String, boolean)} or its overload, as this will let us associate
    * the phone number with the recipient.
    */
   @WorkerThread
@@ -280,21 +245,7 @@ public class Recipient {
     if (UuidUtil.isUuid(identifier)) {
       UUID uuid = UuidUtil.parseOrThrow(identifier);
 
-      if (FeatureFlags.uuids()) {
-        id = db.getOrInsertFromUuid(uuid);
-      } else {
-        Optional<RecipientId> possibleId = db.getByUuid(uuid);
-
-        if (possibleId.isPresent()) {
-          id = possibleId.get();
-        } else {
-          if (!FeatureFlags.uuids() && FeatureFlags.groupsV2()) {
-            throw new RuntimeException(new UuidRecipientError());
-          } else {
-            throw new UuidRecipientError();
-          }
-        }
-      }
+      id = db.getOrInsertFromUuid(uuid);
     } else if (GroupId.isEncodedGroup(identifier)) {
       id = db.getOrInsertFromGroupId(GroupId.parseOrThrow(identifier));
     } else if (NumberUtil.isValidEmail(identifier)) {
@@ -354,9 +305,9 @@ public class Recipient {
     this.identityStatus         = VerifiedStatus.DEFAULT;
   }
 
-  Recipient(@NonNull RecipientId id, @NonNull RecipientDetails details) {
+  public Recipient(@NonNull RecipientId id, @NonNull RecipientDetails details, boolean resolved) {
     this.id                     = id;
-    this.resolving              = false;
+    this.resolving              = !resolved;
     this.uuid                   = details.uuid;
     this.username               = details.username;
     this.e164                   = details.e164;
@@ -418,9 +369,11 @@ public class Recipient {
       }
 
       return Util.join(names, ", ");
+    } else if (name == null && groupId != null && groupId.isPush()) {
+      return context.getString(R.string.RecipientProvider_unnamed_group);
+    } else {
+      return this.name;
     }
-
-    return this.name;
   }
 
   /**
@@ -640,6 +593,10 @@ public class Recipient {
     return groupId != null && groupId.isV2();
   }
 
+  public boolean isActiveGroup() {
+    return Stream.of(getParticipants()).anyMatch(Recipient::isLocalNumber);
+  }
+
   public @NonNull List<Recipient> getParticipants() {
     return new ArrayList<>(participants);
   }
@@ -666,7 +623,7 @@ public class Recipient {
 
   public @NonNull FallbackContactPhoto getFallbackContactPhoto(@NonNull FallbackPhotoProvider fallbackPhotoProvider) {
     if      (localNumber)              return fallbackPhotoProvider.getPhotoForLocalNumber();
-    if      (isResolving())            return fallbackPhotoProvider.getPhotoForResolvingRecipient();
+    else if (isResolving())            return fallbackPhotoProvider.getPhotoForResolvingRecipient();
     else if (isGroupInternal())        return fallbackPhotoProvider.getPhotoForGroup();
     else if (isGroup())                return fallbackPhotoProvider.getPhotoForGroup();
     else if (!TextUtils.isEmpty(name)) return fallbackPhotoProvider.getPhotoForRecipientWithName(name);
@@ -755,7 +712,7 @@ public class Recipient {
     if (FeatureFlags.usernames()) {
       return true;
     } else {
-      return FeatureFlags.uuids() && uuidCapability == Capability.SUPPORTED;
+      return uuidCapability == Capability.SUPPORTED;
     }
   }
 

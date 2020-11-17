@@ -39,6 +39,7 @@ import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.database.model.SmsMessageRecord;
+import su.sres.securesms.database.model.databaseprotos.ProfileChangeDetails;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.TrimThreadJob;
 import su.sres.securesms.logging.Log;
@@ -47,6 +48,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sms.IncomingGroupUpdateMessage;
 import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
+import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -626,15 +628,65 @@ public class SmsDatabase extends MessagingDatabase {
         long messageId = db.insert(TABLE_NAME, null, values);
 
         DatabaseFactory.getThreadDatabase(context).update(threadId, true);
-        notifyConversationListeners(threadId);
-
-        ApplicationDependencies.getJobManager().add(new TrimThreadJob(threadId));
 
         if (unread) {
             DatabaseFactory.getThreadDatabase(context).incrementUnread(threadId, 1);
         }
 
+        notifyConversationListeners(threadId);
+        ApplicationDependencies.getJobManager().add(new TrimThreadJob(threadId));
+
         return new Pair<>(messageId, threadId);
+    }
+
+    public void insertProfileNameChangeMessages(@NonNull Recipient recipient, @NonNull String newProfileName, @NonNull String previousProfileName) {
+        ThreadDatabase                  threadDatabase    = DatabaseFactory.getThreadDatabase(context);
+        List<GroupDatabase.GroupRecord> groupRecords      = DatabaseFactory.getGroupDatabase(context).getGroupsContainingMember(recipient.getId(), false);
+        List<Long>                      threadIdsToUpdate = new LinkedList<>();
+
+        byte[] profileChangeDetails = ProfileChangeDetails.newBuilder()
+                .setProfileNameChange(ProfileChangeDetails.StringChange.newBuilder()
+                        .setNew(newProfileName)
+                        .setPrevious(previousProfileName))
+                .build()
+                .toByteArray();
+
+        String body = Base64.encodeBytes(profileChangeDetails);
+
+        SQLiteDatabase db = databaseHelper.getWritableDatabase();
+        db.beginTransaction();
+
+        try {
+            threadIdsToUpdate.add(threadDatabase.getThreadIdFor(recipient.getId()));
+            for (GroupDatabase.GroupRecord groupRecord : groupRecords) {
+                if (groupRecord.isActive()) {
+                    threadIdsToUpdate.add(threadDatabase.getThreadIdFor(groupRecord.getRecipientId()));
+                }
+            }
+
+            Stream.of(threadIdsToUpdate)
+                    .withoutNulls()
+                    .forEach(threadId -> {
+                        ContentValues values = new ContentValues();
+                        values.put(RECIPIENT_ID, recipient.getId().serialize());
+                        values.put(ADDRESS_DEVICE_ID, 1);
+                        values.put(DATE_RECEIVED, System.currentTimeMillis());
+                        values.put(DATE_SENT, System.currentTimeMillis());
+                        values.put(READ, 1);
+                        values.put(TYPE, Types.PROFILE_CHANGE_TYPE);
+                        values.put(THREAD_ID, threadId);
+                        values.put(BODY, body);
+
+                        db.insert(TABLE_NAME, null, values);
+                        DatabaseFactory.getThreadDatabase(context).update(threadId, false);
+                        notifyConversationListeners(threadId);
+                        ApplicationDependencies.getJobManager().add(new TrimThreadJob(threadId));
+                    });
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
     }
 
     protected Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type) {

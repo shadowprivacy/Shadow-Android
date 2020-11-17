@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupChangeBusyException;
+import su.sres.securesms.groups.GroupChangeException;
 import su.sres.securesms.groups.GroupChangeFailedException;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupInsufficientRightsException;
@@ -44,15 +45,9 @@ final class AddToGroupRepository {
                 GroupManager.addMembers(context, pushGroupId, Collections.singletonList(recipientId));
 
                 success.run();
-            } catch (GroupInsufficientRightsException | GroupNotAMemberException e) {
+            } catch (GroupChangeException | MembershipNotSuitableForV2Exception | IOException e) {
                 Log.w(TAG, e);
-                error.onError(GroupChangeFailureReason.NO_RIGHTS);
-            } catch (GroupChangeFailedException | GroupChangeBusyException | IOException e) {
-                Log.w(TAG, e);
-                error.onError(GroupChangeFailureReason.OTHER);
-            } catch (MembershipNotSuitableForV2Exception e) {
-                Log.w(TAG, e);
-                error.onError(GroupChangeFailureReason.NOT_CAPABLE);
+                error.onError(GroupChangeFailureReason.fromException(e));
             }
         });
     }

@@ -20,7 +20,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat;
 
@@ -45,13 +44,14 @@ import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.text.AfterTextChanged;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 public class AddGroupDetailsFragment extends LoggingFragment {
 
-    private static final int    AVATAR_PLACEHOLDER_INSET_DP = 18;
-    private static final short  REQUEST_CODE_AVATAR         = 27621;
-    private static final String ARG_RECIPIENT_IDS           = "recipient_ids";
+    private static final int   AVATAR_PLACEHOLDER_INSET_DP = 18;
+    private static final short REQUEST_CODE_AVATAR         = 27621;
 
     private CircularProgressButton   create;
     private Callback                 callback;
@@ -69,16 +69,6 @@ public class AddGroupDetailsFragment extends LoggingFragment {
         } else {
             throw new ClassCastException("Parent context should implement AddGroupDetailsFragment.Callback");
         }
-    }
-
-    public static Fragment create(@NonNull RecipientId[] recipientIds) {
-        AddGroupDetailsFragment fragment  = new AddGroupDetailsFragment();
-        Bundle                  arguments = new Bundle();
-
-        arguments.putParcelableArray(ARG_RECIPIENT_IDS, recipientIds);
-        fragment.setArguments(arguments);
-
-        return fragment;
     }
 
     @Override
@@ -182,7 +172,7 @@ public class AddGroupDetailsFragment extends LoggingFragment {
     private void initializeViewModel() {
         AddGroupDetailsFragmentArgs      args       = AddGroupDetailsFragmentArgs.fromBundle(requireArguments());
         AddGroupDetailsRepository        repository = new AddGroupDetailsRepository(requireContext());
-        AddGroupDetailsViewModel.Factory factory    = new AddGroupDetailsViewModel.Factory(args.getRecipientIds(), repository);
+        AddGroupDetailsViewModel.Factory factory    = new AddGroupDetailsViewModel.Factory(Arrays.asList(args.getRecipientIds()), repository);
 
         viewModel = ViewModelProviders.of(this, factory).get(AddGroupDetailsViewModel.class);
 
@@ -214,7 +204,7 @@ public class AddGroupDetailsFragment extends LoggingFragment {
     }
 
     private void handleGroupCreateResultSuccess(@NonNull GroupCreateResult.Success success) {
-        callback.onGroupCreated(success.getGroupRecipient().getId(), success.getThreadId());
+        callback.onGroupCreated(success.getGroupRecipient().getId(), success.getThreadId(), success.getInvitedMembers());
     }
 
     private void handleGroupCreateResultError(@NonNull GroupCreateResult.Error error) {
@@ -264,7 +254,7 @@ public class AddGroupDetailsFragment extends LoggingFragment {
     }
 
     public interface Callback {
-        void onGroupCreated(@NonNull RecipientId recipientId, long threadId);
+        void onGroupCreated(@NonNull RecipientId recipientId, long threadId, @NonNull List<Recipient> invitedMembers);
         void onNavigationButtonPressed();
     }
 }

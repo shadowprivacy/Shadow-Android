@@ -14,6 +14,9 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.ThreadDatabase;
+import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
+import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.OutgoingExpirationUpdateMessage;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -25,6 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class ManageRecipientRepository {
+
+    private static final String TAG = Log.tag(ManageRecipientRepository.class);
 
     private final Context     context;
     private final RecipientId recipientId;
@@ -91,6 +96,7 @@ final class ManageRecipientRepository {
             MaterialColor selectedColor = MaterialColors.CONVERSATION_PALETTE.getByColor(context, color);
             if (selectedColor != null) {
                 DatabaseFactory.getRecipientDatabase(context).setColor(recipientId, selectedColor);
+                ApplicationDependencies.getJobManager().add(new MultiDeviceContactUpdateJob(recipientId));
             }
         });
     }
@@ -104,5 +110,9 @@ final class ManageRecipientRepository {
                 .map(Recipient::resolved)
                 .sortBy(gr -> gr.getDisplayName(context))
                 .toList();
+    }
+
+    void getActiveGroupCount(@NonNull Consumer<Integer> onComplete) {
+        SignalExecutors.BOUNDED.execute(() -> onComplete.accept(DatabaseFactory.getGroupDatabase(context).getActiveGroupCount()));
     }
 }

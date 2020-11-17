@@ -155,6 +155,10 @@ public abstract class DisplayRecord {
     return SmsDatabase.Types.isIdentityDefault(type) || SmsDatabase.Types.isIdentityVerified(type);
   }
 
+  public boolean isProfileChange() {
+    return SmsDatabase.Types.isProfileChange(type);
+  }
+
   public int getDeliveryStatus() {
     return deliveryStatus;
   }

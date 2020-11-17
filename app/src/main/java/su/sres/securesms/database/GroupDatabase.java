@@ -16,6 +16,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import net.sqlcipher.database.SQLiteDatabase;
 
 import su.sres.securesms.groups.GroupAccessControl;
+import su.sres.securesms.util.SqlUtil;
 import su.sres.storageservice.protos.groups.AccessControl;
 import su.sres.storageservice.protos.groups.Member;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
@@ -50,9 +51,9 @@ public final class GroupDatabase extends Database {
   static final String TABLE_NAME          = "groups";
   private static final String ID                  = "_id";
   static final String GROUP_ID            = "group_id";
-  static final String RECIPIENT_ID        = "recipient_id";
+          static final String RECIPIENT_ID        = "recipient_id";
   private static final String TITLE               = "title";
-  private static final String MEMBERS             = "members";
+          static final String MEMBERS             = "members";
   private static final String AVATAR_ID           = "avatar_id";
   private static final String AVATAR_KEY          = "avatar_key";
   private static final String AVATAR_CONTENT_TYPE = "avatar_content_type";
@@ -96,7 +97,7 @@ public final class GroupDatabase extends Database {
 
   private static final String[] GROUP_PROJECTION = {
           GROUP_ID, RECIPIENT_ID, TITLE, MEMBERS, AVATAR_ID, AVATAR_KEY, AVATAR_CONTENT_TYPE, AVATAR_RELAY, AVATAR_DIGEST,
-          TIMESTAMP, ACTIVE, MMS
+          TIMESTAMP, ACTIVE, MMS, V2_MASTER_KEY, V2_REVISION, V2_DECRYPTED_GROUP
   };
 
   static final List<String> TYPED_GROUP_PROJECTION = Stream.of(GROUP_PROJECTION).map(columnName -> TABLE_NAME + "." + columnName).toList();
@@ -224,11 +225,21 @@ public final class GroupDatabase extends Database {
 
   @WorkerThread
   public @NonNull List<GroupRecord> getPushGroupsContainingMember(@NonNull RecipientId recipientId) {
+    return getGroupsContainingMember(recipientId, true);
+  }
+
+  @WorkerThread
+  public @NonNull List<GroupRecord> getGroupsContainingMember(@NonNull RecipientId recipientId, boolean pushOnly) {
     SQLiteDatabase database   = databaseHelper.getReadableDatabase();
     String         table      = TABLE_NAME + " INNER JOIN " + ThreadDatabase.TABLE_NAME + " ON " + TABLE_NAME + "." + RECIPIENT_ID + " = " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.RECIPIENT_ID;
-    String         query      = MEMBERS + " LIKE ? AND " + MMS + " = ?";
-    String[]       args       = new String[]{"%" + recipientId.serialize() + "%", "0"};
+    String         query      = MEMBERS + " LIKE ?";
+    String[]       args       = new String[]{"%" + recipientId.serialize() + "%"};
     String         orderBy    = ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.DATE + " DESC";
+
+    if (pushOnly) {
+      query += " AND " + MMS + " = ?";
+      args = SqlUtil.appendArg(args, "0");
+    }
 
     List<GroupRecord> groups = new LinkedList<>();
 
@@ -249,6 +260,19 @@ public final class GroupDatabase extends Database {
     @SuppressLint("Recycle")
     Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, null, null, null, null, null);
     return new Reader(cursor);
+  }
+  public int getActiveGroupCount() {
+    SQLiteDatabase db    = databaseHelper.getReadableDatabase();
+    String[]       cols  = { "COUNT(*)" };
+    String         query = ACTIVE + " = 1";
+
+    try (Cursor cursor = db.query(TABLE_NAME, cols, query, null, null, null, null)) {
+      if (cursor != null && cursor.moveToFirst()) {
+        return cursor.getInt(0);
+      }
+    }
+
+    return 0;
   }
 
   @WorkerThread

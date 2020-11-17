@@ -80,7 +80,7 @@ public class IncomingMessageProcessor {
             if(!SignalStore.serviceConfigurationValues().isLicensed()) return null;
 
             if (envelope.hasSource()) {
-                Recipient.externalPush(context, envelope.getSourceAddress());
+                Recipient.externalHighTrustPush(context, envelope.getSourceAddress());
             }
 
             if (envelope.isReceipt()) {
@@ -112,7 +112,7 @@ public class IncomingMessageProcessor {
 
         private void processReceipt(@NonNull SignalServiceEnvelope envelope) {
             Log.i(TAG, String.format(Locale.ENGLISH, "Received receipt: (XXXXX, %d)", envelope.getTimestamp()));
-            mmsSmsDatabase.incrementDeliveryReceiptCount(new SyncMessageId(Recipient.externalPush(context, envelope.getSourceAddress()).getId(), envelope.getTimestamp()),
+            mmsSmsDatabase.incrementDeliveryReceiptCount(new SyncMessageId(Recipient.externalHighTrustPush(context, envelope.getSourceAddress()).getId(), envelope.getTimestamp()),
                     System.currentTimeMillis());
         }
 

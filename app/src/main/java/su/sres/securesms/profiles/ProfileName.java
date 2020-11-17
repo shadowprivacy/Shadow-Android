@@ -9,6 +9,8 @@ import androidx.annotation.VisibleForTesting;
 
 import com.annimon.stream.Stream;
 
+import java.util.Objects;
+
 import su.sres.securesms.util.StringUtil;
 import su.sres.securesms.util.cjkv.CJKVUtil;
 import su.sres.signalservice.api.crypto.ProfileCipher;
@@ -131,6 +133,20 @@ public final class ProfileName implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(givenName);
         dest.writeString(familyName);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ProfileName that = (ProfileName) o;
+        return Objects.equals(givenName, that.givenName) &&
+                Objects.equals(familyName, that.familyName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(givenName, familyName);
     }
 
     public static final Creator<ProfileName> CREATOR = new Creator<ProfileName>() {

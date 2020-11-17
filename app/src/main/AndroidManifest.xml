@@ -150,7 +150,14 @@
             android:supportsPictureInPicture="true"
             android:windowSoftInputMode="stateAlwaysHidden"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+            android:taskAffinity=".calling"
             android:launchMode="singleTask" />
+
+        <activity android:name=".messagerequests.CalleeMustAcceptMessageRequestActivity"
+            android:theme="@style/TextSecure.DarkNoActionBar"
+            android:screenOrientation="portrait"
+            android:noHistory="true"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
         <activity
             android:name=".InviteActivity"
@@ -574,6 +581,9 @@
 
         <activity android:name=".groups.ui.creategroup.details.AddGroupDetailsActivity"
             android:theme="@style/Theme.Signal.DayNight.NoActionBar" />
+
+        <activity android:name=".groups.ui.chooseadmin.ChooseNewAdminActivity"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
         <service
             android:enabled="true"

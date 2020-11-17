@@ -15,8 +15,11 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
 import su.sres.securesms.database.MmsDatabase;
+import su.sres.securesms.database.MmsSmsDatabase;
+import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.model.MessageRecord;
+import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sms.MessageSender;
@@ -30,15 +33,17 @@ import static org.whispersystems.libsignal.SessionCipher.SESSION_LOCK;
 
 final class SafetyNumberChangeRepository {
 
+    private static final String TAG = SafetyNumberChangeRepository.class.getSimpleName();
+
     private final Context context;
 
     SafetyNumberChangeRepository(Context context) {
         this.context = context.getApplicationContext();
     }
 
-    @NonNull LiveData<SafetyNumberChangeState> getSafetyNumberChangeState(@NonNull List<RecipientId> recipientIds, @Nullable Long messageId) {
+    @NonNull LiveData<SafetyNumberChangeState> getSafetyNumberChangeState(@NonNull List<RecipientId> recipientIds, @Nullable Long messageId, @Nullable String messageType) {
         MutableLiveData<SafetyNumberChangeState> liveData = new MutableLiveData<>();
-        SignalExecutors.BOUNDED.execute(() -> liveData.postValue(getSafetyNumberChangeStateInternal(recipientIds, messageId)));
+        SignalExecutors.BOUNDED.execute(() -> liveData.postValue(getSafetyNumberChangeStateInternal(recipientIds, messageId, messageType)));
         return liveData;
     }
 
@@ -55,10 +60,10 @@ final class SafetyNumberChangeRepository {
     }
 
     @WorkerThread
-    private @NonNull SafetyNumberChangeState getSafetyNumberChangeStateInternal(@NonNull List<RecipientId> recipientIds, @Nullable Long messageId) {
+    private @NonNull SafetyNumberChangeState getSafetyNumberChangeStateInternal(@NonNull List<RecipientId> recipientIds, @Nullable Long messageId, @Nullable String messageType) {
         MessageRecord messageRecord = null;
-        if (messageId != null) {
-            messageRecord = DatabaseFactory.getMmsSmsDatabase(context).getMessageRecord(messageId);
+        if (messageId != null && messageType != null) {
+            messageRecord = getMessageRecord(messageId, messageType);
         }
 
         List<Recipient> recipients = Stream.of(recipientIds).map(Recipient::resolved).toList();
@@ -68,6 +73,23 @@ final class SafetyNumberChangeRepository {
                 .toList();
 
         return new SafetyNumberChangeState(changedRecipients, messageRecord);
+    }
+
+    @WorkerThread
+    private @Nullable MessageRecord getMessageRecord(Long messageId, String messageType) {
+        try {
+            switch (messageType) {
+                case MmsSmsDatabase.SMS_TRANSPORT:
+                    return DatabaseFactory.getSmsDatabase(context).getMessage(messageId);
+                case MmsSmsDatabase.MMS_TRANSPORT:
+                    return DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId);
+                default:
+                    throw new AssertionError("no valid message type specified");
+            }
+        } catch (NoSuchMessageException e) {
+            Log.i(TAG, e);
+        }
+        return null;
     }
 
     @WorkerThread

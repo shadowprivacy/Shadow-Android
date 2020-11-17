@@ -8,12 +8,9 @@ import androidx.annotation.WorkerThread;
 import androidx.core.util.Consumer;
 
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.groups.GroupChangeBusyException;
-import su.sres.securesms.groups.GroupChangeFailedException;
+import su.sres.securesms.groups.GroupChangeException;
 import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.groups.GroupInsufficientRightsException;
 import su.sres.securesms.groups.GroupManager;
-import su.sres.securesms.groups.GroupNotAMemberException;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.profiles.ProfileName;
@@ -80,10 +77,10 @@ class EditPushGroupProfileRepository implements EditProfileRepository {
     {
         SimpleTask.run(() -> {
             try {
-                GroupManager.updateGroup(context, groupId, avatar, avatarChanged, displayName, displayNameChanged);
+                GroupManager.updateGroupDetails(context, groupId, avatar, avatarChanged, displayName, displayNameChanged);
 
                 return UploadResult.SUCCESS;
-            } catch (GroupChangeFailedException | GroupInsufficientRightsException | IOException | GroupNotAMemberException | GroupChangeBusyException e) {
+            } catch (GroupChangeException | IOException e) {
                 return UploadResult.ERROR_IO;
             }
 

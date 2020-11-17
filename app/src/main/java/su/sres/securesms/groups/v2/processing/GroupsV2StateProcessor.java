@@ -7,6 +7,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import su.sres.securesms.jobs.RequestGroupV2InfoJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 import org.signal.zkgroup.VerificationFailedException;
@@ -99,7 +101,7 @@ public final class GroupsV2StateProcessor {
 
     public static class GroupUpdateResult {
         private final GroupState     groupState;
-        @Nullable private       DecryptedGroup latestServer;
+        @Nullable private final DecryptedGroup latestServer;
 
         GroupUpdateResult(@NonNull GroupState groupState, @Nullable DecryptedGroup latestServer) {
             this.groupState   = groupState;
@@ -152,13 +154,17 @@ public final class GroupsV2StateProcessor {
                     localState.getRevision() + 1 == signedGroupChange.getRevision() &&
                     revision == signedGroupChange.getRevision())
             {
-                try {
-                    Log.i(TAG, "Applying P2P group change");
-                    DecryptedGroup newState = DecryptedGroupUtil.apply(localState, signedGroupChange);
+                if (SignalStore.internalValues().gv2IgnoreP2PChanges()) {
+                    Log.w(TAG, "Ignoring P2P group change by setting");
+                } else {
+                    try {
+                        Log.i(TAG, "Applying P2P group change");
+                        DecryptedGroup newState = DecryptedGroupUtil.apply(localState, signedGroupChange);
 
-                    inputGroupState = new GlobalGroupState(localState, Collections.singletonList(new GroupLogEntry(newState, signedGroupChange)));
-                } catch (DecryptedGroupUtil.NotAbleToApplyChangeException e) {
-                    Log.w(TAG, "Unable to apply P2P group change", e);
+                        inputGroupState = new GlobalGroupState(localState, Collections.singletonList(new ServerGroupLogEntry(newState, signedGroupChange)));
+                    } catch (DecryptedGroupUtil.NotAbleToApplyChangeException e) {
+                        Log.w(TAG, "Unable to apply P2P group change", e);
+                    }
                 }
             }
 
@@ -186,8 +192,9 @@ public final class GroupsV2StateProcessor {
             persistLearnedProfileKeys(inputGroupState);
 
             GlobalGroupState remainingWork = advanceGroupStateResult.getNewGlobalGroupState();
-            if (remainingWork.getHistory().size() > 0) {
-                Log.i(TAG, String.format(Locale.US, "There are more revisions on the server for this group, not applying at this time, V[%d..%d]", newLocalState.getRevision() + 1, remainingWork.getLatestRevisionNumber()));
+            if (remainingWork.getServerHistory().size() > 0) {
+                Log.i(TAG, String.format(Locale.US, "There are more revisions on the server for this group, scheduling for later, V[%d..%d]", newLocalState.getRevision() + 1, remainingWork.getLatestRevisionNumber()));
+                ApplicationDependencies.getJobManager().add(new RequestGroupV2InfoJob(groupId, remainingWork.getLatestRevisionNumber()));
             }
 
             return new GroupUpdateResult(GroupState.GROUP_UPDATED, newLocalState);
@@ -270,18 +277,22 @@ public final class GroupsV2StateProcessor {
             }
         }
 
-        private void insertUpdateMessages(long timestamp, Collection<GroupLogEntry> processedLogEntries) {
-            for (GroupLogEntry entry : processedLogEntries) {
-                storeMessage(GroupProtoUtil.createDecryptedGroupV2Context(masterKey, entry.getGroup(), entry.getChange(), null), timestamp);
+        private void insertUpdateMessages(long timestamp, Collection<LocalGroupLogEntry> processedLogEntries) {
+            for (LocalGroupLogEntry entry : processedLogEntries) {
+                if (entry.getChange() != null && DecryptedGroupUtil.changeIsEmptyExceptForProfileKeyChanges(entry.getChange()) && !DecryptedGroupUtil.changeIsEmpty(entry.getChange())) {
+                    Log.d(TAG, "Skipping profile key changes only update message");
+                } else {
+                    storeMessage(GroupProtoUtil.createDecryptedGroupV2Context(masterKey, entry.getGroup(), entry.getChange(), null), timestamp);
+                }
             }
         }
 
         private void persistLearnedProfileKeys(@NonNull GlobalGroupState globalGroupState) {
             final ProfileKeySet profileKeys = new ProfileKeySet();
 
-            for (GroupLogEntry entry : globalGroupState.getHistory()) {
+            for (ServerGroupLogEntry entry : globalGroupState.getServerHistory()) {
                 Optional<UUID> editor = DecryptedGroupUtil.editorUuid(entry.getChange());
-                if (editor.isPresent()) {
+                if (editor.isPresent() && entry.getGroup() != null) {
                     profileKeys.addKeysFromGroupState(entry.getGroup(), editor.get());
                 }
             }
@@ -297,9 +308,9 @@ public final class GroupsV2StateProcessor {
         private @NonNull GlobalGroupState queryServer(@Nullable DecryptedGroup localState, boolean latestOnly)
                 throws IOException, GroupNotAMemberException
         {
-            DecryptedGroup      latestServerGroup;
-            List<GroupLogEntry> history;
-            UUID                selfUuid          = Recipient.self().getUuid().get();
+            UUID                      selfUuid          = Recipient.self().getUuid().get();
+            DecryptedGroup            latestServerGroup;
+            List<ServerGroupLogEntry> history;
 
             try {
                 latestServerGroup = groupsV2Api.getGroup(groupSecretParams, groupsV2Authorization.getAuthorizationForToday(selfUuid, groupSecretParams));
@@ -310,7 +321,7 @@ public final class GroupsV2StateProcessor {
             }
 
             if (latestOnly || !GroupProtoUtil.isMember(selfUuid, latestServerGroup.getMembersList())) {
-                history = Collections.singletonList(new GroupLogEntry(latestServerGroup, null));
+                history = Collections.singletonList(new ServerGroupLogEntry(latestServerGroup, null));
             } else {
                 int revisionWeWereAdded = GroupProtoUtil.findRevisionWeWereAdded(latestServerGroup, selfUuid);
                 int logsNeededFrom      = localState != null ? Math.max(localState.getRevision(), revisionWeWereAdded) : revisionWeWereAdded;
@@ -321,13 +332,23 @@ public final class GroupsV2StateProcessor {
             return new GlobalGroupState(localState, history);
         }
 
-        private List<GroupLogEntry> getFullMemberHistory(@NonNull UUID selfUuid, int logsNeededFromRevision) throws IOException {
+        private List<ServerGroupLogEntry> getFullMemberHistory(@NonNull UUID selfUuid, int logsNeededFromRevision) throws IOException {
             try {
                 Collection<DecryptedGroupHistoryEntry> groupStatesFromRevision = groupsV2Api.getGroupHistory(groupSecretParams, logsNeededFromRevision, groupsV2Authorization.getAuthorizationForToday(selfUuid, groupSecretParams));
-                ArrayList<GroupLogEntry>               history                 = new ArrayList<>(groupStatesFromRevision.size());
+                ArrayList<ServerGroupLogEntry>         history                 = new ArrayList<>(groupStatesFromRevision.size());
+                boolean                                ignoreServerChanges     = SignalStore.internalValues().gv2IgnoreServerChanges();
+
+                if (ignoreServerChanges) {
+                    Log.w(TAG, "Server change logs are ignored by setting");
+                }
 
                 for (DecryptedGroupHistoryEntry entry : groupStatesFromRevision) {
-                    history.add(new GroupLogEntry(entry.getGroup(), entry.getChange()));
+                    DecryptedGroup       group  = entry.getGroup().orNull();
+                    DecryptedGroupChange change = ignoreServerChanges ? null : entry.getChange().orNull();
+
+                    if (group != null || change != null) {
+                        history.add(new ServerGroupLogEntry(group, change));
+                    }
                 }
 
                 return history;
@@ -339,12 +360,7 @@ public final class GroupsV2StateProcessor {
         private void storeMessage(@NonNull DecryptedGroupV2Context decryptedGroupV2Context, long timestamp) {
             Optional<UUID> editor = getEditor(decryptedGroupV2Context);
 
-            if (!editor.isPresent() || UuidUtil.UNKNOWN_UUID.equals(editor.get())) {
-                Log.w(TAG, "Cannot determine editor of change, can't insert message");
-                return;
-            }
-
-            boolean outgoing = Recipient.self().requireUuid().equals(editor.get());
+            boolean outgoing = !editor.isPresent() || Recipient.self().requireUuid().equals(editor.get());
 
             if (outgoing) {
                 try {

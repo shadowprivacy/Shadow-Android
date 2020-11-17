@@ -36,10 +36,10 @@ public class ApplicationMigrations {
 
     private static final MutableLiveData<Boolean> UI_BLOCKING_MIGRATION_RUNNING = new MutableLiveData<>();
 
-    public static final int CURRENT_VERSION = 14;
+    public static final int CURRENT_VERSION = 15;
 
     private static final class Version {
-
+        static final int VERSIONED_PROFILE  = 15;
     }
 
     /**
@@ -147,6 +147,10 @@ public class ApplicationMigrations {
 
     private static LinkedHashMap<Integer, MigrationJob> getMigrationJobs(@NonNull Context context, int lastSeenVersion) {
         LinkedHashMap<Integer, MigrationJob> jobs = new LinkedHashMap<>();
+
+        if (lastSeenVersion < Version.VERSIONED_PROFILE) {
+            jobs.put(Version.VERSIONED_PROFILE, new ProfileMigrationJob());
+        }
 
         return jobs;
     }

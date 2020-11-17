@@ -6,8 +6,8 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.ConstraintObserver;
 
 /**
- * An observer for {@link WebsocketDrainedConstraint}. Will fire when the
- * {@link su.sres.securesms.messages.InitialMessageRetriever} is caught up.
+ * An observer for {@link WebsocketDrainedConstraint}. Will fire when the websocket is drained
+ * (i.e. it has received an empty response).
  */
 public class WebsocketDrainedConstraintObserver implements ConstraintObserver {
 
@@ -16,7 +16,7 @@ public class WebsocketDrainedConstraintObserver implements ConstraintObserver {
     private volatile Notifier notifier;
 
     public WebsocketDrainedConstraintObserver() {
-        ApplicationDependencies.getInitialMessageRetriever().addListener(() -> {
+        ApplicationDependencies.getIncomingMessageObserver().addWebsocketDrainedListener(() -> {
             if (notifier != null) {
                 notifier.onConstraintMet(REASON);
             }

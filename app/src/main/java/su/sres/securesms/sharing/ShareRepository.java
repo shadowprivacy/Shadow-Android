@@ -150,6 +150,7 @@ class ShareRepository {
                     dimens.second,
                     size,
                     duration,
+                    false,
                     Optional.of(Media.ALL_MEDIA_BUCKET_ID),
                     Optional.absent(),
                     Optional.absent()));
