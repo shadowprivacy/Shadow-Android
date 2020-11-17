@@ -137,8 +137,10 @@ public class IncomingMessageObserver {
     }
 
     private synchronized void waitForConnectionNecessary() {
+        long timeout = TextSecurePreferences.isPushRegistered(context) ? 0 : 60000;
+
         try {
-            while (!isConnectionNecessary()) wait();
+            while (!isConnectionNecessary()) wait(timeout);
         } catch (InterruptedException e) {
             throw new AssertionError(e);
         }
