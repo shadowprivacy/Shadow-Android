@@ -11,6 +11,7 @@ import com.annimon.stream.Stream;
 import su.sres.securesms.ContactSelectionListFragment;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.groups.GroupAccessControl;
 import su.sres.securesms.groups.GroupChangeBusyException;
@@ -153,6 +154,13 @@ final class ManageGroupRepository {
                 Log.w(TAG, e);
                 error.onError(GroupChangeFailureReason.fromException(e));
             }
+        });
+    }
+
+    void setMentionSetting(RecipientDatabase.MentionSetting mentionSetting) {
+        SignalExecutors.BOUNDED.execute(() -> {
+            RecipientId recipientId = Recipient.externalGroup(context, groupId).getId();
+            DatabaseFactory.getRecipientDatabase(context).setMentionSetting(recipientId, mentionSetting);
         });
     }
 

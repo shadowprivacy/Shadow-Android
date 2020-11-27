@@ -51,6 +51,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment;
 import su.sres.securesms.recipients.ui.notifications.CustomNotificationsDialogFragment;
 import su.sres.securesms.util.DateUtils;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.LifecycleCursorWrapper;
 import su.sres.securesms.util.views.LearnMoreTextView;
 
@@ -99,6 +100,8 @@ public class ManageGroupFragment extends LoggingFragment {
     private TextView                           muteNotificationsUntilLabel;
     private TextView                           customNotificationsButton;
     private View                               customNotificationsRow;
+    private View                               mentionsRow;
+    private TextView                           mentionsValue;
     private View                               toggleAllMembers;
 
     private final Recipient.FallbackPhotoProvider fallbackPhotoProvider = new Recipient.FallbackPhotoProvider() {
@@ -156,6 +159,8 @@ public class ManageGroupFragment extends LoggingFragment {
         muteNotificationsRow        = view.findViewById(R.id.group_mute_notifications_row);
         customNotificationsButton   = view.findViewById(R.id.group_custom_notifications_button);
         customNotificationsRow      = view.findViewById(R.id.group_custom_notifications_row);
+        mentionsRow                 = view.findViewById(R.id.group_mentions_row);
+        mentionsValue               = view.findViewById(R.id.group_mentions_value);
         toggleAllMembers            = view.findViewById(R.id.toggle_all_members);
 
         groupV1Indicator.setOnLinkClickListener(v -> GroupsLearnMoreBottomSheetDialogFragment.show(requireFragmentManager()));
@@ -317,13 +322,16 @@ public class ManageGroupFragment extends LoggingFragment {
 
         customNotificationsRow.setVisibility(View.VISIBLE);
 
-        //noinspection CodeBlock2Expr
         if (NotificationChannels.supported()) {
             viewModel.hasCustomNotifications().observe(getViewLifecycleOwner(), hasCustomNotifications -> {
                 customNotificationsButton.setText(hasCustomNotifications ? R.string.ManageGroupActivity_on
                         : R.string.ManageGroupActivity_off);
             });
         }
+
+        mentionsRow.setVisibility(FeatureFlags.mentions() && groupId.isV2() ? View.VISIBLE : View.GONE);
+        mentionsRow.setOnClickListener(v -> viewModel.handleMentionNotificationSelection());
+        viewModel.getMentionSetting().observe(getViewLifecycleOwner(), value -> mentionsValue.setText(value));
 
         viewModel.getSnackbarEvents().observe(getViewLifecycleOwner(), this::handleSnackbarEvent);
         viewModel.getInvitedDialogEvents().observe(getViewLifecycleOwner(), this::handleInvitedDialogEvent);

@@ -50,7 +50,9 @@ import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.groupsv2.DecryptedGroupUtil;
+import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
+import su.sres.storageservice.protos.groups.local.DecryptedMember;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -162,7 +164,7 @@ public class ThreadDatabase extends Database {
   private void updateThread(long threadId, long count, String body, @Nullable Uri attachment,
                             @Nullable String contentType, @Nullable Extra extra,
                             long date, int status, int deliveryReceiptCount, long type, boolean unarchive,
-                            long expiresIn, int readReceiptCount)
+                            long expiresIn, int readReceiptCount, boolean causedByDeletion)
   {
     String extraSerialized = null;
 
@@ -175,7 +177,7 @@ public class ThreadDatabase extends Database {
     }
 
     ContentValues contentValues = new ContentValues();
-    if (!MmsSmsColumns.Types.isProfileChange(type)) {
+    if (!MmsSmsColumns.Types.isProfileChange(type) || causedByDeletion) {
       contentValues.put(DATE, date - date % 1000);
       contentValues.put(SNIPPET, body);
       contentValues.put(SNIPPET_URI, attachment == null ? null : attachment.toString());
@@ -336,10 +338,18 @@ public class ThreadDatabase extends Database {
   }
 
   public List<MarkedMessageInfo> setRead(long threadId, boolean lastSeen) {
-    return setRead(Collections.singletonList(threadId), lastSeen);
+    return setReadInternal(Collections.singletonList(threadId), lastSeen, -1);
+  }
+
+  public List<MarkedMessageInfo> setReadSince(long threadId, boolean lastSeen, long sinceTimestamp) {
+    return setReadInternal(Collections.singletonList(threadId), lastSeen, sinceTimestamp);
   }
 
   public List<MarkedMessageInfo> setRead(Collection<Long> threadIds, boolean lastSeen) {
+    return setReadInternal(threadIds, lastSeen, -1);
+  }
+
+  private List<MarkedMessageInfo> setReadInternal(Collection<Long> threadIds, boolean lastSeen, long sinceTimestamp) {
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
 
     List<MarkedMessageInfo> smsRecords = new LinkedList<>();
@@ -350,20 +360,23 @@ public class ThreadDatabase extends Database {
     try {
       ContentValues contentValues = new ContentValues(2);
       contentValues.put(READ, ReadStatus.READ.serialize());
-      contentValues.put(UNREAD_COUNT, 0);
 
       if (lastSeen) {
-        contentValues.put(LAST_SEEN, System.currentTimeMillis());
+        contentValues.put(LAST_SEEN, sinceTimestamp == -1 ? System.currentTimeMillis() : sinceTimestamp);
       }
 
       for (long threadId : threadIds) {
+        smsRecords.addAll(DatabaseFactory.getSmsDatabase(context).setMessagesReadSince(threadId, sinceTimestamp));
+        mmsRecords.addAll(DatabaseFactory.getMmsDatabase(context).setMessagesReadSince(threadId, sinceTimestamp));
+
+        DatabaseFactory.getSmsDatabase(context).setReactionsSeen(threadId, sinceTimestamp);
+        DatabaseFactory.getMmsDatabase(context).setReactionsSeen(threadId, sinceTimestamp);
+
+        int unreadCount = DatabaseFactory.getMmsSmsDatabase(context).getUnreadCount(threadId);
+
+        contentValues.put(UNREAD_COUNT, unreadCount);
+
         db.update(TABLE_NAME, contentValues, ID_WHERE, new String[]{threadId + ""});
-
-        smsRecords.addAll(DatabaseFactory.getSmsDatabase(context).setMessagesRead(threadId));
-        mmsRecords.addAll(DatabaseFactory.getMmsDatabase(context).setMessagesRead(threadId));
-
-        DatabaseFactory.getSmsDatabase(context).setReactionsSeen(threadId);
-        DatabaseFactory.getMmsDatabase(context).setReactionsSeen(threadId);
       }
 
       db.setTransactionSuccessful();
@@ -813,10 +826,10 @@ public class ThreadDatabase extends Database {
   }
 
   public boolean update(long threadId, boolean unarchive) {
-    return update(threadId, unarchive, true);
+    return update(threadId, unarchive, true, false);
   }
 
-  public boolean update(long threadId, boolean unarchive, boolean allowDeletion) {
+  public boolean update(long threadId, boolean unarchive, boolean allowDeletion, boolean causedByDeletion) {
     MmsSmsDatabase mmsSmsDatabase = DatabaseFactory.getMmsSmsDatabase(context);
     long count                    = mmsSmsDatabase.getConversationCount(threadId);
 
@@ -838,7 +851,7 @@ public class ThreadDatabase extends Database {
         updateThread(threadId, count, ThreadBodyUtil.getFormattedBodyFor(context, record), getAttachmentUriFor(record),
                 getContentTypeFor(record), getExtrasFor(record),
                      record.getTimestamp(), record.getDeliveryStatus(), record.getDeliveryReceiptCount(),
-                     record.getType(), unarchive, record.getExpiresIn(), record.getReadReceiptCount());
+                record.getType(), unarchive, record.getExpiresIn(), record.getReadReceiptCount(), causedByDeletion);
         notifyConversationListListeners();
         return false;
       } else {
@@ -963,9 +976,16 @@ public class ThreadDatabase extends Database {
           DecryptedGroup decryptedGroup = DatabaseFactory.getGroupDatabase(context).requireGroup(resolved.requireGroupId().requireV2()).requireV2GroupProperties().getDecryptedGroup();
           Optional<UUID> inviter        = DecryptedGroupUtil.findInviter(decryptedGroup.getPendingMembersList(), Recipient.self().getUuid().get());
 
-          RecipientId recipientId = inviter.isPresent() ? RecipientId.from(inviter.get(), null) : RecipientId.UNKNOWN;
+          if (inviter.isPresent()) {
+            RecipientId recipientId = RecipientId.from(inviter.get(), null);
+            return Extra.forGroupV2invite(recipientId);
+          } else if (decryptedGroup.getRevision() == 0) {
+            Optional<DecryptedMember> foundingMember = DecryptedGroupUtil.firstMember(decryptedGroup.getMembersList());
 
-          return Extra.forGroupV2invite(recipientId);
+            if (foundingMember.isPresent()) {
+              return Extra.forGroupMessageRequest(RecipientId.from(UuidUtil.fromByteString(foundingMember.get().getUuid()), null));
+            }
+          }
         } else {
           RecipientId recipientId = DatabaseFactory.getMmsSmsDatabase(context).getGroupAddedBy(record.getThreadId());
 

@@ -71,7 +71,7 @@ public class PushTextSendJob extends PushSendJob  {
   public void onPushSend() throws NoSuchMessageException, RetryLaterException {
     ExpiringMessageManager expirationManager = ApplicationContext.getInstance(context).getExpiringMessageManager();
     SmsDatabase            database          = DatabaseFactory.getSmsDatabase(context);
-    SmsMessageRecord       record            = database.getMessage(messageId);
+    SmsMessageRecord       record            = database.getMessageRecord(messageId);
 
     if (!record.isPending() && !record.isFailed()) {
       warn(TAG, "Message " + messageId + " was already sent. Ignoring.");
@@ -158,7 +158,7 @@ public class PushTextSendJob extends PushSendJob  {
 
       Recipient                        messageRecipient   = message.getIndividualRecipient().fresh();
       SignalServiceMessageSender       messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-      SignalServiceAddress             address            = getPushAddress(messageRecipient);
+      SignalServiceAddress             address            = RecipientUtil.toSignalServiceAddress(context, messageRecipient);
       Optional<byte[]>                 profileKey         = getProfileKey(messageRecipient);
       Optional<UnidentifiedAccessPair> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, messageRecipient);
 

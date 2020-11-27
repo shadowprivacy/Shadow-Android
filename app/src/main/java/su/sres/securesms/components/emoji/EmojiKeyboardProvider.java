@@ -12,6 +12,7 @@ import android.widget.ImageView;
 
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiPageViewGridAdapter.VariationSelectorListener;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.util.ResUtil;
 import su.sres.securesms.util.ThemeUtil;
@@ -48,6 +49,7 @@ public class EmojiKeyboardProvider implements MediaKeyboardProvider,
             @Override
             public void onEmojiSelected(String emoji) {
                 recentModel.onCodePointSelected(emoji);
+                SignalStore.emojiValues().setPreferredVariation(emoji);
 
                 if (emojiEventListener != null) {
                     emojiEventListener.onEmojiSelected(emoji);

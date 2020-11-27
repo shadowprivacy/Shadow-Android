@@ -149,7 +149,7 @@ public class ShareActivity extends PassphraseRequiredActivity
   }
 
   @Override
-  public void onContactSelected(Optional<RecipientId> recipientId, String number) {
+  public boolean onContactSelected(Optional<RecipientId> recipientId, String number) {
     SimpleTask.run(this.getLifecycle(), () -> {
       Recipient recipient;
       if (recipientId.isPresent()) {
@@ -162,6 +162,7 @@ public class ShareActivity extends PassphraseRequiredActivity
       long existingThread = DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient);
       return new Pair<>(existingThread, recipient);
     }, result -> onDestinationChosen(result.first(), result.second().getId()));
+    return true;
   }
 
   @Override
@@ -293,7 +294,7 @@ public class ShareActivity extends PassphraseRequiredActivity
 
   private void openConversation(long threadId, @NonNull RecipientId recipientId, @Nullable ShareData shareData) {
     Intent           intent          = new Intent(this, ConversationActivity.class);
-    String           textExtra       = getIntent().getStringExtra(Intent.EXTRA_TEXT);
+    CharSequence     textExtra       = getIntent().getCharSequenceExtra(Intent.EXTRA_TEXT);
     ArrayList<Media> mediaExtra      = getIntent().getParcelableArrayListExtra(ConversationActivity.MEDIA_EXTRA);
     StickerLocator   stickerExtra    = getIntent().getParcelableExtra(ConversationActivity.STICKER_EXTRA);
     boolean          borderlessExtra = getIntent().getBooleanExtra(ConversationActivity.BORDERLESS_EXTRA, false);

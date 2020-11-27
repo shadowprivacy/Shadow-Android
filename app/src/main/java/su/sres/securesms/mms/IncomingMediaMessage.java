@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.PointerAttachment;
 import su.sres.securesms.contactshare.Contact;
+import su.sres.securesms.database.model.Mention;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.recipients.RecipientId;
@@ -35,6 +36,7 @@ public class IncomingMediaMessage {
   private final List<Attachment>  attachments    = new LinkedList<>();
   private final List<Contact>     sharedContacts = new LinkedList<>();
   private final List<LinkPreview> linkPreviews   = new LinkedList<>();
+  private final List<Mention>     mentions       = new LinkedList<>();
 
   public IncomingMediaMessage(@NonNull RecipientId from,
                               Optional<GroupId> groupId,
@@ -78,6 +80,7 @@ public class IncomingMediaMessage {
                               Optional<QuoteModel> quote,
                               Optional<List<Contact>> sharedContacts,
                               Optional<List<LinkPreview>> linkPreviews,
+                              Optional<List<Mention>> mentions,
                               Optional<Attachment> sticker)
   {
     this.push             = true;
@@ -98,6 +101,7 @@ public class IncomingMediaMessage {
     this.attachments.addAll(PointerAttachment.forPointers(attachments));
     this.sharedContacts.addAll(sharedContacts.or(Collections.emptyList()));
     this.linkPreviews.addAll(linkPreviews.or(Collections.emptyList()));
+    this.mentions.addAll(mentions.or(Collections.emptyList()));
 
     if (sticker.isPresent()) {
       this.attachments.add(sticker.get());
@@ -162,6 +166,10 @@ public class IncomingMediaMessage {
 
   public List<LinkPreview> getLinkPreviews() {
     return linkPreviews;
+  }
+
+  public @NonNull List<Mention> getMentions() {
+    return mentions;
   }
 
   public boolean isUnidentified() {

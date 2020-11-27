@@ -63,7 +63,7 @@ public class NewConversationActivity extends ContactSelectionActivity
   }
 
   @Override
-  public void onContactSelected(Optional<RecipientId> recipientId, String number) {
+  public boolean onContactSelected(Optional<RecipientId> recipientId, String number) {
     if (recipientId.isPresent()) {
       launch(Recipient.resolved(recipientId.get()));
     } else {
@@ -95,6 +95,7 @@ public class NewConversationActivity extends ContactSelectionActivity
         launch(Recipient.external(this, number));
       }
     }
+    return true;
   }
 
   private void launch(Recipient recipient) {

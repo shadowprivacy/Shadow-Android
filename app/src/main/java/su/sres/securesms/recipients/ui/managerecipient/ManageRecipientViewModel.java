@@ -27,34 +27,40 @@ import su.sres.securesms.database.loaders.ThreadMediaLoader;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.ui.GroupMemberEntry;
 import su.sres.securesms.groups.ui.addtogroup.AddToGroupsActivity;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
+import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.DefaultValueLiveData;
 import su.sres.securesms.util.ExpirationUtil;
+import su.sres.securesms.util.Hex;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 
 import java.util.List;
+import java.util.UUID;
 
 public final class ManageRecipientViewModel extends ViewModel {
 
-    private static final int MAX_COLLAPSED_GROUPS = 5;
+    private static final int MAX_UNCOLLAPSED_GROUPS = 6;
+    private static final int SHOW_COLLAPSED_GROUPS  = 5;
 
     private final Context                                          context;
     private final ManageRecipientRepository                        manageRecipientRepository;
     private final LiveData<String>                                 title;
     private final LiveData<String>                                 subtitle;
+    private final LiveData<String>                                 internalDetails;
     private final LiveData<String>                                 disappearingMessageTimer;
     private final MutableLiveData<IdentityDatabase.IdentityRecord> identity;
     private final LiveData<Recipient>                              recipient;
-    private final MutableLiveData<MediaCursor>                     mediaCursor               = new MutableLiveData<>(null);
+    private final MutableLiveData<MediaCursor>                     mediaCursor;
     private final LiveData<MuteState>                              muteState;
     private final LiveData<Boolean>                                hasCustomNotifications;
     private final LiveData<Boolean>                                canCollapseMemberList;
-    private final DefaultValueLiveData<CollapseState>              groupListCollapseState    = new DefaultValueLiveData<>(CollapseState.COLLAPSED);
+    private final DefaultValueLiveData<CollapseState>              groupListCollapseState;
     private final LiveData<Boolean>                                canBlock;
     private final LiveData<List<GroupMemberEntry.FullMember>>      visibleSharedGroups;
     private final LiveData<String>                                 sharedGroupsCountSummary;
@@ -63,13 +69,19 @@ public final class ManageRecipientViewModel extends ViewModel {
     private ManageRecipientViewModel(@NonNull Context context, @NonNull ManageRecipientRepository manageRecipientRepository) {
         this.context                   = context;
         this.manageRecipientRepository = manageRecipientRepository;
+        this.recipient                 = Recipient.live(manageRecipientRepository.getRecipientId()).getLiveData();
+        this.title                     = Transformations.map(recipient, r -> getDisplayTitle(r, context)   );
+        this.subtitle                  = Transformations.map(recipient, r -> getDisplaySubtitle(r, context));
+        this.identity                  = new MutableLiveData<>();
+        this.mediaCursor               = new MutableLiveData<>(null);
+        this.groupListCollapseState    = new DefaultValueLiveData<>(CollapseState.COLLAPSED);
+        this.disappearingMessageTimer  = Transformations.map(this.recipient, r -> ExpirationUtil.getExpirationDisplayValue(context, r.getExpireMessages()));
+        this.muteState                 = Transformations.map(this.recipient, r -> new MuteState(r.getMuteUntil(), r.isMuted()));
+        this.hasCustomNotifications    = Transformations.map(this.recipient, r -> r.getNotificationChannel() != null || !NotificationChannels.supported());
+        this.canBlock                  = Transformations.map(this.recipient, r -> !r.isBlocked());
+        this.internalDetails           = Transformations.map(this.recipient, this::populateInternalDetails);
 
         manageRecipientRepository.getThreadId(this::onThreadIdLoaded);
-
-        this.recipient = Recipient.live(manageRecipientRepository.getRecipientId()).getLiveData();
-        this.title     = Transformations.map(recipient, r -> getDisplayTitle(r, context));
-        this.subtitle  = Transformations.map(recipient, r -> getDisplaySubtitle(r, context));
-        this.identity  = new MutableLiveData<>();
 
         LiveData<List<Recipient>> allSharedGroups = LiveDataUtil.mapAsync(this.recipient, r -> manageRecipientRepository.getSharedGroups(r.getId()));
 
@@ -80,17 +92,12 @@ public final class ManageRecipientViewModel extends ViewModel {
         });
 
         this.canCollapseMemberList = LiveDataUtil.combineLatest(this.groupListCollapseState,
-                Transformations.map(allSharedGroups, m -> m.size() > MAX_COLLAPSED_GROUPS),
+                Transformations.map(allSharedGroups, m -> m.size() > MAX_UNCOLLAPSED_GROUPS),
                 (state, hasEnoughMembers) -> state != CollapseState.OPEN && hasEnoughMembers);
         this.visibleSharedGroups   = Transformations.map(LiveDataUtil.combineLatest(allSharedGroups,
                 this.groupListCollapseState,
                 ManageRecipientViewModel::filterSharedGroupList),
                 recipients -> Stream.of(recipients).map(r -> new GroupMemberEntry.FullMember(r, false)).toList());
-
-        this.disappearingMessageTimer = Transformations.map(this.recipient, r -> ExpirationUtil.getExpirationDisplayValue(context, r.getExpireMessages()));
-        this.muteState                = Transformations.map(this.recipient, r -> new MuteState(r.getMuteUntil(), r.isMuted()));
-        this.hasCustomNotifications   = Transformations.map(this.recipient, r -> r.getNotificationChannel() != null || !NotificationChannels.supported());
-        this.canBlock                 = Transformations.map(this.recipient, r -> !r.isBlocked());
 
         boolean isSelf = manageRecipientRepository.getRecipientId().equals(Recipient.self().getId());
         if (!isSelf) {
@@ -99,7 +106,8 @@ public final class ManageRecipientViewModel extends ViewModel {
 
         MutableLiveData<Integer> localGroupCount = new MutableLiveData<>(0);
 
-        canAddToAGroup = LiveDataUtil.combineLatest(recipient, localGroupCount,
+        this.canAddToAGroup = LiveDataUtil.combineLatest(recipient,
+                localGroupCount,
                 (r, count) -> count > 0 && r.isRegistered() && !r.isGroup() && !r.isLocalNumber());
 
         manageRecipientRepository.getActiveGroupCount(localGroupCount::postValue);
@@ -134,6 +142,10 @@ public final class ManageRecipientViewModel extends ViewModel {
 
     LiveData<String> getSubtitle() {
         return subtitle;
+    }
+
+    LiveData<String> getInternalDetails() {
+        return internalDetails;
     }
 
     LiveData<Recipient> getRecipient() {
@@ -198,8 +210,8 @@ public final class ManageRecipientViewModel extends ViewModel {
     private static @NonNull List<Recipient> filterSharedGroupList(@NonNull List<Recipient> groups,
                                                                   @NonNull CollapseState collapseState)
     {
-        if (collapseState == CollapseState.COLLAPSED && groups.size() > MAX_COLLAPSED_GROUPS) {
-            return groups.subList(0, MAX_COLLAPSED_GROUPS);
+        if (collapseState == CollapseState.COLLAPSED && groups.size() > MAX_UNCOLLAPSED_GROUPS) {
+            return groups.subList(0, SHOW_COLLAPSED_GROUPS);
         } else {
             return groups;
         }
@@ -251,6 +263,27 @@ public final class ManageRecipientViewModel extends ViewModel {
 
     void onSecureVideoCall(@NonNull FragmentActivity activity) {
         withRecipient(r -> CommunicationActions.startVideoCall(activity, r, true));
+    }
+
+    private @NonNull String populateInternalDetails(@NonNull Recipient recipient) {
+        if (!SignalStore.internalValues().recipientDetails()) {
+            return "";
+        }
+
+        String profileKeyBase64 = recipient.getProfileKey() != null ? Base64.encodeBytes(recipient.getProfileKey()) : "None";
+        String profileKeyHex    = recipient.getProfileKey() != null ? Hex.toStringCondensed(recipient.getProfileKey()) : "None";
+        return String.format("-- Profile Name --\n%s\n\n" +
+                        "-- Profile Sharing --\n%s\n\n" +
+                        "-- Profile Key (Base64) --\n%s\n\n" +
+                        "-- Profile Key (Hex) --\n%s\n\n" +
+                        "-- UUID --\n%s\n\n" +
+                        "-- RecipientId --\n%s",
+                recipient.getProfileName().toString(),
+                recipient.isProfileSharing(),
+                profileKeyBase64,
+                profileKeyHex,
+                recipient.getUuid().transform(UUID::toString).or("None"),
+                recipient.getId().serialize());
     }
 
     static final class MediaCursor {

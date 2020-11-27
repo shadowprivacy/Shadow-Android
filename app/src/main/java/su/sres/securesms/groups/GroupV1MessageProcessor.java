@@ -99,7 +99,7 @@ public final class GroupV1MessageProcessor {
 
     if (group.getMembers().isPresent()) {
       for (SignalServiceAddress member : group.getMembers().get()) {
-        members.add(Recipient.externalPush(context, member).getId());
+        members.add(Recipient.externalGV1Member(context, member).getId());
       }
     }
 
@@ -129,8 +129,10 @@ public final class GroupV1MessageProcessor {
     Set<RecipientId> recordMembers  = new HashSet<>(groupRecord.getMembers());
     Set<RecipientId> messageMembers = new HashSet<>();
 
-    for (SignalServiceAddress messageMember : group.getMembers().get()) {
-      messageMembers.add(Recipient.externalPush(context, messageMember).getId());
+    if (group.getMembers().isPresent()) {
+      for (SignalServiceAddress messageMember : group.getMembers().get()) {
+        messageMembers.add(Recipient.externalGV1Member(context, messageMember).getId());
+      }
     }
 
     Set<RecipientId> addedMembers = new HashSet<>(messageMembers);
@@ -148,18 +150,19 @@ public final class GroupV1MessageProcessor {
       database.updateMembers(id, new LinkedList<>(unionMembers));
 
       builder.clearMembers();
+      builder.clearMembersE164();
 
       for (RecipientId addedMember : addedMembers) {
         Recipient recipient = Recipient.resolved(addedMember);
 
         if (recipient.getE164().isPresent()) {
-          builder.addMembersE164(recipient.getE164().get());
+          builder.addMembersE164(recipient.requireE164());
+          builder.addMembers(createMember(recipient.requireE164()));
         }
-
-        builder.addMembers(createMember(RecipientUtil.toSignalServiceAddress(context, recipient)));
       }
     } else {
       builder.clearMembers();
+      builder.clearMembersE164();
     }
 
     if (missingMembers.size() > 0) {
@@ -235,7 +238,7 @@ public final class GroupV1MessageProcessor {
         MmsDatabase                mmsDatabase     = DatabaseFactory.getMmsDatabase(context);
         RecipientId                recipientId     = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(GroupId.v1orThrow(group.getGroupId()));
         Recipient                  recipient       = Recipient.resolved(recipientId);
-        OutgoingGroupUpdateMessage outgoingMessage = new OutgoingGroupUpdateMessage(recipient, storage, null, content.getTimestamp(), 0, false, null, Collections.emptyList(), Collections.emptyList());
+        OutgoingGroupUpdateMessage outgoingMessage = new OutgoingGroupUpdateMessage(recipient, storage, null, content.getTimestamp(), 0, false, null, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
         long                       threadId        = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient);
         long                       messageId       = mmsDatabase.insertMessageOutbox(outgoingMessage, threadId, false, null);
 
@@ -268,7 +271,10 @@ public final class GroupV1MessageProcessor {
     GroupContext.Builder builder = GroupContext.newBuilder();
     builder.setId(ByteString.copyFrom(group.getGroupId()));
 
-    if (group.getAvatar().isPresent() && group.getAvatar().get().isPointer()) {
+    if (group.getAvatar().isPresent()       &&
+            group.getAvatar().get().isPointer() &&
+            group.getAvatar().get().asPointer().getRemoteId().getV2().isPresent())
+    {
       builder.setAvatar(AttachmentPointer.newBuilder()
                                          .setCdnId(group.getAvatar().get().asPointer().getRemoteId().getV2().get())
                                          .setKey(ByteString.copyFrom(group.getAvatar().get().asPointer().getKey()))
@@ -285,6 +291,8 @@ public final class GroupV1MessageProcessor {
               .map(a -> a.getNumber().get())
               .toList());
       builder.addAllMembers(Stream.of(group.getMembers().get())
+              .filter(address -> address.getNumber().isPresent())
+              .map(address -> address.getNumber().get())
               .map(GroupV1MessageProcessor::createMember)
               .toList());
     }
@@ -292,18 +300,10 @@ public final class GroupV1MessageProcessor {
     return builder;
   }
 
-  public static GroupContext.Member createMember(SignalServiceAddress address) {
+  public static GroupContext.Member createMember(@NonNull String e164) {
     GroupContext.Member.Builder member = GroupContext.Member.newBuilder();
 
-    if (address.getUuid().isPresent()) {
-      member.setUuid(address.getUuid().get().toString());
-    }
-
-    if (address.getNumber().isPresent()) {
-      member.setE164(address.getNumber().get());
-    }
-
+    member.setE164(e164);
     return member.build();
   }
-
 }

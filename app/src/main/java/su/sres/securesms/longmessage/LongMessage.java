@@ -1,28 +1,32 @@
 package su.sres.securesms.longmessage;
 
+import android.content.Context;
 import android.text.TextUtils;
 
+import androidx.annotation.NonNull;
+
+import su.sres.securesms.conversation.ConversationMessage;
 import su.sres.securesms.database.model.MessageRecord;
 
 /**
- * A wrapper around a {@link MessageRecord} and its extra text attachment expanded into a string
+ * A wrapper around a {@link ConversationMessage} and its extra text attachment expanded into a string
  * held in memory.
  */
 class LongMessage {
 
-    private final MessageRecord messageRecord;
-    private final String        fullBody;
+    private final ConversationMessage conversationMessage;
+    private final String              fullBody;
 
-    LongMessage(MessageRecord messageRecord, String fullBody) {
-        this.messageRecord = messageRecord;
-        this.fullBody      = fullBody;
+    LongMessage(@NonNull ConversationMessage conversationMessage, @NonNull String fullBody) {
+        this.conversationMessage = conversationMessage;
+        this.fullBody            = fullBody;
     }
 
-    MessageRecord getMessageRecord() {
-        return messageRecord;
+    @NonNull MessageRecord getMessageRecord() {
+        return conversationMessage.getMessageRecord();
     }
 
-    String getFullBody() {
-        return !TextUtils.isEmpty(fullBody) ? fullBody : messageRecord.getBody();
+    @NonNull CharSequence getFullBody(@NonNull Context context) {
+        return !TextUtils.isEmpty(fullBody) ? fullBody : conversationMessage.getDisplayBody(context);
     }
 }

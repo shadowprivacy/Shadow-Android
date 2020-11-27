@@ -86,9 +86,10 @@ abstract class ConversationListDataSource extends PositionalDataSource<Conversat
             SizeFixResult<Conversation> result = SizeFixResult.ensureMultipleOfPageSize(conversations, params.requestedStartPosition, params.pageSize, totalCount);
 
             callback.onResult(result.getItems(), params.requestedStartPosition, result.getTotal());
+            Log.d(TAG, "[Initial Load] " + (System.currentTimeMillis() - start) + " ms | start: " + params.requestedStartPosition + ", requestedSize: " + params.requestedLoadSize + ", actualSize: " + result.getItems().size() + ", totalCount: " + result.getTotal() + ", class: " + getClass().getSimpleName());
+        } else {
+            Log.d(TAG, "[Initial Load] " + (System.currentTimeMillis() - start) + " ms | start: " + params.requestedStartPosition + ", requestedSize: " + params.requestedLoadSize + ", totalCount: " + totalCount + ", class: " + getClass().getSimpleName() + " -- invalidated");
         }
-
-        Log.d(TAG, "[Initial Load] " + (System.currentTimeMillis() - start) + " ms | start: " + params.requestedStartPosition + ", size: " + params.requestedLoadSize + ", totalCount: " + totalCount + ", class: " + getClass().getSimpleName() + (isInvalid() ? " -- invalidated" : ""));
     }
 
     @Override

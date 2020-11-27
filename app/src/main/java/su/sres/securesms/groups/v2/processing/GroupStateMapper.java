@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.logging.Log;
 import su.sres.signalservice.api.groupsv2.DecryptedGroupUtil;
 import su.sres.signalservice.api.groupsv2.GroupChangeReconstruct;
+import su.sres.signalservice.api.groupsv2.NotAbleToApplyGroupV2ChangeException;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 
@@ -88,7 +89,7 @@ final class GroupStateMapper {
             DecryptedGroup groupWithChangeApplied;
             try {
                 groupWithChangeApplied = DecryptedGroupUtil.applyWithoutRevisionCheck(current, changeAtRevision);
-            } catch (DecryptedGroupUtil.NotAbleToApplyChangeException e) {
+            } catch (NotAbleToApplyGroupV2ChangeException e) {
                 Log.w(TAG, "Unable to apply V" + revision, e);
                 continue;
             }

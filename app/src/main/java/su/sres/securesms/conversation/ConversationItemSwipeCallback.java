@@ -114,8 +114,8 @@ class ConversationItemSwipeCallback extends ItemTouchHelper.SimpleCallback {
     private void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder) {
         if (cannotSwipeViewHolder(viewHolder)) return;
 
-        ConversationItem  item          = ((ConversationItem) viewHolder.itemView);
-        MessageRecord     messageRecord = item.getMessageRecord();
+        ConversationItem    item          = ((ConversationItem) viewHolder.itemView);
+        ConversationMessage messageRecord = item.getConversationMessage();
 
         onSwipeListener.onSwipe(messageRecord);
     }
@@ -170,7 +170,7 @@ class ConversationItemSwipeCallback extends ItemTouchHelper.SimpleCallback {
         if (!(viewHolder.itemView instanceof ConversationItem)) return true;
 
         ConversationItem item = ((ConversationItem) viewHolder.itemView);
-        return !swipeAvailabilityProvider.isSwipeAvailable(item.getMessageRecord()) ||
+        return !swipeAvailabilityProvider.isSwipeAvailable(item.getConversationMessage()) ||
                 item.disallowSwipe(latestDownX, latestDownY);
     }
 
@@ -193,10 +193,10 @@ class ConversationItemSwipeCallback extends ItemTouchHelper.SimpleCallback {
     }
 
     interface SwipeAvailabilityProvider {
-        boolean isSwipeAvailable(MessageRecord messageRecord);
+        boolean isSwipeAvailable(ConversationMessage conversationMessage);
     }
 
     interface OnSwipeListener {
-        void onSwipe(MessageRecord messageRecord);
+        void onSwipe(ConversationMessage conversationMessage);
     }
 }

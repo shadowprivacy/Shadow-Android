@@ -23,6 +23,11 @@ public final class UuidUtil {
         return Optional.fromNullable(parseOrNull(uuid));
     }
 
+    public static UUID fromByteStringOrUnknown(ByteString bytes) {
+        UUID uuid = fromByteStringOrNull(bytes);
+        return uuid != null ? uuid : UNKNOWN_UUID;
+    }
+
     public static UUID parseOrNull(String uuid) {
         return isUuid(uuid) ? parseOrThrow(uuid) : null;
     }

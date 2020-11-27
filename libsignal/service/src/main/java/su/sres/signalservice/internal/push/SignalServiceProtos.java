@@ -2456,21 +2456,33 @@ public final class SignalServiceProtos {
       long getId();
 
       /**
-       * <code>optional string description = 2;</code>
-       * @return Whether the description field is set.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @return Whether the sdp field is set.
        */
-      boolean hasDescription();
+      boolean hasSdp();
       /**
-       * <code>optional string description = 2;</code>
-       * @return The description.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @return The sdp.
        */
-      java.lang.String getDescription();
+      java.lang.String getSdp();
       /**
-       * <code>optional string description = 2;</code>
-       * @return The bytes for description.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @return The bytes for sdp.
        */
       com.google.protobuf.ByteString
-          getDescriptionBytes();
+          getSdpBytes();
 
       /**
        * <code>optional .signalservice.CallMessage.Offer.Type type = 3;</code>
@@ -2482,6 +2494,17 @@ public final class SignalServiceProtos {
        * @return The type.
        */
       su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Offer.Type getType();
+
+      /**
+       * <code>optional bytes opaque = 4;</code>
+       * @return Whether the opaque field is set.
+       */
+      boolean hasOpaque();
+      /**
+       * <code>optional bytes opaque = 4;</code>
+       * @return The opaque.
+       */
+      com.google.protobuf.ByteString getOpaque();
     }
     /**
      * Protobuf type {@code signalservice.CallMessage.Offer}
@@ -2492,7 +2515,8 @@ public final class SignalServiceProtos {
         // @@protoc_insertion_point(message_implements:signalservice.CallMessage.Offer)
         OfferOrBuilder {
       private Offer() {
-        description_ = "";
+        sdp_ = "";
+        opaque_ = com.google.protobuf.ByteString.EMPTY;
       }
       /**
        * Protobuf enum {@code signalservice.CallMessage.Offer.Type}
@@ -2621,63 +2645,87 @@ public final class SignalServiceProtos {
         id_ = 0L;
       }
 
-      public static final int DESCRIPTION_FIELD_NUMBER = 2;
-      private java.lang.String description_;
+      public static final int SDP_FIELD_NUMBER = 2;
+      private java.lang.String sdp_;
       /**
-       * <code>optional string description = 2;</code>
-       * @return Whether the description field is set.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @return Whether the sdp field is set.
        */
       @java.lang.Override
-      public boolean hasDescription() {
+      public boolean hasSdp() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
-       * <code>optional string description = 2;</code>
-       * @return The description.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @return The sdp.
        */
       @java.lang.Override
-      public java.lang.String getDescription() {
-        return description_;
+      public java.lang.String getSdp() {
+        return sdp_;
       }
       /**
-       * <code>optional string description = 2;</code>
-       * @return The bytes for description.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @return The bytes for sdp.
        */
       @java.lang.Override
       public com.google.protobuf.ByteString
-          getDescriptionBytes() {
-        return com.google.protobuf.ByteString.copyFromUtf8(description_);
+          getSdpBytes() {
+        return com.google.protobuf.ByteString.copyFromUtf8(sdp_);
       }
       /**
-       * <code>optional string description = 2;</code>
-       * @param value The description to set.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @param value The sdp to set.
        */
-      private void setDescription(
+      private void setSdp(
           java.lang.String value) {
         if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000002;
-        description_ = value;
+        sdp_ = value;
       }
       /**
-       * <code>optional string description = 2;</code>
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
        */
-      private void clearDescription() {
+      private void clearSdp() {
         bitField0_ = (bitField0_ & ~0x00000002);
-        description_ = getDefaultInstance().getDescription();
+        sdp_ = getDefaultInstance().getSdp();
       }
       /**
-       * <code>optional string description = 2;</code>
-       * @param value The bytes for description to set.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @param value The bytes for sdp to set.
        */
-      private void setDescriptionBytes(
+      private void setSdpBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000002;
-        description_ = value.toStringUtf8();
+        sdp_ = value.toStringUtf8();
       }
 
       public static final int TYPE_FIELD_NUMBER = 3;
@@ -2716,6 +2764,43 @@ public final class SignalServiceProtos {
       private void clearType() {
         bitField0_ = (bitField0_ & ~0x00000004);
         type_ = 0;
+      }
+
+      public static final int OPAQUE_FIELD_NUMBER = 4;
+      private com.google.protobuf.ByteString opaque_;
+      /**
+       * <code>optional bytes opaque = 4;</code>
+       * @return Whether the opaque field is set.
+       */
+      @java.lang.Override
+      public boolean hasOpaque() {
+        return ((bitField0_ & 0x00000008) != 0);
+      }
+      /**
+       * <code>optional bytes opaque = 4;</code>
+       * @return The opaque.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getOpaque() {
+        return opaque_;
+      }
+      /**
+       * <code>optional bytes opaque = 4;</code>
+       * @param value The opaque to set.
+       */
+      private void setOpaque(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000008;
+        opaque_ = value;
+      }
+      /**
+       * <code>optional bytes opaque = 4;</code>
+       */
+      private void clearOpaque() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        opaque_ = getDefaultInstance().getOpaque();
       }
 
       public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Offer parseFrom(
@@ -2850,59 +2935,83 @@ public final class SignalServiceProtos {
         }
 
         /**
-         * <code>optional string description = 2;</code>
-         * @return Whether the description field is set.
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
+         * <code>optional string sdp = 2;</code>
+         * @return Whether the sdp field is set.
          */
         @java.lang.Override
-        public boolean hasDescription() {
-          return instance.hasDescription();
+        public boolean hasSdp() {
+          return instance.hasSdp();
         }
         /**
-         * <code>optional string description = 2;</code>
-         * @return The description.
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
+         * <code>optional string sdp = 2;</code>
+         * @return The sdp.
          */
         @java.lang.Override
-        public java.lang.String getDescription() {
-          return instance.getDescription();
+        public java.lang.String getSdp() {
+          return instance.getSdp();
         }
         /**
-         * <code>optional string description = 2;</code>
-         * @return The bytes for description.
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
+         * <code>optional string sdp = 2;</code>
+         * @return The bytes for sdp.
          */
         @java.lang.Override
         public com.google.protobuf.ByteString
-            getDescriptionBytes() {
-          return instance.getDescriptionBytes();
+            getSdpBytes() {
+          return instance.getSdpBytes();
         }
         /**
-         * <code>optional string description = 2;</code>
-         * @param value The description to set.
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
+         * <code>optional string sdp = 2;</code>
+         * @param value The sdp to set.
          * @return This builder for chaining.
          */
-        public Builder setDescription(
+        public Builder setSdp(
             java.lang.String value) {
           copyOnWrite();
-          instance.setDescription(value);
+          instance.setSdp(value);
           return this;
         }
         /**
-         * <code>optional string description = 2;</code>
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
+         * <code>optional string sdp = 2;</code>
          * @return This builder for chaining.
          */
-        public Builder clearDescription() {
+        public Builder clearSdp() {
           copyOnWrite();
-          instance.clearDescription();
+          instance.clearSdp();
           return this;
         }
         /**
-         * <code>optional string description = 2;</code>
-         * @param value The bytes for description to set.
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
+         * <code>optional string sdp = 2;</code>
+         * @param value The bytes for sdp to set.
          * @return This builder for chaining.
          */
-        public Builder setDescriptionBytes(
+        public Builder setSdpBytes(
             com.google.protobuf.ByteString value) {
           copyOnWrite();
-          instance.setDescriptionBytes(value);
+          instance.setSdpBytes(value);
           return this;
         }
 
@@ -2942,6 +3051,42 @@ public final class SignalServiceProtos {
           return this;
         }
 
+        /**
+         * <code>optional bytes opaque = 4;</code>
+         * @return Whether the opaque field is set.
+         */
+        @java.lang.Override
+        public boolean hasOpaque() {
+          return instance.hasOpaque();
+        }
+        /**
+         * <code>optional bytes opaque = 4;</code>
+         * @return The opaque.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString getOpaque() {
+          return instance.getOpaque();
+        }
+        /**
+         * <code>optional bytes opaque = 4;</code>
+         * @param value The opaque to set.
+         * @return This builder for chaining.
+         */
+        public Builder setOpaque(com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setOpaque(value);
+          return this;
+        }
+        /**
+         * <code>optional bytes opaque = 4;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearOpaque() {
+          copyOnWrite();
+          instance.clearOpaque();
+          return this;
+        }
+
         // @@protoc_insertion_point(builder_scope:signalservice.CallMessage.Offer)
       }
       @java.lang.Override
@@ -2960,13 +3105,14 @@ public final class SignalServiceProtos {
               java.lang.Object[] objects = new java.lang.Object[] {
                 "bitField0_",
                 "id_",
-                "description_",
+                "sdp_",
                 "type_",
                 su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Offer.Type.internalGetVerifier(),
+                "opaque_",
               };
               java.lang.String info =
-                  "\u0001\u0003\u0000\u0001\u0001\u0003\u0003\u0000\u0000\u0000\u0001\u0003\u0000\u0002" +
-                  "\b\u0001\u0003\f\u0002";
+                  "\u0001\u0004\u0000\u0001\u0001\u0004\u0004\u0000\u0000\u0000\u0001\u0003\u0000\u0002" +
+                  "\b\u0001\u0003\f\u0002\u0004\n\u0003";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through
@@ -3037,21 +3183,44 @@ public final class SignalServiceProtos {
       long getId();
 
       /**
-       * <code>optional string description = 2;</code>
-       * @return Whether the description field is set.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @return Whether the sdp field is set.
        */
-      boolean hasDescription();
+      boolean hasSdp();
       /**
-       * <code>optional string description = 2;</code>
-       * @return The description.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @return The sdp.
        */
-      java.lang.String getDescription();
+      java.lang.String getSdp();
       /**
-       * <code>optional string description = 2;</code>
-       * @return The bytes for description.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @return The bytes for sdp.
        */
       com.google.protobuf.ByteString
-          getDescriptionBytes();
+          getSdpBytes();
+
+      /**
+       * <code>optional bytes opaque = 3;</code>
+       * @return Whether the opaque field is set.
+       */
+      boolean hasOpaque();
+      /**
+       * <code>optional bytes opaque = 3;</code>
+       * @return The opaque.
+       */
+      com.google.protobuf.ByteString getOpaque();
     }
     /**
      * Protobuf type {@code signalservice.CallMessage.Answer}
@@ -3062,7 +3231,8 @@ public final class SignalServiceProtos {
         // @@protoc_insertion_point(message_implements:signalservice.CallMessage.Answer)
         AnswerOrBuilder {
       private Answer() {
-        description_ = "";
+        sdp_ = "";
+        opaque_ = com.google.protobuf.ByteString.EMPTY;
       }
       private int bitField0_;
       public static final int ID_FIELD_NUMBER = 1;
@@ -3099,63 +3269,124 @@ public final class SignalServiceProtos {
         id_ = 0L;
       }
 
-      public static final int DESCRIPTION_FIELD_NUMBER = 2;
-      private java.lang.String description_;
+      public static final int SDP_FIELD_NUMBER = 2;
+      private java.lang.String sdp_;
       /**
-       * <code>optional string description = 2;</code>
-       * @return Whether the description field is set.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @return Whether the sdp field is set.
        */
       @java.lang.Override
-      public boolean hasDescription() {
+      public boolean hasSdp() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
-       * <code>optional string description = 2;</code>
-       * @return The description.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @return The sdp.
        */
       @java.lang.Override
-      public java.lang.String getDescription() {
-        return description_;
+      public java.lang.String getSdp() {
+        return sdp_;
       }
       /**
-       * <code>optional string description = 2;</code>
-       * @return The bytes for description.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @return The bytes for sdp.
        */
       @java.lang.Override
       public com.google.protobuf.ByteString
-          getDescriptionBytes() {
-        return com.google.protobuf.ByteString.copyFromUtf8(description_);
+          getSdpBytes() {
+        return com.google.protobuf.ByteString.copyFromUtf8(sdp_);
       }
       /**
-       * <code>optional string description = 2;</code>
-       * @param value The description to set.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @param value The sdp to set.
        */
-      private void setDescription(
+      private void setSdp(
           java.lang.String value) {
         if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000002;
-        description_ = value;
+        sdp_ = value;
       }
       /**
-       * <code>optional string description = 2;</code>
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
        */
-      private void clearDescription() {
+      private void clearSdp() {
         bitField0_ = (bitField0_ & ~0x00000002);
-        description_ = getDefaultInstance().getDescription();
+        sdp_ = getDefaultInstance().getSdp();
       }
       /**
-       * <code>optional string description = 2;</code>
-       * @param value The bytes for description to set.
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
+       * <code>optional string sdp = 2;</code>
+       * @param value The bytes for sdp to set.
        */
-      private void setDescriptionBytes(
+      private void setSdpBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000002;
-        description_ = value.toStringUtf8();
+        sdp_ = value.toStringUtf8();
+      }
+
+      public static final int OPAQUE_FIELD_NUMBER = 3;
+      private com.google.protobuf.ByteString opaque_;
+      /**
+       * <code>optional bytes opaque = 3;</code>
+       * @return Whether the opaque field is set.
+       */
+      @java.lang.Override
+      public boolean hasOpaque() {
+        return ((bitField0_ & 0x00000004) != 0);
+      }
+      /**
+       * <code>optional bytes opaque = 3;</code>
+       * @return The opaque.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getOpaque() {
+        return opaque_;
+      }
+      /**
+       * <code>optional bytes opaque = 3;</code>
+       * @param value The opaque to set.
+       */
+      private void setOpaque(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        opaque_ = value;
+      }
+      /**
+       * <code>optional bytes opaque = 3;</code>
+       */
+      private void clearOpaque() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        opaque_ = getDefaultInstance().getOpaque();
       }
 
       public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Answer parseFrom(
@@ -3290,59 +3521,119 @@ public final class SignalServiceProtos {
         }
 
         /**
-         * <code>optional string description = 2;</code>
-         * @return Whether the description field is set.
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
+         * <code>optional string sdp = 2;</code>
+         * @return Whether the sdp field is set.
          */
         @java.lang.Override
-        public boolean hasDescription() {
-          return instance.hasDescription();
+        public boolean hasSdp() {
+          return instance.hasSdp();
         }
         /**
-         * <code>optional string description = 2;</code>
-         * @return The description.
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
+         * <code>optional string sdp = 2;</code>
+         * @return The sdp.
          */
         @java.lang.Override
-        public java.lang.String getDescription() {
-          return instance.getDescription();
+        public java.lang.String getSdp() {
+          return instance.getSdp();
         }
         /**
-         * <code>optional string description = 2;</code>
-         * @return The bytes for description.
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
+         * <code>optional string sdp = 2;</code>
+         * @return The bytes for sdp.
          */
         @java.lang.Override
         public com.google.protobuf.ByteString
-            getDescriptionBytes() {
-          return instance.getDescriptionBytes();
+            getSdpBytes() {
+          return instance.getSdpBytes();
         }
         /**
-         * <code>optional string description = 2;</code>
-         * @param value The description to set.
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
+         * <code>optional string sdp = 2;</code>
+         * @param value The sdp to set.
          * @return This builder for chaining.
          */
-        public Builder setDescription(
+        public Builder setSdp(
             java.lang.String value) {
           copyOnWrite();
-          instance.setDescription(value);
+          instance.setSdp(value);
           return this;
         }
         /**
-         * <code>optional string description = 2;</code>
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
+         * <code>optional string sdp = 2;</code>
          * @return This builder for chaining.
          */
-        public Builder clearDescription() {
+        public Builder clearSdp() {
           copyOnWrite();
-          instance.clearDescription();
+          instance.clearSdp();
           return this;
         }
         /**
-         * <code>optional string description = 2;</code>
-         * @param value The bytes for description to set.
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
+         * <code>optional string sdp = 2;</code>
+         * @param value The bytes for sdp to set.
          * @return This builder for chaining.
          */
-        public Builder setDescriptionBytes(
+        public Builder setSdpBytes(
             com.google.protobuf.ByteString value) {
           copyOnWrite();
-          instance.setDescriptionBytes(value);
+          instance.setSdpBytes(value);
+          return this;
+        }
+
+        /**
+         * <code>optional bytes opaque = 3;</code>
+         * @return Whether the opaque field is set.
+         */
+        @java.lang.Override
+        public boolean hasOpaque() {
+          return instance.hasOpaque();
+        }
+        /**
+         * <code>optional bytes opaque = 3;</code>
+         * @return The opaque.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString getOpaque() {
+          return instance.getOpaque();
+        }
+        /**
+         * <code>optional bytes opaque = 3;</code>
+         * @param value The opaque to set.
+         * @return This builder for chaining.
+         */
+        public Builder setOpaque(com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setOpaque(value);
+          return this;
+        }
+        /**
+         * <code>optional bytes opaque = 3;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearOpaque() {
+          copyOnWrite();
+          instance.clearOpaque();
           return this;
         }
 
@@ -3364,11 +3655,12 @@ public final class SignalServiceProtos {
               java.lang.Object[] objects = new java.lang.Object[] {
                 "bitField0_",
                 "id_",
-                "description_",
+                "sdp_",
+                "opaque_",
               };
               java.lang.String info =
-                  "\u0001\u0002\u0000\u0001\u0001\u0002\u0002\u0000\u0000\u0000\u0001\u0003\u0000\u0002" +
-                  "\b\u0001";
+                  "\u0001\u0003\u0000\u0001\u0001\u0003\u0003\u0000\u0000\u0000\u0001\u0003\u0000\u0002" +
+                  "\b\u0001\u0003\n\u0002";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through
@@ -3439,49 +3731,92 @@ public final class SignalServiceProtos {
       long getId();
 
       /**
-       * <code>optional string sdpMid = 2;</code>
-       * @return Whether the sdpMid field is set.
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional string mid = 2;</code>
+       * @return Whether the mid field is set.
        */
-      boolean hasSdpMid();
+      boolean hasMid();
       /**
-       * <code>optional string sdpMid = 2;</code>
-       * @return The sdpMid.
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional string mid = 2;</code>
+       * @return The mid.
        */
-      java.lang.String getSdpMid();
+      java.lang.String getMid();
       /**
-       * <code>optional string sdpMid = 2;</code>
-       * @return The bytes for sdpMid.
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional string mid = 2;</code>
+       * @return The bytes for mid.
        */
       com.google.protobuf.ByteString
-          getSdpMidBytes();
+          getMidBytes();
 
       /**
-       * <code>optional uint32 sdpMLineIndex = 3;</code>
-       * @return Whether the sdpMLineIndex field is set.
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional uint32 line = 3;</code>
+       * @return Whether the line field is set.
        */
-      boolean hasSdpMLineIndex();
+      boolean hasLine();
       /**
-       * <code>optional uint32 sdpMLineIndex = 3;</code>
-       * @return The sdpMLineIndex.
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional uint32 line = 3;</code>
+       * @return The line.
        */
-      int getSdpMLineIndex();
+      int getLine();
 
       /**
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
        * <code>optional string sdp = 4;</code>
        * @return Whether the sdp field is set.
        */
       boolean hasSdp();
       /**
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
        * <code>optional string sdp = 4;</code>
        * @return The sdp.
        */
       java.lang.String getSdp();
       /**
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
        * <code>optional string sdp = 4;</code>
        * @return The bytes for sdp.
        */
       com.google.protobuf.ByteString
           getSdpBytes();
+
+      /**
+       * <code>optional bytes opaque = 5;</code>
+       * @return Whether the opaque field is set.
+       */
+      boolean hasOpaque();
+      /**
+       * <code>optional bytes opaque = 5;</code>
+       * @return The opaque.
+       */
+      com.google.protobuf.ByteString getOpaque();
     }
     /**
      * Protobuf type {@code signalservice.CallMessage.IceUpdate}
@@ -3492,8 +3827,9 @@ public final class SignalServiceProtos {
         // @@protoc_insertion_point(message_implements:signalservice.CallMessage.IceUpdate)
         IceUpdateOrBuilder {
       private IceUpdate() {
-        sdpMid_ = "";
+        mid_ = "";
         sdp_ = "";
+        opaque_ = com.google.protobuf.ByteString.EMPTY;
       }
       private int bitField0_;
       public static final int ID_FIELD_NUMBER = 1;
@@ -3530,102 +3866,146 @@ public final class SignalServiceProtos {
         id_ = 0L;
       }
 
-      public static final int SDPMID_FIELD_NUMBER = 2;
-      private java.lang.String sdpMid_;
+      public static final int MID_FIELD_NUMBER = 2;
+      private java.lang.String mid_;
       /**
-       * <code>optional string sdpMid = 2;</code>
-       * @return Whether the sdpMid field is set.
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional string mid = 2;</code>
+       * @return Whether the mid field is set.
        */
       @java.lang.Override
-      public boolean hasSdpMid() {
+      public boolean hasMid() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
-       * <code>optional string sdpMid = 2;</code>
-       * @return The sdpMid.
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional string mid = 2;</code>
+       * @return The mid.
        */
       @java.lang.Override
-      public java.lang.String getSdpMid() {
-        return sdpMid_;
+      public java.lang.String getMid() {
+        return mid_;
       }
       /**
-       * <code>optional string sdpMid = 2;</code>
-       * @return The bytes for sdpMid.
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional string mid = 2;</code>
+       * @return The bytes for mid.
        */
       @java.lang.Override
       public com.google.protobuf.ByteString
-          getSdpMidBytes() {
-        return com.google.protobuf.ByteString.copyFromUtf8(sdpMid_);
+          getMidBytes() {
+        return com.google.protobuf.ByteString.copyFromUtf8(mid_);
       }
       /**
-       * <code>optional string sdpMid = 2;</code>
-       * @param value The sdpMid to set.
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional string mid = 2;</code>
+       * @param value The mid to set.
        */
-      private void setSdpMid(
+      private void setMid(
           java.lang.String value) {
         if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000002;
-        sdpMid_ = value;
+        mid_ = value;
       }
       /**
-       * <code>optional string sdpMid = 2;</code>
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional string mid = 2;</code>
        */
-      private void clearSdpMid() {
+      private void clearMid() {
         bitField0_ = (bitField0_ & ~0x00000002);
-        sdpMid_ = getDefaultInstance().getSdpMid();
+        mid_ = getDefaultInstance().getMid();
       }
       /**
-       * <code>optional string sdpMid = 2;</code>
-       * @param value The bytes for sdpMid to set.
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional string mid = 2;</code>
+       * @param value The bytes for mid to set.
        */
-      private void setSdpMidBytes(
+      private void setMidBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000002;
-        sdpMid_ = value.toStringUtf8();
+        mid_ = value.toStringUtf8();
       }
 
-      public static final int SDPMLINEINDEX_FIELD_NUMBER = 3;
-      private int sdpMLineIndex_;
+      public static final int LINE_FIELD_NUMBER = 3;
+      private int line_;
       /**
-       * <code>optional uint32 sdpMLineIndex = 3;</code>
-       * @return Whether the sdpMLineIndex field is set.
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional uint32 line = 3;</code>
+       * @return Whether the line field is set.
        */
       @java.lang.Override
-      public boolean hasSdpMLineIndex() {
+      public boolean hasLine() {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
-       * <code>optional uint32 sdpMLineIndex = 3;</code>
-       * @return The sdpMLineIndex.
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional uint32 line = 3;</code>
+       * @return The line.
        */
       @java.lang.Override
-      public int getSdpMLineIndex() {
-        return sdpMLineIndex_;
+      public int getLine() {
+        return line_;
       }
       /**
-       * <code>optional uint32 sdpMLineIndex = 3;</code>
-       * @param value The sdpMLineIndex to set.
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional uint32 line = 3;</code>
+       * @param value The line to set.
        */
-      private void setSdpMLineIndex(int value) {
+      private void setLine(int value) {
         bitField0_ |= 0x00000004;
-        sdpMLineIndex_ = value;
+        line_ = value;
       }
       /**
-       * <code>optional uint32 sdpMLineIndex = 3;</code>
+       * <pre>
+       * Legacy/deprecated; remove when old clients are gone.
+       * </pre>
+       *
+       * <code>optional uint32 line = 3;</code>
        */
-      private void clearSdpMLineIndex() {
+      private void clearLine() {
         bitField0_ = (bitField0_ & ~0x00000004);
-        sdpMLineIndex_ = 0;
+        line_ = 0;
       }
 
       public static final int SDP_FIELD_NUMBER = 4;
       private java.lang.String sdp_;
       /**
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
        * <code>optional string sdp = 4;</code>
        * @return Whether the sdp field is set.
        */
@@ -3634,6 +4014,10 @@ public final class SignalServiceProtos {
         return ((bitField0_ & 0x00000008) != 0);
       }
       /**
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
        * <code>optional string sdp = 4;</code>
        * @return The sdp.
        */
@@ -3642,6 +4026,10 @@ public final class SignalServiceProtos {
         return sdp_;
       }
       /**
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
        * <code>optional string sdp = 4;</code>
        * @return The bytes for sdp.
        */
@@ -3651,6 +4039,10 @@ public final class SignalServiceProtos {
         return com.google.protobuf.ByteString.copyFromUtf8(sdp_);
       }
       /**
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
        * <code>optional string sdp = 4;</code>
        * @param value The sdp to set.
        */
@@ -3663,6 +4055,10 @@ public final class SignalServiceProtos {
         sdp_ = value;
       }
       /**
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
        * <code>optional string sdp = 4;</code>
        */
       private void clearSdp() {
@@ -3670,6 +4066,10 @@ public final class SignalServiceProtos {
         sdp_ = getDefaultInstance().getSdp();
       }
       /**
+       * <pre>
+       * Legacy/deprecated; replaced by 'opaque'
+       * </pre>
+       *
        * <code>optional string sdp = 4;</code>
        * @param value The bytes for sdp to set.
        */
@@ -3680,6 +4080,43 @@ public final class SignalServiceProtos {
   }
   bitField0_ |= 0x00000008;
         sdp_ = value.toStringUtf8();
+      }
+
+      public static final int OPAQUE_FIELD_NUMBER = 5;
+      private com.google.protobuf.ByteString opaque_;
+      /**
+       * <code>optional bytes opaque = 5;</code>
+       * @return Whether the opaque field is set.
+       */
+      @java.lang.Override
+      public boolean hasOpaque() {
+        return ((bitField0_ & 0x00000010) != 0);
+      }
+      /**
+       * <code>optional bytes opaque = 5;</code>
+       * @return The opaque.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getOpaque() {
+        return opaque_;
+      }
+      /**
+       * <code>optional bytes opaque = 5;</code>
+       * @param value The opaque to set.
+       */
+      private void setOpaque(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000010;
+        opaque_ = value;
+      }
+      /**
+       * <code>optional bytes opaque = 5;</code>
+       */
+      private void clearOpaque() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        opaque_ = getDefaultInstance().getOpaque();
       }
 
       public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.IceUpdate parseFrom(
@@ -3814,99 +4251,143 @@ public final class SignalServiceProtos {
         }
 
         /**
-         * <code>optional string sdpMid = 2;</code>
-         * @return Whether the sdpMid field is set.
+         * <pre>
+         * Legacy/deprecated; remove when old clients are gone.
+         * </pre>
+         *
+         * <code>optional string mid = 2;</code>
+         * @return Whether the mid field is set.
          */
         @java.lang.Override
-        public boolean hasSdpMid() {
-          return instance.hasSdpMid();
+        public boolean hasMid() {
+          return instance.hasMid();
         }
         /**
-         * <code>optional string sdpMid = 2;</code>
-         * @return The sdpMid.
+         * <pre>
+         * Legacy/deprecated; remove when old clients are gone.
+         * </pre>
+         *
+         * <code>optional string mid = 2;</code>
+         * @return The mid.
          */
         @java.lang.Override
-        public java.lang.String getSdpMid() {
-          return instance.getSdpMid();
+        public java.lang.String getMid() {
+          return instance.getMid();
         }
         /**
-         * <code>optional string sdpMid = 2;</code>
-         * @return The bytes for sdpMid.
+         * <pre>
+         * Legacy/deprecated; remove when old clients are gone.
+         * </pre>
+         *
+         * <code>optional string mid = 2;</code>
+         * @return The bytes for mid.
          */
         @java.lang.Override
         public com.google.protobuf.ByteString
-            getSdpMidBytes() {
-          return instance.getSdpMidBytes();
+            getMidBytes() {
+          return instance.getMidBytes();
         }
         /**
-         * <code>optional string sdpMid = 2;</code>
-         * @param value The sdpMid to set.
+         * <pre>
+         * Legacy/deprecated; remove when old clients are gone.
+         * </pre>
+         *
+         * <code>optional string mid = 2;</code>
+         * @param value The mid to set.
          * @return This builder for chaining.
          */
-        public Builder setSdpMid(
+        public Builder setMid(
             java.lang.String value) {
           copyOnWrite();
-          instance.setSdpMid(value);
+          instance.setMid(value);
           return this;
         }
         /**
-         * <code>optional string sdpMid = 2;</code>
+         * <pre>
+         * Legacy/deprecated; remove when old clients are gone.
+         * </pre>
+         *
+         * <code>optional string mid = 2;</code>
          * @return This builder for chaining.
          */
-        public Builder clearSdpMid() {
+        public Builder clearMid() {
           copyOnWrite();
-          instance.clearSdpMid();
+          instance.clearMid();
           return this;
         }
         /**
-         * <code>optional string sdpMid = 2;</code>
-         * @param value The bytes for sdpMid to set.
+         * <pre>
+         * Legacy/deprecated; remove when old clients are gone.
+         * </pre>
+         *
+         * <code>optional string mid = 2;</code>
+         * @param value The bytes for mid to set.
          * @return This builder for chaining.
          */
-        public Builder setSdpMidBytes(
+        public Builder setMidBytes(
             com.google.protobuf.ByteString value) {
           copyOnWrite();
-          instance.setSdpMidBytes(value);
+          instance.setMidBytes(value);
           return this;
         }
 
         /**
-         * <code>optional uint32 sdpMLineIndex = 3;</code>
-         * @return Whether the sdpMLineIndex field is set.
+         * <pre>
+         * Legacy/deprecated; remove when old clients are gone.
+         * </pre>
+         *
+         * <code>optional uint32 line = 3;</code>
+         * @return Whether the line field is set.
          */
         @java.lang.Override
-        public boolean hasSdpMLineIndex() {
-          return instance.hasSdpMLineIndex();
+        public boolean hasLine() {
+          return instance.hasLine();
         }
         /**
-         * <code>optional uint32 sdpMLineIndex = 3;</code>
-         * @return The sdpMLineIndex.
+         * <pre>
+         * Legacy/deprecated; remove when old clients are gone.
+         * </pre>
+         *
+         * <code>optional uint32 line = 3;</code>
+         * @return The line.
          */
         @java.lang.Override
-        public int getSdpMLineIndex() {
-          return instance.getSdpMLineIndex();
+        public int getLine() {
+          return instance.getLine();
         }
         /**
-         * <code>optional uint32 sdpMLineIndex = 3;</code>
-         * @param value The sdpMLineIndex to set.
+         * <pre>
+         * Legacy/deprecated; remove when old clients are gone.
+         * </pre>
+         *
+         * <code>optional uint32 line = 3;</code>
+         * @param value The line to set.
          * @return This builder for chaining.
          */
-        public Builder setSdpMLineIndex(int value) {
+        public Builder setLine(int value) {
           copyOnWrite();
-          instance.setSdpMLineIndex(value);
+          instance.setLine(value);
           return this;
         }
         /**
-         * <code>optional uint32 sdpMLineIndex = 3;</code>
+         * <pre>
+         * Legacy/deprecated; remove when old clients are gone.
+         * </pre>
+         *
+         * <code>optional uint32 line = 3;</code>
          * @return This builder for chaining.
          */
-        public Builder clearSdpMLineIndex() {
+        public Builder clearLine() {
           copyOnWrite();
-          instance.clearSdpMLineIndex();
+          instance.clearLine();
           return this;
         }
 
         /**
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
          * <code>optional string sdp = 4;</code>
          * @return Whether the sdp field is set.
          */
@@ -3915,6 +4396,10 @@ public final class SignalServiceProtos {
           return instance.hasSdp();
         }
         /**
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
          * <code>optional string sdp = 4;</code>
          * @return The sdp.
          */
@@ -3923,6 +4408,10 @@ public final class SignalServiceProtos {
           return instance.getSdp();
         }
         /**
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
          * <code>optional string sdp = 4;</code>
          * @return The bytes for sdp.
          */
@@ -3932,6 +4421,10 @@ public final class SignalServiceProtos {
           return instance.getSdpBytes();
         }
         /**
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
          * <code>optional string sdp = 4;</code>
          * @param value The sdp to set.
          * @return This builder for chaining.
@@ -3943,6 +4436,10 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
          * <code>optional string sdp = 4;</code>
          * @return This builder for chaining.
          */
@@ -3952,6 +4449,10 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
+         * <pre>
+         * Legacy/deprecated; replaced by 'opaque'
+         * </pre>
+         *
          * <code>optional string sdp = 4;</code>
          * @param value The bytes for sdp to set.
          * @return This builder for chaining.
@@ -3960,6 +4461,42 @@ public final class SignalServiceProtos {
             com.google.protobuf.ByteString value) {
           copyOnWrite();
           instance.setSdpBytes(value);
+          return this;
+        }
+
+        /**
+         * <code>optional bytes opaque = 5;</code>
+         * @return Whether the opaque field is set.
+         */
+        @java.lang.Override
+        public boolean hasOpaque() {
+          return instance.hasOpaque();
+        }
+        /**
+         * <code>optional bytes opaque = 5;</code>
+         * @return The opaque.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString getOpaque() {
+          return instance.getOpaque();
+        }
+        /**
+         * <code>optional bytes opaque = 5;</code>
+         * @param value The opaque to set.
+         * @return This builder for chaining.
+         */
+        public Builder setOpaque(com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setOpaque(value);
+          return this;
+        }
+        /**
+         * <code>optional bytes opaque = 5;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearOpaque() {
+          copyOnWrite();
+          instance.clearOpaque();
           return this;
         }
 
@@ -3981,13 +4518,14 @@ public final class SignalServiceProtos {
               java.lang.Object[] objects = new java.lang.Object[] {
                 "bitField0_",
                 "id_",
-                "sdpMid_",
-                "sdpMLineIndex_",
+                "mid_",
+                "line_",
                 "sdp_",
+                "opaque_",
               };
               java.lang.String info =
-                  "\u0001\u0004\u0000\u0001\u0001\u0004\u0004\u0000\u0000\u0000\u0001\u0003\u0000\u0002" +
-                  "\b\u0001\u0003\u000b\u0002\u0004\b\u0003";
+                  "\u0001\u0005\u0000\u0001\u0001\u0005\u0005\u0000\u0000\u0000\u0001\u0003\u0000\u0002" +
+                  "\b\u0001\u0003\u000b\u0002\u0004\b\u0003\u0005\n\u0004";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through
@@ -6165,6 +6703,20 @@ public final class SignalServiceProtos {
      * @return The delete.
      */
     su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Delete getDelete();
+
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    java.util.List<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange> 
+        getBodyRangesList();
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange getBodyRanges(int index);
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    int getBodyRangesCount();
   }
   /**
    * Protobuf type {@code signalservice.DataMessage}
@@ -6180,6 +6732,7 @@ public final class SignalServiceProtos {
       profileKey_ = com.google.protobuf.ByteString.EMPTY;
       contact_ = emptyProtobufList();
       preview_ = emptyProtobufList();
+      bodyRanges_ = emptyProtobufList();
     }
     /**
      * Protobuf enum {@code signalservice.DataMessage.Flags}
@@ -6303,12 +6856,16 @@ public final class SignalServiceProtos {
        * <code>CDN_SELECTOR_ATTACHMENTS = 5;</code>
        */
       CDN_SELECTOR_ATTACHMENTS(5),
+      /**
+       * <code>MENTIONS = 6;</code>
+       */
+      MENTIONS(6),
       ;
 
       /**
-       * <code>CURRENT = 5;</code>
+       * <code>CURRENT = 6;</code>
        */
-      public static final ProtocolVersion CURRENT = CDN_SELECTOR_ATTACHMENTS;
+      public static final ProtocolVersion CURRENT = MENTIONS;
       /**
        * <code>INITIAL = 0;</code>
        */
@@ -6334,9 +6891,13 @@ public final class SignalServiceProtos {
        */
       public static final int CDN_SELECTOR_ATTACHMENTS_VALUE = 5;
       /**
-       * <code>CURRENT = 5;</code>
+       * <code>MENTIONS = 6;</code>
        */
-      public static final int CURRENT_VALUE = 5;
+      public static final int MENTIONS_VALUE = 6;
+      /**
+       * <code>CURRENT = 6;</code>
+       */
+      public static final int CURRENT_VALUE = 6;
 
 
       @java.lang.Override
@@ -6362,6 +6923,7 @@ public final class SignalServiceProtos {
           case 3: return VIEW_ONCE_VIDEO;
           case 4: return REACTIONS;
           case 5: return CDN_SELECTOR_ATTACHMENTS;
+          case 6: return MENTIONS;
           default: return null;
         }
       }
@@ -6400,6 +6962,554 @@ public final class SignalServiceProtos {
       }
 
       // @@protoc_insertion_point(enum_scope:signalservice.DataMessage.ProtocolVersion)
+    }
+
+    public interface BodyRangeOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:signalservice.DataMessage.BodyRange)
+        com.google.protobuf.MessageLiteOrBuilder {
+
+      /**
+       * <code>optional int32 start = 1;</code>
+       * @return Whether the start field is set.
+       */
+      boolean hasStart();
+      /**
+       * <code>optional int32 start = 1;</code>
+       * @return The start.
+       */
+      int getStart();
+
+      /**
+       * <code>optional int32 length = 2;</code>
+       * @return Whether the length field is set.
+       */
+      boolean hasLength();
+      /**
+       * <code>optional int32 length = 2;</code>
+       * @return The length.
+       */
+      int getLength();
+
+      /**
+       * <code>optional string mentionUuid = 3;</code>
+       * @return Whether the mentionUuid field is set.
+       */
+      boolean hasMentionUuid();
+      /**
+       * <code>optional string mentionUuid = 3;</code>
+       * @return The mentionUuid.
+       */
+      java.lang.String getMentionUuid();
+      /**
+       * <code>optional string mentionUuid = 3;</code>
+       * @return The bytes for mentionUuid.
+       */
+      com.google.protobuf.ByteString
+          getMentionUuidBytes();
+
+      public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.AssociatedValueCase getAssociatedValueCase();
+    }
+    /**
+     * Protobuf type {@code signalservice.DataMessage.BodyRange}
+     */
+    public  static final class BodyRange extends
+        com.google.protobuf.GeneratedMessageLite<
+            BodyRange, BodyRange.Builder> implements
+        // @@protoc_insertion_point(message_implements:signalservice.DataMessage.BodyRange)
+        BodyRangeOrBuilder {
+      private BodyRange() {
+      }
+      private int bitField0_;
+      private int associatedValueCase_ = 0;
+      private java.lang.Object associatedValue_;
+      public enum AssociatedValueCase {
+        MENTIONUUID(3),
+        ASSOCIATEDVALUE_NOT_SET(0);
+        private final int value;
+        private AssociatedValueCase(int value) {
+          this.value = value;
+        }
+        /**
+         * @deprecated Use {@link #forNumber(int)} instead.
+         */
+        @java.lang.Deprecated
+        public static AssociatedValueCase valueOf(int value) {
+          return forNumber(value);
+        }
+
+        public static AssociatedValueCase forNumber(int value) {
+          switch (value) {
+            case 3: return MENTIONUUID;
+            case 0: return ASSOCIATEDVALUE_NOT_SET;
+            default: return null;
+          }
+        }
+        public int getNumber() {
+          return this.value;
+        }
+      };
+
+      @java.lang.Override
+      public AssociatedValueCase
+      getAssociatedValueCase() {
+        return AssociatedValueCase.forNumber(
+            associatedValueCase_);
+      }
+
+      private void clearAssociatedValue() {
+        associatedValueCase_ = 0;
+        associatedValue_ = null;
+      }
+
+      public static final int START_FIELD_NUMBER = 1;
+      private int start_;
+      /**
+       * <code>optional int32 start = 1;</code>
+       * @return Whether the start field is set.
+       */
+      @java.lang.Override
+      public boolean hasStart() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>optional int32 start = 1;</code>
+       * @return The start.
+       */
+      @java.lang.Override
+      public int getStart() {
+        return start_;
+      }
+      /**
+       * <code>optional int32 start = 1;</code>
+       * @param value The start to set.
+       */
+      private void setStart(int value) {
+        bitField0_ |= 0x00000001;
+        start_ = value;
+      }
+      /**
+       * <code>optional int32 start = 1;</code>
+       */
+      private void clearStart() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        start_ = 0;
+      }
+
+      public static final int LENGTH_FIELD_NUMBER = 2;
+      private int length_;
+      /**
+       * <code>optional int32 length = 2;</code>
+       * @return Whether the length field is set.
+       */
+      @java.lang.Override
+      public boolean hasLength() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <code>optional int32 length = 2;</code>
+       * @return The length.
+       */
+      @java.lang.Override
+      public int getLength() {
+        return length_;
+      }
+      /**
+       * <code>optional int32 length = 2;</code>
+       * @param value The length to set.
+       */
+      private void setLength(int value) {
+        bitField0_ |= 0x00000002;
+        length_ = value;
+      }
+      /**
+       * <code>optional int32 length = 2;</code>
+       */
+      private void clearLength() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        length_ = 0;
+      }
+
+      public static final int MENTIONUUID_FIELD_NUMBER = 3;
+      /**
+       * <code>optional string mentionUuid = 3;</code>
+       * @return Whether the mentionUuid field is set.
+       */
+      @java.lang.Override
+      public boolean hasMentionUuid() {
+        return associatedValueCase_ == 3;
+      }
+      /**
+       * <code>optional string mentionUuid = 3;</code>
+       * @return The mentionUuid.
+       */
+      @java.lang.Override
+      public java.lang.String getMentionUuid() {
+        java.lang.String ref = "";
+        if (associatedValueCase_ == 3) {
+          ref = (java.lang.String) associatedValue_;
+        }
+        return ref;
+      }
+      /**
+       * <code>optional string mentionUuid = 3;</code>
+       * @return The bytes for mentionUuid.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getMentionUuidBytes() {
+        java.lang.String ref = "";
+        if (associatedValueCase_ == 3) {
+          ref = (java.lang.String) associatedValue_;
+        }
+        return com.google.protobuf.ByteString.copyFromUtf8(ref);
+      }
+      /**
+       * <code>optional string mentionUuid = 3;</code>
+       * @param value The mentionUuid to set.
+       */
+      private void setMentionUuid(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  associatedValueCase_ = 3;
+        associatedValue_ = value;
+      }
+      /**
+       * <code>optional string mentionUuid = 3;</code>
+       */
+      private void clearMentionUuid() {
+        if (associatedValueCase_ == 3) {
+          associatedValueCase_ = 0;
+          associatedValue_ = null;
+        }
+      }
+      /**
+       * <code>optional string mentionUuid = 3;</code>
+       * @param value The bytes for mentionUuid to set.
+       */
+      private void setMentionUuidBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  associatedValueCase_ = 3;
+        associatedValue_ = value.toStringUtf8();
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+
+      public static Builder newBuilder() {
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
+      }
+      public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange prototype) {
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+      }
+
+      /**
+       * Protobuf type {@code signalservice.DataMessage.BodyRange}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageLite.Builder<
+            su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange, Builder> implements
+          // @@protoc_insertion_point(builder_implements:signalservice.DataMessage.BodyRange)
+          su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRangeOrBuilder {
+        // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.newBuilder()
+        private Builder() {
+          super(DEFAULT_INSTANCE);
+        }
+
+        @java.lang.Override
+        public AssociatedValueCase
+            getAssociatedValueCase() {
+          return instance.getAssociatedValueCase();
+        }
+
+        public Builder clearAssociatedValue() {
+          copyOnWrite();
+          instance.clearAssociatedValue();
+          return this;
+        }
+
+
+        /**
+         * <code>optional int32 start = 1;</code>
+         * @return Whether the start field is set.
+         */
+        @java.lang.Override
+        public boolean hasStart() {
+          return instance.hasStart();
+        }
+        /**
+         * <code>optional int32 start = 1;</code>
+         * @return The start.
+         */
+        @java.lang.Override
+        public int getStart() {
+          return instance.getStart();
+        }
+        /**
+         * <code>optional int32 start = 1;</code>
+         * @param value The start to set.
+         * @return This builder for chaining.
+         */
+        public Builder setStart(int value) {
+          copyOnWrite();
+          instance.setStart(value);
+          return this;
+        }
+        /**
+         * <code>optional int32 start = 1;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearStart() {
+          copyOnWrite();
+          instance.clearStart();
+          return this;
+        }
+
+        /**
+         * <code>optional int32 length = 2;</code>
+         * @return Whether the length field is set.
+         */
+        @java.lang.Override
+        public boolean hasLength() {
+          return instance.hasLength();
+        }
+        /**
+         * <code>optional int32 length = 2;</code>
+         * @return The length.
+         */
+        @java.lang.Override
+        public int getLength() {
+          return instance.getLength();
+        }
+        /**
+         * <code>optional int32 length = 2;</code>
+         * @param value The length to set.
+         * @return This builder for chaining.
+         */
+        public Builder setLength(int value) {
+          copyOnWrite();
+          instance.setLength(value);
+          return this;
+        }
+        /**
+         * <code>optional int32 length = 2;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearLength() {
+          copyOnWrite();
+          instance.clearLength();
+          return this;
+        }
+
+        /**
+         * <code>optional string mentionUuid = 3;</code>
+         * @return Whether the mentionUuid field is set.
+         */
+        @java.lang.Override
+        public boolean hasMentionUuid() {
+          return instance.hasMentionUuid();
+        }
+        /**
+         * <code>optional string mentionUuid = 3;</code>
+         * @return The mentionUuid.
+         */
+        @java.lang.Override
+        public java.lang.String getMentionUuid() {
+          return instance.getMentionUuid();
+        }
+        /**
+         * <code>optional string mentionUuid = 3;</code>
+         * @return The bytes for mentionUuid.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getMentionUuidBytes() {
+          return instance.getMentionUuidBytes();
+        }
+        /**
+         * <code>optional string mentionUuid = 3;</code>
+         * @param value The mentionUuid to set.
+         * @return This builder for chaining.
+         */
+        public Builder setMentionUuid(
+            java.lang.String value) {
+          copyOnWrite();
+          instance.setMentionUuid(value);
+          return this;
+        }
+        /**
+         * <code>optional string mentionUuid = 3;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearMentionUuid() {
+          copyOnWrite();
+          instance.clearMentionUuid();
+          return this;
+        }
+        /**
+         * <code>optional string mentionUuid = 3;</code>
+         * @param value The bytes for mentionUuid to set.
+         * @return This builder for chaining.
+         */
+        public Builder setMentionUuidBytes(
+            com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setMentionUuidBytes(value);
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:signalservice.DataMessage.BodyRange)
+      }
+      @java.lang.Override
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      protected final java.lang.Object dynamicMethod(
+          com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+          java.lang.Object arg0, java.lang.Object arg1) {
+        switch (method) {
+          case NEW_MUTABLE_INSTANCE: {
+            return new su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange();
+          }
+          case NEW_BUILDER: {
+            return new Builder();
+          }
+          case BUILD_MESSAGE_INFO: {
+              java.lang.Object[] objects = new java.lang.Object[] {
+                "associatedValue_",
+                "associatedValueCase_",
+                "bitField0_",
+                "start_",
+                "length_",
+              };
+              java.lang.String info =
+                  "\u0001\u0003\u0001\u0001\u0001\u0003\u0003\u0000\u0000\u0000\u0001\u0004\u0000\u0002" +
+                  "\u0004\u0001\u0003;\u0000";
+              return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+          }
+          // fall through
+          case GET_DEFAULT_INSTANCE: {
+            return DEFAULT_INSTANCE;
+          }
+          case GET_PARSER: {
+            com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange> parser = PARSER;
+            if (parser == null) {
+              synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.class) {
+                parser = PARSER;
+                if (parser == null) {
+                  parser =
+                      new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange>(
+                          DEFAULT_INSTANCE);
+                  PARSER = parser;
+                }
+              }
+            }
+            return parser;
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return (byte) 1;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          return null;
+        }
+        }
+        throw new UnsupportedOperationException();
+      }
+
+
+      // @@protoc_insertion_point(class_scope:signalservice.DataMessage.BodyRange)
+      private static final su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange DEFAULT_INSTANCE;
+      static {
+        BodyRange defaultInstance = new BodyRange();
+        // New instances are implicitly immutable so no need to make
+        // immutable.
+        DEFAULT_INSTANCE = defaultInstance;
+        com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+          BodyRange.class, defaultInstance);
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static volatile com.google.protobuf.Parser<BodyRange> PARSER;
+
+      public static com.google.protobuf.Parser<BodyRange> parser() {
+        return DEFAULT_INSTANCE.getParserForType();
+      }
     }
 
     public interface QuoteOrBuilder extends
@@ -6481,6 +7591,20 @@ public final class SignalServiceProtos {
        * <code>repeated .signalservice.DataMessage.Quote.QuotedAttachment attachments = 4;</code>
        */
       int getAttachmentsCount();
+
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      java.util.List<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange> 
+          getBodyRangesList();
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange getBodyRanges(int index);
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      int getBodyRangesCount();
     }
     /**
      * Protobuf type {@code signalservice.DataMessage.Quote}
@@ -6495,6 +7619,7 @@ public final class SignalServiceProtos {
         authorUuid_ = "";
         text_ = "";
         attachments_ = emptyProtobufList();
+        bodyRanges_ = emptyProtobufList();
       }
       public interface QuotedAttachmentOrBuilder extends
           // @@protoc_insertion_point(interface_extends:signalservice.DataMessage.Quote.QuotedAttachment)
@@ -7403,6 +8528,129 @@ public final class SignalServiceProtos {
         attachments_.remove(index);
       }
 
+      public static final int BODYRANGES_FIELD_NUMBER = 6;
+      private com.google.protobuf.Internal.ProtobufList<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange> bodyRanges_;
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      @java.lang.Override
+      public java.util.List<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange> getBodyRangesList() {
+        return bodyRanges_;
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      public java.util.List<? extends su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRangeOrBuilder> 
+          getBodyRangesOrBuilderList() {
+        return bodyRanges_;
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      @java.lang.Override
+      public int getBodyRangesCount() {
+        return bodyRanges_.size();
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange getBodyRanges(int index) {
+        return bodyRanges_.get(index);
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRangeOrBuilder getBodyRangesOrBuilder(
+          int index) {
+        return bodyRanges_.get(index);
+      }
+      private void ensureBodyRangesIsMutable() {
+        if (!bodyRanges_.isModifiable()) {
+          bodyRanges_ =
+              com.google.protobuf.GeneratedMessageLite.mutableCopy(bodyRanges_);
+         }
+      }
+
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      private void setBodyRanges(
+          int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureBodyRangesIsMutable();
+        bodyRanges_.set(index, value);
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      private void setBodyRanges(
+          int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.Builder builderForValue) {
+        ensureBodyRangesIsMutable();
+        bodyRanges_.set(index, builderForValue.build());
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      private void addBodyRanges(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureBodyRangesIsMutable();
+        bodyRanges_.add(value);
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      private void addBodyRanges(
+          int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureBodyRangesIsMutable();
+        bodyRanges_.add(index, value);
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      private void addBodyRanges(
+          su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.Builder builderForValue) {
+        ensureBodyRangesIsMutable();
+        bodyRanges_.add(builderForValue.build());
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      private void addBodyRanges(
+          int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.Builder builderForValue) {
+        ensureBodyRangesIsMutable();
+        bodyRanges_.add(index, builderForValue.build());
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      private void addAllBodyRanges(
+          java.lang.Iterable<? extends su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange> values) {
+        ensureBodyRangesIsMutable();
+        com.google.protobuf.AbstractMessageLite.addAll(
+            values, bodyRanges_);
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      private void clearBodyRanges() {
+        bodyRanges_ = emptyProtobufList();
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+       */
+      private void removeBodyRanges(int index) {
+        ensureBodyRangesIsMutable();
+        bodyRanges_.remove(index);
+      }
+
       public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Quote parseFrom(
           java.nio.ByteBuffer data)
           throws com.google.protobuf.InvalidProtocolBufferException {
@@ -7805,6 +9053,106 @@ public final class SignalServiceProtos {
           return this;
         }
 
+        /**
+         * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+         */
+        @java.lang.Override
+        public java.util.List<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange> getBodyRangesList() {
+          return java.util.Collections.unmodifiableList(
+              instance.getBodyRangesList());
+        }
+        /**
+         * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+         */
+        @java.lang.Override
+        public int getBodyRangesCount() {
+          return instance.getBodyRangesCount();
+        }/**
+         * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+         */
+        @java.lang.Override
+        public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange getBodyRanges(int index) {
+          return instance.getBodyRanges(index);
+        }
+        /**
+         * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+         */
+        public Builder setBodyRanges(
+            int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange value) {
+          copyOnWrite();
+          instance.setBodyRanges(index, value);
+          return this;
+        }
+        /**
+         * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+         */
+        public Builder setBodyRanges(
+            int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.Builder builderForValue) {
+          copyOnWrite();
+          instance.setBodyRanges(index, builderForValue);
+          return this;
+        }
+        /**
+         * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+         */
+        public Builder addBodyRanges(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange value) {
+          copyOnWrite();
+          instance.addBodyRanges(value);
+          return this;
+        }
+        /**
+         * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+         */
+        public Builder addBodyRanges(
+            int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange value) {
+          copyOnWrite();
+          instance.addBodyRanges(index, value);
+          return this;
+        }
+        /**
+         * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+         */
+        public Builder addBodyRanges(
+            su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.Builder builderForValue) {
+          copyOnWrite();
+          instance.addBodyRanges(builderForValue);
+          return this;
+        }
+        /**
+         * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+         */
+        public Builder addBodyRanges(
+            int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.Builder builderForValue) {
+          copyOnWrite();
+          instance.addBodyRanges(index, builderForValue);
+          return this;
+        }
+        /**
+         * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+         */
+        public Builder addAllBodyRanges(
+            java.lang.Iterable<? extends su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange> values) {
+          copyOnWrite();
+          instance.addAllBodyRanges(values);
+          return this;
+        }
+        /**
+         * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+         */
+        public Builder clearBodyRanges() {
+          copyOnWrite();
+          instance.clearBodyRanges();
+          return this;
+        }
+        /**
+         * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 6;</code>
+         */
+        public Builder removeBodyRanges(int index) {
+          copyOnWrite();
+          instance.removeBodyRanges(index);
+          return this;
+        }
+
         // @@protoc_insertion_point(builder_scope:signalservice.DataMessage.Quote)
       }
       @java.lang.Override
@@ -7828,10 +9176,12 @@ public final class SignalServiceProtos {
                 "attachments_",
                 su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Quote.QuotedAttachment.class,
                 "authorUuid_",
+                "bodyRanges_",
+                su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.class,
               };
               java.lang.String info =
-                  "\u0001\u0005\u0000\u0001\u0001\u0005\u0005\u0000\u0001\u0000\u0001\u0003\u0000\u0002" +
-                  "\b\u0001\u0003\b\u0003\u0004\u001b\u0005\b\u0002";
+                  "\u0001\u0006\u0000\u0001\u0001\u0006\u0006\u0000\u0002\u0000\u0001\u0003\u0000\u0002" +
+                  "\b\u0001\u0003\b\u0003\u0004\u001b\u0005\b\u0002\u0006\u001b";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through
@@ -16408,6 +17758,129 @@ public final class SignalServiceProtos {
       bitField0_ = (bitField0_ & ~0x00001000);
     }
 
+    public static final int BODYRANGES_FIELD_NUMBER = 18;
+    private com.google.protobuf.Internal.ProtobufList<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange> bodyRanges_;
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    @java.lang.Override
+    public java.util.List<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange> getBodyRangesList() {
+      return bodyRanges_;
+    }
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    public java.util.List<? extends su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRangeOrBuilder> 
+        getBodyRangesOrBuilderList() {
+      return bodyRanges_;
+    }
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    @java.lang.Override
+    public int getBodyRangesCount() {
+      return bodyRanges_.size();
+    }
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    @java.lang.Override
+    public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange getBodyRanges(int index) {
+      return bodyRanges_.get(index);
+    }
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRangeOrBuilder getBodyRangesOrBuilder(
+        int index) {
+      return bodyRanges_.get(index);
+    }
+    private void ensureBodyRangesIsMutable() {
+      if (!bodyRanges_.isModifiable()) {
+        bodyRanges_ =
+            com.google.protobuf.GeneratedMessageLite.mutableCopy(bodyRanges_);
+       }
+    }
+
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    private void setBodyRanges(
+        int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      ensureBodyRangesIsMutable();
+      bodyRanges_.set(index, value);
+    }
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    private void setBodyRanges(
+        int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.Builder builderForValue) {
+      ensureBodyRangesIsMutable();
+      bodyRanges_.set(index, builderForValue.build());
+    }
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    private void addBodyRanges(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      ensureBodyRangesIsMutable();
+      bodyRanges_.add(value);
+    }
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    private void addBodyRanges(
+        int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      ensureBodyRangesIsMutable();
+      bodyRanges_.add(index, value);
+    }
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    private void addBodyRanges(
+        su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.Builder builderForValue) {
+      ensureBodyRangesIsMutable();
+      bodyRanges_.add(builderForValue.build());
+    }
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    private void addBodyRanges(
+        int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.Builder builderForValue) {
+      ensureBodyRangesIsMutable();
+      bodyRanges_.add(index, builderForValue.build());
+    }
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    private void addAllBodyRanges(
+        java.lang.Iterable<? extends su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange> values) {
+      ensureBodyRangesIsMutable();
+      com.google.protobuf.AbstractMessageLite.addAll(
+          values, bodyRanges_);
+    }
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    private void clearBodyRanges() {
+      bodyRanges_ = emptyProtobufList();
+    }
+    /**
+     * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+     */
+    private void removeBodyRanges(int index) {
+      ensureBodyRangesIsMutable();
+      bodyRanges_.remove(index);
+    }
+
     public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -17358,6 +18831,106 @@ public final class SignalServiceProtos {
         return this;
       }
 
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+       */
+      @java.lang.Override
+      public java.util.List<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange> getBodyRangesList() {
+        return java.util.Collections.unmodifiableList(
+            instance.getBodyRangesList());
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+       */
+      @java.lang.Override
+      public int getBodyRangesCount() {
+        return instance.getBodyRangesCount();
+      }/**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange getBodyRanges(int index) {
+        return instance.getBodyRanges(index);
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+       */
+      public Builder setBodyRanges(
+          int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange value) {
+        copyOnWrite();
+        instance.setBodyRanges(index, value);
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+       */
+      public Builder setBodyRanges(
+          int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.Builder builderForValue) {
+        copyOnWrite();
+        instance.setBodyRanges(index, builderForValue);
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+       */
+      public Builder addBodyRanges(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange value) {
+        copyOnWrite();
+        instance.addBodyRanges(value);
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+       */
+      public Builder addBodyRanges(
+          int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange value) {
+        copyOnWrite();
+        instance.addBodyRanges(index, value);
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+       */
+      public Builder addBodyRanges(
+          su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.Builder builderForValue) {
+        copyOnWrite();
+        instance.addBodyRanges(builderForValue);
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+       */
+      public Builder addBodyRanges(
+          int index, su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.Builder builderForValue) {
+        copyOnWrite();
+        instance.addBodyRanges(index, builderForValue);
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+       */
+      public Builder addAllBodyRanges(
+          java.lang.Iterable<? extends su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange> values) {
+        copyOnWrite();
+        instance.addAllBodyRanges(values);
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+       */
+      public Builder clearBodyRanges() {
+        copyOnWrite();
+        instance.clearBodyRanges();
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
+       */
+      public Builder removeBodyRanges(int index) {
+        copyOnWrite();
+        instance.removeBodyRanges(index);
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:signalservice.DataMessage)
     }
     @java.lang.Override
@@ -17394,12 +18967,14 @@ public final class SignalServiceProtos {
               "groupV2_",
               "reaction_",
               "delete_",
+              "bodyRanges_",
+              su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.class,
             };
             java.lang.String info =
-                "\u0001\u0010\u0000\u0001\u0001\u0011\u0010\u0000\u0003\u0000\u0001\b\u0000\u0002" +
+                "\u0001\u0011\u0000\u0001\u0001\u0012\u0011\u0000\u0004\u0000\u0001\b\u0000\u0002" +
                 "\u001b\u0003\t\u0001\u0004\u000b\u0003\u0005\u000b\u0004\u0006\n\u0005\u0007\u0003" +
                 "\u0006\b\t\u0007\t\u001b\n\u001b\u000b\t\b\f\u000b\t\u000e\u0007\n\u000f\t\u0002" +
-                "\u0010\t\u000b\u0011\t\f";
+                "\u0010\t\u000b\u0011\t\f\u0012\u001b";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -30739,33 +32314,28 @@ public final class SignalServiceProtos {
         com.google.protobuf.MessageLiteOrBuilder {
 
       /**
-       * <code>optional string uuid = 1;</code>
-       * @return Whether the uuid field is set.
-       */
-      boolean hasUuid();
-      /**
-       * <code>optional string uuid = 1;</code>
-       * @return The uuid.
-       */
-      java.lang.String getUuid();
-      /**
-       * <code>optional string uuid = 1;</code>
-       * @return The bytes for uuid.
-       */
-      com.google.protobuf.ByteString
-          getUuidBytes();
-
-      /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @return Whether the e164 field is set.
        */
       boolean hasE164();
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @return The e164.
        */
       java.lang.String getE164();
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @return The bytes for e164.
        */
@@ -30781,80 +32351,28 @@ public final class SignalServiceProtos {
         // @@protoc_insertion_point(message_implements:signalservice.GroupContext.Member)
         MemberOrBuilder {
       private Member() {
-        uuid_ = "";
         e164_ = "";
       }
       private int bitField0_;
-      public static final int UUID_FIELD_NUMBER = 1;
-      private java.lang.String uuid_;
-      /**
-       * <code>optional string uuid = 1;</code>
-       * @return Whether the uuid field is set.
-       */
-      @java.lang.Override
-      public boolean hasUuid() {
-        return ((bitField0_ & 0x00000001) != 0);
-      }
-      /**
-       * <code>optional string uuid = 1;</code>
-       * @return The uuid.
-       */
-      @java.lang.Override
-      public java.lang.String getUuid() {
-        return uuid_;
-      }
-      /**
-       * <code>optional string uuid = 1;</code>
-       * @return The bytes for uuid.
-       */
-      @java.lang.Override
-      public com.google.protobuf.ByteString
-          getUuidBytes() {
-        return com.google.protobuf.ByteString.copyFromUtf8(uuid_);
-      }
-      /**
-       * <code>optional string uuid = 1;</code>
-       * @param value The uuid to set.
-       */
-      private void setUuid(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        uuid_ = value;
-      }
-      /**
-       * <code>optional string uuid = 1;</code>
-       */
-      private void clearUuid() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        uuid_ = getDefaultInstance().getUuid();
-      }
-      /**
-       * <code>optional string uuid = 1;</code>
-       * @param value The bytes for uuid to set.
-       */
-      private void setUuidBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        uuid_ = value.toStringUtf8();
-      }
-
       public static final int E164_FIELD_NUMBER = 2;
       private java.lang.String e164_;
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @return Whether the e164 field is set.
        */
       @java.lang.Override
       public boolean hasE164() {
-        return ((bitField0_ & 0x00000002) != 0);
+        return ((bitField0_ & 0x00000001) != 0);
       }
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @return The e164.
        */
@@ -30863,6 +32381,10 @@ public final class SignalServiceProtos {
         return e164_;
       }
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @return The bytes for e164.
        */
@@ -30872,6 +32394,10 @@ public final class SignalServiceProtos {
         return com.google.protobuf.ByteString.copyFromUtf8(e164_);
       }
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @param value The e164 to set.
        */
@@ -30880,17 +32406,25 @@ public final class SignalServiceProtos {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  bitField0_ |= 0x00000001;
         e164_ = value;
       }
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        */
       private void clearE164() {
-        bitField0_ = (bitField0_ & ~0x00000002);
+        bitField0_ = (bitField0_ & ~0x00000001);
         e164_ = getDefaultInstance().getE164();
       }
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @param value The bytes for e164 to set.
        */
@@ -30899,7 +32433,7 @@ public final class SignalServiceProtos {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  bitField0_ |= 0x00000001;
         e164_ = value.toStringUtf8();
       }
 
@@ -30999,63 +32533,10 @@ public final class SignalServiceProtos {
 
 
         /**
-         * <code>optional string uuid = 1;</code>
-         * @return Whether the uuid field is set.
-         */
-        @java.lang.Override
-        public boolean hasUuid() {
-          return instance.hasUuid();
-        }
-        /**
-         * <code>optional string uuid = 1;</code>
-         * @return The uuid.
-         */
-        @java.lang.Override
-        public java.lang.String getUuid() {
-          return instance.getUuid();
-        }
-        /**
-         * <code>optional string uuid = 1;</code>
-         * @return The bytes for uuid.
-         */
-        @java.lang.Override
-        public com.google.protobuf.ByteString
-            getUuidBytes() {
-          return instance.getUuidBytes();
-        }
-        /**
-         * <code>optional string uuid = 1;</code>
-         * @param value The uuid to set.
-         * @return This builder for chaining.
-         */
-        public Builder setUuid(
-            java.lang.String value) {
-          copyOnWrite();
-          instance.setUuid(value);
-          return this;
-        }
-        /**
-         * <code>optional string uuid = 1;</code>
-         * @return This builder for chaining.
-         */
-        public Builder clearUuid() {
-          copyOnWrite();
-          instance.clearUuid();
-          return this;
-        }
-        /**
-         * <code>optional string uuid = 1;</code>
-         * @param value The bytes for uuid to set.
-         * @return This builder for chaining.
-         */
-        public Builder setUuidBytes(
-            com.google.protobuf.ByteString value) {
-          copyOnWrite();
-          instance.setUuidBytes(value);
-          return this;
-        }
-
-        /**
+         * <pre>
+         * 1 is reserved
+         * </pre>
+         *
          * <code>optional string e164 = 2;</code>
          * @return Whether the e164 field is set.
          */
@@ -31064,6 +32545,10 @@ public final class SignalServiceProtos {
           return instance.hasE164();
         }
         /**
+         * <pre>
+         * 1 is reserved
+         * </pre>
+         *
          * <code>optional string e164 = 2;</code>
          * @return The e164.
          */
@@ -31072,6 +32557,10 @@ public final class SignalServiceProtos {
           return instance.getE164();
         }
         /**
+         * <pre>
+         * 1 is reserved
+         * </pre>
+         *
          * <code>optional string e164 = 2;</code>
          * @return The bytes for e164.
          */
@@ -31081,6 +32570,10 @@ public final class SignalServiceProtos {
           return instance.getE164Bytes();
         }
         /**
+         * <pre>
+         * 1 is reserved
+         * </pre>
+         *
          * <code>optional string e164 = 2;</code>
          * @param value The e164 to set.
          * @return This builder for chaining.
@@ -31092,6 +32585,10 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
+         * <pre>
+         * 1 is reserved
+         * </pre>
+         *
          * <code>optional string e164 = 2;</code>
          * @return This builder for chaining.
          */
@@ -31101,6 +32598,10 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
+         * <pre>
+         * 1 is reserved
+         * </pre>
+         *
          * <code>optional string e164 = 2;</code>
          * @param value The bytes for e164 to set.
          * @return This builder for chaining.
@@ -31129,12 +32630,10 @@ public final class SignalServiceProtos {
           case BUILD_MESSAGE_INFO: {
               java.lang.Object[] objects = new java.lang.Object[] {
                 "bitField0_",
-                "uuid_",
                 "e164_",
               };
               java.lang.String info =
-                  "\u0001\u0002\u0000\u0001\u0001\u0002\u0002\u0000\u0000\u0000\u0001\b\u0000\u0002" +
-                  "\b\u0001";
+                  "\u0001\u0001\u0000\u0001\u0002\u0002\u0001\u0000\u0000\u0000\u0002\b\u0000";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through
@@ -34941,33 +36440,28 @@ public final class SignalServiceProtos {
         com.google.protobuf.MessageLiteOrBuilder {
 
       /**
-       * <code>optional string uuid = 1;</code>
-       * @return Whether the uuid field is set.
-       */
-      boolean hasUuid();
-      /**
-       * <code>optional string uuid = 1;</code>
-       * @return The uuid.
-       */
-      java.lang.String getUuid();
-      /**
-       * <code>optional string uuid = 1;</code>
-       * @return The bytes for uuid.
-       */
-      com.google.protobuf.ByteString
-          getUuidBytes();
-
-      /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @return Whether the e164 field is set.
        */
       boolean hasE164();
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @return The e164.
        */
       java.lang.String getE164();
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @return The bytes for e164.
        */
@@ -34983,80 +36477,28 @@ public final class SignalServiceProtos {
         // @@protoc_insertion_point(message_implements:signalservice.GroupDetails.Member)
         MemberOrBuilder {
       private Member() {
-        uuid_ = "";
         e164_ = "";
       }
       private int bitField0_;
-      public static final int UUID_FIELD_NUMBER = 1;
-      private java.lang.String uuid_;
-      /**
-       * <code>optional string uuid = 1;</code>
-       * @return Whether the uuid field is set.
-       */
-      @java.lang.Override
-      public boolean hasUuid() {
-        return ((bitField0_ & 0x00000001) != 0);
-      }
-      /**
-       * <code>optional string uuid = 1;</code>
-       * @return The uuid.
-       */
-      @java.lang.Override
-      public java.lang.String getUuid() {
-        return uuid_;
-      }
-      /**
-       * <code>optional string uuid = 1;</code>
-       * @return The bytes for uuid.
-       */
-      @java.lang.Override
-      public com.google.protobuf.ByteString
-          getUuidBytes() {
-        return com.google.protobuf.ByteString.copyFromUtf8(uuid_);
-      }
-      /**
-       * <code>optional string uuid = 1;</code>
-       * @param value The uuid to set.
-       */
-      private void setUuid(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        uuid_ = value;
-      }
-      /**
-       * <code>optional string uuid = 1;</code>
-       */
-      private void clearUuid() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        uuid_ = getDefaultInstance().getUuid();
-      }
-      /**
-       * <code>optional string uuid = 1;</code>
-       * @param value The bytes for uuid to set.
-       */
-      private void setUuidBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        uuid_ = value.toStringUtf8();
-      }
-
       public static final int E164_FIELD_NUMBER = 2;
       private java.lang.String e164_;
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @return Whether the e164 field is set.
        */
       @java.lang.Override
       public boolean hasE164() {
-        return ((bitField0_ & 0x00000002) != 0);
+        return ((bitField0_ & 0x00000001) != 0);
       }
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @return The e164.
        */
@@ -35065,6 +36507,10 @@ public final class SignalServiceProtos {
         return e164_;
       }
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @return The bytes for e164.
        */
@@ -35074,6 +36520,10 @@ public final class SignalServiceProtos {
         return com.google.protobuf.ByteString.copyFromUtf8(e164_);
       }
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @param value The e164 to set.
        */
@@ -35082,17 +36532,25 @@ public final class SignalServiceProtos {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  bitField0_ |= 0x00000001;
         e164_ = value;
       }
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        */
       private void clearE164() {
-        bitField0_ = (bitField0_ & ~0x00000002);
+        bitField0_ = (bitField0_ & ~0x00000001);
         e164_ = getDefaultInstance().getE164();
       }
       /**
+       * <pre>
+       * 1 is reserved
+       * </pre>
+       *
        * <code>optional string e164 = 2;</code>
        * @param value The bytes for e164 to set.
        */
@@ -35101,7 +36559,7 @@ public final class SignalServiceProtos {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  bitField0_ |= 0x00000001;
         e164_ = value.toStringUtf8();
       }
 
@@ -35201,63 +36659,10 @@ public final class SignalServiceProtos {
 
 
         /**
-         * <code>optional string uuid = 1;</code>
-         * @return Whether the uuid field is set.
-         */
-        @java.lang.Override
-        public boolean hasUuid() {
-          return instance.hasUuid();
-        }
-        /**
-         * <code>optional string uuid = 1;</code>
-         * @return The uuid.
-         */
-        @java.lang.Override
-        public java.lang.String getUuid() {
-          return instance.getUuid();
-        }
-        /**
-         * <code>optional string uuid = 1;</code>
-         * @return The bytes for uuid.
-         */
-        @java.lang.Override
-        public com.google.protobuf.ByteString
-            getUuidBytes() {
-          return instance.getUuidBytes();
-        }
-        /**
-         * <code>optional string uuid = 1;</code>
-         * @param value The uuid to set.
-         * @return This builder for chaining.
-         */
-        public Builder setUuid(
-            java.lang.String value) {
-          copyOnWrite();
-          instance.setUuid(value);
-          return this;
-        }
-        /**
-         * <code>optional string uuid = 1;</code>
-         * @return This builder for chaining.
-         */
-        public Builder clearUuid() {
-          copyOnWrite();
-          instance.clearUuid();
-          return this;
-        }
-        /**
-         * <code>optional string uuid = 1;</code>
-         * @param value The bytes for uuid to set.
-         * @return This builder for chaining.
-         */
-        public Builder setUuidBytes(
-            com.google.protobuf.ByteString value) {
-          copyOnWrite();
-          instance.setUuidBytes(value);
-          return this;
-        }
-
-        /**
+         * <pre>
+         * 1 is reserved
+         * </pre>
+         *
          * <code>optional string e164 = 2;</code>
          * @return Whether the e164 field is set.
          */
@@ -35266,6 +36671,10 @@ public final class SignalServiceProtos {
           return instance.hasE164();
         }
         /**
+         * <pre>
+         * 1 is reserved
+         * </pre>
+         *
          * <code>optional string e164 = 2;</code>
          * @return The e164.
          */
@@ -35274,6 +36683,10 @@ public final class SignalServiceProtos {
           return instance.getE164();
         }
         /**
+         * <pre>
+         * 1 is reserved
+         * </pre>
+         *
          * <code>optional string e164 = 2;</code>
          * @return The bytes for e164.
          */
@@ -35283,6 +36696,10 @@ public final class SignalServiceProtos {
           return instance.getE164Bytes();
         }
         /**
+         * <pre>
+         * 1 is reserved
+         * </pre>
+         *
          * <code>optional string e164 = 2;</code>
          * @param value The e164 to set.
          * @return This builder for chaining.
@@ -35294,6 +36711,10 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
+         * <pre>
+         * 1 is reserved
+         * </pre>
+         *
          * <code>optional string e164 = 2;</code>
          * @return This builder for chaining.
          */
@@ -35303,6 +36724,10 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
+         * <pre>
+         * 1 is reserved
+         * </pre>
+         *
          * <code>optional string e164 = 2;</code>
          * @param value The bytes for e164 to set.
          * @return This builder for chaining.
@@ -35331,12 +36756,10 @@ public final class SignalServiceProtos {
           case BUILD_MESSAGE_INFO: {
               java.lang.Object[] objects = new java.lang.Object[] {
                 "bitField0_",
-                "uuid_",
                 "e164_",
               };
               java.lang.String info =
-                  "\u0001\u0002\u0000\u0001\u0001\u0002\u0002\u0000\u0000\u0000\u0001\b\u0000\u0002" +
-                  "\b\u0001";
+                  "\u0001\u0001\u0000\u0001\u0002\u0002\u0001\u0000\u0000\u0000\u0002\b\u0000";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through

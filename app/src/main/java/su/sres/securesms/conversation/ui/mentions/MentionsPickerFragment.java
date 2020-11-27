@@ -1,0 +1,93 @@
+package su.sres.securesms.conversation.ui.mentions;
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+
+import su.sres.securesms.LoggingFragment;
+import su.sres.securesms.R;
+import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.MappingModel;
+import su.sres.securesms.util.ViewUtil;
+
+import java.util.List;
+
+public class MentionsPickerFragment extends LoggingFragment {
+
+    private MentionsPickerAdapter     adapter;
+    private RecyclerView              list;
+    private BottomSheetBehavior<View> behavior;
+    private MentionsPickerViewModel   viewModel;
+    private int                       defaultPeekHeight;
+
+    @Override
+    public @Nullable View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.mentions_picker_fragment, container, false);
+
+        list              = view.findViewById(R.id.mentions_picker_list);
+        behavior          = BottomSheetBehavior.from(view.findViewById(R.id.mentions_picker_bottom_sheet));
+        defaultPeekHeight = view.getContext().getResources().getDimensionPixelSize(R.dimen.mentions_picker_peek_height);
+
+        return view;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        initializeList();
+
+        viewModel = ViewModelProviders.of(requireActivity()).get(MentionsPickerViewModel.class);
+        viewModel.getMentionList().observe(getViewLifecycleOwner(), this::updateList);
+    }
+
+    private void initializeList() {
+        adapter = new MentionsPickerAdapter(this::handleMentionClicked);
+
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(requireContext()) {
+            @Override
+            public void onLayoutCompleted(RecyclerView.State state) {
+                super.onLayoutCompleted(state);
+                updateBottomSheetBehavior(adapter.getItemCount());
+            }
+        };
+
+        list.setLayoutManager(layoutManager);
+        list.setAdapter(adapter);
+        list.setItemAnimator(null);
+    }
+
+    private void handleMentionClicked(@NonNull Recipient recipient) {
+        viewModel.onSelectionChange(recipient);
+    }
+
+    private void updateList(@NonNull List<MappingModel<?>> mappingModels) {
+        adapter.submitList(mappingModels);
+        if (mappingModels.isEmpty()) {
+            updateBottomSheetBehavior(0);
+        }
+        list.scrollToPosition(0);
+    }
+
+    private void updateBottomSheetBehavior(int count) {
+        if (count > 0) {
+            if (behavior.getPeekHeight() == 0) {
+                behavior.setPeekHeight(defaultPeekHeight, true);
+                behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            } else {
+                list.scrollToPosition(0);
+            }
+        } else {
+            behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            behavior.setPeekHeight(0);
+        }
+    }
+}

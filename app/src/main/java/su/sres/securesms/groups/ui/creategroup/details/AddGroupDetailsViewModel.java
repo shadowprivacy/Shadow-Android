@@ -17,10 +17,12 @@ import su.sres.securesms.groups.ui.GroupMemberEntry;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.DefaultValueLiveData;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.SingleLiveEvent;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -36,6 +38,7 @@ public final class AddGroupDetailsViewModel extends ViewModel {
     private final LiveData<Boolean>                                  isMms;
     private final LiveData<Boolean>                                  canSubmitForm;
     private final AddGroupDetailsRepository                          repository;
+    private final LiveData<List<Recipient>>                          nonGv2CapableMembers;
 
     private AddGroupDetailsViewModel(@NonNull Collection<RecipientId> recipientIds,
                                      @NonNull AddGroupDetailsRepository repository)
@@ -45,9 +48,18 @@ public final class AddGroupDetailsViewModel extends ViewModel {
         MutableLiveData<List<GroupMemberEntry.NewGroupCandidate>> initialMembers = new MutableLiveData<>();
 
         LiveData<Boolean> isValidName = Transformations.map(name, name -> !TextUtils.isEmpty(name));
-        members       = LiveDataUtil.combineLatest(initialMembers, deleted, AddGroupDetailsViewModel::filterDeletedMembers);
-        isMms         = Transformations.map(members, AddGroupDetailsViewModel::isAnyForcedSms);
-        canSubmitForm = LiveDataUtil.combineLatest(isMms, isValidName, (mms, validName) -> mms || validName);
+        members              = LiveDataUtil.combineLatest(initialMembers, deleted, AddGroupDetailsViewModel::filterDeletedMembers);
+        isMms                = Transformations.map(members, AddGroupDetailsViewModel::isAnyForcedSms);
+        LiveData<List<GroupMemberEntry.NewGroupCandidate>> membersToCheckGv2CapabilityOf = LiveDataUtil.combineLatest(isMms, members, (forcedMms, memberList) -> {
+            if (FeatureFlags.groupsV2create() && !forcedMms) {
+                return memberList;
+            } else {
+                return Collections.emptyList();
+            }
+        });
+
+        nonGv2CapableMembers = LiveDataUtil.mapAsync(membersToCheckGv2CapabilityOf, memberList -> repository.checkCapabilities(Stream.of(memberList).map(newGroupCandidate -> newGroupCandidate.getMember().getId()).toList()));
+        canSubmitForm        = LiveDataUtil.combineLatest(isMms, isValidName, (mms, validName) -> mms || validName);
 
         repository.resolveMembers(recipientIds, initialMembers::postValue);
     }
@@ -70,6 +82,10 @@ public final class AddGroupDetailsViewModel extends ViewModel {
 
     @NonNull LiveData<Boolean> getIsMms() {
         return isMms;
+    }
+
+    @NonNull LiveData<List<Recipient>> getNonGv2CapableMembers() {
+        return nonGv2CapableMembers;
     }
 
     void setAvatar(@Nullable byte[] avatar) {

@@ -43,15 +43,18 @@ import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.contactshare.ContactUtil;
 import su.sres.securesms.conversation.ConversationActivity;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.MentionUtil;
 import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;
 import su.sres.securesms.database.MmsSmsColumns;
 import su.sres.securesms.database.MmsSmsDatabase;
+import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.ThreadBodyUtil;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.mms.SlideDeck;
@@ -59,6 +62,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.messages.IncomingMessageObserver;
 import su.sres.securesms.service.KeyCachingService;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.MessageRecordUtil;
 import su.sres.securesms.util.ServiceUtil;
@@ -242,18 +246,14 @@ public class DefaultMessageNotifier implements MessageNotifier {
     {
         boolean isVisible = visibleThread == threadId;
 
-        ThreadDatabase threads    = DatabaseFactory.getThreadDatabase(context);
-        Recipient      recipients = DatabaseFactory.getThreadDatabase(context)
-                .getRecipientForThreadId(threadId);
+        ThreadDatabase threads = DatabaseFactory.getThreadDatabase(context);
 
         if (isVisible) {
             List<MarkedMessageInfo> messageIds = threads.setRead(threadId, false);
             MarkReadReceiver.process(context, messageIds);
         }
 
-        if (!TextSecurePreferences.isNotificationsEnabled(context) ||
-                (recipients != null && recipients.isMuted()))
-        {
+        if (!TextSecurePreferences.isNotificationsEnabled(context)) {
             return;
         }
 
@@ -498,7 +498,7 @@ public class DefaultMessageNotifier implements MessageNotifier {
             Recipient    recipient             = record.getIndividualRecipient().resolve();
             Recipient    conversationRecipient = record.getRecipient().resolve();
             long         threadId              = record.getThreadId();
-            CharSequence body                  = record.getDisplayBody(context);
+            CharSequence body                  = MentionUtil.updateBodyWithDisplayNames(context, record);
             Recipient    threadRecipients      = null;
             SlideDeck    slideDeck             = null;
             long         timestamp             = record.getTimestamp();
@@ -526,7 +526,17 @@ public class DefaultMessageNotifier implements MessageNotifier {
                     slideDeck = ((MmsMessageRecord) record).getSlideDeck();
                 }
 
-                if (threadRecipients == null || !threadRecipients.isMuted()) {
+                boolean includeMessage = true;
+                if (threadRecipients != null && threadRecipients.isMuted()) {
+                    RecipientDatabase.MentionSetting mentionSetting = threadRecipients.getMentionSetting();
+
+                    boolean overrideMuted = (mentionSetting == RecipientDatabase.MentionSetting.GLOBAL && SignalStore.notificationSettings().isMentionNotifiesMeEnabled()) ||
+                            mentionSetting == RecipientDatabase.MentionSetting.ALWAYS_NOTIFY;
+
+                    includeMessage = FeatureFlags.mentions() && overrideMuted && record.hasSelfMention();
+                }
+
+                if (threadRecipients == null || includeMessage) {
                     notificationState.addNotification(new NotificationItem(id, mms, recipient, conversationRecipient, threadRecipients, threadId, body, timestamp, receivedTimestamp, slideDeck, false));
                 }
             }

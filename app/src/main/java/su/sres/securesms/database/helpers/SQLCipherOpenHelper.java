@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.database.JobDatabase;
 import su.sres.securesms.database.KeyValueDatabase;
 import su.sres.securesms.database.MegaphoneDatabase;
+import su.sres.securesms.database.MentionDatabase;
 import su.sres.securesms.logging.Log;
 
 import net.sqlcipher.database.SQLiteDatabase;
@@ -42,8 +43,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int SERVER_DELIVERED_TIMESTAMP       = 64;
   private static final int QUOTE_CLEANUP                    = 65;
   private static final int BORDERLESS                       = 66;
+  private static final int MENTIONS                         = 67;
 
-  private static final int    DATABASE_VERSION = 66;
+  private static final int    DATABASE_VERSION = 67;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -87,6 +89,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(StorageKeyDatabase.CREATE_TABLE);
     db.execSQL(KeyValueDatabase.CREATE_TABLE);
     db.execSQL(MegaphoneDatabase.CREATE_TABLE);
+    db.execSQL(MentionDatabase.CREATE_TABLE);
 
     executeStatements(db, SearchDatabase.CREATE_TABLE);
     executeStatements(db, JobDatabase.CREATE_TABLE);
@@ -101,6 +104,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     executeStatements(db, GroupReceiptDatabase.CREATE_INDEXES);
     executeStatements(db, StickerDatabase.CREATE_INDEXES);
     executeStatements(db, StorageKeyDatabase.CREATE_INDEXES);
+    executeStatements(db, MentionDatabase.CREATE_INDEXES);
   }
 
   @Override
@@ -153,6 +157,23 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       if (oldVersion < BORDERLESS) {
         db.execSQL("ALTER TABLE part ADD COLUMN borderless INTEGER DEFAULT 0");
+      }
+
+      if (oldVersion < MENTIONS) {
+        db.execSQL("CREATE TABLE mention (_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "thread_id INTEGER, " +
+                "message_id INTEGER, " +
+                "recipient_id INTEGER, " +
+                "range_start INTEGER, " +
+                "range_length INTEGER)");
+
+        db.execSQL("CREATE INDEX IF NOT EXISTS mention_message_id_index ON mention (message_id)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS mention_recipient_id_thread_id_index ON mention (recipient_id, thread_id);");
+
+        db.execSQL("ALTER TABLE mms ADD COLUMN quote_mentions BLOB DEFAULT NULL");
+        db.execSQL("ALTER TABLE mms ADD COLUMN mentions_self INTEGER DEFAULT 0");
+
+        db.execSQL("ALTER TABLE recipient ADD COLUMN mention_setting INTEGER DEFAULT 0");
       }
 
       db.setTransactionSuccessful();

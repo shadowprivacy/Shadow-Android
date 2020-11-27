@@ -32,8 +32,10 @@ import su.sres.securesms.R;
 import su.sres.securesms.animation.AnimationCompleteListener;
 import su.sres.securesms.components.MaskView;
 import su.sres.securesms.components.emoji.EmojiImageView;
+import su.sres.securesms.components.emoji.EmojiUtil;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.ThemeUtil;
@@ -91,6 +93,7 @@ public final class ConversationReactionOverlay extends RelativeLayout {
     private OnHideListener                   onHideListener;
 
     private AnimatorSet revealAnimatorSet         = new AnimatorSet();
+    private AnimatorSet revealMaskAnimatorSet     = new AnimatorSet();
     private AnimatorSet hideAnimatorSet           = new AnimatorSet();
     private AnimatorSet hideAllButMaskAnimatorSet = new AnimatorSet();
     private AnimatorSet hideMaskAnimatorSet       = new AnimatorSet();
@@ -185,14 +188,29 @@ public final class ConversationReactionOverlay extends RelativeLayout {
         maskView.setTarget(maskTarget);
 
         hideAnimatorSet.end();
+        toolbar.setVisibility(VISIBLE);
         setVisibility(View.VISIBLE);
         revealAnimatorSet.start();
 
         if (Build.VERSION.SDK_INT >= 21) {
             this.activity = activity;
             originalStatusBarColor = activity.getWindow().getStatusBarColor();
-            activity.getWindow().setStatusBarColor(ContextCompat.getColor(activity, R.color.action_mode_status_bar));
+            activity.getWindow().setStatusBarColor(ThemeUtil.getThemedColor(getContext(), R.attr.reactions_overlay_toolbar_background_color));
+
+            if (!ThemeUtil.isDarkTheme(getContext()) && Build.VERSION.SDK_INT >= 23) {
+                activity.getWindow().getDecorView().setSystemUiVisibility(activity.getWindow().getDecorView().getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            }
         }
+    }
+
+    public void showMask(@NonNull View maskTarget, int maskPaddingTop, int maskPaddingBottom) {
+        maskView.setPadding(0, maskPaddingTop, 0, maskPaddingBottom);
+        maskView.setTarget(maskTarget);
+
+        hideAnimatorSet.end();
+        toolbar.setVisibility(GONE);
+        setVisibility(VISIBLE);
+        revealMaskAnimatorSet.start();
     }
 
     public void hide() {
@@ -218,8 +236,11 @@ public final class ConversationReactionOverlay extends RelativeLayout {
         revealAnimatorSet.end();
         hideAnimatorSet.start();
 
-        if (Build.VERSION.SDK_INT >= 21 && activity != null) {
+        if (Build.VERSION.SDK_INT >= 23 && activity != null) {
             activity.getWindow().setStatusBarColor(originalStatusBarColor);
+
+            activity.getWindow().getDecorView().setSystemUiVisibility(activity.getWindow().getDecorView().getSystemUiVisibility() & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+
             activity = null;
         }
 
@@ -359,7 +380,7 @@ public final class ConversationReactionOverlay extends RelativeLayout {
             view.setTranslationY(0);
 
             boolean isAtCustomIndex                      = i == customEmojiIndex;
-            boolean isNotAtCustomIndexAndOldEmojiMatches = !isAtCustomIndex && ReactionEmoji.values()[i].emoji.equals(oldEmoji);
+            boolean isNotAtCustomIndexAndOldEmojiMatches = !isAtCustomIndex && oldEmoji != null && ReactionEmoji.values()[i].emoji.equals(EmojiUtil.getCanonicalRepresentation(oldEmoji));
             boolean isAtCustomIndexAndOldEmojiExists     = isAtCustomIndex && oldEmoji != null;
 
             if (!foundSelected &&
@@ -380,13 +401,13 @@ public final class ConversationReactionOverlay extends RelativeLayout {
                     view.setImageEmoji(oldEmoji);
                     view.setTag(oldEmoji);
                 } else {
-                    view.setImageEmoji(ReactionEmoji.values()[i].emoji);
+                    view.setImageEmoji(SignalStore.emojiValues().getPreferredVariation(ReactionEmoji.values()[i].emoji));
                 }
             } else if (isAtCustomIndex) {
-                view.setImageDrawable(AppCompatResources.getDrawable(getContext(), R.drawable.ic_any_emoji_32));
+                view.setImageDrawable(ThemeUtil.getThemedDrawable(getContext(), R.attr.reactions_overlay_custom_emoji_icon));
                 view.setTag(null);
             } else {
-                view.setImageEmoji(ReactionEmoji.values()[i].emoji);
+                view.setImageEmoji(SignalStore.emojiValues().getPreferredVariation(ReactionEmoji.values()[i].emoji));
             }
         }
     }
@@ -448,7 +469,7 @@ public final class ConversationReactionOverlay extends RelativeLayout {
             if (selected == customEmojiIndex) {
                 onReactionSelectedListener.onCustomReactionSelected(messageRecord, emojiViews[selected].getTag() != null);
             } else {
-                onReactionSelectedListener.onReactionSelected(messageRecord, ReactionEmoji.values()[selected].emoji);
+                onReactionSelectedListener.onReactionSelected(messageRecord, SignalStore.emojiValues().getPreferredVariation(ReactionEmoji.values()[selected].emoji));
             }
         } else {
             hide();
@@ -534,6 +555,9 @@ public final class ConversationReactionOverlay extends RelativeLayout {
 
         revealAnimatorSet.setInterpolator(INTERPOLATOR);
         revealAnimatorSet.playTogether(reveals);
+
+        revealMaskAnimatorSet.setInterpolator(INTERPOLATOR);
+        revealMaskAnimatorSet.playTogether(overlayRevealAnim);
 
         List<Animator> hides = Stream.of(emojiViews)
                 .mapIndexed((idx, v) -> {

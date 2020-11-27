@@ -14,6 +14,8 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.util.StringUtil;
 import su.sres.securesms.util.livedata.LiveDataPair;
+import su.sres.securesms.util.livedata.LiveDataUtil;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Objects;
@@ -22,13 +24,14 @@ class EditProfileViewModel extends ViewModel {
 
     private final MutableLiveData<String>           givenName           = new MutableLiveData<>();
     private final MutableLiveData<String>           familyName          = new MutableLiveData<>();
-    private final LiveData<ProfileName>             internalProfileName = Transformations.map(new LiveDataPair<>(givenName, familyName),
-            pair -> ProfileName.fromParts(pair.first(), pair.second()));
+    private final LiveData<String>                  trimmedGivenName    = Transformations.map(givenName, StringUtil::trimToVisualBounds);
+    private final LiveData<String>                  trimmedFamilyName   = Transformations.map(familyName, StringUtil::trimToVisualBounds);
+    private final LiveData<ProfileName>             internalProfileName = LiveDataUtil.combineLatest(trimmedGivenName, trimmedFamilyName, ProfileName::fromParts);
     private final MutableLiveData<byte[]>           internalAvatar      = new MutableLiveData<>();
     private final MutableLiveData<byte[]>           originalAvatar      = new MutableLiveData<>();
     private final MutableLiveData<Optional<String>> internalUsername    = new MutableLiveData<>();
     private final MutableLiveData<String>           originalDisplayName = new MutableLiveData<>();
-    private final LiveData<Boolean>                 isFormValid         = Transformations.map(givenName, name -> !StringUtil.isVisuallyEmpty(name));
+    private final LiveData<Boolean>                 isFormValid         = Transformations.map(trimmedGivenName, s -> s.length() > 0);
     private final EditProfileRepository repository;
     private final GroupId groupId;
 
@@ -139,9 +142,8 @@ class EditProfileViewModel extends ViewModel {
             this.groupId          = groupId;
         }
 
-        @NonNull
         @Override
-        public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
+        public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
             //noinspection unchecked
             return (T) new EditProfileViewModel(repository, hasInstanceState, groupId);
         }

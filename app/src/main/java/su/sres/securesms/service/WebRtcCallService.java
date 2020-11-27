@@ -22,6 +22,7 @@ import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.CallId;
 import org.signal.ringrtc.CallManager;
 import org.signal.ringrtc.CallManager.CallEvent;
+import org.signal.ringrtc.IceCandidate;
 import org.signal.ringrtc.Remote;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.WebRtcCallActivity;
@@ -56,7 +57,6 @@ import su.sres.securesms.webrtc.audio.OutgoingRinger;
 import su.sres.securesms.webrtc.audio.SignalAudioManager;
 import su.sres.securesms.webrtc.locks.LockManager;
 import org.webrtc.EglBase;
-import org.webrtc.IceCandidate;
 import org.webrtc.PeerConnection;
 import org.whispersystems.libsignal.IdentityKey;
 import su.sres.signalservice.api.SignalServiceAccountManager;
@@ -104,13 +104,15 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
   public static final String EXTRA_BLUETOOTH                  = "audio_bluetooth";
   public static final String EXTRA_REMOTE_PEER                = "remote_peer";
   public static final String EXTRA_REMOTE_DEVICE              = "remote_device";
-  public static final String EXTRA_OFFER_DESCRIPTION          = "offer_description";
+  public static final String EXTRA_OFFER_OPAQUE               = "offer_opaque";
+  public static final String EXTRA_OFFER_SDP                  = "offer_sdp";
   public static final String EXTRA_OFFER_TYPE                 = "offer_type";
   public static final String EXTRA_MULTI_RING                 = "multi_ring";
   public static final String EXTRA_HANGUP_TYPE                = "hangup_type";
   public static final String EXTRA_HANGUP_IS_LEGACY           = "hangup_is_legacy";
   public static final String EXTRA_HANGUP_DEVICE_ID           = "hangup_device_id";
-  public static final String EXTRA_ANSWER_DESCRIPTION         = "answer_description";
+  public static final String EXTRA_ANSWER_OPAQUE              = "answer_opaque";
+  public static final String EXTRA_ANSWER_SDP                 = "answer_sdp";
   public static final String EXTRA_ICE_CANDIDATES             = "ice_candidates";
   public static final String EXTRA_ENABLE                     = "enable_value";
   public static final String EXTRA_BROADCAST                  = "broadcast";
@@ -388,7 +390,8 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
     CallId            callId                      = getCallId(intent);
     RemotePeer        remotePeer                  = getRemotePeer(intent);
     Integer           remoteDevice                = intent.getIntExtra(EXTRA_REMOTE_DEVICE, -1);
-    String            offer                       = intent.getStringExtra(EXTRA_OFFER_DESCRIPTION);
+    byte[]            opaque                      = intent.getByteArrayExtra(EXTRA_OFFER_OPAQUE);
+    String            sdp                         = intent.getStringExtra(EXTRA_OFFER_SDP);
     long              serverReceivedTimestamp     = intent.getLongExtra(EXTRA_SERVER_RECEIVED_TIMESTAMP, -1);
     long              serverDeliveredTimestamp    = intent.getLongExtra(EXTRA_SERVER_DELIVERED_TIMESTAMP, -1);
     OfferMessage.Type offerType                   = OfferMessage.Type.fromCode(intent.getStringExtra(EXTRA_OFFER_TYPE));
@@ -421,7 +424,7 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
     Log.i(TAG, "handleReceivedOffer(): messageAgeSec: " + messageAgeSec + ", serverReceivedTimestamp: " + serverReceivedTimestamp + ", serverDeliveredTimestamp: " + serverDeliveredTimestamp);
 
     try {
-      callManager.receivedOffer(callId, remotePeer, remoteDevice, offer, messageAgeSec, callType, 1, isMultiRing, true);
+      callManager.receivedOffer(callId, remotePeer, remoteDevice, opaque, sdp, messageAgeSec, callType, 1, isMultiRing, true);
     } catch  (CallException e) {
       callFailure("Unable to process received offer: ", e);
     }
@@ -619,9 +622,7 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
                   camera,
                   iceServers,
                   isAlwaysTurn,
-                  deviceList,
-                  enableVideoOnCreate,
-                  true);
+                  enableVideoOnCreate);
         } catch  (CallException e) {
           callFailure("Unable to proceed with call: ", e);
         }
@@ -663,9 +664,7 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
                   camera,
                   iceServers,
                   hideIp,
-                  deviceList,
-                  false,
-                  true);
+                  false);
         } catch  (CallException e) {
           callFailure("Unable to proceed with call: ", e);
         }
@@ -703,12 +702,13 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
     CallId            callId       = getCallId(intent);
     Integer           remoteDevice = intent.getIntExtra(EXTRA_REMOTE_DEVICE, -1);
     boolean           broadcast    = intent.getBooleanExtra(EXTRA_BROADCAST, false);
-    String            offer        = intent.getStringExtra(EXTRA_OFFER_DESCRIPTION);
+    byte[]            opaque       = intent.getByteArrayExtra(EXTRA_OFFER_OPAQUE);
+    String            sdp          = intent.getStringExtra(EXTRA_OFFER_SDP);
     OfferMessage.Type offerType    = OfferMessage.Type.fromCode(intent.getStringExtra(EXTRA_OFFER_TYPE));
 
     Log.i(TAG, "handleSendOffer: id: " + callId.format(remoteDevice));
 
-    OfferMessage             offerMessage        = new OfferMessage(callId.longValue(), offer, offerType);
+    OfferMessage             offerMessage        = new OfferMessage(callId.longValue(), sdp, offerType, opaque);
     Integer                  destinationDeviceId = broadcast ? null : remoteDevice;
     SignalServiceCallMessage callMessage         = SignalServiceCallMessage.forOffer(offerMessage, true, destinationDeviceId);
 
@@ -720,11 +720,12 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
     CallId     callId       = getCallId(intent);
     Integer    remoteDevice = intent.getIntExtra(EXTRA_REMOTE_DEVICE, -1);
     boolean    broadcast    = intent.getBooleanExtra(EXTRA_BROADCAST, false);
-    String     answer       = intent.getStringExtra(EXTRA_ANSWER_DESCRIPTION);
+    byte[]     opaque       = intent.getByteArrayExtra(EXTRA_ANSWER_OPAQUE);
+    String     sdp          = intent.getStringExtra(EXTRA_ANSWER_SDP);
 
     Log.i(TAG, "handleSendAnswer: id: " + callId.format(remoteDevice));
 
-    AnswerMessage            answerMessage       = new AnswerMessage(callId.longValue(), answer);
+    AnswerMessage            answerMessage       = new AnswerMessage(callId.longValue(), sdp, opaque);
     Integer                  destinationDeviceId = broadcast ? null : remoteDevice;
     SignalServiceCallMessage callMessage         = SignalServiceCallMessage.forAnswer(answerMessage, true, destinationDeviceId);
 
@@ -787,13 +788,14 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
   private void handleReceivedAnswer(Intent intent) {
     CallId       callId         = getCallId(intent);
     Integer      remoteDevice   = intent.getIntExtra(EXTRA_REMOTE_DEVICE, -1);
-    String       description    = intent.getStringExtra(EXTRA_ANSWER_DESCRIPTION);
+    byte[]       opaque         = intent.getByteArrayExtra(EXTRA_ANSWER_OPAQUE);
+    String       sdp            = intent.getStringExtra(EXTRA_ANSWER_SDP);
     boolean      isMultiRing    = intent.getBooleanExtra(EXTRA_MULTI_RING, false);
 
     Log.i(TAG, "handleReceivedAnswer(): id: " + callId.format(remoteDevice));
 
     try {
-      callManager.receivedAnswer(callId, remoteDevice, description , isMultiRing);
+      callManager.receivedAnswer(callId, remoteDevice, opaque, sdp, isMultiRing);
     } catch  (CallException e) {
       callFailure("receivedAnswer() failed: ", e);
     }
@@ -1801,7 +1803,7 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
   }
 
   @Override
-  public void onSendOffer(CallId callId, Remote remote, Integer remoteDevice, Boolean broadcast, String offer, CallManager.CallMediaType callMediaType) {
+  public void onSendOffer(CallId callId, Remote remote, Integer remoteDevice, Boolean broadcast, byte[] opaque, String sdp, CallManager.CallMediaType callMediaType) {
     Log.i(TAG, "onSendOffer: id: " + callId.format(remoteDevice) + " type: " + callMediaType.name());
 
     if (remote instanceof RemotePeer) {
@@ -1810,12 +1812,13 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
       Intent     intent     = new Intent(this, WebRtcCallService.class);
 
       intent.setAction(ACTION_SEND_OFFER)
-              .putExtra(EXTRA_CALL_ID,           callId.longValue())
-              .putExtra(EXTRA_REMOTE_PEER,       remotePeer)
-              .putExtra(EXTRA_REMOTE_DEVICE,     remoteDevice)
-              .putExtra(EXTRA_BROADCAST,         broadcast)
-              .putExtra(EXTRA_OFFER_DESCRIPTION, offer)
-              .putExtra(EXTRA_OFFER_TYPE,        offerType);
+              .putExtra(EXTRA_CALL_ID,       callId.longValue())
+              .putExtra(EXTRA_REMOTE_PEER,   remotePeer)
+              .putExtra(EXTRA_REMOTE_DEVICE, remoteDevice)
+              .putExtra(EXTRA_BROADCAST,     broadcast)
+              .putExtra(EXTRA_OFFER_OPAQUE,  opaque)
+              .putExtra(EXTRA_OFFER_SDP,     sdp)
+              .putExtra(EXTRA_OFFER_TYPE,    offerType);
 
       startService(intent);
     } else {
@@ -1824,7 +1827,7 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
   }
 
   @Override
-  public void onSendAnswer(CallId callId, Remote remote, Integer remoteDevice, Boolean broadcast, String answer) {
+  public void onSendAnswer(CallId callId, Remote remote, Integer remoteDevice, Boolean broadcast, byte[] opaque, String sdp) {
     Log.i(TAG, "onSendAnswer: id: " + callId.format(remoteDevice));
 
     if (remote instanceof RemotePeer) {
@@ -1832,11 +1835,12 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
       Intent     intent     = new Intent(this, WebRtcCallService.class);
 
       intent.setAction(ACTION_SEND_ANSWER)
-              .putExtra(EXTRA_CALL_ID,            callId.longValue())
-              .putExtra(EXTRA_REMOTE_PEER,        remotePeer)
-              .putExtra(EXTRA_REMOTE_DEVICE,      remoteDevice)
-              .putExtra(EXTRA_BROADCAST,          broadcast)
-              .putExtra(EXTRA_ANSWER_DESCRIPTION, answer);
+              .putExtra(EXTRA_CALL_ID,       callId.longValue())
+              .putExtra(EXTRA_REMOTE_PEER,   remotePeer)
+              .putExtra(EXTRA_REMOTE_DEVICE, remoteDevice)
+              .putExtra(EXTRA_BROADCAST,     broadcast)
+              .putExtra(EXTRA_ANSWER_OPAQUE, opaque)
+              .putExtra(EXTRA_ANSWER_SDP,    sdp);
 
       startService(intent);
     } else {

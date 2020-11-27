@@ -80,6 +80,7 @@ public class MmsSmsDatabase extends Database {
             MmsDatabase.QUOTE_BODY,
             MmsDatabase.QUOTE_MISSING,
             MmsDatabase.QUOTE_ATTACHMENT,
+            MmsDatabase.QUOTE_MENTIONS,
             MmsDatabase.SHARED_CONTACTS,
             MmsDatabase.LINK_PREVIEWS,
             MmsDatabase.VIEW_ONCE,
@@ -87,7 +88,8 @@ public class MmsSmsDatabase extends Database {
             MmsSmsColumns.REACTIONS,
             MmsSmsColumns.REACTIONS_UNREAD,
             MmsSmsColumns.REACTIONS_LAST_SEEN,
-            MmsSmsColumns.REMOTE_DELETED};
+            MmsSmsColumns.REMOTE_DELETED,
+            MmsDatabase.MENTIONS_SELF};
 
     public MmsSmsDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
         super(context, databaseHelper);
@@ -407,6 +409,7 @@ public class MmsSmsDatabase extends Database {
                 MmsDatabase.QUOTE_BODY,
                 MmsDatabase.QUOTE_MISSING,
                 MmsDatabase.QUOTE_ATTACHMENT,
+                MmsDatabase.QUOTE_MENTIONS,
                 MmsDatabase.SHARED_CONTACTS,
                 MmsDatabase.LINK_PREVIEWS,
                 MmsDatabase.VIEW_ONCE,
@@ -414,7 +417,8 @@ public class MmsSmsDatabase extends Database {
                 MmsSmsColumns.REACTIONS_UNREAD,
                 MmsSmsColumns.REACTIONS_LAST_SEEN,
                 MmsSmsColumns.DATE_SERVER,
-                MmsSmsColumns.REMOTE_DELETED };
+                MmsSmsColumns.REMOTE_DELETED,
+                MmsDatabase.MENTIONS_SELF };
 
         String[] smsProjection = {SmsDatabase.DATE_SENT + " AS " + MmsSmsColumns.NORMALIZED_DATE_SENT,
                 SmsDatabase.DATE_RECEIVED + " AS " + MmsSmsColumns.NORMALIZED_DATE_RECEIVED,
@@ -439,6 +443,7 @@ public class MmsSmsDatabase extends Database {
                 MmsDatabase.QUOTE_BODY,
                 MmsDatabase.QUOTE_MISSING,
                 MmsDatabase.QUOTE_ATTACHMENT,
+                MmsDatabase.QUOTE_MENTIONS,
                 MmsDatabase.SHARED_CONTACTS,
                 MmsDatabase.LINK_PREVIEWS,
                 MmsDatabase.VIEW_ONCE,
@@ -446,7 +451,8 @@ public class MmsSmsDatabase extends Database {
                 MmsSmsColumns.REACTIONS_UNREAD,
                 MmsSmsColumns.REACTIONS_LAST_SEEN,
                 MmsSmsColumns.DATE_SERVER,
-                MmsSmsColumns.REMOTE_DELETED };
+                MmsSmsColumns.REMOTE_DELETED,
+                MmsDatabase.MENTIONS_SELF };
 
         SQLiteQueryBuilder mmsQueryBuilder = new SQLiteQueryBuilder();
         SQLiteQueryBuilder smsQueryBuilder = new SQLiteQueryBuilder();
@@ -493,6 +499,7 @@ public class MmsSmsDatabase extends Database {
         mmsColumnsPresent.add(MmsDatabase.QUOTE_BODY);
         mmsColumnsPresent.add(MmsDatabase.QUOTE_MISSING);
         mmsColumnsPresent.add(MmsDatabase.QUOTE_ATTACHMENT);
+        mmsColumnsPresent.add(MmsDatabase.QUOTE_MENTIONS);
         mmsColumnsPresent.add(MmsDatabase.SHARED_CONTACTS);
         mmsColumnsPresent.add(MmsDatabase.LINK_PREVIEWS);
         mmsColumnsPresent.add(MmsDatabase.VIEW_ONCE);
@@ -500,6 +507,7 @@ public class MmsSmsDatabase extends Database {
         mmsColumnsPresent.add(MmsDatabase.REACTIONS_UNREAD);
         mmsColumnsPresent.add(MmsDatabase.REACTIONS_LAST_SEEN);
         mmsColumnsPresent.add(MmsDatabase.REMOTE_DELETED);
+        mmsColumnsPresent.add(MmsDatabase.MENTIONS_SELF);
 
         Set<String> smsColumnsPresent = new HashSet<>();
         smsColumnsPresent.add(MmsSmsColumns.ID);

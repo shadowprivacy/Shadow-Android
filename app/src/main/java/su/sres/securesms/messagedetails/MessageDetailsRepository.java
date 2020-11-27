@@ -8,6 +8,7 @@ import androidx.annotation.WorkerThread;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupReceiptDatabase;
@@ -86,7 +87,7 @@ final class MessageDetailsRepository {
             }
         }
 
-        return new MessageDetails(messageRecord, recipients);
+        return new MessageDetails(ConversationMessageFactory.createWithUnresolvedData(context, messageRecord), recipients);
     }
 
     private @Nullable NetworkFailure getNetworkFailure(MessageRecord messageRecord, Recipient recipient) {

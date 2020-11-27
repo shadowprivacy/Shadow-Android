@@ -210,7 +210,9 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
                     if (recipientClickListener != null) {
                         recipientClickListener.onClick(recipient);
                     }
-                    selectionChangeListener.onSelectionChange(getAdapterPosition(), !selected.isChecked());
+                    if (selected != null) {
+                        selectionChangeListener.onSelectionChange(getAdapterPosition(), !selected.isChecked());
+                    }
                 }
             });
             this.itemView.setOnLongClickListener(v -> {
@@ -324,8 +326,8 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
             if (pendingMember.isCancellable() && adminActionsListener != null) {
                 popupMenu.setMenu(R.menu.own_invite_pending_menu,
                         item -> {
-                            if (item == R.id.cancel_invite) {
-                                adminActionsListener.onCancelInvite(pendingMember);
+                            if (item == R.id.revoke_invite) {
+                                adminActionsListener.onRevokeInvite(pendingMember);
                                 return true;
                             }
                             return false;
@@ -360,16 +362,16 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
             if (pendingMembers.isCancellable() && adminActionsListener != null) {
                 popupMenu.setMenu(R.menu.others_invite_pending_menu,
                         item -> {
-                            if (item.getItemId() == R.id.cancel_invites) {
-                                item.setTitle(context.getResources().getQuantityString(R.plurals.PendingMembersActivity_cancel_d_invites, pendingMembers.getInviteCount(),
+                            if (item.getItemId() == R.id.revoke_invites) {
+                                item.setTitle(context.getResources().getQuantityString(R.plurals.PendingMembersActivity_revoke_d_invites, pendingMembers.getInviteCount(),
                                         pendingMembers.getInviteCount()));
                                 return true;
                             }
                             return true;
                         },
                         item -> {
-                            if (item == R.id.cancel_invites) {
-                                adminActionsListener.onCancelAllInvites(pendingMembers);
+                            if (item == R.id.revoke_invites) {
+                                adminActionsListener.onRevokeAllInvites(pendingMembers);
                                 return true;
                             }
                             return false;

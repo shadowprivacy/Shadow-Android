@@ -12,6 +12,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientExporter;
 import su.sres.securesms.util.ViewUtil;
+import su.sres.securesms.util.concurrent.SignalExecutors;
 
 public class UnknownSenderView extends FrameLayout {
 
@@ -50,10 +51,13 @@ public class UnknownSenderView extends FrameLayout {
             protected Void doInBackground(Void... params) {
               DatabaseFactory.getRecipientDatabase(context).setBlocked(recipient.getId(), true);
               if (threadId != -1) DatabaseFactory.getThreadDatabase(context).setHasSent(threadId, true);
-              listener.onActionTaken();
               return null;
             }
-          }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            @Override
+            protected void onPostExecute(Void aVoid) {
+              listener.onActionTaken();
+            }
+          }.executeOnExecutor(SignalExecutors.BOUNDED);
         })
         .setNegativeButton(android.R.string.cancel, null)
         .show();
@@ -78,10 +82,13 @@ public class UnknownSenderView extends FrameLayout {
             protected Void doInBackground(Void... params) {
               DatabaseFactory.getRecipientDatabase(context).setProfileSharing(recipient.getId(), true);
               if (threadId != -1) DatabaseFactory.getThreadDatabase(context).setHasSent(threadId, true);
-              listener.onActionTaken();
               return null;
             }
-          }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            @Override
+            protected void onPostExecute(Void aVoid) {
+              listener.onActionTaken();
+            }
+          }.executeOnExecutor(SignalExecutors.BOUNDED);
         })
         .setNegativeButton(android.R.string.cancel, null)
         .show();

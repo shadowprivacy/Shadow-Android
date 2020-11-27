@@ -39,6 +39,7 @@ import su.sres.securesms.components.ThreadPhotoRailView;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.FallbackPhoto80dp;
 import su.sres.securesms.groups.ui.GroupMemberListView;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.mediaoverview.MediaOverviewActivity;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.notifications.NotificationChannels;
@@ -68,6 +69,7 @@ public class ManageRecipientFragment extends LoggingFragment {
     private Toolbar                                toolbar;
     private TextView                               title;
     private TextView                               subtitle;
+    private TextView                               internalDetails;
     private View                                   contactRow;
  //   private TextView                               contactText;
  //   private ImageView                              contactIcon;
@@ -124,6 +126,7 @@ public class ManageRecipientFragment extends LoggingFragment {
        //  contactIcon                 = view.findViewById(R.id.recipient_contact_icon);
         title                       = view.findViewById(R.id.name);
         subtitle                    = view.findViewById(R.id.username_number);
+        internalDetails             = view.findViewById(R.id.recipient_internal_details);
         sharedGroupList             = view.findViewById(R.id.shared_group_list);
         groupsInCommonCount         = view.findViewById(R.id.groups_in_common_count);
         threadPhotoRailView         = view.findViewById(R.id.recent_photos);
@@ -211,6 +214,13 @@ public class ManageRecipientFragment extends LoggingFragment {
         viewModel.getMediaCursor().observe(getViewLifecycleOwner(), this::presentMediaCursor);
         viewModel.getMuteState().observe(getViewLifecycleOwner(), this::presentMuteState);
         viewModel.getCanAddToAGroup().observe(getViewLifecycleOwner(), canAdd -> addToAGroup.setVisibility(canAdd ? View.VISIBLE : View.GONE));
+
+        if (SignalStore.internalValues().recipientDetails()) {
+            viewModel.getInternalDetails().observe(getViewLifecycleOwner(), internalDetails::setText);
+            internalDetails.setVisibility(View.VISIBLE);
+        } else {
+            internalDetails.setVisibility(View.GONE);
+        }
 
         disappearingMessagesRow.setOnClickListener(v -> viewModel.handleExpirationSelection(requireContext()));
         block.setOnClickListener(v -> viewModel.onBlockClicked(requireActivity()));

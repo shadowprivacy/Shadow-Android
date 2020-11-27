@@ -32,7 +32,7 @@ public class ReactionsLoader implements ReactionsViewModel.Repository, LoaderMan
     private final boolean          isMms;
     private final Context          appContext;
 
-    private MutableLiveData<List<Reaction>> internalLiveData = new MutableLiveData<>();
+    private MutableLiveData<List<ReactionDetails>> internalLiveData = new MutableLiveData<>();
 
     public ReactionsLoader(@NonNull Context context, long messageId, boolean isMms)
     {
@@ -50,6 +50,7 @@ public class ReactionsLoader implements ReactionsViewModel.Repository, LoaderMan
     @Override
     public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
         SignalExecutors.BOUNDED.execute(() -> {
+            data.moveToPosition(-1);
             MessageRecord record = isMms ? DatabaseFactory.getMmsDatabase(appContext).readerFor(data).getNext()
                     : DatabaseFactory.getSmsDatabase(appContext).readerFor(data).getNext();
 
@@ -57,7 +58,7 @@ public class ReactionsLoader implements ReactionsViewModel.Repository, LoaderMan
                 internalLiveData.postValue(Collections.emptyList());
             } else {
                 internalLiveData.postValue(Stream.of(record.getReactions())
-                        .map(reactionRecord -> new Reaction(Recipient.resolved(reactionRecord.getAuthor()),
+                        .map(reactionRecord -> new ReactionDetails(Recipient.resolved(reactionRecord.getAuthor()),
                                 EmojiUtil.getCanonicalRepresentation(reactionRecord.getEmoji()),
                                 reactionRecord.getEmoji(),
                                 reactionRecord.getDateReceived()))
@@ -72,7 +73,7 @@ public class ReactionsLoader implements ReactionsViewModel.Repository, LoaderMan
     }
 
     @Override
-    public LiveData<List<Reaction>> getReactions() {
+    public LiveData<List<ReactionDetails>> getReactions() {
         return internalLiveData;
     }
 
@@ -103,36 +104,6 @@ public class ReactionsLoader implements ReactionsViewModel.Repository, LoaderMan
         @Override
         public Cursor getCursor() {
             return DatabaseFactory.getSmsDatabase(context).getMessageCursor(messageId);
-        }
-    }
-
-    static class Reaction {
-        private final Recipient sender;
-        private final String    baseEmoji;
-        private final String    displayEmoji;
-        private final long      timestamp;
-
-        private Reaction(@NonNull Recipient sender, @NonNull String baseEmoji, @NonNull String displayEmoji, long timestamp) {
-            this.sender       = sender;
-            this.baseEmoji    = baseEmoji;
-            this.displayEmoji = displayEmoji;
-            this.timestamp    = timestamp;
-        }
-
-        public @NonNull Recipient getSender() {
-            return sender;
-        }
-
-        public @NonNull String getBaseEmoji() {
-            return baseEmoji;
-        }
-
-        public @NonNull String getDisplayEmoji() {
-            return displayEmoji;
-        }
-
-        public long getTimestamp() {
-            return timestamp;
         }
     }
 }

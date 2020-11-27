@@ -26,17 +26,18 @@ import su.sres.securesms.contacts.avatars.TransparentContactPhoto;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.RecipientDatabase.MentionSetting;
 import su.sres.securesms.database.RecipientDatabase.RegisteredState;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
 import su.sres.securesms.database.RecipientDatabase.VibrateState;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.jobs.DirectorySyncJob;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.phonenumbers.NumberUtil;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.util.FeatureFlags;
+import su.sres.securesms.util.StringUtil;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
@@ -102,7 +103,7 @@ public class Recipient {
   private final byte[]                 storageId;
   private final byte[]                 identityKey;
   private final VerifiedStatus         identityStatus;
-
+  private final MentionSetting mentionSetting;
 
   /**
    * Returns a {@link LiveRecipient}, which contains a {@link Recipient} that may or may not be
@@ -158,6 +159,20 @@ public class Recipient {
 
   /**
    * Returns a fully-populated {@link Recipient} based off of a {@link SignalServiceAddress},
+   * creating one in the database if necessary. We special-case GV1 members because we want to
+   * prioritize E164 addresses and not use the UUIDs if possible.
+   */
+  @WorkerThread
+  public static @NonNull Recipient externalGV1Member(@NonNull Context context, @NonNull SignalServiceAddress address) {
+    if (address.getNumber().isPresent()) {
+      return externalPush(context, null, address.getNumber().get(), false);
+    } else {
+      return externalPush(context, address.getUuid().orNull(), null, false);
+    }
+  }
+
+  /**
+   * Returns a fully-populated {@link Recipient} based off of a {@link SignalServiceAddress},
    * creating one in the database if necessary. This should only used for high-trust sources,
    * which are limited to:
    * - Envelopes
@@ -207,7 +222,7 @@ public class Recipient {
     RecipientDatabase db = DatabaseFactory.getRecipientDatabase(context);
     RecipientId       id = null;
     if (UuidUtil.isUuid(identifier)) {
-      throw new UuidRecipientError();
+      throw new AssertionError("UUIDs are not valid system contact identifiers!");
     } else if (NumberUtil.isValidEmail(identifier)) {
       id = db.getOrInsertFromEmail(identifier);
     } else {
@@ -303,6 +318,7 @@ public class Recipient {
     this.storageId              = null;
     this.identityKey            = null;
     this.identityStatus         = VerifiedStatus.DEFAULT;
+    this.mentionSetting         = MentionSetting.GLOBAL;
   }
 
   public Recipient(@NonNull RecipientId id, @NonNull RecipientDetails details, boolean resolved) {
@@ -346,6 +362,7 @@ public class Recipient {
     this.storageId              = details.storageId;
     this.identityKey            = details.identityKey;
     this.identityStatus         = details.identityStatus;
+    this.mentionSetting         = details.mentionSetting;
   }
 
   public @NonNull RecipientId getId() {
@@ -386,18 +403,22 @@ public class Recipient {
   }
 
   public @NonNull String getDisplayName(@NonNull Context context) {
-    return Util.getFirstNonEmpty(getName(context),
+    String name = Util.getFirstNonEmpty(getName(context),
             getProfileName().toString(),
             getDisplayUsername(),
             e164,
             email,
             context.getString(R.string.Recipient_unknown));
+
+    return StringUtil.isolateBidi(name);
   }
 
   public @NonNull String getShortDisplayName(@NonNull Context context) {
-    return Util.getFirstNonEmpty(getName(context),
+    String name = Util.getFirstNonEmpty(getName(context),
             getProfileName().getGivenName(),
             getDisplayName(context));
+
+    return StringUtil.isolateBidi(name);
   }
 
   public @NonNull MaterialColor getColor() {
@@ -784,12 +805,16 @@ public class Recipient {
     return ApplicationDependencies.getRecipientCache().getLive(id);
   }
 
-  private @Nullable String getDisplayUsername() {
+  public @Nullable String getDisplayUsername() {
     if (!TextUtils.isEmpty(username)) {
       return "@" + username;
     } else {
       return null;
     }
+  }
+
+  public @NonNull MentionSetting getMentionSetting() {
+    return mentionSetting;
   }
 
   @Override
@@ -857,8 +882,5 @@ public class Recipient {
   }
 
   private static class MissingAddressError extends AssertionError {
-  }
-
-  private static class UuidRecipientError extends AssertionError {
   }
 }

@@ -2,6 +2,7 @@ package su.sres.securesms.conversationlist;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -20,6 +21,7 @@ import su.sres.securesms.conversationlist.model.SearchResult;
 import su.sres.securesms.database.DatabaseContentProviders;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.logging.Log;
 import su.sres.securesms.megaphone.Megaphone;
 import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.megaphone.Megaphones;
@@ -32,10 +34,11 @@ import su.sres.securesms.util.paging.Invalidator;
 
 class ConversationListViewModel extends ViewModel {
 
+    private static final String TAG = Log.tag(ConversationListViewModel.class);
+
     private final Application                   application;
     private final MutableLiveData<Megaphone>    megaphone;
     private final MutableLiveData<SearchResult> searchResult;
-    private final MutableLiveData<Integer>      archivedCount;
     private final LiveData<ConversationList>    conversationList;
     private final SearchRepository              searchRepository;
     private final MegaphoneRepository           megaphoneRepository;
@@ -49,7 +52,6 @@ class ConversationListViewModel extends ViewModel {
         this.application         = application;
         this.megaphone           = new MutableLiveData<>();
         this.searchResult        = new MutableLiveData<>();
-        this.archivedCount       = new MutableLiveData<>();
         this.searchRepository    = searchRepository;
         this.megaphoneRepository = ApplicationDependencies.getMegaphoneRepository();
         this.debouncer           = new Debouncer(300);
@@ -59,10 +61,6 @@ class ConversationListViewModel extends ViewModel {
             public void onChange(boolean selfChange) {
                 if (!TextUtils.isEmpty(getLastQuery())) {
                     searchRepository.query(getLastQuery(), searchResult::postValue);
-                }
-
-                if (!isArchived) {
-                    updateArchivedCount();
                 }
             }
         };
@@ -78,15 +76,27 @@ class ConversationListViewModel extends ViewModel {
                 .setInitialLoadKey(0)
                 .build();
 
-        if (isArchived) {
-            this.archivedCount.setValue(0);
-        } else {
-            updateArchivedCount();
-        }
-
         application.getContentResolver().registerContentObserver(DatabaseContentProviders.ConversationList.CONTENT_URI, true, observer);
 
-        this.conversationList = LiveDataUtil.combineLatest(conversationList, this.archivedCount, ConversationList::new);
+        this.conversationList = Transformations.switchMap(conversationList, conversation -> {
+            if (conversation.getDataSource().isInvalid()) {
+                Log.w(TAG, "Received an invalid conversation list. Ignoring.");
+                return new MutableLiveData<>();
+            }
+
+            MutableLiveData<ConversationList> updated = new MutableLiveData<>();
+
+            if (isArchived) {
+                updated.postValue(new ConversationList(conversation, 0));
+            } else {
+                SignalExecutors.BOUNDED.execute(() -> {
+                    int archiveCount = DatabaseFactory.getThreadDatabase(application).getArchivedConversationListCount();
+                    updated.postValue(new ConversationList(conversation, archiveCount));
+                });
+            }
+
+            return updated;
+        });
     }
 
     @NonNull LiveData<SearchResult> getSearchResult() {
@@ -139,12 +149,6 @@ class ConversationListViewModel extends ViewModel {
         invalidator.invalidate();
         debouncer.clear();
         application.getContentResolver().unregisterContentObserver(observer);
-    }
-
-    private void updateArchivedCount() {
-        SignalExecutors.BOUNDED.execute(() -> {
-            archivedCount.postValue(DatabaseFactory.getThreadDatabase(application).getArchivedConversationListCount());
-        });
     }
 
     public static class Factory extends ViewModelProvider.NewInstanceFactory {

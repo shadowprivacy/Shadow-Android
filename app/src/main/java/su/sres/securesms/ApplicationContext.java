@@ -446,7 +446,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeMasterKey();
     ApplicationDependencies.getJobManager().beginJobLoop();
 //    StorageSyncHelper.scheduleRoutineSync();
-    RetrieveProfileJob.enqueueRoutineFetchIfNeccessary(this);
+    RetrieveProfileJob.enqueueRoutineFetchIfNecessary(this);
     RegistrationUtil.maybeMarkRegistrationComplete(this);
     RefreshPreKeysJob.scheduleIfNecessary();
 

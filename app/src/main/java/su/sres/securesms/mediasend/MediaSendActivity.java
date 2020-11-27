@@ -31,6 +31,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
+
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.TransportOption;
@@ -43,7 +46,9 @@ import su.sres.securesms.components.emoji.EmojiEditText;
 import su.sres.securesms.components.emoji.EmojiKeyboardProvider;
 import su.sres.securesms.components.emoji.EmojiToggle;
 import su.sres.securesms.components.emoji.MediaKeyboard;
+import su.sres.securesms.components.mention.MentionAnnotation;
 import su.sres.securesms.contactshare.SimpleTextWatcher;
+import su.sres.securesms.conversation.ui.mentions.MentionsPickerViewModel;
 import su.sres.securesms.imageeditor.model.EditorModel;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediapreview.MediaRailAdapter;
@@ -56,6 +61,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.scribbles.ImageEditorFragment;
 import su.sres.securesms.util.CharacterCalculator.CharacterState;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.Function3;
 import su.sres.securesms.util.IOFunction;
 import su.sres.securesms.util.MediaUtil;
@@ -77,6 +83,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Encompasses the entire flow of sending media, starting from the selection process to the actual
@@ -131,6 +138,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
     private EmojiEditText       captionText;
     private EmojiToggle         emojiToggle;
     private Stub<MediaKeyboard> emojiDrawer;
+    private Stub<View>          mentionSuggestions;
     private TextView            charactersLeft;
     private RecyclerView        mediaRail;
     private MediaRailAdapter    mediaRailAdapter;
@@ -143,7 +151,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
     /**
      * Get an intent to launch the media send flow starting with the picker.
      */
-    public static Intent buildGalleryIntent(@NonNull Context context, @NonNull Recipient recipient, @Nullable String body, @NonNull TransportOption transport) {
+    public static Intent buildGalleryIntent(@NonNull Context context, @NonNull Recipient recipient, @Nullable CharSequence body, @NonNull TransportOption transport) {
         Intent intent = new Intent(context, MediaSendActivity.class);
         intent.putExtra(KEY_RECIPIENT, recipient.getId());
         intent.putExtra(KEY_TRANSPORT, transport);
@@ -175,8 +183,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
     public static Intent buildEditorIntent(@NonNull Context context,
                                            @NonNull List<Media> media,
                                            @NonNull Recipient recipient,
-                                           @NonNull String body,
-
+                                           @NonNull CharSequence body,
                                            @NonNull TransportOption transport)
 
     {
@@ -210,6 +217,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
         charactersLeft      = findViewById(R.id.mediasend_characters_left);
         mediaRail           = findViewById(R.id.mediasend_media_rail);
         emojiDrawer         = new Stub<>(findViewById(R.id.mediasend_emoji_drawer_stub));
+        mentionSuggestions  = new Stub<>(findViewById(R.id.mediasend_mention_suggestions_stub));
 
         RecipientId recipientId = getIntent().getParcelableExtra(KEY_RECIPIENT);
         if (recipientId != null) {
@@ -225,7 +233,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
 
         viewModel.setTransport(transport);
         viewModel.setRecipient(recipient != null ? recipient.get() : null);
-        viewModel.onBodyChanged(getIntent().getStringExtra(KEY_BODY));
+        viewModel.onBodyChanged(getIntent().getCharSequenceExtra(KEY_BODY));
 
         List<Media> media    = getIntent().getParcelableArrayListExtra(KEY_MEDIA);
         boolean     isCamera = getIntent().getBooleanExtra(KEY_IS_CAMERA, false);
@@ -312,6 +320,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
         }
 
         initViewModel();
+        if (FeatureFlags.mentions()) initializeMentionsViewModel();
         revealButton.setOnClickListener(v -> viewModel.onRevealButtonToggled());
         continueButton.setOnClickListener(v -> navigateToContactSelect());
     }
@@ -531,7 +540,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
         MediaSendFragment fragment = getMediaSendFragment();
 
         if (fragment != null) {
-            viewModel.onSendClicked(buildModelsToTransform(fragment), recipients).observe(this, result -> {
+            viewModel.onSendClicked(buildModelsToTransform(fragment), recipients, composeText.getMentions()).observe(this, result -> {
                 finish();
             });
         } else {
@@ -552,7 +561,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
 
         sendButton.setEnabled(false);
 
-        viewModel.onSendClicked(buildModelsToTransform(fragment), Collections.emptyList()).observe(this, this::setActivityResultAndFinish);
+        viewModel.onSendClicked(buildModelsToTransform(fragment), Collections.emptyList(), composeText.getMentions()).observe(this, this::setActivityResultAndFinish);
     }
 
     private static Map<Media, MediaTransform> buildModelsToTransform(@NonNull MediaSendFragment fragment) {
@@ -756,6 +765,46 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
         });
     }
 
+    private void initializeMentionsViewModel() {
+        if (recipient == null) {
+            return;
+        }
+
+        MentionsPickerViewModel mentionsViewModel = ViewModelProviders.of(this, new MentionsPickerViewModel.Factory()).get(MentionsPickerViewModel.class);
+
+        recipient.observe(this, mentionsViewModel::onRecipientChange);
+        composeText.setMentionQueryChangedListener(query -> {
+            if (recipient.get().isPushV2Group()) {
+                if (!mentionSuggestions.resolved()) {
+                    mentionSuggestions.get();
+                }
+                mentionsViewModel.onQueryChange(query);
+            }
+        });
+
+        composeText.setMentionValidator(annotations -> {
+            if (!recipient.get().isPushV2Group()) {
+                return annotations;
+            }
+
+            Set<String> validRecipientIds = Stream.of(recipient.get().getParticipants())
+                    .map(r -> MentionAnnotation.idToMentionAnnotationValue(r.getId()))
+                    .collect(Collectors.toSet());
+
+            return Stream.of(annotations)
+                    .filter(a -> !validRecipientIds.contains(a.getValue()))
+                    .toList();
+        });
+
+        mentionsViewModel.getSelectedRecipient().observe(this, recipient -> {
+            String replacementDisplayName = recipient.getDisplayName(this);
+            if (replacementDisplayName.equals(recipient.getDisplayUsername())) {
+                replacementDisplayName = recipient.getUsername().or(replacementDisplayName);
+            }
+            composeText.replaceTextWithMention(replacementDisplayName, recipient.getId());
+        });
+    }
+
     private void presentRecipient(@Nullable Recipient recipient) {
         if (recipient == null) {
             composeText.setHint(R.string.MediaSendActivity_message);
@@ -841,7 +890,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
     }
 
     private void presentCharactersRemaining() {
-        String          messageBody     = composeText.getTextTrimmed();
+        String          messageBody     = composeText.getTextTrimmed().toString();
         TransportOption transportOption = sendButton.getSelectedTransport();
         CharacterState characterState  = transportOption.calculateCharacters(messageBody);
 

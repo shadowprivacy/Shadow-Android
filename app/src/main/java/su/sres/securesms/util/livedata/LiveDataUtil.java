@@ -3,6 +3,7 @@ package su.sres.securesms.util.livedata;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.annimon.stream.function.Predicate;
 
@@ -10,6 +11,9 @@ import su.sres.securesms.util.concurrent.SerialMonoLifoExecutor;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.guava.Function;
 
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
 
 public final class LiveDataUtil {
@@ -75,6 +79,34 @@ public final class LiveDataUtil {
                                                       @NonNull LiveData<B> b,
                                                       @NonNull Combine<A, B, R> combine) {
         return new CombineLiveData<>(a, b, combine);
+    }
+
+    /**
+     * Merges the supplied live data streams.
+     */
+    public static <T> LiveData<T> merge(@NonNull List<LiveData<T>> liveDataList) {
+        Set<LiveData<T>> set = new LinkedHashSet<>(liveDataList);
+
+        set.addAll(liveDataList);
+
+        if (set.size() == 1) {
+            return liveDataList.get(0);
+        }
+
+        MediatorLiveData<T> mergedLiveData = new MediatorLiveData<>();
+
+        for (LiveData<T> liveDataSource : set) {
+            mergedLiveData.addSource(liveDataSource, mergedLiveData::setValue);
+        }
+
+        return mergedLiveData;
+    }
+
+    /**
+     * @return Live data with just the initial value.
+     */
+    public static <T> LiveData<T> just(@NonNull T item) {
+        return new MutableLiveData<>(item);
     }
 
     public interface Combine<A, B, R> {

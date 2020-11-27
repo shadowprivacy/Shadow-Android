@@ -48,21 +48,29 @@ message CallMessage {
         OFFER_VIDEO_CALL      = 1;
         // 2 is reserved, removed OFFER_NEED_PERMISSION
     }
-    optional uint64 id          = 1;
-    optional string description = 2;
-    optional Type   type        = 3;
+    optional uint64 id     = 1;
+    // Legacy/deprecated; replaced by 'opaque'
+    optional string sdp    = 2;
+    optional Type   type   = 3;
+    optional bytes  opaque = 4;
   }
 
   message Answer {
-    optional uint64 id          = 1;
-    optional string description = 2;
+    optional uint64 id     = 1;
+    // Legacy/deprecated; replaced by 'opaque'
+    optional string sdp    = 2;
+    optional bytes  opaque = 3;
   }
 
   message IceUpdate {
-    optional uint64 id            = 1;
-    optional string sdpMid        = 2;
-    optional uint32 sdpMLineIndex = 3;
-    optional string sdp           = 4;
+    optional uint64 id     = 1;
+    // Legacy/deprecated; remove when old clients are gone.
+    optional string mid    = 2;
+    // Legacy/deprecated; remove when old clients are gone.
+    optional uint32 line   = 3;
+    // Legacy/deprecated; replaced by 'opaque'
+    optional string sdp    = 4;
+    optional bytes  opaque = 5;
   }
 
   message Busy {
@@ -102,6 +110,15 @@ message DataMessage {
     PROFILE_KEY_UPDATE      = 4;
   }
 
+  message BodyRange {
+    optional int32 start  = 1;
+    optional int32 length = 2;
+
+    oneof associatedValue {
+      string mentionUuid = 3;
+    }
+  }
+
   message Quote {
     message QuotedAttachment {
       optional string            contentType = 1;
@@ -114,6 +131,7 @@ message DataMessage {
     optional string           authorUuid  = 5;
     optional string           text        = 3;
     repeated QuotedAttachment attachments = 4;
+    repeated BodyRange        bodyRanges  = 6;
   }
 
   message Contact {
@@ -217,7 +235,8 @@ message DataMessage {
     VIEW_ONCE_VIDEO          = 3;
     REACTIONS                = 4;
     CDN_SELECTOR_ATTACHMENTS = 5;
-    CURRENT                  = 5;
+    MENTIONS                 = 6;
+    CURRENT                  = 6;
   }
 
   optional string             body                    = 1;
@@ -236,6 +255,7 @@ message DataMessage {
   optional bool               isViewOnce              = 14;
   optional Reaction           reaction                = 16;
   optional Delete             delete                  = 17;
+  repeated BodyRange          bodyRanges              = 18;
 }
 
 message NullMessage {
@@ -434,7 +454,7 @@ message GroupContext {
   }
 
   message Member {
-    optional string uuid = 1;
+    // 1 is reserved
     optional string e164 = 2;
   }
 
@@ -478,7 +498,7 @@ message GroupDetails {
   }
 
   message Member {
-    optional string uuid = 1;
+    // 1 is reserved
     optional string e164 = 2;
   }
 

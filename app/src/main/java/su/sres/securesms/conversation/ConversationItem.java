@@ -26,6 +26,7 @@ import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.text.Annotation;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -48,6 +49,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.components.LinkPreviewView;
 import su.sres.securesms.components.Outliner;
 import su.sres.securesms.components.emoji.EmojiTextView;
+import su.sres.securesms.components.mention.MentionAnnotation;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.linkpreview.LinkPreviewUtil;
@@ -140,11 +142,12 @@ public class ConversationItem extends LinearLayout implements BindableConversati
 
   private static final Rect SWIPE_RECT = new Rect();
 
-  private MessageRecord messageRecord;
-  private Locale        locale;
-  private boolean       groupThread;
-  private LiveRecipient recipient;
-  private GlideRequests glideRequests;
+  private ConversationMessage conversationMessage;
+  private MessageRecord       messageRecord;
+  private Locale              locale;
+  private boolean             groupThread;
+  private LiveRecipient       recipient;
+  private GlideRequests       glideRequests;
 
   protected ConversationItemBodyBubble bodyBubble;
   protected View                       reply;
@@ -161,7 +164,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
   private   ViewGroup                  container;
   protected ReactionsConversationView  reactionsView;
 
-  private @NonNull  Set<MessageRecord>              batchSelected = new HashSet<>();
+  private @NonNull  Set<ConversationMessage>        batchSelected = new HashSet<>();
   private @NonNull  Outliner                        outliner      = new Outliner();
   private           LiveRecipient                   conversationRecipient;
   private           Stub<ConversationItemThumbnail> mediaThumbnailStub;
@@ -235,22 +238,23 @@ public class ConversationItem extends LinearLayout implements BindableConversati
   }
 
   @Override
-  public void bind(@NonNull MessageRecord           messageRecord,
+  public void bind(@NonNull ConversationMessage conversationMessage,
                    @NonNull Optional<MessageRecord> previousMessageRecord,
                    @NonNull Optional<MessageRecord> nextMessageRecord,
-                   @NonNull GlideRequests           glideRequests,
-                   @NonNull Locale                  locale,
-                   @NonNull Set<MessageRecord>      batchSelected,
-                   @NonNull Recipient               conversationRecipient,
-                   @Nullable String                 searchQuery,
-                            boolean                 pulseHighlight)
+                   @NonNull GlideRequests glideRequests,
+                   @NonNull Locale locale,
+                   @NonNull Set<ConversationMessage> batchSelected,
+                   @NonNull Recipient conversationRecipient,
+                   @Nullable String searchQuery,
+                   boolean pulseHighlight)
   {
     if (this.recipient != null) this.recipient.removeForeverObserver(this);
     if (this.conversationRecipient != null) this.conversationRecipient.removeForeverObserver(this);
 
     conversationRecipient = conversationRecipient.resolve();
 
-    this.messageRecord          = messageRecord;
+    this.conversationMessage    = conversationMessage;
+    this.messageRecord          = conversationMessage.getMessageRecord();
     this.locale                 = locale;
     this.glideRequests          = glideRequests;
     this.batchSelected          = batchSelected;
@@ -264,7 +268,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     setGutterSizes(messageRecord, groupThread);
     setMessageShape(messageRecord, previousMessageRecord, nextMessageRecord, groupThread);
     setMediaAttributes(messageRecord, previousMessageRecord, nextMessageRecord, conversationRecipient, groupThread);
-    setInteractionState(messageRecord, pulseHighlight);
+    setInteractionState(conversationMessage, pulseHighlight);
     setBodyText(messageRecord, searchQuery);
     setBubbleState(messageRecord);
     setStatusIcons(messageRecord);
@@ -383,8 +387,8 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     }
   }
 
-  public MessageRecord getMessageRecord() {
-    return messageRecord;
+  public ConversationMessage getConversationMessage() {
+    return conversationMessage;
   }
 
   /// MessageRecord Attribute Parsers
@@ -426,8 +430,8 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     }
   }
 
-  private void setInteractionState(MessageRecord messageRecord, boolean pulseHighlight) {
-    if (batchSelected.contains(messageRecord)) {
+  private void setInteractionState(ConversationMessage conversationMessage, boolean pulseHighlight) {
+    if (batchSelected.contains(conversationMessage)) {
       setBackgroundResource(R.drawable.conversation_item_background);
       setSelected(true);
     } else if (pulseHighlight) {
@@ -439,19 +443,19 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     }
 
     if (mediaThumbnailStub.resolved()) {
-      mediaThumbnailStub.get().setFocusable(!shouldInterceptClicks(messageRecord) && batchSelected.isEmpty());
-      mediaThumbnailStub.get().setClickable(!shouldInterceptClicks(messageRecord) && batchSelected.isEmpty());
+      mediaThumbnailStub.get().setFocusable(!shouldInterceptClicks(conversationMessage.getMessageRecord()) && batchSelected.isEmpty());
+      mediaThumbnailStub.get().setClickable(!shouldInterceptClicks(conversationMessage.getMessageRecord()) && batchSelected.isEmpty());
       mediaThumbnailStub.get().setLongClickable(batchSelected.isEmpty());
     }
 
     if (audioViewStub.resolved()) {
-      audioViewStub.get().setFocusable(!shouldInterceptClicks(messageRecord) && batchSelected.isEmpty());
+      audioViewStub.get().setFocusable(!shouldInterceptClicks(conversationMessage.getMessageRecord()) && batchSelected.isEmpty());
       audioViewStub.get().setClickable(batchSelected.isEmpty());
       audioViewStub.get().setEnabled(batchSelected.isEmpty());
     }
 
     if (documentViewStub.resolved()) {
-      documentViewStub.get().setFocusable(!shouldInterceptClicks(messageRecord) && batchSelected.isEmpty());
+      documentViewStub.get().setFocusable(!shouldInterceptClicks(conversationMessage.getMessageRecord()) && batchSelected.isEmpty());
       documentViewStub.get().setClickable(batchSelected.isEmpty());
     }
   }
@@ -552,7 +556,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     } else if (isCaptionlessMms(messageRecord)) {
       bodyText.setVisibility(View.GONE);
     } else {
-      Spannable styledText = linkifyMessageBody(messageRecord.getDisplayBody(getContext()), batchSelected.isEmpty());
+      Spannable styledText = linkifyMessageBody(conversationMessage.getDisplayBody(getContext()), batchSelected.isEmpty());
       styledText = SearchUtil.getHighlightedSpan(locale, () -> new BackgroundColorSpan(Color.YELLOW), styledText, searchQuery);
       styledText = SearchUtil.getHighlightedSpan(locale, () -> new ForegroundColorSpan(Color.BLACK), styledText, searchQuery);
 
@@ -852,7 +856,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
 
     contactPhoto.setOnClickListener(v -> {
       if (eventListener != null) {
-        eventListener.onGroupMemberAvatarClicked(recipientId, conversationRecipient.get().requireGroupId());
+        eventListener.onGroupMemberClicked(recipientId, conversationRecipient.get().requireGroupId());
       }
     });
 
@@ -876,6 +880,12 @@ public class ConversationItem extends LinearLayout implements BindableConversati
         messageBody.setSpan(new LongClickCopySpan(urlSpan.getURL()), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
       }
     }
+
+    List<Annotation> mentionAnnotations = MentionAnnotation.getMentionAnnotations(messageBody);
+    for (Annotation annotation : mentionAnnotations) {
+      messageBody.setSpan(new MentionClickableSpan(RecipientId.from(annotation.getValue())), messageBody.getSpanStart(annotation), messageBody.getSpanEnd(annotation), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+
     return messageBody;
   }
 
@@ -898,7 +908,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
       }
       Quote quote = ((MediaMmsMessageRecord)current).getQuote();
       //noinspection ConstantConditions
-      quoteView.setQuote(glideRequests, quote.getId(), Recipient.live(quote.getAuthor()).get(), quote.getText(), quote.isOriginalMissing(), quote.getAttachment());
+      quoteView.setQuote(glideRequests, quote.getId(), Recipient.live(quote.getAuthor()).get(), quote.getDisplayText(), quote.isOriginalMissing(), quote.getAttachment());
       quoteView.setVisibility(View.VISIBLE);
       quoteView.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
 
@@ -967,7 +977,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     reactionsView.setOnClickListener(v -> {
       if (eventListener == null) return;
 
-      eventListener.onReactionClicked(current.getId(), current.isMms());
+      eventListener.onReactionClicked(this, current.getId(), current.isMms());
     });
   }
 
@@ -1399,6 +1409,24 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     //    handleMessageApproval();
       }
     }
+  }
+
+  private class MentionClickableSpan extends ClickableSpan {
+    private final RecipientId mentionedRecipientId;
+
+    MentionClickableSpan(RecipientId mentionedRecipientId) {
+      this.mentionedRecipientId = mentionedRecipientId;
+    }
+
+    @Override
+    public void onClick(@NonNull View widget) {
+      if (eventListener != null && !Recipient.resolved(mentionedRecipientId).isLocalNumber()) {
+        eventListener.onGroupMemberClicked(mentionedRecipientId, conversationRecipient.get().requireGroupId());
+      }
+    }
+
+    @Override
+    public void updateDrawState(@NonNull TextPaint ds) { }
   }
 
   private void handleMessageApproval() {

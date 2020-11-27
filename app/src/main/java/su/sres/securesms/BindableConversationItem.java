@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import android.view.View;
 
 import su.sres.securesms.contactshare.Contact;
+import su.sres.securesms.conversation.ConversationMessage;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
@@ -21,17 +22,17 @@ import java.util.Locale;
 import java.util.Set;
 
 public interface BindableConversationItem extends Unbindable {
-  void bind(@NonNull MessageRecord           messageRecord,
+  void bind(@NonNull ConversationMessage messageRecord,
             @NonNull Optional<MessageRecord> previousMessageRecord,
             @NonNull Optional<MessageRecord> nextMessageRecord,
-            @NonNull GlideRequests           glideRequests,
-            @NonNull Locale                  locale,
-            @NonNull Set<MessageRecord>      batchSelected,
-            @NonNull Recipient               recipients,
-            @Nullable String                 searchQuery,
-                     boolean                 pulseHighlight);
+            @NonNull GlideRequests glideRequests,
+            @NonNull Locale locale,
+            @NonNull Set<ConversationMessage> batchSelected,
+            @NonNull Recipient recipients,
+            @Nullable String searchQuery,
+            boolean pulseHighlight);
 
-  MessageRecord getMessageRecord();
+  ConversationMessage getConversationMessage();
 
   void setEventListener(@Nullable EventListener listener);
 
@@ -45,8 +46,8 @@ public interface BindableConversationItem extends Unbindable {
     void onAddToContactsClicked(@NonNull Contact contact);
     void onMessageSharedContactClicked(@NonNull List<Recipient> choices);
     void onInviteSharedContactClicked(@NonNull List<Recipient> choices);
-    void onReactionClicked(long messageId, boolean isMms);
-    void onGroupMemberAvatarClicked(@NonNull RecipientId recipientId, @NonNull GroupId groupId);
+    void onReactionClicked(@NonNull View reactionTarget, long messageId, boolean isMms);
+    void onGroupMemberClicked(@NonNull RecipientId recipientId, @NonNull GroupId groupId);
     void onMessageWithErrorClicked(@NonNull MessageRecord messageRecord);
   }
 }

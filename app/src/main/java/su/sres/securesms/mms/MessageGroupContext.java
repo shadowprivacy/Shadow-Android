@@ -3,6 +3,8 @@ package su.sres.securesms.mms;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.annimon.stream.Stream;
+
 import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.groups.GroupMasterKey;
 
@@ -10,6 +12,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.Base64;
 import su.sres.signalservice.api.groupsv2.DecryptedGroupUtil;
+import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.push.SignalServiceProtos.GroupContext;
 import su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2;
@@ -124,20 +127,15 @@ public final class MessageGroupContext {
 
         @Override
         public @NonNull List<RecipientId> getMembersListExcludingSelf() {
-            List<GroupContext.Member> membersList = groupContext.getMembersList();
-            if (membersList.isEmpty()) {
-                return Collections.emptyList();
-            } else {
-                LinkedList<RecipientId> members = new LinkedList<>();
+            RecipientId selfId = Recipient.self().getId();
 
-                for (GroupContext.Member member : membersList) {
-                    RecipientId recipient = RecipientId.from(UuidUtil.parseOrNull(member.getUuid()), member.getE164());
-                    if (!Recipient.self().getId().equals(recipient)) {
-                        members.add(recipient);
-                    }
-                }
-                return members;
-            }
+            return Stream.of(groupContext.getMembersList())
+                    .map(GroupContext.Member::getE164)
+                    .withoutNulls()
+                    .map(e164 -> new SignalServiceAddress(null, e164))
+                    .map(RecipientId::from)
+                    .filterNot(selfId::equals)
+                    .toList();
         }
     }
 
@@ -171,6 +169,7 @@ public final class MessageGroupContext {
             memberUuids.addAll(DecryptedGroupUtil.membersToUuidList(decryptedGroupV2Context.getGroupState().getMembersList()));
             memberUuids.addAll(DecryptedGroupUtil.pendingToUuidList(decryptedGroupV2Context.getGroupState().getPendingMembersList()));
             memberUuids.addAll(DecryptedGroupUtil.removedMembersUuidList(decryptedGroupV2Context.getChange()));
+            memberUuids.addAll(DecryptedGroupUtil.removedPendingMembersUuidList(decryptedGroupV2Context.getChange()));
 
             return UuidUtil.filterKnown(memberUuids);
         }

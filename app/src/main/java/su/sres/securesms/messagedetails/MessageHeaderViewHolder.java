@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import su.sres.securesms.R;
 import su.sres.securesms.conversation.ConversationItem;
+import su.sres.securesms.conversation.ConversationMessage;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.sms.MessageSender;
@@ -62,25 +63,30 @@ final class MessageHeaderViewHolder extends RecyclerView.ViewHolder {
         receivedStub    = itemView.findViewById(R.id.message_details_header_message_view_received_multimedia);
     }
 
-    void bind(MessageRecord messageRecord, boolean running) {
-        bindMessageView(messageRecord);
+    void bind(ConversationMessage conversationMessage, boolean running) {
+        MessageRecord messageRecord = conversationMessage.getMessageRecord();
+        bindMessageView(conversationMessage);
         bindErrorState(messageRecord);
         bindSentReceivedDates(messageRecord);
         bindExpirationTime(messageRecord, running);
         bindTransport(messageRecord);
     }
 
-    void partialBind(MessageRecord messageRecord, boolean running) {
-        bindExpirationTime(messageRecord, running);
+    void partialBind(ConversationMessage conversationMessage, boolean running) {
+        bindExpirationTime(conversationMessage.getMessageRecord(), running);
     }
 
-    private void bindMessageView(MessageRecord messageRecord) {
+    private void bindMessageView(ConversationMessage conversationMessage) {
         if (conversationItem == null) {
-            if      (messageRecord.isGroupAction()) conversationItem = (ConversationItem) updateStub.inflate();
-            else if (messageRecord.isOutgoing())    conversationItem = (ConversationItem) sentStub.inflate();
-            else                                    conversationItem = (ConversationItem) receivedStub.inflate();
+            if (conversationMessage.getMessageRecord().isGroupAction()) {
+                conversationItem = (ConversationItem) updateStub.inflate();
+            } else if (conversationMessage.getMessageRecord().isOutgoing()) {
+                conversationItem = (ConversationItem) sentStub.inflate();
+            } else {
+                conversationItem = (ConversationItem) receivedStub.inflate();
+            }
         }
-        conversationItem.bind(messageRecord, Optional.absent(), Optional.absent(), glideRequests, Locale.getDefault(), new HashSet<>(), messageRecord.getRecipient(), null, false);
+        conversationItem.bind(conversationMessage, Optional.absent(), Optional.absent(), glideRequests, Locale.getDefault(), new HashSet<>(), conversationMessage.getMessageRecord().getRecipient(), null, false);
     }
 
     private void bindErrorState(MessageRecord messageRecord) {

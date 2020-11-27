@@ -31,6 +31,7 @@ import com.dd.CircularProgressButton;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.groups.ui.GroupMemberListView;
+import su.sres.securesms.groups.ui.creategroup.dialogs.NonGv2MemberDialog;
 import su.sres.securesms.mediasend.AvatarSelectionActivity;
 import su.sres.securesms.mediasend.AvatarSelectionBottomSheetDialogFragment;
 import su.sres.securesms.mediasend.Media;
@@ -43,6 +44,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.text.AfterTextChanged;
+import su.sres.securesms.util.views.LearnMoreTextView;
 
 import java.util.Arrays;
 import java.util.List;
@@ -90,6 +92,7 @@ public class AddGroupDetailsFragment extends LoggingFragment {
         GroupMemberListView members    = view.findViewById(R.id.member_list);
         ImageView           avatar     = view.findViewById(R.id.group_avatar);
         View                mmsWarning = view.findViewById(R.id.mms_warning);
+        LearnMoreTextView gv2Warning = view.findViewById(R.id.gv2_warning);
 
         avatarPlaceholder = VectorDrawableCompat.create(getResources(), R.drawable.ic_camera_outline_32_ultramarine, requireActivity().getTheme());
 
@@ -118,6 +121,12 @@ public class AddGroupDetailsFragment extends LoggingFragment {
             name.setVisibility(isMms ? View.GONE : View.VISIBLE);
             avatar.setVisibility(isMms ? View.GONE : View.VISIBLE);
             toolbar.setTitle(isMms ? R.string.AddGroupDetailsFragment__create_group : R.string.AddGroupDetailsFragment__name_this_group);
+        });
+        viewModel.getNonGv2CapableMembers().observe(getViewLifecycleOwner(), nonGv2CapableMembers -> {
+            gv2Warning.setVisibility(nonGv2CapableMembers.isEmpty() ? View.GONE : View.VISIBLE);
+            gv2Warning.setText(requireContext().getResources().getQuantityString(R.plurals.AddGroupDetailsFragment__d_members_do_not_support_new_groups, nonGv2CapableMembers.size(), nonGv2CapableMembers.size()));
+            gv2Warning.setLearnMoreVisible(true);
+            gv2Warning.setOnLinkClickListener(v -> NonGv2MemberDialog.showNonGv2Members(requireContext(), nonGv2CapableMembers));
         });
         viewModel.getAvatar().observe(getViewLifecycleOwner(), avatarBytes -> {
             if (avatarBytes == null) {

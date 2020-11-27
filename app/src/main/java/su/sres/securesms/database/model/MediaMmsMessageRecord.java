@@ -45,6 +45,7 @@ public class MediaMmsMessageRecord extends MmsMessageRecord {
   private final static String TAG = MediaMmsMessageRecord.class.getSimpleName();
 
   private final int     partCount;
+  private final boolean mentionsSelf;
 
   public MediaMmsMessageRecord(long id,
                                Recipient conversationRecipient,
@@ -65,7 +66,8 @@ public class MediaMmsMessageRecord extends MmsMessageRecord {
                                @Nullable Quote quote, @NonNull List<Contact> contacts,
                                @NonNull List<LinkPreview> linkPreviews, boolean unidentified,
                                @NonNull List<ReactionRecord> reactions,
-                               boolean remoteDelete)
+                               boolean remoteDelete,
+                               boolean mentionsSelf)
 
   {
     super(id, body, conversationRecipient, individualRecipient, recipientDeviceId, dateSent,
@@ -73,11 +75,17 @@ public class MediaMmsMessageRecord extends MmsMessageRecord {
             subscriptionId, expiresIn, expireStarted, viewOnce, slideDeck,
             readReceiptCount, quote, contacts, linkPreviews, unidentified, reactions, remoteDelete);
 
-    this.partCount = partCount;
+    this.partCount    = partCount;
+    this.mentionsSelf = mentionsSelf;
   }
 
   public int getPartCount() {
     return partCount;
+  }
+
+  @Override
+  public boolean hasSelfMention() {
+    return mentionsSelf;
   }
 
   @Override
