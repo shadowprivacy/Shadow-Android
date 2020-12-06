@@ -6,7 +6,6 @@ import android.graphics.Rect;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.widget.TextViewCompat;
 
 import android.text.Editable;
@@ -21,7 +20,6 @@ import android.widget.LinearLayout;
 
 import su.sres.securesms.R;
 import su.sres.securesms.util.ServiceUtil;
-import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.views.DarkOverflowToolbar;
 
 public final class ContactFilterToolbar extends DarkOverflowToolbar {
@@ -29,8 +27,6 @@ public final class ContactFilterToolbar extends DarkOverflowToolbar {
 
   private final EditText        searchText;
   private final AnimatingToggle toggle;
-  private final ImageView       keyboardToggle;
-  private final ImageView       dialpadToggle;
   private final ImageView       clearToggle;
   private final LinearLayout    toggleContainer;
 
@@ -48,36 +44,18 @@ public final class ContactFilterToolbar extends DarkOverflowToolbar {
 
     this.searchText      = findViewById(R.id.search_view);
     this.toggle          = findViewById(R.id.button_toggle);
-    this.keyboardToggle  = findViewById(R.id.search_keyboard);
-    this.dialpadToggle   = findViewById(R.id.search_dialpad);
     this.clearToggle     = findViewById(R.id.search_clear);
     this.toggleContainer = findViewById(R.id.toggle_container);
 
-    this.keyboardToggle.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        searchText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PERSON_NAME);
-        ServiceUtil.getInputMethodManager(getContext()).showSoftInput(searchText, 0);
-        displayTogglingView(dialpadToggle);
-      }
-    });
+    this.toggle.displayQuick(null);
 
-    this.dialpadToggle.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        searchText.setInputType(InputType.TYPE_CLASS_PHONE);
-        ServiceUtil.getInputMethodManager(getContext()).showSoftInput(searchText, 0);
-        displayTogglingView(keyboardToggle);
-      }
-    });
+    searchText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PERSON_NAME);
+    ServiceUtil.getInputMethodManager(getContext()).showSoftInput(searchText, 0);
 
     this.clearToggle.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
         searchText.setText("");
-
-        if (SearchUtil.isTextInput(searchText)) displayTogglingView(dialpadToggle);
-        else displayTogglingView(keyboardToggle);
       }
     });
 
@@ -95,15 +73,13 @@ public final class ContactFilterToolbar extends DarkOverflowToolbar {
       @Override
       public void afterTextChanged(Editable s) {
         if (!SearchUtil.isEmpty(searchText)) displayTogglingView(clearToggle);
-        else if (SearchUtil.isTextInput(searchText)) displayTogglingView(dialpadToggle);
-        else if (SearchUtil.isPhoneInput(searchText)) displayTogglingView(keyboardToggle);
+        else displayTogglingView(null);
         notifyListener();
       }
     });
 
     setLogo(null);
     setContentInsetStartWithNavigation(0);
-    expandTapArea(toggleContainer, dialpadToggle);
     applyAttributes(searchText, context, attrs, defStyleAttr);
     searchText.requestFocus();
   }
@@ -121,10 +97,6 @@ public final class ContactFilterToolbar extends DarkOverflowToolbar {
     int styleResource = attributes.getResourceId(R.styleable.ContactFilterToolbar_searchTextStyle, -1);
     if (styleResource != -1) {
       TextViewCompat.setTextAppearance(searchText, styleResource);
-    }
-
-    if (!attributes.getBoolean(R.styleable.ContactFilterToolbar_showDialpad, true)) {
-      dialpadToggle.setVisibility(GONE);
     }
 
     attributes.recycle();
@@ -149,7 +121,7 @@ public final class ContactFilterToolbar extends DarkOverflowToolbar {
 
   private void displayTogglingView(View view) {
     toggle.display(view);
-    expandTapArea(toggleContainer, view);
+    if (view != null) expandTapArea(toggleContainer, view);
   }
 
   private void expandTapArea(final View container, final View child) {

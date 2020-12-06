@@ -5,7 +5,6 @@ import android.app.ActivityManager;
 import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.job.JobScheduler;
-import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.hardware.display.DisplayManager;
