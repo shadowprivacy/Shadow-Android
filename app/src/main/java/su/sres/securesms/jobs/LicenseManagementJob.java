@@ -294,7 +294,10 @@ public class LicenseManagementJob extends BaseJob {
         String assignee = license.getFeatures().get("Assignee").getString().replaceAll(" ", "%20");
         String id = psid.replaceAll("/", "%2f");
 
-        OkHttpClient client  = new OkHttpClient();
+        OkHttpClient client  = new OkHttpClient.Builder()
+                                .connectTimeout(1, TimeUnit.MINUTES)
+                                .readTimeout(1, TimeUnit.MINUTES)
+                                .build();
         Request request = new Request.Builder().url(String.format("%s/license/android/allocate/%s/%s/%s",
                                                                   BuildConfig.LICENSE_URL,
                                                                   license.getLicenseId().toString(),
@@ -337,7 +340,10 @@ public class LicenseManagementJob extends BaseJob {
 
         String id = psid.replaceAll("/", "%2f");
 
-        OkHttpClient client  = new OkHttpClient();
+        OkHttpClient client  = new OkHttpClient.Builder()
+                .connectTimeout(1, TimeUnit.MINUTES)
+                .readTimeout(1, TimeUnit.MINUTES)
+                .build();
         Request request = new Request.Builder().url(String.format("%s/trial/android/request/%s",
                 BuildConfig.LICENSE_URL,
                 id))
