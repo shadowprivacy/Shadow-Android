@@ -1659,8 +1659,8 @@ public class ConversationActivity extends PassphraseRequiredActivity
             reminderView.get().showReminder(new UnauthorizedReminder(this));
         } else if(LicenseInvalidReminder.isEligible()) {
             reminderView.get().showReminder(new LicenseInvalidReminder(this));
-        } else if (ExpiredBuildReminder.isEligible()) {
-            reminderView.get().showReminder(new ExpiredBuildReminder(this));
+//        } else if (ExpiredBuildReminder.isEligible()) {
+//            reminderView.get().showReminder(new ExpiredBuildReminder(this));
         } else if (ServiceOutageReminder.isEligible(this)) {
             ApplicationDependencies.getJobManager().add(new ServiceOutageDetectionJob());
             reminderView.get().showReminder(new ServiceOutageReminder(this));

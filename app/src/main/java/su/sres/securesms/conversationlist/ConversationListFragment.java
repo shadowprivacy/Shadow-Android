@@ -546,13 +546,13 @@ public class ConversationListFragment extends MainFragment implements ActionMode
                 return Optional.of(new UnauthorizedReminder(context));
             } else if (LicenseInvalidReminder.isEligible()) {
                 return Optional.of(new LicenseInvalidReminder(context));
-            } else if (ExpiredBuildReminder.isEligible()) {
-                return Optional.of(new ExpiredBuildReminder(context));
+//            } else if (ExpiredBuildReminder.isEligible()) {
+//                return Optional.of(new ExpiredBuildReminder(context));
             } else if (ServiceOutageReminder.isEligible(context)) {
                 ApplicationDependencies.getJobManager().add(new ServiceOutageDetectionJob());
                 return Optional.of(new ServiceOutageReminder(context));
-            } else if (OutdatedBuildReminder.isEligible()) {
-                return Optional.of(new OutdatedBuildReminder(context));
+//            } else if (OutdatedBuildReminder.isEligible()) {
+//                return Optional.of(new OutdatedBuildReminder(context));
 //            } else if (DefaultSmsReminder.isEligible(context)) {
 //                return Optional.of(new DefaultSmsReminder(context));
             } else if (Util.isDefaultSmsProvider(context) && SystemSmsImportReminder.isEligible(context)) {
