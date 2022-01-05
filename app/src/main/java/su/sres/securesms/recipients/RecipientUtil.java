@@ -202,6 +202,20 @@ public class RecipientUtil {
     }
 
     /**
+     * Like {@link #isMessageRequestAccepted(Context, long)} but with fewer checks around messages so it
+     * is more likely to return false.
+     */
+    @WorkerThread
+    public static boolean isCallRequestAccepted(@NonNull Context context, @Nullable Recipient threadRecipient) {
+        if (threadRecipient == null) {
+            return true;
+        }
+
+        long threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(threadRecipient);
+        return isCallRequestAccepted(context, threadId, threadRecipient);
+    }
+
+    /**
      * @return True if a conversation existed before we enabled message requests, otherwise false.
      */
     @WorkerThread
@@ -243,6 +257,14 @@ public class RecipientUtil {
                 !threadRecipient.isRegistered()                       ||
                 hasSentMessageInThread(context, threadId)             ||
                 noSecureMessagesAndNoCallsInThread(context, threadId) ||
+                isPreMessageRequestThread(context, threadId);
+    }
+
+    @WorkerThread
+    private static boolean isCallRequestAccepted(@NonNull Context context, long threadId, @NonNull Recipient threadRecipient) {
+        return threadRecipient.isProfileSharing()            ||
+                threadRecipient.isSystemContact()             ||
+                hasSentMessageInThread(context, threadId)     ||
                 isPreMessageRequestThread(context, threadId);
     }
 

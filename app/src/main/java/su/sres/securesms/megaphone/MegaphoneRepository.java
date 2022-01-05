@@ -51,6 +51,7 @@ public class MegaphoneRepository {
         executor.execute(() -> {
             database.markFinished(Event.REACTIONS);
             database.markFinished(Event.MESSAGE_REQUESTS);
+            database.markFinished(Event.MENTIONS);
             resetDatabaseCache();
         });
     }
@@ -101,6 +102,10 @@ public class MegaphoneRepository {
     @AnyThread
     public void markFinished(@NonNull Event event) {
         executor.execute(() -> {
+            MegaphoneRecord record = databaseCache.get(event);
+            if (record != null && record.isFinished()) {
+                return;
+            }
             database.markFinished(event);
             resetDatabaseCache();
         });

@@ -9,7 +9,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import android.text.TextUtils;
-import android.util.Pair;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
@@ -33,9 +32,9 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupReceiptDatabase;
 import su.sres.securesms.database.GroupReceiptDatabase.GroupReceiptInfo;
-import su.sres.securesms.database.MessagingDatabase;
-import su.sres.securesms.database.MessagingDatabase.InsertResult;
-import su.sres.securesms.database.MessagingDatabase.SyncMessageId;
+import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.MessageDatabase.InsertResult;
+import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.RecipientDatabase;
@@ -58,6 +57,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.linkpreview.Link;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.linkpreview.LinkPreviewUtil;
@@ -93,6 +93,7 @@ import su.sres.securesms.util.RemoteDeleteUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import org.whispersystems.libsignal.state.SessionStore;
+import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.signalservice.api.groupsv2.InvalidGroupStateException;
@@ -503,7 +504,7 @@ public final class PushProcessMessageJob extends BaseJob {
     Log.i(TAG, "handleCallOfferMessage...");
 
     if (smsMessageId.isPresent()) {
-      SmsDatabase database = DatabaseFactory.getSmsDatabase(context);
+      MessageDatabase database = DatabaseFactory.getSmsDatabase(context);
       database.markAsMissedCall(smsMessageId.get());
     } else {
         Intent     intent     = new Intent(context, WebRtcCallService.class);
@@ -609,7 +610,7 @@ public final class PushProcessMessageJob extends BaseJob {
   private void handleEndSessionMessage(@NonNull SignalServiceContent content,
                                        @NonNull Optional<Long>       smsMessageId)
   {
-    SmsDatabase         smsDatabase         = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase     smsDatabase         = DatabaseFactory.getSmsDatabase(context);
     IncomingTextMessage incomingTextMessage = new IncomingTextMessage(Recipient.externalHighTrustPush(context, content.getSender()).getId(),
             content.getSenderDevice(),
             content.getTimestamp(),
@@ -642,7 +643,7 @@ public final class PushProcessMessageJob extends BaseJob {
   private long handleSynchronizeSentEndSessionMessage(@NonNull SentTranscriptMessage message)
           throws BadGroupIdException
   {
-    SmsDatabase               database                  = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase           database                  = DatabaseFactory.getSmsDatabase(context);
     Recipient                 recipient                 = getSyncMessageDestination(message);
     OutgoingTextMessage       outgoingTextMessage       = new OutgoingTextMessage(recipient, "", -1);
     OutgoingEndSessionMessage outgoingEndSessionMessage = new OutgoingEndSessionMessage(outgoingTextMessage);
@@ -756,8 +757,8 @@ public final class PushProcessMessageJob extends BaseJob {
     MessageRecord targetMessage = DatabaseFactory.getMmsSmsDatabase(context).getMessageFor(reaction.getTargetSentTimestamp(), targetAuthor.getId());
 
     if (targetMessage != null && !targetMessage.isRemoteDelete()) {
-      Recipient         reactionAuthor = Recipient.externalHighTrustPush(context, content.getSender());
-      MessagingDatabase db             = targetMessage.isMms() ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
+      Recipient       reactionAuthor = Recipient.externalHighTrustPush(context, content.getSender());
+      MessageDatabase db             = targetMessage.isMms() ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
 
       if (reaction.isRemove()) {
         db.deleteReaction(targetMessage.getId(), reactionAuthor.getId());
@@ -784,7 +785,7 @@ public final class PushProcessMessageJob extends BaseJob {
     MessageRecord targetMessage = DatabaseFactory.getMmsSmsDatabase(context).getMessageFor(delete.getTargetSentTimestamp(), sender.getId());
 
     if (targetMessage != null && RemoteDeleteUtil.isValidReceive(targetMessage, sender, content.getServerReceivedTimestamp())) {
-      MessagingDatabase db = targetMessage.isMms() ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
+      MessageDatabase db = targetMessage.isMms() ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
       db.markAsRemoteDelete(targetMessage.getId());
       ApplicationDependencies.getMessageNotifier().updateNotification(context, targetMessage.getThreadId(), false);
     } else if (targetMessage == null) {
@@ -836,7 +837,7 @@ public final class PushProcessMessageJob extends BaseJob {
     }
 
     if (configurationMessage.getLinkPreviews().isPresent()) {
-      TextSecurePreferences.setLinkPreviewsEnabled(context, configurationMessage.getReadReceipts().get());
+      SignalStore.settings().setLinkPreviewsEnabled(configurationMessage.getReadReceipts().get());
     }
   }
 
@@ -974,7 +975,7 @@ public final class PushProcessMessageJob extends BaseJob {
       ApplicationDependencies.getJobManager().add(new MultiDeviceConfigurationUpdateJob(TextSecurePreferences.isReadReceiptsEnabled(context),
               TextSecurePreferences.isTypingIndicatorsEnabled(context),
               TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(context),
-              TextSecurePreferences.isLinkPreviewsEnabled(context)));
+              SignalStore.settings().isLinkPreviewsEnabled()));
       ApplicationDependencies.getJobManager().add(new MultiDeviceStickerPackSyncJob());
     }
 
@@ -992,13 +993,13 @@ public final class PushProcessMessageJob extends BaseJob {
       for (Pair<Long, Long> expiringMessage : expiringText) {
         ApplicationContext.getInstance(context)
                           .getExpiringMessageManager()
-                          .scheduleDeletion(expiringMessage.first, false, envelopeTimestamp, expiringMessage.second);
+                .scheduleDeletion(expiringMessage.first(), false, envelopeTimestamp, expiringMessage.second());
       }
 
       for (Pair<Long, Long> expiringMessage : expiringMedia) {
         ApplicationContext.getInstance(context)
                           .getExpiringMessageManager()
-                          .scheduleDeletion(expiringMessage.first, true, envelopeTimestamp, expiringMessage.second);
+                .scheduleDeletion(expiringMessage.first(), true, envelopeTimestamp, expiringMessage.second());
       }
     }
 
@@ -1249,9 +1250,9 @@ public final class PushProcessMessageJob extends BaseJob {
                                  @NonNull Optional<GroupId> groupId)
           throws StorageFailedException, BadGroupIdException
   {
-    SmsDatabase database  = DatabaseFactory.getSmsDatabase(context);
-    String      body      = message.getBody().isPresent() ? message.getBody().get() : "";
-    Recipient   recipient = getMessageDestination(content, message);
+    MessageDatabase database  = DatabaseFactory.getSmsDatabase(context);
+    String          body      = message.getBody().isPresent() ? message.getBody().get() : "";
+    Recipient       recipient = getMessageDestination(content, message);
 
     if (message.getExpiresInSeconds() != recipient.getExpireMessages()) {
       handleExpirationUpdate(content, message, Optional.absent(), groupId);
@@ -1260,7 +1261,7 @@ public final class PushProcessMessageJob extends BaseJob {
     Long threadId;
 
     if (smsMessageId.isPresent() && !message.getGroupContext().isPresent()) {
-      threadId = database.updateBundleMessageBody(smsMessageId.get(), body).second;
+      threadId = database.updateBundleMessageBody(smsMessageId.get(), body).second();
     } else {
       notifyTypingStoppedFromIncomingMessage(recipient, content.getSender(), content.getSenderDevice());
 
@@ -1302,7 +1303,7 @@ public final class PushProcessMessageJob extends BaseJob {
     long    threadId  = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient);
     boolean isGroup   = recipient.isGroup();
 
-    MessagingDatabase database;
+    MessageDatabase database;
     long              messageId;
 
     if (isGroup) {
@@ -1354,7 +1355,7 @@ public final class PushProcessMessageJob extends BaseJob {
   private void handleInvalidVersionMessage(@NonNull String sender, int senderDevice, long timestamp,
                                            @NonNull Optional<Long> smsMessageId)
   {
-    SmsDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
 
     if (!smsMessageId.isPresent()) {
       Optional<InsertResult> insertResult = insertPlaceholder(sender, senderDevice, timestamp);
@@ -1371,7 +1372,7 @@ public final class PushProcessMessageJob extends BaseJob {
   private void handleCorruptMessage(@NonNull String sender, int senderDevice, long timestamp,
                                     @NonNull Optional<Long> smsMessageId)
   {
-    SmsDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
 
     if (!smsMessageId.isPresent()) {
       Optional<InsertResult> insertResult = insertPlaceholder(sender, senderDevice, timestamp);
@@ -1388,7 +1389,7 @@ public final class PushProcessMessageJob extends BaseJob {
   private void handleNoSessionMessage(@NonNull String sender, int senderDevice, long timestamp,
                                       @NonNull Optional<Long> smsMessageId)
   {
-    SmsDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
 
     if (!smsMessageId.isPresent()) {
       Optional<InsertResult> insertResult = insertPlaceholder(sender, senderDevice, timestamp);
@@ -1408,7 +1409,7 @@ public final class PushProcessMessageJob extends BaseJob {
                                             long timestamp,
                                             @NonNull Optional<Long> smsMessageId)
   {
-    SmsDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
 
     if (!smsMessageId.isPresent()) {
       Optional<InsertResult> insertResult = insertPlaceholder(sender, senderDevice, timestamp, groupId);
@@ -1428,7 +1429,7 @@ public final class PushProcessMessageJob extends BaseJob {
                                     long timestamp,
                                     @NonNull Optional<Long> smsMessageId)
   {
-    SmsDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
 
     if (!smsMessageId.isPresent()) {
       Optional<InsertResult> insertResult = insertPlaceholder(sender.getIdentifier(), senderDevice, timestamp, groupId);
@@ -1445,7 +1446,7 @@ public final class PushProcessMessageJob extends BaseJob {
   private void handleLegacyMessage(@NonNull String sender, int senderDevice, long timestamp,
                                    @NonNull Optional<Long> smsMessageId)
   {
-    SmsDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
 
     if (!smsMessageId.isPresent()) {
       Optional<InsertResult> insertResult = insertPlaceholder(sender, senderDevice, timestamp);
@@ -1702,8 +1703,8 @@ public final class PushProcessMessageJob extends BaseJob {
       Optional<String>     url           = Optional.fromNullable(preview.getUrl());
       Optional<String>     title         = Optional.fromNullable(preview.getTitle());
       boolean              hasContent    = !TextUtils.isEmpty(title.or("")) || thumbnail.isPresent();
-      boolean              presentInBody = url.isPresent() && Stream.of(LinkPreviewUtil.findWhitelistedUrls(message)).map(Link::getUrl).collect(Collectors.toSet()).contains(url.get());
-      boolean              validDomain   = url.isPresent() && LinkPreviewUtil.isWhitelistedLinkUrl(url.get());
+      boolean              presentInBody = url.isPresent() && Stream.of(LinkPreviewUtil.findValidPreviewUrls(message)).map(Link::getUrl).collect(Collectors.toSet()).contains(url.get());
+      boolean              validDomain   = url.isPresent() && LinkPreviewUtil.isValidPreviewUrl(url.get());
 
       if (hasContent && presentInBody && validDomain) {
         LinkPreview linkPreview = new LinkPreview(url.get(), title.or(""), thumbnail);
@@ -1741,7 +1742,7 @@ public final class PushProcessMessageJob extends BaseJob {
   }
 
   private Optional<InsertResult> insertPlaceholder(@NonNull String sender, int senderDevice, long timestamp, Optional<GroupId> groupId) {
-    SmsDatabase         database    = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase     database    = DatabaseFactory.getSmsDatabase(context);
     IncomingTextMessage textMessage = new IncomingTextMessage(Recipient.external(context, sender).getId(),
             senderDevice, timestamp, -1, "",
             groupId, 0, false);

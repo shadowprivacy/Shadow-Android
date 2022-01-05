@@ -259,7 +259,7 @@
         <item name="conversation_title_color">@color/white</item>
         <item name="conversation_subtitle_color">@color/transparent_white_90</item>
         <item name="conversation_mention_background_color">@color/core_grey_20</item>
-        <item name="conversation_mention_divider_color">@color/core_grey_05</item>
+        <item name="mention_picker_background_color">@color/core_white</item>
 
         <item name="safety_number_change_dialog_button_background">@color/core_grey_05</item>
         <item name="safety_number_change_dialog_button_text_color">@color/core_ultramarine</item>
@@ -327,6 +327,7 @@
         <item name="conversation_item_image_outline_color">@color/transparent_black_20</item>
         <item name="conversation_item_reveal_viewed_background_color">?conversation_background</item>
         <item name="conversation_item_delete_for_everyone_text_color">@color/core_grey_90</item>
+        <item name="conversation_item_mention_pulse_color">@color/transparent_black</item>
         <item name="conversation_scroll_to_bottom_background">@drawable/scroll_to_bottom_background_light</item>
         <item name="conversation_scroll_to_bottom_foreground_color">@color/grey_600</item>
 
@@ -379,6 +380,8 @@
         <item name="menu_multi_select_icon">@drawable/ic_select_24</item>
         <item name="menu_archive_icon">@drawable/ic_archive_white_24dp</item>
         <item name="menu_edit_icon">@drawable/ic_compose_outline_tinted_24</item>
+        <item name="menu_pin_icon">@drawable/ic_pin_outline_24</item>
+        <item name="menu_unpin_icon">@drawable/ic_unpin_outline_24</item>
 
         <item name="message_icon">@drawable/ic_message_outline_tinted_bitmap_24</item>
         <item name="notifications_icon">@drawable/ic_bell_outline_24</item>
@@ -555,6 +558,7 @@
         <item name="conversation_item_image_outline_color">@color/transparent_white_20</item>
         <item name="conversation_item_reveal_viewed_background_color">?conversation_background</item>
         <item name="conversation_item_delete_for_everyone_text_color">@color/core_grey_15</item>
+        <item name="conversation_item_mention_pulse_color">@color/transparent</item>
 
         <item name="safety_number_change_dialog_button_background">@color/core_grey_75</item>
         <item name="safety_number_change_dialog_button_text_color">@color/core_grey_05</item>
@@ -612,10 +616,11 @@
         <item name="conversation_popup_theme">@style/ThemeOverlay.AppCompat.Dark</item>
         <item name="conversation_title_color">@color/transparent_white_90</item>
         <item name="conversation_subtitle_color">@color/transparent_white_80</item>
-        <item name="conversation_mention_background_color">@color/core_grey_75</item>
-        <item name="conversation_mention_divider_color">@color/core_grey_25</item>
+        <item name="conversation_mention_background_color">@color/core_grey_60</item>
         <item name="conversation_scroll_to_bottom_background">@drawable/scroll_to_bottom_background_dark</item>
         <item name="conversation_scroll_to_bottom_foreground_color">@color/core_white</item>
+
+        <item name="mention_picker_background_color">@color/core_grey_90</item>
 
         <item name="reactions_overlay_toolbar_icon_tint">@color/core_white</item>
         <item name="reactions_overlay_toolbar_overflow_style">@style/Signal.Toolbar.Overflow</item>
@@ -686,6 +691,8 @@
         <item name="menu_multi_select_icon">@drawable/ic_select_24</item>
         <item name="menu_archive_icon">@drawable/ic_archive_white_24dp</item>
         <item name="menu_edit_icon">@drawable/ic_compose_solid_tinted_24</item>
+        <item name="menu_pin_icon">@drawable/ic_pin_solid_24</item>
+        <item name="menu_unpin_icon">@drawable/ic_unpin_solid_24</item>
 
         <item name="message_icon">@drawable/ic_message_solid_tinted_bitmap_24</item>
         <item name="notifications_icon">@drawable/ic_bell_solid_24</item>

@@ -1,9 +1,12 @@
 package su.sres.securesms;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 
+import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
 
@@ -18,6 +21,14 @@ public class MainActivity extends PassphraseRequiredActivity {
         setContentView(R.layout.main_activity);
 
         navigator.onCreate(savedInstanceState);
+
+        handleGroupLinkInIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleGroupLinkInIntent(intent);
     }
 
     @Override
@@ -41,5 +52,12 @@ public class MainActivity extends PassphraseRequiredActivity {
 
     public @NonNull MainNavigator getNavigator() {
         return navigator;
+    }
+
+    private void handleGroupLinkInIntent(Intent intent) {
+        Uri data = intent.getData();
+        if (data != null) {
+            CommunicationActions.handlePotentialGroupLinkUrl(this, data.toString());
+        }
     }
 }

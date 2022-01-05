@@ -11,6 +11,7 @@ import com.annimon.stream.Stream;
 import su.sres.securesms.R;
 import su.sres.securesms.conversationlist.ConversationListFragment;
 import su.sres.securesms.database.model.MegaphoneRecord;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.messagerequests.MessageRequestMegaphoneActivity;
 import su.sres.securesms.profiles.ProfileName;
@@ -18,6 +19,7 @@ import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.FeatureFlags;
+import su.sres.securesms.util.TextSecurePreferences;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -42,16 +44,15 @@ public final class Megaphones {
 
     private static final String TAG = Log.tag(Megaphones.class);
 
-    private static final MegaphoneSchedule ALWAYS         = new ForeverSchedule(true);
-    private static final MegaphoneSchedule NEVER          = new ForeverSchedule(false);
-    static final MegaphoneSchedule EVERY_TWO_DAYS = new RecurringSchedule(TimeUnit.DAYS.toMillis(2));
+    private static final MegaphoneSchedule ALWAYS = new ForeverSchedule(true);
+    private static final MegaphoneSchedule NEVER  = new ForeverSchedule(false);
 
     private Megaphones() {}
 
     static @Nullable Megaphone getNextMegaphone(@NonNull Context context, @NonNull Map<Event, MegaphoneRecord> records) {
         long currentTime = System.currentTimeMillis();
 
-        List<Megaphone> megaphones = Stream.of(buildDisplayOrder())
+        List<Megaphone> megaphones = Stream.of(buildDisplayOrder(context))
                 .filter(e -> {
                     MegaphoneRecord   record = Objects.requireNonNull(records.get(e.getKey()));
                     MegaphoneSchedule schedule = e.getValue();
@@ -81,10 +82,12 @@ public final class Megaphones {
      * This is when you would hide certain megaphones based on {@link FeatureFlags}. You could
      * conditionally set a {@link ForeverSchedule} set to false for disabled features.
      */
-    private static Map<Event, MegaphoneSchedule> buildDisplayOrder() {
+    private static Map<Event, MegaphoneSchedule> buildDisplayOrder(@NonNull Context context) {
         return new LinkedHashMap<Event, MegaphoneSchedule>() {{
             put(Event.REACTIONS, ALWAYS);
             put(Event.MESSAGE_REQUESTS, shouldShowMessageRequestsMegaphone() ? ALWAYS : NEVER);
+            put(Event.MENTIONS, shouldShowMentionsMegaphone() ? ALWAYS : NEVER);
+            put(Event.LINK_PREVIEWS, shouldShowLinkPreviewsMegaphone(context) ? ALWAYS : NEVER);
         }};
     }
 
@@ -94,6 +97,10 @@ public final class Megaphones {
                 return buildReactionsMegaphone();
             case MESSAGE_REQUESTS:
                 return buildMessageRequestsMegaphone(context);
+            case MENTIONS:
+                return buildMentionsMegaphone();
+            case LINK_PREVIEWS:
+                return buildLinkPreviewsMegaphone();
             default:
                 throw new IllegalArgumentException("Event not handled!");
         }
@@ -105,6 +112,7 @@ public final class Megaphones {
                 .build();
     }
 
+    @SuppressWarnings("CodeBlock2Expr")
     private static @NonNull Megaphone buildMessageRequestsMegaphone(@NonNull Context context) {
         return new Megaphone.Builder(Event.MESSAGE_REQUESTS, Megaphone.Style.FULLSCREEN)
                 .disableSnooze()
@@ -116,13 +124,37 @@ public final class Megaphones {
                 .build();
     }
 
+    private static Megaphone buildMentionsMegaphone() {
+        return new Megaphone.Builder(Event.MENTIONS, Megaphone.Style.POPUP)
+                .setTitle(R.string.MentionsMegaphone__introducing_mentions)
+                .setBody(R.string.MentionsMegaphone__get_someones_attention_in_a_group_by_typing)
+                .setImage(R.drawable.mention_megaphone)
+                .build();
+    }
+
+    private static @NonNull Megaphone buildLinkPreviewsMegaphone() {
+        return new Megaphone.Builder(Event.LINK_PREVIEWS, Megaphone.Style.LINK_PREVIEWS)
+                .setMandatory(true)
+                .build();
+    }
+
     private static boolean shouldShowMessageRequestsMegaphone() {
         return Recipient.self().getProfileName() == ProfileName.EMPTY;
     }
 
+    private static boolean shouldShowMentionsMegaphone() {
+        return FeatureFlags.mentions();
+    }
+
+    private static boolean shouldShowLinkPreviewsMegaphone(@NonNull Context context) {
+        return TextSecurePreferences.wereLinkPreviewsEnabled(context) && !SignalStore.settings().isLinkPreviewsEnabled();
+    }
+
     public enum Event {
         REACTIONS("reactions"),
-        MESSAGE_REQUESTS("message_requests");
+        MESSAGE_REQUESTS("message_requests"),
+        MENTIONS("mentions"),
+        LINK_PREVIEWS("link_previews");
 
         private final String key;
 

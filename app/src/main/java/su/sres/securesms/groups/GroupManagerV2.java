@@ -9,14 +9,17 @@ import androidx.annotation.WorkerThread;
 import com.annimon.stream.Stream;
 import com.google.protobuf.InvalidProtocolBufferException;
 
+import su.sres.securesms.groups.v2.GroupLinkPassword;
 import su.sres.securesms.jobs.PushGroupSilentUpdateSendJob;
 import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.signalservice.api.groupsv2.GroupLinkNotActiveException;
 import su.sres.signalservice.api.groupsv2.NotAbleToApplyGroupV2ChangeException;
 import su.sres.storageservice.protos.groups.AccessControl;
 import su.sres.storageservice.protos.groups.GroupChange;
 import su.sres.storageservice.protos.groups.Member;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
+import su.sres.storageservice.protos.groups.local.DecryptedGroupJoinInfo;
 import su.sres.storageservice.protos.groups.local.DecryptedMember;
 
 import org.signal.zkgroup.InvalidInputException;
@@ -85,6 +88,15 @@ final class GroupManagerV2 {
         this.groupsV2StateProcessor = ApplicationDependencies.getGroupsV2StateProcessor();
         this.selfUuid               = Recipient.self().getUuid().get();
         this.groupCandidateHelper   = new GroupCandidateHelper(context);
+    }
+
+    @NonNull
+    DecryptedGroupJoinInfo getGroupJoinInfoFromServer(@NonNull GroupMasterKey groupMasterKey, @NonNull GroupLinkPassword password)
+            throws IOException, VerificationFailedException, GroupLinkNotActiveException
+    {
+        GroupSecretParams groupSecretParams = GroupSecretParams.deriveFromMasterKey(groupMasterKey);
+
+        return groupsV2Api.getGroupJoinInfo(groupSecretParams, password.serialize(), authorization.getAuthorizationForToday(Recipient.self().requireUuid(), groupSecretParams));
     }
 
     @WorkerThread

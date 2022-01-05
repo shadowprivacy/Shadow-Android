@@ -393,12 +393,13 @@ public class TextSecurePreferences {
     setBooleanPreference(context, TYPING_INDICATORS, enabled);
   }
 
-  public static boolean isLinkPreviewsEnabled(Context context) {
+  /**
+   * Only kept so that we can avoid showing the megaphone for the new link previews setting
+   * ({@link SettingsValues#isLinkPreviewsEnabled()}) when users upgrade. This can be removed after
+   * we stop showing the link previews megaphone.
+   */
+  public static boolean wereLinkPreviewsEnabled(Context context) {
     return getBooleanPreference(context, LINK_PREVIEWS, true);
-  }
-
-  public static void setLinkPreviewsEnabled(Context context, boolean enabled) {
-    setBooleanPreference(context, LINK_PREVIEWS, enabled);
   }
 
   public static boolean isGifSearchInGridLayout(Context context) {

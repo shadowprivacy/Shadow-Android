@@ -30,7 +30,7 @@ public interface BindableConversationItem extends Unbindable {
             @NonNull Set<ConversationMessage> batchSelected,
             @NonNull Recipient recipients,
             @Nullable String searchQuery,
-            boolean pulseHighlight);
+            boolean pulseMention);
 
   ConversationMessage getConversationMessage();
 
@@ -49,5 +49,8 @@ public interface BindableConversationItem extends Unbindable {
     void onReactionClicked(@NonNull View reactionTarget, long messageId, boolean isMms);
     void onGroupMemberClicked(@NonNull RecipientId recipientId, @NonNull GroupId groupId);
     void onMessageWithErrorClicked(@NonNull MessageRecord messageRecord);
+
+    /** @return true if handled, false if you want to let the normal url handling continue */
+    boolean onUrlClicked(@NonNull String url);
   }
 }

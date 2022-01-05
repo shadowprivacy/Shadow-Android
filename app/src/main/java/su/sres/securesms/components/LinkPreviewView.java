@@ -6,6 +6,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +16,7 @@ import android.widget.TextView;
 
 import su.sres.securesms.R;
 import su.sres.securesms.linkpreview.LinkPreview;
+import su.sres.securesms.linkpreview.LinkPreviewRepository;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.mms.ImageSlide;
 import su.sres.securesms.mms.SlidesClickedListener;
@@ -21,6 +24,9 @@ import su.sres.securesms.util.ThemeUtil;
 
 import okhttp3.HttpUrl;
 
+/**
+ * The view shown in the compose box that represents the state of the link preview.
+ */
 public class LinkPreviewView extends FrameLayout {
 
     private static final int TYPE_CONVERSATION = 0;
@@ -33,6 +39,7 @@ public class LinkPreviewView extends FrameLayout {
     private View                  divider;
     private View                  closeButton;
     private View                  spinner;
+    private TextView              noPreview;
 
     private int                  type;
     private int                  defaultRadius;
@@ -60,6 +67,7 @@ public class LinkPreviewView extends FrameLayout {
         divider       = findViewById(R.id.linkpreview_divider);
         spinner       = findViewById(R.id.linkpreview_progress_wheel);
         closeButton   = findViewById(R.id.linkpreview_close);
+        noPreview     = findViewById(R.id.linkpreview_no_preview);
         defaultRadius = getResources().getDimensionPixelSize(R.dimen.thumbnail_default_radius);
         cornerMask    = new CornerMask(this);
         outliner      = new Outliner();
@@ -102,6 +110,16 @@ public class LinkPreviewView extends FrameLayout {
         site.setVisibility(GONE);
         thumbnail.setVisibility(GONE);
         spinner.setVisibility(VISIBLE);
+        noPreview.setVisibility(INVISIBLE);
+    }
+
+    public void setNoPreview(@Nullable LinkPreviewRepository.Error customError) {
+        title.setVisibility(GONE);
+        site.setVisibility(GONE);
+        thumbnail.setVisibility(GONE);
+        spinner.setVisibility(GONE);
+        noPreview.setVisibility(VISIBLE);
+        noPreview.setText(getLinkPreviewErrorString(customError));
     }
 
     public void setLinkPreview(@NonNull GlideRequests glideRequests, @NonNull LinkPreview linkPreview, boolean showThumbnail) {
@@ -109,6 +127,7 @@ public class LinkPreviewView extends FrameLayout {
         site.setVisibility(VISIBLE);
         thumbnail.setVisibility(VISIBLE);
         spinner.setVisibility(GONE);
+        noPreview.setVisibility(GONE);
 
         title.setText(linkPreview.getTitle());
 
@@ -131,6 +150,12 @@ public class LinkPreviewView extends FrameLayout {
         outliner.setRadii(topLeft, topRight, 0, 0);
         thumbnail.setCorners(topLeft, defaultRadius, defaultRadius, defaultRadius);
         postInvalidate();
+    }
+
+    private  @StringRes
+    static int getLinkPreviewErrorString(@Nullable LinkPreviewRepository.Error customError) {
+        return customError == LinkPreviewRepository.Error.GROUP_LINK_INACTIVE ? R.string.LinkPreviewView_this_group_link_is_not_active
+                : R.string.LinkPreviewView_no_link_preview_available;
     }
 
     public void setCloseClickedListener(@Nullable CloseClickedListener closeClickedListener) {

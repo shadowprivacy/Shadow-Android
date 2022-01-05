@@ -9,7 +9,7 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MessagingDatabase;
+import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
@@ -68,7 +68,7 @@ public class ReactionSendJob extends BaseJob {
             throws NoSuchMessageException
     {
         MessageRecord message = isMms ? DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId)
-                : DatabaseFactory.getSmsDatabase(context).getMessageRecord(messageId);
+                : DatabaseFactory.getSmsDatabase(context).getSmsMessage(messageId);
 
         Recipient conversationRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(message.getThreadId());
 
@@ -133,7 +133,7 @@ public class ReactionSendJob extends BaseJob {
 
     @Override
     protected void onRun() throws Exception {
-        MessagingDatabase db;
+        MessageDatabase db;
         MessageRecord     message;
 
         if (isMms) {
@@ -141,7 +141,7 @@ public class ReactionSendJob extends BaseJob {
             message = DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId);
         } else {
             db      = DatabaseFactory.getSmsDatabase(context);
-            message = DatabaseFactory.getSmsDatabase(context).getMessageRecord(messageId);
+            message = DatabaseFactory.getSmsDatabase(context).getSmsMessage(messageId);
         }
 
         Recipient targetAuthor        = message.isOutgoing() ? Recipient.self() : message.getIndividualRecipient();
@@ -193,7 +193,7 @@ public class ReactionSendJob extends BaseJob {
 
         Log.w(TAG, "Failed to send the reaction to all recipients!");
 
-        MessagingDatabase db = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
+        MessageDatabase db = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
 
         if (remove && !db.hasReaction(messageId, reaction)) {
             Log.w(TAG, "Reaction removal failed, so adding the reaction back.");

@@ -7,20 +7,17 @@ import androidx.annotation.Nullable;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import okhttp3.Dns;
-import su.sres.securesms.BuildConfig;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.net.CustomDns;
 import su.sres.securesms.net.SequentialDns;
-import su.sres.securesms.net.UserAgentInterceptor;
+import su.sres.securesms.net.StandardUserAgentInterceptor;
 // import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.internal.configuration.SignalCdnUrl;
 import su.sres.signalservice.internal.configuration.SignalServiceConfiguration;
 import su.sres.signalservice.internal.configuration.SignalServiceUrl;
 import su.sres.signalservice.internal.configuration.SignalStorageUrl;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +34,7 @@ public class SignalServiceNetworkAccess {
 
     private SignalServiceConfiguration Configuration;
 
-    final List<Interceptor> interceptors = Collections.singletonList(new UserAgentInterceptor());
+    final List<Interceptor> interceptors = Collections.singletonList(new StandardUserAgentInterceptor());
     final Optional<Dns>     dns          = Optional.of(DNS);
 
     public SignalServiceNetworkAccess(Context context) {

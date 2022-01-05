@@ -10,7 +10,7 @@ import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MessagingDatabase.SyncMessageId;
+import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;

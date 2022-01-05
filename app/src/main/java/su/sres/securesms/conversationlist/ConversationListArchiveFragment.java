@@ -34,6 +34,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
 
+import java.util.Set;
+
 import su.sres.securesms.R;
 import su.sres.securesms.components.registration.PulsingFloatingActionButton;
 import su.sres.securesms.database.DatabaseFactory;
@@ -107,13 +109,15 @@ public class ConversationListArchiveFragment extends ConversationListFragment im
     }
 
     @Override
-    protected void archiveThread(long threadId) {
-        DatabaseFactory.getThreadDatabase(getActivity()).unarchiveConversation(threadId);
+    @WorkerThread
+    protected void archiveThreads(Set<Long> threadIds) {
+        DatabaseFactory.getThreadDatabase(getActivity()).setArchived(threadIds, true);
     }
 
+    @Override
     @WorkerThread
-    protected void reverseArchiveThread(long threadId) {
-        DatabaseFactory.getThreadDatabase(getActivity()).archiveConversation(threadId);
+    protected void reverseArchiveThreads(Set<Long> threadIds) {
+        DatabaseFactory.getThreadDatabase(getActivity()).setArchived(threadIds, false);
     }
 
     @SuppressLint("StaticFieldLeak")

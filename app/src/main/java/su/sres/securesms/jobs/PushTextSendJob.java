@@ -2,7 +2,8 @@ package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.MessagingDatabase.SyncMessageId;
+import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
 
 import su.sres.securesms.ApplicationContext;
@@ -70,8 +71,8 @@ public class PushTextSendJob extends PushSendJob  {
   @Override
   public void onPushSend() throws NoSuchMessageException, RetryLaterException {
     ExpiringMessageManager expirationManager = ApplicationContext.getInstance(context).getExpiringMessageManager();
-    SmsDatabase            database          = DatabaseFactory.getSmsDatabase(context);
-    SmsMessageRecord       record            = database.getMessageRecord(messageId);
+    MessageDatabase database          = DatabaseFactory.getSmsDatabase(context);
+    SmsMessageRecord       record            = database.getSmsMessage(messageId);
 
     if (!record.isPending() && !record.isFailed()) {
       warn(TAG, "Message " + messageId + " was already sent. Ignoring.");

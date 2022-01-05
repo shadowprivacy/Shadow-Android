@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MessagingDatabase.SyncMessageId;
+import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.PushDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;

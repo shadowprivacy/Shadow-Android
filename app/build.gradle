@@ -18,7 +18,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.1'
+        classpath 'com.android.tools.build:gradle:4.2.2'
         classpath 'androidx.navigation:navigation-safe-args-gradle-plugin:2.1.0'
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.10'
     }
@@ -296,7 +296,7 @@ dependencies {
 
     implementation project(':libsignal-service')
     implementation 'org.signal:zkgroup-android:0.7.0'
-    implementation 'org.signal:ringrtc-android:2.4.1'
+    implementation 'org.signal:ringrtc-android:2.5.0'
     implementation 'org.signal:argon2:13.1@aar'
     implementation 'org.apache.commons:commons-csv:1.8'
     implementation "me.leolin:ShortcutBadger:1.1.16"
@@ -354,11 +354,11 @@ dependencies {
 
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.assertj:assertj-core:3.11.1'
-    testImplementation 'org.mockito:mockito-core:1.9.5'
-    testImplementation 'org.powermock:powermock-api-mockito:1.6.5'
-    testImplementation 'org.powermock:powermock-module-junit4:1.6.5'
-    testImplementation 'org.powermock:powermock-module-junit4-rule:1.6.5'
-    testImplementation 'org.powermock:powermock-classloading-xstream:1.6.5'
+    testImplementation 'org.mockito:mockito-core:2.8.9'
+    testImplementation 'org.powermock:powermock-api-mockito2:1.7.4'
+    testImplementation 'org.powermock:powermock-module-junit4:1.7.4'
+    testImplementation 'org.powermock:powermock-module-junit4-rule:1.7.4'
+    testImplementation 'org.powermock:powermock-classloading-xstream:1.7.4'
 
     testImplementation 'androidx.test:core:1.2.0'
     testImplementation ('org.robolectric:robolectric:4.2') {
@@ -452,4 +452,14 @@ def getLastCommitTimestamp() {
 
             return os.toString() + "000"
         }
+}
+
+tasks.withType(Test) {
+    testLogging {
+        events "failed"
+        exceptionFormat "full"
+        showCauses true
+        showExceptions true
+        showStackTraces true
+    }
 }

@@ -13,9 +13,9 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MessagingDatabase.ExpirationInfo;
-import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;
-import su.sres.securesms.database.MessagingDatabase.SyncMessageId;
+import su.sres.securesms.database.MessageDatabase.ExpirationInfo;
+import su.sres.securesms.database.MessageDatabase.MarkedMessageInfo;
+import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceReadUpdateJob;
 import su.sres.securesms.jobs.SendReadReceiptJob;

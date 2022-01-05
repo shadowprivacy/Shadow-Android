@@ -18,10 +18,7 @@ import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.SwitchPreferenceCompat;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.keyvalue.NotificationSettings;
-import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.notifications.NotificationChannels;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import static android.app.Activity.RESULT_OK;
@@ -130,17 +127,11 @@ public class NotificationsPreferenceFragment extends ListSummaryPreferenceFragme
     initializeMessageVibrateSummary((SwitchPreferenceCompat)findPreference(TextSecurePreferences.VIBRATE_PREF));
     initializeCallVibrateSummary((SwitchPreferenceCompat)findPreference(TextSecurePreferences.CALL_VIBRATE_PREF));
 
-    if (FeatureFlags.mentions()) {
-      initializeMentionsNotifyMeSummary((SwitchPreferenceCompat)findPreference(NotificationSettings.MENTIONS_NOTIFY_ME));
-    }
   }
 
   @Override
   public void onCreatePreferences(@Nullable Bundle savedInstanceState, String rootKey) {
     addPreferencesFromResource(R.xml.preferences_notifications);
-    if (FeatureFlags.mentions()) {
-      addPreferencesFromResource(R.xml.preferences_notifications_mentions);
-    }
   }
 
   @Override
@@ -217,11 +208,6 @@ public class NotificationsPreferenceFragment extends ListSummaryPreferenceFragme
 
   private void initializeCallVibrateSummary(SwitchPreferenceCompat pref) {
     pref.setChecked(TextSecurePreferences.isCallNotificationVibrateEnabled(getContext()));
-  }
-
-  private void initializeMentionsNotifyMeSummary(SwitchPreferenceCompat pref) {
-    pref.setPreferenceDataStore(SignalStore.getPreferenceDataStore());
-    pref.setChecked(SignalStore.notificationSettings().isMentionNotifiesMeEnabled());
   }
 
   public static CharSequence getSummary(Context context) {

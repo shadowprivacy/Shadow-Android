@@ -159,6 +159,10 @@ public class Util {
     return collection == null || collection.isEmpty();
   }
 
+  public static boolean isEmpty(@Nullable String value) {
+    return value == null || value.length() == 0;
+  }
+
   public static boolean hasItems(@Nullable Collection<?> collection) {
     return collection != null && !collection.isEmpty();
   }
@@ -169,7 +173,7 @@ public class Util {
 
   public static String getFirstNonEmpty(String... values) {
     for (String value : values) {
-      if (!TextUtils.isEmpty(value)) {
+      if (!Util.isEmpty(value)) {
         return value;
       }
     }
@@ -333,6 +337,10 @@ public class Util {
   public static Optional<String> getSimCountryIso(Context context) {
     String simCountryIso = ((TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE)).getSimCountryIso();
     return Optional.fromNullable(simCountryIso != null ? simCountryIso.toUpperCase() : null);
+  }
+
+  public static @NonNull <T> T firstNonNull(@Nullable T optional, @NonNull T fallback) {
+    return optional != null ? optional : fallback;
   }
 
   @SafeVarargs

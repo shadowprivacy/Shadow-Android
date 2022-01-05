@@ -31,6 +31,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.service.notification.StatusBarNotification;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -44,17 +45,15 @@ import su.sres.securesms.contactshare.ContactUtil;
 import su.sres.securesms.conversation.ConversationActivity;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MentionUtil;
-import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;
+import su.sres.securesms.database.MessageDatabase.MarkedMessageInfo;
 import su.sres.securesms.database.MmsSmsColumns;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.ThreadBodyUtil;
-import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.mms.SlideDeck;
@@ -244,24 +243,32 @@ public class DefaultMessageNotifier implements MessageNotifier {
                                    long threadId,
                                    boolean signal)
     {
-        boolean isVisible = visibleThread == threadId;
+        boolean   isVisible = visibleThread == threadId;
+        Recipient recipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
 
-        ThreadDatabase threads = DatabaseFactory.getThreadDatabase(context);
-
-        if (isVisible) {
-            List<MarkedMessageInfo> messageIds = threads.setRead(threadId, false);
-            MarkReadReceiver.process(context, messageIds);
+        if (shouldNotify(context, recipient, threadId)) {
+            if (isVisible) {
+                sendInThreadNotification(context, recipient);
+            } else {
+                updateNotification(context, threadId, signal, 0);
+            }
         }
+    }
+
+    private boolean shouldNotify(@NonNull Context context, @Nullable Recipient recipient, long threadId) {
 
         if (!TextSecurePreferences.isNotificationsEnabled(context)) {
-            return;
+            return false;
         }
 
-        if (isVisible) {
-            sendInThreadNotification(context, threads.getRecipientForThreadId(threadId));
-        } else {
-            updateNotification(context, threadId, signal, 0);
+        if (recipient == null || !recipient.isMuted()) {
+            return true;
         }
+
+        return FeatureFlags.mentions()                                                         &&
+                recipient.isPushV2Group()                                                       &&
+                recipient.getMentionSetting() == RecipientDatabase.MentionSetting.ALWAYS_NOTIFY &&
+                DatabaseFactory.getMmsDatabase(context).getUnreadMentionCount(threadId) > 0;
     }
 
     @Override
@@ -528,12 +535,9 @@ public class DefaultMessageNotifier implements MessageNotifier {
 
                 boolean includeMessage = true;
                 if (threadRecipients != null && threadRecipients.isMuted()) {
-                    RecipientDatabase.MentionSetting mentionSetting = threadRecipients.getMentionSetting();
+                    boolean mentionsOverrideMute = threadRecipients.getMentionSetting() == RecipientDatabase.MentionSetting.ALWAYS_NOTIFY;
 
-                    boolean overrideMuted = (mentionSetting == RecipientDatabase.MentionSetting.GLOBAL && SignalStore.notificationSettings().isMentionNotifiesMeEnabled()) ||
-                            mentionSetting == RecipientDatabase.MentionSetting.ALWAYS_NOTIFY;
-
-                    includeMessage = FeatureFlags.mentions() && overrideMuted && record.hasSelfMention();
+                    includeMessage = FeatureFlags.mentions() && mentionsOverrideMute && record.hasSelfMention();
                 }
 
                 if (threadRecipients == null || includeMessage) {

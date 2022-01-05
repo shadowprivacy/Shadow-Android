@@ -30,6 +30,7 @@ public class ConversationItemThumbnail extends FrameLayout {
   private CornerMask             cornerMask;
 
   private Outliner               outliner;
+  private Outliner               pulseOutliner;
   private boolean                borderless;
 
   public ConversationItemThumbnail(Context context) {
@@ -82,6 +83,14 @@ public class ConversationItemThumbnail extends FrameLayout {
         outliner.draw(canvas);
       }
     }
+
+    if (pulseOutliner != null) {
+      pulseOutliner.draw(canvas);
+    }
+  }
+
+  public void setPulseOutliner(@NonNull Outliner outliner) {
+    this.pulseOutliner = outliner;
   }
 
   @Override

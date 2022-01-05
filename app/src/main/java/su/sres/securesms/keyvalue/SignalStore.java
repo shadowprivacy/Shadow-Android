@@ -24,7 +24,7 @@ public final class SignalStore {
     private final MiscellaneousValues        misc;
     private final InternalValues       internalValues;
     private final EmojiValues          emojiValues;
-    private final NotificationSettings notificationSettings;
+    private final SettingsValues       settingsValues;
 
     private SignalStore() {
         this.store                = ApplicationDependencies.getKeyValueStore();
@@ -38,7 +38,7 @@ public final class SignalStore {
         this.misc                 = new MiscellaneousValues(store);
         this.internalValues       = new InternalValues(store);
         this.emojiValues          = new EmojiValues(store);
-        this.notificationSettings = new NotificationSettings(store);
+        this.settingsValues       = new SettingsValues(store);
     }
 
     public static void onFirstEverAppLaunch() {
@@ -51,7 +51,7 @@ public final class SignalStore {
         tooltips().onFirstEverAppLaunch();
         misc().onFirstEverAppLaunch();
         internalValues().onFirstEverAppLaunch();
-        notificationSettings().onFirstEverAppLaunch();
+        settings().onFirstEverAppLaunch();
     }
 
     public static @NonNull KbsValues kbsValues() {
@@ -94,8 +94,8 @@ public final class SignalStore {
         return INSTANCE.emojiValues;
     }
 
-    public static @NonNull NotificationSettings notificationSettings() {
-        return INSTANCE.notificationSettings;
+    public static @NonNull SettingsValues settings() {
+        return INSTANCE.settingsValues;
     }
 
     public static @NonNull GroupsV2AuthorizationSignalStoreCache groupsV2AuthorizationCache() {

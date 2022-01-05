@@ -1,5 +1,6 @@
 package su.sres.securesms.longmessage;
 
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
@@ -25,6 +26,7 @@ import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.components.ConversationItemFooter;
+import su.sres.securesms.components.emoji.EmojiTextView;
 import su.sres.securesms.linkpreview.LinkPreviewUtil;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
@@ -35,6 +37,8 @@ import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.views.Stub;
+
+import static su.sres.securesms.util.ThemeUtil.isDarkTheme;
 
 public class LongMessageActivity extends PassphraseRequiredActivity {
 
@@ -144,7 +148,7 @@ public class LongMessageActivity extends PassphraseRequiredActivity {
                 bubble.getBackground().setColorFilter(message.get().getMessageRecord().getRecipient().getColor().toConversationColor(this), PorterDuff.Mode.MULTIPLY);
             }
 
-            TextView               text   = bubble.findViewById(R.id.longmessage_text);
+            EmojiTextView text   = bubble.findViewById(R.id.longmessage_text);
             ConversationItemFooter footer = bubble.findViewById(R.id.longmessage_footer);
 
             CharSequence    trimmedBody = getTrimmedBody(message.get().getFullBody(this));
@@ -154,6 +158,11 @@ public class LongMessageActivity extends PassphraseRequiredActivity {
             text.setText(styledBody);
             text.setMovementMethod(LinkMovementMethod.getInstance());
             text.setTextSize(TypedValue.COMPLEX_UNIT_SP, TextSecurePreferences.getMessageBodyTextSize(this));
+            if (message.get().getMessageRecord().isOutgoing()) {
+                text.setMentionBackgroundTint(ContextCompat.getColor(this, isDarkTheme(this) ? R.color.core_grey_60 : R.color.core_grey_20));
+            } else {
+                text.setMentionBackgroundTint(ContextCompat.getColor(this, R.color.transparent_black_40));
+            }
             footer.setMessageRecord(message.get().getMessageRecord(), dynamicLanguage.getCurrentLocale());
         });
     }

@@ -1,5 +1,6 @@
 package su.sres.securesms.linkpreview;
 
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -41,6 +42,10 @@ public class LinkPreviewViewModel extends ViewModel {
         return linkPreviewState.getValue() != null && linkPreviewState.getValue().getLinkPreview().isPresent();
     }
 
+    public boolean hasLinkPreviewUi() {
+        return linkPreviewState.getValue() != null && linkPreviewState.getValue().hasContent();
+    }
+
     public @NonNull List<LinkPreview> getActiveLinkPreviews() {
         final LinkPreviewState state = linkPreviewState.getValue();
 
@@ -61,7 +66,7 @@ public class LinkPreviewViewModel extends ViewModel {
                 return;
             }
 
-            List<Link>     links = LinkPreviewUtil.findWhitelistedUrls(text);
+            List<Link>     links = LinkPreviewUtil.findValidPreviewUrls(text);
             Optional<Link> link  = links.isEmpty() ? Optional.absent() : Optional.of(links.get(0));
 
             if (link.isPresent() && link.get().getUrl().equals(activeUrl)) {
@@ -75,20 +80,36 @@ public class LinkPreviewViewModel extends ViewModel {
 
             if (!link.isPresent() || !isCursorPositionValid(text, link.get(), cursorStart, cursorEnd)) {
                 activeUrl = null;
-                linkPreviewState.setValue(LinkPreviewState.forEmpty());
+                linkPreviewState.setValue(LinkPreviewState.forNoLinks());
                 return;
             }
 
             linkPreviewState.setValue(LinkPreviewState.forLoading());
 
             activeUrl     = link.get().getUrl();
-            activeRequest = repository.getLinkPreview(context, link.get().getUrl(), lp -> {
-                Util.runOnMain(() -> {
-                    if (!userCanceled) {
-                        linkPreviewState.setValue(LinkPreviewState.forPreview(lp));
+            activeRequest = repository.getLinkPreview(context, link.get().getUrl(), new LinkPreviewRepository.Callback() {
+                @Override
+                public void onSuccess(@NonNull LinkPreview linkPreview) {
+                    Util.runOnMain(() -> {
+                        if (!userCanceled) {
+                            if (activeUrl != null && activeUrl.equals(linkPreview.getUrl())) {
+                                linkPreviewState.setValue(LinkPreviewState.forPreview(linkPreview));
+                            } else {
+                                linkPreviewState.setValue(LinkPreviewState.forNoLinks());
+                            }
+                            }
+                        activeRequest = null;
+                    });
                     }
-                    activeRequest = null;
-                });
+                @Override
+                public void onError(@NonNull LinkPreviewRepository.Error error) {
+                    Util.runOnMain(() -> {
+                        if (!userCanceled) {
+                            linkPreviewState.setValue(LinkPreviewState.forLinksWithNoPreview(error));
+                        }
+                        activeRequest = null;
+                    });
+                }
             });
         });
     }
@@ -104,7 +125,20 @@ public class LinkPreviewViewModel extends ViewModel {
         activeUrl    = null;
 
         debouncer.clear();
-        linkPreviewState.setValue(LinkPreviewState.forEmpty());
+        linkPreviewState.setValue(LinkPreviewState.forNoLinks());
+    }
+
+    public void onSend() {
+        if (activeRequest != null) {
+            activeRequest.cancel();
+            activeRequest = null;
+        }
+
+        userCanceled = false;
+        activeUrl    = null;
+
+        debouncer.clear();
+        linkPreviewState.setValue(LinkPreviewState.forNoLinks());
     }
 
     public void onEnabled() {
@@ -133,32 +167,56 @@ public class LinkPreviewViewModel extends ViewModel {
     }
 
     public static class LinkPreviewState {
-        private final boolean               isLoading;
-        private final Optional<LinkPreview> linkPreview;
+        private final boolean                     isLoading;
+        private final boolean                     hasLinks;
+        private final Optional<LinkPreview>       linkPreview;
+        private final LinkPreviewRepository.Error error;
 
-        private LinkPreviewState(boolean isLoading, Optional<LinkPreview> linkPreview) {
+        private LinkPreviewState(boolean isLoading,
+                                 boolean hasLinks,
+                                 Optional<LinkPreview> linkPreview,
+                                 @Nullable LinkPreviewRepository.Error error)
+        {
             this.isLoading   = isLoading;
+            this.hasLinks    = hasLinks;
             this.linkPreview = linkPreview;
+            this.error       = error;
         }
 
         private static LinkPreviewState forLoading() {
-            return new LinkPreviewState(true, Optional.absent());
+            return new LinkPreviewState(true, false, Optional.absent(), null);
         }
 
-        private static LinkPreviewState forPreview(@NonNull Optional<LinkPreview> linkPreview) {
-            return new LinkPreviewState(false, linkPreview);
+        private static LinkPreviewState forPreview(@NonNull LinkPreview linkPreview) {
+            return new LinkPreviewState(false, true, Optional.of(linkPreview), null);
         }
 
-        private static LinkPreviewState forEmpty() {
-            return new LinkPreviewState(false, Optional.absent());
+        private static LinkPreviewState forLinksWithNoPreview(@NonNull LinkPreviewRepository.Error error) {
+            return new LinkPreviewState(false, true, Optional.absent(), error);
+        }
+
+        private static LinkPreviewState forNoLinks() {
+            return new LinkPreviewState(false, false, Optional.absent(), null);
         }
 
         public boolean isLoading() {
             return isLoading;
         }
 
+        public boolean hasLinks() {
+            return hasLinks;
+        }
+
         public Optional<LinkPreview> getLinkPreview() {
             return linkPreview;
+        }
+
+        public @Nullable LinkPreviewRepository.Error getError() {
+            return error;
+        }
+
+        boolean hasContent() {
+            return isLoading || hasLinks;
         }
     }
 

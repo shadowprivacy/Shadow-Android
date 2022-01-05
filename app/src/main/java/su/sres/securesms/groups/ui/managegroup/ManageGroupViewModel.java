@@ -260,7 +260,7 @@ public class ManageGroupViewModel extends ViewModel {
     }
 
     void handleMentionNotificationSelection() {
-        manageGroupRepository.getRecipient(r -> GroupMentionSettingDialog.show(context, r.getMentionSetting(), mentionSetting -> manageGroupRepository.setMentionSetting(mentionSetting)));
+        manageGroupRepository.getRecipient(r -> GroupMentionSettingDialog.show(context, r.getMentionSetting(), manageGroupRepository::setMentionSetting));
     }
 
     private void onBlockAndLeaveConfirmed() {

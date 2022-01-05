@@ -16,15 +16,11 @@
  */
 package su.sres.securesms.conversation;
 
-import android.content.Context;
-import android.database.Cursor;
-
 import androidx.annotation.AnyThread;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 import androidx.paging.PagedList;
 import androidx.paging.PagedListAdapter;
 import androidx.recyclerview.widget.DiffUtil;
@@ -43,7 +39,6 @@ import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.CachedInflater;
-import su.sres.securesms.util.Conversions;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.Util;
@@ -101,7 +96,7 @@ public class ConversationAdapter
   private final MessageDigest             digest;
 
   private String              searchQuery;
-  private ConversationMessage recordToPulseHighlight;
+  private ConversationMessage recordToPulse;
   private View                headerView;
   private View                footerView;
 
@@ -232,10 +227,10 @@ public class ConversationAdapter
                 selected,
                 recipient,
                 searchQuery,
-                conversationMessage == recordToPulseHighlight);
+                conversationMessage == recordToPulse);
 
-        if (conversationMessage == recordToPulseHighlight) {
-          recordToPulseHighlight = null;
+        if (conversationMessage == recordToPulse) {
+          recordToPulse = null;
         }
         break;
       case MESSAGE_TYPE_HEADER:
@@ -388,13 +383,13 @@ public class ConversationAdapter
   }
 
   /**
-   * Momentarily highlights a row at the requested position.
+   * Momentarily highlights a mention at the requested position.
    */
-  void pulseHighlightItem(int position) {
+  void pulseAtPosition(int position) {
     if (position >= 0 && position < getItemCount()) {
       int correctedPosition = isHeaderPosition(position) ? position + 1 : position;
 
-      recordToPulseHighlight = getItem(correctedPosition);
+      recordToPulse = getItem(correctedPosition);
       notifyItemChanged(correctedPosition);
     }
   }

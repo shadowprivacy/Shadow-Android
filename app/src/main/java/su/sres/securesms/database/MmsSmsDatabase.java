@@ -25,7 +25,7 @@ import androidx.annotation.Nullable;
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteQueryBuilder;
 
-import su.sres.securesms.database.MessagingDatabase.SyncMessageId;
+import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.recipients.Recipient;
@@ -116,10 +116,10 @@ public class MmsSmsDatabase extends Database {
     }
 
     private @NonNull Pair<RecipientId, Long> getGroupAddedBy(long threadId, long lastQuitChecked) {
-        MmsDatabase mmsDatabase = DatabaseFactory.getMmsDatabase(context);
-        SmsDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
-        long        latestQuit  = mmsDatabase.getLatestGroupQuitTimestamp(threadId, lastQuitChecked);
-        RecipientId id          = smsDatabase.getOldestGroupUpdateSender(threadId, latestQuit);
+        MmsDatabase     mmsDatabase = DatabaseFactory.getMmsDatabase(context);
+        MessageDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
+        long            latestQuit  = mmsDatabase.getLatestGroupQuitTimestamp(threadId, lastQuitChecked);
+        RecipientId     id          = smsDatabase.getOldestGroupUpdateSender(threadId, latestQuit);
 
         return new Pair<>(id, latestQuit);
     }
@@ -183,7 +183,7 @@ public class MmsSmsDatabase extends Database {
 
     public Cursor getConversationSnippet(long threadId) {
         String order = MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " DESC";
-        String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
+        String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND (" + SmsDatabase.TYPE + " IS NULL OR " + SmsDatabase.TYPE + " != " + SmsDatabase.Types.PROFILE_CHANGE_TYPE + ")";
 
         return queryTables(PROJECTION, selection, order, "1");
     }
@@ -208,14 +208,11 @@ public class MmsSmsDatabase extends Database {
     }
 
     public boolean checkMessageExists(@NonNull MessageRecord messageRecord) {
-        if (messageRecord.isMms()) {
-            try (Cursor mms = DatabaseFactory.getMmsDatabase(context).getMessage(messageRecord.getId())) {
-                return mms != null && mms.getCount() > 0;
-            }
-        } else {
-            try (Cursor sms = DatabaseFactory.getSmsDatabase(context).getMessageCursor(messageRecord.getId())) {
-                return sms != null && sms.getCount() > 0;
-            }
+        MessageDatabase db = messageRecord.isMms() ? DatabaseFactory.getMmsDatabase(context)
+                : DatabaseFactory.getSmsDatabase(context);
+
+        try (Cursor cursor = db.getMessageCursor(messageRecord.getId())) {
+            return cursor != null && cursor.getCount() > 0;
         }
     }
 
@@ -253,6 +250,13 @@ public class MmsSmsDatabase extends Database {
                 DatabaseFactory.getMmsDatabase(context).getMessageCountForThread(threadId, beforeTime);
     }
 
+    public int getConversationCountForThreadSummary(long threadId) {
+        int count = DatabaseFactory.getSmsDatabase(context).getMessageCountForThreadSummary(threadId);
+        count    += DatabaseFactory.getMmsDatabase(context).getMessageCountForThreadSummary(threadId);
+
+        return count;
+    }
+
     public int getInsecureSentCount(long threadId) {
         int count = DatabaseFactory.getSmsDatabase(context).getInsecureMessagesSentForThread(threadId);
         count += DatabaseFactory.getMmsDatabase(context).getInsecureMessagesSentForThread(threadId);
@@ -282,14 +286,14 @@ public class MmsSmsDatabase extends Database {
     }
 
     public void incrementDeliveryReceiptCount(SyncMessageId syncMessageId, long timestamp) {
-        DatabaseFactory.getSmsDatabase(context).incrementReceiptCount(syncMessageId, true);
+        DatabaseFactory.getSmsDatabase(context).incrementSmsReceiptCount(syncMessageId, true);
         DatabaseFactory.getMmsDatabase(context).incrementReceiptCount(syncMessageId, timestamp, true);
     }
 
     public boolean incrementReadReceiptCount(SyncMessageId syncMessageId, long timestamp) {
         boolean handled  = false;
 
-        handled |= DatabaseFactory.getSmsDatabase(context).incrementReceiptCount(syncMessageId, false);
+        handled |= DatabaseFactory.getSmsDatabase(context).incrementSmsReceiptCount(syncMessageId, false);
         handled |= DatabaseFactory.getMmsDatabase(context).incrementReceiptCount(syncMessageId, timestamp, false);
 
         return handled;
@@ -569,7 +573,7 @@ public class MmsSmsDatabase extends Database {
 
         private SmsDatabase.Reader getSmsReader() {
             if (smsReader == null) {
-                smsReader = DatabaseFactory.getSmsDatabase(context).readerFor(cursor);
+                smsReader = SmsDatabase.readerFor(cursor);
             }
 
             return smsReader;

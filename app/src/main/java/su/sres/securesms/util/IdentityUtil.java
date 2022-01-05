@@ -13,7 +13,8 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
-import su.sres.securesms.database.MessagingDatabase.InsertResult;
+import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.MessageDatabase.InsertResult;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
@@ -65,9 +66,9 @@ public class IdentityUtil {
 
   public static void markIdentityVerified(Context context, Recipient recipient, boolean verified, boolean remote)
   {
-    long          time          = System.currentTimeMillis();
-    SmsDatabase   smsDatabase   = DatabaseFactory.getSmsDatabase(context);
-    GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
+    long            time          = System.currentTimeMillis();
+    MessageDatabase smsDatabase   = DatabaseFactory.getSmsDatabase(context);
+    GroupDatabase   groupDatabase = DatabaseFactory.getGroupDatabase(context);
 
     try (GroupDatabase.Reader reader = groupDatabase.getGroups()) {
 
@@ -119,9 +120,9 @@ public class IdentityUtil {
   }
 
   public static void markIdentityUpdate(@NonNull Context context, @NonNull RecipientId recipientId) {
-    long                 time          = System.currentTimeMillis();
-    SmsDatabase          smsDatabase   = DatabaseFactory.getSmsDatabase(context);
-    GroupDatabase        groupDatabase = DatabaseFactory.getGroupDatabase(context);
+    long            time          = System.currentTimeMillis();
+    MessageDatabase smsDatabase   = DatabaseFactory.getSmsDatabase(context);
+    GroupDatabase   groupDatabase = DatabaseFactory.getGroupDatabase(context);
 
     try (GroupDatabase.Reader reader = groupDatabase.getGroups()) {
       GroupDatabase.GroupRecord groupRecord;

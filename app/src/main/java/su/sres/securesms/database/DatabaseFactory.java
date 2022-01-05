@@ -77,7 +77,7 @@ public class DatabaseFactory {
         return getInstance(context).thread;
     }
 
-    public static SmsDatabase getSmsDatabase(Context context) {
+    public static MessageDatabase getSmsDatabase(Context context) {
         return getInstance(context).sms;
     }
 

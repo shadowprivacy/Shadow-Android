@@ -15,6 +15,8 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.LiveGroup;
 import su.sres.securesms.groups.ui.GroupMemberEntry.FullMember;
+import su.sres.securesms.megaphone.MegaphoneRepository;
+import su.sres.securesms.megaphone.Megaphones;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.MappingModel;
 import su.sres.securesms.util.SingleLiveEvent;
@@ -29,11 +31,16 @@ public class MentionsPickerViewModel extends ViewModel {
     private final LiveData<List<MappingModel<?>>> mentionList;
     private final MutableLiveData<LiveGroup>      group;
     private final MutableLiveData<Query>          liveQuery;
+    private final MutableLiveData<Boolean>        isShowing;
+    private final MegaphoneRepository             megaphoneRepository;
 
-    MentionsPickerViewModel(@NonNull MentionsPickerRepository mentionsPickerRepository) {
+    MentionsPickerViewModel(@NonNull MentionsPickerRepository mentionsPickerRepository, @NonNull MegaphoneRepository megaphoneRepository) {
+        this.megaphoneRepository = megaphoneRepository;
+
         group             = new MutableLiveData<>();
         liveQuery         = new MutableLiveData<>(Query.NONE);
         selectedRecipient = new SingleLiveEvent<>();
+        isShowing         = new MutableLiveData<>(false);
 
         LiveData<List<FullMember>> fullMembers  = Transformations.distinctUntilChanged(Transformations.switchMap(group, LiveGroup::getFullMembers));
         LiveData<Query>            query        = Transformations.distinctUntilChanged(liveQuery);
@@ -48,10 +55,22 @@ public class MentionsPickerViewModel extends ViewModel {
 
     void onSelectionChange(@NonNull Recipient recipient) {
         selectedRecipient.setValue(recipient);
+        megaphoneRepository.markFinished(Megaphones.Event.MENTIONS);
+    }
+
+    void setIsShowing(boolean isShowing) {
+        if (Objects.equals(this.isShowing.getValue(), isShowing)) {
+            return;
+        }
+        this.isShowing.setValue(isShowing);
     }
 
     public @NonNull LiveData<Recipient> getSelectedRecipient() {
         return selectedRecipient;
+    }
+
+    public @NonNull LiveData<Boolean> isShowing() {
+        return isShowing;
     }
 
     public void onQueryChange(@Nullable String query) {
@@ -103,7 +122,8 @@ public class MentionsPickerViewModel extends ViewModel {
         @Override
         public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
             //noinspection ConstantConditions
-            return modelClass.cast(new MentionsPickerViewModel(new MentionsPickerRepository(ApplicationDependencies.getApplication())));
+            return modelClass.cast(new MentionsPickerViewModel(new MentionsPickerRepository(ApplicationDependencies.getApplication()),
+                    ApplicationDependencies.getMegaphoneRepository()));
         }
     }
 }

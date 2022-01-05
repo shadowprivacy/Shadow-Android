@@ -9,7 +9,7 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MessagingDatabase;
+import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -58,7 +58,7 @@ public class RemoteDeleteSendJob extends BaseJob {
             throws NoSuchMessageException
     {
         MessageRecord message = isMms ? DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId)
-                : DatabaseFactory.getSmsDatabase(context).getMessageRecord(messageId);
+                : DatabaseFactory.getSmsDatabase(context).getSmsMessage(messageId);
 
         Recipient conversationRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(message.getThreadId());
 
@@ -112,7 +112,7 @@ public class RemoteDeleteSendJob extends BaseJob {
 
     @Override
     protected void onRun() throws Exception {
-        MessagingDatabase db;
+        MessageDatabase db;
         MessageRecord     message;
 
         if (isMms) {
@@ -120,7 +120,7 @@ public class RemoteDeleteSendJob extends BaseJob {
             message = DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId);
         } else {
             db      = DatabaseFactory.getSmsDatabase(context);
-            message = DatabaseFactory.getSmsDatabase(context).getMessageRecord(messageId);
+            message = DatabaseFactory.getSmsDatabase(context).getSmsMessage(messageId);
         }
 
         long       targetSentTimestamp  = message.getDateSent();

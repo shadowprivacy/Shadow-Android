@@ -6,14 +6,14 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.logging.Log;
 
 import androidx.annotation.NonNull;
-import android.util.Pair;
 
 import com.google.android.mms.pdu_alt.GenericPdu;
 import com.google.android.mms.pdu_alt.NotificationInd;
 import com.google.android.mms.pdu_alt.PduHeaders;
 import com.google.android.mms.pdu_alt.PduParser;
 
-import su.sres.securesms.ApplicationContext;
+import org.whispersystems.libsignal.util.Pair;
+
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.recipients.Recipient;
@@ -80,8 +80,8 @@ public class MmsReceiveJob extends BaseJob {
 
       Log.i(TAG, "Inserted received MMS notification...");
 
-      ApplicationDependencies.getJobManager().add(new MmsDownloadJob(messageAndThreadId.first,
-              messageAndThreadId.second,
+      ApplicationDependencies.getJobManager().add(new MmsDownloadJob(messageAndThreadId.first(),
+              messageAndThreadId.second(),
               true));
     } else if (isNotification(pdu)) {
       Log.w(TAG, "*** Received blocked MMS, ignoring...");

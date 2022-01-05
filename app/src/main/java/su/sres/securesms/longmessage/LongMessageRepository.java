@@ -9,6 +9,7 @@ import androidx.annotation.WorkerThread;
 import su.sres.securesms.conversation.ConversationMessage;
 import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.model.MessageRecord;
@@ -27,8 +28,8 @@ class LongMessageRepository {
 
     private final static String TAG = LongMessageRepository.class.getSimpleName();
 
-    private final MmsDatabase mmsDatabase;
-    private final SmsDatabase smsDatabase;
+    private final MessageDatabase mmsDatabase;
+    private final MessageDatabase smsDatabase;
 
     LongMessageRepository(@NonNull Context context) {
         this.mmsDatabase = DatabaseFactory.getMmsDatabase(context);
@@ -46,7 +47,7 @@ class LongMessageRepository {
     }
 
     @WorkerThread
-    private Optional<LongMessage> getMmsLongMessage(@NonNull Context context, @NonNull MmsDatabase mmsDatabase, long messageId) {
+    private Optional<LongMessage> getMmsLongMessage(@NonNull Context context, @NonNull MessageDatabase mmsDatabase, long messageId) {
         Optional<MmsMessageRecord> record = getMmsMessage(mmsDatabase, messageId);
 
         if (record.isPresent()) {
@@ -63,7 +64,7 @@ class LongMessageRepository {
     }
 
     @WorkerThread
-    private Optional<LongMessage> getSmsLongMessage(@NonNull Context context, @NonNull SmsDatabase smsDatabase, long messageId) {
+    private Optional<LongMessage> getSmsLongMessage(@NonNull Context context, @NonNull MessageDatabase smsDatabase, long messageId) {
         Optional<MessageRecord> record = getSmsMessage(smsDatabase, messageId);
 
         if (record.isPresent()) {
@@ -75,16 +76,16 @@ class LongMessageRepository {
 
 
     @WorkerThread
-    private Optional<MmsMessageRecord> getMmsMessage(@NonNull MmsDatabase mmsDatabase, long messageId) {
-        try (Cursor cursor = mmsDatabase.getMessage(messageId)) {
-            return Optional.fromNullable((MmsMessageRecord) mmsDatabase.readerFor(cursor).getNext());
+    private Optional<MmsMessageRecord> getMmsMessage(@NonNull MessageDatabase mmsDatabase, long messageId) {
+        try (Cursor cursor = mmsDatabase.getMessageCursor(messageId)) {
+            return Optional.fromNullable((MmsMessageRecord) MmsDatabase.readerFor(cursor).getNext());
         }
     }
 
     @WorkerThread
-    private Optional<MessageRecord> getSmsMessage(@NonNull SmsDatabase smsDatabase, long messageId) {
+    private Optional<MessageRecord> getSmsMessage(@NonNull MessageDatabase smsDatabase, long messageId) {
         try (Cursor cursor = smsDatabase.getMessageCursor(messageId)) {
-            return Optional.fromNullable(smsDatabase.readerFor(cursor).getNext());
+            return Optional.fromNullable(SmsDatabase.readerFor(cursor).getNext());
         }
     }
 

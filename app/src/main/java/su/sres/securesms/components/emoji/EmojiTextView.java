@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -238,5 +240,11 @@ public class EmojiTextView extends AppCompatTextView {
   public void setTextSize(int unit, float size) {
     this.originalFontSize = TypedValue.applyDimension(unit, size, getResources().getDisplayMetrics());
     super.setTextSize(unit, size);
+  }
+
+  public void setMentionBackgroundTint(@ColorInt int mentionBackgroundTint) {
+    if (renderMentions) {
+      mentionRendererDelegate.setTint(mentionBackgroundTint);
+    }
   }
 }

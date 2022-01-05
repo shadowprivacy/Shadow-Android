@@ -1,7 +1,6 @@
 package su.sres.securesms.net;
 
 
-import su.sres.securesms.linkpreview.LinkPreviewDomains;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.BuildConfig;
@@ -22,10 +21,9 @@ public class ContentProxySelector extends ProxySelector {
 
     private static final String TAG = ContentProxySelector.class.getSimpleName();
 
-    private static final Set<String> WHITELISTED_DOMAINS = new HashSet<>();
+    public static final Set<String> WHITELISTED_DOMAINS = new HashSet<>();
     static {
-        WHITELISTED_DOMAINS.addAll(LinkPreviewDomains.LINKS);
-        WHITELISTED_DOMAINS.addAll(LinkPreviewDomains.IMAGES);
+        WHITELISTED_DOMAINS.add("giphy.com");
     }
 
     private final List<Proxy> CONTENT = new ArrayList<Proxy>(1) {{

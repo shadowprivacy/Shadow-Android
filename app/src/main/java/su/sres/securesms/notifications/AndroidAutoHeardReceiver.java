@@ -25,7 +25,7 @@ import android.os.AsyncTask;
 import androidx.core.app.NotificationManagerCompat;
 
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;
+import su.sres.securesms.database.MessageDatabase.MarkedMessageInfo;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 

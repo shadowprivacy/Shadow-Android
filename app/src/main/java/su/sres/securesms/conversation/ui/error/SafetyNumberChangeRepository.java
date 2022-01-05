@@ -14,6 +14,7 @@ import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
+import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
@@ -133,8 +134,8 @@ final class SafetyNumberChangeRepository {
 
     @WorkerThread
     private void processOutgoingMessageRecord(@NonNull List<ChangedRecipient> changedRecipients, @NonNull MessageRecord messageRecord) {
-        SmsDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
-        MmsDatabase mmsDatabase = DatabaseFactory.getMmsDatabase(context);
+        MessageDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
+        MessageDatabase mmsDatabase = DatabaseFactory.getMmsDatabase(context);
 
         for (ChangedRecipient changedRecipient : changedRecipients) {
             RecipientId id          = changedRecipient.getRecipient().getId();

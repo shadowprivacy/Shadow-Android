@@ -26,12 +26,19 @@ import androidx.fragment.app.FragmentActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.WebRtcCallActivity;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.groups.GroupId;
+import su.sres.securesms.groups.ui.invitesandrequests.joining.GroupJoinBottomSheetDialogFragment;
+import su.sres.securesms.groups.ui.invitesandrequests.joining.GroupJoinUpdateRequiredBottomSheetDialogFragment;
+import su.sres.securesms.groups.v2.GroupInviteLinkUrl;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.WebRtcCallService;
 import su.sres.securesms.sms.MessageSender;
+import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.signalservice.api.messages.calls.OfferMessage;
 
 public class CommunicationActions {
@@ -168,6 +175,51 @@ public class CommunicationActions {
     intent.putExtra(Intent.EXTRA_TEXT, Util.emptyIfNull(body));
 
     context.startActivity(intent);
+  }
+
+  /**
+   * If the url is a group link it will handle it.
+   * If the url is a malformed group link, it will assume Signal needs to update.
+   * Otherwise returns false, indicating was not a group link.
+   */
+  public static boolean handlePotentialGroupLinkUrl(@NonNull FragmentActivity activity, @NonNull String potentialGroupLinkUrl) {
+    try {
+      GroupInviteLinkUrl groupInviteLinkUrl = GroupInviteLinkUrl.fromUrl(potentialGroupLinkUrl);
+
+      if (groupInviteLinkUrl == null) {
+        return false;
+      }
+
+      handleGroupLinkUrl(activity, groupInviteLinkUrl);
+      return true;
+    } catch (GroupInviteLinkUrl.InvalidGroupLinkException | GroupInviteLinkUrl.UnknownGroupLinkVersionException e) {
+      Log.w(TAG, "Could not parse group URL", e);
+      GroupJoinUpdateRequiredBottomSheetDialogFragment.show(activity.getSupportFragmentManager());
+      return true;
+    }
+  }
+
+  public static void handleGroupLinkUrl(@NonNull FragmentActivity activity,
+                                        @NonNull GroupInviteLinkUrl groupInviteLinkUrl)
+  {
+    GroupId.V2 groupId = GroupId.v2(groupInviteLinkUrl.getGroupMasterKey());
+
+    SimpleTask.run(SignalExecutors.BOUNDED, () -> {
+              GroupDatabase.GroupRecord group = DatabaseFactory.getGroupDatabase(activity)
+                      .getGroup(groupId)
+                      .orNull();
+
+              return group != null && group.isActive() ? Recipient.resolved(group.getRecipientId())
+                      : null;
+            },
+            recipient -> {
+              if (recipient != null) {
+                CommunicationActions.startConversation(activity, recipient, null);
+                Toast.makeText(activity, R.string.GroupJoinBottomSheetDialogFragment_you_are_already_a_member, Toast.LENGTH_SHORT).show();
+              } else {
+                GroupJoinBottomSheetDialogFragment.show(activity.getSupportFragmentManager(), groupInviteLinkUrl);
+              }
+            });
   }
 
   private static void startInsecureCallInternal(@NonNull Activity activity, @NonNull Recipient recipient) {

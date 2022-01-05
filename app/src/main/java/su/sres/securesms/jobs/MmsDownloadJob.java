@@ -20,7 +20,7 @@ import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.UriAttachment;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MessagingDatabase.InsertResult;
+import su.sres.securesms.database.MessageDatabase.InsertResult;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.mms.ApnUnavailableException;
@@ -243,7 +243,7 @@ public class MmsDownloadJob extends BaseJob {
     Optional<InsertResult> insertResult = database.insertMessageInbox(message, contentLocation, threadId);
 
     if (insertResult.isPresent()) {
-      database.delete(messageId);
+      database.deleteMessage(messageId);
       ApplicationDependencies.getMessageNotifier().updateNotification(context, insertResult.get().getThreadId());
     }
   }

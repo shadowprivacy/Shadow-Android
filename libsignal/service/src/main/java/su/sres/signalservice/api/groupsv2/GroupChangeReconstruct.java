@@ -2,17 +2,21 @@ package su.sres.signalservice.api.groupsv2;
 
 import com.google.protobuf.ByteString;
 
+import su.sres.storageservice.protos.groups.local.DecryptedApproveMember;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 import su.sres.storageservice.protos.groups.local.DecryptedMember;
 import su.sres.storageservice.protos.groups.local.DecryptedModifyMemberRole;
 import su.sres.storageservice.protos.groups.local.DecryptedPendingMember;
 import su.sres.storageservice.protos.groups.local.DecryptedPendingMemberRemoval;
+import su.sres.storageservice.protos.groups.local.DecryptedRequestingMember;
 import su.sres.storageservice.protos.groups.local.DecryptedString;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,15 +56,23 @@ public final class GroupChangeReconstruct {
         Set<ByteString> pendingMembersListA = pendingMembersToSetOfUuids(fromState.getPendingMembersList());
         Set<ByteString> pendingMembersListB = pendingMembersToSetOfUuids(toState.getPendingMembersList());
 
-        Set<ByteString> removedPendingMemberUuids = subtract(pendingMembersListA, pendingMembersListB);
-        Set<ByteString> newPendingMemberUuids     = subtract(pendingMembersListB, pendingMembersListA);
-        Set<ByteString> removedMemberUuids        = subtract(fromStateMemberUuids, toStateMemberUuids);
-        Set<ByteString> newMemberUuids            = subtract(toStateMemberUuids, fromStateMemberUuids);
+        Set<ByteString> requestingMembersListA = requestingMembersToSetOfUuids(fromState.getRequestingMembersList());
+        Set<ByteString> requestingMembersListB = requestingMembersToSetOfUuids(toState.getRequestingMembersList());
 
-        Set<ByteString>             addedByInvitationUuids   = intersect(newMemberUuids, removedPendingMemberUuids);
-        Set<DecryptedMember>        addedMembersByInvitation = intersectByUUID(toState.getMembersList(), addedByInvitationUuids);
-        Set<DecryptedMember>        addedMembers             = intersectByUUID(toState.getMembersList(), subtract(newMemberUuids, addedByInvitationUuids));
-        Set<DecryptedPendingMember> uninvitedMembers         = intersectPendingByUUID(fromState.getPendingMembersList(), subtract(removedPendingMemberUuids, addedByInvitationUuids));
+        Set<ByteString> removedPendingMemberUuids    = subtract(pendingMembersListA, pendingMembersListB);
+        Set<ByteString> removedRequestingMemberUuids = subtract(requestingMembersListA, requestingMembersListB);
+        Set<ByteString> newPendingMemberUuids        = subtract(pendingMembersListB, pendingMembersListA);
+        Set<ByteString> newRequestingMemberUuids     = subtract(requestingMembersListB, requestingMembersListA);
+        Set<ByteString> removedMemberUuids           = subtract(fromStateMemberUuids, toStateMemberUuids);
+        Set<ByteString> newMemberUuids               = subtract(toStateMemberUuids, fromStateMemberUuids);
+
+        Set<ByteString>                addedByInvitationUuids        = intersect(newMemberUuids, removedPendingMemberUuids);
+        Set<ByteString>                addedByRequestApprovalUuids   = intersect(newMemberUuids, removedRequestingMemberUuids);
+        Set<DecryptedMember>           addedMembersByInvitation      = intersectByUUID(toState.getMembersList(), addedByInvitationUuids);
+        Set<DecryptedMember>           addedMembersByRequestApproval = intersectByUUID(toState.getMembersList(), addedByRequestApprovalUuids);
+        Set<DecryptedMember>           addedMembers                  = intersectByUUID(toState.getMembersList(), subtract(newMemberUuids, addedByInvitationUuids, addedByRequestApprovalUuids));
+        Set<DecryptedPendingMember>    uninvitedMembers              = intersectPendingByUUID(fromState.getPendingMembersList(), subtract(removedPendingMemberUuids, addedByInvitationUuids));
+        Set<DecryptedRequestingMember> rejectedRequestMembers        = intersectRequestingByUUID(fromState.getRequestingMembersList(), subtract(removedRequestingMemberUuids, addedByRequestApprovalUuids));
 
         for (DecryptedMember member : intersectByUUID(fromState.getMembersList(), removedMemberUuids)) {
             builder.addDeleteMembers(member.getUuid());
@@ -101,11 +113,33 @@ public final class GroupChangeReconstruct {
             }
         }
 
+        if (!fromState.getAccessControl().getAddFromInviteLink().equals(toState.getAccessControl().getAddFromInviteLink())) {
+            builder.setNewInviteLinkAccess(toState.getAccessControl().getAddFromInviteLink());
+        }
+
+        for (DecryptedRequestingMember requestingMember : intersectRequestingByUUID(toState.getRequestingMembersList(), newRequestingMemberUuids)) {
+            builder.addNewRequestingMembers(requestingMember);
+        }
+
+        for (DecryptedRequestingMember requestingMember : rejectedRequestMembers) {
+            builder.addDeleteRequestingMembers(requestingMember.getUuid());
+        }
+
+        for (DecryptedMember member : addedMembersByRequestApproval) {
+            builder.addPromoteRequestingMembers(DecryptedApproveMember.newBuilder()
+                    .setUuid(member.getUuid())
+                    .setRole(member.getRole()));
+        }
+
+        if (!fromState.getInviteLinkPassword().equals(toState.getInviteLinkPassword())) {
+            builder.setNewInviteLinkPassword(toState.getInviteLinkPassword());
+        }
+
         return builder.build();
     }
 
     private static Map<ByteString, DecryptedMember> uuidMap(List<DecryptedMember> membersList) {
-        HashMap<ByteString, DecryptedMember> map = new HashMap<>(membersList.size());
+        Map<ByteString, DecryptedMember> map = new LinkedHashMap<>(membersList.size());
         for (DecryptedMember member : membersList) {
             map.put(member.getUuid(), member);
         }
@@ -113,7 +147,7 @@ public final class GroupChangeReconstruct {
     }
 
     private static Set<DecryptedMember> intersectByUUID(Collection<DecryptedMember> members, Set<ByteString> uuids) {
-        Set<DecryptedMember> result = new HashSet<>(members.size());
+        Set<DecryptedMember> result = new LinkedHashSet<>(members.size());
         for (DecryptedMember member : members) {
             if (uuids.contains(member.getUuid()))
                 result.add(member);
@@ -122,7 +156,7 @@ public final class GroupChangeReconstruct {
     }
 
     private static Set<DecryptedPendingMember> intersectPendingByUUID(Collection<DecryptedPendingMember> members, Set<ByteString> uuids) {
-        Set<DecryptedPendingMember> result = new HashSet<>(members.size());
+        Set<DecryptedPendingMember> result = new LinkedHashSet<>(members.size());
         for (DecryptedPendingMember member : members) {
             if (uuids.contains(member.getUuid()))
                 result.add(member);
@@ -130,16 +164,33 @@ public final class GroupChangeReconstruct {
         return result;
     }
 
+    private static Set<DecryptedRequestingMember> intersectRequestingByUUID(Collection<DecryptedRequestingMember> members, Set<ByteString> uuids) {
+        Set<DecryptedRequestingMember> result = new LinkedHashSet<>(members.size());
+        for (DecryptedRequestingMember member : members) {
+            if (uuids.contains(member.getUuid()))
+                result.add(member);
+        }
+        return result;
+    }
+
     private static Set<ByteString> pendingMembersToSetOfUuids(Collection<DecryptedPendingMember> pendingMembers) {
-        HashSet<ByteString> uuids = new HashSet<>(pendingMembers.size());
+        Set<ByteString> uuids = new LinkedHashSet<>(pendingMembers.size());
         for (DecryptedPendingMember pendingMember : pendingMembers) {
             uuids.add(pendingMember.getUuid());
         }
         return uuids;
     }
 
+    private static Set<ByteString> requestingMembersToSetOfUuids(Collection<DecryptedRequestingMember> requestingMembers) {
+        Set<ByteString> uuids = new LinkedHashSet<>(requestingMembers.size());
+        for (DecryptedRequestingMember requestingMember : requestingMembers) {
+            uuids.add(requestingMember.getUuid());
+        }
+        return uuids;
+    }
+
     private static Set<ByteString> membersToSetOfUuids(Collection<DecryptedMember> members) {
-        HashSet<ByteString> uuids = new HashSet<>(members.size());
+        Set<ByteString> uuids = new LinkedHashSet<>(members.size());
         for (DecryptedMember member : members) {
             uuids.add(member.getUuid());
         }
@@ -147,13 +198,20 @@ public final class GroupChangeReconstruct {
     }
 
     private static <T> Set<T> subtract(Collection<T> a, Collection<T> b) {
-        Set<T> result = new HashSet<>(a);
+        Set<T> result = new LinkedHashSet<>(a);
         result.removeAll(b);
         return result;
     }
 
+    private static <T> Set<T> subtract(Collection<T> a, Collection<T> b, Collection<T> c) {
+        Set<T> result = new LinkedHashSet<>(a);
+        result.removeAll(b);
+        result.removeAll(c);
+        return result;
+    }
+
     private static <T> Set<T> intersect(Collection<T> a, Collection<T> b) {
-        Set<T> result = new HashSet<>(a);
+        Set<T> result = new LinkedHashSet<>(a);
         result.retainAll(b);
         return result;
     }

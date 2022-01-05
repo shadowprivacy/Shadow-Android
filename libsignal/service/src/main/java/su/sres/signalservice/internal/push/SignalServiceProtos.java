@@ -25347,26 +25347,34 @@ public final class SignalServiceProtos {
       boolean getTypingIndicators();
 
       /**
-       * <code>optional bool linkPreviews = 4;</code>
-       * @return Whether the linkPreviews field is set.
-       */
-      boolean hasLinkPreviews();
-      /**
-       * <code>optional bool linkPreviews = 4;</code>
-       * @return The linkPreviews.
-       */
-      boolean getLinkPreviews();
-
-      /**
+       * <pre>
+       * 4 is reserved (old link preview setting)
+       * </pre>
+       *
        * <code>optional uint32 provisioningVersion = 5;</code>
        * @return Whether the provisioningVersion field is set.
        */
       boolean hasProvisioningVersion();
       /**
+       * <pre>
+       * 4 is reserved (old link preview setting)
+       * </pre>
+       *
        * <code>optional uint32 provisioningVersion = 5;</code>
        * @return The provisioningVersion.
        */
       int getProvisioningVersion();
+
+      /**
+       * <code>optional bool linkPreviews = 6;</code>
+       * @return Whether the linkPreviews field is set.
+       */
+      boolean hasLinkPreviews();
+      /**
+       * <code>optional bool linkPreviews = 6;</code>
+       * @return The linkPreviews.
+       */
+      boolean getLinkPreviews();
     }
     /**
      * Protobuf type {@code signalservice.SyncMessage.Configuration}
@@ -25481,51 +25489,25 @@ public final class SignalServiceProtos {
         typingIndicators_ = false;
       }
 
-      public static final int LINKPREVIEWS_FIELD_NUMBER = 4;
-      private boolean linkPreviews_;
-      /**
-       * <code>optional bool linkPreviews = 4;</code>
-       * @return Whether the linkPreviews field is set.
-       */
-      @java.lang.Override
-      public boolean hasLinkPreviews() {
-        return ((bitField0_ & 0x00000008) != 0);
-      }
-      /**
-       * <code>optional bool linkPreviews = 4;</code>
-       * @return The linkPreviews.
-       */
-      @java.lang.Override
-      public boolean getLinkPreviews() {
-        return linkPreviews_;
-      }
-      /**
-       * <code>optional bool linkPreviews = 4;</code>
-       * @param value The linkPreviews to set.
-       */
-      private void setLinkPreviews(boolean value) {
-        bitField0_ |= 0x00000008;
-        linkPreviews_ = value;
-      }
-      /**
-       * <code>optional bool linkPreviews = 4;</code>
-       */
-      private void clearLinkPreviews() {
-        bitField0_ = (bitField0_ & ~0x00000008);
-        linkPreviews_ = false;
-      }
-
       public static final int PROVISIONINGVERSION_FIELD_NUMBER = 5;
       private int provisioningVersion_;
       /**
+       * <pre>
+       * 4 is reserved (old link preview setting)
+       * </pre>
+       *
        * <code>optional uint32 provisioningVersion = 5;</code>
        * @return Whether the provisioningVersion field is set.
        */
       @java.lang.Override
       public boolean hasProvisioningVersion() {
-        return ((bitField0_ & 0x00000010) != 0);
+        return ((bitField0_ & 0x00000008) != 0);
       }
       /**
+       * <pre>
+       * 4 is reserved (old link preview setting)
+       * </pre>
+       *
        * <code>optional uint32 provisioningVersion = 5;</code>
        * @return The provisioningVersion.
        */
@@ -25534,19 +25516,61 @@ public final class SignalServiceProtos {
         return provisioningVersion_;
       }
       /**
+       * <pre>
+       * 4 is reserved (old link preview setting)
+       * </pre>
+       *
        * <code>optional uint32 provisioningVersion = 5;</code>
        * @param value The provisioningVersion to set.
        */
       private void setProvisioningVersion(int value) {
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000008;
         provisioningVersion_ = value;
       }
       /**
+       * <pre>
+       * 4 is reserved (old link preview setting)
+       * </pre>
+       *
        * <code>optional uint32 provisioningVersion = 5;</code>
        */
       private void clearProvisioningVersion() {
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000008);
         provisioningVersion_ = 0;
+      }
+
+      public static final int LINKPREVIEWS_FIELD_NUMBER = 6;
+      private boolean linkPreviews_;
+      /**
+       * <code>optional bool linkPreviews = 6;</code>
+       * @return Whether the linkPreviews field is set.
+       */
+      @java.lang.Override
+      public boolean hasLinkPreviews() {
+        return ((bitField0_ & 0x00000010) != 0);
+      }
+      /**
+       * <code>optional bool linkPreviews = 6;</code>
+       * @return The linkPreviews.
+       */
+      @java.lang.Override
+      public boolean getLinkPreviews() {
+        return linkPreviews_;
+      }
+      /**
+       * <code>optional bool linkPreviews = 6;</code>
+       * @param value The linkPreviews to set.
+       */
+      private void setLinkPreviews(boolean value) {
+        bitField0_ |= 0x00000010;
+        linkPreviews_ = value;
+      }
+      /**
+       * <code>optional bool linkPreviews = 6;</code>
+       */
+      private void clearLinkPreviews() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        linkPreviews_ = false;
       }
 
       public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Configuration parseFrom(
@@ -25753,42 +25777,10 @@ public final class SignalServiceProtos {
         }
 
         /**
-         * <code>optional bool linkPreviews = 4;</code>
-         * @return Whether the linkPreviews field is set.
-         */
-        @java.lang.Override
-        public boolean hasLinkPreviews() {
-          return instance.hasLinkPreviews();
-        }
-        /**
-         * <code>optional bool linkPreviews = 4;</code>
-         * @return The linkPreviews.
-         */
-        @java.lang.Override
-        public boolean getLinkPreviews() {
-          return instance.getLinkPreviews();
-        }
-        /**
-         * <code>optional bool linkPreviews = 4;</code>
-         * @param value The linkPreviews to set.
-         * @return This builder for chaining.
-         */
-        public Builder setLinkPreviews(boolean value) {
-          copyOnWrite();
-          instance.setLinkPreviews(value);
-          return this;
-        }
-        /**
-         * <code>optional bool linkPreviews = 4;</code>
-         * @return This builder for chaining.
-         */
-        public Builder clearLinkPreviews() {
-          copyOnWrite();
-          instance.clearLinkPreviews();
-          return this;
-        }
-
-        /**
+         * <pre>
+         * 4 is reserved (old link preview setting)
+         * </pre>
+         *
          * <code>optional uint32 provisioningVersion = 5;</code>
          * @return Whether the provisioningVersion field is set.
          */
@@ -25797,6 +25789,10 @@ public final class SignalServiceProtos {
           return instance.hasProvisioningVersion();
         }
         /**
+         * <pre>
+         * 4 is reserved (old link preview setting)
+         * </pre>
+         *
          * <code>optional uint32 provisioningVersion = 5;</code>
          * @return The provisioningVersion.
          */
@@ -25805,6 +25801,10 @@ public final class SignalServiceProtos {
           return instance.getProvisioningVersion();
         }
         /**
+         * <pre>
+         * 4 is reserved (old link preview setting)
+         * </pre>
+         *
          * <code>optional uint32 provisioningVersion = 5;</code>
          * @param value The provisioningVersion to set.
          * @return This builder for chaining.
@@ -25815,12 +25815,52 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
+         * <pre>
+         * 4 is reserved (old link preview setting)
+         * </pre>
+         *
          * <code>optional uint32 provisioningVersion = 5;</code>
          * @return This builder for chaining.
          */
         public Builder clearProvisioningVersion() {
           copyOnWrite();
           instance.clearProvisioningVersion();
+          return this;
+        }
+
+        /**
+         * <code>optional bool linkPreviews = 6;</code>
+         * @return Whether the linkPreviews field is set.
+         */
+        @java.lang.Override
+        public boolean hasLinkPreviews() {
+          return instance.hasLinkPreviews();
+        }
+        /**
+         * <code>optional bool linkPreviews = 6;</code>
+         * @return The linkPreviews.
+         */
+        @java.lang.Override
+        public boolean getLinkPreviews() {
+          return instance.getLinkPreviews();
+        }
+        /**
+         * <code>optional bool linkPreviews = 6;</code>
+         * @param value The linkPreviews to set.
+         * @return This builder for chaining.
+         */
+        public Builder setLinkPreviews(boolean value) {
+          copyOnWrite();
+          instance.setLinkPreviews(value);
+          return this;
+        }
+        /**
+         * <code>optional bool linkPreviews = 6;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearLinkPreviews() {
+          copyOnWrite();
+          instance.clearLinkPreviews();
           return this;
         }
 
@@ -25844,12 +25884,12 @@ public final class SignalServiceProtos {
                 "readReceipts_",
                 "unidentifiedDeliveryIndicators_",
                 "typingIndicators_",
-                "linkPreviews_",
                 "provisioningVersion_",
+                "linkPreviews_",
               };
               java.lang.String info =
-                  "\u0001\u0005\u0000\u0001\u0001\u0005\u0005\u0000\u0000\u0000\u0001\u0007\u0000\u0002" +
-                  "\u0007\u0001\u0003\u0007\u0002\u0004\u0007\u0003\u0005\u000b\u0004";
+                  "\u0001\u0005\u0000\u0001\u0001\u0006\u0005\u0000\u0000\u0000\u0001\u0007\u0000\u0002" +
+                  "\u0007\u0001\u0003\u0007\u0002\u0005\u000b\u0003\u0006\u0007\u0004";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through

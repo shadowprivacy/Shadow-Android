@@ -38,8 +38,8 @@ dependencies {
 
     api 'org.signal:zkgroup-java:0.7.0'
 
-    testImplementation 'junit:junit:3.8.2'
-    testImplementation 'org.assertj:assertj-core:1.7.1'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.assertj:assertj-core:3.11.1'
     testImplementation 'org.conscrypt:conscrypt-openjdk-uber:2.0.0'
     testImplementation 'org.testng:testng:6.9.6'
 }

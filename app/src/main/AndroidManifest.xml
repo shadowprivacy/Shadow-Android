@@ -264,6 +264,14 @@
             android:targetActivity=".MainActivity"
             android:exported="true">
 
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                    android:host="group.shadowprivacy.com"/>
+            </intent-filter>
+
             <meta-data
                 android:name="com.sec.minimode.icon.portrait.normal"
                 android:resource="@mipmap/ic_launcher" />

@@ -463,6 +463,7 @@
     <string name="GroupMembersDialog_you">You</string>
 
     <!-- GV2 access levels -->
+    <string name="GroupManagement_access_level_anyone">Anyone</string>
     <string name="GroupManagement_access_level_all_members">All members</string>
     <string name="GroupManagement_access_level_only_admins">Only admins</string>
     <string name="GroupManagement_access_level_unknown" translatable="false">Unknown</string>
@@ -483,6 +484,15 @@
     <string name="GroupManagement_invite_single_user">“%1$s” can’t be automatically added to this group by you.\n\nThey’ve been invited to join, and won’t see any group messages until they accept.</string>
     <string name="GroupManagement_learn_more">Learn more</string>
     <string name="GroupManagement_invite_multiple_users">These users can’t be automatically added to this group by you.\n\nThey’ve been invited to join the group, and won’t see any group messages until they accept.</string>
+
+    <!-- LinkPreviewsMegaphone -->
+    <string name="LinkPreviewsMegaphone_disable">Disable</string>
+    <string name="LinkPreviewsMegaphone_preview_any_link">Preview any link</string>
+    <string name="LinkPreviewsMegaphone_you_can_now_retrieve_link_previews_directly_from_any_website">You can now retrieve link previews directly from any website for messages you send.</string>
+
+    <!-- LinkPreviewView -->
+    <string name="LinkPreviewView_no_link_preview_available">No link preview available</string>
+    <string name="LinkPreviewView_this_group_link_is_not_active">This group link is not active</string>
 
     <!-- PendingMembersActivity -->
     <string name="PendingMemberInvitesActivity_pending_group_invites">Pending group invites</string>
@@ -634,6 +644,24 @@
         <item quantity="one">Do you want to revoke the invite sent by %1$s?</item>
         <item quantity="other">Do you want to revoke %2$d invites sent by %1$s?</item>
     </plurals>
+
+    <!-- GroupJoinBottomSheetDialogFragment -->
+    <string name="GroupJoinBottomSheetDialogFragment_you_are_already_a_member">You are already a member</string>
+    <string name="GroupJoinBottomSheetDialogFragment_join">Join</string>
+    <string name="GroupJoinBottomSheetDialogFragment_request_to_join">Request to join</string>
+    <string name="GroupJoinBottomSheetDialogFragment_this_group_link_is_not_active">This group link is not active</string>
+    <string name="GroupJoinBottomSheetDialogFragment_unable_to_get_group_information_please_try_again_later">Unable to get group information, please try again later</string>
+    <string name="GroupJoinBottomSheetDialogFragment_direct_join">Do you want to join this group and share your name and photo with its members?</string>
+    <string name="GroupJoinBottomSheetDialogFragment_admin_approval_needed">An admin of this group must approve your request before you can join this group. When you request to join, your name and photo will be shared with its members.</string>
+    <plurals name="GroupJoinBottomSheetDialogFragment_group_dot_d_members">
+        <item quantity="one">Group · %1$d member</item>
+        <item quantity="other">Group · %1$d members</item>
+    </plurals>
+
+    <!-- GroupJoinUpdateRequiredBottomSheetDialogFragment -->
+    <string name="GroupJoinUpdateRequiredBottomSheetDialogFragment_update_signal_to_use_group_links">Update Shadow to use group links</string>
+    <string name="GroupJoinUpdateRequiredBottomSheetDialogFragment_update_message">The version of Shadow you’re using does not support sharable group links. Update to the latest version to join this group via link.</string>
+    <string name="GroupJoinUpdateRequiredBottomSheetDialogFragment_update_signal">Update Shadow</string>
 
     <!-- CropImageActivity -->
     <string name="CropImageActivity_group_avatar">Group avatar</string>
@@ -907,6 +935,41 @@
     <string name="MessageRecord_s_changed_who_can_edit_group_membership_to_s">%1$s changed who can edit group membership to \"%2$s\".</string>
     <string name="MessageRecord_who_can_edit_group_membership_has_been_changed_to_s">Who can edit group membership has been changed to \"%1$s\".</string>
 
+    <!-- GV2 group link invite access level change -->
+    <string name="MessageRecord_you_turned_on_the_sharable_group_link">You turned on the sharable group link.</string>
+    <string name="MessageRecord_you_turned_on_the_sharable_group_link_with_admin_approval">You turned on the sharable group link with admin approval.</string>
+    <string name="MessageRecord_you_turned_off_the_sharable_group_link">You turned off the sharable group link.</string>
+    <string name="MessageRecord_s_turned_on_the_sharable_group_link">%1$s turned on the sharable group link.</string>
+    <string name="MessageRecord_s_turned_on_the_sharable_group_link_with_admin_approval">%1$s turned on the sharable group link with admin approval.</string>
+    <string name="MessageRecord_s_turned_off_the_sharable_group_link">%1$s turned off the sharable group link.</string>
+    <string name="MessageRecord_the_sharable_group_link_has_been_turned_on">The sharable group link has been turned on.</string>
+    <string name="MessageRecord_the_sharable_group_link_has_been_turned_on_with_admin_approval">The sharable group link has been turned on with admin approval.</string>
+    <string name="MessageRecord_the_sharable_group_link_has_been_turned_off">The sharable group link has been turned off.</string>
+
+    <!-- GV2 group link reset -->
+    <string name="MessageRecord_you_reset_the_sharable_group_link">You reset the sharable group link.</string>
+    <string name="MessageRecord_s_reset_the_sharable_group_link">%1$s reset the sharable group link.</string>
+    <string name="MessageRecord_the_sharable_group_link_has_been_reset">The sharable group link has been reset.</string>
+
+    <!-- GV2 group link joins -->
+    <string name="MessageRecord_you_joined_the_group_via_the_sharable_group_link">You joined the group via the sharable group link.</string>
+    <string name="MessageRecord_s_joined_the_group_via_the_sharable_group_link">%1$s joined the group via the sharable group link.</string>
+
+    <!-- GV2 group link requests -->
+    <string name="MessageRecord_you_sent_a_request_to_join_the_group">You sent a request to join the group.</string>
+    <string name="MessageRecord_s_requested_to_join_via_the_sharable_group_link">%1$s requested to join via the sharable group link.</string>
+
+    <!-- GV2 group link approvals -->
+    <string name="MessageRecord_s_approved_your_request_to_join_the_group">%1$s approved your request to join the group.</string>
+    <string name="MessageRecord_s_approved_a_request_to_join_the_group_from_s">%1$s approved a request to join the group from %2$s.</string>
+    <string name="MessageRecord_your_request_to_join_the_group_has_been_approved">Your request to join the group has been approved.</string>
+    <string name="MessageRecord_a_request_to_join_the_group_from_s_has_been_approved">A request to join the group from %1$s has been approved.</string>
+
+    <!-- GV2 group link deny -->
+    <string name="MessageRecord_your_request_to_join_the_group_has_been_denied_by_an_admin">Your request to join the group has been denied by an admin.</string>
+    <string name="MessageRecord_s_denied_a_request_to_join_the_group_from_s">%1$s denied a request to join the group from %2$s.</string>
+    <string name="MessageRecord_a_request_to_join_the_group_from_s_has_been_denied">A request to join the group from %1$s has been denied.</string>
+
     <!-- End of GV2 specific update messages -->
 
     <string name="MessageRecord_your_safety_number_with_s_has_changed">Your safety number with %s has changed.</string>
@@ -1019,10 +1082,10 @@
     <string name="RecipientProvider_unnamed_group">Unnamed group</string>
 
     <!-- RedPhone -->
-    <string name="RedPhone_answering">Answering</string>
-    <string name="RedPhone_ending_call">Ending call</string>
-    <string name="RedPhone_dialing">Dialing</string>
-    <string name="RedPhone_ringing">Ringing</string>
+    <string name="RedPhone_answering">Answering…</string>
+    <string name="RedPhone_ending_call">Ending call…</string>
+    <string name="RedPhone_dialing">Dialing…</string>
+    <string name="RedPhone_ringing">Ringing…</string>
     <string name="RedPhone_busy">Busy</string>
     <string name="RedPhone_connected">Connected</string>
     <string name="RedPhone_recipient_unavailable">Recipient unavailable</string>
@@ -1258,9 +1321,6 @@
 
     <!-- MuteDialog -->
     <string name="MuteDialog_mute_notifications">Mute notifications</string>
-
-    <!-- OutdatedBuildReminder -->
-    <string name="OutdatedBuildReminder_no_web_browser_installed">No web browser installed!</string>
 
     <!-- ApplicationMigrationService -->
     <string name="ApplicationMigrationService_import_in_progress">Import in progress</string>
@@ -1840,8 +1900,8 @@
     <string name="preferences__use_signal_for_viewing_and_storing_all_incoming_multimedia_messages">Use Shadow for all incoming multimedia messages</string>
     <string name="preferences__pref_enter_sends_title">Enter key sends</string>
     <string name="preferences__pressing_the_enter_key_will_send_text_messages">Pressing the Enter key will send text messages</string>
-    <string name="preferences__send_link_previews">Send link previews</string>
-    <string name="preferences__previews_are_supported_for">Previews are supported for Imgur, Instagram, Pinterest, Reddit, and YouTube links</string>
+    <string name="preferences__generate_link_previews">Generate link previews</string>
+    <string name="preferences__retrieve_link_previews_from_websites_for_messages">Retrieve link previews directly from websites for messages you send.</string>
     <string name="preferences__choose_identity">Choose identity</string>
     <string name="preferences__choose_your_contact_entry_from_the_contacts_list">Choose your contact entry from the contacts list.</string>
     <string name="preferences__change_passphrase">Change passphrase</string>
@@ -2018,6 +2078,8 @@
 
     <!-- conversation_list_batch -->
     <string name="conversation_list_batch__menu_delete_selected">Delete selected</string>
+    <string name="conversation_list_batch__menu_pin_selected">Pin selected</string>
+    <string name="conversation_list_batch__menu_unpin_selected">Unpin selected</string>
     <string name="conversation_list_batch__menu_select_all">Select all</string>
     <string name="conversation_list_batch_archive__menu_archive_selected">Archive selected</string>
     <string name="conversation_list_batch_unarchive__menu_unarchive_selected">Unarchive selected</string>
@@ -2028,6 +2090,9 @@
     <!-- conversation_list -->
     <string name="conversation_list_settings_shortcut">Settings shortcut</string>
     <string name="conversation_list_search_description">Search</string>
+    <string name="conversation_list__pinned">Pinned</string>
+    <string name="conversation_list__chats">Chats</string>
+    <string name="conversation_list__you_can_only_pin_up_to_d_chats">You can only pin up to %1$d chats</string>
 
     <!-- conversation_list_item_view -->
     <string name="conversation_list_item_view__contact_photo_image">Contact Photo Image</string>
@@ -2154,6 +2219,10 @@
     <!-- CalleeMustAcceptMessageRequestActivity -->
     <string name="CalleeMustAcceptMessageRequestDialogFragment__okay">Okay</string>
     <string name="CalleeMustAcceptMessageRequestDialogFragment__s_will_get_a_message_request_from_you">%1$s will get a message request from you. You can call once your message request is accepted.</string>
+
+    <!-- Mention Megaphone -->
+    <string name="MentionsMegaphone__introducing_mentions">Introducing @Mentions</string>
+    <string name="MentionsMegaphone__get_someones_attention_in_a_group_by_typing">Get someone\'s attention in a \"New Group\" by typing @</string>
 
     <!-- transport_selection_list_item -->
     <string name="transport_selection_list_item__transport_icon">Transport icon</string>

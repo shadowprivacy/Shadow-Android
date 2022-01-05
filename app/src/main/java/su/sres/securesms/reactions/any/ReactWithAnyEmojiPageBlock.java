@@ -3,6 +3,8 @@ package su.sres.securesms.reactions.any;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 
+import java.util.Objects;
+
 import su.sres.securesms.components.emoji.EmojiPageModel;
 
 /**
@@ -25,5 +27,20 @@ class ReactWithAnyEmojiPageBlock {
 
     public EmojiPageModel getPageModel() {
         return pageModel;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ReactWithAnyEmojiPageBlock that = (ReactWithAnyEmojiPageBlock) o;
+        return label == that.label                                     &&
+                pageModel.getIconAttr() == that.pageModel.getIconAttr() &&
+                Objects.equals(pageModel.getEmoji(), that.pageModel.getEmoji());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(label, pageModel.getEmoji());
     }
 }

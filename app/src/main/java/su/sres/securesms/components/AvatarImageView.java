@@ -28,6 +28,7 @@ import su.sres.securesms.recipients.ui.bottomsheet.RecipientBottomSheetDialogFra
 import su.sres.securesms.recipients.ui.managerecipient.ManageRecipientActivity;
 import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.ThemeUtil;
+import su.sres.securesms.util.Util;
 
 import java.util.Objects;
 
@@ -191,6 +192,23 @@ public final class AvatarImageView extends AppCompatImageView {
       super.setOnClickListener(listener);
       setClickable(listener != null);
     }
+  }
+
+  public void setImageBytesForGroup(@Nullable byte[] avatarBytes,
+                                    @Nullable Recipient.FallbackPhotoProvider fallbackPhotoProvider,
+                                    @NonNull MaterialColor color)
+  {
+    Drawable fallback = Util.firstNonNull(fallbackPhotoProvider, Recipient.DEFAULT_FALLBACK_PHOTO_PROVIDER)
+            .getPhotoForGroup()
+            .asDrawable(getContext(), color.toAvatarColor(getContext()));
+
+    GlideApp.with(this)
+            .load(avatarBytes)
+            .fallback(fallback)
+            .error(fallback)
+            .diskCacheStrategy(DiskCacheStrategy.ALL)
+            .circleCrop()
+            .into(this);
   }
 
   private static class RecipientContactPhoto {

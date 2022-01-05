@@ -8,16 +8,12 @@ import androidx.core.util.Consumer;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
-import su.sres.securesms.database.MessagingDatabase;
+import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.groups.GroupChangeBusyException;
 import su.sres.securesms.groups.GroupChangeException;
-import su.sres.securesms.groups.GroupChangeFailedException;
-import su.sres.securesms.groups.GroupInsufficientRightsException;
 import su.sres.securesms.groups.GroupManager;
-import su.sres.securesms.groups.GroupNotAMemberException;
 import su.sres.securesms.groups.ui.GroupChangeErrorCallback;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.jobs.MultiDeviceMessageRequestResponseJob;
@@ -122,7 +118,7 @@ final class MessageRequestRepository {
 
                 MessageSender.sendProfileKey(context, threadId);
 
-                List<MessagingDatabase.MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context)
+                List<MessageDatabase.MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context)
                         .setEntireThreadRead(threadId);
                 ApplicationDependencies.getMessageNotifier().updateNotification(context);
                 MarkReadReceiver.process(context, messageIds);
@@ -223,7 +219,7 @@ final class MessageRequestRepository {
             recipientDatabase.setProfileSharing(liveRecipient.getId(), true);
             liveRecipient.refresh();
 
-            List<MessagingDatabase.MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context)
+            List<MessageDatabase.MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context)
                     .setEntireThreadRead(threadId);
             ApplicationDependencies.getMessageNotifier().updateNotification(context);
             MarkReadReceiver.process(context, messageIds);

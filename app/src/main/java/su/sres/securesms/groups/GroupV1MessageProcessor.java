@@ -9,9 +9,9 @@ import com.google.protobuf.ByteString;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
-import su.sres.securesms.database.MessagingDatabase.InsertResult;
+import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.MessageDatabase.InsertResult;
 import su.sres.securesms.database.MmsDatabase;
-import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.AvatarGroupsV1DownloadJob;
 import su.sres.securesms.jobs.PushGroupUpdateJob;
@@ -20,11 +20,9 @@ import su.sres.securesms.mms.MmsException;
 import su.sres.securesms.mms.OutgoingGroupUpdateMessage;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.sms.IncomingGroupUpdateMessage;
 import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.util.Base64;
-import su.sres.securesms.util.FeatureFlags;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
 import su.sres.signalservice.api.messages.SignalServiceContent;
@@ -246,9 +244,9 @@ public final class GroupV1MessageProcessor {
 
         return threadId;
       } else {
-        SmsDatabase          smsDatabase  = DatabaseFactory.getSmsDatabase(context);
-        String               body         = Base64.encodeBytes(storage.toByteArray());
-        IncomingTextMessage  incoming     = new IncomingTextMessage(Recipient.externalHighTrustPush(context, content.getSender()).getId(), content.getSenderDevice(), content.getTimestamp(), content.getServerReceivedTimestamp(), body, Optional.of(GroupId.v1orThrow(group.getGroupId())), 0, content.isNeedsReceipt());
+        MessageDatabase smsDatabase  = DatabaseFactory.getSmsDatabase(context);
+        String                     body         = Base64.encodeBytes(storage.toByteArray());
+        IncomingTextMessage        incoming     = new IncomingTextMessage(Recipient.externalHighTrustPush(context, content.getSender()).getId(), content.getSenderDevice(), content.getTimestamp(), content.getServerReceivedTimestamp(), body, Optional.of(GroupId.v1orThrow(group.getGroupId())), 0, content.isNeedsReceipt());
         IncomingGroupUpdateMessage groupMessage = new IncomingGroupUpdateMessage(incoming, storage, body);
 
         Optional<InsertResult> insertResult = smsDatabase.insertMessageInbox(groupMessage);

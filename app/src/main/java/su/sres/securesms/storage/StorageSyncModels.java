@@ -44,6 +44,7 @@ public final class StorageSyncModels {
         }
 
         return new SignalContactRecord.Builder(rawStorageId, new SignalServiceAddress(recipient.getUuid(), recipient.getE164()))
+                .setUnknownFields(recipient.getStorageProto())
                 .setProfileKey(recipient.getProfileKey())
                 .setGivenName(recipient.getProfileName().getGivenName())
                 .setFamilyName(recipient.getProfileName().getFamilyName())
@@ -67,6 +68,7 @@ public final class StorageSyncModels {
         }
 
         return new SignalGroupV1Record.Builder(rawStorageId, groupId.getDecodedId())
+                .setUnknownFields(recipient.getStorageProto())
                 .setBlocked(recipient.isBlocked())
                 .setProfileSharingEnabled(recipient.isProfileSharing())
                 .setArchived(archived.contains(recipient.getId()))
@@ -91,6 +93,7 @@ public final class StorageSyncModels {
         }
 
         return new SignalGroupV2Record.Builder(rawStorageId, groupMasterKey)
+                .setUnknownFields(recipient.getStorageProto())
                 .setBlocked(recipient.isBlocked())
                 .setProfileSharingEnabled(recipient.isProfileSharing())
                 .setArchived(archived.contains(recipient.getId()))

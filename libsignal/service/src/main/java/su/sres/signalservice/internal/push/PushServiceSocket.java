@@ -73,6 +73,7 @@ import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.configuration.SignalCdnUrl;
 import su.sres.signalservice.internal.configuration.SignalServiceConfiguration;
 import su.sres.signalservice.internal.configuration.SignalUrl;
+import su.sres.signalservice.internal.push.exceptions.ForbiddenException;
 import su.sres.signalservice.internal.push.exceptions.GroupPatchNotAcceptedException;
 import su.sres.signalservice.internal.push.exceptions.MismatchedDevicesException;
 import su.sres.signalservice.internal.push.exceptions.NotInGroupException;
@@ -93,6 +94,7 @@ import su.sres.storageservice.protos.groups.AvatarUploadAttributes;
 import su.sres.storageservice.protos.groups.Group;
 import su.sres.storageservice.protos.groups.GroupChange;
 import su.sres.storageservice.protos.groups.GroupChanges;
+import su.sres.storageservice.protos.groups.GroupJoinInfo;
 import su.sres.util.Base64;
 import su.sres.signalservice.internal.util.BlacklistingTrustManager;
 import su.sres.signalservice.internal.util.Hex;
@@ -138,6 +140,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import su.sres.util.Base64UrlSafe;
 
 /**
  * @author Moxie Marlinspike
@@ -199,8 +202,10 @@ public class PushServiceSocket {
 
     private static final String GROUPSV2_CREDENTIAL = "/v1/certificate/group/%d/%d";
     private static final String GROUPSV2_GROUP = "/v1/groups/";
+    private static final String GROUPSV2_GROUP_PASSWORD   = "/v1/groups/?inviteLinkPassword=%s";
     private static final String GROUPSV2_GROUP_CHANGES = "/v1/groups/logs/%s";
     private static final String GROUPSV2_AVATAR_REQUEST = "/v1/groups/avatar/form";
+    private static final String GROUPSV2_GROUP_JOIN       = "/v1/groups/join/%s";
 
     private static final String LICENSE_DOWNLOAD_PATH = "/v1/accounts/license";
 
@@ -1116,12 +1121,17 @@ public class PushServiceSocket {
         Request.Builder request = new Request.Builder().url(urlBuilder.build())
                 .post(RequestBody.create(null, ""));
         for (Map.Entry<String, String> header : headers.entrySet()) {
-            request.header(header.getKey(), header.getValue());
+            if (!header.getKey().equalsIgnoreCase("host")) {
+                request.header(header.getKey(), header.getValue());
+            }
         }
 
         if (connectionHolder.getHostHeader().isPresent()) {
             request.header("host", connectionHolder.getHostHeader().get());
         }
+
+        request.addHeader("Content-Length", "0");
+        request.addHeader("Content-Type", "application/octet-stream");
 
         Call call = okHttpClient.newCall(request.build());
 
@@ -1836,6 +1846,9 @@ public class PushServiceSocket {
     private static final ResponseCodeHandler GROUPS_V2_PATCH_RESPONSE_HANDLER = (responseCode, responseHeaders) -> {
         if (responseCode == 400) throw new GroupPatchNotAcceptedException();
     };
+    private static final ResponseCodeHandler GROUPS_V2_GET_JOIN_INFO_HANDLER  = (responseCode, responseheaders) -> {
+        if (responseCode == 403) throw new ForbiddenException();
+    };
 
     public void putNewGroupsV2Group(Group group, GroupsV2AuthorizationString authorization)
             throws NonSuccessfulResponseCodeException, PushNetworkException {
@@ -1888,6 +1901,18 @@ public class PushServiceSocket {
                 GROUPS_V2_GET_LOGS_HANDLER);
 
         return GroupChanges.parseFrom(readBodyBytes(response));
+    }
+
+    public GroupJoinInfo getGroupJoinInfo(byte[] groupLinkPassword, GroupsV2AuthorizationString authorization)
+            throws NonSuccessfulResponseCodeException, PushNetworkException, InvalidProtocolBufferException
+    {
+        ResponseBody response = makeStorageRequest(authorization.toString(),
+                String.format(GROUPSV2_GROUP_JOIN, Base64UrlSafe.encodeBytesWithoutPadding(groupLinkPassword)),
+                "GET",
+                null,
+                GROUPS_V2_GET_JOIN_INFO_HANDLER);
+
+        return GroupJoinInfo.parseFrom(readBodyBytes(response));
     }
 
     private final class ResumeInfo {

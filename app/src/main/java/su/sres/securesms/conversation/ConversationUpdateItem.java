@@ -95,7 +95,7 @@ public final class ConversationUpdateItem extends LinearLayout
                    @NonNull Set<ConversationMessage> batchSelected,
                    @NonNull Recipient conversationRecipient,
                    @Nullable String searchQuery,
-                   boolean pulseUpdate)
+                   boolean pulseMention)
   {
     this.batchSelected = batchSelected;
 

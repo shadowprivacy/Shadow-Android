@@ -33,6 +33,7 @@ import su.sres.securesms.components.emoji.MediaKeyboard;
 import su.sres.securesms.conversation.ConversationStickerSuggestionAdapter;
 import su.sres.securesms.database.model.StickerRecord;
 import su.sres.securesms.linkpreview.LinkPreview;
+import su.sres.securesms.linkpreview.LinkPreviewRepository;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequests;
@@ -232,6 +233,11 @@ public class InputPanel extends LinearLayout
   public void setLinkPreviewLoading() {
     this.linkPreview.setVisibility(View.VISIBLE);
     this.linkPreview.setLoading();
+  }
+
+  public void setLinkPreviewNoPreview(@Nullable LinkPreviewRepository.Error customError) {
+    this.linkPreview.setVisibility(View.VISIBLE);
+    this.linkPreview.setNoPreview(customError);
   }
 
   public void setLinkPreview(@NonNull GlideRequests glideRequests, @NonNull Optional<LinkPreview> preview) {

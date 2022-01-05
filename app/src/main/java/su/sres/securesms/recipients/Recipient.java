@@ -58,10 +58,11 @@ import static su.sres.securesms.database.RecipientDatabase.InsightsBannerTier;
 
 public class Recipient {
 
+  private static final String TAG = Log.tag(Recipient.class);
+
   public static final Recipient UNKNOWN = new Recipient(RecipientId.UNKNOWN, new RecipientDetails(), true);
 
-  private static final FallbackPhotoProvider DEFAULT_FALLBACK_PHOTO_PROVIDER = new FallbackPhotoProvider();
-  private static final String                TAG = Log.tag(Recipient.class);
+  public static final FallbackPhotoProvider DEFAULT_FALLBACK_PHOTO_PROVIDER = new FallbackPhotoProvider();
 
   private final RecipientId            id;
   private final boolean                resolving;
@@ -318,7 +319,7 @@ public class Recipient {
     this.storageId              = null;
     this.identityKey            = null;
     this.identityStatus         = VerifiedStatus.DEFAULT;
-    this.mentionSetting         = MentionSetting.GLOBAL;
+    this.mentionSetting         = MentionSetting.ALWAYS_NOTIFY;
   }
 
   public Recipient(@NonNull RecipientId id, @NonNull RecipientDetails details, boolean resolved) {
@@ -405,6 +406,17 @@ public class Recipient {
   public @NonNull String getDisplayName(@NonNull Context context) {
     String name = Util.getFirstNonEmpty(getName(context),
             getProfileName().toString(),
+            getDisplayUsername(),
+            e164,
+            email,
+            context.getString(R.string.Recipient_unknown));
+
+    return StringUtil.isolateBidi(name);
+  }
+
+  public @NonNull String getMentionDisplayName(@NonNull Context context) {
+    String name = Util.getFirstNonEmpty(localNumber ? getProfileName().toString() : getName(context),
+            localNumber ? getName(context) : getProfileName().toString(),
             getDisplayUsername(),
             e164,
             email,

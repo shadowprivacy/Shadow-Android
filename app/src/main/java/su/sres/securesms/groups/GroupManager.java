@@ -5,11 +5,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import org.signal.zkgroup.VerificationFailedException;
 import org.signal.zkgroup.groups.GroupMasterKey;
 import org.signal.zkgroup.groups.UuidCiphertext;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.groups.v2.GroupLinkPassword;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
@@ -17,6 +19,8 @@ import su.sres.securesms.recipients.RecipientId;
 
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.Util;
+import su.sres.signalservice.api.groupsv2.GroupLinkNotActiveException;
+import su.sres.storageservice.protos.groups.local.DecryptedGroupJoinInfo;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -252,6 +256,21 @@ public final class GroupManager {
       recipientIds.addAll(newMembers);
       return GroupManagerV1.updateGroup(context, groupId, recipientIds, avatar, groupRecord.getTitle(), recipientIds.size() - originalSize);
     }
+  }
+
+  /**
+   * Use to get a group's details direct from server bypassing the database.
+   * <p>
+   * Useful when you don't yet have the group in the database locally.
+   */
+  @WorkerThread
+  public static @NonNull
+  DecryptedGroupJoinInfo getGroupJoinInfoFromServer(@NonNull Context context,
+                                                    @NonNull GroupMasterKey groupMasterKey,
+                                                    @NonNull GroupLinkPassword groupLinkPassword)
+          throws IOException, VerificationFailedException, GroupLinkNotActiveException
+  {
+    return new GroupManagerV2(context).getGroupJoinInfoFromServer(groupMasterKey, groupLinkPassword);
   }
 
   public static class GroupActionResult {

@@ -11,7 +11,7 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.MessagingDatabase.SyncMessageId;
+import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -22,7 +22,7 @@ import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.multidevice.ReadMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
-import su.sres.signalservice.api.push.SignalServiceAddress;
+
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;

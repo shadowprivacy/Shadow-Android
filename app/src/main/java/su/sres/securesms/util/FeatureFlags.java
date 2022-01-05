@@ -55,7 +55,7 @@ public final class FeatureFlags {
     private static final String GROUPS_V2_OLD_2            = "android.groupsv2.2";
     private static final String GROUPS_V2                  = "android.groupsv2.3";
     private static final String GROUPS_V2_CREATE           = "android.groupsv2.create.3";
-    private static final String GROUPS_V2_CAPACITY         = "all.groupsv2.capacity";
+    private static final String GROUPS_V2_CAPACITY         = "global.groupsv2.maxGroupSize";
     private static final String INTERNAL_USER              = "android.internalUser";
     private static final String MENTIONS                   = "android.mentions";
     private static final String VERIFY_V2                  = "android.verifyV2";
@@ -225,7 +225,7 @@ public final class FeatureFlags {
 
     /** Whether or not we allow mentions send support in groups. */
     public static boolean mentions() {
-        return getBoolean(MENTIONS, false);
+        return groupsV2() && getBoolean(MENTIONS, false);
     }
 
     /** Whether or not to use the UUID in verification codes. */

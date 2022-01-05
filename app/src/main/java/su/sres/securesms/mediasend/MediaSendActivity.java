@@ -3,7 +3,10 @@ package su.sres.securesms.mediasend;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.view.ContextThemeWrapper;
+import androidx.core.util.Pair;
 import androidx.core.util.Supplier;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.Manifest;
@@ -52,6 +55,7 @@ import su.sres.securesms.conversation.ui.mentions.MentionsPickerViewModel;
 import su.sres.securesms.imageeditor.model.EditorModel;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediapreview.MediaRailAdapter;
+import su.sres.securesms.mediasend.MediaSendViewModel.HudState;
 import su.sres.securesms.mediasend.MediaSendViewModel.ViewOnceState;;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.permissions.Permissions;
@@ -67,8 +71,11 @@ import su.sres.securesms.util.IOFunction;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.SimpleTask;
+import su.sres.securesms.util.livedata.LiveDataUtil;
 import su.sres.securesms.util.views.SimpleProgressDialog;
 import su.sres.securesms.util.views.Stub;
 import su.sres.securesms.video.VideoUtil;
@@ -83,6 +90,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -121,8 +129,9 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
 
     private @Nullable LiveRecipient recipient;
 
-    private TransportOption    transport;
-    private MediaSendViewModel viewModel;
+    private TransportOption         transport;
+    private MediaSendViewModel      viewModel;
+    private MentionsPickerViewModel mentionsViewModel;
 
     private InputAwareLayout    hud;
     private View                captionAndRail;
@@ -319,8 +328,8 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
             emojiToggle.setOnClickListener(this::onEmojiToggleClicked);
         }
 
-        initViewModel();
         if (FeatureFlags.mentions()) initializeMentionsViewModel();
+        initViewModel();
         revealButton.setOnClickListener(v -> viewModel.onRevealButtonToggled());
         continueButton.setOnClickListener(v -> navigateToContactSelect());
     }
@@ -614,24 +623,34 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
     }
 
     private void initViewModel() {
+        LiveData<Pair<MediaSendViewModel.HudState, Boolean>> hudStateAndMentionShowing = LiveDataUtil.combineLatest(viewModel.getHudState(),
+                mentionsViewModel != null ? mentionsViewModel.isShowing()
+                        : new MutableLiveData<>(false),
+                Pair::new);
+
+        hudStateAndMentionShowing.observe(this, p -> {
+            HudState state                  = Objects.requireNonNull(p.first);
+            boolean  isMentionPickerShowing = Objects.requireNonNull(p.second);
+            int      captionBackground      = R.color.transparent_black_40;
+
+            if (state.getRailState() == MediaSendViewModel.RailState.VIEWABLE) {
+                captionBackground = R.color.core_grey_90;
+            } else if (state.getViewOnceState() == ViewOnceState.ENABLED) {
+                captionBackground = 0;
+            } else if (isMentionPickerShowing){
+                captionBackground = ThemeUtil.getThemedResourceId(this, R.attr.mention_picker_background_color);
+            }
+
+            captionAndRail.setBackgroundResource(captionBackground);
+
+        });
+
         viewModel.getHudState().observe(this, state -> {
             if (state == null) return;
 
             hud.setVisibility(state.isHudVisible() ? View.VISIBLE : View.GONE);
             composeContainer.setVisibility(state.isComposeVisible() ? View.VISIBLE : (state.getViewOnceState() == ViewOnceState.GONE ? View.GONE : View.INVISIBLE));
             captionText.setVisibility(state.isCaptionVisible() ? View.VISIBLE : View.GONE);
-
-            int captionBackground;
-
-            if (state.getRailState() == MediaSendViewModel.RailState.VIEWABLE) {
-                captionBackground = R.color.core_grey_90;
-            } else if (state.getViewOnceState() == ViewOnceState.ENABLED) {
-                captionBackground = 0;
-            } else {
-                captionBackground = R.color.transparent_black_40;
-            }
-
-            captionAndRail.setBackgroundResource(captionBackground);
 
             switch (state.getButtonState()) {
                 case SEND:
@@ -770,7 +789,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
             return;
         }
 
-        MentionsPickerViewModel mentionsViewModel = ViewModelProviders.of(this, new MentionsPickerViewModel.Factory()).get(MentionsPickerViewModel.class);
+        mentionsViewModel = ViewModelProviders.of(this, new MentionsPickerViewModel.Factory()).get(MentionsPickerViewModel.class);
 
         recipient.observe(this, mentionsViewModel::onRecipientChange);
         composeText.setMentionQueryChangedListener(query -> {
@@ -802,6 +821,17 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
                 replacementDisplayName = recipient.getUsername().or(replacementDisplayName);
             }
             composeText.replaceTextWithMention(replacementDisplayName, recipient.getId());
+        });
+
+        MentionPickerPlacer mentionPickerPlacer = new MentionPickerPlacer();
+
+        mentionsViewModel.isShowing().observe(this, isShowing -> {
+            if (isShowing) {
+                composeRow.getViewTreeObserver().addOnGlobalLayoutListener(mentionPickerPlacer);
+            } else {
+                composeRow.getViewTreeObserver().removeOnGlobalLayoutListener(mentionPickerPlacer);
+            }
+            mentionPickerPlacer.onGlobalLayout();
         });
     }
 
@@ -983,5 +1013,35 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
 
         @Override
         public void onFocusChange(View v, boolean hasFocus) {}
+    }
+
+    private class MentionPickerPlacer implements ViewTreeObserver.OnGlobalLayoutListener {
+
+        private final int       composeMargin;
+        private final ViewGroup parent;
+        private final Rect      composeCoordinates;
+        private       int       previousBottomMargin;
+
+        public MentionPickerPlacer() {
+            parent             = findViewById(android.R.id.content);
+            composeMargin      = ViewUtil.dpToPx(12);
+            composeCoordinates = new Rect();
+        }
+
+        @Override
+        public void onGlobalLayout() {
+            composeRow.getDrawingRect(composeCoordinates);
+            parent.offsetDescendantRectToMyCoords(composeRow, composeCoordinates);
+
+            int marginBottom = parent.getHeight() - composeCoordinates.top + composeMargin;
+
+            if (marginBottom != previousBottomMargin) {
+                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) mentionSuggestions.get().getLayoutParams();
+                params.setMargins(0, 0, 0, marginBottom);
+                mentionSuggestions.get().setLayoutParams(params);
+
+                previousBottomMargin = marginBottom;
+            }
+        }
     }
 }

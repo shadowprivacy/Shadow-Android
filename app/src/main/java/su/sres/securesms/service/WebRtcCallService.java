@@ -12,7 +12,6 @@ import android.os.IBinder;
 import android.os.ResultReceiver;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
-import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -59,6 +58,8 @@ import su.sres.securesms.webrtc.locks.LockManager;
 import org.webrtc.EglBase;
 import org.webrtc.PeerConnection;
 import org.whispersystems.libsignal.IdentityKey;
+import org.whispersystems.libsignal.util.Pair;
+
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
@@ -407,7 +408,7 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
       return;
     }
 
-    if (remotePeer.getRecipient() == null || !RecipientUtil.isMessageRequestAccepted(getApplicationContext(), remotePeer.getRecipient())) {
+    if (remotePeer.getRecipient() == null || !RecipientUtil.isCallRequestAccepted(getApplicationContext(), remotePeer.getRecipient())) {
       Log.i(TAG, "handleReceivedOffer(): Caller is untrusted.");
       intent.putExtra(EXTRA_BROADCAST, true);
       intent.putExtra(EXTRA_HANGUP_TYPE, HangupMessage.Type.NEED_PERMISSION.getCode());
@@ -462,7 +463,7 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
 
   private void insertMissedCall(@NonNull RemotePeer remotePeer, boolean signal) {
     Pair<Long, Long> messageAndThreadId = DatabaseFactory.getSmsDatabase(this).insertMissedCall(remotePeer.getId());
-    ApplicationDependencies.getMessageNotifier().updateNotification(this, messageAndThreadId.second, signal);
+    ApplicationDependencies.getMessageNotifier().updateNotification(this, messageAndThreadId.second(), signal);
   }
 
   private void handleDenyCall(Intent intent) {

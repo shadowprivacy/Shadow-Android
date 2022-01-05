@@ -27,8 +27,8 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.attachments.DatabaseAttachment;
-import su.sres.securesms.contacts.sync.DirectoryHelper;
-import su.sres.securesms.database.MessagingDatabase.SyncMessageId;
+import su.sres.securesms.contactshare.Contact;
+import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.model.SmsMessageRecord;
@@ -40,14 +40,14 @@ import su.sres.securesms.jobs.AttachmentUploadJob;
 import su.sres.securesms.jobs.ProfileKeySendJob;
 import su.sres.securesms.jobs.RemoteDeleteSendJob;
 import su.sres.securesms.jobs.ResumableUploadSpecJob;
-import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MessagingDatabase;
+import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.SmsDatabase;
@@ -72,6 +72,7 @@ import su.sres.securesms.util.ParcelUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import org.greenrobot.eventbus.EventBus;
+import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
 
 import java.io.IOException;
@@ -79,6 +80,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 public class MessageSender {
@@ -99,9 +101,9 @@ public class MessageSender {
                           final boolean forceSms,
                           final SmsDatabase.InsertListener insertListener)
   {
-    SmsDatabase database    = DatabaseFactory.getSmsDatabase(context);
-    Recipient   recipient   = message.getRecipient();
-    boolean     keyExchange = message.isKeyExchange();
+    MessageDatabase database    = DatabaseFactory.getSmsDatabase(context);
+    Recipient       recipient   = message.getRecipient();
+    boolean         keyExchange = message.isKeyExchange();
 
     long allocatedThreadId = DatabaseFactory.getThreadDatabase(context).getOrCreateValidThreadId(recipient, threadId);
     long messageId         = database.insertMessageOutbox(allocatedThreadId, message, forceSms, System.currentTimeMillis(), insertListener);
@@ -284,7 +286,7 @@ public class MessageSender {
   }
 
   public static void sendNewReaction(@NonNull Context context, long messageId, boolean isMms, @NonNull String emoji) {
-    MessagingDatabase db       = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase db       = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
     ReactionRecord    reaction = new ReactionRecord(emoji, Recipient.self().getId(), System.currentTimeMillis(), System.currentTimeMillis());
 
     db.addReaction(messageId, reaction);
@@ -298,7 +300,7 @@ public class MessageSender {
   }
 
   public static void sendReactionRemoval(@NonNull Context context, long messageId, boolean isMms, @NonNull ReactionRecord reaction) {
-    MessagingDatabase db = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase db = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
 
     db.deleteReaction(messageId, reaction.getAuthor());
 
@@ -311,7 +313,7 @@ public class MessageSender {
   }
 
   public static void sendRemoteDelete(@NonNull Context context, long messageId, boolean isMms) {
-    MessagingDatabase db = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase db = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
     db.markAsRemoteDelete(messageId);
     db.markAsSending(messageId);
 
@@ -473,12 +475,26 @@ public class MessageSender {
       MmsSmsDatabase         mmsSmsDatabase     = DatabaseFactory.getMmsSmsDatabase(context);
       OutgoingMediaMessage   message            = mmsDatabase.getOutgoingMessage(messageId);
       SyncMessageId          syncId             = new SyncMessageId(Recipient.self().getId(), message.getSentTimeMillis());
+      List<Attachment>       attachments        = new LinkedList<>();
 
-      List<AttachmentCompressionJob> compressionJobs = Stream.of(message.getAttachments())
+      attachments.addAll(message.getAttachments());
+
+      attachments.addAll(Stream.of(message.getLinkPreviews())
+              .map(LinkPreview::getThumbnail)
+              .filter(Optional::isPresent)
+              .map(Optional::get)
+              .toList());
+
+      attachments.addAll(Stream.of(message.getSharedContacts())
+              .map(Contact::getAvatar).withoutNulls()
+              .map(Contact.Avatar::getAttachment).withoutNulls()
+              .toList());
+
+      List<AttachmentCompressionJob> compressionJobs = Stream.of(attachments)
               .map(a -> AttachmentCompressionJob.fromAttachment((DatabaseAttachment) a, false, -1))
               .toList();
 
-      List<AttachmentMarkUploadedJob> fakeUploadJobs = Stream.of(message.getAttachments())
+      List<AttachmentMarkUploadedJob> fakeUploadJobs = Stream.of(attachments)
               .map(a -> new AttachmentMarkUploadedJob(messageId, ((DatabaseAttachment) a).getAttachmentId()))
               .toList();
 
@@ -504,9 +520,9 @@ public class MessageSender {
   private static void sendLocalTextSelf(Context context, long messageId) {
     try {
       ExpiringMessageManager expirationManager = ApplicationContext.getInstance(context).getExpiringMessageManager();
-      SmsDatabase            smsDatabase       = DatabaseFactory.getSmsDatabase(context);
+      MessageDatabase        smsDatabase       = DatabaseFactory.getSmsDatabase(context);
       MmsSmsDatabase         mmsSmsDatabase    = DatabaseFactory.getMmsSmsDatabase(context);
-      SmsMessageRecord       message           = smsDatabase.getMessageRecord(messageId);
+      SmsMessageRecord       message           = smsDatabase.getSmsMessage(messageId);
       SyncMessageId          syncId            = new SyncMessageId(Recipient.self().getId(), message.getDateSent());
 
       smsDatabase.markAsSent(messageId, true);

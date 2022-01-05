@@ -11,7 +11,7 @@ import com.annimon.stream.Stream;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.logsubmit.util.Scrubber;
-import su.sres.securesms.net.UserAgentInterceptor;
+import su.sres.securesms.net.StandardUserAgentInterceptor;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.push.SignalServiceTrustStore;
 import su.sres.securesms.util.concurrent.SignalExecutors;
@@ -108,7 +108,7 @@ public class SubmitDebugLogRepository {
             context.init(null, trustManagers, null);
 
             OkHttpClient client   = new OkHttpClient.Builder()
-                    .addInterceptor(new UserAgentInterceptor())
+                    .addInterceptor(new StandardUserAgentInterceptor())
                     .dns(SignalServiceNetworkAccess.DNS)
                     .sslSocketFactory(new Tls12SocketFactory(context.getSocketFactory()), (X509TrustManager)trustManagers[0])
                     .build();

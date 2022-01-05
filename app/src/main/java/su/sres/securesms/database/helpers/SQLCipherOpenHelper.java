@@ -44,8 +44,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int QUOTE_CLEANUP                    = 65;
   private static final int BORDERLESS                       = 66;
   private static final int MENTIONS                         = 67;
+  private static final int PINNED_CONVERSATIONS_MENTION_GLOBAL_SETTING_MIGRATION_UNKNOWN_STORAGE_FIELDS = 68;
 
-  private static final int    DATABASE_VERSION = 67;
+  private static final int    DATABASE_VERSION = 68;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -174,6 +175,21 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL("ALTER TABLE mms ADD COLUMN mentions_self INTEGER DEFAULT 0");
 
         db.execSQL("ALTER TABLE recipient ADD COLUMN mention_setting INTEGER DEFAULT 0");
+      }
+
+      if (oldVersion < PINNED_CONVERSATIONS_MENTION_GLOBAL_SETTING_MIGRATION_UNKNOWN_STORAGE_FIELDS) {
+        db.execSQL("ALTER TABLE thread ADD COLUMN pinned INTEGER DEFAULT 0");
+        db.execSQL("CREATE INDEX IF NOT EXISTS thread_pinned_index ON thread (pinned)");
+
+        ContentValues updateAlways = new ContentValues();
+        updateAlways.put("mention_setting", 0);
+        db.update("recipient", updateAlways, "mention_setting = 1", null);
+
+        ContentValues updateNever = new ContentValues();
+        updateNever.put("mention_setting", 1);
+        db.update("recipient", updateNever, "mention_setting = 2", null);
+
+        db.execSQL("ALTER TABLE recipient ADD COLUMN storage_proto TEXT DEFAULT NULL");
       }
 
       db.setTransactionSuccessful();

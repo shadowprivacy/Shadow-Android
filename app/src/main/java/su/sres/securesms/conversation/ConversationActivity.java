@@ -165,7 +165,7 @@ import su.sres.securesms.database.DraftDatabase.Drafts;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
 import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
-import su.sres.securesms.database.MessagingDatabase.MarkedMessageInfo;
+import su.sres.securesms.database.MessageDatabase.MarkedMessageInfo;
 import su.sres.securesms.database.MmsSmsColumns.Types;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.RegisteredState;
@@ -305,6 +305,8 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
     public static final String SAFETY_NUMBER_DIALOG = "SAFETY_NUMBER";
 
+    private static final String STATE_REACT_WITH_ANY_PAGE = "STATE_REACT_WITH_ANY_PAGE";
+
     public static final String RECIPIENT_EXTRA                   = "recipient_id";
     public static final String THREAD_ID_EXTRA                   = "thread_id";
     public static final String TEXT_EXTRA                        = "draft_text";
@@ -370,6 +372,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     private LiveRecipient recipient;
     private long threadId;
     private int distributionType;
+    private int           reactWithAnyEmojiStartPage;
     private boolean       isSecureText;
     private boolean       isDefaultSms                  = true;
     private boolean       isMmsEnabled                  = true;
@@ -475,6 +478,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
             return;
         }
 
+        reactWithAnyEmojiStartPage = 0;
         if (!Util.isEmpty(composeText) || attachmentManager.isAttachmentPresent() || inputPanel.getQuote().isPresent()) {
             saveDraft();
             attachmentManager.clear(glideRequests, false);
@@ -698,6 +702,20 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
                 break;
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putInt(STATE_REACT_WITH_ANY_PAGE, reactWithAnyEmojiStartPage);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        reactWithAnyEmojiStartPage = savedInstanceState.getInt(STATE_REACT_WITH_ANY_PAGE, 0);
     }
 
     private void handleImageFromDeviceCameraApp() {
@@ -1859,7 +1877,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     private void initializeLinkPreviewObserver() {
         linkPreviewViewModel = ViewModelProviders.of(this, new LinkPreviewViewModel.Factory(new LinkPreviewRepository())).get(LinkPreviewViewModel.class);
 
-        if (!TextSecurePreferences.isLinkPreviewsEnabled(this)) {
+        if (!SignalStore.settings().isLinkPreviewsEnabled()) {
             linkPreviewViewModel.onUserCancel();
             return;
         }
@@ -1870,6 +1888,9 @@ public class ConversationActivity extends PassphraseRequiredActivity
             if (previewState.isLoading()) {
                 Log.d(TAG, "Loading link preview.");
                 inputPanel.setLinkPreviewLoading();
+            } else if (previewState.hasLinks() && !previewState.getLinkPreview().isPresent()) {
+                Log.d(TAG, "No preview found.");
+                inputPanel.setLinkPreviewNoPreview(previewState.getError());
             } else {
                 Log.d(TAG, "Setting link preview: " + previewState.getLinkPreview().isPresent());
                 inputPanel.setLinkPreview(glideRequests, previewState.getLinkPreview());
@@ -1938,7 +1959,12 @@ public class ConversationActivity extends PassphraseRequiredActivity
     private void initializeMentionsViewModel() {
         MentionsPickerViewModel mentionsViewModel = ViewModelProviders.of(this, new MentionsPickerViewModel.Factory()).get(MentionsPickerViewModel.class);
 
-        recipient.observe(this, mentionsViewModel::onRecipientChange);
+        recipient.observe(this, r -> {
+            if (r.isPushV2Group() && !mentionsSuggestions.resolved()) {
+                mentionsSuggestions.get();
+            }
+            mentionsViewModel.onRecipientChange(r);
+        });
         composeText.setMentionQueryChangedListener(query -> {
             if (getRecipient().isPushV2Group()) {
                 if (!mentionsSuggestions.resolved()) {
@@ -2025,7 +2051,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
             } else {
                 reactionOverlay.hideAllButMask();
 
-                ReactWithAnyEmojiBottomSheetDialogFragment.createForMessageRecord(messageRecord)
+                ReactWithAnyEmojiBottomSheetDialogFragment.createForMessageRecord(messageRecord, reactWithAnyEmojiStartPage)
                         .show(getSupportFragmentManager(), "BOTTOM");
             }
         }
@@ -2034,6 +2060,11 @@ public class ConversationActivity extends PassphraseRequiredActivity
         public void onReactWithAnyEmojiDialogDismissed() {
             reactionOverlay.hideMask();
         }
+
+    @Override
+    public void onReactWithAnyEmojiPageChanged(int page) {
+        reactWithAnyEmojiStartPage = page;
+    }
 
     @Override
     public void onSearchMoveUpPressed() {
@@ -2400,6 +2431,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         attachmentManager.cleanup();
 
         updateLinkPreviewState();
+        linkPreviewViewModel.onSend();
     }
 
     private void sendMessage() {
@@ -2435,7 +2467,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
             if ((recipient.isMmsGroup() || recipient.getEmail().isPresent()) && !isMmsEnabled) {
                 handleManualMmsRequired();
-            } else if (!forceSms && (identityRecords.isUnverified() || identityRecords.isUntrusted())) {
+            } else if (!forceSms && (identityRecords.isUnverified(true) || identityRecords.isUntrusted(true))) {
                 handleRecentSafetyNumberChange();
             } else if (isMediaMessage) {
                 sendMediaMessage(forceSms, expiresIn, false, subscriptionId, initiating);
@@ -2628,7 +2660,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         } else {
             buttonToggle.display(sendButton);
             quickAttachmentToggle.hide();
-            if (!attachmentManager.isAttachmentPresent() && !linkPreviewViewModel.hasLinkPreview()) {
+            if (!attachmentManager.isAttachmentPresent() && !linkPreviewViewModel.hasLinkPreviewUi()) {
                 inlineAttachmentToggle.show();
             } else {
                 inlineAttachmentToggle.hide();
@@ -2637,7 +2669,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     private void updateLinkPreviewState() {
-        if (TextSecurePreferences.isLinkPreviewsEnabled(this) && !sendButton.getSelectedTransport().isSms() && !attachmentManager.isAttachmentPresent()) {
+        if (SignalStore.settings().isLinkPreviewsEnabled() && !sendButton.getSelectedTransport().isSms() && !attachmentManager.isAttachmentPresent()) {
             linkPreviewViewModel.onEnabled();
             linkPreviewViewModel.onTextChanged(this, composeText.getTextTrimmed().toString(), composeText.getSelectionStart(), composeText.getSelectionEnd());
         } else {

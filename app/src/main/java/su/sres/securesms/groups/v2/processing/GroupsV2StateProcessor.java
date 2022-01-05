@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobs.RequestGroupV2InfoJob;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -407,7 +408,7 @@ public final class GroupsV2StateProcessor {
                     Log.w(TAG, e);
                 }
             } else {
-                SmsDatabase                smsDatabase  = DatabaseFactory.getSmsDatabase(context);
+                MessageDatabase smsDatabase  = DatabaseFactory.getSmsDatabase(context);
                 RecipientId                sender       = RecipientId.from(editor.get(), null);
                 IncomingTextMessage        incoming     = new IncomingTextMessage(sender, -1, timestamp, timestamp, "", Optional.of(groupId), 0, false);
                 IncomingGroupUpdateMessage groupMessage = new IncomingGroupUpdateMessage(incoming, decryptedGroupV2Context);

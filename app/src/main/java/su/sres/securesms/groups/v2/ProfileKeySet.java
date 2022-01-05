@@ -3,6 +3,8 @@ package su.sres.securesms.groups.v2;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.protobuf.ByteString;
+
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 import su.sres.storageservice.protos.groups.local.DecryptedMember;
@@ -10,6 +12,7 @@ import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.logging.Log;
 import su.sres.signalservice.api.util.UuidUtil;
+import su.sres.storageservice.protos.groups.local.DecryptedRequestingMember;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -50,6 +53,10 @@ public final class ProfileKeySet {
         for (DecryptedMember member : change.getModifiedProfileKeysList()) {
             addMemberKey(member, editor);
         }
+
+        for (DecryptedRequestingMember member : change.getNewRequestingMembersList()) {
+            addMemberKey(editor, member.getUuid(), member.getProfileKey());
+        }
     }
 
     /**
@@ -66,7 +73,14 @@ public final class ProfileKeySet {
     }
 
     private void addMemberKey(@NonNull DecryptedMember member, @Nullable UUID changeSource) {
-        UUID memberUuid = UuidUtil.fromByteString(member.getUuid());
+        addMemberKey(changeSource, member.getUuid(), member.getProfileKey());
+    }
+
+    private void addMemberKey(@Nullable UUID changeSource,
+                              @NonNull ByteString memberUuidBytes,
+                              @NonNull ByteString profileKeyBytes)
+    {
+        UUID memberUuid = UuidUtil.fromByteString(memberUuidBytes);
         if (UuidUtil.UNKNOWN_UUID.equals(memberUuid)) {
             Log.w(TAG, "Seen unknown member UUID");
             return;
@@ -74,7 +88,7 @@ public final class ProfileKeySet {
 
         ProfileKey profileKey;
         try {
-            profileKey = new ProfileKey(member.getProfileKey().toByteArray());
+            profileKey = new ProfileKey(profileKeyBytes.toByteArray());
         } catch (InvalidInputException e) {
             Log.w(TAG, "Bad profile key in group");
             return;
