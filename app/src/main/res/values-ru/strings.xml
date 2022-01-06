@@ -130,6 +130,16 @@
   <string name="CameraContacts_cant_find_who_youre_looking_for">Не можете найти нужного человека?</string>
   <string name="CameraContacts_invite_a_contact_to_join_signal">Пригласите контакт в Shadow</string>
   <string name="CameraContacts__menu_search">Поиск</string>
+
+  <!-- CertificatePull -->
+
+  <string name="CertificatePull_caution">Использовать с осторожностью</string>
+  <string name="CertificatePull_alert_builder_title">Загрузка сертификатов</string>
+  <string name="CertificatePull_alert_builder_warning">С сервера будут загружены системные сертификаты. Все локальные сертификаты будут перезаписаны. Вы уверены?</string>
+  <string name="CertificatePull_proceed">Продолжить</string>
+  <string name="CertificatePull_job_failure">Ошибка загрузки сертификатов, попробуйте позднее</string>
+  <string name="CertificatePull_job_success">Сертификаты успешно загружены</string>
+
   <!--ClearProfileActivity-->
   <string name="ClearProfileActivity_remove">Удалить</string>
   <string name="ClearProfileActivity_remove_profile_photo">Удалить фото профиля?</string>
@@ -1884,6 +1894,7 @@
   <string name="preferences__free_private_messages_and_calls">Бесплатные приватные сообщения и звонки пользователям Shadow</string>
   <string name="preferences__submit_debug_log">Отправить журнал отладки</string>
   <string name="preferences__license_info">Сведения об активации</string>
+  <string name="preferences__cert_pull">Загрузка сертификатов</string>
   <string name="preferences__support_wifi_calling">Совместимость с Wi-Fi звонками</string>
   <string name="preferences__enable_if_your_device_supports_sms_mms_delivery_over_wifi">Включите, если ваше устройство отправляет и принимает SMS и MMS через WiFi (включайте, только если «Звонки по WiFi» включены на вашем устройстве)</string>
   <string name="preferences__incognito_keyboard">Инкогнито-клавиатура</string>

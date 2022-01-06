@@ -16,8 +16,10 @@ import androidx.preference.Preference;
 
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.jobs.CertificatePullJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
+
 import android.widget.Toast;
 
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -40,6 +42,7 @@ import java.io.IOException;
 public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
   private static final String TAG = AdvancedPreferenceFragment.class.getSimpleName();
 
+  private static final String CERT_PULL             = "pref_cert_pull";
   private static final String INTERNAL_PREF         = "pref_internal";
   private static final String LICENSE_INFO          = "pref_license_info";
   private static final String PUSH_MESSAGING_PREF   = "pref_toggle_push_messaging";
@@ -76,6 +79,10 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
     Preference licenseInfo = this.findPreference(LICENSE_INFO);
     licenseInfo.setOnPreferenceClickListener(new LicenseInfoListener());
     licenseInfo.setSummary(R.string.LicenseInfoActivity_summary);
+
+    Preference certPull = this.findPreference(CERT_PULL);
+    certPull.setOnPreferenceClickListener(new CertPullListener());
+    certPull.setSummary(R.string.CertificatePull_caution);
   }
 
   @Override
@@ -254,6 +261,27 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
       }
 
       return false;
+    }
+  }
+
+  private class CertPullListener implements Preference.OnPreferenceClickListener {
+    @Override
+    public boolean onPreferenceClick(Preference preference) {
+
+      AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
+
+      alertDialogBuilder.setTitle(R.string.CertificatePull_alert_builder_title);
+      alertDialogBuilder.setMessage(R.string.CertificatePull_alert_builder_warning);
+      alertDialogBuilder.setPositiveButton(R.string.CertificatePull_proceed, new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int id) {
+          CertificatePullJob.scheduleIfNecessary();
+        }
+      });
+      alertDialogBuilder.setCancelable(true);
+      alertDialogBuilder.show();
+
+      return true;
     }
   }
 }

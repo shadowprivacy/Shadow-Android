@@ -19,6 +19,10 @@
                 android:title="@string/preferences__license_info"
                 android:persistent="false"/>
 
+    <Preference android:key="pref_cert_pull"
+        android:title="@string/preferences__cert_pull"
+        android:persistent="false"/>
+
     <Preference android:key="pref_internal"
         android:title="@string/preferences__internal_preferences"
         app:isPreferenceVisible="false" />
