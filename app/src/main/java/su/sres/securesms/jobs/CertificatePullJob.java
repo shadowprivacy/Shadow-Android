@@ -163,6 +163,8 @@ public class CertificatePullJob extends BaseJob {
                         shadowStore.store(fos, shadowStorePassword);
                     }
 
+                    Toast.makeText(context, R.string.CertificatePull_job_success, Toast.LENGTH_LONG).show();
+
                 } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException e) {
                     Log.w(TAG, "Exception occurred while pulling system certificates");
                 }
@@ -172,8 +174,6 @@ public class CertificatePullJob extends BaseJob {
             }
 
             SignalStore.misc().setLastCertRefreshTime(System.currentTimeMillis());
-
-            Toast.makeText(context, R.string.CertificatePull_job_success, Toast.LENGTH_LONG).show();
 
         } catch (IOException e) {
             Log.w(TAG, "IOException while trying to pull certificates. Skipping.");

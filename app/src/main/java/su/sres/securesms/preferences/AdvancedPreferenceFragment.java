@@ -278,6 +278,12 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
           CertificatePullJob.scheduleIfNecessary();
         }
       });
+      alertDialogBuilder.setNeutralButton(R.string.CertificatePull_cancel, new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int id) {
+          dialog.dismiss();
+        }
+      });
       alertDialogBuilder.setCancelable(true);
       alertDialogBuilder.show();
 

@@ -144,6 +144,7 @@
     <string name="CertificatePull_caution">Use with caution</string>
     <string name="CertificatePull_alert_builder_title">Certificate Pull</string>
     <string name="CertificatePull_alert_builder_warning">This will pull current system certificates from the server. All local certificates will be rewritten. Are you sure?</string>
+    <string name="CertificatePull_cancel">Cancel</string>
     <string name="CertificatePull_proceed">Proceed</string>
     <string name="CertificatePull_job_failure">Certificate pull failed, please try later</string>
     <string name="CertificatePull_job_success">Certificate pull success</string>

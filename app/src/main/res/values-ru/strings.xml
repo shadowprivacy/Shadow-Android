@@ -136,6 +136,7 @@
   <string name="CertificatePull_caution">Использовать с осторожностью</string>
   <string name="CertificatePull_alert_builder_title">Загрузка сертификатов</string>
   <string name="CertificatePull_alert_builder_warning">С сервера будут загружены системные сертификаты. Все локальные сертификаты будут перезаписаны. Вы уверены?</string>
+  <string name="CertificatePull_cancel">Отмена</string>
   <string name="CertificatePull_proceed">Продолжить</string>
   <string name="CertificatePull_job_failure">Ошибка загрузки сертификатов, попробуйте позднее</string>
   <string name="CertificatePull_job_success">Сертификаты успешно загружены</string>
