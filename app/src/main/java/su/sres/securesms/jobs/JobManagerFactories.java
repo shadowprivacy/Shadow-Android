@@ -51,6 +51,7 @@ public final class JobManagerFactories {
             put(AttachmentCompressionJob.KEY,              new AttachmentCompressionJob.Factory());
             put(AvatarGroupsV1DownloadJob.KEY,             new AvatarGroupsV1DownloadJob.Factory());
             put(AvatarGroupsV2DownloadJob.KEY,             new AvatarGroupsV2DownloadJob.Factory());
+            put(CertificatePullJob.KEY,                    new CertificatePullJob.Factory());
             put(CertificateRefreshJob.KEY,                 new CertificateRefreshJob.Factory());
             put(CleanPreKeysJob.KEY,                       new CleanPreKeysJob.Factory());
             put(CreateSignedPreKeyJob.KEY,                 new CreateSignedPreKeyJob.Factory());
