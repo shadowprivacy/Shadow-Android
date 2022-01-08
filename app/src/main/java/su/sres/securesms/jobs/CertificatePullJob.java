@@ -1,6 +1,8 @@
 package su.sres.securesms.jobs;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -45,11 +47,10 @@ public class CertificatePullJob extends BaseJob {
             "storage_b"
     };
 
-    private final Context                     context;
+    private final Context context;
     private final SignalServiceAccountManager accountManager;
 
-    public CertificatePullJob()
-    {
+    public CertificatePullJob() {
         this(new Job.Parameters.Builder()
                 .setQueue("CertificatePullJob")
                 .addConstraint(NetworkConstraint.KEY)
@@ -63,7 +64,7 @@ public class CertificatePullJob extends BaseJob {
     private CertificatePullJob(@NonNull Job.Parameters parameters) {
         super(parameters);
 
-        this.context        = ApplicationDependencies.getApplication();
+        this.context = ApplicationDependencies.getApplication();
         this.accountManager = ApplicationDependencies.getSignalServiceAccountManager();
     }
 
@@ -74,7 +75,8 @@ public class CertificatePullJob extends BaseJob {
     }
 
     @Override
-    public @NonNull String getFactoryKey() {
+    public @NonNull
+    String getFactoryKey() {
         return KEY;
     }
 
@@ -91,8 +93,8 @@ public class CertificatePullJob extends BaseJob {
     }
 
     public static void scheduleIfNecessary() {
-            Log.i(TAG, "Scheduling a certificate pull");
-            ApplicationDependencies.getJobManager().add(new CertificatePullJob());
+        Log.i(TAG, "Scheduling a certificate pull");
+        ApplicationDependencies.getJobManager().add(new CertificatePullJob());
     }
 
     private void performPull() throws IOException {
@@ -108,7 +110,7 @@ public class CertificatePullJob extends BaseJob {
 
                 SystemCertificates receivedCerts = accountManager.getSystemCerts();
 
-                byte [][] receivedCertBytes = {
+                byte[][] receivedCertBytes = {
                         receivedCerts.getCloudCertA(),
                         receivedCerts.getCloudCertB(),
                         receivedCerts.getShadowCertA(),
@@ -129,7 +131,7 @@ public class CertificatePullJob extends BaseJob {
 
                     for (int i = 0; i < 6; i++) {
 
-                        if (receivedCertBytes[i] != null ) {
+                        if (receivedCertBytes[i] != null) {
 
                             InputStream certInputStream = new ByteArrayInputStream(receivedCertBytes[i]);
                             X509Certificate cert = (X509Certificate) certFactory.generateCertificate(certInputStream);
@@ -147,11 +149,11 @@ public class CertificatePullJob extends BaseJob {
 
                         if (shadowStore.containsAlias(CERT_ALIASES[i])) {
 
-                                // removing certs which are not present in the most current set
-                                if (receivedCertBytes[i] == null) {
-                                    Log.i(TAG, CERT_ALIASES[i] + " not present in the most current set. Removing.");
-                                    shadowStore.deleteEntry(CERT_ALIASES[i]);
-                                }
+                            // removing certs which are not present in the most current set
+                            if (receivedCertBytes[i] == null) {
+                                Log.i(TAG, CERT_ALIASES[i] + " not present in the most current set. Removing.");
+                                shadowStore.deleteEntry(CERT_ALIASES[i]);
+                            }
                         }
                     }
 
@@ -163,7 +165,7 @@ public class CertificatePullJob extends BaseJob {
                         shadowStore.store(fos, shadowStorePassword);
                     }
 
-                    Toast.makeText(context, R.string.CertificatePull_job_success, Toast.LENGTH_LONG).show();
+                    notifyUser(R.string.CertificatePull_job_success);
 
                 } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException e) {
                     Log.w(TAG, "Exception occurred while pulling system certificates");
@@ -177,7 +179,7 @@ public class CertificatePullJob extends BaseJob {
 
         } catch (IOException e) {
             Log.w(TAG, "IOException while trying to pull certificates. Skipping.");
-            Toast.makeText(context, R.string.CertificatePull_job_failure, Toast.LENGTH_LONG).show();
+            notifyUser(R.string.CertificatePull_job_failure);
             throw e;
         }
     }
@@ -187,10 +189,15 @@ public class CertificatePullJob extends BaseJob {
         Toast.makeText(context, R.string.CertificatePull_job_failure, Toast.LENGTH_LONG).show();
     }
 
+    private void notifyUser(int message) {
+        new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(context, message, Toast.LENGTH_LONG).show());
+    }
+
     public static final class Factory implements Job.Factory<CertificatePullJob> {
 
         @Override
-        public @NonNull CertificatePullJob create(@NonNull Parameters parameters, @NonNull Data data) {
+        public @NonNull
+        CertificatePullJob create(@NonNull Parameters parameters, @NonNull Data data) {
             return new CertificatePullJob(parameters);
         }
     }
