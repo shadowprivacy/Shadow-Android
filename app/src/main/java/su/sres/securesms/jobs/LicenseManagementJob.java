@@ -186,6 +186,8 @@ public class LicenseManagementJob extends BaseJob {
                             Log.i(TAG, "License validation success. Setting licensed as true");
                             config.setLicensed(true);
                         }
+                    } else {
+                        Log.i(TAG, "License allocation failure");
                     }
                 }
             } else {
