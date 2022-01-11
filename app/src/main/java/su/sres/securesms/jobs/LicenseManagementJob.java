@@ -214,10 +214,17 @@ public class LicenseManagementJob extends BaseJob {
 
             } else {
                 // We're not licensed. A valid case why that would be is that the license was not yet valid on previous check. But it might be now.
+                // Another possible cornercase is when the license was successfully allocated on the server, but the client failed to get a response
                 if(status == LicenseStatus.OK) {
 
+                    // check for the "unknown" allocation
+                    if(validate(license, psid)) {
+                        Log.i(TAG, "Late validation success. Setting the app as licensed");
+                        config.setLicensed(true);
+                    }
+
                     if(allocate(license, psid) && validate(license, psid)) {
-                        Log.i(TAG, "License web-check success. Setting the app as licensed");
+                        Log.i(TAG, "Late allocation success. Setting the app as licensed");
                         config.setLicensed(true);
                     }
                 } else if(status != LicenseStatus.NYV) {
