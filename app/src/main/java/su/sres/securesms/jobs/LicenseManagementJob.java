@@ -183,11 +183,17 @@ public class LicenseManagementJob extends BaseJob {
                     if (allocate(license, psid)) {
                         Log.i(TAG, "License allocation success");
                         if(validate(license, psid)) {
-                            Log.i(TAG, "License validation success. Setting licensed as true");
+                            Log.i(TAG, "New license validation success. Setting licensed as true");
                             config.setLicensed(true);
                         }
                     } else {
-                        Log.i(TAG, "License allocation failure");
+                        // maybe we're after app reinstall, so let's try to just validate the existing license
+                        if(validate(license, psid)) {
+                            Log.i(TAG, "Existing license validation success. Setting licensed as true");
+                            config.setLicensed(true);
+                        } else {
+                            Log.i(TAG, "License allocation failure");
+                        }
                     }
                 }
             } else {
