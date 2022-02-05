@@ -1492,11 +1492,13 @@ public class ConversationActivity extends PassphraseRequiredActivity
         groupViewModel.getGroupActiveState().observe(this, state -> {
             boolean inactivePushGroup = state != null && isPushGroupConversation() && !state.isActiveGroup();
             boolean enabled = !inactivePushGroup;
+            boolean activated = SignalStore.serviceConfigurationValues().isLicensed();
+            boolean self = recipient.get().isLocalNumber();
             noLongerMemberBanner.setVisibility(enabled ? View.GONE : View.VISIBLE);
             inputPanel.setVisibility(enabled ? View.VISIBLE : View.GONE);
-            inputPanel.setEnabled(enabled);
-            sendButton.setEnabled(enabled);
-            attachButton.setEnabled(enabled);
+            inputPanel.setEnabled(enabled && (activated || self));
+            sendButton.setEnabled(enabled && (activated || self));
+            attachButton.setEnabled(enabled && (activated || self));
         });
     }
 
@@ -2014,9 +2016,12 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
     @Override
     public void onReactionSelected(MessageRecord messageRecord, String emoji) {
+
         final Context context = getApplicationContext();
 
         reactionOverlay.hide();
+
+        if (!SignalStore.serviceConfigurationValues().isLicensed()) return;
 
         SignalExecutors.BOUNDED.execute(() -> {
             ReactionRecord oldRecord = Stream.of(messageRecord.getReactions())

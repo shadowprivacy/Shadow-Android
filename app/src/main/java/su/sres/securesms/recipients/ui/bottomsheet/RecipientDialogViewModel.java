@@ -113,7 +113,7 @@ final class RecipientDialogViewModel extends ViewModel {
     }
 
     void onSecureVideoCallClicked(@NonNull FragmentActivity activity) {
-        recipientDialogRepository.getRecipient(recipient -> CommunicationActions.startVideoCall(activity, recipient, true));
+        recipientDialogRepository.getRecipient(recipient -> CommunicationActions.startVideoCall(activity, recipient, SignalStore.serviceConfigurationValues().isLicensed()));
     }
 
     void onBlockClicked(@NonNull FragmentActivity activity) {

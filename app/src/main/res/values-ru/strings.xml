@@ -1094,8 +1094,8 @@
   <string name="RedPhone_connected">Соединено</string>
   <string name="RedPhone_recipient_unavailable">Собеседник недоступен</string>
   <string name="RedPhone_network_failed">Ошибка сети!</string>
-  <string name="RedPhone_number_not_registered">Номер не зарегистрирован!</string>
-  <string name="RedPhone_the_number_you_dialed_does_not_support_secure_voice">Вызываемый номер не поддерживает защищённые звонки!</string>
+  <string name="RedPhone_number_not_registered">Пользователь отключен!</string>
+  <string name="RedPhone_the_number_you_dialed_does_not_support_secure_voice">Вызываемый пользователь не поддерживает защищённые звонки!</string>
   <string name="RedPhone_got_it">Понятно</string>
 
     <!--WebRtcCallActivity-->
