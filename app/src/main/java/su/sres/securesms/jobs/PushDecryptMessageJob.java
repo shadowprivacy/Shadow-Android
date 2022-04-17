@@ -249,6 +249,17 @@ public final class PushDecryptMessageJob extends BaseJob {
                 groupId);
     }
 
+    private static PushProcessMessageJob.ExceptionMetadata toExceptionMetadata(@NonNull ProtocolDuplicateMessageException e) throws NoSenderException {
+        String sender = e.getSender();
+        int senderDevice = e.getSenderDevice();
+
+        if (sender == null) throw new NoSenderException();
+
+        Log.w(TAG, String.format("Sender of the duplicate message is: '%s', sender device is '%d'", sender, senderDevice));
+
+        return new PushProcessMessageJob.ExceptionMetadata(sender, e.getSenderDevice());
+    }
+
     private static PushProcessMessageJob.ExceptionMetadata toExceptionMetadata(@NonNull ProtocolException e) throws NoSenderException {
         String sender = e.getSender();
 
