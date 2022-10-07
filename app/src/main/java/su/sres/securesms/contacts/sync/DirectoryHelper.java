@@ -126,6 +126,7 @@ public class DirectoryHelper {
           UUID uuid = null;
           RecipientId id = recipientDatabase.getOrInsertFromUserLogin(userLogin);
 
+          // removal
           if (field.equals("-1")) {
             recipientDatabase.markUnregistered(id);
             recipientDatabase.setProfileSharing(id, false);

@@ -163,6 +163,7 @@ public class PushServiceSocket {
     private static final String CONFIGURATION_INFO = "/v1/accounts/config";
     private static final String CERTIFICATE_VERSION_PATH = "/v1/accounts/certver";
     private static final String SYSTEM_CERTS_PATH = "/v1/accounts/cert";
+    private static final String SELF = "/v1/accounts/me";
 
     private static final String PREKEY_METADATA_PATH = "/v2/keys/";
     private static final String PREKEY_PATH = "/v2/keys/%s";
@@ -207,7 +208,8 @@ public class PushServiceSocket {
     private static final String GROUPSV2_AVATAR_REQUEST = "/v1/groups/avatar/form";
     private static final String GROUPSV2_GROUP_JOIN       = "/v1/groups/join/%s";
 
-    private static final String LICENSE_DOWNLOAD_PATH = "/v1/accounts/license";
+    private static final String LICENSE_DOWNLOAD_PATH = "/v1/accounts/serverlicense";
+    private static final String LICENSE_FILE_NAME = "shadowserver.bin";
 
     private static final String SERVER_DELIVERED_TIMESTAMP_HEADER = "X-Signal-Timestamp";
 
@@ -352,6 +354,10 @@ public class PushServiceSocket {
 
     public void unregisterGcmId() throws IOException {
         makeServiceRequest(REGISTER_GCM_PATH, "DELETE", null);
+    }
+
+    public void selfDeleteAccount() throws IOException {
+        makeServiceRequest(SELF, "DELETE", null);
     }
 
     public void setPin(String pin) throws IOException {
@@ -767,9 +773,9 @@ public class PushServiceSocket {
     }
 
 
-    public byte[] getLicense(String filename)
+    public byte[] getLicense()
             throws IOException {
-        try (ResponseBody responseBody = makeLicenseRequest(LICENSE_DOWNLOAD_PATH, "GET", null, filename)) {
+        try (ResponseBody responseBody = makeLicenseRequest(LICENSE_DOWNLOAD_PATH, "GET", null, LICENSE_FILE_NAME)) {
             return responseBody.bytes();
         }
     }
@@ -1322,9 +1328,9 @@ public class PushServiceSocket {
                         String contents = "attachment; filename=\"" + filename + "\"";
 
                         if (cdHeader == null)
-                            throw new NonSuccessfulResponseCodeException("Bad response: no Content-Disposition header");
+                            throw new NonSuccessfulResponseCodeException(String.format("Bad response: received %d from the server with no Content-Disposition header", responseCode));
                         if (!contents.equals(cdHeader))
-                            throw new NonSuccessfulResponseCodeException("Bad response: invalid Content-Disposition header");
+                            throw new NonSuccessfulResponseCodeException(String.format("Bad response: received %d from the server with invalid Content-Disposition header", responseCode));
                     }
                 },
                 Optional.<UnidentifiedAccess>absent());

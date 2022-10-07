@@ -544,8 +544,8 @@ public class ConversationListFragment extends MainFragment implements ActionMode
         SimpleTask.run(getViewLifecycleOwner().getLifecycle(), () -> {
             if (UnauthorizedReminder.isEligible(context)) {
                 return Optional.of(new UnauthorizedReminder(context));
-            } else if (LicenseInvalidReminder.isEligible()) {
-                return Optional.of(new LicenseInvalidReminder(context));
+//            } else if (LicenseInvalidReminder.isEligible()) {
+//                return Optional.of(new LicenseInvalidReminder(context));
 //            } else if (ExpiredBuildReminder.isEligible()) {
 //                return Optional.of(new ExpiredBuildReminder(context));
             } else if (ServiceOutageReminder.isEligible(context)) {
@@ -576,7 +576,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }
 
     private void handleCreateGroup(Context context) {
-        if(TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed()) {
+        if(TextSecurePreferences.isPushRegistered(context)) {
             getNavigator().goToGroupCreation();
         }
     }

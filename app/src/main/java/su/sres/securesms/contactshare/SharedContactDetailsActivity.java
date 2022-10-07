@@ -218,7 +218,7 @@ public class SharedContactDetailsActivity extends PassphraseRequiredActivity {
       });
 
       callButtonView.setOnClickListener(v -> {
-        ContactUtil.selectRecipientThroughDialog(this, pushUsers, dynamicLanguage.getCurrentLocale(), recipient -> CommunicationActions.startVoiceCall(this, recipient, SignalStore.serviceConfigurationValues().isLicensed()));
+        ContactUtil.selectRecipientThroughDialog(this, pushUsers, dynamicLanguage.getCurrentLocale(), recipient -> CommunicationActions.startVoiceCall(this, recipient));
       });
     } else if (!systemUsers.isEmpty()) {
       inviteButtonView.setVisibility(View.VISIBLE);

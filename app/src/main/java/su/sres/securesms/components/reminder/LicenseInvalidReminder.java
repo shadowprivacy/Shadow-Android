@@ -18,6 +18,7 @@ public class LicenseInvalidReminder extends Reminder {
     }
 
     public static boolean isEligible() {
-        return !SignalStore.serviceConfigurationValues().isLicensed();
+        // return !SignalStore.serviceConfigurationValues().isLicensed();
+        return false;
     }
 }

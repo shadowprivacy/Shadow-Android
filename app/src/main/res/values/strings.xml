@@ -2368,20 +2368,19 @@
     <!-- LicenseInfoActivity -->
 
     <string name="LicenseInfoActivity_title">Activation Information:</string>
-    <string name="LicenseInfoActivity_status_active">Activation status: Active</string>
+    <string name="LicenseInfoActivity_status_active">Activation status: Normal</string>
     <string name="LicenseInfoActivity_status_expired">Activation Status: Expired</string>
     <string name="LicenseInfoActivity_status_invalid">Activation Status: Invalid</string>
     <string name="LicenseInfoActivity_status_nyv">Activation Status: Not yet valid</string>
-    <string name="LicenseInfoActivity_status_nokey">Activation Status: No key</string>
-    <string name="LicenseInfoActivity_status_trial_active">Activation Status: Trial (%s left)</string>
-    <string name="LicenseInfoActivity_status_trial_expired">Activation Status: Trial (expired)</string>
+    <string name="LicenseInfoActivity_status_nokey">Activation Status: No key</string>    >
     <string name="LicenseInfoActivity_status_uncertain">Activation Status: Uncertain</string>
-    <string name="LicenseInfoActivity_valid_from">Valid From: %s</string>
-    <string name="LicenseInfoActivity_valid_thru">Valid Until: %s</string>
-    <string name="LicenseInfoActivity_serial">Serial Number: %s</string>
-    <string name="LicenseInfoActivity_psid">Platform ID: %s</string>
-    <string name="LicenseInfoActivity_na">N/A</string>
-    <string name="LicenseInfoActivity_summary">Current status and validity period</string>
+    <string name="LicenseInfoActivity_status_oversubscribed">Activation Status: Server oversubscription</string>
+    <string name="LicenseInfoActivity_summary">Current status</string>
+
+    <!-- LicenseManagementJob -->
+
+    <string name="LicenseManagementJob_error_connecting_to_server">Error connecting to server!</string>
+    <string name="LicenseManagementJob_self_unregistered">Oversubscription on the server! Your registration has been cancelled.</string>
 
     <!-- GroupsLearnMoreBottomSheetDialogFragment -->
     <string name="GroupsLearnMore_legacy_vs_new_groups">Legacy vs. New Groups</string>

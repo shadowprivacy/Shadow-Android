@@ -154,7 +154,6 @@ public final class CodeVerificationRequest {
         }
 
         JobManager jobManager = ApplicationDependencies.getJobManager();
-        // jobManager.add(new DirectoryRefreshJob(false));
         jobManager.add(new DirectorySyncJob(false));
         jobManager.add(new RotateCertificateJob(context));
 

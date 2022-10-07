@@ -107,15 +107,14 @@ public class SignalServiceAccountManager {
      * Construct a SignalServiceAccountManager.
      *
      * @param configuration The URL for the Signal Service.
-     * @param uuid The Signal Service UUID.
-     * @param e164 The Signal Service phone number.
-     * @param password A Signal Service password.
-     * @param signalAgent A string which identifies the client software.
+     * @param uuid          The Signal Service UUID.
+     * @param e164          The Signal Service phone number.
+     * @param password      A Signal Service password.
+     * @param signalAgent   A string which identifies the client software.
      */
     public SignalServiceAccountManager(SignalServiceConfiguration configuration,
                                        UUID uuid, String e164, String password,
-                                       String signalAgent)
-    {
+                                       String signalAgent) {
         this(configuration,
                 new StaticCredentialsProvider(uuid, e164, password, null),
                 signalAgent,
@@ -125,12 +124,11 @@ public class SignalServiceAccountManager {
     public SignalServiceAccountManager(SignalServiceConfiguration configuration,
                                        CredentialsProvider credentialsProvider,
                                        String signalAgent,
-                                       GroupsV2Operations groupsV2Operations)
-    {
+                                       GroupsV2Operations groupsV2Operations) {
         this.groupsV2Operations = groupsV2Operations;
-        this.pushServiceSocket  = new PushServiceSocket(configuration, credentialsProvider, signalAgent, groupsV2Operations.getProfileOperations());
-        this.credentials        = credentialsProvider;
-        this.userAgent          = signalAgent;
+        this.pushServiceSocket = new PushServiceSocket(configuration, credentialsProvider, signalAgent, groupsV2Operations.getProfileOperations());
+        this.credentials = credentialsProvider;
+        this.userAgent = signalAgent;
     }
 
     public byte[] getSenderCertificate() throws IOException {
@@ -165,6 +163,10 @@ public class SignalServiceAccountManager {
         } else {
             this.pushServiceSocket.unregisterGcmId();
         }
+    }
+
+    public void selfUnregister() throws IOException {
+        this.pushServiceSocket.selfDeleteAccount();
     }
 
     /**
@@ -208,16 +210,15 @@ public class SignalServiceAccountManager {
     /**
      * Verify a Signal Service account with a received SMS or voice verification code.
      *
-     * @param verificationCode The verification code received via SMS or Voice
-     *                         (see {@link #requestSmsVerificationCode} and
-     *                         {@link #requestVoiceVerificationCode}).
-     * @param signalingKey 52 random bytes.  A 32 byte AES key and a 20 byte Hmac256 key,
-     *                     concatenated.
+     * @param verificationCode             The verification code received via SMS or Voice
+     *                                     (see {@link #requestSmsVerificationCode} and
+     *                                     {@link #requestVoiceVerificationCode}).
+     * @param signalingKey                 52 random bytes.  A 32 byte AES key and a 20 byte Hmac256 key,
+     *                                     concatenated.
      * @param signalProtocolRegistrationId A random 14-bit number that identifies this Signal install.
      *                                     This value should remain consistent across registrations for the
      *                                     same install, but probabilistically differ across registrations
      *                                     for separate installs.
-     *
      * @return The UUID of the user that was registered.
      * @throws IOException
      */
@@ -236,12 +237,11 @@ public class SignalServiceAccountManager {
     /**
      * Refresh account attributes with server.
      *
-     * @param signalingKey 52 random bytes.  A 32 byte AES key and a 20 byte Hmac256 key, concatenated.
+     * @param signalingKey                 52 random bytes.  A 32 byte AES key and a 20 byte Hmac256 key, concatenated.
      * @param signalProtocolRegistrationId A random 14-bit number that identifies this Signal install.
      *                                     This value should remain consistent across registrations for the same
      *                                     install, but probabilistically differ across registrations for
      *                                     separate installs.
-     *
      * @throws IOException
      */
     public void setAccountAttributes(String signalingKey, int signalProtocolRegistrationId, boolean fetchesMessages, String pin,
@@ -257,10 +257,9 @@ public class SignalServiceAccountManager {
      * Register an identity key, signed prekey, and list of one time prekeys
      * with the server.
      *
-     * @param identityKey The client's long-term identity keypair.
-     * @param signedPreKey The client's signed prekey.
+     * @param identityKey    The client's long-term identity keypair.
+     * @param signedPreKey   The client's signed prekey.
      * @param oneTimePreKeys The client's list of one-time prekeys.
-     *
      * @throws IOException
      */
     public void setPreKeys(IdentityKey identityKey, SignedPreKeyRecord signedPreKey, List<PreKeyRecord> oneTimePreKeys)
@@ -336,14 +335,14 @@ public class SignalServiceAccountManager {
         return this.pushServiceSocket.getDirectoryResponse(directoryVersion, forceFull);
     }
 
-    public byte [] getLicense(String filename) throws IOException {
+    public byte[] getLicense() throws IOException {
 
-        return this.pushServiceSocket.getLicense(filename);
+        return this.pushServiceSocket.getLicense();
     }
 
     public Optional<SignalStorageManifest> getStorageManifest(StorageKey storageKey) throws IOException {
         try {
-            String          authToken       = this.pushServiceSocket.getStorageAuth();
+            String authToken = this.pushServiceSocket.getStorageAuth();
             StorageManifest storageManifest = this.pushServiceSocket.getStorageManifest(authToken);
 
             return Optional.of(SignalStorageModels.remoteToLocalStorageManifest(storageManifest, storageKey));
@@ -366,7 +365,7 @@ public class SignalServiceAccountManager {
 
     public Optional<SignalStorageManifest> getStorageManifestIfDifferentVersion(StorageKey storageKey, long manifestVersion) throws IOException, InvalidKeyException {
         try {
-            String          authToken       = this.pushServiceSocket.getStorageAuth();
+            String authToken = this.pushServiceSocket.getStorageAuth();
             StorageManifest storageManifest = this.pushServiceSocket.getStorageManifestIfDifferentVersion(authToken, manifestVersion);
 
             if (storageManifest.getValue().isEmpty()) {
@@ -385,9 +384,9 @@ public class SignalServiceAccountManager {
             return Collections.emptyList();
         }
 
-        List<SignalStorageRecord> result    = new ArrayList<>();
-        ReadOperation.Builder     operation = ReadOperation.newBuilder();
-        Map<ByteString, Integer>  typeMap   = new HashMap<>();
+        List<SignalStorageRecord> result = new ArrayList<>();
+        ReadOperation.Builder operation = ReadOperation.newBuilder();
+        Map<ByteString, Integer> typeMap = new HashMap<>();
 
         for (StorageId key : storageKeys) {
             typeMap.put(ByteString.copyFrom(key.getRaw()), key.getType());
@@ -399,8 +398,8 @@ public class SignalServiceAccountManager {
             }
         }
 
-        String       authToken = this.pushServiceSocket.getStorageAuth();
-        StorageItems items     = this.pushServiceSocket.readStorageItems(authToken, operation.build());
+        String authToken = this.pushServiceSocket.getStorageAuth();
+        StorageItems items = this.pushServiceSocket.readStorageItems(authToken, operation.build());
 
         if (items.getItemsCount() != storageKeys.size()) {
             Log.w(TAG, "Failed to find all remote keys! Requested: " + storageKeys.size() + ", Found: " + items.getItemsCount());
@@ -424,8 +423,7 @@ public class SignalServiceAccountManager {
     public Optional<SignalStorageManifest> resetStorageRecords(StorageKey storageKey,
                                                                SignalStorageManifest manifest,
                                                                List<SignalStorageRecord> allRecords)
-            throws IOException, InvalidKeyException
-    {
+            throws IOException, InvalidKeyException {
         return writeStorageRecords(storageKey, manifest, allRecords, Collections.<byte[]>emptyList(), true);
     }
 
@@ -436,34 +434,32 @@ public class SignalServiceAccountManager {
                                                                SignalStorageManifest manifest,
                                                                List<SignalStorageRecord> inserts,
                                                                List<byte[]> deletes)
-            throws IOException, InvalidKeyException
-        {
-            return writeStorageRecords(storageKey, manifest, inserts, deletes, false);
-        }
+            throws IOException, InvalidKeyException {
+        return writeStorageRecords(storageKey, manifest, inserts, deletes, false);
+    }
 
-        /**
-         * @return If there was a conflict, the latest {@link SignalStorageManifest}. Otherwise absent.
-         */
-        private Optional<SignalStorageManifest> writeStorageRecords(StorageKey storageKey,
-                SignalStorageManifest manifest,
-                List<SignalStorageRecord> inserts,
-                List<byte[]> deletes,
-        boolean clearAll)
-      throws IOException, InvalidKeyException
-        {
+    /**
+     * @return If there was a conflict, the latest {@link SignalStorageManifest}. Otherwise absent.
+     */
+    private Optional<SignalStorageManifest> writeStorageRecords(StorageKey storageKey,
+                                                                SignalStorageManifest manifest,
+                                                                List<SignalStorageRecord> inserts,
+                                                                List<byte[]> deletes,
+                                                                boolean clearAll)
+            throws IOException, InvalidKeyException {
         ManifestRecord.Builder manifestRecordBuilder = ManifestRecord.newBuilder().setVersion(manifest.getVersion());
 
-            for (StorageId id : manifest.getStorageIds()) {
-                ManifestRecord.Identifier idProto = ManifestRecord.Identifier.newBuilder()
-                        .setRaw(ByteString.copyFrom(id.getRaw()))
-                        .setType(ManifestRecord.Identifier.Type.forNumber(id.getType())).build();
-                manifestRecordBuilder.addIdentifiers(idProto);
+        for (StorageId id : manifest.getStorageIds()) {
+            ManifestRecord.Identifier idProto = ManifestRecord.Identifier.newBuilder()
+                    .setRaw(ByteString.copyFrom(id.getRaw()))
+                    .setType(ManifestRecord.Identifier.Type.forNumber(id.getType())).build();
+            manifestRecordBuilder.addIdentifiers(idProto);
         }
 
-            String             authToken       = this.pushServiceSocket.getStorageAuth();
-            StorageManifestKey manifestKey     = storageKey.deriveManifestKey(manifest.getVersion());
-            byte[]             encryptedRecord = SignalStorageCipher.encrypt(manifestKey, manifestRecordBuilder.build().toByteArray());
-            StorageManifest    storageManifest = StorageManifest.newBuilder()
+        String authToken = this.pushServiceSocket.getStorageAuth();
+        StorageManifestKey manifestKey = storageKey.deriveManifestKey(manifest.getVersion());
+        byte[] encryptedRecord = SignalStorageCipher.encrypt(manifestKey, manifestRecordBuilder.build().toByteArray());
+        StorageManifest storageManifest = StorageManifest.newBuilder()
                 .setVersion(manifest.getVersion())
                 .setValue(ByteString.copyFrom(encryptedRecord))
                 .build();
@@ -473,21 +469,21 @@ public class SignalServiceAccountManager {
             writeBuilder.addInsertItem(SignalStorageModels.localToRemoteStorageRecord(insert, storageKey));
         }
 
-            if (clearAll) {
-                writeBuilder.setClearAll(true);
-            } else {
-                for (byte[] delete : deletes) {
-                    writeBuilder.addDeleteKey(ByteString.copyFrom(delete));
-                }
+        if (clearAll) {
+            writeBuilder.setClearAll(true);
+        } else {
+            for (byte[] delete : deletes) {
+                writeBuilder.addDeleteKey(ByteString.copyFrom(delete));
+            }
         }
 
         Optional<StorageManifest> conflict = this.pushServiceSocket.writeStorageContacts(authToken, writeBuilder.build());
 
         if (conflict.isPresent()) {
-            StorageManifestKey conflictKey       = storageKey.deriveManifestKey(conflict.get().getVersion());
-            byte[]             rawManifestRecord = SignalStorageCipher.decrypt(conflictKey, conflict.get().getValue().toByteArray());
-            ManifestRecord     record            = ManifestRecord.parseFrom(rawManifestRecord);
-            List<StorageId>    ids               = new ArrayList<>(record.getIdentifiersCount());
+            StorageManifestKey conflictKey = storageKey.deriveManifestKey(conflict.get().getVersion());
+            byte[] rawManifestRecord = SignalStorageCipher.decrypt(conflictKey, conflict.get().getValue().toByteArray());
+            ManifestRecord record = ManifestRecord.parseFrom(rawManifestRecord);
+            List<StorageId> ids = new ArrayList<>(record.getIdentifiersCount());
 
             for (ManifestRecord.Identifier id : record.getIdentifiersList()) {
                 ids.add(StorageId.forType(id.getRaw().toByteArray(), id.getType().getNumber()));
@@ -503,7 +499,7 @@ public class SignalServiceAccountManager {
 
     public Map<String, Object> getRemoteConfig() throws IOException {
         RemoteConfigResponse response = this.pushServiceSocket.getRemoteConfig();
-        Map<String, Object>  out      = new HashMap<>();
+        Map<String, Object> out = new HashMap<>();
 
         for (RemoteConfigResponse.Config config : response.getConfig()) {
             out.put(config.getName(), config.getValue() != null ? config.getValue() : config.isEnabled());
@@ -576,19 +572,18 @@ public class SignalServiceAccountManager {
     }
 
     public AttachmentV2UploadAttributes getDebugLogUploadAttributes() throws IOException {
-            return this.pushServiceSocket.getDebugLogUploadAttributes();
+        return this.pushServiceSocket.getDebugLogUploadAttributes();
     }
 
     /**
      * @return The avatar URL path, if one was written.
      */
     public Optional<String> setVersionedProfile(UUID uuid, ProfileKey profileKey, String name, StreamDetails avatar)
-            throws IOException
-    {
+            throws IOException {
         if (name == null) name = "";
 
-        byte[]            ciphertextName    = new ProfileCipher(profileKey).encryptName(name.getBytes(StandardCharsets.UTF_8), ProfileCipher.NAME_PADDED_LENGTH);
-        boolean           hasAvatar         = avatar != null;
+        byte[] ciphertextName = new ProfileCipher(profileKey).encryptName(name.getBytes(StandardCharsets.UTF_8), ProfileCipher.NAME_PADDED_LENGTH);
+        boolean hasAvatar = avatar != null;
         ProfileAvatarData profileAvatarData = null;
 
         if (hasAvatar) {
@@ -606,8 +601,7 @@ public class SignalServiceAccountManager {
     }
 
     public Optional<ProfileKeyCredential> resolveProfileKeyCredential(UUID uuid, ProfileKey profileKey)
-            throws NonSuccessfulResponseCodeException, PushNetworkException
-    {
+            throws NonSuccessfulResponseCodeException, PushNetworkException {
         try {
             ProfileAndCredential credential = this.pushServiceSocket.retrieveVersionedProfileAndCredential(uuid, profileKey, Optional.absent()).get(10, TimeUnit.SECONDS);
             return credential.getProfileKeyCredential();

@@ -20,11 +20,12 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
     private static final String IS_LICENSED                       = "service_configuration.is_licensed";
     private static final String LICENSE                           = "service_configuration.license";
 
+    public static final String EXAMPLE_URI                        = "https://example.com";
+
+    // obsoleted
     private static final String TRIAL_STATUS                      = "service_configuration.trial_status";
     private static final String TRIAL_START_TIME                  = "service_configuration.trial_start_time";
     private static final String TRIAL_DURATION                    = "service_configuration.trial_duration";
-
-    public static final String EXAMPLE_URI                        = "https://example.com";
 
     ServiceConfigurationValues(@NonNull KeyValueStore store) {
         super(store);
@@ -77,18 +78,6 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
         putBoolean(IS_LICENSED, isLicensed);
     }
 
-    public synchronized void setTrialStatus(int status) {
-        putInteger(TRIAL_STATUS, status);
-    }
-
-    public synchronized void setTrialStartTime(long timestamp) {
-        putLong(TRIAL_START_TIME, timestamp);
-    }
-
-    public synchronized void setTrialDuration(int duration) {
-        putInteger(TRIAL_DURATION, duration);
-    }
-
     public synchronized void storeLicense(byte [] license) {
         putBlob(LICENSE, license);
     }
@@ -97,6 +86,14 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
         getStore().beginWrite()
                   .remove(LICENSE)
                   .commit();
+    }
+
+    public synchronized void removeTrials() {
+        getStore().beginWrite()
+                .remove(TRIAL_STATUS)
+                .remove(TRIAL_START_TIME)
+                .remove(TRIAL_DURATION)
+                .commit();
     }
 
     public synchronized void setFcmSenderId(String senderId) {
@@ -156,18 +153,6 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
 
     public @Nullable byte [] retrieveLicense() {
         return getBlob(LICENSE, null);
-    }
-
-    public int getTrialStatus() {
-        return getInteger(TRIAL_STATUS, 0);
-    }
-
-    public long getTrialStartTime() {
-        return getLong(TRIAL_START_TIME, System.currentTimeMillis());
-    }
-
-    public int getTrialDuration() {
-        return getInteger(TRIAL_DURATION, 14);
     }
 
     public String getFcmSenderId() {

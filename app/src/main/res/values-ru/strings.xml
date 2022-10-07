@@ -2231,20 +2231,19 @@
   <!-- LicenseInfoActivity -->
 
   <string name="LicenseInfoActivity_title">Сведения об активации:</string>
-  <string name="LicenseInfoActivity_status_active">Статус активации: Активна</string>
+  <string name="LicenseInfoActivity_status_active">Статус активации: Норма</string>
   <string name="LicenseInfoActivity_status_expired">Статус активации: Истекла</string>
   <string name="LicenseInfoActivity_status_invalid">Статус активации: Недействительна</string>
   <string name="LicenseInfoActivity_status_nyv">Статус активации: Ещё не активна</string>
   <string name="LicenseInfoActivity_status_nokey">Статус активации: Ключ отсутствует</string>
-  <string name="LicenseInfoActivity_status_trial_active">Статус активации: Пробный период (осталось %s)</string>
-  <string name="LicenseInfoActivity_status_trial_expired">Статус активации: Пробный период (истёк)</string>
   <string name="LicenseInfoActivity_status_uncertain">Статус активации: Не определен</string>
-  <string name="LicenseInfoActivity_valid_from">Действительна с: %s</string>
-  <string name="LicenseInfoActivity_valid_thru">Действительна по: %s</string>
-  <string name="LicenseInfoActivity_serial">Серийный номер: %s</string>
-  <string name="LicenseInfoActivity_psid">ID платформы: %s</string>
-  <string name="LicenseInfoActivity_na">Н/Д</string>
-  <string name="LicenseInfoActivity_summary">Текущий статус и срок действия</string>
+  <string name="LicenseInfoActivity_status_oversubscribed">Статус активации: превышение емкости сервера</string>
+  <string name="LicenseInfoActivity_summary">Текущий статус</string>
+
+  <!-- LicenseManagementJob -->
+
+  <string name="LicenseManagementJob_error_connecting_to_server">Ошибка подключения к серверу!</string>
+  <string name="LicenseManagementJob_self_unregistered">Превышение емкости сервера! Ваша регистрация отменена.</string>
 
   <!--GroupsLearnMoreBottomSheetDialogFragment-->
   <string name="GroupsLearnMore_legacy_vs_new_groups">Сравнение Старых и Новых групп</string>

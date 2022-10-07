@@ -121,16 +121,14 @@ public class IncomingMessageObserver {
 
     private synchronized boolean isConnectionNecessary() {
         boolean registered          = TextSecurePreferences.isPushRegistered(context);
-        boolean activated           = SignalStore.serviceConfigurationValues().isLicensed();
         boolean websocketRegistered = TextSecurePreferences.isWebsocketRegistered(context);
         boolean isGcmDisabled       = TextSecurePreferences.isFcmDisabled(context);
         boolean hasNetwork          = NetworkConstraint.isMet(context);
 
-        Log.d(TAG, String.format("Network: %s, Foreground: %s, FCM: %s, Activated: %s, Registered: %s, Websocket Registered: %s",
-                hasNetwork, appVisible, !isGcmDisabled, activated, registered, websocketRegistered));
+        Log.d(TAG, String.format("Network: %s, Foreground: %s, FCM: %s, Registered: %s, Websocket Registered: %s",
+                hasNetwork, appVisible, !isGcmDisabled, registered, websocketRegistered));
 
-        return registered                    &&
-                activated                     &&
+        return registered                     &&
                 websocketRegistered           &&
                 (appVisible || isGcmDisabled) &&
                 hasNetwork;

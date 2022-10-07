@@ -117,7 +117,7 @@ public class MmsDownloadJob extends BaseJob {
         throw new MmsException("Notification content location was null.");
       }
 
-      if (!TextSecurePreferences.isPushRegistered(context) || !SignalStore.serviceConfigurationValues().isLicensed()) {
+      if (!TextSecurePreferences.isPushRegistered(context)) {
         throw new MmsException("Not registered or no valid activation");
       }
 

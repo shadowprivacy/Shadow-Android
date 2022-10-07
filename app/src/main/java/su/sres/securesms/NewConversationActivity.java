@@ -133,7 +133,7 @@ public class NewConversationActivity extends ContactSelectionActivity
   }
 
   private void handleCreateGroup(Context context) {
-    if(TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed()) {
+    if(TextSecurePreferences.isPushRegistered(context)) {
       startActivity(CreateGroupActivity.newIntent(this));
     }
   }

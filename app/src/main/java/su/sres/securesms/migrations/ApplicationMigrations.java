@@ -36,10 +36,11 @@ public class ApplicationMigrations {
 
     private static final MutableLiveData<Boolean> UI_BLOCKING_MIGRATION_RUNNING = new MutableLiveData<>();
 
-    public static final int CURRENT_VERSION = 15;
+    public static final int CURRENT_VERSION = 16;
 
     private static final class Version {
         static final int VERSIONED_PROFILE  = 15;
+        static final int NEW_ACTIVATION_MODEL  = 16;
     }
 
     /**
@@ -150,6 +151,10 @@ public class ApplicationMigrations {
 
         if (lastSeenVersion < Version.VERSIONED_PROFILE) {
             jobs.put(Version.VERSIONED_PROFILE, new ProfileMigrationJob());
+        }
+
+        if (lastSeenVersion < Version.NEW_ACTIVATION_MODEL) {
+            jobs.put(Version.NEW_ACTIVATION_MODEL, new LicenseMigrationJob());
         }
 
         return jobs;

@@ -64,7 +64,7 @@ public class ContactPreference extends Preference {
 
   public void setState(boolean secure, boolean blocked) {
     this.secure = secure;
-    boolean registered = TextSecurePreferences.isPushRegistered(getContext()) && SignalStore.serviceConfigurationValues().isLicensed();
+    boolean registered = TextSecurePreferences.isPushRegistered(getContext());
 
     if (secureCallButton != null)  secureCallButton.setVisibility(secure && !blocked && registered ? View.VISIBLE : View.GONE);
     if (secureVideoButton != null) secureVideoButton.setVisibility(secure && !blocked && registered ? View.VISIBLE : View.GONE);

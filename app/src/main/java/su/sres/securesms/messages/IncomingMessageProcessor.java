@@ -77,8 +77,6 @@ public class IncomingMessageProcessor {
          */
         public @Nullable String processEnvelope(@NonNull SignalServiceEnvelope envelope) {
 
-            if(!SignalStore.serviceConfigurationValues().isLicensed()) return null;
-
             if (envelope.hasSource()) {
                 Recipient.externalHighTrustPush(context, envelope.getSourceAddress());
             }

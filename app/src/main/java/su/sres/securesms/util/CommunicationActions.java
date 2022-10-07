@@ -45,9 +45,7 @@ public class CommunicationActions {
 
   private static final String TAG = Log.tag(CommunicationActions.class);
 
-  public static void startVoiceCall(@NonNull FragmentActivity activity, @NonNull Recipient recipient, boolean isEligible) {
-
-    if (!isEligible) return;
+  public static void startVoiceCall(@NonNull FragmentActivity activity, @NonNull Recipient recipient) {
 
     if (TelephonyUtil.isAnyPstnLineBusy(activity)) {
       Toast.makeText(activity,
@@ -74,9 +72,7 @@ public class CommunicationActions {
     });
   }
 
-  public static void startVideoCall(@NonNull FragmentActivity activity, @NonNull Recipient recipient, boolean isEligible) {
-
-    if (!isEligible) return;
+  public static void startVideoCall(@NonNull FragmentActivity activity, @NonNull Recipient recipient) {
 
     if (TelephonyUtil.isAnyPstnLineBusy(activity)) {
       Toast.makeText(activity,

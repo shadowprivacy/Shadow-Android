@@ -258,11 +258,11 @@ public final class ManageRecipientViewModel extends ViewModel {
     }
 
     void onSecureCall(@NonNull FragmentActivity activity) {
-        withRecipient(r -> CommunicationActions.startVoiceCall(activity, r, SignalStore.serviceConfigurationValues().isLicensed()));
+        withRecipient(r -> CommunicationActions.startVoiceCall(activity, r));
     }
 
     void onSecureVideoCall(@NonNull FragmentActivity activity) {
-        withRecipient(r -> CommunicationActions.startVideoCall(activity, r, SignalStore.serviceConfigurationValues().isLicensed()));
+        withRecipient(r -> CommunicationActions.startVideoCall(activity, r));
     }
 
     private @NonNull String populateInternalDetails(@NonNull Recipient recipient) {

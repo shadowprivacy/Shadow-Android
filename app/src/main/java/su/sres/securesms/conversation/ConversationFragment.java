@@ -1223,8 +1223,7 @@ public class ConversationFragment extends LoggingFragment {
               !messageRecord.isUpdate()                           &&
               !recipient.get().isBlocked()                        &&
               !messageRequestViewModel.shouldShowMessageRequest() &&
-              ((ConversationAdapter) list.getAdapter()).getSelectedItems().isEmpty() &&
-              SignalStore.serviceConfigurationValues().isLicensed())
+              ((ConversationAdapter) list.getAdapter()).getSelectedItems().isEmpty())
       {
         isReacting = true;
         list.setLayoutFrozen(true);
@@ -1477,7 +1476,7 @@ public class ConversationFragment extends LoggingFragment {
         case R.id.action_copy:        handleCopyMessage(Sets.newHashSet(conversationMessage));                              return true;
         case R.id.action_reply:       handleReplyMessage(conversationMessage);                                              return true;
         case R.id.action_multiselect: handleEnterMultiSelect(conversationMessage);                                          return true;
-        case R.id.action_forward:     if (SignalStore.serviceConfigurationValues().isLicensed()) handleForwardMessage(conversationMessage);                                            return true;
+        case R.id.action_forward:     handleForwardMessage(conversationMessage);                                            return true;
         case R.id.action_download:    handleSaveAttachment((MediaMmsMessageRecord) conversationMessage.getMessageRecord()); return true;
         default:                                                                                                            return false;
       }
@@ -1542,7 +1541,7 @@ public class ConversationFragment extends LoggingFragment {
           actionMode.finish();
           return true;
         case R.id.menu_context_forward:
-          if (SignalStore.serviceConfigurationValues().isLicensed()) handleForwardMessage(getSelectedConversationMessage());
+          handleForwardMessage(getSelectedConversationMessage());
           actionMode.finish();
           return true;
         case R.id.menu_context_resend:

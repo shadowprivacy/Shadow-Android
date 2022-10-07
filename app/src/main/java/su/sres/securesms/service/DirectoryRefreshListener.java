@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 public class DirectoryRefreshListener extends PersistentAlarmManagerListener {
 
-  private static final long INTERVAL = TimeUnit.HOURS.toMillis(6);
+  public static final long INTERVAL = TimeUnit.HOURS.toMillis(6);
 
   @Override
   protected long getNextScheduledExecutionTime(Context context) {
@@ -21,7 +21,7 @@ public class DirectoryRefreshListener extends PersistentAlarmManagerListener {
 
   @Override
   protected long onAlarm(Context context, long scheduledTime) {
-    if (scheduledTime != 0 && TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed()) {
+    if (scheduledTime != 0 && TextSecurePreferences.isPushRegistered(context)) {
         ApplicationDependencies.getJobManager().add(new DirectorySyncJob(true));
     }
 

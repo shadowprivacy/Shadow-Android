@@ -1275,7 +1275,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     private void handleManageGroup(Context context) {
-        if(TextSecurePreferences.isPushRegistered(context) && SignalStore.serviceConfigurationValues().isLicensed()) {
+        if(TextSecurePreferences.isPushRegistered(context)) {
             startActivityForResult(ManageGroupActivity.newIntent(ConversationActivity.this, recipient.get().requireGroupId()),
                     GROUP_EDIT,
                     ManageGroupActivity.createTransitionBundle(this, titleView.findViewById(R.id.contact_photo_image)));
@@ -1318,7 +1318,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         if (recipient == null) return;
 
         if (isSecure) {
-            CommunicationActions.startVoiceCall(this, recipient, SignalStore.serviceConfigurationValues().isLicensed());
+            CommunicationActions.startVoiceCall(this, recipient);
         } else {
             CommunicationActions.startInsecureCall(this, recipient);
         }
@@ -1327,7 +1327,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     private void handleVideo(final Recipient recipient) {
         if (recipient == null) return;
 
-        CommunicationActions.startVideoCall(this, recipient, SignalStore.serviceConfigurationValues().isLicensed());
+        CommunicationActions.startVideoCall(this, recipient);
     }
 
     private void handleDisplayGroupRecipients() {
@@ -1492,13 +1492,11 @@ public class ConversationActivity extends PassphraseRequiredActivity
         groupViewModel.getGroupActiveState().observe(this, state -> {
             boolean inactivePushGroup = state != null && isPushGroupConversation() && !state.isActiveGroup();
             boolean enabled = !inactivePushGroup;
-            boolean activated = SignalStore.serviceConfigurationValues().isLicensed();
-            boolean self = recipient.get().isLocalNumber();
             noLongerMemberBanner.setVisibility(enabled ? View.GONE : View.VISIBLE);
             inputPanel.setVisibility(enabled ? View.VISIBLE : View.GONE);
-            inputPanel.setEnabled(enabled && (activated || self));
-            sendButton.setEnabled(enabled && (activated || self));
-            attachButton.setEnabled(enabled && (activated || self));
+            inputPanel.setEnabled(enabled);
+            sendButton.setEnabled(enabled);
+            attachButton.setEnabled(enabled);
         });
     }
 
@@ -1659,8 +1657,8 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
         if (UnauthorizedReminder.isEligible(this)) {
             reminderView.get().showReminder(new UnauthorizedReminder(this));
-        } else if(LicenseInvalidReminder.isEligible()) {
-            reminderView.get().showReminder(new LicenseInvalidReminder(this));
+//        } else if(LicenseInvalidReminder.isEligible()) {
+//            reminderView.get().showReminder(new LicenseInvalidReminder(this));
 //        } else if (ExpiredBuildReminder.isEligible()) {
 //            reminderView.get().showReminder(new ExpiredBuildReminder(this));
         } else if (ServiceOutageReminder.isEligible(this)) {
@@ -2021,8 +2019,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
         reactionOverlay.hide();
 
-        if (!SignalStore.serviceConfigurationValues().isLicensed()) return;
-
         SignalExecutors.BOUNDED.execute(() -> {
             ReactionRecord oldRecord = Stream.of(messageRecord.getReactions())
                     .filter(record -> record.getAuthor().equals(Recipient.self().getId()))
@@ -2362,7 +2358,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
     @SuppressWarnings("SimplifiableIfStatement")
     private boolean isSelfConversation() {
-        if (!TextSecurePreferences.isPushRegistered(this) || !SignalStore.serviceConfigurationValues().isLicensed()) return false;
+        if (!TextSecurePreferences.isPushRegistered(this)) return false;
         if (recipient.get().isGroup()) return false;
 
         return recipient.get().isLocalNumber();

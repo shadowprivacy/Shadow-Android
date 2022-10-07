@@ -1,18 +1,25 @@
 package su.sres.securesms.jobs;
 
-import android.annotation.SuppressLint;
-import android.provider.Settings.Secure;
+import static su.sres.securesms.service.DirectoryRefreshListener.INTERVAL;
+
+import android.content.Context;
+import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.firebase.iid.FirebaseInstanceId;
+
+import su.sres.securesms.R;
 import su.sres.securesms.activation.Feature;
 import su.sres.securesms.activation.License;
 import su.sres.securesms.activation.LicenseReader;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import su.sres.securesms.BuildConfig;
+import su.sres.securesms.contacts.sync.DirectoryHelper;
+import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -23,10 +30,14 @@ import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.signalservice.api.SignalServiceAccountManager;
+import su.sres.signalservice.api.push.exceptions.AuthorizationFailedException;
+import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -39,7 +50,7 @@ public class LicenseManagementJob extends BaseJob {
 
     private static final String TAG = LicenseManagementJob.class.getSimpleName();
 
-    private static final long REFRESH_INTERVAL = TimeUnit.MINUTES.toMillis(360);
+    private static final long REFRESH_INTERVAL = TimeUnit.MINUTES.toMillis(480);
 
     private final ServiceConfigurationValues config = SignalStore.serviceConfigurationValues();
 
@@ -85,6 +96,10 @@ public class LicenseManagementJob extends BaseJob {
             (byte) 0x01
     };
 
+    private static final int SUCCESS = 0;
+    private static final int NETWORK_ERROR = 1;
+    private static final int ERROR = 2;
+
     public LicenseManagementJob() {
         this(new Job.Parameters.Builder()
                 .addConstraint(NetworkConstraint.KEY)
@@ -111,145 +126,59 @@ public class LicenseManagementJob extends BaseJob {
 
     @Override
     public void onRun() throws IOException,
-                               AbsentLicenseFileException,
-                               InvalidLicenseFileException,
-                               NullPsidException,
-                               LicenseAllocationOrValidationException,
-                               LicenseNoMoreValidException,
-                               NoSuchAlgorithmException
-    {
+            InvalidLicenseFileException,
+            NoSuchAlgorithmException {
+
         Log.i(TAG, "LicenseManagementJob.onRun()");
 
-        @SuppressLint("HardwareIds") String psid = calculatePsid(Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
+        byte[] licenseBytes = null;
 
-        byte [] candidateBytes = config.retrieveLicense();
+        try {
+            licenseBytes = downloadLicense();
+            // if the server is inaccessible with PushNetworkException, the job will retry
+        } catch (NonSuccessfulResponseCodeException e) {
+            // if the server responds with something else than 2xx, we assume that there is no file on the server and proceed to volume check based on no-license case
+            // PushServiceSocket will throw the details in
+            Log.w(TAG, e);
+            config.setLicensed(false);
+            config.removeLicense();
+        }
 
-        if(candidateBytes == null) {
+        if (licenseBytes != null) {
 
-            // there's no license file locally, so suppose we are eligible for unconditional trial, let's check that
-            switch(config.getTrialStatus()) {
-                case 0:
-                   int duration = requestTrial(psid);
-                   if (duration != -1) {
-                       Log.i(TAG, "Trial request success. Setting trial in progress. Setting licensed as true");
-                       config.setTrialStatus(1);
-                       config.setTrialStartTime(System.currentTimeMillis());
-                       config.setTrialDuration(duration);
-                       config.setLicensed(true);
-                       SignalStore.misc().setLastLicenseRefreshTime(System.currentTimeMillis());
-                       return;
-                   }
-                   // this is when we are requesting a trial already used in the past, e.g. after a reinstall
-                   else Log.i(TAG, "Trial request failure.");
-
-                   break;
-
-                case 1:
-                    if ((System.currentTimeMillis() > (config.getTrialStartTime() + TimeUnit.DAYS.toMillis(config.getTrialDuration())) ) || !validateTrial(psid) ) {
-                        Log.i(TAG, "Trial expired!");
-                        config.setTrialStatus(2);
-                        config.setLicensed(false);
-                    } else {
-                        Log.i(TAG, "Trial validation success. Continuing to use trial");
-                        SignalStore.misc().setLastLicenseRefreshTime(System.currentTimeMillis());
-                        return;
-                    }
-
-                    break;
-
-                case 2: break;
-            }
-
-            // as there's no license file locally, so download, validate and store it
-
-            byte[] licenseBytes = downloadLicense();
-
-            if (licenseBytes != null) {
-
-                License license = License.Create.from(licenseBytes);
-
-                LicenseStatus status = verifyLicenseFile(license);
-
-                if(status == LicenseStatus.CORRUPTED || status == LicenseStatus.EXPIRED || status == LicenseStatus.TAMPERED) {
-                    SignalStore.misc().setLastLicenseRefreshTime(System.currentTimeMillis());
-                    throw new InvalidLicenseFileException();
-                    // here the job will fail by unretryable exception
-                } else if(status == LicenseStatus.NYV) {
-                    // store the license and exit, since it's not yet valid
-                    config.storeLicense(licenseBytes);
-                } else {
-                    // the license is OK, store it, allocate it and and web-validate it
-                    config.storeLicense(licenseBytes);
-                    if (allocate(license, psid)) {
-                        Log.i(TAG, "License allocation success");
-                        if(validate(license, psid)) {
-                            Log.i(TAG, "New license validation success. Setting licensed as true");
-                            config.setLicensed(true);
-                        }
-                    } else {
-                        // maybe we're after app reinstall, so let's try to just validate the existing license
-                        if(validate(license, psid)) {
-                            Log.i(TAG, "Existing license validation success. Setting licensed as true");
-                            config.setLicensed(true);
-                        } else {
-                            Log.i(TAG, "License allocation failure");
-                        }
-                    }
-                }
-            } else {
-                Log.w(TAG, "Failed to retrieve the license file");
-                SignalStore.misc().setLastLicenseRefreshTime(System.currentTimeMillis());
-                throw new AbsentLicenseFileException();
-                // here the job will fail by unretryable exception
-            }
-
-        } else {
-            // there's a license file locally already
-
-            License license = new LicenseReader(new ByteArrayInputStream(candidateBytes)).read();
+            License license = License.Create.from(licenseBytes);
             LicenseStatus status = verifyLicenseFile(license);
 
-            if (config.isLicensed()) {
-                // we're licensed to the best of local knowledge, but need to validate. If invalid, throw a retryable exception
-                if(status == LicenseStatus.OK && validate(license, psid)) {
-                    Log.i(TAG, "License validation success. Exiting");
-                } else {
-                    Log.i(TAG, "License validation failure. Setting licensed as false and removing the license file.");
-                    config.setLicensed(false);
-                    config.removeLicense();
-                    throw new LicenseNoMoreValidException(); // this is retryable, the client will download a new license (if available) on retry
-                }
+            if (status == LicenseStatus.CORRUPTED || status == LicenseStatus.EXPIRED || status == LicenseStatus.TAMPERED || status == LicenseStatus.IRRELEVANT || status == LicenseStatus.NYV) {
+                Log.i(TAG, "License verification failure. Setting licensed as false and removing the license file.");
+                // the fresh info received from the server overrides the local keyvalues, if any
+                config.setLicensed(false);
+                config.removeLicense();
 
+                // fail the job with unretryable exception and proceed to volume validation
+                SignalStore.misc().setLastLicenseRefreshTime(System.currentTimeMillis());
+                new VolumeValidationTask(context, config).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                throw new InvalidLicenseFileException();
             } else {
-                // We're not licensed. A valid case why that would be is that the license was not yet valid on previous check. But it might be now.
-                // Another possible cornercase is when the license was successfully allocated on the server, but the client failed to get a response
-                if(status == LicenseStatus.OK) {
-
-                    // check for the "unknown" allocation
-                    if(validate(license, psid)) {
-                        Log.i(TAG, "Late validation success. Setting the app as licensed");
-                        config.setLicensed(true);
-                    }
-
-                    if(allocate(license, psid) && validate(license, psid)) {
-                        Log.i(TAG, "Late allocation success. Setting the app as licensed");
-                        config.setLicensed(true);
-                    }
-                } else if(status != LicenseStatus.NYV) {
-                    // this is some cornercase, like the file previously getting corrupted somehow
-                    Log.i(TAG, "License validation failure. Removing the license file.");
-                    config.removeLicense();
-                }
-                // if still not valid, we'd like to preserve the license file for future checks and do nothing
+                // the license is OK, store it and set licensed as true
+                config.storeLicense(licenseBytes);
+                Log.i(TAG, "License verification success. Setting licensed as true");
+                config.setLicensed(true);
             }
+        } else {
+            Log.w(TAG, "Failed to retrieve the license file");
+            SignalStore.misc().setLastLicenseRefreshTime(System.currentTimeMillis());
+            // if we can't download the license, continue to the volume validation stage using the locally stored keyvalues
         }
+
+        new VolumeValidationTask(context, config).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
         SignalStore.misc().setLastLicenseRefreshTime(System.currentTimeMillis());
     }
 
     @Override
     public boolean onShouldRetry(@NonNull Exception exception) {
-        return (exception instanceof PushNetworkException) || (exception instanceof LicenseAllocationOrValidationException) || (exception instanceof LicenseNoMoreValidException);
+        return (exception instanceof PushNetworkException);
     }
 
     public static void scheduleIfNecessary() {
@@ -269,11 +198,12 @@ public class LicenseManagementJob extends BaseJob {
         SignalStore.misc().setLastLicenseRefreshTime(System.currentTimeMillis());
     }
 
-    private @Nullable byte [] downloadLicense() throws IOException {
-        return ApplicationDependencies.getSignalServiceAccountManager().getLicense(TextSecurePreferences.getLocalNumber(context) + ".bin");
+    private @Nullable
+    byte[] downloadLicense() throws IOException {
+        return ApplicationDependencies.getSignalServiceAccountManager().getLicense();
     }
 
-    private LicenseStatus verifyLicenseFile(License license) {
+    private LicenseStatus verifyLicenseFile(License license) throws NoSuchAlgorithmException {
 
         if (!license.isOK(pubKey)) {
             Log.w(TAG, "The retrieved license has been tampered with!");
@@ -287,6 +217,9 @@ public class LicenseManagementJob extends BaseJob {
         } else if (license.getFeatures().get("Valid From").getLong() > System.currentTimeMillis()) {
             Log.w(TAG, "The retrieved license is not yet valid!");
             return LicenseStatus.NYV;
+        } else if (!isHashValid(license.getFeatures().get("Shared").getString(), extractDomain(config.getShadowUrl()))) {
+            Log.w(TAG, "The retrieved license is irrelevant!");
+            return LicenseStatus.IRRELEVANT;
         } else {
             return LicenseStatus.OK;
         }
@@ -296,119 +229,185 @@ public class LicenseManagementJob extends BaseJob {
         Map<String, Feature> featureMap = license.getFeatures();
         @Nullable Feature assignee = featureMap.get("Assignee");
         @Nullable Feature validFrom = featureMap.get("Valid From");
+        @Nullable Feature shared = featureMap.get("Shared");
+        @Nullable Feature volumes = featureMap.get("Volumes");
 
-        if (assignee == null || validFrom == null) {
+        if (assignee == null || validFrom == null || shared == null || volumes == null) {
             return false;
         } else {
             return assignee.getString() != null;
         }
     }
 
-    private boolean allocate(License license, String psid) throws LicenseAllocationOrValidationException {
+    private static boolean isHashValid(String hash, String domain) throws NoSuchAlgorithmException {
 
-        String assignee = license.getFeatures().get("Assignee").getString().replaceAll(" ", "%20");
-        String id = psid.replaceAll("/", "%2f");
+        return calculateHash(domain).equals(hash);
+    }
 
-        OkHttpClient client  = new OkHttpClient.Builder()
-                                .connectTimeout(1, TimeUnit.MINUTES)
-                                .readTimeout(1, TimeUnit.MINUTES)
-                                .build();
-        Request request = new Request.Builder().url(String.format("%s/license/android/allocate/%s/%s/%s",
-                                                                  BuildConfig.LICENSE_URL,
-                                                                  license.getLicenseId().toString(),
-                                                                  assignee,
-                                                                  id))
-                                               .build();
+    public static String calculateHash(String domain) throws NoSuchAlgorithmException {
+        MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+        return Base64.encodeBytes(messageDigest.digest(domain.getBytes(StandardCharsets.UTF_8)));
+    }
 
-        try {
-            Response response = client.newCall(request).execute();
-            return response.code() == 200;
-        } catch (IOException e) {
-            Log.i(TAG, e);
+    private static String extractDomain(String url) {
+        int start = url.indexOf("https://");
+        String tmpName, name = "";
+        if (start >= 0) {
+            tmpName = url.substring(start + 8);
+            int end = tmpName.indexOf(":");
+            if (end > 0) {
+                name = tmpName.substring(0, end);
+            } else {
+                name = tmpName;
+            }
+        }
 
-            throw new LicenseAllocationOrValidationException();
-            // here the job will fail by retryable exception
+        return name;
+    }
+
+    private static void notifyUser(Context context, int message) {
+        new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(context, message, Toast.LENGTH_LONG).show());
+    }
+
+    private static class SelfKickOffTask extends AsyncTask<Void, Void, Integer> {
+
+        private final WeakReference<Context> contextReference;
+
+        SelfKickOffTask(Context context) {
+            contextReference = new WeakReference<>(context);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Log.w(TAG, "Oversubscription detected. Self-unregistering.");
+        }
+
+        @Override
+        protected void onPostExecute(Integer result) {
+            super.onPostExecute(result);
+            final Context context = contextReference.get();
+            if (context != null) {
+                switch (result) {
+                    case NETWORK_ERROR:
+                        notifyUser(context, R.string.LicenseManagementJob_error_connecting_to_server);
+                        break;
+                    case SUCCESS:
+
+                        TextSecurePreferences.setPushRegistered(context, false);
+                        SignalStore.registrationValues().clearRegistrationComplete();
+                        notifyUser(context, R.string.LicenseManagementJob_self_unregistered);
+                        break;
+                }
+            }
+        }
+
+        @Override
+        protected Integer doInBackground(Void... params) {
+            final Context context = contextReference.get();
+            if (context != null) {
+                try {
+                    SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
+
+                    try {
+                        accountManager.selfUnregister();
+                    } catch (AuthorizationFailedException e) {
+                        Log.w(TAG, e);
+                    }
+
+                    if (!TextSecurePreferences.isFcmDisabled(context)) {
+                        FirebaseInstanceId.getInstance().deleteInstanceId();
+                    }
+
+                    return SUCCESS;
+                } catch (IOException ioe) {
+                    Log.w(TAG, ioe);
+                    return NETWORK_ERROR;
+                }
+            } else return ERROR;
         }
     }
 
-    private boolean validate(License license, String psid) throws LicenseAllocationOrValidationException {
+    private static class VolumeValidationTask extends AsyncTask<Void, Void, Integer> {
+        private final WeakReference<Context> contextReference;
+        private final ServiceConfigurationValues config;
 
-        String id = psid.replaceAll("/", "%2f");
-
-        OkHttpClient client  = new OkHttpClient();
-        Request request = new Request.Builder().url(String.format("%s/license/android/check/%s/%s",
-                                                                  BuildConfig.LICENSE_URL,
-                                                                  license.getLicenseId().toString(),
-                                                                  id))
-                                               .build();
-
-        try {
-            Response response = client.newCall(request).execute();
-            return response.code() == 200;
-        } catch (IOException e) {
-            throw new LicenseAllocationOrValidationException();
-            // here the job will fail by retryable exception
+        VolumeValidationTask(Context context, ServiceConfigurationValues config) {
+            contextReference = new WeakReference<>(context);
+            this.config = config;
         }
-    }
 
-    private int requestTrial(String psid) throws LicenseAllocationOrValidationException {
-
-        String id = psid.replaceAll("/", "%2f");
-
-        OkHttpClient client  = new OkHttpClient.Builder()
-                .connectTimeout(1, TimeUnit.MINUTES)
-                .readTimeout(1, TimeUnit.MINUTES)
-                .build();
-        Request request = new Request.Builder().url(String.format("%s/trial/android/request/%s",
-                BuildConfig.LICENSE_URL,
-                id))
-                .build();
-
-        try {
-            Response response = client.newCall(request).execute();
-            if (response.code() == 200) {
-                if (response.body() != null) {
-
-                    return Integer.parseInt(response.body().string());
-
-                } else throw new LicenseAllocationOrValidationException();
-
-            } else return -1;
-
-        } catch (IOException e) {
-            Log.i(TAG, e);
-
-            throw new LicenseAllocationOrValidationException();
-            // here the job will fail by retryable exception
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Log.i(TAG, "Retrieving the current directory.");
         }
-    }
 
-    private boolean validateTrial(String psid) throws LicenseAllocationOrValidationException {
-
-        String id = psid.replaceAll("/", "%2f");
-
-        OkHttpClient client  = new OkHttpClient();
-        Request request = new Request.Builder().url(String.format("%s/trial/android/check/%s",
-                BuildConfig.LICENSE_URL,
-                id))
-                .build();
-
-        try {
-            Response response = client.newCall(request).execute();
-            return response.code() == 200;
-        } catch (IOException e) {
-            throw new LicenseAllocationOrValidationException();
-            // here the job will fail by retryable exception
+        @Override
+        protected void onPostExecute(Integer result) {
+            super.onPostExecute(result);
+            final Context context = contextReference.get();
+            if (context != null) {
+                switch (result) {
+                    case NETWORK_ERROR:
+                        notifyUser(context, R.string.LicenseManagementJob_error_connecting_to_server);
+                        break;
+                    case SUCCESS:
+                        // this is to adjust the general directory refresh cycle
+                        TextSecurePreferences.setDirectoryRefreshTime(context, System.currentTimeMillis() + INTERVAL);
+                        Log.i(TAG, "Directory successfully retrieved. Proceeding to volume validation.");
+                        validateVolumes(context, config);
+                        break;
+                }
+            }
         }
-    }
 
-    public static String calculatePsid(String androidId) throws NoSuchAlgorithmException, NullPsidException {
+        @Override
+        protected Integer doInBackground(Void... params) {
+            final Context context = contextReference.get();
+            if (context != null) {
+                try {
+                    DirectoryHelper.refreshDirectory(context);
+                    return SUCCESS;
+                } catch (IOException ioe) {
+                    Log.w(TAG, ioe);
+                    return NETWORK_ERROR;
+                }
+            } else return ERROR;
+        }
 
-        if(androidId != null) {
-            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-            return Base64.encodeBytes(messageDigest.digest(androidId.getBytes(StandardCharsets.UTF_8)));
-        } else {
-            throw new NullPsidException();
+        private void validateVolumes(Context context, ServiceConfigurationValues config) {
+            RecipientDatabase rdb = DatabaseFactory.getRecipientDatabase(context);
+            int actualUsers = rdb.getRegistered().size();
+
+            if (!config.isLicensed()) {
+                // enforce free volumes
+                if (actualUsers > 3)
+                    new SelfKickOffTask(context).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
+            } else {
+
+                @Nullable byte[] licenseBytes = config.retrieveLicense();
+
+                // the thing that should not be
+                if (licenseBytes == null) {
+                    if (actualUsers > 3)
+                        new SelfKickOffTask(context).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
+                } else {
+                    // enforce volumes
+                    try {
+                        License license = new LicenseReader(new ByteArrayInputStream(licenseBytes)).read();
+                        String[] volumes = license.getFeatures().get("Volumes").getString().split(":");
+                        int licensedUsers = Integer.valueOf(volumes[1]);
+
+                        if (licensedUsers < actualUsers)
+                            new SelfKickOffTask(context).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                    } catch (IOException e) {
+                        // noop
+                    }
+                }
+            }
         }
     }
 
@@ -422,21 +421,15 @@ public class LicenseManagementJob extends BaseJob {
         }
     }
 
-    private static class AbsentLicenseFileException extends Exception {}
-
-    private static class InvalidLicenseFileException extends Exception {}
-
-    private static class LicenseAllocationOrValidationException extends Exception {}
-
-    public static class NullPsidException extends Exception {}
-
-    private static class LicenseNoMoreValidException extends Exception {}
+    private static class InvalidLicenseFileException extends Exception {
+    }
 
     private enum LicenseStatus {
         OK,
         TAMPERED,
         CORRUPTED,
         EXPIRED,
-        NYV
+        NYV,
+        IRRELEVANT
     }
 }
