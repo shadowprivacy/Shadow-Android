@@ -14674,6 +14674,34 @@ public final class SignalServiceProtos {
        * @return The image.
        */
       su.sres.signalservice.internal.push.SignalServiceProtos.AttachmentPointer getImage();
+
+      /**
+       * <code>optional string description = 4;</code>
+       * @return Whether the description field is set.
+       */
+      boolean hasDescription();
+      /**
+       * <code>optional string description = 4;</code>
+       * @return The description.
+       */
+      java.lang.String getDescription();
+      /**
+       * <code>optional string description = 4;</code>
+       * @return The bytes for description.
+       */
+      com.google.protobuf.ByteString
+          getDescriptionBytes();
+
+      /**
+       * <code>optional uint64 date = 5;</code>
+       * @return Whether the date field is set.
+       */
+      boolean hasDate();
+      /**
+       * <code>optional uint64 date = 5;</code>
+       * @return The date.
+       */
+      long getDate();
     }
     /**
      * Protobuf type {@code signalservice.DataMessage.Preview}
@@ -14686,6 +14714,7 @@ public final class SignalServiceProtos {
       private Preview() {
         url_ = "";
         title_ = "";
+        description_ = "";
       }
       private int bitField0_;
       public static final int URL_FIELD_NUMBER = 1;
@@ -14862,6 +14891,99 @@ public final class SignalServiceProtos {
        */
       private void clearImage() {  image_ = null;
         bitField0_ = (bitField0_ & ~0x00000004);
+      }
+
+      public static final int DESCRIPTION_FIELD_NUMBER = 4;
+      private java.lang.String description_;
+      /**
+       * <code>optional string description = 4;</code>
+       * @return Whether the description field is set.
+       */
+      @java.lang.Override
+      public boolean hasDescription() {
+        return ((bitField0_ & 0x00000008) != 0);
+      }
+      /**
+       * <code>optional string description = 4;</code>
+       * @return The description.
+       */
+      @java.lang.Override
+      public java.lang.String getDescription() {
+        return description_;
+      }
+      /**
+       * <code>optional string description = 4;</code>
+       * @return The bytes for description.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getDescriptionBytes() {
+        return com.google.protobuf.ByteString.copyFromUtf8(description_);
+      }
+      /**
+       * <code>optional string description = 4;</code>
+       * @param value The description to set.
+       */
+      private void setDescription(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000008;
+        description_ = value;
+      }
+      /**
+       * <code>optional string description = 4;</code>
+       */
+      private void clearDescription() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        description_ = getDefaultInstance().getDescription();
+      }
+      /**
+       * <code>optional string description = 4;</code>
+       * @param value The bytes for description to set.
+       */
+      private void setDescriptionBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000008;
+        description_ = value.toStringUtf8();
+      }
+
+      public static final int DATE_FIELD_NUMBER = 5;
+      private long date_;
+      /**
+       * <code>optional uint64 date = 5;</code>
+       * @return Whether the date field is set.
+       */
+      @java.lang.Override
+      public boolean hasDate() {
+        return ((bitField0_ & 0x00000010) != 0);
+      }
+      /**
+       * <code>optional uint64 date = 5;</code>
+       * @return The date.
+       */
+      @java.lang.Override
+      public long getDate() {
+        return date_;
+      }
+      /**
+       * <code>optional uint64 date = 5;</code>
+       * @param value The date to set.
+       */
+      private void setDate(long value) {
+        bitField0_ |= 0x00000010;
+        date_ = value;
+      }
+      /**
+       * <code>optional uint64 date = 5;</code>
+       */
+      private void clearDate() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        date_ = 0L;
       }
 
       public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Preview parseFrom(
@@ -15120,6 +15242,99 @@ public final class SignalServiceProtos {
           return this;
         }
 
+        /**
+         * <code>optional string description = 4;</code>
+         * @return Whether the description field is set.
+         */
+        @java.lang.Override
+        public boolean hasDescription() {
+          return instance.hasDescription();
+        }
+        /**
+         * <code>optional string description = 4;</code>
+         * @return The description.
+         */
+        @java.lang.Override
+        public java.lang.String getDescription() {
+          return instance.getDescription();
+        }
+        /**
+         * <code>optional string description = 4;</code>
+         * @return The bytes for description.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getDescriptionBytes() {
+          return instance.getDescriptionBytes();
+        }
+        /**
+         * <code>optional string description = 4;</code>
+         * @param value The description to set.
+         * @return This builder for chaining.
+         */
+        public Builder setDescription(
+            java.lang.String value) {
+          copyOnWrite();
+          instance.setDescription(value);
+          return this;
+        }
+        /**
+         * <code>optional string description = 4;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearDescription() {
+          copyOnWrite();
+          instance.clearDescription();
+          return this;
+        }
+        /**
+         * <code>optional string description = 4;</code>
+         * @param value The bytes for description to set.
+         * @return This builder for chaining.
+         */
+        public Builder setDescriptionBytes(
+            com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setDescriptionBytes(value);
+          return this;
+        }
+
+        /**
+         * <code>optional uint64 date = 5;</code>
+         * @return Whether the date field is set.
+         */
+        @java.lang.Override
+        public boolean hasDate() {
+          return instance.hasDate();
+        }
+        /**
+         * <code>optional uint64 date = 5;</code>
+         * @return The date.
+         */
+        @java.lang.Override
+        public long getDate() {
+          return instance.getDate();
+        }
+        /**
+         * <code>optional uint64 date = 5;</code>
+         * @param value The date to set.
+         * @return This builder for chaining.
+         */
+        public Builder setDate(long value) {
+          copyOnWrite();
+          instance.setDate(value);
+          return this;
+        }
+        /**
+         * <code>optional uint64 date = 5;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearDate() {
+          copyOnWrite();
+          instance.clearDate();
+          return this;
+        }
+
         // @@protoc_insertion_point(builder_scope:signalservice.DataMessage.Preview)
       }
       @java.lang.Override
@@ -15140,10 +15355,12 @@ public final class SignalServiceProtos {
                 "url_",
                 "title_",
                 "image_",
+                "description_",
+                "date_",
               };
               java.lang.String info =
-                  "\u0001\u0003\u0000\u0001\u0001\u0003\u0003\u0000\u0000\u0000\u0001\b\u0000\u0002" +
-                  "\b\u0001\u0003\t\u0002";
+                  "\u0001\u0005\u0000\u0001\u0001\u0005\u0005\u0000\u0000\u0000\u0001\b\u0000\u0002" +
+                  "\b\u0001\u0003\t\u0002\u0004\b\u0003\u0005\u0003\u0004";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through

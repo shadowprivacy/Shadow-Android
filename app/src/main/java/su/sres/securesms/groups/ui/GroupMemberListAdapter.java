@@ -26,21 +26,26 @@ import java.util.Set;
 
 final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberListAdapter.ViewHolder> {
 
-    private static final int FULL_MEMBER                = 0;
-    private static final int OWN_INVITE_PENDING         = 1;
+    private static final int FULL_MEMBER = 0;
+    private static final int OWN_INVITE_PENDING = 1;
     private static final int OTHER_INVITE_PENDING_COUNT = 2;
-    private static final int NEW_GROUP_CANDIDATE        = 3;
+    private static final int NEW_GROUP_CANDIDATE = 3;
+    private static final int REQUESTING_MEMBER = 4;
 
-    private final List<GroupMemberEntry>  data                    = new ArrayList<>();
-    private final Set<GroupMemberEntry> selection               = new HashSet<>();
+    private final List<GroupMemberEntry> data = new ArrayList<>();
+    private final Set<GroupMemberEntry> selection = new HashSet<>();
     private final SelectionChangeListener selectionChangeListener = new SelectionChangeListener();
 
-    private final boolean                 selectable;
+    private final boolean selectable;
 
-    @Nullable private AdminActionsListener             adminActionsListener;
-    @Nullable private RecipientClickListener           recipientClickListener;
-    @Nullable private RecipientLongClickListener       recipientLongClickListener;
-    @Nullable private RecipientSelectionChangeListener recipientSelectionChangeListener;
+    @Nullable
+    private AdminActionsListener adminActionsListener;
+    @Nullable
+    private RecipientClickListener recipientClickListener;
+    @Nullable
+    private RecipientLongClickListener recipientLongClickListener;
+    @Nullable
+    private RecipientSelectionChangeListener recipientSelectionChangeListener;
 
     GroupMemberListAdapter(boolean selectable) {
         this.selectable = selectable;
@@ -74,7 +79,8 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
     }
 
     @Override
-    public @NonNull ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public @NonNull
+    ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         switch (viewType) {
             case FULL_MEMBER:
                 return new FullMemberViewHolder(LayoutInflater.from(parent.getContext())
@@ -100,6 +106,13 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
                         .inflate(R.layout.group_new_candidate_recipient_list_item, parent, false),
                         recipientClickListener,
                         recipientLongClickListener,
+                        selectionChangeListener);
+            case REQUESTING_MEMBER:
+                return new RequestingMemberViewHolder(LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.group_recipient_requesting_list_item, parent, false),
+                        recipientClickListener,
+                        recipientLongClickListener,
+                        adminActionsListener,
                         selectionChangeListener);
             default:
                 throw new AssertionError();
@@ -140,6 +153,8 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
             return OTHER_INVITE_PENDING_COUNT;
         } else if (groupMemberEntry instanceof GroupMemberEntry.NewGroupCandidate) {
             return NEW_GROUP_CANDIDATE;
+        } else if (groupMemberEntry instanceof GroupMemberEntry.RequestingMember) {
+            return REQUESTING_MEMBER;
         }
 
         throw new AssertionError();
@@ -152,39 +167,42 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
 
     static abstract class ViewHolder extends LifecycleViewHolder {
 
-        final Context                    context;
-        final AvatarImageView            avatar;
-        final TextView                   recipient;
-        final CheckBox                   selected;
-        final PopupMenuView              popupMenu;
-        final View                       popupMenuContainer;
-        final ProgressBar                busyProgress;
-        final View                       admin;
-        final SelectionChangeListener    selectionChangeListener;
-        @Nullable final RecipientClickListener     recipientClickListener;
-        @Nullable final AdminActionsListener       adminActionsListener;
-        @Nullable final RecipientLongClickListener recipientLongClickListener;
+        final Context context;
+        final AvatarImageView avatar;
+        final TextView recipient;
+        final CheckBox selected;
+        final PopupMenuView popupMenu;
+        final View popupMenuContainer;
+        final ProgressBar busyProgress;
+        @Nullable
+        final View admin;
+        final SelectionChangeListener selectionChangeListener;
+        @Nullable
+        final RecipientClickListener recipientClickListener;
+        @Nullable
+        final AdminActionsListener adminActionsListener;
+        @Nullable
+        final RecipientLongClickListener recipientLongClickListener;
 
         ViewHolder(@NonNull View itemView,
                    @Nullable RecipientClickListener recipientClickListener,
                    @Nullable RecipientLongClickListener recipientLongClickListener,
                    @Nullable AdminActionsListener adminActionsListener,
-                   @NonNull SelectionChangeListener selectionChangeListener)
-        {
+                   @NonNull SelectionChangeListener selectionChangeListener) {
             super(itemView);
 
-            this.context                    = itemView.getContext();
-            this.avatar                     = itemView.findViewById(R.id.recipient_avatar);
-            this.recipient                  = itemView.findViewById(R.id.recipient_name);
-            this.selected                   = itemView.findViewById(R.id.recipient_selected);
-            this.popupMenu                  = itemView.findViewById(R.id.popupMenu);
-            this.popupMenuContainer         = itemView.findViewById(R.id.popupMenuProgressContainer);
-            this.busyProgress               = itemView.findViewById(R.id.menuBusyProgress);
-            this.admin                      = itemView.findViewById(R.id.admin);
-            this.recipientClickListener     = recipientClickListener;
+            this.context = itemView.getContext();
+            this.avatar = itemView.findViewById(R.id.recipient_avatar);
+            this.recipient = itemView.findViewById(R.id.recipient_name);
+            this.selected = itemView.findViewById(R.id.recipient_selected);
+            this.popupMenu = itemView.findViewById(R.id.popupMenu);
+            this.popupMenuContainer = itemView.findViewById(R.id.popupMenuProgressContainer);
+            this.busyProgress = itemView.findViewById(R.id.menuBusyProgress);
+            this.admin = itemView.findViewById(R.id.admin);
+            this.recipientClickListener = recipientClickListener;
             this.recipientLongClickListener = recipientLongClickListener;
-            this.adminActionsListener       = adminActionsListener;
-            this.selectionChangeListener    = selectionChangeListener;
+            this.adminActionsListener = adminActionsListener;
+            this.selectionChangeListener = selectionChangeListener;
         }
 
         void bindRecipient(@NonNull Recipient recipient) {
@@ -226,7 +244,9 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
 
         void bind(@NonNull GroupMemberEntry memberEntry, boolean isSelected) {
             busyProgress.setVisibility(View.GONE);
-            admin.setVisibility(View.GONE);
+            if (admin != null) {
+                admin.setVisibility(View.GONE);
+            }
             hideMenu();
 
             itemView.setOnClickListener(null);
@@ -256,8 +276,7 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
                              @Nullable RecipientClickListener recipientClickListener,
                              @Nullable RecipientLongClickListener recipientLongClickListener,
                              @Nullable AdminActionsListener adminActionsListener,
-                             @NonNull SelectionChangeListener selectionChangeListener)
-        {
+                             @NonNull SelectionChangeListener selectionChangeListener) {
             super(itemView, recipientClickListener, recipientLongClickListener, adminActionsListener, selectionChangeListener);
         }
 
@@ -269,7 +288,9 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
 
             bindRecipient(fullMember.getMember());
             bindRecipientClick(fullMember.getMember());
-            admin.setVisibility(fullMember.isAdmin() ? View.VISIBLE : View.INVISIBLE);
+            if (admin != null) {
+                admin.setVisibility(fullMember.isAdmin() ? View.VISIBLE : View.INVISIBLE);
+            }
         }
     }
 
@@ -281,8 +302,7 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
         NewGroupInviteeViewHolder(@NonNull View itemView,
                                   @Nullable RecipientClickListener recipientClickListener,
                                   @Nullable RecipientLongClickListener recipientLongClickListener,
-                                  @NonNull SelectionChangeListener selectionChangeListener)
-        {
+                                  @NonNull SelectionChangeListener selectionChangeListener) {
             super(itemView, recipientClickListener, recipientLongClickListener, null, selectionChangeListener);
 
             smsContact = itemView.findViewById(R.id.sms_contact);
@@ -309,8 +329,7 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
                                          @Nullable RecipientClickListener recipientClickListener,
                                          @Nullable RecipientLongClickListener recipientLongClickListener,
                                          @Nullable AdminActionsListener adminActionsListener,
-                                         @NonNull SelectionChangeListener selectionChangeListener)
-        {
+                                         @NonNull SelectionChangeListener selectionChangeListener) {
             super(itemView, recipientClickListener, recipientLongClickListener, adminActionsListener, selectionChangeListener);
         }
 
@@ -320,7 +339,7 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
 
             GroupMemberEntry.PendingMember pendingMember = (GroupMemberEntry.PendingMember) memberEntry;
 
-            bindRecipient(pendingMember.getInvitee());
+            bindImageAndText(pendingMember.getInvitee(), pendingMember.getInvitee().getDisplayNameOrUsername(context));
             bindRecipientClick(pendingMember.getInvitee());
 
             if (pendingMember.isCancellable() && adminActionsListener != null) {
@@ -341,8 +360,7 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
 
         UnknownPendingMemberCountViewHolder(@NonNull View itemView,
                                             @Nullable AdminActionsListener adminActionsListener,
-                                            @NonNull SelectionChangeListener selectionChangeListener)
-        {
+                                            @NonNull SelectionChangeListener selectionChangeListener) {
             super(itemView, null, null, adminActionsListener, selectionChangeListener);
         }
 
@@ -351,9 +369,9 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
             super.bind(memberEntry, isSelected);
             GroupMemberEntry.UnknownPendingMemberCount pendingMembers = (GroupMemberEntry.UnknownPendingMemberCount) memberEntry;
 
-            Recipient inviter     = pendingMembers.getInviter();
-            String    displayName = inviter.getDisplayName(itemView.getContext());
-            String    displayText = context.getResources().getQuantityString(R.plurals.GroupMemberList_invited,
+            Recipient inviter = pendingMembers.getInviter();
+            String displayName = inviter.getDisplayName(itemView.getContext());
+            String displayText = context.getResources().getQuantityString(R.plurals.GroupMemberList_invited,
                     pendingMembers.getInviteCount(),
                     displayName, pendingMembers.getInviteCount());
 
@@ -378,6 +396,46 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
                         });
                 showMenu();
             }
+        }
+    }
+
+    final static class RequestingMemberViewHolder extends ViewHolder {
+
+        private final View approveRequest;
+        private final View denyRequest;
+
+        RequestingMemberViewHolder(@NonNull View itemView,
+                                   @Nullable RecipientClickListener recipientClickListener,
+                                   @Nullable RecipientLongClickListener recipientLongClickListener,
+                                   @Nullable AdminActionsListener adminActionsListener,
+                                   @NonNull SelectionChangeListener selectionChangeListener)
+        {
+            super(itemView, recipientClickListener, recipientLongClickListener, adminActionsListener, selectionChangeListener);
+
+            approveRequest = itemView.findViewById(R.id.request_approve);
+            denyRequest    = itemView.findViewById(R.id.request_deny);
+        }
+
+        @Override
+        void bind(@NonNull GroupMemberEntry memberEntry, boolean isSelected) {
+            super.bind(memberEntry, isSelected);
+
+            GroupMemberEntry.RequestingMember requestingMember = (GroupMemberEntry.RequestingMember) memberEntry;
+
+            if (adminActionsListener != null && requestingMember.isApprovableDeniable()) {
+                approveRequest.setVisibility(View.VISIBLE);
+                denyRequest   .setVisibility(View.VISIBLE);
+                approveRequest.setOnClickListener(v -> adminActionsListener.onApproveRequest(requestingMember));
+                denyRequest   .setOnClickListener(v -> adminActionsListener.onDenyRequest   (requestingMember));
+            } else {
+                approveRequest.setVisibility(View.GONE);
+                denyRequest   .setVisibility(View.GONE);
+                approveRequest.setOnClickListener(null);
+                denyRequest   .setOnClickListener(null);
+            }
+
+            bindRecipient(requestingMember.getRequester());
+            bindRecipientClick(requestingMember.getRequester());
         }
     }
 

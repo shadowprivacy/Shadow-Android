@@ -1,4 +1,4 @@
-package su.sres.securesms.groups.ui.pendingmemberinvites;
+package su.sres.securesms.groups.ui.invitesandrequests.invited;
 
 import android.content.Context;
 

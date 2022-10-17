@@ -351,17 +351,16 @@ public final class PushProcessMessageJob extends BaseJob {
         boolean                  isGv2Message   = groupId.isPresent() && groupId.get().isV2();
 
         if (isGv2Message) {
-          GroupMasterKey groupMasterKey = message.getGroupContext().get().getGroupV2().get().getMasterKey();
+          GroupId.V2 groupIdV2 = groupId.get().requireV2();
 
-          if (!groupV2PreProcessMessage(content, groupMasterKey, message.getGroupContext().get().getGroupV2().get())) {
-            Log.i(TAG, "Ignoring GV2 message for group we are not currently in " + groupId);
+          if (!updateGv2GroupFromServerOrP2PChange(content, message.getGroupContext().get().getGroupV2().get())) {
+            Log.i(TAG, "Ignoring GV2 message for group we are not currently in " + groupIdV2);
             return;
           }
 
-          GroupId.V2 groupIdV2 = groupId.get().requireV2();
-          Recipient  sender    = Recipient.externalPush(context, content.getSender());
+          Recipient sender = Recipient.externalPush(context, content.getSender());
           if (!groupDatabase.isCurrentMember(groupIdV2, sender.getId())) {
-            Log.i(TAG, "Ignoring GV2 message from member not in group " + groupId);
+            Log.i(TAG, "Ignoring GV2 message from member not in group " + groupIdV2);
             return;
           }
         }
@@ -440,18 +439,20 @@ public final class PushProcessMessageJob extends BaseJob {
   }
 
   /**
-   * Attempts to update the group to the version mentioned in the message.
-   * If the local version is at least that it will not check the server.
+   * Attempts to update the group to the revision mentioned in the message.
+   * If the local version is at least the revision in the message it will not query the server.
+   * If the message includes a signed change proto that is sufficient (i.e. local revision is only
+   * 1 revision behind), it will also not query the server in this case.
    *
-   * @return false iff self is not a current member of the group.
+   * @return false if needed to query the server and was not able to because self is not a current
+   * member of the group.
    */
-  private boolean groupV2PreProcessMessage(@NonNull SignalServiceContent content,
-                                           @NonNull GroupMasterKey groupMasterKey,
-                                           @NonNull SignalServiceGroupV2 groupV2)
+  private boolean updateGv2GroupFromServerOrP2PChange(@NonNull SignalServiceContent content,
+                                                      @NonNull SignalServiceGroupV2 groupV2)
           throws IOException, GroupChangeBusyException
   {
     try {
-      GroupManager.updateGroupFromServer(context, groupMasterKey, groupV2.getRevision(), content.getTimestamp(), groupV2.getSignedGroupChange());
+      GroupManager.updateGroupFromServer(context, groupV2.getMasterKey(), groupV2.getRevision(), content.getTimestamp(), groupV2.getSignedGroupChange());
       return true;
     } catch (GroupNotAMemberException e) {
       Log.w(TAG, "Ignoring message for a group we're not in");
@@ -719,7 +720,7 @@ public final class PushProcessMessageJob extends BaseJob {
     }
 
     try {
-      MmsDatabase          database     = DatabaseFactory.getMmsDatabase(context);
+      MessageDatabase      database     = DatabaseFactory.getMmsDatabase(context);
       Recipient            sender       = Recipient.externalHighTrustPush(context, content.getSender());
       IncomingMediaMessage mediaMessage = new IncomingMediaMessage(sender.getId(),
               content.getTimestamp(),
@@ -906,26 +907,29 @@ public final class PushProcessMessageJob extends BaseJob {
 
   private void handleSynchronizeSentMessage(@NonNull SignalServiceContent content,
                                             @NonNull SentTranscriptMessage message)
-          throws StorageFailedException, BadGroupIdException, VerificationFailedException, IOException, InvalidGroupStateException
+          throws StorageFailedException, BadGroupIdException, IOException, GroupChangeBusyException
 
   {
     try {
       GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
 
-      Long threadId = null;
+      long threadId = -1;
 
       if (message.isRecipientUpdate()) {
         handleGroupRecipientUpdate(message);
       } else if (message.getMessage().isEndSession()) {
         threadId = handleSynchronizeSentEndSessionMessage(message);
       } else if (message.getMessage().isGroupV1Update()) {
-        threadId = GroupV1MessageProcessor.process(context, content, message.getMessage(), true);
+        Long gv1ThreadId = GroupV1MessageProcessor.process(context, content, message.getMessage(), true);
+        threadId = gv1ThreadId == null ? -1 : gv1ThreadId;
+      } else if (message.getMessage().isGroupV2Update()) {
+        handleSynchronizeSentGv2Update(content, message);
+        threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(getSyncMessageDestination(message));
       } else if (message.getMessage().isExpirationUpdate()) {
         threadId = handleSynchronizeSentExpirationUpdate(message);
       } else if (message.getMessage().getReaction().isPresent()) {
         handleReaction(content, message.getMessage());
         threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(getSyncMessageDestination(message));
-        threadId = threadId != -1 ? threadId : null;
       } else if (message.getMessage().getRemoteDelete().isPresent()) {
         handleRemoteDelete(content, message.getMessage());
       } else if (message.getMessage().getAttachments().isPresent() || message.getMessage().getQuote().isPresent() || message.getMessage().getPreviews().isPresent() || message.getMessage().getSticker().isPresent() || message.getMessage().isViewOnce()) {
@@ -934,7 +938,8 @@ public final class PushProcessMessageJob extends BaseJob {
         threadId = handleSynchronizeSentTextMessage(message);
       }
 
-      if (message.getMessage().getGroupContext().isPresent() && groupDatabase.isUnknownGroup(GroupUtil.idFromGroupContext(message.getMessage().getGroupContext().get()))) {        handleUnknownGroupMessage(content, message.getMessage().getGroupContext().get());
+      if (message.getMessage().getGroupContext().isPresent() && groupDatabase.isUnknownGroup(GroupUtil.idFromGroupContext(message.getMessage().getGroupContext().get()))) {
+        handleUnknownGroupMessage(content, message.getMessage().getGroupContext().get());
       }
 
       if (message.getMessage().getProfileKey().isPresent()) {
@@ -946,7 +951,7 @@ public final class PushProcessMessageJob extends BaseJob {
       }
 
 
-      if (threadId != null) {
+      if (threadId != -1) {
         DatabaseFactory.getThreadDatabase(context).setRead(threadId, true);
         ApplicationDependencies.getMessageNotifier().updateNotification(context);
       }
@@ -954,6 +959,18 @@ public final class PushProcessMessageJob extends BaseJob {
       ApplicationDependencies.getMessageNotifier().setLastDesktopActivityTimestamp(message.getTimestamp());
     } catch (MmsException e) {
       throw new StorageFailedException(e, content.getSender().getIdentifier(), content.getSenderDevice());
+    }
+  }
+
+  private void handleSynchronizeSentGv2Update(@NonNull SignalServiceContent content,
+                                              @NonNull SentTranscriptMessage message)
+          throws IOException, GroupChangeBusyException
+  {
+    SignalServiceGroupV2 signalServiceGroupV2 = message.getMessage().getGroupContext().get().getGroupV2().get();
+    GroupId.V2           groupIdV2            = GroupId.v2(signalServiceGroupV2.getMasterKey());
+
+    if (!updateGv2GroupFromServerOrP2PChange(content, signalServiceGroupV2)) {
+      Log.i(TAG, "Ignoring GV2 message for group we are not currently in " + groupIdV2);
     }
   }
 
@@ -1033,7 +1050,7 @@ public final class PushProcessMessageJob extends BaseJob {
 
     Optional<InsertResult> insertResult;
 
-    MmsDatabase database = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase database = DatabaseFactory.getMmsDatabase(context);
     database.beginTransaction();
 
     try {
@@ -1096,8 +1113,8 @@ public final class PushProcessMessageJob extends BaseJob {
   private long handleSynchronizeSentExpirationUpdate(@NonNull SentTranscriptMessage message)
           throws MmsException, BadGroupIdException
   {
-    MmsDatabase database   = DatabaseFactory.getMmsDatabase(context);
-    Recipient   recipient  = getSyncMessageDestination(message);
+    MessageDatabase database   = DatabaseFactory.getMmsDatabase(context);
+    Recipient       recipient  = getSyncMessageDestination(message);
 
     OutgoingExpirationUpdateMessage expirationUpdateMessage = new OutgoingExpirationUpdateMessage(recipient,
                                                                                                   message.getTimestamp(),
@@ -1116,7 +1133,7 @@ public final class PushProcessMessageJob extends BaseJob {
   private long handleSynchronizeSentMediaMessage(@NonNull SentTranscriptMessage message)
           throws MmsException, BadGroupIdException
   {
-    MmsDatabase                 database        = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase             database        = DatabaseFactory.getMmsDatabase(context);
     Recipient                   recipients      = getSyncMessageDestination(message);
     Optional<QuoteModel>        quote           = getValidatedQuote(message.getMessage().getQuote());
     Optional<Attachment>        sticker         = getStickerAttachment(message.getMessage().getSticker());
@@ -1702,15 +1719,16 @@ public final class PushProcessMessageJob extends BaseJob {
       Optional<Attachment> thumbnail     = PointerAttachment.forPointer(preview.getImage());
       Optional<String>     url           = Optional.fromNullable(preview.getUrl());
       Optional<String>     title         = Optional.fromNullable(preview.getTitle());
-      boolean              hasContent    = !TextUtils.isEmpty(title.or("")) || thumbnail.isPresent();
+      Optional<String>     description   = Optional.fromNullable(preview.getDescription());
+      boolean              hasTitle      = !TextUtils.isEmpty(title.or(""));
       boolean              presentInBody = url.isPresent() && Stream.of(LinkPreviewUtil.findValidPreviewUrls(message)).map(Link::getUrl).collect(Collectors.toSet()).contains(url.get());
       boolean              validDomain   = url.isPresent() && LinkPreviewUtil.isValidPreviewUrl(url.get());
 
-      if (hasContent && presentInBody && validDomain) {
-        LinkPreview linkPreview = new LinkPreview(url.get(), title.or(""), thumbnail);
+      if (hasTitle && presentInBody && validDomain) {
+        LinkPreview linkPreview = new LinkPreview(url.get(), title.or(""), description.or(""), preview.getDate(), thumbnail);
         linkPreviews.add(linkPreview);
       } else {
-        Log.w(TAG, String.format("Discarding an invalid link preview. hasContent: %b presentInBody: %b validDomain: %b", hasContent, presentInBody, validDomain));
+        Log.w(TAG, String.format("Discarding an invalid link preview. hasTitle: %b presentInBody: %b validDomain: %b", hasTitle, presentInBody, validDomain));
       }
     }
 

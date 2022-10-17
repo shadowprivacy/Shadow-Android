@@ -28,12 +28,14 @@ import android.text.TextUtils;
 import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
+import com.google.android.mms.pdu_alt.NotificationInd;
 
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteStatement;
 
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.documents.IdentityKeyMismatchList;
+import su.sres.securesms.database.documents.NetworkFailure;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
@@ -42,8 +44,12 @@ import su.sres.securesms.database.model.databaseprotos.ProfileChangeDetails;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.TrimThreadJob;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.mms.IncomingMediaMessage;
+import su.sres.securesms.mms.MmsException;
+import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.revealable.ViewOnceExpirationInfo;
 import su.sres.securesms.sms.IncomingGroupUpdateMessage;
 import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
@@ -454,7 +460,7 @@ public class SmsDatabase extends MessageDatabase {
     }
 
     @Override
-    public boolean incrementSmsReceiptCount(SyncMessageId messageId, boolean deliveryReceipt) {
+    public boolean incrementReceiptCount(SyncMessageId messageId, long timestamp, boolean deliveryReceipt) {
         SQLiteDatabase database = databaseHelper.getWritableDatabase();
         boolean foundMessage = false;
 
@@ -996,20 +1002,30 @@ public class SmsDatabase extends MessageDatabase {
     }
 
     @Override
-    SQLiteDatabase beginTransaction() {
+    public SQLiteDatabase beginTransaction() {
         SQLiteDatabase database = databaseHelper.getWritableDatabase();
         database.beginTransaction();
         return database;
     }
 
     @Override
-    void endTransaction(SQLiteDatabase database) {
+    public void setTransactionSuccessful() {
+        databaseHelper.getWritableDatabase().setTransactionSuccessful();
+    }
+
+    @Override
+    public void endTransaction(SQLiteDatabase database) {
         database.setTransactionSuccessful();
         database.endTransaction();
     }
 
     @Override
-    SQLiteStatement createInsertStatement(SQLiteDatabase database) {
+    public void endTransaction() {
+        databaseHelper.getWritableDatabase().endTransaction();
+    }
+
+    @Override
+    public SQLiteStatement createInsertStatement(SQLiteDatabase database) {
         return database.compileStatement("INSERT INTO " + TABLE_NAME + " (" + RECIPIENT_ID + ", " +
                 PERSON + ", " +
                 DATE_SENT + ", " +
@@ -1024,6 +1040,97 @@ public class SmsDatabase extends MessageDatabase {
                 SERVICE_CENTER +
                 ", " + THREAD_ID + ") " +
                 " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    }
+
+    @Override
+    public @Nullable
+    ViewOnceExpirationInfo getNearestExpiringViewOnceMessage() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isSent(long messageId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long getLatestGroupQuitTimestamp(long threadId, long quitTimeBarrier) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isGroupQuitMessage(long messageId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public @Nullable Pair<RecipientId, Long> getOldestUnreadMentionDetails(long threadId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getUnreadMentionCount(long threadId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addFailures(long messageId, List<NetworkFailure> failure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void removeFailure(long messageId, NetworkFailure failure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void markDownloadState(long messageId, long state) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Optional<MmsNotificationInfo> getNotification(long messageId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public OutgoingMediaMessage getOutgoingMessage(long messageId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Optional<InsertResult> insertMessageInbox(IncomingMediaMessage retrieved, String contentLocation, long threadId) throws MmsException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Pair<Long, Long> insertMessageInbox(@NonNull NotificationInd notification, int subscriptionId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Optional<InsertResult> insertSecureDecryptedMessageInbox(IncomingMediaMessage retrieved, long threadId) throws MmsException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long insertMessageOutbox(@NonNull OutgoingMediaMessage message, long threadId, boolean forceSms, @Nullable InsertListener insertListener) throws MmsException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long insertMessageOutbox(@NonNull OutgoingMediaMessage message, long threadId, boolean forceSms, int defaultReceiptStatus, @Nullable InsertListener insertListener) throws MmsException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void markIncomingNotificationReceived(long threadId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public MessageDatabase.Reader getMessages(Collection<Long> messageIds) {
+        throw new UnsupportedOperationException();
     }
 
     public static class Status {

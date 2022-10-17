@@ -14,6 +14,10 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+
 import su.sres.securesms.R;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.linkpreview.LinkPreviewRepository;
@@ -23,9 +27,10 @@ import su.sres.securesms.mms.SlidesClickedListener;
 import su.sres.securesms.util.ThemeUtil;
 
 import okhttp3.HttpUrl;
+import su.sres.securesms.util.Util;
 
 /**
- * The view shown in the compose box that represents the state of the link preview.
+ * The view shown in the compose box or conversation that represents the state of the link preview.
  */
 public class LinkPreviewView extends FrameLayout {
 
@@ -35,6 +40,7 @@ public class LinkPreviewView extends FrameLayout {
     private ViewGroup             container;
     private OutlinedThumbnailView thumbnail;
     private TextView              title;
+    private TextView              description;
     private TextView              site;
     private View                  divider;
     private View                  closeButton;
@@ -63,6 +69,7 @@ public class LinkPreviewView extends FrameLayout {
         container     = findViewById(R.id.linkpreview_container);
         thumbnail     = findViewById(R.id.linkpreview_thumbnail);
         title         = findViewById(R.id.linkpreview_title);
+        description   = findViewById(R.id.linkpreview_description);
         site          = findViewById(R.id.linkpreview_site);
         divider       = findViewById(R.id.linkpreview_divider);
         spinner       = findViewById(R.id.linkpreview_progress_wheel);
@@ -85,6 +92,8 @@ public class LinkPreviewView extends FrameLayout {
             container.setPadding(0, 0, 0, 0);
             divider.setVisibility(VISIBLE);
             closeButton.setVisibility(VISIBLE);
+            title.setMaxLines(2);
+            description.setMaxLines(2);
 
             closeButton.setOnClickListener(v -> {
                 if (closeClickedListener != null) {
@@ -108,6 +117,7 @@ public class LinkPreviewView extends FrameLayout {
     public void setLoading() {
         title.setVisibility(GONE);
         site.setVisibility(GONE);
+        description.setVisibility(GONE);
         thumbnail.setVisibility(GONE);
         spinner.setVisibility(VISIBLE);
         noPreview.setVisibility(INVISIBLE);
@@ -123,17 +133,44 @@ public class LinkPreviewView extends FrameLayout {
     }
 
     public void setLinkPreview(@NonNull GlideRequests glideRequests, @NonNull LinkPreview linkPreview, boolean showThumbnail) {
-        title.setVisibility(VISIBLE);
-        site.setVisibility(VISIBLE);
-        thumbnail.setVisibility(VISIBLE);
         spinner.setVisibility(GONE);
         noPreview.setVisibility(GONE);
 
-        title.setText(linkPreview.getTitle());
+        if (!Util.isEmpty(linkPreview.getTitle())) {
+            title.setText(linkPreview.getTitle());
+            title.setVisibility(VISIBLE);
+        } else {
+            title.setVisibility(GONE);
+        }
 
-        HttpUrl url = HttpUrl.parse(linkPreview.getUrl());
-        if (url != null) {
-            site.setText(url.topPrivateDomain());
+        if (!Util.isEmpty(linkPreview.getDescription())) {
+            description.setText(linkPreview.getDescription());
+            description.setVisibility(VISIBLE);
+        } else {
+            description.setVisibility(GONE);
+        }
+
+        String domain = null;
+
+        if (!Util.isEmpty(linkPreview.getUrl())) {
+            HttpUrl url = HttpUrl.parse(linkPreview.getUrl());
+            if (url != null) {
+                domain = url.topPrivateDomain();
+            }
+
+        }
+
+        if (domain != null && linkPreview.getDate() > 0) {
+            site.setText(getContext().getString(R.string.LinkPreviewView_domain_date, domain, formatDate(linkPreview.getDate())));
+            site.setVisibility(VISIBLE);
+        } else if (domain != null) {
+            site.setText(domain);
+            site.setVisibility(VISIBLE);
+        } else if (linkPreview.getDate() > 0) {
+            site.setText(formatDate(linkPreview.getDate()));
+            site.setVisibility(VISIBLE);
+        } else {
+            site.setVisibility(GONE);
         }
 
         if (showThumbnail && linkPreview.getThumbnail().isPresent()) {
@@ -164,6 +201,11 @@ public class LinkPreviewView extends FrameLayout {
 
     public void setDownloadClickedListener(SlidesClickedListener listener) {
         thumbnail.setDownloadClickListener(listener);
+    }
+
+    private static String formatDate(long date) {
+        DateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+        return dateFormat.format(date);
     }
 
     public interface CloseClickedListener {

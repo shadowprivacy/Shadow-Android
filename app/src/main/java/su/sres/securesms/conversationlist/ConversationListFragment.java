@@ -129,6 +129,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -281,12 +282,14 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }
 
     @Override
-    public void onPrepareOptionsMenu(Menu menu) {
-        MenuInflater inflater = requireActivity().getMenuInflater();
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         menu.clear();
 
         inflater.inflate(R.menu.text_secure_normal, menu);
+    }
 
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
         menu.findItem(R.id.menu_insights).setVisible(TextSecurePreferences.isSmsEnabled(requireContext()));
         menu.findItem(R.id.menu_clear_passphrase).setVisible(!TextSecurePreferences.isPasswordDisabled(requireContext()));
     }
@@ -730,7 +733,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }
 
     private void handlePinAllSelected() {
-        final Set<Long> toPin = new HashSet<>(Stream.of(defaultAdapter.getBatchSelection())
+        final Set<Long> toPin = new LinkedHashSet<>(Stream.of(defaultAdapter.getBatchSelection())
                 .filterNot(conversation -> conversation.getThreadRecord().isPinned())
                 .map(conversation -> conversation.getThreadRecord().getThreadId())
                 .toList());

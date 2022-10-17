@@ -8,7 +8,9 @@ import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
+import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.groups.GroupChangeBusyException;
@@ -26,6 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 public class RecipientUtil {
@@ -35,7 +38,8 @@ public class RecipientUtil {
     /**
      * This method will do it's best to craft a fully-populated {@link SignalServiceAddress} based on
      * the provided recipient. This includes performing a possible network request if no UUID is
-     * available.
+     * available. If the request to get a UUID fails, the exception is swallowed and an E164-only
+     * recipient is returned.
      */
     @WorkerThread
     public static @NonNull SignalServiceAddress toSignalServiceAddressBestEffort(@NonNull Context context, @NonNull Recipient recipient) {
@@ -50,7 +54,7 @@ public class RecipientUtil {
     /**
      * This method will do it's best to craft a fully-populated {@link SignalServiceAddress} based on
      * the provided recipient. This includes performing a possible network request if no UUID is
-     * available.
+     * available. If the request to get a UUID fails, an IOException is thrown.
      */
     @WorkerThread
     public static @NonNull SignalServiceAddress toSignalServiceAddress(@NonNull Context context, @NonNull Recipient recipient)
@@ -78,30 +82,38 @@ public class RecipientUtil {
     public static @NonNull List<SignalServiceAddress> toSignalServiceAddresses(@NonNull Context context, @NonNull List<RecipientId> recipients)
             throws IOException
     {
-        List<SignalServiceAddress> addresses = new ArrayList<>(recipients.size());
-
-        for (RecipientId id : recipients) {
-            addresses.add(toSignalServiceAddress(context, Recipient.resolved(id)));
-        }
-
-        return addresses;
+        return toSignalServiceAddressesFromResolved(context, Recipient.resolvedList(recipients));
     }
 
     public static @NonNull List<SignalServiceAddress> toSignalServiceAddressesFromResolved(@NonNull Context context, @NonNull List<Recipient> recipients)
             throws IOException
     {
-        List<SignalServiceAddress> addresses = new ArrayList<>(recipients.size());
 
-        for (Recipient recipient : recipients) {
-            addresses.add(toSignalServiceAddress(context, recipient));
-        }
+            List<Recipient> recipientsWithoutUuids = Stream.of(recipients)
+                    .map(Recipient::resolve)
+                    .filterNot(Recipient::hasUuid)
+                    .toList();
 
-        return addresses;
+            if (recipientsWithoutUuids.size() > 0) {
+                DirectoryHelper.refreshDirectory(context);
+            }
+
+
+        return Stream.of(recipients)
+                .map(Recipient::resolve)
+                .map(r -> new SignalServiceAddress(r.getUuid().orNull(), r.getE164().orNull()))
+                .toList();
     }
 
     public static boolean isBlockable(@NonNull Recipient recipient) {
         Recipient resolved = recipient.resolve();
         return resolved.isPushGroup() || resolved.hasServiceIdentifier();
+    }
+
+    public static List<Recipient> getEligibleForSending(@NonNull List<Recipient> recipients) {
+            return Stream.of(recipients)
+                    .filter(r -> r.getRegistered() != RecipientDatabase.RegisteredState.NOT_REGISTERED)
+                    .toList();
     }
 
     /**

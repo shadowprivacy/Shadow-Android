@@ -25,6 +25,7 @@ import su.sres.securesms.contacts.avatars.FallbackPhoto80dp;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.BottomSheetUtil;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.ThemeUtil;
@@ -146,7 +147,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
             } */
 
             String usernameNumberString = recipient.hasAUserSetDisplayName(requireContext()) && !recipient.isLocalNumber()
-                    ? String.format("%s %s", recipient.getUsername().or(""), recipient.getSmsAddress().or("")).trim()
+                    ? recipient.getSmsAddress().or("").trim()
                     : "";
             usernameNumber.setText(usernameNumberString);
             usernameNumber.setVisibility(TextUtils.isEmpty(usernameNumberString) ? View.GONE : View.VISIBLE);
@@ -159,9 +160,15 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
 
             noteToSelfDescription.setVisibility(recipient.isLocalNumber() ? View.VISIBLE : View.GONE);
 
-            boolean blocked = recipient.isBlocked();
-            blockButton  .setVisibility(recipient.isLocalNumber() ||  blocked ? View.GONE : View.VISIBLE);
-            unblockButton.setVisibility(recipient.isLocalNumber() || !blocked ? View.GONE : View.VISIBLE);
+            if (RecipientUtil.isBlockable(recipient)) {
+                boolean blocked = recipient.isBlocked();
+
+                blockButton  .setVisibility(recipient.isLocalNumber() ||  blocked ? View.GONE : View.VISIBLE);
+                unblockButton.setVisibility(recipient.isLocalNumber() || !blocked ? View.GONE : View.VISIBLE);
+            } else {
+                blockButton  .setVisibility(View.GONE);
+                unblockButton.setVisibility(View.GONE);
+            }
 
             messageButton.setVisibility(recipient.isRegistered() && !recipient.isLocalNumber() ? View.VISIBLE : View.GONE);
             secureCallButton.setVisibility(recipient.isRegistered() && !recipient.isLocalNumber() ? View.VISIBLE : View.GONE);

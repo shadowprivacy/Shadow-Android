@@ -95,7 +95,7 @@ public class CreateGroupActivity extends ContactSelectionActivity {
     }
 
     @Override
-    public boolean onContactSelected(Optional<RecipientId> recipientId, String number) {
+    public boolean onBeforeContactSelected(Optional<RecipientId> recipientId, String number) {
         if (contactsFragment.hasQueryFilter()) {
             getToolbar().clear();
         }

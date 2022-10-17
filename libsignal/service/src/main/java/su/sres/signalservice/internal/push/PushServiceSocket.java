@@ -1562,7 +1562,6 @@ public class PushServiceSocket {
                 .readTimeout(soTimeoutMillis, TimeUnit.MILLISECONDS)
                 .build();
 
-        //    Log.d(TAG, "Opening URL: " + String.format("%s%s", connectionHolder.getUrl(), path));
         Log.d(TAG, "Opening URL: <REDACTED>");
 
         Request.Builder request = new Request.Builder().url(connectionHolder.getUrl() + path);
@@ -1887,10 +1886,18 @@ public class PushServiceSocket {
         return AvatarUploadAttributes.parseFrom(readBodyBytes(response));
     }
 
-    public GroupChange patchGroupsV2Group(GroupChange.Actions groupChange, String authorization)
+    public GroupChange patchGroupsV2Group(GroupChange.Actions groupChange, String authorization, Optional<byte[]> groupLinkPassword)
             throws NonSuccessfulResponseCodeException, PushNetworkException, InvalidProtocolBufferException {
+        String path;
+
+        if (groupLinkPassword.isPresent()) {
+            path = String.format(GROUPSV2_GROUP_PASSWORD, Base64UrlSafe.encodeBytesWithoutPadding(groupLinkPassword.get()));
+        } else {
+            path = GROUPSV2_GROUP;
+        }
+
         ResponseBody response = makeStorageRequest(authorization,
-                GROUPSV2_GROUP,
+                path,
                 "PATCH",
                 protobufRequestBody(groupChange),
                 GROUPS_V2_PATCH_RESPONSE_HANDLER);
@@ -1909,11 +1916,12 @@ public class PushServiceSocket {
         return GroupChanges.parseFrom(readBodyBytes(response));
     }
 
-    public GroupJoinInfo getGroupJoinInfo(byte[] groupLinkPassword, GroupsV2AuthorizationString authorization)
+    public GroupJoinInfo getGroupJoinInfo(Optional<byte[]> groupLinkPassword, GroupsV2AuthorizationString authorization)
             throws NonSuccessfulResponseCodeException, PushNetworkException, InvalidProtocolBufferException
     {
-        ResponseBody response = makeStorageRequest(authorization.toString(),
-                String.format(GROUPSV2_GROUP_JOIN, Base64UrlSafe.encodeBytesWithoutPadding(groupLinkPassword)),
+        String       passwordParam = groupLinkPassword.transform(Base64UrlSafe::encodeBytesWithoutPadding).or("");
+        ResponseBody response      = makeStorageRequest(authorization.toString(),
+                String.format(GROUPSV2_GROUP_JOIN, passwordParam),
                 "GET",
                 null,
                 GROUPS_V2_GET_JOIN_INFO_HANDLER);

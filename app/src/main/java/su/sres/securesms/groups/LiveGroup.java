@@ -17,12 +17,19 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.ui.GroupMemberEntry;
+import su.sres.securesms.groups.v2.GroupInviteLinkUrl;
+import su.sres.securesms.groups.v2.GroupLinkUrlAndStatus;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.livedata.LiveDataUtil;
+import su.sres.signalservice.api.util.UuidUtil;
+import su.sres.storageservice.protos.groups.AccessControl;
+import su.sres.storageservice.protos.groups.local.DecryptedGroup;
+import su.sres.storageservice.protos.groups.local.DecryptedRequestingMember;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -37,19 +44,49 @@ public final class LiveGroup {
             .thenComparing(HAS_DISPLAY_NAME)
             .thenComparing(ALPHABETICAL);
 
-    private final GroupDatabase                               groupDatabase;
-    private final LiveData<Recipient>                         recipient;
-    private final LiveData<GroupDatabase.GroupRecord>         groupRecord;
-    private final LiveData<List<GroupMemberEntry.FullMember>> fullMembers;
+    private final GroupDatabase                                     groupDatabase;
+    private final LiveData<Recipient>                               recipient;
+    private final LiveData<GroupDatabase.GroupRecord>               groupRecord;
+    private final LiveData<List<GroupMemberEntry.FullMember>>       fullMembers;
+    private final LiveData<List<GroupMemberEntry.RequestingMember>> requestingMembers;
+    private final LiveData<GroupLinkUrlAndStatus>                   groupLink;
 
     public LiveGroup(@NonNull GroupId groupId) {
         Context                        context       = ApplicationDependencies.getApplication();
         MutableLiveData<LiveRecipient> liveRecipient = new MutableLiveData<>();
 
-        this.groupDatabase = DatabaseFactory.getGroupDatabase(context);
-        this.recipient     = Transformations.switchMap(liveRecipient, LiveRecipient::getLiveData);
-        this.groupRecord   = LiveDataUtil.filterNotNull(LiveDataUtil.mapAsync(recipient, groupRecipient -> groupDatabase.getGroup(groupRecipient.getId()).orNull()));
-        this.fullMembers   = LiveDataUtil.mapAsync(groupRecord,
+        this.groupDatabase     = DatabaseFactory.getGroupDatabase(context);
+        this.recipient         = Transformations.switchMap(liveRecipient, LiveRecipient::getLiveData);
+        this.groupRecord       = LiveDataUtil.filterNotNull(LiveDataUtil.mapAsync(recipient, groupRecipient -> groupDatabase.getGroup(groupRecipient.getId()).orNull()));
+        this.fullMembers       = mapToFullMembers(this.groupRecord);
+        this.requestingMembers = mapToRequestingMembers(this.groupRecord);
+
+        if (groupId.isV2()) {
+            LiveData<GroupDatabase.V2GroupProperties> v2Properties = Transformations.map(this.groupRecord, GroupDatabase.GroupRecord::requireV2GroupProperties);
+            this.groupLink = Transformations.map(v2Properties, g -> {
+                DecryptedGroup               group             = g.getDecryptedGroup();
+                AccessControl.AccessRequired addFromInviteLink = group.getAccessControl().getAddFromInviteLink();
+
+                if (group.getInviteLinkPassword().isEmpty()) {
+                    return GroupLinkUrlAndStatus.NONE;
+                }
+
+                boolean enabled       = addFromInviteLink == AccessControl.AccessRequired.ANY || addFromInviteLink == AccessControl.AccessRequired.ADMINISTRATOR;
+                boolean adminApproval = addFromInviteLink == AccessControl.AccessRequired.ADMINISTRATOR;
+                String  url           = GroupInviteLinkUrl.forGroup(g.getGroupMasterKey(), group)
+                        .getUrl();
+
+                return new GroupLinkUrlAndStatus(enabled, adminApproval, url);
+            });
+        } else {
+            this.groupLink = new MutableLiveData<>(GroupLinkUrlAndStatus.NONE);
+        }
+
+        SignalExecutors.BOUNDED.execute(() -> liveRecipient.postValue(Recipient.externalGroup(context, groupId).live()));
+    }
+
+    protected static LiveData<List<GroupMemberEntry.FullMember>> mapToFullMembers(@NonNull LiveData<GroupDatabase.GroupRecord> groupRecord) {
+        return LiveDataUtil.mapAsync(groupRecord,
                 g -> Stream.of(g.getMembers())
                         .map(m -> {
                             Recipient recipient = Recipient.resolved(m);
@@ -57,8 +94,25 @@ public final class LiveGroup {
                         })
                         .sorted(MEMBER_ORDER)
                         .toList());
+    }
 
-        SignalExecutors.BOUNDED.execute(() -> liveRecipient.postValue(Recipient.externalGroup(context, groupId).live()));
+    protected static LiveData<List<GroupMemberEntry.RequestingMember>> mapToRequestingMembers(@NonNull LiveData<GroupDatabase.GroupRecord> groupRecord) {
+        return LiveDataUtil.mapAsync(groupRecord,
+                g -> {
+                    if (!g.isV2Group()) {
+                        return Collections.emptyList();
+                    }
+
+                    boolean                         selfAdmin             = g.isAdmin(Recipient.self());
+                    List<DecryptedRequestingMember> requestingMembersList = g.requireV2GroupProperties().getDecryptedGroup().getRequestingMembersList();
+
+                    return Stream.of(requestingMembersList)
+                            .map(requestingMember -> {
+                                Recipient recipient = Recipient.externalPush(ApplicationDependencies.getApplication(), UuidUtil.fromByteString(requestingMember.getUuid()), null, false);
+                                return new GroupMemberEntry.RequestingMember(recipient, selfAdmin);
+                            })
+                            .toList();
+                });
     }
 
     public LiveData<String> getTitle() {
@@ -91,6 +145,17 @@ public final class LiveGroup {
         return Transformations.map(groupRecord, g -> g.isV2Group() ? g.requireV2GroupProperties().getDecryptedGroup().getPendingMembersCount() : 0);
     }
 
+    public LiveData<Integer> getPendingAndRequestingMemberCount() {
+        return Transformations.map(groupRecord, g -> {
+            if (g.isV2Group()) {
+                DecryptedGroup decryptedGroup = g.requireV2GroupProperties().getDecryptedGroup();
+
+                return decryptedGroup.getPendingMembersCount() + decryptedGroup.getRequestingMembersCount();
+            }
+            return 0;
+        });
+    }
+
     public LiveData<GroupAccessControl> getMembershipAdditionAccessControl() {
         return Transformations.map(groupRecord, GroupDatabase.GroupRecord::getMembershipAdditionAccessControl);
     }
@@ -108,6 +173,10 @@ public final class LiveGroup {
 
     public LiveData<List<GroupMemberEntry.FullMember>> getFullMembers() {
         return fullMembers;
+    }
+
+    public LiveData<List<GroupMemberEntry.RequestingMember>> getRequestingMembers() {
+        return requestingMembers;
     }
 
     public LiveData<Integer> getExpireMessages() {
@@ -154,7 +223,12 @@ public final class LiveGroup {
         switch (rights) {
             case ALL_MEMBERS: return memberLevel.isInGroup();
             case ONLY_ADMINS: return memberLevel == GroupDatabase.MemberLevel.ADMINISTRATOR;
+            case NO_ONE     : return false;
             default:          throw new AssertionError();
         }
+    }
+
+    public LiveData<GroupLinkUrlAndStatus> getGroupLink() {
+        return groupLink;
     }
 }

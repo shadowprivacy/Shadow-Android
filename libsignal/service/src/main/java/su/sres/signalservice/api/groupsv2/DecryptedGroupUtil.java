@@ -111,6 +111,24 @@ public final class DecryptedGroupUtil {
         return uuidList;
     }
 
+    /**
+     * Will not return any non-decryptable member UUIDs.
+     */
+    public static ArrayList<UUID> removedRequestingMembersUuidList(DecryptedGroupChange groupChange) {
+        List<ByteString> deleteRequestingMembers = groupChange.getDeleteRequestingMembersList();
+        ArrayList<UUID>  uuidList                = new ArrayList<>(deleteRequestingMembers.size());
+
+        for (ByteString member : deleteRequestingMembers) {
+            UUID uuid = toUuid(member);
+
+            if(!UuidUtil.UNKNOWN_UUID.equals(uuid)) {
+                uuidList.add(uuid);
+            }
+        }
+
+        return uuidList;
+    }
+
     public static UUID toUuid(DecryptedMember member) {
         return toUuid(member.getUuid());
     }
@@ -184,6 +202,23 @@ public final class DecryptedGroupUtil {
         }
 
         return -1;
+    }
+
+    public static Optional<DecryptedRequestingMember> findRequestingByUuid(Collection<DecryptedRequestingMember> members, UUID uuid) {
+        ByteString uuidBytes = UuidUtil.toByteString(uuid);
+
+        for (DecryptedRequestingMember member : members) {
+            if (uuidBytes.equals(member.getUuid())) {
+                return Optional.of(member);
+            }
+        }
+
+        return Optional.absent();
+    }
+
+    public static boolean isPendingOrRequesting(DecryptedGroup group, UUID uuid) {
+        return findPendingByUuid(group.getPendingMembersList(), uuid).isPresent() ||
+                findRequestingByUuid(group.getRequestingMembersList(), uuid).isPresent();
     }
 
     /**
@@ -273,7 +308,7 @@ public final class DecryptedGroupUtil {
     private static void applyAddMemberAction(DecryptedGroup.Builder builder, List<DecryptedMember> newMembersList) {
         builder.addAllMembers(newMembersList);
 
-        removePendingMembersNowInGroup(builder);
+        removePendingAndRequestingMembersNowInGroup(builder);
     }
 
     protected static void applyDeleteMemberActions(DecryptedGroup.Builder builder, List<ByteString> deleteMembersList) {
@@ -480,13 +515,20 @@ public final class DecryptedGroupUtil {
         return pendingMemberCipherTexts;
     }
 
-    private static void removePendingMembersNowInGroup(DecryptedGroup.Builder builder) {
+    private static void removePendingAndRequestingMembersNowInGroup(DecryptedGroup.Builder builder) {
         Set<ByteString> allMembers = membersToUuidByteStringSet(builder.getMembersList());
 
         for (int i = builder.getPendingMembersCount() - 1; i >= 0; i--) {
             DecryptedPendingMember pendingMember = builder.getPendingMembers(i);
             if (allMembers.contains(pendingMember.getUuid())) {
                 builder.removePendingMembers(i);
+            }
+        }
+
+        for (int i = builder.getRequestingMembersCount() - 1; i >= 0; i--) {
+            DecryptedRequestingMember requestingMember = builder.getRequestingMembers(i);
+            if (allMembers.contains(requestingMember.getUuid())) {
+                builder.removeRequestingMembers(i);
             }
         }
     }

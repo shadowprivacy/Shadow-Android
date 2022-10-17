@@ -119,6 +119,7 @@ import su.sres.securesms.util.SearchUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.UrlClickHandler;
+import su.sres.securesms.util.Util;
 import su.sres.securesms.util.VibrateUtil;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.views.Stub;
@@ -571,10 +572,16 @@ public class ConversationItem extends LinearLayout implements BindableConversati
   }
 
   private boolean hasBigImageLinkPreview(MessageRecord messageRecord) {
-    if (!hasLinkPreview(messageRecord)) return false;
+    if (!hasLinkPreview(messageRecord)) {
+      return false;
+    }
 
     LinkPreview linkPreview = ((MmsMessageRecord) messageRecord).getLinkPreviews().get(0);
-    int         minWidth    = getResources().getDimensionPixelSize(R.dimen.media_bubble_min_width);
+    if (linkPreview.getThumbnail().isPresent() && !Util.isEmpty(linkPreview.getDescription())) {
+      return true;
+    }
+
+    int minWidth = getResources().getDimensionPixelSize(R.dimen.media_bubble_min_width_solo);
 
     return linkPreview.getThumbnail().isPresent()                  &&
             linkPreview.getThumbnail().get().getWidth() >= minWidth &&
@@ -683,6 +690,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
 
       if (hasBigImageLinkPreview(messageRecord)) {
         mediaThumbnailStub.get().setVisibility(VISIBLE);
+        mediaThumbnailStub.get().setMinimumThumbnailWidth(readDimen(R.dimen.media_bubble_min_width_with_content));
         mediaThumbnailStub.get().setImageResource(glideRequests, Collections.singletonList(new ImageSlide(context, linkPreview.getThumbnail().get())), showControls, false);
         mediaThumbnailStub.get().setThumbnailClickListener(new LinkPreviewThumbnailClickListener());
         mediaThumbnailStub.get().setDownloadClickListener(downloadClickListener);
@@ -783,6 +791,8 @@ public class ConversationItem extends LinearLayout implements BindableConversati
       if (revealableStub.resolved())     revealableStub.get().setVisibility(View.GONE);
 
       List<Slide> thumbnailSlides = ((MmsMessageRecord) messageRecord).getSlideDeck().getThumbnailSlides();
+      mediaThumbnailStub.get().setMinimumThumbnailWidth(readDimen(isCaptionlessMms(messageRecord) ? R.dimen.media_bubble_min_width_solo
+              : R.dimen.media_bubble_min_width_with_content));
       mediaThumbnailStub.get().setImageResource(glideRequests,
                                                 thumbnailSlides,
                                                 showControls,

@@ -11,7 +11,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.dd.CircularProgressButton;
@@ -19,6 +21,7 @@ import com.dd.CircularProgressButton;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.contactshare.SimpleTextWatcher;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.UsernameUtil;
 
@@ -49,6 +52,10 @@ public class UsernameEditFragment extends LoggingFragment {
         submitButton    = view.findViewById(R.id.username_submit_button);
         deleteButton    = view.findViewById(R.id.username_delete_button);
 
+        view.<Toolbar>findViewById(R.id.toolbar)
+                .setNavigationOnClickListener(v -> Navigation.findNavController(view)
+                        .popBackStack());
+
         viewModel = ViewModelProviders.of(this, new UsernameEditViewModel.Factory()).get(UsernameEditViewModel.class);
 
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::onUiStateChanged);
@@ -57,7 +64,7 @@ public class UsernameEditFragment extends LoggingFragment {
         submitButton.setOnClickListener(v -> viewModel.onUsernameSubmitted(usernameInput.getText().toString()));
         deleteButton.setOnClickListener(v -> viewModel.onUsernameDeleted());
 
-        usernameInput.setText(TextSecurePreferences.getLocalUsername(requireContext()));
+        usernameInput.setText(Recipient.self().getUsername().orNull());
         usernameInput.addTextChangedListener(new SimpleTextWatcher() {
             @Override
             public void onTextChanged(String text) {

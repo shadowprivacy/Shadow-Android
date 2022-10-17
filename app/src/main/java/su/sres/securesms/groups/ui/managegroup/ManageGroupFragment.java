@@ -37,6 +37,7 @@ import su.sres.securesms.contacts.avatars.FallbackPhoto80dp;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.ui.GroupMemberListView;
 import su.sres.securesms.groups.ui.LeaveGroupDialog;
+import su.sres.securesms.groups.ui.invitesandrequests.ManagePendingAndRequestingMembersActivity;
 import su.sres.securesms.groups.ui.managegroup.dialogs.GroupInviteSentDialog;
 import su.sres.securesms.groups.ui.managegroup.dialogs.GroupRightsDialog;
 import su.sres.securesms.groups.ui.managegroup.dialogs.GroupsLearnMoreBottomSheetDialogFragment;
@@ -50,6 +51,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment;
 import su.sres.securesms.recipients.ui.notifications.CustomNotificationsDialogFragment;
+import su.sres.securesms.recipients.ui.sharablegrouplink.ShareableGroupLinkDialogFragment;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.LifecycleCursorWrapper;
@@ -64,13 +66,16 @@ public class ManageGroupFragment extends LoggingFragment {
 
     private static final String TAG = Log.tag(ManageGroupFragment.class);
 
-    private static final int RETURN_FROM_MEDIA = 33114;
-    private static final int PICK_CONTACT      = 61341;
+    private static final int    RETURN_FROM_MEDIA = 33114;
+    private static final int    PICK_CONTACT      = 61341;
+    public  static final String DIALOG_TAG        = "DIALOG";
 
     private ManageGroupViewModel               viewModel;
     private GroupMemberListView                groupMemberList;
     private View                               pendingMembersRow;
     private TextView                           pendingMembersCount;
+    private View                               pendingAndRequestingRow;
+    private TextView                           pendingAndRequestingCount;
     private Toolbar                            toolbar;
     private TextView                           groupName;
     private LearnMoreTextView                  groupV1Indicator;
@@ -81,6 +86,7 @@ public class ManageGroupFragment extends LoggingFragment {
     private View                               groupMediaCard;
     private View                               accessControlCard;
     private View                               pendingMembersCard;
+    private View                               groupLinkCard;
     private ManageGroupViewModel.CursorFactory cursorFactory;
     private View                               sharedMediaRow;
     private View                               editGroupAccessRow;
@@ -103,6 +109,8 @@ public class ManageGroupFragment extends LoggingFragment {
     private View                               mentionsRow;
     private TextView                           mentionsValue;
     private View                               toggleAllMembers;
+    private View                               groupLinkRow;
+    private TextView                           groupLinkButton;
 
     private final Recipient.FallbackPhotoProvider fallbackPhotoProvider = new Recipient.FallbackPhotoProvider() {
         @Override
@@ -137,10 +145,13 @@ public class ManageGroupFragment extends LoggingFragment {
         groupMemberList             = view.findViewById(R.id.group_members);
         pendingMembersRow           = view.findViewById(R.id.pending_members_row);
         pendingMembersCount         = view.findViewById(R.id.pending_members_count);
+        pendingAndRequestingRow     = view.findViewById(R.id.pending_and_requesting_members_row);
+        pendingAndRequestingCount   = view.findViewById(R.id.pending_and_requesting_members_count);
         threadPhotoRailView         = view.findViewById(R.id.recent_photos);
         groupMediaCard              = view.findViewById(R.id.group_media_card);
         accessControlCard           = view.findViewById(R.id.group_access_control_card);
         pendingMembersCard          = view.findViewById(R.id.group_pending_card);
+        groupLinkCard               = view.findViewById(R.id.group_link_card);
         sharedMediaRow              = view.findViewById(R.id.shared_media_row);
         editGroupAccessRow          = view.findViewById(R.id.edit_group_access_row);
         editGroupAccessValue        = view.findViewById(R.id.edit_group_access_value);
@@ -162,6 +173,8 @@ public class ManageGroupFragment extends LoggingFragment {
         mentionsRow                 = view.findViewById(R.id.group_mentions_row);
         mentionsValue               = view.findViewById(R.id.group_mentions_value);
         toggleAllMembers            = view.findViewById(R.id.toggle_all_members);
+        groupLinkRow                = view.findViewById(R.id.group_link_row);
+        groupLinkButton             = view.findViewById(R.id.group_link_button);
 
         groupV1Indicator.setOnLinkClickListener(v -> GroupsLearnMoreBottomSheetDialogFragment.show(requireFragmentManager()));
         groupV1Indicator.setLearnMoreVisible(true);
@@ -193,18 +206,34 @@ public class ManageGroupFragment extends LoggingFragment {
             }
         });
 
-        viewModel.getPendingMemberCount().observe(getViewLifecycleOwner(),
-                pendingInviteCount -> {
-                    pendingMembersRow.setOnClickListener(v -> {
-                        FragmentActivity activity = requireActivity();
-                        activity.startActivity(PendingMemberInvitesActivity.newIntent(activity, groupId.requireV2()));
+        if (FeatureFlags.groupsV2manageGroupLinks()) {
+            viewModel.getPendingAndRequestingCount().observe(getViewLifecycleOwner(),
+                    pendingAndRequestingCount -> {
+                        pendingAndRequestingRow.setOnClickListener(v -> {
+                            FragmentActivity activity = requireActivity();
+                            activity.startActivity(ManagePendingAndRequestingMembersActivity.newIntent(activity, groupId.requireV2()));
+                        });
+                        if (pendingAndRequestingCount == 0) {
+                            this.pendingAndRequestingCount.setVisibility(View.GONE);
+                        } else {
+                            this.pendingAndRequestingCount.setText(String.format(Locale.getDefault(), "%d", pendingAndRequestingCount));
+                            this.pendingAndRequestingCount.setVisibility(View.VISIBLE);
+                        }
                     });
-                    if (pendingInviteCount == 0) {
-                        pendingMembersCount.setText(R.string.ManageGroupActivity_none);
-                    } else {
-                        pendingMembersCount.setText(getResources().getQuantityString(R.plurals.ManageGroupActivity_invited, pendingInviteCount, pendingInviteCount));
-                    }
-                });
+        } else {
+            viewModel.getPendingMemberCount().observe(getViewLifecycleOwner(),
+                    pendingInviteCount -> {
+                        pendingMembersRow.setOnClickListener(v -> {
+                            FragmentActivity activity = requireActivity();
+                            activity.startActivity(PendingMemberInvitesActivity.newIntent(activity, groupId.requireV2()));
+                        });
+                        if (pendingInviteCount == 0) {
+                            pendingMembersCount.setText(R.string.ManageGroupActivity_none);
+                        } else {
+                            pendingMembersCount.setText(getResources().getQuantityString(R.plurals.ManageGroupActivity_invited, pendingInviteCount, pendingInviteCount));
+                        }
+                    });
+        }
 
         avatar.setFallbackPhotoProvider(fallbackPhotoProvider);
 
@@ -230,8 +259,14 @@ public class ManageGroupFragment extends LoggingFragment {
                         AvatarPreviewActivity.createTransitionBundle(activity, avatar));
             });
             customNotificationsRow.setOnClickListener(v -> CustomNotificationsDialogFragment.create(groupRecipient.getId())
-                    .show(requireFragmentManager(), "CUSTOM_NOTIFICATIONS"));
+                    .show(requireFragmentManager(), DIALOG_TAG));
         });
+
+        if (groupId.isV2()) {
+            groupLinkRow.setOnClickListener(v -> ShareableGroupLinkDialogFragment.create(groupId.requireV2())
+                    .show(requireFragmentManager(), DIALOG_TAG));
+            viewModel.getGroupLinkOn().observe(getViewLifecycleOwner(), linkEnabled -> groupLinkButton.setText(booleanToOnOff(linkEnabled)));
+        }
 
         viewModel.getGroupViewState().observe(getViewLifecycleOwner(), vs -> {
             if (vs == null) return;
@@ -245,7 +280,8 @@ public class ManageGroupFragment extends LoggingFragment {
                             ViewCompat.getLayoutDirection(threadPhotoRailView) == ViewCompat.LAYOUT_DIRECTION_LTR),
                             RETURN_FROM_MEDIA));
 
-            pendingMembersCard.setVisibility(vs.getGroupRecipient().requireGroupId().isV2() ? View.VISIBLE : View.GONE);
+            pendingMembersCard.setVisibility(!FeatureFlags.groupsV2manageGroupLinks() && vs.getGroupRecipient().requireGroupId().isV2() ? View.VISIBLE : View.GONE);
+            groupLinkCard     .setVisibility( FeatureFlags.groupsV2manageGroupLinks() && vs.getGroupRecipient().requireGroupId().isV2() ? View.VISIBLE : View.GONE);
         });
 
         leaveGroup.setVisibility(groupId.isPush() ? View.VISIBLE : View.GONE);
@@ -324,8 +360,7 @@ public class ManageGroupFragment extends LoggingFragment {
 
         if (NotificationChannels.supported()) {
             viewModel.hasCustomNotifications().observe(getViewLifecycleOwner(), hasCustomNotifications -> {
-                customNotificationsButton.setText(hasCustomNotifications ? R.string.ManageGroupActivity_on
-                        : R.string.ManageGroupActivity_off);
+                customNotificationsButton.setText(booleanToOnOff(hasCustomNotifications));
             });
         }
 
@@ -341,6 +376,11 @@ public class ManageGroupFragment extends LoggingFragment {
             blockGroup.setVisibility(canBlock ? View.VISIBLE : View.GONE);
             unblockGroup.setVisibility(canBlock ? View.GONE : View.VISIBLE);
         });
+    }
+
+    private static int booleanToOnOff(boolean isOn) {
+        return isOn ? R.string.ManageGroupActivity_on
+                : R.string.ManageGroupActivity_off;
     }
 
     public boolean onMenuItemSelected(@NonNull MenuItem item) {

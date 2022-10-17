@@ -13,6 +13,7 @@ import androidx.annotation.WorkerThread;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.service.TimedEventManager;
@@ -24,7 +25,7 @@ public class ViewOnceMessageManager extends TimedEventManager<ViewOnceExpiration
 
     private static final String TAG = Log.tag(ViewOnceMessageManager.class);
 
-    private final MmsDatabase        mmsDatabase;
+    private final MessageDatabase mmsDatabase;
     private final AttachmentDatabase attachmentDatabase;
 
     public ViewOnceMessageManager(@NonNull Application application) {

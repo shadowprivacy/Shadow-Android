@@ -116,9 +116,7 @@ public class CommunicationActions {
 
       @Override
       protected void onPostExecute(Long threadId) {
-        Intent intent = new Intent(context, ConversationActivity.class);
-        intent.putExtra(ConversationActivity.RECIPIENT_EXTRA, recipient.getId());
-        intent.putExtra(ConversationActivity.THREAD_ID_EXTRA, threadId);
+        Intent intent = ConversationActivity.buildIntent(context, recipient.getId(), threadId);
 
         if (!TextUtils.isEmpty(text)) {
           intent.putExtra(ConversationActivity.TEXT_EXTRA, text);
@@ -188,8 +186,12 @@ public class CommunicationActions {
 
       handleGroupLinkUrl(activity, groupInviteLinkUrl);
       return true;
-    } catch (GroupInviteLinkUrl.InvalidGroupLinkException | GroupInviteLinkUrl.UnknownGroupLinkVersionException e) {
+    } catch (GroupInviteLinkUrl.InvalidGroupLinkException e) {
       Log.w(TAG, "Could not parse group URL", e);
+      Toast.makeText(activity, R.string.GroupJoinUpdateRequiredBottomSheetDialogFragment_group_link_is_not_valid, Toast.LENGTH_SHORT).show();
+      return true;
+    } catch (GroupInviteLinkUrl.UnknownGroupLinkVersionException e) {
+      Log.w(TAG, "Group link is for an advanced version", e);
       GroupJoinUpdateRequiredBottomSheetDialogFragment.show(activity.getSupportFragmentManager());
       return true;
     }

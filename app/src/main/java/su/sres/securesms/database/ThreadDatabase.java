@@ -621,9 +621,19 @@ public class ThreadDatabase extends Database {
   }
 
   public Cursor getUnarchivedConversationList(boolean pinned, long offset, long limit) {
-    SQLiteDatabase db     = databaseHelper.getReadableDatabase();
-    String         query  = createQuery(ARCHIVED + " = 0 AND " + MESSAGE_COUNT + " != 0 AND " + PINNED + " = ?", offset, limit, false);
-    Cursor         cursor = db.rawQuery(query, new String[]{pinned ? "1" : "0"});
+    SQLiteDatabase db          = databaseHelper.getReadableDatabase();
+    String         pinnedWhere = PINNED + (pinned ? " != 0" : " = 0");
+    String         where       = ARCHIVED + " = 0 AND " + MESSAGE_COUNT + " != 0 AND " + pinnedWhere;
+
+    final String query;
+
+    if (pinned) {
+      query = createQuery(where, PINNED + " ASC", offset, limit, false);
+    } else {
+      query = createQuery(where, offset, limit, false);
+    }
+
+    Cursor cursor = db.rawQuery(query, new String[]{});
 
     setNotifyConversationListListeners(cursor);
 
@@ -658,7 +668,7 @@ public class ThreadDatabase extends Database {
   public int getPinnedConversationListCount() {
     SQLiteDatabase db      = databaseHelper.getReadableDatabase();
     String[]       columns = new String[] { "COUNT(*)" };
-    String         query   = ARCHIVED + " = 0 AND " + PINNED + " = 1 AND " + MESSAGE_COUNT + " != 0";
+    String         query   = ARCHIVED + " = 0 AND " + PINNED + " != 0 AND " + MESSAGE_COUNT + " != 0";
 
     try (Cursor cursor = db.query(TABLE_NAME, columns, query, null, null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
@@ -685,15 +695,25 @@ public class ThreadDatabase extends Database {
   }
 
   public void pinConversations(@NonNull Set<Long> threadIds) {
-    SQLiteDatabase db            = databaseHelper.getWritableDatabase();
-    ContentValues  contentValues = new ContentValues(1);
-    contentValues.put(PINNED, 0);
-    String         placeholders  = StringUtil.join(Stream.of(threadIds).map(unused -> "?").toList(), ",");
-    String         selection     = ID + " IN (" + placeholders + ")";
+    SQLiteDatabase db = databaseHelper.getWritableDatabase();
 
-    contentValues.put(PINNED, 1);
+    try {
+      db.beginTransaction();
 
-    db.update(TABLE_NAME, contentValues, selection, SqlUtil.buildArgs(Stream.of(threadIds).toArray()));
+      int pinnedCount = getPinnedConversationListCount();
+
+      for (long threadId : threadIds) {
+        ContentValues contentValues = new ContentValues(1);
+        contentValues.put(PINNED, ++pinnedCount);
+
+        db.update(TABLE_NAME, contentValues, ID_WHERE, SqlUtil.buildArgs(threadId));
+      }
+
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+      notifyConversationListListeners();
+    }
 
     notifyConversationListListeners();
   }
@@ -713,6 +733,7 @@ public class ThreadDatabase extends Database {
   public void archiveConversation(long threadId) {
     SQLiteDatabase db            = databaseHelper.getWritableDatabase();
     ContentValues  contentValues = new ContentValues(1);
+    contentValues.put(PINNED, 0);
     contentValues.put(ARCHIVED, 1);
 
     db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId + ""});
@@ -721,7 +742,7 @@ public class ThreadDatabase extends Database {
     Recipient recipient = getRecipientForThreadId(threadId);
     if (recipient != null) {
       DatabaseFactory.getRecipientDatabase(context).markNeedsSync(recipient.getId());
-//      StorageSyncHelper.scheduleSyncForDataChange();
+    //  StorageSyncHelper.scheduleSyncForDataChange();
     }
   }
 
@@ -1101,6 +1122,10 @@ public class ThreadDatabase extends Database {
 
   private @NonNull String createQuery(@NonNull String where, long offset, long limit, boolean preferPinned) {
     String orderBy    = (preferPinned ? TABLE_NAME + "." + PINNED + " DESC, " : "") + TABLE_NAME + "." + DATE + " DESC";
+    return createQuery(where, orderBy, offset, limit, preferPinned);
+  }
+
+  private @NonNull String createQuery(@NonNull String where, @NonNull String orderBy, long offset, long limit, boolean preferPinned) {
     String projection = Util.join(COMBINED_THREAD_RECIPIENT_GROUP_PROJECTION, ",");
     String query =
     "SELECT " + projection + " FROM " + TABLE_NAME +

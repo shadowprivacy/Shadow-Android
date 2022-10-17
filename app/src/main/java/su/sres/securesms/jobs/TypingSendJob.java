@@ -104,7 +104,9 @@ public class TypingSendJob extends BaseJob  {
             groupId    = Optional.of(recipient.requireGroupId().getDecodedId());
         }
 
-        recipients = Stream.of(recipients).map(Recipient::resolve).toList();
+        recipients = RecipientUtil.getEligibleForSending(Stream.of(recipients)
+                .map(Recipient::resolve)
+                .toList());
 
         SignalServiceMessageSender             messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
         List<SignalServiceAddress>             addresses          = RecipientUtil.toSignalServiceAddressesFromResolved(context, recipients);

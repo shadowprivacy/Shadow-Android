@@ -10,9 +10,12 @@ import android.view.View;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ActivityOptionsCompat;
+
+import java.util.Objects;
 
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -72,9 +75,9 @@ public abstract class BaseActivity extends AppCompatActivity {
     ActivityCompat.startActivity(this, intent, bundle);
   }
 
-  @TargetApi(VERSION_CODES.LOLLIPOP)
+  @TargetApi(21)
   protected void setStatusBarColor(int color) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+    if (Build.VERSION.SDK_INT >= 21) {
       getWindow().setStatusBarColor(color);
     }
   }
@@ -86,5 +89,11 @@ public abstract class BaseActivity extends AppCompatActivity {
 
   private void logEvent(@NonNull String event) {
     Log.d(TAG, "[" + Log.tag(getClass()) + "] " + event);
+  }
+
+  protected final @NonNull
+  ActionBar requireSupportActionBar() {
+
+    return Objects.requireNonNull(getSupportActionBar());
   }
 }

@@ -9,6 +9,8 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.google.protobuf.InvalidProtocolBufferException;
 
+import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -75,7 +77,11 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
         Set<RecipientId> recipients = Stream.concat(Stream.of(memberUuids), Stream.of(pendingUuids))
                 .filter(uuid -> !UuidUtil.UNKNOWN_UUID.equals(uuid))
                 .filter(uuid -> !Recipient.self().getUuid().get().equals(uuid))
-                .map(uuid -> RecipientId.from(uuid, null))
+                .map(uuid -> Recipient.externalPush(context, uuid, null, false))
+                .filter(recipient -> {
+                        return recipient.getRegistered() != RecipientDatabase.RegisteredState.NOT_REGISTERED;
+                })
+                .map(Recipient::getId)
                 .collect(Collectors.toSet());
 
         MessageGroupContext.GroupV2Properties properties   = groupMessage.requireGroupV2Properties();

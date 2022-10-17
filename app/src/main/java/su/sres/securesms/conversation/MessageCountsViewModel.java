@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import su.sres.securesms.database.DatabaseContentProviders;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -79,7 +80,7 @@ public class MessageCountsViewModel extends ViewModel {
 
     private Pair<Integer, Integer> getCounts(@NonNull Context context, long threadId) {
         MmsSmsDatabase mmsSmsDatabase     = DatabaseFactory.getMmsSmsDatabase(context);
-        MmsDatabase    mmsDatabase        = DatabaseFactory.getMmsDatabase(context);
+        MessageDatabase mmsDatabase        = DatabaseFactory.getMmsDatabase(context);
         int            unreadCount        = mmsSmsDatabase.getUnreadCount(threadId);
         int            unreadMentionCount = mmsDatabase.getUnreadMentionCount(threadId);
 

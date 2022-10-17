@@ -17,6 +17,7 @@ import su.sres.securesms.database.CursorList;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MentionDatabase;
 import su.sres.securesms.database.MentionUtil;
+import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.MmsSmsColumns;
 import su.sres.securesms.database.RecipientDatabase;
@@ -82,7 +83,7 @@ public class SearchRepository {
   private final ExecutorService   parallelExecutor;
   private final RecipientDatabase recipientDatabase;
   private final MentionDatabase mentionDatabase;
-  private final MmsDatabase mmsDatabase;
+  private final MessageDatabase mmsDatabase;
 
   public SearchRepository() {
     this.context           = ApplicationDependencies.getApplication().getApplicationContext();
@@ -261,7 +262,7 @@ public class SearchRepository {
 
     List<MessageResult> results = new ArrayList<>();
 
-    try (MmsDatabase.Reader reader = mmsDatabase.getMessages(mentionQueryResults.keySet())) {
+    try (MessageDatabase.Reader reader = mmsDatabase.getMessages(mentionQueryResults.keySet())) {
       MessageRecord record;
       while ((record = reader.getNext()) != null) {
         List<Mention> mentions = mentionQueryResults.get(record.getId());
@@ -295,7 +296,7 @@ public class SearchRepository {
 
     List<MessageResult> results = new ArrayList<>();
 
-    try (MmsDatabase.Reader reader = mmsDatabase.getMessages(mentionQueryResults.keySet())) {
+    try (MessageDatabase.Reader reader = mmsDatabase.getMessages(mentionQueryResults.keySet())) {
       MessageRecord record;
       while ((record = reader.getNext()) != null) {
         //noinspection ConstantConditions

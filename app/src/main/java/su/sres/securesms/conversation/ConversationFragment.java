@@ -397,7 +397,7 @@ public class ConversationFragment extends LoggingFragment {
     if (recipient != null) {
       conversationBanner.setAvatar(GlideApp.with(context), recipient);
 
-      String title = isSelf ? context.getString(R.string.note_to_self) : recipient.getDisplayName(context);
+      String title = isSelf ? context.getString(R.string.note_to_self) : recipient.getDisplayNameOrUsername(context);
       conversationBanner.setTitle(title);
 
       if (recipient.isGroup()) {
@@ -405,14 +405,16 @@ public class ConversationFragment extends LoggingFragment {
               conversationBanner.setSubtitle(context.getResources()
                       .getQuantityString(R.plurals.MessageRequestProfileView_members_and_invited, memberCount,
                               memberCount, pendingMemberCount));
-          } else {
+          } else if (memberCount > 0) {
               conversationBanner.setSubtitle(context.getResources().getQuantityString(R.plurals.MessageRequestProfileView_members, memberCount,
                       memberCount));
+          } else {
+            conversationBanner.setSubtitle(null);
           }
       } else if (isSelf) {
         conversationBanner.setSubtitle(context.getString(R.string.ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation));
       } else {
-        String subtitle = recipient.getUsername().or(recipient.getE164()).orNull();
+        String subtitle = recipient.getE164().orNull();
 
         if (subtitle == null || subtitle.equals(title)) {
           conversationBanner.hideSubtitle();
@@ -908,7 +910,7 @@ public class ConversationFragment extends LoggingFragment {
   }
 
   public long stageOutgoingMessage(OutgoingMediaMessage message) {
-    MessageRecord messageRecord = DatabaseFactory.getMmsDatabase(getContext()).readerFor(message, threadId).getCurrent();
+    MessageRecord messageRecord = MmsDatabase.readerFor(message, threadId).getCurrent();
 
     if (getListAdapter() != null) {
       clearHeaderIfNotTyping(getListAdapter());
@@ -1085,7 +1087,7 @@ public class ConversationFragment extends LoggingFragment {
 
   private void scrollToNextMention() {
     SimpleTask.run(getViewLifecycleOwner().getLifecycle(), () -> {
-      MmsDatabase mmsDatabase = DatabaseFactory.getMmsDatabase(ApplicationDependencies.getApplication());
+      MessageDatabase mmsDatabase = DatabaseFactory.getMmsDatabase(ApplicationDependencies.getApplication());
       return mmsDatabase.getOldestUnreadMentionDetails(threadId);
     }, (pair) -> {
       if (pair != null) {
@@ -1100,6 +1102,11 @@ public class ConversationFragment extends LoggingFragment {
     }
 
     int position = getListLayoutManager().findFirstVisibleItemPosition();
+
+    if (position == getListAdapter().getItemCount() - 1) {
+      return;
+    }
+
     if (position >= (isTypingIndicatorShowing() ? 1 : 0)) {
       ConversationMessage item = getListAdapter().getItem(position);
       if (item != null) {

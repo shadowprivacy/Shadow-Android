@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.logging.Log;
@@ -15,7 +16,7 @@ class ViewOnceMessageRepository {
 
     private static final String TAG = Log.tag(ViewOnceMessageRepository.class);
 
-    private final MmsDatabase mmsDatabase;
+    private final MessageDatabase mmsDatabase;
 
     ViewOnceMessageRepository(@NonNull Context context) {
         this.mmsDatabase = DatabaseFactory.getMmsDatabase(context);

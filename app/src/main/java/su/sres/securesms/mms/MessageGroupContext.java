@@ -17,6 +17,8 @@ import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.push.SignalServiceProtos.GroupContext;
 import su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2;
 import su.sres.securesms.database.model.databaseprotos.DecryptedGroupV2Context;
+import su.sres.storageservice.protos.groups.local.DecryptedGroup;
+import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 import su.sres.storageservice.protos.groups.local.DecryptedMember;
 
 import java.io.IOException;
@@ -164,12 +166,16 @@ public final class MessageGroupContext {
         }
 
         public @NonNull List<UUID> getAllActivePendingAndRemovedMembers() {
-            LinkedList<UUID> memberUuids = new LinkedList<>();
+            LinkedList<UUID>     memberUuids = new LinkedList<>();
+            DecryptedGroup groupState  = decryptedGroupV2Context.getGroupState();
+            DecryptedGroupChange groupChange = decryptedGroupV2Context.getChange();
 
-            memberUuids.addAll(DecryptedGroupUtil.membersToUuidList(decryptedGroupV2Context.getGroupState().getMembersList()));
-            memberUuids.addAll(DecryptedGroupUtil.pendingToUuidList(decryptedGroupV2Context.getGroupState().getPendingMembersList()));
-            memberUuids.addAll(DecryptedGroupUtil.removedMembersUuidList(decryptedGroupV2Context.getChange()));
-            memberUuids.addAll(DecryptedGroupUtil.removedPendingMembersUuidList(decryptedGroupV2Context.getChange()));
+            memberUuids.addAll(DecryptedGroupUtil.membersToUuidList(groupState.getMembersList()));
+            memberUuids.addAll(DecryptedGroupUtil.pendingToUuidList(groupState.getPendingMembersList()));
+
+            memberUuids.addAll(DecryptedGroupUtil.removedMembersUuidList(groupChange));
+            memberUuids.addAll(DecryptedGroupUtil.removedPendingMembersUuidList(groupChange));
+            memberUuids.addAll(DecryptedGroupUtil.removedRequestingMembersUuidList(groupChange));
 
             return UuidUtil.filterKnown(memberUuids);
         }

@@ -1,6 +1,5 @@
 package su.sres.securesms.groups.ui.creategroup.details;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -37,7 +36,6 @@ import su.sres.securesms.mediasend.AvatarSelectionBottomSheetDialogFragment;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
 import su.sres.securesms.mms.GlideApp;
-import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -52,15 +50,15 @@ import java.util.Objects;
 
 public class AddGroupDetailsFragment extends LoggingFragment {
 
-    private static final int   AVATAR_PLACEHOLDER_INSET_DP = 18;
-    private static final short REQUEST_CODE_AVATAR         = 27621;
+    private static final int AVATAR_PLACEHOLDER_INSET_DP = 18;
+    private static final short REQUEST_CODE_AVATAR = 27621;
 
-    private CircularProgressButton   create;
-    private Callback                 callback;
+    private CircularProgressButton create;
+    private Callback callback;
     private AddGroupDetailsViewModel viewModel;
-    private Drawable                 avatarPlaceholder;
-    private EditText                 name;
-    private Toolbar                  toolbar;
+    private Drawable avatarPlaceholder;
+    private EditText name;
+    private Toolbar toolbar;
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -74,24 +72,24 @@ public class AddGroupDetailsFragment extends LoggingFragment {
     }
 
     @Override
-    public @Nullable View onCreateView(@NonNull LayoutInflater inflater,
-                                       @Nullable ViewGroup container,
-                                       @Nullable Bundle savedInstanceState)
-    {
+    public @Nullable
+    View onCreateView(@NonNull LayoutInflater inflater,
+                      @Nullable ViewGroup container,
+                      @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.add_group_details_fragment, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        create  = view.findViewById(R.id.create);
-        name    = view.findViewById(R.id.name);
+        create = view.findViewById(R.id.create);
+        name = view.findViewById(R.id.name);
         toolbar = view.findViewById(R.id.toolbar);
 
         setCreateEnabled(false, false);
 
-        GroupMemberListView members    = view.findViewById(R.id.member_list);
-        ImageView           avatar     = view.findViewById(R.id.group_avatar);
-        View                mmsWarning = view.findViewById(R.id.mms_warning);
+        GroupMemberListView members = view.findViewById(R.id.member_list);
+        ImageView avatar = view.findViewById(R.id.group_avatar);
+        View mmsWarning = view.findViewById(R.id.mms_warning);
         LearnMoreTextView gv2Warning = view.findViewById(R.id.gv2_warning);
 
         avatarPlaceholder = VectorDrawableCompat.create(getResources(), R.drawable.ic_camera_outline_32_ultramarine, requireActivity().getTheme());
@@ -153,7 +151,7 @@ public class AddGroupDetailsFragment extends LoggingFragment {
                 return;
             }
 
-            final Media                                     result         = data.getParcelableExtra(AvatarSelectionActivity.EXTRA_MEDIA);
+            final Media result = data.getParcelableExtra(AvatarSelectionActivity.EXTRA_MEDIA);
             final DecryptableStreamUriLoader.DecryptableUri decryptableUri = new DecryptableStreamUriLoader.DecryptableUri(result.getUri());
 
             GlideApp.with(this)
@@ -179,9 +177,9 @@ public class AddGroupDetailsFragment extends LoggingFragment {
     }
 
     private void initializeViewModel() {
-        AddGroupDetailsFragmentArgs      args       = AddGroupDetailsFragmentArgs.fromBundle(requireArguments());
-        AddGroupDetailsRepository        repository = new AddGroupDetailsRepository(requireContext());
-        AddGroupDetailsViewModel.Factory factory    = new AddGroupDetailsViewModel.Factory(Arrays.asList(args.getRecipientIds()), repository);
+        AddGroupDetailsFragmentArgs args = AddGroupDetailsFragmentArgs.fromBundle(requireArguments());
+        AddGroupDetailsRepository repository = new AddGroupDetailsRepository(requireContext());
+        AddGroupDetailsViewModel.Factory factory = new AddGroupDetailsViewModel.Factory(Arrays.asList(args.getRecipientIds()), repository);
 
         viewModel = ViewModelProviders.of(this, factory).get(AddGroupDetailsViewModel.class);
 
@@ -254,16 +252,13 @@ public class AddGroupDetailsFragment extends LoggingFragment {
     }
 
     private void showAvatarSelectionBottomSheet() {
-        Permissions.with(this)
-                .request(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                .ifNecessary()
-                .onAnyResult(() -> AvatarSelectionBottomSheetDialogFragment.create(viewModel.hasAvatar(), true, REQUEST_CODE_AVATAR, true)
-                        .show(getChildFragmentManager(), "BOTTOM"))
-                .execute();
+        AvatarSelectionBottomSheetDialogFragment.create(viewModel.hasAvatar(), true, REQUEST_CODE_AVATAR, true)
+                .show(getChildFragmentManager(), "BOTTOM");
     }
 
     public interface Callback {
         void onGroupCreated(@NonNull RecipientId recipientId, long threadId, @NonNull List<Recipient> invitedMembers);
+
         void onNavigationButtonPressed();
     }
 }

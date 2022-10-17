@@ -10,9 +10,15 @@ import androidx.appcompat.widget.Toolbar;
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.groups.GroupId;
+import su.sres.securesms.groups.ui.invitesandrequests.invited.PendingMemberInvitesFragment;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
+import su.sres.securesms.util.FeatureFlags;
 
+/**
+ * @deprecated With group links FF, this activity is replaced with {@link ManagePendingAndRequestingMembersActivity}.
+ */
+@Deprecated
 public class PendingMemberInvitesActivity extends PassphraseRequiredActivity {
 
     private static final String GROUP_ID = "GROUP_ID";
@@ -33,6 +39,11 @@ public class PendingMemberInvitesActivity extends PassphraseRequiredActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState, boolean ready) {
         super.onCreate(savedInstanceState, ready);
+
+        if (FeatureFlags.groupsV2manageGroupLinks()) {
+            throw new AssertionError();
+        }
+
         setContentView(R.layout.group_pending_member_invites_activity);
 
         if (savedInstanceState == null) {

@@ -16,7 +16,6 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.registration.RegistrationUtil;
-import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.storage.protos.DirectoryResponse;
@@ -48,13 +47,9 @@ public class DirectoryHelper {
       return;
     }
 
-    Stopwatch         stopwatch         = new Stopwatch("full");
-
     final RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
     final SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
     PlainDirectoryResult directoryResult = getDirectoryResult(context, accountManager, false);
-
-    stopwatch.split("network");
 
     long remoteVersion = directoryResult.getVersion();
 
@@ -190,8 +185,6 @@ public class DirectoryHelper {
     TextSecurePreferences.setHasSuccessfullyRetrievedDirectory(context, true);
  //   StorageSyncHelper.scheduleSyncForDataChange();
 
-    stopwatch.split("disk");
-    stopwatch.stop(TAG);
   }
 
   public static PlainDirectoryResult getDirectoryResult(@NonNull Context context, @NonNull SignalServiceAccountManager accountManager, boolean forceFull)

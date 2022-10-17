@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
+import com.google.android.mms.pdu_alt.NotificationInd;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import net.sqlcipher.database.SQLiteDatabase;
@@ -17,6 +18,7 @@ import net.sqlcipher.database.SQLiteStatement;
 import su.sres.securesms.database.documents.Document;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.documents.IdentityKeyMismatchList;
+import su.sres.securesms.database.documents.NetworkFailure;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.SmsMessageRecord;
@@ -24,8 +26,12 @@ import su.sres.securesms.database.model.databaseprotos.ReactionList;
 import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.insights.InsightsConstants;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.mms.IncomingMediaMessage;
+import su.sres.securesms.mms.MmsException;
+import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.revealable.ViewOnceExpirationInfo;
 import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
 import su.sres.securesms.util.JsonUtils;
@@ -34,6 +40,7 @@ import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,17 +65,27 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
 
   public abstract @Nullable
   RecipientId getOldestGroupUpdateSender(long threadId, long minimumDateReceived);
+  public abstract long getLatestGroupQuitTimestamp(long threadId, long quitTimeBarrier);
+  public abstract boolean isGroupQuitMessage(long messageId);
+  public abstract @Nullable Pair<RecipientId, Long> getOldestUnreadMentionDetails(long threadId);
+  public abstract int getUnreadMentionCount(long threadId);
   public abstract long getThreadIdForMessage(long id);
   public abstract int getMessageCountForThread(long threadId);
   public abstract int getMessageCountForThread(long threadId, long beforeTime);
   abstract int getMessageCountForThreadSummary(long threadId);
+  public abstract Optional<MmsNotificationInfo> getNotification(long messageId);
 
   public abstract Cursor getExpirationStartedMessages();
   public abstract SmsMessageRecord getSmsMessage(long messageId) throws NoSuchMessageException;
+  public abstract Reader getMessages(Collection<Long> messageIds);
   public abstract Cursor getMessageCursor(long messageId);
+  public abstract OutgoingMediaMessage getOutgoingMessage(long messageId) throws MmsException, NoSuchMessageException;
   public abstract MessageRecord getMessageRecord(long messageId) throws NoSuchMessageException;
   public abstract Cursor getVerboseMessageCursor(long messageId);
   public abstract boolean hasReceivedAnyCallsSince(long threadId, long timestamp);
+  public abstract @Nullable
+  ViewOnceExpirationInfo getNearestExpiringViewOnceMessage();
+  public abstract boolean isSent(long messageId);
 
   public abstract void markExpireStarted(long messageId);
   public abstract void markExpireStarted(long messageId, long startTime);
@@ -101,13 +118,18 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   public abstract void markAsMissedCall(long id);
   public abstract void markAsNotified(long id);
   public abstract void markSmsStatus(long id, int status);
+  public abstract void markDownloadState(long messageId, long state);
+  public abstract void markIncomingNotificationReceived(long threadId);
 
-  public abstract boolean incrementSmsReceiptCount(SyncMessageId messageId, boolean deliveryReceipt);
+  public abstract boolean incrementReceiptCount(SyncMessageId messageId, long timestamp, boolean deliveryReceipt);
   public abstract List<Pair<Long, Long>> setTimestampRead(SyncMessageId messageId, long proposedExpireStarted);
   public abstract List<MarkedMessageInfo> setEntireThreadRead(long threadId);
   public abstract List<MarkedMessageInfo> setMessagesReadSince(long threadId, long timestamp);
   public abstract List<MarkedMessageInfo> setAllMessagesRead();
   public abstract Pair<Long, Long> updateBundleMessageBody(long messageId, String body);
+
+  public abstract void addFailures(long messageId, List<NetworkFailure> failure);
+  public abstract void removeFailure(long messageId, NetworkFailure failure);
 
 
   public abstract @NonNull Pair<Long, Long> insertReceivedCall(@NonNull RecipientId address);
@@ -117,7 +139,12 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
 
   public abstract Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type);
   public abstract Optional<InsertResult> insertMessageInbox(IncomingTextMessage message);
+  public abstract Optional<InsertResult> insertMessageInbox(IncomingMediaMessage retrieved, String contentLocation, long threadId) throws MmsException;
+  public abstract Pair<Long, Long> insertMessageInbox(@NonNull NotificationInd notification, int subscriptionId);
+  public abstract Optional<InsertResult> insertSecureDecryptedMessageInbox(IncomingMediaMessage retrieved, long threadId) throws MmsException;
   public abstract long insertMessageOutbox(long threadId, OutgoingTextMessage message, boolean forceSms, long date, InsertListener insertListener);
+  public abstract long insertMessageOutbox(@NonNull OutgoingMediaMessage message, long threadId, boolean forceSms, @Nullable SmsDatabase.InsertListener insertListener) throws MmsException;
+  public abstract long insertMessageOutbox(@NonNull OutgoingMediaMessage message, long threadId, boolean forceSms, int defaultReceiptStatus, @Nullable SmsDatabase.InsertListener insertListener) throws MmsException;
   public abstract void insertProfileNameChangeMessages(@NonNull Recipient recipient, @NonNull String newProfileName, @NonNull String previousProfileName);
 
   public abstract boolean deleteMessage(long messageId);
@@ -126,9 +153,11 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   abstract void deleteThreads(@NonNull Set<Long> threadIds);
   abstract void deleteAllThreads();
 
-  abstract SQLiteDatabase beginTransaction();
-  abstract void endTransaction(SQLiteDatabase database);
-  abstract SQLiteStatement createInsertStatement(SQLiteDatabase database);
+  public abstract SQLiteDatabase beginTransaction();
+  public abstract void endTransaction(SQLiteDatabase database);
+  public abstract void setTransactionSuccessful();
+  public abstract void endTransaction();
+  public abstract SQLiteStatement createInsertStatement(SQLiteDatabase database);
 
   public abstract void ensureMigration();
 
@@ -600,7 +629,43 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
     }
   }
 
+  public static class MmsNotificationInfo {
+    private final RecipientId from;
+    private final String      contentLocation;
+    private final String      transactionId;
+    private final int         subscriptionId;
+
+    MmsNotificationInfo(@NonNull RecipientId from, String contentLocation, String transactionId, int subscriptionId) {
+      this.from            = from;
+      this.contentLocation = contentLocation;
+      this.transactionId   = transactionId;
+      this.subscriptionId  = subscriptionId;
+    }
+
+    public String getContentLocation() {
+      return contentLocation;
+    }
+
+    public String getTransactionId() {
+      return transactionId;
+    }
+
+    public int getSubscriptionId() {
+      return subscriptionId;
+    }
+
+    public @NonNull RecipientId getFrom() {
+      return from;
+    }
+  }
+
   public interface InsertListener {
     void onComplete();
+  }
+
+  public interface Reader extends Closeable {
+    MessageRecord getNext();
+    MessageRecord getCurrent();
+    void close();
   }
 }

@@ -6,6 +6,7 @@ import androidx.annotation.WorkerThread;
 import android.text.TextUtils;
 
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -78,7 +79,7 @@ public final class MmsSendJob extends SendJob {
   /** Enqueues compression jobs for attachments and finally the MMS send job. */
   @WorkerThread
   public static void enqueue(@NonNull Context context, @NonNull JobManager jobManager, long messageId) {
-    MmsDatabase          database = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase database = DatabaseFactory.getMmsDatabase(context);
     OutgoingMediaMessage message;
 
     try {
@@ -120,7 +121,7 @@ public final class MmsSendJob extends SendJob {
 
   @Override
   public void onSend() throws MmsException, NoSuchMessageException, IOException {
-    MmsDatabase          database = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase      database = DatabaseFactory.getMmsDatabase(context);
     OutgoingMediaMessage message  = database.getOutgoingMessage(messageId);
 
     if (database.isSent(messageId)) {

@@ -10,6 +10,7 @@ import androidx.core.util.Consumer;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
+import su.sres.securesms.R;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.UriAttachment;
 import su.sres.securesms.database.AttachmentDatabase;
@@ -20,6 +21,8 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
 import su.sres.securesms.groups.v2.GroupInviteLinkUrl;
 import su.sres.securesms.jobs.AvatarGroupsV2DownloadJob;
+import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.linkpreview.LinkPreviewUtil.OpenGraph;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.net.CallRequestController;
@@ -83,6 +86,10 @@ public class LinkPreviewRepository  {
                                                @NonNull String url,
                                                @NonNull Callback callback)
     {
+        if (!SignalStore.settings().isLinkPreviewsEnabled()) {
+            throw new IllegalStateException();
+        }
+
         CompositeRequestController compositeController = new CompositeRequestController();
 
         if (!LinkPreviewUtil.isValidPreviewUrl(url)) {
@@ -105,7 +112,7 @@ public class LinkPreviewRepository  {
                 }
 
                 if (!metadata.getImageUrl().isPresent()) {
-                    callback.onSuccess(new LinkPreview(url, metadata.getTitle().get(), Optional.absent()));
+                    callback.onSuccess(new LinkPreview(url, metadata.getTitle().or(""), metadata.getDescription().or(""), metadata.getDate(), Optional.absent()));
                     return;
                 }
 
@@ -113,7 +120,7 @@ public class LinkPreviewRepository  {
                     if (!metadata.getTitle().isPresent() && !attachment.isPresent()) {
                         callback.onError(Error.PREVIEW_NOT_AVAILABLE);
                     } else {
-                        callback.onSuccess(new LinkPreview(url, metadata.getTitle().or(""), attachment));
+                        callback.onSuccess(new LinkPreview(url, metadata.getTitle().or(""), metadata.getDescription().or(""), metadata.getDate(), attachment));
                     }
                 });
 
@@ -147,17 +154,19 @@ public class LinkPreviewRepository  {
                     return;
                 }
 
-                String           body      = OkHttpUtil.readAsString(response.body(), FAILSAFE_MAX_TEXT_SIZE);
-                LinkPreviewUtil.OpenGraph openGraph = LinkPreviewUtil.parseOpenGraphFields(body);
-                Optional<String> title     = openGraph.getTitle();
-                Optional<String> imageUrl  = openGraph.getImageUrl();
+                String           body        = OkHttpUtil.readAsString(response.body(), FAILSAFE_MAX_TEXT_SIZE);
+                OpenGraph        openGraph   = LinkPreviewUtil.parseOpenGraphFields(body);
+                Optional<String> title       = openGraph.getTitle();
+                Optional<String> description = openGraph.getDescription();
+                Optional<String> imageUrl    = openGraph.getImageUrl();
+                long             date        = openGraph.getDate();
 
                 if (imageUrl.isPresent() && !LinkPreviewUtil.isValidPreviewUrl(imageUrl.get())) {
                     Log.i(TAG, "Image URL was invalid or for a non-whitelisted domain. Skipping.");
                     imageUrl = Optional.absent();
                 }
 
-                callback.accept(new Metadata(title, imageUrl));
+                callback.accept(new Metadata(title, description, date, imageUrl));
             }
         });
 
@@ -225,7 +234,7 @@ public class LinkPreviewRepository  {
 
                     Optional<Attachment> thumbnail = bitmapToAttachment(bitmap, Bitmap.CompressFormat.WEBP, MediaUtil.IMAGE_WEBP);
 
-                    callback.onSuccess(new LinkPreview(packUrl, title, thumbnail));
+                    callback.onSuccess(new LinkPreview(packUrl, title, "", 0, thumbnail));
                 } else {
                     callback.onError(Error.PREVIEW_NOT_AVAILABLE);
                 }
@@ -259,6 +268,8 @@ public class LinkPreviewRepository  {
 
                     GroupDatabase.GroupRecord groupRecord = group.get();
                     String                    title       = groupRecord.getTitle();
+                    int                       memberCount = groupRecord.getMembers().size();
+                    String                    description = getMemberCountDescription(context, memberCount);
                     Optional<Attachment>      thumbnail   = Optional.absent();
 
                     if (AvatarHelper.hasAvatar(context, groupRecord.getRecipientId())) {
@@ -268,11 +279,12 @@ public class LinkPreviewRepository  {
                         thumbnail = bitmapToAttachment(bitmap, Bitmap.CompressFormat.WEBP, MediaUtil.IMAGE_WEBP);
                     }
 
-                    callback.onSuccess(new LinkPreview(groupUrl, title, thumbnail));
+                    callback.onSuccess(new LinkPreview(groupUrl, title, description, 0, thumbnail));
                 } else {
                     Log.i(TAG, "Group is not locally available for preview generation, fetching from server");
 
                     DecryptedGroupJoinInfo joinInfo    = GroupManager.getGroupJoinInfoFromServer(context, groupMasterKey, groupInviteLinkUrl.getPassword());
+                    String                 description = getMemberCountDescription(context, joinInfo.getMemberCount());
                     Optional<Attachment>   thumbnail   = Optional.absent();
                     byte[]                 avatarBytes = AvatarGroupsV2DownloadJob.downloadGroupAvatarBytes(context, groupMasterKey, joinInfo.getAvatar());
 
@@ -284,7 +296,7 @@ public class LinkPreviewRepository  {
                         if (bitmap != null) bitmap.recycle();
                     }
 
-                    callback.onSuccess(new LinkPreview(groupUrl, joinInfo.getTitle(), thumbnail));
+                    callback.onSuccess(new LinkPreview(groupUrl, joinInfo.getTitle(), description, 0, thumbnail));
                 }
             } catch (ExecutionException | InterruptedException | IOException | VerificationFailedException e) {
                 Log.w(TAG, "Failed to fetch group link preview.", e);
@@ -299,6 +311,13 @@ public class LinkPreviewRepository  {
         });
 
         return () -> Log.i(TAG, "Cancelled group link preview fetch -- no effect.");
+    }
+
+    private static @NonNull String getMemberCountDescription(@NonNull Context context, int memberCount) {
+        return context.getResources()
+                .getQuantityString(R.plurals.LinkPreviewRepository_d_members,
+                        memberCount,
+                        memberCount);
     }
 
     private static Optional<Attachment> bitmapToAttachment(@Nullable Bitmap bitmap,
@@ -337,19 +356,31 @@ public class LinkPreviewRepository  {
 
     private static class Metadata {
         private final Optional<String> title;
+        private final Optional<String> description;
+        private final long             date;
         private final Optional<String> imageUrl;
 
-        Metadata(Optional<String> title, Optional<String> imageUrl) {
-            this.title    = title;
-            this.imageUrl = imageUrl;
+        Metadata(Optional<String> title, Optional<String> description, long date, Optional<String> imageUrl) {
+            this.title       = title;
+            this.description = description;
+            this.date        = date;
+            this.imageUrl    = imageUrl;
         }
 
         static Metadata empty() {
-            return new Metadata(Optional.absent(), Optional.absent());
+            return new Metadata(Optional.absent(), Optional.absent(), 0, Optional.absent());
         }
 
         Optional<String> getTitle() {
             return title;
+        }
+
+        Optional<String> getDescription() {
+            return description;
+        }
+
+        long getDate() {
+            return date;
         }
 
         Optional<String> getImageUrl() {

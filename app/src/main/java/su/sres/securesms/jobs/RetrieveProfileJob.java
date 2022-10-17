@@ -295,7 +295,7 @@ public class RetrieveProfileJob extends BaseJob  {
 
     setProfileName(recipient, profile.getName());
     setProfileAvatar(recipient, profile.getAvatar());
-    if (FeatureFlags.usernames()) setUsername(recipient, profile.getUsername());
+    clearUsername(recipient);
     setProfileCapabilities(recipient, profile.getCapabilities());
     setIdentityKey(recipient, profile.getIdentityKey());
     setUnidentifiedAccessMode(recipient, profile.getUnidentifiedAccess(), profile.isUnrestrictedUnidentifiedAccess());
@@ -429,8 +429,8 @@ public class RetrieveProfileJob extends BaseJob  {
     }
   }
 
-  private void setUsername(Recipient recipient, @Nullable String username) {
-    DatabaseFactory.getRecipientDatabase(context).setUsername(recipient.getId(), username);
+  private void clearUsername(Recipient recipient) {
+    DatabaseFactory.getRecipientDatabase(context).setUsername(recipient.getId(), null);
   }
 
   // maybe later...

@@ -9,6 +9,7 @@ public final class MiscellaneousValues extends SignalStoreValues {
     private static final String LAST_LICENSE_REFRESH_TIME     = "last_license_refresh_time";
     private static final String LAST_PREKEY_REFRESH_TIME    = "last_prekey_refresh_time";
     private static final String LAST_PROFILE_REFRESH_TIME   = "misc.last_profile_refresh_time";
+    private static final String USERNAME_SHOW_REMINDER      = "username.show.reminder";
     private static final String LAST_SERVCONF_REFRESH_TIME    = "last_service_config_refresh_time";
     private static final String MESSAGE_REQUEST_ENABLE_TIME = "message_request_enable_time";
 
@@ -71,5 +72,13 @@ public final class MiscellaneousValues extends SignalStoreValues {
 
     public void setDirectoryMigratedToUuids(boolean flag) {
         putBoolean(DIRECTORY_MIGRATED_TO_UUDS, flag);
+    }
+
+    public void hideUsernameReminder() {
+        putBoolean(USERNAME_SHOW_REMINDER, false);
+    }
+
+    public boolean shouldShowUsernameReminder() {
+        return getBoolean(USERNAME_SHOW_REMINDER, true);
     }
 }

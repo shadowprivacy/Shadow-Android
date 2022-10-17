@@ -65,7 +65,8 @@ public final class GroupsV2StateProcessor {
 
     private static final String TAG = Log.tag(GroupsV2StateProcessor.class);
 
-    public static final int LATEST = GroupStateMapper.LATEST;
+    public static final int LATEST               = GroupStateMapper.LATEST;
+    public static final int PLACEHOLDER_REVISION = GroupStateMapper.PLACEHOLDER_REVISION;
 
     private final Context               context;
     private final JobManager            jobManager;
@@ -177,9 +178,26 @@ public final class GroupsV2StateProcessor {
                 try {
                     inputGroupState = queryServer(localState, revision == LATEST && localState == null);
                 } catch (GroupNotAMemberException e) {
-                    Log.w(TAG, "Unable to query server for group " + groupId + " server says we're not in group, inserting leave message");
-                    insertGroupLeave();
-                    throw e;
+                    if (localState != null && signedGroupChange != null) {
+                        try {
+                            Log.i(TAG, "Applying P2P group change when not a member");
+                            DecryptedGroup newState = DecryptedGroupUtil.applyWithoutRevisionCheck(localState, signedGroupChange);
+
+                            inputGroupState = new GlobalGroupState(localState, Collections.singletonList(new ServerGroupLogEntry(newState, signedGroupChange)));
+                        } catch (NotAbleToApplyGroupV2ChangeException failed) {
+                            Log.w(TAG, "Unable to apply P2P group change when not a member", failed);
+                        }
+                    }
+
+                    if (inputGroupState == null) {
+                        if (localState != null && DecryptedGroupUtil.isPendingOrRequesting(localState, Recipient.self().getUuid().get())) {
+                            Log.w(TAG, "Unable to query server for group " + groupId + " server says we're not in group, but we think we are a pending or requesting member");
+                        } else {
+                            Log.w(TAG, "Unable to query server for group " + groupId + " server says we're not in group, inserting leave message");
+                            insertGroupLeave();
+                        }
+                        throw e;
+                    }
                 }
             } else {
                 Log.i(TAG, "Saved server query for group change");
@@ -237,9 +255,9 @@ public final class GroupsV2StateProcessor {
                     Collections.emptyList());
 
             try {
-                MmsDatabase mmsDatabase = DatabaseFactory.getMmsDatabase(context);
-                long        threadId    = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(groupRecipient);
-                long        id          = mmsDatabase.insertMessageOutbox(leaveMessage, threadId, false, null);
+                MessageDatabase mmsDatabase = DatabaseFactory.getMmsDatabase(context);
+                long            threadId    = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(groupRecipient);
+                long            id          = mmsDatabase.insertMessageOutbox(leaveMessage, threadId, false, null);
                 mmsDatabase.markAsSent(id, true);
             } catch (MmsException e) {
                 Log.w(TAG, "Failed to insert leave message.", e);
@@ -396,7 +414,7 @@ public final class GroupsV2StateProcessor {
 
             if (outgoing) {
                 try {
-                    MmsDatabase                mmsDatabase     = DatabaseFactory.getMmsDatabase(context);
+                    MessageDatabase            mmsDatabase     = DatabaseFactory.getMmsDatabase(context);
                     RecipientId                recipientId     = recipientDatabase.getOrInsertFromGroupId(groupId);
                     Recipient                  recipient       = Recipient.resolved(recipientId);
                     OutgoingGroupUpdateMessage outgoingMessage = new OutgoingGroupUpdateMessage(recipient, decryptedGroupV2Context, null, timestamp, 0, false, null, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());

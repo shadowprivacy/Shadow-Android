@@ -156,11 +156,6 @@ public class EditProfileFragment extends LoggingFragment {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
-    }
-
-    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
@@ -235,11 +230,7 @@ public class EditProfileFragment extends LoggingFragment {
             usernameLabel.setVisibility(View.VISIBLE);
         }
 
-        this.avatar.setOnClickListener(v -> Permissions.with(this)
-                .request(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                .ifNecessary()
-                .onAnyResult(this::startAvatarSelection)
-                .execute());
+        this.avatar.setOnClickListener(v -> startAvatarSelection());
 
         this.givenName .addTextChangedListener(new AfterTextChanged(s -> {
             trimInPlace(s, isEditingGroup);
