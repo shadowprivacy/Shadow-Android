@@ -2294,7 +2294,7 @@
 
     <!-- LicenseInfoActivity -->
 
-    <string name="LicenseInfoActivity_title">Сведения об активации:</string>
+    <string name="LicenseInfoActivity_title">Сведения об активации сервера:</string>
     <string name="LicenseInfoActivity_status_active">Статус активации: Норма</string>
     <string name="LicenseInfoActivity_status_expired">Статус активации: Истекла</string>
     <string name="LicenseInfoActivity_status_invalid">Статус активации: Недействительна</string>
