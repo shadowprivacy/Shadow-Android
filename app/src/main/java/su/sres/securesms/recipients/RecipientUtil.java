@@ -171,6 +171,7 @@ public class RecipientUtil {
         }
 
         DatabaseFactory.getRecipientDatabase(context).setBlocked(recipient.getId(), false);
+        DatabaseFactory.getRecipientDatabase(context).setProfileSharing(recipient.getId(), true);
         ApplicationDependencies.getJobManager().add(new MultiDeviceBlockedUpdateJob());
 //        StorageSyncHelper.scheduleSyncForDataChange();
 

@@ -16,7 +16,6 @@ import su.sres.securesms.ContactSelectionActivity;
 import su.sres.securesms.ContactSelectionListFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.ContactsCursorLoader;
-import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.groups.GroupsV2CapabilityChecker;
 import su.sres.securesms.groups.ui.creategroup.details.AddGroupDetailsActivity;
@@ -34,7 +33,6 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class CreateGroupActivity extends ContactSelectionActivity {
 
@@ -57,7 +55,7 @@ public class CreateGroupActivity extends ContactSelectionActivity {
                 : ContactsCursorLoader.DisplayMode.FLAG_PUSH;
 
         intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, displayMode);
-        intent.putExtra(ContactSelectionListFragment.TOTAL_CAPACITY, FeatureFlags.groupsV2create() ? FeatureFlags.gv2GroupCapacity() - 1
+        intent.putExtra(ContactSelectionListFragment.SELECTION_LIMIT, FeatureFlags.groupsV2create() ? FeatureFlags.gv2GroupCapacity() - 1
                 : ContactSelectionListFragment.NO_LIMIT);
 
         return intent;

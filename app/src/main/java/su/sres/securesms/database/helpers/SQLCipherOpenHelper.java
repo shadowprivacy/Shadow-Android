@@ -45,8 +45,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int BORDERLESS                       = 66;
   private static final int MENTIONS                         = 67;
   private static final int PINNED_CONVERSATIONS_MENTION_GLOBAL_SETTING_MIGRATION_UNKNOWN_STORAGE_FIELDS = 68;
+  private static final int STICKER_CONTENT_TYPE_EMOJI_IN_NOTIFICATIONS             = 69;
 
-  private static final int    DATABASE_VERSION = 68;
+  private static final int    DATABASE_VERSION = 69;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -190,6 +191,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.update("recipient", updateNever, "mention_setting = 2", null);
 
         db.execSQL("ALTER TABLE recipient ADD COLUMN storage_proto TEXT DEFAULT NULL");
+      }
+
+      if (oldVersion < STICKER_CONTENT_TYPE_EMOJI_IN_NOTIFICATIONS) {
+        db.execSQL("ALTER TABLE sticker ADD COLUMN content_type TEXT DEFAULT NULL");
+        db.execSQL("ALTER TABLE part ADD COLUMN sticker_emoji TEXT DEFAULT NULL");
       }
 
       db.setTransactionSuccessful();

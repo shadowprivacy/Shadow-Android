@@ -16,6 +16,7 @@ import su.sres.securesms.groups.v2.GroupLinkPassword;
 import su.sres.securesms.jobs.PushGroupSilentUpdateSendJob;
 import su.sres.securesms.jobs.RequestGroupV2InfoJob;
 import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.signalservice.api.groupsv2.GroupChangeReconstruct;
 import su.sres.signalservice.api.groupsv2.GroupLinkNotActiveException;
 import su.sres.signalservice.api.groupsv2.NotAbleToApplyGroupV2ChangeException;
 import su.sres.storageservice.protos.groups.AccessControl;
@@ -190,7 +191,11 @@ final class GroupManagerV2 {
                 groupDatabase.onAvatarUpdated(groupId, avatar != null);
                 DatabaseFactory.getRecipientDatabase(context).setProfileSharing(groupRecipient.getId(), true);
 
-                RecipientAndThread recipientAndThread = sendGroupUpdate(masterKey, decryptedGroup, null, null);
+                DecryptedGroupChange groupChange = DecryptedGroupChange.newBuilder(GroupChangeReconstruct.reconstructGroupChange(DecryptedGroup.newBuilder().build(), decryptedGroup))
+                        .setEditor(UuidUtil.toByteString(selfUuid))
+                        .build();
+
+                RecipientAndThread recipientAndThread = sendGroupUpdate(masterKey, decryptedGroup, groupChange, null);
 
                 return new GroupManager.GroupActionResult(recipientAndThread.groupRecipient,
                         recipientAndThread.threadId,

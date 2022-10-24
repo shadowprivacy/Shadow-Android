@@ -19,8 +19,11 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.keyvalue.KeepMessagesDuration;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -55,13 +58,15 @@ public class TrimThreadJob extends BaseJob {
 
   @Override
   public void onRun() {
-    boolean trimmingEnabled   = TextSecurePreferences.isThreadLengthTrimmingEnabled(context);
-    int     threadLengthLimit = TextSecurePreferences.getThreadTrimLength(context);
+    KeepMessagesDuration keepMessagesDuration = SignalStore.settings().getKeepMessagesDuration();
 
-    if (!trimmingEnabled)
-      return;
+    int trimLength = SignalStore.settings().isTrimByLengthEnabled() ? SignalStore.settings().getThreadTrimLength()
+            : ThreadDatabase.NO_TRIM_MESSAGE_COUNT_SET;
 
-    DatabaseFactory.getThreadDatabase(context).trimThread(threadId, threadLengthLimit);
+    long trimBeforeDate = keepMessagesDuration != KeepMessagesDuration.FOREVER ? System.currentTimeMillis() - keepMessagesDuration.getDuration()
+            : ThreadDatabase.NO_TRIM_BEFORE_DATE_SET;
+
+    DatabaseFactory.getThreadDatabase(context).trimThread(threadId, trimLength, trimBeforeDate);
   }
 
   @Override

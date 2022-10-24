@@ -13,6 +13,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
@@ -34,15 +36,18 @@ import java.util.Set;
 
 public final class SafetyNumberChangeDialog extends DialogFragment implements SafetyNumberChangeAdapter.Callbacks {
 
+    public static final String SAFETY_NUMBER_DIALOG = "SAFETY_NUMBER";
+
     private static final String RECIPIENT_IDS_EXTRA = "recipient_ids";
     private static final String MESSAGE_ID_EXTRA    = "message_id";
     private static final String MESSAGE_TYPE_EXTRA  = "message_type";
+    private static final String IS_CALL_EXTRA       = "is_call";
 
     private SafetyNumberChangeViewModel viewModel;
     private SafetyNumberChangeAdapter   adapter;
     private View                        dialogView;
 
-    public static @NonNull SafetyNumberChangeDialog create(List<IdentityDatabase.IdentityRecord> identityRecords) {
+    public static void show(@NonNull FragmentManager fragmentManager, @NonNull List<IdentityDatabase.IdentityRecord> identityRecords) {
         List<String> ids = Stream.of(identityRecords)
                 .filterNot(IdentityDatabase.IdentityRecord::isFirstUse)
                 .map(record -> record.getRecipientId().serialize())
@@ -53,12 +58,12 @@ public final class SafetyNumberChangeDialog extends DialogFragment implements Sa
         arguments.putStringArray(RECIPIENT_IDS_EXTRA, ids.toArray(new String[0]));
         SafetyNumberChangeDialog fragment = new SafetyNumberChangeDialog();
         fragment.setArguments(arguments);
-        return fragment;
+        fragment.show(fragmentManager, SAFETY_NUMBER_DIALOG);
     }
 
-    public static @NonNull SafetyNumberChangeDialog create(Context context, MessageRecord messageRecord) {
+    public static void show(@NonNull FragmentActivity fragmentActivity, @NonNull MessageRecord messageRecord) {
         List<String> ids = Stream.of(messageRecord.getIdentityKeyMismatches())
-                .map(mismatch -> mismatch.getRecipientId(context).serialize())
+                .map(mismatch -> mismatch.getRecipientId(fragmentActivity).serialize())
                 .distinct()
                 .toList();
 
@@ -68,7 +73,16 @@ public final class SafetyNumberChangeDialog extends DialogFragment implements Sa
         arguments.putString(MESSAGE_TYPE_EXTRA, messageRecord.isMms() ? MmsSmsDatabase.MMS_TRANSPORT : MmsSmsDatabase.SMS_TRANSPORT);
         SafetyNumberChangeDialog fragment = new SafetyNumberChangeDialog();
         fragment.setArguments(arguments);
-        return fragment;
+        fragment.show(fragmentActivity.getSupportFragmentManager(), SAFETY_NUMBER_DIALOG);
+    }
+
+    public static void showForCall(@NonNull FragmentManager fragmentManager, @NonNull RecipientId recipientId) {
+        Bundle arguments = new Bundle();
+        arguments.putStringArray(RECIPIENT_IDS_EXTRA, new String[] { recipientId.serialize() });
+        arguments.putBoolean(IS_CALL_EXTRA, true);
+        SafetyNumberChangeDialog fragment = new SafetyNumberChangeDialog();
+        fragment.setArguments(arguments);
+        fragment.show(fragmentManager, SAFETY_NUMBER_DIALOG);
     }
 
     private SafetyNumberChangeDialog() { }
@@ -93,6 +107,8 @@ public final class SafetyNumberChangeDialog extends DialogFragment implements Sa
 
     @Override
     public @NonNull Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        boolean isCall = requireArguments().getBoolean(IS_CALL_EXTRA, false);
+
         dialogView = LayoutInflater.from(requireActivity()).inflate(R.layout.safety_number_change_dialog, null);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity(), getTheme());
@@ -101,8 +117,8 @@ public final class SafetyNumberChangeDialog extends DialogFragment implements Sa
 
         builder.setTitle(R.string.safety_number_change_dialog__safety_number_changes)
                 .setView(dialogView)
-                .setPositiveButton(R.string.safety_number_change_dialog__send_anyway, this::handleSendAnyway)
-                .setNegativeButton(android.R.string.cancel, null);
+                .setPositiveButton(isCall ? R.string.safety_number_change_dialog__call_anyway : R.string.safety_number_change_dialog__send_anyway, this::handleSendAnyway)
+                .setNegativeButton(android.R.string.cancel, this::handleCancel);
 
         return builder.create();
     }
@@ -151,6 +167,12 @@ public final class SafetyNumberChangeDialog extends DialogFragment implements Sa
         trustOrVerifyResultLiveData.observeForever(observer);
     }
 
+    private void handleCancel(@NonNull DialogInterface dialogInterface, int which) {
+        if (getActivity() instanceof Callback) {
+            ((Callback) getActivity()).onCanceled();
+        }
+    }
+
     @Override
     public void onViewIdentityRecord(@NonNull IdentityDatabase.IdentityRecord identityRecord) {
         startActivity(VerifyIdentityActivity.newIntent(requireContext(), identityRecord));
@@ -159,5 +181,6 @@ public final class SafetyNumberChangeDialog extends DialogFragment implements Sa
     public interface Callback {
         void onSendAnywayAfterSafetyNumberChange();
         void onMessageResentAfterSafetyNumberChange();
+        void onCanceled();
     }
 }

@@ -5,15 +5,18 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.model.IncomingSticker;
+import su.sres.securesms.database.model.StickerRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.util.Hex;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
@@ -25,15 +28,16 @@ public class StickerDownloadJob extends BaseJob  {
 
     private static final String TAG = Log.tag(StickerDownloadJob.class);
 
-    private static final String KEY_PACK_ID     = "pack_id";
-    private static final String KEY_PACK_KEY    = "pack_key";
-    private static final String KEY_PACK_TITLE  = "pack_title";
-    private static final String KEY_PACK_AUTHOR = "pack_author";
-    private static final String KEY_STICKER_ID  = "sticker_id";
-    private static final String KEY_EMOJI       = "emoji";
-    private static final String KEY_COVER       = "cover";
-    private static final String KEY_INSTALLED   = "installed";
-    private static final String KEY_NOTIFY      = "notify";
+    private static final String KEY_PACK_ID      = "pack_id";
+    private static final String KEY_PACK_KEY     = "pack_key";
+    private static final String KEY_PACK_TITLE   = "pack_title";
+    private static final String KEY_PACK_AUTHOR  = "pack_author";
+    private static final String KEY_STICKER_ID   = "sticker_id";
+    private static final String KEY_EMOJI        = "emoji";
+    private static final String KEY_CONTENT_TYPE = "content_type";
+    private static final String KEY_COVER        = "cover";
+    private static final String KEY_INSTALLED    = "installed";
+    private static final String KEY_NOTIFY       = "notify";
 
     private final IncomingSticker sticker;
     private final boolean         notify;
@@ -61,6 +65,7 @@ public class StickerDownloadJob extends BaseJob  {
                 .putString(KEY_PACK_AUTHOR, sticker.getPackAuthor())
                 .putInt(KEY_STICKER_ID, sticker.getStickerId())
                 .putString(KEY_EMOJI, sticker.getEmoji())
+                .putString(KEY_CONTENT_TYPE, sticker.getContentType())
                 .putBoolean(KEY_COVER, sticker.isCover())
                 .putBoolean(KEY_INSTALLED, sticker.isInstalled())
                 .putBoolean(KEY_NOTIFY, notify)
@@ -76,9 +81,16 @@ public class StickerDownloadJob extends BaseJob  {
     protected void onRun() throws Exception {
         StickerDatabase db = DatabaseFactory.getStickerDatabase(context);
 
-        if (db.getSticker(sticker.getPackId(), sticker.getStickerId(), sticker.isCover()) != null) {
-            Log.w(TAG, "Sticker already downloaded.");
-            return;
+        StickerRecord stickerRecord = db.getSticker(sticker.getPackId(), sticker.getStickerId(), sticker.isCover());
+        if (stickerRecord != null) {
+            try (InputStream stream = PartAuthority.getAttachmentStream(context, stickerRecord.getUri())) {
+                if (stream != null) {
+                    Log.w(TAG, "Sticker already downloaded.");
+                    return;
+                }
+            } catch (FileNotFoundException e) {
+                Log.w(TAG, "Sticker file no longer exists, downloading again.");
+            }
         }
 
         if (!db.isPackInstalled(sticker.getPackId()) && !sticker.isCover()) {
@@ -113,6 +125,7 @@ public class StickerDownloadJob extends BaseJob  {
                     data.getString(KEY_PACK_AUTHOR),
                     data.getInt(KEY_STICKER_ID),
                     data.getString(KEY_EMOJI),
+                    data.getString(KEY_CONTENT_TYPE),
                     data.getBoolean(KEY_COVER),
                     data.getBoolean(KEY_INSTALLED));
 

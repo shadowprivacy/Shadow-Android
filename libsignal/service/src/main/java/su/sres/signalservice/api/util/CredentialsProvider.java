@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface CredentialsProvider {
   public UUID getUuid();
-  public String getE164();
+  public String getUserLogin();
   public String getPassword();
   public String getSignalingKey();
 }

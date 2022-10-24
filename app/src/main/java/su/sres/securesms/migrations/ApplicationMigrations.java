@@ -36,11 +36,12 @@ public class ApplicationMigrations {
 
     private static final MutableLiveData<Boolean> UI_BLOCKING_MIGRATION_RUNNING = new MutableLiveData<>();
 
-    public static final int CURRENT_VERSION = 16;
+    public static final int CURRENT_VERSION = 17;
 
     private static final class Version {
         static final int VERSIONED_PROFILE  = 15;
         static final int NEW_ACTIVATION_MODEL  = 16;
+        static final int TRIM_SETTINGS      = 17;
     }
 
     /**
@@ -52,6 +53,7 @@ public class ApplicationMigrations {
 
         if (!isUpdate(context)) {
             Log.d(TAG, "Not an update. Skipping.");
+            VersionTracker.updateLastSeenVersion(context);
             return;
         }
 
@@ -155,6 +157,10 @@ public class ApplicationMigrations {
 
         if (lastSeenVersion < Version.NEW_ACTIVATION_MODEL) {
             jobs.put(Version.NEW_ACTIVATION_MODEL, new LicenseMigrationJob());
+        }
+
+        if (lastSeenVersion < Version.TRIM_SETTINGS) {
+            jobs.put(Version.TRIM_SETTINGS, new TrimByLengthSettingsMigrationJob());
         }
 
         return jobs;

@@ -155,7 +155,7 @@ public final class CodeVerificationRequest {
 
         JobManager jobManager = ApplicationDependencies.getJobManager();
         jobManager.add(new DirectorySyncJob(false));
-        jobManager.add(new RotateCertificateJob(context));
+        jobManager.add(new RotateCertificateJob());
 
         DirectoryRefreshListener.schedule(context);
         RotateSignedPreKeyListener.schedule(context);
@@ -181,7 +181,8 @@ public final class CodeVerificationRequest {
         boolean hasFcm = fcmToken != null;
 
         VerifyAccountResponse response = accountManager.verifyAccountWithCode(code, null, registrationId, !hasFcm, pin, unidentifiedAccessKey, universalUnidentifiedAccess,
-                    AppCapabilities.getCapabilities(true));
+                AppCapabilities.getCapabilities(true),
+                SignalStore.userLoginPrivacy().getUserLoginListingMode().isDiscoverable());
 
 
         UUID    uuid   = UuidUtil.parseOrThrow(response.getUuid());

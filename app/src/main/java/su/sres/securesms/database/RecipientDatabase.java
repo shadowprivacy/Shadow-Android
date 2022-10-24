@@ -23,8 +23,9 @@ import su.sres.securesms.contacts.avatars.ContactColors;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.groups.v2.ProfileKeySet;
+import su.sres.securesms.groups.v2.processing.GroupsV2StateProcessor;
 import su.sres.securesms.jobs.RefreshAttributesJob;
-import su.sres.securesms.jobs.WakeGroupV2Job;
+import su.sres.securesms.jobs.RequestGroupV2InfoJob;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.storage.StorageSyncHelper.RecordUpdate;
@@ -39,7 +40,6 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.CursorUtil;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.StringUtil;
@@ -56,6 +56,7 @@ import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.api.storage.SignalContactRecord;
 import su.sres.signalservice.api.storage.SignalGroupV1Record;
 import su.sres.signalservice.api.storage.StorageId;
+import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -868,10 +869,21 @@ public class RecipientDatabase extends Database {
       for (SignalGroupV2Record insert : groupV2Inserts) {
         db.insertOrThrow(TABLE_NAME, null, getValuesForStorageGroupV2(insert));
 
-        GroupId.V2 groupId   = GroupId.v2(insert.getMasterKey());
-        Recipient  recipient = Recipient.externalGroup(context, groupId);
+        GroupMasterKey masterKey = insert.getMasterKeyOrThrow();
+        GroupId.V2     groupId   = GroupId.v2(masterKey);
+        Recipient      recipient = Recipient.externalGroup(context, groupId);
 
-        ApplicationDependencies.getJobManager().add(new WakeGroupV2Job(insert.getMasterKey()));
+        Log.i(TAG, "Creating restore placeholder for " + groupId);
+
+        DatabaseFactory.getGroupDatabase(context)
+                .create(masterKey,
+                        DecryptedGroup.newBuilder()
+                                .setRevision(GroupsV2StateProcessor.RESTORE_PLACEHOLDER_REVISION)
+                                .build());
+
+        Log.i(TAG, "Scheduling request for latest group info for " + groupId);
+
+        ApplicationDependencies.getJobManager().add(new RequestGroupV2InfoJob(groupId));
 
         threadDatabase.setArchived(recipient.getId(), insert.isArchived());
         needsRefresh.add(recipient.getId());
@@ -885,7 +897,8 @@ public class RecipientDatabase extends Database {
           throw new AssertionError("Had an update, but it didn't match any rows!");
         }
 
-        Recipient recipient = Recipient.externalGroup(context, GroupId.v2(update.getOld().getMasterKey()));
+        GroupMasterKey masterKey = update.getOld().getMasterKeyOrThrow();
+        Recipient      recipient = Recipient.externalGroup(context, GroupId.v2(masterKey));
 
         threadDatabase.setArchived(recipient.getId(), update.getNew().isArchived());
         needsRefresh.add(recipient.getId());
@@ -1029,7 +1042,7 @@ public class RecipientDatabase extends Database {
 
   private static @NonNull ContentValues getValuesForStorageGroupV2(@NonNull SignalGroupV2Record groupV2) {
     ContentValues values = new ContentValues();
-    values.put(GROUP_ID, GroupId.v2(groupV2.getMasterKey()).toString());
+    values.put(GROUP_ID, GroupId.v2(groupV2.getMasterKeyOrThrow()).toString());
     values.put(GROUP_TYPE, GroupType.SIGNAL_V2.getId());
     values.put(PROFILE_SHARING, groupV2.isProfileSharingEnabled() ? "1" : "0");
     values.put(BLOCKED, groupV2.isBlocked() ? "1" : "0");
@@ -1726,47 +1739,6 @@ public class RecipientDatabase extends Database {
       Recipient.live(id).refresh();
     }
   }
-
-  /* public void bulkUpdatedRegisteredStatus(@NonNull Map<RecipientId, String> registered, Collection<RecipientId> unregistered) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
-    db.beginTransaction();
-
-    try {
-      for (Map.Entry<RecipientId, String> entry : registered.entrySet()) {
-        ContentValues values = new ContentValues(2);
-        values.put(REGISTERED, RegisteredState.REGISTERED.getId());
-
-        if (entry.getValue() != null) {
-          values.put(UUID, entry.getValue().toLowerCase());
-        }
-
-        try {
-          if (update(entry.getKey(), values)) {
-            markDirty(entry.getKey(), DirtyState.INSERT);
-          }
-        } catch (SQLiteConstraintException e) {
-          Log.w(TAG, "[bulkUpdateRegisteredStatus] Hit a conflict when trying to update " + entry.getKey() + ". Possibly merging.");
-
-          RecipientSettings existing = getRecipientSettings(entry.getKey());
-          RecipientId       newId    = getAndPossiblyMerge(UuidUtil.parseOrThrow(entry.getValue()), existing.getE164(), true);
-          Log.w(TAG, "[bulkUpdateRegisteredStatus] Merged into " + newId);
-        }
-      }
-
-      for (RecipientId id : unregistered) {
-        ContentValues values = new ContentValues(2);
-        values.put(REGISTERED, RegisteredState.NOT_REGISTERED.getId());
-        values.put(UUID, (String) null);
-        if (update(id, values)) {
-          markDirty(id, DirtyState.DELETE);
-        }
-      }
-
-      db.setTransactionSuccessful();
-    } finally {
-      db.endTransaction();
-    }
-  } */
 
   @Deprecated
   public void setRegistered(@NonNull RecipientId id, RegisteredState registeredState) {

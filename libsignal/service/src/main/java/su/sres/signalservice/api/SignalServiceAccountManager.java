@@ -108,15 +108,15 @@ public class SignalServiceAccountManager {
      *
      * @param configuration The URL for the Signal Service.
      * @param uuid          The Signal Service UUID.
-     * @param e164          The Signal Service phone number.
+     * @param userLogin     The Signal Service user login.
      * @param password      A Signal Service password.
      * @param signalAgent   A string which identifies the client software.
      */
     public SignalServiceAccountManager(SignalServiceConfiguration configuration,
-                                       UUID uuid, String e164, String password,
+                                       UUID uuid, String userLogin, String password,
                                        String signalAgent) {
         this(configuration,
-                new StaticCredentialsProvider(uuid, e164, password, null),
+                new StaticCredentialsProvider(uuid, userLogin, password, null),
                 signalAgent,
                 new GroupsV2Operations(ClientZkOperations.create(configuration)));
     }
@@ -135,8 +135,8 @@ public class SignalServiceAccountManager {
         return this.pushServiceSocket.getSenderCertificate();
     }
 
-    public byte[] getSenderCertificateLegacy() throws IOException {
-        return this.pushServiceSocket.getSenderCertificateLegacy();
+    public byte[] getSenderCertificateForUserLoginPrivacy() throws IOException {
+        return this.pushServiceSocket.getUuidOnlySenderCertificate();
     }
 
     public void setPin(Optional<String> pin) throws IOException {
@@ -174,11 +174,11 @@ public class SignalServiceAccountManager {
      * during SMS/call requests to bypass the CAPTCHA.
      *
      * @param gcmRegistrationId The GCM (FCM) id to use.
-     * @param e164number        The number to associate it with.
+     * @param userLoginnumber        The number to associate it with.
      * @throws IOException
      */
-    public void requestPushChallenge(String gcmRegistrationId, String e164number) throws IOException {
-        this.pushServiceSocket.requestPushChallenge(gcmRegistrationId, e164number);
+    public void requestPushChallenge(String gcmRegistrationId, String userLoginnumber) throws IOException {
+        this.pushServiceSocket.requestPushChallenge(gcmRegistrationId, userLoginnumber);
     }
 
     /**
@@ -224,14 +224,16 @@ public class SignalServiceAccountManager {
      */
     public VerifyAccountResponse verifyAccountWithCode(String verificationCode, String signalingKey, int signalProtocolRegistrationId, boolean fetchesMessages, String pin,
                                                        byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess,
-                                                       SignalServiceProfile.Capabilities capabilities)
+                                                       SignalServiceProfile.Capabilities capabilities,
+                                                       boolean discoverableByUserLogin)
             throws IOException {
         return this.pushServiceSocket.verifyAccountCode(verificationCode, signalingKey,
                 signalProtocolRegistrationId,
                 fetchesMessages, pin,
                 unidentifiedAccessKey,
                 unrestrictedUnidentifiedAccess,
-                capabilities);
+                capabilities,
+                discoverableByUserLogin);
     }
 
     /**
@@ -246,11 +248,13 @@ public class SignalServiceAccountManager {
      */
     public void setAccountAttributes(String signalingKey, int signalProtocolRegistrationId, boolean fetchesMessages, String pin,
                                      byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess,
-                                     SignalServiceProfile.Capabilities capabilities)
+                                     SignalServiceProfile.Capabilities capabilities,
+                                     boolean discoverableByUserLogin)
             throws IOException {
         this.pushServiceSocket.setAccountAttributes(signalingKey, signalProtocolRegistrationId, fetchesMessages, pin,
                 unidentifiedAccessKey, unrestrictedUnidentifiedAccess,
-                capabilities);
+                capabilities,
+                discoverableByUserLogin);
     }
 
     /**
@@ -296,16 +300,16 @@ public class SignalServiceAccountManager {
     /**
      * Checks whether a contact is currently registered with the server.
      *
-     * @param e164number The contact to check.
+     * @param userLoginnumber The contact to check.
      * @return An optional ContactTokenDetails, present if registered, absent if not.
      * @throws IOException
      */
-    public Optional<ContactTokenDetails> getContact(String e164number) throws IOException {
-        String contactToken = createDirectoryServerToken(e164number, true);
+    public Optional<ContactTokenDetails> getContact(String userLoginnumber) throws IOException {
+        String contactToken = createDirectoryServerToken(userLoginnumber, true);
         ContactTokenDetails contactTokenDetails = this.pushServiceSocket.getContactTokenDetails(contactToken);
 
         if (contactTokenDetails != null) {
-            contactTokenDetails.setNumber(e164number);
+            contactTokenDetails.setNumber(userLoginnumber);
         }
 
         return Optional.fromNullable(contactTokenDetails);
@@ -314,13 +318,13 @@ public class SignalServiceAccountManager {
     /**
      * Checks which contacts in a set are registered with the server.
      *
-     * @param e164numbers The contacts to check.
+     * @param userLoginnumbers The contacts to check.
      * @return A list of ContactTokenDetails for the registered users.
      * @throws IOException
      */
-    public List<ContactTokenDetails> getContacts(Set<String> e164numbers)
+    public List<ContactTokenDetails> getContacts(Set<String> userLoginnumbers)
             throws IOException {
-        Map<String, String> contactTokensMap = createDirectoryServerTokenMap(e164numbers);
+        Map<String, String> contactTokensMap = createDirectoryServerTokenMap(userLoginnumbers);
         List<ContactTokenDetails> activeTokens = this.pushServiceSocket.retrieveDirectory(contactTokensMap.keySet());
 
         for (ContactTokenDetails activeToken : activeTokens) {
@@ -400,10 +404,6 @@ public class SignalServiceAccountManager {
 
         String authToken = this.pushServiceSocket.getStorageAuth();
         StorageItems items = this.pushServiceSocket.readStorageItems(authToken, operation.build());
-
-        if (items.getItemsCount() != storageKeys.size()) {
-            Log.w(TAG, "Failed to find all remote keys! Requested: " + storageKeys.size() + ", Found: " + items.getItemsCount());
-        }
 
         for (StorageItem item : items.getItemsList()) {
             Integer type = typeMap.get(item.getKey());
@@ -524,13 +524,13 @@ public class SignalServiceAccountManager {
                 .setIdentityKeyPrivate(ByteString.copyFrom(identityKeyPair.getPrivateKey().serialize()))
                 .setProvisioningCode(code)
                 .setProvisioningVersion(ProvisioningVersion.CURRENT_VALUE);
-        String e164 = credentials.getE164();
+        String userLogin = credentials.getUserLogin();
         UUID uuid = credentials.getUuid();
 
-        if (e164 != null) {
-            message.setNumber(e164);
+        if (userLogin != null) {
+            message.setNumber(userLogin);
         } else {
-            throw new AssertionError("Missing phone number!");
+            throw new AssertionError("Missing user login!");
         }
 
         if (uuid != null) {
@@ -634,10 +634,10 @@ public class SignalServiceAccountManager {
         this.pushServiceSocket.cancelInFlightRequests();
     }
 
-    private String createDirectoryServerToken(String e164number, boolean urlSafe) {
+    private String createDirectoryServerToken(String userLoginnumber, boolean urlSafe) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA1");
-            byte[] token = Util.trim(digest.digest(e164number.getBytes()), 10);
+            byte[] token = Util.trim(digest.digest(userLoginnumber.getBytes()), 10);
             String encoded = Base64.encodeBytesWithoutPadding(token);
 
             if (urlSafe) return encoded.replace('+', '-').replace('/', '_');
@@ -647,10 +647,10 @@ public class SignalServiceAccountManager {
         }
     }
 
-    private Map<String, String> createDirectoryServerTokenMap(Collection<String> e164numbers) {
-        Map<String, String> tokenMap = new HashMap<>(e164numbers.size());
+    private Map<String, String> createDirectoryServerTokenMap(Collection<String> userLoginnumbers) {
+        Map<String, String> tokenMap = new HashMap<>(userLoginnumbers.size());
 
-        for (String number : e164numbers) {
+        for (String number : userLoginnumbers) {
             tokenMap.put(createDirectoryServerToken(number, false), number);
         }
 

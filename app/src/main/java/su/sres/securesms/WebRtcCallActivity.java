@@ -48,6 +48,7 @@ import su.sres.securesms.components.TooltipPopup;
 import su.sres.securesms.components.webrtc.WebRtcAudioOutput;
 import su.sres.securesms.components.webrtc.WebRtcCallView;
 import su.sres.securesms.components.webrtc.WebRtcCallViewModel;
+import su.sres.securesms.conversation.ui.error.SafetyNumberChangeDialog;
 import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.securesms.logging.Log;
@@ -67,13 +68,12 @@ import su.sres.signalservice.api.messages.calls.HangupMessage;
 
 import static org.whispersystems.libsignal.SessionCipher.SESSION_LOCK;
 
-public class WebRtcCallActivity extends AppCompatActivity {
+public class WebRtcCallActivity extends AppCompatActivity implements SafetyNumberChangeDialog.Callback {
 
 
   private static final String TAG = WebRtcCallActivity.class.getSimpleName();
 
   private static final int STANDARD_DELAY_FINISH    = 1000;
-  public  static final int BUSY_SIGNAL_DELAY_FINISH = 5500;
 
   public static final String ANSWER_ACTION   = WebRtcCallActivity.class.getCanonicalName() + ".ANSWER_ACTION";
   public static final String DENY_ACTION     = WebRtcCallActivity.class.getCanonicalName() + ".DENY_ACTION";
@@ -418,7 +418,7 @@ public class WebRtcCallActivity extends AppCompatActivity {
     callScreen.setRecipient(event.getRecipient());
     callScreen.setStatus(getString(R.string.RedPhone_busy));
 
-    delayedFinish(BUSY_SIGNAL_DELAY_FINISH);
+    delayedFinish(WebRtcCallService.BUSY_TONE_LENGTH);
   }
 
   private void handleCallConnected(@NonNull WebRtcViewModel event) {
@@ -470,37 +470,24 @@ public class WebRtcCallActivity extends AppCompatActivity {
       handleTerminate(recipient, HangupMessage.Type.NORMAL);
     }
 
-    String          name            = recipient.getDisplayName(this);
-    String          introduction    = getString(R.string.WebRtcCallScreen_new_safety_numbers, name, name);
-    SpannableString spannableString = new SpannableString(introduction + " " + getString(R.string.WebRtcCallScreen_you_may_wish_to_verify_this_contact));
+    SafetyNumberChangeDialog.showForCall(getSupportFragmentManager(), recipient.getId());
+  }
 
-    spannableString.setSpan(new VerifySpan(this, recipient.getId(), theirKey), introduction.length() + 1, spannableString.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+  @Override
+  public void onSendAnywayAfterSafetyNumberChange() {
+    Intent intent = new Intent(WebRtcCallActivity.this, WebRtcCallService.class);
+    intent.setAction(WebRtcCallService.ACTION_OUTGOING_CALL)
+            .putExtra(WebRtcCallService.EXTRA_REMOTE_PEER, new RemotePeer(viewModel.getRecipient().getId()));
 
-    AppCompatTextView untrustedIdentityExplanation = new AppCompatTextView(this);
-    untrustedIdentityExplanation.setText(spannableString);
-    untrustedIdentityExplanation.setMovementMethod(LinkMovementMethod.getInstance());
+    startService(intent);
+  }
 
-    new AlertDialog.Builder(this)
-            .setView(untrustedIdentityExplanation)
-            .setPositiveButton(R.string.WebRtcCallScreen_accept, (d, w) -> {
-              synchronized (SESSION_LOCK) {
-                TextSecureIdentityKeyStore identityKeyStore = new TextSecureIdentityKeyStore(WebRtcCallActivity.this);
-                identityKeyStore.saveIdentity(new SignalProtocolAddress(recipient.requireServiceId(), 1), theirKey, true);
-              }
+  @Override
+  public void onMessageResentAfterSafetyNumberChange() { }
 
-              d.dismiss();
-
-              Intent intent = new Intent(WebRtcCallActivity.this, WebRtcCallService.class);
-              intent.setAction(WebRtcCallService.ACTION_OUTGOING_CALL)
-                      .putExtra(WebRtcCallService.EXTRA_REMOTE_PEER, new RemotePeer(recipient.getId()));
-
-              startService(intent);
-            })
-            .setNegativeButton(R.string.WebRtcCallScreen_end_call, (d, w) -> {
-              d.dismiss();
-              handleTerminate(recipient, HangupMessage.Type.NORMAL);
-            })
-            .show();
+  @Override
+  public void onCanceled() {
+    handleTerminate(viewModel.getRecipient().get(), HangupMessage.Type.NORMAL);
   }
 
   private boolean isSystemPipEnabledAndAvailable() {

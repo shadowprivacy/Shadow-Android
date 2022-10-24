@@ -6,6 +6,8 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 
+import java.util.Objects;
+
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiStrings;
 import su.sres.securesms.contactshare.Contact;
@@ -15,7 +17,9 @@ import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.GifSlide;
 import su.sres.securesms.mms.Slide;
+import su.sres.securesms.mms.StickerSlide;
 import su.sres.securesms.util.MessageRecordUtil;
+import su.sres.securesms.util.Util;
 
 public final class ThreadBodyUtil {
 
@@ -42,7 +46,8 @@ public final class ThreadBodyUtil {
         } else if (record.getSlideDeck().getAudioSlide() != null) {
             return format(context, record, EmojiStrings.AUDIO, R.string.ThreadRecord_voice_message);
         } else if (MessageRecordUtil.hasSticker(record)) {
-            return format(context, record, EmojiStrings.STICKER, R.string.ThreadRecord_sticker);
+            String emoji = getStickerEmoji(record);
+            return format(context, record, emoji, R.string.ThreadRecord_sticker);
         }
 
         boolean hasImage = false;
@@ -80,5 +85,12 @@ public final class ThreadBodyUtil {
 
     private static @NonNull String getBody(@NonNull Context context, @NonNull MessageRecord record) {
         return MentionUtil.updateBodyWithDisplayNames(context, record, record.getBody()).toString();
+    }
+
+    private static @NonNull String getStickerEmoji(@NonNull MessageRecord record) {
+        StickerSlide slide = Objects.requireNonNull(((MmsMessageRecord) record).getSlideDeck().getStickerSlide());
+
+        return Util.isEmpty(slide.getEmoji()) ? EmojiStrings.STICKER
+                : slide.getEmoji();
     }
 }

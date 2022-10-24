@@ -35,6 +35,7 @@ import su.sres.securesms.notifications.OptimizedMessageNotifier;
 import su.sres.securesms.push.SecurityEventListener;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
+import su.sres.securesms.service.TrimThreadsByDateManager;
 import su.sres.securesms.util.AlarmSleepTimer;
 import su.sres.securesms.util.EarlyMessageCache;
 import su.sres.securesms.util.FeatureFlags;
@@ -183,6 +184,11 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
         return new IncomingMessageObserver(context);
     }
 
+    @Override
+    public @NonNull TrimThreadsByDateManager provideTrimThreadsByDateManager() {
+        return new TrimThreadsByDateManager(context);
+    }
+
     private static class DynamicCredentialsProvider implements CredentialsProvider {
 
         private final Context context;
@@ -197,7 +203,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
         }
 
         @Override
-        public String getE164() {
+        public String getUserLogin() {
             return TextSecurePreferences.getLocalNumber(context);
         }
 

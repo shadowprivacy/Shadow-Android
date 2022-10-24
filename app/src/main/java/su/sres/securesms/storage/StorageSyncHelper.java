@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.database.DatabaseFactory;
@@ -14,12 +15,12 @@ import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.RetrieveProfileAvatarJob;
 import su.sres.securesms.jobs.StorageSyncJob;
+import su.sres.securesms.keyvalue.UserLoginPrivacyValues;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.FeatureFlags;
+import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -33,6 +34,7 @@ import su.sres.signalservice.api.storage.SignalStorageManifest;
 import su.sres.signalservice.api.storage.SignalStorageRecord;
 import su.sres.signalservice.api.storage.StorageId;
 import su.sres.signalservice.api.util.OptionalUtil;
+import su.sres.signalservice.internal.storage.protos.AccountRecord;
 import su.sres.signalservice.internal.storage.protos.ManifestRecord;
 
 import java.nio.ByteBuffer;
@@ -47,8 +49,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
-import javax.crypto.KeyGenerator;
 
 public final class StorageSyncHelper {
 
@@ -214,10 +214,30 @@ public final class StorageSyncHelper {
     public static @NonNull KeyDifferenceResult findKeyDifference(@NonNull Collection<StorageId> remoteKeys,
                                                                  @NonNull Collection<StorageId> localKeys)
     {
-        Set<StorageId> remoteOnlyKeys = SetUtil.difference(remoteKeys, localKeys);
-        Set<StorageId> localOnlyKeys  = SetUtil.difference(localKeys, remoteKeys);
+        Map<String, StorageId> remoteByRawId = Stream.of(remoteKeys).collect(Collectors.toMap(id -> Base64.encodeBytes(id.getRaw()), id -> id));
+        Map<String, StorageId> localByRawId  = Stream.of(localKeys).collect(Collectors.toMap(id -> Base64.encodeBytes(id.getRaw()), id -> id));
 
-        return new KeyDifferenceResult(new ArrayList<>(remoteOnlyKeys), new ArrayList<>(localOnlyKeys));
+        boolean hasTypeMismatch = remoteByRawId.size() != remoteKeys.size() || localByRawId.size() != localKeys.size();
+
+        Set<String> remoteOnlyRawIds = SetUtil.difference(remoteByRawId.keySet(), localByRawId.keySet());
+        Set<String> localOnlyRawIds  = SetUtil.difference(localByRawId.keySet(), remoteByRawId.keySet());
+        Set<String> sharedRawIds     = SetUtil.intersection(localByRawId.keySet(), remoteByRawId.keySet());
+
+        for (String rawId : sharedRawIds) {
+            StorageId remote = Objects.requireNonNull(remoteByRawId.get(rawId));
+            StorageId local  = Objects.requireNonNull(localByRawId.get(rawId));
+
+            if (remote.getType() != local.getType()) {
+                remoteOnlyRawIds.remove(rawId);
+                localOnlyRawIds.remove(rawId);
+                hasTypeMismatch = true;
+            }
+        }
+
+        List<StorageId> remoteOnlyKeys = Stream.of(remoteOnlyRawIds).map(remoteByRawId::get).toList();
+        List<StorageId> localOnlyKeys  = Stream.of(localOnlyRawIds).map(localByRawId::get).toList();
+
+        return new KeyDifferenceResult(remoteOnlyKeys, localOnlyKeys, hasTypeMismatch);
     }
 
     /**
@@ -283,6 +303,7 @@ public final class StorageSyncHelper {
         Set<SignalRecord> remoteDeletes = new HashSet<>();
         remoteDeletes.addAll(contactMergeResult.remoteDeletes);
         remoteDeletes.addAll(groupV1MergeResult.remoteDeletes);
+        remoteDeletes.addAll(groupV2MergeResult.remoteDeletes);
         remoteDeletes.addAll(accountMergeResult.remoteDeletes);
 
         return new MergeResult(contactMergeResult.localInserts,
@@ -401,9 +422,19 @@ public final class StorageSyncHelper {
                 .setReadReceiptsEnabled(TextSecurePreferences.isReadReceiptsEnabled(context))
                 .setSealedSenderIndicatorsEnabled(TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(context))
                 .setLinkPreviewsEnabled(SignalStore.settings().isLinkPreviewsEnabled())
+                .setUnlistedUserLogin(SignalStore.userLoginPrivacy().getUserLoginListingMode().isUnlisted())
+                .setUserLoginSharingMode(localToRemoteuserLoginSharingMode(SignalStore.userLoginPrivacy().getUserLoginSharingMode()))
                 .build();
 
         return SignalStorageRecord.forAccount(account);
+    }
+
+    private static AccountRecord.UserLoginSharingMode localToRemoteuserLoginSharingMode(UserLoginPrivacyValues.UserLoginSharingMode userLoginuserLoginSharingMode) {
+        switch (userLoginuserLoginSharingMode) {
+            case EVERYONE: return AccountRecord.UserLoginSharingMode.EVERYBODY;
+            case NOBODY  : return AccountRecord.UserLoginSharingMode.NOBODY;
+            default      : throw new AssertionError();
+        }
     }
 
     public static void applyAccountStorageSyncUpdates(@NonNull Context context, Optional<StorageSyncHelper.RecordUpdate<SignalAccountRecord>> update) {
@@ -448,12 +479,15 @@ public final class StorageSyncHelper {
     public static final class KeyDifferenceResult {
         private final List<StorageId> remoteOnlyKeys;
         private final List<StorageId> localOnlyKeys;
+        private final boolean         hasTypeMismatches;
 
         private KeyDifferenceResult(@NonNull List<StorageId> remoteOnlyKeys,
-                                    @NonNull List<StorageId> localOnlyKeys)
+                                    @NonNull List<StorageId> localOnlyKeys,
+                                    boolean hasTypeMismatches)
         {
-            this.remoteOnlyKeys = remoteOnlyKeys;
-            this.localOnlyKeys  = localOnlyKeys;
+            this.remoteOnlyKeys    = remoteOnlyKeys;
+            this.localOnlyKeys     = localOnlyKeys;
+            this.hasTypeMismatches = hasTypeMismatches;
         }
 
         public @NonNull List<StorageId> getRemoteOnlyKeys() {
@@ -462,6 +496,14 @@ public final class StorageSyncHelper {
 
         public @NonNull List<StorageId> getLocalOnlyKeys() {
             return localOnlyKeys;
+        }
+
+        /**
+         * @return True if there exist some keys that have matching raw ID's but different types,
+         *         otherwise false.
+         */
+        public boolean hasTypeMismatches() {
+            return hasTypeMismatches;
         }
 
         public boolean isEmpty() {
@@ -593,8 +635,8 @@ public final class StorageSyncHelper {
         @Override
         public @NonNull String toString() {
             return String.format(Locale.ENGLISH,
-                    "localContactInserts: %d, localContactUpdates: %d, localGroupV1Inserts: %d, localGroupV1Updates: %d, localGroupV2Inserts: %d, localGroupV2Updates: %d, localUnknownInserts: %d, localUnknownDeletes: %d, localAccountUpdate: %b, remoteInserts: %d, remoteUpdates: %d",
-                    localContactInserts.size(), localContactUpdates.size(), localGroupV1Inserts.size(), localGroupV1Updates.size(), localGroupV2Inserts.size(), localGroupV2Updates.size(), localUnknownInserts.size(), localUnknownDeletes.size(), localAccountUpdate.isPresent(), remoteInserts.size(), remoteUpdates.size());
+                    "localContactInserts: %d, localContactUpdates: %d, localGroupV1Inserts: %d, localGroupV1Updates: %d, localGroupV2Inserts: %d, localGroupV2Updates: %d, localUnknownInserts: %d, localUnknownDeletes: %d, localAccountUpdate: %b, remoteInserts: %d, remoteUpdates: %d, remoteDeletes: %d",
+                    localContactInserts.size(), localContactUpdates.size(), localGroupV1Inserts.size(), localGroupV1Updates.size(), localGroupV2Inserts.size(), localGroupV2Updates.size(), localUnknownInserts.size(), localUnknownDeletes.size(), localAccountUpdate.isPresent(), remoteInserts.size(), remoteUpdates.size(), remoteDeletes.size());
         }
     }
 

@@ -75,12 +75,12 @@ public class PushTextSendJob extends PushSendJob  {
     SmsMessageRecord       record            = database.getSmsMessage(messageId);
 
     if (!record.isPending() && !record.isFailed()) {
-      warn(TAG, "Message " + messageId + " was already sent. Ignoring.");
+      warn(TAG, String.valueOf(record.getDateSent()), "Message " + messageId + " was already sent. Ignoring.");
       return;
     }
 
     try {
-      log(TAG, "Sending message: " + messageId);
+      log(TAG, String.valueOf(record.getDateSent()), "Sending message: " + messageId);
 
       RecipientUtil.shareProfileIfFirstSecureMessage(context, record.getRecipient());
 
@@ -99,13 +99,13 @@ public class PushTextSendJob extends PushSendJob  {
       }
 
         if (unidentified && accessMode == UnidentifiedAccessMode.UNKNOWN && profileKey == null) {
-            log(TAG, "Marking recipient as UD-unrestricted following a UD send.");
+          log(TAG, String.valueOf(record.getDateSent()), "Marking recipient as UD-unrestricted following a UD send.");
             DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.UNRESTRICTED);
         } else if (unidentified && accessMode == UnidentifiedAccessMode.UNKNOWN) {
-            log(TAG, "Marking recipient as UD-enabled following a UD send.");
+          log(TAG, String.valueOf(record.getDateSent()), "Marking recipient as UD-enabled following a UD send.");
             DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.ENABLED);
         } else if (!unidentified && accessMode != UnidentifiedAccessMode.DISABLED) {
-            log(TAG, "Marking recipient as UD-disabled following a non-UD send.");
+          log(TAG, String.valueOf(record.getDateSent()), "Marking recipient as UD-disabled following a non-UD send.");
             DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.DISABLED);
       }
 
@@ -114,16 +114,15 @@ public class PushTextSendJob extends PushSendJob  {
         expirationManager.scheduleDeletion(record.getId(), record.isMms(), record.getExpiresIn());
       }
 
-      log(TAG, "Sent message: " + messageId);
+      log(TAG, String.valueOf(record.getDateSent()), "Sent message: " + messageId);
 
     } catch (InsecureFallbackApprovalException e) {
-      warn(TAG, "Failure", e);
+      warn(TAG, String.valueOf(record.getDateSent()), "Failure", e);
       database.markAsPendingInsecureSmsFallback(record.getId());
       ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, record.getRecipient(), record.getThreadId());
-      // ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
       ApplicationDependencies.getJobManager().add(new DirectorySyncJob(false));
     } catch (UntrustedIdentityException e) {
-      warn(TAG, "Failure", e);
+      warn(TAG, String.valueOf(record.getDateSent()), "Failure", e);
       RecipientId recipientId = Recipient.external(context, e.getIdentifier()).getId();
       database.addMismatchedIdentity(record.getId(), recipientId, e.getIdentityKey());
       database.markAsSentFailed(record.getId());
@@ -163,7 +162,7 @@ public class PushTextSendJob extends PushSendJob  {
       Optional<byte[]>                 profileKey         = getProfileKey(messageRecipient);
       Optional<UnidentifiedAccessPair> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, messageRecipient);
 
-      log(TAG, "Have access key to use: " + unidentifiedAccess.isPresent());
+      log(TAG, String.valueOf(message.getDateSent()), "Have access key to use: " + unidentifiedAccess.isPresent());
 
       SignalServiceDataMessage textSecureMessage = SignalServiceDataMessage.newBuilder()
               .withTimestamp(message.getDateSent())

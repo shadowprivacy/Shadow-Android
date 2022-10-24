@@ -112,12 +112,12 @@ public class PushMediaSendJob extends PushSendJob  {
     OutgoingMediaMessage   message           = database.getOutgoingMessage(messageId);
 
     if (database.isSent(messageId)) {
-      warn(TAG, "Message " + messageId + " was already sent. Ignoring.");
+      warn(TAG, String.valueOf(message.getSentTimeMillis()), "Message " + messageId + " was already sent. Ignoring.");
       return;
     }
 
     try {
-      log(TAG, "Sending message: " + messageId);
+      log(TAG, String.valueOf(message.getSentTimeMillis()), "Sending message: " + messageId);
 
       RecipientUtil.shareProfileIfFirstSecureMessage(context, message.getRecipient());
 
@@ -137,13 +137,13 @@ public class PushMediaSendJob extends PushSendJob  {
       }
 
       if (unidentified && accessMode == UnidentifiedAccessMode.UNKNOWN && profileKey == null) {
-        log(TAG, "Marking recipient as UD-unrestricted following a UD send.");
+        log(TAG, String.valueOf(message.getSentTimeMillis()), "Marking recipient as UD-unrestricted following a UD send.");
         DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.UNRESTRICTED);
       } else if (unidentified && accessMode == UnidentifiedAccessMode.UNKNOWN) {
-        log(TAG, "Marking recipient as UD-enabled following a UD send.");
+        log(TAG, String.valueOf(message.getSentTimeMillis()), "Marking recipient as UD-enabled following a UD send.");
         DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.ENABLED);
       } else if (!unidentified && accessMode != UnidentifiedAccessMode.DISABLED) {
-        log(TAG, "Marking recipient as UD-disabled following a non-UD send.");
+        log(TAG, String.valueOf(message.getSentTimeMillis()), "Marking recipient as UD-disabled following a non-UD send.");
 
         DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.DISABLED);
       }
@@ -157,7 +157,7 @@ public class PushMediaSendJob extends PushSendJob  {
         DatabaseFactory.getAttachmentDatabase(context).deleteAttachmentFilesForViewOnceMessage(messageId);
       }
 
-      log(TAG, "Sent message: " + messageId);
+      log(TAG, String.valueOf(message.getSentTimeMillis()), "Sent message: " + messageId);
 
     } catch (InsecureFallbackApprovalException ifae) {
       warn(TAG, "Failure", ifae);
@@ -232,13 +232,13 @@ public class PushMediaSendJob extends PushSendJob  {
         return messageSender.sendMessage(address, UnidentifiedAccessUtil.getAccessFor(context, messageRecipient), mediaMessage).getSuccess().isUnidentified();
       }
     } catch (UnregisteredUserException e) {
-      warn(TAG, e);
+      warn(TAG, String.valueOf(message.getSentTimeMillis()), e);
       throw new InsecureFallbackApprovalException(e);
     } catch (FileNotFoundException e) {
-      warn(TAG, e);
+      warn(TAG, String.valueOf(message.getSentTimeMillis()), e);
       throw new UndeliverableMessageException(e);
     } catch (IOException e) {
-      warn(TAG, e);
+      warn(TAG, String.valueOf(message.getSentTimeMillis()), e);
       throw new RetryLaterException(e);
     }
   }

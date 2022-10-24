@@ -30,7 +30,7 @@ public class StaticCredentialsProvider implements CredentialsProvider {
   }
 
   @Override
-  public String getE164() {
+  public String getUserLogin() {
     return e164;
   }
 

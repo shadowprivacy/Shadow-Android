@@ -8,6 +8,8 @@ import androidx.annotation.WorkerThread;
 import org.signal.libsignal.metadata.certificate.CertificateValidator;
 import org.signal.libsignal.metadata.certificate.InvalidCertificateException;
 
+import su.sres.securesms.keyvalue.CertificateType;
+import su.sres.securesms.keyvalue.UserLoginPrivacyValues;
 import su.sres.securesms.keyvalue.SignalStore;
 import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.logging.Log;
@@ -46,21 +48,17 @@ public class UnidentifiedAccessUtil {
         try {
             byte[] theirUnidentifiedAccessKey       = getTargetUnidentifiedAccessKey(recipient);
             byte[] ourUnidentifiedAccessKey         = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
-            byte[] ourUnidentifiedAccessCertificate = TextSecurePreferences.getUnidentifiedAccessCertificate(context);
+            byte[] ourUnidentifiedAccessCertificate = getUnidentifiedAccessCertificate(recipient);
 
             if (TextSecurePreferences.isUniversalUnidentifiedAccess(context)) {
                 ourUnidentifiedAccessKey = Util.getSecretBytes(16);
             }
 
             Log.i(TAG, "Their access key present? " + (theirUnidentifiedAccessKey != null) +
-                    " | Our access key present? " + (ourUnidentifiedAccessKey != null) +
                     " | Our certificate present? " + (ourUnidentifiedAccessCertificate != null) +
                     " | UUID certificate supported? " + recipient.isUuidSupported());
 
-            if (theirUnidentifiedAccessKey != null &&
-                    ourUnidentifiedAccessKey != null   &&
-                    ourUnidentifiedAccessCertificate != null)
-            {
+            if (theirUnidentifiedAccessKey != null && ourUnidentifiedAccessCertificate != null) {
                 return Optional.of(new UnidentifiedAccessPair(new UnidentifiedAccess(theirUnidentifiedAccessKey,
                         ourUnidentifiedAccessCertificate),
                         new UnidentifiedAccess(ourUnidentifiedAccessKey,
@@ -78,13 +76,13 @@ public class UnidentifiedAccessUtil {
 
         try {
             byte[] ourUnidentifiedAccessKey         = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
-            byte[] ourUnidentifiedAccessCertificate = TextSecurePreferences.getUnidentifiedAccessCertificate(context);
+            byte[] ourUnidentifiedAccessCertificate = getUnidentifiedAccessCertificate(Recipient.self());
 
             if (TextSecurePreferences.isUniversalUnidentifiedAccess(context)) {
                 ourUnidentifiedAccessKey = Util.getSecretBytes(16);
             }
 
-            if (ourUnidentifiedAccessKey != null && ourUnidentifiedAccessCertificate != null) {
+            if (ourUnidentifiedAccessCertificate != null) {
                 return Optional.of(new UnidentifiedAccessPair(new UnidentifiedAccess(ourUnidentifiedAccessKey,
                         ourUnidentifiedAccessCertificate),
                         new UnidentifiedAccess(ourUnidentifiedAccessKey,
@@ -96,6 +94,22 @@ public class UnidentifiedAccessUtil {
             Log.w(TAG, e);
             return Optional.absent();
         }
+    }
+
+    private static byte[] getUnidentifiedAccessCertificate(@NonNull Recipient recipient) {
+        CertificateType certificateType;
+        UserLoginPrivacyValues.UserLoginSharingMode sendUserLoginTo = SignalStore.userLoginPrivacy().getUserLoginSharingMode();
+
+        switch (sendUserLoginTo) {
+            case EVERYONE: certificateType = CertificateType.UUID_AND_E164; break;
+            case NOBODY  : certificateType = CertificateType.UUID_ONLY; break;
+            default      : throw new AssertionError();
+        }
+
+        Log.i(TAG, String.format("Certificate type for %s with setting %s -> %s", recipient.getId(), sendUserLoginTo, certificateType));
+
+        return SignalStore.certificateValues()
+                .getUnidentifiedAccessCertificate(certificateType);
     }
 
     private static @Nullable byte[] getTargetUnidentifiedAccessKey(@NonNull Recipient recipient) {

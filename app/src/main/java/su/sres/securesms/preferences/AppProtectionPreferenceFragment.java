@@ -4,10 +4,16 @@ import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.Preference;
+
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.TextAppearanceSpan;
 import android.widget.Toast;
 
 import su.sres.securesms.ApplicationContext;
@@ -21,6 +27,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceConfigurationUpdateJob;
 import su.sres.securesms.jobs.RefreshAttributesJob;
+import su.sres.securesms.keyvalue.UserLoginPrivacyValues;
 import su.sres.securesms.keyvalue.SettingsValues;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
@@ -29,6 +36,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.CommunicationActions;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 
@@ -41,8 +49,10 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
 
   private static final String TAG = Log.tag(AppProtectionPreferenceFragment.class);
 
-  private static final String PREFERENCE_CATEGORY_BLOCKED        = "preference_category_blocked";
-  private static final String PREFERENCE_UNIDENTIFIED_LEARN_MORE = "pref_unidentified_learn_more";
+  private static final String PREFERENCE_CATEGORY_BLOCKED             = "preference_category_blocked";
+  private static final String PREFERENCE_UNIDENTIFIED_LEARN_MORE      = "pref_unidentified_learn_more";
+  private static final String PREFERENCE_WHO_CAN_SEE_USER_LOGIN     = "pref_who_can_see_user_login";
+  private static final String PREFERENCE_WHO_CAN_FIND_BY_USER_LOGIN = "pref_who_can_find_by_user_login";
 
   private CheckBoxPreference disablePassphrase;
 
@@ -66,6 +76,19 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
     this.findPreference(PREFERENCE_UNIDENTIFIED_LEARN_MORE).setOnPreferenceClickListener(new UnidentifiedLearnMoreClickListener());
     disablePassphrase.setOnPreferenceChangeListener(new DisablePassphraseClickListener());
 
+    if (FeatureFlags.UserLoginPrivacy()) {
+      Preference whoCanSeeUserLogin    = this.findPreference(PREFERENCE_WHO_CAN_SEE_USER_LOGIN);
+      Preference whoCanFindByUserLogin = this.findPreference(PREFERENCE_WHO_CAN_FIND_BY_USER_LOGIN);
+
+      whoCanSeeUserLogin.setPreferenceDataStore(null);
+      whoCanSeeUserLogin.setOnPreferenceClickListener(new UserLoginPrivacyWhoCanSeeClickListener());
+
+      whoCanFindByUserLogin.setPreferenceDataStore(null);
+      whoCanFindByUserLogin.setOnPreferenceClickListener(new UserLoginPrivacyWhoCanFindClickListener());
+    } else {
+      this.findPreference("category_user_login_privacy").setVisible(false);
+    }
+
     SwitchPreferenceCompat linkPreviewPref = (SwitchPreferenceCompat) this.findPreference(SettingsValues.LINK_PREVIEWS);
     linkPreviewPref.setChecked(SignalStore.settings().isLinkPreviewsEnabled());
     linkPreviewPref.setPreferenceDataStore(SignalStore.getPreferenceDataStore());
@@ -88,6 +111,9 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
     else                                                         initializeScreenLockTimeoutSummary();
 
     disablePassphrase.setChecked(!TextSecurePreferences.isPasswordDisabled(getActivity()));
+
+    initializeUserLoginPrivacyWhoCanSeeSummary();
+    initializeUserLoginPrivacyWhoCanFindSummary();
   }
 
   private void initializePassphraseTimeoutSummary() {
@@ -105,6 +131,26 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
     findPreference(TextSecurePreferences.SCREEN_LOCK_TIMEOUT)
         .setSummary(timeoutSeconds <= 0 ? getString(R.string.AppProtectionPreferenceFragment_none) :
                 String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds));
+  }
+
+  private void initializeUserLoginPrivacyWhoCanSeeSummary() {
+    Preference preference = findPreference(PREFERENCE_WHO_CAN_SEE_USER_LOGIN);
+
+    switch (SignalStore.userLoginPrivacy().getUserLoginSharingMode()) {
+      case EVERYONE: preference.setSummary(R.string.PhoneNumberPrivacy_everyone);    break;
+      case NOBODY  : preference.setSummary(R.string.PhoneNumberPrivacy_nobody);      break;
+      default      : throw new AssertionError();
+    }
+  }
+
+  private void initializeUserLoginPrivacyWhoCanFindSummary() {
+    Preference preference = findPreference(PREFERENCE_WHO_CAN_FIND_BY_USER_LOGIN);
+
+    switch (SignalStore.userLoginPrivacy().getUserLoginListingMode()) {
+      case LISTED  : preference.setSummary(R.string.PhoneNumberPrivacy_everyone); break;
+      case UNLISTED: preference.setSummary(R.string.PhoneNumberPrivacy_nobody);   break;
+      default      : throw new AssertionError();
+    }
   }
 
   private void initializeVisibility() {
@@ -336,5 +382,87 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
       CommunicationActions.openBrowserLink(preference.getContext(), "https://signal.org/blog/sealed-sender/");
       return true;
     }
+  }
+
+  private final class UserLoginPrivacyWhoCanSeeClickListener implements Preference.OnPreferenceClickListener {
+    @Override
+    public boolean onPreferenceClick(Preference preference) {
+      UserLoginPrivacyValues userLoginPrivacyValues = SignalStore.userLoginPrivacy();
+
+      final UserLoginPrivacyValues.UserLoginSharingMode[] value = { userLoginPrivacyValues.getUserLoginSharingMode() };
+
+      new AlertDialog.Builder(requireActivity())
+              .setTitle(R.string.preferences_app_protection__see_my_phone_number)
+              .setCancelable(true)
+              .setSingleChoiceItems(items(requireContext()), value[0].ordinal(), (dialog, which) -> value[0] = UserLoginPrivacyValues.UserLoginSharingMode.values()[which])
+              .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                UserLoginPrivacyValues.UserLoginSharingMode UserLoginSharingMode = value[0];
+                userLoginPrivacyValues.setUserLoginSharingMode(UserLoginSharingMode);
+                Log.i(TAG, String.format("UserLoginSharingMode changed to %s. Scheduling storage value sync", UserLoginSharingMode));
+                // StorageSyncHelper.scheduleSyncForDataChange();
+                initializeUserLoginPrivacyWhoCanSeeSummary();
+              })
+              .setNegativeButton(android.R.string.cancel, null)
+              .show();
+
+      return true;
+    }
+
+    private CharSequence[] items(Context context) {
+      return new CharSequence[]{
+              titleAndDescription(context, context.getString(R.string.PhoneNumberPrivacy_everyone), context.getString(R.string.PhoneNumberPrivacy_everyone_see_description)),
+              context.getString(R.string.PhoneNumberPrivacy_nobody) };
+    }
+
+  }
+
+  private final class UserLoginPrivacyWhoCanFindClickListener implements Preference.OnPreferenceClickListener {
+    @Override
+    public boolean onPreferenceClick(Preference preference) {
+      UserLoginPrivacyValues userLoginPrivacyValues = SignalStore.userLoginPrivacy();
+
+      final UserLoginPrivacyValues.UserLoginListingMode[] value = { userLoginPrivacyValues.getUserLoginListingMode() };
+
+      new AlertDialog.Builder(requireActivity())
+              .setTitle(R.string.preferences_app_protection__find_me_by_phone_number)
+              .setCancelable(true)
+              .setSingleChoiceItems(items(requireContext()),
+                      value[0].ordinal(),
+                      (dialog, which) -> value[0] = UserLoginPrivacyValues.UserLoginListingMode.values()[which])
+              .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                UserLoginPrivacyValues.UserLoginListingMode UserLoginListingMode = value[0];
+                userLoginPrivacyValues.setUserLoginListingMode(UserLoginListingMode);
+                Log.i(TAG, String.format("UserLoginListingMode changed to %s. Scheduling storage value sync", UserLoginListingMode));
+                // StorageSyncHelper.scheduleSyncForDataChange();
+                ApplicationDependencies.getJobManager().add(new RefreshAttributesJob());
+                initializeUserLoginPrivacyWhoCanFindSummary();
+              })
+              .setNegativeButton(android.R.string.cancel, null)
+              .show();
+
+      return true;
+    }
+
+    private CharSequence[] items(Context context) {
+      return new CharSequence[]{
+              titleAndDescription(context, context.getString(R.string.PhoneNumberPrivacy_everyone), context.getString(R.string.PhoneNumberPrivacy_everyone_find_description)),
+              context.getString(R.string.PhoneNumberPrivacy_nobody) };
+    }
+  }
+
+  /** Adds a detail row for radio group descriptions. */
+  private static CharSequence titleAndDescription(@NonNull Context context, @NonNull String header, @NonNull String description) {
+    SpannableStringBuilder builder = new SpannableStringBuilder();
+
+    builder.append("\n");
+    builder.append(header);
+    builder.append("\n");
+
+    builder.setSpan(new TextAppearanceSpan(context, android.R.style.TextAppearance_Small), builder.length(), builder.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+
+    builder.append(description);
+    builder.append("\n");
+
+    return builder;
   }
 }

@@ -67,7 +67,6 @@ import static su.sres.securesms.profiles.edit.EditProfileActivity.SHOW_TOOLBAR;
 public class EditProfileFragment extends LoggingFragment {
 
     private static final String TAG                        = Log.tag(EditProfileFragment.class);
-    private static final String AVATAR_STATE               = "avatar";
     private static final short  REQUEST_CODE_SELECT_AVATAR = 31726;
     private static final int    MAX_GROUP_NAME_LENGTH      = 32;
 
@@ -142,20 +141,6 @@ public class EditProfileFragment extends LoggingFragment {
     }
 
     @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        outState.putByteArray(AVATAR_STATE, viewModel.getAvatarSnapshot());
-    }
-
-    @Override
-    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
-        super.onViewStateRestored(savedInstanceState);
-
-        if (savedInstanceState != null && savedInstanceState.containsKey(AVATAR_STATE)) {
-            viewModel.setAvatar(savedInstanceState.getByteArray(AVATAR_STATE));
-        }
-    }
-
-    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
@@ -205,7 +190,8 @@ public class EditProfileFragment extends LoggingFragment {
 
         EditProfileViewModel.Factory factory = new EditProfileViewModel.Factory(repository, hasSavedInstanceState, groupId);
 
-        viewModel = ViewModelProviders.of(this, factory).get(EditProfileViewModel.class);
+        viewModel = ViewModelProviders.of(requireActivity(), factory)
+                .get(EditProfileViewModel.class);
     }
 
     private void initializeResources(@NonNull View view, boolean isEditingGroup) {

@@ -10,6 +10,6 @@ import su.sres.securesms.BuildConfig;
 public class StandardUserAgentInterceptor extends UserAgentInterceptor {
 
     public StandardUserAgentInterceptor() {
-        super("Signal-Android " + BuildConfig.VERSION_NAME + " (API " + Build.VERSION.SDK_INT + ")");
+        super("Shadow-Android/" + BuildConfig.VERSION_NAME + " Android/" + Build.VERSION.SDK_INT);
     }
 }

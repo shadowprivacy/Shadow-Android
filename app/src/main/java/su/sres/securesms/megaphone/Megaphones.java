@@ -31,12 +31,12 @@ import java.util.concurrent.TimeUnit;
  * Creating a new megaphone:
  * - Add an enum to {@link Event}
  * - Return a megaphone in {@link #forRecord(Context, MegaphoneRecord)}
- * - Include the event in {@link #buildDisplayOrder()}
+ * - Include the event in {@link #buildDisplayOrder(Context)}
  *
  * Common patterns:
  * - For events that have a snooze-able recurring display schedule, use a {@link RecurringSchedule}.
  * - For events guarded by feature flags, set a {@link ForeverSchedule} with false in
- *   {@link #buildDisplayOrder()}.
+ *   {@link #buildDisplayOrder(Context)}.
  * - For events that change, return different megaphones in {@link #forRecord(Context, MegaphoneRecord)}
  *   based on whatever properties you're interested in.
  */
@@ -62,14 +62,8 @@ public final class Megaphones {
                 .map(Map.Entry::getKey)
                 .map(records::get)
                 .map(record -> Megaphones.forRecord(context, record))
+                .sortBy(m -> -m.getPriority().getPriorityValue())
                 .toList();
-
-        boolean hasOptional  = Stream.of(megaphones).anyMatch(m -> !m.isMandatory());
-        boolean hasMandatory = Stream.of(megaphones).anyMatch(Megaphone::isMandatory);
-
-        if (hasOptional && hasMandatory) {
-            megaphones = Stream.of(megaphones).filter(Megaphone::isMandatory).toList();
-        }
 
         if (megaphones.size() > 0) {
             return megaphones.get(0);
@@ -88,6 +82,7 @@ public final class Megaphones {
             put(Event.MESSAGE_REQUESTS, shouldShowMessageRequestsMegaphone() ? ALWAYS : NEVER);
             put(Event.MENTIONS, shouldShowMentionsMegaphone() ? ALWAYS : NEVER);
             put(Event.LINK_PREVIEWS, shouldShowLinkPreviewsMegaphone(context) ? ALWAYS : NEVER);
+            put(Event.CLIENT_DEPRECATED, SignalStore.misc().isClientDeprecated() ? ALWAYS : NEVER);
         }};
     }
 
@@ -101,6 +96,8 @@ public final class Megaphones {
                 return buildMentionsMegaphone();
             case LINK_PREVIEWS:
                 return buildLinkPreviewsMegaphone();
+            case CLIENT_DEPRECATED:
+                return buildClientDeprecatedMegaphone(context);
             default:
                 throw new IllegalArgumentException("Event not handled!");
         }
@@ -108,7 +105,7 @@ public final class Megaphones {
 
     private static @NonNull Megaphone buildReactionsMegaphone() {
         return new Megaphone.Builder(Event.REACTIONS, Megaphone.Style.REACTIONS)
-                .setMandatory(false)
+                .setPriority(Megaphone.Priority.DEFAULT)
                 .build();
     }
 
@@ -116,7 +113,7 @@ public final class Megaphones {
     private static @NonNull Megaphone buildMessageRequestsMegaphone(@NonNull Context context) {
         return new Megaphone.Builder(Event.MESSAGE_REQUESTS, Megaphone.Style.FULLSCREEN)
                 .disableSnooze()
-                .setMandatory(true)
+                .setPriority(Megaphone.Priority.HIGH)
                 .setOnVisibleListener(((megaphone, listener) -> {
                     listener.onMegaphoneNavigationRequested(new Intent(context, MessageRequestMegaphoneActivity.class),
                             ConversationListFragment.MESSAGE_REQUESTS_REQUEST_CODE_CREATE_NAME);
@@ -134,7 +131,17 @@ public final class Megaphones {
 
     private static @NonNull Megaphone buildLinkPreviewsMegaphone() {
         return new Megaphone.Builder(Event.LINK_PREVIEWS, Megaphone.Style.LINK_PREVIEWS)
-                .setMandatory(true)
+                .setPriority(Megaphone.Priority.HIGH)
+                .build();
+    }
+
+    private static @NonNull Megaphone buildClientDeprecatedMegaphone(@NonNull Context context) {
+        return new Megaphone.Builder(Event.CLIENT_DEPRECATED, Megaphone.Style.FULLSCREEN)
+                .disableSnooze()
+                .setPriority(Megaphone.Priority.HIGH)
+                .setOnVisibleListener((megaphone, listener) -> {
+                    listener.onMegaphoneNavigationRequested(new Intent(context, ClientDeprecatedActivity.class));
+                })
                 .build();
     }
 
@@ -143,7 +150,8 @@ public final class Megaphones {
     }
 
     private static boolean shouldShowMentionsMegaphone() {
-        return FeatureFlags.mentions();
+        return false;
+        // return FeatureFlags.mentions();
     }
 
     private static boolean shouldShowLinkPreviewsMegaphone(@NonNull Context context) {
@@ -154,7 +162,8 @@ public final class Megaphones {
         REACTIONS("reactions"),
         MESSAGE_REQUESTS("message_requests"),
         MENTIONS("mentions"),
-        LINK_PREVIEWS("link_previews");
+        LINK_PREVIEWS("link_previews"),
+        CLIENT_DEPRECATED("client_deprecated");
 
         private final String key;
 

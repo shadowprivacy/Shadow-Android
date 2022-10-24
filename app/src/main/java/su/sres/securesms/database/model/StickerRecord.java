@@ -2,8 +2,10 @@ package su.sres.securesms.database.model;
 
 import android.net.Uri;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import su.sres.securesms.mms.PartAuthority;
+import su.sres.securesms.util.MediaUtil;
 
 import java.util.Objects;
 
@@ -17,6 +19,7 @@ public final class StickerRecord {
     private final String  packKey;
     private final int     stickerId;
     private final String  emoji;
+    private final String  contentType;
     private final long    size;
     private final boolean isCover;
 
@@ -25,16 +28,18 @@ public final class StickerRecord {
                          @NonNull String packKey,
                          int stickerId,
                          @NonNull String emoji,
+                         @Nullable String contentType,
                          long size,
                          boolean isCover)
     {
-        this.rowId     = rowId;
-        this.packId    = packId;
-        this.packKey   = packKey;
-        this.stickerId = stickerId;
-        this.emoji     = emoji;
-        this.size      = size;
-        this.isCover   = isCover;
+        this.rowId       = rowId;
+        this.packId      = packId;
+        this.packKey     = packKey;
+        this.stickerId   = stickerId;
+        this.emoji       = emoji;
+        this.contentType = contentType;
+        this.size        = size;
+        this.isCover     = isCover;
     }
 
     public long getRowId() {
@@ -61,6 +66,10 @@ public final class StickerRecord {
         return emoji;
     }
 
+    public @NonNull String getContentType() {
+        return contentType == null ? MediaUtil.IMAGE_WEBP : contentType;
+    }
+
     public long getSize() {
         return size;
     }
@@ -80,11 +89,12 @@ public final class StickerRecord {
                 isCover == that.isCover &&
                 packId.equals(that.packId) &&
                 packKey.equals(that.packKey) &&
-                emoji.equals(that.emoji);
+                emoji.equals(that.emoji) &&
+                Objects.equals(contentType, that.contentType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(rowId, packId, packKey, stickerId, emoji, size, isCover);
+        return Objects.hash(rowId, packId, packKey, stickerId, emoji, contentType, size, isCover);
     }
 }

@@ -17,7 +17,9 @@ import su.sres.securesms.groups.LiveGroup;
 import su.sres.securesms.groups.ui.GroupMemberEntry.FullMember;
 import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.megaphone.Megaphones;
+import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.MappingModel;
 import su.sres.securesms.util.SingleLiveEvent;
 import su.sres.securesms.util.livedata.LiveDataUtil;
@@ -29,24 +31,26 @@ public class MentionsPickerViewModel extends ViewModel {
 
     private final SingleLiveEvent<Recipient>      selectedRecipient;
     private final LiveData<List<MappingModel<?>>> mentionList;
-    private final MutableLiveData<LiveGroup>      group;
+    private final MutableLiveData<LiveRecipient>  liveRecipient;
     private final MutableLiveData<Query>          liveQuery;
     private final MutableLiveData<Boolean>        isShowing;
     private final MegaphoneRepository             megaphoneRepository;
 
-    MentionsPickerViewModel(@NonNull MentionsPickerRepository mentionsPickerRepository, @NonNull MegaphoneRepository megaphoneRepository) {
+    MentionsPickerViewModel(@NonNull MentionsPickerRepository mentionsPickerRepository,
+                            @NonNull MegaphoneRepository megaphoneRepository)
+    {
         this.megaphoneRepository = megaphoneRepository;
+        this.liveRecipient       = new MutableLiveData<>();
+        this.liveQuery           = new MutableLiveData<>();
+        this.selectedRecipient   = new SingleLiveEvent<>();
+        this.isShowing           = new MutableLiveData<>(false);
 
-        group             = new MutableLiveData<>();
-        liveQuery         = new MutableLiveData<>(Query.NONE);
-        selectedRecipient = new SingleLiveEvent<>();
-        isShowing         = new MutableLiveData<>(false);
+        LiveData<Recipient>         recipient    = Transformations.switchMap(liveRecipient, LiveRecipient::getLiveData);
+        LiveData<List<RecipientId>> fullMembers  = Transformations.distinctUntilChanged(LiveDataUtil.mapAsync(recipient, mentionsPickerRepository::getMembers));
+        LiveData<Query>             query        = Transformations.distinctUntilChanged(liveQuery);
+        LiveData<MentionQuery>      mentionQuery = LiveDataUtil.combineLatest(query, fullMembers, (q, m) -> new MentionQuery(q.query, m));
 
-        LiveData<List<FullMember>> fullMembers  = Transformations.distinctUntilChanged(Transformations.switchMap(group, LiveGroup::getFullMembers));
-        LiveData<Query>            query        = Transformations.distinctUntilChanged(liveQuery);
-        LiveData<MentionQuery>     mentionQuery = LiveDataUtil.combineLatest(query, fullMembers, (q, m) -> new MentionQuery(q.query, m));
-
-        mentionList = LiveDataUtil.mapAsync(mentionQuery, q -> Stream.of(mentionsPickerRepository.search(q)).<MappingModel<?>>map(MentionViewState::new).toList());
+        this.mentionList = LiveDataUtil.mapAsync(mentionQuery, q -> Stream.of(mentionsPickerRepository.search(q)).<MappingModel<?>>map(MentionViewState::new).toList());
     }
 
     @NonNull LiveData<List<MappingModel<?>>> getMentionList() {
@@ -78,11 +82,7 @@ public class MentionsPickerViewModel extends ViewModel {
     }
 
     public void onRecipientChange(@NonNull Recipient recipient) {
-        GroupId groupId = recipient.getGroupId().orNull();
-        if (groupId != null) {
-            LiveGroup liveGroup = new LiveGroup(groupId);
-            group.setValue(liveGroup);
-        }
+        this.liveRecipient.setValue(recipient.live());
     }
 
     /**

@@ -6,6 +6,8 @@ import org.signal.zkgroup.groups.GroupMasterKey;
 import su.sres.securesms.storage.StorageSyncHelper.KeyGenerator;
 import su.sres.signalservice.api.storage.SignalGroupV2Record;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -15,10 +17,11 @@ import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static su.sres.securesms.testutil.TestHelpers.byteArray;
 
-public class GroupV2ConflictMergerTest {
+public final class GroupV2ConflictMergerTest {
 
-    private static byte[]       GENERATED_KEY = byteArray(8675309);
-    private static KeyGenerator KEY_GENERATOR = mock(KeyGenerator.class);
+    private static final byte[]       GENERATED_KEY = byteArray(8675309);
+    private static final KeyGenerator KEY_GENERATOR = mock(KeyGenerator.class);
+
     static {
         when(KEY_GENERATOR.generate()).thenReturn(GENERATED_KEY);
     }
@@ -39,7 +42,7 @@ public class GroupV2ConflictMergerTest {
         SignalGroupV2Record merged = new GroupV2ConflictMerger(Collections.singletonList(local)).merge(remote, local, KEY_GENERATOR);
 
         assertArrayEquals(GENERATED_KEY, merged.getId().getRaw());
-        assertEquals(groupKey(100), merged.getMasterKey());
+        assertArrayEquals(groupKey(100), merged.getMasterKeyBytes());
         assertFalse(merged.isBlocked());
         assertFalse(merged.isArchived());
     }
@@ -80,11 +83,30 @@ public class GroupV2ConflictMergerTest {
         assertEquals(local, merged);
     }
 
-    private static GroupMasterKey groupKey(int value) {
-        try {
-            return new GroupMasterKey(byteArray(value, 32));
-        } catch (InvalidInputException e) {
-            throw new AssertionError(e);
-        }
+    @Test
+    public void merge_excludeBadGroupId() {
+        SignalGroupV2Record badRemote  = new SignalGroupV2Record.Builder(byteArray(1), badGroupKey(99))
+                .setBlocked(false)
+                .setProfileSharingEnabled(true)
+                .setArchived(true)
+                .build();
+
+        SignalGroupV2Record goodRemote = new SignalGroupV2Record.Builder(byteArray(1), groupKey(99))
+                .setBlocked(false)
+                .setProfileSharingEnabled(true)
+                .setArchived(true)
+                .build();
+
+        Collection<SignalGroupV2Record> invalid = new GroupV2ConflictMerger(Collections.emptyList()).getInvalidEntries(Arrays.asList(badRemote, goodRemote));
+
+        assertEquals(Collections.singletonList(badRemote), invalid);
+    }
+
+    private static byte[] groupKey(int value) {
+        return byteArray(value, 32);
+    }
+
+    private static byte[] badGroupKey(int value) {
+        return byteArray(value, 16);
     }
 }

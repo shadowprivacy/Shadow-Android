@@ -7,28 +7,30 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.keyvalue.CertificateType;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-public class RotateCertificateJob extends BaseJob  {
+public final class RotateCertificateJob extends BaseJob {
 
     public static final String KEY = "RotateCertificateJob";
 
-    private static final String TAG = RotateCertificateJob.class.getSimpleName();
+    private static final String TAG = Log.tag(RotateCertificateJob.class);
 
-    public RotateCertificateJob(Context context) {
+    public RotateCertificateJob() {
         this(new Job.Parameters.Builder()
                 .setQueue("__ROTATE_SENDER_CERTIFICATE__")
                 .addConstraint(NetworkConstraint.KEY)
                 .setLifespan(TimeUnit.DAYS.toMillis(1))
                 .setMaxAttempts(Parameters.UNLIMITED)
                 .build());
-        setContext(context);
     }
 
     private RotateCertificateJob(@NonNull Job.Parameters parameters) {
@@ -56,10 +58,25 @@ public class RotateCertificateJob extends BaseJob  {
         }
 
         synchronized (RotateCertificateJob.class) {
-            SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
-            byte[]                      certificate    = accountManager.getSenderCertificate();
+            SignalServiceAccountManager accountManager   = ApplicationDependencies.getSignalServiceAccountManager();
+            Collection<CertificateType> certificateTypes = SignalStore.userLoginPrivacy()
+                    .getAllCertificateTypes();
 
-            TextSecurePreferences.setUnidentifiedAccessCertificate(context, certificate);
+            Log.i(TAG, "Rotating these certificates " + certificateTypes);
+
+            for (CertificateType certificateType: certificateTypes) {
+                byte[] certificate;
+
+                switch (certificateType) {
+                    case UUID_AND_E164: certificate = accountManager.getSenderCertificate(); break;
+                    case UUID_ONLY    : certificate = accountManager.getSenderCertificateForUserLoginPrivacy(); break;
+                    default           : throw new AssertionError();
+                }
+
+                Log.i(TAG, String.format("Successfully got %s certificate", certificateType));
+                SignalStore.certificateValues()
+                        .setUnidentifiedAccessCertificate(certificateType, certificate);
+            }
         }
     }
 

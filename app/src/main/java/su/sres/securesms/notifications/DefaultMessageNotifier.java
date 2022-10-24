@@ -57,6 +57,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.mms.SlideDeck;
+import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.messages.IncomingMessageObserver;
@@ -347,9 +348,10 @@ public class DefaultMessageNotifier implements MessageNotifier {
             return;
         }
 
-        SingleRecipientNotificationBuilder builder        = new SingleRecipientNotificationBuilder(context, TextSecurePreferences.getNotificationPrivacy(context));
-        List<NotificationItem>             notifications  = notificationState.getNotifications();
-        Recipient                          recipient      = notifications.get(0).getRecipient();
+        NotificationPrivacyPreference notificationPrivacy = TextSecurePreferences.getNotificationPrivacy(context);
+        SingleRecipientNotificationBuilder builder             = new SingleRecipientNotificationBuilder(context, notificationPrivacy);
+        List<NotificationItem>             notifications       = notificationState.getNotifications();
+        Recipient                          recipient           = notifications.get(0).getRecipient();
         int                                notificationId;
 
         if (Build.VERSION.SDK_INT >= 23) {
@@ -370,7 +372,10 @@ public class DefaultMessageNotifier implements MessageNotifier {
         long timestamp = notifications.get(0).getTimestamp();
         if (timestamp != 0) builder.setWhen(timestamp);
 
-        if (!KeyCachingService.isLocked(context) && RecipientUtil.isMessageRequestAccepted(context, recipient.resolve())) {
+        if (notificationPrivacy.isDisplayMessage() &&
+                !KeyCachingService.isLocked(context)   &&
+                RecipientUtil.isMessageRequestAccepted(context, recipient.resolve()))
+        {
             ReplyMethod replyMethod = ReplyMethod.forRecipient(context, recipient);
 
             builder.addActions(notificationState.getMarkAsReadIntent(context, notificationId),
@@ -416,8 +421,9 @@ public class DefaultMessageNotifier implements MessageNotifier {
             return;
         }
 
-        MultipleRecipientNotificationBuilder builder       = new MultipleRecipientNotificationBuilder(context, TextSecurePreferences.getNotificationPrivacy(context));
-        List<NotificationItem>               notifications = notificationState.getNotifications();
+        NotificationPrivacyPreference        notificationPrivacy = TextSecurePreferences.getNotificationPrivacy(context);
+        MultipleRecipientNotificationBuilder builder             = new MultipleRecipientNotificationBuilder(context, notificationPrivacy);
+        List<NotificationItem>               notifications       = notificationState.getNotifications();
 
         builder.setMessageCount(notificationState.getMessageCount(), notificationState.getThreadCount());
         builder.setMostRecentSender(notifications.get(0).getIndividualRecipient());
@@ -432,7 +438,9 @@ public class DefaultMessageNotifier implements MessageNotifier {
         long timestamp = notifications.get(0).getTimestamp();
         if (timestamp != 0) builder.setWhen(timestamp);
 
-        builder.addActions(notificationState.getMarkAsReadIntent(context, NotificationIds.MESSAGE_SUMMARY));
+        if (notificationPrivacy.isDisplayMessage()) {
+            builder.addActions(notificationState.getMarkAsReadIntent(context, NotificationIds.MESSAGE_SUMMARY));
+        }
 
         ListIterator<NotificationItem> iterator = notifications.listIterator(notifications.size());
 

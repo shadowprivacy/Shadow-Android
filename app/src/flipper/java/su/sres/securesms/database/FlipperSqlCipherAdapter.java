@@ -15,7 +15,9 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteStatement;
 
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
+import su.sres.securesms.logging.Log;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,6 +30,7 @@ import java.util.Map;
  * and made to work with SqlCipher. Unfortunately I couldn't use it directly, nor subclass it.
  */
 public class FlipperSqlCipherAdapter extends DatabaseDriver<FlipperSqlCipherAdapter.Descriptor> {
+    private static final String TAG = Log.tag(FlipperSqlCipherAdapter.class);
 
     public FlipperSqlCipherAdapter(Context context) {
         super(context);
@@ -35,7 +38,15 @@ public class FlipperSqlCipherAdapter extends DatabaseDriver<FlipperSqlCipherAdap
 
     @Override
     public List<Descriptor> getDatabases() {
-        return Collections.singletonList(new Descriptor(DatabaseFactory.getRawDatabase(getContext())));
+        try {
+            Field databaseHelperField = DatabaseFactory.class.getDeclaredField("databaseHelper");
+            databaseHelperField.setAccessible(true);
+            SQLCipherOpenHelper sqlCipherOpenHelper = (SQLCipherOpenHelper) databaseHelperField.get(DatabaseFactory.getInstance(getContext()));
+            return Collections.singletonList(new Descriptor(sqlCipherOpenHelper));
+        } catch (Exception e) {
+            Log.i(TAG, "Unable to use reflection to access raw database.", e);
+        }
+        return Collections.emptyList();
     }
 
     @Override

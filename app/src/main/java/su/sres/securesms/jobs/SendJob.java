@@ -8,10 +8,8 @@ import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.mms.MediaConstraints;
-import su.sres.securesms.transport.UndeliverableMessageException;
-import su.sres.securesms.util.Util;
 
 import java.util.List;
 
@@ -26,7 +24,7 @@ public abstract class SendJob extends BaseJob {
 
   @Override
   public final void onRun() throws Exception {
-    if (Util.getDaysTillBuildExpiry() <= 0) {
+    if (SignalStore.misc().isClientDeprecated()) {
       throw new TextSecureExpiredException(String.format("TextSecure expired (build %d, now %d)",
                                                          BuildConfig.BUILD_TIMESTAMP,
                                                          System.currentTimeMillis()));

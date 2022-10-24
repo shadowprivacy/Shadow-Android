@@ -16,6 +16,7 @@
  */
 package su.sres.securesms;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
@@ -30,6 +31,8 @@ import org.conscrypt.Conscrypt;
 
 import org.signal.aesgcmprovider.AesGcmProvider;
 import org.signal.ringrtc.CallManager;
+
+import su.sres.glide.SignalGlideCodecs;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.database.DatabaseFactory;
@@ -69,6 +72,7 @@ import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
 
@@ -172,6 +176,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
           launchCertificateRefresh();
           launchLicenseRefresh();
           launchServiceConfigRefresh();
+          checkBuildExpiration();
 
           initializedOnStart = true;
 
@@ -230,6 +235,13 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   public PersistentLogger getPersistentLogger() {
     return persistentLogger;
+  }
+
+  public void checkBuildExpiration() {
+    if (Util.getTimeUntilBuildExpiry() <= 0 && !SignalStore.misc().isClientDeprecated()) {
+      Log.w(TAG, "Build expired!");
+      SignalStore.misc().markClientDeprecated();
+    }
   }
 
   private void initializeSecurityProvider() {
@@ -417,6 +429,35 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     SignalStore.kbsValues().setKbsMasterKey(SignalStore.kbsValues().getOrCreateMasterKey());
   }
 
+  private void initializeGlideCodecs() {
+    SignalGlideCodecs.setLogProvider(new su.sres.glide.Log.Provider() {
+      @Override
+      public void v(@NonNull String tag, @NonNull String message) {
+        Log.v(tag, message);
+      }
+
+      @Override
+      public void d(@NonNull String tag, @NonNull String message) {
+        Log.d(tag, message);
+      }
+
+      @Override
+      public void i(@NonNull String tag, @NonNull String message) {
+        Log.i(tag, message);
+      }
+
+      @Override
+      public void w(@NonNull String tag, @NonNull String message) {
+        Log.w(tag, message);
+      }
+
+      @Override
+      public void e(@NonNull String tag, @NonNull String message, @Nullable Throwable throwable) {
+        Log.e(tag, message, throwable);
+      }
+    });
+  }
+
   @Override
   protected void attachBaseContext(Context base) {
     super.attachBaseContext(DynamicLanguageContextWrapper.updateContext(base, TextSecurePreferences.getLanguage(base)));
@@ -442,6 +483,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializePendingMessages();
     initializeBlobProvider();
     initializeCleanup();
+    initializeGlideCodecs();
     FeatureFlags.init();
     initializeMasterKey();
     ApplicationDependencies.getJobManager().beginJobLoop();

@@ -80,6 +80,14 @@ public final class SignalAccountRecord implements SignalRecord {
         return proto.getLinkPreviews();
     }
 
+    public AccountRecord.UserLoginSharingMode getUserLoginSharingMode() {
+        return proto.getUserLoginSharingMode();
+    }
+
+    public boolean isUserLoginUnlisted() {
+        return proto.getUnlistedUserLogin();
+    }
+
     AccountRecord toProto() {
         return proto;
     }
@@ -156,6 +164,16 @@ public final class SignalAccountRecord implements SignalRecord {
 
         public Builder setLinkPreviewsEnabled(boolean enabled) {
             builder.setLinkPreviews(enabled);
+            return this;
+        }
+
+        public Builder setUserLoginSharingMode(AccountRecord.UserLoginSharingMode mode) {
+            builder.setUserLoginSharingMode(mode);
+            return this;
+        }
+
+        public Builder setUnlistedUserLogin(boolean unlisted) {
+            builder.setUnlistedUserLogin(unlisted);
             return this;
         }
 

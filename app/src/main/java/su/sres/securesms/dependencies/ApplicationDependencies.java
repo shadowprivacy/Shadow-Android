@@ -18,6 +18,7 @@ import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
+import su.sres.securesms.service.TrimThreadsByDateManager;
 import su.sres.securesms.util.EarlyMessageCache;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
@@ -60,6 +61,7 @@ public class ApplicationDependencies {
     private static GroupsV2Operations           groupsV2Operations;
     private static EarlyMessageCache            earlyMessageCache;
     private static MessageNotifier              messageNotifier;
+    private static TrimThreadsByDateManager trimThreadsByDateManager;
 
     public static synchronized void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
         if (ApplicationDependencies.application != null || ApplicationDependencies.networkIndependentProvider != null) {
@@ -68,6 +70,7 @@ public class ApplicationDependencies {
 
         ApplicationDependencies.application                = application;
         ApplicationDependencies.networkIndependentProvider = networkIndependentProvider;
+
     }
 
     @MainThread
@@ -79,6 +82,7 @@ public class ApplicationDependencies {
 
         ApplicationDependencies.provider        = provider;
         ApplicationDependencies.messageNotifier = provider.provideMessageNotifier();
+        ApplicationDependencies.trimThreadsByDateManager = provider.provideTrimThreadsByDateManager();
     }
 
 
@@ -261,6 +265,11 @@ public class ApplicationDependencies {
         return incomingMessageObserver;
     }
 
+    public static synchronized @NonNull TrimThreadsByDateManager getTrimThreadsByDateManager() {
+        assertNetworkDependentInitialization();
+        return trimThreadsByDateManager;
+    }
+
     private static void assertNetworkDependentInitialization() {
         if (application == null || provider == null) {
             throw new UninitializedException();
@@ -289,6 +298,7 @@ public class ApplicationDependencies {
         @NonNull EarlyMessageCache provideEarlyMessageCache();
         @NonNull MessageNotifier provideMessageNotifier();
         @NonNull IncomingMessageObserver provideIncomingMessageObserver();
+        @NonNull TrimThreadsByDateManager provideTrimThreadsByDateManager();
     }
 
     public interface NetworkIndependentProvider {

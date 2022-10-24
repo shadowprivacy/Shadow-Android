@@ -15462,6 +15462,23 @@ public final class SignalServiceProtos {
        * @return The data.
        */
       su.sres.signalservice.internal.push.SignalServiceProtos.AttachmentPointer getData();
+
+      /**
+       * <code>optional string emoji = 5;</code>
+       * @return Whether the emoji field is set.
+       */
+      boolean hasEmoji();
+      /**
+       * <code>optional string emoji = 5;</code>
+       * @return The emoji.
+       */
+      java.lang.String getEmoji();
+      /**
+       * <code>optional string emoji = 5;</code>
+       * @return The bytes for emoji.
+       */
+      com.google.protobuf.ByteString
+          getEmojiBytes();
     }
     /**
      * Protobuf type {@code signalservice.DataMessage.Sticker}
@@ -15474,6 +15491,7 @@ public final class SignalServiceProtos {
       private Sticker() {
         packId_ = com.google.protobuf.ByteString.EMPTY;
         packKey_ = com.google.protobuf.ByteString.EMPTY;
+        emoji_ = "";
       }
       private int bitField0_;
       public static final int PACKID_FIELD_NUMBER = 1;
@@ -15640,6 +15658,65 @@ public final class SignalServiceProtos {
        */
       private void clearData() {  data_ = null;
         bitField0_ = (bitField0_ & ~0x00000008);
+      }
+
+      public static final int EMOJI_FIELD_NUMBER = 5;
+      private java.lang.String emoji_;
+      /**
+       * <code>optional string emoji = 5;</code>
+       * @return Whether the emoji field is set.
+       */
+      @java.lang.Override
+      public boolean hasEmoji() {
+        return ((bitField0_ & 0x00000010) != 0);
+      }
+      /**
+       * <code>optional string emoji = 5;</code>
+       * @return The emoji.
+       */
+      @java.lang.Override
+      public java.lang.String getEmoji() {
+        return emoji_;
+      }
+      /**
+       * <code>optional string emoji = 5;</code>
+       * @return The bytes for emoji.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getEmojiBytes() {
+        return com.google.protobuf.ByteString.copyFromUtf8(emoji_);
+      }
+      /**
+       * <code>optional string emoji = 5;</code>
+       * @param value The emoji to set.
+       */
+      private void setEmoji(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000010;
+        emoji_ = value;
+      }
+      /**
+       * <code>optional string emoji = 5;</code>
+       */
+      private void clearEmoji() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        emoji_ = getDefaultInstance().getEmoji();
+      }
+      /**
+       * <code>optional string emoji = 5;</code>
+       * @param value The bytes for emoji to set.
+       */
+      private void setEmojiBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000010;
+        emoji_ = value.toStringUtf8();
       }
 
       public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Sticker parseFrom(
@@ -15892,6 +15969,63 @@ public final class SignalServiceProtos {
           return this;
         }
 
+        /**
+         * <code>optional string emoji = 5;</code>
+         * @return Whether the emoji field is set.
+         */
+        @java.lang.Override
+        public boolean hasEmoji() {
+          return instance.hasEmoji();
+        }
+        /**
+         * <code>optional string emoji = 5;</code>
+         * @return The emoji.
+         */
+        @java.lang.Override
+        public java.lang.String getEmoji() {
+          return instance.getEmoji();
+        }
+        /**
+         * <code>optional string emoji = 5;</code>
+         * @return The bytes for emoji.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getEmojiBytes() {
+          return instance.getEmojiBytes();
+        }
+        /**
+         * <code>optional string emoji = 5;</code>
+         * @param value The emoji to set.
+         * @return This builder for chaining.
+         */
+        public Builder setEmoji(
+            java.lang.String value) {
+          copyOnWrite();
+          instance.setEmoji(value);
+          return this;
+        }
+        /**
+         * <code>optional string emoji = 5;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearEmoji() {
+          copyOnWrite();
+          instance.clearEmoji();
+          return this;
+        }
+        /**
+         * <code>optional string emoji = 5;</code>
+         * @param value The bytes for emoji to set.
+         * @return This builder for chaining.
+         */
+        public Builder setEmojiBytes(
+            com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setEmojiBytes(value);
+          return this;
+        }
+
         // @@protoc_insertion_point(builder_scope:signalservice.DataMessage.Sticker)
       }
       @java.lang.Override
@@ -15913,10 +16047,11 @@ public final class SignalServiceProtos {
                 "packKey_",
                 "stickerId_",
                 "data_",
+                "emoji_",
               };
               java.lang.String info =
-                  "\u0001\u0004\u0000\u0001\u0001\u0004\u0004\u0000\u0000\u0000\u0001\n\u0000\u0002" +
-                  "\n\u0001\u0003\u000b\u0002\u0004\t\u0003";
+                  "\u0001\u0005\u0000\u0001\u0001\u0005\u0005\u0000\u0000\u0000\u0001\n\u0000\u0002" +
+                  "\n\u0001\u0003\u000b\u0002\u0004\t\u0003\u0005\b\u0004";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through

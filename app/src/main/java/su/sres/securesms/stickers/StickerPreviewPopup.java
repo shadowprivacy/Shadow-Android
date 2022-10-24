@@ -9,6 +9,8 @@ import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+
 import su.sres.securesms.R;
 import su.sres.securesms.mms.GlideRequests;
 
@@ -35,6 +37,7 @@ final class StickerPreviewPopup extends PopupWindow {
     void presentSticker(@NonNull Object stickerGlideModel, @Nullable String emoji) {
         emojiText.setText(emoji);
         glideRequests.load(stickerGlideModel)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .into(image);
     }
 }

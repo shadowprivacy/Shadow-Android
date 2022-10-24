@@ -115,6 +115,23 @@ public final class StickerProtos {
        */
       com.google.protobuf.ByteString
           getEmojiBytes();
+
+      /**
+       * <code>optional string contentType = 3;</code>
+       * @return Whether the contentType field is set.
+       */
+      boolean hasContentType();
+      /**
+       * <code>optional string contentType = 3;</code>
+       * @return The contentType.
+       */
+      java.lang.String getContentType();
+      /**
+       * <code>optional string contentType = 3;</code>
+       * @return The bytes for contentType.
+       */
+      com.google.protobuf.ByteString
+          getContentTypeBytes();
     }
     /**
      * Protobuf type {@code signalservice.Pack.Sticker}
@@ -126,6 +143,7 @@ public final class StickerProtos {
         StickerOrBuilder {
       private Sticker() {
         emoji_ = "";
+        contentType_ = "";
       }
       private int bitField0_;
       public static final int ID_FIELD_NUMBER = 1;
@@ -219,6 +237,65 @@ public final class StickerProtos {
   }
   bitField0_ |= 0x00000002;
         emoji_ = value.toStringUtf8();
+      }
+
+      public static final int CONTENTTYPE_FIELD_NUMBER = 3;
+      private java.lang.String contentType_;
+      /**
+       * <code>optional string contentType = 3;</code>
+       * @return Whether the contentType field is set.
+       */
+      @java.lang.Override
+      public boolean hasContentType() {
+        return ((bitField0_ & 0x00000004) != 0);
+      }
+      /**
+       * <code>optional string contentType = 3;</code>
+       * @return The contentType.
+       */
+      @java.lang.Override
+      public java.lang.String getContentType() {
+        return contentType_;
+      }
+      /**
+       * <code>optional string contentType = 3;</code>
+       * @return The bytes for contentType.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getContentTypeBytes() {
+        return com.google.protobuf.ByteString.copyFromUtf8(contentType_);
+      }
+      /**
+       * <code>optional string contentType = 3;</code>
+       * @param value The contentType to set.
+       */
+      private void setContentType(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        contentType_ = value;
+      }
+      /**
+       * <code>optional string contentType = 3;</code>
+       */
+      private void clearContentType() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        contentType_ = getDefaultInstance().getContentType();
+      }
+      /**
+       * <code>optional string contentType = 3;</code>
+       * @param value The bytes for contentType to set.
+       */
+      private void setContentTypeBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        contentType_ = value.toStringUtf8();
       }
 
       public static su.sres.signalservice.internal.sticker.StickerProtos.Pack.Sticker parseFrom(
@@ -409,6 +486,63 @@ public final class StickerProtos {
           return this;
         }
 
+        /**
+         * <code>optional string contentType = 3;</code>
+         * @return Whether the contentType field is set.
+         */
+        @java.lang.Override
+        public boolean hasContentType() {
+          return instance.hasContentType();
+        }
+        /**
+         * <code>optional string contentType = 3;</code>
+         * @return The contentType.
+         */
+        @java.lang.Override
+        public java.lang.String getContentType() {
+          return instance.getContentType();
+        }
+        /**
+         * <code>optional string contentType = 3;</code>
+         * @return The bytes for contentType.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getContentTypeBytes() {
+          return instance.getContentTypeBytes();
+        }
+        /**
+         * <code>optional string contentType = 3;</code>
+         * @param value The contentType to set.
+         * @return This builder for chaining.
+         */
+        public Builder setContentType(
+            java.lang.String value) {
+          copyOnWrite();
+          instance.setContentType(value);
+          return this;
+        }
+        /**
+         * <code>optional string contentType = 3;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearContentType() {
+          copyOnWrite();
+          instance.clearContentType();
+          return this;
+        }
+        /**
+         * <code>optional string contentType = 3;</code>
+         * @param value The bytes for contentType to set.
+         * @return This builder for chaining.
+         */
+        public Builder setContentTypeBytes(
+            com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setContentTypeBytes(value);
+          return this;
+        }
+
         // @@protoc_insertion_point(builder_scope:signalservice.Pack.Sticker)
       }
       @java.lang.Override
@@ -428,10 +562,11 @@ public final class StickerProtos {
                 "bitField0_",
                 "id_",
                 "emoji_",
+                "contentType_",
               };
               java.lang.String info =
-                  "\u0001\u0002\u0000\u0001\u0001\u0002\u0002\u0000\u0000\u0000\u0001\u000b\u0000\u0002" +
-                  "\b\u0001";
+                  "\u0001\u0003\u0000\u0001\u0001\u0003\u0003\u0000\u0000\u0000\u0001\u000b\u0000\u0002" +
+                  "\b\u0001\u0003\b\u0002";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through

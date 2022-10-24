@@ -16,12 +16,18 @@
  */
 package su.sres.securesms.util;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import android.os.Build;
 import android.text.format.DateFormat;
 
 import su.sres.securesms.R;
+import su.sres.securesms.logging.Log;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -168,5 +174,34 @@ public class DateUtils extends android.text.format.DateUtils {
 
   private static String getLocalizedPattern(String template, Locale locale) {
     return DateFormat.getBestDateTimePattern(locale, template);
+  }
+
+  /**
+   * e.g. 2020-09-04T19:17:51Z
+   * https://www.iso.org/iso-8601-date-and-time-format.html
+   *
+   * Note: SDK_INT == 0 check needed to pass unit tests due to JVM date parser differences.
+   *
+   * @return The timestamp if able to be parsed, otherwise -1.
+   */
+  @SuppressLint("ObsoleteSdkInt")
+  public static long parseIso8601(@Nullable String date) {
+    SimpleDateFormat format;
+    if (Build.VERSION.SDK_INT == 0 || Build.VERSION.SDK_INT >= 24) {
+      format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.getDefault());
+    } else {
+      format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault());
+    }
+
+    if (Util.isEmpty(date)) {
+      return -1;
+    }
+
+    try {
+      return format.parse(date).getTime();
+    } catch (ParseException e) {
+      Log.w(TAG, "Failed to parse date.", e);
+      return -1;
+    }
   }
 }

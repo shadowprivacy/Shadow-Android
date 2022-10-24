@@ -10,6 +10,7 @@ import androidx.annotation.WorkerThread;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.groups.ui.GroupMemberEntry;
 import su.sres.securesms.recipients.Recipient;
@@ -21,9 +22,22 @@ import java.util.List;
 final class MentionsPickerRepository {
 
     private final RecipientDatabase recipientDatabase;
+    private final GroupDatabase groupDatabase;
 
     MentionsPickerRepository(@NonNull Context context) {
         recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+        groupDatabase     = DatabaseFactory.getGroupDatabase(context);
+    }
+
+    @WorkerThread
+    @NonNull List<RecipientId> getMembers(@Nullable Recipient recipient) {
+        if (recipient == null || !recipient.isPushV2Group()) {
+            return Collections.emptyList();
+        }
+
+        return Stream.of(groupDatabase.getGroupMembers(recipient.requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF))
+                .map(Recipient::getId)
+                .toList();
     }
 
     @WorkerThread
@@ -32,20 +46,14 @@ final class MentionsPickerRepository {
             return Collections.emptyList();
         }
 
-        List<RecipientId> recipientIds = Stream.of(mentionQuery.members)
-                .filterNot(m -> m.getMember().isLocalNumber())
-                .map(m -> m.getMember().getId())
-                .toList();
-
-        return recipientDatabase.queryRecipientsForMentions(mentionQuery.query, recipientIds);
+        return recipientDatabase.queryRecipientsForMentions(mentionQuery.query, mentionQuery.members);
     }
 
     static class MentionQuery {
-        @Nullable
-        private final String                            query;
-        @NonNull  private final List<GroupMemberEntry.FullMember> members;
+        @Nullable private final String            query;
+        @NonNull  private final List<RecipientId> members;
 
-        MentionQuery(@Nullable String query, @NonNull List<GroupMemberEntry.FullMember> members) {
+        MentionQuery(@Nullable String query, @NonNull List<RecipientId> members) {
             this.query   = query;
             this.members = members;
         }

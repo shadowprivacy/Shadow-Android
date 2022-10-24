@@ -735,6 +735,7 @@ public final class SignalServiceContent {
     return new SignalServiceDataMessage.Sticker(sticker.getPackId().toByteArray(),
             sticker.getPackKey().toByteArray(),
             sticker.getStickerId(),
+            sticker.getEmoji(),
             createAttachmentPointer(sticker.getData()));
   }
 

@@ -42,7 +42,9 @@ import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.ExpirationUtil;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.StringUtil;
+import su.sres.signalservice.api.groupsv2.DecryptedGroupUtil;
 import su.sres.signalservice.api.util.UuidUtil;
+import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 
 import java.io.IOException;
@@ -180,11 +182,34 @@ public abstract class MessageRecord extends DisplayRecord {
       if (decryptedGroupV2Context.hasChange() && decryptedGroupV2Context.getGroupState().getRevision() != 0) {
         return UpdateDescription.concatWithNewLines(updateMessageProducer.describeChanges(decryptedGroupV2Context.getChange()));
       } else {
-        return updateMessageProducer.describeNewGroup(decryptedGroupV2Context.getGroupState());
+        return updateMessageProducer.describeNewGroup(decryptedGroupV2Context.getGroupState(), decryptedGroupV2Context.getChange());
       }
     } catch (IOException e) {
       Log.w(TAG, "GV2 Message update detail could not be read", e);
       return staticUpdateDescription(context.getString(R.string.MessageRecord_group_updated));
+    }
+  }
+
+  public @Nullable InviteAddState getGv2AddInviteState() {
+    try {
+      byte[]                  decoded                 = Base64.decode(getBody());
+      DecryptedGroupV2Context decryptedGroupV2Context = DecryptedGroupV2Context.parseFrom(decoded);
+      DecryptedGroup groupState              = decryptedGroupV2Context.getGroupState();
+      boolean                 invited                 = DecryptedGroupUtil.findPendingByUuid(groupState.getPendingMembersList(), Recipient.self().requireUuid()).isPresent();
+
+      if (decryptedGroupV2Context.hasChange()) {
+        UUID changeEditor = UuidUtil.fromByteStringOrNull(decryptedGroupV2Context.getChange().getEditor());
+
+        if (changeEditor != null) {
+          return new InviteAddState(invited, changeEditor);
+        }
+      }
+
+      Log.w(TAG, "GV2 Message editor could not be determined");
+      return null;
+    } catch (IOException e) {
+      Log.w(TAG, "GV2 Message update detail could not be read", e);
+      return null;
     }
   }
 
@@ -380,5 +405,24 @@ public abstract class MessageRecord extends DisplayRecord {
 
   public boolean hasSelfMention() {
     return false;
+  }
+
+  public static final class InviteAddState {
+
+    private final boolean invited;
+    private final UUID    addedOrInvitedBy;
+
+    public InviteAddState(boolean invited, @NonNull UUID addedOrInvitedBy) {
+      this.invited          = invited;
+      this.addedOrInvitedBy = addedOrInvitedBy;
+    }
+
+    public @NonNull UUID getAddedOrInvitedBy() {
+      return addedOrInvitedBy;
+    }
+
+    public boolean isInvited() {
+      return invited;
+    }
   }
 }

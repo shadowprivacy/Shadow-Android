@@ -34,6 +34,7 @@ import su.sres.securesms.migrations.StickerLaunchMigrationJob;
 import su.sres.securesms.migrations.StorageCapabilityMigrationJob;
 import su.sres.securesms.migrations.StorageServiceMigrationJob;
 import su.sres.securesms.migrations.StickerAdditionMigrationJob;
+import su.sres.securesms.migrations.TrimByLengthSettingsMigrationJob;
 import su.sres.securesms.migrations.UuidMigrationJob;
 
 import java.util.Arrays;
@@ -99,7 +100,6 @@ public final class JobManagerFactories {
             put(StorageAccountRestoreJob.KEY,              new StorageAccountRestoreJob.Factory());
             put(RequestGroupV2InfoWorkerJob.KEY,           new RequestGroupV2InfoWorkerJob.Factory());
             put(RequestGroupV2InfoJob.KEY,                 new RequestGroupV2InfoJob.Factory());
-            put(WakeGroupV2Job.KEY,                        new WakeGroupV2Job.Factory());
             put(GroupV2UpdateSelfProfileKeyJob.KEY,        new GroupV2UpdateSelfProfileKeyJob.Factory());
             put(RetrieveProfileAvatarJob.KEY,              new RetrieveProfileAvatarJob.Factory());
             put(RetrieveProfileJob.KEY,                    new RetrieveProfileJob.Factory());
@@ -134,6 +134,7 @@ public final class JobManagerFactories {
             put(StickerAdditionMigrationJob.KEY,           new StickerAdditionMigrationJob.Factory());
             put(StorageCapabilityMigrationJob.KEY,         new StorageCapabilityMigrationJob.Factory());
             put(StorageServiceMigrationJob.KEY,            new StorageServiceMigrationJob.Factory());
+            put(TrimByLengthSettingsMigrationJob.KEY,      new TrimByLengthSettingsMigrationJob.Factory());
             put(UuidMigrationJob.KEY,                      new UuidMigrationJob.Factory());
 
             // Dead jobs
@@ -143,6 +144,7 @@ public final class JobManagerFactories {
             put("AttachmentUploadJob",                     new FailingJob.Factory());
             put("MmsSendJob",                              new FailingJob.Factory());
             put("RefreshUnidentifiedDeliveryAbilityJob",   new FailingJob.Factory());
+            put("WakeGroupV2Job",                          new FailingJob.Factory());
 
         }};
     }

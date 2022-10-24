@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -60,19 +61,22 @@ public class RefreshAttributesJob extends BaseJob  {
     byte[]    unidentifiedAccessKey       = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
     boolean universalUnidentifiedAccess = TextSecurePreferences.isUniversalUnidentifiedAccess(context);
 
+    boolean userLoginDiscoverable = SignalStore.userLoginPrivacy().getUserLoginListingMode().isDiscoverable();
+
     // dummy true instead of checking whether the client has a PIN
     SignalServiceProfile.Capabilities capabilities = AppCapabilities.getCapabilities(true);
 
-    Log.i(TAG, "Capabilities:" +
+    Log.i(TAG, "User login discoverable : " + userLoginDiscoverable +
+            "\n  Capabilities:" +
             "\n    Storage? " + capabilities.isStorage() +
             "\n    GV2? " + capabilities.isGv2() +
-            "\n    UUID? " + capabilities.isUuid())  ;
+            "\n    UUID? " + capabilities.isUuid());
 
     SignalServiceAccountManager signalAccountManager = ApplicationDependencies.getSignalServiceAccountManager();
     signalAccountManager.setAccountAttributes(null, registrationId, fetchesMessages, pin,
             unidentifiedAccessKey, universalUnidentifiedAccess,
-            capabilities);
-
+            capabilities,
+            userLoginDiscoverable);
   }
 
   @Override

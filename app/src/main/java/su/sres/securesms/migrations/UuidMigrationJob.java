@@ -58,7 +58,6 @@ public class UuidMigrationJob extends MigrationJob {
 
         ensureSelfRecipientExists(context);
         fetchOwnUuid(context);
-        rotateSealedSenderCerts(context);
     }
 
     @Override
@@ -77,14 +76,6 @@ public class UuidMigrationJob extends MigrationJob {
         DatabaseFactory.getRecipientDatabase(context).markRegistered(self, localUuid);
         TextSecurePreferences.setLocalUuid(context, localUuid);
     }
-
-    private static void rotateSealedSenderCerts(@NonNull Context context) throws IOException {
-        SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
-        byte[]                      certificate    = accountManager.getSenderCertificate();
-
-        TextSecurePreferences.setUnidentifiedAccessCertificate(context, certificate);
-    }
-
 
     public static class Factory implements Job.Factory<UuidMigrationJob> {
         @Override
