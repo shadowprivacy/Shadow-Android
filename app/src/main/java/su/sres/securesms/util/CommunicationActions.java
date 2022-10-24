@@ -132,18 +132,6 @@ public class CommunicationActions {
     }.execute();
   }
 
-  public static void startInsecureCall(@NonNull Activity activity, @NonNull Recipient recipient) {
-    new AlertDialog.Builder(activity)
-            .setTitle(R.string.CommunicationActions_insecure_call)
-            .setMessage(R.string.CommunicationActions_carrier_charges_may_apply)
-            .setPositiveButton(R.string.CommunicationActions_call, (d, w) -> {
-              d.dismiss();
-              startInsecureCallInternal(activity, recipient);
-            })
-            .setNegativeButton(R.string.CommunicationActions_cancel, (d, w) -> d.dismiss())
-            .show();
-  }
-
   public static void composeSmsThroughDefaultApp(@NonNull Context context, @NonNull Recipient recipient, @Nullable String text) {
     Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + recipient.requireSmsAddress()));
     if (text != null) {
@@ -218,18 +206,6 @@ public class CommunicationActions {
                 GroupJoinBottomSheetDialogFragment.show(activity.getSupportFragmentManager(), groupInviteLinkUrl);
               }
             });
-  }
-
-  private static void startInsecureCallInternal(@NonNull Activity activity, @NonNull Recipient recipient) {
-    try {
-      Intent dialIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + recipient.requireSmsAddress()));
-      activity.startActivity(dialIntent);
-    } catch (ActivityNotFoundException anfe) {
-      Log.w(TAG, anfe);
-      Dialogs.showAlertDialog(activity,
-              activity.getString(R.string.ConversationActivity_calls_not_supported),
-              activity.getString(R.string.ConversationActivity_this_device_does_not_appear_to_support_dial_actions));
-    }
   }
 
   private static void startCallInternal(@NonNull FragmentActivity activity, @NonNull Recipient recipient, boolean isVideo) {
