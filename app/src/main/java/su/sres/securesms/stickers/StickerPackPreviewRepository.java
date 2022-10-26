@@ -6,7 +6,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
-import com.google.android.gms.common.util.Hex;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.StickerDatabase;
@@ -14,6 +13,7 @@ import su.sres.securesms.database.model.StickerPackRecord;
 import su.sres.securesms.database.model.StickerRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.util.Hex;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.InvalidMessageException;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -23,8 +23,6 @@ import su.sres.signalservice.api.messages.SignalServiceStickerManifest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-
 
 public final class StickerPackPreviewRepository  {
 
@@ -79,8 +77,8 @@ public final class StickerPackPreviewRepository  {
     @WorkerThread
     private Optional<StickerManifestResult> getManifestRemote(@NonNull String packId, @NonNull String packKey) {
         try {
-            byte[]                       packIdBytes    = Hex.stringToBytes(packId);
-            byte[]                       packKeyBytes   = Hex.stringToBytes(packKey);
+            byte[]                       packIdBytes    = Hex.fromStringCondensed(packId);
+            byte[]                       packKeyBytes   = Hex.fromStringCondensed(packKey);
             SignalServiceStickerManifest remoteManifest = receiver.retrieveStickerManifest(packIdBytes, packKeyBytes);
             StickerManifest              localManifest  = new StickerManifest(packId,
                     packKey,

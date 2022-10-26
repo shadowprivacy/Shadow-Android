@@ -7,6 +7,8 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.securesms.BuildConfig;
+
 /**
  * Starting in API 26, a {@link ContentProvider} needs to be defined for each authority you wish to
  * observe changes on. These classes essentially do nothing except exist so Android doesn't complain.
@@ -14,11 +16,15 @@ import androidx.annotation.Nullable;
 public class DatabaseContentProviders {
 
     public static class ConversationList extends NoopContentProvider {
-        public static final Uri CONTENT_URI = Uri.parse("content://su.sres.securesms.database.conversationlist");
+        private static final String CONTENT_AUTHORITY  = BuildConfig.APPLICATION_ID + ".database.conversationlist";
+        private static final String CONTENT_URI_STRING = "content://" + CONTENT_AUTHORITY;
+
+        public static final Uri CONTENT_URI = Uri.parse(CONTENT_URI_STRING);
     }
 
     public static class Conversation extends NoopContentProvider {
-        private static final String CONTENT_URI_STRING = "content://su.sres.securesms.database.conversation/";
+        private static final String CONTENT_AUTHORITY  = BuildConfig.APPLICATION_ID + ".database.conversation";
+        private static final String CONTENT_URI_STRING = "content://" + CONTENT_AUTHORITY + "/";
 
         public static Uri getUriForThread(long threadId) {
             return Uri.parse(CONTENT_URI_STRING + threadId);
@@ -34,15 +40,24 @@ public class DatabaseContentProviders {
     }
 
     public static class Attachment extends NoopContentProvider {
-        public static final Uri CONTENT_URI = Uri.parse("content://su.sres.securesms.database.attachment");
+        private static final String CONTENT_AUTHORITY  = BuildConfig.APPLICATION_ID + ".database.attachment";
+        private static final String CONTENT_URI_STRING = "content://" + CONTENT_AUTHORITY;
+
+        public static final Uri CONTENT_URI = Uri.parse(CONTENT_URI_STRING);
     }
 
     public static class Sticker extends NoopContentProvider {
-        public static final Uri CONTENT_URI = Uri.parse("content://su.sres.securesms.database.sticker");
+        private static final String CONTENT_AUTHORITY  = BuildConfig.APPLICATION_ID + ".database.sticker";
+        private static final String CONTENT_URI_STRING = "content://" + CONTENT_AUTHORITY;
+
+        public static final Uri CONTENT_URI = Uri.parse(CONTENT_URI_STRING);
     }
 
     public static class StickerPack extends NoopContentProvider {
-        public static final Uri CONTENT_URI = Uri.parse("content://su.sres.securesms.database.stickerpack");
+        private static final String CONTENT_AUTHORITY  = BuildConfig.APPLICATION_ID + ".database.stickerpack";
+        private static final String CONTENT_URI_STRING = "content://" + CONTENT_AUTHORITY;
+
+        public static final Uri CONTENT_URI = Uri.parse(CONTENT_URI_STRING);
     }
 
     private static abstract class NoopContentProvider extends ContentProvider {

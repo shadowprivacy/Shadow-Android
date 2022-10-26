@@ -37,7 +37,6 @@ import su.sres.signalservice.api.storage.StorageKey;
 import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
 import su.sres.signalservice.api.messages.calls.TurnServerInfo;
 import su.sres.signalservice.api.messages.multidevice.DeviceInfo;
-import su.sres.signalservice.api.profiles.SignalServiceProfile;
 import su.sres.signalservice.api.profiles.SignalServiceProfileWrite;
 import su.sres.signalservice.api.push.ContactTokenDetails;
 import su.sres.signalservice.api.push.SignedPreKeyEntity;
@@ -51,6 +50,7 @@ import su.sres.signalservice.api.util.CredentialsProvider;
 import su.sres.signalservice.api.util.StreamDetails;
 import su.sres.signalservice.internal.configuration.SignalServiceConfiguration;
 import su.sres.signalservice.internal.crypto.ProvisioningCipher;
+import su.sres.signalservice.api.account.AccountAttributes;
 import su.sres.signalservice.internal.push.AttachmentV2UploadAttributes;
 import su.sres.signalservice.internal.push.ProfileAvatarData;
 import su.sres.signalservice.internal.push.PushServiceSocket;
@@ -224,7 +224,7 @@ public class SignalServiceAccountManager {
      */
     public VerifyAccountResponse verifyAccountWithCode(String verificationCode, String signalingKey, int signalProtocolRegistrationId, boolean fetchesMessages, String pin,
                                                        byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess,
-                                                       SignalServiceProfile.Capabilities capabilities,
+                                                       AccountAttributes.Capabilities capabilities,
                                                        boolean discoverableByUserLogin)
             throws IOException {
         return this.pushServiceSocket.verifyAccountCode(verificationCode, signalingKey,
@@ -248,7 +248,7 @@ public class SignalServiceAccountManager {
      */
     public void setAccountAttributes(String signalingKey, int signalProtocolRegistrationId, boolean fetchesMessages, String pin,
                                      byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess,
-                                     SignalServiceProfile.Capabilities capabilities,
+                                     AccountAttributes.Capabilities capabilities,
                                      boolean discoverableByUserLogin)
             throws IOException {
         this.pushServiceSocket.setAccountAttributes(signalingKey, signalProtocolRegistrationId, fetchesMessages, pin,

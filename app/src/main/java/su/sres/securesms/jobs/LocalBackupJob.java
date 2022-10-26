@@ -4,8 +4,11 @@ package su.sres.securesms.jobs;
 import android.Manifest;
 import androidx.annotation.NonNull;
 import su.sres.securesms.backup.BackupPassphrase;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.jobmanager.JobManager;
+import su.sres.securesms.jobmanager.impl.ChargingConstraint;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.R;
@@ -26,18 +29,30 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class LocalBackupJob extends BaseJob {
+public final class LocalBackupJob extends BaseJob {
 
   public static final String KEY = "LocalBackupJob";
 
-  private static final String TAG = LocalBackupJob.class.getSimpleName();
+  private static final String TAG = Log.tag(LocalBackupJob.class);
 
-  public LocalBackupJob() {
-    this(new Job.Parameters.Builder()
-            .setQueue("__LOCAL_BACKUP__")
+  private static final String QUEUE = "__LOCAL_BACKUP__";
+
+  public static final String TEMP_BACKUP_FILE_PREFIX = ".backup";
+  public static final String TEMP_BACKUP_FILE_SUFFIX = ".tmp";
+
+  public static void enqueue(boolean force) {
+    JobManager jobManager = ApplicationDependencies.getJobManager();
+    Parameters.Builder parameters = new Parameters.Builder()
+            .setQueue(QUEUE)
             .setMaxInstances(1)
-            .setMaxAttempts(3)
-            .build());
+            .setMaxAttempts(3);
+    if (force) {
+      jobManager.cancelAllInQueue(QUEUE);
+    } else {
+      parameters.addConstraint(ChargingConstraint.KEY);
+    }
+
+    jobManager.add(new LocalBackupJob(parameters.build()));
   }
 
   private LocalBackupJob(@NonNull Job.Parameters parameters) {
@@ -74,6 +89,8 @@ public class LocalBackupJob extends BaseJob {
       String fileName        = String.format("shadow-%s.backup", timestamp);
       File   backupFile      = new File(backupDirectory, fileName);
 
+      deleteOldTemporaryBackups(backupDirectory);
+
       if (backupFile.exists()) {
         throw new IOException("Backup file already exists?");
       }
@@ -82,7 +99,7 @@ public class LocalBackupJob extends BaseJob {
         throw new IOException("Backup password is null");
       }
 
-      File tempFile = File.createTempFile("backup", "tmp", StorageUtil.getBackupCacheDirectory(context));
+      File tempFile = File.createTempFile(TEMP_BACKUP_FILE_PREFIX, TEMP_BACKUP_FILE_SUFFIX, backupDirectory);
 
       try {
         FullBackupExporter.export(context,
@@ -106,6 +123,21 @@ public class LocalBackupJob extends BaseJob {
       }
 
       BackupUtil.deleteOldBackups();
+    }
+  }
+
+  private static void deleteOldTemporaryBackups(@NonNull File backupDirectory) {
+    for (File file : backupDirectory.listFiles()) {
+      if (file.isFile()) {
+        String name = file.getName();
+        if (name.startsWith(TEMP_BACKUP_FILE_PREFIX) && name.endsWith(TEMP_BACKUP_FILE_SUFFIX)) {
+          if (file.delete()) {
+            Log.w(TAG, "Deleted old temporary backup file");
+          } else {
+            Log.w(TAG, "Could not delete old temporary backup file");
+          }
+        }
+      }
     }
   }
 

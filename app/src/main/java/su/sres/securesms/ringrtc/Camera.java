@@ -50,7 +50,8 @@ public class Camera implements CameraControl, CameraVideoCapturer.CameraSwitchHa
 
     public Camera(@NonNull Context             context,
                   @NonNull CameraEventListener cameraEventListener,
-                  @NonNull EglBase             eglBase)
+                  @NonNull EglBase eglBase,
+                  @NonNull CameraState.Direction desiredCameraDirection)
     {
         this.context                = context;
         this.cameraEventListener    = cameraEventListener;
@@ -58,13 +59,16 @@ public class Camera implements CameraControl, CameraVideoCapturer.CameraSwitchHa
         CameraEnumerator enumerator = getCameraEnumerator(context);
         cameraCount                 = enumerator.getDeviceNames().length;
 
-        CameraVideoCapturer capturerCandidate = createVideoCapturer(enumerator, FRONT);
+        CameraState.Direction firstChoice = desiredCameraDirection.isUsable() ? desiredCameraDirection : FRONT;
+
+        CameraVideoCapturer capturerCandidate = createVideoCapturer(enumerator, firstChoice);
         if (capturerCandidate != null) {
-            activeDirection = FRONT;
+            activeDirection = firstChoice;
         } else {
-            capturerCandidate = createVideoCapturer(enumerator, BACK);
+            CameraState.Direction secondChoice = firstChoice.switchDirection();
+            capturerCandidate = createVideoCapturer(enumerator, secondChoice);
             if (capturerCandidate != null) {
-                activeDirection = BACK;
+                activeDirection = secondChoice;
             } else {
                 activeDirection = NONE;
             }

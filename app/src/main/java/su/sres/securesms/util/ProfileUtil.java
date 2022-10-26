@@ -10,6 +10,7 @@ import org.signal.zkgroup.VerificationFailedException;
 import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
+import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
@@ -55,6 +56,8 @@ public final class ProfileUtil {
         } catch (ExecutionException e) {
             if (e.getCause() instanceof PushNetworkException) {
                 throw (PushNetworkException) e.getCause();
+            } else if (e.getCause() instanceof NotFoundException) {
+                throw (NotFoundException) e.getCause();
             } else {
                 throw new IOException(e);
             }
@@ -69,7 +72,7 @@ public final class ProfileUtil {
                                                            @NonNull Recipient recipient,
                                                            @NonNull SignalServiceProfile.RequestType requestType)
     {
-        SignalServiceAddress         address            = RecipientUtil.toSignalServiceAddressBestEffort(context, recipient);
+        SignalServiceAddress         address            = toSignalServiceAddress(context, recipient);
         Optional<UnidentifiedAccess> unidentifiedAccess = getUnidentifiedAccess(context, recipient);
         Optional<ProfileKey>         profileKey         = ProfileKeyUtil.profileKeyOptional(recipient.getProfileKey());
 
@@ -128,12 +131,20 @@ public final class ProfileUtil {
     }
 
     private static Optional<UnidentifiedAccess> getUnidentifiedAccess(@NonNull Context context, @NonNull Recipient recipient) {
-        Optional<UnidentifiedAccessPair> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, recipient);
+        Optional<UnidentifiedAccessPair> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, recipient, false);
 
         if (unidentifiedAccess.isPresent()) {
             return unidentifiedAccess.get().getTargetUnidentifiedAccess();
         }
 
         return Optional.absent();
+    }
+
+    private static @NonNull SignalServiceAddress toSignalServiceAddress(@NonNull Context context, @NonNull Recipient recipient) {
+        if (recipient.getRegistered() == RecipientDatabase.RegisteredState.NOT_REGISTERED) {
+            return new SignalServiceAddress(recipient.getUuid().orNull(), recipient.getE164().orNull());
+        } else {
+            return RecipientUtil.toSignalServiceAddressBestEffort(context, recipient);
+        }
     }
 }

@@ -2,8 +2,19 @@ package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.Person;
+
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.Intent;
 import android.telephony.SmsMessage;
 
+import com.google.android.gms.auth.api.phone.SmsRetriever;
+import com.google.android.gms.common.api.Status;
+
+import su.sres.securesms.R;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
@@ -14,15 +25,20 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase.InsertResult;
 import su.sres.securesms.database.SmsDatabase;
+import su.sres.securesms.notifications.NotificationChannels;
+import su.sres.securesms.notifications.NotificationIds;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.sms.IncomingTextMessage;
+import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.Base64;
+import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class SmsReceiveJob extends BaseJob {
 
@@ -40,7 +56,7 @@ public class SmsReceiveJob extends BaseJob {
   public SmsReceiveJob(@Nullable Object[] pdus, int subscriptionId) {
     this(new Job.Parameters.Builder()
                     .addConstraint(SqlCipherMigrationConstraint.KEY)
-                    .setMaxAttempts(25)
+                    .setLifespan(TimeUnit.DAYS.toMillis(1))
                     .build(),
             pdus,
             subscriptionId);
@@ -71,12 +87,19 @@ public class SmsReceiveJob extends BaseJob {
   }
 
   @Override
-  public void onRun() throws MigrationPendingException {
-    if (TextSecurePreferences.getLocalUuid(context) == null && TextSecurePreferences.getLocalNumber(context) == null) {
-      throw new NotReadyException();
-    }
-    
+  public void onRun() throws MigrationPendingException, RetryLaterException {
     Optional<IncomingTextMessage> message = assembleMessageFragments(pdus, subscriptionId);
+    if (TextSecurePreferences.getLocalUuid(context) == null && TextSecurePreferences.getLocalNumber(context) == null) {
+      Log.i(TAG, "Received an SMS before we're registered...");
+
+      if (message.isPresent()) {
+          Log.w(TAG, "Received an SMS before registration is complete. We'll try again later.");
+          throw new RetryLaterException();
+      } else {
+        Log.w(TAG, "Received an SMS before registration is complete, but couldn't assemble the message anyway. Ignoring.");
+        return;
+      }
+    }
 
     if (message.isPresent() && !isBlocked(message.get())) {
       Optional<InsertResult> insertResult = storeMessage(message.get());
@@ -98,7 +121,8 @@ public class SmsReceiveJob extends BaseJob {
 
   @Override
   public boolean onShouldRetry(@NonNull Exception exception) {
-    return exception instanceof MigrationPendingException;
+    return exception instanceof MigrationPendingException ||
+            exception instanceof RetryLaterException;
   }
 
   private boolean isBlocked(IncomingTextMessage message) {
@@ -149,9 +173,6 @@ public class SmsReceiveJob extends BaseJob {
     return Optional.of(new IncomingTextMessage(messages));
   }
 
-  private class MigrationPendingException extends Exception {
-  }
-
   public static final class Factory implements Job.Factory<SmsReceiveJob> {
     @Override
     public @NonNull SmsReceiveJob create(@NonNull Parameters parameters, @NonNull Data data) {
@@ -171,6 +192,6 @@ public class SmsReceiveJob extends BaseJob {
     }
   }
 
-  private static class NotReadyException extends RuntimeException {
+  private class MigrationPendingException extends Exception {
   }
 }

@@ -26,6 +26,7 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import androidx.annotation.NonNull;
 
+import su.sres.securesms.BuildConfig;
 import su.sres.securesms.logging.Log;
 
 import java.io.File;
@@ -35,7 +36,8 @@ import java.io.OutputStream;
 
 public class MmsBodyProvider extends ContentProvider {
   private static final String TAG                = MmsBodyProvider.class.getSimpleName();
-  private static final String CONTENT_URI_STRING = "content://su.sres.provider.securesms.mms/mms";
+  private static final String CONTENT_AUTHORITY  = BuildConfig.APPLICATION_ID + ".mms";
+  private static final String CONTENT_URI_STRING = "content://" + CONTENT_AUTHORITY + "/mms";
   public  static final Uri    CONTENT_URI        = Uri.parse(CONTENT_URI_STRING);
   private static final int    SINGLE_ROW         = 1;
 
@@ -43,7 +45,7 @@ public class MmsBodyProvider extends ContentProvider {
 
   static {
     uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-    uriMatcher.addURI("su.sres.provider.securesms.mms", "mms/#", SINGLE_ROW);
+    uriMatcher.addURI(CONTENT_AUTHORITY, "mms/#", SINGLE_ROW);
   }
 
   @Override

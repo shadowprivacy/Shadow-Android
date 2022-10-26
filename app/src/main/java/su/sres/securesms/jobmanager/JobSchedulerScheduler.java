@@ -11,7 +11,6 @@ import android.content.SharedPreferences;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logging.Log;
 
@@ -36,7 +35,15 @@ public class JobSchedulerScheduler implements Scheduler {
     @RequiresApi(26)
     @Override
     public void schedule(long delay, @NonNull List<Constraint> constraints) {
-        JobInfo.Builder jobInfoBuilder = new JobInfo.Builder(getNextId(), new ComponentName(application, SystemService.class))
+        JobScheduler jobScheduler = application.getSystemService(JobScheduler.class);
+        int          currentId    = getCurrentId();
+
+        if (constraints.isEmpty() && jobScheduler.getPendingJob(currentId) != null) {
+            Log.d(TAG, "Skipping JobScheduler enqueue because we have no constraints and there's already one pending.");
+            return;
+        }
+
+        JobInfo.Builder jobInfoBuilder = new JobInfo.Builder(getAndUpdateNextId(), new ComponentName(application, SystemService.class))
                 .setMinimumLatency(delay)
                 .setPersisted(true);
 
@@ -44,12 +51,15 @@ public class JobSchedulerScheduler implements Scheduler {
             constraint.applyToJobInfo(jobInfoBuilder);
         }
 
-        Log.i(TAG, "Scheduling a run in " + delay + " ms.");
-        JobScheduler jobScheduler = application.getSystemService(JobScheduler.class);
         jobScheduler.schedule(jobInfoBuilder.build());
     }
 
-    private int getNextId() {
+    private int getCurrentId() {
+        SharedPreferences prefs = application.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        return prefs.getInt(PREF_NEXT_ID, 0);
+    }
+
+    private int getAndUpdateNextId() {
         SharedPreferences prefs      = application.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         int               returnedId = prefs.getInt(PREF_NEXT_ID, 0);
         int               nextId     = returnedId + 1 > MAX_ID ? 0 : returnedId + 1;
@@ -64,7 +74,6 @@ public class JobSchedulerScheduler implements Scheduler {
 
         @Override
         public boolean onStartJob(JobParameters params) {
-            Log.d(TAG, "onStartJob()");
 
             JobManager jobManager = ApplicationDependencies.getJobManager();
 
@@ -73,7 +82,6 @@ public class JobSchedulerScheduler implements Scheduler {
                 public void onQueueEmpty() {
                     jobManager.removeOnEmptyQueueListener(this);
                     jobFinished(params, false);
-                    Log.d(TAG, "jobFinished()");
                 }
             });
 
@@ -84,7 +92,6 @@ public class JobSchedulerScheduler implements Scheduler {
 
         @Override
         public boolean onStopJob(JobParameters params) {
-            Log.d(TAG, "onStopJob()");
             return false;
         }
     }

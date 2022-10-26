@@ -52,12 +52,7 @@ public abstract class Slide {
 
   @Nullable
   public Uri getUri() {
-    return attachment.getDataUri();
-  }
-
-  @Nullable
-  public Uri getThumbnailUri() {
-    return attachment.getThumbnailUri();
+    return attachment.getUri();
   }
 
   @NonNull
@@ -189,7 +184,6 @@ public abstract class Slide {
     String                 resolvedType    = Optional.fromNullable(MediaUtil.getMimeType(context, uri)).or(defaultMime);
     String                 fastPreflightId = String.valueOf(new SecureRandom().nextLong());
     return new UriAttachment(uri,
-            hasThumbnail ? uri : null,
             resolvedType,
             AttachmentDatabase.TRANSFER_PROGRESS_STARTED,
             size,
@@ -211,7 +205,10 @@ public abstract class Slide {
     Optional<String> fileName = getFileName();
 
     if (fileName.isPresent()) {
-      return Optional.of(getFileType(fileName));
+      String fileType = getFileType(fileName);
+      if (!fileType.isEmpty()) {
+        return Optional.of(fileType);
+      }
     }
 
     return Optional.fromNullable(MediaUtil.getExtension(context, getUri()));
@@ -247,13 +244,12 @@ public abstract class Slide {
            this.hasImage() == that.hasImage()                        &&
            this.hasVideo() == that.hasVideo()                        &&
            this.getTransferState() == that.getTransferState()        &&
-           Util.equals(this.getUri(), that.getUri())                 &&
-           Util.equals(this.getThumbnailUri(), that.getThumbnailUri());
+            Util.equals(this.getUri(), that.getUri());
   }
 
   @Override
   public int hashCode() {
     return Util.hashCode(getContentType(), hasAudio(), hasImage(),
-                         hasVideo(), getUri(), getThumbnailUri(), getTransferState());
+            hasVideo(), getUri(), getTransferState());
   }
 }

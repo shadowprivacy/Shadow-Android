@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.AppCapabilities;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.signalservice.api.profiles.SignalServiceProfile;
+import su.sres.signalservice.api.account.AccountAttributes;
 
 public final class LogSectionCapabilities implements LogSection {
 
@@ -28,7 +28,7 @@ public final class LogSectionCapabilities implements LogSection {
 
         Recipient self = Recipient.self();
 
-        SignalServiceProfile.Capabilities capabilities = AppCapabilities.getCapabilities(false);
+        AccountAttributes.Capabilities capabilities = AppCapabilities.getCapabilities(false);
 
         return new StringBuilder().append("Local device UUID : ").append(capabilities.isUuid()).append("\n")
                 .append("Global UUID       : ").append(self.getUuidCapability()).append("\n")

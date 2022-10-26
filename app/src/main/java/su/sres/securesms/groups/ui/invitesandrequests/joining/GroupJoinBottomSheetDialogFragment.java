@@ -24,7 +24,9 @@ import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.conversation.ConversationActivity;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.v2.GroupInviteLinkUrl;
+import su.sres.securesms.jobs.RetrieveProfileJob;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.BottomSheetUtil;
@@ -112,6 +114,13 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
                     });
                     groupJoinButton.setVisibility(View.VISIBLE);
                     break;
+                case UPDATE_LINKED_DEVICE_TO_JOIN:
+                    groupJoinExplain.setText(R.string.GroupJoinUpdateRequiredBottomSheetDialogFragment_update_linked_device_message);
+                    groupCancelButton.setText(android.R.string.ok);
+                    groupJoinButton.setVisibility(View.GONE);
+                    ApplicationDependencies.getJobManager()
+                            .add(RetrieveProfileJob.forRecipient(Recipient.self().getId()));
+                    break;
                 case LOCAL_CAN_JOIN:
                     groupJoinExplain.setText(details.joinRequiresAdminApproval() ? R.string.GroupJoinBottomSheetDialogFragment_admin_approval_needed
                             : R.string.GroupJoinBottomSheetDialogFragment_direct_join);
@@ -149,19 +158,22 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
         );
     }
 
-    private static FeatureFlags.GroupJoinStatus getGroupJoinStatus() {
+    private static ExtendedGroupJoinStatus getGroupJoinStatus() {
         FeatureFlags.GroupJoinStatus groupJoinStatus = FeatureFlags.clientLocalGroupJoinStatus();
 
-        if (groupJoinStatus == FeatureFlags.GroupJoinStatus.LOCAL_CAN_JOIN) {
-            if (!FeatureFlags.groupsV2() || Recipient.self().getGroupsV2Capability() == Recipient.Capability.NOT_SUPPORTED) {
-                // TODO [Alan] GV2 additional copy could be presented in these cases
-                return FeatureFlags.GroupJoinStatus.UPDATE_TO_JOIN;
+        switch (groupJoinStatus) {
+            case COMING_SOON   : return ExtendedGroupJoinStatus.COMING_SOON;
+            case UPDATE_TO_JOIN: return ExtendedGroupJoinStatus.UPDATE_TO_JOIN;
+            case LOCAL_CAN_JOIN: {
+                if (Recipient.self().getGroupsV2Capability() != Recipient.Capability.SUPPORTED) {
+                    return ExtendedGroupJoinStatus.UPDATE_LINKED_DEVICE_TO_JOIN;
+                }
+
+                return ExtendedGroupJoinStatus.LOCAL_CAN_JOIN;
             }
 
-            return groupJoinStatus;
+            default: throw new AssertionError();
         }
-
-        return groupJoinStatus;
     }
 
     private @NonNull String errorToMessage(@NonNull FetchGroupDetailsError error) {
@@ -198,5 +210,27 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
         public @NonNull FallbackContactPhoto getPhotoForGroup() {
             return new ResourceContactPhoto(R.drawable.ic_group_outline_48);
         }
+    }
+
+    public enum ExtendedGroupJoinStatus {
+        /**
+         * No version of the client that can join V2 groups by link is in production.
+         */
+        COMING_SOON,
+
+        /**
+         * A newer version of the client is in production that will allow joining via GV2 group links.
+         */
+        UPDATE_TO_JOIN,
+
+        /**
+         * Locally we're using a version that can use group links, but one or more linked devices needs updating for GV2.
+         */
+        UPDATE_LINKED_DEVICE_TO_JOIN,
+
+        /**
+         * This version of the client allows joining via GV2 group links.
+         */
+        LOCAL_CAN_JOIN
     }
 }

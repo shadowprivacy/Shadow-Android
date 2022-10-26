@@ -16139,33 +16139,28 @@ public final class SignalServiceProtos {
       boolean getRemove();
 
       /**
-       * <code>optional string targetAuthorE164 = 3;</code>
-       * @return Whether the targetAuthorE164 field is set.
-       */
-      boolean hasTargetAuthorE164();
-      /**
-       * <code>optional string targetAuthorE164 = 3;</code>
-       * @return The targetAuthorE164.
-       */
-      java.lang.String getTargetAuthorE164();
-      /**
-       * <code>optional string targetAuthorE164 = 3;</code>
-       * @return The bytes for targetAuthorE164.
-       */
-      com.google.protobuf.ByteString
-          getTargetAuthorE164Bytes();
-
-      /**
+       * <pre>
+       * optional string targetAuthorE164    = 3;
+       * </pre>
+       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @return Whether the targetAuthorUuid field is set.
        */
       boolean hasTargetAuthorUuid();
       /**
+       * <pre>
+       * optional string targetAuthorE164    = 3;
+       * </pre>
+       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @return The targetAuthorUuid.
        */
       java.lang.String getTargetAuthorUuid();
       /**
+       * <pre>
+       * optional string targetAuthorE164    = 3;
+       * </pre>
+       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @return The bytes for targetAuthorUuid.
        */
@@ -16193,7 +16188,6 @@ public final class SignalServiceProtos {
         ReactionOrBuilder {
       private Reaction() {
         emoji_ = "";
-        targetAuthorE164_ = "";
         targetAuthorUuid_ = "";
       }
       private int bitField0_;
@@ -16290,76 +16284,25 @@ public final class SignalServiceProtos {
         remove_ = false;
       }
 
-      public static final int TARGETAUTHORE164_FIELD_NUMBER = 3;
-      private java.lang.String targetAuthorE164_;
-      /**
-       * <code>optional string targetAuthorE164 = 3;</code>
-       * @return Whether the targetAuthorE164 field is set.
-       */
-      @java.lang.Override
-      public boolean hasTargetAuthorE164() {
-        return ((bitField0_ & 0x00000004) != 0);
-      }
-      /**
-       * <code>optional string targetAuthorE164 = 3;</code>
-       * @return The targetAuthorE164.
-       */
-      @java.lang.Override
-      public java.lang.String getTargetAuthorE164() {
-        return targetAuthorE164_;
-      }
-      /**
-       * <code>optional string targetAuthorE164 = 3;</code>
-       * @return The bytes for targetAuthorE164.
-       */
-      @java.lang.Override
-      public com.google.protobuf.ByteString
-          getTargetAuthorE164Bytes() {
-        return com.google.protobuf.ByteString.copyFromUtf8(targetAuthorE164_);
-      }
-      /**
-       * <code>optional string targetAuthorE164 = 3;</code>
-       * @param value The targetAuthorE164 to set.
-       */
-      private void setTargetAuthorE164(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-        targetAuthorE164_ = value;
-      }
-      /**
-       * <code>optional string targetAuthorE164 = 3;</code>
-       */
-      private void clearTargetAuthorE164() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        targetAuthorE164_ = getDefaultInstance().getTargetAuthorE164();
-      }
-      /**
-       * <code>optional string targetAuthorE164 = 3;</code>
-       * @param value The bytes for targetAuthorE164 to set.
-       */
-      private void setTargetAuthorE164Bytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-        targetAuthorE164_ = value.toStringUtf8();
-      }
-
       public static final int TARGETAUTHORUUID_FIELD_NUMBER = 4;
       private java.lang.String targetAuthorUuid_;
       /**
+       * <pre>
+       * optional string targetAuthorE164    = 3;
+       * </pre>
+       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @return Whether the targetAuthorUuid field is set.
        */
       @java.lang.Override
       public boolean hasTargetAuthorUuid() {
-        return ((bitField0_ & 0x00000008) != 0);
+        return ((bitField0_ & 0x00000004) != 0);
       }
       /**
+       * <pre>
+       * optional string targetAuthorE164    = 3;
+       * </pre>
+       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @return The targetAuthorUuid.
        */
@@ -16368,6 +16311,10 @@ public final class SignalServiceProtos {
         return targetAuthorUuid_;
       }
       /**
+       * <pre>
+       * optional string targetAuthorE164    = 3;
+       * </pre>
+       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @return The bytes for targetAuthorUuid.
        */
@@ -16377,6 +16324,10 @@ public final class SignalServiceProtos {
         return com.google.protobuf.ByteString.copyFromUtf8(targetAuthorUuid_);
       }
       /**
+       * <pre>
+       * optional string targetAuthorE164    = 3;
+       * </pre>
+       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @param value The targetAuthorUuid to set.
        */
@@ -16385,17 +16336,25 @@ public final class SignalServiceProtos {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000004;
         targetAuthorUuid_ = value;
       }
       /**
+       * <pre>
+       * optional string targetAuthorE164    = 3;
+       * </pre>
+       *
        * <code>optional string targetAuthorUuid = 4;</code>
        */
       private void clearTargetAuthorUuid() {
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000004);
         targetAuthorUuid_ = getDefaultInstance().getTargetAuthorUuid();
       }
       /**
+       * <pre>
+       * optional string targetAuthorE164    = 3;
+       * </pre>
+       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @param value The bytes for targetAuthorUuid to set.
        */
@@ -16404,7 +16363,7 @@ public final class SignalServiceProtos {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000004;
         targetAuthorUuid_ = value.toStringUtf8();
       }
 
@@ -16416,7 +16375,7 @@ public final class SignalServiceProtos {
        */
       @java.lang.Override
       public boolean hasTargetSentTimestamp() {
-        return ((bitField0_ & 0x00000010) != 0);
+        return ((bitField0_ & 0x00000008) != 0);
       }
       /**
        * <code>optional uint64 targetSentTimestamp = 5;</code>
@@ -16431,14 +16390,14 @@ public final class SignalServiceProtos {
        * @param value The targetSentTimestamp to set.
        */
       private void setTargetSentTimestamp(long value) {
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000008;
         targetSentTimestamp_ = value;
       }
       /**
        * <code>optional uint64 targetSentTimestamp = 5;</code>
        */
       private void clearTargetSentTimestamp() {
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000008);
         targetSentTimestamp_ = 0L;
       }
 
@@ -16631,63 +16590,10 @@ public final class SignalServiceProtos {
         }
 
         /**
-         * <code>optional string targetAuthorE164 = 3;</code>
-         * @return Whether the targetAuthorE164 field is set.
-         */
-        @java.lang.Override
-        public boolean hasTargetAuthorE164() {
-          return instance.hasTargetAuthorE164();
-        }
-        /**
-         * <code>optional string targetAuthorE164 = 3;</code>
-         * @return The targetAuthorE164.
-         */
-        @java.lang.Override
-        public java.lang.String getTargetAuthorE164() {
-          return instance.getTargetAuthorE164();
-        }
-        /**
-         * <code>optional string targetAuthorE164 = 3;</code>
-         * @return The bytes for targetAuthorE164.
-         */
-        @java.lang.Override
-        public com.google.protobuf.ByteString
-            getTargetAuthorE164Bytes() {
-          return instance.getTargetAuthorE164Bytes();
-        }
-        /**
-         * <code>optional string targetAuthorE164 = 3;</code>
-         * @param value The targetAuthorE164 to set.
-         * @return This builder for chaining.
-         */
-        public Builder setTargetAuthorE164(
-            java.lang.String value) {
-          copyOnWrite();
-          instance.setTargetAuthorE164(value);
-          return this;
-        }
-        /**
-         * <code>optional string targetAuthorE164 = 3;</code>
-         * @return This builder for chaining.
-         */
-        public Builder clearTargetAuthorE164() {
-          copyOnWrite();
-          instance.clearTargetAuthorE164();
-          return this;
-        }
-        /**
-         * <code>optional string targetAuthorE164 = 3;</code>
-         * @param value The bytes for targetAuthorE164 to set.
-         * @return This builder for chaining.
-         */
-        public Builder setTargetAuthorE164Bytes(
-            com.google.protobuf.ByteString value) {
-          copyOnWrite();
-          instance.setTargetAuthorE164Bytes(value);
-          return this;
-        }
-
-        /**
+         * <pre>
+         * optional string targetAuthorE164    = 3;
+         * </pre>
+         *
          * <code>optional string targetAuthorUuid = 4;</code>
          * @return Whether the targetAuthorUuid field is set.
          */
@@ -16696,6 +16602,10 @@ public final class SignalServiceProtos {
           return instance.hasTargetAuthorUuid();
         }
         /**
+         * <pre>
+         * optional string targetAuthorE164    = 3;
+         * </pre>
+         *
          * <code>optional string targetAuthorUuid = 4;</code>
          * @return The targetAuthorUuid.
          */
@@ -16704,6 +16614,10 @@ public final class SignalServiceProtos {
           return instance.getTargetAuthorUuid();
         }
         /**
+         * <pre>
+         * optional string targetAuthorE164    = 3;
+         * </pre>
+         *
          * <code>optional string targetAuthorUuid = 4;</code>
          * @return The bytes for targetAuthorUuid.
          */
@@ -16713,6 +16627,10 @@ public final class SignalServiceProtos {
           return instance.getTargetAuthorUuidBytes();
         }
         /**
+         * <pre>
+         * optional string targetAuthorE164    = 3;
+         * </pre>
+         *
          * <code>optional string targetAuthorUuid = 4;</code>
          * @param value The targetAuthorUuid to set.
          * @return This builder for chaining.
@@ -16724,6 +16642,10 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
+         * <pre>
+         * optional string targetAuthorE164    = 3;
+         * </pre>
+         *
          * <code>optional string targetAuthorUuid = 4;</code>
          * @return This builder for chaining.
          */
@@ -16733,6 +16655,10 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
+         * <pre>
+         * optional string targetAuthorE164    = 3;
+         * </pre>
+         *
          * <code>optional string targetAuthorUuid = 4;</code>
          * @param value The bytes for targetAuthorUuid to set.
          * @return This builder for chaining.
@@ -16799,13 +16725,12 @@ public final class SignalServiceProtos {
                 "bitField0_",
                 "emoji_",
                 "remove_",
-                "targetAuthorE164_",
                 "targetAuthorUuid_",
                 "targetSentTimestamp_",
               };
               java.lang.String info =
-                  "\u0001\u0005\u0000\u0001\u0001\u0005\u0005\u0000\u0000\u0000\u0001\b\u0000\u0002" +
-                  "\u0007\u0001\u0003\b\u0002\u0004\b\u0003\u0005\u0003\u0004";
+                  "\u0001\u0004\u0000\u0001\u0001\u0005\u0004\u0000\u0000\u0000\u0001\b\u0000\u0002" +
+                  "\u0007\u0001\u0004\b\u0002\u0005\u0003\u0003";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through

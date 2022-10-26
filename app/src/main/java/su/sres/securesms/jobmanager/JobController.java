@@ -158,9 +158,8 @@ class JobController {
 
     @WorkerThread
     synchronized void cancelAllInQueue(@NonNull String queue) {
-        Stream.of(runningJobs.values())
-                .filter(j -> Objects.equals(j.getParameters().getQueue(), queue))
-                .map(Job::getId)
+        Stream.of(jobStorage.getJobsInQueue(queue))
+                .map(JobSpec::getId)
                 .forEach(this::cancelJob);
     }
 

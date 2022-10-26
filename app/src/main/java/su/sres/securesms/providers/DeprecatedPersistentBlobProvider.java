@@ -6,6 +6,8 @@ import android.content.UriMatcher;
 import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import su.sres.securesms.BuildConfig;
 import su.sres.securesms.logging.Log;
 import android.webkit.MimeTypeMap;
 
@@ -28,11 +30,11 @@ import java.io.InputStream;
 @Deprecated
 public class DeprecatedPersistentBlobProvider {
 
-  private static final String TAG = DeprecatedPersistentBlobProvider.class.getSimpleName();
+  private static final String TAG = Log.tag(DeprecatedPersistentBlobProvider.class);
 
-  private static final String     URI_STRING            = "content://su.sres.securesms/capture-new";
+  public  static final String     AUTHORITY             = BuildConfig.APPLICATION_ID;
+  private static final String     URI_STRING            = "content://" + AUTHORITY + "/capture-new";
   public  static final Uri        CONTENT_URI           = Uri.parse(URI_STRING);
-  public  static final String     AUTHORITY             = "su.sres.securesms";
   public  static final String     EXPECTED_PATH_OLD     = "capture/*/*/#";
   public  static final String     EXPECTED_PATH_NEW     = "capture-new/*/*/*/*/#";
 

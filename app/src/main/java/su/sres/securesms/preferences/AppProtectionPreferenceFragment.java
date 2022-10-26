@@ -40,7 +40,11 @@ import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import mobi.upod.timedurationpicker.TimeDurationPickerDialog;
@@ -391,10 +395,15 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
 
       final UserLoginPrivacyValues.UserLoginSharingMode[] value = { userLoginPrivacyValues.getUserLoginSharingMode() };
 
+      Map<UserLoginPrivacyValues.UserLoginSharingMode, CharSequence> items        = items(requireContext());
+      List<UserLoginPrivacyValues.UserLoginSharingMode> modes        = new ArrayList<>(items.keySet());
+      CharSequence[]                                                     modeStrings  = items.values().toArray(new CharSequence[0]);
+      int                                                                selectedMode = modes.indexOf(value[0]);
+
       new AlertDialog.Builder(requireActivity())
               .setTitle(R.string.preferences_app_protection__see_my_phone_number)
               .setCancelable(true)
-              .setSingleChoiceItems(items(requireContext()), value[0].ordinal(), (dialog, which) -> value[0] = UserLoginPrivacyValues.UserLoginSharingMode.values()[which])
+              .setSingleChoiceItems(modeStrings, selectedMode, (dialog, which) -> value[0] = modes.get(which))
               .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                 UserLoginPrivacyValues.UserLoginSharingMode UserLoginSharingMode = value[0];
                 userLoginPrivacyValues.setUserLoginSharingMode(UserLoginSharingMode);
@@ -408,12 +417,14 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
       return true;
     }
 
-    private CharSequence[] items(Context context) {
-      return new CharSequence[]{
-              titleAndDescription(context, context.getString(R.string.PhoneNumberPrivacy_everyone), context.getString(R.string.PhoneNumberPrivacy_everyone_see_description)),
-              context.getString(R.string.PhoneNumberPrivacy_nobody) };
-    }
+    private Map<UserLoginPrivacyValues.UserLoginSharingMode, CharSequence> items(Context context) {
+      Map<UserLoginPrivacyValues.UserLoginSharingMode, CharSequence> map = new LinkedHashMap<>();
 
+      map.put(UserLoginPrivacyValues.UserLoginSharingMode.EVERYONE, titleAndDescription(context, context.getString(R.string.PhoneNumberPrivacy_everyone), context.getString(R.string.PhoneNumberPrivacy_everyone_see_description)));
+      map.put(UserLoginPrivacyValues.UserLoginSharingMode.NOBODY, context.getString(R.string.PhoneNumberPrivacy_nobody));
+
+      return map;
+    }
   }
 
   private final class UserLoginPrivacyWhoCanFindClickListener implements Preference.OnPreferenceClickListener {

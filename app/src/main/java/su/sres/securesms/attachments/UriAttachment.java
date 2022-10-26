@@ -12,7 +12,6 @@ import su.sres.securesms.stickers.StickerLocator;
 public class UriAttachment extends Attachment {
 
   private final @NonNull  Uri dataUri;
-  private final @Nullable Uri thumbnailUri;
 
   public UriAttachment(@NonNull Uri uri,
                        @NonNull String contentType,
@@ -28,11 +27,10 @@ public class UriAttachment extends Attachment {
                        @Nullable AudioHash audioHash,
                        @Nullable TransformProperties transformProperties)
   {
-    this(uri, uri, contentType, transferState, size, 0, 0, fileName, null, voiceNote, borderless, quote, caption, stickerLocator, blurHash, audioHash, transformProperties);
+    this(uri, contentType, transferState, size, 0, 0, fileName, null, voiceNote, borderless, quote, caption, stickerLocator, blurHash, audioHash, transformProperties);
   }
 
   public UriAttachment(@NonNull Uri dataUri,
-                       @Nullable Uri thumbnailUri,
                        @NonNull String contentType,
                        int transferState,
                        long size,
@@ -50,20 +48,13 @@ public class UriAttachment extends Attachment {
                        @Nullable TransformProperties transformProperties)
   {
     super(contentType, transferState, size, fileName, 0, null, null, null, null, fastPreflightId, voiceNote, borderless, width, height, quote, 0, caption, stickerLocator, blurHash, audioHash, transformProperties);
-    this.dataUri      = dataUri;
-    this.thumbnailUri = thumbnailUri;
+    this.dataUri = dataUri;
   }
 
   @Override
   @NonNull
-  public Uri getDataUri() {
+  public Uri getUri() {
     return dataUri;
-  }
-
-  @Override
-  @Nullable
-  public Uri getThumbnailUri() {
-    return thumbnailUri;
   }
 
   @Override

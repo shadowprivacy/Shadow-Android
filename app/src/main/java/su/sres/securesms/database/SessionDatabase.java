@@ -12,6 +12,8 @@ import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import org.whispersystems.libsignal.state.SessionRecord;
+
+import su.sres.securesms.util.SqlUtil;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.io.IOException;
@@ -142,6 +144,16 @@ public class SessionDatabase extends Database {
   public void deleteAllFor(@NonNull RecipientId recipientId) {
     SQLiteDatabase database = databaseHelper.getWritableDatabase();
     database.delete(TABLE_NAME, RECIPIENT_ID + " = ?", new String[] {recipientId.serialize()});
+  }
+
+  public boolean hasSessionFor(@NonNull RecipientId recipientId) {
+    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    String         query    = RECIPIENT_ID + " = ?";
+    String[]       args     = SqlUtil.buildArgs(recipientId);
+
+    try (Cursor cursor = database.query(TABLE_NAME, new String[] { ID }, query, args, null, null, null, "1")) {
+      return cursor != null && cursor.moveToFirst();
+    }
   }
 
   public static final class SessionRow {

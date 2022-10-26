@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 
+import su.sres.securesms.BuildConfig;
 import su.sres.securesms.crypto.AttachmentSecret;
 import su.sres.securesms.crypto.AttachmentSecretProvider;
 import su.sres.securesms.crypto.ModernDecryptingPartInputStream;
@@ -43,9 +44,9 @@ public class BlobProvider {
     private static final String MULTI_SESSION_DIRECTORY  = "multi_session_blobs";
     private static final String SINGLE_SESSION_DIRECTORY = "single_session_blobs";
 
-    public static final Uri        CONTENT_URI = Uri.parse("content://su.sres.securesms/blob");
-    public static final String     AUTHORITY   = "su.sres.securesms";
-    public static final String     PATH        = "blob/*/*/*/*/*";
+    public static final String AUTHORITY   = BuildConfig.APPLICATION_ID;
+    public static final Uri    CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/blob");
+    public static final String PATH        = "blob/*/*/*/*/*";
 
     private static final int STORAGE_TYPE_PATH_SEGMENT = 1;
     private static final int MIMETYPE_PATH_SEGMENT     = 2;

@@ -22,10 +22,12 @@ import su.sres.securesms.jobs.MultiDeviceMessageRequestResponseJob;
 import su.sres.securesms.jobs.RotateProfileKeyJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import su.sres.securesms.util.FeatureFlags;
@@ -42,7 +44,8 @@ public class RecipientUtil {
      * recipient is returned.
      */
     @WorkerThread
-    public static @NonNull SignalServiceAddress toSignalServiceAddressBestEffort(@NonNull Context context, @NonNull Recipient recipient) {
+    public static @NonNull
+    SignalServiceAddress toSignalServiceAddressBestEffort(@NonNull Context context, @NonNull Recipient recipient) {
         try {
             return toSignalServiceAddress(context, recipient);
         } catch (IOException e) {
@@ -57,52 +60,56 @@ public class RecipientUtil {
      * available. If the request to get a UUID fails, an IOException is thrown.
      */
     @WorkerThread
-    public static @NonNull SignalServiceAddress toSignalServiceAddress(@NonNull Context context, @NonNull Recipient recipient)
-            throws IOException
-    {
+    public static @NonNull
+    SignalServiceAddress toSignalServiceAddress(@NonNull Context context, @NonNull Recipient recipient)
+            throws IOException {
         recipient = recipient.resolve();
 
         if (!recipient.getUuid().isPresent() && !recipient.getE164().isPresent()) {
             throw new AssertionError(recipient.getId() + " - No UUID or phone number!");
         }
 
-        // this won't be the case, since all recipients will have UUIDs
-   /*     if (!recipient.getUuid().isPresent()) {
+
+        if (!recipient.getUuid().isPresent()) {
 
             Log.i(TAG, recipient.getId() + " is missing a UUID...");
-                  RegisteredState state = DirectoryHelper.refreshDirectoryFor(context, recipient, false);
+            DirectoryHelper.refreshDirectory(context);
 
-      recipient = Recipient.resolved(recipient.getId());
-      Log.i(TAG, "Successfully performed a UUID fetch for " + recipient.getId() + ". Registered: " + state);
-        } */
+            recipient = Recipient.resolved(recipient.getId());
+
+        }
 
         return new SignalServiceAddress(Optional.fromNullable(recipient.getUuid().orNull()), Optional.fromNullable(recipient.resolve().getE164().orNull()));
     }
 
-    public static @NonNull List<SignalServiceAddress> toSignalServiceAddresses(@NonNull Context context, @NonNull List<RecipientId> recipients)
-            throws IOException
-    {
+    public static @NonNull
+    List<SignalServiceAddress> toSignalServiceAddresses(@NonNull Context context, @NonNull List<RecipientId> recipients)
+            throws IOException {
         return toSignalServiceAddressesFromResolved(context, Recipient.resolvedList(recipients));
     }
 
-    public static @NonNull List<SignalServiceAddress> toSignalServiceAddressesFromResolved(@NonNull Context context, @NonNull List<Recipient> recipients)
-            throws IOException
-    {
-
-            List<Recipient> recipientsWithoutUuids = Stream.of(recipients)
-                    .map(Recipient::resolve)
-                    .filterNot(Recipient::hasUuid)
-                    .toList();
-
-            if (recipientsWithoutUuids.size() > 0) {
-                DirectoryHelper.refreshDirectory(context);
-            }
-
+    public static @NonNull
+    List<SignalServiceAddress> toSignalServiceAddressesFromResolved(@NonNull Context context, @NonNull List<Recipient> recipients)
+            throws IOException {
+        ensureUuidsAreAvailable(context, recipients);
 
         return Stream.of(recipients)
                 .map(Recipient::resolve)
                 .map(r -> new SignalServiceAddress(r.getUuid().orNull(), r.getE164().orNull()))
                 .toList();
+    }
+
+    public static void ensureUuidsAreAvailable(@NonNull Context context, @NonNull Collection<Recipient> recipients)
+            throws IOException {
+
+        List<Recipient> recipientsWithoutUuids = Stream.of(recipients)
+                .map(Recipient::resolve)
+                .filterNot(Recipient::hasUuid)
+                .toList();
+
+        if (recipientsWithoutUuids.size() > 0) {
+            DirectoryHelper.refreshDirectory(context);
+        }
     }
 
     public static boolean isBlockable(@NonNull Recipient recipient) {
@@ -111,9 +118,9 @@ public class RecipientUtil {
     }
 
     public static List<Recipient> getEligibleForSending(@NonNull List<Recipient> recipients) {
-            return Stream.of(recipients)
-                    .filter(r -> r.getRegistered() != RecipientDatabase.RegisteredState.NOT_REGISTERED)
-                    .toList();
+        return Stream.of(recipients)
+                .filter(r -> r.getRegistered() != RecipientDatabase.RegisteredState.NOT_REGISTERED)
+                .toList();
     }
 
     /**
@@ -137,12 +144,11 @@ public class RecipientUtil {
      * GV2.
      * <p>
      * GV2 operations can also take longer due to the network.
-     * */
+     */
 
     @WorkerThread
     public static void block(@NonNull Context context, @NonNull Recipient recipient)
-    throws GroupChangeBusyException, IOException, GroupChangeFailedException
-    {
+            throws GroupChangeBusyException, IOException, GroupChangeFailedException {
         if (!isBlockable(recipient)) {
             throw new AssertionError("Recipient is not blockable!");
         }
@@ -181,7 +187,7 @@ public class RecipientUtil {
     /**
      * If true, the new message request UI does not need to be shown, and it's safe to send read
      * receipts.
-     *
+     * <p>
      * Note that this does not imply that a user has explicitly accepted a message request -- it could
      * also be the case that the thread in question is for a system contact or something of the like.
      */
@@ -191,8 +197,8 @@ public class RecipientUtil {
             return true;
         }
 
-        ThreadDatabase threadDatabase  = DatabaseFactory.getThreadDatabase(context);
-        Recipient      threadRecipient = threadDatabase.getRecipientForThreadId(threadId);
+        ThreadDatabase threadDatabase = DatabaseFactory.getThreadDatabase(context);
+        Recipient threadRecipient = threadDatabase.getRecipientForThreadId(threadId);
 
         if (threadRecipient == null) {
             return true;
@@ -241,7 +247,7 @@ public class RecipientUtil {
     @WorkerThread
     public static void shareProfileIfFirstSecureMessage(@NonNull Context context, @NonNull Recipient recipient) {
 
-        long threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdIfExistsFor(recipient);
+        long threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdIfExistsFor(recipient.getId());
 
         if (isPreMessageRequestThread(context, threadId)) {
             return;
@@ -255,29 +261,29 @@ public class RecipientUtil {
     }
 
     public static boolean isLegacyProfileSharingAccepted(@NonNull Recipient threadRecipient) {
-        return threadRecipient.isLocalNumber()    ||
+        return threadRecipient.isLocalNumber() ||
                 threadRecipient.isProfileSharing() ||
-                threadRecipient.isSystemContact()  ||
+                threadRecipient.isSystemContact() ||
                 !threadRecipient.isRegistered();
     }
 
     @WorkerThread
     private static boolean isMessageRequestAccepted(@NonNull Context context, long threadId, @NonNull Recipient threadRecipient) {
-        return threadRecipient.isLocalNumber()                       ||
-                threadRecipient.isProfileSharing()                    ||
-                threadRecipient.isSystemContact()                     ||
-                threadRecipient.isForceSmsSelection()                 ||
-                !threadRecipient.isRegistered()                       ||
-                hasSentMessageInThread(context, threadId)             ||
+        return threadRecipient.isLocalNumber() ||
+                threadRecipient.isProfileSharing() ||
+                threadRecipient.isSystemContact() ||
+                threadRecipient.isForceSmsSelection() ||
+                !threadRecipient.isRegistered() ||
+                hasSentMessageInThread(context, threadId) ||
                 noSecureMessagesAndNoCallsInThread(context, threadId) ||
                 isPreMessageRequestThread(context, threadId);
     }
 
     @WorkerThread
     private static boolean isCallRequestAccepted(@NonNull Context context, long threadId, @NonNull Recipient threadRecipient) {
-        return threadRecipient.isProfileSharing()            ||
-                threadRecipient.isSystemContact()             ||
-                hasSentMessageInThread(context, threadId)     ||
+        return threadRecipient.isProfileSharing() ||
+                threadRecipient.isSystemContact() ||
+                hasSentMessageInThread(context, threadId) ||
                 isPreMessageRequestThread(context, threadId);
     }
 

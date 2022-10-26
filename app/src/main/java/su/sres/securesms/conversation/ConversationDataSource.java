@@ -85,6 +85,8 @@ class ConversationDataSource extends PositionalDataSource<ConversationMessage> {
             }
         }
 
+        long mentionStart = System.currentTimeMillis();
+
         mentionHelper.fetchMentions(context);
 
         if (!isInvalid()) {
@@ -95,7 +97,7 @@ class ConversationDataSource extends PositionalDataSource<ConversationMessage> {
                     .toList();
 
             callback.onResult(items, params.requestedStartPosition, result.getTotal());
-            Log.d(TAG, "[Initial Load] " + (System.currentTimeMillis() - start) + " ms | thread: " + threadId + ", start: " + params.requestedStartPosition + ", requestedSize: " + params.requestedLoadSize + ", actualSize: " + result.getItems().size() + ", totalCount: " + result.getTotal());
+            Log.d(TAG, "[Initial Load] " + (System.currentTimeMillis() - start) + " ms (mentions: " + (System.currentTimeMillis() - mentionStart) + " ms) | thread: " + threadId + ", start: " + params.requestedStartPosition + ", requestedSize: " + params.requestedLoadSize + ", actualSize: " + result.getItems().size() + ", totalCount: " + result.getTotal());
         } else {
             Log.d(TAG, "[Initial Load] " + (System.currentTimeMillis() - start) + " ms | thread: " + threadId + ", start: " + params.requestedStartPosition + ", requestedSize: " + params.requestedLoadSize + ", totalCount: " + totalCount + " -- invalidated");
         }
@@ -117,6 +119,8 @@ class ConversationDataSource extends PositionalDataSource<ConversationMessage> {
             }
         }
 
+        long mentionStart = System.currentTimeMillis();
+
         mentionHelper.fetchMentions(context);
 
         List<ConversationMessage> items = Stream.of(records)
@@ -124,7 +128,7 @@ class ConversationDataSource extends PositionalDataSource<ConversationMessage> {
                 .toList();
         callback.onResult(items);
 
-        Log.d(TAG, "[Update] " + (System.currentTimeMillis() - start) + " ms | thread: " + threadId + ", start: " + params.startPosition + ", size: " + params.loadSize + (isInvalid() ? " -- invalidated" : ""));
+        Log.d(TAG, "[Update] " + (System.currentTimeMillis() - start) + " ms (mentions: " + (System.currentTimeMillis() - mentionStart) + " ms) | thread: " + threadId + ", start: " + params.startPosition + ", size: " + params.loadSize + (isInvalid() ? " -- invalidated" : ""));
     }
 
     private static class MentionHelper {

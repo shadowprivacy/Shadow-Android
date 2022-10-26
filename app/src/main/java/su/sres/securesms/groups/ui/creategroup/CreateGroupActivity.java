@@ -16,6 +16,7 @@ import su.sres.securesms.ContactSelectionActivity;
 import su.sres.securesms.ContactSelectionListFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.ContactsCursorLoader;
+import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.groups.GroupsV2CapabilityChecker;
 import su.sres.securesms.groups.ui.creategroup.details.AddGroupDetailsActivity;
@@ -31,6 +32,7 @@ import su.sres.securesms.util.views.SimpleProgressDialog;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -38,7 +40,7 @@ public class CreateGroupActivity extends ContactSelectionActivity {
 
     private static final String TAG = Log.tag(CreateGroupActivity.class);
 
-    private static final int   MINIMUM_GROUP_SIZE       = 1;
+    private static final int MINIMUM_GROUP_SIZE = 1;
     private static final short REQUEST_CODE_ADD_DETAILS = 17275;
 
     private View next;
@@ -125,7 +127,7 @@ public class CreateGroupActivity extends ContactSelectionActivity {
     }
 
     private void handleNextPressed() {
-        Stopwatch                              stopwatch         = new Stopwatch("Recipient Refresh");
+        Stopwatch stopwatch = new Stopwatch("Recipient Refresh");
         SimpleProgressDialog.DismissibleDialog dismissibleDialog = SimpleProgressDialog.showDelayed(this);
 
         SimpleTask.run(getLifecycle(), () -> {
@@ -143,21 +145,22 @@ public class CreateGroupActivity extends ContactSelectionActivity {
 
             Log.i(TAG, "Need to do " + registeredChecks.size() + " registration checks.");
 
-/*            for (Recipient recipient : registeredChecks) {
+            if (!registeredChecks.isEmpty()) {
                 try {
-                    DirectoryHelper.refreshDirectoryFor(this, recipient, false);
+                    DirectoryHelper.refreshDirectory(this);
                 } catch (IOException e) {
-                    Log.w(TAG, "Failed to refresh registered status for " + recipient.getId(), e);
+                    Log.w(TAG, "Failed to refresh registered status", e);
                 }
             }
 
- */
-
             stopwatch.split("registered");
+
+            List<Recipient> recipientsAndSelf = new ArrayList<>(resolved);
+            recipientsAndSelf.add(Recipient.self().resolve());
 
             if (FeatureFlags.groupsV2create()) {
                 try {
-                    GroupsV2CapabilityChecker.refreshCapabilitiesIfNecessary(resolved);
+                    GroupsV2CapabilityChecker.refreshCapabilitiesIfNecessary(recipientsAndSelf);
                 } catch (IOException e) {
                     Log.w(TAG, "Failed to refresh all recipient capabilities.", e);
                 }
@@ -167,9 +170,8 @@ public class CreateGroupActivity extends ContactSelectionActivity {
 
             resolved = Recipient.resolvedList(ids);
 
-            if (Stream.of(resolved).anyMatch(r -> r.getGroupsV2Capability() != Recipient.Capability.SUPPORTED) &&
-                    Stream.of(resolved).anyMatch(r -> !r.hasE164()))
-            {
+            boolean gv2 = Stream.of(recipientsAndSelf).allMatch(r -> r.getGroupsV2Capability() == Recipient.Capability.SUPPORTED);
+            if (!gv2 && Stream.of(resolved).anyMatch(r -> !r.hasE164())) {
                 Log.w(TAG, "Invalid GV1 group...");
                 ids = Collections.emptyList();
             }

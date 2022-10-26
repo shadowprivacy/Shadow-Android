@@ -68,6 +68,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LifecycleOwner;
 
 import com.annimon.stream.Stream;
 
@@ -88,8 +89,6 @@ import su.sres.securesms.components.SharedContactView;
 import su.sres.securesms.components.BorderlessImageView;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MmsDatabase;
-import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.model.MediaMmsMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
@@ -113,7 +112,6 @@ import su.sres.securesms.stickers.StickerUrl;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.InterceptableLongClickCopyLinkSpan;
-import su.sres.securesms.util.LongClickCopySpan;
 import su.sres.securesms.util.LongClickMovementMethod;
 import su.sres.securesms.util.SearchUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -252,7 +250,8 @@ public class ConversationItem extends LinearLayout implements BindableConversati
   }
 
   @Override
-  public void bind(@NonNull ConversationMessage conversationMessage,
+  public void bind(@NonNull LifecycleOwner lifecycleOwner,
+                   @NonNull ConversationMessage conversationMessage,
                    @NonNull Optional<MessageRecord> previousMessageRecord,
                    @NonNull Optional<MessageRecord> nextMessageRecord,
                    @NonNull GlideRequests glideRequests,
@@ -334,6 +333,16 @@ public class ConversationItem extends LinearLayout implements BindableConversati
 
       if (quoteWidth != availableWidth) {
         quoteView.getLayoutParams().width = availableWidth;
+        needsMeasure = true;
+      }
+    }
+
+    if (hasSharedContact(messageRecord)) {
+      int contactWidth   = sharedContactStub.get().getMeasuredWidth();
+      int availableWidth = getAvailableMessageBubbleWidth(sharedContactStub.get());
+
+      if (contactWidth != availableWidth) {
+        sharedContactStub.get().getLayoutParams().width = availableWidth;
         needsMeasure = true;
       }
     }
@@ -890,12 +899,14 @@ public class ConversationItem extends LinearLayout implements BindableConversati
   }
 
   private void setSharedContactCorners(@NonNull MessageRecord current, @NonNull Optional<MessageRecord> previous, @NonNull Optional<MessageRecord> next, boolean isGroupThread) {
-    if (isSingularMessage(current, previous, next, isGroupThread) || isEndOfMessageCluster(current, next, isGroupThread)) {
-      sharedContactStub.get().setSingularStyle();
-    } else if (current.isOutgoing()) {
-      sharedContactStub.get().setClusteredOutgoingStyle();
-    } else {
-      sharedContactStub.get().setClusteredIncomingStyle();
+    if (TextUtils.isEmpty(messageRecord.getDisplayBody(getContext()))){
+      if (isSingularMessage(current, previous, next, isGroupThread) || isEndOfMessageCluster(current, next, isGroupThread)) {
+        sharedContactStub.get().setSingularStyle();
+      } else if (current.isOutgoing()) {
+        sharedContactStub.get().setClusteredOutgoingStyle();
+      } else {
+        sharedContactStub.get().setClusteredIncomingStyle();
+      }
     }
   }
 
@@ -1073,7 +1084,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
   private ConversationItemFooter getActiveFooter(@NonNull MessageRecord messageRecord) {
     if (hasSticker(messageRecord) || isBorderless(messageRecord)) {
       return stickerFooter;
-    } else if (hasSharedContact(messageRecord)) {
+    } else if (hasSharedContact(messageRecord) && TextUtils.isEmpty(messageRecord.getDisplayBody(getContext()))) {
       return sharedContactStub.get().getFooter();
     } else if (hasOnlyThumbnail(messageRecord) && TextUtils.isEmpty(messageRecord.getDisplayBody(getContext()))) {
       return mediaThumbnailStub.get().getFooter();
@@ -1439,7 +1450,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
         Log.i(TAG, "Public URI: " + publicUri);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.setDataAndType(PartAuthority.getAttachmentPublicUri(slide.getUri()), slide.getContentType());
+        intent.setDataAndType(PartAuthority.getAttachmentPublicUri(slide.getUri()), Intent.normalizeMimeType(slide.getContentType()));
         try {
           context.startActivity(intent);
         } catch (ActivityNotFoundException anfe) {
@@ -1506,7 +1517,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
 
     @Override
     public void onClick(@NonNull View widget) {
-      if (eventListener != null && !Recipient.resolved(mentionedRecipientId).isLocalNumber()) {
+      if (eventListener != null) {
         VibrateUtil.vibrateTick(context);
         eventListener.onGroupMemberClicked(mentionedRecipientId, conversationRecipient.get().requireGroupId());
       }

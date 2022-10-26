@@ -79,7 +79,7 @@ public class ServiceUtil {
     return (JobScheduler) context.getSystemService(JobScheduler.class);
   }
 
-  @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP_MR1)
+  @RequiresApi(22)
   public static @Nullable SubscriptionManager getSubscriptionManager(@NonNull Context context) {
     return (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
   }

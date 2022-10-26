@@ -27,6 +27,7 @@ public class NotificationItem {
   private final long         messageReceivedTimestamp;
   @Nullable private final SlideDeck    slideDeck;
   private final boolean      jumpToMessage;
+  private final boolean      canReply;
 
   public NotificationItem(long id,
                           boolean mms,
@@ -38,7 +39,8 @@ public class NotificationItem {
                           long notificationTimestamp,
                           long messageReceivedTimestamp,
                           @Nullable SlideDeck slideDeck,
-                          boolean jumpToMessage)
+                          boolean jumpToMessage,
+                          boolean canReply)
   {
     this.id                       = id;
     this.mms                      = mms;
@@ -51,6 +53,7 @@ public class NotificationItem {
     this.messageReceivedTimestamp = messageReceivedTimestamp;
     this.slideDeck                = slideDeck;
     this.jumpToMessage            = jumpToMessage;
+    this.canReply                 = canReply;
   }
 
   public @NonNull  Recipient getRecipient() {
@@ -104,5 +107,9 @@ public class NotificationItem {
 
   private static void makeIntentUniqueToPreventMerging(@NonNull Intent intent) {
     intent.setData((Uri.parse("custom://"+System.currentTimeMillis())));
+  }
+
+  public boolean canReply() {
+    return canReply;
   }
 }

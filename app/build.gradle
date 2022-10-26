@@ -98,6 +98,15 @@ android {
         javaMaxHeapSize "4g"
     }
 
+    signingConfigs {
+        staging {
+            storeFile file("${project.rootDir}/dev.keystore")
+            storePassword 'android'
+            keyAlias 'staging'
+            keyPassword 'android'
+        }
+    }
+
     defaultConfig {
         versionCode canonicalVersionCode * postFixSize
         versionName canonicalVersionName
@@ -185,6 +194,8 @@ android {
 
         staging {
             initWith debug
+            applicationIdSuffix ".staging"
+            signingConfig signingConfigs.staging
         }
 
         flipper {
@@ -294,7 +305,7 @@ dependencies {
 
     implementation project(':libsignal-service')
     implementation 'org.signal:zkgroup-android:0.7.0'
-    implementation 'org.signal:ringrtc-android:2.5.1'
+    implementation 'org.signal:ringrtc-android:2.7.0'
     implementation 'org.signal:argon2:13.1@aar'
     implementation 'org.apache.commons:commons-csv:1.8'
     implementation "me.leolin:ShortcutBadger:1.1.16"

@@ -15,8 +15,8 @@ import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.crypto.UnidentifiedAccess;
-import su.sres.signalservice.api.profiles.SignalServiceProfile;
 import su.sres.signalservice.api.push.exceptions.NetworkFailureException;
+import su.sres.signalservice.api.account.AccountAttributes;
 
 import java.io.IOException;
 
@@ -64,7 +64,7 @@ public class RefreshAttributesJob extends BaseJob  {
     boolean userLoginDiscoverable = SignalStore.userLoginPrivacy().getUserLoginListingMode().isDiscoverable();
 
     // dummy true instead of checking whether the client has a PIN
-    SignalServiceProfile.Capabilities capabilities = AppCapabilities.getCapabilities(true);
+    AccountAttributes.Capabilities capabilities = AppCapabilities.getCapabilities(true);
 
     Log.i(TAG, "User login discoverable : " + userLoginDiscoverable +
             "\n  Capabilities:" +

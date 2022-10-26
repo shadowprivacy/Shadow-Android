@@ -69,6 +69,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sharing.ShareActivity;
 import su.sres.securesms.util.AttachmentUtil;
 import su.sres.securesms.util.DateUtils;
+import su.sres.securesms.util.FullscreenHelper;
 import su.sres.securesms.util.SaveAttachmentTask;
 import su.sres.securesms.util.SaveAttachmentTask.Attachment;
 
@@ -119,6 +120,7 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
     private boolean               cameFromAllMedia;
     private boolean               showThread;
     private MediaDatabase.Sorting sorting;
+    private FullscreenHelper fullscreenHelper;
 
     private @Nullable Cursor cursor = null;
 
@@ -133,7 +135,7 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
         intent.putExtra(MediaPreviewActivity.SIZE_EXTRA, attachment.getSize());
         intent.putExtra(MediaPreviewActivity.CAPTION_EXTRA, attachment.getCaption());
         intent.putExtra(MediaPreviewActivity.LEFT_IS_RECENT_EXTRA, leftIsRecent);
-        intent.setDataAndType(attachment.getDataUri(), mediaRecord.getContentType());
+        intent.setDataAndType(attachment.getUri(), mediaRecord.getContentType());
         return intent;
     }
 
@@ -147,10 +149,7 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
 
         viewModel = ViewModelProviders.of(this).get(MediaPreviewViewModel.class);
 
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
-        showSystemUI();
+        fullscreenHelper = new FullscreenHelper(this);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
@@ -261,6 +260,7 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
         albumRail        = findViewById(R.id.media_preview_album_rail);
         albumRailAdapter = new MediaRailAdapter(GlideApp.with(this), this, false);
 
+        albumRail.setItemAnimator(null); // Or can crash when set to INVISIBLE while animating by FullscreenHelper https://issuetracker.google.com/issues/148720682
         albumRail.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         albumRail.setAdapter(albumRailAdapter);
 
@@ -273,9 +273,9 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
 
         anchorMarginsToBottomInsets(detailsContainer);
 
-        anchorMarginsToTopInsets(toolbarLayout);
+        fullscreenHelper.configureToolbarSpacer(findViewById(R.id.toolbar_cutout_spacer));
 
-        showAndHideWithSystemUI(getWindow(), detailsContainer, toolbarLayout);
+        fullscreenHelper.showAndHideWithSystemUI(getWindow(), detailsContainer, toolbarLayout);
     }
 
     private void initializeResources() {
@@ -548,7 +548,7 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
 
     @Override
     public boolean singleTapOnMedia() {
-        toggleUiVisibility();
+        fullscreenHelper.toggleUiVisibility();
         return true;
     }
 
@@ -556,32 +556,6 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
     public void mediaNotAvailable() {
         Toast.makeText(this, R.string.MediaPreviewActivity_media_no_longer_available, Toast.LENGTH_LONG).show();
         finish();
-    }
-
-    private void toggleUiVisibility() {
-        int systemUiVisibility = getWindow().getDecorView().getSystemUiVisibility();
-        if ((systemUiVisibility & View.SYSTEM_UI_FLAG_FULLSCREEN) != 0) {
-            showSystemUI();
-        } else {
-            hideSystemUI();
-        }
-    }
-
-    private void hideSystemUI() {
-        getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_IMMERSIVE              |
-                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE          |
-                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
-                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN      |
-                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION        |
-                        View.SYSTEM_UI_FLAG_FULLSCREEN              );
-    }
-
-    private void showSystemUI() {
-        getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE          |
-                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
-                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN       );
     }
 
     private class ViewPagerListener extends ExtendedOnPageChangedListener {
@@ -699,33 +673,6 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
         });
     }
 
-    private static void anchorMarginsToTopInsets(@NonNull View viewToAnchor) {
-        ViewCompat.setOnApplyWindowInsetsListener(viewToAnchor, (view, insets) -> {
-            ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
-
-            layoutParams.setMargins(insets.getSystemWindowInsetLeft(),
-                    insets.getSystemWindowInsetTop(),
-                    insets.getSystemWindowInsetRight(),
-                    layoutParams.bottomMargin);
-
-            view.setLayoutParams(layoutParams);
-
-            return insets;
-        });
-    }
-
-    private static void showAndHideWithSystemUI(@NonNull Window window, @NonNull View... views) {
-        window.getDecorView().setOnSystemUiVisibilityChangeListener(visibility -> {
-            boolean hide = (visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) != 0;
-
-            for (View view : views) {
-                view.animate()
-                        .alpha(hide ? 0 : 1)
-                        .start();
-            }
-        });
-    }
-
     private static class CursorPagerAdapter extends FragmentStatePagerAdapter implements MediaItemAdapter {
 
         @SuppressLint("UseSparseArrays")
@@ -803,7 +750,7 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
             return new MediaItem(Recipient.live(recipientId).get(),
                     Recipient.live(threadRecipientId).get(),
                     attachment,
-                    Objects.requireNonNull(attachment.getDataUri()),
+                    Objects.requireNonNull(attachment.getUri()),
                     mediaRecord.getContentType(),
                     mediaRecord.getDate(),
                     mediaRecord.isOutgoing());

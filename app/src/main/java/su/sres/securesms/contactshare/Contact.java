@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.attachments.UriAttachment;
-import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.MediaUtil;
@@ -648,7 +647,7 @@ public class Contact implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-      dest.writeParcelable(attachment != null ? attachment.getDataUri() : null, flags);
+      dest.writeParcelable(attachment != null ? attachment.getUri() : null, flags);
       dest.writeByte((byte) (isProfile ? 1 : 0));
     }
 

@@ -80,7 +80,6 @@ public final class Megaphones {
         return new LinkedHashMap<Event, MegaphoneSchedule>() {{
             put(Event.REACTIONS, ALWAYS);
             put(Event.MESSAGE_REQUESTS, shouldShowMessageRequestsMegaphone() ? ALWAYS : NEVER);
-            put(Event.MENTIONS, shouldShowMentionsMegaphone() ? ALWAYS : NEVER);
             put(Event.LINK_PREVIEWS, shouldShowLinkPreviewsMegaphone(context) ? ALWAYS : NEVER);
             put(Event.CLIENT_DEPRECATED, SignalStore.misc().isClientDeprecated() ? ALWAYS : NEVER);
         }};
@@ -92,8 +91,6 @@ public final class Megaphones {
                 return buildReactionsMegaphone();
             case MESSAGE_REQUESTS:
                 return buildMessageRequestsMegaphone(context);
-            case MENTIONS:
-                return buildMentionsMegaphone();
             case LINK_PREVIEWS:
                 return buildLinkPreviewsMegaphone();
             case CLIENT_DEPRECATED:
@@ -121,14 +118,6 @@ public final class Megaphones {
                 .build();
     }
 
-    private static Megaphone buildMentionsMegaphone() {
-        return new Megaphone.Builder(Event.MENTIONS, Megaphone.Style.POPUP)
-                .setTitle(R.string.MentionsMegaphone__introducing_mentions)
-                .setBody(R.string.MentionsMegaphone__get_someones_attention_in_a_group_by_typing)
-                .setImage(R.drawable.mention_megaphone)
-                .build();
-    }
-
     private static @NonNull Megaphone buildLinkPreviewsMegaphone() {
         return new Megaphone.Builder(Event.LINK_PREVIEWS, Megaphone.Style.LINK_PREVIEWS)
                 .setPriority(Megaphone.Priority.HIGH)
@@ -139,19 +128,12 @@ public final class Megaphones {
         return new Megaphone.Builder(Event.CLIENT_DEPRECATED, Megaphone.Style.FULLSCREEN)
                 .disableSnooze()
                 .setPriority(Megaphone.Priority.HIGH)
-                .setOnVisibleListener((megaphone, listener) -> {
-                    listener.onMegaphoneNavigationRequested(new Intent(context, ClientDeprecatedActivity.class));
-                })
+                .setOnVisibleListener((megaphone, listener) -> listener.onMegaphoneNavigationRequested(new Intent(context, ClientDeprecatedActivity.class)))
                 .build();
     }
 
     private static boolean shouldShowMessageRequestsMegaphone() {
         return Recipient.self().getProfileName() == ProfileName.EMPTY;
-    }
-
-    private static boolean shouldShowMentionsMegaphone() {
-        return false;
-        // return FeatureFlags.mentions();
     }
 
     private static boolean shouldShowLinkPreviewsMegaphone(@NonNull Context context) {
@@ -161,7 +143,6 @@ public final class Megaphones {
     public enum Event {
         REACTIONS("reactions"),
         MESSAGE_REQUESTS("message_requests"),
-        MENTIONS("mentions"),
         LINK_PREVIEWS("link_previews"),
         CLIENT_DEPRECATED("client_deprecated");
 

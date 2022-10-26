@@ -673,11 +673,11 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
                 for (Media mediaItem : result.getNonUploadedMedia()) {
                     if (MediaUtil.isVideoType(mediaItem.getMimeType())) {
-                        slideDeck.addSlide(new VideoSlide(this, mediaItem.getUri(), 0, mediaItem.getCaption().orNull(), mediaItem.getTransformProperties().orNull()));
+                        slideDeck.addSlide(new VideoSlide(this, mediaItem.getUri(), mediaItem.getSize(), mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.getCaption().orNull(), mediaItem.getTransformProperties().orNull()));
                     } else if (MediaUtil.isGif(mediaItem.getMimeType())) {
-                        slideDeck.addSlide(new GifSlide(this, mediaItem.getUri(), 0, mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.isBorderless(), mediaItem.getCaption().orNull()));
+                        slideDeck.addSlide(new GifSlide(this, mediaItem.getUri(), mediaItem.getSize(), mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.isBorderless(), mediaItem.getCaption().orNull()));
                     } else if (MediaUtil.isImageType(mediaItem.getMimeType())) {
-                        slideDeck.addSlide(new ImageSlide(this, mediaItem.getUri(), mediaItem.getMimeType(), 0, mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.isBorderless(), mediaItem.getCaption().orNull(), null));
+                        slideDeck.addSlide(new ImageSlide(this, mediaItem.getUri(), mediaItem.getMimeType(), mediaItem.getSize(), mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.isBorderless(), mediaItem.getCaption().orNull(), null));
                     } else {
                         Log.w(TAG, "Asked to send an unexpected mimeType: '" + mediaItem.getMimeType() + "'. Skipping.");
                     }
@@ -1945,13 +1945,10 @@ public class ConversationActivity extends PassphraseRequiredActivity
             if (previewState == null) return;
 
             if (previewState.isLoading()) {
-                Log.d(TAG, "Loading link preview.");
                 inputPanel.setLinkPreviewLoading();
             } else if (previewState.hasLinks() && !previewState.getLinkPreview().isPresent()) {
-                Log.d(TAG, "No preview found.");
                 inputPanel.setLinkPreviewNoPreview(previewState.getError());
             } else {
-                Log.d(TAG, "Setting link preview: " + previewState.getLinkPreview().isPresent());
                 inputPanel.setLinkPreview(glideRequests, previewState.getLinkPreview());
             }
 
@@ -2025,7 +2022,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
             mentionsViewModel.onRecipientChange(r);
         });
         composeText.setMentionQueryChangedListener(query -> {
-            if (getRecipient().isPushV2Group()) {
+            if (getRecipient().isPushV2Group() && getRecipient().isActiveGroup()) {
                 if (!mentionsSuggestions.resolved()) {
                     mentionsSuggestions.get();
                 }
@@ -2034,7 +2031,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         });
 
         composeText.setMentionValidator(annotations -> {
-            if (!getRecipient().isPushV2Group()) {
+            if (!getRecipient().isPushV2Group() || !getRecipient().isActiveGroup()) {
                 return annotations;
             }
 
@@ -3372,7 +3369,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
         long expiresIn = recipient.get().getExpireMessages() * 1000L;
         int subscriptionId = sendButton.getSelectedTransport().getSimSubscriptionId().or(-1);
         boolean initiating = threadId == -1;
-        QuoteModel quote = inputPanel.getQuote().orNull();
         SlideDeck slideDeck = new SlideDeck();
 
         if (MediaUtil.isGif(contentType)) {
@@ -3386,7 +3382,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         sendMediaMessage(isSmsForced(),
                 "",
                 slideDeck,
-                quote,
+                null,
                 Collections.emptyList(),
                 Collections.emptyList(),
                 composeText.getMentions(),
@@ -3394,7 +3390,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
                 false,
                 subscriptionId,
                 initiating,
-                true);
+                false);
     }
 
     private class UnverifiedDismissedListener implements UnverifiedBannerView.DismissListener {

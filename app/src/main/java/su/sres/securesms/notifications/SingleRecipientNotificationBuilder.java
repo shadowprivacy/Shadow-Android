@@ -157,40 +157,46 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   public void addActions(@NonNull PendingIntent markReadIntent,
                          @NonNull PendingIntent quickReplyIntent,
                          @NonNull PendingIntent wearableReplyIntent,
-                         @NonNull ReplyMethod replyMethod)
+                         @NonNull ReplyMethod replyMethod,
+                         boolean replyEnabled)
   {
-    Action markAsReadAction = new Action(R.drawable.check,
-                                         context.getString(R.string.MessageNotifier_mark_read),
-                                         markReadIntent);
-
-    String actionName = context.getString(R.string.MessageNotifier_reply);
-    String label      = context.getString(replyMethodLongDescription(replyMethod));
-
-    Action replyAction = new Action(R.drawable.ic_reply_white_36dp,
-            actionName,
-                                    quickReplyIntent);
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-      replyAction = new Action.Builder(R.drawable.ic_reply_white_36dp,
-              actionName,
-                                       wearableReplyIntent)
-              .addRemoteInput(new RemoteInput.Builder(DefaultMessageNotifier.EXTRA_REMOTE_REPLY)
-                  .setLabel(label).build())
-          .build();
-    }
-
-    Action wearableReplyAction = new Action.Builder(R.drawable.ic_reply,
-            actionName,
-                                                    wearableReplyIntent)
-            .addRemoteInput(new RemoteInput.Builder(DefaultMessageNotifier.EXTRA_REMOTE_REPLY)
-                .setLabel(label).build())
-        .build();
+    NotificationCompat.WearableExtender extender         = new NotificationCompat.WearableExtender();
+    Action                              markAsReadAction = new Action(R.drawable.check,
+            context.getString(R.string.MessageNotifier_mark_read),
+            markReadIntent);
 
     addAction(markAsReadAction);
-    addAction(replyAction);
+    extender.addAction(markAsReadAction);
 
-    extend(new NotificationCompat.WearableExtender().addAction(markAsReadAction)
-                                                    .addAction(wearableReplyAction));
+    if (replyEnabled) {
+      String actionName = context.getString(R.string.MessageNotifier_reply);
+      String label      = context.getString(replyMethodLongDescription(replyMethod));
+
+      Action replyAction = new Action(R.drawable.ic_reply_white_36dp,
+              actionName,
+              quickReplyIntent);
+
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        replyAction = new Action.Builder(R.drawable.ic_reply_white_36dp,
+                actionName,
+                wearableReplyIntent)
+                .addRemoteInput(new RemoteInput.Builder(DefaultMessageNotifier.EXTRA_REMOTE_REPLY)
+                        .setLabel(label)
+                        .build())
+                .build();
+      }
+
+      Action wearableReplyAction = new Action.Builder(R.drawable.ic_reply,
+              actionName,
+              wearableReplyIntent)
+              .addRemoteInput(new RemoteInput.Builder(DefaultMessageNotifier.EXTRA_REMOTE_REPLY)
+                      .setLabel(label)
+                      .build())
+              .build();
+
+      addAction(replyAction);
+      extend(extender.addAction(wearableReplyAction));
+    }
   }
 
   @StringRes
@@ -329,8 +335,8 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   }
 
   private static Optional<Uri> getThumbnailUri(@Nullable Slide slide) {
-    if (slide != null && !slide.isInProgress() && slide.getThumbnailUri() != null) {
-      return Optional.of(slide.getThumbnailUri());
+    if (slide != null && !slide.isInProgress() && slide.getUri() != null) {
+      return Optional.of(slide.getUri());
     } else {
       return Optional.absent();
     }

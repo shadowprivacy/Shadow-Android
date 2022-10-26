@@ -159,7 +159,7 @@ public class ShareActivity extends PassphraseRequiredActivity
         recipient = Recipient.external(this, number);
       }
 
-      long existingThread = DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient);
+      long existingThread = DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient.getId());
       return new Pair<>(existingThread, recipient);
     }, result -> onDestinationChosen(result.first(), result.second().getId()));
     return true;

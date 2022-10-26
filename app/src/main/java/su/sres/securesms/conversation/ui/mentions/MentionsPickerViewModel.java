@@ -12,11 +12,6 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.conversation.ui.mentions.MentionsPickerRepository.MentionQuery;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.groups.LiveGroup;
-import su.sres.securesms.groups.ui.GroupMemberEntry.FullMember;
-import su.sres.securesms.megaphone.MegaphoneRepository;
-import su.sres.securesms.megaphone.Megaphones;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -29,37 +24,32 @@ import java.util.Objects;
 
 public class MentionsPickerViewModel extends ViewModel {
 
-    private final SingleLiveEvent<Recipient>      selectedRecipient;
+    private final SingleLiveEvent<Recipient> selectedRecipient;
     private final LiveData<List<MappingModel<?>>> mentionList;
-    private final MutableLiveData<LiveRecipient>  liveRecipient;
-    private final MutableLiveData<Query>          liveQuery;
-    private final MutableLiveData<Boolean>        isShowing;
-    private final MegaphoneRepository             megaphoneRepository;
+    private final MutableLiveData<LiveRecipient> liveRecipient;
+    private final MutableLiveData<Query> liveQuery;
+    private final MutableLiveData<Boolean> isShowing;
 
-    MentionsPickerViewModel(@NonNull MentionsPickerRepository mentionsPickerRepository,
-                            @NonNull MegaphoneRepository megaphoneRepository)
-    {
-        this.megaphoneRepository = megaphoneRepository;
-        this.liveRecipient       = new MutableLiveData<>();
-        this.liveQuery           = new MutableLiveData<>();
-        this.selectedRecipient   = new SingleLiveEvent<>();
-        this.isShowing           = new MutableLiveData<>(false);
+    MentionsPickerViewModel(@NonNull MentionsPickerRepository mentionsPickerRepository) {
+        this.liveRecipient = new MutableLiveData<>();
+        this.liveQuery = new MutableLiveData<>();
+        this.selectedRecipient = new SingleLiveEvent<>();
+        this.isShowing = new MutableLiveData<>(false);
 
-        LiveData<Recipient>         recipient    = Transformations.switchMap(liveRecipient, LiveRecipient::getLiveData);
-        LiveData<List<RecipientId>> fullMembers  = Transformations.distinctUntilChanged(LiveDataUtil.mapAsync(recipient, mentionsPickerRepository::getMembers));
-        LiveData<Query>             query        = Transformations.distinctUntilChanged(liveQuery);
-        LiveData<MentionQuery>      mentionQuery = LiveDataUtil.combineLatest(query, fullMembers, (q, m) -> new MentionQuery(q.query, m));
+        LiveData<Recipient> recipient = Transformations.switchMap(liveRecipient, LiveRecipient::getLiveData);
+        LiveData<List<RecipientId>> fullMembers = Transformations.distinctUntilChanged(LiveDataUtil.mapAsync(recipient, mentionsPickerRepository::getMembers));
+        LiveData<MentionQuery>      mentionQuery = LiveDataUtil.combineLatest(liveQuery, fullMembers, (q, m) -> new MentionQuery(q.query, m));
 
         this.mentionList = LiveDataUtil.mapAsync(mentionQuery, q -> Stream.of(mentionsPickerRepository.search(q)).<MappingModel<?>>map(MentionViewState::new).toList());
     }
 
-    @NonNull LiveData<List<MappingModel<?>>> getMentionList() {
+    @NonNull
+    LiveData<List<MappingModel<?>>> getMentionList() {
         return mentionList;
     }
 
     void onSelectionChange(@NonNull Recipient recipient) {
         selectedRecipient.setValue(recipient);
-        megaphoneRepository.markFinished(Megaphones.Event.MENTIONS);
     }
 
     void setIsShowing(boolean isShowing) {
@@ -69,11 +59,13 @@ public class MentionsPickerViewModel extends ViewModel {
         this.isShowing.setValue(isShowing);
     }
 
-    public @NonNull LiveData<Recipient> getSelectedRecipient() {
+    public @NonNull
+    LiveData<Recipient> getSelectedRecipient() {
         return selectedRecipient;
     }
 
-    public @NonNull LiveData<Boolean> isShowing() {
+    public @NonNull
+    LiveData<Boolean> isShowing() {
         return isShowing;
     }
 
@@ -92,7 +84,8 @@ public class MentionsPickerViewModel extends ViewModel {
     private static class Query {
         static final Query NONE = new Query(null);
 
-        @Nullable private final String query;
+        @Nullable
+        private final String query;
 
         Query(@Nullable String query) {
             this.query = query;
@@ -120,10 +113,10 @@ public class MentionsPickerViewModel extends ViewModel {
 
     public static final class Factory implements ViewModelProvider.Factory {
         @Override
-        public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
+        public @NonNull
+        <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
             //noinspection ConstantConditions
-            return modelClass.cast(new MentionsPickerViewModel(new MentionsPickerRepository(ApplicationDependencies.getApplication()),
-                    ApplicationDependencies.getMegaphoneRepository()));
+            return modelClass.cast(new MentionsPickerViewModel(new MentionsPickerRepository(ApplicationDependencies.getApplication())));
         }
     }
 }

@@ -38,6 +38,7 @@ import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
+import su.sres.securesms.util.AsynchronousCallback;
 import su.sres.securesms.util.DefaultValueLiveData;
 import su.sres.securesms.util.ExpirationUtil;
 import su.sres.securesms.util.FeatureFlags;
@@ -55,8 +56,6 @@ public class ManageGroupViewModel extends ViewModel {
 
     private final Context                                     context;
     private final ManageGroupRepository                       manageGroupRepository;
-    private final SingleLiveEvent<SnackbarEvent>              snackbarEvents            = new SingleLiveEvent<>();
-    private final SingleLiveEvent<InvitedDialogEvent>         invitedDialogEvents       = new SingleLiveEvent<>();
     private final LiveData<String>                            title;
     private final LiveData<Boolean>                           isAdmin;
     private final LiveData<Boolean>                           canEditGroupAttributes;
@@ -80,6 +79,7 @@ public class ManageGroupViewModel extends ViewModel {
     private final LiveData<Boolean>                           showLegacyIndicator;
     private final LiveData<String>                            mentionSetting;
     private final LiveData<Boolean>                           groupLinkOn;
+    private final LiveData<GroupInfoMessage>                  groupInfoMessage;
 
     private ManageGroupViewModel(@NonNull Context context, @NonNull ManageGroupRepository manageGroupRepository) {
         this.context               = context;
@@ -123,6 +123,16 @@ public class ManageGroupViewModel extends ViewModel {
         this.mentionSetting            = Transformations.distinctUntilChanged(Transformations.map(this.groupRecipient,
                 recipient -> MentionUtil.getMentionSettingDisplayValue(context, recipient.getMentionSetting())));
         this.groupLinkOn               = Transformations.map(liveGroup.getGroupLink(), GroupLinkUrlAndStatus::isEnabled);
+        this.groupInfoMessage          = Transformations.map(this.showLegacyIndicator,
+                showLegacyInfo -> {
+                    if (showLegacyInfo) {
+                        return GroupInfoMessage.LEGACY_GROUP_LEARN_MORE;
+                    } else if (groupId.isMms()) {
+                        return GroupInfoMessage.MMS_WARNING;
+                    } else {
+                        return GroupInfoMessage.NONE;
+                    }
+                });
     }
 
     @WorkerThread
@@ -150,10 +160,6 @@ public class ManageGroupViewModel extends ViewModel {
 
     LiveData<String> getFullMemberCountSummary() {
         return fullMemberCountSummary;
-    }
-
-    LiveData<Boolean> getShowLegacyIndicator() {
-        return showLegacyIndicator;
     }
 
     LiveData<Recipient> getGroupRecipient() {
@@ -200,14 +206,6 @@ public class ManageGroupViewModel extends ViewModel {
         return hasCustomNotifications;
     }
 
-    SingleLiveEvent<SnackbarEvent> getSnackbarEvents() {
-        return snackbarEvents;
-    }
-
-    SingleLiveEvent<InvitedDialogEvent> getInvitedDialogEvents() {
-        return invitedDialogEvents;
-    }
-
     LiveData<Boolean> getCanCollapseMemberList() {
         return canCollapseMemberList;
     }
@@ -226,6 +224,10 @@ public class ManageGroupViewModel extends ViewModel {
 
     LiveData<Boolean> getGroupLinkOn() {
         return groupLinkOn;
+    }
+
+    LiveData<GroupInfoMessage> getGroupInfoMessage() {
+        return groupInfoMessage;
     }
 
     void handleExpirationSelection() {
@@ -255,8 +257,10 @@ public class ManageGroupViewModel extends ViewModel {
                 () -> RecipientUtil.unblock(context, recipient)));
     }
 
-    void onAddMembers(List<RecipientId> selected) {
-        manageGroupRepository.addMembers(selected, this::showAddSuccess, this::showErrorToast);
+    void onAddMembers(@NonNull List<RecipientId> selected,
+                      @NonNull AsynchronousCallback.MainThread<AddMembersResult, GroupChangeFailureReason> callback)
+    {
+        manageGroupRepository.addMembers(selected, callback.toWorkerCallback());
     }
 
     void setMuteUntil(long muteUntil) {
@@ -296,17 +300,6 @@ public class ManageGroupViewModel extends ViewModel {
     }
 
     @WorkerThread
-    private void showAddSuccess(int numberOfMembersAdded, @NonNull List<RecipientId> newInvitedMembers) {
-        if (!newInvitedMembers.isEmpty()) {
-            invitedDialogEvents.postValue(new InvitedDialogEvent(Recipient.resolvedList(newInvitedMembers)));
-        }
-
-        if (numberOfMembersAdded > 0) {
-            snackbarEvents.postValue(new SnackbarEvent(numberOfMembersAdded));
-        }
-    }
-
-    @WorkerThread
     private void showErrorToast(@NonNull GroupChangeFailureReason e) {
         Util.runOnMain(() -> Toast.makeText(context, GroupErrors.getUserDisplayMessage(e), Toast.LENGTH_LONG).show());
     }
@@ -325,6 +318,24 @@ public class ManageGroupViewModel extends ViewModel {
                 fragment.startActivityForResult(intent, resultCode);
             }
         });
+    }
+
+    static final class AddMembersResult {
+        private final int             numberOfMembersAdded;
+        private final List<Recipient> newInvitedMembers;
+
+        AddMembersResult(int numberOfMembersAdded, @NonNull List<Recipient> newInvitedMembers) {
+            this.numberOfMembersAdded = numberOfMembersAdded;
+            this.newInvitedMembers    = newInvitedMembers;
+        }
+
+        int getNumberOfMembersAdded() {
+            return numberOfMembersAdded;
+        }
+
+        List<Recipient> getNewInvitedMembers() {
+            return newInvitedMembers;
+        }
     }
 
     static final class GroupViewState {
@@ -372,29 +383,10 @@ public class ManageGroupViewModel extends ViewModel {
         }
     }
 
-    static final class SnackbarEvent {
-        private final int numberOfMembersAdded;
-
-        private SnackbarEvent(int numberOfMembersAdded) {
-            this.numberOfMembersAdded = numberOfMembersAdded;
-        }
-
-        public int getNumberOfMembersAdded() {
-            return numberOfMembersAdded;
-        }
-    }
-
-    static final class InvitedDialogEvent {
-
-        private final List<Recipient> newInvitedMembers;
-
-        private InvitedDialogEvent(@NonNull List<Recipient> newInvitedMembers) {
-            this.newInvitedMembers = newInvitedMembers;
-        }
-
-        public @NonNull List<Recipient> getNewInvitedMembers() {
-            return newInvitedMembers;
-        }
+    enum GroupInfoMessage {
+        NONE,
+        LEGACY_GROUP_LEARN_MORE,
+        MMS_WARNING
     }
 
     private enum CollapseState {

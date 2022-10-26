@@ -3,6 +3,8 @@ package su.sres.securesms.database.helpers;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.JobDatabase;
@@ -32,8 +34,15 @@ import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.StorageKeyDatabase;
 import su.sres.securesms.database.ThreadDatabase;
+import su.sres.securesms.util.CursorUtil;
+import su.sres.securesms.util.Triple;
+import su.sres.securesms.util.Util;
 
 import java.io.File;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
@@ -46,8 +55,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int MENTIONS                         = 67;
   private static final int PINNED_CONVERSATIONS_MENTION_GLOBAL_SETTING_MIGRATION_UNKNOWN_STORAGE_FIELDS = 68;
   private static final int STICKER_CONTENT_TYPE_EMOJI_IN_NOTIFICATIONS             = 69;
+  private static final int THUMBNAIL_CLEANUP_AND_STICKER_CONTENT_TYPE_CLEANUP_AND_MENTION_CLEANUP                = 70;
 
-  private static final int    DATABASE_VERSION = 69;
+  private static final int    DATABASE_VERSION = 70;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -196,6 +206,95 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       if (oldVersion < STICKER_CONTENT_TYPE_EMOJI_IN_NOTIFICATIONS) {
         db.execSQL("ALTER TABLE sticker ADD COLUMN content_type TEXT DEFAULT NULL");
         db.execSQL("ALTER TABLE part ADD COLUMN sticker_emoji TEXT DEFAULT NULL");
+      }
+
+      if (oldVersion < THUMBNAIL_CLEANUP_AND_STICKER_CONTENT_TYPE_CLEANUP_AND_MENTION_CLEANUP) {
+        int total   = 0;
+        int deleted = 0;
+
+        try (Cursor cursor = db.rawQuery("SELECT thumbnail FROM part WHERE thumbnail NOT NULL", null)) {
+          if (cursor != null) {
+            total = cursor.getCount();
+            Log.w(TAG, "Found " + total + " thumbnails to delete.");
+          }
+
+          while (cursor != null && cursor.moveToNext()) {
+            File file = new File(CursorUtil.requireString(cursor, "thumbnail"));
+
+            if (file.delete()) {
+              deleted++;
+            } else {
+              Log.w(TAG, "Failed to delete file! " + file.getAbsolutePath());
+            }
+          }
+        }
+
+        Log.w(TAG, "Deleted " + deleted + "/" + total + " thumbnail files.");
+
+        // sticker content type cleanup
+
+        ContentValues values = new ContentValues();
+        values.put("ct", "image/webp");
+
+        String query = "sticker_id NOT NULL AND (ct IS NULL OR ct = '')";
+
+        int rows = db.update("part", values, query, null);
+        Log.i(TAG, "Updated " + rows + " sticker attachment content types.");
+
+        // mention cleanup
+
+        String selectMentionIdsNotInGroupsV2 = "select mention._id from mention left join thread on mention.thread_id = thread._id left join recipient on thread.recipient_ids = recipient._id where recipient.group_type != 3";
+        db.delete("mention", "_id in (" + selectMentionIdsNotInGroupsV2 + ")", null);
+        db.delete("mention", "message_id NOT IN (SELECT _id FROM mms) OR thread_id NOT IN (SELECT _id from thread)", null);
+
+        List<Long> idsToDelete = new LinkedList<>();
+        try (Cursor cursor = db.rawQuery("select mention.*, mms.body from mention inner join mms on mention.message_id = mms._id", null)) {
+          while (cursor != null && cursor.moveToNext()) {
+            int    rangeStart  = CursorUtil.requireInt(cursor, "range_start");
+            int    rangeLength = CursorUtil.requireInt(cursor, "range_length");
+            String body        = CursorUtil.requireString(cursor, "body");
+
+            if (body == null || body.isEmpty() || rangeStart < 0 || rangeLength < 0 || (rangeStart + rangeLength) > body.length()) {
+              idsToDelete.add(CursorUtil.requireLong(cursor, "_id"));
+            }
+          }
+        }
+
+        if (Util.hasItems(idsToDelete)) {
+          String ids = TextUtils.join(",", idsToDelete);
+          db.delete("mention", "_id in (" + ids + ")", null);
+        }
+
+        String selectMentionIdsWithMismatchingThreadIds = "select mention._id from mention left join mms on mention.message_id = mms._id where mention.thread_id != mms.thread_id";
+        db.delete("mention", "_id in (" + selectMentionIdsWithMismatchingThreadIds + ")", null);
+
+        List<Long>                          idsToDelete2   = new LinkedList<>();
+        Set<Triple<Long, Integer, Integer>> mentionTuples = new HashSet<>();
+        try (Cursor cursor = db.rawQuery("select mention.*, mms.body from mention inner join mms on mention.message_id = mms._id order by mention._id desc", null)) {
+          while (cursor != null && cursor.moveToNext()) {
+            long   mentionId   = CursorUtil.requireLong(cursor, "_id");
+            long   messageId   = CursorUtil.requireLong(cursor, "message_id");
+            int    rangeStart  = CursorUtil.requireInt(cursor, "range_start");
+            int    rangeLength = CursorUtil.requireInt(cursor, "range_length");
+            String body        = CursorUtil.requireString(cursor, "body");
+
+            if (body != null && rangeStart < body.length() && body.charAt(rangeStart) != '\uFFFC') {
+              idsToDelete2.add(mentionId);
+            } else {
+              Triple<Long, Integer, Integer> tuple = new Triple<>(messageId, rangeStart, rangeLength);
+              if (mentionTuples.contains(tuple)) {
+                idsToDelete2.add(mentionId);
+              } else {
+                mentionTuples.add(tuple);
+              }
+            }
+          }
+
+          if (Util.hasItems(idsToDelete2)) {
+            String ids = TextUtils.join(",", idsToDelete2);
+            db.delete("mention", "_id in (" + ids + ")", null);
+          }
+        }
       }
 
       db.setTransactionSuccessful();

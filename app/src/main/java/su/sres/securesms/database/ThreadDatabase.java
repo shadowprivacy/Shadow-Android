@@ -269,6 +269,7 @@ public class ThreadDatabase extends Database {
     AttachmentDatabase   attachmentDatabase   = DatabaseFactory.getAttachmentDatabase(context);
     GroupReceiptDatabase groupReceiptDatabase = DatabaseFactory.getGroupReceiptDatabase(context);
     MmsSmsDatabase       mmsSmsDatabase       = DatabaseFactory.getMmsSmsDatabase(context);
+    MentionDatabase      mentionDatabase      = DatabaseFactory.getMentionDatabase(context);
 
     try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[] { ID }, null, null, null, null, null)) {
 
@@ -283,12 +284,12 @@ public class ThreadDatabase extends Database {
       mmsSmsDatabase.deleteAbandonedMessages();
       attachmentDatabase.trimAllAbandonedAttachments();
       groupReceiptDatabase.deleteAbandonedRows();
+      mentionDatabase.deleteAbandonedMentions();
+      attachmentDatabase.deleteAbandonedAttachmentFiles();
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
     }
-
-    attachmentDatabase.deleteAbandonedAttachmentFiles();
 
     notifyAttachmentListeners();
     notifyStickerListeners();
@@ -304,6 +305,7 @@ public class ThreadDatabase extends Database {
     AttachmentDatabase   attachmentDatabase   = DatabaseFactory.getAttachmentDatabase(context);
     GroupReceiptDatabase groupReceiptDatabase = DatabaseFactory.getGroupReceiptDatabase(context);
     MmsSmsDatabase       mmsSmsDatabase       = DatabaseFactory.getMmsSmsDatabase(context);
+    MentionDatabase      mentionDatabase      = DatabaseFactory.getMentionDatabase(context);
 
     db.beginTransaction();
 
@@ -312,12 +314,12 @@ public class ThreadDatabase extends Database {
       mmsSmsDatabase.deleteAbandonedMessages();
       attachmentDatabase.trimAllAbandonedAttachments();
       groupReceiptDatabase.deleteAbandonedRows();
+      mentionDatabase.deleteAbandonedMentions();
+      attachmentDatabase.deleteAbandonedAttachmentFiles();
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
     }
-
-    attachmentDatabase.deleteAbandonedAttachmentFiles();
 
     notifyAttachmentListeners();
     notifyStickerListeners();
@@ -872,22 +874,17 @@ public class ThreadDatabase extends Database {
     deleteAllThreads();
   }
 
-  public long getThreadIdIfExistsFor(Recipient recipient) {
+  public long getThreadIdIfExistsFor(@NonNull RecipientId recipientId) {
     SQLiteDatabase db            = databaseHelper.getReadableDatabase();
     String         where         = RECIPIENT_ID + " = ?";
-    String[]       recipientsArg = new String[] {recipient.getId().serialize()};
-    Cursor         cursor        = null;
+    String[]       recipientsArg = new String[] {recipientId.serialize()};
 
-    try {
-      cursor = db.query(TABLE_NAME, new String[]{ID}, where, recipientsArg, null, null, null);
-
-      if (cursor != null && cursor.moveToFirst())
-        return cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-      else
-        return -1L;
-    } finally {
-      if (cursor != null)
-        cursor.close();
+    try (Cursor cursor = db.query(TABLE_NAME, new String[]{ ID }, where, recipientsArg, null, null, null, "1")) {
+      if (cursor != null && cursor.moveToFirst()) {
+        return CursorUtil.requireLong(cursor, ID);
+      } else {
+        return -1;
+      }
     }
   }
 
@@ -949,6 +946,10 @@ public class ThreadDatabase extends Database {
     RecipientId id = getRecipientIdForThreadId(threadId);
     if (id == null) return null;
     return Recipient.resolved(id);
+  }
+
+  public boolean hasThread(@NonNull RecipientId recipientId) {
+    return getThreadIdIfExistsFor(recipientId) > -1;
   }
 
   public void setHasSent(long threadId, boolean hasSent) {
@@ -1096,7 +1097,7 @@ public class ThreadDatabase extends Database {
     Slide     thumbnail = Optional.fromNullable(slideDeck.getThumbnailSlide()).or(Optional.fromNullable(slideDeck.getStickerSlide())).orNull();
 
     if (thumbnail != null && !((MmsMessageRecord) record).isViewOnce()) {
-      return thumbnail.getThumbnailUri();
+      return thumbnail.getUri();
     }
 
     return null;

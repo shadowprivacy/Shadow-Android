@@ -18,7 +18,7 @@ public class BasicMegaphoneView extends FrameLayout {
     private TextView   titleText;
     private TextView   bodyText;
     private Button     actionButton;
-    private Button     snoozeButton;
+    private Button    secondaryButton;
 
     private Megaphone                 megaphone;
     private MegaphoneActionController megaphoneListener;
@@ -40,7 +40,7 @@ public class BasicMegaphoneView extends FrameLayout {
         this.titleText    = findViewById(R.id.basic_megaphone_title);
         this.bodyText     = findViewById(R.id.basic_megaphone_body);
         this.actionButton = findViewById(R.id.basic_megaphone_action);
-        this.snoozeButton = findViewById(R.id.basic_megaphone_snooze);
+        this.secondaryButton = findViewById(R.id.basic_megaphone_secondary);
     }
 
     @Override
@@ -89,17 +89,27 @@ public class BasicMegaphoneView extends FrameLayout {
             actionButton.setVisibility(GONE);
         }
 
-        if (megaphone.canSnooze()) {
-            snoozeButton.setVisibility(VISIBLE);
-            snoozeButton.setOnClickListener(v -> {
-                megaphoneListener.onMegaphoneSnooze(megaphone.getEvent());
+        if (megaphone.canSnooze() || megaphone.hasSecondaryButton()) {
+            secondaryButton.setVisibility(VISIBLE);
 
-                if (megaphone.getSnoozeListener() != null) {
-                    megaphone.getSnoozeListener().onEvent(megaphone, megaphoneListener);
-                }
-            });
+            if (megaphone.canSnooze()) {
+                secondaryButton.setOnClickListener(v -> {
+                    megaphoneListener.onMegaphoneSnooze(megaphone.getEvent());
+
+                    if (megaphone.getSnoozeListener() != null) {
+                        megaphone.getSnoozeListener().onEvent(megaphone, megaphoneListener);
+                    }
+                });
+            } else {
+                secondaryButton.setText(megaphone.getSecondaryButtonText());
+                secondaryButton.setOnClickListener(v -> {
+                    if (megaphone.getSecondaryButtonClickListener() != null) {
+                        megaphone.getSecondaryButtonClickListener().onEvent(megaphone, megaphoneListener);
+                    }
+                });
+            }
         } else {
-            snoozeButton.setVisibility(GONE);
+            secondaryButton.setVisibility(GONE);
         }
     }
 }

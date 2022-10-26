@@ -27,6 +27,8 @@ import android.os.MemoryFile;
 import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
 import androidx.annotation.NonNull;
+
+import su.sres.securesms.BuildConfig;
 import su.sres.securesms.logging.Log;
 
 import su.sres.securesms.attachments.AttachmentId;
@@ -46,7 +48,8 @@ public class PartProvider extends ContentProvider {
 
   private static final String TAG = PartProvider.class.getSimpleName();
 
-  private static final String CONTENT_URI_STRING = "content://su.sres.provider.securesms/part";
+  private static final String CONTENT_AUTHORITY  = BuildConfig.APPLICATION_ID + ".part";
+  private static final String CONTENT_URI_STRING = "content://" + CONTENT_AUTHORITY + "/part";
   private static final Uri    CONTENT_URI        = Uri.parse(CONTENT_URI_STRING);
   private static final int    SINGLE_ROW         = 1;
 
@@ -54,7 +57,7 @@ public class PartProvider extends ContentProvider {
 
   static {
     uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-    uriMatcher.addURI("su.sres.provider.securesms", "part/*/#", SINGLE_ROW);
+    uriMatcher.addURI(CONTENT_AUTHORITY, "part/*/#", SINGLE_ROW);
   }
 
   @Override

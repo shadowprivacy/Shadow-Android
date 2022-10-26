@@ -2,6 +2,8 @@ package su.sres.securesms;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.LifecycleOwner;
+
 import android.view.View;
 
 import su.sres.securesms.contactshare.Contact;
@@ -22,7 +24,8 @@ import java.util.Locale;
 import java.util.Set;
 
 public interface BindableConversationItem extends Unbindable {
-  void bind(@NonNull ConversationMessage messageRecord,
+  void bind(@NonNull LifecycleOwner lifecycleOwner,
+            @NonNull ConversationMessage messageRecord,
             @NonNull Optional<MessageRecord> previousMessageRecord,
             @NonNull Optional<MessageRecord> nextMessageRecord,
             @NonNull GlideRequests glideRequests,

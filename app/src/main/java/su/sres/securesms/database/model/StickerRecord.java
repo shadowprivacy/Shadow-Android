@@ -6,6 +6,7 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.util.MediaUtil;
+import su.sres.securesms.util.Util;
 
 import java.util.Objects;
 
@@ -67,7 +68,7 @@ public final class StickerRecord {
     }
 
     public @NonNull String getContentType() {
-        return contentType == null ? MediaUtil.IMAGE_WEBP : contentType;
+        return Util.isEmpty(contentType) ? MediaUtil.IMAGE_WEBP : contentType;
     }
 
     public long getSize() {

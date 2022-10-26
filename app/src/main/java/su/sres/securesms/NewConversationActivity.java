@@ -69,15 +69,16 @@ public class NewConversationActivity extends ContactSelectionActivity
     } else {
       // is there a case when a recipientId would be absent?
       Log.i(TAG, "[onContactSelected] Maybe creating a new recipient.");
-      if (NetworkConstraint.isMet(this)) {
+      if (TextSecurePreferences.isPushRegistered(this) && NetworkConstraint.isMet(this)) {
+        Log.i(TAG, "[onContactSelected] Doing contact refresh.");
 
         AlertDialog progress = SimpleProgressDialog.show(this);
 
         SimpleTask.run(getLifecycle(), () -> {
           Recipient resolved = Recipient.external(this, number);
 
-          if (!resolved.isRegistered()) {
-            Log.i(TAG, "[onContactSelected] Not registered. Doing a directory refresh.");
+          if (!resolved.isRegistered() || !resolved.hasUuid()) {
+            Log.i(TAG, "[onContactSelected] Not registered or no UUID. Doing a directory refresh.");
             try {
               DirectoryHelper.refreshDirectory(this);
               resolved = Recipient.resolved(resolved.getId());
@@ -105,7 +106,7 @@ public class NewConversationActivity extends ContactSelectionActivity
     intent.putExtra(ConversationActivity.TEXT_EXTRA, getIntent().getStringExtra(ConversationActivity.TEXT_EXTRA));
     intent.setDataAndType(getIntent().getData(), getIntent().getType());
 
-    long existingThread = DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient);
+    long existingThread = DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient.getId());
 
     intent.putExtra(ConversationActivity.THREAD_ID_EXTRA, existingThread);
     intent.putExtra(ConversationActivity.DISTRIBUTION_TYPE_EXTRA, ThreadDatabase.DistributionTypes.DEFAULT);

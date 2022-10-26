@@ -19,13 +19,13 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
 import su.sres.securesms.groups.GroupProtoUtil;
 import su.sres.securesms.groups.MembershipNotSuitableForV2Exception;
-import su.sres.securesms.groups.ui.AddMembersResultCallback;
 import su.sres.securesms.groups.ui.GroupChangeErrorCallback;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
+import su.sres.securesms.util.AsynchronousCallback;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
@@ -130,14 +130,16 @@ final class ManageGroupRepository {
         });
     }
 
-    void addMembers(@NonNull List<RecipientId> selected, @NonNull AddMembersResultCallback addMembersResultCallback, @NonNull GroupChangeErrorCallback error) {
+    void addMembers(@NonNull List<RecipientId> selected,
+                    @NonNull AsynchronousCallback.WorkerThread<ManageGroupViewModel.AddMembersResult, GroupChangeFailureReason> callback)
+    {
         SignalExecutors.UNBOUNDED.execute(() -> {
             try {
                 GroupManager.GroupActionResult groupActionResult = GroupManager.addMembers(context, groupId.requirePush(), selected);
-                addMembersResultCallback.onMembersAdded(groupActionResult.getAddedMemberCount(), groupActionResult.getInvitedMembers());
+                callback.onComplete(new ManageGroupViewModel.AddMembersResult(groupActionResult.getAddedMemberCount(), Recipient.resolvedList(groupActionResult.getInvitedMembers())));
             } catch (GroupChangeException | MembershipNotSuitableForV2Exception | IOException e) {
                 Log.w(TAG, e);
-                error.onError(GroupChangeFailureReason.fromException(e));
+                callback.onError(GroupChangeFailureReason.fromException(e));
             }
         });
     }

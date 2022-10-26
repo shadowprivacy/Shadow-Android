@@ -25,5 +25,5 @@ obj/
 jni/libspeex/.deps/
 *.sh
 pkcs11.password
-app/libs/ringrtc-android-*.jar
 app/.cxx
+dev.keystore

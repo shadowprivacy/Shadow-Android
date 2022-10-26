@@ -653,7 +653,10 @@ public class SignalServiceMessageSender {
             stickerBuilder.setPackId(ByteString.copyFrom(message.getSticker().get().getPackId()));
             stickerBuilder.setPackKey(ByteString.copyFrom(message.getSticker().get().getPackKey()));
             stickerBuilder.setStickerId(message.getSticker().get().getStickerId());
-            stickerBuilder.setEmoji(message.getSticker().get().getEmoji());
+
+            if (message.getSticker().get().getEmoji() != null) {
+                stickerBuilder.setEmoji(message.getSticker().get().getEmoji());
+            }
 
             if (message.getSticker().get().getAttachment().isStream()) {
                 stickerBuilder.setData(createAttachmentPointer(message.getSticker().get().getAttachment().asStream()));
@@ -674,11 +677,6 @@ public class SignalServiceMessageSender {
                     .setEmoji(message.getReaction().get().getEmoji())
                     .setRemove(message.getReaction().get().isRemove())
                     .setTargetSentTimestamp(message.getReaction().get().getTargetSentTimestamp());
-
-            // TODO [Alan] PhoneNumberPrivacy: Do not set this number
-            if (message.getReaction().get().getTargetAuthor().getNumber().isPresent()) {
-                reactionBuilder.setTargetAuthorE164(message.getReaction().get().getTargetAuthor().getNumber().get());
-            }
 
             if (message.getReaction().get().getTargetAuthor().getUuid().isPresent()) {
                 reactionBuilder.setTargetAuthorUuid(message.getReaction().get().getTargetAuthor().getUuid().get().toString());
@@ -802,7 +800,7 @@ public class SignalServiceMessageSender {
 
     private byte[] createMultiDeviceSentTranscriptContent(SentTranscriptMessage transcript, Optional<UnidentifiedAccessPair> unidentifiedAccess) throws IOException {
         SignalServiceAddress address = transcript.getDestination().get();
-        SendMessageResult result = SendMessageResult.success(address, unidentifiedAccess.isPresent(), true);
+        SendMessageResult    result  = SendMessageResult.success(address, unidentifiedAccess.isPresent(), true, -1);
 
         return createMultiDeviceSentTranscriptContent(createMessageContent(transcript.getMessage()),
                 Optional.of(address),
@@ -1339,7 +1337,23 @@ public class SignalServiceMessageSender {
             }
         }
 
-        Log.d(TAG, "Completed send to " + recipients.size() + " recipients in " + (System.currentTimeMillis() - startTime) + " ms");
+        double sendsForAverage = 0;
+        for (SendMessageResult result : results) {
+            if (result.getSuccess() != null && result.getSuccess().getDuration() != -1) {
+                sendsForAverage++;
+            }
+        }
+
+        double average = 0;
+        if (sendsForAverage > 0) {
+            for (SendMessageResult result : results) {
+                if (result.getSuccess() != null && result.getSuccess().getDuration() != -1) {
+                    average += result.getSuccess().getDuration() / sendsForAverage;
+                }
+            }
+        }
+
+        Log.d(TAG, "Completed send to " + recipients.size() + " recipients in " + (System.currentTimeMillis() - startTime) + " ms, with an average time of " + Math.round(average) + " ms per send.");
         return results;
     }
 
@@ -1369,8 +1383,7 @@ public class SignalServiceMessageSender {
                 if (pipe.isPresent() && !unidentifiedAccess.isPresent()) {
                     try {
                         SendMessageResponse response = pipe.get().send(messages, Optional.absent()).get(10, TimeUnit.SECONDS);
-                        Log.d(TAG, "[sendMessage] Completed over pipe in " + (System.currentTimeMillis() - startTime) + " ms and " + (i + 1) + " attempt(s)");
-                        return SendMessageResult.success(recipient, false, response.getNeedsSync() || isMultiDevice.get());
+                        return SendMessageResult.success(recipient, false, response.getNeedsSync() || isMultiDevice.get(), System.currentTimeMillis() - startTime);
                     } catch (IOException | ExecutionException | InterruptedException | TimeoutException e) {
                         Log.w(TAG, e);
                         Log.w(TAG, "[sendMessage] Pipe failed, falling back...");
@@ -1378,8 +1391,7 @@ public class SignalServiceMessageSender {
                 } else if (unidentifiedPipe.isPresent() && unidentifiedAccess.isPresent()) {
                     try {
                         SendMessageResponse response = unidentifiedPipe.get().send(messages, unidentifiedAccess).get(10, TimeUnit.SECONDS);
-                        Log.d(TAG, "[sendMessage] Completed over unidentified pipe in " + (System.currentTimeMillis() - startTime) + " ms and " + (i + 1) + " attempt(s)");
-                        return SendMessageResult.success(recipient, true, response.getNeedsSync() || isMultiDevice.get());
+                        return SendMessageResult.success(recipient, true, response.getNeedsSync() || isMultiDevice.get(), System.currentTimeMillis() - startTime);
                     } catch (IOException | ExecutionException | InterruptedException | TimeoutException e) {
                         Log.w(TAG, e);
                         Log.w(TAG, "[sendMessage] Unidentified pipe failed, falling back...");
@@ -1392,8 +1404,7 @@ public class SignalServiceMessageSender {
 
                 SendMessageResponse response = socket.sendMessage(messages, unidentifiedAccess);
 
-                Log.d(TAG, "[sendMessage] Completed over REST in " + (System.currentTimeMillis() - startTime) + " ms and " + (i + 1) + " attempt(s)");
-                return SendMessageResult.success(recipient, unidentifiedAccess.isPresent(), response.getNeedsSync() || isMultiDevice.get());
+                return SendMessageResult.success(recipient, unidentifiedAccess.isPresent(), response.getNeedsSync() || isMultiDevice.get(), System.currentTimeMillis() - startTime);
 
             } catch (InvalidKeyException ike) {
                 Log.w(TAG, ike);

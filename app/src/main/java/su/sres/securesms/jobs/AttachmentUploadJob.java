@@ -1,8 +1,6 @@
 package su.sres.securesms.jobs;
 
 import android.graphics.Bitmap;
-import android.media.MediaDataSource;
-import android.media.MediaMetadataRetriever;
 import android.os.Build;
 import android.text.TextUtils;
 
@@ -10,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.greenrobot.eventbus.EventBus;
+
 import su.sres.securesms.R;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.AttachmentId;
@@ -27,10 +26,10 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.service.GenericForegroundService;
 import su.sres.securesms.service.NotificationController;
-import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.MediaMetadataRetrieverUtil;
 import su.sres.securesms.util.MediaUtil;
+
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
 import su.sres.signalservice.api.messages.SignalServiceAttachmentPointer;
@@ -39,6 +38,7 @@ import su.sres.signalservice.internal.push.http.ResumableUploadSpec;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -55,7 +55,7 @@ public final class AttachmentUploadJob extends BaseJob {
 
     private static final long UPLOAD_REUSE_THRESHOLD = TimeUnit.DAYS.toMillis(3);
 
-    private static final String KEY_ROW_ID    = "row_id";
+    private static final String KEY_ROW_ID = "row_id";
     private static final String KEY_UNIQUE_ID = "unique_id";
 
     /**
@@ -81,14 +81,16 @@ public final class AttachmentUploadJob extends BaseJob {
     }
 
     @Override
-    public @NonNull Data serialize() {
+    public @NonNull
+    Data serialize() {
         return new Data.Builder().putLong(KEY_ROW_ID, attachmentId.getRowId())
                 .putLong(KEY_UNIQUE_ID, attachmentId.getUniqueId())
                 .build();
     }
 
     @Override
-    public @NonNull String getFactoryKey() {
+    public @NonNull
+    String getFactoryKey() {
         return KEY;
     }
 
@@ -107,9 +109,9 @@ public final class AttachmentUploadJob extends BaseJob {
             resumableUploadSpec = null;
         }
 
-        SignalServiceMessageSender messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-        AttachmentDatabase         database           = DatabaseFactory.getAttachmentDatabase(context);
-        DatabaseAttachment         databaseAttachment = database.getAttachment(attachmentId);
+        SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
+        AttachmentDatabase database = DatabaseFactory.getAttachmentDatabase(context);
+        DatabaseAttachment databaseAttachment = database.getAttachment(attachmentId);
 
         if (databaseAttachment == null) {
             throw new InvalidAttachmentException("Cannot find the specified attachment.");
@@ -126,15 +128,16 @@ public final class AttachmentUploadJob extends BaseJob {
         Log.i(TAG, "Uploading attachment for message " + databaseAttachment.getMmsId() + " with ID " + databaseAttachment.getAttachmentId());
 
         try (NotificationController notification = getNotificationForAttachment(databaseAttachment)) {
-            SignalServiceAttachment        localAttachment  = getAttachmentFor(databaseAttachment, notification, resumableUploadSpec);
+            SignalServiceAttachment localAttachment = getAttachmentFor(databaseAttachment, notification, resumableUploadSpec);
             SignalServiceAttachmentPointer remoteAttachment = messageSender.uploadAttachment(localAttachment.asStream());
-            Attachment                     attachment       = PointerAttachment.forPointer(Optional.of(remoteAttachment), null, databaseAttachment.getFastPreflightId()).get();
+            Attachment attachment = PointerAttachment.forPointer(Optional.of(remoteAttachment), null, databaseAttachment.getFastPreflightId()).get();
 
             database.updateAttachmentAfterUpload(databaseAttachment.getAttachmentId(), attachment, remoteAttachment.getUploadTimestamp());
         }
     }
 
-    private @Nullable NotificationController getNotificationForAttachment(@NonNull Attachment attachment) {
+    private @Nullable
+    NotificationController getNotificationForAttachment(@NonNull Attachment attachment) {
         if (attachment.getSize() >= FOREGROUND_LIMIT) {
             return GenericForegroundService.startForegroundTask(context, context.getString(R.string.AttachmentUploadJob_uploading_media));
         } else {
@@ -156,10 +159,12 @@ public final class AttachmentUploadJob extends BaseJob {
         return exception instanceof IOException;
     }
 
-    private @NonNull SignalServiceAttachment getAttachmentFor(Attachment attachment, @Nullable NotificationController notification, @Nullable ResumableUploadSpec resumableUploadSpec) throws InvalidAttachmentException {
+    private @NonNull
+    SignalServiceAttachment getAttachmentFor(Attachment attachment, @Nullable NotificationController notification, @Nullable ResumableUploadSpec resumableUploadSpec) throws InvalidAttachmentException {
         try {
-            if (attachment.getDataUri() == null || attachment.getSize() == 0) throw new IOException("Assertion failed, outgoing attachment has no data!");
-            InputStream is = PartAuthority.getAttachmentStream(context, attachment.getDataUri());
+            if (attachment.getUri() == null || attachment.getSize() == 0)
+                throw new IOException("Assertion failed, outgoing attachment has no data!");
+            InputStream is = PartAuthority.getAttachmentStream(context, attachment.getUri());
             SignalServiceAttachment.Builder builder = SignalServiceAttachment.newStreamBuilder()
                     .withStream(is)
                     .withContentType(attachment.getContentType())
@@ -192,45 +197,38 @@ public final class AttachmentUploadJob extends BaseJob {
         }
     }
 
-    private @Nullable String getImageBlurHash(@NonNull Attachment attachment) throws IOException {
+    private @Nullable
+    String getImageBlurHash(@NonNull Attachment attachment) throws IOException {
         if (attachment.getBlurHash() != null) return attachment.getBlurHash().getHash();
-        if (attachment.getDataUri() == null) return null;
+        if (attachment.getUri() == null) return null;
 
-        return BlurHashEncoder.encode(PartAuthority.getAttachmentStream(context, attachment.getDataUri()));
+        return BlurHashEncoder.encode(PartAuthority.getAttachmentStream(context, attachment.getUri()));
     }
 
-    private @Nullable String getVideoBlurHash(@NonNull Attachment attachment) throws IOException {
-        if (attachment.getThumbnailUri() != null) {
-            return BlurHashEncoder.encode(PartAuthority.getAttachmentStream(context, attachment.getThumbnailUri()));
+    private @Nullable
+    String getVideoBlurHash(@NonNull Attachment attachment) throws IOException {
+        if (attachment.getBlurHash() != null) {
+            return attachment.getBlurHash().getHash();
         }
-
-        if (attachment.getBlurHash() != null) return attachment.getBlurHash().getHash();
 
         if (Build.VERSION.SDK_INT < 23) {
             Log.w(TAG, "Video thumbnails not supported...");
             return null;
         }
 
-        try (MediaDataSource dataSource = DatabaseFactory.getAttachmentDatabase(context).mediaDataSourceFor(attachmentId)) {
-            if (dataSource == null) return null;
+        Bitmap bitmap = MediaUtil.getVideoThumbnail(context, Objects.requireNonNull(attachment.getUri()), 1000);
 
-            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-            MediaMetadataRetrieverUtil.setDataSource(retriever, dataSource);
+        if (bitmap != null) {
+            Bitmap thumb = Bitmap.createScaledBitmap(bitmap, 100, 100, false);
+            bitmap.recycle();
 
-            Bitmap bitmap = retriever.getFrameAtTime(1000);
+            Log.i(TAG, "Generated video thumbnail...");
+            String hash = BlurHashEncoder.encode(thumb);
+            thumb.recycle();
 
-            if (bitmap != null) {
-                Bitmap thumb = Bitmap.createScaledBitmap(bitmap, 100, 100, false);
-                bitmap.recycle();
-
-                Log.i(TAG, "Generated video thumbnail...");
-                String hash = BlurHashEncoder.encode(thumb);
-                thumb.recycle();
-
-                return hash;
-            } else {
-                return null;
-            }
+            return hash;
+        } else {
+            return null;
         }
     }
 
@@ -246,7 +244,8 @@ public final class AttachmentUploadJob extends BaseJob {
 
     public static final class Factory implements Job.Factory<AttachmentUploadJob> {
         @Override
-        public @NonNull AttachmentUploadJob create(@NonNull Parameters parameters, @NonNull su.sres.securesms.jobmanager.Data data) {
+        public @NonNull
+        AttachmentUploadJob create(@NonNull Job.Parameters parameters, @NonNull su.sres.securesms.jobmanager.Data data) {
             return new AttachmentUploadJob(parameters, new AttachmentId(data.getLong(KEY_ROW_ID), data.getLong(KEY_UNIQUE_ID)));
         }
     }

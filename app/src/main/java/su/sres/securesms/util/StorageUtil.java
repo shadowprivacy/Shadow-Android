@@ -4,11 +4,14 @@ import android.content.Context;
 import android.os.Environment;
 import androidx.annotation.Nullable;
 
+import su.sres.securesms.BuildConfig;
 import su.sres.securesms.database.NoExternalStorageException;
 
 import java.io.File;
 
 public class StorageUtil {
+
+  private static final String PRODUCTION_PACKAGE_ID = "su.sres.securesms";
 
   public static File getBackupDirectory() throws NoExternalStorageException {
     File storage = Environment.getExternalStorageDirectory();
@@ -19,6 +22,11 @@ public class StorageUtil {
 
     File signal = new File(storage, "Shadow");
     File backups = new File(signal, "Backups");
+
+    //noinspection ConstantConditions
+    if (BuildConfig.APPLICATION_ID.startsWith(PRODUCTION_PACKAGE_ID + ".")) {
+      backups = new File(backups, BuildConfig.APPLICATION_ID.substring(PRODUCTION_PACKAGE_ID.length() + 1));
+    }
 
     if (!backups.exists()) {
       if (!backups.mkdirs()) {

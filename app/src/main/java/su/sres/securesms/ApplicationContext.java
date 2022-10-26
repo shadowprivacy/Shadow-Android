@@ -171,6 +171,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         if (SignalStore.registrationValues().isServerSet() && initializedOnCreate) {
           FeatureFlags.refreshIfNecessary();
           ApplicationDependencies.getRecipientCache().warmUp();
+          RetrieveProfileJob.enqueueRoutineFetchIfNecessary(this);
           ApplicationDependencies.getFrameRateTracker().begin();
           ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
           launchCertificateRefresh();
@@ -488,7 +489,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeMasterKey();
     ApplicationDependencies.getJobManager().beginJobLoop();
 //    StorageSyncHelper.scheduleRoutineSync();
-    RetrieveProfileJob.enqueueRoutineFetchIfNecessary(this);
     RegistrationUtil.maybeMarkRegistrationComplete(this);
     RefreshPreKeysJob.scheduleIfNecessary();
 

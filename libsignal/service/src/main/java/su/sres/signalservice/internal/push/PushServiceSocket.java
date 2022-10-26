@@ -15,6 +15,7 @@ import okhttp3.Callback;
 import okhttp3.Dns;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import su.sres.signalservice.api.account.AccountAttributes;
 import su.sres.signalservice.api.groupsv2.GroupsV2AuthorizationString;
 import su.sres.signalservice.api.push.exceptions.DeprecatedVersionException;
 import su.sres.signalservice.api.push.exceptions.RetryAfterException;
@@ -110,7 +111,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -299,7 +299,7 @@ public class PushServiceSocket {
 
     public VerifyAccountResponse verifyAccountCode(String verificationCode, String signalingKey, int registrationId, boolean fetchesMessages, String pin,
                                                    byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess,
-                                                   SignalServiceProfile.Capabilities capabilities,
+                                                   AccountAttributes.Capabilities capabilities,
                                                    boolean discoverableByUserLogin)
             throws IOException {
         AccountAttributes signalingKeyEntity = new AccountAttributes(signalingKey, registrationId, fetchesMessages, pin, unidentifiedAccessKey, unrestrictedUnidentifiedAccess, capabilities, discoverableByUserLogin);
@@ -319,7 +319,7 @@ public class PushServiceSocket {
 
     public void setAccountAttributes(String signalingKey, int registrationId, boolean fetchesMessages, String pin,
                                      byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess,
-                                     SignalServiceProfile.Capabilities capabilities,
+                                     AccountAttributes.Capabilities capabilities,
                                      boolean discoverableByUserLogin)
             throws IOException {
         AccountAttributes accountAttributes = new AccountAttributes(signalingKey, registrationId, fetchesMessages, pin,
@@ -1525,7 +1525,6 @@ public class PushServiceSocket {
 
 //      Log.d(TAG, "Push service URL: " + connectionHolder.getUrl());
 //      Log.d(TAG, "Opening URL: " + String.format("%s%s", connectionHolder.getUrl(), urlFragment));
-        Log.d(TAG, "Opening URL: <REDACTED>");
 
         Request.Builder request = new Request.Builder();
         request.url(String.format("%s%s", connectionHolder.getUrl(), urlFragment));
@@ -1568,7 +1567,7 @@ public class PushServiceSocket {
                 .readTimeout(soTimeoutMillis, TimeUnit.MILLISECONDS)
                 .build();
 
-        Log.d(TAG, "Opening URL: <REDACTED>");
+        // Log.d(TAG, "Opening URL: <REDACTED>");
 
         Request.Builder request = new Request.Builder().url(connectionHolder.getUrl() + path);
 

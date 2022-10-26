@@ -36,12 +36,13 @@ public class ApplicationMigrations {
 
     private static final MutableLiveData<Boolean> UI_BLOCKING_MIGRATION_RUNNING = new MutableLiveData<>();
 
-    public static final int CURRENT_VERSION = 17;
+    public static final int CURRENT_VERSION = 18;
 
     private static final class Version {
         static final int VERSIONED_PROFILE  = 15;
         static final int NEW_ACTIVATION_MODEL  = 16;
         static final int TRIM_SETTINGS      = 17;
+        static final int THUMBNAIL_CLEANUP_AND_GV2  = 18;
     }
 
     /**
@@ -161,6 +162,11 @@ public class ApplicationMigrations {
 
         if (lastSeenVersion < Version.TRIM_SETTINGS) {
             jobs.put(Version.TRIM_SETTINGS, new TrimByLengthSettingsMigrationJob());
+        }
+
+        if (lastSeenVersion < Version.THUMBNAIL_CLEANUP_AND_GV2) {
+            jobs.put(Version.THUMBNAIL_CLEANUP_AND_GV2, new DatabaseMigrationJob());
+            jobs.put(Version.THUMBNAIL_CLEANUP_AND_GV2, new AttributesMigrationJob());
         }
 
         return jobs;

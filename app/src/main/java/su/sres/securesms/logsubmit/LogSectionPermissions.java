@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import su.sres.securesms.BuildConfig;
+
 public class LogSectionPermissions implements LogSection {
     @Override
     public @NonNull String getTitle() {
@@ -24,7 +26,7 @@ public class LogSectionPermissions implements LogSection {
         List<Pair<String, Boolean>> status = new ArrayList<>();
 
         try {
-            PackageInfo info = context.getPackageManager().getPackageInfo("su.sres.securesms", PackageManager.GET_PERMISSIONS);
+            PackageInfo info = context.getPackageManager().getPackageInfo(BuildConfig.APPLICATION_ID, PackageManager.GET_PERMISSIONS);
 
             for (int i = 0; i < info.requestedPermissions.length; i++) {
                 status.add(new Pair<>(info.requestedPermissions[i],

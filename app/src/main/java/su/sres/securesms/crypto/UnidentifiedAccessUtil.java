@@ -5,6 +5,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import com.annimon.stream.Stream;
+
 import org.signal.libsignal.metadata.certificate.CertificateValidator;
 import org.signal.libsignal.metadata.certificate.InvalidCertificateException;
 
@@ -20,6 +22,13 @@ import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.ecc.Curve;
 import org.whispersystems.libsignal.ecc.ECPublicKey;
 import org.whispersystems.libsignal.util.guava.Optional;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import su.sres.signalservice.api.crypto.UnidentifiedAccess;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
 
@@ -42,34 +51,64 @@ public class UnidentifiedAccessUtil {
     }
 
     @WorkerThread
-    public static Optional<UnidentifiedAccessPair> getAccessFor(@NonNull Context context,
-                                                                @NonNull Recipient recipient)
-    {
-        try {
-            byte[] theirUnidentifiedAccessKey       = getTargetUnidentifiedAccessKey(recipient);
-            byte[] ourUnidentifiedAccessKey         = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
-            byte[] ourUnidentifiedAccessCertificate = getUnidentifiedAccessCertificate(recipient);
+    public static Optional<UnidentifiedAccessPair> getAccessFor(@NonNull Context context, @NonNull Recipient recipient) {
+        return getAccessFor(context, recipient, true);
+    }
 
-            if (TextSecurePreferences.isUniversalUnidentifiedAccess(context)) {
-                ourUnidentifiedAccessKey = Util.getSecretBytes(16);
-            }
+    @WorkerThread
+    public static Optional<UnidentifiedAccessPair> getAccessFor(@NonNull Context context, @NonNull Recipient recipient, boolean log) {
+        return getAccessFor(context, Collections.singletonList(recipient), log).get(0);
+    }
 
-            Log.i(TAG, "Their access key present? " + (theirUnidentifiedAccessKey != null) +
-                    " | Our certificate present? " + (ourUnidentifiedAccessCertificate != null) +
-                    " | UUID certificate supported? " + recipient.isUuidSupported());
+    @WorkerThread
+    public static List<Optional<UnidentifiedAccessPair>> getAccessFor(@NonNull Context context, @NonNull List<Recipient> recipients) {
+        return getAccessFor(context, recipients, true);
+    }
+
+    @WorkerThread
+    public static List<Optional<UnidentifiedAccessPair>> getAccessFor(@NonNull Context context, @NonNull List<Recipient> recipients, boolean log) {
+        byte[] ourUnidentifiedAccessKey = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
+
+        if (TextSecurePreferences.isUniversalUnidentifiedAccess(context)) {
+            ourUnidentifiedAccessKey = Util.getSecretBytes(16);
+        }
+
+        List<Optional<UnidentifiedAccessPair>> access = new ArrayList<>(recipients.size());
+
+        Map<CertificateType, Integer> typeCounts = new HashMap<>();
+
+        for (Recipient recipient : recipients) {
+            byte[] theirUnidentifiedAccessKey = getTargetUnidentifiedAccessKey(recipient);
+            CertificateType certificateType = getUnidentifiedAccessCertificateType(recipient);
+            byte[] ourUnidentifiedAccessCertificate = SignalStore.certificateValues().getUnidentifiedAccessCertificate(certificateType);
+
+            int typeCount = Util.getOrDefault(typeCounts, certificateType, 0);
+            typeCount++;
+            typeCounts.put(certificateType, typeCount);
 
             if (theirUnidentifiedAccessKey != null && ourUnidentifiedAccessCertificate != null) {
-                return Optional.of(new UnidentifiedAccessPair(new UnidentifiedAccess(theirUnidentifiedAccessKey,
-                        ourUnidentifiedAccessCertificate),
-                        new UnidentifiedAccess(ourUnidentifiedAccessKey,
-                                ourUnidentifiedAccessCertificate)));
+                try {
+                    access.add(Optional.of(new UnidentifiedAccessPair(new UnidentifiedAccess(theirUnidentifiedAccessKey,
+                            ourUnidentifiedAccessCertificate),
+                            new UnidentifiedAccess(ourUnidentifiedAccessKey,
+                                    ourUnidentifiedAccessCertificate))));
+                } catch (InvalidCertificateException e) {
+                    Log.w(TAG, e);
+                    access.add(Optional.absent());
+                }
+            } else {
+                access.add(Optional.absent());
             }
-
-            return Optional.absent();
-        } catch (InvalidCertificateException e) {
-            Log.w(TAG, e);
-            return Optional.absent();
         }
+
+        int unidentifiedCount = Stream.of(access).filter(Optional::isPresent).toList().size();
+        int otherCount        = access.size() - unidentifiedCount;
+
+        if (log) {
+            Log.i(TAG, "Unidentified: " + unidentifiedCount + ", Other: " + otherCount + ". Types: " + typeCounts);
+        }
+
+        return access;
     }
 
     public static Optional<UnidentifiedAccessPair> getAccessForSync(@NonNull Context context) {
@@ -96,20 +135,23 @@ public class UnidentifiedAccessUtil {
         }
     }
 
-    private static byte[] getUnidentifiedAccessCertificate(@NonNull Recipient recipient) {
-        CertificateType certificateType;
+    private static @NonNull CertificateType getUnidentifiedAccessCertificateType(@NonNull Recipient recipient) {
         UserLoginPrivacyValues.UserLoginSharingMode sendUserLoginTo = SignalStore.userLoginPrivacy().getUserLoginSharingMode();
 
         switch (sendUserLoginTo) {
-            case EVERYONE: certificateType = CertificateType.UUID_AND_E164; break;
-            case NOBODY  : certificateType = CertificateType.UUID_ONLY; break;
-            default      : throw new AssertionError();
+            case EVERYONE:
+                return CertificateType.UUID_AND_E164;
+            case NOBODY:
+                return CertificateType.UUID_ONLY;
+            default:
+                throw new AssertionError();
         }
+    }
 
-        Log.i(TAG, String.format("Certificate type for %s with setting %s -> %s", recipient.getId(), sendUserLoginTo, certificateType));
+    private static byte[] getUnidentifiedAccessCertificate(@NonNull Recipient recipient) {
 
         return SignalStore.certificateValues()
-                .getUnidentifiedAccessCertificate(certificateType);
+                .getUnidentifiedAccessCertificate(getUnidentifiedAccessCertificateType(recipient));
     }
 
     private static @Nullable byte[] getTargetUnidentifiedAccessKey(@NonNull Recipient recipient) {
