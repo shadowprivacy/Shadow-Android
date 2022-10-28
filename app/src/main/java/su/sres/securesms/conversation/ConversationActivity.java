@@ -165,7 +165,6 @@ import su.sres.securesms.database.DraftDatabase.Drafts;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
 import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
-import su.sres.securesms.database.MessageDatabase.MarkedMessageInfo;
 import su.sres.securesms.database.MmsSmsColumns.Types;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.RegisteredState;
@@ -210,7 +209,6 @@ import su.sres.securesms.mms.Slide;
 import su.sres.securesms.mms.SlideDeck;
 import su.sres.securesms.mms.StickerSlide;
 import su.sres.securesms.mms.VideoSlide;
-import su.sres.securesms.notifications.MarkReadReceiver;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.providers.BlobProvider;
@@ -685,7 +683,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
                 final Context context = ConversationActivity.this.getApplicationContext();
 
-                sendMediaMessage(result.getTransport().isSms(),
+                sendMediaMessage(false,
                         result.getBody(),
                         slideDeck,
                         quote,
@@ -1427,14 +1425,12 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
         if (!isSecureText && !isPushGroupConversation())
             sendButton.disableTransport(Type.TEXTSECURE);
-        if (recipient.get().isPushGroup()) sendButton.disableTransport(Type.SMS);
 
         if (!recipient.get().isPushGroup() && recipient.get().isForceSmsSelection()) {
-            sendButton.setDefaultTransport(Type.SMS);
+            // noop
         } else {
             if (isSecureText || isPushGroupConversation())
                 sendButton.setDefaultTransport(Type.TEXTSECURE);
-            else sendButton.setDefaultTransport(Type.SMS);
         }
 
         calculateCharactersRemaining();
@@ -1879,7 +1875,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         sendButton.addOnTransportChangedListener((newTransport, manuallySelected) -> {
             calculateCharactersRemaining();
             updateLinkPreviewState();
-            linkPreviewViewModel.onTransportChanged(newTransport.isSms());
+            linkPreviewViewModel.onTransportChanged(false);
             composeText.setTransport(newTransport);
 
             buttonToggle.getBackground().setColorFilter(newTransport.getBackgroundColor(), PorterDuff.Mode.MULTIPLY);
@@ -1890,7 +1886,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
         titleView.setOnClickListener(v -> handleConversationSettings());
         titleView.setOnLongClickListener(v -> handleDisplayQuickContact());
         unblockButton.setOnClickListener(v -> handleUnblock());
-//        makeDefaultSmsButton.setOnClickListener(v -> handleMakeDefaultSms());
         registerButton.setOnClickListener(v -> handleRegisterForSignal());
 
         composeText.setOnKeyListener(composeKeyPressedListener);
@@ -2429,7 +2424,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     private boolean isSmsForced() {
-        return sendButton.isManualSelection() && sendButton.getSelectedTransport().isSms();
+        return false;
     }
 
     protected Recipient getRecipient() {
@@ -2502,11 +2497,11 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
             String message = getMessage();
             TransportOption transport = sendButton.getSelectedTransport();
-            boolean forceSms = (recipient.isForceSmsSelection() || sendButton.isManualSelection()) && transport.isSms();
+            boolean forceSms = false;
             int subscriptionId = sendButton.getSelectedTransport().getSimSubscriptionId().or(-1);
             long expiresIn = recipient.getExpireMessages() * 1000L;
             boolean initiating = threadId == -1;
-            boolean needsSplit = !transport.isSms() && message.length() > transport.calculateCharacters(message).maxPrimaryMessageSize;
+            boolean needsSplit = message.length() > transport.calculateCharacters(message).maxPrimaryMessageSize;
             boolean isMediaMessage = attachmentManager.isAttachmentPresent() ||
                     recipient.isGroup() ||
                     recipient.getEmail().isPresent() ||
@@ -2543,7 +2538,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         long expiresIn = recipient.get().getExpireMessages() * 1000L;
         QuoteModel quote = result.isViewOnce() ? null : inputPanel.getQuote().orNull();
         List<Mention> mentions = new ArrayList<>(result.getMentions());
-        boolean initiating = threadId == -1;
+
         OutgoingMediaMessage message = new OutgoingMediaMessage(recipient.get(), new SlideDeck(), result.getBody(), System.currentTimeMillis(), -1, expiresIn, result.isViewOnce(), distributionType, quote, Collections.emptyList(), Collections.emptyList(), mentions);
         OutgoingMediaMessage secureMessage = new OutgoingSecureMediaMessage(message);
 
@@ -2722,7 +2717,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     private void updateLinkPreviewState() {
-        if (SignalStore.settings().isLinkPreviewsEnabled() && isSecureText && !sendButton.getSelectedTransport().isSms() && !attachmentManager.isAttachmentPresent()) {
+        if (SignalStore.settings().isLinkPreviewsEnabled() && isSecureText && !attachmentManager.isAttachmentPresent()) {
             linkPreviewViewModel.onEnabled();
             linkPreviewViewModel.onTextChanged(this, composeText.getTextTrimmed().toString(), composeText.getSelectionStart(), composeText.getSelectionEnd());
         } else {
@@ -2739,7 +2734,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
                 recipientDatabase.setDefaultSubscriptionId(recipient.getId(), transportOption.getSimSubscriptionId().or(-1));
 
                 if (!recipient.resolve().isPushGroup()) {
-                    recipientDatabase.setForceSmsSelection(recipient.getId(), recipient.get().getRegistered() == RegisteredState.REGISTERED && transportOption.isSms());
+                    recipientDatabase.setForceSmsSelection(recipient.getId(), false);
                 }
 
                 return null;
@@ -2784,7 +2779,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         future.addListener(new ListenableFuture.Listener<Pair<Uri, Long>>() {
             @Override
             public void onSuccess(final @NonNull Pair<Uri, Long> result) {
-                boolean forceSms = sendButton.isManualSelection() && sendButton.getSelectedTransport().isSms();
+                boolean forceSms = false;
                 boolean initiating = threadId == -1;
                 int subscriptionId = sendButton.getSelectedTransport().getSimSubscriptionId().or(-1);
                 long expiresIn = recipient.get().getExpireMessages() * 1000L;
@@ -2919,23 +2914,16 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     private void sendSticker(@NonNull StickerLocator stickerLocator, @NonNull String contentType, @NonNull Uri uri, long size, boolean clearCompose) {
-        if (sendButton.getSelectedTransport().isSms()) {
-            Media media = new Media(uri, contentType, System.currentTimeMillis(), StickerSlide.WIDTH, StickerSlide.HEIGHT, size, 0, false, Optional.absent(), Optional.absent(), Optional.absent());
-            Intent intent = MediaSendActivity.buildEditorIntent(this, Collections.singletonList(media), recipient.get(), composeText.getTextTrimmed(), sendButton.getSelectedTransport());
-            startActivityForResult(intent, MEDIA_SENDER);
-            return;
-        }
 
         long expiresIn = recipient.get().getExpireMessages() * 1000L;
         int subscriptionId = sendButton.getSelectedTransport().getSimSubscriptionId().or(-1);
         boolean initiating = threadId == -1;
-        TransportOption transport = sendButton.getSelectedTransport();
         SlideDeck slideDeck = new SlideDeck();
         Slide stickerSlide = new StickerSlide(this, uri, size, stickerLocator, contentType);
 
         slideDeck.addSlide(stickerSlide);
 
-        sendMediaMessage(transport.isSms(), "", slideDeck, null, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), expiresIn, false, subscriptionId, initiating, clearCompose);
+        sendMediaMessage(false, "", slideDeck, null, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), expiresIn, false, subscriptionId, initiating, clearCompose);
 
     }
 

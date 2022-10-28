@@ -304,7 +304,6 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
         });
 
         sendButton.setTransport(transport);
-        sendButton.disableTransport(transport.getType() == TransportOption.Type.SMS ? TransportOption.Type.TEXTSECURE : TransportOption.Type.SMS);
 
         countButton.setOnClickListener(v -> navigateToMediaSend(Locale.getDefault()));
 
@@ -517,12 +516,12 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
 
     @Override
     public void onKeyboardHidden() {
-        viewModel.onKeyboardHidden(sendButton.getSelectedTransport().isSms());
+        viewModel.onKeyboardHidden(false);
     }
 
     @Override
     public void onKeyboardShown() {
-        viewModel.onKeyboardShown(composeText.hasFocus(), captionText.hasFocus(), sendButton.getSelectedTransport().isSms());
+        viewModel.onKeyboardShown(composeText.hasFocus(), captionText.hasFocus(), false);
     }
 
     @Override

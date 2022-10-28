@@ -13,7 +13,6 @@ import org.whispersystems.libsignal.util.guava.Optional;
 public class TransportOption implements Parcelable {
 
   public enum Type {
-    SMS,
     TEXTSECURE
   }
 
@@ -73,10 +72,6 @@ public class TransportOption implements Parcelable {
 
   public boolean isType(Type type) {
     return this.type == type;
-  }
-
-  public boolean isSms() {
-    return type == Type.SMS;
   }
 
   public CharacterState calculateCharacters(String messageBody) {
