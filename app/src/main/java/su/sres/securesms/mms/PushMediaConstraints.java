@@ -2,9 +2,13 @@ package su.sres.securesms.mms;
 
 import android.content.Context;
 
+import su.sres.securesms.keyvalue.ServiceConfigurationValues;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.Util;
 
 public class PushMediaConstraints extends MediaConstraints {
+
+  private final ServiceConfigurationValues config = SignalStore.serviceConfigurationValues();
 
   private static final int MAX_IMAGE_DIMEN_LOWMEM = 768;
   private static final int MAX_IMAGE_DIMEN        = 4096;
@@ -23,38 +27,39 @@ public class PushMediaConstraints extends MediaConstraints {
 
   @Override
   public int getImageMaxSize(Context context) {
-    return 6 * MB;
+    return config.getImageMaxSize();
   }
 
   @Override
   public int getGifMaxSize(Context context) {
-    return 25 * MB;
+    return config.getGifMaxSize();
   }
 
   @Override
   public int getVideoMaxSize(Context context) {
-    return 100 * MB;
+    return config.getVideoMaxSize();
   }
 
   @Override
   public int getUncompressedVideoMaxSize(Context context) {
-    return isVideoTranscodeAvailable() ? 200 * MB
+    return isVideoTranscodeAvailable() ? 2 * getVideoMaxSize(context)
             : getVideoMaxSize(context);
   }
 
   @Override
   public int getCompressedVideoMaxSize(Context context) {
-    return Util.isLowMemory(context) ? 30 * MB
-            : 50 * MB;
+    // on low memory devices the transcoder will fail with large video files due to this
+    return (int) (Util.isLowMemory(context) ? 30 * MB
+                : 0.5 * getVideoMaxSize(context));
   }
 
   @Override
   public int getAudioMaxSize(Context context) {
-    return 100 * MB;
+    return config.getAudioMaxSize();
   }
 
   @Override
   public int getDocumentMaxSize(Context context) {
-    return 100 * MB;
+    return config.getDocMaxSize();
   }
 }

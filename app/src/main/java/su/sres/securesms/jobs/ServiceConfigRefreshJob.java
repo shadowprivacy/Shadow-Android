@@ -111,6 +111,17 @@ public class ServiceConfigRefreshJob extends BaseJob {
             String supportEmail                  = configRequested.getSupportEmail();
             String fcmSenderId                   = configRequested.getFcmSenderId();
             String oldFcmSenderId                = SignalStore.serviceConfigurationValues().getFcmSenderId();
+            Integer maxImageSize                 = configRequested.getMaxImageSize();
+            Integer maxGifSize                   = configRequested.getMaxGifSize();
+            Integer maxAudioSize                 = configRequested.getMaxAudioSize();
+            Integer maxVideoSize                 = configRequested.getMaxVideoSize();
+            Integer maxDocSize                   = configRequested.getMaxDocSize();
+
+            if (maxImageSize !=null) SignalStore.serviceConfigurationValues().setImageMaxSize(maxImageSize);
+            if (maxGifSize !=null) SignalStore.serviceConfigurationValues().setImageMaxSize(maxGifSize);
+            if (maxAudioSize !=null) SignalStore.serviceConfigurationValues().setImageMaxSize(maxAudioSize);
+            if (maxVideoSize !=null) SignalStore.serviceConfigurationValues().setImageMaxSize(maxVideoSize);
+            if (maxDocSize !=null) SignalStore.serviceConfigurationValues().setImageMaxSize(maxDocSize);
 
             if (
                             cloudUrl                      != null &&

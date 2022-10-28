@@ -36,6 +36,21 @@ public class ConfigurationInfo {
     @JsonProperty
     private String fcmSenderId;
 
+    @JsonProperty
+    private int maxImageSize;
+
+    @JsonProperty
+    private int maxGifSize;
+
+    @JsonProperty
+    private int maxAudioSize;
+
+    @JsonProperty
+    private int maxVideoSize;
+
+    @JsonProperty
+    private int maxDocSize;
+
     public String getCloudUri() {
         return cloudUri;
     }
@@ -62,6 +77,26 @@ public class ConfigurationInfo {
 
     public String getFcmSenderId() {
         return fcmSenderId;
+    }
+
+    public Integer getMaxImageSize() {
+        return maxImageSize;
+    }
+
+    public Integer getMaxGifSize() {
+        return maxGifSize;
+    }
+
+    public Integer getMaxAudioSize() {
+        return maxAudioSize;
+    }
+
+    public Integer getMaxVideoSize() {
+        return maxVideoSize;
+    }
+
+    public Integer getMaxDocSize() {
+        return maxDocSize;
     }
 
     static class ByteArrayDeserializer extends JsonDeserializer<byte[]> {
