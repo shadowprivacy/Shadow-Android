@@ -41,7 +41,7 @@ public final class WebRtcControls {
     }
 
     boolean displayEndCall() {
-        return isPreJoin();
+        return isAtLeastOutgoing();
     }
 
     boolean displayMuteAudio() {
