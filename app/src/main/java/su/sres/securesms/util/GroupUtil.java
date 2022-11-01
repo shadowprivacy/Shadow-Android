@@ -14,6 +14,9 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.MessageGroupContext;
 import su.sres.securesms.recipients.Recipient;
+
+import org.signal.zkgroup.InvalidInputException;
+import org.signal.zkgroup.groups.GroupMasterKey;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.securesms.recipients.RecipientId;
@@ -65,6 +68,14 @@ public final class GroupUtil {
       return Optional.of(idFromGroupContext(groupContext.get()));
     }
     return Optional.absent();
+  }
+
+  public static @NonNull GroupMasterKey requireMasterKey(@NonNull byte[] masterKey) {
+    try {
+      return new GroupMasterKey(masterKey);
+    } catch (InvalidInputException e) {
+      throw new AssertionError(e);
+    }
   }
 
   public static @NonNull GroupDescription getNonV2GroupDescription(@NonNull Context context, @Nullable String encodedGroup) {

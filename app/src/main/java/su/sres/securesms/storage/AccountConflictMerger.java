@@ -61,14 +61,15 @@ class AccountConflictMerger implements StorageSyncHelper.ConflictMerger<SignalAc
         String                               avatarUrlPath          = remote.getAvatarUrlPath().or(local.getAvatarUrlPath()).or("");
         byte[]                               profileKey             = remote.getProfileKey().or(local.getProfileKey()).orNull();
         boolean                              noteToSelfArchived     = remote.isNoteToSelfArchived();
+        boolean                              noteToSelfForcedUnread = remote.isNoteToSelfForcedUnread();
         boolean                              readReceipts           = remote.isReadReceiptsEnabled();
         boolean                              typingIndicators       = remote.isTypingIndicatorsEnabled();
         boolean                              sealedSenderIndicators = remote.isSealedSenderIndicatorsEnabled();
         boolean                              linkPreviews           = remote.isLinkPreviewsEnabled();
         boolean                              unlisted               = remote.isUserLoginUnlisted();
-        AccountRecord.UserLoginSharingMode UserLoginSharingMode = remote.getUserLoginSharingMode();
-        boolean                              matchesRemote          = doParamsMatch(remote, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, UserLoginSharingMode, unlisted);
-        boolean                              matchesLocal           = doParamsMatch(local, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, UserLoginSharingMode, unlisted );
+        AccountRecord.UserLoginSharingMode   userLoginSharingMode = remote.getUserLoginSharingMode();
+        boolean                              matchesRemote          = doParamsMatch(remote, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted);
+        boolean                              matchesLocal           = doParamsMatch(local, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted );
 
         if (matchesRemote) {
             return remote;
@@ -82,12 +83,13 @@ class AccountConflictMerger implements StorageSyncHelper.ConflictMerger<SignalAc
                     .setAvatarUrlPath(avatarUrlPath)
                     .setProfileKey(profileKey)
                     .setNoteToSelfArchived(noteToSelfArchived)
+                    .setNoteToSelfForcedUnread(noteToSelfForcedUnread)
                     .setReadReceiptsEnabled(readReceipts)
                     .setTypingIndicatorsEnabled(typingIndicators)
                     .setSealedSenderIndicatorsEnabled(sealedSenderIndicators)
                     .setLinkPreviewsEnabled(linkPreviews)
                     .setUnlistedUserLogin(unlisted)
-                    .setUserLoginSharingMode(UserLoginSharingMode)
+                    .setUserLoginSharingMode(userLoginSharingMode)
                     .setUnlistedUserLogin(unlisted)
                     .build();
         }
@@ -100,6 +102,7 @@ class AccountConflictMerger implements StorageSyncHelper.ConflictMerger<SignalAc
                                          @NonNull String avatarUrlPath,
                                          @Nullable byte[] profileKey,
                                          boolean noteToSelfArchived,
+                                         boolean noteToSelfForcedUnread,
                                          boolean readReceipts,
                                          boolean typingIndicators,
                                          boolean sealedSenderIndicators,
@@ -113,6 +116,7 @@ class AccountConflictMerger implements StorageSyncHelper.ConflictMerger<SignalAc
                 Objects.equals(contact.getAvatarUrlPath().or(""), avatarUrlPath)    &&
                 Arrays.equals(contact.getProfileKey().orNull(), profileKey)         &&
                 contact.isNoteToSelfArchived() == noteToSelfArchived                &&
+                contact.isNoteToSelfForcedUnread() == noteToSelfForcedUnread        &&
                 contact.isReadReceiptsEnabled() == readReceipts                     &&
                 contact.isTypingIndicatorsEnabled() == typingIndicators             &&
                 contact.isSealedSenderIndicatorsEnabled() == sealedSenderIndicators &&

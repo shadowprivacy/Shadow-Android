@@ -13,6 +13,7 @@ import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupChangeException;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
 import su.sres.securesms.groups.ui.GroupChangeErrorCallback;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
@@ -227,6 +228,10 @@ final class MessageRequestRepository {
 
             onMessageRequestUnblocked.run();
         });
+    }
+
+    boolean isPendingMember(@NonNull GroupId.V2 groupId) {
+        return DatabaseFactory.getGroupDatabase(context).isPendingMember(groupId, Recipient.self());
     }
 
     enum MessageRequestState {

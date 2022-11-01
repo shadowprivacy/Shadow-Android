@@ -61,6 +61,10 @@ public final class SignalGroupV2Record implements SignalRecord {
         return proto.getArchived();
     }
 
+    public boolean isForcedUnread() {
+        return proto.getMarkedUnread();
+    }
+
     GroupV2Record toProto() {
         return proto;
     }
@@ -113,6 +117,11 @@ public final class SignalGroupV2Record implements SignalRecord {
 
         public Builder setArchived(boolean archived) {
             builder.setArchived(archived);
+            return this;
+        }
+
+        public Builder setForcedUnread(boolean forcedUnread) {
+            builder.setMarkedUnread(forcedUnread);
             return this;
         }
 

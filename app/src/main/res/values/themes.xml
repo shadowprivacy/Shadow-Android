@@ -128,6 +128,11 @@
         <item name="login_floating_background">@drawable/rounded_rectangle_dark</item>
     </style>
 
+    <style name="FadeScale" parent="@android:style/Animation">
+        <item name="android:windowEnterAnimation">@anim/fade_scale_in</item>
+        <item name="android:windowExitAnimation">@anim/fade_scale_out</item>
+    </style>
+
     <style name="PopupAnimation" parent="@android:style/Animation">
         <item name="android:windowEnterAnimation">@anim/slide_from_top</item>
         <item name="android:windowExitAnimation">@anim/slide_to_top</item>
@@ -886,6 +891,14 @@
         <item name="bottomSheetStyle">@style/Widget.Signal.BottomSheet.ReactWithAny.Light</item>
         <item name="android:backgroundDimEnabled">false</item>
         <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Signal.BottomSheet.Rounded</item>
+    </style>
+
+    <style name="TextSecure.DarkTheme.AnimatedDialog">
+        <item name="android:windowAnimationStyle">@style/FadeScale</item>
+    </style>
+
+    <style name="TextSecure.LightTheme.AnimatedDialog">
+        <item name="android:windowAnimationStyle">@style/FadeScale</item>
     </style>
 
     <style name="Widget.Signal.BottomSheet.ReactWithAny" parent="Widget.MaterialComponents.BottomSheet">

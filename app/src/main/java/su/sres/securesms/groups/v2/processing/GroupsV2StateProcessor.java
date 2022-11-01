@@ -10,6 +10,7 @@ import androidx.annotation.WorkerThread;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.groups.GroupMutation;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobs.RequestGroupV2InfoJob;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -228,9 +229,9 @@ public final class GroupsV2StateProcessor {
             determineProfileSharing(inputGroupState, newLocalState);
             if (localState != null && localState.getRevision() == GroupsV2StateProcessor.RESTORE_PLACEHOLDER_REVISION) {
                 Log.i(TAG, "Inserting single update message for restore placeholder");
-                insertUpdateMessages(timestamp, Collections.singleton(new LocalGroupLogEntry(newLocalState, null)));
+                insertUpdateMessages(timestamp, null, Collections.singleton(new LocalGroupLogEntry(newLocalState, null)));
             } else {
-                insertUpdateMessages(timestamp, advanceGroupStateResult.getProcessedLogEntries());
+                insertUpdateMessages(timestamp, localState, advanceGroupStateResult.getProcessedLogEntries());
             }
             persistLearnedProfileKeys(inputGroupState);
 
@@ -262,7 +263,7 @@ public final class GroupsV2StateProcessor {
                     .addDeleteMembers(UuidUtil.toByteString(selfUuid))
                     .build();
 
-            DecryptedGroupV2Context    decryptedGroupV2Context = GroupProtoUtil.createDecryptedGroupV2Context(masterKey, simulatedGroupState, simulatedGroupChange, null);
+            DecryptedGroupV2Context    decryptedGroupV2Context = GroupProtoUtil.createDecryptedGroupV2Context(masterKey, new GroupMutation(decryptedGroup, simulatedGroupChange, simulatedGroupState), null);
             OutgoingGroupUpdateMessage leaveMessage            = new OutgoingGroupUpdateMessage(groupRecipient,
                     decryptedGroupV2Context,
                     null,
@@ -365,13 +366,18 @@ public final class GroupsV2StateProcessor {
             }
         }
 
-        private void insertUpdateMessages(long timestamp, Collection<LocalGroupLogEntry> processedLogEntries) {
+        private void insertUpdateMessages(long timestamp,
+                                          @Nullable DecryptedGroup previousGroupState,
+                                          Collection<LocalGroupLogEntry> processedLogEntries)
+        {
             for (LocalGroupLogEntry entry : processedLogEntries) {
                 if (entry.getChange() != null && DecryptedGroupUtil.changeIsEmptyExceptForProfileKeyChanges(entry.getChange()) && !DecryptedGroupUtil.changeIsEmpty(entry.getChange())) {
                     Log.d(TAG, "Skipping profile key changes only update message");
                 } else {
-                    storeMessage(GroupProtoUtil.createDecryptedGroupV2Context(masterKey, entry.getGroup(), entry.getChange(), null), timestamp);
+                    storeMessage(GroupProtoUtil.createDecryptedGroupV2Context(masterKey, new GroupMutation(previousGroupState, entry.getChange(), entry.getGroup()), null), timestamp);
+                    timestamp++;
                 }
+                previousGroupState = entry.getGroup();
             }
         }
 
@@ -474,7 +480,9 @@ public final class GroupsV2StateProcessor {
                 IncomingTextMessage        incoming     = new IncomingTextMessage(sender, -1, timestamp, timestamp, "", Optional.of(groupId), 0, false);
                 IncomingGroupUpdateMessage groupMessage = new IncomingGroupUpdateMessage(incoming, decryptedGroupV2Context);
 
-                smsDatabase.insertMessageInbox(groupMessage);
+                if (!smsDatabase.insertMessageInbox(groupMessage).isPresent()) {
+                    Log.w(TAG, "Could not insert update message");
+                }
             }
         }
 

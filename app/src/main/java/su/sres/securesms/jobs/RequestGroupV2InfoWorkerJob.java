@@ -10,6 +10,7 @@ import su.sres.securesms.groups.GroupChangeBusyException;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
 import su.sres.securesms.groups.GroupNotAMemberException;
+import su.sres.securesms.groups.v2.processing.GroupsV2StateProcessor;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -72,7 +73,11 @@ final class RequestGroupV2InfoWorkerJob extends BaseJob {
     @Override
     public void onRun() throws IOException, GroupNotAMemberException, GroupChangeBusyException {
 
-        Log.i(TAG, "Updating group to revision " + toRevision);
+        if (toRevision == GroupsV2StateProcessor.LATEST) {
+            Log.i(TAG, "Updating group to latest revision");
+        } else {
+            Log.i(TAG, "Updating group to revision " + toRevision);
+        }
 
         Optional<GroupDatabase.GroupRecord> group = DatabaseFactory.getGroupDatabase(context).getGroup(groupId);
 

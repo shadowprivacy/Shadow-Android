@@ -88,7 +88,10 @@ public final class SignalContactRecord implements SignalRecord {
 
     public boolean isArchived() {
         return proto.getArchived();
+    }
 
+    public boolean isForcedUnread() {
+        return proto.getMarkedUnread();
     }
 
     ContactRecord toProto() {
@@ -170,6 +173,11 @@ public final class SignalContactRecord implements SignalRecord {
 
         public Builder setArchived(boolean archived) {
             builder.setArchived(archived);
+            return this;
+        }
+
+        public Builder setForcedUnread(boolean forcedUnread) {
+            builder.setMarkedUnread(forcedUnread);
             return this;
         }
 

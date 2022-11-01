@@ -263,6 +263,14 @@
             android:targetActivity=".MainActivity"
             android:exported="true">
 
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="sgnl"
+                    android:host="group.shadowprivacy.com" />
+            </intent-filter>
+
             <intent-filter android:autoVerify="true"
                 tools:targetApi="23">
                 <action android:name="android.intent.action.VIEW" />

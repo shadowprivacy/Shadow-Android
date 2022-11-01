@@ -56,8 +56,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int PINNED_CONVERSATIONS_MENTION_GLOBAL_SETTING_MIGRATION_UNKNOWN_STORAGE_FIELDS = 68;
   private static final int STICKER_CONTENT_TYPE_EMOJI_IN_NOTIFICATIONS             = 69;
   private static final int THUMBNAIL_CLEANUP_AND_STICKER_CONTENT_TYPE_CLEANUP_AND_MENTION_CLEANUP                = 70;
+  private static final int REACTION_CLEANUP                 = 71;
 
-  private static final int    DATABASE_VERSION = 70;
+  private static final int    DATABASE_VERSION = 71;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -295,6 +296,12 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
             db.delete("mention", "_id in (" + ids + ")", null);
           }
         }
+      }
+
+      if (oldVersion < REACTION_CLEANUP) {
+        ContentValues values = new ContentValues();
+        values.putNull("reactions");
+        db.update("sms", values, "remote_deleted = ?", new String[] { "1" });
       }
 
       db.setTransactionSuccessful();

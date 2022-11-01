@@ -65,8 +65,6 @@ public class RecipientDetails {
     final Recipient.Capability   groupsV2Capability;
     final InsightsBannerTier     insightsBannerTier;
     final byte[]                 storageId;
-    final byte[]                 identityKey;
-    final VerifiedStatus         identityStatus;
     final MentionSetting         mentionSetting;
 
     public RecipientDetails(@Nullable String name,
@@ -112,8 +110,6 @@ public class RecipientDetails {
         this.groupsV2Capability              = settings.getGroupsV2Capability();
         this.insightsBannerTier              = settings.getInsightsBannerTier();
         this.storageId                       = settings.getStorageId();
-        this.identityKey                     = settings.getIdentityKey();
-        this.identityStatus                  = settings.getIdentityStatus();
         this.mentionSetting                  = settings.getMentionSetting();
 
         if (name == null) this.name = settings.getSystemDisplayName();
@@ -161,8 +157,6 @@ public class RecipientDetails {
         this.uuidCapability         = Recipient.Capability.UNKNOWN;
         this.groupsV2Capability     = Recipient.Capability.UNKNOWN;
         this.storageId              = null;
-        this.identityKey            = null;
-        this.identityStatus         = VerifiedStatus.DEFAULT;
         this.mentionSetting         = MentionSetting.ALWAYS_NOTIFY;
     }
 

@@ -52,7 +52,6 @@ public final class FeatureFlags {
 
     private static final String USERNAMES                  = "android.usernames";
     private static final String ATTACHMENTS_V3             = "android.attachmentsV3.2";
-    private static final String REMOTE_DELETE              = "android.remoteDelete";
     private static final String GROUPS_V2_CREATE_VERSION     = "android.groupsv2.createVersion";
     private static final String GROUPS_V2_JOIN_VERSION     = "android.groupsv2.joinVersion";
     private static final String GROUPS_V2_LINKS_VERSION    = "android.groupsv2.manageGroupLinksVersion";
@@ -70,7 +69,6 @@ public final class FeatureFlags {
 
     private static final Set<String> REMOTE_CAPABLE = Sets.newHashSet(
             ATTACHMENTS_V3,
-            REMOTE_DELETE,
             GROUPS_V2_CREATE_VERSION,
             GROUPS_V2_CAPACITY,
             GROUPS_V2_JOIN_VERSION,
@@ -180,11 +178,6 @@ public final class FeatureFlags {
     /** Whether or not we use the attachments v3 form. */
     public static boolean attachmentsV3() {
         return getBoolean(ATTACHMENTS_V3, false);
-    }
-
-    /** Send support for remotely deleting a message. */
-    public static boolean remoteDelete() {
-        return getBoolean(REMOTE_DELETE, false);
     }
 
     /** Attempt groups v2 creation. */
