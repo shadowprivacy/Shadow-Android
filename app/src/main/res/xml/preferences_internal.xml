@@ -21,7 +21,7 @@
         android:key="internal_display"
         android:title="@string/preferences__internal_display">
 
-        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+        <su.sres.securesms.components.SwitchPreferenceCompat
             android:key="internal.recipient_details"
             android:defaultValue="false"
             android:summary="@string/preferences__internal_user_details_description"

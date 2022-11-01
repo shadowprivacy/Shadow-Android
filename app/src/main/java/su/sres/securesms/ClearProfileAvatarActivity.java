@@ -14,11 +14,11 @@ public class ClearProfileAvatarActivity extends Activity {
     private static final String ARG_TITLE = "arg_title";
 
     public static Intent createForUserProfilePhoto() {
-        return new Intent("org.thoughtcrime.securesms.action.CLEAR_PROFILE_PHOTO");
+        return new Intent("su.sres.securesms.action.CLEAR_PROFILE_PHOTO");
     }
 
     public static Intent createForGroupProfilePhoto() {
-        Intent intent = new Intent("org.thoughtcrime.securesms.action.CLEAR_PROFILE_PHOTO");
+        Intent intent = new Intent("su.sres.securesms.action.CLEAR_PROFILE_PHOTO");
         intent.putExtra(ARG_TITLE, R.string.ClearProfileActivity_remove_group_photo);
         return intent;
     }
