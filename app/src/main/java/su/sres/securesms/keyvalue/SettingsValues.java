@@ -10,6 +10,8 @@ public final class SettingsValues extends SignalStoreValues {
     public static final String THREAD_TRIM_LENGTH     = "pref_trim_length";
     public static final String THREAD_TRIM_ENABLED    = "pref_trim_threads";
 
+    public static final String UPDATE_IN_ROAMING      = "settings.update_in_roaming";
+
     SettingsValues(@NonNull KeyValueStore store) {
         super(store);
     }
@@ -51,5 +53,13 @@ public final class SettingsValues extends SignalStoreValues {
 
     public void setThreadTrimLength(int length) {
         putInteger(THREAD_TRIM_LENGTH, length);
+    }
+
+    public boolean isUpdateInRoamingEnabled() {
+        return getBoolean(UPDATE_IN_ROAMING, true);
+    }
+
+    public void setUpdateInRoamingEnabled(boolean enabled) {
+        putBoolean(UPDATE_IN_ROAMING, enabled);
     }
 }

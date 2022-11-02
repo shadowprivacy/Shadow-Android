@@ -2092,6 +2092,8 @@
     <string name="preferences__submit_debug_log">Submit debug log</string>
     <string name="preferences__license_info">Server activation information</string>
     <string name="preferences__cert_pull">Certificate pull</string>
+    <string name="preferences__update_in_roaming">Updates in roaming</string>
+    <string name="preferences__allow_shadow_update_in_roaming">Allow Shadow to download updates in roaming</string>
     <string name="preferences__support_wifi_calling">\'WiFi Calling\' compatibility mode</string>
     <string name="preferences__enable_if_your_device_supports_sms_mms_delivery_over_wifi">Enable if your device uses SMS/MMS delivery over WiFi (only enable when \'WiFi Calling\' is enabled on your device)</string>
     <string name="preferences__incognito_keyboard">Incognito keyboard</string>

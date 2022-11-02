@@ -13,6 +13,8 @@ import androidx.annotation.Nullable;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.keyvalue.SettingsValues;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -40,6 +42,8 @@ public class UpdateApkJob extends BaseJob {
   public static final String KEY = "UpdateApkJob";
 
   private static final String TAG = UpdateApkJob.class.getSimpleName();
+
+  private final SettingsValues config = SignalStore.settings();
 
   public UpdateApkJob() {
     this(new Job.Parameters.Builder()
@@ -159,7 +163,7 @@ public class UpdateApkJob extends BaseJob {
     DownloadManager         downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
     DownloadManager.Request downloadRequest = new DownloadManager.Request(Uri.parse(uri));
 
-    downloadRequest.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI);
+    downloadRequest.setAllowedOverRoaming(config.isUpdateInRoamingEnabled());
     downloadRequest.setTitle("Downloading Shadow update");
     downloadRequest.setDescription("Downloading Shadow " + versionName);
     downloadRequest.setVisibleInDownloadsUi(false);

@@ -26,4 +26,10 @@
     <Preference android:key="pref_internal"
         android:title="@string/preferences__internal_preferences"
         app:isPreferenceVisible="false" />
+
+    <su.sres.securesms.components.SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="settings.update_in_roaming"
+        android:title="@string/preferences__update_in_roaming"
+        android:summary="@string/preferences__allow_shadow_update_in_roaming"/>
 </PreferenceScreen>

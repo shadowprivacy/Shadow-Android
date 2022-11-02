@@ -15,8 +15,10 @@ import androidx.preference.CheckBoxPreference;
 import androidx.preference.Preference;
 
 import su.sres.securesms.BuildConfig;
+import su.sres.securesms.components.SwitchPreferenceCompat;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.CertificatePullJob;
+import su.sres.securesms.keyvalue.SettingsValues;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 
@@ -83,6 +85,11 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
     Preference certPull = this.findPreference(CERT_PULL);
     certPull.setOnPreferenceClickListener(new CertPullListener());
     certPull.setSummary(R.string.CertificatePull_caution);
+
+    SwitchPreferenceCompat updateInRoaming = this.findPreference(SettingsValues.UPDATE_IN_ROAMING);
+    updateInRoaming.setChecked(SignalStore.settings().isUpdateInRoamingEnabled());
+    updateInRoaming.setPreferenceDataStore(SignalStore.getPreferenceDataStore());
+    updateInRoaming.setOnPreferenceChangeListener(new UpdateInRoamingToggleListener());
   }
 
   @Override
@@ -184,6 +191,13 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
     public boolean onPreferenceClick(Preference preference) {
       final Intent intent = new Intent(getActivity(), LicenseInfoActivity.class);
       startActivity(intent);
+      return true;
+    }
+  }
+
+  private class UpdateInRoamingToggleListener implements Preference.OnPreferenceChangeListener {
+    @Override
+    public boolean onPreferenceChange(final Preference preference, Object newValue) {
       return true;
     }
   }
