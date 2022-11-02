@@ -1423,7 +1423,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         sendButton.resetAvailableTransports(isMediaMessage);
 
         if (!isSecureText && !isPushGroupConversation())
-            sendButton.disableTransport(Type.TEXTSECURE);
+            // sendButton.disableTransport(Type.TEXTSECURE);
 
         if (!recipient.get().isPushGroup() && recipient.get().isForceSmsSelection()) {
             // noop
