@@ -50,7 +50,7 @@ public class LicenseManagementJob extends BaseJob {
 
     private static final String TAG = LicenseManagementJob.class.getSimpleName();
 
-    private static final long REFRESH_INTERVAL = TimeUnit.MINUTES.toMillis(480);
+    private static final long REFRESH_INTERVAL = TimeUnit.MINUTES.toMillis(360);
 
     private final ServiceConfigurationValues config = SignalStore.serviceConfigurationValues();
 
