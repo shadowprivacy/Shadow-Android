@@ -36,6 +36,7 @@ import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.ProfileUtil;
 import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.Stopwatch;
+import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
@@ -172,7 +173,10 @@ public class RetrieveProfileJob extends BaseJob  {
    * certain time period.
    */
   public static void enqueueRoutineFetchIfNecessary(Application application) {
-    if (!SignalStore.registrationValues().isRegistrationComplete()) {
+    if (!SignalStore.registrationValues().isRegistrationComplete() ||
+            !TextSecurePreferences.isPushRegistered(application)       ||
+            TextSecurePreferences.getLocalUuid(application) == null)
+    {
       Log.i(TAG, "Registration not complete. Skipping.");
       return;
     }
