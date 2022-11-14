@@ -103,6 +103,34 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
                 .commit();
     }
 
+    private void removeKey(String key) {
+        getStore().beginWrite()
+                .remove(key)
+                .commit();
+    }
+
+    public synchronized void removeImageKey() {
+        removeKey(IMAGE_MAX_SIZE);
+    }
+
+    public synchronized void removeGifKey() {
+        removeKey(GIF_MAX_SIZE);
+    }
+
+    public synchronized void removeDocKey() {
+        removeKey(DOC_MAX_SIZE);
+    }
+
+    public synchronized void removeAudioKey() {
+        removeKey(AUDIO_MAX_SIZE);
+    }
+
+    public synchronized void removeVideoKey() {
+        removeKey(VIDEO_MAX_SIZE);
+    }
+
+
+
     public synchronized void setFcmSenderId(String senderId) {
         putString(FCM_SENDER_ID, senderId);
     }

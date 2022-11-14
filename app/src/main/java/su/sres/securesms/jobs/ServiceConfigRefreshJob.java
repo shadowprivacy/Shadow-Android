@@ -22,6 +22,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.keyvalue.ServiceConfigurationValues;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.push.SignalServiceTrustStore;
@@ -39,10 +40,11 @@ public class ServiceConfigRefreshJob extends BaseJob {
 
     private static final String TAG = ServiceConfigRefreshJob.class.getSimpleName();
 
-    private static final long REFRESH_INTERVAL = TimeUnit.DAYS.toMillis(1);
+    private static final long REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(12);
 
-    private final Context                     context;
     private final SignalServiceAccountManager accountManager;
+
+    private final ServiceConfigurationValues values = SignalStore.serviceConfigurationValues();
 
     public ServiceConfigRefreshJob()
     {
@@ -110,18 +112,18 @@ public class ServiceConfigRefreshJob extends BaseJob {
             byte[] zkPublicKey                   = configRequested.getZkPublicKey();
             String supportEmail                  = configRequested.getSupportEmail();
             String fcmSenderId                   = configRequested.getFcmSenderId();
-            String oldFcmSenderId                = SignalStore.serviceConfigurationValues().getFcmSenderId();
+            String oldFcmSenderId                = values.getFcmSenderId();
             Integer maxImageSize                 = configRequested.getMaxImageSize();
             Integer maxGifSize                   = configRequested.getMaxGifSize();
             Integer maxAudioSize                 = configRequested.getMaxAudioSize();
             Integer maxVideoSize                 = configRequested.getMaxVideoSize();
             Integer maxDocSize                   = configRequested.getMaxDocSize();
 
-            if (maxImageSize !=null) SignalStore.serviceConfigurationValues().setImageMaxSize(maxImageSize);
-            if (maxGifSize !=null) SignalStore.serviceConfigurationValues().setImageMaxSize(maxGifSize);
-            if (maxAudioSize !=null) SignalStore.serviceConfigurationValues().setImageMaxSize(maxAudioSize);
-            if (maxVideoSize !=null) SignalStore.serviceConfigurationValues().setImageMaxSize(maxVideoSize);
-            if (maxDocSize !=null) SignalStore.serviceConfigurationValues().setImageMaxSize(maxDocSize);
+            if (maxImageSize !=null && maxImageSize !=0) values.setImageMaxSize(maxImageSize); else values.removeImageKey();
+            if (maxGifSize !=null && maxGifSize !=0) values.setGifMaxSize(maxGifSize); else values.removeGifKey();
+            if (maxAudioSize !=null && maxAudioSize !=0) values.setAudioMaxSize(maxAudioSize); else values.removeAudioKey();
+            if (maxVideoSize !=null && maxVideoSize !=0) values.setVideoMaxSize(maxVideoSize); else values.removeVideoKey();
+            if (maxDocSize !=null && maxDocSize !=0) values.setDocMaxSize(maxDocSize); else values.removeDocKey();
 
             if (
                             cloudUrl                      != null &&
@@ -131,16 +133,16 @@ public class ServiceConfigRefreshJob extends BaseJob {
                             zkPublicKey                   != null &&
                             fcmSenderId                   != null) {
 
-                SignalStore.serviceConfigurationValues().setCloudUrl(cloudUrl);
-                SignalStore.serviceConfigurationValues().setCloud2Url(cloudUrl);
-                SignalStore.serviceConfigurationValues().setStorageUrl(storageUrl);
-                SignalStore.serviceConfigurationValues().setStatusUrl(statusUrl);
-                SignalStore.serviceConfigurationValues().setUnidentifiedAccessCaPublicKey(unidentifiedAccessCaPublicKey);
-                SignalStore.serviceConfigurationValues().setZkPublicKey(zkPublicKey);
-                SignalStore.serviceConfigurationValues().setSupportEmail(supportEmail);
+                values.setCloudUrl(cloudUrl);
+                values.setCloud2Url(cloudUrl);
+                values.setStorageUrl(storageUrl);
+                values.setStatusUrl(statusUrl);
+                values.setUnidentifiedAccessCaPublicKey(unidentifiedAccessCaPublicKey);
+                values.setZkPublicKey(zkPublicKey);
+                values.setSupportEmail(supportEmail);
 
                 if (!fcmSenderId.equals(oldFcmSenderId)) {
-                    SignalStore.serviceConfigurationValues().setFcmSenderId(fcmSenderId);
+                    values.setFcmSenderId(fcmSenderId);
                     ApplicationDependencies.getJobManager().add(new FcmRefreshJob());
                 }
 
