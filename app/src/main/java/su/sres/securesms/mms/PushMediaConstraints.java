@@ -42,15 +42,15 @@ public class PushMediaConstraints extends MediaConstraints {
 
   @Override
   public long getUncompressedVideoMaxSize(Context context) {
-    return isVideoTranscodeAvailable() ? 2 * MB * getVideoMaxSize(context)
-            : MB * getVideoMaxSize(context);
+    return isVideoTranscodeAvailable() ? 2 * getVideoMaxSize(context)
+            : getVideoMaxSize(context);
   }
 
   @Override
   public long getCompressedVideoMaxSize(Context context) {
     // on low memory devices the transcoder will fail with large video files due to this
     return (long) (Util.isLowMemory(context) ? 30 * MB
-                : 0.5 * MB * getVideoMaxSize(context));
+                : 0.5 * getVideoMaxSize(context));
   }
 
   @Override

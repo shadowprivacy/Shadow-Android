@@ -72,7 +72,7 @@ public class UpdateApkJob extends BaseJob {
   @Override
   public void onRun() throws IOException, PackageManager.NameNotFoundException {
     if (!BuildConfig.PLAY_STORE_DISABLED || !serviceConfig.getUpdatesAllowed()) return;
-    
+
     Log.i(TAG, "Checking for APK update...");
 
     OkHttpClient client  = new OkHttpClient();
