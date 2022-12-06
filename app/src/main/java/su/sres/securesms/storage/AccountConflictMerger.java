@@ -7,11 +7,13 @@ import androidx.annotation.Nullable;
 import su.sres.securesms.logging.Log;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.storage.SignalAccountRecord;
+import su.sres.signalservice.api.storage.SignalAccountRecord.PinnedConversation;
 import su.sres.signalservice.internal.storage.protos.AccountRecord;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -67,9 +69,10 @@ class AccountConflictMerger implements StorageSyncHelper.ConflictMerger<SignalAc
         boolean                              sealedSenderIndicators = remote.isSealedSenderIndicatorsEnabled();
         boolean                              linkPreviews           = remote.isLinkPreviewsEnabled();
         boolean                              unlisted               = remote.isUserLoginUnlisted();
+        List<PinnedConversation> pinnedConversations    = remote.getPinnedConversations();
         AccountRecord.UserLoginSharingMode   userLoginSharingMode = remote.getUserLoginSharingMode();
-        boolean                              matchesRemote          = doParamsMatch(remote, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted);
-        boolean                              matchesLocal           = doParamsMatch(local, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted );
+        boolean                              matchesRemote          = doParamsMatch(remote, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations);
+        boolean                              matchesLocal           = doParamsMatch(local, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations);
 
         if (matchesRemote) {
             return remote;
@@ -91,6 +94,7 @@ class AccountConflictMerger implements StorageSyncHelper.ConflictMerger<SignalAc
                     .setUnlistedUserLogin(unlisted)
                     .setUserLoginSharingMode(userLoginSharingMode)
                     .setUnlistedUserLogin(unlisted)
+                    .setPinnedConversations(pinnedConversations)
                     .build();
         }
     }
@@ -108,7 +112,8 @@ class AccountConflictMerger implements StorageSyncHelper.ConflictMerger<SignalAc
                                          boolean sealedSenderIndicators,
                                          boolean linkPreviewsEnabled,
                                          AccountRecord.UserLoginSharingMode userLoginSharingMode,
-                                         boolean unlistedUserLogin)
+                                         boolean unlistedUserLogin,
+                                         @NonNull List<PinnedConversation> pinnedConversations)
     {
         return Arrays.equals(contact.serializeUnknownFields(), unknownFields)      &&
                 Objects.equals(contact.getGivenName().or(""), givenName)            &&
@@ -122,6 +127,7 @@ class AccountConflictMerger implements StorageSyncHelper.ConflictMerger<SignalAc
                 contact.isSealedSenderIndicatorsEnabled() == sealedSenderIndicators &&
                 contact.isLinkPreviewsEnabled() == linkPreviewsEnabled              &&
                 contact.getUserLoginSharingMode() == userLoginSharingMode       &&
-                contact.isUserLoginUnlisted() == unlistedUserLogin;
+                contact.isUserLoginUnlisted() == unlistedUserLogin              &&
+                Objects.equals(contact.getPinnedConversations(), pinnedConversations);
     }
 }

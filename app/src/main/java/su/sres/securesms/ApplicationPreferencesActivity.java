@@ -36,6 +36,7 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.preferences.AdvancedPreferenceFragment;
 import su.sres.securesms.preferences.AppProtectionPreferenceFragment;
 import su.sres.securesms.preferences.AppearancePreferenceFragment;
+import su.sres.securesms.preferences.BackupsPreferenceFragment;
 import su.sres.securesms.preferences.ChatsPreferenceFragment;
 import su.sres.securesms.preferences.CorrectedPreferenceFragment;
 import su.sres.securesms.preferences.NotificationsPreferenceFragment;
@@ -60,6 +61,9 @@ import su.sres.securesms.util.ThemeUtil;
 
 public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
         implements SharedPreferences.OnSharedPreferenceChangeListener {
+
+    public static final String LAUNCH_TO_BACKUPS_FRAGMENT = "launch.to.backups.fragment";
+
     @SuppressWarnings("unused")
     private static final String TAG = ApplicationPreferencesActivity.class.getSimpleName();
 
@@ -91,6 +95,8 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
 
         if (getIntent() != null && getIntent().getCategories() != null && getIntent().getCategories().contains("android.intent.category.NOTIFICATION_PREFERENCES")) {
             initFragment(android.R.id.content, new NotificationsPreferenceFragment());
+        } else if (getIntent() != null && getIntent().getBooleanExtra(LAUNCH_TO_BACKUPS_FRAGMENT, false)) {
+            initFragment(android.R.id.content, new BackupsPreferenceFragment());
         } else if (icicle == null) {
             initFragment(android.R.id.content, new ApplicationPreferenceFragment());
         }

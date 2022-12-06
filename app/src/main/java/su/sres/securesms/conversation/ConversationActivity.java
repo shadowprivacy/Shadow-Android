@@ -94,6 +94,7 @@ import su.sres.securesms.MainActivity;
 import su.sres.securesms.ExpirationDialog;
 import su.sres.securesms.GroupMembersDialog;
 import su.sres.securesms.components.mention.MentionAnnotation;
+import su.sres.securesms.components.reminder.PendingGroupJoinRequestsReminder;
 import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
 import su.sres.securesms.conversation.ui.error.SafetyNumberChangeDialog;
 import su.sres.securesms.conversation.ui.mentions.MentionsPickerViewModel;
@@ -108,6 +109,7 @@ import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.groups.ui.GroupChangeResult;
 import su.sres.securesms.groups.ui.GroupErrors;
 import su.sres.securesms.groups.ui.LeaveGroupDialog;
+import su.sres.securesms.groups.ui.invitesandrequests.ManagePendingAndRequestingMembersActivity;
 import su.sres.securesms.groups.ui.managegroup.ManageGroupActivity;
 import su.sres.securesms.jobs.GroupV2UpdateSelfProfileKeyJob;
 import su.sres.securesms.jobs.RequestGroupV2InfoJob;
@@ -129,7 +131,6 @@ import su.sres.securesms.VerifyIdentityActivity;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.TombstoneAttachment;
 import su.sres.securesms.audio.AudioRecorder;
-import su.sres.securesms.audio.AudioSlidePlayer;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.components.AnimatingToggle;
 import su.sres.securesms.components.ComposeText;
@@ -150,7 +151,6 @@ import su.sres.securesms.components.reminder.ExpiredBuildReminder;
 import su.sres.securesms.components.reminder.ReminderView;
 import su.sres.securesms.components.reminder.ServiceOutageReminder;
 import su.sres.securesms.components.reminder.UnauthorizedReminder;
-import su.sres.securesms.components.reminder.LicenseInvalidReminder;
 import su.sres.securesms.contacts.ContactAccessor;
 import su.sres.securesms.contacts.ContactAccessor.ContactData;
 import su.sres.securesms.contactshare.Contact;
@@ -444,8 +444,9 @@ public class ConversationActivity extends PassphraseRequiredActivity
         initializeStickerObserver();
         initializeViewModel();
         initializeGroupViewModel();
-        if (FeatureFlags.mentions()) initializeMentionsViewModel();
+        initializeMentionsViewModel();
         initializeEnabledCheck();
+        initializePendingRequestsBanner();
         initializeSecurity(recipient.get().isRegistered(), isDefaultSms).addListener(new AssertedSuccessListener<Boolean>() {
             @Override
             public void onSuccess(Boolean result) {
@@ -559,7 +560,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
         fragment.setLastSeen(System.currentTimeMillis());
         markLastSeen();
-        AudioSlidePlayer.stopAll();
         EventBus.getDefault().unregister(this);
     }
 
@@ -1058,6 +1058,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         Permissions.with(this)
                 .request(Manifest.permission.READ_EXTERNAL_STORAGE)
                 .onAllGranted(() -> viewModel.onAttachmentKeyboardOpen())
+                .withPermanentDenialDialog(getString(R.string.AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio))
                 .execute();
     }
 
@@ -1552,6 +1553,11 @@ public class ConversationActivity extends PassphraseRequiredActivity
         });
     }
 
+    private void initializePendingRequestsBanner() {
+        groupViewModel.getActionableRequestingMembers()
+                .observe(this, actionablePendingGroupRequests -> updateReminders());
+    }
+
     private ListenableFuture<Boolean> initializeDraftFromDatabase() {
         SettableFuture<Boolean> future = new SettableFuture<>();
 
@@ -1705,7 +1711,8 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     protected void updateReminders() {
-        Optional<Reminder> inviteReminder = inviteReminderModel.getReminder();
+        Optional<Reminder> inviteReminder              = inviteReminderModel.getReminder();
+        Integer            actionableRequestingMembers = groupViewModel.getActionableRequestingMembers().getValue();
 
         if (UnauthorizedReminder.isEligible(this)) {
             reminderView.get().showReminder(new UnauthorizedReminder(this));
@@ -1725,6 +1732,13 @@ public class ConversationActivity extends PassphraseRequiredActivity
             //     reminderView.get().setOnActionClickListener(this::handleReminderAction);
             //     reminderView.get().setOnDismissListener(() -> inviteReminderModel.dismissReminder());
             //     reminderView.get().showReminder(inviteReminder.get());
+        } else if (actionableRequestingMembers != null && actionableRequestingMembers > 0 && FeatureFlags.groupsV2manageGroupLinks()) {
+            reminderView.get().showReminder(PendingGroupJoinRequestsReminder.create(this, actionableRequestingMembers));
+            reminderView.get().setOnActionClickListener(id -> {
+                if (id == R.id.reminder_action_review_join_requests) {
+                    startActivity(ManagePendingAndRequestingMembersActivity.newIntent(this, getRecipient().getGroupId().get().requireV2()));
+                }
+            });
         } else if (reminderView.resolved()) {
             reminderView.get().hide();
         }
@@ -3316,7 +3330,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
                     //                       groupShareProfileView.get().setVisibility(View.GONE);
                     //                   }
                     break;
-                case DISPLAY_LEGACY:
+                case DISPLAY_PRE_MESSAGE_REQUEST:
 //                    if (recipient.get().isGroup()) {
 //                        groupShareProfileView.get().setRecipient(recipient.get());
 //                        groupShareProfileView.get().setVisibility(View.VISIBLE);

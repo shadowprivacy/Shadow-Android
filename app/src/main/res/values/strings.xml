@@ -2,7 +2,8 @@
 <resources>
     <string name="app_name" translatable="false">Shadow</string>
 
-    <string name="install_url" translatable="false">http://sres.su/shadow</string>
+    <string name="install_url" translatable="false">https://shadowprivacy.com</string>
+    <string name="backup_support_url" translatable="false">https://support.signal.org/hc/articles/360007059752</string>
 
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -185,7 +186,7 @@
     <string name="ContactsCursorLoader_recent_chats">Recent chats</string>
     <string name="ContactsCursorLoader_contacts">Contacts</string>
     <string name="ContactsCursorLoader_groups">Groups</string>
-    <string name="ContactsCursorLoader_phone_number_search">Phone number search</string>
+    <string name="ContactsCursorLoader_phone_number_search">User login search</string>
     <string name="ContactsCursorLoader_username_search">Username search</string>
 
     <!-- ContactsDatabase -->
@@ -394,6 +395,35 @@
     <string name="CreateProfileActivity_signal_profiles_are_end_to_end_encrypted">Your profile is end-to-end encrypted. Your profile and changes to it will be visible to your contacts, when you initiate or accept new conversations, and when you join new groups.</string>
     <string name="CreateProfileActivity_set_avatar_description">Set avatar</string>
 
+    <!-- ChooseBackupFragment -->
+    <string name="ChooseBackupFragment__restore_from_backup">Restore from backup?</string>
+    <string name="ChooseBackupFragment__restore_your_messages_and_media">Restore your messages and media from a local backup. If you don\'t restore now, you won\'t be able to restore later.</string>
+    <string name="ChooseBackupFragment__icon_content_description">Restore from backup icon</string>
+    <string name="ChooseBackupFragment__choose_backup">Choose backup</string>
+    <string name="ChooseBackupFragment__learn_more">Learn more</string>
+
+    <!-- RestoreBackupFragment -->
+    <string name="RestoreBackupFragment__restore_complete">Restore complete</string>
+    <string name="RestoreBackupFragment__to_continue_using_backups_please_choose_a_folder">To continue using backups, please choose a folder. New backups will be saved to this location.</string>
+    <string name="RestoreBackupFragment__choose_folder">Choose folder</string>
+    <string name="RestoreBackupFragment__not_now">Not now</string>
+
+    <!-- BackupsPreferenceFragment -->
+    <string name="BackupsPreferenceFragment__chat_backups">Chat backups</string>
+    <string name="BackupsPreferenceFragment__backups_are_encrypted_with_a_passphrase">Backups are encrypted with a passphrase and stored on your device.</string>
+    <string name="BackupsPreferenceFragment__create_backup">Create backup</string>
+    <string name="BackupsPreferenceFragment__last_backup">Last backup: %1$s</string>
+    <string name="BackupsPreferenceFragment__backup_folder">Backup folder</string>
+    <string name="BackupsPreferenceFragment__verify_backup_passphrase">Verify backup passphrase</string>
+    <string name="BackupsPreferenceFragment__test_your_backup_passphrase">Test your backup passphrase and verify that it matches</string>
+    <string name="BackupsPreferenceFragment__turn_on">Turn on</string>
+    <string name="BackupsPreferenceFragment__turn_off">Turn off</string>
+    <string name="BackupsPreferenceFragment__to_restore_a_backup">To restore a backup, install a new copy of Shadow. Open the app and tap "Restore backup", then locate a backup file. %1$s</string>
+    <string name="BackupsPreferenceFragment__learn_more">Learn more</string>
+    <string name="BackupsPreferenceFragment__in_progress">In progress…</string>
+    <string name="BackupsPreferenceFragment__d_so_far">%1$d so far…</string>
+    <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">Shadow requires external storage permission in order to create backups, but it has been permanently denied. Please continue to app settings, select \"Permissions\" and enable \"Storage\".</string>
+
     <!-- CustomDefaultPreference -->
     <string name="CustomDefaultPreference_using_custom">Using custom: %s</string>
     <string name="CustomDefaultPreference_using_default">Using default: %s</string>
@@ -443,6 +473,13 @@
     <!-- ExpiredBuildReminder -->
     <string name="ExpiredBuildReminder_this_version_of_signal_has_expired">This version of Shadow has expired. Update now to send and receive messages.</string>
     <string name="ExpiredBuildReminder_update_now">Update now</string>
+
+    <!-- PendingGroupJoinRequestsReminder -->
+    <plurals name="PendingGroupJoinRequestsReminder_d_pending_member_requests">
+        <item quantity="one">%d pending member request.</item>
+        <item quantity="many">%d pending member requests.</item>
+    </plurals>
+    <string name="PendingGroupJoinRequestsReminder_view">View</string>
 
     <!-- ShareActivity -->
     <string name="ShareActivity_share_with">Share with</string>
@@ -732,7 +769,7 @@
 
     <string name="GroupJoinBottomSheetDialogFragment_unable_to_get_group_information_please_try_again_later">Unable to get group information, please try again later</string>
     <string name="GroupJoinBottomSheetDialogFragment_direct_join">Do you want to join this group and share your name and photo with its members?</string>
-    <string name="MessageRequestBottomView_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">Join this group? They won’t know you’ve seen their messages until you accept.</string>
+
     <string name="GroupJoinBottomSheetDialogFragment_admin_approval_needed">An admin of this group must approve your request before you can join this group. When you request to join, your name and photo will be shared with its members.</string>
     <plurals name="GroupJoinBottomSheetDialogFragment_group_dot_d_members">
         <item quantity="one">Group · %1$d member</item>
@@ -901,6 +938,7 @@
     <string name="MediaSendActivity_message">Message</string>
     <string name="MediaSendActivity_select_recipients">Select recipients</string>
     <string name="MediaSendActivity_signal_needs_access_to_your_contacts">Shadow needs access to your contacts in order to display them.</string>
+    <string name="RegistrationActivity_signal_needs_access_to_your_contacts_in_order_to_connect_with_friends">Shadow needs access to your contacts in order to attach contact information</string>
     <string name="MediaSendActivity_signal_needs_contacts_permission_in_order_to_show_your_contacts_but_it_has_been_permanently_denied">Shadow needs Contacts permission in order to show your contacts, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Contacts\".</string>
     <plurals name="MediaSendActivity_cant_share_more_than_n_items">
         <item quantity="one">You can\'t share more than %d item.</item>
@@ -1080,13 +1118,18 @@
 
     <!-- MessageRequestBottomView -->
     <string name="MessageRequestBottomView_accept">Accept</string>
+    <string name="MessageRequestBottomView_continue">Continue</string>
     <string name="MessageRequestBottomView_delete">Delete</string>
     <string name="MessageRequestBottomView_block">Block</string>
     <string name="MessageRequestBottomView_unblock">Unblock</string>
     <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_they_wont_know_youve_seen_their_messages_until_you_accept">Let %1$s message you? They won\'t know you\'ve seen their message until you accept.</string>
     <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_wont_receive_any_messages_until_you_unblock_them">Let %1$s message you? You won\'t receive any messages until you unblock them.</string>
     <string name="MessageRequestBottomView_do_you_want_to_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">Join this group? They won\'t know you\'ve seen their messages until you accept.</string>
+    <string name="MessageRequestBottomView_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">Join this group? They won’t know you’ve seen their messages until you accept.</string>
     <string name="MessageRequestBottomView_unblock_this_group_and_share_your_name_and_photo_with_its_members">Unblock this group? You won\'t receive any messages until you unblock them.</string>
+    <string name="MessageRequestBottomView_continue_your_conversation_with_this_group_and_share_your_name_and_photo">Continue your conversation with this group and share your name and photo with its members?</string>
+    <string name="MessageRequestBottomView_continue_your_conversation_with_s_and_share_your_name_and_photo">Continue your conversation with %1$s and share your name and photo with them?</string>
+    <string name="MessageRequestBottomView_legacy_learn_more_url" translatable="false">https://support.signal.org/hc/articles/360007459591</string>
     <string name="MessageRequestProfileView_member_of_one_group">Member of %1$s</string>
     <string name="MessageRequestProfileView_member_of_two_groups">Member of %1$s and %2$s</string>
     <string name="MessageRequestProfileView_member_of_many_groups">Member of %1$s, %2$s, and %3$s</string>
@@ -1505,6 +1548,7 @@
     <string name="NotificationChannel_other">Other</string>
     <string name="NotificationChannel_group_messages">Messages</string>
     <string name="NotificationChannel_missing_display_name">Unknown</string>
+    <string name="NotificationChannel_voice_notes">Voice Notes</string>
 
     <!-- ProfileEditNameFragment -->
     <string name="ProfileEditNameFragment_successfully_set_profile_name">Successfully set profile name.</string>
@@ -2370,6 +2414,8 @@
     <string name="PushDecryptJob_unlock_to_view_pending_messages">Unlock to view pending messages</string>
     <string name="enter_backup_passphrase_dialog__backup_passphrase">Backup passphrase</string>
     <string name="backup_enable_dialog__backups_will_be_saved_to_external_storage_and_encrypted_with_the_passphrase_below_you_must_have_this_passphrase_in_order_to_restore_a_backup">Backups will be saved to external storage and encrypted with the passphrase below. You must have this passphrase in order to restore a backup.</string>
+    <string name="backup_enable_dialog__you_must_have_this_passphrase">You must have this passphrase in order to restore a backup.</string>
+    <string name="backup_enable_dialog__folder">Folder</string>
     <string name="backup_enable_dialog__i_have_written_down_this_passphrase">I have written down this passphrase. Without it, I will be unable to restore a backup.</string>
     <string name="registration_activity__restore_backup">Restore backup</string>
     <string name="registration_activity__skip">Skip</string>
@@ -2395,6 +2441,8 @@
     <string name="BackupDialog_delete_backups">Delete backups?</string>
     <string name="BackupDialog_disable_and_delete_all_local_backups">Disable and delete all local backups?</string>
     <string name="BackupDialog_delete_backups_statement">Delete backups</string>
+    <string name="BackupDialog_to_enable_backups_choose_a_folder">To enable backups, choose a folder. Backups will be saved to this location.</string>
+    <string name="BackupDialog_choose_folder">Choose folder</string>
     <string name="BackupDialog_copied_to_clipboard">Copied to clipboard</string>
     <string name="BackupDialog_enter_backup_passphrase_to_verify">Enter your backup passphrase to verify</string>
     <string name="BackupDialog_verify">Verify</string>
@@ -2404,6 +2452,8 @@
     <string name="ChatsPreferenceFragment_last_backup_s">Last backup: %s</string>
     <string name="ChatsPreferenceFragment_in_progress">In progress</string>
     <string name="LocalBackupJob_creating_backup">Creating backup…</string>
+    <string name="LocalBackupJobApi29_backups_disabled">Backups disabled.</string>
+    <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">Your backup directory has been deleted or moved.</string>
     <string name="ProgressPreference_d_messages_so_far">%d messages so far</string>
     <string name="RegistrationActivity_please_enter_the_verification_code_sent_to_s">Please enter the verification code sent to %s.</string>
     <string name="RegistrationActivity_wrong_number">Wrong number?</string>
@@ -2525,6 +2575,13 @@
     <string name="GroupLinkBottomSheet_share">Share</string>
     <string name="GroupLinkBottomSheet_copied_to_clipboard">Copied to clipboard</string>
     <string name="GroupLinkBottomSheet_the_link_is_not_currently_active">The link is not currently active</string>
+
+    <!-- VoiceNotePlaybackPreparer -->
+    <string name="VoiceNotePlaybackPreparer__could_not_start_playback">Could not start playback.</string>
+
+    <!-- VoiceNoteMediaDescriptionCompatFactory -->
+    <string name="VoiceNoteMediaDescriptionCompatFactory__voice_message">Voice message &#183; %1$s</string>
+    <string name="VoiceNoteMediaDescriptionCompatFactory__s_to_s">%1$s to %2$s</string>
 
     <!-- EOF -->
 

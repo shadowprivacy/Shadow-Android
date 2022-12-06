@@ -41,8 +41,6 @@ import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.AsynchronousCallback;
 import su.sres.securesms.util.DefaultValueLiveData;
 import su.sres.securesms.util.ExpirationUtil;
-import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.SingleLiveEvent;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 import su.sres.securesms.util.views.SimpleProgressDialog;
@@ -102,7 +100,7 @@ public class ManageGroupViewModel extends ViewModel {
                 ManageGroupViewModel::filterMemberList);
         this.pendingMemberCount        = liveGroup.getPendingMemberCount();
         this.pendingAndRequestingCount = liveGroup.getPendingAndRequestingMemberCount();
-        this.showLegacyIndicator       = new MutableLiveData<>(groupId.isV1() && FeatureFlags.groupsV2create());
+        this.showLegacyIndicator       = new MutableLiveData<>(groupId.isV1());
         this.memberCountSummary        = LiveDataUtil.combineLatest(liveGroup.getMembershipCountDescription(context.getResources()),
                 this.showLegacyIndicator,
                 (description, legacy) -> legacy ? String.format("%s · %s", description, context.getString(R.string.ManageGroupActivity_legacy_group))

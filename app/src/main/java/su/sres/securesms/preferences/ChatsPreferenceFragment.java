@@ -47,16 +47,12 @@ public class ChatsPreferenceFragment extends ListSummaryPreferenceFragment {
     findPreference(TextSecurePreferences.MESSAGE_BODY_TEXT_SIZE_PREF)
         .setOnPreferenceChangeListener(new ListSummaryListener());
 
-    findPreference(TextSecurePreferences.BACKUP_ENABLED)
-        .setOnPreferenceClickListener(new BackupClickListener());
-    findPreference(TextSecurePreferences.BACKUP_NOW)
-        .setOnPreferenceClickListener(new BackupCreateListener());
-    findPreference(TextSecurePreferences.BACKUP_PASSPHRASE_VERIFY)
-            .setOnPreferenceClickListener(new BackupVerifyListener());
+    findPreference(TextSecurePreferences.BACKUP).setOnPreferenceClickListener(unused -> {
+      goToBackupsPreferenceFragment();
+      return true;
+    });
 
     initializeListSummary((ListPreference) findPreference(TextSecurePreferences.MESSAGE_BODY_TEXT_SIZE_PREF));
-
-    EventBus.getDefault().register(this);
   }
 
   @Override
@@ -69,7 +65,6 @@ public class ChatsPreferenceFragment extends ListSummaryPreferenceFragment {
     super.onResume();
     ((ApplicationPreferencesActivity)getActivity()).getSupportActionBar().setTitle(R.string.preferences__chats);
     setMediaDownloadSummaries();
-    setBackupSummary();
   }
 
   @Override
@@ -83,24 +78,8 @@ public class ChatsPreferenceFragment extends ListSummaryPreferenceFragment {
     Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
   }
 
-  @Subscribe(threadMode = ThreadMode.MAIN)
-  public void onEvent(BackupEvent event) {
-    ProgressPreference preference = (ProgressPreference)findPreference(TextSecurePreferences.BACKUP_NOW);
-
-    if (event.getType() == BackupEvent.Type.PROGRESS) {
-      preference.setEnabled(false);
-      preference.setSummary(getString(R.string.ChatsPreferenceFragment_in_progress));
-      preference.setProgress(event.getCount());
-    } else if (event.getType() == BackupEvent.Type.FINISHED) {
-      preference.setEnabled(true);
-      preference.setProgressVisible(false);
-      setBackupSummary();
-    }
-  }
-
-  private void setBackupSummary() {
-    findPreference(TextSecurePreferences.BACKUP_NOW)
-            .setSummary(String.format(getString(R.string.ChatsPreferenceFragment_last_backup_s), BackupUtil.getLastBackupTime(getContext(), Locale.getDefault())));
+  private void goToBackupsPreferenceFragment() {
+    ((ApplicationPreferencesActivity) requireActivity()).pushFragment(new BackupsPreferenceFragment());
   }
 
   private void setMediaDownloadSummaries() {
@@ -123,51 +102,6 @@ public class ChatsPreferenceFragment extends ListSummaryPreferenceFragment {
 
     return outValues.isEmpty() ? getResources().getString(R.string.preferences__none)
                                : TextUtils.join(", ", outValues);
-  }
-
-  private class BackupClickListener implements Preference.OnPreferenceClickListener {
-    @Override
-    public boolean onPreferenceClick(Preference preference) {
-      Permissions.with(ChatsPreferenceFragment.this)
-                 .request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                 .ifNecessary()
-                 .onAllGranted(() -> {
-                   if (!((SwitchPreferenceCompat)preference).isChecked()) {
-                     BackupDialog.showEnableBackupDialog(getActivity(), (SwitchPreferenceCompat)preference);
-                   } else {
-                     BackupDialog.showDisableBackupDialog(getActivity(), (SwitchPreferenceCompat)preference);
-                   }
-                 })
-                 .withPermanentDenialDialog(getString(R.string.ChatsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups))
-                 .execute();
-
-      return true;
-    }
-  }
-
-  private class BackupCreateListener implements Preference.OnPreferenceClickListener {
-    @Override
-    public boolean onPreferenceClick(Preference preference) {
-      Permissions.with(ChatsPreferenceFragment.this)
-                 .request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                 .ifNecessary()
-                 .onAllGranted(() -> {
-                   Log.i(TAG, "Starting backup from user");
-                   LocalBackupJob.enqueue(true);
-                 })
-                 .withPermanentDenialDialog(getString(R.string.ChatsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups))
-                 .execute();
-
-      return true;
-    }
-  }
-
-  private class BackupVerifyListener implements Preference.OnPreferenceClickListener {
-    @Override
-    public boolean onPreferenceClick(Preference preference) {
-      BackupDialog.showVerifyBackupPassphraseDialog(requireContext());
-      return true;
-    }
   }
 
   private class MediaDownloadChangeListener implements Preference.OnPreferenceChangeListener {

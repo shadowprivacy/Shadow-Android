@@ -1105,25 +1105,10 @@ public class PushServiceSocket {
                 .connectTimeout(soTimeoutMillis, TimeUnit.MILLISECONDS)
                 .readTimeout(soTimeoutMillis, TimeUnit.MILLISECONDS)
                 .build();
-        final HttpUrl endpointUrl = HttpUrl.get(connectionHolder.url);
-        final HttpUrl signedHttpUrl;
-        try {
-            signedHttpUrl = HttpUrl.get(signedUrl);
-        } catch (IllegalArgumentException e) {
-            Log.w(TAG, "Server returned a malformed signed url: " + signedUrl);
-            throw new IOException("Server returned a malformed signed url", e);
-        }
 
-        final HttpUrl.Builder urlBuilder = new HttpUrl.Builder().scheme(endpointUrl.scheme())
-                .host(endpointUrl.host())
-                .port(endpointUrl.port())
-                .encodedPath(endpointUrl.encodedPath())
-                .addEncodedPathSegments(signedHttpUrl.encodedPath().substring(1))
-                .encodedQuery(signedHttpUrl.encodedQuery())
-                .encodedFragment(signedHttpUrl.encodedFragment());
-
-        Request.Builder request = new Request.Builder().url(urlBuilder.build())
+        Request.Builder request = new Request.Builder().url(buildConfiguredUrl(connectionHolder, signedUrl))
                 .post(RequestBody.create(null, ""));
+
         for (Map.Entry<String, String> header : headers.entrySet()) {
             if (!header.getKey().equalsIgnoreCase("host")) {
                 request.header(header.getKey(), header.getValue());
@@ -1183,7 +1168,7 @@ public class PushServiceSocket {
             return file.getTransmittedDigest();
         }
 
-        Request.Builder request = new Request.Builder().url(resumableUrl)
+        Request.Builder request = new Request.Builder().url(buildConfiguredUrl(connectionHolder, resumableUrl))
                 .put(file)
                 .addHeader("Content-Range", resumeInfo.contentRange);
 
@@ -1226,7 +1211,7 @@ public class PushServiceSocket {
         final long offset;
         final String contentRange;
 
-        Request.Builder request = new Request.Builder().url(resumableUrl)
+        Request.Builder request = new Request.Builder().url(buildConfiguredUrl(connectionHolder, resumableUrl))
                 .put(RequestBody.create(null, ""))
                 .addHeader("Content-Range", String.format(Locale.US, "bytes */%d", contentLength));
 
@@ -1274,6 +1259,25 @@ public class PushServiceSocket {
         }
 
         return new ResumeInfo(contentRange, offset);
+    }
+
+    private static HttpUrl buildConfiguredUrl(ConnectionHolder connectionHolder, String url) throws IOException {
+        final HttpUrl endpointUrl = HttpUrl.get(connectionHolder.url);
+        final HttpUrl resumableHttpUrl;
+        try {
+            resumableHttpUrl = HttpUrl.get(url);
+        } catch (IllegalArgumentException e) {
+            throw new IOException("Malformed URL!", e);
+        }
+
+        return new HttpUrl.Builder().scheme(endpointUrl.scheme())
+                .host(endpointUrl.host())
+                .port(endpointUrl.port())
+                .encodedPath(endpointUrl.encodedPath())
+                .addEncodedPathSegments(resumableHttpUrl.encodedPath().substring(1))
+                .encodedQuery(resumableHttpUrl.encodedQuery())
+                .encodedFragment(resumableHttpUrl.encodedFragment())
+                .build();
     }
 
     private String makeServiceRequest(String urlFragment, String method, String jsonBody)
@@ -1523,7 +1527,6 @@ public class PushServiceSocket {
     private Response makeStorageRequestResponse(String authorization, String path, String method, RequestBody body, ResponseCodeHandler responseCodeHandler)
             throws PushNetworkException, NonSuccessfulResponseCodeException
     {
-
         ConnectionHolder connectionHolder = getRandom(storageClients, random);
         OkHttpClient okHttpClient = connectionHolder.getClient()
                 .newBuilder()

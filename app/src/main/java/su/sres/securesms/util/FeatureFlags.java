@@ -52,15 +52,14 @@ public final class FeatureFlags {
 
     private static final String USERNAMES                  = "android.usernames";
     private static final String ATTACHMENTS_V3             = "android.attachmentsV3.2";
-    private static final String GROUPS_V2_CREATE_VERSION     = "android.groupsv2.createVersion";
     private static final String GROUPS_V2_JOIN_VERSION     = "android.groupsv2.joinVersion";
     private static final String GROUPS_V2_LINKS_VERSION    = "android.groupsv2.manageGroupLinksVersion";
     private static final String GROUPS_V2_CAPACITY         = "global.groupsv2.maxGroupSize";
     private static final String INTERNAL_USER              = "android.internalUser";
-    private static final String MENTIONS                   = "android.mentions";
     private static final String VERIFY_V2                  = "android.verifyV2";
-    private static final String PHONE_NUMBER_PRIVACY_VERSION = "android.UserLoginPrivacyVersion";
+    private static final String USER_LOGIN_PRIVACY_VERSION = "android.UserLoginPrivacyVersion";
     private static final String CLIENT_EXPIRATION            = "android.clientExpiration";
+    public  static final String MODERN_PROFILE_SHARING       = "android.modernProfileSharing";
 
     /**
      * We will only store remote values for flags in this set. If you want a flag to be controllable
@@ -69,15 +68,14 @@ public final class FeatureFlags {
 
     private static final Set<String> REMOTE_CAPABLE = Sets.newHashSet(
             ATTACHMENTS_V3,
-            GROUPS_V2_CREATE_VERSION,
             GROUPS_V2_CAPACITY,
             GROUPS_V2_JOIN_VERSION,
             GROUPS_V2_LINKS_VERSION,
             INTERNAL_USER,
             USERNAMES,
-            MENTIONS,
             VERIFY_V2,
-            CLIENT_EXPIRATION
+            CLIENT_EXPIRATION,
+            MODERN_PROFILE_SHARING
     );
 
     /**
@@ -99,7 +97,6 @@ public final class FeatureFlags {
      */
     private static final Set<String> HOT_SWAPPABLE = Sets.newHashSet(
             ATTACHMENTS_V3,
-            GROUPS_V2_CREATE_VERSION,
             GROUPS_V2_JOIN_VERSION,
             VERIFY_V2,
             CLIENT_EXPIRATION
@@ -180,12 +177,6 @@ public final class FeatureFlags {
         return getBoolean(ATTACHMENTS_V3, false);
     }
 
-    /** Attempt groups v2 creation. */
-    public static boolean groupsV2create() {
-        return getVersionFlag(GROUPS_V2_CREATE_VERSION) == VersionFlag.ON &&
-                !SignalStore.internalValues().gv2DoNotCreateGv2Groups();
-    }
-
     /** Allow creation and managing of group links. */
     public static boolean groupsV2manageGroupLinks() {
         return getVersionFlag(GROUPS_V2_LINKS_VERSION) == VersionFlag.ON;
@@ -228,11 +219,6 @@ public final class FeatureFlags {
         return getBoolean(INTERNAL_USER, false);
     }
 
-    /** Whether or not we allow mentions send support in groups. */
-    public static boolean mentions() {
-        return getBoolean(MENTIONS, false);
-    }
-
     /** Whether or not to use the UUID in verification codes. */
     public static boolean verifyV2() {
         return getBoolean(VERIFY_V2, false);
@@ -248,7 +234,12 @@ public final class FeatureFlags {
      * Whether to fetch and store the secondary certificate
      */
     public static boolean UserLoginPrivacy() {
-        return getVersionFlag(PHONE_NUMBER_PRIVACY_VERSION) == VersionFlag.ON;
+        return getVersionFlag(USER_LOGIN_PRIVACY_VERSION) == VersionFlag.ON;
+    }
+
+    /** Whether or not to show the new profile sharing prompt for legacy conversations. */
+    public static boolean modernProfileSharing() {
+        return getBoolean(MODERN_PROFILE_SHARING, false);
     }
 
     /** Only for rendering debug info. */

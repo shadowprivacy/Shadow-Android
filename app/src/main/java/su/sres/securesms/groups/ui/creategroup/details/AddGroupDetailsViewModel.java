@@ -14,10 +14,10 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.groups.ui.GroupMemberEntry;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.DefaultValueLiveData;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.SingleLiveEvent;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 
@@ -51,10 +51,10 @@ public final class AddGroupDetailsViewModel extends ViewModel {
         members              = LiveDataUtil.combineLatest(initialMembers, deleted, AddGroupDetailsViewModel::filterDeletedMembers);
         isMms                = Transformations.map(members, AddGroupDetailsViewModel::isAnyForcedSms);
         LiveData<List<GroupMemberEntry.NewGroupCandidate>> membersToCheckGv2CapabilityOf = LiveDataUtil.combineLatest(isMms, members, (forcedMms, memberList) -> {
-            if (FeatureFlags.groupsV2create() && !forcedMms) {
-                return memberList;
-            } else {
+            if (SignalStore.internalValues().gv2DoNotCreateGv2Groups() || forcedMms) {
                 return Collections.emptyList();
+            } else {
+                return memberList;
             }
         });
 

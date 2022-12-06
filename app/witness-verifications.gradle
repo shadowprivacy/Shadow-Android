@@ -255,6 +255,9 @@ dependencyVerification {
         ['com.google.android.exoplayer:exoplayer-ui:2.9.1',
          '7a942afcc402ff01e9bf48e8d3942850986710f06562d50a1408aaf04a683151'],
 
+        ['com.google.android.exoplayer:extension-mediasession:2.9.1',
+         'a7dff433b41b714c6584d925f1438ca890eaa16d66a47c3fb9ce88b39dcf3d52'],
+
         ['com.google.android.gms:play-services-auth-api-phone:17.0.0',
          'e13f76de5abf796342c7baea802abb5e46c1a383de1b7edf006aed0f5f28db8e'],
 

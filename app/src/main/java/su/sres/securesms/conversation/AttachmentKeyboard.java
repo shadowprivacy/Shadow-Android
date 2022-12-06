@@ -19,6 +19,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.components.InputAwareLayout;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mms.GlideApp;
+import su.sres.securesms.util.StorageUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -84,7 +85,7 @@ public class AttachmentKeyboard extends FrameLayout implements InputAwareLayout.
     }
 
     public void onMediaChanged(@NonNull List<Media> media) {
-        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+        if (StorageUtil.canReadFromMediaStore()) {
             mediaAdapter.setMedia(media);
             permissionButton.setVisibility(GONE);
             permissionText.setVisibility(GONE);

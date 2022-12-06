@@ -327,7 +327,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
             emojiToggle.setOnClickListener(this::onEmojiToggleClicked);
         }
 
-        if (FeatureFlags.mentions()) initializeMentionsViewModel();
+        initializeMentionsViewModel();
         initViewModel();
         revealButton.setOnClickListener(v -> viewModel.onRevealButtonToggled());
         continueButton.setOnClickListener(v -> navigateToContactSelect());

@@ -12,6 +12,7 @@ import org.signal.zkgroup.groups.UuidCiphertext;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.groups.v2.GroupLinkPassword;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
@@ -40,7 +41,7 @@ public final class GroupManager {
                                                                  boolean        mms)
           throws GroupChangeBusyException, GroupChangeFailedException, IOException
   {
-    boolean          shouldAttemptToCreateV2 = !mms && FeatureFlags.groupsV2create();
+    boolean          shouldAttemptToCreateV2 = !mms && !SignalStore.internalValues().gv2DoNotCreateGv2Groups();
     Set<RecipientId> memberIds               = getMemberIds(members);
 
     if (shouldAttemptToCreateV2) {

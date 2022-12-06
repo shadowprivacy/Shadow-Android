@@ -12,12 +12,15 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.ui.GroupChangeErrorCallback;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.SingleLiveEvent;
 import su.sres.securesms.util.concurrent.SignalExecutors;
@@ -170,16 +173,20 @@ public class MessageRequestViewModel extends ViewModel {
             } else {
                 return new MessageData(recipient, MessageClass.BLOCKED_INDIVIDUAL);
             }
-        } else if (recipient.isGroup()) {
-            if (recipient.isPushV2Group()) {
-                if (repository.isPendingMember(recipient.requireGroupId().requireV2())) {
-                    return new MessageData(recipient, MessageClass.GROUP_V2_INVITE);
-                } else {
-                    return new MessageData(recipient, MessageClass.GROUP_V2_ADD);
-                }
+        } else if (recipient.isPushV2Group()) {
+            if (repository.isPendingMember(recipient.requireGroupId().requireV2())) {
+                return new MessageData(recipient, MessageClass.GROUP_V2_INVITE);
             } else {
-                return new MessageData(recipient, MessageClass.GROUP_V1);
+                return new MessageData(recipient, MessageClass.GROUP_V2_ADD);
             }
+        } else if (isLegacyThread(recipient)) {
+            if (recipient.isGroup()) {
+                return new MessageData(recipient, MessageClass.LEGACY_GROUP_V1);
+            } else {
+                return new MessageData(recipient, MessageClass.LEGACY_INDIVIDUAL);
+            }
+        } else if (recipient.isGroup()) {
+            return new MessageData(recipient, MessageClass.GROUP_V1);
         } else {
             return new MessageData(recipient, MessageClass.INDIVIDUAL);
         }
@@ -200,11 +207,21 @@ public class MessageRequestViewModel extends ViewModel {
                 case REQUIRED:
                     displayState.postValue(DisplayState.DISPLAY_MESSAGE_REQUEST);
                     break;
-                case LEGACY:
-                    displayState.postValue(DisplayState.DISPLAY_LEGACY);
+                case PRE_MESSAGE_REQUEST:
+                    displayState.postValue(DisplayState.DISPLAY_PRE_MESSAGE_REQUEST);
                     break;
             }
         });
+    }
+
+    @WorkerThread
+    private boolean isLegacyThread(@NonNull Recipient recipient) {
+        Context context  = ApplicationDependencies.getApplication();
+        Long    threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient.getId());
+
+        return FeatureFlags.modernProfileSharing() &&
+                threadId != null                    &&
+                (RecipientUtil.hasSentMessageInThread(context, threadId) || RecipientUtil.isPreMessageRequestThread(context, threadId));
     }
 
     public static class RecipientInfo {
@@ -248,12 +265,16 @@ public class MessageRequestViewModel extends ViewModel {
     }
 
     public enum DisplayState {
-        DISPLAY_MESSAGE_REQUEST, DISPLAY_LEGACY, DISPLAY_NONE
+        DISPLAY_MESSAGE_REQUEST, DISPLAY_PRE_MESSAGE_REQUEST, DISPLAY_NONE
     }
 
     public enum MessageClass {
         BLOCKED_INDIVIDUAL,
         BLOCKED_GROUP,
+        /** An individual conversation that existed pre-message-requests but doesn't have profile sharing enabled */
+        LEGACY_INDIVIDUAL,
+        /** A V1 group conversation that existed pre-message-requests but doesn't have profile sharing enabled */
+        LEGACY_GROUP_V1,
         GROUP_V1,
         GROUP_V2_INVITE,
         GROUP_V2_ADD,

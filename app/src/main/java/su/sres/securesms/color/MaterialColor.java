@@ -7,6 +7,7 @@ import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.R;
+import su.sres.securesms.util.ThemeUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,6 +68,11 @@ public enum MaterialColor {
     this.tintColor  = tintColor;
     this.shadeColor = shadeColor;
     this.serialized = serialized;
+  }
+
+  public @ColorInt int toNotificationColor(@NonNull Context context) {
+    final boolean isDark = ThemeUtil.isDarkNotificationTheme(context);
+    return context.getResources().getColor(isDark ? shadeColor : mainColor);
   }
 
   public @ColorInt int toConversationColor(@NonNull Context context) {

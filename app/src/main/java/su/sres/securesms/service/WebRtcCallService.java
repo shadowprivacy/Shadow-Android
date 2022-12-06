@@ -27,7 +27,6 @@ import org.signal.ringrtc.Remote;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.WebRtcCallActivity;
 import su.sres.securesms.components.webrtc.BroadcastVideoSink;
-import su.sres.securesms.components.webrtc.TextureViewRenderer;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
@@ -45,7 +44,6 @@ import su.sres.securesms.ringrtc.CameraEventListener;
 import su.sres.securesms.ringrtc.CameraState;
 import su.sres.securesms.ringrtc.IceCandidateParcel;
 import su.sres.securesms.ringrtc.RemotePeer;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FutureTaskListener;
 import su.sres.securesms.util.ListenableFutureTask;
 import su.sres.securesms.util.ServiceUtil;
@@ -53,7 +51,6 @@ import su.sres.securesms.util.TelephonyUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.webrtc.CallNotificationBuilder;
-import su.sres.securesms.webrtc.IncomingPstnCallReceiver;
 import su.sres.securesms.webrtc.UncaughtExceptionHandlerManager;
 import su.sres.securesms.webrtc.audio.BluetoothStateManager;
 import su.sres.securesms.webrtc.audio.OutgoingRinger;
@@ -64,7 +61,6 @@ import org.webrtc.CapturerObserver;
 import org.webrtc.EglBase;
 import org.webrtc.PeerConnection;
 import org.webrtc.VideoFrame;
-import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.ecc.Curve;
 import org.whispersystems.libsignal.ecc.DjbECPublicKey;
@@ -81,7 +77,6 @@ import su.sres.signalservice.api.messages.calls.IceUpdateMessage;
 import su.sres.signalservice.api.messages.calls.OfferMessage;
 import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
 import su.sres.signalservice.api.messages.calls.TurnServerInfo;
-import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 
 import java.io.IOException;
@@ -199,7 +194,6 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
   private WiredHeadsetStateReceiver       wiredHeadsetStateReceiver;
   private PowerButtonReceiver             powerButtonReceiver;
   private LockManager                     lockManager;
-  private IncomingPstnCallReceiver        callReceiver;
   private UncaughtExceptionHandlerManager uncaughtExceptionHandlerManager;
 
   @Nullable private CallManager             callManager;
@@ -226,7 +220,6 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
 
     initializeResources();
 
-    registerIncomingPstnCallReceiver();
     registerUncaughtExceptionHandler();
     registerWiredHeadsetStateReceiver();
 
@@ -305,10 +298,6 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
       callManager = null;
     }
 
-    if (callReceiver != null) {
-      unregisterReceiver(callReceiver);
-    }
-
     if (uncaughtExceptionHandlerManager != null) {
       uncaughtExceptionHandlerManager.unregister();
     }
@@ -369,11 +358,6 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
       callFailure("Unable to create Call Manager: ", e);
     }
 
-  }
-
-  private void registerIncomingPstnCallReceiver() {
-    callReceiver = new IncomingPstnCallReceiver();
-    registerReceiver(callReceiver, new IntentFilter("android.intent.action.PHONE_STATE"));
   }
 
   private void registerUncaughtExceptionHandler() {
@@ -515,7 +499,10 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
 
   private void handleCancelPreJoinCall() {
     cleanupVideo();
-    preJoinPeer = null;
+    enableVideoOnCreate = false;
+    preJoinPeer         = null;
+
+    EventBus.getDefault().removeStickyEvent(WebRtcViewModel.class);
   }
 
   private void handleOutgoingCall(Intent intent) {

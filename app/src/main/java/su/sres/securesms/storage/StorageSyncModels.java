@@ -2,19 +2,26 @@ package su.sres.securesms.storage;
 
 import androidx.annotation.NonNull;
 
+import com.annimon.stream.Stream;
+
 import org.signal.zkgroup.groups.GroupMasterKey;
 
 import su.sres.securesms.database.IdentityDatabase;
+import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
 import su.sres.securesms.groups.GroupId;
+import su.sres.securesms.keyvalue.UserLoginPrivacyValues;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.signalservice.api.push.SignalServiceAddress;
+import su.sres.signalservice.api.storage.SignalAccountRecord;
 import su.sres.signalservice.api.storage.SignalContactRecord;
 import su.sres.signalservice.api.storage.SignalGroupV1Record;
 import su.sres.signalservice.api.storage.SignalGroupV2Record;
 import su.sres.signalservice.api.storage.SignalStorageRecord;
+import su.sres.signalservice.internal.storage.protos.AccountRecord;
 import su.sres.signalservice.internal.storage.protos.ContactRecord.IdentityState;
 
+import java.util.List;
 import java.util.Set;
 
 public final class StorageSyncModels {
@@ -27,6 +34,40 @@ public final class StorageSyncModels {
         }
 
         return localToRemoteRecord(settings, settings.getStorageId());
+    }
+
+    public static AccountRecord.UserLoginSharingMode localToRemoteUserLoginSharingMode(UserLoginPrivacyValues.UserLoginSharingMode userLoginUserLoginSharingMode) {
+        switch (userLoginUserLoginSharingMode) {
+            case EVERYONE: return AccountRecord.UserLoginSharingMode.EVERYBODY;
+            case NOBODY  : return AccountRecord.UserLoginSharingMode.NOBODY;
+            default      : throw new AssertionError();
+        }
+    }
+
+    public static UserLoginPrivacyValues.UserLoginSharingMode remoteToLocalUserLoginSharingMode(AccountRecord.UserLoginSharingMode userLoginUserLoginSharingMode) {
+        switch (userLoginUserLoginSharingMode) {
+            case EVERYBODY    : return UserLoginPrivacyValues.UserLoginSharingMode.EVERYONE;
+            case NOBODY       : return UserLoginPrivacyValues.UserLoginSharingMode.NOBODY;
+            default           : return UserLoginPrivacyValues.UserLoginSharingMode.NOBODY;
+        }
+    }
+
+    public static List<SignalAccountRecord.PinnedConversation> localToRemotePinnedConversations(@NonNull List<RecipientSettings> settings) {
+        return Stream.of(settings)
+                .filter(s -> s.getGroupType() == RecipientDatabase.GroupType.SIGNAL_V1 ||
+                        s.getGroupType() == RecipientDatabase.GroupType.SIGNAL_V2 ||
+                        s.getRegistered() == RecipientDatabase.RegisteredState.REGISTERED)
+                .map(StorageSyncModels::localToRemotePinnedConversation)
+                .toList();
+    }
+
+    private static @NonNull SignalAccountRecord.PinnedConversation localToRemotePinnedConversation(@NonNull RecipientSettings settings) {
+        switch (settings.getGroupType()) {
+            case NONE     : return SignalAccountRecord.PinnedConversation.forContact(new SignalServiceAddress(settings.getUuid(), settings.getE164()));
+            case SIGNAL_V1: return SignalAccountRecord.PinnedConversation.forGroupV1(settings.getGroupId().requireV1().getDecodedId());
+            case SIGNAL_V2: return SignalAccountRecord.PinnedConversation.forGroupV2(settings.getSyncExtras().getGroupMasterKey().serialize());
+            default       : throw new AssertionError("Unexpected group type!");
+        }
     }
 
     public static @NonNull SignalStorageRecord localToRemoteRecord(@NonNull RecipientSettings settings, @NonNull byte[] rawStorageId) {

@@ -56,7 +56,8 @@
     <uses-permission android:name="android.permission.WRITE_SMS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <uses-permission android:name="android.permission.CAMERA" />
 
@@ -621,6 +622,18 @@
         <service
             android:enabled="true"
             android:name=".messages.IncomingMessageObserver$ForegroundService" />
+
+        <service android:name=".components.voice.VoiceNotePlaybackService">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
+
+        <receiver android:name="androidx.media.session.MediaButtonReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
 
         <service
             android:name=".service.QuickResponseService"

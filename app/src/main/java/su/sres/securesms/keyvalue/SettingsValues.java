@@ -1,11 +1,17 @@
 package su.sres.securesms.keyvalue;
 
+import android.net.Uri;
+import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public final class SettingsValues extends SignalStoreValues {
 
     public static final String LINK_PREVIEWS          = "settings.link_previews";
     public static final String KEEP_MESSAGES_DURATION = "settings.keep_messages_duration";
+
+    private static final String SHADOW_BACKUP_DIRECTORY = "settings.shadow.backup.directory";
 
     public static final String THREAD_TRIM_LENGTH     = "pref_trim_length";
     public static final String THREAD_TRIM_ENABLED    = "pref_trim_threads";
@@ -61,5 +67,24 @@ public final class SettingsValues extends SignalStoreValues {
 
     public void setUpdateInRoamingEnabled(boolean enabled) {
         putBoolean(UPDATE_IN_ROAMING, enabled);
+    }
+
+    public void setShadowBackupDirectory(@NonNull Uri uri) {
+        putString(SHADOW_BACKUP_DIRECTORY, uri.toString());
+    }
+
+    public @Nullable
+    Uri getSignalBackupDirectory() {
+        String uri = getString(SHADOW_BACKUP_DIRECTORY, "");
+
+        if (TextUtils.isEmpty(uri)) {
+            return null;
+        } else {
+            return Uri.parse(uri);
+        }
+    }
+
+    public void clearShadowBackupDirectory() {
+        putString(SHADOW_BACKUP_DIRECTORY, null);
     }
 }

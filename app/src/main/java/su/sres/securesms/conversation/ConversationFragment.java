@@ -16,6 +16,7 @@
  */
 package su.sres.securesms.conversation;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
@@ -39,6 +40,8 @@ import su.sres.securesms.components.ConversationScrollToView;
 import su.sres.securesms.components.ConversationTypingView;
 import su.sres.securesms.components.TooltipPopup;
 import su.sres.securesms.components.recyclerview.SmoothScrollingLinearLayoutManager;
+import su.sres.securesms.components.voice.VoiceNoteMediaController;
+import su.sres.securesms.components.voice.VoiceNotePlaybackState;
 import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsDatabase;
@@ -72,6 +75,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.text.HtmlCompat;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -88,7 +92,6 @@ import su.sres.securesms.contactshare.ContactUtil;
 import su.sres.securesms.contactshare.SharedContactDetailsActivity;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.model.MediaMmsMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
@@ -103,6 +106,7 @@ import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.mms.Slide;
+import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.reactions.ReactionsBottomSheetDialogFragment;
 import su.sres.securesms.recipients.LiveRecipient;
@@ -118,12 +122,12 @@ import su.sres.securesms.stickers.StickerLocator;
 import su.sres.securesms.stickers.StickerPackPreviewActivity;
 import su.sres.securesms.util.CachedInflater;
 import su.sres.securesms.util.CommunicationActions;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.HtmlUtil;
 import su.sres.securesms.util.RemoteDeleteUtil;
 import su.sres.securesms.util.SaveAttachmentTask;
 import su.sres.securesms.util.SnapToTopDataObserver;
 import su.sres.securesms.util.StickyHeaderDecoration;
+import su.sres.securesms.util.StorageUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
@@ -137,7 +141,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -183,6 +186,7 @@ public class ConversationFragment extends LoggingFragment {
   private Animation                   mentionButtonOutAnimation;
   private OnScrollListener            conversationScrollListener;
   private int                         pulsePosition = -1;
+  private VoiceNoteMediaController voiceNoteMediaController;
 
   public static void prepare(@NonNull Context context) {
     FrameLayout parent = new FrameLayout(context);
@@ -309,6 +313,7 @@ public class ConversationFragment extends LoggingFragment {
     initializeResources();
     initializeMessageRequestViewModel();
     initializeListAdapter();
+    voiceNoteMediaController = new VoiceNoteMediaController((AppCompatActivity) requireActivity());
   }
 
   @Override
@@ -351,9 +356,17 @@ public class ConversationFragment extends LoggingFragment {
       actionMode.finish();
     }
 
+    long oldThreadId = threadId;
+
     initializeResources();
     messageRequestViewModel.setConversationInfo(recipient.getId(), threadId);
-    initializeListAdapter();
+
+    int startingPosition = getStartPosition();
+    if (startingPosition != -1 && oldThreadId == threadId) {
+      list.post(() -> moveToPosition(startingPosition, () -> Log.w(TAG, "Could not scroll to requested message.")));
+    } else {
+      initializeListAdapter();
+    }
   }
 
   public void moveToLastSeen() {
@@ -369,6 +382,10 @@ public class ConversationFragment extends LoggingFragment {
 
     int position = getListAdapter().getAdapterPositionForMessagePosition(conversationViewModel.getLastSeenPosition());
     snapToTopDataObserver.requestScrollPosition(position);
+  }
+
+  private int getStartPosition() {
+    return requireActivity().getIntent().getIntExtra(ConversationActivity.STARTING_POSITION_EXTRA, -1);
   }
 
   private void initializeMessageRequestViewModel() {
@@ -458,7 +475,7 @@ public class ConversationFragment extends LoggingFragment {
   private void initializeResources() {
     long oldThreadId = threadId;
 
-    int startingPosition  = this.getActivity().getIntent().getIntExtra(ConversationActivity.STARTING_POSITION_EXTRA, -1);
+    int startingPosition  = getStartPosition();
 
     this.recipient         = Recipient.live(getActivity().getIntent().getParcelableExtra(ConversationActivity.RECIPIENT_EXTRA));
     this.threadId          = this.getActivity().getIntent().getLongExtra(ConversationActivity.THREAD_ID_EXTRA, -1);
@@ -842,24 +859,38 @@ public class ConversationFragment extends LoggingFragment {
       throw new AssertionError("Cannot save a view-once message.");
     }
 
-    SaveAttachmentTask.showWarningDialog(getActivity(), new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int which) {
-        List<SaveAttachmentTask.Attachment> attachments = Stream.of(message.getSlideDeck().getSlides())
-                .filter(s -> s.getUri() != null && (s.hasImage() || s.hasVideo() || s.hasAudio() || s.hasDocument()))
-                .map(s -> new SaveAttachmentTask.Attachment(s.getUri(), s.getContentType(), message.getDateReceived(), s.getFileName().orNull()))
-                .toList();
-        if (!Util.isEmpty(attachments)) {
-          SaveAttachmentTask saveTask = new SaveAttachmentTask(getActivity());
-          saveTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, attachments.toArray(new SaveAttachmentTask.Attachment[0]));
-          return;
-        }
-
-        Log.w(TAG, "No slide with attachable media found, failing nicely.");
-        Toast.makeText(getActivity(),
-                       getResources().getQuantityString(R.plurals.ConversationFragment_error_while_saving_attachments_to_sd_card, 1),
-                       Toast.LENGTH_LONG).show();
+    SaveAttachmentTask.showWarningDialog(getActivity(), (dialog, which) -> {
+      if (StorageUtil.canWriteToMediaStore()) {
+        performSave(message);
+        return;
       }
+
+      Permissions.with(this)
+              .request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+              .ifNecessary()
+              .withPermanentDenialDialog(getString(R.string.MediaPreviewActivity_signal_needs_the_storage_permission_in_order_to_write_to_external_storage_but_it_has_been_permanently_denied))
+              .onAnyDenied(() -> Toast.makeText(requireContext(), R.string.MediaPreviewActivity_unable_to_write_to_external_storage_without_permission, Toast.LENGTH_LONG).show())
+              .onAllGranted(() -> performSave(message))
+              .execute();
     });
+  }
+
+  private void performSave(final MediaMmsMessageRecord message) {
+    List<SaveAttachmentTask.Attachment> attachments = Stream.of(message.getSlideDeck().getSlides())
+            .filter(s -> s.getUri() != null && (s.hasImage() || s.hasVideo() || s.hasAudio() || s.hasDocument()))
+            .map(s -> new SaveAttachmentTask.Attachment(s.getUri(), s.getContentType(), message.getDateReceived(), s.getFileName().orNull()))
+            .toList();
+
+    if (!Util.isEmpty(attachments)) {
+      SaveAttachmentTask saveTask = new SaveAttachmentTask(getActivity());
+      saveTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, attachments.toArray(new SaveAttachmentTask.Attachment[0]));
+      return;
+    }
+
+    Log.w(TAG, "No slide with attachable media found, failing nicely.");
+    Toast.makeText(getActivity(),
+            getResources().getQuantityString(R.plurals.ConversationFragment_error_while_saving_attachments_to_sd_card, 1),
+            Toast.LENGTH_LONG).show();
   }
 
   private void clearHeaderIfNotTyping(ConversationAdapter adapter) {
@@ -1357,6 +1388,31 @@ public class ConversationFragment extends LoggingFragment {
     @Override
     public void onMessageWithErrorClicked(@NonNull MessageRecord messageRecord) {
       listener.onMessageWithErrorClicked(messageRecord);
+    }
+
+    @Override
+    public void onVoiceNotePause(@NonNull Uri uri) {
+      voiceNoteMediaController.pausePlayback(uri);
+    }
+
+    @Override
+    public void onVoiceNotePlay(@NonNull Uri uri, long messageId, double progress) {
+      voiceNoteMediaController.startConsecutivePlayback(uri, messageId, progress);
+    }
+
+    @Override
+    public void onVoiceNoteSeekTo(@NonNull Uri uri, double progress) {
+      voiceNoteMediaController.seekToPosition(uri, progress);
+    }
+
+    @Override
+    public void onRegisterVoiceNoteCallbacks(@NonNull Observer<VoiceNotePlaybackState> onPlaybackStartObserver) {
+      voiceNoteMediaController.getVoiceNotePlaybackState().observe(getViewLifecycleOwner(), onPlaybackStartObserver);
+    }
+
+    @Override
+    public void onUnregisterVoiceNoteCallbacks(@NonNull Observer<VoiceNotePlaybackState> onPlaybackStartObserver) {
+      voiceNoteMediaController.getVoiceNotePlaybackState().removeObserver(onPlaybackStartObserver);
     }
 
     @Override

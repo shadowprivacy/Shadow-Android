@@ -12,6 +12,7 @@ import su.sres.securesms.jobs.DirectorySyncJob;
 import su.sres.securesms.jobs.FailingJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.securesms.jobs.LocalBackupJob;
+import su.sres.securesms.jobs.LocalBackupJobApi29;
 import su.sres.securesms.jobs.MmsDownloadJob;
 import su.sres.securesms.jobs.MmsReceiveJob;
 import su.sres.securesms.jobs.MmsSendJob;
@@ -60,6 +61,7 @@ public class WorkManagerFactoryMappings {
         put("DirectorySyncJob", DirectorySyncJob.KEY);
         put("FcmRefreshJob", FcmRefreshJob.KEY);
         put("LocalBackupJob", LocalBackupJob.KEY);
+        put("LocalBackupJobApi29", LocalBackupJobApi29.KEY);
         put("MmsDownloadJob", MmsDownloadJob.KEY);
         put("MmsReceiveJob", MmsReceiveJob.KEY);
         put("MmsSendJob", MmsSendJob.KEY);

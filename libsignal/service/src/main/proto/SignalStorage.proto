@@ -105,6 +105,19 @@ message AccountRecord {
         NOBODY        = 2;
     }
 
+    message PinnedConversation {
+        message Contact {
+            string uuid = 1;
+            string e164 = 2;
+        }
+
+        oneof identifier {
+            Contact contact        = 1;
+            bytes   legacyGroupId  = 3;
+            bytes   groupMasterKey = 4;
+        }
+    }
+
     bytes                  profileKey             = 1;
     string                 givenName              = 2;
     string                 familyName             = 3;
@@ -118,4 +131,5 @@ message AccountRecord {
     bool                   linkPreviews           = 11;
     UserLoginSharingMode   userLoginSharingMode   = 12;
     bool                   unlistedUserLogin      = 13;
+    repeated PinnedConversation     pinnedConversations    = 14;
 }

@@ -91,7 +91,7 @@ def abiPostFix = ['universal'   : 0,
 android {
     flavorDimensions "none"
     compileSdkVersion 29
-    buildToolsVersion '29.0.2'
+    buildToolsVersion '29.0.3'
     useLibrary 'org.apache.http.legacy'
 
     dexOptions {
@@ -112,7 +112,7 @@ android {
         versionName canonicalVersionName
 
         minSdkVersion 19
-        targetSdkVersion 28
+        targetSdkVersion 29
         multiDexEnabled true
 
         vectorDrawables.useSupportLibrary = true
@@ -299,6 +299,7 @@ dependencies {
 
     implementation 'com.google.android.exoplayer:exoplayer-core:2.9.1'
     implementation 'com.google.android.exoplayer:exoplayer-ui:2.9.1'
+    implementation 'com.google.android.exoplayer:extension-mediasession:2.9.1'
 
     implementation 'org.conscrypt:conscrypt-android:2.0.0'
     implementation 'org.signal:aesgcmprovider:0.0.3'
@@ -370,10 +371,11 @@ dependencies {
     testImplementation 'org.powermock:powermock-classloading-xstream:1.7.4'
 
     testImplementation 'androidx.test:core:1.2.0'
-    testImplementation ('org.robolectric:robolectric:4.2') {
+    testImplementation ('org.robolectric:robolectric:4.4') {
         exclude group: 'com.google.protobuf', module: 'protobuf-java'
     }
-    testImplementation 'org.robolectric:shadows-multidex:4.2'
+    testImplementation 'org.robolectric:shadows-multidex:4.4'
+    testImplementation 'org.hamcrest:hamcrest:2.2'
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
@@ -438,17 +440,6 @@ task signProductionWebsiteRelease {
         File signedRelease = signProductionRelease(variant).find { it.name.contains('universal') }
         assembleWebsiteDescriptor(variant, signedRelease)
     }
-}
-
-tasks.whenTaskAdded { task ->
-
-//    if (task.name.equals("assemblePlayRelease")) {
-//        task.finalizedBy signProductionPlayRelease
-//    }
-
-//    if (task.name.equals("assembleWebsiteRelease")) {
-//        task.finalizedBy signProductionWebsiteRelease
-//   }
 }
 
 def getLastCommitTimestamp() {

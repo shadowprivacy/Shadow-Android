@@ -20,6 +20,7 @@ import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.groups.GroupsV2CapabilityChecker;
 import su.sres.securesms.groups.ui.creategroup.details.AddGroupDetailsActivity;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -57,8 +58,8 @@ public class CreateGroupActivity extends ContactSelectionActivity {
                 : ContactsCursorLoader.DisplayMode.FLAG_PUSH;
 
         intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, displayMode);
-        intent.putExtra(ContactSelectionListFragment.SELECTION_LIMIT, FeatureFlags.groupsV2create() ? FeatureFlags.gv2GroupCapacity() - 1
-                : ContactSelectionListFragment.NO_LIMIT);
+        intent.putExtra(ContactSelectionListFragment.SELECTION_LIMIT, SignalStore.internalValues().gv2DoNotCreateGv2Groups() ? ContactSelectionListFragment.NO_LIMIT
+                : FeatureFlags.gv2GroupCapacity() - 1);
 
         return intent;
     }
@@ -158,7 +159,7 @@ public class CreateGroupActivity extends ContactSelectionActivity {
             List<Recipient> recipientsAndSelf = new ArrayList<>(resolved);
             recipientsAndSelf.add(Recipient.self().resolve());
 
-            if (FeatureFlags.groupsV2create()) {
+            if (!SignalStore.internalValues().gv2DoNotCreateGv2Groups()) {
                 try {
                     GroupsV2CapabilityChecker.refreshCapabilitiesIfNecessary(recipientsAndSelf);
                 } catch (IOException e) {

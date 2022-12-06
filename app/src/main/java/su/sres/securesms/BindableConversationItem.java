@@ -3,9 +3,12 @@ package su.sres.securesms;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
 
+import android.net.Uri;
 import android.view.View;
 
+import su.sres.securesms.components.voice.VoiceNotePlaybackState;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.conversation.ConversationMessage;
 import su.sres.securesms.database.model.MessageRecord;
@@ -52,6 +55,11 @@ public interface BindableConversationItem extends Unbindable {
     void onReactionClicked(@NonNull View reactionTarget, long messageId, boolean isMms);
     void onGroupMemberClicked(@NonNull RecipientId recipientId, @NonNull GroupId groupId);
     void onMessageWithErrorClicked(@NonNull MessageRecord messageRecord);
+    void onRegisterVoiceNoteCallbacks(@NonNull Observer<VoiceNotePlaybackState> onPlaybackStartObserver);
+    void onUnregisterVoiceNoteCallbacks(@NonNull Observer<VoiceNotePlaybackState> onPlaybackStartObserver);
+    void onVoiceNotePause(@NonNull Uri uri);
+    void onVoiceNotePlay(@NonNull Uri uri, long messageId, double position);
+    void onVoiceNoteSeekTo(@NonNull Uri uri, double position);
 
     /** @return true if handled, false if you want to let the normal url handling continue */
     boolean onUrlClicked(@NonNull String url);

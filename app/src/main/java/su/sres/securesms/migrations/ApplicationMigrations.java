@@ -36,7 +36,7 @@ public class ApplicationMigrations {
 
     private static final MutableLiveData<Boolean> UI_BLOCKING_MIGRATION_RUNNING = new MutableLiveData<>();
 
-    public static final int CURRENT_VERSION = 19;
+    public static final int CURRENT_VERSION = 21;
 
     private static final class Version {
         static final int VERSIONED_PROFILE  = 15;
@@ -45,6 +45,7 @@ public class ApplicationMigrations {
         static final int GV2  = 18;
         static final int THUMBNAIL_CLEANUP = 19;
         static final int GV2_2              = 20;
+        static final int DIR              = 21;
     }
 
     /**
@@ -176,6 +177,10 @@ public class ApplicationMigrations {
 
         if (lastSeenVersion < Version.GV2_2) {
             jobs.put(Version.GV2_2, new AttributesMigrationJob());
+        }
+
+        if (lastSeenVersion < Version.DIR) {
+            jobs.put(Version.DIR, new DirectoryRefreshMigrationJob());
         }
 
         return jobs;

@@ -412,7 +412,11 @@ public final class StorageSyncHelper {
 
     public static SignalStorageRecord buildAccountRecord(@NonNull Context context, @NonNull Recipient self) {
 
-        RecipientSettings settings = DatabaseFactory.getRecipientDatabase(context).getRecipientSettingsForSync(self.getId());
+        RecipientDatabase       recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+        RecipientSettings       settings          = recipientDatabase.getRecipientSettingsForSync(self.getId());
+        List<RecipientSettings> pinned            = Stream.of(DatabaseFactory.getThreadDatabase(context).getPinnedRecipientIds())
+                .map(recipientDatabase::getRecipientSettingsForSync)
+                .toList();
 
         SignalAccountRecord account = new SignalAccountRecord.Builder(self.getStorageServiceId())
                 .setUnknownFields(settings != null ? settings.getSyncExtras().getStorageProto() : null)
@@ -427,18 +431,11 @@ public final class StorageSyncHelper {
                 .setSealedSenderIndicatorsEnabled(TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(context))
                 .setLinkPreviewsEnabled(SignalStore.settings().isLinkPreviewsEnabled())
                 .setUnlistedUserLogin(SignalStore.userLoginPrivacy().getUserLoginListingMode().isUnlisted())
-                .setUserLoginSharingMode(localToRemoteuserLoginSharingMode(SignalStore.userLoginPrivacy().getUserLoginSharingMode()))
+                .setUserLoginSharingMode(StorageSyncModels.localToRemoteUserLoginSharingMode(SignalStore.userLoginPrivacy().getUserLoginSharingMode()))
+                .setPinnedConversations(StorageSyncModels.localToRemotePinnedConversations(pinned))
                 .build();
 
         return SignalStorageRecord.forAccount(account);
-    }
-
-    private static AccountRecord.UserLoginSharingMode localToRemoteuserLoginSharingMode(UserLoginPrivacyValues.UserLoginSharingMode userLoginuserLoginSharingMode) {
-        switch (userLoginuserLoginSharingMode) {
-            case EVERYONE: return AccountRecord.UserLoginSharingMode.EVERYBODY;
-            case NOBODY  : return AccountRecord.UserLoginSharingMode.NOBODY;
-            default      : throw new AssertionError();
-        }
     }
 
     public static void applyAccountStorageSyncUpdates(@NonNull Context context, Optional<StorageSyncHelper.RecordUpdate<SignalAccountRecord>> update) {
@@ -446,14 +443,6 @@ public final class StorageSyncHelper {
             return;
         }
         applyAccountStorageSyncUpdates(context, StorageId.forAccount(Recipient.self().getStorageServiceId()), update.get().getNew(), true);
-    }
-
-    private static UserLoginPrivacyValues.UserLoginSharingMode remoteToLocalPhoneNumberSharingMode(AccountRecord.UserLoginSharingMode userLoginSharingMode) {
-        switch (userLoginSharingMode) {
-            case EVERYBODY    : return UserLoginPrivacyValues.UserLoginSharingMode.EVERYONE;
-            case NOBODY       : return UserLoginPrivacyValues.UserLoginSharingMode.NOBODY;
-            default           : return UserLoginPrivacyValues.UserLoginSharingMode.NOBODY;
-        }
     }
 
     public static void applyAccountStorageSyncUpdates(@NonNull Context context, @NonNull StorageId storageId, @NonNull SignalAccountRecord update, boolean fetchProfile) {
@@ -464,7 +453,7 @@ public final class StorageSyncHelper {
         TextSecurePreferences.setShowUnidentifiedDeliveryIndicatorsEnabled(context, update.isSealedSenderIndicatorsEnabled());
         SignalStore.settings().setLinkPreviewsEnabled(update.isLinkPreviewsEnabled());
         SignalStore.userLoginPrivacy().setUserLoginListingMode(update.isUserLoginUnlisted() ? UserLoginPrivacyValues.UserLoginListingMode.UNLISTED : UserLoginPrivacyValues.UserLoginListingMode.LISTED);
-        SignalStore.userLoginPrivacy().setUserLoginSharingMode(remoteToLocalPhoneNumberSharingMode(update.getUserLoginSharingMode()));
+        SignalStore.userLoginPrivacy().setUserLoginSharingMode(StorageSyncModels.remoteToLocalUserLoginSharingMode(update.getUserLoginSharingMode()));
 
         if (fetchProfile && update.getAvatarUrlPath().isPresent()) {
             ApplicationDependencies.getJobManager().add(new RetrieveProfileAvatarJob(Recipient.self(), update.getAvatarUrlPath().get()));

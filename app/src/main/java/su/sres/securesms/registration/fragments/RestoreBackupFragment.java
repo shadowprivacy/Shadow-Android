@@ -2,9 +2,12 @@ package su.sres.securesms.registration.fragments;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
@@ -22,6 +25,7 @@ import android.widget.Toast;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.navigation.Navigation;
 
@@ -40,6 +44,7 @@ import su.sres.securesms.backup.FullBackupImporter;
 import su.sres.securesms.crypto.AttachmentSecretProvider;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoExternalStorageException;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.permissions.Permissions;
@@ -48,13 +53,15 @@ import su.sres.securesms.util.BackupUtil;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.util.concurrent.SimpleTask;
 
 import java.io.IOException;
 import java.util.Locale;
 
 public final class RestoreBackupFragment extends BaseRegistrationFragment {
 
-    private static final String TAG = Log.tag(RestoreBackupFragment.class);
+    private static final String TAG                            = Log.tag(RestoreBackupFragment.class);
+    private static final short  OPEN_DOCUMENT_TREE_RESULT_CODE = 13782;
 
     private TextView               restoreBackupSize;
     private TextView               restoreBackupTime;
@@ -102,35 +109,68 @@ public final class RestoreBackupFragment extends BaseRegistrationFragment {
             return;
         }
 
-        if (!Permissions.hasAll(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+        RestoreBackupFragmentArgs args = RestoreBackupFragmentArgs.fromBundle(requireArguments());
+        if (BackupUtil.isUserSelectionRequired(requireContext()) && args.getUri() != null) {
+            Log.i(TAG, "Restoring backup from passed uri");
+            initializeBackupForUri(view, args.getUri());
+
+            return;
+        }
+
+        if (BackupUtil.canUserAccessBackupDirectory(requireContext())) {
+            initializeBackupDetection(view);
+        } else {
             Log.i(TAG, "Skipping backup detection. We don't have the permission.");
             Navigation.findNavController(view)
                     .navigate(RestoreBackupFragmentDirections.actionSkipNoReturn());
-        } else {
-            initializeBackupDetection(view);
         }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (requestCode == OPEN_DOCUMENT_TREE_RESULT_CODE && resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+            Uri backupDirectoryUri = data.getData();
+            int takeFlags          = Intent.FLAG_GRANT_READ_URI_PERMISSION |
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+
+            SignalStore.settings().setShadowBackupDirectory(backupDirectoryUri);
+            requireContext().getContentResolver()
+                    .takePersistableUriPermission(backupDirectoryUri, takeFlags);
+
+            enableBackups(requireContext());
+
+            Navigation.findNavController(requireView())
+                    .navigate(RestoreBackupFragmentDirections.actionBackupRestored());
+        }
+    }
+
+    @RequiresApi(29)
+    private void initializeBackupForUri(@NonNull View view, @NonNull Uri uri) {
+        getFromUri(requireContext(), uri, backup -> handleBackupInfo(view, backup));
     }
 
     @SuppressLint("StaticFieldLeak")
     private void initializeBackupDetection(@NonNull View view) {
-        searchForBackup(backup -> {
-            Context context = getContext();
-            if (context == null) {
-                Log.i(TAG, "No context on fragment, must have navigated away.");
-                return;
-            }
+        searchForBackup(backup -> handleBackupInfo(view, backup));
+    }
 
-            if (backup == null) {
-                Log.i(TAG, "Skipping backup detection. No backup found, or permission revoked since.");
-                Navigation.findNavController(view)
-                        .navigate(RestoreBackupFragmentDirections.actionNoBackupFound());
-            } else {
-                restoreBackupSize.setText(getString(R.string.RegistrationActivity_backup_size_s, Util.getPrettyFileSize(backup.getSize())));
-                restoreBackupTime.setText(getString(R.string.RegistrationActivity_backup_timestamp_s, DateUtils.getExtendedRelativeTimeSpanString(requireContext(), Locale.getDefault(), backup.getTimestamp())));
+    private void handleBackupInfo(@NonNull View view, @Nullable BackupUtil.BackupInfo backup) {
+        Context context = getContext();
+        if (context == null) {
+            Log.i(TAG, "No context on fragment, must have navigated away.");
+            return;
+        }
 
-                restoreButton.setOnClickListener((v) -> handleRestore(v.getContext(), backup));
-            }
-        });
+        if (backup == null) {
+            Log.i(TAG, "Skipping backup detection. No backup found, or permission revoked since.");
+            Navigation.findNavController(view)
+                    .navigate(RestoreBackupFragmentDirections.actionNoBackupFound());
+        } else {
+            restoreBackupSize.setText(getString(R.string.RegistrationActivity_backup_size_s, Util.getPrettyFileSize(backup.getSize())));
+            restoreBackupTime.setText(getString(R.string.RegistrationActivity_backup_timestamp_s, DateUtils.getExtendedRelativeTimeSpanString(requireContext(), Locale.getDefault(), backup.getTimestamp())));
+
+            restoreButton.setOnClickListener((v) -> handleRestore(v.getContext(), backup));
+        }
     }
 
     interface OnBackupSearchResultListener {
@@ -157,6 +197,15 @@ public final class RestoreBackupFragment extends BaseRegistrationFragment {
                 listener.run(backup);
             }
         }.execute();
+    }
+
+    @RequiresApi(29)
+    static void getFromUri(@NonNull Context context,
+                           @NonNull Uri backupUri,
+                           @NonNull OnBackupSearchResultListener listener)
+    {
+        SimpleTask.run(() -> BackupUtil.getBackupInfoForUri(context, backupUri),
+                listener::run);
     }
 
     private void handleRestore(@NonNull Context context, @NonNull BackupUtil.BackupInfo backup) {
@@ -198,19 +247,18 @@ public final class RestoreBackupFragment extends BaseRegistrationFragment {
 
                     SQLiteDatabase database = DatabaseFactory.getBackupDatabase(context);
 
+                    BackupPassphrase.set(context, passphrase);
                     FullBackupImporter.importFile(context,
                             AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret(),
                             database,
-                            backup.getFile(),
+                            backup.getUri(),
                             passphrase);
 
                     DatabaseFactory.upgradeRestored(context, database);
                     NotificationChannels.restoreContactNotificationChannels(context);
 
-                    LocalBackupListener.setNextBackupTimeToIntervalFromNow(context);
-                    BackupPassphrase.set(context, passphrase);
-                    TextSecurePreferences.setBackupEnabled(context, true);
-                    LocalBackupListener.schedule(context);
+                    enableBackups(context);
+
                     AppInitialization.onPostBackupRestore(context);
 
                     Log.i(TAG, "Backup restore complete.");
@@ -272,9 +320,46 @@ public final class RestoreBackupFragment extends BaseRegistrationFragment {
         skipRestoreButton.setVisibility(View.INVISIBLE);
 
         if (event.getType() == FullBackupBase.BackupEvent.Type.FINISHED) {
-            Navigation.findNavController(requireView())
-                    .navigate(RestoreBackupFragmentDirections.actionBackupRestored());
+            if (BackupUtil.isUserSelectionRequired(requireContext()) && !BackupUtil.canUserAccessBackupDirectory(requireContext())) {
+                displayConfirmationDialog(requireContext());
+            } else {
+                Navigation.findNavController(requireView())
+                        .navigate(RestoreBackupFragmentDirections.actionBackupRestored());
+            }
         }
+    }
+
+    private void enableBackups(@NonNull Context context) {
+        if (BackupUtil.canUserAccessBackupDirectory(context)) {
+            LocalBackupListener.setNextBackupTimeToIntervalFromNow(context);
+            TextSecurePreferences.setBackupEnabled(context, true);
+            LocalBackupListener.schedule(context);
+        }
+    }
+
+    @RequiresApi(29)
+    private void displayConfirmationDialog(@NonNull Context context) {
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.RestoreBackupFragment__restore_complete)
+                .setMessage(R.string.RestoreBackupFragment__to_continue_using_backups_please_choose_a_folder)
+                .setPositiveButton(R.string.RestoreBackupFragment__choose_folder, (dialog, which) -> {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+
+                    intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION |
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION       |
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                    startActivityForResult(intent, OPEN_DOCUMENT_TREE_RESULT_CODE);
+                })
+                .setNegativeButton(R.string.RestoreBackupFragment__not_now, (dialog, which) -> {
+                    BackupPassphrase.set(context, null);
+                    dialog.dismiss();
+
+                    Navigation.findNavController(requireView())
+                            .navigate(RestoreBackupFragmentDirections.actionBackupRestored());
+                })
+                .setCancelable(false)
+                .show();
     }
 
     private enum BackupImportResult {

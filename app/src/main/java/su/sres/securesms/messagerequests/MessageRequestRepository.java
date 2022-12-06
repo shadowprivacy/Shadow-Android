@@ -25,6 +25,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.sms.MessageSender;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
@@ -86,9 +87,12 @@ final class MessageRequestRepository {
                     return MessageRequestState.NOT_REQUIRED;
                 }
             }
+
+            return MessageRequestState.REQUIRED;
+        } else if (FeatureFlags.modernProfileSharing() && !RecipientUtil.isLegacyProfileSharingAccepted(recipient)) {
             return MessageRequestState.REQUIRED;
         } else if (RecipientUtil.isPreMessageRequestThread(context, threadId) && !RecipientUtil.isLegacyProfileSharingAccepted(recipient)) {
-            return MessageRequestState.LEGACY;
+            return MessageRequestState.PRE_MESSAGE_REQUEST;
         } else {
             return MessageRequestState.NOT_REQUIRED;
         }
@@ -230,6 +234,7 @@ final class MessageRequestRepository {
         });
     }
 
+    @WorkerThread
     boolean isPendingMember(@NonNull GroupId.V2 groupId) {
         return DatabaseFactory.getGroupDatabase(context).isPendingMember(groupId, Recipient.self());
     }
@@ -248,6 +253,7 @@ final class MessageRequestRepository {
         /** Explicit message request permission is required. */
         REQUIRED,
 
-        LEGACY
+        /** This conversation existed before message requests and needs the old UI */
+        PRE_MESSAGE_REQUEST
     }
 }
