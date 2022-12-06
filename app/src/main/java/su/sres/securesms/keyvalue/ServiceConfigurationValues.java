@@ -20,10 +20,11 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
     private static final String IS_LICENSED                       = "service_configuration.is_licensed";
     private static final String LICENSE                           = "service_configuration.license";
     private static final String IMAGE_MAX_SIZE                    = "service_configuration.maxsize_image";
-    private static final String GIF_MAX_SIZE                    = "service_configuration.maxsize_gif";
+    private static final String GIF_MAX_SIZE                      = "service_configuration.maxsize_gif";
     private static final String AUDIO_MAX_SIZE                    = "service_configuration.maxsize_audio";
     private static final String VIDEO_MAX_SIZE                    = "service_configuration.maxsize_video";
-    private static final String DOC_MAX_SIZE                    = "service_configuration.maxsize_doc";
+    private static final String DOC_MAX_SIZE                      = "service_configuration.maxsize_doc";
+    private static final String UPDATES_ALLOWED                   = "service_configuration.updates_allowed";
 
     public static final String EXAMPLE_URI                        = "https://example.com";
 
@@ -129,8 +130,6 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
         removeKey(VIDEO_MAX_SIZE);
     }
 
-
-
     public synchronized void setFcmSenderId(String senderId) {
         putString(FCM_SENDER_ID, senderId);
     }
@@ -153,6 +152,10 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
 
     public synchronized void setDocMaxSize(int size) {
         putInteger(DOC_MAX_SIZE, size);
+    }
+
+    public synchronized void setUpdatesAllowed(boolean allowed) {
+        putBoolean(UPDATES_ALLOWED, allowed);
     }
 
     public @Nullable
@@ -232,5 +235,9 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
 
     public int getDocMaxSize() {
         return getInteger(DOC_MAX_SIZE, 100 * MB);
+    }
+
+    public boolean getUpdatesAllowed() {
+        return getBoolean(UPDATES_ALLOWED, true);
     }
 }

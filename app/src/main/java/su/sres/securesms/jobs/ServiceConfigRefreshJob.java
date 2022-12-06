@@ -1,21 +1,8 @@
 package su.sres.securesms.jobs;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateExpiredException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.CertificateNotYetValidException;
-import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -25,14 +12,9 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.ServiceConfigurationValues;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.push.SignalServiceTrustStore;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
-import su.sres.signalservice.api.messages.calls.SystemCertificates;
-import su.sres.signalservice.api.push.TrustStore;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
-
-import static su.sres.securesms.InitialActivity.TRUSTSTORE_FILE_NAME;
 
 public class ServiceConfigRefreshJob extends BaseJob {
 
@@ -40,7 +22,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
 
     private static final String TAG = ServiceConfigRefreshJob.class.getSimpleName();
 
-    private static final long REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(12);
+    private static final long REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(8);
 
     private final SignalServiceAccountManager accountManager;
 
@@ -118,6 +100,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
             Integer maxAudioSize                 = configRequested.getMaxAudioSize();
             Integer maxVideoSize                 = configRequested.getMaxVideoSize();
             Integer maxDocSize                   = configRequested.getMaxDocSize();
+            boolean updatesAllowed               = configRequested.getUpdatesAllowed();
 
             if (maxImageSize !=null && maxImageSize !=0) values.setImageMaxSize(maxImageSize); else values.removeImageKey();
             if (maxGifSize !=null && maxGifSize !=0) values.setGifMaxSize(maxGifSize); else values.removeGifKey();
@@ -140,6 +123,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
                 values.setUnidentifiedAccessCaPublicKey(unidentifiedAccessCaPublicKey);
                 values.setZkPublicKey(zkPublicKey);
                 values.setSupportEmail(supportEmail);
+                values.setUpdatesAllowed(updatesAllowed);
 
                 if (!fcmSenderId.equals(oldFcmSenderId)) {
                     values.setFcmSenderId(fcmSenderId);
@@ -149,7 +133,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
                 Log.i(TAG, "Successfully updated service configuration");
 
             } else {
-                Log.w(TAG, "Failed to update service configuration as one or more parameters received are null");
+                Log.w(TAG, "Failed to update service configuration as one or more critical parameters received are null");
             }
 
             SignalStore.misc().setLastServiceConfigRefreshTime(System.currentTimeMillis());

@@ -51,6 +51,9 @@ public class ConfigurationInfo {
     @JsonProperty
     private int maxDocSize;
 
+    @JsonProperty
+    private boolean updatesAllowed;
+
     public String getCloudUri() {
         return cloudUri;
     }
@@ -97,6 +100,10 @@ public class ConfigurationInfo {
 
     public Integer getMaxDocSize() {
         return maxDocSize;
+    }
+
+    public boolean getUpdatesAllowed() {
+        return updatesAllowed;
     }
 
     static class ByteArrayDeserializer extends JsonDeserializer<byte[]> {

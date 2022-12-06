@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.keyvalue.ServiceConfigurationValues;
 import su.sres.securesms.keyvalue.SettingsValues;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
@@ -43,7 +44,8 @@ public class UpdateApkJob extends BaseJob {
 
   private static final String TAG = UpdateApkJob.class.getSimpleName();
 
-  private final SettingsValues config = SignalStore.settings();
+  private final SettingsValues settingsConfig = SignalStore.settings();
+  private final ServiceConfigurationValues serviceConfig = SignalStore.serviceConfigurationValues();
 
   public UpdateApkJob() {
     this(new Job.Parameters.Builder()
@@ -69,8 +71,8 @@ public class UpdateApkJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException, PackageManager.NameNotFoundException {
-    if (!BuildConfig.PLAY_STORE_DISABLED) return;
-
+    if (!BuildConfig.PLAY_STORE_DISABLED || !serviceConfig.getUpdatesAllowed()) return;
+    
     Log.i(TAG, "Checking for APK update...");
 
     OkHttpClient client  = new OkHttpClient();
@@ -163,7 +165,7 @@ public class UpdateApkJob extends BaseJob {
     DownloadManager         downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
     DownloadManager.Request downloadRequest = new DownloadManager.Request(Uri.parse(uri));
 
-    downloadRequest.setAllowedOverRoaming(config.isUpdateInRoamingEnabled());
+    downloadRequest.setAllowedOverRoaming(settingsConfig.isUpdateInRoamingEnabled());
     downloadRequest.setTitle("Downloading Shadow update");
     downloadRequest.setDescription("Downloading Shadow " + versionName);
     downloadRequest.setVisibleInDownloadsUi(false);
