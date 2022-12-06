@@ -61,7 +61,7 @@ public class BitmapUtil {
                                                   @NonNull T model,
                                                   final int maxImageWidth,
                                                   final int maxImageHeight,
-                                                  final int maxImageSize)
+                                                  final long maxImageSize)
           throws BitmapDecodingException
   {
     return createScaledBytes(context, model, maxImageWidth, maxImageHeight, maxImageSize, CompressFormat.JPEG);
@@ -72,7 +72,7 @@ public class BitmapUtil {
                                                   T model,
                                                   int maxImageWidth,
                                                   int maxImageHeight,
-                                                  int maxImageSize,
+                                                  long maxImageSize,
                                                   @NonNull CompressFormat format)
           throws BitmapDecodingException
   {
@@ -84,7 +84,7 @@ public class BitmapUtil {
                                                    @NonNull T model,
                                                    final int maxImageWidth,
                                                    final int maxImageHeight,
-                                                   final int maxImageSize,
+                                                   final long maxImageSize,
                                                    @NonNull CompressFormat format,
                                                    final int sizeAttempt,
                                                    int totalAttempts)

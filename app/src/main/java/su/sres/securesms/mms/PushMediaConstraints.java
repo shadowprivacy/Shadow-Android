@@ -26,40 +26,40 @@ public class PushMediaConstraints extends MediaConstraints {
   }
 
   @Override
-  public int getImageMaxSize(Context context) {
-    return config.getImageMaxSize();
+  public long getImageMaxSize(Context context) {
+    return MB * config.getImageMaxSize();
   }
 
   @Override
-  public int getGifMaxSize(Context context) {
-    return config.getGifMaxSize();
+  public long getGifMaxSize(Context context) {
+    return MB * config.getGifMaxSize();
   }
 
   @Override
-  public int getVideoMaxSize(Context context) {
-    return config.getVideoMaxSize();
+  public long getVideoMaxSize(Context context) {
+    return MB * config.getVideoMaxSize();
   }
 
   @Override
-  public int getUncompressedVideoMaxSize(Context context) {
-    return isVideoTranscodeAvailable() ? 2 * getVideoMaxSize(context)
-            : getVideoMaxSize(context);
+  public long getUncompressedVideoMaxSize(Context context) {
+    return isVideoTranscodeAvailable() ? 2 * MB * getVideoMaxSize(context)
+            : MB * getVideoMaxSize(context);
   }
 
   @Override
-  public int getCompressedVideoMaxSize(Context context) {
+  public long getCompressedVideoMaxSize(Context context) {
     // on low memory devices the transcoder will fail with large video files due to this
-    return (int) (Util.isLowMemory(context) ? 30 * MB
-                : 0.5 * getVideoMaxSize(context));
+    return (long) (Util.isLowMemory(context) ? 30 * MB
+                : 0.5 * MB * getVideoMaxSize(context));
   }
 
   @Override
-  public int getAudioMaxSize(Context context) {
-    return config.getAudioMaxSize();
+  public long getAudioMaxSize(Context context) {
+    return MB * config.getAudioMaxSize();
   }
 
   @Override
-  public int getDocumentMaxSize(Context context) {
-    return config.getDocMaxSize();
+  public long getDocumentMaxSize(Context context) {
+    return MB * config.getDocMaxSize();
   }
 }

@@ -29,21 +29,21 @@ public abstract class MediaConstraints {
 
   public abstract int getImageMaxWidth(Context context);
   public abstract int getImageMaxHeight(Context context);
-  public abstract int getImageMaxSize(Context context);
+  public abstract long getImageMaxSize(Context context);
 
-  public abstract int getGifMaxSize(Context context);
-  public abstract int getVideoMaxSize(Context context);
+  public abstract long getGifMaxSize(Context context);
+  public abstract long getVideoMaxSize(Context context);
 
-  public int getUncompressedVideoMaxSize(Context context) {
+  public long getUncompressedVideoMaxSize(Context context) {
     return getVideoMaxSize(context);
   }
 
-  public int getCompressedVideoMaxSize(Context context) {
+  public long getCompressedVideoMaxSize(Context context) {
     return getVideoMaxSize(context);
   }
 
-  public abstract int getAudioMaxSize(Context context);
-  public abstract int getDocumentMaxSize(Context context);
+  public abstract long getAudioMaxSize(Context context);
+  public abstract long getDocumentMaxSize(Context context);
 
   public boolean isSatisfied(@NonNull Context context, @NonNull Attachment attachment) {
     try {
