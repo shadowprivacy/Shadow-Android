@@ -833,7 +833,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
 //            inflater.inflate(R.menu.conversation_add_to_contacts, menu);
 //        }
 
-        if (recipient != null && recipient.get().isLocalNumber()) {
+        if (recipient != null && recipient.get().isSelf()) {
             if (isSecureText) {
                 hideMenuItem(menu, R.id.menu_call_secure);
                 hideMenuItem(menu, R.id.menu_video_secure);
@@ -1004,9 +1004,13 @@ public class ConversationActivity extends PassphraseRequiredActivity
     @Override
     public void onBackPressed() {
         Log.d(TAG, "onBackPressed()");
-        if (reactionOverlay.isShowing()) reactionOverlay.hide();
-        else if (container.isInputOpen()) container.hideCurrentInput(composeText);
-        else super.onBackPressed();
+        if (reactionOverlay.isShowing()) {
+            reactionOverlay.hide();
+        } else if (container.isInputOpen()) {
+            container.hideCurrentInput(composeText);
+        } else {
+            super.onBackPressed();
+        }
     }
 
     @Override
@@ -1150,13 +1154,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
         });
     }
 
-    @TargetApi(Build.VERSION_CODES.KITKAT)
-    private void handleMakeDefaultSms() {
-        Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
-        intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
-        startActivityForResult(intent, SMS_DEFAULT);
-    }
-
     private void handleRegisterForSignal() {
         startActivity(RegistrationNavigationActivity.newIntentForReRegistration(this));
     }
@@ -1249,7 +1246,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
                                             @NonNull Bitmap bitmap,
                                             @NonNull Recipient recipient) {
         IconCompat icon = IconCompat.createWithAdaptiveBitmap(bitmap);
-        String name = recipient.isLocalNumber() ? context.getString(R.string.note_to_self)
+        String name = recipient.isSelf() ? context.getString(R.string.note_to_self)
                 : recipient.getDisplayName(context);
 
         ShortcutInfoCompat shortcutInfoCompat = new ShortcutInfoCompat.Builder(context, recipient.getId().serialize() + '-' + System.currentTimeMillis())
@@ -2429,7 +2426,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         if (!TextSecurePreferences.isPushRegistered(this)) return false;
         if (recipient.get().isGroup()) return false;
 
-        return recipient.get().isLocalNumber();
+        return recipient.get().isSelf();
     }
 
     private boolean isGroupConversation() {
@@ -2610,10 +2607,10 @@ public class ConversationActivity extends PassphraseRequiredActivity
                                                     final int subscriptionId,
                                                     final boolean initiating,
                                                     final boolean clearComposeBox) {
-        if (!isDefaultSms && (!isSecureText || forceSms)) {
-            showDefaultSmsPrompt();
-            return new SettableFuture<>(null);
-        }
+        // if (!isDefaultSms && (!isSecureText || forceSms)) {
+        //    showDefaultSmsPrompt();
+        //    return new SettableFuture<>(null);
+        // }
 
         if (isSecureText && !forceSms) {
             MessageUtil.SplitResult splitMessage = MessageUtil.getSplitMessage(this, body, sendButton.getSelectedTransport().calculateCharacters(body).maxPrimaryMessageSize);
@@ -2665,10 +2662,10 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
     private void sendTextMessage(final boolean forceSms, final long expiresIn, final int subscriptionId, final boolean initiating)
             throws InvalidMessageException {
-        if (!isDefaultSms && (!isSecureText || forceSms)) {
-            showDefaultSmsPrompt();
-            return;
-        }
+        // if (!isDefaultSms && (!isSecureText || forceSms)) {
+        //    showDefaultSmsPrompt();
+        //    return;
+        // }
 
         final Context context = getApplicationContext();
         final String messageBody = getMessage();
@@ -2706,13 +2703,13 @@ public class ConversationActivity extends PassphraseRequiredActivity
                 .execute();
     }
 
-    private void showDefaultSmsPrompt() {
-        new AlertDialog.Builder(this)
-                .setMessage(R.string.ConversationActivity_signal_cannot_sent_sms_mms_messages_because_it_is_not_your_default_sms_app)
-                .setNegativeButton(R.string.ConversationActivity_no, (dialog, which) -> dialog.dismiss())
-                .setPositiveButton(R.string.ConversationActivity_yes, (dialog, which) -> handleMakeDefaultSms())
-                .show();
-    }
+    // private void showDefaultSmsPrompt() {
+    //    new AlertDialog.Builder(this)
+    //            .setMessage(R.string.ConversationActivity_signal_cannot_sent_sms_mms_messages_because_it_is_not_your_default_sms_app)
+    //            .setNegativeButton(R.string.ConversationActivity_no, (dialog, which) -> dialog.dismiss())
+    //            .setPositiveButton(R.string.ConversationActivity_yes, (dialog, which) -> handleMakeDefaultSms())
+    //            .show();
+    // }
 
     private void updateToggleButtonState() {
         if (inputPanel.isRecordingInLockedMode()) {

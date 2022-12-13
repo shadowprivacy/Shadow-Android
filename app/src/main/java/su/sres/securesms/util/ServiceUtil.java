@@ -20,6 +20,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
+import android.os.storage.StorageManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.view.WindowManager;
@@ -33,6 +34,10 @@ public class ServiceUtil {
 
   public static WindowManager getWindowManager(Context context) {
     return (WindowManager) context.getSystemService(Activity.WINDOW_SERVICE);
+  }
+
+  public static StorageManager getStorageManager(Context context) {
+    return ContextCompat.getSystemService(context, StorageManager.class);
   }
 
   public static ConnectivityManager getConnectivityManager(Context context) {

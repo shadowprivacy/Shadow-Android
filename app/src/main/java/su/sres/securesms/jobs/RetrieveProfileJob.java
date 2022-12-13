@@ -119,7 +119,7 @@ public class RetrieveProfileJob extends BaseJob  {
   public static @NonNull Job forRecipient(@NonNull RecipientId recipientId) {
     Recipient recipient = Recipient.resolved(recipientId);
 
-    if (recipient.isLocalNumber()) {
+    if (recipient.isSelf()) {
       return new RefreshOwnProfileJob();
     } else if (recipient.isGroup()) {
       Context         context    = ApplicationDependencies.getApplication();
@@ -145,7 +145,7 @@ public class RetrieveProfileJob extends BaseJob  {
     for (RecipientId recipientId : recipientIds) {
       Recipient recipient = Recipient.resolved(recipientId);
 
-      if (recipient.isLocalNumber()) {
+      if (recipient.isSelf()) {
         includeSelf = true;
       } else if (recipient.isGroup()) {
         List<Recipient> recipients = DatabaseFactory.getGroupDatabase(context).getGroupMembers(recipient.requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
@@ -432,7 +432,7 @@ public class RetrieveProfileJob extends BaseJob  {
 
         if (!recipient.isBlocked()      &&
                 !recipient.isGroup()        &&
-                !recipient.isLocalNumber()  &&
+                !recipient.isSelf()  &&
                 !localDisplayName.isEmpty() &&
                 !remoteDisplayName.equals(localDisplayName))
         {
@@ -440,7 +440,7 @@ public class RetrieveProfileJob extends BaseJob  {
           DatabaseFactory.getSmsDatabase(context).insertProfileNameChangeMessages(recipient, remoteDisplayName, localDisplayName);
         } else {
           Log.i(TAG, String.format(Locale.US, "Name changed, but wasn't relevant to write an event. blocked: %s, group: %s, self: %s, firstSet: %s, displayChange: %s",
-                  recipient.isBlocked(), recipient.isGroup(), recipient.isLocalNumber(), localDisplayName.isEmpty(), !remoteDisplayName.equals(localDisplayName)));
+                  recipient.isBlocked(), recipient.isGroup(), recipient.isSelf(), localDisplayName.isEmpty(), !remoteDisplayName.equals(localDisplayName)));
         }
       }
       if (TextUtils.isEmpty(plaintextProfileName)) {

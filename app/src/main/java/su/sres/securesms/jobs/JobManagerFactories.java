@@ -26,6 +26,7 @@ import su.sres.securesms.jobmanager.migrations.RetrieveProfileJobMigration;
 import su.sres.securesms.jobmanager.migrations.SendReadReceiptsJobMigration;
 import su.sres.securesms.migrations.AttributesMigrationJob;
 import su.sres.securesms.migrations.AvatarIdRemovalMigrationJob;
+import su.sres.securesms.migrations.BackupNotificationMigrationJob;
 import su.sres.securesms.migrations.DirectoryRefreshMigrationJob;
 import su.sres.securesms.migrations.LicenseMigrationJob;
 import su.sres.securesms.migrations.PassingMigrationJob;
@@ -130,6 +131,7 @@ public final class JobManagerFactories {
             // Migrations
             put(AttributesMigrationJob.KEY,                new AttributesMigrationJob.Factory());
             put(AvatarIdRemovalMigrationJob.KEY,           new AvatarIdRemovalMigrationJob.Factory());
+            put(BackupNotificationMigrationJob.KEY,        new BackupNotificationMigrationJob.Factory());
             put(CachedAttachmentsMigrationJob.KEY,         new CachedAttachmentsMigrationJob.Factory());
             put(DatabaseMigrationJob.KEY,                  new DatabaseMigrationJob.Factory());
             put(DirectoryRefreshMigrationJob.KEY,          new DirectoryRefreshMigrationJob.Factory());

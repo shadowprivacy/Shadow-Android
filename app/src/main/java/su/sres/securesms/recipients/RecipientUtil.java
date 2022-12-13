@@ -261,7 +261,7 @@ public class RecipientUtil {
     }
 
     public static boolean isLegacyProfileSharingAccepted(@NonNull Recipient threadRecipient) {
-        return threadRecipient.isLocalNumber() ||
+        return threadRecipient.isSelf() ||
                 threadRecipient.isProfileSharing() ||
                 threadRecipient.isSystemContact() ||
                 !threadRecipient.isRegistered()    ||
@@ -270,7 +270,7 @@ public class RecipientUtil {
 
     @WorkerThread
     private static boolean isMessageRequestAccepted(@NonNull Context context, long threadId, @NonNull Recipient threadRecipient) {
-        return threadRecipient.isLocalNumber() ||
+        return threadRecipient.isSelf() ||
                 threadRecipient.isProfileSharing() ||
                 threadRecipient.isSystemContact() ||
                 threadRecipient.isForceSmsSelection() ||

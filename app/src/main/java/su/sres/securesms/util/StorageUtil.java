@@ -5,36 +5,36 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import su.sres.securesms.BuildConfig;
+import su.sres.securesms.R;
 import su.sres.securesms.database.NoExternalStorageException;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.permissions.Permissions;
 
 import java.io.File;
+import java.util.List;
+import java.util.Objects;
 
 public class StorageUtil {
 
   private static final String PRODUCTION_PACKAGE_ID = "su.sres.securesms";
 
-  public static File getBackupDirectory() throws NoExternalStorageException {
+  public static File getOrCreateBackupDirectory() throws NoExternalStorageException {
     File storage = Environment.getExternalStorageDirectory();
 
     if (!storage.canWrite()) {
       throw new NoExternalStorageException();
     }
 
-    File signal = new File(storage, "Shadow");
-    File backups = new File(signal, "Backups");
-
-    //noinspection ConstantConditions
-    if (BuildConfig.APPLICATION_ID.startsWith(PRODUCTION_PACKAGE_ID + ".")) {
-      backups = new File(backups, BuildConfig.APPLICATION_ID.substring(PRODUCTION_PACKAGE_ID.length() + 1));
-    }
+    File backups = getBackupDirectory();
 
     if (!backups.exists()) {
       if (!backups.mkdirs()) {
@@ -44,6 +44,45 @@ public class StorageUtil {
 
     return backups;
   }
+
+  public static File getBackupDirectory() throws NoExternalStorageException {
+    File storage = Environment.getExternalStorageDirectory();
+    File signal  = new File(storage, "Signal");
+    File backups = new File(signal, "Backups");
+
+    //noinspection ConstantConditions
+    if (BuildConfig.APPLICATION_ID.startsWith(PRODUCTION_PACKAGE_ID + ".")) {
+      backups = new File(backups, BuildConfig.APPLICATION_ID.substring(PRODUCTION_PACKAGE_ID.length() + 1));
+    }
+
+    return backups;
+  }
+
+  @RequiresApi(24)
+  public static @NonNull String getDisplayPath(@NonNull Context context, @NonNull Uri uri) {
+    String lastPathSegment = Objects.requireNonNull(uri.getLastPathSegment());
+    String backupVolume    = lastPathSegment.replaceFirst(":.*", "");
+    String backupName      = lastPathSegment.replaceFirst(".*:", "");
+
+    StorageManager storageManager = ServiceUtil.getStorageManager(context);
+    List<StorageVolume> storageVolumes = storageManager.getStorageVolumes();
+    StorageVolume       storageVolume  = null;
+
+    for (StorageVolume volume : storageVolumes) {
+      if (Objects.equals(volume.getUuid(), backupVolume)) {
+        storageVolume = volume;
+        break;
+      }
+    }
+
+    if (storageVolume == null) {
+      return backupName;
+    } else {
+      return context.getString(R.string.StorageUtil__s_s, storageVolume.getDescription(context), backupName);
+    }
+  }
+
+
 
   public static File getBackupCacheDirectory(Context context) {
     return context.getExternalCacheDir();

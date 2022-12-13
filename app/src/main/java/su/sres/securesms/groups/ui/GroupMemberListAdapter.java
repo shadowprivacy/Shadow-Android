@@ -206,7 +206,7 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
         }
 
         void bindRecipient(@NonNull Recipient recipient) {
-            String displayName = recipient.isLocalNumber() ? context.getString(R.string.GroupMembersDialog_you)
+            String displayName = recipient.isSelf() ? context.getString(R.string.GroupMembersDialog_you)
                     : recipient.getDisplayName(itemView.getContext());
             bindImageAndText(recipient, displayName);
         }

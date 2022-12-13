@@ -579,8 +579,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
                 return Optional.of(new ServiceOutageReminder(context));
             } else if (OutdatedBuildReminder.isEligible()) {
                 return Optional.of(new OutdatedBuildReminder(context));
-//            } else if (DefaultSmsReminder.isEligible(context)) {
-//                return Optional.of(new DefaultSmsReminder(context));
             } else if (Util.isDefaultSmsProvider(context) && SystemSmsImportReminder.isEligible(context)) {
                 return Optional.of((new SystemSmsImportReminder(context)));
             } else if (PushRegistrationReminder.isEligible(context)) {

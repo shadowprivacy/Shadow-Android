@@ -67,10 +67,10 @@ public class SubmitDebugLogRepository {
         if (Build.VERSION.SDK_INT >= 28) {
             add(new LogSectionPower());
         }
-        add(new LogSectionThreads());
         add(new LogSectionCapabilities());
         add(new LogSectionFeatureFlags());
         add(new LogSectionPermissions());
+        add(new LogSectionThreads());
         add(new LogSectionLogcat());
         add(new LogSectionLogger());
     }};
@@ -147,30 +147,18 @@ public class SubmitDebugLogRepository {
 
         int maxTitleLength = Stream.of(SECTIONS).reduce(0, (max, section) -> Math.max(max, section.getTitle().length()));
 
-        List<Future<List<LogLine>>> futures = new ArrayList<>();
-
-        for (LogSection section : SECTIONS) {
-            futures.add(SignalExecutors.BOUNDED.submit(() -> {
-                List<LogLine> lines = getLinesForSection(context, section, maxTitleLength);
-
-                if (SECTIONS.indexOf(section) != SECTIONS.size() - 1) {
-                    for (int i = 0; i < SECTION_SPACING; i++) {
-                        lines.add(SimpleLogLine.EMPTY);
-                    }
-                }
-
-                return lines;
-            }));
-        }
-
         List<LogLine> allLines = new ArrayList<>();
 
-        for (Future<List<LogLine>> future : futures) {
-            try {
-                allLines.addAll(future.get());
-            } catch (ExecutionException | InterruptedException e) {
-                throw new AssertionError(e);
+        for (LogSection section : SECTIONS) {
+            List<LogLine> lines = getLinesForSection(context, section, maxTitleLength);
+
+            if (SECTIONS.indexOf(section) != SECTIONS.size() - 1) {
+                for (int i = 0; i < SECTION_SPACING; i++) {
+                    lines.add(SimpleLogLine.EMPTY);
+                }
             }
+
+            allLines.addAll(lines);
         }
 
         List<LogLine> withIds = new ArrayList<>(allLines.size());

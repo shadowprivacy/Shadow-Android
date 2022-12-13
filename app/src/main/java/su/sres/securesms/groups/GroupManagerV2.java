@@ -19,6 +19,7 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.signalservice.api.groupsv2.GroupChangeReconstruct;
 import su.sres.signalservice.api.groupsv2.GroupLinkNotActiveException;
 import su.sres.signalservice.api.groupsv2.NotAbleToApplyGroupV2ChangeException;
+import su.sres.signalservice.internal.push.exceptions.GroupExistsException;
 import su.sres.storageservice.protos.groups.AccessControl;
 import su.sres.storageservice.protos.groups.GroupChange;
 import su.sres.storageservice.protos.groups.Member;
@@ -201,7 +202,7 @@ final class GroupManagerV2 {
                         recipientAndThread.threadId,
                         decryptedGroup.getMembersCount() - 1,
                         getPendingMemberRecipientIds(decryptedGroup.getPendingMembersList()));
-            } catch (VerificationFailedException | InvalidGroupStateException e) {
+            } catch (VerificationFailedException | InvalidGroupStateException | GroupExistsException e) {
                 throw new GroupChangeFailedException(e);
             }
         }

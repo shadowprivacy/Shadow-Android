@@ -462,7 +462,7 @@ public class MessageSender {
 
   public static boolean isLocalSelfSend(@NonNull Context context, @Nullable Recipient recipient, boolean forceSms) {
     return recipient != null                               &&
-            recipient.isLocalNumber()                       &&
+            recipient.isSelf()                       &&
             !forceSms                                       &&
             TextSecurePreferences.isPushRegistered(context) &&
             !TextSecurePreferences.isMultiDevice(context);

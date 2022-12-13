@@ -1,6 +1,5 @@
 package su.sres.securesms;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -10,12 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.transition.TransitionInflater;
-import android.view.DisplayCutout;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
@@ -90,9 +84,9 @@ public final class AvatarPreviewActivity extends PassphraseRequiredActivity {
         RecipientId recipientId = RecipientId.from(getIntent().getStringExtra(RECIPIENT_ID_EXTRA));
 
         Recipient.live(recipientId).observe(this, recipient -> {
-            ContactPhoto contactPhoto  = recipient.isLocalNumber() ? new ProfileContactPhoto(recipient, recipient.getProfileAvatar())
+            ContactPhoto contactPhoto  = recipient.isSelf() ? new ProfileContactPhoto(recipient, recipient.getProfileAvatar())
                     : recipient.getContactPhoto();
-            FallbackContactPhoto fallbackPhoto = recipient.isLocalNumber() ? new ResourceContactPhoto(R.drawable.ic_profile_outline_40, R.drawable.ic_profile_outline_20, R.drawable.ic_person_large)
+            FallbackContactPhoto fallbackPhoto = recipient.isSelf() ? new ResourceContactPhoto(R.drawable.ic_profile_outline_40, R.drawable.ic_profile_outline_20, R.drawable.ic_person_large)
                     : recipient.getFallbackContactPhoto();
 
             Resources resources = this.getResources();

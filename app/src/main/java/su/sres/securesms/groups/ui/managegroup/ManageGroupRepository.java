@@ -19,6 +19,7 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
 import su.sres.securesms.groups.GroupProtoUtil;
 import su.sres.securesms.groups.MembershipNotSuitableForV2Exception;
+import su.sres.securesms.groups.SelectionLimits;
 import su.sres.securesms.groups.ui.GroupChangeErrorCallback;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.logging.Log;
@@ -68,9 +69,9 @@ final class ManageGroupRepository {
 
                 members.addAll(pendingMembers);
 
-                return new GroupCapacityResult(members, FeatureFlags.gv2GroupCapacity());
+                return new GroupCapacityResult(members, FeatureFlags.groupLimits());
             } else {
-                return new GroupCapacityResult(groupRecord.getMembers(), ContactSelectionListFragment.NO_LIMIT);
+                return new GroupCapacityResult(groupRecord.getMembers(), FeatureFlags.groupLimits());
             }
         }, onGroupCapacityLoaded::accept);
     }
@@ -186,33 +187,39 @@ final class ManageGroupRepository {
 
     static final class GroupCapacityResult {
         private final List<RecipientId> members;
-        private final int               totalCapacity;
+        private final SelectionLimits selectionLimits;
 
-        GroupCapacityResult(@NonNull List<RecipientId> members, int totalCapacity) {
-            this.members        = members;
-            this.totalCapacity  = totalCapacity;
+        GroupCapacityResult(@NonNull List<RecipientId> members, @NonNull SelectionLimits selectionLimits) {
+            this.members         = members;
+            this.selectionLimits = selectionLimits;
         }
 
         public @NonNull List<RecipientId> getMembers() {
             return members;
         }
 
-        public int getTotalCapacity() {
-            return totalCapacity;
-        }
-
         public int getSelectionLimit() {
-            if (totalCapacity == ContactSelectionListFragment.NO_LIMIT) {
-                return totalCapacity;
+            if (!selectionLimits.hasHardLimit()) {
+                return ContactSelectionListFragment.NO_LIMIT;
             }
 
             boolean containsSelf = members.indexOf(Recipient.self().getId()) != -1;
 
-            return totalCapacity - (containsSelf ? 1 : 0);
+            return selectionLimits.getHardLimit() - (containsSelf ? 1 : 0);
+        }
+
+        public int getSelectionWarning() {
+            if (!selectionLimits.hasRecommendedLimit()) {
+                return ContactSelectionListFragment.NO_LIMIT;
+            }
+
+            boolean containsSelf = members.indexOf(Recipient.self().getId()) != -1;
+
+            return selectionLimits.getRecommendedLimit() - (containsSelf ? 1 : 0);
         }
 
         public int getRemainingCapacity() {
-            return totalCapacity - members.size();
+            return selectionLimits.getHardLimit() - members.size();
         }
 
         public @NonNull ArrayList<RecipientId> getMembersWithoutSelf() {

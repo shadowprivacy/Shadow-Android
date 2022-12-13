@@ -10,7 +10,6 @@ import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
-import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.model.SmsMessageRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
@@ -92,7 +91,7 @@ public class PushTextSendJob extends PushSendJob  {
       database.markAsSent(messageId, true);
       database.markUnidentified(messageId, unidentified);
 
-      if (recipient.isLocalNumber()) {
+      if (recipient.isSelf()) {
         SyncMessageId id = new SyncMessageId(recipient.getId(), record.getDateSent());
         DatabaseFactory.getMmsSmsDatabase(context).incrementDeliveryReceiptCount(id, System.currentTimeMillis());
         DatabaseFactory.getMmsSmsDatabase(context).incrementReadReceiptCount(id, System.currentTimeMillis());

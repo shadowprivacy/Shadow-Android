@@ -13,6 +13,7 @@ import org.json.JSONObject;
 
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.groups.SelectionLimits;
 import su.sres.securesms.jobs.RefreshAttributesJob;
 import su.sres.securesms.jobs.RefreshOwnProfileJob;
 import su.sres.securesms.jobs.RemoteConfigRefreshJob;
@@ -54,12 +55,15 @@ public final class FeatureFlags {
     private static final String ATTACHMENTS_V3             = "android.attachmentsV3.2";
     private static final String GROUPS_V2_JOIN_VERSION     = "android.groupsv2.joinVersion";
     private static final String GROUPS_V2_LINKS_VERSION    = "android.groupsv2.manageGroupLinksVersion";
-    private static final String GROUPS_V2_CAPACITY         = "global.groupsv2.maxGroupSize";
+    private static final String GROUPS_V2_RECOMMENDED_LIMIT  = "global.groupsv2.maxGroupSize";
+    private static final String GROUPS_V2_HARD_LIMIT         = "global.groupsv2.groupSizeHardLimit";
     private static final String INTERNAL_USER              = "android.internalUser";
     private static final String VERIFY_V2                  = "android.verifyV2";
     private static final String USER_LOGIN_PRIVACY_VERSION = "android.UserLoginPrivacyVersion";
     private static final String CLIENT_EXPIRATION            = "android.clientExpiration";
     public  static final String MODERN_PROFILE_SHARING       = "android.modernProfileSharing";
+    private static final String VIEWED_RECEIPTS              = "android.viewed.receipts";
+    private static final String MAX_ENVELOPE_SIZE            = "android.maxEnvelopeSize";
 
     /**
      * We will only store remote values for flags in this set. If you want a flag to be controllable
@@ -68,14 +72,17 @@ public final class FeatureFlags {
 
     private static final Set<String> REMOTE_CAPABLE = Sets.newHashSet(
             ATTACHMENTS_V3,
-            GROUPS_V2_CAPACITY,
+            GROUPS_V2_RECOMMENDED_LIMIT,
+            GROUPS_V2_HARD_LIMIT,
             GROUPS_V2_JOIN_VERSION,
             GROUPS_V2_LINKS_VERSION,
             INTERNAL_USER,
             USERNAMES,
             VERIFY_V2,
             CLIENT_EXPIRATION,
-            MODERN_PROFILE_SHARING
+            MODERN_PROFILE_SHARING,
+            VIEWED_RECEIPTS,
+            MAX_ENVELOPE_SIZE
     );
 
     /**
@@ -185,8 +192,9 @@ public final class FeatureFlags {
     /**
      * Maximum number of members allowed in a group.
      */
-    public static int gv2GroupCapacity() {
-        return getInteger(GROUPS_V2_CAPACITY, 151);
+    public static SelectionLimits groupLimits() {
+        return new SelectionLimits(getInteger(GROUPS_V2_RECOMMENDED_LIMIT, 151),
+                getInteger(GROUPS_V2_HARD_LIMIT, 1001));
     }
 
     /**
@@ -240,6 +248,16 @@ public final class FeatureFlags {
     /** Whether or not to show the new profile sharing prompt for legacy conversations. */
     public static boolean modernProfileSharing() {
         return getBoolean(MODERN_PROFILE_SHARING, false);
+    }
+
+    /** Whether the user should display the content revealed dot in voice notes. */
+    public static boolean viewedReceipts() {
+        return getBoolean(VIEWED_RECEIPTS, false);
+    }
+
+    /** The max size envelope that is allowed to be sent. */
+    public static int maxEnvelopeSize() {
+        return getInteger(MAX_ENVELOPE_SIZE, 0);
     }
 
     /** Only for rendering debug info. */

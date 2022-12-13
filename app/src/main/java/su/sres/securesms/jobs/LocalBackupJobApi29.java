@@ -12,6 +12,7 @@ import androidx.documentfile.provider.DocumentFile;
 
 import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.backup.BackupFileIOError;
 import su.sres.securesms.backup.BackupPassphrase;
 import su.sres.securesms.backup.FullBackupExporter;
 import su.sres.securesms.crypto.AttachmentSecretProvider;
@@ -42,8 +43,6 @@ public final class LocalBackupJobApi29 extends BaseJob {
 
     private static final String TAG = Log.tag(LocalBackupJobApi29.class);
 
-    private static final short BACKUP_FAILED_ID = 31321;
-
     public static final String TEMP_BACKUP_FILE_PREFIX = ".backup";
     public static final String TEMP_BACKUP_FILE_SUFFIX = ".tmp";
 
@@ -65,13 +64,13 @@ public final class LocalBackupJobApi29 extends BaseJob {
     public void onRun() throws IOException {
         Log.i(TAG, "Executing backup job...");
 
-        NotificationManagerCompat.from(context).cancel(BACKUP_FAILED_ID);
+        BackupFileIOError.clearNotification(context);
 
         if (!BackupUtil.isUserSelectionRequired(context)) {
             throw new IOException("Wrong backup job!");
         }
 
-        Uri backupDirectoryUri = SignalStore.settings().getSignalBackupDirectory();
+        Uri backupDirectoryUri = SignalStore.settings().getShadowBackupDirectory();
         if (backupDirectoryUri == null || backupDirectoryUri.getPath() == null) {
             throw new IOException("Backup Directory has not been selected!");
         }
@@ -89,8 +88,7 @@ public final class LocalBackupJobApi29 extends BaseJob {
             String       fileName        = String.format("signal-%s.backup", timestamp);
 
             if (backupDirectory == null || !backupDirectory.canWrite()) {
-                BackupUtil.disableBackups(context);
-                postBackupsDisabledNotification();
+                BackupFileIOError.ACCESS_ERROR.postNotification(context);
                 throw new IOException("Cannot write to backup directory location.");
             }
 
@@ -122,6 +120,10 @@ public final class LocalBackupJobApi29 extends BaseJob {
                     Log.w(TAG, "Failed to rename temp file");
                     throw new IOException("Renaming temporary backup file failed!");
                 }
+
+            } catch (IOException e) {
+                BackupFileIOError.postNotificationForException(context, e, getRunAttempt());
+                throw e;
             } finally {
                 DocumentFile fileToCleanUp = backupDirectory.findFile(temporaryName);
                 if (fileToCleanUp != null) {
@@ -159,23 +161,6 @@ public final class LocalBackupJobApi29 extends BaseJob {
 
     @Override
     public void onFailure() {
-    }
-
-    private void postBackupsDisabledNotification() {
-        Intent intent = new Intent(context, ApplicationPreferencesActivity.class);
-
-        intent.putExtra(ApplicationPreferencesActivity.LAUNCH_TO_BACKUPS_FRAGMENT, true);
-
-        PendingIntent pendingIntent            = PendingIntent.getActivity(context, -1, intent, 0);
-        Notification  backupFailedNotification = new NotificationCompat.Builder(context, NotificationChannels.BACKUPS)
-                .setSmallIcon(R.drawable.ic_signal_backup)
-                .setContentTitle(context.getString(R.string.LocalBackupJobApi29_backups_disabled))
-                .setContentText(context.getString(R.string.LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved))
-                .setContentIntent(pendingIntent)
-                .build();
-
-        NotificationManagerCompat.from(context)
-                .notify(BACKUP_FAILED_ID, backupFailedNotification);
     }
 
     public static class Factory implements Job.Factory<LocalBackupJobApi29> {

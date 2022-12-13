@@ -1,8 +1,9 @@
 package su.sres.securesms.jobs;
 
-
 import android.Manifest;
 import androidx.annotation.NonNull;
+
+import su.sres.securesms.backup.BackupFileIOError;
 import su.sres.securesms.backup.BackupPassphrase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
@@ -77,6 +78,8 @@ public final class LocalBackupJob extends BaseJob {
   public void onRun() throws NoExternalStorageException, IOException {
     Log.i(TAG, "Executing backup job...");
 
+    BackupFileIOError.clearNotification(context);
+
     if (!Permissions.hasAll(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
       throw new IOException("No external storage permission!");
     }
@@ -88,7 +91,7 @@ public final class LocalBackupJob extends BaseJob {
     {
       notification.setIndeterminateProgress();
       String backupPassword  = BackupPassphrase.get(context);
-      File   backupDirectory = StorageUtil.getBackupDirectory();
+      File   backupDirectory = StorageUtil.getOrCreateBackupDirectory();
       String timestamp       = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).format(new Date());
       String fileName        = String.format("shadow-%s.backup", timestamp);
       File   backupFile      = new File(backupDirectory, fileName);
@@ -116,6 +119,10 @@ public final class LocalBackupJob extends BaseJob {
           Log.w(TAG, "Failed to rename temp file");
           throw new IOException("Renaming temporary backup file failed!");
         }
+
+      } catch (IOException e) {
+        BackupFileIOError.postNotificationForException(context, e, getRunAttempt());
+        throw e;
       } finally {
         if (tempFile.exists()) {
           if (tempFile.delete()) {

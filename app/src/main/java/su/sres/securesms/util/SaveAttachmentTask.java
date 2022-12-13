@@ -107,10 +107,10 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
           Util.copy(inputStream, outputStream);
           MediaScannerConnection.scanFile(context, new String[]{mediaUri.getPath()}, new String[]{contentType}, null);
         }
-      }
-
-      try (OutputStream outputStream = context.getContentResolver().openOutputStream(mediaUri)) {
-        Util.copy(inputStream, outputStream);
+      } else {
+        try (OutputStream outputStream = context.getContentResolver().openOutputStream(mediaUri)) {
+          Util.copy(inputStream, outputStream);
+        }
       }
     }
 
@@ -152,17 +152,22 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
   }
 
   private Uri createOutputUri(@NonNull Uri outputUri, @NonNull String fileName) throws IOException {
+    String[] fileParts = getFileNameParts(fileName);
+    String   base      = fileParts[0];
+    String   extension = fileParts[1];
+    String   mimeType  = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+
     ContentValues contentValues = new ContentValues();
     contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+    contentValues.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
+    contentValues.put(MediaStore.MediaColumns.DATE_ADDED, System.currentTimeMillis());
+    contentValues.put(MediaStore.MediaColumns.DATE_MODIFIED, System.currentTimeMillis());
 
     if (Build.VERSION.SDK_INT > 28) {
       contentValues.put(MediaStore.MediaColumns.IS_PENDING, 1);
     }
 
     if (Build.VERSION.SDK_INT <= 28 && outputUri.equals(StorageUtil.getLegacyDownloadUri())) {
-      String[] fileParts       = getFileNameParts(fileName);
-      String   base            = fileParts[0];
-      String   extension       = fileParts[1];
       File     outputDirectory = new File(outputUri.getPath());
       File     outputFile      = new File(outputDirectory, base + "." + extension);
 

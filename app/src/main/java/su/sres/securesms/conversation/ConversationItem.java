@@ -128,6 +128,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 
 import static su.sres.securesms.util.ThemeUtil.isDarkTheme;
@@ -409,9 +410,6 @@ public class ConversationItem extends LinearLayout implements BindableConversati
       conversationRecipient.removeForeverObserver(this);
     }
     cancelPulseOutlinerAnimation();
-    if (eventListener != null && audioViewStub.resolved()) {
-      eventListener.onUnregisterVoiceNoteCallbacks(audioViewStub.get().getPlaybackStateObserver());
-    }
   }
 
   public ConversationMessage getConversationMessage() {
@@ -659,6 +657,7 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     boolean showControls = !messageRecord.isFailed();
 
     if (eventListener != null && audioViewStub.resolved()) {
+      Log.d(TAG, "setMediaAttributes: unregistering voice note callbacks for audio slide " + audioViewStub.get().getAudioSlideUri());
       eventListener.onUnregisterVoiceNoteCallbacks(audioViewStub.get().getPlaybackStateObserver());
     }
 
@@ -744,13 +743,15 @@ public class ConversationItem extends LinearLayout implements BindableConversati
       if (stickerStub.resolved())        stickerStub.get().setVisibility(View.GONE);
       if (revealableStub.resolved())     revealableStub.get().setVisibility(View.GONE);
 
-      //noinspection ConstantConditions
-      audioViewStub.get().setAudio(((MediaMmsMessageRecord) messageRecord).getSlideDeck().getAudioSlide(), new AudioViewCallbacks(), showControls);
+      audioViewStub.get().setAudio(Objects.requireNonNull(((MediaMmsMessageRecord) messageRecord).getSlideDeck().getAudioSlide()), new AudioViewCallbacks(), showControls, false);
       audioViewStub.get().setDownloadClickListener(singleDownloadClickListener);
       audioViewStub.get().setOnLongClickListener(passthroughClickListener);
 
       if (eventListener != null) {
+        Log.d(TAG, "setMediaAttributes: registered listener for audio slide " + audioViewStub.get().getAudioSlideUri());
         eventListener.onRegisterVoiceNoteCallbacks(audioViewStub.get().getPlaybackStateObserver());
+      } else {
+        Log.w(TAG, "setMediaAttributes: could not register listener for audio slide " + audioViewStub.get().getAudioSlideUri());
       }
 
       ViewUtil.updateLayoutParams(bodyText, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -1567,6 +1568,11 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     @Override
     public void onStopAndReset(@NonNull Uri audioUri) {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void onProgressUpdated(long durationMillis, long playheadMillis) {
+      footer.setAudioDuration(durationMillis, playheadMillis);
     }
   }
 

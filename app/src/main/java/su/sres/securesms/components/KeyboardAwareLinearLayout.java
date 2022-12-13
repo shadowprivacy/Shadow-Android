@@ -31,6 +31,7 @@ import android.view.View;
 import su.sres.securesms.R;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.util.ViewUtil;
 
 import java.lang.reflect.Field;
 import java.util.HashSet;
@@ -69,13 +70,12 @@ public class KeyboardAwareLinearLayout extends LinearLayoutCompat {
 
   public KeyboardAwareLinearLayout(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
-    final int statusBarRes = getResources().getIdentifier("status_bar_height", "dimen", "android");
     minKeyboardSize                     = getResources().getDimensionPixelSize(R.dimen.min_keyboard_size);
     minCustomKeyboardSize               = getResources().getDimensionPixelSize(R.dimen.min_custom_keyboard_size);
     defaultCustomKeyboardSize           = getResources().getDimensionPixelSize(R.dimen.default_custom_keyboard_size);
     minCustomKeyboardTopMarginPortrait  = getResources().getDimensionPixelSize(R.dimen.min_custom_keyboard_top_margin_portrait);
     minCustomKeyboardTopMarginLandscape = getResources().getDimensionPixelSize(R.dimen.min_custom_keyboard_top_margin_portrait);
-    statusBarHeight                     = statusBarRes > 0 ? getResources().getDimensionPixelSize(statusBarRes) : 0;
+    statusBarHeight                     = ViewUtil.getStatusBarHeight(this);
     viewInset                           = getViewInset();
   }
 
@@ -101,7 +101,7 @@ public class KeyboardAwareLinearLayout extends LinearLayoutCompat {
     getWindowVisibleDisplayFrame(rect);
 
     final int availableHeight = getAvailableHeight();
-    final int keyboardHeight  = availableHeight - (rect.bottom - rect.top);
+    final int keyboardHeight  = availableHeight - rect.bottom;
 
     if (keyboardHeight > minKeyboardSize) {
       if (getKeyboardHeight() != keyboardHeight) {
@@ -129,19 +129,19 @@ public class KeyboardAwareLinearLayout extends LinearLayoutCompat {
         Field stableInsetsField = attachInfo.getClass().getDeclaredField("mStableInsets");
         stableInsetsField.setAccessible(true);
         Rect insets = (Rect)stableInsetsField.get(attachInfo);
-        return insets.bottom;
+        if (insets != null) {
+          return insets.bottom;
+        }
       }
-    } catch (NoSuchFieldException nsfe) {
-      Log.w(TAG, "field reflection error when measuring view inset", nsfe);
-    } catch (IllegalAccessException iae) {
-      Log.w(TAG, "access reflection error when measuring view inset", iae);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      // Do nothing
     }
-    return 0;
+    return statusBarHeight;
   }
 
   private int getAvailableHeight() {
-    final int availableHeight = this.getRootView().getHeight() - viewInset - (!isFullscreen ? statusBarHeight : 0);
-    final int availableWidth  = this.getRootView().getWidth() - (!isFullscreen ? statusBarHeight : 0);
+    final int availableHeight = this.getRootView().getHeight() - viewInset;
+    final int availableWidth  = this.getRootView().getWidth();
 
     if (isLandscape() && availableHeight > availableWidth) {
       //noinspection SuspiciousNameCombination

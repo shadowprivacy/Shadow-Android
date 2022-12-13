@@ -67,10 +67,10 @@ public class SmsMmsPreferenceFragment extends CorrectedPreferenceFragment {
   }
 
   private void initializeDefaultPreference() {
-    if (VERSION.SDK_INT < VERSION_CODES.KITKAT) return;
-
     Preference defaultPreference = findPreference(KITKAT_DEFAULT_PREF);
+
     if (Util.isDefaultSmsProvider(getActivity())) {
+
       if (VERSION.SDK_INT < VERSION_CODES.M) defaultPreference.setIntent(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
       if (VERSION.SDK_INT < VERSION_CODES.N) defaultPreference.setIntent(new Intent(Settings.ACTION_SETTINGS));
       else                                   defaultPreference.setIntent(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS));
@@ -78,11 +78,10 @@ public class SmsMmsPreferenceFragment extends CorrectedPreferenceFragment {
       defaultPreference.setTitle(getString(R.string.ApplicationPreferencesActivity_sms_enabled));
       defaultPreference.setSummary(getString(R.string.ApplicationPreferencesActivity_touch_to_change_your_default_sms_app));
     } else {
-      Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
-      intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getActivity().getPackageName());
-      defaultPreference.setIntent(intent);
       defaultPreference.setTitle(getString(R.string.ApplicationPreferencesActivity_sms_disabled));
       defaultPreference.setSummary(getString(R.string.ApplicationPreferencesActivity_touch_to_make_signal_your_default_sms_app));
+
+      defaultPreference.setOnPreferenceClickListener(null);
     }
   }
 

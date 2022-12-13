@@ -11,6 +11,8 @@ import androidx.fragment.app.Fragment;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
+import android.provider.DocumentsContract;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -20,7 +22,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import su.sres.securesms.R;
-import su.sres.securesms.components.SwitchPreferenceCompat;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.registration.fragments.RestoreBackupFragment;
@@ -116,6 +117,10 @@ public class BackupDialog {
             })
             .setPositiveButton(R.string.BackupDialog_choose_folder, ((dialog, which) -> {
               Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+
+              if (Build.VERSION.SDK_INT >= 26) {
+                intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, SignalStore.settings().getLatestShadowBackupDirectory());
+              }
 
               intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION |
                       Intent.FLAG_GRANT_WRITE_URI_PERMISSION       |

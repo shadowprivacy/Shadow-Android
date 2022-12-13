@@ -27,6 +27,7 @@ import su.sres.securesms.components.ContactFilterToolbar.OnFilterChangedListener
 import su.sres.securesms.contacts.ContactsCursorLoader.DisplayMode;
 import su.sres.securesms.contacts.SelectedContact;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.groups.SelectionLimits;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sms.MessageSender;
@@ -40,7 +41,6 @@ import su.sres.securesms.util.concurrent.ListenableFuture.Listener;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class InviteActivity extends PassphraseRequiredActivity implements ContactSelectionListFragment.OnContactSelectedListener {
@@ -63,7 +63,8 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
   @Override
   protected void onCreate(Bundle savedInstanceState, boolean ready) {
     getIntent().putExtra(ContactSelectionListFragment.DISPLAY_MODE, DisplayMode.FLAG_SMS);
-    getIntent().putExtra(ContactSelectionListFragment.MULTI_SELECT, true);
+    getIntent().putExtra(ContactSelectionListFragment.SELECTION_LIMITS, SelectionLimits.NO_LIMITS);
+    getIntent().putExtra(ContactSelectionListFragment.HIDE_COUNT, true);
     getIntent().putExtra(ContactSelectionListFragment.REFRESHABLE, false);
 
     setContentView(R.layout.invite_activity);

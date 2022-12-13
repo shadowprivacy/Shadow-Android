@@ -224,6 +224,13 @@ android {
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "\"$ext.websiteUpdateUrl\""
         }
+
+        internal {
+            dimension "none"
+            ext.websiteUpdateUrl = "null"
+            buildConfigField "boolean", "PLAY_STORE_DISABLED", "false"
+            buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
+        }
     }
 
     android.applicationVariants.all { variant ->
@@ -306,7 +313,7 @@ dependencies {
 
     implementation project(':libsignal-service')
     implementation 'org.signal:zkgroup-android:0.7.0'
-    implementation 'org.signal:ringrtc-android:2.7.0'
+    implementation 'org.signal:ringrtc-android:2.7.3'
     implementation 'org.signal:argon2:13.1@aar'
     implementation 'org.apache.commons:commons-csv:1.8'
     implementation "me.leolin:ShortcutBadger:1.1.16"
@@ -431,6 +438,12 @@ def assembleWebsiteDescriptor = { variant, file ->
 task signProductionPlayRelease {
     doLast {
         signProductionRelease(android.applicationVariants.find { (it.name == 'playRelease') })
+    }
+}
+
+task signProductionInternalRelease {
+    doLast {
+        signProductionRelease(android.applicationVariants.find { (it.name == 'internalRelease') })
     }
 }
 

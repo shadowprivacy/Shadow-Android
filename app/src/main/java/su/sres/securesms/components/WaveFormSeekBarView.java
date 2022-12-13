@@ -3,6 +3,7 @@ package su.sres.securesms.components;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.animation.Interpolator;
@@ -65,9 +66,12 @@ public final class WaveFormSeekBarView extends AppCompatSeekBar {
         barWidth = getResources().getDimensionPixelSize(R.dimen.wave_form_bar_width);
     }
 
-    public void setColors(@ColorInt int playedBarColor, @ColorInt int unplayedBarColor) {
+    public void setColors(@ColorInt int playedBarColor, @ColorInt int unplayedBarColor, @ColorInt int thumbTint) {
         this.playedBarColor   = playedBarColor;
         this.unplayedBarColor = unplayedBarColor;
+
+        getThumb().setColorFilter(thumbTint, PorterDuff.Mode.SRC_IN);
+
         invalidate();
     }
 

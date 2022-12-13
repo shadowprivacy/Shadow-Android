@@ -384,18 +384,18 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
         }
 
         private String getSentFromToString(@NonNull Recipient from, @NonNull Recipient thread) {
-            if (from.isLocalNumber() && from == thread) {
+            if (from.isSelf() && from == thread) {
                 return context.getString(R.string.note_to_self);
             }
 
-            if (showThread && (from.isLocalNumber() || thread.isGroup())) {
-                if (from.isLocalNumber()) {
+            if (showThread && (from.isSelf() || thread.isGroup())) {
+                if (from.isSelf()) {
                     return context.getString(R.string.MediaOverviewActivity_sent_by_you_to_s, thread.getDisplayName(context));
                 } else {
                     return context.getString(R.string.MediaOverviewActivity_sent_by_s_to_s, from.getDisplayName(context), thread.getDisplayName(context));
                 }
             } else {
-                if (from.isLocalNumber()) {
+                if (from.isSelf()) {
                     return context.getString(R.string.MediaOverviewActivity_sent_by_you);
                 } else {
                     return context.getString(R.string.MediaOverviewActivity_sent_by_s, from.getDisplayName(context));
@@ -441,7 +441,7 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
             long mmsId = Objects.requireNonNull(mediaRecord.getAttachment()).getMmsId();
 
             audioItemListener.unregisterPlaybackStateObserver(audioView.getPlaybackStateObserver());
-            audioView.setAudio((AudioSlide) slide, new AudioViewCallbacksAdapter(audioItemListener, mmsId), true);
+            audioView.setAudio((AudioSlide) slide, new AudioViewCallbacksAdapter(audioItemListener, mmsId), true, true);
             audioItemListener.registerPlaybackStateObserver(audioView.getPlaybackStateObserver());
 
             audioView.setOnClickListener(view -> itemClickListener.onMediaClicked(mediaRecord));
@@ -520,6 +520,10 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
         @Override
         public void onStopAndReset(@NonNull Uri audioUri) {
             audioItemListener.onStopAndReset(audioUri);
+        }
+
+        @Override
+        public void onProgressUpdated(long durationMillis, long playheadMillis) {
         }
     }
 

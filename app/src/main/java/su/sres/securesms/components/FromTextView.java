@@ -4,22 +4,15 @@ import android.content.Context;
 import android.graphics.Typeface;
 
 import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
-import android.text.style.TypefaceSpan;
 import android.util.AttributeSet;
 
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiTextView;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.ResUtil;
-import su.sres.securesms.util.spans.CenterAlignedRelativeSizeSpan;
 
 public class FromTextView extends EmojiTextView {
 
@@ -59,7 +52,7 @@ public class FromTextView extends EmojiTextView {
                      Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
 
 
-    if (recipient.isLocalNumber()) {
+    if (recipient.isSelf()) {
       builder.append(getContext().getString(R.string.note_to_self));
     } else {
       builder.append(fromSpan);

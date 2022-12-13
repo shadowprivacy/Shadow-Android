@@ -12,6 +12,7 @@ public final class SettingsValues extends SignalStoreValues {
     public static final String KEEP_MESSAGES_DURATION = "settings.keep_messages_duration";
 
     private static final String SHADOW_BACKUP_DIRECTORY = "settings.shadow.backup.directory";
+    private static final String SHADOW_LATEST_BACKUP_DIRECTORY = "settings.shadow.backup.directory,latest";
 
     public static final String THREAD_TRIM_LENGTH     = "pref_trim_length";
     public static final String THREAD_TRIM_ENABLED    = "pref_trim_threads";
@@ -71,11 +72,23 @@ public final class SettingsValues extends SignalStoreValues {
 
     public void setShadowBackupDirectory(@NonNull Uri uri) {
         putString(SHADOW_BACKUP_DIRECTORY, uri.toString());
+        putString(SHADOW_LATEST_BACKUP_DIRECTORY, uri.toString());
     }
 
-    public @Nullable
-    Uri getSignalBackupDirectory() {
-        String uri = getString(SHADOW_BACKUP_DIRECTORY, "");
+    public @Nullable Uri getShadowBackupDirectory() {
+        return getUri(SHADOW_BACKUP_DIRECTORY);
+    }
+
+    public @Nullable Uri getLatestShadowBackupDirectory() {
+        return getUri(SHADOW_LATEST_BACKUP_DIRECTORY);
+    }
+
+    public void clearShadowBackupDirectory() {
+        putString(SHADOW_BACKUP_DIRECTORY, null);
+    }
+
+    private @Nullable Uri getUri(@NonNull String key) {
+        String uri = getString(key, "");
 
         if (TextUtils.isEmpty(uri)) {
             return null;
@@ -83,8 +96,4 @@ public final class SettingsValues extends SignalStoreValues {
             return Uri.parse(uri);
         }
     }
-
-    public void clearShadowBackupDirectory() {
-        putString(SHADOW_BACKUP_DIRECTORY, null);
-    }
-}
+   }

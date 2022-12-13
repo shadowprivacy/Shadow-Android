@@ -50,7 +50,6 @@ public class CreateGroupActivity extends ContactSelectionActivity {
 
         Intent intent = new Intent(context, CreateGroupActivity.class);
 
-        intent.putExtra(ContactSelectionListFragment.MULTI_SELECT, true);
         intent.putExtra(ContactSelectionListFragment.REFRESHABLE, false);
         intent.putExtra(ContactSelectionActivity.EXTRA_LAYOUT_RES_ID, R.layout.create_group_activity);
 
@@ -58,8 +57,7 @@ public class CreateGroupActivity extends ContactSelectionActivity {
                 : ContactsCursorLoader.DisplayMode.FLAG_PUSH;
 
         intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, displayMode);
-        intent.putExtra(ContactSelectionListFragment.SELECTION_LIMIT, SignalStore.internalValues().gv2DoNotCreateGv2Groups() ? ContactSelectionListFragment.NO_LIMIT
-                : FeatureFlags.gv2GroupCapacity() - 1);
+        intent.putExtra(ContactSelectionListFragment.SELECTION_LIMITS, FeatureFlags.groupLimits().excludingSelf());
 
         return intent;
     }

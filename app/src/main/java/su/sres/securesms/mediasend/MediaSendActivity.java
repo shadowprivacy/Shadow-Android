@@ -65,7 +65,6 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.scribbles.ImageEditorFragment;
 import su.sres.securesms.util.CharacterCalculator.CharacterState;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.Function3;
 import su.sres.securesms.util.IOFunction;
 import su.sres.securesms.util.MediaUtil;
@@ -833,7 +832,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
     private void presentRecipient(@Nullable Recipient recipient) {
         if (recipient == null) {
             composeText.setHint(R.string.MediaSendActivity_message);
-        } else if (recipient.isLocalNumber()) {
+        } else if (recipient.isSelf()) {
             composeText.setHint(getString(R.string.note_to_self), null);
         } else {
             composeText.setHint(getString(R.string.MediaSendActivity_message_to_s, recipient.getDisplayName(this)), null);

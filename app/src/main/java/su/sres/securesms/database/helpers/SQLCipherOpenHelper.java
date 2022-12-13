@@ -49,16 +49,17 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   @SuppressWarnings("unused")
   private static final String TAG = SQLCipherOpenHelper.class.getSimpleName();
 
-  private static final int SERVER_DELIVERED_TIMESTAMP       = 64;
-  private static final int QUOTE_CLEANUP                    = 65;
-  private static final int BORDERLESS                       = 66;
-  private static final int MENTIONS                         = 67;
+  private static final int SERVER_DELIVERED_TIMESTAMP          = 64;
+  private static final int QUOTE_CLEANUP                       = 65;
+  private static final int BORDERLESS                          = 66;
+  private static final int MENTIONS                            = 67;
   private static final int PINNED_CONVERSATIONS_MENTION_GLOBAL_SETTING_MIGRATION_UNKNOWN_STORAGE_FIELDS = 68;
   private static final int STICKER_CONTENT_TYPE_EMOJI_IN_NOTIFICATIONS             = 69;
   private static final int THUMBNAIL_CLEANUP_AND_STICKER_CONTENT_TYPE_CLEANUP_AND_MENTION_CLEANUP                = 70;
-  private static final int REACTION_CLEANUP                 = 71;
+  private static final int REACTION_CLEANUP                    = 71;
+  private static final int CAPABILITIES_REFACTOR               = 72;
 
-  private static final int    DATABASE_VERSION = 71;
+  private static final int    DATABASE_VERSION = 72;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -302,6 +303,13 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.putNull("reactions");
         db.update("sms", values, "remote_deleted = ?", new String[] { "1" });
+      }
+
+      if (oldVersion < CAPABILITIES_REFACTOR) {
+        db.execSQL("ALTER TABLE recipient ADD COLUMN capabilities INTEGER DEFAULT 0");
+
+        db.execSQL("UPDATE recipient SET capabilities = 1 WHERE gv2_capability = 1");
+        db.execSQL("UPDATE recipient SET capabilities = 2 WHERE gv2_capability = -1");
       }
 
       db.setTransactionSuccessful();

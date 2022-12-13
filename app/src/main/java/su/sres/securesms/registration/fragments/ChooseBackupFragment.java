@@ -2,7 +2,9 @@ package su.sres.securesms.registration.fragments;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.text.method.LinkMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -70,6 +72,10 @@ public class ChooseBackupFragment extends BaseRegistrationFragment {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
 
         intent.setType("application/octet-stream");
+
+        if (Build.VERSION.SDK_INT >= 26) {
+            intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, SignalStore.settings().getLatestShadowBackupDirectory());
+        }
 
         startActivityForResult(intent, OPEN_FILE_REQUEST_CODE);
     }

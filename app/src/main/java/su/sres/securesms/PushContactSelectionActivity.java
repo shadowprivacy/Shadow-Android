@@ -41,7 +41,6 @@ public class PushContactSelectionActivity extends ContactSelectionActivity {
 
   @Override
   protected void onCreate(Bundle icicle, boolean ready) {
-    getIntent().putExtra(ContactSelectionListFragment.MULTI_SELECT, true);
     super.onCreate(icicle, ready);
 
     initializeToolbar();

@@ -76,6 +76,8 @@ import su.sres.signalservice.internal.configuration.SignalCdnUrl;
 import su.sres.signalservice.internal.configuration.SignalServiceConfiguration;
 import su.sres.signalservice.internal.configuration.SignalUrl;
 import su.sres.signalservice.internal.push.exceptions.ForbiddenException;
+import su.sres.signalservice.internal.push.exceptions.GroupExistsException;
+import su.sres.signalservice.internal.push.exceptions.GroupNotFoundException;
 import su.sres.signalservice.internal.push.exceptions.GroupPatchNotAcceptedException;
 import su.sres.signalservice.internal.push.exceptions.MismatchedDevicesException;
 import su.sres.signalservice.internal.push.exceptions.NotInGroupException;
@@ -1859,10 +1861,15 @@ public class PushServiceSocket {
         return JsonUtil.fromJson(response, CredentialResponse.class);
     }
 
-    private static final ResponseCodeHandler GROUPS_V2_PUT_RESPONSE_HANDLER = NO_HANDLER;
+    private static final ResponseCodeHandler GROUPS_V2_PUT_RESPONSE_HANDLER   = (responseCode, responseHeaders) -> {
+        if (responseCode == 409) throw new GroupExistsException();
+    };;
     private static final ResponseCodeHandler GROUPS_V2_GET_LOGS_HANDLER = NO_HANDLER;
     private static final ResponseCodeHandler GROUPS_V2_GET_CURRENT_HANDLER = (responseCode, responseHeaders) -> {
-        if (responseCode == 403) throw new NotInGroupException();
+        switch (responseCode) {
+            case 403: throw new NotInGroupException();
+            case 404: throw new GroupNotFoundException();
+        }
     };
     private static final ResponseCodeHandler GROUPS_V2_PATCH_RESPONSE_HANDLER = (responseCode, responseHeaders) -> {
         if (responseCode == 400) throw new GroupPatchNotAcceptedException();

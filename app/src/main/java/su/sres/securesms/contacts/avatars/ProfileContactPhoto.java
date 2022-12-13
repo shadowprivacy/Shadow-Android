@@ -6,13 +6,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.recipients.RecipientId;
 import org.whispersystems.libsignal.util.ByteUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
@@ -66,7 +63,7 @@ public class ProfileContactPhoto implements ContactPhoto {
   }
 
   private long getFileLastModified() {
-    if (!recipient.isLocalNumber()) {
+    if (!recipient.isSelf()) {
       return 0;
     }
 

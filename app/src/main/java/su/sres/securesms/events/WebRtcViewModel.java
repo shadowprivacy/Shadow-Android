@@ -17,6 +17,8 @@ import java.util.List;
 public class WebRtcViewModel {
 
   public enum State {
+    IDLE,
+
     // Normal states
     CALL_PRE_JOIN,
     CALL_INCOMING,
@@ -54,7 +56,7 @@ public class WebRtcViewModel {
   public WebRtcViewModel(@NonNull State state,
                          @NonNull Recipient recipient,
                          @NonNull CameraState localCameraState,
-                         @NonNull BroadcastVideoSink localSink,
+                         @Nullable BroadcastVideoSink localSink,
                          boolean isBluetoothAvailable,
                          boolean isMicrophoneEnabled,
                          boolean isRemoteVideoOffer,
@@ -68,7 +70,7 @@ public class WebRtcViewModel {
     this.callConnectedTime    = callConnectedTime;
     this.remoteParticipants   = remoteParticipants;
 
-    localParticipant = CallParticipant.createLocal(localCameraState, localSink, isMicrophoneEnabled);
+    localParticipant = CallParticipant.createLocal(localCameraState, localSink != null ? localSink : new BroadcastVideoSink(null), isMicrophoneEnabled);
   }
 
   public @NonNull State getState() {
@@ -101,5 +103,17 @@ public class WebRtcViewModel {
 
   public @NonNull List<CallParticipant> getRemoteParticipants() {
     return remoteParticipants;
+  }
+
+  @Override public @NonNull String toString() {
+    return "WebRtcViewModel{" +
+            "state=" + state +
+            ", recipient=" + recipient.getId() +
+            ", isBluetoothAvailable=" + isBluetoothAvailable +
+            ", isRemoteVideoOffer=" + isRemoteVideoOffer +
+            ", callConnectedTime=" + callConnectedTime +
+            ", localParticipant=" + localParticipant +
+            ", remoteParticipants=" + remoteParticipants +
+            '}';
   }
 }

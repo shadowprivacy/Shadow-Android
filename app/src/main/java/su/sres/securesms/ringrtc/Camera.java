@@ -6,6 +6,7 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -40,24 +41,29 @@ public class Camera implements CameraControl, CameraVideoCapturer.CameraSwitchHa
 
     private static final String TAG = Log.tag(Camera.class);
 
-    @NonNull  private final Context               context;
-    @Nullable private final CameraVideoCapturer   capturer;
-    @NonNull  private final CameraEventListener   cameraEventListener;
-    @NonNull  private final EglBase               eglBase;
-    private final int                   cameraCount;
-    @NonNull  private       CameraState.Direction activeDirection;
-    private       boolean               enabled;
+    @NonNull
+    private final Context context;
+    @Nullable
+    private final CameraVideoCapturer capturer;
+    @NonNull
+    private final CameraEventListener cameraEventListener;
+    @NonNull
+    private final EglBase eglBase;
+    private final int cameraCount;
+    @NonNull
+    private CameraState.Direction activeDirection;
+    private boolean enabled;
+    private boolean isInitialized;
 
-    public Camera(@NonNull Context             context,
+    public Camera(@NonNull Context context,
                   @NonNull CameraEventListener cameraEventListener,
                   @NonNull EglBase eglBase,
-                  @NonNull CameraState.Direction desiredCameraDirection)
-    {
-        this.context                = context;
-        this.cameraEventListener    = cameraEventListener;
-        this.eglBase                = eglBase;
+                  @NonNull CameraState.Direction desiredCameraDirection) {
+        this.context = context;
+        this.cameraEventListener = cameraEventListener;
+        this.eglBase = eglBase;
         CameraEnumerator enumerator = getCameraEnumerator(context);
-        cameraCount                 = enumerator.getDeviceNames().length;
+        cameraCount = enumerator.getDeviceNames().length;
 
         CameraState.Direction firstChoice = desiredCameraDirection.isUsable() ? desiredCameraDirection : FRONT;
 
@@ -82,6 +88,7 @@ public class Camera implements CameraControl, CameraVideoCapturer.CameraSwitchHa
             capturer.initialize(SurfaceTextureHelper.create("WebRTC-SurfaceTextureHelper", eglBase.getEglBaseContext()),
                     context,
                     observer);
+            isInitialized = true;
         }
     }
 
@@ -132,26 +139,32 @@ public class Camera implements CameraControl, CameraVideoCapturer.CameraSwitchHa
         return cameraCount;
     }
 
-    @NonNull CameraState.Direction getActiveDirection() {
+    @NonNull
+    CameraState.Direction getActiveDirection() {
         return enabled ? activeDirection : NONE;
     }
 
-    @NonNull public CameraState getCameraState() {
+    @NonNull
+    public CameraState getCameraState() {
         return new CameraState(getActiveDirection(), getCount());
     }
 
-    @Nullable CameraVideoCapturer getCapturer() {
+    public boolean isInitialized() {
+        return isInitialized;
+    }
+
+    @Nullable
+    CameraVideoCapturer getCapturer() {
         return capturer;
     }
 
-    private @Nullable CameraVideoCapturer createVideoCapturer(@NonNull CameraEnumerator enumerator,
-                                                              @NonNull CameraState.Direction direction)
-    {
+    private @Nullable
+    CameraVideoCapturer createVideoCapturer(@NonNull CameraEnumerator enumerator,
+                                            @NonNull CameraState.Direction direction) {
         String[] deviceNames = enumerator.getDeviceNames();
         for (String deviceName : deviceNames) {
             if ((direction == FRONT && enumerator.isFrontFacing(deviceName)) ||
-                    (direction == BACK  && enumerator.isBackFacing(deviceName)))
-            {
+                    (direction == BACK && enumerator.isBackFacing(deviceName))) {
                 return enumerator.createCapturer(deviceName, null);
             }
         }
@@ -159,7 +172,8 @@ public class Camera implements CameraControl, CameraVideoCapturer.CameraSwitchHa
         return null;
     }
 
-    private @NonNull CameraEnumerator getCameraEnumerator(@NonNull Context context) {
+    private @NonNull
+    CameraEnumerator getCameraEnumerator(@NonNull Context context) {
         boolean camera2EnumeratorIsSupported = false;
         try {
             camera2EnumeratorIsSupported = Camera2Enumerator.isSupported(context);
@@ -190,22 +204,25 @@ public class Camera implements CameraControl, CameraVideoCapturer.CameraSwitchHa
 
         private static final String TAG = Log.tag(Camera2Enumerator.class);
 
-        @NonNull  private final Context       context;
-        @Nullable private final CameraManager cameraManager;
-        @Nullable private       String[]      deviceNames;
+        @NonNull
+        private final Context context;
+        @Nullable
+        private final CameraManager cameraManager;
+        @Nullable
+        private String[] deviceNames;
 
         FilteredCamera2Enumerator(@NonNull Context context) {
             super(context);
 
-            this.context       = context;
+            this.context = context;
             this.cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-            this.deviceNames   = null;
+            this.deviceNames = null;
         }
 
         private static boolean isMonochrome(@NonNull String deviceName, @NonNull CameraManager cameraManager) {
             try {
                 CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(deviceName);
-                int[]                 capabilities    = characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+                int[] capabilities = characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
 
                 if (capabilities != null) {
                     for (int capability : capabilities) {
@@ -224,7 +241,7 @@ public class Camera implements CameraControl, CameraVideoCapturer.CameraSwitchHa
         private static boolean isLensFacing(@NonNull String deviceName, @NonNull CameraManager cameraManager, @NonNull Integer facing) {
             try {
                 CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(deviceName);
-                Integer               lensFacing      = characteristics.get(CameraCharacteristics.LENS_FACING);
+                Integer lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING);
 
                 return facing.equals(lensFacing);
             } catch (CameraAccessException e) {
@@ -233,7 +250,8 @@ public class Camera implements CameraControl, CameraVideoCapturer.CameraSwitchHa
         }
 
         @Override
-        public @NonNull String[] getDeviceNames() {
+        public @NonNull
+        String[] getDeviceNames() {
             if (deviceNames != null) {
                 return deviceNames;
             }
@@ -268,16 +286,16 @@ public class Camera implements CameraControl, CameraVideoCapturer.CameraSwitchHa
                 this.deviceNames = cameraList.toArray(new String[0]);
             } catch (CameraAccessException e) {
                 Log.e(TAG, "Camera access exception: " + e);
-                this.deviceNames = new String[] {};
+                this.deviceNames = new String[]{};
             }
 
             return deviceNames;
         }
 
         @Override
-        public @NonNull CameraVideoCapturer createCapturer(@Nullable String deviceName,
-                                                           @Nullable CameraVideoCapturer.CameraEventsHandler eventsHandler)
-        {
+        public @NonNull
+        CameraVideoCapturer createCapturer(@Nullable String deviceName,
+                                           @Nullable CameraVideoCapturer.CameraEventsHandler eventsHandler) {
             return new Camera2Capturer(context, deviceName, eventsHandler, new FilteredCamera2Enumerator(context));
         }
     }

@@ -7,7 +7,6 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.view.animation.Animation;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -35,18 +34,13 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import su.sres.securesms.R;
 import su.sres.securesms.animation.ResizeAnimation;
 import su.sres.securesms.components.AccessibleToggleButton;
-import su.sres.securesms.components.AvatarImageView;
-import su.sres.securesms.contacts.avatars.ContactPhoto;
-import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
-import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.mediasend.SimpleAnimationListener;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.ringrtc.CameraState;
-import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.BlurTransformation;
 import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.ViewUtil;
@@ -554,6 +548,7 @@ public class WebRtcCallView extends FrameLayout {
         Transition transition = new AutoTransition().setOrdering(TransitionSet.ORDERING_TOGETHER)
                 .setDuration(TRANSITION_DURATION_MILLIS);
 
+        TransitionManager.endTransitions(parent);
         TransitionManager.beginDelayedTransition(parent, transition);
 
         ConstraintSet constraintSet = new ConstraintSet();
@@ -571,6 +566,7 @@ public class WebRtcCallView extends FrameLayout {
     private void fadeInNewUiState(@NonNull Set<View> previouslyVisibleViewSet, boolean useSmallMargins) {
         Transition transition = new AutoTransition().setDuration(TRANSITION_DURATION_MILLIS);
 
+        TransitionManager.endTransitions(parent);
         TransitionManager.beginDelayedTransition(parent, transition);
 
         ConstraintSet constraintSet = new ConstraintSet();

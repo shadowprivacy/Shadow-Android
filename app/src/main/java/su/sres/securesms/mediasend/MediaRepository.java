@@ -44,12 +44,19 @@ import java.util.Map;
  */
 public class MediaRepository {
 
-    private static final String TAG = Log.tag(MediaRepository.class);
+    private static final String TAG    = Log.tag(MediaRepository.class);
+    private static final String CAMERA = "Camera";
 
     /**
      * Retrieves a list of folders that contain media.
      */
     void getFolders(@NonNull Context context, @NonNull Callback<List<MediaFolder>> callback) {
+        if (!StorageUtil.canReadFromMediaStore()) {
+            Log.w(TAG, "No storage permissions!", new Throwable());
+            callback.onComplete(Collections.emptyList());
+            return;
+        }
+
         SignalExecutors.BOUNDED.execute(() -> callback.onComplete(getFolders(context)));
     }
 
@@ -57,6 +64,12 @@ public class MediaRepository {
      * Retrieves a list of media items (images and videos) that are present int he specified bucket.
      */
     public void getMediaInBucket(@NonNull Context context, @NonNull String bucketId, @NonNull Callback<List<Media>> callback) {
+        if (!StorageUtil.canReadFromMediaStore()) {
+            Log.w(TAG, "No storage permissions!", new Throwable());
+            callback.onComplete(Collections.emptyList());
+            return;
+        }
+
         SignalExecutors.BOUNDED.execute(() -> callback.onComplete(getMediaInBucket(context, bucketId)));
     }
 
@@ -70,10 +83,22 @@ public class MediaRepository {
             return;
         }
 
+        if (!StorageUtil.canReadFromMediaStore()) {
+            Log.w(TAG, "No storage permissions!", new Throwable());
+            callback.onComplete(media);
+            return;
+        }
+
         SignalExecutors.BOUNDED.execute(() -> callback.onComplete(getPopulatedMedia(context, media)));
     }
 
     void getMostRecentItem(@NonNull Context context, @NonNull Callback<Optional<Media>> callback) {
+        if (!StorageUtil.canReadFromMediaStore()) {
+            Log.w(TAG, "No storage permissions!", new Throwable());
+            callback.onComplete(Optional.absent());
+            return;
+        }
+
         SignalExecutors.BOUNDED.execute(() -> callback.onComplete(getMostRecentItem(context)));
     }
 
@@ -87,10 +112,6 @@ public class MediaRepository {
 
     @WorkerThread
     private @NonNull List<MediaFolder> getFolders(@NonNull Context context) {
-        if (!StorageUtil.canReadFromMediaStore()) {
-            return Collections.emptyList();
-        }
-
         FolderResult imageFolders       = getFolders(context, Images.Media.EXTERNAL_CONTENT_URI);
         FolderResult videoFolders       = getFolders(context, Video.Media.EXTERNAL_CONTENT_URI);
         Map<String, FolderData> folders = new HashMap<>(imageFolders.getFolderData());
@@ -151,12 +172,12 @@ public class MediaRepository {
                 String     bucketId  = cursor.getString(cursor.getColumnIndexOrThrow(projection[1]));
                 String     title     = cursor.getString(cursor.getColumnIndexOrThrow(projection[2]));
                 long       timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(projection[3]));
-                FolderData folder    = Util.getOrDefault(folders, bucketId, new FolderData(thumbnail, title, bucketId));
+                FolderData folder    = Util.getOrDefault(folders, bucketId, new FolderData(thumbnail, localizeTitle(context, title), bucketId));
 
                 folder.incrementCount();
                 folders.put(bucketId, folder);
 
-                if (cameraBucketId == null && "Camera".equals(title)) {
+                if (cameraBucketId == null && CAMERA.equals(title)) {
                     cameraBucketId = bucketId;
                 }
 
@@ -170,12 +191,16 @@ public class MediaRepository {
         return new FolderResult(cameraBucketId, globalThumbnail, thumbnailTimestamp, folders);
     }
 
+    private @NonNull String localizeTitle(@NonNull Context context, @NonNull String title) {
+        if (CAMERA.equals(title)) {
+            return context.getString(R.string.MediaRepository__camera);
+        } else {
+            return title;
+        }
+    }
+
     @WorkerThread
     private @NonNull List<Media> getMediaInBucket(@NonNull Context context, @NonNull String bucketId) {
-        if (!StorageUtil.canReadFromMediaStore()) {
-            return Collections.emptyList();
-        }
-
         List<Media> images = getMediaInBucket(context, bucketId, Images.Media.EXTERNAL_CONTENT_URI, true);
         List<Media> videos = getMediaInBucket(context, bucketId, Video.Media.EXTERNAL_CONTENT_URI, false);
         List<Media> media  = new ArrayList<>(images.size() + videos.size());

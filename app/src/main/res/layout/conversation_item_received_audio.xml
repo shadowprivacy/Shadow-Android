@@ -10,4 +10,5 @@
     app:foregroundTintColor="@color/white"
     app:waveformPlayedBarsColor="@color/core_white"
     app:waveformUnplayedBarsColor="@color/transparent_white_40"
+    app:progressAndPlayTint="@color/transparent_white_20"
     tools:visibility="visible" />

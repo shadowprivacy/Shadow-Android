@@ -55,7 +55,7 @@ public class BackupUtil {
 
   public static boolean canUserAccessBackupDirectory(@NonNull Context context) {
     if (isUserSelectionRequired(context)) {
-      Uri backupDirectoryUri = SignalStore.settings().getSignalBackupDirectory();
+      Uri backupDirectoryUri = SignalStore.settings().getShadowBackupDirectory();
       if (backupDirectoryUri == null) {
         return false;
       }
@@ -107,7 +107,7 @@ public class BackupUtil {
     BackupUtil.deleteAllBackups();
 
     if (BackupUtil.isUserSelectionRequired(context)) {
-      Uri backupLocationUri = SignalStore.settings().getSignalBackupDirectory();
+      Uri backupLocationUri = SignalStore.settings().getShadowBackupDirectory();
 
       if (backupLocationUri == null) {
         return;
@@ -136,7 +136,7 @@ public class BackupUtil {
 
   @RequiresApi(29)
   private static List<BackupInfo> getAllBackupsNewestFirstApi29() {
-    Uri backupDirectoryUri = SignalStore.settings().getSignalBackupDirectory();
+    Uri backupDirectoryUri = SignalStore.settings().getShadowBackupDirectory();
     if (backupDirectoryUri == null) {
       Log.i(TAG, "Backup directory is not set. Returning an empty list.");
       return Collections.emptyList();
@@ -181,7 +181,7 @@ public class BackupUtil {
   }
 
   private static List<BackupInfo> getAllBackupsNewestFirstLegacy() throws NoExternalStorageException {
-    File             backupDirectory = StorageUtil.getBackupDirectory();
+    File             backupDirectory = StorageUtil.getOrCreateBackupDirectory();
     File[]           files           = backupDirectory.listFiles();
     List<BackupInfo> backups         = new ArrayList<>(files.length);
 
@@ -211,6 +211,25 @@ public class BackupUtil {
     }
 
     return result;
+  }
+
+  public static boolean hasBackupFiles(@NonNull Context context) {
+    if (Permissions.hasAll(context, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+      try {
+        File directory = StorageUtil.getBackupDirectory();
+        if (directory.exists() && directory.isDirectory()) {
+          File[] files = directory.listFiles();
+          return files != null && files.length > 0;
+        } else {
+          return false;
+        }
+      } catch (NoExternalStorageException e) {
+        Log.w(TAG, "Failed to read storage!", e);
+        return false;
+      }
+    } else {
+      return false;
+    }
   }
 
   private static long getBackupTimestamp(@NonNull String backupName) {

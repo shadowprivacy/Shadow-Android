@@ -23,7 +23,6 @@ import su.sres.securesms.util.Util;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -56,6 +55,7 @@ public class LogSectionSystemInfo implements LogSection {
         builder.append("OS Host      : ").append(Build.HOST).append("\n");
         builder.append("Play Services: ").append(getPlayServicesString(context)).append("\n");
         builder.append("FCM          : ").append(!TextSecurePreferences.isFcmDisabled(context)).append("\n");
+        builder.append("Locale       : ").append(Locale.getDefault().toString()).append("\n");
         builder.append("First Version: ").append(TextSecurePreferences.getFirstInstallVersion(context)).append("\n");
         builder.append("App          : ");
         try {
