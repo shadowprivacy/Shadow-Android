@@ -6,6 +6,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.ringrtc.CallId;
+
+import su.sres.securesms.crypto.IdentityKeyParcelable;
+import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.ringrtc.IceCandidateParcel;
 import su.sres.securesms.ringrtc.RemotePeer;
@@ -13,6 +16,9 @@ import su.sres.securesms.ringrtc.TurnServerInfoParcel;
 import su.sres.securesms.service.WebRtcCallService;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import org.webrtc.PeerConnection;
+import org.whispersystems.libsignal.IdentityKey;
+import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.messages.calls.OfferMessage;
 
 import java.util.ArrayList;
@@ -26,6 +32,8 @@ import static su.sres.securesms.service.WebRtcCallService.EXTRA_AVAILABLE;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_BROADCAST;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_CALL_ID;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_ENABLE;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_ERROR_CALL_STATE;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_ERROR_IDENTITY_KEY;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_ICE_CANDIDATES;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_MULTI_RING;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_OFFER_OPAQUE;
@@ -143,4 +151,15 @@ public final class WebRtcIntentParser {
         return intent.getBooleanExtra(EXTRA_ENABLE, false);
     }
 
+    public static @NonNull WebRtcViewModel.State getErrorCallState(@NonNull Intent intent) {
+        return (WebRtcViewModel.State) Objects.requireNonNull(intent.getSerializableExtra(EXTRA_ERROR_CALL_STATE));
+    }
+
+    public static @NonNull Optional<IdentityKey> getErrorIdentityKey(@NonNull Intent intent) {
+        IdentityKeyParcelable identityKeyParcelable = (IdentityKeyParcelable) intent.getParcelableExtra(EXTRA_ERROR_IDENTITY_KEY);
+        if (identityKeyParcelable != null) {
+            return Optional.fromNullable(identityKeyParcelable.get());
+        }
+        return Optional.absent();
+    }
 }

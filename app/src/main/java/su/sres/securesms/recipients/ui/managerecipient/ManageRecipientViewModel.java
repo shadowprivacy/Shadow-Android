@@ -29,6 +29,7 @@ import su.sres.securesms.groups.ui.GroupMemberEntry;
 import su.sres.securesms.groups.ui.addtogroup.AddToGroupsActivity;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.notifications.NotificationChannels;
+import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -123,7 +124,7 @@ public final class ManageRecipientViewModel extends ViewModel {
 
     private static @NonNull String getDisplaySubtitle(@NonNull Recipient recipient, @NonNull Context context) {
         if (!recipient.isSelf() && recipient.hasAUserSetDisplayName(context)) {
-            return recipient.getSmsAddress().or("").trim();
+            return recipient.getSmsAddress().transform(PhoneNumberFormatter::prettyPrint).or("").trim();
         } else {
             return "";
         }

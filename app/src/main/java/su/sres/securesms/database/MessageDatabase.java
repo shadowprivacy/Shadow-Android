@@ -86,6 +86,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   public abstract @Nullable
   ViewOnceExpirationInfo getNearestExpiringViewOnceMessage();
   public abstract boolean isSent(long messageId);
+  public abstract List<MessageRecord> getProfileChangeDetailsRecords(long threadId, long afterTimestamp);
 
   public abstract void markExpireStarted(long messageId);
   public abstract void markExpireStarted(long messageId, long startTime);
@@ -115,7 +116,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   public abstract void markAsSending(long messageId);
   public abstract void markAsRemoteDelete(long messageId);
 
-  public abstract void markAsMissedCall(long id);
+  public abstract void markAsMissedCall(long id, boolean isVideoOffer);
   public abstract void markAsNotified(long id);
   public abstract void markSmsStatus(long id, int status);
   public abstract void markDownloadState(long messageId, long state);
@@ -132,9 +133,9 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   public abstract void removeFailure(long messageId, NetworkFailure failure);
 
 
-  public abstract @NonNull Pair<Long, Long> insertReceivedCall(@NonNull RecipientId address);
-  public abstract @NonNull Pair<Long, Long> insertOutgoingCall(@NonNull RecipientId address);
-  public abstract @NonNull Pair<Long, Long> insertMissedCall(@NonNull RecipientId address, long timestamp);
+  public abstract @NonNull Pair<Long, Long> insertReceivedCall(@NonNull RecipientId address, boolean isVideoOffer);
+  public abstract @NonNull Pair<Long, Long> insertOutgoingCall(@NonNull RecipientId address, boolean isVideoOffer);
+  public abstract @NonNull Pair<Long, Long> insertMissedCall(@NonNull RecipientId address, long timestamp, boolean isVideoOffer);
 
   public abstract Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type);
   public abstract Optional<InsertResult> insertMessageInbox(IncomingTextMessage message);
@@ -145,6 +146,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   public abstract long insertMessageOutbox(@NonNull OutgoingMediaMessage message, long threadId, boolean forceSms, @Nullable SmsDatabase.InsertListener insertListener) throws MmsException;
   public abstract long insertMessageOutbox(@NonNull OutgoingMediaMessage message, long threadId, boolean forceSms, int defaultReceiptStatus, @Nullable SmsDatabase.InsertListener insertListener) throws MmsException;
   public abstract void insertProfileNameChangeMessages(@NonNull Recipient recipient, @NonNull String newProfileName, @NonNull String previousProfileName);
+  public abstract void insertGroupV1MigrationEvents(@NonNull RecipientId recipientId, long threadId, List<RecipientId> pendingRecipients);
 
   public abstract boolean deleteMessage(long messageId);
   abstract void deleteThread(long threadId);
@@ -153,7 +155,6 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   abstract void deleteAllThreads();
   abstract void deleteAbandonedMessages();
 
-  public abstract List<MessageRecord> getMessagesInThreadBeforeExclusive(long threadId, long timestamp, long limit);
   public abstract List<MessageRecord> getMessagesInThreadAfterInclusive(long threadId, long timestamp, long limit);
 
   public abstract SQLiteDatabase beginTransaction();

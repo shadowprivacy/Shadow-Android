@@ -64,6 +64,7 @@ public final class JobManagerFactories {
             put(CreateSignedPreKeyJob.KEY,                 new CreateSignedPreKeyJob.Factory());
             put(DirectorySyncJob.KEY,                      new DirectorySyncJob.Factory());
             put(FcmRefreshJob.KEY,                         new FcmRefreshJob.Factory());
+            put(GroupV1MigrationJob.KEY,                   new GroupV1MigrationJob.Factory());
             put(LeaveGroupJob.KEY,                         new LeaveGroupJob.Factory());
             put(LicenseManagementJob.KEY,                  new LicenseManagementJob.Factory());
             put(LocalBackupJob.KEY,                        new LocalBackupJob.Factory());

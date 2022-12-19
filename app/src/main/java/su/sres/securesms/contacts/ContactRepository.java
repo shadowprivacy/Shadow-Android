@@ -13,6 +13,7 @@ import androidx.annotation.WorkerThread;
 import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.Pair;
@@ -63,6 +64,10 @@ public class ContactRepository {
         add(new Pair<>(NUMBER_COLUMN, cursor -> {
             String phone = cursor.getString(cursor.getColumnIndexOrThrow(RecipientDatabase.PHONE));
             String email = cursor.getString(cursor.getColumnIndexOrThrow(RecipientDatabase.EMAIL));
+
+            if (phone != null) {
+                phone = PhoneNumberFormatter.prettyPrint(phone);
+            }
 
             return Util.getFirstNonEmpty(phone, email);
         }));

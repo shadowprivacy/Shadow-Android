@@ -365,8 +365,8 @@ public class SmsDatabase extends MessageDatabase {
     }
 
     @Override
-    public void markAsMissedCall(long id) {
-        updateTypeBitmask(id, Types.TOTAL_MASK, Types.MISSED_CALL_TYPE);
+    public void markAsMissedCall(long id, boolean isVideoOffer) {
+        updateTypeBitmask(id, Types.TOTAL_MASK, isVideoOffer ? Types.MISSED_VIDEO_CALL_TYPE : Types.MISSED_AUDIO_CALL_TYPE);
     }
 
     @Override
@@ -633,12 +633,14 @@ public class SmsDatabase extends MessageDatabase {
     @Override
     public boolean hasReceivedAnyCallsSince(long threadId, long timestamp) {
         SQLiteDatabase db = databaseHelper.getReadableDatabase();
-        String[] projection = new String[]{SmsDatabase.TYPE};
-        String selection = THREAD_ID + " = ? AND " + DATE_RECEIVED + " > ? AND (" + TYPE + " = ? OR " + TYPE + " = ?)";
-        String[] selectionArgs = new String[]{String.valueOf(threadId),
-                String.valueOf(timestamp),
-                String.valueOf(Types.INCOMING_CALL_TYPE),
-                String.valueOf(Types.MISSED_CALL_TYPE)};
+        String[]       projection    = SqlUtil.buildArgs(SmsDatabase.TYPE);
+        String         selection     = THREAD_ID + " = ? AND " + DATE_RECEIVED  + " > ? AND (" + TYPE + " = ? OR " + TYPE + " = ? OR " + TYPE + " = ? OR " + TYPE + " =?)";
+        String[]       selectionArgs = SqlUtil.buildArgs(threadId,
+                timestamp,
+                Types.INCOMING_AUDIO_CALL_TYPE,
+                Types.INCOMING_VIDEO_CALL_TYPE,
+                Types.MISSED_AUDIO_CALL_TYPE,
+                Types.MISSED_VIDEO_CALL_TYPE);
 
         try (Cursor cursor = db.query(TABLE_NAME, projection, selection, selectionArgs, null, null, null)) {
             return cursor != null && cursor.moveToFirst();
@@ -646,20 +648,18 @@ public class SmsDatabase extends MessageDatabase {
     }
 
     @Override
-    public @NonNull
-    Pair<Long, Long> insertReceivedCall(@NonNull RecipientId address) {
-        return insertCallLog(address, Types.INCOMING_CALL_TYPE, false, System.currentTimeMillis());
+    public @NonNull Pair<Long, Long> insertReceivedCall(@NonNull RecipientId address, boolean isVideoOffer) {
+        return insertCallLog(address, isVideoOffer ? Types.INCOMING_VIDEO_CALL_TYPE : Types.INCOMING_AUDIO_CALL_TYPE, false, System.currentTimeMillis());
     }
 
     @Override
-    public @NonNull
-    Pair<Long, Long> insertOutgoingCall(@NonNull RecipientId address) {
-        return insertCallLog(address, Types.OUTGOING_CALL_TYPE, false, System.currentTimeMillis());
+    public @NonNull Pair<Long, Long> insertOutgoingCall(@NonNull RecipientId address, boolean isVideoOffer) {
+        return insertCallLog(address, isVideoOffer ? Types.OUTGOING_VIDEO_CALL_TYPE : Types.OUTGOING_AUDIO_CALL_TYPE, false, System.currentTimeMillis());
     }
 
     @Override
-    public @NonNull Pair<Long, Long> insertMissedCall(@NonNull RecipientId address, long timestamp) {
-        return insertCallLog(address, Types.MISSED_CALL_TYPE, true, timestamp);
+    public @NonNull Pair<Long, Long> insertMissedCall(@NonNull RecipientId address, long timestamp, boolean isVideoOffer) {
+        return insertCallLog(address, isVideoOffer ? Types.MISSED_VIDEO_CALL_TYPE : Types.MISSED_AUDIO_CALL_TYPE, true, timestamp);
     }
 
     private @NonNull Pair<Long, Long> insertCallLog(@NonNull RecipientId recipientId, long type, boolean unread, long timestamp) {
@@ -688,6 +688,21 @@ public class SmsDatabase extends MessageDatabase {
         ApplicationDependencies.getJobManager().add(new TrimThreadJob(threadId));
 
         return new Pair<>(messageId, threadId);
+    }
+
+    @Override
+    public List<MessageRecord> getProfileChangeDetailsRecords(long threadId, long afterTimestamp) {
+        String   where = THREAD_ID + " = ? AND " + DATE_RECEIVED + " >= ? AND " + TYPE + " = ?";
+        String[] args  = SqlUtil.buildArgs(threadId, afterTimestamp, Types.PROFILE_CHANGE_TYPE);
+
+        try (Reader reader = readerFor(queryMessages(where, args, true, -1))) {
+            List<MessageRecord> results = new ArrayList<>(reader.getCount());
+            while (reader.getNext() != null) {
+                results.add(reader.getCurrent());
+            }
+
+            return results;
+        }
     }
 
     @Override
@@ -741,6 +756,39 @@ public class SmsDatabase extends MessageDatabase {
     }
 
     @Override
+    public void insertGroupV1MigrationEvents(@NonNull RecipientId recipientId, long threadId, @NonNull List<RecipientId> pendingRecipients) {
+        insertGroupV1MigrationNotification(recipientId, threadId);
+
+        if (pendingRecipients.size() > 0) {
+            insertGroupV1MigrationEvent(recipientId, threadId, pendingRecipients);
+        }
+
+        notifyConversationListeners(threadId);
+        ApplicationDependencies.getJobManager().add(new TrimThreadJob(threadId));
+    }
+
+    private void insertGroupV1MigrationNotification(@NonNull RecipientId recipientId, long threadId) {
+        insertGroupV1MigrationEvent(recipientId, threadId, Collections.emptyList());
+    }
+
+    private void insertGroupV1MigrationEvent(@NonNull RecipientId recipientId, long threadId, @NonNull List<RecipientId> pendingRecipients) {
+        ContentValues values = new ContentValues();
+        values.put(RECIPIENT_ID, recipientId.serialize());
+        values.put(ADDRESS_DEVICE_ID, 1);
+        values.put(DATE_RECEIVED, System.currentTimeMillis());
+        values.put(DATE_SENT, System.currentTimeMillis());
+        values.put(READ, 1);
+        values.put(TYPE, Types.GV1_MIGRATION_TYPE);
+        values.put(THREAD_ID, threadId);
+
+        if (pendingRecipients.size() > 0) {
+            values.put(BODY, RecipientId.toSerializedList(pendingRecipients));
+        }
+
+        databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, values);
+    }
+
+    @Override
     public Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type) {
         if (message.isJoined()) {
             type = (type & (Types.TOTAL_MASK - Types.BASE_TYPE_MASK)) | Types.JOINED_TYPE;
@@ -774,7 +822,7 @@ public class SmsDatabase extends MessageDatabase {
         if (message.getGroupId() == null) {
             groupRecipient = null;
         } else {
-            RecipientId id = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(message.getGroupId());
+            RecipientId id = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromPossiblyMigratedGroupId(message.getGroupId());
             groupRecipient = Recipient.resolved(id);
         }
 
@@ -930,6 +978,8 @@ public class SmsDatabase extends MessageDatabase {
 
     @Override
     public boolean deleteMessage(long messageId) {
+        Log.d(TAG, "deleteMessage(" + messageId + ")");
+
         SQLiteDatabase db       = databaseHelper.getWritableDatabase();
         long           threadId = getThreadIdForMessage(messageId);
 
@@ -964,6 +1014,8 @@ public class SmsDatabase extends MessageDatabase {
 
     @Override
     void deleteThread(long threadId) {
+        Log.d(TAG, "deleteThread(" + threadId + ")");
+
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
         db.delete(TABLE_NAME, THREAD_ID + " = ?", new String[]{threadId + ""});
     }
@@ -982,23 +1034,6 @@ public class SmsDatabase extends MessageDatabase {
         String         where = THREAD_ID + " NOT IN (SELECT _id FROM " + ThreadDatabase.TABLE_NAME + ")";
 
         db.delete(TABLE_NAME, where, null);
-    }
-
-    @Override
-    public List<MessageRecord> getMessagesInThreadBeforeExclusive(long threadId, long timestamp, long limit) {
-        String   where = TABLE_NAME + "." + MmsSmsColumns.THREAD_ID + " = ? AND " +
-                TABLE_NAME + "." + getDateReceivedColumnName() + " < ?";
-        String[] args  = SqlUtil.buildArgs(threadId, timestamp);
-
-        try (Reader reader = readerFor(queryMessages(where, args, true, limit))) {
-            List<MessageRecord> results = new ArrayList<>(reader.cursor.getCount());
-
-            while (reader.getNext() != null) {
-                results.add(reader.getCurrent());
-            }
-
-            return results;
-        }
     }
 
     @Override
@@ -1033,6 +1068,8 @@ public class SmsDatabase extends MessageDatabase {
 
     @Override
     void deleteThreads(@NonNull Set<Long> threadIds) {
+        Log.d(TAG, "deleteThreads(count: " + threadIds.size() + ")");
+
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
         String where = "";
 
@@ -1047,6 +1084,8 @@ public class SmsDatabase extends MessageDatabase {
 
     @Override
     void deleteAllThreads() {
+        Log.d(TAG, "deleteAllThreads()");
+
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
         db.delete(TABLE_NAME, null, null);
     }

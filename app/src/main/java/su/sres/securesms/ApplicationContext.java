@@ -42,6 +42,7 @@ import su.sres.securesms.dependencies.ApplicationDependencyProvider;
 import su.sres.securesms.dependencies.NetworkIndependentProvider;
 import su.sres.securesms.gcm.FcmJobService;
 import su.sres.securesms.jobs.CertificateRefreshJob;
+import su.sres.securesms.jobs.GroupV1MigrationJob;
 import su.sres.securesms.jobs.LicenseManagementJob;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
@@ -172,6 +173,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
           FeatureFlags.refreshIfNecessary();
           ApplicationDependencies.getRecipientCache().warmUp();
           RetrieveProfileJob.enqueueRoutineFetchIfNecessary(this);
+          GroupV1MigrationJob.enqueueRoutineMigrationsIfNecessary(this);
           ApplicationDependencies.getFrameRateTracker().begin();
           ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
           launchCertificateRefresh();

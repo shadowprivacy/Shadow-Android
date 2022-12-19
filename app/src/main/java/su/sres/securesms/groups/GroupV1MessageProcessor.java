@@ -11,7 +11,6 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MessageDatabase.InsertResult;
-import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.AvatarGroupsV1DownloadJob;
 import su.sres.securesms.jobs.PushGroupUpdateJob;
@@ -108,7 +107,7 @@ public final class GroupV1MessageProcessor {
 
     if (sender.isSystemContact() || sender.isProfileSharing()) {
       Log.i(TAG, "Auto-enabling profile sharing because 'adder' is trusted. contact: " + sender.isSystemContact() + ", profileSharing: " + sender.isProfileSharing());
-      DatabaseFactory.getRecipientDatabase(context).setProfileSharing(Recipient.externalGroup(context, id).getId(), true);
+      DatabaseFactory.getRecipientDatabase(context).setProfileSharing(Recipient.externalGroupExact(context, id).getId(), true);
     }
 
     return storeMessage(context, content, group, builder.build(), outgoing);

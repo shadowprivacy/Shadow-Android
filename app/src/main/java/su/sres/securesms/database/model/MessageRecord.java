@@ -47,6 +47,7 @@ import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.ExpirationUtil;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.StringUtil;
+import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.groupsv2.DecryptedGroupUtil;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
@@ -143,12 +144,18 @@ public abstract class MessageRecord extends DisplayRecord {
       return staticUpdateDescription(context.getString(R.string.MessageRecord_left_group), R.drawable.ic_update_group_leave_light_16, R.drawable.ic_update_group_leave_dark_16);
     } else if (isGroupQuit()) {
       return fromRecipient(getIndividualRecipient(), r -> context.getString(R.string.ConversationItem_group_action_left, r.getDisplayName(context)), R.drawable.ic_update_group_leave_light_16, R.drawable.ic_update_group_leave_dark_16);
-    } else if (isIncomingCall()) {
+    } else if (isIncomingAudioCall()) {
       return fromRecipient(getIndividualRecipient(), r -> context.getString(R.string.MessageRecord_s_called_you_date, r.getDisplayName(context), getCallDateString(context)), R.drawable.ic_update_audio_call_incoming_light_16, R.drawable.ic_update_audio_call_incoming_dark_16);
-    } else if (isOutgoingCall()) {
+    } else if (isIncomingVideoCall()) {
+      return fromRecipient(getIndividualRecipient(), r -> context.getString(R.string.MessageRecord_s_called_you_date, r.getDisplayName(context), getCallDateString(context)), R.drawable.ic_update_video_call_incomg_light_16, R.drawable.ic_update_video_call_incoming_dark_16);
+    } else if (isOutgoingAudioCall()) {
       return staticUpdateDescription(context.getString(R.string.MessageRecord_you_called_date, getCallDateString(context)), R.drawable.ic_update_audio_call_outgoing_light_16, R.drawable.ic_update_audio_call_outgoing_dark_16);
-    } else if (isMissedCall()) {
-      return staticUpdateDescription(context.getString(R.string.MessageRecord_missed_call_date, getCallDateString(context)), R.drawable.ic_update_audio_call_missed_light_16, R.drawable.ic_update_audio_call_missed_dark_16, ContextCompat.getColor(context, R.color.core_red_shade), ContextCompat.getColor(context, R.color.core_red));
+    } else if (isOutgoingVideoCall()) {
+      return staticUpdateDescription(context.getString(R.string.MessageRecord_you_called_date, getCallDateString(context)), R.drawable.ic_update_video_call_outgoing_light_16, R.drawable.ic_update_video_call_outgoing_dark_16);
+    } else if (isMissedAudioCall()) {
+      return staticUpdateDescription(context.getString(R.string.MessageRecord_missed_audio_call_date, getCallDateString(context)), R.drawable.ic_update_audio_call_missed_light_16, R.drawable.ic_update_audio_call_missed_dark_16, ContextCompat.getColor(context, R.color.core_red_shade), ContextCompat.getColor(context, R.color.core_red));
+    } else if (isMissedVideoCall()) {
+      return staticUpdateDescription(context.getString(R.string.MessageRecord_missed_video_call_date, getCallDateString(context)), R.drawable.ic_update_video_call_missed_light_16, R.drawable.ic_update_video_call_missed_dark_16, ContextCompat.getColor(context, R.color.core_red_shade), ContextCompat.getColor(context, R.color.core_red));
     } else if (isJoined()) {
       return staticUpdateDescription(context.getString(R.string.MessageRecord_s_joined_signal, getIndividualRecipient().getDisplayName(context)), R.drawable.ic_update_group_add_light_16, R.drawable.ic_update_group_add_dark_16);
     } else if (isExpirationTimerUpdate()) {
@@ -173,6 +180,13 @@ public abstract class MessageRecord extends DisplayRecord {
     } else if (isEndSession()) {
       if (isOutgoing()) return staticUpdateDescription(context.getString(R.string.SmsMessageRecord_secure_session_reset), R.drawable.ic_update_info_light_16, R.drawable.ic_update_info_dark_16);
       else              return fromRecipient(getIndividualRecipient(), r-> context.getString(R.string.SmsMessageRecord_secure_session_reset_s, r.getDisplayName(context)), R.drawable.ic_update_info_light_16, R.drawable.ic_update_info_dark_16);
+    } else if (isGroupV1MigrationEvent()) {
+      if (Util.isEmpty(getBody())) {
+        return staticUpdateDescription(context.getString(R.string.MessageRecord_this_group_was_updated_to_a_new_group), R.drawable.ic_update_group_role_light_16, R.drawable.ic_update_group_role_dark_16);
+      } else {
+        int count = getGroupV1MigrationEventInvites().size();
+        return staticUpdateDescription(context.getResources().getQuantityString(R.plurals.MessageRecord_members_couldnt_be_added_to_the_new_group_and_have_been_invited, count, count), R.drawable.ic_update_group_add_light_16, R.drawable.ic_update_group_add_dark_16);
+      }
     }
 
     return null;
@@ -348,9 +362,22 @@ public abstract class MessageRecord extends DisplayRecord {
     return SmsDatabase.Types.isInvalidVersionKeyExchange(type);
   }
 
+  public boolean isGroupV1MigrationEvent() {
+    return SmsDatabase.Types.isGroupV1MigrationEvent(type);
+  }
+
+  public @NonNull List<RecipientId> getGroupV1MigrationEventInvites() {
+    if (isGroupV1MigrationEvent()) {
+      return RecipientId.fromSerializedList(getBody());
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
   public boolean isUpdate() {
     return isGroupAction() || isJoined() || isExpirationTimerUpdate() || isCallLog() ||
-            isEndSession()  || isIdentityUpdate() || isIdentityVerified() || isIdentityDefault() || isProfileChange();
+            isEndSession()  || isIdentityUpdate() || isIdentityVerified() || isIdentityDefault() ||
+            isProfileChange() || isGroupV1MigrationEvent();
   }
 
   public boolean isMediaPending() {

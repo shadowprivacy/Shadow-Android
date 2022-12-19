@@ -109,7 +109,7 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
 
         Log.i(TAG, "handleAcceptCall(): call_id: " + activePeer.getCallId());
 
-        DatabaseFactory.getSmsDatabase(context).insertReceivedCall(activePeer.getId());
+        DatabaseFactory.getSmsDatabase(context).insertReceivedCall(activePeer.getId(), currentState.getCallSetupState().isRemoteVideoOffer());
 
         currentState = currentState.builder()
                 .changeCallSetupState()
@@ -137,7 +137,7 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
 
         try {
             webRtcInteractor.getCallManager().hangup();
-            DatabaseFactory.getSmsDatabase(context).insertMissedCall(activePeer.getId(), System.currentTimeMillis());
+            DatabaseFactory.getSmsDatabase(context).insertMissedCall(activePeer.getId(), System.currentTimeMillis(), currentState.getCallSetupState().isRemoteVideoOffer());
             return terminate(currentState, activePeer);
         } catch  (CallException e) {
             return callFailure(currentState, "hangup() failed: ", e);

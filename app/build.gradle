@@ -88,8 +88,10 @@ def abiPostFix = ['universal'   : 0,
                   'x86'         : 3,
                   'x86_64'      : 4]
 
+def keystores = [ 'debug'  : loadKeystoreProperties('keystore.debug.properties') ]
+
 android {
-    flavorDimensions "none"
+    flavorDimensions 'distribution', 'environment'
     compileSdkVersion 29
     buildToolsVersion '29.0.3'
     useLibrary 'org.apache.http.legacy'
@@ -99,11 +101,13 @@ android {
     }
 
     signingConfigs {
-        staging {
-            storeFile file("${project.rootDir}/dev.keystore")
-            storePassword 'android'
-            keyAlias 'staging'
-            keyPassword 'android'
+        if (keystores.debug != null) {
+            debug {
+                storeFile file("${project.rootDir}/${keystores.debug.storeFile}")
+                storePassword keystores.debug.storePassword
+                keyAlias keystores.debug.keyAlias
+                keyPassword keystores.debug.keyPassword
+            }
         }
     }
 
@@ -167,6 +171,10 @@ android {
 
     buildTypes {
         debug {
+            if (keystores['debug'] != null) {
+                signingConfig signingConfigs.debug
+            }
+            isDefault true
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'),
                           'proguard/proguard-firebase-messaging.pro',
@@ -192,14 +200,9 @@ android {
                           'proguard/proguard.cfg'
         }
 
-        staging {
-            initWith debug
-            applicationIdSuffix ".staging"
-            signingConfig signingConfigs.staging
-        }
-
         flipper {
             initWith debug
+            isDefault false
             minifyEnabled false
         }
 
@@ -212,24 +215,36 @@ android {
 
     productFlavors {
         play {
-            dimension "none"
+            dimension 'distribution'
             ext.websiteUpdateUrl = "null"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "false"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
         }
 
         website {
-            dimension "none"
+            dimension 'distribution'
+            isDefault true
             ext.websiteUpdateUrl = "https://shadowupdate.sres.su:19080/android"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "\"$ext.websiteUpdateUrl\""
         }
 
         internal {
-            dimension "none"
+            dimension 'distribution'
             ext.websiteUpdateUrl = "null"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "false"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
+        }
+
+        prod {
+            dimension 'environment'
+
+            isDefault true
+        }
+
+        staging {
+            dimension 'environment'
+            applicationIdSuffix ".staging"
         }
     }
 
@@ -389,7 +404,7 @@ dependencies {
 }
 
 dependencyVerification {
-    configuration = '(play|website)(Debug|Release)RuntimeClasspath'
+    configuration = '(play|website)(Prod|Staging)(Debug|Release)RuntimeClasspath'
 }
 
 def assembleWebsiteDescriptor = { variant, file ->
@@ -437,19 +452,19 @@ def assembleWebsiteDescriptor = { variant, file ->
 
 task signProductionPlayRelease {
     doLast {
-        signProductionRelease(android.applicationVariants.find { (it.name == 'playRelease') })
+        signProductionRelease(android.applicationVariants.find { (it.name == 'playProdRelease') })
     }
 }
 
 task signProductionInternalRelease {
     doLast {
-        signProductionRelease(android.applicationVariants.find { (it.name == 'internalRelease') })
+        signProductionRelease(android.applicationVariants.find { (it.name == 'internalProdRelease') })
     }
 }
 
 task signProductionWebsiteRelease {
     doLast {
-        def  variant       = android.applicationVariants.find { (it.name == 'websiteRelease') }
+        def  variant       = android.applicationVariants.find { (it.name == 'websiteProdRelease') }
         File signedRelease = signProductionRelease(variant).find { it.name.contains('universal') }
         assembleWebsiteDescriptor(variant, signedRelease)
     }
@@ -474,5 +489,16 @@ tasks.withType(Test) {
         showCauses true
         showExceptions true
         showStackTraces true
+    }
+}
+
+def loadKeystoreProperties(filename) {
+    def keystorePropertiesFile = file("${project.rootDir}/${filename}")
+    if (keystorePropertiesFile.exists()) {
+        def keystoreProperties = new Properties()
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+        return keystoreProperties;
+    } else {
+        return null;
     }
 }

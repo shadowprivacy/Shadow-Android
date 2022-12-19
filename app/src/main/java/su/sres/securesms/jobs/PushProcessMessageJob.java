@@ -237,15 +237,16 @@ public final class PushProcessMessageJob extends BaseJob {
         try {
           SignalServiceGroupContext signalServiceGroupContext = content.getDataMessage().get().getGroupContext().get();
           GroupId                   groupId                   = GroupUtil.idFromGroupContext(signalServiceGroupContext);
-          Recipient                 recipient                 = Recipient.externalGroup(context, groupId);
-
-          queueName = getQueueName(recipient.getId());
+          queueName = getQueueName(Recipient.externalPossiblyMigratedGroup(context, groupId).getId());
 
           if (groupId.isV2()) {
             int localRevision = DatabaseFactory.getGroupDatabase(context)
                     .getGroupV2Revision(groupId.requireV2());
 
-            if (signalServiceGroupContext.getGroupV2().get().getRevision() > localRevision) {
+            if (signalServiceGroupContext.getGroupV2().get().getRevision() > localRevision ||
+                    DatabaseFactory.getGroupDatabase(context).getGroupV1ByExpectedV2(groupId.requireV2()).isPresent())
+            {
+              Log.i(TAG, "Adding network constraint to group-related job.");
               builder.addConstraint(NetworkConstraint.KEY)
                       .setLifespan(TimeUnit.DAYS.toMillis(30));
             }
@@ -257,7 +258,7 @@ public final class PushProcessMessageJob extends BaseJob {
         queueName = getQueueName(RecipientId.fromHighTrust(content.getSender()));
       }
     } else if (exceptionMetadata != null) {
-      Recipient recipient = exceptionMetadata.groupId != null ? Recipient.externalGroup(context, exceptionMetadata.groupId)
+      Recipient recipient = exceptionMetadata.groupId != null ? Recipient.externalPossiblyMigratedGroup(context, exceptionMetadata.groupId)
               : Recipient.external(context, exceptionMetadata.sender);
       queueName = getQueueName(recipient.getId());
     }
@@ -349,6 +350,11 @@ public final class PushProcessMessageJob extends BaseJob {
 
         if (isGv2Message) {
           GroupId.V2 groupIdV2 = groupId.get().requireV2();
+
+          Optional<GroupDatabase.GroupRecord> possibleGv1 = groupDatabase.getGroupV1ByExpectedV2(groupIdV2);
+          if (possibleGv1.isPresent()) {
+            GroupV1MigrationJob.performLocalMigration(context, possibleGv1.get().getId().requireV1());
+          }
 
           if (!updateGv2GroupFromServerOrP2PChange(content, message.getGroupContext().get().getGroupV2().get())) {
             log(TAG, String.valueOf(content.getTimestamp()), "Ignoring GV2 message for group we are not currently in " + groupIdV2);
@@ -509,7 +515,7 @@ public final class PushProcessMessageJob extends BaseJob {
 
     if (smsMessageId.isPresent()) {
       MessageDatabase database = DatabaseFactory.getSmsDatabase(context);
-      database.markAsMissedCall(smsMessageId.get());
+      database.markAsMissedCall(smsMessageId.get(), message.getType() == OfferMessage.Type.VIDEO_CALL);
     } else {
       Intent     intent            = new Intent(context, WebRtcCallService.class);
       Recipient  recipient         = Recipient.externalHighTrustPush(context, content.getSender());
@@ -584,7 +590,7 @@ public final class PushProcessMessageJob extends BaseJob {
   {
     log(TAG, String.valueOf(content), "handleCallHangupMessage");
     if (smsMessageId.isPresent()) {
-      DatabaseFactory.getSmsDatabase(context).markAsMissedCall(smsMessageId.get());
+      DatabaseFactory.getSmsDatabase(context).markAsMissedCall(smsMessageId.get(), false);
     } else {
         Intent     intent     = new Intent(context, WebRtcCallService.class);
       RemotePeer remotePeer = new RemotePeer(Recipient.externalHighTrustPush(context, content.getSender()).getId());
@@ -882,7 +888,7 @@ public final class PushProcessMessageJob extends BaseJob {
       recipient = Recipient.externalPush(context, response.getPerson().get());
     } else if (response.getGroupId().isPresent()) {
       GroupId groupId = GroupId.v1(response.getGroupId().get());
-      recipient = Recipient.externalGroup(context, groupId);
+      recipient = Recipient.externalPossiblyMigratedGroup(context, groupId);
     } else {
       warn(TAG, "Message request response was missing a thread recipient! Skipping.");
       return;
@@ -1038,12 +1044,16 @@ public final class PushProcessMessageJob extends BaseJob {
   }
 
   private void handleSynchronizeViewOnceOpenMessage(@NonNull ViewOnceOpenMessage openMessage, long envelopeTimestamp) {
+    log(TAG, String.valueOf(envelopeTimestamp), "Handling a view-once open for message: " + openMessage.getTimestamp());
+
     RecipientId   author    = Recipient.externalPush(context, openMessage.getSender()).getId();
     long          timestamp = openMessage.getTimestamp();
     MessageRecord record    = DatabaseFactory.getMmsSmsDatabase(context).getMessageFor(timestamp, author);
 
     if (record != null && record.isMms()) {
       DatabaseFactory.getAttachmentDatabase(context).deleteAttachmentFilesForViewOnceMessage(record.getId());
+    } else {
+      warn(TAG, String.valueOf(envelopeTimestamp), "Got a view-once open message for a message we don't have!");
     }
 
     MessageNotifier messageNotifier = ApplicationDependencies.getMessageNotifier();
@@ -1562,7 +1572,7 @@ public final class PushProcessMessageJob extends BaseJob {
         return;
       }
 
-      Recipient groupRecipient = Recipient.externalGroup(context, groupId);
+      Recipient groupRecipient = Recipient.externalPossiblyMigratedGroup(context, groupId);
 
       threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(groupRecipient);
     } else {
@@ -1788,7 +1798,7 @@ public final class PushProcessMessageJob extends BaseJob {
           throws BadGroupIdException
   {
     if (message.isPresent()) {
-      return Optional.of(Recipient.externalGroup(context, GroupUtil.idFromGroupContext(message.get())));
+      return Optional.of(Recipient.externalPossiblyMigratedGroup(context, GroupUtil.idFromGroupContext(message.get())));
     }
     return Optional.absent();
   }
@@ -1823,6 +1833,15 @@ public final class PushProcessMessageJob extends BaseJob {
         GroupDatabase     groupDatabase = DatabaseFactory.getGroupDatabase(context);
         Optional<GroupId> groupId       = GroupUtil.idFromGroupContext(message.getGroupContext());
 
+        if (groupId.isPresent()       &&
+                groupId.get().isV1()      &&
+                message.isGroupV1Update() &&
+                groupDatabase.groupExists(groupId.get().requireV1().deriveV2MigrationGroupId()))
+        {
+          warn(TAG, String.valueOf(content.getTimestamp()), "Ignoring V1 update for a group we've already migrated to V2.");
+          return true;
+        }
+
         if (groupId.isPresent() && groupDatabase.isUnknownGroup(groupId.get())) {
           return sender.isBlocked();
         }
@@ -1848,7 +1867,7 @@ public final class PushProcessMessageJob extends BaseJob {
 
       if (content.getTypingMessage().get().getGroupId().isPresent()) {
         GroupId   groupId        = GroupId.push(content.getTypingMessage().get().getGroupId().get());
-        Recipient groupRecipient = Recipient.externalGroup(context, groupId);
+        Recipient groupRecipient = Recipient.externalPossiblyMigratedGroup(context, groupId);
         return groupRecipient.isBlocked() || !groupRecipient.isActiveGroup();
       }
     }

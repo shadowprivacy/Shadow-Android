@@ -366,7 +366,11 @@ public final class ConversationListItem extends RelativeLayout
   }
 
   private void setStatusIcons(ThreadRecord thread) {
-    if (!thread.isOutgoing() || thread.isOutgoingCall() || thread.isVerificationStatusChange()) {
+    if (!thread.isOutgoing()         ||
+            thread.isOutgoingAudioCall() ||
+            thread.isOutgoingVideoCall() ||
+            thread.isVerificationStatusChange())
+    {
       deliveryStatusIndicator.setNone();
       alertView.setNone();
     } else if (thread.isFailed()) {
@@ -446,12 +450,14 @@ public final class ConversationListItem extends RelativeLayout
     } else if (MmsSmsColumns.Types.isDraftMessageType(thread.getType())) {
       String draftText = context.getString(R.string.ThreadRecord_draft);
       return emphasisAdded(context, draftText + " " + thread.getBody());
-    } else if (SmsDatabase.Types.isOutgoingCall(thread.getType())) {
+    } else if (SmsDatabase.Types.isOutgoingAudioCall(thread.getType()) || SmsDatabase.Types.isOutgoingVideoCall(thread.getType())) {
       return emphasisAdded(context, context.getString(R.string.ThreadRecord_called));
-    } else if (SmsDatabase.Types.isIncomingCall(thread.getType())) {
+    } else if (SmsDatabase.Types.isIncomingAudioCall(thread.getType()) || SmsDatabase.Types.isIncomingVideoCall(thread.getType())) {
       return emphasisAdded(context, context.getString(R.string.ThreadRecord_called_you));
-    } else if (SmsDatabase.Types.isMissedCall(thread.getType())) {
-      return emphasisAdded(context, context.getString(R.string.ThreadRecord_missed_call));
+    } else if (SmsDatabase.Types.isMissedAudioCall(thread.getType())) {
+      return emphasisAdded(context, context.getString(R.string.ThreadRecord_missed_audio_call));
+    } else if (SmsDatabase.Types.isMissedVideoCall(thread.getType())) {
+      return emphasisAdded(context, context.getString(R.string.ThreadRecord_missed_video_call));
     } else if (SmsDatabase.Types.isJoinedType(thread.getType())) {
       return emphasisAdded(recipientToStringAsync(thread.getRecipient().getId(), r -> new SpannableString(context.getString(R.string.ThreadRecord_s_is_on_signal, r.getDisplayName(context)))));
     } else if (SmsDatabase.Types.isExpirationTimerUpdate(thread.getType())) {

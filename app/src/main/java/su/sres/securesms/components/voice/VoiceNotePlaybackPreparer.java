@@ -150,12 +150,19 @@ final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackP
 
             if (holderIndex != -1) {
                 queueDataAdapter.remove(holderIndex);
-                queueDataAdapter.remove(holderIndex);
+
+                if (!queueDataAdapter.isEmpty()) {
+                    queueDataAdapter.remove(holderIndex);
+                }
+
                 queueDataAdapter.add(holderIndex, createNextClone(description));
                 queueDataAdapter.add(holderIndex, description);
 
                 if (currentIndex != holderIndex) {
-                    dataSource.removeMediaSource(holderIndex);
+                    if (dataSource.getSize() > 1) {
+                        dataSource.removeMediaSource(holderIndex + 1);
+                    }
+
                     dataSource.addMediaSource(holderIndex, mediaSourceFactory.createMediaSource(description));
                 }
 
@@ -178,12 +185,15 @@ final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackP
         MediaDescriptionCompat last      = queueDataAdapter.getMediaDescription(lastIndex);
 
         if (Objects.equals(last.getMediaUri(), NEXT_URI)) {
-            MediaDescriptionCompat end = createEndClone(last);
 
             queueDataAdapter.remove(lastIndex);
-            queueDataAdapter.add(lastIndex, end);
             dataSource.removeMediaSource(lastIndex);
-            dataSource.addMediaSource(lastIndex, mediaSourceFactory.createMediaSource(end));
+            if (queueDataAdapter.size() > 1) {
+                MediaDescriptionCompat end = createEndClone(last);
+
+                queueDataAdapter.add(lastIndex, end);
+                dataSource.addMediaSource(lastIndex, mediaSourceFactory.createMediaSource(end));
+            }
         }
     }
 
@@ -242,10 +252,9 @@ final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackP
     @WorkerThread
     private @NonNull List<MediaDescriptionCompat> loadMediaDescriptionsForConsecutivePlayback(long messageId) {
         try {
-            List<MessageRecord> recordsBefore = DatabaseFactory.getMmsSmsDatabase(context).getMessagesBeforeVoiceNoteExclusive(messageId, LIMIT);
             List<MessageRecord> recordsAfter  = DatabaseFactory.getMmsSmsDatabase(context).getMessagesAfterVoiceNoteInclusive(messageId, LIMIT);
 
-            return Stream.of(buildFilteredMessageRecordList(recordsBefore, recordsAfter))
+            return Stream.of(buildFilteredMessageRecordList(recordsAfter))
                     .map(record -> VoiceNoteMediaDescriptionCompatFactory.buildMediaDescription(context, record))
                     .toList();
         } catch (NoSuchMessageException e) {
@@ -254,20 +263,9 @@ final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackP
         }
     }
 
-    @VisibleForTesting
-    static @NonNull List<MessageRecord> buildFilteredMessageRecordList(@NonNull List<MessageRecord> recordsBefore, @NonNull List<MessageRecord> recordsAfter) {
-        Collections.reverse(recordsBefore);
-        List<MessageRecord> filteredBefore = Stream.of(recordsBefore)
+    private static @NonNull List<MessageRecord> buildFilteredMessageRecordList(@NonNull List<MessageRecord> recordsAfter) {
+        return Stream.of(recordsAfter)
                 .takeWhile(MessageRecordUtil::hasAudio)
                 .toList();
-        Collections.reverse(filteredBefore);
-
-        List<MessageRecord> filteredAfter = Stream.of(recordsAfter)
-                .takeWhile(MessageRecordUtil::hasAudio)
-                .toList();
-
-        filteredBefore.addAll(filteredAfter);
-
-        return filteredBefore;
     }
 }

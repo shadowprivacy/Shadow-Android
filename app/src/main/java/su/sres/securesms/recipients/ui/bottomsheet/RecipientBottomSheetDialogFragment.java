@@ -23,6 +23,7 @@ import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.FallbackPhoto80dp;
 import su.sres.securesms.groups.GroupId;
+import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -147,7 +148,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
             } */
 
             String usernameNumberString = recipient.hasAUserSetDisplayName(requireContext()) && !recipient.isSelf()
-                    ? recipient.getSmsAddress().or("").trim()
+                    ? recipient.getSmsAddress().transform(PhoneNumberFormatter::prettyPrint).or("").trim()
                     : "";
             usernameNumber.setText(usernameNumberString);
             usernameNumber.setVisibility(TextUtils.isEmpty(usernameNumberString) ? View.GONE : View.VISIBLE);

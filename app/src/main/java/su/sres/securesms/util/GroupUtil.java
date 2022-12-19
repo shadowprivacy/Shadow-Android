@@ -6,6 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import com.google.protobuf.ByteString;
+
 import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
@@ -13,6 +15,7 @@ import su.sres.securesms.groups.BadGroupIdException;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.MessageGroupContext;
+import su.sres.securesms.mms.OutgoingGroupUpdateMessage;
 import su.sres.securesms.recipients.Recipient;
 
 import org.signal.zkgroup.InvalidInputException;
@@ -24,8 +27,10 @@ import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.messages.SignalServiceGroup;
 import su.sres.signalservice.api.messages.SignalServiceGroupContext;
 import su.sres.signalservice.api.messages.SignalServiceGroupV2;
+import su.sres.signalservice.internal.push.SignalServiceProtos.GroupContext;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 public final class GroupUtil {
@@ -108,6 +113,26 @@ public final class GroupUtil {
     } else {
       dataMessageBuilder.asGroupMessage(new SignalServiceGroup(groupId.getDecodedId()));
     }
+  }
+
+  public static OutgoingGroupUpdateMessage createGroupV1LeaveMessage(@NonNull GroupId.V1 groupId,
+                                                                     @NonNull Recipient groupRecipient)
+  {
+    GroupContext groupContext = GroupContext.newBuilder()
+            .setId(ByteString.copyFrom(groupId.getDecodedId()))
+            .setType(GroupContext.Type.QUIT)
+            .build();
+
+    return new OutgoingGroupUpdateMessage(groupRecipient,
+            groupContext,
+            null,
+            System.currentTimeMillis(),
+            0,
+            false,
+            null,
+            Collections.emptyList(),
+            Collections.emptyList(),
+            Collections.emptyList());
   }
 
   public static class GroupDescription {

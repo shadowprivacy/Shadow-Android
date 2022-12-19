@@ -578,6 +578,28 @@ public class ThreadDatabase extends Database {
         return db.rawQuery(query, null);
     }
 
+    public @NonNull List<ThreadRecord> getRecentV1Groups(int limit) {
+        SQLiteDatabase db               = databaseHelper.getReadableDatabase();
+        String         where            = MESSAGE_COUNT + " != 0 AND " +
+                "(" +
+                GroupDatabase.TABLE_NAME + "." + GroupDatabase.ACTIVE + " = 1 AND " +
+                GroupDatabase.TABLE_NAME + "." + GroupDatabase.V2_MASTER_KEY + " IS NULL AND " +
+                GroupDatabase.TABLE_NAME + "." + GroupDatabase.MMS + " = 0" +
+                ")";
+        String         query = createQuery(where, 0, limit, true);
+
+        List<ThreadRecord> threadRecords = new ArrayList<>();
+
+        try (Reader reader = readerFor(db.rawQuery(query, null))) {
+            ThreadRecord record;
+
+            while ((record = reader.getNext()) != null) {
+                threadRecords.add(record);
+            }
+        }
+        return threadRecords;
+    }
+
     public Cursor getConversationList() {
         return getConversationList("0");
     }
@@ -700,7 +722,7 @@ public class ThreadDatabase extends Database {
         final String query;
 
         if (pinned) {
-            query = createQuery(where, PINNED + " ASC", offset, limit, false);
+            query = createQuery(where, PINNED + " ASC", offset, limit);
         } else {
             query = createQuery(where, offset, limit, false);
         }
@@ -1083,14 +1105,14 @@ public class ThreadDatabase extends Database {
                     pinnedRecipient = Recipient.externalPush(context, pinned.getContact().get());
                 } else if (pinned.getGroupV1Id().isPresent()) {
                     try {
-                        pinnedRecipient = Recipient.externalGroup(context, GroupId.v1Exact(pinned.getGroupV1Id().get()));
+                        pinnedRecipient = Recipient.externalGroupExact(context, GroupId.v1Exact(pinned.getGroupV1Id().get()));
                     } catch (BadGroupIdException e) {
                         Log.w(TAG, "Failed to parse pinned groupV1 ID!", e);
                         pinnedRecipient = null;
                     }
                 } else if (pinned.getGroupV2MasterKey().isPresent()) {
                     try {
-                        pinnedRecipient = Recipient.externalGroup(context, GroupId.v2(new GroupMasterKey(pinned.getGroupV2MasterKey().get())));
+                        pinnedRecipient = Recipient.externalGroupExact(context, GroupId.v2(new GroupMasterKey(pinned.getGroupV2MasterKey().get())));
                     } catch (InvalidInputException e) {
                         Log.w(TAG, "Failed to parse pinned groupV2 master key!", e);
                         pinnedRecipient = null;
@@ -1334,11 +1356,10 @@ public class ThreadDatabase extends Database {
     private @NonNull
     String createQuery(@NonNull String where, long offset, long limit, boolean preferPinned) {
         String orderBy = (preferPinned ? TABLE_NAME + "." + PINNED + " DESC, " : "") + TABLE_NAME + "." + DATE + " DESC";
-        return createQuery(where, orderBy, offset, limit, preferPinned);
+        return createQuery(where, orderBy, offset, limit);
     }
 
-    private @NonNull
-    String createQuery(@NonNull String where, @NonNull String orderBy, long offset, long limit, boolean preferPinned) {
+    private @NonNull String createQuery(@NonNull String where, @NonNull String orderBy, long offset, long limit) {
         String projection = Util.join(COMBINED_THREAD_RECIPIENT_GROUP_PROJECTION, ",");
         String query =
                 "SELECT " + projection + " FROM " + TABLE_NAME +

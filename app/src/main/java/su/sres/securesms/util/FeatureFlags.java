@@ -64,6 +64,8 @@ public final class FeatureFlags {
     public  static final String MODERN_PROFILE_SHARING       = "android.modernProfileSharing";
     private static final String VIEWED_RECEIPTS              = "android.viewed.receipts";
     private static final String MAX_ENVELOPE_SIZE            = "android.maxEnvelopeSize";
+    private static final String GV1_AUTO_MIGRATE_VERSION     = "android.groupsv2.autoMigrateVersion";
+    private static final String GV1_MANUAL_MIGRATE_VERSION   = "android.groupsv2.manualMigrateVersion";
 
     /**
      * We will only store remote values for flags in this set. If you want a flag to be controllable
@@ -82,7 +84,9 @@ public final class FeatureFlags {
             CLIENT_EXPIRATION,
             MODERN_PROFILE_SHARING,
             VIEWED_RECEIPTS,
-            MAX_ENVELOPE_SIZE
+            MAX_ENVELOPE_SIZE,
+            GV1_AUTO_MIGRATE_VERSION,
+            GV1_MANUAL_MIGRATE_VERSION
     );
 
     /**
@@ -128,6 +132,7 @@ public final class FeatureFlags {
      * desired test state.
      */
     private static final Map<String, OnFlagChange> FLAG_CHANGE_LISTENERS = new HashMap<String, OnFlagChange>() {{
+        put(GV1_AUTO_MIGRATE_VERSION, change -> ApplicationDependencies.getJobManager().add(new RefreshAttributesJob()));
     }};
 
     private static final Map<String, Object> REMOTE_VALUES = new TreeMap<>();
@@ -258,6 +263,16 @@ public final class FeatureFlags {
     /** The max size envelope that is allowed to be sent. */
     public static int maxEnvelopeSize() {
         return getInteger(MAX_ENVELOPE_SIZE, 0);
+    }
+
+    /** Whether or not auto-migration from GV1->GV2 is enabled. */
+    public static boolean groupsV1AutoMigration() {
+        return getVersionFlag(GV1_AUTO_MIGRATE_VERSION) == VersionFlag.ON;
+    }
+
+    /** Whether or not manual migration from GV1->GV2 is enabled. */
+    public static boolean groupsV1ManualMigration() {
+        return groupsV1AutoMigration() && getVersionFlag(GV1_MANUAL_MIGRATE_VERSION) == VersionFlag.ON;
     }
 
     /** Only for rendering debug info. */

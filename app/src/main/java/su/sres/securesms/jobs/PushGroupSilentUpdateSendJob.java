@@ -10,7 +10,6 @@ import com.annimon.stream.Stream;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import su.sres.securesms.database.RecipientDatabase;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -85,7 +84,7 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
         MessageGroupContext.GroupV2Properties properties   = groupMessage.requireGroupV2Properties();
         SignalServiceProtos.GroupContextV2    groupContext = properties.getGroupContext();
 
-        String queue = Recipient.externalGroup(context, groupId).getId().toQueueKey();
+        String queue = Recipient.externalGroupExact(context, groupId).getId().toQueueKey();
 
         return new PushGroupSilentUpdateSendJob(new ArrayList<>(recipients),
                 recipients.size(),

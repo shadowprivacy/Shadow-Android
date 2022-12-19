@@ -43,12 +43,14 @@ public final class ConversationUpdateItem extends LinearLayout
 
   private Set<ConversationMessage> batchSelected;
 
-  private TextView                  body;
-  private LiveRecipient             sender;
-  private ConversationMessage       conversationMessage;
-  private MessageRecord             messageRecord;
-  private Locale                    locale;
-  private LiveData<Spannable>       displayBody;
+  private TextView                body;
+  private TextView                actionButton;
+  private LiveRecipient           sender;
+  private ConversationMessage     conversationMessage;
+  private Optional<MessageRecord> nextMessageRecord;
+  private MessageRecord           messageRecord;
+  private LiveData<Spannable>     displayBody;
+  private EventListener           eventListener;
 
   private final UpdateObserver updateObserver = new UpdateObserver();
   private final SenderObserver senderObserver = new SenderObserver();
@@ -65,7 +67,8 @@ public final class ConversationUpdateItem extends LinearLayout
   public void onFinishInflate() {
     super.onFinishInflate();
 
-    this.body = findViewById(R.id.conversation_update_body);
+    this.body         = findViewById(R.id.conversation_update_body);
+    this.actionButton = findViewById(R.id.conversation_update_action);
 
     this.setOnClickListener(new InternalClickListener(null));
   }
@@ -84,12 +87,12 @@ public final class ConversationUpdateItem extends LinearLayout
   {
     this.batchSelected = batchSelected;
 
-    bind(lifecycleOwner, conversationMessage, locale);
+    bind(lifecycleOwner, conversationMessage, nextMessageRecord);
   }
 
   @Override
   public void setEventListener(@Nullable EventListener listener) {
-    // No events to report yet
+    this.eventListener = listener;
   }
 
   @Override
@@ -97,11 +100,14 @@ public final class ConversationUpdateItem extends LinearLayout
     return conversationMessage;
   }
 
-  private void bind(@NonNull LifecycleOwner lifecycleOwner, @NonNull ConversationMessage conversationMessage, @NonNull Locale locale) {
+  private void bind(@NonNull LifecycleOwner lifecycleOwner,
+                    @NonNull ConversationMessage conversationMessage,
+                    @NonNull Optional<MessageRecord> nextMessageRecord)
+  {
 
     this.conversationMessage = conversationMessage;
     this.messageRecord       = conversationMessage.getMessageRecord();
-    this.locale              = locale;
+    this.nextMessageRecord   = nextMessageRecord;
 
     observeSender(lifecycleOwner, messageRecord.getIndividualRecipient());
 
@@ -109,7 +115,7 @@ public final class ConversationUpdateItem extends LinearLayout
     LiveData<Spannable> liveUpdateMessage = LiveUpdateMessage.fromMessageDescription(getContext(), updateDescription);
     LiveData<Spannable> spannableMessage  = loading(liveUpdateMessage);
 
-    present(conversationMessage);
+    present(conversationMessage, nextMessageRecord);
 
     observeDisplayBody(lifecycleOwner, spannableMessage);
   }
@@ -159,9 +165,24 @@ public final class ConversationUpdateItem extends LinearLayout
     }
   }
 
-  private void present(ConversationMessage conversationMessage) {
+  private void present(ConversationMessage conversationMessage, @NonNull Optional<MessageRecord> nextMessageRecord) {
     if (batchSelected.contains(conversationMessage)) setSelected(true);
     else                                             setSelected(false);
+
+    if (conversationMessage.getMessageRecord().isGroupV1MigrationEvent() &&
+            (!nextMessageRecord.isPresent() || !nextMessageRecord.get().isGroupV1MigrationEvent()))
+    {
+      actionButton.setText(R.string.ConversationUpdateItem_learn_more);
+      actionButton.setVisibility(VISIBLE);
+      actionButton.setOnClickListener(v -> {
+        if (batchSelected.isEmpty() && eventListener != null) {
+          eventListener.onGroupMigrationLearnMoreClicked(conversationMessage.getMessageRecord().getGroupV1MigrationEventInvites());
+        }
+      });
+    } else {
+      actionButton.setVisibility(GONE);
+      actionButton.setOnClickListener(null);
+    }
   }
 
   @Override
@@ -172,7 +193,7 @@ public final class ConversationUpdateItem extends LinearLayout
   private final class SenderObserver implements Observer<Recipient> {
     @Override
     public void onChanged(Recipient recipient) {
-      present(conversationMessage);
+      present(conversationMessage, nextMessageRecord);
     }
   }
 

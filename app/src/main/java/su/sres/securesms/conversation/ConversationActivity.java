@@ -21,6 +21,7 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 
 import androidx.annotation.WorkerThread;
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.content.ActivityNotFoundException;
@@ -59,6 +60,7 @@ import androidx.appcompat.widget.Toolbar;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 
 import android.view.Gravity;
@@ -111,6 +113,7 @@ import su.sres.securesms.groups.ui.GroupErrors;
 import su.sres.securesms.groups.ui.LeaveGroupDialog;
 import su.sres.securesms.groups.ui.invitesandrequests.ManagePendingAndRequestingMembersActivity;
 import su.sres.securesms.groups.ui.managegroup.ManageGroupActivity;
+import su.sres.securesms.jobs.GroupV1MigrationJob;
 import su.sres.securesms.jobs.GroupV2UpdateSelfProfileKeyJob;
 import su.sres.securesms.jobs.RequestGroupV2InfoJob;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -121,6 +124,8 @@ import su.sres.securesms.PromptMmsActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.messagedetails.MessageDetailsActivity;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
+import su.sres.securesms.profiles.spoofing.ReviewBannerView;
+import su.sres.securesms.profiles.spoofing.ReviewCardDialogFragment;
 import su.sres.securesms.reactions.ReactionsBottomSheetDialogFragment;
 import su.sres.securesms.reactions.any.ReactWithAnyEmojiBottomSheetDialogFragment;
 import su.sres.securesms.recipients.ui.managerecipient.ManageRecipientActivity;
@@ -244,8 +249,10 @@ import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.MessageUtil;
 import su.sres.securesms.util.PlayStoreUtil;
 import su.sres.securesms.util.ServiceUtil;
+import su.sres.securesms.util.SpanUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.TextSecurePreferences.MediaKeyboardMode;
+import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.AssertedSuccessListener;
@@ -341,6 +348,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     protected Stub<ReminderView> reminderView;
     private Stub<UnverifiedBannerView> unverifiedBannerView;
     //    private Stub<GroupShareProfileView> groupShareProfileView;
+    private   Stub<ReviewBannerView>      reviewBanner;
     private TypingStatusTextWatcher typingTextWatcher;
     private ConversationSearchBottomBar searchNav;
     private MenuItem searchViewItem;
@@ -451,6 +459,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
             @Override
             public void onSuccess(Boolean result) {
                 initializeProfiles();
+                initializeGv1Migration();
                 initializeDraft().addListener(new AssertedSuccessListener<Boolean>() {
                     @Override
                     public void onSuccess(Boolean loadedDraft) {
@@ -1849,6 +1858,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         reminderView = ViewUtil.findStubById(this, R.id.reminder_stub);
         unverifiedBannerView = ViewUtil.findStubById(this, R.id.unverified_banner_stub);
 //        groupShareProfileView    = ViewUtil.findStubById(this, R.id.group_share_profile_view_stub);
+        reviewBanner             = ViewUtil.findStubById(this, R.id.review_banner_stub);
         quickAttachmentToggle = ViewUtil.findById(this, R.id.quick_attachment_toggle);
         inlineAttachmentToggle = ViewUtil.findById(this, R.id.inline_attachment_container);
         inputPanel = ViewUtil.findById(this, R.id.bottom_panel);
@@ -2015,6 +2025,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         groupViewModel = ViewModelProviders.of(this, new ConversationGroupViewModel.Factory()).get(ConversationGroupViewModel.class);
         recipient.observe(this, groupViewModel::onRecipientChange);
         groupViewModel.getGroupActiveState().observe(this, unused -> invalidateOptionsMenu());
+        groupViewModel.getReviewState().observe(this, this::presentGroupReviewBanner);
     }
 
     private void initializeMentionsViewModel() {
@@ -2141,6 +2152,10 @@ public class ConversationActivity extends PassphraseRequiredActivity
         }
 
         RetrieveProfileJob.enqueueAsync(recipient.getId());
+    }
+
+    private void initializeGv1Migration() {
+        GroupV1MigrationJob.enqueuePossibleAutoMigrate(recipient.getId());
     }
 
     private void onRecipientChanged(@NonNull Recipient recipient) {
@@ -3078,6 +3093,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         messageRequestBottomView.setBlockOnClickListener(v -> onMessageRequestBlockClicked(viewModel));
         messageRequestBottomView.setUnblockOnClickListener(v -> onMessageRequestUnblockClicked(viewModel));
 
+        viewModel.getRequestReviewDisplayState().observe(this, this::presentRequestReviewBanner);
         viewModel.getMessageData().observe(this, this::presentMessageRequestBottomViewTo);
         viewModel.getMessageRequestDisplayState().observe(this, this::presentMessageRequestDisplayState);
         viewModel.getFailures().observe(this, this::showGroupChangeErrorToast);
@@ -3103,12 +3119,66 @@ public class ConversationActivity extends PassphraseRequiredActivity
         });
     }
 
+    private void presentRequestReviewBanner(@NonNull MessageRequestViewModel.RequestReviewDisplayState state) {
+        switch (state) {
+            case SHOWN:
+                reviewBanner.get().setVisibility(View.VISIBLE);
+
+                CharSequence message = new SpannableStringBuilder().append(SpanUtil.bold(getString(R.string.ConversationFragment__review_requests_carefully)))
+                        .append(" ")
+                        .append(getString(R.string.ConversationFragment__signal_found_another_contact_with_the_same_name));
+
+                reviewBanner.get().setBannerMessage(message);
+
+                Drawable drawable = Objects.requireNonNull(ThemeUtil.getThemedDrawable(this, R.attr.menu_info_icon)).mutate();
+                DrawableCompat.setTint(drawable, ThemeUtil.getThemedColor(this, R.attr.icon_tint));
+
+                reviewBanner.get().setBannerIcon(drawable);
+                reviewBanner.get().setOnClickListener(unused -> handleReviewRequest(recipient.getId()));
+                break;
+            case HIDDEN:
+                reviewBanner.get().setVisibility(View.GONE);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void presentGroupReviewBanner(@NonNull ConversationGroupViewModel.ReviewState groupReviewState) {
+        if (groupReviewState.getCount() > 0) {
+            reviewBanner.get().setVisibility(View.VISIBLE);
+            reviewBanner.get().setBannerMessage(getString(R.string.ConversationFragment__d_group_members_have_the_same_name, groupReviewState.getCount()));
+            reviewBanner.get().setBannerRecipient(groupReviewState.getRecipient());
+            reviewBanner.get().setOnClickListener(unused -> handleReviewGroupMembers(groupReviewState.getGroupId()));
+        } else if (reviewBanner.resolved()) {
+            reviewBanner.get().setVisibility(View.GONE);
+        }
+    }
+
     private void showMessageRequestBusy() {
         messageRequestBottomView.showBusy();
     }
 
     private void hideMessageRequestBusy() {
         messageRequestBottomView.hideBusy();
+    }
+
+    private void handleReviewGroupMembers(@Nullable GroupId.V2 groupId) {
+        if (groupId == null) {
+            return;
+        }
+
+        ReviewCardDialogFragment.createForReviewMembers(groupId)
+                .show(getSupportFragmentManager(), null);
+    }
+
+    private void handleReviewRequest(@NonNull RecipientId recipientId) {
+        if (recipientId == Recipient.UNKNOWN.getId()) {
+            return;
+        }
+
+        ReviewCardDialogFragment.createForReviewRequest(recipientId)
+                .show(getSupportFragmentManager(), null);
     }
 
     private void showGroupChangeErrorToast(@NonNull GroupChangeFailureReason e) {

@@ -11,6 +11,7 @@ import su.sres.securesms.database.JobDatabase;
 import su.sres.securesms.database.KeyValueDatabase;
 import su.sres.securesms.database.MegaphoneDatabase;
 import su.sres.securesms.database.MentionDatabase;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.logging.Log;
 
 import net.sqlcipher.database.SQLiteDatabase;
@@ -35,6 +36,7 @@ import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.StorageKeyDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.util.CursorUtil;
+import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.Triple;
 import su.sres.securesms.util.Util;
 
@@ -49,15 +51,15 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   @SuppressWarnings("unused")
   private static final String TAG = SQLCipherOpenHelper.class.getSimpleName();
 
-  private static final int SERVER_DELIVERED_TIMESTAMP          = 64;
-  private static final int QUOTE_CLEANUP                       = 65;
-  private static final int BORDERLESS                          = 66;
-  private static final int MENTIONS                            = 67;
+  private static final int SERVER_DELIVERED_TIMESTAMP             = 64;
+  private static final int QUOTE_CLEANUP                          = 65;
+  private static final int BORDERLESS                             = 66;
+  private static final int MENTIONS                               = 67;
   private static final int PINNED_CONVERSATIONS_MENTION_GLOBAL_SETTING_MIGRATION_UNKNOWN_STORAGE_FIELDS = 68;
   private static final int STICKER_CONTENT_TYPE_EMOJI_IN_NOTIFICATIONS             = 69;
   private static final int THUMBNAIL_CLEANUP_AND_STICKER_CONTENT_TYPE_CLEANUP_AND_MENTION_CLEANUP                = 70;
-  private static final int REACTION_CLEANUP                    = 71;
-  private static final int CAPABILITIES_REFACTOR               = 72;
+  private static final int REACTION_CLEANUP                        = 71;
+  private static final int CAPABILITIES_REFACTOR_AND_GV1_MIGRATION = 72;
 
   private static final int    DATABASE_VERSION = 72;
   private static final String DATABASE_NAME    = "shadow.db";
@@ -305,11 +307,31 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.update("sms", values, "remote_deleted = ?", new String[] { "1" });
       }
 
-      if (oldVersion < CAPABILITIES_REFACTOR) {
+      if (oldVersion < CAPABILITIES_REFACTOR_AND_GV1_MIGRATION) {
         db.execSQL("ALTER TABLE recipient ADD COLUMN capabilities INTEGER DEFAULT 0");
 
         db.execSQL("UPDATE recipient SET capabilities = 1 WHERE gv2_capability = 1");
         db.execSQL("UPDATE recipient SET capabilities = 2 WHERE gv2_capability = -1");
+
+        // gv1 migration
+
+        db.execSQL("ALTER TABLE groups ADD COLUMN expected_v2_id TEXT DEFAULT NULL");
+        db.execSQL("ALTER TABLE groups ADD COLUMN former_v1_members TEXT DEFAULT NULL");
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS expected_v2_id_index ON groups (expected_v2_id)");
+
+        int count = 0;
+        try (Cursor cursor = db.rawQuery("SELECT * FROM groups WHERE group_id LIKE '__textsecure_group__!%' AND LENGTH(group_id) = 53", null)) {
+          while (cursor.moveToNext()) {
+            String gv1 = CursorUtil.requireString(cursor, "group_id");
+            String gv2 = GroupId.parseOrThrow(gv1).requireV1().deriveV2MigrationGroupId().toString();
+
+            ContentValues values = new ContentValues();
+            values.put("expected_v2_id", gv2);
+            count += db.update("groups", values, "group_id = ?", SqlUtil.buildArgs(gv1));
+          }
+        }
+
+        Log.i(TAG, "Updated " + count + " GV1 groups with expected GV2 IDs.");
       }
 
       db.setTransactionSuccessful();

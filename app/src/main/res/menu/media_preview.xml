@@ -6,6 +6,9 @@
         android:icon="?menu_forward_icon"
         android:title="@string/media_preview__forward_title"
         app:showAsAction="never"/>
+    <item android:id="@+id/media_preview__share"
+        android:title="@string/media_preview__share_title"
+        app:showAsAction="never"/>
     <item
         android:id="@+id/save"
         android:icon="@drawable/ic_download_filled_white_24"

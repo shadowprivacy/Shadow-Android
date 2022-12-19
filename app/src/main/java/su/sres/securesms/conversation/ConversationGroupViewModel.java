@@ -10,14 +10,19 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.annimon.stream.Stream;
+
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupDatabase.GroupRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupChangeBusyException;
 import su.sres.securesms.groups.GroupChangeFailedException;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
+import su.sres.securesms.profiles.spoofing.ReviewRecipient;
+import su.sres.securesms.profiles.spoofing.ReviewUtil;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.AsynchronousCallback;
 import su.sres.securesms.util.FeatureFlags;
@@ -25,6 +30,8 @@ import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 final class ConversationGroupViewModel extends ViewModel {
 
@@ -32,15 +39,30 @@ final class ConversationGroupViewModel extends ViewModel {
     private final LiveData<GroupActiveState>          groupActiveState;
     private final LiveData<GroupDatabase.MemberLevel> selfMembershipLevel;
     private final LiveData<Integer>                   actionableRequestingMembers;
+    private final LiveData<ReviewState>               reviewState;
 
     private ConversationGroupViewModel() {
         this.liveRecipient = new MutableLiveData<>();
 
-        LiveData<GroupRecord> groupRecord = LiveDataUtil.mapAsync(liveRecipient, ConversationGroupViewModel::getGroupRecordForRecipient);
+        LiveData<GroupRecord>     groupRecord = LiveDataUtil.mapAsync(liveRecipient, ConversationGroupViewModel::getGroupRecordForRecipient);
+        LiveData<List<Recipient>> duplicates  = LiveDataUtil.mapAsync(groupRecord, record -> {
+            if (record != null && record.isV2Group()) {
+                return Stream.of(ReviewUtil.getDuplicatedRecipients(record.getId().requireV2()))
+                        .map(ReviewRecipient::getRecipient)
+                        .toList();
+            } else {
+                return Collections.emptyList();
+            }
+        });
 
         this.groupActiveState            = Transformations.distinctUntilChanged(Transformations.map(groupRecord, ConversationGroupViewModel::mapToGroupActiveState));
         this.selfMembershipLevel         = Transformations.distinctUntilChanged(Transformations.map(groupRecord, ConversationGroupViewModel::mapToSelfMembershipLevel));
         this.actionableRequestingMembers = Transformations.distinctUntilChanged(Transformations.map(groupRecord, ConversationGroupViewModel::mapToActionableRequestingMemberCount));
+        this.reviewState                 = LiveDataUtil.combineLatest(groupRecord,
+                duplicates,
+                (record, dups) -> dups.isEmpty()
+                        ? ReviewState.EMPTY
+                        : new ReviewState(record.getId().requireV2(), dups.get(0), dups.size()));
     }
 
     void onRecipientChange(Recipient recipient) {
@@ -60,6 +82,10 @@ final class ConversationGroupViewModel extends ViewModel {
 
     LiveData<GroupDatabase.MemberLevel> getSelfMemberLevel() {
         return selfMembershipLevel;
+    }
+
+    public LiveData<ReviewState> getReviewState() {
+        return reviewState;
     }
 
     private static @Nullable GroupRecord getGroupRecordForRecipient(@Nullable Recipient recipient) {
@@ -115,6 +141,33 @@ final class ConversationGroupViewModel extends ViewModel {
                 callback.onError(GroupChangeFailureReason.fromException(e));
             }
         });
+    }
+
+    static final class ReviewState {
+
+        private static final ReviewState EMPTY = new ReviewState(null, Recipient.UNKNOWN, 0);
+
+        private final GroupId.V2 groupId;
+        private final Recipient  recipient;
+        private final int        count;
+
+        ReviewState(@Nullable GroupId.V2 groupId, @NonNull Recipient recipient, int count) {
+            this.groupId   = groupId;
+            this.recipient = recipient;
+            this.count     = count;
+        }
+
+        public @Nullable GroupId.V2 getGroupId() {
+            return groupId;
+        }
+
+        public @NonNull Recipient getRecipient() {
+            return recipient;
+        }
+
+        public int getCount() {
+            return count;
+        }
     }
 
     static final class GroupActiveState {

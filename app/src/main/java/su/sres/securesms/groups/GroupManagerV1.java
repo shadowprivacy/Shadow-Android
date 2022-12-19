@@ -29,6 +29,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.sms.MessageSender;
+import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.MediaUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.internal.push.SignalServiceProtos.GroupContext;
@@ -154,7 +155,7 @@ final class GroupManagerV1 {
 
     @WorkerThread
     static boolean leaveGroup(@NonNull Context context, @NonNull GroupId.V1 groupId) {
-        Recipient                            groupRecipient = Recipient.externalGroup(context, groupId);
+        Recipient                            groupRecipient = Recipient.externalGroupExact(context, groupId);
         long                                 threadId       = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(groupRecipient);
         Optional<OutgoingGroupUpdateMessage> leaveMessage   = createGroupLeaveMessage(context, groupId, groupRecipient);
 
@@ -180,7 +181,7 @@ final class GroupManagerV1 {
     @WorkerThread
     static boolean silentLeaveGroup(@NonNull Context context, @NonNull GroupId.V1 groupId) {
         if (DatabaseFactory.getGroupDatabase(context).isActive(groupId)) {
-            Recipient                            groupRecipient = Recipient.externalGroup(context, groupId);
+            Recipient                            groupRecipient = Recipient.externalGroupExact(context, groupId);
             long                                 threadId       = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(groupRecipient);
             Optional<OutgoingGroupUpdateMessage> leaveMessage   = createGroupLeaveMessage(context, groupId, groupRecipient);
 
@@ -205,7 +206,7 @@ final class GroupManagerV1 {
     static void updateGroupTimer(@NonNull Context context, @NonNull GroupId.V1 groupId, int expirationTime) {
         RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
         ThreadDatabase    threadDatabase    = DatabaseFactory.getThreadDatabase(context);
-        Recipient         recipient         = Recipient.externalGroup(context, groupId);
+        Recipient         recipient         = Recipient.externalGroupExact(context, groupId);
         long              threadId          = threadDatabase.getThreadIdFor(recipient);
 
         recipientDatabase.setExpireMessages(recipient.getId(), expirationTime);
@@ -225,20 +226,6 @@ final class GroupManagerV1 {
             return Optional.absent();
         }
 
-        GroupContext groupContext = GroupContext.newBuilder()
-                .setId(ByteString.copyFrom(groupId.getDecodedId()))
-                .setType(GroupContext.Type.QUIT)
-                .build();
-
-        return Optional.of(new OutgoingGroupUpdateMessage(groupRecipient,
-                groupContext,
-                null,
-                System.currentTimeMillis(),
-                0,
-                false,
-                null,
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList()));
+        return Optional.of(GroupUtil.createGroupV1LeaveMessage(groupId, groupRecipient));
     }
 }

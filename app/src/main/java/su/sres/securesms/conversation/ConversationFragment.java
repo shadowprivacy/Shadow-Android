@@ -47,6 +47,7 @@ import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.groups.GroupId;
+import su.sres.securesms.groups.ui.migration.GroupsV1MigrationBottomSheetDialogFragment;
 import su.sres.securesms.jobs.DirectorySyncJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.linkpreview.LinkPreview;
@@ -107,6 +108,7 @@ import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.permissions.Permissions;
+import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.reactions.ReactionsBottomSheetDialogFragment;
 import su.sres.securesms.recipients.LiveRecipient;
@@ -434,7 +436,7 @@ public class ConversationFragment extends LoggingFragment {
       } else if (isSelf) {
         conversationBanner.setSubtitle(context.getString(R.string.ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation));
       } else {
-        String subtitle = recipient.getE164().orNull();
+        String subtitle = recipient.getE164().transform(PhoneNumberFormatter::prettyPrint).orNull();
 
         if (subtitle == null || subtitle.equals(title)) {
           conversationBanner.hideSubtitle();
@@ -1418,6 +1420,11 @@ public class ConversationFragment extends LoggingFragment {
     @Override
     public boolean onUrlClicked(@NonNull String url) {
       return CommunicationActions.handlePotentialGroupLinkUrl(requireActivity(), url);
+    }
+
+    @Override
+    public void onGroupMigrationLearnMoreClicked(@NonNull List<RecipientId> pendingRecipients) {
+      GroupsV1MigrationBottomSheetDialogFragment.showForLearnMore(requireFragmentManager(), pendingRecipients);
     }
   }
 

@@ -56,6 +56,7 @@ public class LogSectionSystemInfo implements LogSection {
         builder.append("Play Services: ").append(getPlayServicesString(context)).append("\n");
         builder.append("FCM          : ").append(!TextSecurePreferences.isFcmDisabled(context)).append("\n");
         builder.append("Locale       : ").append(Locale.getDefault().toString()).append("\n");
+        builder.append("Linked Devices: ").append(TextSecurePreferences.isMultiDevice(context)).append("\n");
         builder.append("First Version: ").append(TextSecurePreferences.getFirstInstallVersion(context)).append("\n");
         builder.append("App          : ");
         try {
@@ -63,6 +64,8 @@ public class LogSectionSystemInfo implements LogSection {
                     .append(" ")
                     .append(pm.getPackageInfo(context.getPackageName(), 0).versionName)
                     .append(" (")
+                    .append(BuildConfig.CANONICAL_VERSION_CODE)
+                    .append(", ")
                     .append(Util.getManifestApkVersion(context))
                     .append(")\n");
         } catch (PackageManager.NameNotFoundException nnfe) {

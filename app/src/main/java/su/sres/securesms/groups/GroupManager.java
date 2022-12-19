@@ -21,6 +21,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.groupsv2.GroupLinkNotActiveException;
+import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupJoinInfo;
 
 import java.io.IOException;
@@ -80,6 +81,15 @@ public final class GroupManager {
 
       return GroupManagerV1.updateGroup(context, groupId.requireV1(), recipientIds, avatar, name, 0);
     }
+  }
+
+  @WorkerThread
+  public static void migrateGroupToServer(@NonNull Context context,
+                                          @NonNull GroupId.V1 groupIdV1,
+                                          @NonNull Collection<Recipient> members)
+          throws IOException, GroupChangeFailedException, MembershipNotSuitableForV2Exception, GroupAlreadyExistsException
+  {
+    new GroupManagerV2(context).migrateGroupOnToServer(groupIdV1, members);
   }
 
   private static Set<RecipientId> getMemberIds(Collection<Recipient> recipients) {
@@ -166,6 +176,34 @@ public final class GroupManager {
   }
 
   @WorkerThread
+  public static V2GroupServerStatus v2GroupStatus(@NonNull Context context,
+                                                  @NonNull GroupMasterKey groupMasterKey)
+          throws IOException
+  {
+    try {
+      new GroupManagerV2(context).groupServerQuery(groupMasterKey);
+      return V2GroupServerStatus.FULL_OR_PENDING_MEMBER;
+    } catch (GroupNotAMemberException e) {
+      return V2GroupServerStatus.NOT_A_MEMBER;
+    } catch (GroupDoesNotExistException e) {
+      return V2GroupServerStatus.DOES_NOT_EXIST;
+    }
+  }
+
+  /**
+   * Tries to gets the exact version of the group at the time you joined.
+   * <p>
+   * If it fails to get the exact version, it will give the latest.
+   */
+  @WorkerThread
+  public static DecryptedGroup addedGroupVersion(@NonNull Context context,
+                                                 @NonNull GroupMasterKey groupMasterKey)
+          throws IOException, GroupDoesNotExistException, GroupNotAMemberException
+  {
+    return new GroupManagerV2(context).addedGroupVersion(groupMasterKey);
+  }
+
+  @WorkerThread
   public static void setMemberAdmin(@NonNull Context context,
                                     @NonNull GroupId.V2 groupId,
                                     @NonNull RecipientId recipientId,
@@ -181,7 +219,7 @@ public final class GroupManager {
   public static void updateSelfProfileKeyInGroup(@NonNull Context context, @NonNull GroupId.V2 groupId)
           throws IOException, GroupChangeBusyException, GroupInsufficientRightsException, GroupNotAMemberException, GroupChangeFailedException
   {
-    if (!DatabaseFactory.getGroupDatabase(context).findGroup(groupId)) {
+    if (!DatabaseFactory.getGroupDatabase(context).groupExists(groupId)) {
       Log.i(TAG, "Group is not available locally " + groupId);
       return;
     }
@@ -304,7 +342,7 @@ public final class GroupManager {
     } else {
       GroupDatabase.GroupRecord groupRecord  = DatabaseFactory.getGroupDatabase(context).requireGroup(groupId);
       List<RecipientId>         members      = groupRecord.getMembers();
-      byte[]                    avatar       = groupRecord.hasAvatar() ? Util.readFully(AvatarHelper.getAvatar(context, groupRecord.getRecipientId())) : null;
+      byte[]                    avatar       = groupRecord.hasAvatar() ? AvatarHelper.getAvatarBytes(context, groupRecord.getRecipientId()) : null;
       Set<RecipientId>          recipientIds = new HashSet<>(members);
       int                       originalSize = recipientIds.size();
 
@@ -351,6 +389,10 @@ public final class GroupManager {
     }
   }
 
+  public static void sendNoopUpdate(@NonNull Context context, @NonNull GroupMasterKey groupMasterKey, @NonNull DecryptedGroup currentState) {
+    new GroupManagerV2(context).sendNoopGroupUpdate(groupMasterKey, currentState);
+  }
+
   public static class GroupActionResult {
     private final Recipient         groupRecipient;
     private final long              threadId;
@@ -389,5 +431,14 @@ public final class GroupManager {
     DISABLED,
     ENABLED,
     ENABLED_WITH_APPROVAL
+  }
+
+  public enum V2GroupServerStatus {
+    /** The group does not exist. The expected pre-migration state for V1 groups. */
+    DOES_NOT_EXIST,
+    /** Group exists but self is not in the group. */
+    NOT_A_MEMBER,
+    /** Self is a full or pending member of the group. */
+    FULL_OR_PENDING_MEMBER
   }
 }
