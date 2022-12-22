@@ -436,7 +436,7 @@ public class ConversationFragment extends LoggingFragment {
       } else if (isSelf) {
         conversationBanner.setSubtitle(context.getString(R.string.ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation));
       } else {
-        String subtitle = recipient.getE164().transform(PhoneNumberFormatter::prettyPrint).orNull();
+        String subtitle = recipient.getE164().orNull();
 
         if (subtitle == null || subtitle.equals(title)) {
           conversationBanner.hideSubtitle();

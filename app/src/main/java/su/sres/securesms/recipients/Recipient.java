@@ -420,7 +420,7 @@ public class Recipient {
   public @NonNull String getDisplayName(@NonNull Context context) {
     String name = Util.getFirstNonEmpty(getName(context),
             getProfileName().toString(),
-            PhoneNumberFormatter.prettyPrint(e164),
+            e164,
             email,
             context.getString(R.string.Recipient_unknown));
 
@@ -430,7 +430,7 @@ public class Recipient {
   public @NonNull String getDisplayNameOrUsername(@NonNull Context context) {
     String name = Util.getFirstNonEmpty(getName(context),
             getProfileName().toString(),
-            PhoneNumberFormatter.prettyPrint(e164),
+            e164,
             email,
             username,
             context.getString(R.string.Recipient_unknown));
@@ -441,7 +441,7 @@ public class Recipient {
   public @NonNull String getMentionDisplayName(@NonNull Context context) {
     String name = Util.getFirstNonEmpty(isSelf ? getProfileName().toString() : getName(context),
             isSelf ? getName(context) : getProfileName().toString(),
-            PhoneNumberFormatter.prettyPrint(e164),
+            e164,
             email,
             context.getString(R.string.Recipient_unknown));
 
