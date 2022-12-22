@@ -27,17 +27,17 @@ public class PushMediaConstraints extends MediaConstraints {
 
   @Override
   public long getImageMaxSize(Context context) {
-    return MB * config.getImageMaxSize();
+    return (long) MB * config.getImageMaxSize();
   }
 
   @Override
   public long getGifMaxSize(Context context) {
-    return MB * config.getGifMaxSize();
+    return (long) MB * config.getGifMaxSize();
   }
 
   @Override
   public long getVideoMaxSize(Context context) {
-    return MB * config.getVideoMaxSize();
+    return (long) MB * config.getVideoMaxSize();
   }
 
   @Override
@@ -55,11 +55,11 @@ public class PushMediaConstraints extends MediaConstraints {
 
   @Override
   public long getAudioMaxSize(Context context) {
-    return MB * config.getAudioMaxSize();
+    return (long) MB * config.getAudioMaxSize();
   }
 
   @Override
   public long getDocumentMaxSize(Context context) {
-    return MB * config.getDocMaxSize();
+    return (long) MB * config.getDocMaxSize();
   }
 }
