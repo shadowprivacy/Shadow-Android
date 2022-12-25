@@ -65,10 +65,6 @@ public class ContactRepository {
             String phone = cursor.getString(cursor.getColumnIndexOrThrow(RecipientDatabase.PHONE));
             String email = cursor.getString(cursor.getColumnIndexOrThrow(RecipientDatabase.EMAIL));
 
-            if (phone != null) {
-                phone = PhoneNumberFormatter.prettyPrint(phone);
-            }
-
             return Util.getFirstNonEmpty(phone, email);
         }));
 
