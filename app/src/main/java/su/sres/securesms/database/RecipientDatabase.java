@@ -19,6 +19,7 @@ import org.signal.zkgroup.profiles.ProfileKey;
 import org.signal.zkgroup.profiles.ProfileKeyCredential;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.contacts.avatars.ContactColors;
+import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.groups.v2.ProfileKeySet;
@@ -391,6 +392,15 @@ public class RecipientDatabase extends Database {
       throw new IllegalArgumentException("Must provide a UUID or user login!");
     }
 
+    if (uuid != null && !getByUuid(uuid).isPresent()) {
+      Log.i(TAG, "Suspecting a new user. Refreshing directory.");
+      try {
+        DirectoryHelper.refreshDirectory(context);
+      } catch (IOException e) {
+        Log.i(TAG, "Failed to refresh directory");
+      }
+    }
+
     RecipientId                    recipientNeedingRefresh = null;
     Pair<RecipientId, RecipientId> remapped                = null;
     boolean                        transactionSuccessful   = false;
@@ -405,16 +415,10 @@ public class RecipientDatabase extends Database {
       RecipientId finalId;
 
       if (!byUserLogin.isPresent() && !byUuid.isPresent()) {
-        // this is something which will not happen
+
+        // this is something which normally should not happen
         throw new AssertionError("Neither found by user login nor by UUID");
-        /* Log.i(TAG, "Discovered a completely new user. Inserting.");
-        if (highTrust) {
-          long id = db.insert(TABLE_NAME, null, buildContentValuesForNewUser(e164, uuid));
-          finalId = RecipientId.from(id);
-        } else {
-          long id = db.insert(TABLE_NAME, null, buildContentValuesForNewUser(uuid == null ? e164 : null, uuid));
-          finalId = RecipientId.from(id);
-        } */
+
       } else if (byUserLogin.isPresent() && !byUuid.isPresent()) {
         // whether uuid is null or not, we get the finalId by user login
         finalId = byUserLogin.get();
