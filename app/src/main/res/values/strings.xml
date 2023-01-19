@@ -92,8 +92,17 @@
     <!-- AudioSlidePlayer -->
     <string name="AudioSlidePlayer_error_playing_audio">Error playing audio!</string>
 
-    <!-- BlockedContactsActivity -->
-    <string name="BlockedContactsActivity_blocked_contacts">Blocked contacts</string>
+    <!-- BlockedUsersActivity -->
+    <string name="BlockedUsersActivity__blocked_users">Blocked users</string>
+    <string name="BlockedUsersActivity__add_blocked_user">Add blocked user</string>
+    <string name="BlockedUsersActivity__blocked_users_will">Blocked users will not be able to call you or send you messages.</string>
+    <string name="BlockedUsersActivity__no_blocked_users">No blocked users</string>
+    <string name="BlockedUsersActivity__block_user">Block user?</string>
+    <string name="BlockedUserActivity__s_will_not_be_able_to">\"%1$s\" will not be able to call you or send you messages.</string>
+    <string name="BlockedUsersActivity__block">Block</string>
+    <string name="BlockedUsersActivity__unblock_user">Unblock user?</string>
+    <string name="BlockedUsersActivity__do_you_want_to_unblock_s">Do you want to unblock \"%1$s\"?</string>
+    <string name="BlockedUsersActivity__unblock">Unblock</string>
 
     <!-- BlockUnblockDialog -->
     <string name="BlockUnblockDialog_block_and_leave_s">Block and leave %1$s?</string>
@@ -559,9 +568,58 @@
         <item quantity="one">This member will need to accept an invite to join this group again and will not receive group messages until they accept:</item>
         <item quantity="other">These members will need to accept an invite to join this group again and will not receive group messages until they accept:</item>
     </plurals>
-    <plurals name="GroupsV1MigrationLearnMore_these_members_are_not_capable_of_joining_new_groups">
-        <item quantity="one">This member is not capable of joining New Groups, and has been removed from the group:</item>
-        <item quantity="other">These members are not capable of joining New Groups, and have been removed from the group:</item>
+    <!-- GroupsV1MigrationInitiationBottomSheetDialogFragment -->
+    <string name="GroupsV1MigrationInitiation_upgrade_to_new_group">Upgrade to New Group</string>
+    <string name="GroupsV1MigrationInitiation_upgrade_this_group">Upgrade this group</string>
+    <string name="GroupsV1MigrationInitiation_new_groups_have_features_like_mentions">New Groups have features like @mentions and group admins, and will support more features in the future.</string>
+    <string name="GroupsV1MigrationInitiation_all_message_history_and_media_will_be_kept">All message history and media will be kept from before the upgrade.</string>
+    <string name="GroupsV1MigrationInitiation_encountered_a_network_error">Encountered a network error. Try again later.</string>
+    <string name="GroupsV1MigrationInitiation_failed_to_upgrade">Failed to upgrade.</string>
+    <plurals name="GroupsV1MigrationInitiation_these_members_will_need_to_accept_an_invite">
+        <item quantity="one">This member will need to accept an invite to join this group again and will not receive group messages until they accept:</item>
+        <item quantity="other">These members will need to accept an invite to join this group again and will not receive group messages until they accept:</item>
+    </plurals>
+    <plurals name="GroupsV1MigrationInitiation_these_members_are_not_capable_of_joining_new_groups">
+        <item quantity="one">This member is not capable of joining New Groups, and will be removed from the group:</item>
+        <item quantity="other">These members are not capable of joining New Groups, and will be removed from the group:</item>
+    </plurals>
+
+    <!-- GroupsV1MigrationInitiationReminder -->
+    <string name="GroupsV1MigrationInitiationReminder_to_access_new_features_like_mentions">To access new features like @mentions and admins, upgrade this group.</string>
+    <string name="GroupsV1MigrationInitiationReminder_not_now">Not now</string>
+    <string name="GroupsV1MigrationInitiationReminder_update_group">Update group</string>
+
+    <!-- GroupsV1MigrationSuggestionsReminder -->
+    <plurals name="GroupsV1MigrationSuggestionsReminder_members_couldnt_be_added_to_the_new_group">
+        <item quantity="one">%1$d member couldn\'t be re-added to the New Group. Do you want to add them now?</item>
+        <item quantity="other">%1$d members couldn\'t be re-added to the New Group. Do you want to add them now?</item>
+    </plurals>
+    <plurals name="GroupsV1MigrationSuggestionsReminder_add_members">
+        <item quantity="one">Add member</item>
+        <item quantity="other">Add members</item>
+    </plurals>
+    <string name="GroupsV1MigrationSuggestionsReminder_not_now">Not now</string>
+
+    <!-- GroupsV1MigrationSuggestionsDialog -->
+    <plurals name="GroupsV1MigrationSuggestionsDialog_add_members_question">
+        <item quantity="one">Add member?</item>
+        <item quantity="other">Add members?</item>
+    </plurals>
+    <plurals name="GroupsV1MigrationSuggestionsDialog_these_members_couldnt_be_automatically_added">
+        <item quantity="one">This member couldn\'t be automatically added to the New Group when it was upgraded:</item>
+        <item quantity="other">These members couldn\'t be automatically added to the New Group when it was upgraded:</item>
+    </plurals>
+    <plurals name="GroupsV1MigrationSuggestionsDialog_add_members">
+        <item quantity="one">Add member</item>
+        <item quantity="other">Add members</item>
+    </plurals>
+    <plurals name="GroupsV1MigrationSuggestionsDialog_failed_to_add_members_try_again_later">
+        <item quantity="one">Failed to add member. Try again later.</item>
+        <item quantity="other">Failed to add members. Try again later.</item>
+    </plurals>
+    <plurals name="GroupsV1MigrationSuggestionsDialog_cannot_add_members">
+        <item quantity="one">Cannot add member.</item>
+        <item quantity="other">Cannot add members.</item>
     </plurals>
 
     <!-- LeaveGroupDialog -->
@@ -643,12 +701,21 @@
         <item quantity="one">%d member does not support New Groups, so this will be a Legacy Group.</item>
         <item quantity="other">%d members do not support New Groups, so this group will be a Legacy Group.</item>
     </plurals>
+    <plurals name="AddGroupDetailsFragment__d_members_do_not_support_new_groups_so_this_group_cannot_be_created">
+        <item quantity="one">%d member does not support New Groups, so this group cannot be created.</item>
+        <item quantity="other">%d members do not support New Groups, so this group cannot be created.</item>
+    </plurals>
 
     <!-- NonGv2MemberDialog -->
     <string name="NonGv2MemberDialog_single_users_are_non_gv2_capable">A Legacy Group will be created because “%1$s” is using an old version of Shadow. You can create a New Style Group with them after they update Shadow, or remove them before creating the group.</string>
     <plurals name="NonGv2MemberDialog_d_users_are_non_gv2_capable">
         <item quantity="one">A Legacy Group will be created because %1$d member is using an old version of Shadow. You can create a New Style Group with them after they update Shadow, or remove them before creating the group.</item>
         <item quantity="other">A Legacy Group will be created because %1$d members are using an old version of Shadow. You can create a New Style Group with them after they update Shadow, or remove them before creating the group.</item>
+    </plurals>
+    <string name="NonGv2MemberDialog_single_users_are_non_gv2_capable_forced_migration">This group cannot be created because “%1$s” is using an old version of Shadow. You must remove them before creating the group.</string>
+    <plurals name="NonGv2MemberDialog_d_users_are_non_gv2_capable_forced_migration">
+        <item quantity="one">This group cannot be created because %1$d member is using an old version of Shadow. You must remove them before creating the group.</item>
+        <item quantity="other">This group cannot be created because %1$d members are using an old version of Shadow. You must remove them before creating the group.</item>
     </plurals>
 
     <!-- ManageGroupActivity -->
@@ -696,7 +763,10 @@
     <string name="ManageGroupActivity_edit_name_and_picture">Edit name and picture</string>
     <string name="ManageGroupActivity_legacy_group">Legacy Group</string>
     <string name="ManageGroupActivity_legacy_group_learn_more">This is a Legacy Group. Features like group admins are only available for New Groups.</string>
-    <string name="ManageGroupActivity_this_is_an_insecure_mms_group">This is an insecure MMS Group. To chat privately and access features like group names, invite your contacts to Signal.</string>
+    <string name="ManageGroupActivity_legacy_group_upgrade">This is a Legacy Group. To access new features like @mentions and admins,</string>
+    <string name="ManageGroupActivity_legacy_group_too_large">This Legacy Group can’t be upgraded to a New Group because it is too large. The maximum group size is %1$d.</string>
+    <string name="ManageGroupActivity_upgrade_this_group">upgrade this group.</string>
+    <string name="ManageGroupActivity_this_is_an_insecure_mms_group">This is an insecure MMS Group. To chat privately and access features like group names, invite your contacts to Shadow.</string>
     <string name="ManageGroupActivity_invite_now">Invite now</string>
 
     <plurals name="GroupMemberList_invited">
@@ -1138,6 +1208,20 @@
     <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified">You marked your safety number with %s unverified</string>
     <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified_from_another_device">You marked your safety number with %s unverified from another device</string>
 
+    <!-- Group Calling update messages -->
+    <string name="MessageRecord_s_started_a_group_call_s">%1$s started a group call · %2$s</string>
+    <string name="MessageRecord_s_is_in_the_group_call_s">%1$s is in the group call · %2$s</string>
+    <string name="MessageRecord_you_are_in_the_group_call_s">You are in the group call · %2$s</string>
+    <string name="MessageRecord_s_and_s_are_in_the_group_call_s">%1$s and %2$s are in the group call · %3$s</string>
+    <string name="MessageRecord_s_s_and_s_are_in_the_group_call_s">%1$s, %2$s, and %3$s are in the group call · %4$s</string>
+    <string name="MessageRecord_group_call_s">Group call · %1$s</string>
+    <string name="MessageRecord_you">You</string>
+
+    <plurals name="MessageRecord_s_s_and_d_others_are_in_the_group_call_s">
+        <item quantity="one">%1$s, %2$s, and %3$d other are in the group call · %4$s</item>
+        <item quantity="other">%1$s, %2$s, and %3$d others are in the group call · %4$s</item>
+    </plurals>
+
     <!-- MessageRequestBottomView -->
     <string name="MessageRequestBottomView_accept">Accept</string>
     <string name="MessageRequestBottomView_continue">Continue</string>
@@ -1150,6 +1234,8 @@
     <string name="MessageRequestBottomView_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">Join this group? They won’t know you’ve seen their messages until you accept.</string>
     <string name="MessageRequestBottomView_unblock_this_group_and_share_your_name_and_photo_with_its_members">Unblock this group? You won\'t receive any messages until you unblock them.</string>
     <string name="MessageRequestBottomView_continue_your_conversation_with_this_group_and_share_your_name_and_photo">Continue your conversation with this group and share your name and photo with its members?</string>
+    <string name="MessageRequestBottomView_upgrade_this_group_to_activate_new_features">Upgrade this group to activate new features like @mentions and admins. Members who have not shared their name or photo in this group will be invited to join.</string>
+    <string name="MessageRequestBottomView_this_legacy_group_can_no_longer_be_used">This Legacy Group can no longer be used because it is too large. The maximum group size is %1$d.</string>
     <string name="MessageRequestBottomView_continue_your_conversation_with_s_and_share_your_name_and_photo">Continue your conversation with %1$s and share your name and photo with them?</string>
     <string name="MessageRequestBottomView_legacy_learn_more_url" translatable="false">https://support.signal.org/hc/articles/360007459591</string>
     <string name="MessageRequestProfileView_member_of_one_group">Member of %1$s</string>
@@ -1278,9 +1364,23 @@
     <string name="WebRtcCallView__signal_voice_call">Shadow voice call…</string>
     <string name="WebRtcCallView__signal_video_call">Shadow video call…</string>
     <string name="WebRtcCallView__start_call">Start Call</string>
-    <string name="WebRtcCallView__group_call">Group Call</string>
+    <string name="WebRtcCallView__join_call">Join Call</string>
+    <string name="WebRtcCallView__s_group_call">\"%1$s\" Group Call</string>
     <string name="WebRtcCallView__view_participants_list">View participants</string>
     <string name="WebRtcCallView__your_video_is_off">Your video is off</string>
+    <string name="WebRtcCallView__connecting">Connecting…</string>
+    <string name="WebRtcCallView__reconnecting">Reconnecting…</string>
+    <string name="WebRtcCallView__joining">Joining…</string>
+    <string name="WebRtcCallView__disconnected">Disconnected</string>
+
+    <string name="WebRtcCallView__no_one_else_is_here">No one else is here</string>
+    <string name="WebRtcCallView__s_is_in_this_call">%1$s is in this call</string>
+    <string name="WebRtcCallView__s_and_s_are_in_this_call">%1$s and %2$s are in this call</string>
+
+    <plurals name="WebRtcCallView__s_s_and_d_others_are_in_this_call">
+        <item quantity="one">%1$s, %2$s, and %3$d other are in this call</item>
+        <item quantity="other">%1$s, %2$s, and %3$d others are in this call</item>
+    </plurals>
 
     <!-- CallParticipantsListDialog -->
     <plurals name="CallParticipantsListDialog_in_this_call_d_people">
@@ -1448,14 +1548,6 @@
     <!-- UpdateApkReadyListener -->
     <string name="UpdateApkReadyListener_Signal_update">Shadow update</string>
     <string name="UpdateApkReadyListener_a_new_version_of_signal_is_available_tap_to_update">A new version of Shadow is available, tap to update</string>
-
-    <!-- UnknownSenderView -->
-    <string name="UnknownSenderView_block_s">Block %s?</string>
-    <string name="UnknownSenderView_blocked_contacts_will_no_longer_be_able_to_send_you_messages_or_call_you">Blocked contacts will no longer be able to send you messages or call you.</string>
-    <string name="UnknownSenderView_block">Block</string>
-    <string name="UnknownSenderView_share_profile_with_s">Share profile with %s?</string>
-    <string name="UnknownSenderView_the_easiest_way_to_share_your_profile_information_is_to_add_the_sender_to_your_contacts">The easiest way to share your profile information is to add the sender to your contacts. If you do not wish to, you can still share your profile information this way.</string>
-    <string name="UnknownSenderView_share_profile">Share profile</string>
 
     <!-- UntrustedSendDialog -->
     <string name="UntrustedSendDialog_send_message">Send message?</string>
@@ -1763,6 +1855,8 @@
     <!-- ConversationUpdateItem -->
     <string name="ConversationUpdateItem_loading">Loading</string>
     <string name="ConversationUpdateItem_learn_more">Learn more</string>
+    <string name="ConversationUpdateItem_join_call">Join call</string>
+    <string name="ConversationUpdateItem_return_to_call">Return to call</string>
 
     <!-- audio_view -->
     <string name="audio_view__play_pause_accessibility_description">Play … Pause</string>
@@ -1916,9 +2010,6 @@
         <item quantity="other">%1$s joined the group.</item>
     </plurals>
     <string name="GroupUtil_group_name_is_now">Group name is now \'%1$s\'.</string>
-
-    <!-- profile_group_share_view -->
-    <string name="profile_group_share_view__make_your_profile_name_and_photo_visible_to_this_group">Make your profile name and photo visible to this group?</string>
 
     <!-- prompt_passphrase_activity -->
     <string name="prompt_passphrase_activity__unlock">Unlock</string>
@@ -2178,7 +2269,7 @@
     <string name="preferences__typing_indicators">Typing indicators</string>
     <string name="preferences__if_typing_indicators_are_disabled_you_wont_be_able_to_see_typing_indicators">If typing indicators are disabled, you won\'t be able to see typing indicators from others.</string>
     <string name="preferences__request_keyboard_to_disable_personalized_learning">Request keyboard to disable personalized learning</string>
-    <string name="preferences_app_protection__blocked_contacts">Blocked contacts</string>
+    <string name="preferences_app_protection__blocked_users">Blocked users</string>
     <string name="preferences_chats__when_using_mobile_data">When using mobile data</string>
     <string name="preferences_chats__when_using_wifi">When using Wi-Fi</string>
     <string name="preferences_chats__when_roaming">When roaming</string>
@@ -2261,6 +2352,9 @@
     <string name="preferences__internal_display" translatable="false">Display</string>
     <string name="preferences__internal_user_details" translatable="false">User Details</string>
     <string name="preferences__internal_user_details_description" translatable="false">See more information about a user when viewing conversation settings.</string>
+    <string name="preferences__internal_conversations_and_shortcuts">Conversations and Shortcuts</string>
+    <string name="preferences__internal_delete_all_dynamic_shortcuts">Delete all dynamic shortcuts</string>
+    <string name="preferences__internal_click_to_delete_all_dynamic_shortcuts">Click to delete all dynamic shortcuts</string>
 
     <!-- **************************************** -->
     <!-- menus -->
@@ -2268,6 +2362,7 @@
 
     <!-- contact_selection_list -->
     <string name="contact_selection_list__unknown_contact">New message to…</string>
+    <string name="contact_selection_list__unknown_contact_block">Block user</string>
     <string name="contact_selection_list__unknown_contact_add_to_group">Add to group</string>
 
     <!-- conversation_callable_insecure -->
@@ -2626,6 +2721,9 @@
 
     <!-- StorageUtil -->
     <string name="StorageUtil__s_s">%1$s/%2$s</string>
+    <string name="BlockedUsersActivity__s_has_been_blocked">\"%1$s\" has been blocked.</string>
+    <string name="BlockedUsersActivity__failed_to_block_s">Failed to block \"%1$s\"</string>
+    <string name="BlockedUsersActivity__s_has_been_unblocked">\"%1$s\" has been unblocked.</string>
 
     <!-- ReviewCardDialogFragment -->
     <string name="ReviewCardDialogFragment__review_members">Review Members</string>

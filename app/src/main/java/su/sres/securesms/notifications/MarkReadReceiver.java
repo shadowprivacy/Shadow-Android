@@ -98,7 +98,7 @@ public class MarkReadReceiver extends BroadcastReceiver {
       Stream.of(idMapForThread).forEach(entry -> {
         List<Long> timestamps = Stream.of(entry.getValue()).map(SyncMessageId::getTimetamp).toList();
 
-        ApplicationDependencies.getJobManager().add(new SendReadReceiptJob(threadToInfoEntry.getKey(), entry.getKey(), timestamps));
+        SendReadReceiptJob.enqueue(threadToInfoEntry.getKey(), entry.getKey(), timestamps);
       });
     });
   }

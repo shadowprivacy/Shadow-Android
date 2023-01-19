@@ -11,7 +11,6 @@ import android.text.TextUtils;
 
 import com.annimon.stream.function.Consumer;
 import com.annimon.stream.function.Predicate;
-import com.google.android.collect.Sets;
 import com.google.protobuf.ByteString;
 
 import net.sqlcipher.database.SQLiteDatabase;
@@ -37,6 +36,7 @@ import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.util.Conversions;
+import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.kdf.HKDFv3;
@@ -68,7 +68,7 @@ public class FullBackupExporter extends FullBackupBase {
   @SuppressWarnings("unused")
   private static final String TAG = FullBackupExporter.class.getSimpleName();
 
-  private static final Set<String> BLACKLISTED_TABLES = Sets.newHashSet(
+  private static final Set<String> BLACKLISTED_TABLES = SetUtil.newHashSet(
           SignedPreKeyDatabase.TABLE_NAME,
           OneTimePreKeyDatabase.TABLE_NAME,
           SessionDatabase.TABLE_NAME,

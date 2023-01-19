@@ -163,6 +163,10 @@ public abstract class DisplayRecord {
     return SmsDatabase.Types.isMissedVideoCall(type);
   }
 
+  public final boolean isGroupCall() {
+    return SmsDatabase.Types.isGroupCall(type);
+  }
+
   public boolean isVerificationStatusChange() {
     return SmsDatabase.Types.isIdentityDefault(type) || SmsDatabase.Types.isIdentityVerified(type);
   }

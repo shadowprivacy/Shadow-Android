@@ -21,7 +21,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -39,6 +38,7 @@ import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.components.ConversationScrollToView;
 import su.sres.securesms.components.ConversationTypingView;
 import su.sres.securesms.components.TooltipPopup;
+import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.recyclerview.SmoothScrollingLinearLayoutManager;
 import su.sres.securesms.components.voice.VoiceNoteMediaController;
 import su.sres.securesms.components.voice.VoiceNotePlaybackState;
@@ -47,7 +47,7 @@ import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.groups.ui.migration.GroupsV1MigrationBottomSheetDialogFragment;
+import su.sres.securesms.groups.ui.migration.GroupsV1MigrationInfoBottomSheetDialogFragment;
 import su.sres.securesms.jobs.DirectorySyncJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.linkpreview.LinkPreview;
@@ -76,6 +76,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.text.HtmlCompat;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -85,15 +86,12 @@ import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
-import com.google.android.collect.Sets;
-
 import su.sres.securesms.conversation.ConversationAdapter.StickyHeaderViewHolder;
 import su.sres.securesms.conversation.ConversationAdapter.ItemClickListener;
 import su.sres.securesms.contactshare.ContactUtil;
 import su.sres.securesms.contactshare.SharedContactDetailsActivity;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.model.MediaMmsMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
@@ -108,7 +106,6 @@ import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.permissions.Permissions;
-import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.reactions.ReactionsBottomSheetDialogFragment;
 import su.sres.securesms.recipients.LiveRecipient;
@@ -127,12 +124,15 @@ import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.HtmlUtil;
 import su.sres.securesms.util.RemoteDeleteUtil;
 import su.sres.securesms.util.SaveAttachmentTask;
+import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.SnapToTopDataObserver;
 import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.StorageUtil;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
+import su.sres.securesms.util.WindowUtil;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
@@ -170,7 +170,6 @@ public class ConversationFragment extends LoggingFragment {
   private ViewSwitcher                topLoadMoreView;
   private ViewSwitcher                bottomLoadMoreView;
   private ConversationTypingView      typingView;
-//  private UnknownSenderView           unknownSenderView;
   private View                        composeDivider;
   private ConversationScrollToView    scrollToBottomButton;
   private ConversationScrollToView scrollToMentionButton;
@@ -350,7 +349,7 @@ public class ConversationFragment extends LoggingFragment {
   @Override
   public void onStop() {
     super.onStop();
-    ApplicationContext.getInstance(requireContext()).getTypingStatusRepository().getTypists(threadId).removeObservers(this);
+    ApplicationDependencies.getTypingStatusRepository().getTypists(threadId).removeObservers(this);
   }
 
   public void onNewIntent() {
@@ -479,9 +478,8 @@ public class ConversationFragment extends LoggingFragment {
 
     int startingPosition  = getStartPosition();
 
-    this.recipient         = Recipient.live(getActivity().getIntent().getParcelableExtra(ConversationActivity.RECIPIENT_EXTRA));
+    this.recipient         = Recipient.live(ConversationActivity.getRecipientId(requireActivity().getIntent()));
     this.threadId          = this.getActivity().getIntent().getLongExtra(ConversationActivity.THREAD_ID_EXTRA, -1);
-//    this.unknownSenderView = new UnknownSenderView(getActivity(), recipient.get(), threadId, () -> clearHeaderIfNotTyping(getListAdapter()));
     this.markReadHelper    = new MarkReadHelper(threadId, requireContext());
 
     conversationViewModel.onConversationDataAvailable(threadId, startingPosition);
@@ -497,7 +495,7 @@ public class ConversationFragment extends LoggingFragment {
     list.addOnScrollListener(conversationScrollListener);
 
     if (oldThreadId != threadId) {
-      ApplicationContext.getInstance(requireContext()).getTypingStatusRepository().getTypists(oldThreadId).removeObservers(this);
+      ApplicationDependencies.getTypingStatusRepository().getTypists(oldThreadId).removeObservers(this);
     }
   }
 
@@ -531,8 +529,10 @@ public class ConversationFragment extends LoggingFragment {
       return;
     }
 
-    ApplicationContext.getInstance(requireContext()).getTypingStatusRepository().getTypists(threadId).removeObservers(this);
-    ApplicationContext.getInstance(requireContext()).getTypingStatusRepository().getTypists(threadId).observe(this, typingState ->  {
+    LiveData<TypingStatusRepository.TypingState> typists = ApplicationDependencies.getTypingStatusRepository().getTypists(threadId);
+
+    typists.removeObservers(this);
+    typists.observe(this, typingState ->  {
       List<Recipient> recipients;
       boolean         replacedByIncomingMessage;
 
@@ -949,15 +949,7 @@ public class ConversationFragment extends LoggingFragment {
 
     setLastSeen(conversation.getLastSeen());
 
-      if (!conversation.hasPreMessageRequestMessages()) {
-        clearHeaderIfNotTyping(adapter);
-      } else {
-        if (!conversation.hasSent() && !recipient.get().isSystemContact() && !recipient.get().isGroup() && recipient.get().getRegistered() == RecipientDatabase.RegisteredState.REGISTERED) {
-         // adapter.setHeaderView(unknownSenderView);
-        } else {
-          clearHeaderIfNotTyping(adapter);
-        }
-      }
+      clearHeaderIfNotTyping(adapter);
 
       listener.onCursorChanged();
 
@@ -1424,7 +1416,12 @@ public class ConversationFragment extends LoggingFragment {
 
     @Override
     public void onGroupMigrationLearnMoreClicked(@NonNull List<RecipientId> pendingRecipients) {
-      GroupsV1MigrationBottomSheetDialogFragment.showForLearnMore(requireFragmentManager(), pendingRecipients);
+      GroupsV1MigrationInfoBottomSheetDialogFragment.showForLearnMore(requireFragmentManager(), pendingRecipients);
+    }
+
+    @Override
+    public void onJoinGroupCallClicked() {
+      CommunicationActions.startVideoCall(requireActivity(), recipient.get());
     }
   }
 
@@ -1505,8 +1502,8 @@ public class ConversationFragment extends LoggingFragment {
     public boolean onMenuItemClick(MenuItem item) {
       switch (item.getItemId()) {
         case R.id.action_info:        handleDisplayDetails(conversationMessage);                                            return true;
-        case R.id.action_delete:      handleDeleteMessages(Sets.newHashSet(conversationMessage));                           return true;
-        case R.id.action_copy:        handleCopyMessage(Sets.newHashSet(conversationMessage));                              return true;
+        case R.id.action_delete:      handleDeleteMessages(SetUtil.newHashSet(conversationMessage));                        return true;
+        case R.id.action_copy:        handleCopyMessage(SetUtil.newHashSet(conversationMessage));                           return true;
         case R.id.action_reply:       handleReplyMessage(conversationMessage);                                              return true;
         case R.id.action_multiselect: handleEnterMultiSelect(conversationMessage);                                          return true;
         case R.id.action_forward:     handleForwardMessage(conversationMessage);                                            return true;
@@ -1530,7 +1527,11 @@ public class ConversationFragment extends LoggingFragment {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
         Window window = getActivity().getWindow();
         statusBarColor = window.getStatusBarColor();
-        window.setStatusBarColor(getResources().getColor(R.color.action_mode_status_bar));
+        WindowUtil.setStatusBarColor(window, getResources().getColor(R.color.action_mode_status_bar));
+      }
+
+      if (!ThemeUtil.isDarkTheme(getContext())) {
+        WindowUtil.setLightStatusBar(getActivity().getWindow());
       }
 
       setCorrectMenuVisibility(menu);
@@ -1550,9 +1551,10 @@ public class ConversationFragment extends LoggingFragment {
       list.getAdapter().notifyDataSetChanged();
 
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-        getActivity().getWindow().setStatusBarColor(statusBarColor);
+        WindowUtil.setStatusBarColor(requireActivity().getWindow(), statusBarColor);
       }
 
+      WindowUtil.clearLightStatusBar(getActivity().getWindow());
       actionMode = null;
     }
 

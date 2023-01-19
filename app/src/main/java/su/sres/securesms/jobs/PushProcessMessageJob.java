@@ -50,6 +50,7 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
 import su.sres.securesms.groups.GroupNotAMemberException;
 import su.sres.securesms.groups.GroupV1MessageProcessor;
+import su.sres.securesms.groups.GroupsV1MigrationUtil;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
@@ -81,6 +82,7 @@ import su.sres.securesms.sms.OutgoingEndSessionMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
 import su.sres.securesms.stickers.StickerLocator;
 import su.sres.securesms.util.Base64;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.Hex;
 import su.sres.securesms.util.IdentityUtil;
@@ -92,6 +94,7 @@ import org.whispersystems.libsignal.state.SessionStore;
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.groupsv2.InvalidGroupStateException;
 import su.sres.signalservice.api.groupsv2.NoCredentialForRedemptionTimeException;
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
@@ -108,6 +111,7 @@ import su.sres.signalservice.api.messages.calls.BusyMessage;
 import su.sres.signalservice.api.messages.calls.HangupMessage;
 import su.sres.signalservice.api.messages.calls.IceUpdateMessage;
 import su.sres.signalservice.api.messages.calls.OfferMessage;
+import su.sres.signalservice.api.messages.calls.OpaqueMessage;
 import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
 import su.sres.signalservice.api.messages.multidevice.BlockedListMessage;
 import su.sres.signalservice.api.messages.multidevice.ConfigurationMessage;
@@ -126,6 +130,7 @@ import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -353,7 +358,7 @@ public final class PushProcessMessageJob extends BaseJob {
 
           Optional<GroupDatabase.GroupRecord> possibleGv1 = groupDatabase.getGroupV1ByExpectedV2(groupIdV2);
           if (possibleGv1.isPresent()) {
-            GroupV1MigrationJob.performLocalMigration(context, possibleGv1.get().getId().requireV1());
+            GroupsV1MigrationUtil.performLocalMigration(context, possibleGv1.get().getId().requireV1());
           }
 
           if (!updateGv2GroupFromServerOrP2PChange(content, message.getGroupContext().get().getGroupV2().get())) {
@@ -368,14 +373,15 @@ public final class PushProcessMessageJob extends BaseJob {
           }
         }
 
-        if      (isInvalidMessage(message))             handleInvalidMessage(content.getSender(), content.getSenderDevice(), groupId, content.getTimestamp(), smsMessageId);
-        else if (message.isEndSession())                handleEndSessionMessage(content, smsMessageId);
-        else if (message.isGroupV1Update())             handleGroupV1Message(content, message, smsMessageId, groupId.get().requireV1());
-        else if (message.isExpirationUpdate())          handleExpirationUpdate(content, message, smsMessageId, groupId);
-        else if (message.getReaction().isPresent())     handleReaction(content, message);
-        else if (message.getRemoteDelete().isPresent()) handleRemoteDelete(content, message);
-        else if (isMediaMessage)                        handleMediaMessage(content, message, smsMessageId);
-        else if (message.getBody().isPresent())         handleTextMessage(content, message, smsMessageId, groupId);
+        if      (isInvalidMessage(message))                                               handleInvalidMessage(content.getSender(), content.getSenderDevice(), groupId, content.getTimestamp(), smsMessageId);
+        else if (message.isEndSession())                                                  handleEndSessionMessage(content, smsMessageId);
+        else if (message.isGroupV1Update())                                               handleGroupV1Message(content, message, smsMessageId, groupId.get().requireV1());
+        else if (message.isExpirationUpdate())                                            handleExpirationUpdate(content, message, smsMessageId, groupId);
+        else if (message.getReaction().isPresent())                                       handleReaction(content, message);
+        else if (message.getRemoteDelete().isPresent())                                   handleRemoteDelete(content, message);
+        else if (isMediaMessage)                                                          handleMediaMessage(content, message, smsMessageId);
+        else if (message.getBody().isPresent())                                           handleTextMessage(content, message, smsMessageId, groupId);
+        else if (FeatureFlags.groupCalling() && message.getGroupCallUpdate().isPresent()) handleGroupCallUpdateMessage(content, message, groupId);
 
         if (groupId.isPresent() && groupDatabase.isUnknownGroup(groupId.get())) {
           handleUnknownGroupMessage(content, message.getGroupContext().get());
@@ -420,6 +426,7 @@ public final class PushProcessMessageJob extends BaseJob {
         else if (message.getIceUpdateMessages().isPresent()) handleCallIceUpdateMessage(content, message.getIceUpdateMessages().get());
         else if (message.getHangupMessage().isPresent())     handleCallHangupMessage(content, message.getHangupMessage().get(), smsMessageId);
         else if (message.getBusyMessage().isPresent())       handleCallBusyMessage(content, message.getBusyMessage().get());
+        else if (message.getOpaqueMessage().isPresent())     handleCallOpaqueMessage(content, message.getOpaqueMessage().get());
       } else if (content.getReceiptMessage().isPresent()) {
         SignalServiceReceiptMessage message = content.getReceiptMessage().get();
 
@@ -619,6 +626,49 @@ public final class PushProcessMessageJob extends BaseJob {
               .putExtra(WebRtcCallService.EXTRA_CALL_ID,       message.getId())
               .putExtra(WebRtcCallService.EXTRA_REMOTE_PEER,   remotePeer)
               .putExtra(WebRtcCallService.EXTRA_REMOTE_DEVICE, content.getSenderDevice());
+
+    context.startService(intent);
+  }
+
+  private void handleCallOpaqueMessage(@NonNull SignalServiceContent content,
+                                       @NonNull OpaqueMessage message)
+  {
+    log(TAG, String.valueOf(content.getTimestamp()), "handleCallOpaqueMessage");
+
+    Intent intent = new Intent(context, WebRtcCallService.class);
+
+    long messageAgeSeconds = 0;
+    if (content.getServerReceivedTimestamp() > 0 && content.getServerDeliveredTimestamp() >= content.getServerReceivedTimestamp()) {
+      messageAgeSeconds = (content.getServerDeliveredTimestamp() - content.getServerReceivedTimestamp()) / 1000;
+    }
+
+    intent.setAction(WebRtcCallService.ACTION_RECEIVE_OPAQUE_MESSAGE)
+            .putExtra(WebRtcCallService.EXTRA_OPAQUE_MESSAGE, message.getOpaque())
+            .putExtra(WebRtcCallService.EXTRA_UUID, Recipient.externalHighTrustPush(context, content.getSender()).requireUuid().toString())
+            .putExtra(WebRtcCallService.EXTRA_REMOTE_DEVICE, content.getSenderDevice())
+            .putExtra(WebRtcCallService.EXTRA_MESSAGE_AGE_SECONDS, messageAgeSeconds);
+
+    context.startService(intent);
+  }
+
+  private void handleGroupCallUpdateMessage(@NonNull SignalServiceContent content,
+                                            @NonNull SignalServiceDataMessage message,
+                                            @NonNull Optional<GroupId> groupId)
+  {
+    if (!groupId.isPresent() || !groupId.get().isV2()) {
+      Log.w(TAG, "Invalid group for group call update message");
+      return;
+    }
+
+    RecipientId groupRecipientId = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromPossiblyMigratedGroupId(groupId.get());
+
+    Intent intent = new Intent(context, WebRtcCallService.class);
+
+    intent.setAction(WebRtcCallService.ACTION_GROUP_CALL_UPDATE_MESSAGE)
+            .putExtra(WebRtcCallService.EXTRA_GROUP_CALL_UPDATE_SENDER, RecipientId.from(content.getSender()).serialize())
+            .putExtra(WebRtcCallService.EXTRA_GROUP_CALL_UPDATE_GROUP, groupRecipientId.serialize())
+            .putExtra(WebRtcCallService.EXTRA_GROUP_CALL_ERA_ID, message.getGroupCallUpdate().get().getEraId())
+            .putExtra(WebRtcCallService.EXTRA_SERVER_RECEIVED_TIMESTAMP, content.getServerReceivedTimestamp());
 
     context.startService(intent);
   }
@@ -930,6 +980,13 @@ public final class PushProcessMessageJob extends BaseJob {
     try {
       GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
 
+      if (message.getMessage().isGroupV2Message()) {
+        Optional<GroupDatabase.GroupRecord> possibleGv1 = groupDatabase.getGroupV1ByExpectedV2(GroupId.v2(message.getMessage().getGroupContext().get().getGroupV2().get().getMasterKey()));
+        if (possibleGv1.isPresent()) {
+          GroupsV1MigrationUtil.performLocalMigration(context, possibleGv1.get().getId().requireV1());
+        }
+      }
+
       long threadId = -1;
 
       if (message.isRecipientUpdate()) {
@@ -942,6 +999,8 @@ public final class PushProcessMessageJob extends BaseJob {
       } else if (message.getMessage().isGroupV2Update()) {
         handleSynchronizeSentGv2Update(content, message);
         threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(getSyncMessageDestination(message));
+      } else if (message.getMessage().isEmptyGroupV2Message()) {
+        // Do nothing
       } else if (message.getMessage().isExpirationUpdate()) {
         threadId = handleSynchronizeSentExpirationUpdate(message);
       } else if (message.getMessage().getReaction().isPresent()) {
@@ -1524,31 +1583,37 @@ public final class PushProcessMessageJob extends BaseJob {
   private void handleDeliveryReceipt(@NonNull SignalServiceContent content,
                                      @NonNull SignalServiceReceiptMessage message)
   {
-    for (long timestamp : message.getTimestamps()) {
-      log(TAG, String.format("Received encrypted delivery receipt: (XXXXX, %d)", timestamp));
-      DatabaseFactory.getMmsSmsDatabase(context)
-              .incrementDeliveryReceiptCount(new SyncMessageId(RecipientId.fromHighTrust(content.getSender()), timestamp), System.currentTimeMillis());
-    }
+    log(TAG, "Processing delivery receipts for IDs: " + Util.join(message.getTimestamps(), ", "));
+
+    Recipient           sender  = Recipient.externalHighTrustPush(context, content.getSender());
+    List<SyncMessageId> ids     = Stream.of(message.getTimestamps())
+            .map(t -> new SyncMessageId(sender.getId(), t))
+            .toList();
+
+    DatabaseFactory.getMmsSmsDatabase(context).incrementDeliveryReceiptCounts(ids, System.currentTimeMillis());
   }
 
   @SuppressLint("DefaultLocale")
   private void handleReadReceipt(@NonNull SignalServiceContent content,
                                  @NonNull SignalServiceReceiptMessage message)
   {
-    if (TextSecurePreferences.isReadReceiptsEnabled(context)) {
-      for (long timestamp : message.getTimestamps()) {
-        log(TAG, String.format("Received encrypted read receipt: (XXXXX, %d)", timestamp));
+    if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
+      log(TAG, "Ignoring read receipts for IDs: " + Util.join(message.getTimestamps(), ", "));
+      return;
+    }
 
-        Recipient     sender  = Recipient.externalHighTrustPush(context, content.getSender());
-        SyncMessageId id      = new SyncMessageId(sender.getId(), timestamp);
-        boolean       handled = DatabaseFactory.getMmsSmsDatabase(context)
-                .incrementReadReceiptCount(id, content.getTimestamp());
+    log(TAG, "Processing read receipts for IDs: " + Util.join(message.getTimestamps(), ", "));
 
-        if (!handled) {
-          warn(TAG, String.valueOf(content.getTimestamp()), "[handleReadReceipt] Could not find matching message! timestamp: " + timestamp + "  author: " + sender.getId());
-          ApplicationDependencies.getEarlyMessageCache().store(sender.getId(), timestamp, content);
-        }
-      }
+    Recipient           sender  = Recipient.externalHighTrustPush(context, content.getSender());
+    List<SyncMessageId> ids     = Stream.of(message.getTimestamps())
+            .map(t -> new SyncMessageId(sender.getId(), t))
+            .toList();
+
+    Collection<SyncMessageId> unhandled = DatabaseFactory.getMmsSmsDatabase(context).incrementReadReceiptCounts(ids, content.getTimestamp());
+
+    for (SyncMessageId id : unhandled) {
+      warn(TAG, String.valueOf(content.getTimestamp()), "[handleReadReceipt] Could not find matching message! timestamp: " + id.getTimetamp() + "  author: " + sender.getId());
+      ApplicationDependencies.getEarlyMessageCache().store(sender.getId(), id.getTimetamp(), content);
     }
   }
 
@@ -1586,10 +1651,10 @@ public final class PushProcessMessageJob extends BaseJob {
 
     if (typingMessage.isTypingStarted()) {
       Log.d(TAG, "Typing started on thread " + threadId);
-      ApplicationContext.getInstance(context).getTypingStatusRepository().onTypingStarted(context,threadId, author, content.getSenderDevice());
+      ApplicationDependencies.getTypingStatusRepository().onTypingStarted(context,threadId, author, content.getSenderDevice());
     } else {
       Log.d(TAG, "Typing stopped on thread " + threadId);
-      ApplicationContext.getInstance(context).getTypingStatusRepository().onTypingStopped(context, threadId, author, content.getSenderDevice(), false);
+      ApplicationDependencies.getTypingStatusRepository().onTypingStopped(context, threadId, author, content.getSenderDevice(), false);
     }
   }
 
@@ -1809,7 +1874,7 @@ public final class PushProcessMessageJob extends BaseJob {
 
     if (threadId > 0) {
       Log.d(TAG, "Typing stopped on thread " + threadId + " due to an incoming message.");
-      ApplicationContext.getInstance(context).getTypingStatusRepository().onTypingStopped(context, threadId, author, device, true);
+      ApplicationDependencies.getTypingStatusRepository().onTypingStopped(context, threadId, author, device, true);
     }
   }
 

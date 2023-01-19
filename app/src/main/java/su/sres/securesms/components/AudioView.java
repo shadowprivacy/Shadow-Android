@@ -35,11 +35,9 @@ import su.sres.securesms.audio.AudioWaveForm;
 import su.sres.securesms.components.voice.VoiceNotePlaybackState;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.events.PartProgressEvent;
-import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.AudioSlide;
 import su.sres.securesms.mms.SlideClickListener;
 
-import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -377,10 +375,11 @@ public final class AudioView extends FrameLayout {
   }
 
   private void showPlayButton() {
-    if (!smallView || seekBar.getProgress() == 0) {
+    if (!smallView) {
+      circleProgress.setVisibility(GONE);
+    } else if (seekBar.getProgress() == 0) {
       circleProgress.setInstantProgress(1);
     }
-    circleProgress.setVisibility(GONE);
     playPauseButton.setVisibility(VISIBLE);
     controlToggle.displayQuick(progressAndPlay);
   }

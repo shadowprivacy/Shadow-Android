@@ -20,6 +20,7 @@ public interface MmsSmsColumns {
   public static final String EXPIRES_IN               = "expires_in";
   public static final String EXPIRE_STARTED           = "expire_started";
   public static final String NOTIFIED                 = "notified";
+  public static final String NOTIFIED_TIMESTAMP       = "notified_timestamp";
   public static final String UNIDENTIFIED             = "unidentified";
   public static final String REACTIONS                = "reactions";
   public static final String REACTIONS_UNREAD         = "reactions_unread";
@@ -43,6 +44,7 @@ public interface MmsSmsColumns {
     protected static final long GV1_MIGRATION_TYPE                 = 9;
     protected static final long INCOMING_VIDEO_CALL_TYPE           = 10;
     protected static final long OUTGOING_VIDEO_CALL_TYPE           = 11;
+    protected static final long GROUP_CALL_TYPE                    = 12;
 
     protected static final long BASE_INBOX_TYPE                    = 20;
     protected static final long BASE_OUTBOX_TYPE                   = 21;
@@ -213,7 +215,8 @@ public interface MmsSmsColumns {
               isOutgoingAudioCall(type) ||
               isOutgoingVideoCall(type) ||
               isMissedAudioCall(type)   ||
-              isMissedVideoCall(type);
+              isMissedVideoCall(type)   ||
+              isGroupCall(type);
     }
 
     public static boolean isExpirationTimerUpdate(long type) {
@@ -242,6 +245,10 @@ public interface MmsSmsColumns {
 
     public static boolean isMissedVideoCall(long type) {
       return type == MISSED_VIDEO_CALL_TYPE;
+    }
+
+    public static boolean isGroupCall(long type) {
+      return type == GROUP_CALL_TYPE;
     }
 
     public static boolean isGroupUpdate(long type) {

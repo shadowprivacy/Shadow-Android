@@ -76,4 +76,14 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:title="@string/preferences__internal_conversations_and_shortcuts">
+
+        <Preference
+            android:key="pref_delete_dynamic_shortcuts"
+            android:title="@string/preferences__internal_delete_all_dynamic_shortcuts"
+            android:summary="@string/preferences__internal_click_to_delete_all_dynamic_shortcuts" />
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

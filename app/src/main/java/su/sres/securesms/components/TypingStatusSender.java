@@ -50,6 +50,10 @@ public class TypingStatusSender {
         pair.setStop(stop);
     }
 
+    public synchronized void onTypingStoppedWithNotify(long threadId) {
+        onTypingStopped(threadId, true);
+    }
+
     public synchronized void onTypingStopped(long threadId) {
         onTypingStopped(threadId, false);
     }

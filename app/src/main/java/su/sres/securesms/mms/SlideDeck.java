@@ -24,6 +24,8 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.util.MediaUtil;
+import su.sres.securesms.util.Util;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.LinkedList;
@@ -145,6 +147,14 @@ public class SlideDeck {
       if (slide.hasSticker()) {
         return (StickerSlide)slide;
       }
+    }
+
+    return null;
+  }
+
+  public @Nullable String getFirstSlideContentType() {
+    if (Util.hasItems(slides)) {
+      return slides.get(0).getContentType();
     }
 
     return null;

@@ -23,6 +23,7 @@ import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.DynamicDarkActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
+import su.sres.securesms.util.WindowUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -124,9 +125,7 @@ public final class MessageDetailsActivity extends PassphraseRequiredActivity {
         assert getSupportActionBar() != null;
         getSupportActionBar().setBackgroundDrawable(new ColorDrawable(color.toActionBarColor(this)));
 
-        if (Build.VERSION.SDK_INT >= 21) {
-            getWindow().setStatusBarColor(color.toStatusBarColor(this));
-        }
+        WindowUtil.setStatusBarColor(getWindow(), color.toStatusBarColor(this));
     }
 
     private List<MessageDetailsViewState<?>> convertToRows(MessageDetails details) {

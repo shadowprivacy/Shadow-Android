@@ -60,8 +60,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int THUMBNAIL_CLEANUP_AND_STICKER_CONTENT_TYPE_CLEANUP_AND_MENTION_CLEANUP                = 70;
   private static final int REACTION_CLEANUP                        = 71;
   private static final int CAPABILITIES_REFACTOR_AND_GV1_MIGRATION = 72;
+  private static final int NOTIFIED_TIMESTAMP_AND_GV1_MIGRATION_LAST_SEEN               = 73;
 
-  private static final int    DATABASE_VERSION = 72;
+  private static final int    DATABASE_VERSION = 73;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -332,6 +333,13 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         }
 
         Log.i(TAG, "Updated " + count + " GV1 groups with expected GV2 IDs.");
+      }
+
+      if (oldVersion < NOTIFIED_TIMESTAMP_AND_GV1_MIGRATION_LAST_SEEN) {
+        db.execSQL("ALTER TABLE sms ADD COLUMN notified_timestamp INTEGER DEFAULT 0");
+        db.execSQL("ALTER TABLE mms ADD COLUMN notified_timestamp INTEGER DEFAULT 0");
+
+        db.execSQL("ALTER TABLE recipient ADD COLUMN last_gv1_migrate_reminder INTEGER DEFAULT 0");
       }
 
       db.setTransactionSuccessful();

@@ -16,6 +16,7 @@ import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 
 import java.util.ArrayList;
@@ -120,7 +121,7 @@ class CameraContactsRepository {
 
         List<Recipient> recipients = new ArrayList<>();
 
-        try (GroupDatabase.Reader reader = groupDatabase.getGroupsFilteredByTitle(query, false)) {
+        try (GroupDatabase.Reader reader = groupDatabase.getGroupsFilteredByTitle(query, false, FeatureFlags.groupsV1ForcedMigration())) {
             GroupDatabase.GroupRecord groupRecord;
             while ((groupRecord = reader.getNext()) != null) {
                 RecipientId recipientId = recipientDatabase.getOrInsertFromGroupId(groupRecord.getId());

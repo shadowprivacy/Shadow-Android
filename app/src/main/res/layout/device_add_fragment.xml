@@ -33,7 +33,7 @@
             android:background="?android:windowBackground"
             android:gravity="center">
 
-            <ImageView android:id="@+id/devices"
+            <androidx.appcompat.widget.AppCompatImageView android:id="@+id/devices"
                        android:src="@drawable/ic_devices_white"
                        android:layout_width="wrap_content"
                        android:layout_height="wrap_content"

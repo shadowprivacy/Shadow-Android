@@ -251,7 +251,8 @@ public final class StorageSyncHelper {
      * @return A set of actions that should be applied to resolve the conflict.
      */
     public static @NonNull MergeResult resolveConflict(@NonNull Collection<SignalStorageRecord> remoteOnlyRecords,
-                                                       @NonNull Collection<SignalStorageRecord> localOnlyRecords)
+                                                       @NonNull Collection<SignalStorageRecord> localOnlyRecords,
+                                                       @NonNull GroupV2ExistenceChecker groupExistenceChecker)
     {
         List<SignalContactRecord> remoteOnlyContacts = Stream.of(remoteOnlyRecords).filter(r -> r.getContact().isPresent()).map(r -> r.getContact().get()).toList();
         List<SignalContactRecord> localOnlyContacts  = Stream.of(localOnlyRecords).filter(r -> r.getContact().isPresent()).map(r -> r.getContact().get()).toList();
@@ -275,7 +276,7 @@ public final class StorageSyncHelper {
         }
 
         RecordMergeResult<SignalContactRecord> contactMergeResult = resolveRecordConflict(remoteOnlyContacts, localOnlyContacts, new ContactConflictMerger(localOnlyContacts, Recipient.self()));
-        RecordMergeResult<SignalGroupV1Record> groupV1MergeResult = resolveRecordConflict(remoteOnlyGroupV1, localOnlyGroupV1, new GroupV1ConflictMerger(localOnlyGroupV1));
+        RecordMergeResult<SignalGroupV1Record> groupV1MergeResult = resolveRecordConflict(remoteOnlyGroupV1, localOnlyGroupV1, new GroupV1ConflictMerger(localOnlyGroupV1, groupExistenceChecker));
         RecordMergeResult<SignalGroupV2Record> groupV2MergeResult = resolveRecordConflict(remoteOnlyGroupV2, localOnlyGroupV2, new GroupV2ConflictMerger(localOnlyGroupV2));
         RecordMergeResult<SignalAccountRecord> accountMergeResult = resolveRecordConflict(remoteOnlyAccount, localOnlyAccount, new AccountConflictMerger(localOnlyAccount.isEmpty() ? Optional.absent() : Optional.of(localOnlyAccount.get(0))));
 

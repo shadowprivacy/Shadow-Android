@@ -23,11 +23,12 @@ public class NotificationItem {
   @Nullable private final Recipient    threadRecipient;
   private final long         threadId;
   @Nullable private final CharSequence text;
-  private final long         notificationTimestamp;
+  private final long         timestamp;
   private final long         messageReceivedTimestamp;
   @Nullable private final SlideDeck    slideDeck;
   private final boolean      jumpToMessage;
   private final boolean      canReply;
+  private final long         notifiedTimestamp;
 
   public NotificationItem(long id,
                           boolean mms,
@@ -36,11 +37,12 @@ public class NotificationItem {
                           @Nullable Recipient threadRecipient,
                           long threadId,
                           @Nullable CharSequence text,
-                          long notificationTimestamp,
+                          long timestamp,
                           long messageReceivedTimestamp,
                           @Nullable SlideDeck slideDeck,
                           boolean jumpToMessage,
-                          boolean canReply)
+                          boolean canReply,
+                          long notifiedTimestamp)
   {
     this.id                       = id;
     this.mms                      = mms;
@@ -49,11 +51,12 @@ public class NotificationItem {
     this.threadRecipient          = threadRecipient;
     this.text                     = text;
     this.threadId                 = threadId;
-    this.notificationTimestamp    = notificationTimestamp;
+    this.timestamp                = timestamp;
     this.messageReceivedTimestamp = messageReceivedTimestamp;
     this.slideDeck                = slideDeck;
     this.jumpToMessage            = jumpToMessage;
     this.canReply                 = canReply;
+    this.notifiedTimestamp        = notifiedTimestamp;
   }
 
   public @NonNull  Recipient getRecipient() {
@@ -69,7 +72,7 @@ public class NotificationItem {
   }
 
   public long getTimestamp() {
-    return notificationTimestamp;
+    return timestamp;
   }
 
   public long getThreadId() {
@@ -111,5 +114,9 @@ public class NotificationItem {
 
   public boolean canReply() {
     return canReply;
+  }
+
+  public long getNotifiedTimestamp() {
+    return notifiedTimestamp;
   }
 }

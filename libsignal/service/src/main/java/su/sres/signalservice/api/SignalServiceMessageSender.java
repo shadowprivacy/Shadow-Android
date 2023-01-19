@@ -35,6 +35,7 @@ import su.sres.signalservice.api.messages.SignalServiceGroupV2;
 import su.sres.signalservice.api.messages.SignalServiceReceiptMessage;
 import su.sres.signalservice.api.messages.SignalServiceTypingMessage;
 import su.sres.signalservice.api.messages.calls.AnswerMessage;
+import su.sres.signalservice.api.messages.calls.CallingResponse;
 import su.sres.signalservice.api.messages.calls.IceUpdateMessage;
 import su.sres.signalservice.api.messages.calls.OfferMessage;
 import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
@@ -238,6 +239,22 @@ public class SignalServiceMessageSender {
         byte[] content = createCallContent(message);
         sendMessage(recipient, getTargetUnidentifiedAccess(unidentifiedAccess), System.currentTimeMillis(), content, false, null);
     }
+
+    /**
+     * Send an http request on behalf of the calling infrastructure.
+     *
+     * @param requestId Request identifier
+     * @param url Fully qualified URL to request
+     * @param httpMethod Http method to use (e.g., "GET", "POST")
+     * @param headers Optional list of headers to send with request
+     * @param body Optional body to send with request
+     * @return
+     */
+    public CallingResponse makeCallingRequest(long requestId, String url, String httpMethod, List<Pair<String, String>> headers, byte[] body) {
+        return socket.makeCallingRequest(requestId, url, httpMethod, headers, body);
+    }
+
+
 
     /**
      * Send a message to a single recipient.
@@ -697,15 +714,13 @@ public class SignalServiceMessageSender {
             builder.setDelete(delete);
         }
 
-        builder.setTimestamp(message.getTimestamp());
-
-        byte[] content = container.setDataMessage(builder).build().toByteArray();
-
-        if (maxEnvelopeSize > 0 && content.length > maxEnvelopeSize) {
-            throw new ContentTooLargeException(content.length);
+        if (message.getGroupCallUpdate().isPresent()) {
+            builder.setGroupCallUpdate(DataMessage.GroupCallUpdate.newBuilder().setEraId(message.getGroupCallUpdate().get().getEraId()));
         }
 
-        return content;
+        builder.setTimestamp(message.getTimestamp());
+
+        return enforceMaxContentSize(container.setDataMessage(builder).build().toByteArray());
     }
 
     private byte[] createCallContent(SignalServiceCallMessage callMessage) {
@@ -777,6 +792,8 @@ public class SignalServiceMessageSender {
             }
         } else if (callMessage.getBusyMessage().isPresent()) {
             builder.setBusy(CallMessage.Busy.newBuilder().setId(callMessage.getBusyMessage().get().getId()));
+        } else if (callMessage.getOpaqueMessage().isPresent()) {
+            builder.setOpaque(CallMessage.Opaque.newBuilder().setData(ByteString.copyFrom(callMessage.getOpaqueMessage().get().getOpaque())));
         }
 
         builder.setMultiRing(callMessage.isMultiRing());
@@ -1310,6 +1327,8 @@ public class SignalServiceMessageSender {
                                                 boolean online,
                                                 CancelationSignal cancelationSignal)
             throws IOException {
+        enforceMaxContentSize(content);
+
         long startTime = System.currentTimeMillis();
         List<Future<SendMessageResult>> futureResults = new LinkedList<>();
         Iterator<SignalServiceAddress> recipientIterator = recipients.iterator();
@@ -1374,6 +1393,8 @@ public class SignalServiceMessageSender {
                                           boolean online,
                                           CancelationSignal cancelationSignal)
             throws UntrustedIdentityException, IOException {
+        enforceMaxContentSize(content);
+
         long startTime = System.currentTimeMillis();
 
         for (int i = 0; i < RETRY_COUNT; i++) {
@@ -1633,6 +1654,13 @@ public class SignalServiceMessageSender {
         }
 
         return results;
+    }
+
+    private byte[] enforceMaxContentSize(byte[] content) {
+        if (maxEnvelopeSize > 0 && content.length > maxEnvelopeSize) {
+            throw new ContentTooLargeException(content.length);
+        }
+        return content;
     }
 
     public static interface EventListener {

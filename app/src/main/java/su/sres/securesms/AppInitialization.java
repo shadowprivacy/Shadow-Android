@@ -34,14 +34,13 @@ public final class AppInitialization {
         TextSecurePreferences.setJobManagerVersion(context, JobManager.CURRENT_VERSION);
         TextSecurePreferences.setLastExperienceVersionCode(context, Util.getCanonicalVersionCode());
         TextSecurePreferences.setHasSeenStickerIntroTooltip(context, true);
+        TextSecurePreferences.setPasswordDisabled(context, true);
+        TextSecurePreferences.setLastExperienceVersionCode(context, Util.getCanonicalVersionCode());
+        TextSecurePreferences.setReadReceiptsEnabled(context, true);
+        TextSecurePreferences.setTypingIndicatorsEnabled(context, true);
+        TextSecurePreferences.setHasSeenWelcomeScreen(context, false);
         ApplicationDependencies.getMegaphoneRepository().onFirstEverAppLaunch();
         SignalStore.onFirstEverAppLaunch();
-
-//   moved to Code Verification stage
-//        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
-//        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
-//        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forReference(BlessedPacks.SWOON_HANDS.getPackId(), BlessedPacks.SWOON_HANDS.getPackKey()));
-//        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forReference(BlessedPacks.SWOON_FACES.getPackId(), BlessedPacks.SWOON_FACES.getPackKey()));
     }
 
     public static void onPostBackupRestore(@NonNull Context context) {
@@ -49,11 +48,5 @@ public final class AppInitialization {
 
         ApplicationDependencies.getMegaphoneRepository().onFirstEverAppLaunch();
         SignalStore.onFirstEverAppLaunch();
-
-//   moved to Code Verification stage
-//        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
-//        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
-//        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forReference(BlessedPacks.SWOON_HANDS.getPackId(), BlessedPacks.SWOON_HANDS.getPackKey()));/
-//        ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forReference(BlessedPacks.SWOON_FACES.getPackId(), BlessedPacks.SWOON_FACES.getPackKey()));
     }
 }

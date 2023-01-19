@@ -43,13 +43,13 @@
                 android:paddingStart="10dp"
                 android:text="@string/InviteActivity_friends_dont_let_friends_text_unencrypted"
                 android:textAppearance="@style/TextAppearance.Signal.Title2"
-                android:textColor="?title_text_color_primary" />
+                android:textColor="@color/signal_text_primary" />
 
             <EditText
                 android:id="@+id/invite_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?attr/invite_edit_text_background"
+                android:background="@drawable/invite_edit_text_background"
                 android:gravity="top"
                 android:inputType="textShortMessage|textMultiLine"
                 android:minHeight="@dimen/invite_edit_text_min_height"
@@ -59,7 +59,7 @@
                 android:paddingEnd="20dp"
                 android:paddingBottom="10dp"
                 android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
-                android:textColor="?title_text_color_primary"
+                android:textColor="@color/signal_text_primary"
                 tools:text="Let's switch to Shadow: https://sgnl.link/asdfdfsa" />
 
             <Button
@@ -70,7 +70,7 @@
                 android:layout_marginTop="16dp"
                 android:background="@drawable/cta_button_background"
                 android:text="@string/InviteActivity_share_with_contacts"
-                android:textColor="?conversation_title_color" />
+                android:textColor="@color/signal_text_toolbar_title" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/share_button"
@@ -81,7 +81,7 @@
                 android:layout_marginTop="16dp"
                 android:drawablePadding="4dp"
                 android:text="@string/InviteActivity_choose_how_to_share"
-                app:drawableStartCompat="?invite_share_icon" />
+                app:drawableStartCompat="@drawable/ic_share_24" />
 
         </LinearLayout>
     </ScrollView>

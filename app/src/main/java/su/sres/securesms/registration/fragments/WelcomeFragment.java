@@ -3,6 +3,7 @@ package su.sres.securesms.registration.fragments;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -12,6 +13,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
@@ -37,6 +39,13 @@ public final class WelcomeFragment extends BaseRegistrationFragment {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.READ_PHONE_STATE };
+    @RequiresApi(26)
+    private static final            String[]       PERMISSIONS_API_26 = { Manifest.permission.WRITE_CONTACTS,
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.READ_PHONE_STATE };
+    @RequiresApi(26)
     private static final            String[]       PERMISSIONS_API_29 = {
             Manifest.permission.WRITE_CONTACTS,
             Manifest.permission.READ_CONTACTS,
@@ -168,37 +177,21 @@ public final class WelcomeFragment extends BaseRegistrationFragment {
                 .navigate(WelcomeFragmentDirections.actionChooseBackup());
     }
 
-/*    @SuppressLint("MissingPermission")
-    private void initializeNumber() {
-        Optional<Phonenumber.PhoneNumber> localNumber = Optional.absent();
-
-        if (Permissions.hasAll(requireContext(), Manifest.permission.READ_PHONE_STATE)) {
-            localNumber = Util.getDeviceNumber(requireContext());
-        }
-
-        if (localNumber.isPresent()) {
-            getModel().onNumberDetected(localNumber.get().getCountryCode(), localNumber.get().getNationalNumber());
-        } else {
-            Optional<String> simCountryIso = Util.getSimCountryIso(requireContext());
-
-            if (simCountryIso.isPresent() && !TextUtils.isEmpty(simCountryIso.get())) {
-                getModel().onNumberDetected(PhoneNumberUtil.getInstance().getCountryCodeForRegion(simCountryIso.get()), 0);
-            }
-        }
-    } */
-
-/*    private void onTermsClicked() {
-        CommunicationActions.openBrowserLink(requireContext(), RegistrationConstants.TERMS_AND_CONDITIONS_URL);
-    } */
-
     private boolean canUserSelectBackup() {
         return BackupUtil.isUserSelectionRequired(requireContext()) &&
                 !isReregister()                                      &&
                 !TextSecurePreferences.isBackupEnabled(requireContext());
     }
 
+    @SuppressLint("NewApi")
     private static String[] getContinuePermissions(boolean isUserSelectionRequired) {
-        return isUserSelectionRequired ? PERMISSIONS_API_29 : PERMISSIONS;
+        if (isUserSelectionRequired) {
+            return PERMISSIONS_API_29;
+        } else if (Build.VERSION.SDK_INT >= 26) {
+            return PERMISSIONS_API_26;
+        } else {
+            return PERMISSIONS;
+        }
     }
 
     private static @StringRes int getContinueRationale(boolean isUserSelectionRequired) {

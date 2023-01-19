@@ -23,8 +23,6 @@ import android.text.SpannableString;
 import su.sres.securesms.R;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.SmsDatabase.Status;
-import su.sres.securesms.database.documents.IdentityKeyMismatch;
-import su.sres.securesms.database.documents.NetworkFailure;
 import su.sres.securesms.mms.SlideDeck;
 import su.sres.securesms.recipients.Recipient;
 
@@ -58,7 +56,7 @@ public class NotificationMmsMessageRecord extends MmsMessageRecord {
             dateSent, dateReceived, -1, threadId, Status.STATUS_NONE, deliveryReceiptCount, mailbox,
             new LinkedList<>(), new LinkedList<>(), subscriptionId,
             0, 0, false, slideDeck, readReceiptCount, null, Collections.emptyList(), Collections.emptyList(), false,
-            Collections.emptyList(), false);
+            Collections.emptyList(), false, 0);
 
     this.contentLocation = contentLocation;
     this.messageSize     = messageSize;

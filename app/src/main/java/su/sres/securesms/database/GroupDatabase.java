@@ -39,10 +39,12 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 public final class GroupDatabase extends Database {
@@ -161,6 +163,7 @@ public final class GroupDatabase extends Database {
     values.putNull(FORMER_V1_MEMBERS);
 
     databaseHelper.getWritableDatabase().update(TABLE_NAME, values, GROUP_ID + " = ?", SqlUtil.buildArgs(id));
+    Recipient.live(Recipient.externalGroupExact(context, id).getId()).refresh();
   }
 
   Optional<GroupRecord> getGroup(Cursor cursor) {
@@ -212,7 +215,7 @@ public final class GroupDatabase extends Database {
     return noMetadata && noMembers;
   }
 
-  public Reader getGroupsFilteredByTitle(String constraint, boolean includeInactive) {
+  public Reader getGroupsFilteredByTitle(String constraint, boolean includeInactive, boolean excludeV1) {
     String   query;
     String[] queryArgs;
 
@@ -222,6 +225,10 @@ public final class GroupDatabase extends Database {
     } else {
       query     = TITLE + " LIKE ? AND " + ACTIVE + " = ?";
       queryArgs = new String[]{"%" + constraint + "%", "1"};
+    }
+
+    if (excludeV1) {
+      query += " AND " + EXPECTED_V2_ID + " IS NULL";
     }
 
     Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, query, queryArgs, null, null, TITLE + " COLLATE NOCASE ASC");
@@ -472,6 +479,11 @@ public final class GroupDatabase extends Database {
 
   /**
    * Migrates a V1 group to a V2 group.
+   *
+   * @param decryptedGroup The state that represents the group on the server. This will be used to
+   *                       determine if we need to save our old membership list and stuff. It will
+   *                       *not* be stored as the definitive group state as-is. In order to ensure
+   *                       proper diffing, we modify this model to have our V1 membership.
    */
   public @NonNull GroupId.V2 migrateToV2(@NonNull GroupId.V1 groupIdV1, @NonNull DecryptedGroup decryptedGroup) {
     SQLiteDatabase db             = databaseHelper.getWritableDatabase();
@@ -502,7 +514,7 @@ public final class GroupDatabase extends Database {
 
       DatabaseFactory.getRecipientDatabase(context).updateGroupId(groupIdV1, groupIdV2);
 
-      update(groupMasterKey, decryptedGroup);
+      update(groupMasterKey, updateToHaveV1Membership(decryptedGroup, record.getMembers()));
 
       db.setTransactionSuccessful();
     } finally {
@@ -510,6 +522,23 @@ public final class GroupDatabase extends Database {
     }
 
     return groupIdV2;
+  }
+
+  private static DecryptedGroup updateToHaveV1Membership(@NonNull DecryptedGroup serverGroup, @NonNull List<RecipientId> v1Members) {
+    DecryptedGroup.Builder builder = serverGroup.toBuilder();
+    builder.clearMembers();
+
+    for (RecipientId v1MemberId : v1Members) {
+      Recipient v1Member = Recipient.resolved(v1MemberId);
+      if (v1Member.hasUuid()) {
+        builder.addMembers(DecryptedMember.newBuilder()
+                .setUuid(UuidUtil.toByteString(v1Member.getUuid().get()))
+                .setRole(Member.Role.ADMINISTRATOR)
+                .build());
+      }
+    }
+
+    return builder.build();
   }
 
   public void update(@NonNull GroupMasterKey groupMasterKey, @NonNull DecryptedGroup decryptedGroup) {
@@ -672,7 +701,7 @@ public final class GroupDatabase extends Database {
     return RecipientId.toSerializedList(groupMembers);
   }
 
-  public List<GroupId.V2> getAllGroupV2Ids() {
+  public @NonNull List<GroupId.V2> getAllGroupV2Ids() {
     List<GroupId.V2> result = new LinkedList<>();
 
     try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[]{ GROUP_ID }, null, null, null, null, null)) {
@@ -681,6 +710,28 @@ public final class GroupDatabase extends Database {
         if (groupId.isV2()) {
           result.add(groupId.requireV2());
         }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Key: The 'expected' V2 ID (i.e. what a V1 ID would map to when migrated)
+   * Value: The matching V1 ID
+   */
+  public @NonNull Map<GroupId.V2, GroupId.V1> getAllExpectedV2Ids() {
+    Map<GroupId.V2, GroupId.V1> result = new HashMap<>();
+
+    String[] projection = new String[]{ GROUP_ID, EXPECTED_V2_ID };
+    String   query      = EXPECTED_V2_ID + " NOT NULL";
+
+    try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, projection, query, null, null, null, null)) {
+      while (cursor.moveToNext()) {
+        GroupId.V1 groupId    = GroupId.parseOrThrow(cursor.getString(cursor.getColumnIndexOrThrow(GROUP_ID))).requireV1();
+        GroupId.V2 expectedId = GroupId.parseOrThrow(cursor.getString(cursor.getColumnIndexOrThrow(EXPECTED_V2_ID))).requireV2();
+
+        result.put(expectedId, groupId);
       }
     }
 

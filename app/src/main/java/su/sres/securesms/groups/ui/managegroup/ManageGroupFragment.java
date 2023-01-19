@@ -45,6 +45,7 @@ import su.sres.securesms.groups.ui.invitesandrequests.ManagePendingAndRequesting
 import su.sres.securesms.groups.ui.managegroup.dialogs.GroupInviteSentDialog;
 import su.sres.securesms.groups.ui.managegroup.dialogs.GroupRightsDialog;
 import su.sres.securesms.groups.ui.managegroup.dialogs.GroupsLearnMoreBottomSheetDialogFragment;
+import su.sres.securesms.groups.ui.migration.GroupsV1MigrationInitiationBottomSheetDialogFragment;
 import su.sres.securesms.groups.ui.pendingmemberinvites.PendingMemberInvitesActivity;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediaoverview.MediaOverviewActivity;
@@ -382,6 +383,17 @@ public class ManageGroupFragment extends LoggingFragment {
                     groupInfoText.setText(R.string.ManageGroupActivity_legacy_group_learn_more);
                     groupInfoText.setOnLinkClickListener(v -> GroupsLearnMoreBottomSheetDialogFragment.show(requireFragmentManager()));
                     groupInfoText.setLearnMoreVisible(true);
+                    groupInfoText.setVisibility(View.VISIBLE);
+                    break;
+                case LEGACY_GROUP_UPGRADE:
+                    groupInfoText.setText(R.string.ManageGroupActivity_legacy_group_upgrade);
+                    groupInfoText.setOnLinkClickListener(v -> GroupsV1MigrationInitiationBottomSheetDialogFragment.showForInitiation(requireFragmentManager(), Recipient.externalPossiblyMigratedGroup(requireContext(), groupId).getId()));
+                    groupInfoText.setLearnMoreVisible(true, R.string.ManageGroupActivity_upgrade_this_group);
+                    groupInfoText.setVisibility(View.VISIBLE);
+                    break;
+                case LEGACY_GROUP_TOO_LARGE:
+                    groupInfoText.setText(context.getString(R.string.ManageGroupActivity_legacy_group_too_large, FeatureFlags.groupLimits().getHardLimit() - 1));
+                    groupInfoText.setLearnMoreVisible(false);
                     groupInfoText.setVisibility(View.VISIBLE);
                     break;
                 case MMS_WARNING:

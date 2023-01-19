@@ -1,10 +1,8 @@
 package su.sres.securesms;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
-import android.os.Build.VERSION_CODES;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
@@ -12,14 +10,15 @@ import android.view.WindowManager;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ActivityOptionsCompat;
 
 import java.util.Objects;
 
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.util.ConfigurationUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.dynamiclanguage.DynamicLanguageActivityHelper;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
 
 /**
@@ -40,7 +39,6 @@ public abstract class BaseActivity extends AppCompatActivity {
   protected void onResume() {
     super.onResume();
     initializeScreenshotSecurity();
-    DynamicLanguageActivityHelper.recreateIfNotInCorrectLanguage(this, TextSecurePreferences.getLanguage(this));
   }
 
   @Override
@@ -74,17 +72,23 @@ public abstract class BaseActivity extends AppCompatActivity {
             .toBundle();
     ActivityCompat.startActivity(this, intent, bundle);
   }
+  @Override
+  protected void attachBaseContext(@NonNull Context newBase) {
+    super.attachBaseContext(newBase);
 
-  @TargetApi(21)
-  protected void setStatusBarColor(int color) {
-    if (Build.VERSION.SDK_INT >= 21) {
-      getWindow().setStatusBarColor(color);
-    }
+    Configuration configuration      = new Configuration(newBase.getResources().getConfiguration());
+    int           appCompatNightMode = getDelegate().getLocalNightMode() != AppCompatDelegate.MODE_NIGHT_UNSPECIFIED ? getDelegate().getLocalNightMode()
+            : AppCompatDelegate.getDefaultNightMode();
+
+    configuration.uiMode = (configuration.uiMode & ~Configuration.UI_MODE_NIGHT_MASK) | mapNightModeToConfigurationUiMode(newBase, appCompatNightMode);
+
+    applyOverrideConfiguration(configuration);
   }
 
   @Override
-  protected void attachBaseContext(Context newBase) {
-    super.attachBaseContext(DynamicLanguageContextWrapper.updateContext(newBase, TextSecurePreferences.getLanguage(newBase)));
+  public void applyOverrideConfiguration(@NonNull Configuration overrideConfiguration) {
+    DynamicLanguageContextWrapper.prepareOverrideConfiguration(this, overrideConfiguration);
+    super.applyOverrideConfiguration(overrideConfiguration);
   }
 
   private void logEvent(@NonNull String event) {
@@ -95,5 +99,14 @@ public abstract class BaseActivity extends AppCompatActivity {
   ActionBar requireSupportActionBar() {
 
     return Objects.requireNonNull(getSupportActionBar());
+  }
+
+  private static int mapNightModeToConfigurationUiMode(@NonNull Context context, @AppCompatDelegate.NightMode int appCompatNightMode) {
+    if (appCompatNightMode == AppCompatDelegate.MODE_NIGHT_YES) {
+      return Configuration.UI_MODE_NIGHT_YES;
+    } else if (appCompatNightMode == AppCompatDelegate.MODE_NIGHT_NO) {
+      return Configuration.UI_MODE_NIGHT_NO;
+    }
+    return ConfigurationUtil.getNightModeConfiguration(context.getApplicationContext());
   }
 }

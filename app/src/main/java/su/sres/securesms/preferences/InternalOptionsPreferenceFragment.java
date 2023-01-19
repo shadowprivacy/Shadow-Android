@@ -17,6 +17,7 @@ import su.sres.securesms.jobs.RotateProfileKeyJob;
 import su.sres.securesms.keyvalue.InternalValues;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.util.ConversationUtil;
 
 public class InternalOptionsPreferenceFragment extends CorrectedPreferenceFragment {
     private static final String TAG = Log.tag(InternalOptionsPreferenceFragment.class);
@@ -52,6 +53,12 @@ public class InternalOptionsPreferenceFragment extends CorrectedPreferenceFragme
         findPreference("pref_rotate_profile_key").setOnPreferenceClickListener(preference -> {
             ApplicationDependencies.getJobManager().add(new RotateProfileKeyJob());
             Toast.makeText(getContext(), "Scheduled profile key rotation", Toast.LENGTH_SHORT).show();
+            return true;
+        });
+
+        findPreference("pref_delete_dynamic_shortcuts").setOnPreferenceClickListener(preference -> {
+            ConversationUtil.clearAllShortcuts(requireContext());
+            Toast.makeText(getContext(), "Deleted all dynamic shortcuts.", Toast.LENGTH_SHORT).show();
             return true;
         });
     }

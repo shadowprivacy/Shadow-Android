@@ -7,6 +7,7 @@ import android.graphics.Color;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
+import androidx.core.content.ContextCompat;
 
 import android.util.AttributeSet;
 import android.view.View;
@@ -79,7 +80,7 @@ public class LinkPreviewView extends FrameLayout {
         cornerMask    = new CornerMask(this);
         outliner      = new Outliner();
 
-        outliner.setColor(ThemeUtil.getThemedColor(getContext(), R.attr.conversation_item_image_outline_color));
+        outliner.setColor(ContextCompat.getColor(getContext(), R.color.signal_inverse_transparent_20));
 
         if (attrs != null) {
             TypedArray typedArray   = getContext().getTheme().obtainStyledAttributes(attrs, R.styleable.LinkPreviewView, 0, 0);

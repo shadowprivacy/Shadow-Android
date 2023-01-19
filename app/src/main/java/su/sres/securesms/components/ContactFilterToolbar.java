@@ -20,6 +20,7 @@ import android.widget.LinearLayout;
 
 import su.sres.securesms.R;
 import su.sres.securesms.util.ServiceUtil;
+import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.views.DarkOverflowToolbar;
 
 public final class ContactFilterToolbar extends DarkOverflowToolbar {
@@ -100,6 +101,10 @@ public final class ContactFilterToolbar extends DarkOverflowToolbar {
     }
 
     attributes.recycle();
+  }
+
+  public void focusAndShowKeyboard() {
+    ViewUtil.focusAndShowKeyboard(searchText);
   }
 
   public void clear() {

@@ -11,6 +11,8 @@ import android.view.ViewGroup;
 
 import com.annimon.stream.Stream;
 
+import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.scribbles.ImageEditorFragment;
 import su.sres.securesms.util.MediaUtil;
 
@@ -24,12 +26,14 @@ class MediaSendFragmentPagerAdapter extends FragmentStatePagerAdapter {
     private final List<Media>                         media;
     private final Map<Integer, MediaSendPageFragment> fragments;
     private final Map<Uri, Object>                    savedState;
+    private final MediaConstraints mediaConstraints;
 
-    MediaSendFragmentPagerAdapter(@NonNull FragmentManager fm) {
+    MediaSendFragmentPagerAdapter(@NonNull FragmentManager fm, @NonNull MediaConstraints mediaConstraints) {
         super(fm);
-        this.media      = new ArrayList<>();
-        this.fragments  = new HashMap<>();
-        this.savedState = new HashMap<>();
+        this.mediaConstraints = mediaConstraints;
+        this.media            = new ArrayList<>();
+        this.fragments        = new HashMap<>();
+        this.savedState       = new HashMap<>();
     }
 
     @Override
@@ -41,7 +45,9 @@ class MediaSendFragmentPagerAdapter extends FragmentStatePagerAdapter {
         } else if (MediaUtil.isImageType(mediaItem.getMimeType())) {
             return ImageEditorFragment.newInstance(mediaItem.getUri());
         } else if (MediaUtil.isVideoType(mediaItem.getMimeType())) {
-            return MediaSendVideoFragment.newInstance(mediaItem.getUri());
+            return MediaSendVideoFragment.newInstance(mediaItem.getUri(),
+                    mediaConstraints.getCompressedVideoMaxSize(ApplicationDependencies.getApplication()),
+                    mediaConstraints.getVideoMaxSize(ApplicationDependencies.getApplication()));
         } else {
             throw new UnsupportedOperationException("Can only render images and videos. Found mimetype: '" + mediaItem.getMimeType() + "'");
         }
@@ -122,6 +128,13 @@ class MediaSendFragmentPagerAdapter extends FragmentStatePagerAdapter {
         return fragments.containsKey(position) ? fragments.get(position).getPlaybackControls() : null;
     }
 
+    void pausePlayback() {
+        for (MediaSendPageFragment fragment : fragments.values()) {
+            if (fragment instanceof MediaSendVideoFragment) {
+                ((MediaSendVideoFragment)fragment).pausePlayback();
+            }
+        }
+    }
 
     void notifyHidden() {
         Stream.of(fragments.values()).forEach(MediaSendPageFragment::notifyHidden);

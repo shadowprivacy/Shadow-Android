@@ -33,7 +33,7 @@
                 android:paddingEnd="10dp"
                 android:gravity="center">
 
-                <ImageView android:id="@+id/search_clear"
+                <androidx.appcompat.widget.AppCompatImageView android:id="@+id/search_clear"
                     android:contentDescription="@string/contact_filter_toolbar__clear_entered_text_description"
                            android:layout_width="wrap_content"
                            android:layout_height="wrap_content"

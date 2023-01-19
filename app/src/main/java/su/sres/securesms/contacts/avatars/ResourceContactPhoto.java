@@ -16,6 +16,7 @@ import com.amulyakhare.textdrawable.TextDrawable;
 import com.makeramen.roundedimageview.RoundedDrawable;
 
 import su.sres.securesms.R;
+import su.sres.securesms.util.ContextUtil;
 import su.sres.securesms.util.ThemeUtil;
 
 public class ResourceContactPhoto implements FallbackContactPhoto {
@@ -70,8 +71,7 @@ public class ResourceContactPhoto implements FallbackContactPhoto {
       foreground.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
     }
 
-    Drawable gradient = context.getResources().getDrawable(ThemeUtil.isDarkTheme(context) ? R.drawable.avatar_gradient_dark
-            : R.drawable.avatar_gradient_light);
+    Drawable gradient = ContextUtil.requireDrawable(context, R.drawable.avatar_gradient);
 
     return new ExpandingLayerDrawable(new Drawable[] {background, foreground, gradient});
   }

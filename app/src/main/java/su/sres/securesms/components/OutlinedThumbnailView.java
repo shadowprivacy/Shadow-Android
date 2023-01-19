@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.util.AttributeSet;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 
 import su.sres.securesms.R;
 import su.sres.securesms.util.ThemeUtil;
@@ -30,7 +31,7 @@ public class OutlinedThumbnailView extends ThumbnailView {
         cornerMask = new CornerMask(this);
         outliner   = new Outliner();
 
-        outliner.setColor(ThemeUtil.getThemedColor(getContext(), R.attr.conversation_item_image_outline_color));
+        outliner.setColor(ContextCompat.getColor(getContext(), R.color.signal_inverse_transparent_20));
         int radius = 0;
 
         if (attrs != null) {

@@ -10,39 +10,51 @@ import org.signal.ringrtc.CallId;
 import su.sres.securesms.crypto.IdentityKeyParcelable;
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.ringrtc.CameraState;
 import su.sres.securesms.ringrtc.IceCandidateParcel;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.ringrtc.TurnServerInfoParcel;
 import su.sres.securesms.service.WebRtcCallService;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
+
+import org.signal.ringrtc.GroupCall;
 import org.webrtc.PeerConnection;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.signalservice.api.messages.calls.OfferMessage;
+import su.sres.signalservice.api.util.UuidUtil;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_ANSWER_OPAQUE;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_ANSWER_SDP;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_AVAILABLE;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_BROADCAST;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_CALL_ID;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_CAMERA_STATE;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_ENABLE;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_ERROR_CALL_STATE;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_ERROR_IDENTITY_KEY;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_GROUP_CALL_END_REASON;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_GROUP_CALL_HASH;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_GROUP_EXTERNAL_TOKEN;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_ICE_CANDIDATES;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_MULTI_RING;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_OFFER_OPAQUE;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_OFFER_SDP;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_OFFER_TYPE;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_OPAQUE_MESSAGE;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_REMOTE_DEVICE;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_REMOTE_IDENTITY_KEY;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_REMOTE_PEER_KEY;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_TURN_SERVER_INFO;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_UUID;
 
 /**
  * Helper to parse the various attributes out of intents passed to the service.
@@ -70,14 +82,17 @@ public final class WebRtcIntentParser {
     }
 
     public static @NonNull RemotePeer getRemotePeerFromMap(@NonNull Intent intent, @NonNull WebRtcServiceState currentState) {
-        int        remotePeerKey = getRemotePeerKey(intent);
-        RemotePeer remotePeer    = currentState.getCallInfoState().getPeer(remotePeerKey);
+        RemotePeer remotePeer = getNullableRemotePeerFromMap(intent, currentState);
 
         if (remotePeer == null) {
-            throw new AssertionError("No RemotePeer in map for key: " + remotePeerKey + "!");
+            throw new AssertionError("No RemotePeer in map for key: " + getRemotePeerKey(intent) + "!");
         }
 
         return remotePeer;
+    }
+
+    public static @Nullable RemotePeer getNullableRemotePeerFromMap(@NonNull Intent intent, @NonNull WebRtcServiceState currentState) {
+        return currentState.getCallInfoState().getPeer(getRemotePeerKey(intent));
     }
 
     public static int getRemotePeerKey(@NonNull Intent intent) {
@@ -111,6 +126,14 @@ public final class WebRtcIntentParser {
 
     public static @Nullable byte[] getOfferOpaque(@NonNull Intent intent) {
         return intent.getByteArrayExtra(EXTRA_OFFER_OPAQUE);
+    }
+
+    public static @NonNull byte[] getOpaque(@NonNull Intent intent) {
+        return Objects.requireNonNull(intent.getByteArrayExtra(EXTRA_OPAQUE_MESSAGE));
+    }
+
+    public static @NonNull UUID getUuid(@NonNull Intent intent) {
+        return UuidUtil.parseOrThrow(intent.getStringExtra(EXTRA_UUID));
     }
 
     public static boolean getBroadcastFlag(@NonNull Intent intent) {
@@ -151,15 +174,41 @@ public final class WebRtcIntentParser {
         return intent.getBooleanExtra(EXTRA_ENABLE, false);
     }
 
+    public static @NonNull byte[] getGroupMembershipToken(@NonNull Intent intent) {
+        return Objects.requireNonNull(intent.getByteArrayExtra(EXTRA_GROUP_EXTERNAL_TOKEN));
+    }
+
+    public static @NonNull CameraState getCameraState(@NonNull Intent intent) {
+        return Objects.requireNonNull(intent.getParcelableExtra(EXTRA_CAMERA_STATE));
+    }
+
     public static @NonNull WebRtcViewModel.State getErrorCallState(@NonNull Intent intent) {
         return (WebRtcViewModel.State) Objects.requireNonNull(intent.getSerializableExtra(EXTRA_ERROR_CALL_STATE));
     }
 
     public static @NonNull Optional<IdentityKey> getErrorIdentityKey(@NonNull Intent intent) {
-        IdentityKeyParcelable identityKeyParcelable = (IdentityKeyParcelable) intent.getParcelableExtra(EXTRA_ERROR_IDENTITY_KEY);
+        IdentityKeyParcelable identityKeyParcelable = intent.getParcelableExtra(EXTRA_ERROR_IDENTITY_KEY);
         if (identityKeyParcelable != null) {
             return Optional.fromNullable(identityKeyParcelable.get());
         }
         return Optional.absent();
+    }
+
+    public static int getGroupCallHash(@NonNull Intent intent) {
+        return intent.getIntExtra(EXTRA_GROUP_CALL_HASH, 0);
+    }
+
+    public static @NonNull GroupCall.GroupCallEndReason getGroupCallEndReason(@NonNull Intent intent) {
+        int ordinal = intent.getIntExtra(EXTRA_GROUP_CALL_END_REASON, -1);
+
+        if (ordinal >= 0 && ordinal < GroupCall.GroupCallEndReason.values().length) {
+            return GroupCall.GroupCallEndReason.values()[ordinal];
+        }
+
+        return GroupCall.GroupCallEndReason.DEVICE_EXPLICITLY_DISCONNECTED;
+    }
+
+    public static @NonNull RecipientId getRecipientId(@NonNull Intent intent, @NonNull String name) {
+        return RecipientId.from(Objects.requireNonNull(intent.getStringExtra(name)));
     }
 }

@@ -43,6 +43,7 @@ import su.sres.securesms.transport.UndeliverableMessageException;
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
@@ -172,6 +173,10 @@ public final class PushGroupSendJob extends PushSendJob {
 
     if (!groupRecipient.isPushGroup()) {
       throw new MmsException("Message recipient isn't a group!");
+    }
+
+    if (groupRecipient.isPushV1Group() && FeatureFlags.groupsV1ForcedMigration()) {
+      throw new MmsException("No GV1 messages can be sent anymore!");
     }
 
     try {

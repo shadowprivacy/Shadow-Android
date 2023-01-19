@@ -16,5 +16,5 @@
     app:conversationThumbnail_maxWidth="@dimen/media_bubble_max_width"
     app:conversationThumbnail_minHeight="@dimen/media_bubble_min_height"
     app:conversationThumbnail_minWidth="@dimen/media_bubble_min_width_solo"
-    tools:src="@drawable/ic_video_light"
+    tools:src="@drawable/ic_video"
     tools:visibility="visible" />

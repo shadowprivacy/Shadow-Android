@@ -2428,6 +2428,17 @@ public final class SignalServiceProtos {
      * @return The destinationDeviceId.
      */
     int getDestinationDeviceId();
+
+    /**
+     * <code>optional .signalservice.CallMessage.Opaque opaque = 10;</code>
+     * @return Whether the opaque field is set.
+     */
+    boolean hasOpaque();
+    /**
+     * <code>optional .signalservice.CallMessage.Opaque opaque = 10;</code>
+     * @return The opaque.
+     */
+    su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque getOpaque();
   }
   /**
    * Protobuf type {@code signalservice.CallMessage}
@@ -5393,6 +5404,276 @@ public final class SignalServiceProtos {
       }
     }
 
+    public interface OpaqueOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:signalservice.CallMessage.Opaque)
+        com.google.protobuf.MessageLiteOrBuilder {
+
+      /**
+       * <code>optional bytes data = 1;</code>
+       * @return Whether the data field is set.
+       */
+      boolean hasData();
+      /**
+       * <code>optional bytes data = 1;</code>
+       * @return The data.
+       */
+      com.google.protobuf.ByteString getData();
+    }
+    /**
+     * Protobuf type {@code signalservice.CallMessage.Opaque}
+     */
+    public  static final class Opaque extends
+        com.google.protobuf.GeneratedMessageLite<
+            Opaque, Opaque.Builder> implements
+        // @@protoc_insertion_point(message_implements:signalservice.CallMessage.Opaque)
+        OpaqueOrBuilder {
+      private Opaque() {
+        data_ = com.google.protobuf.ByteString.EMPTY;
+      }
+      private int bitField0_;
+      public static final int DATA_FIELD_NUMBER = 1;
+      private com.google.protobuf.ByteString data_;
+      /**
+       * <code>optional bytes data = 1;</code>
+       * @return Whether the data field is set.
+       */
+      @java.lang.Override
+      public boolean hasData() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>optional bytes data = 1;</code>
+       * @return The data.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getData() {
+        return data_;
+      }
+      /**
+       * <code>optional bytes data = 1;</code>
+       * @param value The data to set.
+       */
+      private void setData(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        data_ = value;
+      }
+      /**
+       * <code>optional bytes data = 1;</code>
+       */
+      private void clearData() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        data_ = getDefaultInstance().getData();
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+
+      public static Builder newBuilder() {
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
+      }
+      public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque prototype) {
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+      }
+
+      /**
+       * Protobuf type {@code signalservice.CallMessage.Opaque}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageLite.Builder<
+            su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque, Builder> implements
+          // @@protoc_insertion_point(builder_implements:signalservice.CallMessage.Opaque)
+          su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.OpaqueOrBuilder {
+        // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.newBuilder()
+        private Builder() {
+          super(DEFAULT_INSTANCE);
+        }
+
+
+        /**
+         * <code>optional bytes data = 1;</code>
+         * @return Whether the data field is set.
+         */
+        @java.lang.Override
+        public boolean hasData() {
+          return instance.hasData();
+        }
+        /**
+         * <code>optional bytes data = 1;</code>
+         * @return The data.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString getData() {
+          return instance.getData();
+        }
+        /**
+         * <code>optional bytes data = 1;</code>
+         * @param value The data to set.
+         * @return This builder for chaining.
+         */
+        public Builder setData(com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setData(value);
+          return this;
+        }
+        /**
+         * <code>optional bytes data = 1;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearData() {
+          copyOnWrite();
+          instance.clearData();
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:signalservice.CallMessage.Opaque)
+      }
+      @java.lang.Override
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      protected final java.lang.Object dynamicMethod(
+          com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+          java.lang.Object arg0, java.lang.Object arg1) {
+        switch (method) {
+          case NEW_MUTABLE_INSTANCE: {
+            return new su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque();
+          }
+          case NEW_BUILDER: {
+            return new Builder();
+          }
+          case BUILD_MESSAGE_INFO: {
+              java.lang.Object[] objects = new java.lang.Object[] {
+                "bitField0_",
+                "data_",
+              };
+              java.lang.String info =
+                  "\u0001\u0001\u0000\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0001\n\u0000";
+              return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+          }
+          // fall through
+          case GET_DEFAULT_INSTANCE: {
+            return DEFAULT_INSTANCE;
+          }
+          case GET_PARSER: {
+            com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque> parser = PARSER;
+            if (parser == null) {
+              synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.class) {
+                parser = PARSER;
+                if (parser == null) {
+                  parser =
+                      new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque>(
+                          DEFAULT_INSTANCE);
+                  PARSER = parser;
+                }
+              }
+            }
+            return parser;
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return (byte) 1;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          return null;
+        }
+        }
+        throw new UnsupportedOperationException();
+      }
+
+
+      // @@protoc_insertion_point(class_scope:signalservice.CallMessage.Opaque)
+      private static final su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque DEFAULT_INSTANCE;
+      static {
+        Opaque defaultInstance = new Opaque();
+        // New instances are implicitly immutable so no need to make
+        // immutable.
+        DEFAULT_INSTANCE = defaultInstance;
+        com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+          Opaque.class, defaultInstance);
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static volatile com.google.protobuf.Parser<Opaque> PARSER;
+
+      public static com.google.protobuf.Parser<Opaque> parser() {
+        return DEFAULT_INSTANCE.getParserForType();
+      }
+    }
+
     private int bitField0_;
     public static final int OFFER_FIELD_NUMBER = 1;
     private su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Offer offer_;
@@ -5897,6 +6178,64 @@ public final class SignalServiceProtos {
     private void clearDestinationDeviceId() {
       bitField0_ = (bitField0_ & ~0x00000040);
       destinationDeviceId_ = 0;
+    }
+
+    public static final int OPAQUE_FIELD_NUMBER = 10;
+    private su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque opaque_;
+    /**
+     * <code>optional .signalservice.CallMessage.Opaque opaque = 10;</code>
+     */
+    @java.lang.Override
+    public boolean hasOpaque() {
+      return ((bitField0_ & 0x00000080) != 0);
+    }
+    /**
+     * <code>optional .signalservice.CallMessage.Opaque opaque = 10;</code>
+     */
+    @java.lang.Override
+    public su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque getOpaque() {
+      return opaque_ == null ? su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.getDefaultInstance() : opaque_;
+    }
+    /**
+     * <code>optional .signalservice.CallMessage.Opaque opaque = 10;</code>
+     */
+    private void setOpaque(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      opaque_ = value;
+      bitField0_ |= 0x00000080;
+      }
+    /**
+     * <code>optional .signalservice.CallMessage.Opaque opaque = 10;</code>
+     */
+    private void setOpaque(
+        su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.Builder builderForValue) {
+      opaque_ = builderForValue.build();
+      bitField0_ |= 0x00000080;
+    }
+    /**
+     * <code>optional .signalservice.CallMessage.Opaque opaque = 10;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeOpaque(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      if (opaque_ != null &&
+          opaque_ != su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.getDefaultInstance()) {
+        opaque_ =
+          su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.newBuilder(opaque_).mergeFrom(value).buildPartial();
+      } else {
+        opaque_ = value;
+      }
+      bitField0_ |= 0x00000080;
+    }
+    /**
+     * <code>optional .signalservice.CallMessage.Opaque opaque = 10;</code>
+     */
+    private void clearOpaque() {  opaque_ = null;
+      bitField0_ = (bitField0_ & ~0x00000080);
     }
 
     public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage parseFrom(
@@ -6425,6 +6764,53 @@ public final class SignalServiceProtos {
         return this;
       }
 
+      /**
+       * <code>optional .signalservice.CallMessage.Opaque opaque = 10;</code>
+       */
+      @java.lang.Override
+      public boolean hasOpaque() {
+        return instance.hasOpaque();
+      }
+      /**
+       * <code>optional .signalservice.CallMessage.Opaque opaque = 10;</code>
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque getOpaque() {
+        return instance.getOpaque();
+      }
+      /**
+       * <code>optional .signalservice.CallMessage.Opaque opaque = 10;</code>
+       */
+      public Builder setOpaque(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque value) {
+        copyOnWrite();
+        instance.setOpaque(value);
+        return this;
+        }
+      /**
+       * <code>optional .signalservice.CallMessage.Opaque opaque = 10;</code>
+       */
+      public Builder setOpaque(
+          su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.Builder builderForValue) {
+        copyOnWrite();
+        instance.setOpaque(builderForValue);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.CallMessage.Opaque opaque = 10;</code>
+       */
+      public Builder mergeOpaque(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque value) {
+        copyOnWrite();
+        instance.mergeOpaque(value);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.CallMessage.Opaque opaque = 10;</code>
+       */
+      public Builder clearOpaque() {  copyOnWrite();
+        instance.clearOpaque();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:signalservice.CallMessage)
     }
     @java.lang.Override
@@ -6451,10 +6837,12 @@ public final class SignalServiceProtos {
               "hangup_",
               "multiRing_",
               "destinationDeviceId_",
+              "opaque_",
             };
             java.lang.String info =
-                "\u0001\b\u0000\u0001\u0001\t\b\u0000\u0001\u0000\u0001\t\u0000\u0002\t\u0001\u0003" +
-                "\u001b\u0004\t\u0002\u0005\t\u0003\u0007\t\u0004\b\u0007\u0005\t\u000b\u0006";
+                "\u0001\t\u0000\u0001\u0001\n\t\u0000\u0001\u0000\u0001\t\u0000\u0002\t\u0001\u0003" +
+                "\u001b\u0004\t\u0002\u0005\t\u0003\u0007\t\u0004\b\u0007\u0005\t\u000b\u0006\n\t" +
+                "\u0007";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -6717,6 +7105,17 @@ public final class SignalServiceProtos {
      * <code>repeated .signalservice.DataMessage.BodyRange bodyRanges = 18;</code>
      */
     int getBodyRangesCount();
+
+    /**
+     * <code>optional .signalservice.DataMessage.GroupCallUpdate groupCallUpdate = 19;</code>
+     * @return Whether the groupCallUpdate field is set.
+     */
+    boolean hasGroupCallUpdate();
+    /**
+     * <code>optional .signalservice.DataMessage.GroupCallUpdate groupCallUpdate = 19;</code>
+     * @return The groupCallUpdate.
+     */
+    su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate getGroupCallUpdate();
   }
   /**
    * Protobuf type {@code signalservice.DataMessage}
@@ -17051,6 +17450,325 @@ public final class SignalServiceProtos {
       }
     }
 
+    public interface GroupCallUpdateOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:signalservice.DataMessage.GroupCallUpdate)
+        com.google.protobuf.MessageLiteOrBuilder {
+
+      /**
+       * <code>optional string eraId = 1;</code>
+       * @return Whether the eraId field is set.
+       */
+      boolean hasEraId();
+      /**
+       * <code>optional string eraId = 1;</code>
+       * @return The eraId.
+       */
+      java.lang.String getEraId();
+      /**
+       * <code>optional string eraId = 1;</code>
+       * @return The bytes for eraId.
+       */
+      com.google.protobuf.ByteString
+          getEraIdBytes();
+    }
+    /**
+     * Protobuf type {@code signalservice.DataMessage.GroupCallUpdate}
+     */
+    public  static final class GroupCallUpdate extends
+        com.google.protobuf.GeneratedMessageLite<
+            GroupCallUpdate, GroupCallUpdate.Builder> implements
+        // @@protoc_insertion_point(message_implements:signalservice.DataMessage.GroupCallUpdate)
+        GroupCallUpdateOrBuilder {
+      private GroupCallUpdate() {
+        eraId_ = "";
+      }
+      private int bitField0_;
+      public static final int ERAID_FIELD_NUMBER = 1;
+      private java.lang.String eraId_;
+      /**
+       * <code>optional string eraId = 1;</code>
+       * @return Whether the eraId field is set.
+       */
+      @java.lang.Override
+      public boolean hasEraId() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>optional string eraId = 1;</code>
+       * @return The eraId.
+       */
+      @java.lang.Override
+      public java.lang.String getEraId() {
+        return eraId_;
+      }
+      /**
+       * <code>optional string eraId = 1;</code>
+       * @return The bytes for eraId.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getEraIdBytes() {
+        return com.google.protobuf.ByteString.copyFromUtf8(eraId_);
+      }
+      /**
+       * <code>optional string eraId = 1;</code>
+       * @param value The eraId to set.
+       */
+      private void setEraId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        eraId_ = value;
+      }
+      /**
+       * <code>optional string eraId = 1;</code>
+       */
+      private void clearEraId() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        eraId_ = getDefaultInstance().getEraId();
+      }
+      /**
+       * <code>optional string eraId = 1;</code>
+       * @param value The bytes for eraId to set.
+       */
+      private void setEraIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        eraId_ = value.toStringUtf8();
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+
+      public static Builder newBuilder() {
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
+      }
+      public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate prototype) {
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+      }
+
+      /**
+       * Protobuf type {@code signalservice.DataMessage.GroupCallUpdate}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageLite.Builder<
+            su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate, Builder> implements
+          // @@protoc_insertion_point(builder_implements:signalservice.DataMessage.GroupCallUpdate)
+          su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdateOrBuilder {
+        // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate.newBuilder()
+        private Builder() {
+          super(DEFAULT_INSTANCE);
+        }
+
+
+        /**
+         * <code>optional string eraId = 1;</code>
+         * @return Whether the eraId field is set.
+         */
+        @java.lang.Override
+        public boolean hasEraId() {
+          return instance.hasEraId();
+        }
+        /**
+         * <code>optional string eraId = 1;</code>
+         * @return The eraId.
+         */
+        @java.lang.Override
+        public java.lang.String getEraId() {
+          return instance.getEraId();
+        }
+        /**
+         * <code>optional string eraId = 1;</code>
+         * @return The bytes for eraId.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getEraIdBytes() {
+          return instance.getEraIdBytes();
+        }
+        /**
+         * <code>optional string eraId = 1;</code>
+         * @param value The eraId to set.
+         * @return This builder for chaining.
+         */
+        public Builder setEraId(
+            java.lang.String value) {
+          copyOnWrite();
+          instance.setEraId(value);
+          return this;
+        }
+        /**
+         * <code>optional string eraId = 1;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearEraId() {
+          copyOnWrite();
+          instance.clearEraId();
+          return this;
+        }
+        /**
+         * <code>optional string eraId = 1;</code>
+         * @param value The bytes for eraId to set.
+         * @return This builder for chaining.
+         */
+        public Builder setEraIdBytes(
+            com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setEraIdBytes(value);
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:signalservice.DataMessage.GroupCallUpdate)
+      }
+      @java.lang.Override
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      protected final java.lang.Object dynamicMethod(
+          com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+          java.lang.Object arg0, java.lang.Object arg1) {
+        switch (method) {
+          case NEW_MUTABLE_INSTANCE: {
+            return new su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate();
+          }
+          case NEW_BUILDER: {
+            return new Builder();
+          }
+          case BUILD_MESSAGE_INFO: {
+              java.lang.Object[] objects = new java.lang.Object[] {
+                "bitField0_",
+                "eraId_",
+              };
+              java.lang.String info =
+                  "\u0001\u0001\u0000\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0001\b\u0000";
+              return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+          }
+          // fall through
+          case GET_DEFAULT_INSTANCE: {
+            return DEFAULT_INSTANCE;
+          }
+          case GET_PARSER: {
+            com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate> parser = PARSER;
+            if (parser == null) {
+              synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate.class) {
+                parser = PARSER;
+                if (parser == null) {
+                  parser =
+                      new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate>(
+                          DEFAULT_INSTANCE);
+                  PARSER = parser;
+                }
+              }
+            }
+            return parser;
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return (byte) 1;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          return null;
+        }
+        }
+        throw new UnsupportedOperationException();
+      }
+
+
+      // @@protoc_insertion_point(class_scope:signalservice.DataMessage.GroupCallUpdate)
+      private static final su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate DEFAULT_INSTANCE;
+      static {
+        GroupCallUpdate defaultInstance = new GroupCallUpdate();
+        // New instances are implicitly immutable so no need to make
+        // immutable.
+        DEFAULT_INSTANCE = defaultInstance;
+        com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+          GroupCallUpdate.class, defaultInstance);
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static volatile com.google.protobuf.Parser<GroupCallUpdate> PARSER;
+
+      public static com.google.protobuf.Parser<GroupCallUpdate> parser() {
+        return DEFAULT_INSTANCE.getParserForType();
+      }
+    }
+
     private int bitField0_;
     public static final int BODY_FIELD_NUMBER = 1;
     private java.lang.String body_;
@@ -18158,6 +18876,64 @@ public final class SignalServiceProtos {
       bodyRanges_.remove(index);
     }
 
+    public static final int GROUPCALLUPDATE_FIELD_NUMBER = 19;
+    private su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate groupCallUpdate_;
+    /**
+     * <code>optional .signalservice.DataMessage.GroupCallUpdate groupCallUpdate = 19;</code>
+     */
+    @java.lang.Override
+    public boolean hasGroupCallUpdate() {
+      return ((bitField0_ & 0x00002000) != 0);
+    }
+    /**
+     * <code>optional .signalservice.DataMessage.GroupCallUpdate groupCallUpdate = 19;</code>
+     */
+    @java.lang.Override
+    public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate getGroupCallUpdate() {
+      return groupCallUpdate_ == null ? su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate.getDefaultInstance() : groupCallUpdate_;
+    }
+    /**
+     * <code>optional .signalservice.DataMessage.GroupCallUpdate groupCallUpdate = 19;</code>
+     */
+    private void setGroupCallUpdate(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      groupCallUpdate_ = value;
+      bitField0_ |= 0x00002000;
+      }
+    /**
+     * <code>optional .signalservice.DataMessage.GroupCallUpdate groupCallUpdate = 19;</code>
+     */
+    private void setGroupCallUpdate(
+        su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate.Builder builderForValue) {
+      groupCallUpdate_ = builderForValue.build();
+      bitField0_ |= 0x00002000;
+    }
+    /**
+     * <code>optional .signalservice.DataMessage.GroupCallUpdate groupCallUpdate = 19;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeGroupCallUpdate(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      if (groupCallUpdate_ != null &&
+          groupCallUpdate_ != su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate.getDefaultInstance()) {
+        groupCallUpdate_ =
+          su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate.newBuilder(groupCallUpdate_).mergeFrom(value).buildPartial();
+      } else {
+        groupCallUpdate_ = value;
+      }
+      bitField0_ |= 0x00002000;
+    }
+    /**
+     * <code>optional .signalservice.DataMessage.GroupCallUpdate groupCallUpdate = 19;</code>
+     */
+    private void clearGroupCallUpdate() {  groupCallUpdate_ = null;
+      bitField0_ = (bitField0_ & ~0x00002000);
+    }
+
     public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -19208,6 +19984,53 @@ public final class SignalServiceProtos {
         return this;
       }
 
+      /**
+       * <code>optional .signalservice.DataMessage.GroupCallUpdate groupCallUpdate = 19;</code>
+       */
+      @java.lang.Override
+      public boolean hasGroupCallUpdate() {
+        return instance.hasGroupCallUpdate();
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.GroupCallUpdate groupCallUpdate = 19;</code>
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate getGroupCallUpdate() {
+        return instance.getGroupCallUpdate();
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.GroupCallUpdate groupCallUpdate = 19;</code>
+       */
+      public Builder setGroupCallUpdate(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate value) {
+        copyOnWrite();
+        instance.setGroupCallUpdate(value);
+        return this;
+        }
+      /**
+       * <code>optional .signalservice.DataMessage.GroupCallUpdate groupCallUpdate = 19;</code>
+       */
+      public Builder setGroupCallUpdate(
+          su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate.Builder builderForValue) {
+        copyOnWrite();
+        instance.setGroupCallUpdate(builderForValue);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.GroupCallUpdate groupCallUpdate = 19;</code>
+       */
+      public Builder mergeGroupCallUpdate(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate value) {
+        copyOnWrite();
+        instance.mergeGroupCallUpdate(value);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.GroupCallUpdate groupCallUpdate = 19;</code>
+       */
+      public Builder clearGroupCallUpdate() {  copyOnWrite();
+        instance.clearGroupCallUpdate();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:signalservice.DataMessage)
     }
     @java.lang.Override
@@ -19246,12 +20069,13 @@ public final class SignalServiceProtos {
               "delete_",
               "bodyRanges_",
               su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.class,
+              "groupCallUpdate_",
             };
             java.lang.String info =
-                "\u0001\u0011\u0000\u0001\u0001\u0012\u0011\u0000\u0004\u0000\u0001\b\u0000\u0002" +
+                "\u0001\u0012\u0000\u0001\u0001\u0013\u0012\u0000\u0004\u0000\u0001\b\u0000\u0002" +
                 "\u001b\u0003\t\u0001\u0004\u000b\u0003\u0005\u000b\u0004\u0006\n\u0005\u0007\u0003" +
                 "\u0006\b\t\u0007\t\u001b\n\u001b\u000b\t\b\f\u000b\t\u000e\u0007\n\u000f\t\u0002" +
-                "\u0010\t\u000b\u0011\t\f\u0012\u001b";
+                "\u0010\t\u000b\u0011\t\f\u0012\u001b\u0013\t\r";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through

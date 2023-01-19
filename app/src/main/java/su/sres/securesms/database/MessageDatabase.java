@@ -35,6 +35,7 @@ import su.sres.securesms.revealable.ViewOnceExpirationInfo;
 import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
 import su.sres.securesms.util.JsonUtils;
+import su.sres.securesms.util.SqlUtil;
 
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.util.Pair;
@@ -49,6 +50,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 
 public abstract class MessageDatabase extends Database implements MmsSmsColumns {
 
@@ -136,6 +138,12 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   public abstract @NonNull Pair<Long, Long> insertReceivedCall(@NonNull RecipientId address, boolean isVideoOffer);
   public abstract @NonNull Pair<Long, Long> insertOutgoingCall(@NonNull RecipientId address, boolean isVideoOffer);
   public abstract @NonNull Pair<Long, Long> insertMissedCall(@NonNull RecipientId address, long timestamp, boolean isVideoOffer);
+  public abstract @NonNull void insertOrUpdateGroupCall(@NonNull RecipientId groupRecipientId,
+                                                        @NonNull RecipientId sender,
+                                                        long timestamp,
+                                                        @Nullable String messageGroupCallEraId,
+                                                        @Nullable String peekGroupCallEraId,
+                                                        @NonNull Collection<UUID> peekJoinedUuids);
 
   public abstract Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type);
   public abstract Optional<InsertResult> insertMessageInbox(IncomingTextMessage message);
@@ -339,6 +347,20 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
     }
 
     return false;
+  }
+
+  public void setNotifiedTimestamp(long timestamp, @NonNull List<Long> ids) {
+    if (ids.isEmpty()) {
+      return;
+    }
+
+    SQLiteDatabase db     = databaseHelper.getWritableDatabase();
+    SqlUtil.Query  where  = SqlUtil.buildCollectionQuery(ID, ids);
+    ContentValues  values = new ContentValues();
+
+    values.put(NOTIFIED_TIMESTAMP, timestamp);
+
+    db.update(getTableName(), values, where.getWhere(), where.getWhereArgs());
   }
 
   public void addMismatchedIdentity(long messageId, @NonNull RecipientId recipientId, IdentityKey identityKey) {

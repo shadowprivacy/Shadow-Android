@@ -1,16 +1,20 @@
 package su.sres.securesms;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
 
 public class MainActivity extends PassphraseRequiredActivity {
+
+    public static final int RESULT_CONFIG_CHANGED = Activity.RESULT_FIRST_USER + 901;
 
     private final DynamicTheme  dynamicTheme = new DynamicNoActionBarTheme();
     private final MainNavigator navigator    = new MainNavigator(this);
@@ -47,6 +51,14 @@ public class MainActivity extends PassphraseRequiredActivity {
     public void onBackPressed() {
         if (!navigator.onBackPressed()) {
             super.onBackPressed();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == MainNavigator.REQUEST_CONFIG_CHANGES && resultCode == RESULT_CONFIG_CHANGED) {
+            recreate();
         }
     }
 

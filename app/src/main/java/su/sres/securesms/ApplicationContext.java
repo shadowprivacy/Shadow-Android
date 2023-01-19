@@ -71,6 +71,7 @@ import su.sres.securesms.service.LocalBackupListener;
 import su.sres.securesms.service.RotateSenderCertificateListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.service.UpdateApkRefreshListener;
+import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -99,11 +100,9 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   private static final String TAG = ApplicationContext.class.getSimpleName();
 
-  private ExpiringMessageManager   expiringMessageManager;
-  private ViewOnceMessageManager   viewOnceMessageManager;
-  private TypingStatusRepository   typingStatusRepository;
-  private TypingStatusSender       typingStatusSender;
-  private PersistentLogger         persistentLogger;
+  private ExpiringMessageManager expiringMessageManager;
+  private ViewOnceMessageManager viewOnceMessageManager;
+  private PersistentLogger       persistentLogger;
 
   private volatile boolean isAppVisible;
 
@@ -157,6 +156,8 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     if (Build.VERSION.SDK_INT < 21) {
       AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
     }
+
+    DynamicTheme.setDefaultDayNightMode(this);
   }
 
   @Override
@@ -222,14 +223,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   public ViewOnceMessageManager getViewOnceMessageManager() {
     return viewOnceMessageManager;
-  }
-
-  public TypingStatusRepository getTypingStatusRepository() {
-    return typingStatusRepository;
-  }
-
-  public TypingStatusSender getTypingStatusSender() {
-    return typingStatusSender;
   }
 
   public boolean isAppVisible() {
@@ -334,14 +327,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   private void initializeRevealableMessageManager() {
     this.viewOnceMessageManager = new ViewOnceMessageManager(this);
-  }
-
-  private void initializeTypingStatusRepository() {
-    this.typingStatusRepository = new TypingStatusRepository();
-  }
-
-  private void initializeTypingStatusSender() {
-    this.typingStatusSender = new TypingStatusSender(this);
   }
 
   private void initializePeriodicTasks() {
@@ -463,7 +448,8 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   @Override
   protected void attachBaseContext(Context base) {
-    super.attachBaseContext(DynamicLanguageContextWrapper.updateContext(base, TextSecurePreferences.getLanguage(base)));
+    DynamicLanguageContextWrapper.updateContext(base);
+    super.attachBaseContext(base);
   }
 
   private static class ProviderInitializationException extends RuntimeException {
@@ -477,8 +463,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     initializeMessageRetrieval();
     initializeExpiringMessageManager();
     initializeRevealableMessageManager();
-    initializeTypingStatusRepository();
-    initializeTypingStatusSender();
     initializeGcmCheck();
     initializeSignedPreKeyCheck();
     initializePeriodicTasks();

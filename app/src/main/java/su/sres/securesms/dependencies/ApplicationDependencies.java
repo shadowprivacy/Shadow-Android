@@ -5,6 +5,8 @@ import android.app.Application;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 
+import su.sres.securesms.components.TypingStatusRepository;
+import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.messages.BackgroundMessageRetriever;
 import su.sres.securesms.messages.IncomingMessageObserver;
 import su.sres.securesms.messages.IncomingMessageProcessor;
@@ -62,6 +64,8 @@ public class ApplicationDependencies {
     private static EarlyMessageCache            earlyMessageCache;
     private static MessageNotifier              messageNotifier;
     private static TrimThreadsByDateManager trimThreadsByDateManager;
+    private static TypingStatusRepository typingStatusRepository;
+    private static TypingStatusSender typingStatusSender;
 
     public static synchronized void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
         if (ApplicationDependencies.application != null || ApplicationDependencies.networkIndependentProvider != null) {
@@ -270,6 +274,26 @@ public class ApplicationDependencies {
         return trimThreadsByDateManager;
     }
 
+    public static TypingStatusRepository getTypingStatusRepository() {
+        assertNetworkDependentInitialization();
+
+        if (typingStatusRepository == null) {
+            typingStatusRepository = provider.provideTypingStatusRepository();
+        }
+
+        return typingStatusRepository;
+    }
+
+    public static TypingStatusSender getTypingStatusSender() {
+        assertNetworkDependentInitialization();
+
+        if (typingStatusSender == null) {
+            typingStatusSender = provider.provideTypingStatusSender();
+        }
+
+        return typingStatusSender;
+    }
+
     private static void assertNetworkDependentInitialization() {
         if (application == null || provider == null) {
             throw new UninitializedException();
@@ -299,6 +323,8 @@ public class ApplicationDependencies {
         @NonNull MessageNotifier provideMessageNotifier();
         @NonNull IncomingMessageObserver provideIncomingMessageObserver();
         @NonNull TrimThreadsByDateManager provideTrimThreadsByDateManager();
+        @NonNull TypingStatusRepository provideTypingStatusRepository();
+        @NonNull TypingStatusSender provideTypingStatusSender();
     }
 
     public interface NetworkIndependentProvider {

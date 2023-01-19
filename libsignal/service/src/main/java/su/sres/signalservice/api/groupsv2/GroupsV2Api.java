@@ -8,6 +8,7 @@ import su.sres.storageservice.protos.groups.Group;
 import su.sres.storageservice.protos.groups.GroupAttributeBlob;
 import su.sres.storageservice.protos.groups.GroupChange;
 import su.sres.storageservice.protos.groups.GroupChanges;
+import su.sres.storageservice.protos.groups.GroupExternalCredential;
 import su.sres.storageservice.protos.groups.GroupJoinInfo;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
@@ -166,6 +167,12 @@ public final class GroupsV2Api {
             throws IOException
     {
         return socket.patchGroupsV2Group(groupChange, authorization.toString(), groupLinkPassword);
+    }
+
+    public GroupExternalCredential getGroupExternalCredential(GroupsV2AuthorizationString authorization)
+            throws IOException
+    {
+        return socket.getGroupExternalCredential(authorization);
     }
 
     private static HashMap<Integer, AuthCredentialResponse> parseCredentialResponse(CredentialResponse credentialResponse)

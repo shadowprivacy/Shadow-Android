@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import su.sres.securesms.imageeditor.model.EditorModel;
 import su.sres.securesms.R;
 import su.sres.securesms.components.ControllableViewPager;
+import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.util.Util;
 
 import java.util.List;
@@ -25,10 +26,6 @@ import java.util.Map;
  */
 public class MediaSendFragment extends Fragment {
 
-    private static final String TAG = MediaSendFragment.class.getSimpleName();
-
-    private static final String KEY_LOCALE    = "locale";
-
     private ViewGroup                     playbackControlsContainer;
 
     private ControllableViewPager         fragmentPager;
@@ -36,9 +33,8 @@ public class MediaSendFragment extends Fragment {
 
     private MediaSendViewModel viewModel;
 
-    public static MediaSendFragment newInstance(@NonNull Locale locale) {
+    public static MediaSendFragment newInstance() {
         Bundle args = new Bundle();
-        args.putSerializable(KEY_LOCALE, locale);
 
         MediaSendFragment fragment = new MediaSendFragment();
         fragment.setArguments(args);
@@ -61,7 +57,7 @@ public class MediaSendFragment extends Fragment {
         fragmentPager             = view.findViewById(R.id.mediasend_pager);
         playbackControlsContainer = view.findViewById(R.id.mediasend_playback_controls_container);
 
-        fragmentPagerAdapter = new MediaSendFragmentPagerAdapter(getChildFragmentManager());
+        fragmentPagerAdapter = new MediaSendFragmentPagerAdapter(getChildFragmentManager(), MediaConstraints.getPushMediaConstraints());
         fragmentPager.setAdapter(fragmentPagerAdapter);
 
         FragmentPageChangeListener pageChangeListener = new FragmentPageChangeListener();
@@ -146,6 +142,10 @@ public class MediaSendFragment extends Fragment {
                 playbackControlsContainer.removeAllViews();
             }
         });
+    }
+
+    void pausePlayback() {
+        fragmentPagerAdapter.pausePlayback();
     }
 
     private class FragmentPageChangeListener extends ViewPager.SimpleOnPageChangeListener {

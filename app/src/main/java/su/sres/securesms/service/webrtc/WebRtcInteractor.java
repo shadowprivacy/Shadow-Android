@@ -6,6 +6,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.ringrtc.CallManager;
+import org.signal.ringrtc.GroupCall;
+
+import java.util.UUID;
+
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.ringrtc.CameraEventListener;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.WebRtcCallService;
@@ -23,19 +28,21 @@ import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
  */
 public class WebRtcInteractor {
 
-    @NonNull private final WebRtcCallService           webRtcCallService;
-    @NonNull private final CallManager                 callManager;
-    @NonNull private final LockManager                 lockManager;
-    @NonNull private final SignalAudioManager          audioManager;
-    @NonNull private final BluetoothStateManager       bluetoothStateManager;
-    @NonNull private final CameraEventListener         cameraEventListener;
+    @NonNull private final WebRtcCallService     webRtcCallService;
+    @NonNull private final CallManager           callManager;
+    @NonNull private final LockManager           lockManager;
+    @NonNull private final SignalAudioManager    audioManager;
+    @NonNull private final BluetoothStateManager bluetoothStateManager;
+    @NonNull private final CameraEventListener   cameraEventListener;
+    @NonNull private final GroupCall.Observer    groupCallObserver;
 
     public WebRtcInteractor(@NonNull WebRtcCallService webRtcCallService,
                             @NonNull CallManager callManager,
                             @NonNull LockManager lockManager,
                             @NonNull SignalAudioManager audioManager,
                             @NonNull BluetoothStateManager bluetoothStateManager,
-                            @NonNull CameraEventListener cameraEventListener)
+                            @NonNull CameraEventListener cameraEventListener,
+                            @NonNull GroupCall.Observer groupCallObserver)
     {
         this.webRtcCallService     = webRtcCallService;
         this.callManager           = callManager;
@@ -43,6 +50,7 @@ public class WebRtcInteractor {
         this.audioManager          = audioManager;
         this.bluetoothStateManager = bluetoothStateManager;
         this.cameraEventListener   = cameraEventListener;
+        this.groupCallObserver     = groupCallObserver;
     }
 
     @NonNull CameraEventListener getCameraEventListener() {
@@ -55,6 +63,10 @@ public class WebRtcInteractor {
 
     @NonNull WebRtcCallService getWebRtcCallService() {
         return webRtcCallService;
+    }
+
+    @NonNull GroupCall.Observer getGroupCallObserver() {
+        return groupCallObserver;
     }
 
     void setWantsBluetoothConnection(boolean enabled) {
@@ -73,8 +85,20 @@ public class WebRtcInteractor {
         webRtcCallService.sendCallMessage(remotePeer, callMessage);
     }
 
+    void sendOpaqueCallMessage(@NonNull UUID uuid, @NonNull SignalServiceCallMessage callMessage) {
+        webRtcCallService.sendOpaqueCallMessage(uuid, callMessage);
+    }
+
+    void sendGroupCallMessage(@NonNull Recipient recipient, @Nullable String groupCallEraId) {
+        webRtcCallService.sendGroupCallMessage(recipient, groupCallEraId);
+    }
+
     void setCallInProgressNotification(int type, @NonNull RemotePeer remotePeer) {
-        webRtcCallService.setCallInProgressNotification(type, remotePeer);
+        webRtcCallService.setCallInProgressNotification(type, remotePeer.getRecipient());
+    }
+
+    void setCallInProgressNotification(int type, @NonNull Recipient recipient) {
+        webRtcCallService.setCallInProgressNotification(type, recipient);
     }
 
     void retrieveTurnServers(@NonNull RemotePeer remotePeer) {
@@ -123,5 +147,9 @@ public class WebRtcInteractor {
 
     void startAudioCommunication(boolean preserveSpeakerphone) {
         audioManager.startCommunication(preserveSpeakerphone);
+    }
+
+    void peekGroupCall(@NonNull WebRtcData.GroupCallUpdateMetadata groupCallUpdateMetadata) {
+        webRtcCallService.peekGroupCall(groupCallUpdateMetadata);
     }
 }

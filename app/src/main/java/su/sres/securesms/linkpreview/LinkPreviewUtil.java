@@ -5,7 +5,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import android.annotation.SuppressLint;
-import android.os.Build;
 import android.text.Html;
 import android.text.SpannableString;
 import android.text.TextUtils;
@@ -13,20 +12,15 @@ import android.text.style.URLSpan;
 import android.text.util.Linkify;
 
 import com.annimon.stream.Stream;
-import com.google.android.collect.Sets;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.stickers.StickerUrl;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -34,6 +28,7 @@ import java.util.regex.Pattern;
 
 import okhttp3.HttpUrl;
 import su.sres.securesms.util.DateUtils;
+import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.util.OptionalUtil;
 
@@ -50,7 +45,7 @@ public final class LinkPreviewUtil {
     private static final Pattern FAVICON_PATTERN            = Pattern.compile("<\\s*link[^>]*rel\\s*=\\s*\".*icon.*\"[^>]*>");
     private static final Pattern FAVICON_HREF_PATTERN       = Pattern.compile("href\\s*=\\s*\"([^\"]*)\"");
 
-    private static final Set<String> INVALID_TOP_LEVEL_DOMAINS = Sets.newHashSet("onion", "i2p");
+    private static final Set<String> INVALID_TOP_LEVEL_DOMAINS = SetUtil.newHashSet("onion", "i2p");
 
     /**
      * @return All whitelisted URLs in the source text.

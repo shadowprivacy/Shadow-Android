@@ -4,7 +4,6 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import androidx.appcompat.app.AlertDialog;
 import su.sres.securesms.logging.Log;
@@ -12,6 +11,7 @@ import android.widget.Toast;
 
 import su.sres.securesms.R;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.VersionTracker;
 
 import java.util.concurrent.TimeUnit;
 
@@ -25,7 +25,7 @@ public class RatingManager {
   public static void showRatingDialogIfNecessary(Context context) {
     if (!TextSecurePreferences.isRatingEnabled(context)) return;
 
-    long daysSinceInstall = getDaysSinceInstalled(context);
+    long daysSinceInstall = VersionTracker.getDaysSinceFirstInstalled(context);
     long laterTimestamp   = TextSecurePreferences.getRatingLaterTimestamp(context);
 
 //    if (daysSinceInstall >= DAYS_SINCE_INSTALL_THRESHOLD &&
@@ -71,18 +71,4 @@ public class RatingManager {
       Toast.makeText(context, R.string.RatingManager_whoops_the_play_store_app_does_not_appear_to_be_installed, Toast.LENGTH_LONG).show();
     }
   }
-
-  private static long getDaysSinceInstalled(Context context) {
-    try {
-      long installTimestamp = context.getPackageManager()
-                                     .getPackageInfo(context.getPackageName(), 0)
-                                     .firstInstallTime;
-
-      return TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - installTimestamp);
-    } catch (PackageManager.NameNotFoundException e) {
-      Log.w(TAG, e);
-      return 0;
-    }
-  }
-
 }

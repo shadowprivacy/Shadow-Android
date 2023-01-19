@@ -96,6 +96,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import static su.sres.securesms.contactshare.Contact.Avatar;
 
@@ -186,7 +187,8 @@ public class MmsDatabase extends MessageDatabase {
             REACTIONS_UNREAD + " INTEGER DEFAULT 0, " +
             REACTIONS_LAST_SEEN    + " INTEGER DEFAULT -1, " +
             REMOTE_DELETED         + " INTEGER DEFAULT 0, " +
-            MENTIONS_SELF          + " INTEGER DEFAULT 0);";
+            MENTIONS_SELF          + " INTEGER DEFAULT 0, " +
+            NOTIFIED_TIMESTAMP     + " INTEGER DEFAULT 0);";
 
     public static final String[] CREATE_INDEXS = {
             "CREATE INDEX IF NOT EXISTS mms_thread_id_index ON " + TABLE_NAME + " (" + THREAD_ID + ");",
@@ -211,7 +213,7 @@ public class MmsDatabase extends MessageDatabase {
             DELIVERY_RECEIPT_COUNT, READ_RECEIPT_COUNT, MISMATCHED_IDENTITIES, NETWORK_FAILURE, SUBSCRIPTION_ID,
             EXPIRES_IN, EXPIRE_STARTED, NOTIFIED, QUOTE_ID, QUOTE_AUTHOR, QUOTE_BODY, QUOTE_ATTACHMENT, QUOTE_MISSING, QUOTE_MENTIONS,
             SHARED_CONTACTS, LINK_PREVIEWS, UNIDENTIFIED, VIEW_ONCE, REACTIONS, REACTIONS_UNREAD, REACTIONS_LAST_SEEN,
-            REMOTE_DELETED, MENTIONS_SELF,
+            REMOTE_DELETED, MENTIONS_SELF, NOTIFIED_TIMESTAMP,
             "json_group_array(json_object(" +
                     "'" + AttachmentDatabase.ROW_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.ROW_ID + ", " +
                     "'" + AttachmentDatabase.UNIQUE_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.UNIQUE_ID + ", " +
@@ -401,6 +403,17 @@ public class MmsDatabase extends MessageDatabase {
 
     @Override
     public Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public @NonNull void insertOrUpdateGroupCall(@NonNull RecipientId groupRecipientId,
+                                                 @NonNull RecipientId sender,
+                                                 long timestamp,
+                                                 @Nullable String messageGroupCallEraId,
+                                                 @Nullable String peekGroupCallEraId,
+                                                 @NonNull Collection<UUID> peekJoinedUuids)
+    {
         throw new UnsupportedOperationException();
     }
 
@@ -1795,7 +1808,8 @@ public class MmsDatabase extends MessageDatabase {
                     false,
                     Collections.emptyList(),
                     false,
-                    false);
+                    false,
+                    0);
         }
     }
 
@@ -1893,6 +1907,7 @@ public class MmsDatabase extends MessageDatabase {
             boolean              remoteDelete         = cursor.getLong(cursor.getColumnIndexOrThrow(MmsDatabase.REMOTE_DELETED))   == 1;
             List<ReactionRecord> reactions = parseReactions(cursor);
             boolean              mentionsSelf         = CursorUtil.requireBoolean(cursor, MENTIONS_SELF);
+            long                 notifiedTimestamp    = CursorUtil.requireLong(cursor, NOTIFIED_TIMESTAMP);
 
             if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
                 readReceiptCount = 0;
@@ -1914,7 +1929,7 @@ public class MmsDatabase extends MessageDatabase {
                     threadId, body, slideDeck, partCount, box, mismatches,
                     networkFailures, subscriptionId, expiresIn, expireStarted,
                     isViewOnce, readReceiptCount, quote, contacts, previews, unidentified, reactions,
-                    remoteDelete, mentionsSelf);
+                    remoteDelete, mentionsSelf, notifiedTimestamp);
         }
 
         private List<IdentityKeyMismatch> getMismatchedIdentities(String document) {

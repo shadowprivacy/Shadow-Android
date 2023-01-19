@@ -19,25 +19,26 @@ import su.sres.securesms.ringrtc.CameraState;
 import su.sres.securesms.ringrtc.IceCandidateParcel;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.WebRtcData.CallMetadata;
+import su.sres.securesms.service.webrtc.WebRtcData.GroupCallUpdateMetadata;
+import su.sres.securesms.service.webrtc.WebRtcData.HttpData;
 import su.sres.securesms.service.webrtc.WebRtcData.OfferMetadata;
 import su.sres.securesms.service.webrtc.WebRtcData.ReceivedOfferMetadata;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceStateBuilder;
 import su.sres.securesms.util.TelephonyUtil;
 import su.sres.securesms.webrtc.locks.LockManager;
+
+import org.signal.ringrtc.GroupCall;
 import org.webrtc.PeerConnection;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.calls.BusyMessage;
 import su.sres.signalservice.api.messages.calls.HangupMessage;
 import su.sres.signalservice.api.messages.calls.OfferMessage;
 import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
-import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -61,6 +62,16 @@ import static su.sres.securesms.service.WebRtcCallService.ACTION_ENDED_REMOTE_HA
 import static su.sres.securesms.service.WebRtcCallService.ACTION_ENDED_SIGNALING_FAILURE;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_ENDED_TIMEOUT;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_FLIP_CAMERA;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_CALL_ENDED;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_CALL_UPDATE_MESSAGE;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_JOINED_MEMBERSHIP_CHANGED;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_LOCAL_DEVICE_STATE_CHANGED;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_REMOTE_DEVICE_STATE_CHANGED;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_REQUEST_MEMBERSHIP_PROOF;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_REQUEST_UPDATE_MEMBERS;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_UPDATE_RENDERED_RESOLUTIONS;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_HTTP_FAILURE;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_HTTP_SUCCESS;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_IS_IN_CALL_QUERY;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_LOCAL_HANGUP;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_LOCAL_RINGING;
@@ -75,6 +86,7 @@ import static su.sres.securesms.service.WebRtcCallService.ACTION_RECEIVE_BUSY;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_RECEIVE_HANGUP;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_RECEIVE_ICE_CANDIDATES;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_RECEIVE_OFFER;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_RECEIVE_OPAQUE_MESSAGE;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_REMOTE_RINGING;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_REMOTE_VIDEO_ENABLE;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_SCREEN_OFF;
@@ -83,6 +95,7 @@ import static su.sres.securesms.service.WebRtcCallService.ACTION_SEND_BUSY;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_SEND_HANGUP;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_SEND_ICE_CANDIDATES;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_SEND_OFFER;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_SEND_OPAQUE_MESSAGE;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_SETUP_FAILURE;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_SET_AUDIO_BLUETOOTH;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_SET_AUDIO_SPEAKER;
@@ -101,15 +114,21 @@ import static su.sres.securesms.service.WebRtcCallService.EXTRA_RESULT_RECEIVER;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_SPEAKER;
 import static su.sres.securesms.service.webrtc.WebRtcData.AnswerMetadata;
 import static su.sres.securesms.service.webrtc.WebRtcData.HangupMetadata;
+import static su.sres.securesms.service.webrtc.WebRtcData.OpaqueMessageMetadata;
 import static su.sres.securesms.service.webrtc.WebRtcData.ReceivedAnswerMetadata;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getAvailable;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getBroadcastFlag;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getCallId;
+import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getCameraState;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getEnable;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getErrorCallState;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getErrorIdentityKey;
+import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getGroupCallEndReason;
+import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getGroupCallHash;
+import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getGroupMembershipToken;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getIceCandidates;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getIceServers;
+import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getNullableRemotePeerFromMap;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getOfferMessageType;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getRemotePeer;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getRemotePeerFromMap;
@@ -171,7 +190,7 @@ public abstract class WebRtcActionProcessor {
             case ACTION_CALL_CONNECTED:                      return handleCallConnected(currentState, getRemotePeerFromMap(intent, currentState));
             case ACTION_RECEIVED_OFFER_WHILE_ACTIVE:         return handleReceivedOfferWhileActive(currentState, getRemotePeerFromMap(intent, currentState));
             case ACTION_SEND_BUSY:                           return handleSendBusy(currentState, CallMetadata.fromIntent(intent), getBroadcastFlag(intent));
-            case ACTION_CALL_CONCLUDED:                      return handleCallConcluded(currentState, getRemotePeerFromMap(intent, currentState));
+            case ACTION_CALL_CONCLUDED:                      return handleCallConcluded(currentState, getNullableRemotePeerFromMap(intent, currentState));
             case ACTION_REMOTE_VIDEO_ENABLE:                 return handleRemoteVideoEnable(currentState, getEnable(intent));
             case ACTION_RECEIVE_HANGUP:                      return handleReceivedHangup(currentState, CallMetadata.fromIntent(intent), HangupMetadata.fromIntent(intent));
             case ACTION_LOCAL_HANGUP:                        return handleLocalHangup(currentState);
@@ -193,7 +212,7 @@ public abstract class WebRtcActionProcessor {
             case ACTION_SET_AUDIO_SPEAKER:                   return handleSetSpeakerAudio(currentState, intent.getBooleanExtra(EXTRA_SPEAKER, false));
             case ACTION_SET_AUDIO_BLUETOOTH:                 return handleSetBluetoothAudio(currentState, intent.getBooleanExtra(EXTRA_BLUETOOTH, false));
             case ACTION_BLUETOOTH_CHANGE:                    return handleBluetoothChange(currentState, getAvailable(intent));
-            case ACTION_CAMERA_SWITCH_COMPLETED:             return handleCameraSwitchCompleted(currentState, intent.getParcelableExtra(EXTRA_CAMERA_STATE));
+            case ACTION_CAMERA_SWITCH_COMPLETED:             return handleCameraSwitchCompleted(currentState, getCameraState(intent));
 
             // End Call Actions
             case ACTION_ENDED_REMOTE_HANGUP:
@@ -212,6 +231,22 @@ public abstract class WebRtcActionProcessor {
 
             // Local Call Failure Actions
             case ACTION_SETUP_FAILURE:                       return handleSetupFailure(currentState, getCallId(intent));
+
+            // Group Calling
+            case ACTION_GROUP_LOCAL_DEVICE_STATE_CHANGED:    return handleGroupLocalDeviceStateChanged(currentState);
+            case ACTION_GROUP_REMOTE_DEVICE_STATE_CHANGED:   return handleGroupRemoteDeviceStateChanged(currentState);
+            case ACTION_GROUP_JOINED_MEMBERSHIP_CHANGED:     return handleGroupJoinedMembershipChanged(currentState);
+            case ACTION_GROUP_REQUEST_MEMBERSHIP_PROOF:      return handleGroupRequestMembershipProof(currentState, getGroupCallHash(intent), getGroupMembershipToken(intent));
+            case ACTION_GROUP_REQUEST_UPDATE_MEMBERS:        return handleGroupRequestUpdateMembers(currentState);
+            case ACTION_GROUP_UPDATE_RENDERED_RESOLUTIONS:   return handleUpdateRenderedResolutions(currentState);
+            case ACTION_GROUP_CALL_ENDED:                    return handleGroupCallEnded(currentState, getGroupCallHash(intent), getGroupCallEndReason(intent));
+            case ACTION_GROUP_CALL_UPDATE_MESSAGE:           return handleGroupCallUpdateMessage(currentState, GroupCallUpdateMetadata.fromIntent(intent));
+
+            case ACTION_HTTP_SUCCESS:                        return handleHttpSuccess(currentState, HttpData.fromIntent(intent));
+            case ACTION_HTTP_FAILURE:                        return handleHttpFailure(currentState, HttpData.fromIntent(intent));
+
+            case ACTION_SEND_OPAQUE_MESSAGE:                 return handleSendOpaqueMessage(currentState, OpaqueMessageMetadata.fromIntent(intent));
+            case ACTION_RECEIVE_OPAQUE_MESSAGE:              return handleReceivedOpaqueMessage(currentState, OpaqueMessageMetadata.fromIntent(intent));
         }
 
         return currentState;
@@ -279,8 +314,8 @@ public abstract class WebRtcActionProcessor {
     //region Incoming call
 
     protected @NonNull WebRtcServiceState handleReceivedOffer(@NonNull WebRtcServiceState currentState,
-                                                              @NonNull WebRtcData.CallMetadata callMetadata,
-                                                              @NonNull WebRtcData.OfferMetadata offerMetadata,
+                                                              @NonNull CallMetadata callMetadata,
+                                                              @NonNull OfferMetadata offerMetadata,
                                                               @NonNull ReceivedOfferMetadata receivedOfferMetadata)
     {
         Log.i(tag, "handleReceivedOffer(): id: " + callMetadata.getCallId().format(callMetadata.getRemoteDevice()));
@@ -390,7 +425,7 @@ public abstract class WebRtcActionProcessor {
         return currentState;
     }
 
-    protected @NonNull WebRtcServiceState handleSendBusy(@NonNull WebRtcServiceState currentState, @NonNull WebRtcData.CallMetadata callMetadata, boolean broadcast) {
+    protected @NonNull WebRtcServiceState handleSendBusy(@NonNull WebRtcServiceState currentState, @NonNull CallMetadata callMetadata, boolean broadcast) {
         Log.i(tag, "handleSendBusy(): id: " + callMetadata.getCallId().format(callMetadata.getRemoteDevice()));
 
         BusyMessage              busyMessage         = new BusyMessage(callMetadata.getCallId().longValue());
@@ -402,7 +437,7 @@ public abstract class WebRtcActionProcessor {
         return currentState;
     }
 
-    protected @NonNull WebRtcServiceState handleCallConcluded(@NonNull WebRtcServiceState currentState, @NonNull RemotePeer remotePeer) {
+    protected @NonNull WebRtcServiceState handleCallConcluded(@NonNull WebRtcServiceState currentState, @Nullable RemotePeer remotePeer) {
         Log.i(tag, "handleCallConcluded not processed");
         return currentState;
     }
@@ -477,7 +512,7 @@ public abstract class WebRtcActionProcessor {
         WebRtcServiceStateBuilder builder = currentState.builder();
 
         if (errorCallState == WebRtcViewModel.State.UNTRUSTED_IDENTITY) {
-            CallParticipant participant = Objects.requireNonNull(currentState.getCallInfoState().getRemoteParticipant(activePeer.getRecipient()));
+            CallParticipant participant = Objects.requireNonNull(currentState.getCallInfoState().getRemoteCallParticipant(activePeer.getRecipient()));
             CallParticipant untrusted   = participant.withIdentityKey(identityKey.get());
 
             builder.changeCallInfoState()
@@ -652,4 +687,78 @@ public abstract class WebRtcActionProcessor {
     }
 
     //endregion
+
+    //region Group Calling
+
+    protected @NonNull WebRtcServiceState handleGroupLocalDeviceStateChanged(@NonNull WebRtcServiceState currentState) {
+        Log.i(tag, "handleGroupLocalDeviceStateChanged not processed");
+        return currentState;
+    }
+
+    protected @NonNull WebRtcServiceState handleGroupRemoteDeviceStateChanged(@NonNull WebRtcServiceState currentState) {
+        Log.i(tag, "handleGroupRemoteDeviceStateChanged not processed");
+        return currentState;
+    }
+
+    protected @NonNull WebRtcServiceState handleGroupJoinedMembershipChanged(@NonNull WebRtcServiceState currentState) {
+        Log.i(tag, "handleGroupJoinedMembershipChanged not processed");
+        return currentState;
+    }
+
+    protected @NonNull WebRtcServiceState handleGroupRequestMembershipProof(@NonNull WebRtcServiceState currentState, int groupCallHash, @NonNull byte[] groupMembershipToken) {
+        Log.i(tag, "handleGroupRequestMembershipProof not processed");
+        return currentState;
+    }
+
+    protected @NonNull WebRtcServiceState handleGroupRequestUpdateMembers(@NonNull WebRtcServiceState currentState) {
+        Log.i(tag, "handleGroupRequestUpdateMembers not processed");
+        return currentState;
+    }
+
+    protected @NonNull WebRtcServiceState handleUpdateRenderedResolutions(@NonNull WebRtcServiceState currentState) {
+        Log.i(tag, "handleUpdateRenderedResolutions not processed");
+        return currentState;
+    }
+
+    protected @NonNull WebRtcServiceState handleGroupCallEnded(@NonNull WebRtcServiceState currentState, int groupCallHash, @NonNull GroupCall.GroupCallEndReason groupCallEndReason) {
+        Log.i(tag, "handleGroupCallEnded not processed");
+        return currentState;
+    }
+
+    protected @NonNull WebRtcServiceState handleGroupCallUpdateMessage(@NonNull WebRtcServiceState currentState, @NonNull WebRtcData.GroupCallUpdateMetadata groupCallUpdateMetadata) {
+        webRtcInteractor.peekGroupCall(groupCallUpdateMetadata);
+        return currentState;
+    }
+
+    //endregion
+
+    protected @NonNull WebRtcServiceState handleHttpSuccess(@NonNull WebRtcServiceState currentState, @NonNull HttpData httpData) {
+        try {
+            webRtcInteractor.getCallManager().receivedHttpResponse(httpData.getRequestId(), httpData.getStatus(), httpData.getBody() != null ? httpData.getBody() : new byte[0]);
+        } catch (CallException e) {
+            return callFailure(currentState, "Unable to process received http response", e);
+        }
+        return currentState;
+    }
+
+    protected @NonNull WebRtcServiceState handleHttpFailure(@NonNull WebRtcServiceState currentState, @NonNull HttpData httpData) {
+        try {
+            webRtcInteractor.getCallManager().httpRequestFailed(httpData.getRequestId());
+        } catch (CallException e) {
+            return callFailure(currentState, "Unable to process received http response", e);
+        }
+        return currentState;
+    }
+
+    protected @NonNull WebRtcServiceState handleSendOpaqueMessage(@NonNull WebRtcServiceState currentState, @NonNull OpaqueMessageMetadata opaqueMessageMetadata) {
+        Log.i(tag, "handleSendOpaqueMessage not processed");
+
+        return currentState;
+    }
+
+    protected @NonNull WebRtcServiceState handleReceivedOpaqueMessage(@NonNull WebRtcServiceState currentState, @NonNull OpaqueMessageMetadata opaqueMessageMetadata) {
+        Log.i(tag, "handleReceivedOpaqueMessage not processed");
+
+        return currentState;
+    }
 }

@@ -17,6 +17,7 @@ import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import su.sres.signalservice.api.account.AccountAttributes;
 import su.sres.signalservice.api.groupsv2.GroupsV2AuthorizationString;
+import su.sres.signalservice.api.messages.calls.CallingResponse;
 import su.sres.signalservice.api.push.exceptions.DeprecatedVersionException;
 import su.sres.signalservice.api.push.exceptions.RetryAfterException;
 import su.sres.signalservice.api.storage.protos.DirectoryResponse;
@@ -98,6 +99,7 @@ import su.sres.storageservice.protos.groups.AvatarUploadAttributes;
 import su.sres.storageservice.protos.groups.Group;
 import su.sres.storageservice.protos.groups.GroupChange;
 import su.sres.storageservice.protos.groups.GroupChanges;
+import su.sres.storageservice.protos.groups.GroupExternalCredential;
 import su.sres.storageservice.protos.groups.GroupJoinInfo;
 import su.sres.util.Base64;
 import su.sres.signalservice.internal.util.BlacklistingTrustManager;
@@ -210,6 +212,7 @@ public class PushServiceSocket {
     private static final String GROUPSV2_GROUP_CHANGES = "/v1/groups/logs/%s";
     private static final String GROUPSV2_AVATAR_REQUEST = "/v1/groups/avatar/form";
     private static final String GROUPSV2_GROUP_JOIN       = "/v1/groups/join/%s";
+    private static final String GROUPSV2_TOKEN            = "/v1/groups/token";
 
     private static final String LICENSE_DOWNLOAD_PATH = "/v1/accounts/serverlicense";
     private static final String LICENSE_FILE_NAME = "shadowserver.bin";
@@ -220,6 +223,8 @@ public class PushServiceSocket {
     private static final ResponseCodeHandler NO_HANDLER = new EmptyResponseCodeHandler();
 
     private static final long CDN2_RESUMABLE_LINK_LIFETIME_MILLIS = TimeUnit.DAYS.toMillis(7);
+
+    private static final int MAX_FOLLOW_UPS = 20;
 
     private long soTimeoutMillis = TimeUnit.SECONDS.toMillis(30);
     private final Set<Call> connections = new HashSet<>();
@@ -1597,6 +1602,56 @@ public class PushServiceSocket {
         throw new NonSuccessfulResponseCodeException("Response: " + response);
     }
 
+    public CallingResponse makeCallingRequest(long requestId, String url, String httpMethod, List<Pair<String, String>> headers, byte[] body) {
+        ConnectionHolder connectionHolder = getRandom(serviceClients, random);
+        OkHttpClient     okHttpClient     = connectionHolder.getClient()
+                .newBuilder()
+                .followRedirects(false)
+                .connectTimeout(soTimeoutMillis, TimeUnit.MILLISECONDS)
+                .readTimeout(soTimeoutMillis, TimeUnit.MILLISECONDS)
+                .build();
+
+        RequestBody     requestBody = body != null ? RequestBody.create(null, body) : null;
+        Request.Builder builder     = new Request.Builder()
+                .url(url)
+                .method(httpMethod, requestBody);
+
+        if (headers != null) {
+            for (Pair<String, String> header : headers) {
+                builder.addHeader(header.first(), header.second());
+            }
+        }
+
+        Request request = builder.build();
+
+        for (int i = 0; i < MAX_FOLLOW_UPS; i++) {
+            try (Response response = okHttpClient.newCall(request).execute()) {
+                int responseStatus = response.code();
+
+                if (responseStatus != 307) {
+                    return new CallingResponse.Success(requestId,
+                            responseStatus,
+                            response.body() != null ? response.body().bytes() : new byte[0]);
+                }
+
+                String  location = response.header("Location");
+                HttpUrl newUrl   = location != null ? request.url().resolve(location) : null;
+
+                if (newUrl != null) {
+                    request = request.newBuilder().url(newUrl).build();
+                } else {
+                    return new CallingResponse.Error(requestId, new IOException("Received redirect without a valid Location header"));
+                }
+            } catch (IOException e) {
+                Log.w(TAG, "Exception during ringrtc http call.", e);
+                return new CallingResponse.Error(requestId, e);
+            }
+        }
+
+        Log.w(TAG, "Calling request max redirects exceeded");
+        return new CallingResponse.Error(requestId, new IOException("Redirect limit exceeded"));
+    }
+
     private ServiceConnectionHolder[] createServiceConnectionHolders(SignalUrl[] urls,
                                                                      List<Interceptor> interceptors,
                                                                      Optional<Dns> dns) {
@@ -1965,6 +2020,18 @@ public class PushServiceSocket {
                 GROUPS_V2_GET_JOIN_INFO_HANDLER);
 
         return GroupJoinInfo.parseFrom(readBodyBytes(response));
+    }
+
+    public GroupExternalCredential getGroupExternalCredential(GroupsV2AuthorizationString authorization)
+            throws NonSuccessfulResponseCodeException, PushNetworkException, InvalidProtocolBufferException
+    {
+        ResponseBody response = makeStorageRequest(authorization.toString(),
+                GROUPSV2_TOKEN,
+                "GET",
+                null,
+                NO_HANDLER);
+
+        return GroupExternalCredential.parseFrom(readBodyBytes(response));
     }
 
     public static final class GroupHistory {

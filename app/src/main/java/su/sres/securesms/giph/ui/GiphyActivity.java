@@ -29,6 +29,7 @@ import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.ViewUtil;
+import su.sres.securesms.util.WindowUtil;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -78,7 +79,7 @@ public class GiphyActivity extends PassphraseRequiredActivity
 
     final int conversationColor = getConversationColor();
     toolbar.setBackgroundColor(conversationColor);
-    setStatusBarColor(conversationColor);
+    WindowUtil.setStatusBarColor(getWindow(), conversationColor);
 
     setSupportActionBar(toolbar);
 

@@ -1,9 +1,11 @@
 package su.sres.securesms.conversation;
 
 import android.app.Application;
+import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
@@ -15,31 +17,41 @@ import com.annimon.stream.Stream;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupDatabase.GroupRecord;
+import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupChangeBusyException;
 import su.sres.securesms.groups.GroupChangeFailedException;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
+import su.sres.securesms.groups.GroupsV1MigrationUtil;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.profiles.spoofing.ReviewRecipient;
 import su.sres.securesms.profiles.spoofing.ReviewUtil;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.AsynchronousCallback;
 import su.sres.securesms.util.FeatureFlags;
+import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 final class ConversationGroupViewModel extends ViewModel {
+
+    private static final long GV1_MIGRATION_REMINDER_INTERVAL = TimeUnit.DAYS.toMillis(1);
 
     private final MutableLiveData<Recipient>          liveRecipient;
     private final LiveData<GroupActiveState>          groupActiveState;
     private final LiveData<GroupDatabase.MemberLevel> selfMembershipLevel;
     private final LiveData<Integer>                   actionableRequestingMembers;
     private final LiveData<ReviewState>               reviewState;
+    private final LiveData<List<RecipientId>>         gv1MigrationSuggestions;
+    private final LiveData<Boolean>                   gv1MigrationReminder;
 
     private ConversationGroupViewModel() {
         this.liveRecipient = new MutableLiveData<>();
@@ -58,6 +70,8 @@ final class ConversationGroupViewModel extends ViewModel {
         this.groupActiveState            = Transformations.distinctUntilChanged(Transformations.map(groupRecord, ConversationGroupViewModel::mapToGroupActiveState));
         this.selfMembershipLevel         = Transformations.distinctUntilChanged(Transformations.map(groupRecord, ConversationGroupViewModel::mapToSelfMembershipLevel));
         this.actionableRequestingMembers = Transformations.distinctUntilChanged(Transformations.map(groupRecord, ConversationGroupViewModel::mapToActionableRequestingMemberCount));
+        this.gv1MigrationSuggestions     = Transformations.distinctUntilChanged(LiveDataUtil.mapAsync(groupRecord, ConversationGroupViewModel::mapToGroupV1MigrationSuggestions));
+        this.gv1MigrationReminder        = Transformations.distinctUntilChanged(LiveDataUtil.mapAsync(groupRecord, ConversationGroupViewModel::mapToGroupV1MigrationReminder));
         this.reviewState                 = LiveDataUtil.combineLatest(groupRecord,
                 duplicates,
                 (record, dups) -> dups.isEmpty()
@@ -67,6 +81,22 @@ final class ConversationGroupViewModel extends ViewModel {
 
     void onRecipientChange(Recipient recipient) {
         liveRecipient.setValue(recipient);
+    }
+
+    void onSuggestedMembersBannerDismissed(@NonNull GroupId groupId) {
+        SignalExecutors.BOUNDED.execute(() -> {
+            if (groupId.isV2()) {
+                DatabaseFactory.getGroupDatabase(ApplicationDependencies.getApplication()).clearFormerV1Members(groupId.requireV2());
+                liveRecipient.postValue(liveRecipient.getValue());
+            }
+        });
+    }
+
+    void onMigrationInitiationReminderBannerDismissed(@NonNull RecipientId recipientId) {
+        SignalExecutors.BOUNDED.execute(() -> {
+            DatabaseFactory.getRecipientDatabase(ApplicationDependencies.getApplication()).markGroupsV1MigrationReminderSeen(recipientId, System.currentTimeMillis());
+            liveRecipient.postValue(liveRecipient.getValue());
+        });
     }
 
     /**
@@ -86,6 +116,14 @@ final class ConversationGroupViewModel extends ViewModel {
 
     public LiveData<ReviewState> getReviewState() {
         return reviewState;
+    }
+
+    @NonNull LiveData<List<RecipientId>> getGroupV1MigrationSuggestions() {
+        return gv1MigrationSuggestions;
+    }
+
+    @NonNull LiveData<Boolean> getShowGroupsV1MigrationBanner() {
+        return gv1MigrationReminder;
     }
 
     private static @Nullable GroupRecord getGroupRecordForRecipient(@Nullable Recipient recipient) {
@@ -124,6 +162,39 @@ final class ConversationGroupViewModel extends ViewModel {
             return null;
         }
         return record.memberLevel(Recipient.self());
+    }
+
+    @WorkerThread
+    private static List<RecipientId> mapToGroupV1MigrationSuggestions(@Nullable GroupRecord record) {
+        if (record == null) {
+            return Collections.emptyList();
+        }
+
+        Set<RecipientId> difference = SetUtil.difference(record.getFormerV1Members(), record.getMembers());
+
+        return Stream.of(Recipient.resolvedList(difference))
+                .filter(GroupsV1MigrationUtil::isAutoMigratable)
+                .map(Recipient::getId)
+                .toList();
+    }
+
+    @WorkerThread
+    private static boolean mapToGroupV1MigrationReminder(@Nullable GroupRecord record) {
+        if (record == null || !record.isV1Group() || !record.isActive() || !FeatureFlags.groupsV1ManualMigration()) {
+            return false;
+        }
+
+        boolean canAutoMigrate = Stream.of(Recipient.resolvedList(record.getMembers()))
+                .allMatch(GroupsV1MigrationUtil::isAutoMigratable);
+
+        if (canAutoMigrate) {
+            return false;
+        }
+
+        Context context          = ApplicationDependencies.getApplication();
+        long    lastReminderTime = DatabaseFactory.getRecipientDatabase(context).getGroupsV1MigrationReminderLastSeen(record.getRecipientId());
+
+        return System.currentTimeMillis() - lastReminderTime > GV1_MIGRATION_REMINDER_INTERVAL;
     }
 
     public static void onCancelJoinRequest(@NonNull Recipient recipient,

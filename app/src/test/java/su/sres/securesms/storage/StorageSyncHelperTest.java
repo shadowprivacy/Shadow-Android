@@ -7,6 +7,7 @@ import com.annimon.stream.Stream;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.groups.GroupMasterKey;
 import org.junit.runner.RunWith;
@@ -53,6 +54,7 @@ import static su.sres.securesms.testutil.TestHelpers.setOf;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ Recipient.class, FeatureFlags.class})
+@PowerMockIgnore("javax.crypto.*")
 public final class StorageSyncHelperTest {
 
     private static final UUID UUID_A    = UuidUtil.parseOrThrow("ebef429e-695e-4f51-bcc4-526a60ac68c7");
@@ -147,7 +149,7 @@ public final class StorageSyncHelperTest {
         SignalContactRecord remote1 = contact(1, UUID_A, E164_A, "a");
         SignalContactRecord local1  = contact(2, UUID_B, E164_B, "b");
 
-        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1));
+        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1), r -> false);
 
         assertEquals(setOf(remote1), result.getLocalContactInserts());
         assertTrue(result.getLocalContactUpdates().isEmpty());
@@ -161,7 +163,7 @@ public final class StorageSyncHelperTest {
         SignalContactRecord remote1 = contact(1, UUID_SELF, E164_SELF, "self");
         SignalContactRecord local1  = contact(2, UUID_A, E164_A, "a");
 
-        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1));
+        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1), r -> false);
 
         assertTrue(result.getLocalContactInserts().isEmpty());
         assertTrue(result.getLocalContactUpdates().isEmpty());
@@ -175,7 +177,7 @@ public final class StorageSyncHelperTest {
         SignalGroupV1Record remote1 = badGroupV1(1, 1, true, false);
         SignalGroupV1Record local1  = groupV1(2, 1, true, true);
 
-        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1));
+        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1), r -> false);
 
         assertTrue(result.getLocalContactInserts().isEmpty());
         assertTrue(result.getLocalContactUpdates().isEmpty());
@@ -189,7 +191,7 @@ public final class StorageSyncHelperTest {
         SignalGroupV2Record remote1 = badGroupV2(1, 2, true, false);
         SignalGroupV2Record local1  = groupV2(2, 2, true, false);
 
-        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1));
+        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1), r -> false);
 
         assertTrue(result.getLocalContactInserts().isEmpty());
         assertTrue(result.getLocalContactUpdates().isEmpty());
@@ -203,7 +205,7 @@ public final class StorageSyncHelperTest {
         SignalContactRecord remote1 = contact(1, UUID_A, E164_A, "a");
         SignalContactRecord local1  = contact(2, UUID_A, E164_A, "a");
 
-        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1));
+        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1), r -> false);
 
         SignalContactRecord expectedMerge = contact(1, UUID_A, E164_A, "a");
 
@@ -219,7 +221,7 @@ public final class StorageSyncHelperTest {
         SignalGroupV1Record remote1 = groupV1(1, 1, true, false);
         SignalGroupV1Record local1  = groupV1(2, 1, true, false);
 
-        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1));
+        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1), r -> false);
 
         SignalGroupV1Record expectedMerge = groupV1(1, 1, true, false);
 
@@ -235,7 +237,7 @@ public final class StorageSyncHelperTest {
         SignalGroupV2Record remote1 = groupV2(1, 2, true, false);
         SignalGroupV2Record local1  = groupV2(2, 2, true, false);
 
-        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1));
+        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1), r -> false);
 
         SignalGroupV2Record expectedMerge = groupV2(1, 2, true, false);
 
@@ -251,7 +253,7 @@ public final class StorageSyncHelperTest {
         SignalContactRecord remote1 = contact(1, UUID_A, E164_A, null);
         SignalContactRecord local1  = contact(2, UUID_A, E164_A, "a");
 
-        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1));
+        MergeResult result = StorageSyncHelper.resolveConflict(recordSetOf(remote1), recordSetOf(local1), r -> false);
 
         SignalContactRecord expectedMerge = contact(2, UUID_A, E164_A, "a");
 
@@ -270,7 +272,7 @@ public final class StorageSyncHelperTest {
         SignalStorageRecord local1  = unknown(1);
         SignalStorageRecord local2  = unknown(2);
 
-        MergeResult result = StorageSyncHelper.resolveConflict(setOf(remote1, remote2, account), setOf(local1, local2, account));
+        MergeResult result = StorageSyncHelper.resolveConflict(setOf(remote1, remote2, account), setOf(local1, local2, account), r -> false);
 
         assertTrue(result.getLocalContactInserts().isEmpty());
         assertTrue(result.getLocalContactUpdates().isEmpty());
@@ -298,7 +300,7 @@ public final class StorageSyncHelperTest {
         StorageSyncHelper.setTestKeyGenerator(new TestGenerator(111));
         Set<SignalStorageRecord> remoteOnly = recordSetOf(remote1, remote2, remote3, remote4, remote5, remote6, unknownRemote);
         Set<SignalStorageRecord> localOnly  = recordSetOf(local1, local2, local3, local4, local5, local6, unknownLocal);
-        MergeResult result = StorageSyncHelper.resolveConflict(remoteOnly, localOnly);
+        MergeResult result = StorageSyncHelper.resolveConflict(remoteOnly, localOnly, r -> false);
         SignalContactRecord merge1 = contact(2, UUID_A, E164_A, "a");
         SignalContactRecord merge2 = contact(111, UUID_B, E164_B, "b");
         assertEquals(setOf(remote3), result.getLocalContactInserts());

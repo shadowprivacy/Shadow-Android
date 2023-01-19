@@ -1,5 +1,6 @@
 package su.sres.securesms.stickers;
 
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
@@ -62,9 +63,9 @@ public final class StickerKeyboardProvider implements MediaKeyboardProvider,
     @Override
     public int getProviderIconView(boolean selected) {
         if (selected) {
-            return ThemeUtil.isDarkTheme(context) ? R.layout.sticker_keyboard_icon_dark_selected : R.layout.sticker_keyboard_icon_light_selected;
+            return R.layout.sticker_keyboard_icon_selected;
         } else {
-            return ThemeUtil.isDarkTheme(context) ? R.layout.sticker_keyboard_icon_dark : R.layout.sticker_keyboard_icon_light;
+            return R.layout.sticker_keyboard_icon;
         }
     }
 
@@ -239,7 +240,7 @@ public final class StickerKeyboardProvider implements MediaKeyboardProvider,
         @Override
         public void loadCategoryTabIcon(@NonNull GlideRequests glideRequests, @NonNull ImageView imageView, int index) {
             if (index == 0) {
-                Drawable icon = ResUtil.getDrawable(context, R.attr.emoji_category_recent);
+                Drawable icon = ContextCompat.getDrawable(context, R.drawable.ic_recent_20);
                 imageView.setImageDrawable(icon);
             } else {
                 Uri uri = packs.get(index - 1).getCover().getUri();

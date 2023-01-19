@@ -1,9 +1,12 @@
 package su.sres.securesms.util;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
+
 import androidx.annotation.NonNull;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
@@ -28,6 +31,19 @@ public class VersionTracker {
       }
     } catch (IOException ioe) {
       throw new AssertionError(ioe);
+    }
+  }
+
+  public static long getDaysSinceFirstInstalled(Context context) {
+    try {
+      long installTimestamp = context.getPackageManager()
+              .getPackageInfo(context.getPackageName(), 0)
+              .firstInstallTime;
+
+      return TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - installTimestamp);
+    } catch (PackageManager.NameNotFoundException e) {
+      Log.w(TAG, e);
+      return 0;
     }
   }
 }

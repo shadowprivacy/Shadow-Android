@@ -11,32 +11,44 @@ import java.util.Set;
 
 public final class StringUtil {
 
-    private static final Set<Character> WHITESPACE = Sets.newHashSet('\u200E',  // left-to-right mark
+    private static final Set<Character> WHITESPACE = SetUtil.newHashSet('\u200E',  // left-to-right mark
             '\u200F',  // right-to-left mark
             '\u2007'); // figure space
 
     private static final class Bidi {
-        /** Override text direction  */
-        private static final Set<Integer> OVERRIDES = Sets.newHashSet("\u202a".codePointAt(0), /* LRE */
+        /**
+         * Override text direction
+         */
+        private static final Set<Integer> OVERRIDES = SetUtil.newHashSet("\u202a".codePointAt(0), /* LRE */
                 "\u202b".codePointAt(0), /* RLE */
                 "\u202d".codePointAt(0), /* LRO */
                 "\u202e".codePointAt(0)  /* RLO */);
 
-        /** Set direction and isolate surrounding text */
-        private static final Set<Integer> ISOLATES = Sets.newHashSet("\u2066".codePointAt(0), /* LRI */
+        /**
+         * Set direction and isolate surrounding text
+         */
+        private static final Set<Integer> ISOLATES = SetUtil.newHashSet("\u2066".codePointAt(0), /* LRI */
                 "\u2067".codePointAt(0), /* RLI */
                 "\u2068".codePointAt(0)  /* FSI */);
-        /** Closes things in {@link #OVERRIDES} */
+
+        /**
+         * Closes things in {@link #OVERRIDES}
+         */
         private static final int PDF = "\u202c".codePointAt(0);
 
-        /** Closes things in {@link #ISOLATES} */
+        /**
+         * Closes things in {@link #ISOLATES}
+         */
         private static final int PDI = "\u2069".codePointAt(0);
 
-        /** Auto-detecting isolate */
+        /**
+         * Auto-detecting isolate
+         */
         private static final int FSI = "\u2068".codePointAt(0);
     }
 
-    private StringUtil() {}
+    private StringUtil() {
+    }
 
     /**
      * Trims a name string to fit into the byte length requirement.
@@ -58,8 +70,35 @@ public final class StringUtil {
     }
 
     /**
+     * @return A charsequence with no leading or trailing whitespace. Only creates a new charsequence
+     * if it has to.
+     */
+    public static @NonNull CharSequence trim(@NonNull CharSequence charSequence) {
+        if (charSequence.length() == 0) {
+            return charSequence;
+        }
+
+        int start = 0;
+        int end = charSequence.length() - 1;
+
+        while (start < charSequence.length() && Character.isWhitespace(charSequence.charAt(start))) {
+            start++;
+        }
+
+        while (end >= 0 && end > start && Character.isWhitespace(charSequence.charAt(end))) {
+            end--;
+        }
+
+        if (start > 0 || end < charSequence.length() - 1) {
+            return charSequence.subSequence(start, end + 1);
+        } else {
+            return charSequence;
+        }
+    }
+
+    /**
      * @return True if the string is empty, or if it contains nothing but whitespace characters.
-     *         Accounts for various unicode whitespace characters.
+     * Accounts for various unicode whitespace characters.
      */
     public static boolean isVisuallyEmpty(@Nullable String value) {
         if (value == null || value.length() == 0) {
@@ -71,7 +110,7 @@ public final class StringUtil {
 
     /**
      * @return String without any leading or trailing whitespace.
-     *         Accounts for various unicode whitespace characters.
+     * Accounts for various unicode whitespace characters.
      */
     public static String trimToVisualBounds(@NonNull String value) {
         int start = indexOfFirstNonEmptyChar(value);
@@ -108,7 +147,7 @@ public final class StringUtil {
 
     /**
      * @return True if the character is invisible or whitespace. Accounts for various unicode
-     *         whitespace characters.
+     * whitespace characters.
      */
     public static boolean isVisuallyEmpty(char c) {
         return Character.isWhitespace(c) || WHITESPACE.contains(c);
@@ -124,13 +163,13 @@ public final class StringUtil {
     /**
      * Isolates bi-directional text from influencing surrounding text. You should use this whenever
      * you're injecting user-generated text into a larger string.
-     *
+     * <p>
      * You'd think we'd be able to trust {@link BidiFormatter}, but unfortunately it just misses some
      * corner cases, so here we are.
-     *
+     * <p>
      * The general idea is just to balance out the opening and closing codepoints, and then wrap the
      * whole thing in FSI/PDI to isolate it.
-     *
+     * <p>
      * For more details, see:
      * https://www.w3.org/International/questions/qa-bidi-unicode-controls
      */
@@ -140,10 +179,10 @@ public final class StringUtil {
             return text;
         }
 
-        int overrideCount      = 0;
+        int overrideCount = 0;
         int overrideCloseCount = 0;
-        int isolateCount       = 0;
-        int isolateCloseCount  = 0;
+        int isolateCount = 0;
+        int isolateCloseCount = 0;
 
         for (int i = 0, len = text.codePointCount(0, text.length()); i < len; i++) {
             int codePoint = text.codePointAt(i);
@@ -191,7 +230,7 @@ public final class StringUtil {
      * {@link String#trim()} to preserve expectations around results.
      */
     public static CharSequence trimSequence(CharSequence text) {
-        int length     = text.length();
+        int length = text.length();
         int startIndex = 0;
 
         while ((startIndex < length) && (text.charAt(startIndex) <= ' ')) {

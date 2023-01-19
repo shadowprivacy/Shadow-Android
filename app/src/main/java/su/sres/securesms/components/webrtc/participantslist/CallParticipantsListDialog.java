@@ -20,6 +20,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.components.webrtc.CallParticipantsState;
 import su.sres.securesms.components.webrtc.WebRtcCallViewModel;
 import su.sres.securesms.events.CallParticipant;
+import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.securesms.util.BottomSheetUtil;
 import su.sres.securesms.util.MappingModel;
 
@@ -79,9 +80,14 @@ public class CallParticipantsListDialog extends BottomSheetDialogFragment {
     private void updateList(@NonNull CallParticipantsState callParticipantsState) {
         List<MappingModel<?>> items = new ArrayList<>();
 
-        items.add(new CallParticipantsListHeader(callParticipantsState.getAllRemoteParticipants().size() + 1));
+        boolean includeSelf = callParticipantsState.getGroupCallState() == WebRtcViewModel.GroupCallState.CONNECTED_AND_JOINED;
 
-        items.add(new CallParticipantViewState(callParticipantsState.getLocalParticipant()));
+        items.add(new CallParticipantsListHeader(callParticipantsState.getAllRemoteParticipants().size() + (includeSelf ? 1 : 0)));
+
+        if (includeSelf) {
+            items.add(new CallParticipantViewState(callParticipantsState.getLocalParticipant()));
+        }
+
         for (CallParticipant callParticipant : callParticipantsState.getAllRemoteParticipants()) {
             items.add(new CallParticipantViewState(callParticipant));
         }

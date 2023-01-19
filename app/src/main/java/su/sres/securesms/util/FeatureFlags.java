@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
@@ -61,18 +62,19 @@ public final class FeatureFlags {
     private static final String VERIFY_V2                  = "android.verifyV2";
     private static final String USER_LOGIN_PRIVACY_VERSION = "android.UserLoginPrivacyVersion";
     private static final String CLIENT_EXPIRATION            = "android.clientExpiration";
-    public  static final String MODERN_PROFILE_SHARING       = "android.modernProfileSharing";
     private static final String VIEWED_RECEIPTS              = "android.viewed.receipts";
     private static final String MAX_ENVELOPE_SIZE            = "android.maxEnvelopeSize";
-    private static final String GV1_AUTO_MIGRATE_VERSION     = "android.groupsv2.autoMigrateVersion";
-    private static final String GV1_MANUAL_MIGRATE_VERSION   = "android.groupsv2.manualMigrateVersion";
+    private static final String GROUP_CALLING_VERSION        = "android.groupsv2.callingVersion";
+    private static final String GV1_AUTO_MIGRATE             = "android.groupsV1Migration.auto";
+    private static final String GV1_MANUAL_MIGRATE           = "android.groupsV1Migration.manual";
+    private static final String GV1_FORCED_MIGRATE           = "android.groupsV1Migration.forced";
 
     /**
      * We will only store remote values for flags in this set. If you want a flag to be controllable
      * remotely, place it in here.
      */
 
-    private static final Set<String> REMOTE_CAPABLE = Sets.newHashSet(
+    private static final Set<String> REMOTE_CAPABLE = SetUtil.newHashSet(
             ATTACHMENTS_V3,
             GROUPS_V2_RECOMMENDED_LIMIT,
             GROUPS_V2_HARD_LIMIT,
@@ -82,11 +84,12 @@ public final class FeatureFlags {
             USERNAMES,
             VERIFY_V2,
             CLIENT_EXPIRATION,
-            MODERN_PROFILE_SHARING,
             VIEWED_RECEIPTS,
             MAX_ENVELOPE_SIZE,
-            GV1_AUTO_MIGRATE_VERSION,
-            GV1_MANUAL_MIGRATE_VERSION
+            GV1_AUTO_MIGRATE,
+            GV1_MANUAL_MIGRATE,
+            GV1_FORCED_MIGRATE,
+            GROUP_CALLING_VERSION
     );
 
     /**
@@ -106,17 +109,18 @@ public final class FeatureFlags {
      * will be updated arbitrarily at runtime. This will make values more responsive, but also places
      * more burden on the reader to ensure that the app experience remains consistent.
      */
-    private static final Set<String> HOT_SWAPPABLE = Sets.newHashSet(
+    private static final Set<String> HOT_SWAPPABLE = SetUtil.newHashSet(
             ATTACHMENTS_V3,
             GROUPS_V2_JOIN_VERSION,
             VERIFY_V2,
-            CLIENT_EXPIRATION
+            CLIENT_EXPIRATION,
+            MAX_ENVELOPE_SIZE
     );
 
     /**
      * Flags in this set will stay true forever once they receive a true value from a remote config.
      */
-    private static final Set<String> STICKY = Sets.newHashSet(
+    private static final Set<String> STICKY = SetUtil.newHashSet(
             VERIFY_V2
     );
 
@@ -132,7 +136,7 @@ public final class FeatureFlags {
      * desired test state.
      */
     private static final Map<String, OnFlagChange> FLAG_CHANGE_LISTENERS = new HashMap<String, OnFlagChange>() {{
-        put(GV1_AUTO_MIGRATE_VERSION, change -> ApplicationDependencies.getJobManager().add(new RefreshAttributesJob()));
+        put(GV1_AUTO_MIGRATE, change -> ApplicationDependencies.getJobManager().add(new RefreshAttributesJob()));
     }};
 
     private static final Map<String, Object> REMOTE_VALUES = new TreeMap<>();
@@ -250,11 +254,6 @@ public final class FeatureFlags {
         return getVersionFlag(USER_LOGIN_PRIVACY_VERSION) == VersionFlag.ON;
     }
 
-    /** Whether or not to show the new profile sharing prompt for legacy conversations. */
-    public static boolean modernProfileSharing() {
-        return getBoolean(MODERN_PROFILE_SHARING, false);
-    }
-
     /** Whether the user should display the content revealed dot in voice notes. */
     public static boolean viewedReceipts() {
         return getBoolean(VIEWED_RECEIPTS, false);
@@ -265,14 +264,24 @@ public final class FeatureFlags {
         return getInteger(MAX_ENVELOPE_SIZE, 0);
     }
 
+    /** Whether or not group calling is enabled. */
+    public static boolean groupCalling() {
+        return getVersionFlag(GROUP_CALLING_VERSION) == VersionFlag.ON;
+    }
+
     /** Whether or not auto-migration from GV1->GV2 is enabled. */
     public static boolean groupsV1AutoMigration() {
-        return getVersionFlag(GV1_AUTO_MIGRATE_VERSION) == VersionFlag.ON;
+        return getBoolean(GV1_AUTO_MIGRATE, false);
     }
 
     /** Whether or not manual migration from GV1->GV2 is enabled. */
     public static boolean groupsV1ManualMigration() {
-        return groupsV1AutoMigration() && getVersionFlag(GV1_MANUAL_MIGRATE_VERSION) == VersionFlag.ON;
+        return getBoolean(GV1_MANUAL_MIGRATE, false) && groupsV1AutoMigration();
+    }
+
+    /** Whether or not forced migration from GV1->GV2 is enabled. */
+    public static boolean groupsV1ForcedMigration() {
+        return getBoolean(GV1_FORCED_MIGRATE, false) && groupsV1ManualMigration() && groupsV1AutoMigration();
     }
 
     /** Only for rendering debug info. */
@@ -383,7 +392,7 @@ public final class FeatureFlags {
                 changes.put(key, Change.REMOVED);
             } else if (newValue != oldValue && newValue instanceof Boolean) {
                 changes.put(key, (boolean) newValue ? Change.ENABLED : Change.DISABLED);
-            } else if (newValue != oldValue) {
+            } else if (!Objects.equals(oldValue, newValue)) {
                 changes.put(key, Change.CHANGED);
             }
         }

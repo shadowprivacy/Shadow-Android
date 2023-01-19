@@ -90,6 +90,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
             String statusUrl                     = configRequested.getStatusUri();
             String storageUrl                    = configRequested.getStorageUri();
             String cloudUrl                      = configRequested.getCloudUri();
+            String voipUrl                       = configRequested.getVoipUri();
             byte[] unidentifiedAccessCaPublicKey = configRequested.getUnidentifiedDeliveryCaPublicKey();
             byte[] zkPublicKey                   = configRequested.getZkPublicKey();
             String supportEmail                  = configRequested.getSupportEmail();
@@ -112,6 +113,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
                             cloudUrl                      != null &&
                             statusUrl                     != null &&
                             storageUrl                    != null &&
+                            // voipUrl                    != null &&
                             unidentifiedAccessCaPublicKey != null &&
                             zkPublicKey                   != null &&
                             fcmSenderId                   != null) {
@@ -119,6 +121,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
                 values.setCloudUrl(cloudUrl);
                 values.setCloud2Url(cloudUrl);
                 values.setStorageUrl(storageUrl);
+                values.setVoipUrl(voipUrl);
                 values.setStatusUrl(statusUrl);
                 values.setUnidentifiedAccessCaPublicKey(unidentifiedAccessCaPublicKey);
                 values.setZkPublicKey(zkPublicKey);

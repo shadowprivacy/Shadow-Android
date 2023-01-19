@@ -54,7 +54,6 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ActionMode;
-import androidx.paging.PagedList;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -72,12 +71,10 @@ import android.widget.Toast;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.MainFragment;
 import su.sres.securesms.MainNavigator;
 import su.sres.securesms.NewConversationActivity;
 import su.sres.securesms.R;
-import su.sres.securesms.components.reminder.LicenseInvalidReminder;
 import su.sres.securesms.components.RatingManager;
 import su.sres.securesms.components.SearchToolbar;
 import su.sres.securesms.components.recyclerview.DeleteItemAnimator;
@@ -103,7 +100,6 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.ReminderUpdateEvent;
 import su.sres.securesms.insights.InsightsLauncher;
 import su.sres.securesms.jobs.ServiceOutageDetectionJob;
-import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mediasend.MediaSendActivity;
 import su.sres.securesms.megaphone.Megaphone;
@@ -124,6 +120,7 @@ import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
+import su.sres.securesms.util.WindowUtil;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.task.SnackbarAsyncTask;
@@ -231,7 +228,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
             Permissions.with(requireActivity())
                     .request(Manifest.permission.CAMERA)
                     .ifNecessary()
-                    .withRationaleDialog(getString(R.string.ConversationActivity_to_capture_photos_and_video_allow_signal_access_to_the_camera), R.drawable.ic_camera_solid_24)
+                    .withRationaleDialog(getString(R.string.ConversationActivity_to_capture_photos_and_video_allow_signal_access_to_the_camera), R.drawable.ic_camera_24)
                     .withPermanentDenialDialog(getString(R.string.ConversationActivity_signal_needs_the_camera_permission_to_take_photos_or_video))
                     .onAllGranted(() -> startActivity(MediaSendActivity.buildCameraFirstIntent(requireActivity())))
                     .onAnyDenied(() -> Toast.makeText(requireContext(), R.string.ConversationActivity_signal_needs_camera_permissions_to_take_photos_or_video, Toast.LENGTH_LONG).show())
@@ -498,7 +495,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }
 
     private void initializeTypingObserver() {
-        ApplicationContext.getInstance(requireContext()).getTypingStatusRepository().getTypingThreads().observe(this, threadIds -> {
+        ApplicationDependencies.getTypingStatusRepository().getTypingThreads().observe(this, threadIds -> {
             if (threadIds == null) {
                 threadIds = Collections.emptySet();
             }
@@ -709,7 +706,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     private void handleDeleteAllSelected() {
         int                 conversationsCount = defaultAdapter.getBatchSelectionIds().size();
         AlertDialog.Builder alert              = new AlertDialog.Builder(getActivity());
-        alert.setIconAttribute(R.attr.dialog_alert_icon);
+        alert.setIcon(R.drawable.ic_warning);
         alert.setTitle(getActivity().getResources().getQuantityString(R.plurals.ConversationListFragment_delete_selected_conversations,
                 conversationsCount, conversationsCount));
         alert.setMessage(getActivity().getResources().getQuantityString(R.plurals.ConversationListFragment_this_will_permanently_delete_all_n_selected_conversations,
@@ -878,14 +875,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
         mode.setTitle("1");
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getActivity().getWindow().setStatusBarColor(getResources().getColor(R.color.action_mode_status_bar));
-        }
-
-        if (Build.VERSION.SDK_INT >= 23) {
-            int current = getActivity().getWindow().getDecorView().getSystemUiVisibility();
-            getActivity().getWindow().getDecorView().setSystemUiVisibility(current & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-        }
+        WindowUtil.setStatusBarColor(requireActivity().getWindow(), getResources().getColor(R.color.action_mode_status_bar));
 
         return true;
     }
@@ -917,7 +907,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             TypedArray color = getActivity().getTheme().obtainStyledAttributes(new int[] {android.R.attr.statusBarColor});
-            getActivity().getWindow().setStatusBarColor(color.getColor(0, Color.BLACK));
+            WindowUtil.setStatusBarColor(getActivity().getWindow(), color.getColor(0, Color.BLACK));
             color.recycle();
         }
 

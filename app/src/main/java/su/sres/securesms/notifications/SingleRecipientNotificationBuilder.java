@@ -35,6 +35,7 @@ import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.BitmapUtil;
+import su.sres.securesms.util.ConversationUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -86,6 +87,8 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
       setContentTitle(context.getString(R.string.SingleRecipientNotificationBuilder_signal));
       setLargeIcon(new GeneratedContactPhoto("Unknown", R.drawable.ic_profile_outline_40).asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context)));
     }
+
+    setShortcutId(ConversationUtil.getShortcutId(recipient));
   }
 
   private Drawable getContactDrawable(@NonNull Recipient recipient) {
@@ -220,13 +223,14 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   {
     SpannableStringBuilder stringBuilder = new SpannableStringBuilder();
     Person.Builder personBuilder = new Person.Builder()
-            .setKey(individualRecipient.getId().serialize())
+            .setKey(ConversationUtil.getShortcutId(individualRecipient))
             .setBot(false);
 
     this.threadRecipient = threadRecipient;
 
     if (privacy.isDisplayContact()) {
       personBuilder.setName(individualRecipient.getDisplayName(context));
+      personBuilder.setUri(individualRecipient.isSystemContact() ? individualRecipient.getContactUri().toString() : null);
 
       Bitmap bitmap = getLargeBitmap(getContactDrawable(individualRecipient));
       if (bitmap != null) {
@@ -273,13 +277,8 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   }
 
   private void applyMessageStyle() {
-    NotificationCompat.MessagingStyle messagingStyle = new NotificationCompat.MessagingStyle(
-            new Person.Builder()
-                    .setBot(false)
-                    .setName(Recipient.self().getDisplayName(context))
-                    .setKey(Recipient.self().getId().serialize())
-                    .setIcon(AvatarUtil.getIconForNotification(context, Recipient.self()))
-                    .build());
+    ConversationUtil.pushShortcutForRecipientIfNeededSync(context, threadRecipient);
+    NotificationCompat.MessagingStyle messagingStyle = new NotificationCompat.MessagingStyle(ConversationUtil.buildPersonCompat(context, Recipient.self()));
 
     if (threadRecipient.isGroup()) {
       if (privacy.isDisplayContact()) {

@@ -18,6 +18,7 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.DefaultValueLiveData;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.SingleLiveEvent;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 
@@ -59,7 +60,8 @@ public final class AddGroupDetailsViewModel extends ViewModel {
         });
 
         nonGv2CapableMembers = LiveDataUtil.mapAsync(membersToCheckGv2CapabilityOf, memberList -> repository.checkCapabilities(Stream.of(memberList).map(newGroupCandidate -> newGroupCandidate.getMember().getId()).toList()));
-        canSubmitForm        = LiveDataUtil.combineLatest(isMms, isValidName, (mms, validName) -> mms || validName);
+        canSubmitForm        = FeatureFlags.groupsV1ForcedMigration() ? LiveDataUtil.just(false)
+                : LiveDataUtil.combineLatest(isMms, isValidName, (mms, validName) -> mms || validName);
 
         repository.resolveMembers(recipientIds, initialMembers::postValue);
     }

@@ -7,6 +7,8 @@ import androidx.annotation.Nullable;
 
 import org.signal.ringrtc.CallId;
 import org.signal.ringrtc.CallManager;
+
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.signalservice.api.messages.calls.HangupMessage;
 import su.sres.signalservice.api.messages.calls.OfferMessage;
@@ -14,8 +16,19 @@ import su.sres.signalservice.api.messages.calls.OfferMessage;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_HANGUP_DEVICE_ID;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_HANGUP_IS_LEGACY;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_HANGUP_TYPE;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_HTTP_REQUEST_ID;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_HTTP_RESPONSE_BODY;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_HTTP_RESPONSE_STATUS;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_MESSAGE_AGE_SECONDS;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_SERVER_DELIVERED_TIMESTAMP;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_SERVER_RECEIVED_TIMESTAMP;
+import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getRemoteDevice;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_GROUP_CALL_ERA_ID;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_GROUP_CALL_UPDATE_GROUP;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_GROUP_CALL_UPDATE_SENDER;
+import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getRecipientId;
+
+import java.util.UUID;
 
 /**
  * Collection of classes to ease parsing data from intents and passing said data
@@ -222,6 +235,119 @@ public class WebRtcData {
 
         int getDeviceId() {
             return deviceId;
+        }
+    }
+
+    /**
+     * Http response data.
+     */
+    static class HttpData {
+        private final long   requestId;
+        private final int    status;
+        private final byte[] body;
+
+        static @NonNull HttpData fromIntent(@NonNull Intent intent) {
+            return new HttpData(intent.getLongExtra(EXTRA_HTTP_REQUEST_ID, -1),
+                    intent.getIntExtra(EXTRA_HTTP_RESPONSE_STATUS, -1),
+                    intent.getByteArrayExtra(EXTRA_HTTP_RESPONSE_BODY));
+        }
+
+        HttpData(long requestId, int status, @Nullable byte[] body) {
+            this.requestId = requestId;
+            this.status    = status;
+            this.body      = body;
+        }
+
+        long getRequestId() {
+            return requestId;
+        }
+
+        int getStatus() {
+            return status;
+        }
+
+        @Nullable byte[] getBody() {
+            return body;
+        }
+    }
+
+    /**
+     * An opaque calling message.
+     */
+    static class OpaqueMessageMetadata {
+        private final UUID   uuid;
+        private final byte[] opaque;
+        private final int    remoteDeviceId;
+        private final long   messageAgeSeconds;
+
+        static @NonNull OpaqueMessageMetadata fromIntent(@NonNull Intent intent) {
+            return new OpaqueMessageMetadata(WebRtcIntentParser.getUuid(intent),
+                    WebRtcIntentParser.getOpaque(intent),
+                    getRemoteDevice(intent),
+                    intent.getLongExtra(EXTRA_MESSAGE_AGE_SECONDS, 0));
+        }
+
+        OpaqueMessageMetadata(@NonNull UUID uuid, @NonNull byte[] opaque, int remoteDeviceId, long messageAgeSeconds) {
+            this.uuid              = uuid;
+            this.opaque            = opaque;
+            this.remoteDeviceId    = remoteDeviceId;
+            this.messageAgeSeconds = messageAgeSeconds;
+        }
+
+        @NonNull UUID getUuid() {
+            return uuid;
+        }
+
+        @NonNull byte[] getOpaque() {
+            return opaque;
+        }
+
+        int getRemoteDeviceId() {
+            return remoteDeviceId;
+        }
+
+        long getMessageAgeSeconds() {
+            return messageAgeSeconds;
+        }
+    }
+
+    /**
+     * Metadata associated with a group call update message.
+     */
+    public static class GroupCallUpdateMetadata {
+        private final RecipientId sender;
+        private final RecipientId groupRecipientId;
+        private final String      groupCallEraId;
+        private final long        serverReceivedTimestamp;
+
+        static @NonNull GroupCallUpdateMetadata fromIntent(@NonNull Intent intent) {
+            return new GroupCallUpdateMetadata(getRecipientId(intent, EXTRA_GROUP_CALL_UPDATE_SENDER),
+                    getRecipientId(intent, EXTRA_GROUP_CALL_UPDATE_GROUP),
+                    intent.getStringExtra(EXTRA_GROUP_CALL_ERA_ID),
+                    intent.getLongExtra(EXTRA_SERVER_RECEIVED_TIMESTAMP, 0));
+        }
+
+        public GroupCallUpdateMetadata(@NonNull RecipientId sender, @NonNull RecipientId groupRecipientId, @Nullable String groupCallEraId, long serverReceivedTimestamp) {
+            this.sender                  = sender;
+            this.groupRecipientId        = groupRecipientId;
+            this.groupCallEraId          = groupCallEraId;
+            this.serverReceivedTimestamp = serverReceivedTimestamp;
+        }
+
+        public @NonNull RecipientId getSender() {
+            return sender;
+        }
+
+        public @NonNull RecipientId getGroupRecipientId() {
+            return groupRecipientId;
+        }
+
+        public @Nullable String getGroupCallEraId() {
+            return groupCallEraId;
+        }
+
+        public long getServerReceivedTimestamp() {
+            return serverReceivedTimestamp;
         }
     }
 }

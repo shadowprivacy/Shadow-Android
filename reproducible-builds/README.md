@@ -14,7 +14,7 @@ docker build -t shadow-android .
 # Go back up to the root of the project
 cd ..
 # Build using the Docker environment
-docker run --rm -v $(pwd):/project -w /project shadow-android ./gradlew clean assembleRelease
+docker run --rm -v $(pwd):/project -w /project signal-android ./gradlew clean assemblePlayProdRelease
 # Verify the APKs
 python3 apkdiff/apkdiff.py build/outputs/apks/project-release-unsigned.apk path/to/ShadowFromPlay.apk
 ```

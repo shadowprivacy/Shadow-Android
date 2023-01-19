@@ -7,7 +7,10 @@ import androidx.annotation.NonNull;
 
 import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.BuildConfig;
+import su.sres.securesms.components.TypingStatusRepository;
+import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.jobmanager.impl.FactoryJobPredicate;
+import su.sres.securesms.jobs.GroupCallUpdateSendJob;
 import su.sres.securesms.jobs.MarkerJob;
 import su.sres.securesms.jobs.PushDecryptMessageJob;
 import su.sres.securesms.jobs.PushGroupSendJob;
@@ -151,7 +154,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
                 .setJobStorage(new FastJobStorage(DatabaseFactory.getJobDatabase(context), SignalExecutors.newCachedSingleThreadExecutor("signal-fast-job-storage")))
                 .setJobMigrator(new JobMigrator(TextSecurePreferences.getJobManagerVersion(context), JobManager.CURRENT_VERSION, JobManagerFactories.getJobMigrations(context)))
                 .addReservedJobRunner(new FactoryJobPredicate(PushDecryptMessageJob.KEY, PushProcessMessageJob.KEY, MarkerJob.KEY))
-                .addReservedJobRunner(new FactoryJobPredicate(PushTextSendJob.KEY, PushMediaSendJob.KEY, PushGroupSendJob.KEY, ReactionSendJob.KEY, TypingSendJob.KEY))
+                .addReservedJobRunner(new FactoryJobPredicate(PushTextSendJob.KEY, PushMediaSendJob.KEY, PushGroupSendJob.KEY, ReactionSendJob.KEY, TypingSendJob.KEY, GroupCallUpdateSendJob.KEY))
                 .build());
     }
 
@@ -188,6 +191,16 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     @Override
     public @NonNull TrimThreadsByDateManager provideTrimThreadsByDateManager() {
         return new TrimThreadsByDateManager(context);
+    }
+
+    @Override
+    public @NonNull TypingStatusRepository provideTypingStatusRepository() {
+        return new TypingStatusRepository();
+    }
+
+    @Override
+    public @NonNull TypingStatusSender provideTypingStatusSender() {
+        return new TypingStatusSender(context);
     }
 
     private static class DynamicCredentialsProvider implements CredentialsProvider {

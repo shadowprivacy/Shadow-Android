@@ -1,6 +1,5 @@
 package su.sres.securesms.registration.fragments;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -47,7 +46,6 @@ import su.sres.securesms.database.NoExternalStorageException;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
-import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.service.LocalBackupListener;
 import su.sres.securesms.util.BackupUtil;
 import su.sres.securesms.util.DateUtils;
@@ -204,7 +202,7 @@ public final class RestoreBackupFragment extends BaseRegistrationFragment {
                            @NonNull Uri backupUri,
                            @NonNull OnBackupSearchResultListener listener)
     {
-        SimpleTask.run(() -> BackupUtil.getBackupInfoForUri(context, backupUri),
+        SimpleTask.run(() -> BackupUtil.getBackupInfoFromSingleUri(context, backupUri),
                 listener::run);
     }
 

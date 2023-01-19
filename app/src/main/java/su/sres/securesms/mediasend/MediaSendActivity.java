@@ -2,6 +2,7 @@ package su.sres.securesms.mediasend;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.core.util.Pair;
 import androidx.core.util.Supplier;
@@ -150,7 +151,6 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
     private TextView            charactersLeft;
     private RecyclerView        mediaRail;
     private MediaRailAdapter    mediaRailAdapter;
-    private AlertDialog         progressDialog;
 
     private int visibleHeight;
 
@@ -198,6 +198,12 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
         Intent intent = buildGalleryIntent(context, recipient, body, transport);
         intent.putParcelableArrayListExtra(KEY_MEDIA, new ArrayList<>(media));
         return intent;
+    }
+
+    @Override
+    protected void attachBaseContext(@NonNull Context newBase) {
+        getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        super.attachBaseContext(newBase);
     }
 
     @Override
@@ -255,7 +261,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
         } else if (!Util.isEmpty(media)) {
             viewModel.onSelectedMediaChanged(this, media);
 
-            Fragment fragment = MediaSendFragment.newInstance(Locale.getDefault());
+            Fragment fragment = MediaSendFragment.newInstance();
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.mediasend_fragment_container, fragment, TAG_SEND)
                     .commit();
@@ -304,7 +310,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
 
         sendButton.setTransport(transport);
 
-        countButton.setOnClickListener(v -> navigateToMediaSend(Locale.getDefault()));
+        countButton.setOnClickListener(v -> navigateToMediaSend());
 
         composeText.append(viewModel.getBody());
 
@@ -366,7 +372,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
     @Override
     public void onMediaSelected(@NonNull Media media) {
         viewModel.onSingleMediaSelected(this, media);
-        navigateToMediaSend(Locale.getDefault());
+        navigateToMediaSend();
     }
 
     @Override
@@ -458,7 +464,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
             Log.i(TAG, "Camera capture stored: " + media.getUri().toString());
 
             viewModel.onMediaCaptured(media);
-            navigateToMediaSend(Locale.getDefault());
+            navigateToMediaSend();
         });
     }
 
@@ -469,7 +475,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
 
     @Override
     public void onCameraCountButtonClicked() {
-        navigateToMediaSend(Locale.getDefault());
+        navigateToMediaSend();
     }
 
     @Override
@@ -547,7 +553,11 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
         MediaSendFragment fragment = getMediaSendFragment();
 
         if (fragment != null) {
+            fragment.pausePlayback();
+
+            SimpleProgressDialog.DismissibleDialog dialog = SimpleProgressDialog.showDelayed(this, 300, 0);
             viewModel.onSendClicked(buildModelsToTransform(fragment), recipients, composeText.getMentions()).observe(this, result -> {
+                dialog.dismiss();
                 finish();
             });
         } else {
@@ -568,7 +578,14 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
 
         sendButton.setEnabled(false);
 
-        viewModel.onSendClicked(buildModelsToTransform(fragment), Collections.emptyList(), composeText.getMentions()).observe(this, this::setActivityResultAndFinish);
+        fragment.pausePlayback();
+
+        SimpleProgressDialog.DismissibleDialog dialog = SimpleProgressDialog.showDelayed(this, 300, 0);
+        viewModel.onSendClicked(buildModelsToTransform(fragment), Collections.emptyList(), composeText.getMentions())
+                .observe(this, result -> {
+                    dialog.dismiss();
+                    setActivityResultAndFinish(result);
+                });
     }
 
     private static Map<Media, MediaTransform> buildModelsToTransform(@NonNull MediaSendFragment fragment) {
@@ -636,7 +653,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
             } else if (state.getViewOnceState() == ViewOnceState.ENABLED) {
                 captionBackground = 0;
             } else if (isMentionPickerShowing){
-                captionBackground = ThemeUtil.getThemedResourceId(this, R.attr.mention_picker_background_color);
+                captionBackground = R.color.signal_background_dialog;
             }
 
             captionAndRail.setBackgroundResource(captionBackground);
@@ -769,15 +786,6 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
                             .setOnDismissListener(() -> TextSecurePreferences.setHasSeenViewOnceTooltip(this, true))
                             .show(TooltipPopup.POSITION_ABOVE);
                     break;
-                case SHOW_RENDER_PROGRESS:
-                    progressDialog = SimpleProgressDialog.show(new ContextThemeWrapper(MediaSendActivity.this, R.style.TextSecure_MediaSendProgressDialog));
-                    break;
-                case HIDE_RENDER_PROGRESS:
-                    if (progressDialog != null) {
-                        progressDialog.dismiss();
-                        progressDialog = null;
-                    }
-                    break;
             }
         });
     }
@@ -840,8 +848,8 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
 
     }
 
-    private void navigateToMediaSend(@NonNull Locale locale) {
-        MediaSendFragment fragment     = MediaSendFragment.newInstance(locale);
+    private void navigateToMediaSend() {
+        MediaSendFragment fragment     = MediaSendFragment.newInstance();
         String            backstackTag = null;
 
         if (getSupportFragmentManager().findFragmentByTag(TAG_SEND) != null) {
@@ -861,7 +869,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
         Permissions.with(this)
                 .request(Manifest.permission.CAMERA)
                 .ifNecessary()
-                .withRationaleDialog(getString(R.string.ConversationActivity_to_capture_photos_and_video_allow_signal_access_to_the_camera), R.drawable.ic_camera_solid_24)
+                .withRationaleDialog(getString(R.string.ConversationActivity_to_capture_photos_and_video_allow_signal_access_to_the_camera), R.drawable.ic_camera_24)
                 .withPermanentDenialDialog(getString(R.string.ConversationActivity_signal_needs_the_camera_permission_to_take_photos_or_video))
                 .onAllGranted(() -> {
                     Fragment fragment = getOrCreateCameraFragment();

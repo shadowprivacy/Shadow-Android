@@ -6,7 +6,11 @@ import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
 
+import su.sres.securesms.groups.GroupId;
+import su.sres.securesms.groups.GroupsV1MigrationUtil;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.storage.GroupV2ExistenceChecker;
+import su.sres.securesms.storage.StaticGroupV2ExistenceChecker;
 import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.storage.StorageSyncHelper.KeyDifferenceResult;
 import su.sres.securesms.storage.StorageSyncHelper.LocalWriteResult;
@@ -26,12 +30,14 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.storage.StorageSyncValidations;
 import su.sres.securesms.transport.RetryLaterException;
+import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.storage.SignalAccountRecord;
+import su.sres.signalservice.api.storage.SignalGroupV2Record;
 import su.sres.signalservice.api.storage.StorageId;
 import su.sres.signalservice.api.storage.StorageKey;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
@@ -42,10 +48,12 @@ import su.sres.signalservice.internal.storage.protos.ManifestRecord;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -149,7 +157,8 @@ public class StorageSyncJob extends BaseJob {
 
                 List<SignalStorageRecord> localOnly            = buildLocalStorageRecords(context, keyDifference.getLocalOnlyKeys());
                 List<SignalStorageRecord> remoteOnly           = accountManager.readStorageRecords(storageServiceKey, keyDifference.getRemoteOnlyKeys());
-                MergeResult               mergeResult          = StorageSyncHelper.resolveConflict(remoteOnly, localOnly);
+                GroupV2ExistenceChecker gv2ExistenceChecker  = new StaticGroupV2ExistenceChecker(DatabaseFactory.getGroupDatabase(context).getAllGroupV2Ids());
+                MergeResult               mergeResult          = StorageSyncHelper.resolveConflict(remoteOnly, localOnly, gv2ExistenceChecker);
                 WriteOperationResult      writeOperationResult = StorageSyncHelper.createWriteOperation(remoteManifest.get().getVersion(), allLocalStorageKeys, mergeResult);
 
                 if (remoteOnly.size() != keyDifference.getRemoteOnlyKeys().size()) {
@@ -184,6 +193,7 @@ public class StorageSyncJob extends BaseJob {
                     Log.i(TAG, "[Remote Newer] After resolving the conflict, all changes are local. No remote writes needed.");
                 }
 
+                migrateToGv2IfNecessary(context, mergeResult.getLocalGroupV2Inserts());
                 recipientDatabase.applyStorageSyncUpdates(mergeResult.getLocalContactInserts(), mergeResult.getLocalContactUpdates(), mergeResult.getLocalGroupV1Inserts(), mergeResult.getLocalGroupV1Updates(), mergeResult.getLocalGroupV2Inserts(), mergeResult.getLocalGroupV2Updates());
                 storageKeyDatabase.applyStorageSyncUpdates(mergeResult.getLocalUnknownInserts(), mergeResult.getLocalUnknownDeletes());
                 StorageSyncHelper.applyAccountStorageSyncUpdates(context, mergeResult.getLocalAccountUpdate());
@@ -257,6 +267,27 @@ public class StorageSyncJob extends BaseJob {
         }
 
         return needsMultiDeviceSync;
+    }
+
+    /**
+     * Migrates any of the provided V2 IDs that map a local V1 ID. If a match is found, we remove the
+     * record from the collection of V2 IDs.
+     */
+    private static void migrateToGv2IfNecessary(@NonNull Context context, @NonNull Collection<SignalGroupV2Record> inserts)
+            throws IOException
+    {
+        Map<GroupId.V2, GroupId.V1> idMap          = DatabaseFactory.getGroupDatabase(context).getAllExpectedV2Ids();
+        Iterator<SignalGroupV2Record> recordIterator = inserts.iterator();
+
+        while (recordIterator.hasNext()) {
+            GroupId.V2 id = GroupId.v2(GroupUtil.requireMasterKey(recordIterator.next().getMasterKeyBytes()));
+
+            if (idMap.containsKey(id)) {
+                Log.i(TAG, "Discovered a new GV2 ID that is actually a migrated V1 group! Migrating now.");
+                GroupsV1MigrationUtil.performLocalMigration(context, idMap.get(id));
+                recordIterator.remove();
+            }
+        }
     }
 
     private static @NonNull List<StorageId> getAllLocalStorageIds(@NonNull Context context, @NonNull Recipient self) {

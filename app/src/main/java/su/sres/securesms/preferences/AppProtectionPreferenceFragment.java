@@ -16,11 +16,10 @@ import android.text.Spanned;
 import android.text.style.TextAppearanceSpan;
 import android.widget.Toast;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.ApplicationPreferencesActivity;
-import su.sres.securesms.BlockedContactsActivity;
 import su.sres.securesms.PassphraseChangeActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.blocked.BlockedUsersActivity;
 import su.sres.securesms.components.SwitchPreferenceCompat;
 import su.sres.securesms.crypto.MasterSecretUtil;
 import su.sres.securesms.database.DatabaseFactory;
@@ -34,7 +33,6 @@ import su.sres.securesms.logging.Log;
 import su.sres.securesms.megaphone.Megaphones;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.KeyCachingService;
-import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -66,7 +64,6 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
 
     disablePassphrase = (CheckBoxPreference) this.findPreference("pref_enable_passphrase_temporary");
 
-//    this.findPreference(TextSecurePreferences.REGISTRATION_LOCK_PREF).setOnPreferenceClickListener(new AccountLockClickListener());
     this.findPreference(TextSecurePreferences.SCREEN_LOCK).setOnPreferenceChangeListener(new ScreenLockListener());
     this.findPreference(TextSecurePreferences.SCREEN_LOCK_TIMEOUT).setOnPreferenceClickListener(new ScreenLockTimeoutListener());
 
@@ -210,7 +207,7 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
   private class BlockedContactsClickListener implements Preference.OnPreferenceClickListener {
     @Override
     public boolean onPreferenceClick(Preference preference) {
-      Intent intent = new Intent(getActivity(), BlockedContactsActivity.class);
+      Intent intent = new Intent(getActivity(), BlockedUsersActivity.class);
       startActivity(intent);
       return true;
     }
@@ -247,7 +244,7 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
                 SignalStore.settings().isLinkPreviewsEnabled()));
 
         if (!enabled) {
-          ApplicationContext.getInstance(requireContext()).getTypingStatusRepository().clear();
+          ApplicationDependencies.getTypingStatusRepository().clear();
         }
       });
 
@@ -329,7 +326,7 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.ApplicationPreferencesActivity_disable_passphrase);
         builder.setMessage(R.string.ApplicationPreferencesActivity_this_will_permanently_unlock_signal_and_message_notifications);
-        builder.setIconAttribute(R.attr.dialog_alert_icon);
+        builder.setIcon(R.drawable.ic_warning);
         builder.setPositiveButton(R.string.ApplicationPreferencesActivity_disable, (dialog, which) -> {
           MasterSecretUtil.changeMasterSecretPassphrase(getActivity(),
                                                         KeyCachingService.getMasterSecret(getContext()),

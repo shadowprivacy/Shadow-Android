@@ -87,6 +87,10 @@ final class MessageRequestRepository {
             }
         }
 
+        if (recipient.isPushV1Group() && FeatureFlags.groupsV1ForcedMigration()) {
+            return MessageRequestState.REQUIRED;
+        }
+
         if (!RecipientUtil.isMessageRequestAccepted(context, threadId)) {
             if (recipient.isGroup()) {
                 GroupDatabase.MemberLevel memberLevel = DatabaseFactory.getGroupDatabase(context)
@@ -100,10 +104,8 @@ final class MessageRequestRepository {
             }
 
             return MessageRequestState.REQUIRED;
-        } else if (FeatureFlags.modernProfileSharing() && !RecipientUtil.isLegacyProfileSharingAccepted(recipient) && threadId > 0) {
+        } else if (!RecipientUtil.isLegacyProfileSharingAccepted(recipient) && threadId > 0) {
             return MessageRequestState.REQUIRED;
-        } else if (RecipientUtil.isPreMessageRequestThread(context, threadId) && !RecipientUtil.isLegacyProfileSharingAccepted(recipient)) {
-            return MessageRequestState.PRE_MESSAGE_REQUEST;
         } else {
             return MessageRequestState.NOT_REQUIRED;
         }
@@ -262,9 +264,6 @@ final class MessageRequestRepository {
         NOT_REQUIRED,
 
         /** Explicit message request permission is required. */
-        REQUIRED,
-
-        /** This conversation existed before message requests and needs the old UI */
-        PRE_MESSAGE_REQUEST
+        REQUIRED
     }
 }

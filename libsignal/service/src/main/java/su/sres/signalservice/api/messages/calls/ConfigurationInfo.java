@@ -23,6 +23,9 @@ public class ConfigurationInfo {
     private String storageUri;
 
     @JsonProperty
+    private String voipUri;
+
+    @JsonProperty
     @JsonDeserialize(using = ByteArrayDeserializer.class)
     private byte[] unidentifiedDeliveryCaPublicKey;
 
@@ -63,6 +66,10 @@ public class ConfigurationInfo {
     }
 
     public String getStorageUri() {
+        return storageUri;
+    }
+
+    public String getVoipUri() {
         return storageUri;
     }
 

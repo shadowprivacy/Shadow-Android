@@ -22,6 +22,7 @@ import su.sres.signalservice.api.groupsv2.NotAbleToApplyGroupV2ChangeException;
 import su.sres.signalservice.internal.push.exceptions.GroupExistsException;
 import su.sres.storageservice.protos.groups.AccessControl;
 import su.sres.storageservice.protos.groups.GroupChange;
+import su.sres.storageservice.protos.groups.GroupExternalCredential;
 import su.sres.storageservice.protos.groups.Member;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
@@ -30,6 +31,7 @@ import su.sres.storageservice.protos.groups.local.DecryptedMember;
 
 import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.VerificationFailedException;
+import org.signal.zkgroup.groups.ClientZkGroupCipher;
 import org.signal.zkgroup.groups.GroupMasterKey;
 import org.signal.zkgroup.groups.GroupSecretParams;
 import org.signal.zkgroup.groups.UuidCiphertext;
@@ -70,8 +72,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -108,6 +112,36 @@ final class GroupManagerV2 {
         return groupsV2Api.getGroupJoinInfo(groupSecretParams,
                 Optional.fromNullable(password).transform(GroupLinkPassword::serialize),
                 authorization.getAuthorizationForToday(Recipient.self().requireUuid(), groupSecretParams));
+    }
+
+    @WorkerThread
+    @NonNull
+    GroupExternalCredential getGroupExternalCredential(@NonNull GroupId.V2 groupId)
+            throws IOException, VerificationFailedException
+    {
+        GroupMasterKey groupMasterKey = DatabaseFactory.getGroupDatabase(context)
+                .requireGroup(groupId)
+                .requireV2GroupProperties()
+                .getGroupMasterKey();
+
+        GroupSecretParams groupSecretParams = GroupSecretParams.deriveFromMasterKey(groupMasterKey);
+
+        return groupsV2Api.getGroupExternalCredential(authorization.getAuthorizationForToday(Recipient.self().requireUuid(), groupSecretParams));
+    }
+
+    @WorkerThread
+    @NonNull Map<UUID, UuidCiphertext> getUuidCipherTexts(@NonNull GroupId.V2 groupId) {
+        GroupDatabase.GroupRecord groupRecord         = DatabaseFactory.getGroupDatabase(context).requireGroup(groupId);
+        GroupMasterKey            groupMasterKey      = groupRecord.requireV2GroupProperties().getGroupMasterKey();
+        ClientZkGroupCipher       clientZkGroupCipher = new ClientZkGroupCipher(GroupSecretParams.deriveFromMasterKey(groupMasterKey));
+        List<Recipient>           recipients          = Recipient.resolvedList(groupRecord.getMembers());
+
+        Map<UUID, UuidCiphertext> uuidCipherTexts = new HashMap<>();
+        for (Recipient recipient : recipients) {
+            uuidCipherTexts.put(recipient.requireUuid(), clientZkGroupCipher.encryptUuid(recipient.requireUuid()));
+        }
+
+        return uuidCipherTexts;
     }
 
     @WorkerThread

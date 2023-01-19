@@ -37,9 +37,11 @@ import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.documents.IdentityKeyMismatchList;
 import su.sres.securesms.database.documents.NetworkFailure;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
+import su.sres.securesms.database.model.GroupCallUpdateDetailsUtil;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.database.model.SmsMessageRecord;
+import su.sres.securesms.database.model.databaseprotos.GroupCallUpdateDetails;
 import su.sres.securesms.database.model.databaseprotos.ProfileChangeDetails;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.TrimThreadJob;
@@ -54,9 +56,11 @@ import su.sres.securesms.sms.IncomingGroupUpdateMessage;
 import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
 import su.sres.securesms.util.Base64;
+import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.Util;
 
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -71,6 +75,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Database for storage of SMS messages.
@@ -119,7 +124,8 @@ public class SmsDatabase extends MessageDatabase {
             REACTIONS + " BLOB DEFAULT NULL, " +
             REACTIONS_UNREAD + " INTEGER DEFAULT 0, " +
             REACTIONS_LAST_SEEN    + " INTEGER DEFAULT -1, " +
-            REMOTE_DELETED         + " INTEGER DEFAULT 0);";
+            REMOTE_DELETED         + " INTEGER DEFAULT 0, " +
+            NOTIFIED_TIMESTAMP     + " INTEGER DEFAULT 0);";
 
     public static final String[] CREATE_INDEXS = {
             "CREATE INDEX IF NOT EXISTS sms_thread_id_index ON " + TABLE_NAME + " (" + THREAD_ID + ");",
@@ -141,7 +147,7 @@ public class SmsDatabase extends MessageDatabase {
             REPLY_PATH_PRESENT, SUBJECT, BODY, SERVICE_CENTER, DELIVERY_RECEIPT_COUNT,
             MISMATCHED_IDENTITIES, SUBSCRIPTION_ID, EXPIRES_IN, EXPIRE_STARTED,
             NOTIFIED, READ_RECEIPT_COUNT, UNIDENTIFIED, REACTIONS, REACTIONS_UNREAD, REACTIONS_LAST_SEEN,
-            REMOTE_DELETED
+            REMOTE_DELETED, NOTIFIED_TIMESTAMP
     };
 
     private final String OUTGOING_INSECURE_MESSAGE_CLAUSE = "(" + TYPE + " & " + Types.BASE_TYPE_MASK + ") = " + Types.BASE_SENT_TYPE + " AND NOT (" + TYPE + " & " + Types.SECURE_MESSAGE_BIT + ")";
@@ -660,6 +666,89 @@ public class SmsDatabase extends MessageDatabase {
     @Override
     public @NonNull Pair<Long, Long> insertMissedCall(@NonNull RecipientId address, long timestamp, boolean isVideoOffer) {
         return insertCallLog(address, isVideoOffer ? Types.MISSED_VIDEO_CALL_TYPE : Types.MISSED_AUDIO_CALL_TYPE, true, timestamp);
+    }
+
+    @Override
+    public void insertOrUpdateGroupCall(@NonNull RecipientId groupRecipientId,
+                                        @NonNull RecipientId sender,
+                                        long timestamp,
+                                        @Nullable String messageGroupCallEraId,
+                                        @Nullable String peekGroupCallEraId,
+                                        @NonNull Collection<UUID> peekJoinedUuids)
+    {
+        SQLiteDatabase db        = databaseHelper.getWritableDatabase();
+
+        try {
+            db.beginTransaction();
+
+            Recipient recipient = Recipient.resolved(groupRecipientId);
+            long      threadId  = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient);
+
+            boolean peerEraIdSameAsPrevious = updatePreviousGroupCall(threadId, peekGroupCallEraId, peekJoinedUuids);
+
+            if (!peerEraIdSameAsPrevious && !Util.isEmpty(peekGroupCallEraId)) {
+                byte[] updateDetails = GroupCallUpdateDetails.newBuilder()
+                        .setEraId(Util.emptyIfNull(peekGroupCallEraId))
+                        .setStartedCallUuid(Recipient.resolved(sender).requireUuid().toString())
+                        .setStartedCallTimestamp(timestamp)
+                        .addAllInCallUuids(Stream.of(peekJoinedUuids).map(UUID::toString).toList())
+                        .build()
+                        .toByteArray();
+
+                String body = Base64.encodeBytes(updateDetails);
+
+                ContentValues values = new ContentValues();
+                values.put(RECIPIENT_ID, sender.serialize());
+                values.put(ADDRESS_DEVICE_ID, 1);
+                values.put(DATE_RECEIVED, timestamp);
+                values.put(DATE_SENT, timestamp);
+                values.put(READ, 0);
+                values.put(BODY, body);
+                values.put(TYPE, Types.GROUP_CALL_TYPE);
+                values.put(THREAD_ID, threadId);
+
+                db.insert(TABLE_NAME, null, values);
+
+                DatabaseFactory.getThreadDatabase(context).incrementUnread(threadId, 1);
+            }
+
+            DatabaseFactory.getThreadDatabase(context).update(threadId, true);
+
+            notifyConversationListeners(threadId);
+            ApplicationDependencies.getJobManager().add(new TrimThreadJob(threadId));
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private boolean updatePreviousGroupCall(long threadId, @Nullable String peekGroupCallEraId, @NonNull Collection<UUID> peekJoinedUuids) {
+        SQLiteDatabase db    = databaseHelper.getWritableDatabase();
+        String         where = TYPE + " = ? AND " + THREAD_ID + " = ?";
+        String[]       args  = SqlUtil.buildArgs(Types.GROUP_CALL_TYPE, threadId);
+
+        try (Reader reader = new Reader(db.query(TABLE_NAME, MESSAGE_PROJECTION, where, args, null, null, DATE_RECEIVED + " DESC", "1"))) {
+            MessageRecord record = reader.getNext();
+            if (record == null) {
+                return false;
+            }
+
+            GroupCallUpdateDetails groupCallUpdateDetails = GroupCallUpdateDetailsUtil.parse(record.getBody());
+            boolean                sameEraId              = groupCallUpdateDetails.getEraId().equals(peekGroupCallEraId) && !Util.isEmpty(peekGroupCallEraId);
+
+            List<String> inCallUuids = sameEraId ? Stream.of(peekJoinedUuids).map(UUID::toString).toList()
+                    : Collections.emptyList();
+
+            String body = GroupCallUpdateDetailsUtil.createUpdatedBody(groupCallUpdateDetails, inCallUuids);
+
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(BODY, body);
+
+            db.update(TABLE_NAME, contentValues, ID_WHERE, SqlUtil.buildArgs(record.getId()));
+
+            return sameEraId;
+        }
     }
 
     private @NonNull Pair<Long, Long> insertCallLog(@NonNull RecipientId recipientId, long type, boolean unread, long timestamp) {
@@ -1269,7 +1358,8 @@ public class SmsDatabase extends MessageDatabase {
                     0,
                     false,
                     Collections.emptyList(),
-                    false);
+                    false,
+                    0);
         }
     }
 
@@ -1315,6 +1405,7 @@ public class SmsDatabase extends MessageDatabase {
             boolean unidentified = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.UNIDENTIFIED)) == 1;
             boolean              remoteDelete         = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.REMOTE_DELETED)) == 1;
             List<ReactionRecord> reactions = parseReactions(cursor);
+            long                 notifiedTimestamp    = CursorUtil.requireLong(cursor, NOTIFIED_TIMESTAMP);
 
             if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
                 readReceiptCount = 0;
@@ -1329,7 +1420,8 @@ public class SmsDatabase extends MessageDatabase {
                     dateSent, dateReceived, dateServer, deliveryReceiptCount, type,
                     threadId, status, mismatches, subscriptionId,
                     expiresIn, expireStarted,
-                    readReceiptCount, unidentified, reactions, remoteDelete);
+                    readReceiptCount, unidentified, reactions, remoteDelete,
+                    notifiedTimestamp);
         }
 
         private List<IdentityKeyMismatch> getMismatches(String document) {
