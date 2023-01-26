@@ -1,4 +1,4 @@
-libc6:i386=2.31-2
+libc6:i386=2.24-11+deb9u4
 libncurses5:i386=6.2-1
 libstdc++6:i386=10.2.0-3
 lib32z1=1:1.2.11.dfsg-2
@@ -6,3 +6,6 @@ wget=1.20.3-1+b3
 openjdk-8-jdk=8u252-b09-1
 git=1:2.28.0-1
 unzip=6.0-25
+make=4.3-4
+file=1:5.38-5
+opensc-pkcs11:amd64=0.20.0-3
