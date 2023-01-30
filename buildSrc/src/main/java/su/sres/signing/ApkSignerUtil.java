@@ -1,4 +1,4 @@
-package org.signal.signing;
+package su.sres.signing;
 
 import com.android.apksig.ApkSigner;
 import com.android.apksig.apk.ApkFormatException;
@@ -7,14 +7,13 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.Provider;
-import java.security.Security;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
@@ -26,20 +25,16 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ApkSignerUtil {
-
-    private final String providerClass;
-
-    private final String providerArgument;
-
     private final String keyStoreType;
+
+    private final String keyStoreFile;
 
     private final String keyStorePassword;
 
 
-    public ApkSignerUtil(String providerClass, String providerArgument, String keyStoreType, String keyStorePassword) {
-        this.providerClass    = providerClass;
-        this.providerArgument = providerArgument;
+    public ApkSignerUtil(String keyStoreType, String keyStoreFile, String keyStorePassword) {
         this.keyStoreType     = keyStoreType;
+        this.keyStoreFile     = keyStoreFile;
         this.keyStorePassword = keyStorePassword;
     }
 
@@ -48,11 +43,7 @@ public class ApkSignerUtil {
     {
         System.out.println("Running calculateSignature()...");
 
-        if (providerClass != null) {
-            installProvider(providerClass, providerArgument);
-        }
-
-        ApkSigner apkSigner = new ApkSigner.Builder(Collections.singletonList(loadKeyStore(keyStoreType, keyStorePassword)))
+        ApkSigner apkSigner = new ApkSigner.Builder(Collections.singletonList(loadKeyStore(keyStoreType, keyStoreFile, keyStorePassword)))
                 .setV1SigningEnabled(true)
                 .setV2SigningEnabled(true)
                 .setInputApk(new File(inputApkFile))
@@ -63,32 +54,10 @@ public class ApkSignerUtil {
         apkSigner.sign();
     }
 
-    private void installProvider(String providerName, String providerArgument) {
-        try {
-            Class<?> providerClass = Class.forName(providerName);
-
-            if (!Provider.class.isAssignableFrom(providerClass)) {
-                throw new IllegalArgumentException("JCA Provider class " + providerClass + " not subclass of " + Provider.class.getName());
-            }
-
-            Provider provider;
-
-            if (providerArgument != null) {
-                provider = (Provider) providerClass.getConstructor(String.class).newInstance(providerArgument);
-            } else {
-                provider = (Provider) providerClass.getConstructor().newInstance();
-            }
-
-            Security.addProvider(provider);
-        } catch (ClassNotFoundException | InstantiationException | InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    private ApkSigner.SignerConfig loadKeyStore(String keyStoreType, String keyStorePassword) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException {
+    private ApkSigner.SignerConfig loadKeyStore(String keyStoreType, String keyStoreFile, String keyStorePassword) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException {
         KeyStore keyStoreEntity = KeyStore.getInstance(keyStoreType == null ? KeyStore.getDefaultType() : keyStoreType);
         char[]   password       = getPassword(keyStorePassword);
-        keyStoreEntity.load(null, password);
+        keyStoreEntity.load(Files.newInputStream(Paths.get(keyStoreFile)), password);
 
         Enumeration<String> aliases  = keyStoreEntity.aliases();
         String              keyAlias = null;

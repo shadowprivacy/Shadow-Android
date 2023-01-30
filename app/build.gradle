@@ -1,4 +1,4 @@
-import org.signal.signing.ApkSignerUtil
+import su.sres.signing.ApkSignerUtil
 
 import java.security.MessageDigest
 
@@ -433,10 +433,9 @@ def assembleWebsiteDescriptor = { variant, file ->
         File   inputFile  = new File(output.outputFile.path)
         File   outputFile = new File(output.outputFile.parent, apkName.replace('-unsigned', ''))
 
-        new ApkSignerUtil('sun.security.pkcs11.SunPKCS11',
-                'pkcs11.config',
-                'PKCS11',
-                'file:pkcs11.password').calculateSignature(inputFile.getAbsolutePath(),
+        new ApkSignerUtil('JKS',
+                'shadow_client.jks',
+                'file:shadow_client_jks.password').calculateSignature(inputFile.getAbsolutePath(),
                 outputFile.getAbsolutePath())
 
         inputFile.delete()
