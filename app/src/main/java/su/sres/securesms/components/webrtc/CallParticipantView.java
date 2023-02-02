@@ -12,10 +12,13 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
+import org.webrtc.RendererCommon;
+
 import su.sres.securesms.R;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.contacts.avatars.ContactPhoto;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
+import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.mms.GlideApp;
@@ -67,6 +70,14 @@ public class CallParticipantView extends ConstraintLayout {
 
         avatar.setFallbackPhotoProvider(FALLBACK_PHOTO_PROVIDER);
         useLargeAvatar();
+    }
+
+    void setMirror(boolean mirror) {
+        renderer.setMirror(mirror);
+    }
+
+    void setScalingType(@NonNull RendererCommon.ScalingType scalingType) {
+        renderer.setScalingType(scalingType);
     }
 
     void setCallParticipant(@NonNull CallParticipant participant) {
@@ -121,7 +132,8 @@ public class CallParticipantView extends ConstraintLayout {
     }
 
     private void setPipAvatar(@NonNull Recipient recipient) {
-        ContactPhoto         contactPhoto  = recipient.getContactPhoto();
+        ContactPhoto         contactPhoto  = recipient.isSelf() ? new ProfileContactPhoto(Recipient.self(), Recipient.self().getProfileAvatar())
+                : recipient.getContactPhoto();
         FallbackContactPhoto fallbackPhoto = recipient.getFallbackContactPhoto(FALLBACK_PHOTO_PROVIDER);
 
         GlideApp.with(this)
@@ -136,6 +148,12 @@ public class CallParticipantView extends ConstraintLayout {
     }
 
     private static final class FallbackPhotoProvider extends Recipient.FallbackPhotoProvider {
+
+        @Override
+        public @NonNull FallbackContactPhoto getPhotoForLocalNumber() {
+            return super.getPhotoForRecipientWithoutName();
+        }
+
         @Override
         public @NonNull FallbackContactPhoto getPhotoForRecipientWithoutName() {
             ResourceContactPhoto photo = new ResourceContactPhoto(R.drawable.ic_profile_outline_120);

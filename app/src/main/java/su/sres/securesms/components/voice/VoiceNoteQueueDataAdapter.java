@@ -3,6 +3,7 @@ package su.sres.securesms.components.voice;
 import android.net.Uri;
 import android.support.v4.media.MediaDescriptionCompat;
 
+import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 
 import com.google.android.exoplayer2.ext.mediasession.TimelineQueueEditor;
@@ -11,39 +12,51 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
+import su.sres.securesms.logging.Log;
+
 /**
  * DataAdapter which maintains the current queue of MediaDescriptionCompat objects.
  */
+@MainThread
 final class VoiceNoteQueueDataAdapter implements TimelineQueueEditor.QueueDataAdapter {
+
+    private static final String TAG = Log.tag(VoiceNoteQueueDataAdapter.class);
+
+    public static final MediaDescriptionCompat EMPTY = new MediaDescriptionCompat.Builder().build();
 
     private final List<MediaDescriptionCompat> descriptions = new LinkedList<>();
 
     @Override
-    public synchronized MediaDescriptionCompat getMediaDescription(int position) {
+    public MediaDescriptionCompat getMediaDescription(int position) {
+        if (descriptions.size() <= position) {
+            Log.i(TAG, "getMediaDescription: Returning EMPTY MediaDescriptionCompat for index " + position);
+            return EMPTY;
+        }
+
         return descriptions.get(position);
     }
 
     @Override
-    public synchronized void add(int position, MediaDescriptionCompat description) {
+    public void add(int position, MediaDescriptionCompat description) {
         descriptions.add(position, description);
     }
 
     @Override
-    public synchronized void remove(int position) {
+    public void remove(int position) {
         descriptions.remove(position);
     }
 
     @Override
-    public synchronized void move(int from, int to) {
+    public void move(int from, int to) {
         MediaDescriptionCompat description = descriptions.remove(from);
         descriptions.add(to, description);
     }
 
-    synchronized int size() {
+    int size() {
         return descriptions.size();
     }
 
-    synchronized int indexOf(@NonNull Uri uri) {
+    int indexOf(@NonNull Uri uri) {
         for (int i = 0; i < descriptions.size(); i++) {
             if (Objects.equals(uri, descriptions.get(i).getMediaUri())) {
                 return i;
@@ -53,7 +66,7 @@ final class VoiceNoteQueueDataAdapter implements TimelineQueueEditor.QueueDataAd
         return -1;
     }
 
-    synchronized int indexAfter(@NonNull MediaDescriptionCompat target) {
+    int indexAfter(@NonNull MediaDescriptionCompat target) {
         if (isEmpty()) {
             return 0;
         }
@@ -70,11 +83,11 @@ final class VoiceNoteQueueDataAdapter implements TimelineQueueEditor.QueueDataAd
         return descriptions.size();
     }
 
-    synchronized boolean isEmpty() {
+    boolean isEmpty() {
         return descriptions.isEmpty();
     }
 
-    synchronized void clear() {
+    void clear() {
         descriptions.clear();
     }
 }

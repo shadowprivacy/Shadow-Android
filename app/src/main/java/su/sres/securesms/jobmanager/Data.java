@@ -5,10 +5,12 @@ import androidx.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class Data {
 
@@ -135,6 +137,18 @@ public class Data {
         return longArrays.get(key);
     }
 
+    public List<Long> getLongArrayAsList(@NonNull String key) {
+        throwIfAbsent(longArrays, key);
+
+        long[]     array = Objects.requireNonNull(longArrays.get(key));
+        List<Long> longs = new ArrayList<>(array.length);
+
+        for (long l : array) {
+            longs.add(l);
+        }
+
+        return longs;
+    }
 
     public boolean hasFloat(@NonNull String key) {
         return floats.containsKey(key);
@@ -288,6 +302,17 @@ public class Data {
 
         public Builder putLongArray(@NonNull String key, @NonNull long[] value) {
             longArrays.put(key, value);
+            return this;
+        }
+
+        public Builder putLongListAsArray(@NonNull String key, @NonNull List<Long> value) {
+            long[] longs = new long[value.size()];
+
+            for (int i = 0; i < value.size(); i++) {
+                longs[i] = value.get(i);
+            }
+
+            longArrays.put(key, longs);
             return this;
         }
 

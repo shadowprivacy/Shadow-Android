@@ -7,8 +7,7 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.conversation.ConversationActivity;
-import su.sres.securesms.conversation.ConversationPopupActivity;
+import su.sres.securesms.conversation.ConversationIntents;
 import su.sres.securesms.database.RecipientDatabase.VibrateState;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.recipients.Recipient;
@@ -172,10 +171,9 @@ public class NotificationState {
   public PendingIntent getQuickReplyIntent(Context context, Recipient recipient) {
     if (threads.size() != 1) throw new AssertionError("We only support replies to single thread notifications! " + threads.size());
 
-    Intent     intent           = new Intent(context, ConversationPopupActivity.class);
-    intent.putExtra(ConversationActivity.RECIPIENT_EXTRA, recipient.getId().serialize());
-    intent.putExtra(ConversationActivity.THREAD_ID_EXTRA, (long)threads.toArray()[0]);
-    intent.setData((Uri.parse("custom://"+System.currentTimeMillis())));
+    Intent intent = ConversationIntents.createPopUpBuilder(context, recipient.getId(), (long) threads.toArray()[0])
+            .withDataUri(Uri.parse("custom://"+System.currentTimeMillis()))
+            .build();
 
     return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
   }

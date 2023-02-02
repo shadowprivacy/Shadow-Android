@@ -79,6 +79,7 @@ import su.sres.storageservice.protos.groups.GroupExternalCredential;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -673,8 +674,6 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
 
   public void sendGroupCallMessage(@NonNull Recipient recipient, @Nullable String groupCallEraId) {
     SignalExecutors.BOUNDED.execute(() -> ApplicationDependencies.getJobManager().add(GroupCallUpdateSendJob.create(recipient.getId(), groupCallEraId)));
-
-    peekGroupCall(new WebRtcData.GroupCallUpdateMetadata(Recipient.self().getId(), recipient.getId(), groupCallEraId, System.currentTimeMillis()));
   }
 
   public void peekGroupCall(@NonNull WebRtcData.GroupCallUpdateMetadata groupCallUpdateMetadata) {
@@ -695,12 +694,24 @@ public class WebRtcCallService extends Service implements CallManager.Observer,
                   groupCallUpdateMetadata.getGroupCallEraId(),
                   peekInfo.getEraId(),
                   peekInfo.getJoinedMembers());
+
+          long threadId = DatabaseFactory.getThreadDatabase(this).getThreadIdFor(group);
+          ApplicationDependencies.getMessageNotifier().updateNotification(this, threadId, true);
         });
 
       } catch (IOException | VerificationFailedException | CallException e) {
         Log.e(TAG, "error peeking", e);
       }
     });
+  }
+
+  public void updateGroupCallUpdateMessage(@NonNull RecipientId groupId, @Nullable String groupCallEraId, @NonNull Collection<UUID> joinedMembers) {
+    DatabaseFactory.getSmsDatabase(this).insertOrUpdateGroupCall(groupId,
+            Recipient.self().getId(),
+            System.currentTimeMillis(),
+            null,
+            groupCallEraId,
+            joinedMembers);
   }
 
   @Override

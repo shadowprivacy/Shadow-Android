@@ -38,14 +38,11 @@ import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.SearchToolbar;
 import su.sres.securesms.contacts.ContactsCursorLoader.DisplayMode;
-import su.sres.securesms.conversation.ConversationActivity;
+import su.sres.securesms.conversation.ConversationIntents;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.logging.Log;
-import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.stickers.StickerLocator;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
@@ -56,7 +53,6 @@ import su.sres.securesms.util.views.SimpleProgressDialog;
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -298,37 +294,30 @@ public class ShareActivity extends PassphraseRequiredActivity
   }
 
   private void openConversation(long threadId, @NonNull RecipientId recipientId, @Nullable ShareData shareData) {
-    Intent           intent          = new Intent(this, ConversationActivity.class);
-    CharSequence     textExtra       = getIntent().getCharSequenceExtra(Intent.EXTRA_TEXT);
-    ArrayList<Media> mediaExtra      = getIntent().getParcelableArrayListExtra(ConversationActivity.MEDIA_EXTRA);
-    StickerLocator   stickerExtra    = getIntent().getParcelableExtra(ConversationActivity.STICKER_EXTRA);
-    boolean          borderlessExtra = getIntent().getBooleanExtra(ConversationActivity.BORDERLESS_EXTRA, false);
-
-    intent.putExtra(ConversationActivity.TEXT_EXTRA, textExtra);
-    intent.putExtra(ConversationActivity.MEDIA_EXTRA, mediaExtra);
-    intent.putExtra(ConversationActivity.STICKER_EXTRA, stickerExtra);
-    intent.putExtra(ConversationActivity.BORDERLESS_EXTRA, borderlessExtra);
+    ShareIntents.Args           args    = ShareIntents.Args.from(getIntent());
+    ConversationIntents.Builder builder = ConversationIntents.createBuilder(this, recipientId, threadId)
+            .withMedia(args.getExtraMedia())
+            .withDraftText(args.getExtraText() != null ? args.getExtraText().toString() : null)
+            .withStickerLocator(args.getExtraSticker())
+            .asBorderless(args.isBorderless());
 
     if (shareData != null && shareData.isForIntent()) {
       Log.i(TAG, "Shared data is a single file.");
-      intent.setDataAndType(shareData.getUri(), shareData.getMimeType());
+      builder.withDataUri(shareData.getUri())
+              .withDataType(shareData.getMimeType());
     } else if (shareData != null && shareData.isForMedia()) {
       Log.i(TAG, "Shared data is set of media.");
-      intent.putExtra(ConversationActivity.MEDIA_EXTRA, shareData.getMedia());
+      builder.withMedia(shareData.getMedia());
     } else if (shareData != null && shareData.isForPrimitive()) {
       Log.i(TAG, "Shared data is a primitive type.");
-    } else if (shareData == null && stickerExtra != null) {
-      intent.setType(getIntent().getType());
+    } else if (shareData == null && args.getExtraSticker() != null) {
+      builder.withDataType(getIntent().getType());
     } else {
       Log.i(TAG, "Shared data was not external.");
     }
 
-    intent.putExtra(ConversationActivity.RECIPIENT_EXTRA, recipientId.serialize());
-    intent.putExtra(ConversationActivity.THREAD_ID_EXTRA, threadId);
-    intent.putExtra(ConversationActivity.DISTRIBUTION_TYPE_EXTRA, ThreadDatabase.DistributionTypes.DEFAULT);
-
     viewModel.onSuccessulShare();
 
-    startActivity(intent);
+    startActivity(builder.build());
   }
 }

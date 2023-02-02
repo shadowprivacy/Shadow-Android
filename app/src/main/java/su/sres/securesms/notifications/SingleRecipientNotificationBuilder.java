@@ -26,6 +26,8 @@ import su.sres.securesms.contacts.avatars.ContactColors;
 import su.sres.securesms.contacts.avatars.ContactPhoto;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.GeneratedContactPhoto;
+import su.sres.securesms.conversation.ConversationIntents;
+import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.logging.Log;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
 import su.sres.securesms.mms.GlideApp;
@@ -35,6 +37,7 @@ import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.BitmapUtil;
+import su.sres.securesms.util.BubbleUtil;
 import su.sres.securesms.util.ConversationUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -53,10 +56,11 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
 
   private final List<NotificationCompat.MessagingStyle.Message> messages = new LinkedList<>();
 
-  private SlideDeck    slideDeck;
-  private CharSequence contentTitle;
-  private CharSequence contentText;
-  private Recipient threadRecipient;
+  private SlideDeck              slideDeck;
+  private CharSequence           contentTitle;
+  private CharSequence           contentText;
+  private Recipient              threadRecipient;
+  private BubbleUtil.BubbleState defaultBubbleState;
 
   public SingleRecipientNotificationBuilder(@NonNull Context context, @NonNull NotificationPrivacyPreference privacy)
   {
@@ -219,7 +223,8 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   public void addMessageBody(@NonNull Recipient threadRecipient,
                              @NonNull Recipient individualRecipient,
                              @Nullable CharSequence messageBody,
-                             long timestamp)
+                             long timestamp,
+                             @Nullable SlideDeck slideDeck)
   {
     SpannableStringBuilder stringBuilder = new SpannableStringBuilder();
     Person.Builder personBuilder = new Person.Builder()
@@ -247,7 +252,21 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
       text = stringBuilder.append(context.getString(R.string.SingleRecipientNotificationBuilder_new_message));
     }
 
-    messages.add(new NotificationCompat.MessagingStyle.Message(text, timestamp, personBuilder.build()));
+    Uri    dataUri  = null;
+    String mimeType = null;
+
+    if (slideDeck != null && slideDeck.getThumbnailSlide() != null) {
+      Slide thumbnail = slideDeck.getThumbnailSlide();
+
+      dataUri  = thumbnail.getUri();
+      mimeType = thumbnail.getContentType();
+    }
+
+    messages.add(new NotificationCompat.MessagingStyle.Message(text, timestamp, personBuilder.build()).setData(mimeType, dataUri));
+  }
+
+  public void setDefaultBubbleState(@NonNull BubbleUtil.BubbleState bubbleState) {
+    this.defaultBubbleState = bubbleState;
   }
 
   @Override
@@ -260,13 +279,17 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
         setLargeIcon(getNotificationPicture(largeIconUri.get(), LARGE_ICON_DIMEN));
       }
 
-      if (messages.size() == 1 && bigPictureUri.isPresent()) {
+      if (messages.size() == 1 && bigPictureUri.isPresent() && Build.VERSION.SDK_INT < ConversationUtil.CONVERSATION_SUPPORT_VERSION) {
         setStyle(new NotificationCompat.BigPictureStyle()
                 .bigPicture(getNotificationPicture(bigPictureUri.get(), BIG_PICTURE_DIMEN))
                 .setSummaryText(getBigText()));
       } else {
         if (Build.VERSION.SDK_INT >= 24) {
           applyMessageStyle();
+
+          if (Build.VERSION.SDK_INT >= ConversationUtil.CONVERSATION_SUPPORT_VERSION) {
+            applyBubbleMetadata();
+          }
         } else {
           applyLegacy();
         }
@@ -292,6 +315,19 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
 
     Stream.of(messages).forEach(messagingStyle::addMessage);
     setStyle(messagingStyle);
+  }
+
+  private void applyBubbleMetadata() {
+    long                              threadId       = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(threadRecipient);
+    PendingIntent                     intent         = PendingIntent.getActivity(context, 0, ConversationIntents.createBubbleIntent(context, threadRecipient.getId(), threadId), 0);
+    NotificationCompat.BubbleMetadata bubbleMetadata = new NotificationCompat.BubbleMetadata.Builder()
+            .setAutoExpandBubble(defaultBubbleState == BubbleUtil.BubbleState.SHOWN)
+            .setDesiredHeight(600)
+            .setIcon(AvatarUtil.getIconCompatForShortcut(context, threadRecipient))
+            .setSuppressNotification(defaultBubbleState == BubbleUtil.BubbleState.SHOWN)
+            .setIntent(intent)
+            .build();
+    setBubbleMetadata(bubbleMetadata);
   }
 
   private void applyLegacy() {

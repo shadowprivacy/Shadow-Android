@@ -26,6 +26,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.conversation.ConversationActivity;
+import su.sres.securesms.conversation.ConversationIntents;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.groups.ui.creategroup.CreateGroupActivity;
@@ -101,15 +102,13 @@ public class NewConversationActivity extends ContactSelectionActivity
 
   private void launch(Recipient recipient) {
 
-    Intent intent = new Intent(this, ConversationActivity.class);
-    intent.putExtra(ConversationActivity.RECIPIENT_EXTRA, recipient.getId().serialize());
-    intent.putExtra(ConversationActivity.TEXT_EXTRA, getIntent().getStringExtra(ConversationActivity.TEXT_EXTRA));
-    intent.setDataAndType(getIntent().getData(), getIntent().getType());
+    long   existingThread = DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient.getId());
+    Intent intent         = ConversationIntents.createBuilder(this, recipient.getId(), existingThread)
+            .withDraftText(getIntent().getStringExtra(Intent.EXTRA_TEXT))
+            .withDataUri(getIntent().getData())
+            .withDataType(getIntent().getType())
+            .build();
 
-    long existingThread = DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient.getId());
-
-    intent.putExtra(ConversationActivity.THREAD_ID_EXTRA, existingThread);
-    intent.putExtra(ConversationActivity.DISTRIBUTION_TYPE_EXTRA, ThreadDatabase.DistributionTypes.DEFAULT);
     startActivity(intent);
     finish();
   }

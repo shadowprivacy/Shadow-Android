@@ -7,6 +7,7 @@ import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.BubbleUtil;
 import su.sres.securesms.util.LeakyBucketLimiter;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SignalExecutors;
@@ -66,13 +67,18 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     }
 
     @Override
+    public void updateNotification(@NonNull Context context, long threadId, @NonNull BubbleUtil.BubbleState defaultBubbleState) {
+        runOnLimiter(() -> wrapped.updateNotification(context, threadId, defaultBubbleState));
+    }
+
+    @Override
     public void updateNotification(@NonNull Context context, long threadId, boolean signal) {
         runOnLimiter(() -> wrapped.updateNotification(context, threadId, signal));
     }
 
     @Override
-    public void updateNotification(@NonNull Context context, long threadId, boolean signal, int reminderCount) {
-        runOnLimiter(() -> wrapped.updateNotification(context, threadId, signal, reminderCount));
+    public void updateNotification(@NonNull Context context, long threadId, boolean signal, int reminderCount, @NonNull BubbleUtil.BubbleState defaultBubbleState) {
+        runOnLimiter(() -> wrapped.updateNotification(context, threadId, signal, reminderCount, defaultBubbleState));
     }
 
     @Override

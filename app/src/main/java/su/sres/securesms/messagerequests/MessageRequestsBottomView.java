@@ -74,7 +74,7 @@ public class MessageRequestsBottomView extends ConstraintLayout {
         question.setLearnMoreVisible(false);
         question.setOnLinkClickListener(null);
 
-        switch (messageData.getMessageClass()) {
+        switch (messageData.getMessageState()) {
             case BLOCKED_INDIVIDUAL:
                 question.setText(HtmlCompat.fromHtml(getContext().getString(R.string.MessageRequestBottomView_do_you_want_to_let_s_message_you_wont_receive_any_messages_until_you_unblock_them,
                         HtmlUtil.bold(recipient.getShortDisplayName(getContext()))), 0));

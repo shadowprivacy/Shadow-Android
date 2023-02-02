@@ -222,7 +222,8 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
             MediaMetadataCompat mediaMetadataCompat = mediaController.getMetadata();
             if (isPlayerActive(mediaController.getPlaybackState()) &&
                     mediaMetadataCompat != null                        &&
-                    mediaMetadataCompat.getDescription() != null)
+                    mediaMetadataCompat.getDescription() != null       &&
+                    mediaMetadataCompat.getDescription().getMediaUri() != null)
             {
                 Uri                    mediaUri      = Objects.requireNonNull(mediaMetadataCompat.getDescription().getMediaUri());
                 boolean                autoReset     = Objects.equals(mediaUri, VoiceNotePlaybackPreparer.NEXT_URI) || Objects.equals(mediaUri, VoiceNotePlaybackPreparer.END_URI);

@@ -40,7 +40,9 @@ class ConversationViewModel extends ViewModel {
     private final Invalidator                              invalidator;
     private final MutableLiveData<Boolean>                 showScrollButtons;
     private final MutableLiveData<Boolean>                 hasUnreadMentions;
+    private final LiveData<Boolean>                        canShowAsBubble;
 
+    private ConversationIntents.Args args;
     private int  jumpToPosition;
 
     private ConversationViewModel() {
@@ -94,6 +96,7 @@ class ConversationViewModel extends ViewModel {
                 (m, data) -> new DistinctConversationDataByThreadId(data));
 
         conversationMetadata = Transformations.map(Transformations.distinctUntilChanged(distinctData), DistinctConversationDataByThreadId::getConversationData);
+        canShowAsBubble = LiveDataUtil.mapAsync(threadId, conversationRepository::canShowAsBubble);
     }
 
     void onAttachmentKeyboardOpen() {
@@ -111,6 +114,10 @@ class ConversationViewModel extends ViewModel {
     void clearThreadId() {
         this.jumpToPosition = -1;
         this.threadId.postValue(-1L);
+    }
+
+    @NonNull LiveData<Boolean> canShowAsBubble() {
+        return canShowAsBubble;
     }
 
     @NonNull LiveData<Boolean> getShowScrollToBottom() {
@@ -147,6 +154,14 @@ class ConversationViewModel extends ViewModel {
 
     int getLastSeenPosition() {
         return conversationMetadata.getValue() != null ? conversationMetadata.getValue().getLastSeenPosition() : 0;
+    }
+
+    void setArgs(@NonNull ConversationIntents.Args args) {
+        this.args = args;
+    }
+
+    @NonNull ConversationIntents.Args getArgs() {
+        return Objects.requireNonNull(args);
     }
 
     @Override

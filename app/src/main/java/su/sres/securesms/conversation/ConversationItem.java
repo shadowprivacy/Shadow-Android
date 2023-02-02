@@ -60,6 +60,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -142,7 +143,7 @@ import static su.sres.securesms.util.ThemeUtil.isDarkTheme;
  *
  */
 
-public class ConversationItem extends LinearLayout implements BindableConversationItem,
+public final class ConversationItem extends RelativeLayout implements BindableConversationItem,
         RecipientForeverObserver
 {
   private static final String TAG = ConversationItem.class.getSimpleName();
@@ -172,7 +173,6 @@ public class ConversationItem extends LinearLayout implements BindableConversati
   @Nullable private   View                       groupSenderHolder;
   private   AvatarImageView            contactPhoto;
   private   AlertView                  alertView;
-  private   ViewGroup                  container;
   protected ReactionsConversationView  reactionsView;
 
   private @NonNull  Set<ConversationMessage>        batchSelected   = new HashSet<>();
@@ -241,7 +241,6 @@ public class ConversationItem extends LinearLayout implements BindableConversati
     this.revealableStub          = new Stub<>(findViewById(R.id.revealable_view_stub));
     this.groupSenderHolder       =            findViewById(R.id.group_sender_holder);
     this.quoteView               =            findViewById(R.id.quote_view);
-    this.container               =            findViewById(R.id.container);
     this.reply                   =            findViewById(R.id.reply_icon);
     this.reactionsView           =            findViewById(R.id.reactions_view);
 
@@ -1049,9 +1048,9 @@ public class ConversationItem extends LinearLayout implements BindableConversati
 
   private void setGutterSizes(@NonNull MessageRecord current, boolean isGroupThread) {
     if (isGroupThread && current.isOutgoing()) {
-      ViewUtil.setLeftMargin(container, readDimen(R.dimen.conversation_group_left_gutter));
+      ViewUtil.setLeftMargin(this, readDimen(R.dimen.conversation_group_left_gutter));
     } else if (current.isOutgoing()) {
-      ViewUtil.setLeftMargin(container, readDimen(R.dimen.conversation_individual_left_gutter));
+      ViewUtil.setLeftMargin(this, readDimen(R.dimen.conversation_individual_left_gutter));
     }
   }
 

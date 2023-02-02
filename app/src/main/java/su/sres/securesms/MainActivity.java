@@ -8,6 +8,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.securesms.util.CachedInflater;
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
@@ -27,6 +28,8 @@ public class MainActivity extends PassphraseRequiredActivity {
         navigator.onCreate(savedInstanceState);
 
         handleGroupLinkInIntent(getIntent());
+
+        CachedInflater.from(this).clear();
     }
 
     @Override

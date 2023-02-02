@@ -4,7 +4,7 @@
 ## TL;DR
 
 ```bash
-# Clone the Signal Android source repository
+# Clone the Shadow-Android source repository
 git clone https://github.com/shadowprivacy/Shadow-Android.git && cd Shadow-Android
 # Check out the release tag for the version you'd like to compare
 git checkout v[the version number]
@@ -14,9 +14,9 @@ docker build -t shadow-android .
 # Go back up to the root of the project
 cd ..
 # Build using the Docker environment
-docker run --rm -v $(pwd):/project -w /project signal-android ./gradlew clean assemblePlayProdRelease
+docker run --rm -v $(pwd):/project -w /project shadow-android ./gradlew clean assembleWebsiteProdRelease
 # Verify the APKs
-python3 apkdiff/apkdiff.py build/outputs/apks/project-release-unsigned.apk path/to/ShadowFromPlay.apk
+python3 apkdiff/apkdiff.py build/outputs/apks/project-release-unsigned.apk path/to/ShadowFromSomewhere.apk
 ```
 
 ***
@@ -24,7 +24,7 @@ python3 apkdiff/apkdiff.py build/outputs/apks/project-release-unsigned.apk path/
 
 ## Introduction
 
-A reproducible build is achieved by replicating the build environment as a Docker image. You'll need to build the image, run a container instance of it, compile Shadow inside the container and finally compare the resulted APK to the APK that is distributed in the Google Play Store or on our website.
+A reproducible build is achieved by replicating the build environment as a Docker image. You'll need to build the image, run a container instance of it, compile Shadow inside the container and finally compare the resulted APK to the APK that is distributed on our website.
 
 The command line parts in this guide are written for Linux but with some little modifications you can adapt them to macOS (OS X) and Windows. In the following sections we will use `3.15.2` as an example Shadow version. You'll just need to replace all occurrences of `3.15.2` with the version number you are about to verify.
 
@@ -35,10 +35,10 @@ First let's create a new directory for this whole reproducible builds project. I
 mkdir ~/reproducible-shadow
 ```
 
-Next create another directory inside `reproducible-shadow` called `apk-from-google-play-store`.
+Next create another directory inside `reproducible-shadow` called `apk-from-somewhere`.
 
 ```bash
-mkdir ~/reproducible-shadow/apk-from-google-play-store
+mkdir ~/reproducible-shadow/apk-from-somewhere
 ```
 
 We will use this directory to share APKs between the host OS and the Docker container.
@@ -88,7 +88,7 @@ The APKs are being split by ABI, the CPU architecture of the target device. Goog
 To identify which ABIs the google play APK supports, we can look inside the APK, which is just a zip file:
 
 ```bash
-unzip -l ~/reproducible-shadow/apk-from-google-play-store/Shadow-*.apk | grep lib/
+unzip -l ~/reproducible-shadow/apk-from-somewhere/Shadow-*.apk | grep lib/
 ```
 
 Example:
@@ -153,12 +153,6 @@ docker build -t shadow-android .
 
 (Note that there is a dot at the end of that command!)
 
-Wait a few years for the build to finish... :construction_worker:
-
-(Depending on your computer and network connection, this may take several minutes.)
-
-:calendar: :sleeping:
-
 After the build has finished, you may wish to list all your Docker images to see that it's really there:
 
 ```
@@ -186,11 +180,8 @@ cd ~/reproducible-shadow/shadow-source
 To build with the docker image you just built (`shadow-android`), run:
 
 ```
-docker run --rm -v $(pwd):/project -w /project shadow-android ./gradlew clean assemblePlayRelease
+docker run --rm -v $(pwd):/project -w /project shadow-android ./gradlew clean assembleWebsiteProdRelease
 ```
-
-This will take a few minutes :sleeping:
-
 
 ### Checking if the APKs match
 
@@ -198,11 +189,11 @@ So now we can compare the APKs using the `apkdiff.py` tool.
 
 The above build step produced several APKs, one for each supported ABI and one universal one. You will need to determine the correct APK to compare.
 
-Currently, the most common ABI is `armeabi-v7a`. Other options at this time include `x86` and `universal`. In the future it will also include 64-bit options, such as `x86_64` and `arm64-v8a`.
+Currently, the only released ABI is `universal`. In the future it will also include other options, such as `armeabi-v7a`.
 
-See [Identifying the ABI](#identifying-the-abi) above if you don't know the ABI of your play store APK.
+See [Identifying the ABI](#identifying-the-abi) above if you don't know the ABI of your APK.
 
-Once you have determined the ABI, add an `abi` environment variable. For example, suppose we determine that `armeabi-v7a` is the ABI google play has served:
+Once you have determined the ABI, add an `abi` environment variable. For example, suppose we determine that `armeabi-v7a` is the ABI of interest:
 
 ```bash
 export abi=armeabi-v7a
@@ -212,7 +203,7 @@ And run the diff script to compare (updating the filenames for your specific ver
 
 ```bash
 python3 reproducible-builds/apkdiff/apkdiff.py \
-        build/outputs/apk/play/release/*play-$abi-release-unsigned*.apk \
+        app/build/outputs/apk/websiteProd/release/*website-prod-$abi-release-unsigned*.apk \
         ../apk-from-google-play-store/Shadow-5.0.0.apk
 ```
 Output:

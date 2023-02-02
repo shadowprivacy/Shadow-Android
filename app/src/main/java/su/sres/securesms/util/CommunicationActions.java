@@ -1,7 +1,6 @@
 package su.sres.securesms.util;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -15,8 +14,6 @@ import android.os.ResultReceiver;
 import android.text.TextUtils;
 import android.widget.Toast;
 
-import su.sres.securesms.conversation.ConversationActivity;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -25,6 +22,7 @@ import androidx.fragment.app.FragmentActivity;
 
 import su.sres.securesms.R;
 import su.sres.securesms.WebRtcCallActivity;
+import su.sres.securesms.conversation.ConversationIntents;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.groups.GroupId;
@@ -107,11 +105,13 @@ public class CommunicationActions {
 
       @Override
       protected void onPostExecute(Long threadId) {
-        Intent intent = ConversationActivity.buildIntent(context, recipient.getId(), threadId);
+        ConversationIntents.Builder builder = ConversationIntents.createBuilder(context, recipient.getId(), threadId);
 
         if (!TextUtils.isEmpty(text)) {
-          intent.putExtra(ConversationActivity.TEXT_EXTRA, text);
+          builder.withDraftText(text);
         }
+
+        Intent intent = builder.build();
 
         if (backStack != null) {
           backStack.addNextIntent(intent);
@@ -147,7 +147,7 @@ public class CommunicationActions {
     intent.putExtra(Intent.EXTRA_SUBJECT, Util.emptyIfNull(subject));
     intent.putExtra(Intent.EXTRA_TEXT, Util.emptyIfNull(body));
 
-    context.startActivity(intent);
+    context.startActivity(Intent.createChooser(intent, context.getString(R.string.CommunicationActions_send_email)));
   }
 
   /**

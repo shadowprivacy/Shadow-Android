@@ -15,6 +15,7 @@ import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.groups.GroupId;
+import su.sres.securesms.groups.GroupMigrationMembershipChange;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
@@ -60,7 +61,7 @@ public interface BindableConversationItem extends Unbindable {
     void onVoiceNotePause(@NonNull Uri uri);
     void onVoiceNotePlay(@NonNull Uri uri, long messageId, double position);
     void onVoiceNoteSeekTo(@NonNull Uri uri, double position);
-    void onGroupMigrationLearnMoreClicked(@NonNull List<RecipientId> pendingRecipients);
+    void onGroupMigrationLearnMoreClicked(@NonNull GroupMigrationMembershipChange membershipChange);
     void onJoinGroupCallClicked();
 
     /** @return true if handled, false if you want to let the normal url handling continue */

@@ -61,6 +61,7 @@ public final class JobManagerFactories {
             put(CertificatePullJob.KEY,                    new CertificatePullJob.Factory());
             put(CertificateRefreshJob.KEY,                 new CertificateRefreshJob.Factory());
             put(CleanPreKeysJob.KEY,                       new CleanPreKeysJob.Factory());
+            put(ConversationShortcutUpdateJob.KEY,         new ConversationShortcutUpdateJob.Factory());
             put(CreateSignedPreKeyJob.KEY,                 new CreateSignedPreKeyJob.Factory());
             put(DirectorySyncJob.KEY,                      new DirectorySyncJob.Factory());
             put(FcmRefreshJob.KEY,                         new FcmRefreshJob.Factory());
@@ -116,6 +117,7 @@ public final class JobManagerFactories {
             put(RotateSignedPreKeyJob.KEY,                 new RotateSignedPreKeyJob.Factory());
             put(SendDeliveryReceiptJob.KEY,                new SendDeliveryReceiptJob.Factory());
             put(SendReadReceiptJob.KEY,                    new SendReadReceiptJob.Factory(application));
+            put(SendViewedReceiptJob.KEY,                  new SendViewedReceiptJob.Factory(application));
             put(ServiceOutageDetectionJob.KEY,             new ServiceOutageDetectionJob.Factory());
             put(SmsReceiveJob.KEY,                         new SmsReceiveJob.Factory());
             put(SmsSendJob.KEY,                            new SmsSendJob.Factory());

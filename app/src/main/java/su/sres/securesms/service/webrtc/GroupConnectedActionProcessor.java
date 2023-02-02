@@ -1,13 +1,23 @@
 package su.sres.securesms.service.webrtc;
 
+import android.os.ResultReceiver;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.annimon.stream.Stream;
 
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.GroupCall;
 import org.signal.ringrtc.PeekInfo;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.securesms.logging.Log;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.ringrtc.Camera;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 
@@ -20,6 +30,14 @@ public class GroupConnectedActionProcessor extends GroupActionProcessor {
 
     public GroupConnectedActionProcessor(@NonNull WebRtcInteractor webRtcInteractor) {
         super(webRtcInteractor, TAG);
+    }
+
+    @Override
+    protected @NonNull WebRtcServiceState handleIsInCallQuery(@NonNull WebRtcServiceState currentState, @Nullable ResultReceiver resultReceiver) {
+        if (resultReceiver != null) {
+            resultReceiver.send(1, null);
+        }
+        return currentState;
     }
 
     @Override
@@ -101,7 +119,14 @@ public class GroupConnectedActionProcessor extends GroupActionProcessor {
             return currentState;
         }
 
-        webRtcInteractor.sendGroupCallMessage(currentState.getCallInfoState().getCallRecipient(), WebRtcUtil.getGroupCallEraId(groupCall));
+        String eraId = WebRtcUtil.getGroupCallEraId(groupCall);
+        webRtcInteractor.sendGroupCallMessage(currentState.getCallInfoState().getCallRecipient(), eraId);
+
+        List<UUID> members = new ArrayList<>(peekInfo.getJoinedMembers());
+        if (!members.contains(Recipient.self().requireUuid())) {
+            members.add(Recipient.self().requireUuid());
+        }
+        webRtcInteractor.updateGroupCallUpdateMessage(currentState.getCallInfoState().getCallRecipient().getId(), eraId, members);
 
         return currentState.builder()
                 .changeCallSetupState()
@@ -121,7 +146,11 @@ public class GroupConnectedActionProcessor extends GroupActionProcessor {
             return groupCallFailure(currentState, "Unable to disconnect from group call", e);
         }
 
-        webRtcInteractor.sendGroupCallMessage(currentState.getCallInfoState().getCallRecipient(), WebRtcUtil.getGroupCallEraId(groupCall));
+        String eraId = WebRtcUtil.getGroupCallEraId(groupCall);
+        webRtcInteractor.sendGroupCallMessage(currentState.getCallInfoState().getCallRecipient(), eraId);
+
+        List<UUID> members = Stream.of(currentState.getCallInfoState().getRemoteCallParticipants()).map(p -> p.getRecipient().requireUuid()).toList();
+        webRtcInteractor.updateGroupCallUpdateMessage(currentState.getCallInfoState().getCallRecipient().getId(), eraId, members);
 
         currentState = currentState.builder()
                 .changeCallInfoState()

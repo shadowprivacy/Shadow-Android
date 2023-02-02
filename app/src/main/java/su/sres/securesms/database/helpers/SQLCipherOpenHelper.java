@@ -36,6 +36,7 @@ import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.StorageKeyDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.util.CursorUtil;
+import su.sres.securesms.util.Hex;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.Triple;
 import su.sres.securesms.util.Util;
@@ -44,6 +45,7 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public class SQLCipherOpenHelper extends SQLiteOpenHelper {
@@ -61,8 +63,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int REACTION_CLEANUP                        = 71;
   private static final int CAPABILITIES_REFACTOR_AND_GV1_MIGRATION = 72;
   private static final int NOTIFIED_TIMESTAMP_AND_GV1_MIGRATION_LAST_SEEN               = 73;
+  private static final int VIEWED_RECEIPTS_CLEAN_UP_GV1_IDS                  = 74;
 
-  private static final int    DATABASE_VERSION = 73;
+  private static final int    DATABASE_VERSION = 74;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -340,6 +343,64 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL("ALTER TABLE mms ADD COLUMN notified_timestamp INTEGER DEFAULT 0");
 
         db.execSQL("ALTER TABLE recipient ADD COLUMN last_gv1_migrate_reminder INTEGER DEFAULT 0");
+      }
+
+      if (oldVersion < VIEWED_RECEIPTS_CLEAN_UP_GV1_IDS) {
+        db.execSQL("ALTER TABLE mms ADD COLUMN viewed_receipt_count INTEGER DEFAULT 0");
+        //
+        List<String> deletableRecipients = new LinkedList<>();
+        try (Cursor cursor = db.rawQuery("SELECT _id, group_id FROM recipient\n" +
+                "WHERE group_id NOT IN (SELECT group_id FROM groups)\n" +
+                "AND group_id LIKE '__textsecure_group__!%' AND length(group_id) <> 53\n" +
+                "AND (_id NOT IN (SELECT recipient_ids FROM thread) OR _id IN (SELECT recipient_ids FROM thread WHERE message_count = 0))", null))
+        {
+          while (cursor.moveToNext()) {
+            String recipientId = cursor.getString(cursor.getColumnIndexOrThrow("_id"));
+            String groupIdV1   = cursor.getString(cursor.getColumnIndexOrThrow("group_id"));
+            deletableRecipients.add(recipientId);
+            Log.d(TAG, String.format(Locale.US, "Found invalid GV1 on %s with no or empty thread %s length %d", recipientId, groupIdV1, groupIdV1.length()));
+          }
+        }
+
+        for (String recipientId : deletableRecipients) {
+          db.delete("recipient", "_id = ?", new String[]{recipientId});
+          Log.d(TAG, "Deleted recipient " + recipientId);
+        }
+
+        List<String> orphanedThreads = new LinkedList<>();
+        try (Cursor cursor = db.rawQuery("SELECT _id FROM thread WHERE message_count = 0 AND recipient_ids NOT IN (SELECT _id FROM recipient)", null)) {
+          while (cursor.moveToNext()) {
+            orphanedThreads.add(cursor.getString(cursor.getColumnIndexOrThrow("_id")));
+          }
+        }
+
+        for (String orphanedThreadId : orphanedThreads) {
+          db.delete("thread", "_id = ?", new String[]{orphanedThreadId});
+          Log.d(TAG, "Deleted orphaned thread " + orphanedThreadId);
+        }
+
+        List<String> remainingInvalidGV1Recipients = new LinkedList<>();
+        try (Cursor cursor = db.rawQuery("SELECT _id, group_id FROM recipient\n" +
+                "WHERE group_id NOT IN (SELECT group_id FROM groups)\n" +
+                "AND group_id LIKE '__textsecure_group__!%' AND length(group_id) <> 53\n" +
+                "AND _id IN (SELECT recipient_ids FROM thread)", null))
+        {
+          while (cursor.moveToNext()) {
+            String recipientId = cursor.getString(cursor.getColumnIndexOrThrow("_id"));
+            String groupIdV1   = cursor.getString(cursor.getColumnIndexOrThrow("group_id"));
+            remainingInvalidGV1Recipients.add(recipientId);
+            Log.d(TAG, String.format(Locale.US, "Found invalid GV1 on %s with non-empty thread %s length %d", recipientId, groupIdV1, groupIdV1.length()));
+          }
+        }
+
+        for (String recipientId : remainingInvalidGV1Recipients) {
+          String        newId  = "__textsecure_group__!" + Hex.toStringCondensed(Util.getSecretBytes(16));
+          ContentValues values = new ContentValues(1);
+          values.put("group_id", newId);
+
+          db.update("recipient", values, "_id = ?", new String[] { String.valueOf(recipientId) });
+          Log.d(TAG, String.format("Replaced group id on recipient %s now %s", recipientId, newId));
+        }
       }
 
       db.setTransactionSuccessful();

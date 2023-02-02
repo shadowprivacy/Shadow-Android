@@ -8,9 +8,11 @@ import androidx.annotation.Nullable;
 import org.signal.ringrtc.CallManager;
 import org.signal.ringrtc.GroupCall;
 
+import java.util.Collection;
 import java.util.UUID;
 
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.ringrtc.CameraEventListener;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.WebRtcCallService;
@@ -91,6 +93,10 @@ public class WebRtcInteractor {
 
     void sendGroupCallMessage(@NonNull Recipient recipient, @Nullable String groupCallEraId) {
         webRtcCallService.sendGroupCallMessage(recipient, groupCallEraId);
+    }
+
+    void updateGroupCallUpdateMessage(@NonNull RecipientId groupId, @Nullable String groupCallEraId, @NonNull Collection<UUID> joinedMembers) {
+        webRtcCallService.updateGroupCallUpdateMessage(groupId, groupCallEraId, joinedMembers);
     }
 
     void setCallInProgressNotification(int type, @NonNull RemotePeer remotePeer) {

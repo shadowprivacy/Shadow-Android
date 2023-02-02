@@ -8,6 +8,7 @@ import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.widget.Toast;
 
+import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
@@ -100,9 +101,6 @@ final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackP
         canLoadMore = false;
         latestUri   = uri;
 
-        queueDataAdapter.clear();
-        dataSource.clear();
-
         SimpleTask.run(EXECUTOR,
                 () -> {
                     if (singlePlayback) {
@@ -112,6 +110,9 @@ final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackP
                     }
                 },
                 descriptions -> {
+                    queueDataAdapter.clear();
+                    dataSource.clear();
+
                     if (Util.hasItems(descriptions) && Objects.equals(latestUri, uri)) {
                         applyDescriptionsToQueue(descriptions);
 
@@ -142,45 +143,45 @@ final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackP
     public void onCommand(Player player, String command, Bundle extras, ResultReceiver cb) {
     }
 
+    @MainThread
     private void applyDescriptionsToQueue(@NonNull List<MediaDescriptionCompat> descriptions) {
-        synchronized (queueDataAdapter) {
-            for (MediaDescriptionCompat description : descriptions) {
-                int                    holderIndex  = queueDataAdapter.indexOf(description.getMediaUri());
-                MediaDescriptionCompat next         = createNextClone(description);
-                int                    currentIndex = player.getCurrentWindowIndex();
+        for (MediaDescriptionCompat description : descriptions) {
+            int holderIndex = queueDataAdapter.indexOf(description.getMediaUri());
+            MediaDescriptionCompat next = createNextClone(description);
+            int currentIndex = player.getCurrentWindowIndex();
 
-                if (holderIndex != -1) {
+            if (holderIndex != -1) {
+                queueDataAdapter.remove(holderIndex);
+
+                if (!queueDataAdapter.isEmpty()) {
                     queueDataAdapter.remove(holderIndex);
-
-                    if (!queueDataAdapter.isEmpty()) {
-                        queueDataAdapter.remove(holderIndex);
-                    }
-
-                    queueDataAdapter.add(holderIndex, createNextClone(description));
-                    queueDataAdapter.add(holderIndex, description);
-
-                    if (currentIndex != holderIndex) {
-                        dataSource.removeMediaSource(holderIndex);
-                        dataSource.addMediaSource(holderIndex, mediaSourceFactory.createMediaSource(description));
-                    }
-
-                    if (currentIndex != holderIndex + 1) {
-                        if (dataSource.getSize() > 1) {
-                            dataSource.removeMediaSource(holderIndex + 1);
-                        }
-
-                        dataSource.addMediaSource(holderIndex + 1, mediaSourceFactory.createMediaSource(next));
-                    }
-                } else {
-                    int insertLocation = queueDataAdapter.indexAfter(description);
-
-                    queueDataAdapter.add(insertLocation, next);
-                    queueDataAdapter.add(insertLocation, description);
-
-                    dataSource.addMediaSource(insertLocation, mediaSourceFactory.createMediaSource(next));
-                    dataSource.addMediaSource(insertLocation, mediaSourceFactory.createMediaSource(description));
                 }
+
+                queueDataAdapter.add(holderIndex, createNextClone(description));
+                queueDataAdapter.add(holderIndex, description);
+
+                if (currentIndex != holderIndex) {
+                    dataSource.removeMediaSource(holderIndex);
+                    dataSource.addMediaSource(holderIndex, mediaSourceFactory.createMediaSource(description));
+                }
+
+                if (currentIndex != holderIndex + 1) {
+                    if (dataSource.getSize() > 1) {
+                        dataSource.removeMediaSource(holderIndex + 1);
+                    }
+
+                    dataSource.addMediaSource(holderIndex + 1, mediaSourceFactory.createMediaSource(next));
+                }
+            } else {
+                int insertLocation = queueDataAdapter.indexAfter(description);
+
+                queueDataAdapter.add(insertLocation, next);
+                queueDataAdapter.add(insertLocation, description);
+
+                dataSource.addMediaSource(insertLocation, mediaSourceFactory.createMediaSource(next));
+                dataSource.addMediaSource(insertLocation, mediaSourceFactory.createMediaSource(description));
             }
+        }
 
             int                    lastIndex = queueDataAdapter.size() - 1;
             MediaDescriptionCompat last      = queueDataAdapter.getMediaDescription(lastIndex);
@@ -194,8 +195,10 @@ final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackP
 
                     queueDataAdapter.add(lastIndex, end);
                     dataSource.addMediaSource(lastIndex, mediaSourceFactory.createMediaSource(end));
-                }
             }
+        }
+        if (queueDataAdapter.size() != dataSource.getSize()) {
+            throw new IllegalStateException("QueueDataAdapter and DataSource size inconsistency.");
         }
     }
 
@@ -224,7 +227,11 @@ final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackP
         }
 
         MediaDescriptionCompat mediaDescriptionCompat = queueDataAdapter.getMediaDescription(player.getCurrentWindowIndex());
-        long                   messageId              = mediaDescriptionCompat.getExtras().getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_MESSAGE_ID);
+        if (Objects.equals(mediaDescriptionCompat, VoiceNoteQueueDataAdapter.EMPTY)) {
+            return;
+        }
+
+        long messageId = mediaDescriptionCompat.getExtras().getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_MESSAGE_ID);
 
         SimpleTask.run(EXECUTOR,
                 () -> loadMediaDescriptionsForConsecutivePlayback(messageId),

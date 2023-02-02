@@ -39,6 +39,7 @@ import su.sres.securesms.jobs.RotateProfileKeyJob;
 import su.sres.securesms.jobs.RotateSignedPreKeyJob;
 import su.sres.securesms.jobs.SendDeliveryReceiptJob;
 import su.sres.securesms.jobs.SendReadReceiptJob;
+import su.sres.securesms.jobs.SendViewedReceiptJob;
 import su.sres.securesms.jobs.ServiceOutageDetectionJob;
 import su.sres.securesms.jobs.SmsReceiveJob;
 import su.sres.securesms.jobs.SmsSendJob;
@@ -90,6 +91,7 @@ public class WorkManagerFactoryMappings {
         put("RotateSignedPreKeyJob", RotateSignedPreKeyJob.KEY);
         put("SendDeliveryReceiptJob", SendDeliveryReceiptJob.KEY);
         put("SendReadReceiptJob", SendReadReceiptJob.KEY);
+        put("SendViewedReceiptJob", SendViewedReceiptJob.KEY);
         put("ServiceOutageDetectionJob", ServiceOutageDetectionJob.KEY);
         put("SmsReceiveJob", SmsReceiveJob.KEY);
         put("SmsSendJob", SmsSendJob.KEY);

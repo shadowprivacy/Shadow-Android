@@ -1,6 +1,7 @@
 package su.sres.securesms.service.webrtc;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.GroupCall;
@@ -12,6 +13,8 @@ import su.sres.securesms.service.webrtc.state.WebRtcServiceStateBuilder;
 import su.sres.securesms.webrtc.locks.LockManager;
 
 import static su.sres.securesms.webrtc.CallNotificationBuilder.TYPE_ESTABLISHED;
+
+import android.os.ResultReceiver;
 
 /**
  * Process actions to go from lobby to a joined call.
@@ -25,6 +28,14 @@ public class GroupJoiningActionProcessor extends GroupActionProcessor {
     public GroupJoiningActionProcessor(@NonNull WebRtcInteractor webRtcInteractor) {
         super(webRtcInteractor, TAG);
         callSetupDelegate = new CallSetupActionProcessorDelegate(webRtcInteractor, TAG);
+    }
+
+    @Override
+    protected @NonNull WebRtcServiceState handleIsInCallQuery(@NonNull WebRtcServiceState currentState, @Nullable ResultReceiver resultReceiver) {
+        if (resultReceiver != null) {
+            resultReceiver.send(1, null);
+        }
+        return currentState;
     }
 
     @Override

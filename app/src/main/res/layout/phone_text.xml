@@ -11,6 +11,7 @@
     android:paddingBottom="16dp"
     android:background="@color/transparent"
     android:singleLine="true"
+    android:maxLength="255"
     android:saveEnabled="false"
     android:hint="@string/RegistrationActivity_user_login_description"
     tools:text="johndoe" />

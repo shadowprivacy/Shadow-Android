@@ -4,7 +4,6 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,8 +16,7 @@ import java.util.List;
 
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
-import su.sres.securesms.conversation.ConversationActivity;
-import su.sres.securesms.database.ThreadDatabase;
+import su.sres.securesms.conversation.ConversationIntents;
 import su.sres.securesms.groups.ui.managegroup.dialogs.GroupInviteSentDialog;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -74,11 +72,8 @@ public class AddGroupDetailsActivity extends PassphraseRequiredActivity implemen
     }
 
     void goToConversation(@NonNull RecipientId recipientId, long threadId) {
-        Intent intent = ConversationActivity.buildIntent(this,
-                recipientId,
-                threadId,
-                ThreadDatabase.DistributionTypes.DEFAULT,
-                -1);
+        Intent intent = ConversationIntents.createBuilder(this, recipientId, threadId)
+                .build();
 
         startActivity(intent);
         setResult(RESULT_OK);

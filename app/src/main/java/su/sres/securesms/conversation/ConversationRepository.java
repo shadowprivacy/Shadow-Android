@@ -1,15 +1,20 @@
 package su.sres.securesms.conversation;
 
 import android.content.Context;
+import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.WorkerThread;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
+import su.sres.securesms.util.BubbleUtil;
+import su.sres.securesms.util.ConversationUtil;
 import su.sres.securesms.util.concurrent.SignalExecutors;
 
 import java.util.concurrent.Executor;
@@ -32,6 +37,17 @@ class ConversationRepository {
         });
 
         return liveData;
+    }
+
+    @WorkerThread
+    boolean canShowAsBubble(long threadId) {
+        if (Build.VERSION.SDK_INT >= ConversationUtil.CONVERSATION_SUPPORT_VERSION) {
+            Recipient recipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
+
+            return recipient != null && BubbleUtil.canBubble(context, recipient.getId(), threadId);
+        } else {
+            return false;
+        }
     }
 
     private @NonNull ConversationData getConversationDataInternal(long threadId, int jumpToPosition) {

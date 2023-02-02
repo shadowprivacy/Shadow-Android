@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import su.sres.securesms.conversation.ConversationActivity;
+import su.sres.securesms.conversation.ConversationIntents;
 import su.sres.securesms.conversationlist.ConversationListArchiveFragment;
 import su.sres.securesms.conversationlist.ConversationListFragment;
 import su.sres.securesms.groups.ui.creategroup.CreateGroupActivity;
@@ -59,7 +60,10 @@ public class MainNavigator {
     }
 
     public void goToConversation(@NonNull RecipientId recipientId, long threadId, int distributionType, int startingPosition) {
-        Intent intent = ConversationActivity.buildIntent(activity, recipientId, threadId, distributionType, startingPosition);
+        Intent intent = ConversationIntents.createBuilder(activity, recipientId, threadId)
+                .withDistributionType(distributionType)
+                .withStartingPosition(startingPosition)
+                .build();
 
         activity.startActivity(intent);
         activity.overridePendingTransition(R.anim.slide_from_end, R.anim.fade_scale_out);

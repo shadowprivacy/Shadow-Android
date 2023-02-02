@@ -48,6 +48,7 @@ import su.sres.securesms.preferences.widgets.UsernamePreference;
 import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.KeyCachingService;
+import su.sres.securesms.util.CachedInflater;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.FeatureFlags;
@@ -153,6 +154,7 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
             DynamicTheme.setDefaultDayNightMode(this);
             recreate();
         } else if (key.equals(TextSecurePreferences.LANGUAGE_PREF)) {
+            CachedInflater.from(this).clear();
             wasConfigurationUpdated = true;
             recreate();
 

@@ -16,8 +16,11 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import net.sqlcipher.database.SQLiteDatabase;
 
 import su.sres.securesms.groups.GroupAccessControl;
+import su.sres.securesms.groups.GroupMigrationMembershipChange;
 import su.sres.securesms.util.CursorUtil;
+import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.SqlUtil;
+import su.sres.securesms.util.Util;
 import su.sres.storageservice.protos.groups.AccessControl;
 import su.sres.storageservice.protos.groups.Member;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
@@ -249,7 +252,7 @@ public final class GroupDatabase extends Database {
                 .requireMms();
       } else {
         GroupId.Mms groupId = GroupId.createMms(new SecureRandom());
-        create(groupId, members);
+        create(groupId, null, members);
         return groupId;
       }
     } finally {
@@ -359,9 +362,10 @@ public final class GroupDatabase extends Database {
   }
 
   public void create(@NonNull GroupId.Mms groupId,
+                     @Nullable String title,
                      @NonNull Collection<RecipientId> members)
   {
-    create(groupId, null, members, null, null, null, null);
+    create(groupId, Util.isEmpty(title) ? null : title, members, null, null, null, null);
   }
 
   public GroupId.V2 create(@NonNull GroupMasterKey groupMasterKey,
@@ -481,11 +485,12 @@ public final class GroupDatabase extends Database {
    * Migrates a V1 group to a V2 group.
    *
    * @param decryptedGroup The state that represents the group on the server. This will be used to
-   *                       determine if we need to save our old membership list and stuff. It will
-   *                       *not* be stored as the definitive group state as-is. In order to ensure
-   *                       proper diffing, we modify this model to have our V1 membership.
+   *                       determine if we need to save our old membership list and stuff.
    */
-  public @NonNull GroupId.V2 migrateToV2(@NonNull GroupId.V1 groupIdV1, @NonNull DecryptedGroup decryptedGroup) {
+  public @NonNull GroupId.V2 migrateToV2(long threadId,
+                                         @NonNull GroupId.V1 groupIdV1,
+                                         @NonNull DecryptedGroup decryptedGroup)
+  {
     SQLiteDatabase db             = databaseHelper.getWritableDatabase();
     GroupId.V2     groupIdV2      = groupIdV1.deriveV2MigrationGroupId();
     GroupMasterKey groupMasterKey = groupIdV1.deriveV2MigrationMasterKey();
@@ -499,10 +504,13 @@ public final class GroupDatabase extends Database {
       contentValues.put(V2_MASTER_KEY, groupMasterKey.serialize());
       contentValues.putNull(EXPECTED_V2_ID);
 
-      List<RecipientId> newMembers = Stream.of(DecryptedGroupUtil.membersToUuidList(decryptedGroup.getMembersList())).map(u -> RecipientId.from(u, null)).toList();
-      newMembers.addAll(Stream.of(DecryptedGroupUtil.pendingToUuidList(decryptedGroup.getPendingMembersList())).map(u -> RecipientId.from(u, null)).toList());
+      List<RecipientId> newMembers     = Stream.of(DecryptedGroupUtil.membersToUuidList(decryptedGroup.getMembersList())).map(u -> RecipientId.from(u, null)).toList();
+      List<RecipientId> pendingMembers = Stream.of(DecryptedGroupUtil.pendingToUuidList(decryptedGroup.getPendingMembersList())).map(u -> RecipientId.from(u, null)).toList();
+      List<RecipientId> droppedMembers = new ArrayList<>(SetUtil.difference(record.getMembers(), newMembers));
 
-      if (record.getMembers().size() > newMembers.size() || !newMembers.containsAll(record.getMembers())) {
+      newMembers.addAll(pendingMembers);
+
+      if (droppedMembers.size() > 0) {
         contentValues.put(FORMER_V1_MEMBERS, RecipientId.toSerializedList(record.getMembers()));
       }
 
@@ -514,7 +522,11 @@ public final class GroupDatabase extends Database {
 
       DatabaseFactory.getRecipientDatabase(context).updateGroupId(groupIdV1, groupIdV2);
 
-      update(groupMasterKey, updateToHaveV1Membership(decryptedGroup, record.getMembers()));
+      update(groupMasterKey, decryptedGroup);
+
+      DatabaseFactory.getSmsDatabase(context).insertGroupV1MigrationEvents(record.getRecipientId(),
+              threadId,
+              new GroupMigrationMembershipChange(pendingMembers, droppedMembers));
 
       db.setTransactionSuccessful();
     } finally {
@@ -522,23 +534,6 @@ public final class GroupDatabase extends Database {
     }
 
     return groupIdV2;
-  }
-
-  private static DecryptedGroup updateToHaveV1Membership(@NonNull DecryptedGroup serverGroup, @NonNull List<RecipientId> v1Members) {
-    DecryptedGroup.Builder builder = serverGroup.toBuilder();
-    builder.clearMembers();
-
-    for (RecipientId v1MemberId : v1Members) {
-      Recipient v1Member = Recipient.resolved(v1MemberId);
-      if (v1Member.hasUuid()) {
-        builder.addMembers(DecryptedMember.newBuilder()
-                .setUuid(UuidUtil.toByteString(v1Member.getUuid().get()))
-                .setRole(Member.Role.ADMINISTRATOR)
-                .build());
-      }
-    }
-
-    return builder.build();
   }
 
   public void update(@NonNull GroupMasterKey groupMasterKey, @NonNull DecryptedGroup decryptedGroup) {
@@ -571,6 +566,17 @@ public final class GroupDatabase extends Database {
   }
 
   public void updateTitle(@NonNull GroupId.V1 groupId, String title) {
+    updateTitle((GroupId) groupId, title);
+  }
+
+  public void updateTitle(@NonNull GroupId.Mms groupId, @Nullable String title) {
+    updateTitle((GroupId) groupId, Util.isEmpty(title) ? null : title);
+  }
+
+  private void updateTitle(@NonNull GroupId groupId, String title) {
+    if (!groupId.isV1() && !groupId.isMms()) {
+      throw new AssertionError();
+    }
     ContentValues contentValues = new ContentValues();
     contentValues.put(TITLE, title);
     databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID +  " = ?",
@@ -583,7 +589,7 @@ public final class GroupDatabase extends Database {
   /**
    * Used to bust the Glide cache when an avatar changes.
    */
-  public void onAvatarUpdated(@NonNull GroupId.Push groupId, boolean hasAvatar) {
+  public void onAvatarUpdated(@NonNull GroupId groupId, boolean hasAvatar) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(AVATAR_ID, hasAvatar ? Math.abs(new SecureRandom().nextLong()) : 0);
 
@@ -958,11 +964,14 @@ public final class GroupDatabase extends Database {
         }
         return GroupAccessControl.ONLY_ADMINS;
       } else {
-        return id.isV1() ? GroupAccessControl.ALL_MEMBERS : GroupAccessControl.ONLY_ADMINS;
+        return GroupAccessControl.ALL_MEMBERS;
       }
     }
 
-    boolean isPendingMember(@NonNull Recipient recipient) {
+    /**
+     * Whether or not the recipient is a pending member.
+     */
+    public boolean isPendingMember(@NonNull Recipient recipient) {
       if (isV2Group()) {
         Optional<UUID> uuid = recipient.getUuid();
         if (uuid.isPresent()) {

@@ -53,7 +53,7 @@ public class AndroidAutoHeardReceiver extends BroadcastReceiver {
 
     if (threadIds != null) {
       int notificationId = intent.getIntExtra(NOTIFICATION_ID_EXTRA, -1);
-      NotificationManagerCompat.from(context).cancel(notificationId);
+      NotificationCancellationHelper.cancelLegacy(context, notificationId);
 
       new AsyncTask<Void, Void, Void>() {
         @Override

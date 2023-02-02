@@ -301,6 +301,11 @@
                 android:value="su.sres.securesms.MainActivity" />
         </activity>
 
+        <activity android:name=".conversation.BubbleConversationActivity"
+            android:theme="@style/Signal.DayNight"
+            android:allowEmbedded="true"
+            android:resizeableActivity="true" />
+
         <activity android:name=".longmessage.LongMessageActivity" />
 
         <activity
@@ -317,10 +322,6 @@
             android:windowSoftInputMode="stateHidden"
             android:launchMode="singleTask"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
-
-        <activity android:name=".groups.ui.pendingmemberinvites.PendingMemberInvitesActivity"
-            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-            android:theme="@style/Theme.Signal.DayNight.NoActionBar" />
 
         <activity android:name=".groups.ui.invitesandrequests.ManagePendingAndRequestingMembersActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"

@@ -40,6 +40,7 @@ import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.TrimThreadsByDateManager;
 import su.sres.securesms.util.AlarmSleepTimer;
+import su.sres.securesms.util.ByteUnit;
 import su.sres.securesms.util.EarlyMessageCache;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
@@ -108,7 +109,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
                 Optional.of(new SecurityEventListener(context)),
                 provideClientZkOperations().getProfileOperations(),
                 SignalExecutors.newCachedBoundedExecutor("signal-messages", 1, 16),
-                FeatureFlags.maxEnvelopeSize());
+                ByteUnit.KILOBYTES.toBytes(512));
     }
 
     @Override

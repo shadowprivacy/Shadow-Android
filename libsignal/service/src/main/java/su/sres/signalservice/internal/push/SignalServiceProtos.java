@@ -2389,19 +2389,11 @@ public final class SignalServiceProtos {
     su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Busy getBusy();
 
     /**
-     * <pre>
-     * 6 is reserved.
-     * </pre>
-     *
      * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
      * @return Whether the hangup field is set.
      */
     boolean hasHangup();
     /**
-     * <pre>
-     * 6 is reserved.
-     * </pre>
-     *
      * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
      * @return The hangup.
      */
@@ -2539,10 +2531,6 @@ public final class SignalServiceProtos {
          */
         OFFER_AUDIO_CALL(0),
         /**
-         * <pre>
-         * 2 is reserved, removed OFFER_NEED_PERMISSION
-         * </pre>
-         *
          * <code>OFFER_VIDEO_CALL = 1;</code>
          */
         OFFER_VIDEO_CALL(1),
@@ -2553,10 +2541,6 @@ public final class SignalServiceProtos {
          */
         public static final int OFFER_AUDIO_CALL_VALUE = 0;
         /**
-         * <pre>
-         * 2 is reserved, removed OFFER_NEED_PERMISSION
-         * </pre>
-         *
          * <code>OFFER_VIDEO_CALL = 1;</code>
          */
         public static final int OFFER_VIDEO_CALL_VALUE = 1;
@@ -6033,10 +6017,6 @@ public final class SignalServiceProtos {
     public static final int HANGUP_FIELD_NUMBER = 7;
     private su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup hangup_;
     /**
-     * <pre>
-     * 6 is reserved.
-     * </pre>
-     *
      * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
      */
     @java.lang.Override
@@ -6044,10 +6024,6 @@ public final class SignalServiceProtos {
       return ((bitField0_ & 0x00000010) != 0);
     }
     /**
-     * <pre>
-     * 6 is reserved.
-     * </pre>
-     *
      * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
      */
     @java.lang.Override
@@ -6055,10 +6031,6 @@ public final class SignalServiceProtos {
       return hangup_ == null ? su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup.getDefaultInstance() : hangup_;
     }
     /**
-     * <pre>
-     * 6 is reserved.
-     * </pre>
-     *
      * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
      */
     private void setHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
@@ -6069,10 +6041,6 @@ public final class SignalServiceProtos {
       bitField0_ |= 0x00000010;
       }
     /**
-     * <pre>
-     * 6 is reserved.
-     * </pre>
-     *
      * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
      */
     private void setHangup(
@@ -6081,10 +6049,6 @@ public final class SignalServiceProtos {
       bitField0_ |= 0x00000010;
     }
     /**
-     * <pre>
-     * 6 is reserved.
-     * </pre>
-     *
      * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
      */
     @java.lang.SuppressWarnings({"ReferenceEquality"})
@@ -6102,10 +6066,6 @@ public final class SignalServiceProtos {
       bitField0_ |= 0x00000010;
     }
     /**
-     * <pre>
-     * 6 is reserved.
-     * </pre>
-     *
      * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
      */
     private void clearHangup() {  hangup_ = null;
@@ -6622,10 +6582,6 @@ public final class SignalServiceProtos {
       }
 
       /**
-       * <pre>
-       * 6 is reserved.
-       * </pre>
-       *
        * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
        */
       @java.lang.Override
@@ -6633,10 +6589,6 @@ public final class SignalServiceProtos {
         return instance.hasHangup();
       }
       /**
-       * <pre>
-       * 6 is reserved.
-       * </pre>
-       *
        * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
        */
       @java.lang.Override
@@ -6644,10 +6596,6 @@ public final class SignalServiceProtos {
         return instance.getHangup();
       }
       /**
-       * <pre>
-       * 6 is reserved.
-       * </pre>
-       *
        * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
        */
       public Builder setHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
@@ -6656,10 +6604,6 @@ public final class SignalServiceProtos {
         return this;
         }
       /**
-       * <pre>
-       * 6 is reserved.
-       * </pre>
-       *
        * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
        */
       public Builder setHangup(
@@ -6669,10 +6613,6 @@ public final class SignalServiceProtos {
         return this;
       }
       /**
-       * <pre>
-       * 6 is reserved.
-       * </pre>
-       *
        * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
        */
       public Builder mergeHangup(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Hangup value) {
@@ -6681,10 +6621,6 @@ public final class SignalServiceProtos {
         return this;
       }
       /**
-       * <pre>
-       * 6 is reserved.
-       * </pre>
-       *
        * <code>optional .signalservice.CallMessage.Hangup hangup = 7;</code>
        */
       public Builder clearHangup() {  copyOnWrite();
@@ -16538,28 +16474,16 @@ public final class SignalServiceProtos {
       boolean getRemove();
 
       /**
-       * <pre>
-       * optional string targetAuthorE164    = 3;
-       * </pre>
-       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @return Whether the targetAuthorUuid field is set.
        */
       boolean hasTargetAuthorUuid();
       /**
-       * <pre>
-       * optional string targetAuthorE164    = 3;
-       * </pre>
-       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @return The targetAuthorUuid.
        */
       java.lang.String getTargetAuthorUuid();
       /**
-       * <pre>
-       * optional string targetAuthorE164    = 3;
-       * </pre>
-       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @return The bytes for targetAuthorUuid.
        */
@@ -16686,10 +16610,6 @@ public final class SignalServiceProtos {
       public static final int TARGETAUTHORUUID_FIELD_NUMBER = 4;
       private java.lang.String targetAuthorUuid_;
       /**
-       * <pre>
-       * optional string targetAuthorE164    = 3;
-       * </pre>
-       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @return Whether the targetAuthorUuid field is set.
        */
@@ -16698,10 +16618,6 @@ public final class SignalServiceProtos {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
-       * <pre>
-       * optional string targetAuthorE164    = 3;
-       * </pre>
-       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @return The targetAuthorUuid.
        */
@@ -16710,10 +16626,6 @@ public final class SignalServiceProtos {
         return targetAuthorUuid_;
       }
       /**
-       * <pre>
-       * optional string targetAuthorE164    = 3;
-       * </pre>
-       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @return The bytes for targetAuthorUuid.
        */
@@ -16723,10 +16635,6 @@ public final class SignalServiceProtos {
         return com.google.protobuf.ByteString.copyFromUtf8(targetAuthorUuid_);
       }
       /**
-       * <pre>
-       * optional string targetAuthorE164    = 3;
-       * </pre>
-       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @param value The targetAuthorUuid to set.
        */
@@ -16739,10 +16647,6 @@ public final class SignalServiceProtos {
         targetAuthorUuid_ = value;
       }
       /**
-       * <pre>
-       * optional string targetAuthorE164    = 3;
-       * </pre>
-       *
        * <code>optional string targetAuthorUuid = 4;</code>
        */
       private void clearTargetAuthorUuid() {
@@ -16750,10 +16654,6 @@ public final class SignalServiceProtos {
         targetAuthorUuid_ = getDefaultInstance().getTargetAuthorUuid();
       }
       /**
-       * <pre>
-       * optional string targetAuthorE164    = 3;
-       * </pre>
-       *
        * <code>optional string targetAuthorUuid = 4;</code>
        * @param value The bytes for targetAuthorUuid to set.
        */
@@ -16989,10 +16889,6 @@ public final class SignalServiceProtos {
         }
 
         /**
-         * <pre>
-         * optional string targetAuthorE164    = 3;
-         * </pre>
-         *
          * <code>optional string targetAuthorUuid = 4;</code>
          * @return Whether the targetAuthorUuid field is set.
          */
@@ -17001,10 +16897,6 @@ public final class SignalServiceProtos {
           return instance.hasTargetAuthorUuid();
         }
         /**
-         * <pre>
-         * optional string targetAuthorE164    = 3;
-         * </pre>
-         *
          * <code>optional string targetAuthorUuid = 4;</code>
          * @return The targetAuthorUuid.
          */
@@ -17013,10 +16905,6 @@ public final class SignalServiceProtos {
           return instance.getTargetAuthorUuid();
         }
         /**
-         * <pre>
-         * optional string targetAuthorE164    = 3;
-         * </pre>
-         *
          * <code>optional string targetAuthorUuid = 4;</code>
          * @return The bytes for targetAuthorUuid.
          */
@@ -17026,10 +16914,6 @@ public final class SignalServiceProtos {
           return instance.getTargetAuthorUuidBytes();
         }
         /**
-         * <pre>
-         * optional string targetAuthorE164    = 3;
-         * </pre>
-         *
          * <code>optional string targetAuthorUuid = 4;</code>
          * @param value The targetAuthorUuid to set.
          * @return This builder for chaining.
@@ -17041,10 +16925,6 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
-         * <pre>
-         * optional string targetAuthorE164    = 3;
-         * </pre>
-         *
          * <code>optional string targetAuthorUuid = 4;</code>
          * @return This builder for chaining.
          */
@@ -17054,10 +16934,6 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
-         * <pre>
-         * optional string targetAuthorE164    = 3;
-         * </pre>
-         *
          * <code>optional string targetAuthorUuid = 4;</code>
          * @param value The bytes for targetAuthorUuid to set.
          * @return This builder for chaining.
@@ -20456,6 +20332,10 @@ public final class SignalServiceProtos {
        * <code>READ = 1;</code>
        */
       READ(1),
+      /**
+       * <code>VIEWED = 2;</code>
+       */
+      VIEWED(2),
       ;
 
       /**
@@ -20466,6 +20346,10 @@ public final class SignalServiceProtos {
        * <code>READ = 1;</code>
        */
       public static final int READ_VALUE = 1;
+      /**
+       * <code>VIEWED = 2;</code>
+       */
+      public static final int VIEWED_VALUE = 2;
 
 
       @java.lang.Override
@@ -20487,6 +20371,7 @@ public final class SignalServiceProtos {
         switch (value) {
           case 0: return DELIVERY;
           case 1: return READ;
+          case 2: return VIEWED;
           default: return null;
         }
       }
@@ -26448,19 +26333,11 @@ public final class SignalServiceProtos {
       boolean getTypingIndicators();
 
       /**
-       * <pre>
-       * 4 is reserved (old link preview setting)
-       * </pre>
-       *
        * <code>optional uint32 provisioningVersion = 5;</code>
        * @return Whether the provisioningVersion field is set.
        */
       boolean hasProvisioningVersion();
       /**
-       * <pre>
-       * 4 is reserved (old link preview setting)
-       * </pre>
-       *
        * <code>optional uint32 provisioningVersion = 5;</code>
        * @return The provisioningVersion.
        */
@@ -26593,10 +26470,6 @@ public final class SignalServiceProtos {
       public static final int PROVISIONINGVERSION_FIELD_NUMBER = 5;
       private int provisioningVersion_;
       /**
-       * <pre>
-       * 4 is reserved (old link preview setting)
-       * </pre>
-       *
        * <code>optional uint32 provisioningVersion = 5;</code>
        * @return Whether the provisioningVersion field is set.
        */
@@ -26605,10 +26478,6 @@ public final class SignalServiceProtos {
         return ((bitField0_ & 0x00000008) != 0);
       }
       /**
-       * <pre>
-       * 4 is reserved (old link preview setting)
-       * </pre>
-       *
        * <code>optional uint32 provisioningVersion = 5;</code>
        * @return The provisioningVersion.
        */
@@ -26617,10 +26486,6 @@ public final class SignalServiceProtos {
         return provisioningVersion_;
       }
       /**
-       * <pre>
-       * 4 is reserved (old link preview setting)
-       * </pre>
-       *
        * <code>optional uint32 provisioningVersion = 5;</code>
        * @param value The provisioningVersion to set.
        */
@@ -26629,10 +26494,6 @@ public final class SignalServiceProtos {
         provisioningVersion_ = value;
       }
       /**
-       * <pre>
-       * 4 is reserved (old link preview setting)
-       * </pre>
-       *
        * <code>optional uint32 provisioningVersion = 5;</code>
        */
       private void clearProvisioningVersion() {
@@ -26878,10 +26739,6 @@ public final class SignalServiceProtos {
         }
 
         /**
-         * <pre>
-         * 4 is reserved (old link preview setting)
-         * </pre>
-         *
          * <code>optional uint32 provisioningVersion = 5;</code>
          * @return Whether the provisioningVersion field is set.
          */
@@ -26890,10 +26747,6 @@ public final class SignalServiceProtos {
           return instance.hasProvisioningVersion();
         }
         /**
-         * <pre>
-         * 4 is reserved (old link preview setting)
-         * </pre>
-         *
          * <code>optional uint32 provisioningVersion = 5;</code>
          * @return The provisioningVersion.
          */
@@ -26902,10 +26755,6 @@ public final class SignalServiceProtos {
           return instance.getProvisioningVersion();
         }
         /**
-         * <pre>
-         * 4 is reserved (old link preview setting)
-         * </pre>
-         *
          * <code>optional uint32 provisioningVersion = 5;</code>
          * @param value The provisioningVersion to set.
          * @return This builder for chaining.
@@ -26916,10 +26765,6 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
-         * <pre>
-         * 4 is reserved (old link preview setting)
-         * </pre>
-         *
          * <code>optional uint32 provisioningVersion = 5;</code>
          * @return This builder for chaining.
          */
@@ -33455,28 +33300,16 @@ public final class SignalServiceProtos {
         com.google.protobuf.MessageLiteOrBuilder {
 
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @return Whether the e164 field is set.
        */
       boolean hasE164();
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @return The e164.
        */
       java.lang.String getE164();
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @return The bytes for e164.
        */
@@ -33498,10 +33331,6 @@ public final class SignalServiceProtos {
       public static final int E164_FIELD_NUMBER = 2;
       private java.lang.String e164_;
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @return Whether the e164 field is set.
        */
@@ -33510,10 +33339,6 @@ public final class SignalServiceProtos {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @return The e164.
        */
@@ -33522,10 +33347,6 @@ public final class SignalServiceProtos {
         return e164_;
       }
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @return The bytes for e164.
        */
@@ -33535,10 +33356,6 @@ public final class SignalServiceProtos {
         return com.google.protobuf.ByteString.copyFromUtf8(e164_);
       }
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @param value The e164 to set.
        */
@@ -33551,10 +33368,6 @@ public final class SignalServiceProtos {
         e164_ = value;
       }
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        */
       private void clearE164() {
@@ -33562,10 +33375,6 @@ public final class SignalServiceProtos {
         e164_ = getDefaultInstance().getE164();
       }
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @param value The bytes for e164 to set.
        */
@@ -33674,10 +33483,6 @@ public final class SignalServiceProtos {
 
 
         /**
-         * <pre>
-         * 1 is reserved
-         * </pre>
-         *
          * <code>optional string e164 = 2;</code>
          * @return Whether the e164 field is set.
          */
@@ -33686,10 +33491,6 @@ public final class SignalServiceProtos {
           return instance.hasE164();
         }
         /**
-         * <pre>
-         * 1 is reserved
-         * </pre>
-         *
          * <code>optional string e164 = 2;</code>
          * @return The e164.
          */
@@ -33698,10 +33499,6 @@ public final class SignalServiceProtos {
           return instance.getE164();
         }
         /**
-         * <pre>
-         * 1 is reserved
-         * </pre>
-         *
          * <code>optional string e164 = 2;</code>
          * @return The bytes for e164.
          */
@@ -33711,10 +33508,6 @@ public final class SignalServiceProtos {
           return instance.getE164Bytes();
         }
         /**
-         * <pre>
-         * 1 is reserved
-         * </pre>
-         *
          * <code>optional string e164 = 2;</code>
          * @param value The e164 to set.
          * @return This builder for chaining.
@@ -33726,10 +33519,6 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
-         * <pre>
-         * 1 is reserved
-         * </pre>
-         *
          * <code>optional string e164 = 2;</code>
          * @return This builder for chaining.
          */
@@ -33739,10 +33528,6 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
-         * <pre>
-         * 1 is reserved
-         * </pre>
-         *
          * <code>optional string e164 = 2;</code>
          * @param value The bytes for e164 to set.
          * @return This builder for chaining.
@@ -37581,28 +37366,16 @@ public final class SignalServiceProtos {
         com.google.protobuf.MessageLiteOrBuilder {
 
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @return Whether the e164 field is set.
        */
       boolean hasE164();
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @return The e164.
        */
       java.lang.String getE164();
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @return The bytes for e164.
        */
@@ -37624,10 +37397,6 @@ public final class SignalServiceProtos {
       public static final int E164_FIELD_NUMBER = 2;
       private java.lang.String e164_;
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @return Whether the e164 field is set.
        */
@@ -37636,10 +37405,6 @@ public final class SignalServiceProtos {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @return The e164.
        */
@@ -37648,10 +37413,6 @@ public final class SignalServiceProtos {
         return e164_;
       }
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @return The bytes for e164.
        */
@@ -37661,10 +37422,6 @@ public final class SignalServiceProtos {
         return com.google.protobuf.ByteString.copyFromUtf8(e164_);
       }
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @param value The e164 to set.
        */
@@ -37677,10 +37434,6 @@ public final class SignalServiceProtos {
         e164_ = value;
       }
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        */
       private void clearE164() {
@@ -37688,10 +37441,6 @@ public final class SignalServiceProtos {
         e164_ = getDefaultInstance().getE164();
       }
       /**
-       * <pre>
-       * 1 is reserved
-       * </pre>
-       *
        * <code>optional string e164 = 2;</code>
        * @param value The bytes for e164 to set.
        */
@@ -37800,10 +37549,6 @@ public final class SignalServiceProtos {
 
 
         /**
-         * <pre>
-         * 1 is reserved
-         * </pre>
-         *
          * <code>optional string e164 = 2;</code>
          * @return Whether the e164 field is set.
          */
@@ -37812,10 +37557,6 @@ public final class SignalServiceProtos {
           return instance.hasE164();
         }
         /**
-         * <pre>
-         * 1 is reserved
-         * </pre>
-         *
          * <code>optional string e164 = 2;</code>
          * @return The e164.
          */
@@ -37824,10 +37565,6 @@ public final class SignalServiceProtos {
           return instance.getE164();
         }
         /**
-         * <pre>
-         * 1 is reserved
-         * </pre>
-         *
          * <code>optional string e164 = 2;</code>
          * @return The bytes for e164.
          */
@@ -37837,10 +37574,6 @@ public final class SignalServiceProtos {
           return instance.getE164Bytes();
         }
         /**
-         * <pre>
-         * 1 is reserved
-         * </pre>
-         *
          * <code>optional string e164 = 2;</code>
          * @param value The e164 to set.
          * @return This builder for chaining.
@@ -37852,10 +37585,6 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
-         * <pre>
-         * 1 is reserved
-         * </pre>
-         *
          * <code>optional string e164 = 2;</code>
          * @return This builder for chaining.
          */
@@ -37865,10 +37594,6 @@ public final class SignalServiceProtos {
           return this;
         }
         /**
-         * <pre>
-         * 1 is reserved
-         * </pre>
-         *
          * <code>optional string e164 = 2;</code>
          * @param value The bytes for e164 to set.
          * @return This builder for chaining.

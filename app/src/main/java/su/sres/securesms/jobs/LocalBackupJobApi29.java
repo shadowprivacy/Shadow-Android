@@ -1,16 +1,10 @@
 package su.sres.securesms.jobs;
 
-import android.app.Notification;
-import android.app.PendingIntent;
-import android.content.Intent;
 import android.net.Uri;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.documentfile.provider.DocumentFile;
 
-import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.backup.BackupFileIOError;
 import su.sres.securesms.backup.BackupPassphrase;

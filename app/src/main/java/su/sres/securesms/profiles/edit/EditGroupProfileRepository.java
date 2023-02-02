@@ -22,14 +22,14 @@ import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
 
-class EditPushGroupProfileRepository implements EditProfileRepository {
+class EditGroupProfileRepository implements EditProfileRepository {
 
-    private static final String TAG = Log.tag(EditPushGroupProfileRepository.class);
+    private static final String TAG = Log.tag(EditGroupProfileRepository.class);
 
-    private final Context      context;
-    private final GroupId.Push groupId;
+    private final Context context;
+    private final GroupId groupId;
 
-    EditPushGroupProfileRepository(@NonNull Context context, @NonNull GroupId.Push groupId) {
+    EditGroupProfileRepository(@NonNull Context context, @NonNull GroupId groupId) {
         this.context = context.getApplicationContext();
         this.groupId = groupId;
     }
@@ -64,7 +64,18 @@ class EditPushGroupProfileRepository implements EditProfileRepository {
 
     @Override
     public void getCurrentName(@NonNull Consumer<String> nameConsumer) {
-        SimpleTask.run(() -> Recipient.resolved(getRecipientId()).getName(context), nameConsumer::accept);
+        SimpleTask.run(() -> {
+            RecipientId recipientId = getRecipientId();
+            Recipient   recipient   = Recipient.resolved(recipientId);
+
+            return DatabaseFactory.getGroupDatabase(context)
+                    .getGroup(recipientId)
+                    .transform(groupRecord -> {
+                        String title = groupRecord.getTitle();
+                        return title == null ? "" : title;
+                    })
+                    .or(() -> recipient.getName(context));
+        }, nameConsumer::accept);
     }
 
     @Override
