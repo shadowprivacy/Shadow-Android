@@ -270,6 +270,12 @@ android {
             includeAndroidResources = true
         }
     }
+
+    externalNativeBuild {
+        ndkBuild {
+            path file('jni/Android.mk')
+        }
+    }
 }
 
 dependencies {
