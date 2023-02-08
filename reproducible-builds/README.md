@@ -26,7 +26,7 @@ python3 apkdiff/apkdiff.py build/outputs/apks/project-release-unsigned.apk path/
 
 A reproducible build is achieved by replicating the build environment as a Docker image. You'll need to build the image, run a container instance of it, compile Shadow inside the container and finally compare the resulted APK to the APK that is distributed on our website.
 
-The command line parts in this guide are written for Linux but with some little modifications you can adapt them to macOS (OS X) and Windows. In the following sections we will use `3.15.2` as an example Shadow version. You'll just need to replace all occurrences of `3.15.2` with the version number you are about to verify.
+The command line parts in this guide are written for Linux but with some little modifications you can adapt them to macOS (OS X) and Windows. In the following sections we will use `1.15.0` as an example Shadow version. You'll just need to replace all occurrences of `1.15.0` with the version number you are about to verify.
 
 ## Setting up directories
 
@@ -43,80 +43,13 @@ mkdir ~/reproducible-shadow/apk-from-somewhere
 
 We will use this directory to share APKs between the host OS and the Docker container.
 
+## Getting the Shadow APK
 
-## Getting the Google Play Store version of Shadow APK
+Simply download the client APK file from the following webpage:
 
-To compare the APKs we of course need a version of Shadow from the Google Play Store.
+https://shadowprivacy.com/download/
 
-First make sure that the Shadow version you want to verify is installed on your Android device. You'll need `adb` for this part.
-
-Plug your device to your computer and run this command to pull the APK from the device:
-
-```bash
-adb pull $(adb shell pm path su.sres.securesms | grep /base.apk | awk -F':' '{print $2}') ~/reproducible-shadow/apk-from-google-play-store/Shadow-$(adb shell dumpsys package su.sres.securesms | grep versionName | awk -F'=' '{print $2}').apk
-```
-
-This will pull a file into `~/reproducible-shadow/apk-from-google-play-store/` with the name `Shadow-<version>.apk`
-
-Alternatively, you can do this step-by-step:
-
-```bash
-adb shell pm path su.sres.securesms
-```
-
-This will output something like:
-
-```bash
-package:/data/app/su.sres.securesms-aWRzcGlzcG9wZA==/base.apk
-```
-
-The output will tell you where the Shadow APK is located in your device. (In this example the path is `/data/app/su.sres.securesms-aWRzcGlzcG9wZA==/base.apk`)
-
-Now using this information, pull the APK from your device to the `reproducible-shadow/apk-from-google-play-store` directory you created before:
-```bash
-adb pull \
-  /data/app/su.sres.securesms-aWRzcGlzcG9wZA==/base.apk \
-  ~/reproducible-shadow/apk-from-google-play-store/Shadow-3.15.2.apk
-```
-
-We will use this APK in the final part when we compare it with the self-built APK from GitHub.
-
-## Identifying the ABI
-
-The APKs are being split by ABI, the CPU architecture of the target device. Google Play will serve the correct one to you for your device.
-
-To identify which ABIs the google play APK supports, we can look inside the APK, which is just a zip file:
-
-```bash
-unzip -l ~/reproducible-shadow/apk-from-somewhere/Shadow-*.apk | grep lib/
-```
-
-Example:
-
-```
-  1214348  00-00-1980 00:00   lib/armeabi-v7a/libconscrypt_jni.so
-   151980  00-00-1980 00:00   lib/armeabi-v7a/libcurve25519.so
-  4164320  00-00-1980 00:00   lib/armeabi-v7a/libjingle_peerconnection_so.so
-    13948  00-00-1980 00:00   lib/armeabi-v7a/libnative-utils.so
-  2357812  00-00-1980 00:00   lib/armeabi-v7a/libsqlcipher.so
-```
-
-As there is just one sub directory of `lib/` called `armeabi-v7a`, that is your ABI. Make a note of that for later. If you see more than one subdirectory of `lib/`:
-
-```
-  1214348  00-00-1980 00:00   lib/armeabi-v7a/libconscrypt_jni.so
-   151980  00-00-1980 00:00   lib/armeabi-v7a/libcurve25519.so
-  4164320  00-00-1980 00:00   lib/armeabi-v7a/libjingle_peerconnection_so.so
-    13948  00-00-1980 00:00   lib/armeabi-v7a/libnative-utils.so
-  2357812  00-00-1980 00:00   lib/armeabi-v7a/libsqlcipher.so
-  2111376  00-00-1980 00:00   lib/x86/libconscrypt_jni.so
-   201056  00-00-1980 00:00   lib/x86/libcurve25519.so
-  7303888  00-00-1980 00:00   lib/x86/libjingle_peerconnection_so.so
-     5596  00-00-1980 00:00   lib/x86/libnative-utils.so
-  3977636  00-00-1980 00:00   lib/x86/libsqlcipher.so
-```
-
-Then that means you have the `universal` APK.
+and place it into the `apk-from-somewhere` folder.
 
 ## Installing Docker
 
@@ -128,7 +61,7 @@ In the following sections we will assume that your Docker installation works wit
 
 
 ## Building a Docker image for Shadow
-First, you need to pull down the source for Shadow-Android, which contains everything you need to build the project, including the `Dockerfile`. The `Dockerfile` contains instructions on how to automatically build a Docker image for Shadow. It's located in the `reproducible-builds` directory of the repository. To get it, clone the project:
+First, you need to pull down the source for Shadow-Android, which contains everything you need to build the project, including the `Dockerfile`. The `Dockerfile` contains instructions on how to automatically build a Docker image for Shadow. It's located in the `reproducible-builds` directory of the repository. To get it, go into the `reproducible-shadow` directory and clone the project:
 
 ```
 git clone https://github.com/shadowprivacy/Shadow-Android.git shadow-source
@@ -137,7 +70,7 @@ git clone https://github.com/shadowprivacy/Shadow-Android.git shadow-source
 Then, checkout the specific version you're trying to build:
 
 ```
-git checkout --quiet v5.0.0
+git checkout --quiet v1.15.0
 ```
 
 Then, to build it, go into the `reproducible-builds` directory:
@@ -191,8 +124,6 @@ The above build step produced several APKs, one for each supported ABI and one u
 
 Currently, the only released ABI is `universal`. In the future it will also include other options, such as `armeabi-v7a`.
 
-See [Identifying the ABI](#identifying-the-abi) above if you don't know the ABI of your APK.
-
 Once you have determined the ABI, add an `abi` environment variable. For example, suppose we determine that `armeabi-v7a` is the ABI of interest:
 
 ```bash
@@ -204,14 +135,14 @@ And run the diff script to compare (updating the filenames for your specific ver
 ```bash
 python3 reproducible-builds/apkdiff/apkdiff.py \
         app/build/outputs/apk/websiteProd/release/*website-prod-$abi-release-unsigned*.apk \
-        ../apk-from-google-play-store/Shadow-5.0.0.apk
+        ../apk-from-somewhere/Shadow-website-universal-release-1.15.0.apk
 ```
 Output:
 ```
 APKs match!
 ```
 
-If you get `APKs match!`, you have successfully verified that the Google Play release matches with your own self-built version of Shadow.
+If you get `APKs match!`, you have successfully verified that the release obtained from elsewhere matches with your own self-built version of Shadow.
 
 If you get `APKs don't match!`, you did something wrong in the previous steps. See the [Troubleshooting section](#troubleshooting) for more info.
 
