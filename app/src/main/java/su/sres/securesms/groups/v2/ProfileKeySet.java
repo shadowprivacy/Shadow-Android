@@ -10,7 +10,7 @@ import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 import su.sres.storageservice.protos.groups.local.DecryptedMember;
 import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.profiles.ProfileKey;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.storageservice.protos.groups.local.DecryptedRequestingMember;
 

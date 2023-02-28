@@ -26,7 +26,7 @@ import android.opengl.EGLExt;
 import android.opengl.EGLSurface;
 import android.view.Surface;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 
 /**

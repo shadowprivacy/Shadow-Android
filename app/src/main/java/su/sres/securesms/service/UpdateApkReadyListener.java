@@ -11,7 +11,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.R;
 import su.sres.securesms.notifications.NotificationChannels;

@@ -14,10 +14,10 @@ import su.sres.securesms.groups.GroupChangeException;
 import su.sres.securesms.groups.GroupManager;
 import su.sres.securesms.groups.GroupsV2CapabilityChecker;
 import su.sres.securesms.groups.ui.GroupMemberEntry;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.io.IOException;
 import java.util.ArrayList;

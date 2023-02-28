@@ -14,9 +14,9 @@ import su.sres.securesms.groups.v2.processing.GroupsV2StateProcessor;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.FeatureFlags;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.groupsv2.NoCredentialForRedemptionTimeException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;

@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import com.annimon.stream.Stream;
 
 import net.sqlcipher.Cursor;
-import net.sqlcipher.database.SQLiteDatabase;
+
 
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 

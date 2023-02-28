@@ -11,7 +11,7 @@ import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.WebRtcViewModel;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.ringrtc.IceCandidateParcel;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.WebRtcData.CallMetadata;

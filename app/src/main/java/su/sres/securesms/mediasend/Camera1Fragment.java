@@ -37,7 +37,7 @@ import com.bumptech.glide.request.transition.Transition;
 
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.util.ServiceUtil;

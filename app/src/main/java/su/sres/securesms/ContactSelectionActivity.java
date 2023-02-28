@@ -20,7 +20,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.components.ContactFilterToolbar;
 import su.sres.securesms.contacts.ContactsCursorLoader.DisplayMode;

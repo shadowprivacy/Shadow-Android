@@ -21,13 +21,13 @@ import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.model.databaseprotos.AudioWaveFormData;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.media.DecryptableUriMediaInput;
 import su.sres.securesms.media.MediaInput;
 import su.sres.securesms.mms.AudioSlide;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SerialExecutor;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

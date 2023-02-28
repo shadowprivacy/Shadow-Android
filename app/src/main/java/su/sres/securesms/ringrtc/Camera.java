@@ -12,13 +12,12 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.LinkedList;
 
 import org.signal.ringrtc.CameraControl;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import org.webrtc.Camera1Enumerator;
 import org.webrtc.Camera2Capturer;

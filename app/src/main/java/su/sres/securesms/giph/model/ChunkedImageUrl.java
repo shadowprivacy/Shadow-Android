@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 
 import com.bumptech.glide.load.Key;
 
-import su.sres.securesms.util.Conversions;
+import su.sres.core.util.Conversions;
 
 import java.security.MessageDigest;
 

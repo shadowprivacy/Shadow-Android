@@ -16,12 +16,12 @@ import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.reactions.ReactionDetails;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.util.Util;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.Arrays;
 import java.util.Collections;

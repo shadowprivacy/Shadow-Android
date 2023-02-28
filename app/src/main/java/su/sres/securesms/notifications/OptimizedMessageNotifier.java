@@ -10,7 +10,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.BubbleUtil;
 import su.sres.securesms.util.LeakyBucketLimiter;
 import su.sres.securesms.util.Util;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 /**
  * Uses a leaky-bucket strategy to limiting notification updates.

@@ -22,11 +22,12 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.text.TextUtils;
-import su.sres.securesms.logging.Log;
+
+import su.sres.core.util.StreamUtil;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.mms.LegacyMmsConnection.Apn;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.File;
@@ -87,7 +88,7 @@ public class ApnDatabase {
       throw new IOException("couldn't make databases directory");
     }
 
-    Util.copy(context.getAssets().open(ASSET_PATH, AssetManager.ACCESS_STREAMING),
+    StreamUtil.copy(context.getAssets().open(ASSET_PATH, AssetManager.ACCESS_STREAMING),
               new FileOutputStream(dbFile));
 
     try {

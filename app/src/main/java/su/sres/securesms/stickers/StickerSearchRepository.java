@@ -10,9 +10,8 @@ import su.sres.securesms.database.CursorList;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.StickerDatabase.StickerRecordReader;
-import su.sres.securesms.database.model.StickerPackRecord;
 import su.sres.securesms.database.model.StickerRecord;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.ArrayList;
 import java.util.List;

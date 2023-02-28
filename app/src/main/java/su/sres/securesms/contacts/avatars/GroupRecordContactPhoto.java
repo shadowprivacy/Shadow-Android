@@ -9,10 +9,9 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.profiles.AvatarHelper;
-import su.sres.securesms.util.Conversions;
+import su.sres.core.util.Conversions;
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;

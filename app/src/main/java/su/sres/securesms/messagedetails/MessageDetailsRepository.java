@@ -17,7 +17,7 @@ import su.sres.securesms.database.documents.NetworkFailure;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.LinkedList;
 import java.util.List;

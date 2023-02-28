@@ -14,7 +14,7 @@ import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.model.MessageRecord;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 final class MessageRecordLiveData extends LiveData<MessageRecord> {
 

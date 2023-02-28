@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.StickerDatabase;
@@ -15,7 +14,7 @@ import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.MultiDeviceStickerPackOperationJob;
 import su.sres.securesms.jobs.StickerPackDownloadJob;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.ArrayList;
 import java.util.List;

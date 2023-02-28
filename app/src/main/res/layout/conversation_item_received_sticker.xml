@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <su.sres.securesms.components.BorderlessImageView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/image_view"
     android:layout_width="@dimen/media_bubble_sticker_dimens"
     android:layout_height="@dimen/media_bubble_sticker_dimens"

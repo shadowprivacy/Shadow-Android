@@ -6,7 +6,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import su.sres.securesms.jobmanager.persistence.JobSpec;
 import su.sres.securesms.jobmanager.persistence.JobStorage;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;

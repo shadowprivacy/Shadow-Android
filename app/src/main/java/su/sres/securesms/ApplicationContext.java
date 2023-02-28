@@ -33,8 +33,6 @@ import org.signal.aesgcmprovider.AesGcmProvider;
 import org.signal.ringrtc.CallManager;
 
 import su.sres.glide.SignalGlideCodecs;
-import su.sres.securesms.components.TypingStatusRepository;
-import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -52,11 +50,13 @@ import su.sres.securesms.jobs.RefreshPreKeysJob;
 import su.sres.securesms.jobs.RetrieveProfileJob;
 import su.sres.securesms.jobs.ServiceConfigRefreshJob;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.AndroidLogger;
+import su.sres.core.util.logging.AndroidLogger;
 import su.sres.securesms.logging.CustomSignalProtocolLogger;
-import su.sres.securesms.logging.Log;
-import su.sres.securesms.logging.PersistentLogger;
-import su.sres.securesms.logging.SignalUncaughtExceptionHandler;
+import su.sres.core.util.logging.Log;
+import su.sres.core.util.logging.PersistentLogger;
+import su.sres.securesms.logging.LogSecretProvider;
+import su.sres.securesms.tracing.Tracer;
+import su.sres.securesms.util.SignalUncaughtExceptionHandler;
 import su.sres.securesms.migrations.ApplicationMigrations;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.providers.BlobProvider;
@@ -75,7 +75,7 @@ import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
 
 import org.webrtc.voiceengine.WebRtcAudioManager;
@@ -118,6 +118,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   @Override
   public void onCreate() {
+    Tracer.getInstance().start("Application#onCreate()");
     super.onCreate();
 
     Log.i(TAG, "onCreate()");
@@ -158,6 +159,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     }
 
     DynamicTheme.setDefaultDayNightMode(this);
+    Tracer.getInstance().end("Application#onCreate()");
   }
 
   @Override
@@ -265,8 +267,8 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   }
 
   private void initializeLogging() {
-    persistentLogger = new PersistentLogger(this);
-    su.sres.securesms.logging.Log.initialize(new AndroidLogger(), persistentLogger);
+    persistentLogger = new PersistentLogger(this, LogSecretProvider.getOrCreateAttachmentSecret(this), BuildConfig.VERSION_NAME);
+    su.sres.core.util.logging.Log.initialize(new AndroidLogger(), persistentLogger);
 
     SignalProtocolLoggerProvider.setProvider(new CustomSignalProtocolLogger());
   }

@@ -8,7 +8,7 @@ import com.annimon.stream.Stream;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import su.sres.securesms.BuildConfig;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.io.IOException;
 import java.util.Objects;

@@ -7,10 +7,10 @@ import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.ResourceDecoder;
 import com.bumptech.glide.load.engine.Resource;
 
+import su.sres.core.util.StreamUtil;
 import su.sres.glide.apng.decode.APNGDecoder;
 import su.sres.glide.apng.decode.APNGParser;
 import su.sres.glide.common.io.StreamReader;
-import su.sres.securesms.util.Util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +31,7 @@ public class ApngStreamCacheDecoder implements ResourceDecoder<InputStream, APNG
 
     @Override
     public @Nullable Resource<APNGDecoder> decode(@NonNull final InputStream source, int width, int height, @NonNull Options options) throws IOException {
-        byte[] data = Util.readFully(source);
+        byte[] data = StreamUtil.readFully(source);
 
         if (data == null) {
             return null;

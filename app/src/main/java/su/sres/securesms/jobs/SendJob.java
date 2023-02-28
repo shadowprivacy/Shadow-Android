@@ -9,7 +9,7 @@ import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.List;
 

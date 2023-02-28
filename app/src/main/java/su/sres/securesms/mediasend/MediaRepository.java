@@ -1,13 +1,11 @@
 package su.sres.securesms.mediasend;
 
-import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.provider.MediaStore.Video;
@@ -20,16 +18,14 @@ import androidx.annotation.WorkerThread;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
-import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.StorageUtil;
 import su.sres.securesms.util.Util;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;

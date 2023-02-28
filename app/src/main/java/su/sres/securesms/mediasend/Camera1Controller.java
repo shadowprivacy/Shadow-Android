@@ -5,7 +5,7 @@ import android.hardware.Camera;
 import androidx.annotation.NonNull;
 import android.view.Surface;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.Collections;
 import java.util.Comparator;

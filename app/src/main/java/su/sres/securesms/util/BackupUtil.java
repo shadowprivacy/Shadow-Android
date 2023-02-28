@@ -15,7 +15,7 @@ import androidx.documentfile.provider.DocumentFile;
 import su.sres.securesms.backup.BackupPassphrase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.R;
 import su.sres.securesms.database.NoExternalStorageException;

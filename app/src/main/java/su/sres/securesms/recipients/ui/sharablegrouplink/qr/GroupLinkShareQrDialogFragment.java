@@ -21,7 +21,7 @@ import androidx.lifecycle.ViewModelProviders;
 import su.sres.securesms.R;
 import su.sres.securesms.components.qr.QrView;
 import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.qr.QrCode;
 import su.sres.securesms.util.BottomSheetUtil;

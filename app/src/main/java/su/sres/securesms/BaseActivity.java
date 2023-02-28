@@ -16,7 +16,7 @@ import androidx.core.app.ActivityOptionsCompat;
 
 import java.util.Objects;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.ConfigurationUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;

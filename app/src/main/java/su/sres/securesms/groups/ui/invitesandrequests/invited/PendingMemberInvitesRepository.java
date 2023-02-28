@@ -20,9 +20,9 @@ import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
 import su.sres.securesms.groups.GroupProtoUtil;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.io.IOException;
 import java.util.ArrayList;

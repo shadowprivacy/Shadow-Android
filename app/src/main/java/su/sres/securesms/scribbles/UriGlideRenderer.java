@@ -28,7 +28,7 @@ import su.sres.securesms.imageeditor.Renderer;
 import su.sres.securesms.imageeditor.RendererContext;
 import su.sres.securesms.imageeditor.model.EditorElement;
 import su.sres.securesms.imageeditor.model.EditorModel;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequest;

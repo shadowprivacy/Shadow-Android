@@ -2,7 +2,6 @@ package su.sres.securesms.util;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Build;
 
@@ -11,7 +10,7 @@ import androidx.annotation.StyleRes;
 import androidx.appcompat.app.AppCompatDelegate;
 
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 public class DynamicTheme {
 

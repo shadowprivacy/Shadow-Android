@@ -5,17 +5,14 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.navigation.ActivityNavigator;
 import androidx.navigation.Navigation;
@@ -23,7 +20,7 @@ import androidx.navigation.Navigation;
 import com.dd.CircularProgressButton;
 
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.registration.viewmodel.RegistrationViewModel;
 import su.sres.securesms.util.BackupUtil;

@@ -17,7 +17,7 @@ import su.sres.securesms.jobs.RetrieveProfileAvatarJob;
 import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.keyvalue.UserLoginPrivacyValues;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.Base64;
@@ -34,7 +34,6 @@ import su.sres.signalservice.api.storage.SignalStorageManifest;
 import su.sres.signalservice.api.storage.SignalStorageRecord;
 import su.sres.signalservice.api.storage.StorageId;
 import su.sres.signalservice.api.util.OptionalUtil;
-import su.sres.signalservice.internal.storage.protos.AccountRecord;
 import su.sres.signalservice.internal.storage.protos.ManifestRecord;
 
 import java.nio.ByteBuffer;

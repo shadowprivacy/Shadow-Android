@@ -6,7 +6,7 @@ import androidx.annotation.Nullable;
 
 import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.profiles.ProfileKey;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.Util;

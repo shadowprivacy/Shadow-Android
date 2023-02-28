@@ -16,8 +16,9 @@ import android.text.TextUtils;
 import android.webkit.MimeTypeMap;
 import android.widget.Toast;
 
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
 import org.whispersystems.libsignal.util.Pair;
@@ -106,12 +107,12 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
 
       if (Objects.equals(outputUri.getScheme(), ContentResolver.SCHEME_FILE)) {
         try (OutputStream outputStream = new FileOutputStream(mediaUri.getPath())) {
-          Util.copy(inputStream, outputStream);
+          StreamUtil.copy(inputStream, outputStream);
           MediaScannerConnection.scanFile(context, new String[]{mediaUri.getPath()}, new String[]{contentType}, null);
         }
       } else {
         try (OutputStream outputStream = context.getContentResolver().openOutputStream(mediaUri, "w")) {
-          Util.copy(inputStream, outputStream);
+          StreamUtil.copy(inputStream, outputStream);
         }
       }
     }

@@ -42,7 +42,7 @@ import su.sres.securesms.database.model.databaseprotos.DecryptedGroupV2Context;
 import su.sres.securesms.database.model.databaseprotos.GroupCallUpdateDetails;
 import su.sres.securesms.database.model.databaseprotos.ProfileChangeDetails;
 import su.sres.securesms.groups.GroupMigrationMembershipChange;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -55,7 +55,6 @@ import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.groupsv2.DecryptedGroupUtil;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
-import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 
 import java.io.IOException;
 import java.util.ArrayList;

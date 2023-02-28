@@ -15,7 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.VideoSlide;
 import su.sres.securesms.media.DecryptableUriMediaInput;
 import su.sres.securesms.util.MediaUtil;

@@ -8,7 +8,7 @@ import androidx.core.util.Consumer;
 import su.sres.securesms.contacts.SelectedContact;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 class AddMembersRepository {
 

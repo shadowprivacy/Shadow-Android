@@ -27,11 +27,12 @@ import androidx.navigation.Navigation;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.dd.CircularProgressButton;
 
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mediasend.AvatarSelectionActivity;
 import su.sres.securesms.mediasend.AvatarSelectionBottomSheetDialogFragment;
 import su.sres.securesms.mediasend.Media;
@@ -41,7 +42,6 @@ import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.registration.RegistrationUtil;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.StringUtil;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.text.AfterTextChanged;
 
@@ -151,7 +151,7 @@ public class EditProfileFragment extends LoggingFragment {
                     Media       result = data.getParcelableExtra(AvatarSelectionActivity.EXTRA_MEDIA);
                     InputStream stream = BlobProvider.getInstance().getStream(requireContext(), result.getUri());
 
-                    return Util.readFully(stream);
+                    return StreamUtil.readFully(stream);
                 } catch (IOException ioException) {
                     Log.w(TAG, ioException);
                     return null;

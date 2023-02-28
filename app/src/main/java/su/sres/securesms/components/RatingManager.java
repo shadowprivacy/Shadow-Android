@@ -6,7 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import androidx.appcompat.app.AlertDialog;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.widget.Toast;
 
 import su.sres.securesms.R;

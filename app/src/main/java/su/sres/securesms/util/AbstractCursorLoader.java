@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import androidx.loader.content.AsyncTaskLoader;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 
 

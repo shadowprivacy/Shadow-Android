@@ -9,15 +9,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.jobmanager.impl.DefaultExecutorFactory;
 import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
 import su.sres.securesms.jobmanager.workmanager.WorkManagerMigrator;
 import su.sres.securesms.jobmanager.persistence.JobStorage;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.Debouncer;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
-import su.sres.securesms.util.concurrent.NonMainThreadExecutor;
+import su.sres.securesms.util.concurrent.FilteredExecutor;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -59,7 +60,17 @@ public class JobManager implements ConstraintObserver.Notifier {
   public JobManager(@NonNull Application application, @NonNull Configuration configuration) {
     this.application   = application;
     this.configuration = configuration;
-    this.executor      = new NonMainThreadExecutor(configuration.getExecutorFactory().newSingleThreadExecutor("signal-JobManager"));
+    this.executor      = new FilteredExecutor(configuration.getExecutorFactory().newSingleThreadExecutor("signal-JobManager"),
+            () -> {
+              if (Util.isMainThread()) {
+                return true;
+              } else if (DatabaseFactory.inTransaction(application)) {
+                Log.w(TAG, "Tried to add a job while in a transaction!", new Throwable());
+                return true;
+              } else {
+                return false;
+              }
+            });
     this.jobTracker    = configuration.getJobTracker();
     this.jobController = new JobController(application,
             configuration.getJobStorage(),
@@ -324,10 +335,7 @@ public class JobManager implements ConstraintObserver.Notifier {
   public void flush() {
     CountDownLatch latch = new CountDownLatch(1);
 
-    runOnExecutor(() -> {
-      jobController.flush();
-      latch.countDown();
-    });
+    runOnExecutor(latch::countDown);
 
     try {
       latch.await();

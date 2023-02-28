@@ -14,7 +14,7 @@ import su.sres.securesms.database.MessageDatabase.InsertResult;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.AvatarGroupsV1DownloadJob;
 import su.sres.securesms.jobs.PushGroupUpdateJob;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.MmsException;
 import su.sres.securesms.mms.OutgoingGroupUpdateMessage;
 import su.sres.securesms.recipients.Recipient;
@@ -49,6 +49,7 @@ public final class GroupV1MessageProcessor {
                                        @NonNull SignalServiceContent content,
                                        @NonNull SignalServiceDataMessage message,
                                        boolean outgoing)
+          throws BadGroupIdException
   {
     SignalServiceGroupContext    signalServiceGroupContext = message.getGroupContext().get();
     Optional<SignalServiceGroup> groupV1                   = signalServiceGroupContext.getGroupV1();
@@ -64,7 +65,7 @@ public final class GroupV1MessageProcessor {
 
     GroupDatabase         database = DatabaseFactory.getGroupDatabase(context);
     SignalServiceGroup    group    = groupV1.get();
-    GroupId               id       = GroupId.v1orThrow(group.getGroupId());
+    GroupId               id       = GroupId.v1(group.getGroupId());
     Optional<GroupRecord> record   = database.getGroup(id);
 
     if (record.isPresent() && group.getType() == Type.UPDATE) {

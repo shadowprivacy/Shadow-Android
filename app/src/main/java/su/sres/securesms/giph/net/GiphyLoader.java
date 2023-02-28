@@ -8,7 +8,7 @@ import android.text.TextUtils;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 
 import su.sres.securesms.giph.model.GiphyImage;

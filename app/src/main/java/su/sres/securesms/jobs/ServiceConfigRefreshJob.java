@@ -11,7 +11,7 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.ServiceConfigurationValues;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
@@ -35,7 +35,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
                 .addConstraint(NetworkConstraint.KEY)
                 // default
                 .setMaxAttempts(1)
-                .setMaxInstances(1)
+                .setMaxInstancesForFactory(1)
                 .build()
         );
     }

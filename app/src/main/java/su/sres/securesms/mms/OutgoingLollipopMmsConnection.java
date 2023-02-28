@@ -25,7 +25,9 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.telephony.SmsManager;
-import su.sres.securesms.logging.Log;
+
+import su.sres.core.util.StreamUtil;
+import su.sres.core.util.logging.Log;
 
 import com.android.mms.service_alt.MmsConfig;
 import com.google.android.mms.pdu_alt.PduParser;
@@ -33,7 +35,6 @@ import com.google.android.mms.pdu_alt.SendConf;
 
 import su.sres.securesms.providers.MmsBodyProvider;
 import su.sres.securesms.transport.UndeliverableMessageException;
-import su.sres.securesms.util.Util;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -67,7 +68,7 @@ public class OutgoingLollipopMmsConnection extends LollipopMmsConnection impleme
     beginTransaction();
     try {
       MmsBodyProvider.Pointer pointer = MmsBodyProvider.makeTemporaryPointer(getContext());
-      Util.copy(new ByteArrayInputStream(pduBytes), pointer.getOutputStream());
+      StreamUtil.copy(new ByteArrayInputStream(pduBytes), pointer.getOutputStream());
 
       SmsManager smsManager;
 

@@ -22,7 +22,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.components.registration.VerificationCodeView;
 import su.sres.securesms.components.registration.VerificationPinKeyboard;
 import su.sres.securesms.events.ServerCertErrorEvent;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.registration.service.CodeVerificationRequest;
 import su.sres.securesms.registration.service.RegistrationService;

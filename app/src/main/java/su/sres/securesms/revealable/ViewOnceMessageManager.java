@@ -14,8 +14,7 @@ import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
-import su.sres.securesms.database.MmsDatabase;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.service.TimedEventManager;
 
 /**

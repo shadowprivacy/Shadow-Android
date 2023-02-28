@@ -12,7 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 /**
  * DataAdapter which maintains the current queue of MediaDescriptionCompat objects.

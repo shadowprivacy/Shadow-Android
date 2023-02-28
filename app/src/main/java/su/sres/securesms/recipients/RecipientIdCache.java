@@ -3,7 +3,7 @@ package su.sres.securesms.recipients;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.LinkedHashMap;

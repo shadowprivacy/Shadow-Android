@@ -8,7 +8,7 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.data.DataFetcher;
 
 import su.sres.securesms.giph.model.ChunkedImageUrl;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.net.ChunkedDataFetcher;
 import su.sres.securesms.net.RequestController;
 

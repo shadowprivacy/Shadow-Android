@@ -17,7 +17,7 @@
 package su.sres.securesms.util;
 
 import android.telephony.SmsMessage;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 public class SmsCharacterCalculator extends CharacterCalculator {
 

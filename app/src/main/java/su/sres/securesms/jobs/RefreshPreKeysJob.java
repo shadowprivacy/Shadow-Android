@@ -2,7 +2,6 @@ package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.PreKeyUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -10,7 +9,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.IdentityKeyPair;
 import org.whispersystems.libsignal.state.PreKeyRecord;
@@ -18,7 +17,6 @@ import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
-import su.sres.signalservice.api.storage.SignalStorageRecord;
 
 import java.io.IOException;
 import java.util.List;
@@ -38,7 +36,7 @@ public class RefreshPreKeysJob extends BaseJob  {
     this(new Job.Parameters.Builder()
             .setQueue("RefreshPreKeysJob")
             .addConstraint(NetworkConstraint.KEY)
-            .setMaxInstances(1)
+            .setMaxInstancesForFactory(1)
             .setMaxAttempts(Parameters.UNLIMITED)
             .setLifespan(TimeUnit.DAYS.toMillis(30))
             .build());

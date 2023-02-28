@@ -16,7 +16,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.MessageGroupContext;
 import su.sres.securesms.mms.OutgoingGroupUpdateMessage;
 import su.sres.securesms.recipients.Recipient;

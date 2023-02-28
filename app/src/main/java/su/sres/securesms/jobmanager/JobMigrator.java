@@ -7,10 +7,8 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.jobmanager.JobMigration.JobData;
 import su.sres.securesms.jobmanager.persistence.JobSpec;
 import su.sres.securesms.jobmanager.persistence.JobStorage;
-import su.sres.securesms.logging.Log;
-import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.core.util.logging.Log;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
@@ -73,7 +71,7 @@ public class JobMigrator {
                         jobSpec.getMaxAttempts(),
                         jobSpec.getMaxBackoff(),
                         jobSpec.getLifespan(),
-                        jobSpec.getMaxInstances(),
+                        jobSpec.getMaxInstancesForFactory(),
                         dataSerializer.serialize(updatedJobData.getData()),
                         jobSpec.getSerializedInputData(),
                         jobSpec.isRunning(),

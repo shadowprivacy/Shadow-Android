@@ -26,7 +26,7 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.ServiceConfigurationValues;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -104,7 +104,7 @@ public class LicenseManagementJob extends BaseJob {
         this(new Job.Parameters.Builder()
                 .addConstraint(NetworkConstraint.KEY)
                 .setMaxAttempts(10)
-                .setMaxInstances(1)
+                .setMaxInstancesForFactory(1)
                 .build());
     }
 
@@ -310,7 +310,7 @@ public class LicenseManagementJob extends BaseJob {
                     SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
 
                     try {
-                        accountManager.selfUnregister();
+                        accountManager.deleteAccount();
                     } catch (AuthorizationFailedException e) {
                         Log.w(TAG, e);
                     }

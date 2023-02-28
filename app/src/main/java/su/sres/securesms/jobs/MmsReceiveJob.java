@@ -4,7 +4,7 @@ import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import androidx.annotation.NonNull;
 
@@ -16,7 +16,6 @@ import com.google.android.mms.pdu_alt.PduParser;
 import org.whispersystems.libsignal.util.Pair;
 
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.Util;

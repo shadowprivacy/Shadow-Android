@@ -12,7 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import android.text.TextUtils;
 import android.transition.TransitionInflater;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;

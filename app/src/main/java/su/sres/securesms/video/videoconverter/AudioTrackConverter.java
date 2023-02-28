@@ -8,7 +8,7 @@ import android.media.MediaFormat;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.media.MediaInput;
 import su.sres.securesms.video.VideoUtil;
 

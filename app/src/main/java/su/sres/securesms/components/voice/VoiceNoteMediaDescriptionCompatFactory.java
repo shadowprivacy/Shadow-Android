@@ -13,10 +13,9 @@ import java.util.Objects;
 
 import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.DateUtils;

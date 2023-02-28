@@ -2,36 +2,22 @@ package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.Person;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.content.Context;
-import android.content.Intent;
 import android.telephony.SmsMessage;
 
-import com.google.android.gms.auth.api.phone.SmsRetriever;
-import com.google.android.gms.common.api.Status;
-
-import su.sres.securesms.R;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraint;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase.InsertResult;
-import su.sres.securesms.database.SmsDatabase;
-import su.sres.securesms.notifications.NotificationChannels;
-import su.sres.securesms.notifications.NotificationIds;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.Base64;
-import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 

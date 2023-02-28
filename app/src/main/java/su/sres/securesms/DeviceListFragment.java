@@ -13,7 +13,7 @@ import androidx.loader.content.Loader;
 import androidx.appcompat.app.AlertDialog;
 
 import su.sres.securesms.devicelist.Device;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;

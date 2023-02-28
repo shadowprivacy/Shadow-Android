@@ -4,7 +4,7 @@ import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.os.PowerManager;
 import android.provider.Settings;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 /**
  * Maintains wake lock state.

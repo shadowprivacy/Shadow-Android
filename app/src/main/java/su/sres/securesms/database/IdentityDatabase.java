@@ -22,7 +22,7 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import net.sqlcipher.database.SQLiteDatabase;
+
 
 import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;

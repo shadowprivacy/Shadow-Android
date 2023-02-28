@@ -46,14 +46,13 @@ import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.recipients.RecipientExporter;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.ui.notifications.CustomNotificationsDialogFragment;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.LifecycleCursorWrapper;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.Util;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.Locale;
 import java.util.Objects;

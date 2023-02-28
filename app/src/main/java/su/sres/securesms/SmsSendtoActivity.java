@@ -8,9 +8,8 @@ import android.provider.ContactsContract;
 import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
-import su.sres.securesms.conversation.ConversationActivity;
 import su.sres.securesms.conversation.ConversationIntents;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.widget.Toast;
 
 import su.sres.securesms.database.DatabaseFactory;

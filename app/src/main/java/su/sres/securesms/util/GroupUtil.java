@@ -13,7 +13,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.groups.BadGroupIdException;
 import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.MessageGroupContext;
 import su.sres.securesms.mms.OutgoingGroupUpdateMessage;
 import su.sres.securesms.recipients.Recipient;

@@ -7,11 +7,9 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.insights.InsightsOptOut;
 import su.sres.securesms.jobmanager.JobManager;
-import su.sres.securesms.jobs.StickerPackDownloadJob;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.migrations.ApplicationMigrations;
-import su.sres.securesms.stickers.BlessedPacks;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 

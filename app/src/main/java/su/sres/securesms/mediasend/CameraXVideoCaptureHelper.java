@@ -20,7 +20,7 @@ import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.ValueAnimator;
 
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import androidx.camera.view.SignalCameraView;
 
 import su.sres.securesms.permissions.Permissions;

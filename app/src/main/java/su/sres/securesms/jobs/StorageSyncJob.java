@@ -26,7 +26,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.storage.StorageSyncValidations;
 import su.sres.securesms.transport.RetryLaterException;
@@ -73,7 +73,7 @@ public class StorageSyncJob extends BaseJob {
     public StorageSyncJob() {
         this(new Job.Parameters.Builder().addConstraint(NetworkConstraint.KEY)
                 .setQueue(QUEUE_KEY)
-                .setMaxInstances(1)
+                .setMaxInstancesForFactory(1)
                 .setLifespan(TimeUnit.DAYS.toMillis(1))
                 .build());
     }

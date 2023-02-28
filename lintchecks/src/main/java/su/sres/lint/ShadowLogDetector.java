@@ -65,7 +65,7 @@ public final class ShadowLogDetector extends Detector implements Detector.UastSc
             context.report(LOG_NOT_APP, call, context.getLocation(call), "Using Signal server logger instead of app level Logger", fix);
         }
 
-        if (evaluator.isMemberInClass(method, "su.sres.securesms.logging.Log")) {
+        if (evaluator.isMemberInClass(method, "su.sres.core.util.logging.Log")) {
             List<UExpression> arguments  = call.getValueArguments();
             UExpression       tag        = arguments.get(0);
             if (!(tag instanceof JavaUSimpleNameReferenceExpression)) {
@@ -79,7 +79,7 @@ public final class ShadowLogDetector extends Detector implements Detector.UastSc
         String            methodName = logCall.getMethodName();
         UExpression       tag        = arguments.get(0);
 
-        String fixSource = "su.sres.securesms.logging.Log.";
+        String fixSource = "su.sres.core.util.logging.Log.";
 
         switch (arguments.size()) {
             case 2:

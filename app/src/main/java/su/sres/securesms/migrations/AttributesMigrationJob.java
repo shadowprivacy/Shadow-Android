@@ -5,10 +5,9 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.jobs.ProfileUploadJob;
 import su.sres.securesms.jobs.RefreshAttributesJob;
 import su.sres.securesms.jobs.RefreshOwnProfileJob;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 /**
  * Schedules a re-upload of the users attributes followed by a download of their profile.

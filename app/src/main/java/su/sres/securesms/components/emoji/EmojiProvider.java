@@ -22,7 +22,7 @@ import su.sres.securesms.components.emoji.parsing.EmojiDrawInfo;
 import su.sres.securesms.components.emoji.parsing.EmojiPageBitmap;
 import su.sres.securesms.components.emoji.parsing.EmojiParser;
 import su.sres.securesms.components.emoji.parsing.EmojiTree;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.FutureTaskListener;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.Pair;

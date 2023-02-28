@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.JobMigration;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 public class RetrieveProfileJobMigration extends JobMigration {
 

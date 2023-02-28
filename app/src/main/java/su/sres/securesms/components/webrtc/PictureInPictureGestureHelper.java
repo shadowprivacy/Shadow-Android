@@ -17,7 +17,6 @@ import androidx.core.view.GestureDetectorCompat;
 
 import su.sres.securesms.R;
 import su.sres.securesms.animation.AnimationCompleteListener;
-import su.sres.securesms.logging.Log;
 import su.sres.securesms.util.views.TouchInterceptingFrameLayout;
 
 import java.util.Arrays;

@@ -10,8 +10,7 @@ import su.sres.securesms.jobs.MultiDeviceKeysUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceStorageSyncRequestJob;
 import su.sres.securesms.jobs.RefreshAttributesJob;
 import su.sres.securesms.jobs.StorageForcePushJob;
-import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.TextSecurePreferences;
 
 /**

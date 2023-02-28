@@ -3,8 +3,7 @@ package su.sres.securesms.net;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.linkpreview.LinkPreviewUtil;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.io.IOException;
 

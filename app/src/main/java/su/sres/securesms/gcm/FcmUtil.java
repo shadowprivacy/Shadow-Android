@@ -2,12 +2,10 @@ package su.sres.securesms.gcm;
 
 import androidx.annotation.WorkerThread;
 
-import android.text.TextUtils;
-
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 

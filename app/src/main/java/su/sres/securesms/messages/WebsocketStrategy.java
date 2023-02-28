@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.PushProcessMessageJob;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import org.whispersystems.libsignal.InvalidVersionException;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessagePipe;

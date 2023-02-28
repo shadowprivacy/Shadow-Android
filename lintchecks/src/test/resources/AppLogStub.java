@@ -1,4 +1,4 @@
-package su.sres.securesms.logging;
+package su.sres.core.util.logging;
 
 public class Log {
 

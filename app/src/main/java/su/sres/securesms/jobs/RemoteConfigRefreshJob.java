@@ -2,11 +2,10 @@ package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
@@ -24,7 +23,7 @@ public class RemoteConfigRefreshJob extends BaseJob {
     public RemoteConfigRefreshJob() {
         this(new Job.Parameters.Builder()
                 .setQueue("RemoteConfigRefreshJob")
-                .setMaxInstances(1)
+                .setMaxInstancesForFactory(1)
                 .addConstraint(NetworkConstraint.KEY)
                 .setMaxAttempts(Parameters.UNLIMITED)
                 .setLifespan(TimeUnit.DAYS.toMillis(1))

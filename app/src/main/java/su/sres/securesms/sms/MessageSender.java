@@ -41,14 +41,13 @@ import su.sres.securesms.jobs.ProfileKeySendJob;
 import su.sres.securesms.jobs.RemoteDeleteSendJob;
 import su.sres.securesms.jobs.ResumableUploadSpecJob;
 import su.sres.securesms.linkpreview.LinkPreview;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
-import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.ThreadDatabase;
@@ -75,7 +74,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;

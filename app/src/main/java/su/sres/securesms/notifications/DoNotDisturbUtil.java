@@ -11,7 +11,7 @@ import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.ServiceUtil;
 

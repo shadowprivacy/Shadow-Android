@@ -5,7 +5,7 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 /**
  * Useful for putting in a queue as a marker to know that previously enqueued jobs have been processed.

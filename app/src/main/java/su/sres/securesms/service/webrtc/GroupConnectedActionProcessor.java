@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 import su.sres.securesms.events.WebRtcViewModel;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.ringrtc.Camera;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
@@ -126,7 +126,7 @@ public class GroupConnectedActionProcessor extends GroupActionProcessor {
         if (!members.contains(Recipient.self().requireUuid())) {
             members.add(Recipient.self().requireUuid());
         }
-        webRtcInteractor.updateGroupCallUpdateMessage(currentState.getCallInfoState().getCallRecipient().getId(), eraId, members);
+        webRtcInteractor.updateGroupCallUpdateMessage(currentState.getCallInfoState().getCallRecipient().getId(), eraId, members, WebRtcUtil.isCallFull(peekInfo));
 
         return currentState.builder()
                 .changeCallSetupState()
@@ -150,7 +150,7 @@ public class GroupConnectedActionProcessor extends GroupActionProcessor {
         webRtcInteractor.sendGroupCallMessage(currentState.getCallInfoState().getCallRecipient(), eraId);
 
         List<UUID> members = Stream.of(currentState.getCallInfoState().getRemoteCallParticipants()).map(p -> p.getRecipient().requireUuid()).toList();
-        webRtcInteractor.updateGroupCallUpdateMessage(currentState.getCallInfoState().getCallRecipient().getId(), eraId, members);
+        webRtcInteractor.updateGroupCallUpdateMessage(currentState.getCallInfoState().getCallRecipient().getId(), eraId, members, false);
 
         currentState = currentState.builder()
                 .changeCallInfoState()

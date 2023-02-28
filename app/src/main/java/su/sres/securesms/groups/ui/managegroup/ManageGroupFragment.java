@@ -46,7 +46,7 @@ import su.sres.securesms.groups.ui.managegroup.dialogs.GroupInviteSentDialog;
 import su.sres.securesms.groups.ui.managegroup.dialogs.GroupRightsDialog;
 import su.sres.securesms.groups.ui.managegroup.dialogs.GroupsLearnMoreBottomSheetDialogFragment;
 import su.sres.securesms.groups.ui.migration.GroupsV1MigrationInitiationBottomSheetDialogFragment;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mediaoverview.MediaOverviewActivity;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.notifications.NotificationChannels;

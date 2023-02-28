@@ -24,7 +24,7 @@ import android.os.Build.VERSION_CODES;
 import android.preference.PreferenceManager;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import android.util.AttributeSet;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.view.Surface;
 import android.view.View;
 

@@ -32,7 +32,6 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.Transformations;
 
-import android.text.TextUtils;
 import android.text.style.StyleSpan;
 import android.util.AttributeSet;
 import android.view.View;
@@ -55,7 +54,7 @@ import su.sres.securesms.database.model.LiveUpdateMessage;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.database.model.UpdateDescription;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
@@ -66,8 +65,6 @@ import su.sres.securesms.util.Debouncer;
 import su.sres.securesms.util.ExpirationUtil;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.SearchUtil;
-import su.sres.securesms.util.ThemeUtil;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 

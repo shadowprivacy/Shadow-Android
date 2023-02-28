@@ -57,7 +57,7 @@ import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.mms.SlideDeck;
 import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
@@ -71,7 +71,7 @@ import su.sres.securesms.util.MessageRecordUtil;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.SpanUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.webrtc.CallNotificationBuilder;
 import su.sres.signalservice.internal.util.Util;
 

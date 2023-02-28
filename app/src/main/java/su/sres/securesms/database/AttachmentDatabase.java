@@ -30,9 +30,10 @@ import androidx.annotation.WorkerThread;
 
 import android.text.TextUtils;
 
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.audio.AudioHash;
 import su.sres.securesms.database.model.databaseprotos.AudioWaveFormData;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import android.util.Pair;
 
@@ -40,7 +41,7 @@ import com.bumptech.glide.Glide;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import net.sqlcipher.database.SQLiteDatabase;
+
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -59,17 +60,12 @@ import su.sres.securesms.mms.MmsException;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.stickers.StickerLocator;
 import su.sres.securesms.util.Base64;
-import su.sres.securesms.util.BitmapDecodingException;
-import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.FileUtils;
 import su.sres.securesms.util.JsonUtils;
-import su.sres.securesms.util.MediaMetadataRetrieverUtil;
 import su.sres.securesms.util.MediaUtil;
-import su.sres.securesms.util.MediaUtil.ThumbnailData;
 import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.StorageUtil;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.video.EncryptedMediaDataSource;
 
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -77,7 +73,6 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.internal.util.JsonUtil;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -93,9 +88,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 
 public class AttachmentDatabase extends Database {
 
@@ -1062,7 +1054,7 @@ public class AttachmentDatabase extends Database {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
             DigestInputStream digestInputStream = new DigestInputStream(in, messageDigest);
             Pair<byte[], OutputStream> out = ModernEncryptingPartOutputStream.createFor(attachmentSecret, destination, false);
-            long length = Util.copy(digestInputStream, out.second);
+            long length = StreamUtil.copy(digestInputStream, out.second);
             String hash = Base64.encodeBytes(digestInputStream.getMessageDigest().digest());
 
             SQLiteDatabase database = databaseHelper.getWritableDatabase();

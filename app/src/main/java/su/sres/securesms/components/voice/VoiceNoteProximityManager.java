@@ -19,7 +19,7 @@ import com.google.android.exoplayer2.audio.AudioAttributes;
 import com.google.android.exoplayer2.util.Util;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.ServiceUtil;
 
 import java.util.concurrent.TimeUnit;

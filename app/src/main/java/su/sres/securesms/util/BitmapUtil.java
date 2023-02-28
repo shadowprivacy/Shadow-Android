@@ -18,7 +18,7 @@ import android.util.Pair;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.MediaConstraints;
 

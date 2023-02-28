@@ -10,8 +10,8 @@ import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.SendViewedReceiptJob;
-import su.sres.securesms.logging.Log;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.logging.Log;
+import su.sres.core.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 class ViewOnceMessageRepository {

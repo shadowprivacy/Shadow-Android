@@ -14,7 +14,7 @@ import androidx.core.content.ContextCompat;
 
 import su.sres.securesms.MainActivity;
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
 
 import java.util.Iterator;

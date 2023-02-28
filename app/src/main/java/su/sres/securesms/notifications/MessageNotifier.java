@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.BubbleUtil;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 public interface MessageNotifier {
   void setVisibleThread(long threadId);

@@ -8,7 +8,7 @@ import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;

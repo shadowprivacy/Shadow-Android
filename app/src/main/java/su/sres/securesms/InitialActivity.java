@@ -58,7 +58,7 @@ import su.sres.securesms.components.camera.CameraView;
 import su.sres.securesms.events.ServerCertErrorEvent;
 import su.sres.securesms.events.ServerSetEvent;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.qr.ScanListener;
 import su.sres.securesms.qr.ScanningThread;

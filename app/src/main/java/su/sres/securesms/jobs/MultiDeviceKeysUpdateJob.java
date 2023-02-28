@@ -8,12 +8,11 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
-import su.sres.signalservice.api.kbs.MasterKey;
 import su.sres.signalservice.api.storage.StorageKey;
 import su.sres.signalservice.api.messages.multidevice.KeysMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
@@ -30,7 +29,7 @@ public class MultiDeviceKeysUpdateJob extends BaseJob {
     public MultiDeviceKeysUpdateJob() {
         this(new Parameters.Builder()
                 .setQueue("MultiDeviceKeysUpdateJob")
-                .setMaxInstances(2)
+                .setMaxInstancesForFactory(2)
                 .addConstraint(NetworkConstraint.KEY)
                 .setMaxAttempts(10)
                 .build());

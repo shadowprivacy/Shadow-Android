@@ -8,8 +8,9 @@ import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.CallManager;
 import su.sres.securesms.components.webrtc.BroadcastVideoSink;
 import su.sres.securesms.events.CallParticipant;
+import su.sres.securesms.events.CallParticipantId;
 import su.sres.securesms.events.WebRtcViewModel;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.util.ServiceUtil;
@@ -41,11 +42,14 @@ public class BeginCallActionProcessorDelegate extends WebRtcActionProcessor {
                 .putRemotePeer(remotePeer)
                 .putParticipant(remotePeer.getRecipient(),
                         CallParticipant.createRemote(
+                                new CallParticipantId(remotePeer.getRecipient()),
                                 remotePeer.getRecipient(),
                                 null,
                                 new BroadcastVideoSink(currentState.getVideoState().getEglBase()),
                                 true,
                                 false,
+                                0,
+                                true,
                                 0
                         ))
                 .build();
@@ -81,11 +85,14 @@ public class BeginCallActionProcessorDelegate extends WebRtcActionProcessor {
                 .callState(WebRtcViewModel.State.CALL_INCOMING)
                 .putParticipant(remotePeer.getRecipient(),
                         CallParticipant.createRemote(
+                                new CallParticipantId(remotePeer.getRecipient()),
                                 remotePeer.getRecipient(),
                                 null,
                                 new BroadcastVideoSink(currentState.getVideoState().getEglBase()),
                                 true,
                                 false,
+                                0,
+                                true,
                                 0
                         ))
                 .build();

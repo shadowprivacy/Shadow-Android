@@ -15,7 +15,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteStatement;
 
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -246,11 +246,11 @@ public class FlipperSqlCipherAdapter extends DatabaseDriver<FlipperSqlCipherAdap
         }
 
         public @NonNull SQLiteDatabase getReadable() {
-            return sqlCipherOpenHelper.getReadableDatabase();
+            return sqlCipherOpenHelper.getReadableDatabase().getSqlCipherDatabase();
         }
 
         public @NonNull SQLiteDatabase getWritable() {
-            return sqlCipherOpenHelper.getWritableDatabase();
+            return sqlCipherOpenHelper.getWritableDatabase().getSqlCipherDatabase();
         }
     }
 }

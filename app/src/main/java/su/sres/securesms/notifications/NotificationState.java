@@ -9,7 +9,7 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.conversation.ConversationIntents;
 import su.sres.securesms.database.RecipientDatabase.VibrateState;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 
 import java.util.Collection;

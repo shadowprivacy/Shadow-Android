@@ -11,15 +11,15 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.crypto.AttachmentSecret;
 import su.sres.securesms.crypto.AttachmentSecretProvider;
 import su.sres.securesms.crypto.ModernDecryptingPartInputStream;
 import su.sres.securesms.crypto.ModernEncryptingPartOutputStream;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.IOFunction;
-import su.sres.securesms.util.Util;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.video.ByteArrayMediaDataSource;
 import su.sres.securesms.video.EncryptedMediaDataSource;
 
@@ -223,7 +223,7 @@ public class BlobProvider {
         }
 
         try (InputStream stream = getStream(context, uri)) {
-            return Util.getStreamLength(stream);
+            return StreamUtil.getStreamLength(stream);
         } catch (IOException e) {
             Log.w(TAG, e);
             return 0;
@@ -270,7 +270,7 @@ public class BlobProvider {
 
         SignalExecutors.UNBOUNDED.execute(() -> {
             try {
-                Util.copy(blobSpec.getData(), outputStream);
+                StreamUtil.copy(blobSpec.getData(), outputStream);
 
                 if (successListener != null) {
                     successListener.onSuccess();

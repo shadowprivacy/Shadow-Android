@@ -7,9 +7,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import su.sres.securesms.ApplicationContext;
-import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.PowerManagerCompat;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;

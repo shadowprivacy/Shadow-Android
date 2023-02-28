@@ -9,14 +9,11 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobmanager.JobTracker;
 import su.sres.securesms.jobs.MarkerJob;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import org.whispersystems.libsignal.util.guava.Optional;
-import su.sres.signalservice.api.SignalServiceMessageReceiver;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Implementations are responsible for fetching and processing a batch of messages.

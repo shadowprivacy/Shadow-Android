@@ -33,7 +33,7 @@ import su.sres.securesms.gcm.FcmUtil;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.PlayServicesProblemActivity;
 import su.sres.securesms.R;
@@ -59,7 +59,7 @@ public class FcmRefreshJob extends BaseJob {
             .addConstraint(NetworkConstraint.KEY)
             .setMaxAttempts(1)
             .setLifespan(TimeUnit.MINUTES.toMillis(5))
-            .setMaxInstances(1)
+            .setMaxInstancesForFactory(1)
             .build());
   }
 

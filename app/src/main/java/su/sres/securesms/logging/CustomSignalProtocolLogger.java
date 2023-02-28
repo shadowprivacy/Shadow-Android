@@ -2,6 +2,8 @@ package su.sres.securesms.logging;
 
 import org.whispersystems.libsignal.logging.SignalProtocolLogger;
 
+import su.sres.core.util.logging.Log;
+
 public class CustomSignalProtocolLogger implements SignalProtocolLogger {
   @Override
   public void log(int priority, String tag, String message) {

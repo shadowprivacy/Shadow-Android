@@ -1,7 +1,7 @@
 package su.sres.securesms.mms;
 
 import androidx.annotation.NonNull;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.DataSource;

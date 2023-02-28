@@ -86,7 +86,7 @@ public final class JobSpec {
         return maxBackoff;
     }
 
-    public int getMaxInstances() {
+    public int getMaxInstancesForFactory() {
         return maxInstances;
     }
 

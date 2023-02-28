@@ -22,11 +22,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.AccessibilityUtil;
 import su.sres.securesms.util.ServiceUtil;
 
-import su.sres.securesms.R;
 import su.sres.securesms.util.ViewUtil;
 
 public final class WebRtcAnswerDeclineButton extends LinearLayout implements AccessibilityManager.TouchExplorationStateChangeListener {

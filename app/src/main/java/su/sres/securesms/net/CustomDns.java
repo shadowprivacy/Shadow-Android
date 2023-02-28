@@ -9,7 +9,6 @@ import org.xbill.DNS.Lookup;
 import org.xbill.DNS.Record;
 import org.xbill.DNS.Resolver;
 import org.xbill.DNS.SimpleResolver;
-import org.xbill.DNS.TextParseException;
 import org.xbill.DNS.Type;
 
 import java.net.InetAddress;
@@ -17,7 +16,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 
 import okhttp3.Dns;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 /**
  * A {@link Dns} implementation that specifies the hostname of a specific DNS.

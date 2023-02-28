@@ -23,7 +23,7 @@ import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 

@@ -7,7 +7,7 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.sms.OutgoingTextMessage;

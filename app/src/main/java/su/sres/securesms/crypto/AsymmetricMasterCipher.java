@@ -25,7 +25,7 @@ import org.whispersystems.libsignal.ecc.Curve;
 import org.whispersystems.libsignal.ecc.ECKeyPair;
 import org.whispersystems.libsignal.ecc.ECPrivateKey;
 import org.whispersystems.libsignal.ecc.ECPublicKey;
-import su.sres.securesms.util.Conversions;
+import su.sres.core.util.Conversions;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;

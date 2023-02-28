@@ -100,7 +100,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.ReminderUpdateEvent;
 import su.sres.securesms.insights.InsightsLauncher;
 import su.sres.securesms.jobs.ServiceOutageDetectionJob;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mediasend.MediaSendActivity;
 import su.sres.securesms.megaphone.Megaphone;
 import su.sres.securesms.megaphone.MegaphoneActionController;
@@ -121,7 +121,7 @@ import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.WindowUtil;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.task.SnackbarAsyncTask;
 
@@ -134,8 +134,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-
-import static android.app.Activity.RESULT_OK;
 
 public class ConversationListFragment extends MainFragment implements ActionMode.Callback,
         ConversationListAdapter.OnConversationClickListener,

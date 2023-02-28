@@ -3,13 +3,13 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 
 import org.greenrobot.eventbus.EventBus;
-import su.sres.securesms.BuildConfig;
+
 import su.sres.securesms.events.ReminderUpdateEvent;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -31,7 +31,7 @@ public class ServiceOutageDetectionJob extends BaseJob {
             .setQueue("ServiceOutageDetectionJob")
             .addConstraint(NetworkConstraint.KEY)
             .setMaxAttempts(5)
-            .setMaxInstances(1)
+            .setMaxInstancesForFactory(1)
             .build());
   }
 

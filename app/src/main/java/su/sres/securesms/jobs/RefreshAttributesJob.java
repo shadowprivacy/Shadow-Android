@@ -6,7 +6,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
 
@@ -30,7 +30,7 @@ public class RefreshAttributesJob extends BaseJob  {
     this(new Job.Parameters.Builder()
             .addConstraint(NetworkConstraint.KEY)
             .setQueue("RefreshAttributesJob")
-            .setMaxInstances(2)
+            .setMaxInstancesForFactory(2)
             .build());
   }
 

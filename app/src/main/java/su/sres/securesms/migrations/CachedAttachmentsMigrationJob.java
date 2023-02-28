@@ -4,12 +4,11 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.util.FileUtils;
 
 import java.io.File;
-import java.io.IOException;
 
 public class CachedAttachmentsMigrationJob extends MigrationJob {
 

@@ -33,8 +33,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -61,7 +59,7 @@ import su.sres.securesms.components.viewpager.ExtendedOnPageChangedListener;
 import su.sres.securesms.database.MediaDatabase;
 import su.sres.securesms.database.MediaDatabase.MediaRecord;
 import su.sres.securesms.database.loaders.PagingMediaLoader;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mediaoverview.MediaOverviewActivity;
 import su.sres.securesms.mediapreview.MediaPreviewFragment;
 import su.sres.securesms.mediapreview.MediaPreviewViewModel;

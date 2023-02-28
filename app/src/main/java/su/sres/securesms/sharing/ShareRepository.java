@@ -14,13 +14,13 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mediasend.MediaSendConstants;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.util.MediaUtil;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;

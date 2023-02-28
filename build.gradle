@@ -1,5 +1,39 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        jcenter {
+            content {
+                includeVersion 'org.jetbrains.trove4j', 'trove4j', '20160824'
+            }
+        }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.2.2'
+        classpath 'androidx.navigation:navigation-safe-args-gradle-plugin:2.1.0'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.10'
+    }
+}
+
+ext {
+    BUILD_TOOL_VERSION = '30.0.2'
+
+    COMPILE_SDK = 30
+    TARGET_SDK  = 30
+    MINIMUM_SDK = 19
+
+    JAVA_VERSION = JavaVersion.VERSION_1_8
+}
+
 wrapper {
     distributionType = Wrapper.DistributionType.ALL
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
 }
 
 subprojects {

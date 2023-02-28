@@ -10,7 +10,7 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.FcmRefreshJob;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.registration.PushChallengeRequest;
 import su.sres.securesms.util.TextSecurePreferences;
 

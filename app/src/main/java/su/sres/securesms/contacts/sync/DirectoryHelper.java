@@ -13,7 +13,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.RotateProfileKeyJob;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.registration.RegistrationUtil;
 import su.sres.securesms.util.TextSecurePreferences;

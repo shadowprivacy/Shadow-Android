@@ -22,12 +22,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
-import androidx.core.app.NotificationManagerCompat;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase.MarkedMessageInfo;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.LinkedList;
 import java.util.List;

@@ -5,11 +5,10 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.nio.charset.StandardCharsets;

@@ -3,13 +3,11 @@ package su.sres.securesms.net;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
-import su.sres.signalservice.api.push.exceptions.DeprecatedVersionException;
+import su.sres.core.util.logging.Log;
 
 import java.io.IOException;
 
 import okhttp3.Interceptor;
-import okhttp3.MediaType;
 import okhttp3.Protocol;
 import okhttp3.Response;
 import okhttp3.ResponseBody;

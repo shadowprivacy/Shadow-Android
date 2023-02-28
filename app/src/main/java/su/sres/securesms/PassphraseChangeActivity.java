@@ -20,7 +20,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;

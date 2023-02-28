@@ -10,12 +10,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.messages.BackgroundMessageRetriever;
 import su.sres.securesms.messages.RestStrategy;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 /**
  * Pulls down messages. Used when we fail to pull down messages in {@link FcmReceiveService}.

@@ -12,7 +12,7 @@ import su.sres.securesms.groups.ui.GroupErrors;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.SingleLiveEvent;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.List;
 import java.util.Objects;

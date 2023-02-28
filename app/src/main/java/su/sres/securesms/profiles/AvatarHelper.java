@@ -5,16 +5,16 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.crypto.AttachmentSecret;
 import su.sres.securesms.crypto.AttachmentSecretProvider;
 import su.sres.securesms.crypto.ModernDecryptingPartInputStream;
 import su.sres.securesms.crypto.ModernEncryptingPartOutputStream;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.ByteUnit;
 import su.sres.securesms.util.MediaUtil;
-import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.util.StreamDetails;
 
 import java.io.File;
@@ -96,7 +96,7 @@ public class AvatarHelper {
   }
 
   public static byte[] getAvatarBytes(@NonNull Context context, @NonNull RecipientId recipientId) throws IOException {
-    return hasAvatar(context, recipientId) ? Util.readFully(getAvatar(context, recipientId))
+    return hasAvatar(context, recipientId) ? StreamUtil.readFully(getAvatar(context, recipientId))
             : null;
   }
 
@@ -122,9 +122,9 @@ public class AvatarHelper {
     OutputStream outputStream = null;
     try {
       outputStream = getOutputStream(context, recipientId);
-      Util.copy(inputStream, outputStream);
+      StreamUtil.copy(inputStream, outputStream);
     } finally {
-      Util.close(outputStream);
+      StreamUtil.close(outputStream);
     }
   }
 

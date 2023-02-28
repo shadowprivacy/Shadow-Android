@@ -19,10 +19,8 @@ import androidx.navigation.Navigation;
 
 import su.sres.securesms.R;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.BackupUtil;
-
-import java.util.Objects;
 
 public class ChooseBackupFragment extends BaseRegistrationFragment {
 

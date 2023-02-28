@@ -23,7 +23,7 @@ import su.sres.securesms.groups.v2.GroupInviteLinkUrl;
 import su.sres.securesms.jobs.AvatarGroupsV2DownloadJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.linkpreview.LinkPreviewUtil.OpenGraph;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.net.CallRequestController;
 import su.sres.securesms.net.CompositeRequestController;
@@ -39,7 +39,7 @@ import su.sres.securesms.util.ByteUnit;
 import su.sres.securesms.util.Hex;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.OkHttpUtil;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import org.signal.zkgroup.VerificationFailedException;
 import org.signal.zkgroup.groups.GroupMasterKey;

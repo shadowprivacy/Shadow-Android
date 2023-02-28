@@ -19,10 +19,11 @@ import su.sres.securesms.BindableConversationItem;
 import su.sres.securesms.R;
 import su.sres.securesms.VerifyIdentityActivity;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
+import su.sres.securesms.database.model.GroupCallUpdateDetailsUtil;
 import su.sres.securesms.database.model.LiveUpdateMessage;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.UpdateDescription;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
@@ -50,15 +51,18 @@ public final class ConversationUpdateItem extends LinearLayout
 
   private TextView                body;
   private TextView                actionButton;
-  private LiveRecipient           sender;
   private ConversationMessage     conversationMessage;
+  private Recipient               conversationRecipient;
   private Optional<MessageRecord> nextMessageRecord;
   private MessageRecord           messageRecord;
   private LiveData<Spannable>     displayBody;
   private EventListener           eventListener;
 
   private final UpdateObserver updateObserver = new UpdateObserver();
-  private final SenderObserver senderObserver = new SenderObserver();
+
+  private final PresentOnChange          presentOnChange = new PresentOnChange();
+  private final RecipientObserverManager senderObserver  = new RecipientObserverManager(presentOnChange);
+  private final RecipientObserverManager groupObserver   = new RecipientObserverManager(presentOnChange);
 
   public ConversationUpdateItem(Context context) {
     super(context);
@@ -92,7 +96,7 @@ public final class ConversationUpdateItem extends LinearLayout
   {
     this.batchSelected = batchSelected;
 
-    bind(lifecycleOwner, conversationMessage, nextMessageRecord);
+    bind(lifecycleOwner, conversationMessage, nextMessageRecord, conversationRecipient);
   }
 
   @Override
@@ -107,20 +111,26 @@ public final class ConversationUpdateItem extends LinearLayout
 
   private void bind(@NonNull LifecycleOwner lifecycleOwner,
                     @NonNull ConversationMessage conversationMessage,
-                    @NonNull Optional<MessageRecord> nextMessageRecord)
+                    @NonNull Optional<MessageRecord> nextMessageRecord,
+                    @NonNull Recipient conversationRecipient)
   {
 
-    this.conversationMessage = conversationMessage;
-    this.messageRecord       = conversationMessage.getMessageRecord();
-    this.nextMessageRecord   = nextMessageRecord;
+    this.conversationMessage   = conversationMessage;
+    this.messageRecord         = conversationMessage.getMessageRecord();
+    this.nextMessageRecord     = nextMessageRecord;
+    this.conversationRecipient = conversationRecipient;
 
-    observeSender(lifecycleOwner, messageRecord.getIndividualRecipient());
+    senderObserver.observe(lifecycleOwner, messageRecord.getIndividualRecipient());
+
+    if (conversationRecipient.isActiveGroup() && conversationMessage.getMessageRecord().isGroupCall()) {
+      groupObserver.observe(lifecycleOwner, conversationRecipient);
+    } else {
+      groupObserver.observe(lifecycleOwner, null);
+    }
 
     UpdateDescription   updateDescription = Objects.requireNonNull(messageRecord.getUpdateDisplayBody(getContext()));
     LiveData<Spannable> liveUpdateMessage = LiveUpdateMessage.fromMessageDescription(getContext(), updateDescription, ContextCompat.getColor(getContext(), R.color.conversation_item_update_text_color));
     LiveData<Spannable> spannableMessage  = loading(liveUpdateMessage);
-
-    present(conversationMessage, nextMessageRecord);
 
     observeDisplayBody(lifecycleOwner, spannableMessage);
   }
@@ -134,16 +144,31 @@ public final class ConversationUpdateItem extends LinearLayout
   public void unbind() {
   }
 
-  private void observeSender(@NonNull LifecycleOwner lifecycleOwner, @Nullable Recipient recipient) {
-    if (sender != null) {
-      sender.getLiveData().removeObserver(senderObserver);
+  static final class RecipientObserverManager {
+
+    private final Observer<Recipient> recipientObserver;
+
+    private LiveRecipient recipient;
+
+    RecipientObserverManager(@NonNull Observer<Recipient> observer){
+      this.recipientObserver = observer;
     }
 
-    if (recipient != null) {
-      sender = recipient.live();
-      sender.getLiveData().observe(lifecycleOwner, senderObserver);
-    } else {
-      sender = null;
+    public void observe(@NonNull LifecycleOwner lifecycleOwner, @Nullable Recipient recipient) {
+      if (this.recipient != null) {
+        this.recipient.getLiveData().removeObserver(recipientObserver);
+      }
+
+      if (recipient != null) {
+        this.recipient = recipient.live();
+        this.recipient.getLiveData().observe(lifecycleOwner, recipientObserver);
+      } else {
+        this.recipient = null;
+      }
+    }
+
+    @NonNull Recipient getObservedRecipient() {
+      return recipient.get();
     }
   }
 
@@ -170,7 +195,7 @@ public final class ConversationUpdateItem extends LinearLayout
     }
   }
 
-  private void present(ConversationMessage conversationMessage, @NonNull Optional<MessageRecord> nextMessageRecord) {
+  private void present(ConversationMessage conversationMessage, @NonNull Optional<MessageRecord> nextMessageRecord, @NonNull Recipient conversationRecipient) {
     if (batchSelected.contains(conversationMessage)) setSelected(true);
     else                                             setSelected(false);
 
@@ -191,10 +216,14 @@ public final class ConversationUpdateItem extends LinearLayout
 
       int text = 0;
       if (Util.hasItems(uuids)) {
-        text = uuids.contains(TextSecurePreferences.getLocalUuid(getContext())) ? R.string.ConversationUpdateItem_return_to_call : R.string.ConversationUpdateItem_join_call;
+        if (GroupCallUpdateDetailsUtil.parse(conversationMessage.getMessageRecord().getBody()).getIsCallFull()) {
+          text = R.string.ConversationUpdateItem_call_is_full;
+        } else {
+          text = uuids.contains(TextSecurePreferences.getLocalUuid(getContext())) ? R.string.ConversationUpdateItem_return_to_call : R.string.ConversationUpdateItem_join_call;
+        }
       }
 
-      if (text != 0) {
+      if (text != 0 && conversationRecipient.isGroup() && conversationRecipient.isActiveGroup()) {
         actionButton.setText(text);
         actionButton.setVisibility(VISIBLE);
         actionButton.setOnClickListener(v -> {
@@ -217,10 +246,13 @@ public final class ConversationUpdateItem extends LinearLayout
     super.setOnClickListener(new InternalClickListener(l));
   }
 
-  private final class SenderObserver implements Observer<Recipient> {
+  private final class PresentOnChange implements Observer<Recipient> {
     @Override
     public void onChanged(Recipient recipient) {
-      present(conversationMessage, nextMessageRecord);
+      if (recipient.getId() == conversationRecipient.getId()) {
+        conversationRecipient = recipient;
+      }
+      present(conversationMessage, nextMessageRecord, conversationRecipient);
     }
   }
 
@@ -251,7 +283,7 @@ public final class ConversationUpdateItem extends LinearLayout
         return;
       }
 
-      final Recipient sender = ConversationUpdateItem.this.sender.get();
+      final Recipient sender = ConversationUpdateItem.this.senderObserver.getObservedRecipient();
 
       IdentityUtil.getRemoteIdentityKey(getContext(), sender).addListener(new ListenableFuture.Listener<Optional<IdentityRecord>>() {
         @Override

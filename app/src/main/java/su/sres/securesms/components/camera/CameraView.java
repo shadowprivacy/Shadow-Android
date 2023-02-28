@@ -32,7 +32,7 @@ import android.os.Build.VERSION;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.util.AttributeSet;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.view.OrientationEventListener;
 import android.view.ViewGroup;
 

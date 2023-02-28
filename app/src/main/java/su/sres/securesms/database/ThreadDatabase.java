@@ -28,13 +28,13 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.groups.BadGroupIdException;
 import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import com.annimon.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import net.sqlcipher.database.SQLiteDatabase;
+
 
 import su.sres.securesms.database.MessageDatabase.MarkedMessageInfo;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
@@ -49,21 +49,16 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientDetails;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
-import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.ConversationUtil;
 import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
-import su.sres.signalservice.api.groupsv2.DecryptedGroupUtil;
 import su.sres.signalservice.api.storage.SignalAccountRecord;
 import su.sres.signalservice.api.storage.SignalContactRecord;
 import su.sres.signalservice.api.storage.SignalGroupV1Record;
 import su.sres.signalservice.api.storage.SignalGroupV2Record;
-import su.sres.signalservice.api.util.UuidUtil;
-import su.sres.storageservice.protos.groups.local.DecryptedGroup;
-import su.sres.storageservice.protos.groups.local.DecryptedMember;
 
 import org.jsoup.helper.StringUtil;
 import org.signal.zkgroup.InvalidInputException;
@@ -82,7 +77,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 
 public class ThreadDatabase extends Database {
 

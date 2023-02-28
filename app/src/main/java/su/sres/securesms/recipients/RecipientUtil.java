@@ -21,16 +21,14 @@ import su.sres.securesms.jobs.MultiDeviceBlockedUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceMessageRequestResponseJob;
 import su.sres.securesms.jobs.RotateProfileKeyJob;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 public class RecipientUtil {
@@ -99,7 +97,7 @@ public class RecipientUtil {
                 .toList();
     }
 
-    public static void ensureUuidsAreAvailable(@NonNull Context context, @NonNull Collection<Recipient> recipients)
+    public static boolean ensureUuidsAreAvailable(@NonNull Context context, @NonNull Collection<Recipient> recipients)
             throws IOException {
 
         List<Recipient> recipientsWithoutUuids = Stream.of(recipients)
@@ -109,6 +107,9 @@ public class RecipientUtil {
 
         if (recipientsWithoutUuids.size() > 0) {
             DirectoryHelper.refreshDirectory(context);
+            return true;
+        } else {
+            return false;
         }
     }
 

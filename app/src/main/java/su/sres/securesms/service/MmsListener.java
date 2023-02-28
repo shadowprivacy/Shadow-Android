@@ -22,9 +22,8 @@ import android.content.Intent;
 import android.provider.Telephony;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.jobs.MmsReceiveJob;
 import su.sres.securesms.util.Util;
 

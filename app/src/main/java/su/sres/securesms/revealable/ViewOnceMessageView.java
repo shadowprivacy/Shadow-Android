@@ -22,7 +22,7 @@ import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.events.PartProgressEvent;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.Util;

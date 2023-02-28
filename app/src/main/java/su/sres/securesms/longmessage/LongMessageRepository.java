@@ -6,7 +6,7 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
-import su.sres.securesms.conversation.ConversationMessage;
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
@@ -14,11 +14,10 @@ import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.mms.TextSlide;
-import su.sres.securesms.util.Util;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
@@ -91,7 +90,7 @@ class LongMessageRepository {
 
     private String readFullBody(@NonNull Context context, @NonNull Uri uri) {
         try (InputStream stream = PartAuthority.getAttachmentStream(context, uri)) {
-            return Util.readFullyAsString(stream);
+            return StreamUtil.readFullyAsString(stream);
         } catch (IOException e) {
             Log.w(TAG, "Failed to read full text body.", e);
             return "";

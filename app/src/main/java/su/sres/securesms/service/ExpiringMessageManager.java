@@ -3,7 +3,7 @@ package su.sres.securesms.service;
 import android.content.Context;
 
 import su.sres.securesms.database.MessageDatabase;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MmsDatabase;

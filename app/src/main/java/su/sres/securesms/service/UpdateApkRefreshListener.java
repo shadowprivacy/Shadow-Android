@@ -4,9 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.jobs.UpdateApkJob;
 import su.sres.securesms.util.TextSecurePreferences;

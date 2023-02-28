@@ -8,11 +8,10 @@ import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
-import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.model.SmsMessageRecord;
 import su.sres.securesms.service.SmsDeliveryListener;
 

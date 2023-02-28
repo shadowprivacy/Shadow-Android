@@ -24,7 +24,6 @@ import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.contacts.avatars.SystemContactPhoto;
 import su.sres.securesms.contacts.avatars.TransparentContactPhoto;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.MentionSetting;
 import su.sres.securesms.database.RecipientDatabase.RegisteredState;
@@ -32,10 +31,9 @@ import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
 import su.sres.securesms.database.RecipientDatabase.VibrateState;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.phonenumbers.NumberUtil;
-import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.StringUtil;
@@ -43,7 +41,7 @@ import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
 
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.util.UuidUtil;
 
@@ -418,32 +416,71 @@ public class Recipient {
   }
 
   public @NonNull String getDisplayName(@NonNull Context context) {
-    String name = Util.getFirstNonEmpty(getName(context),
-            getProfileName().toString(),
-            e164,
-            email,
-            context.getString(R.string.Recipient_unknown));
+    String name = getName(context);
+
+    if (Util.isEmpty(name)) {
+      name = getProfileName().toString();
+    }
+
+    if (Util.isEmpty(name) && !Util.isEmpty(e164)) {
+      name = e164;
+    }
+
+    if (Util.isEmpty(name)) {
+      name = email;
+    }
+
+    if (Util.isEmpty(name)) {
+      name = context.getString(R.string.Recipient_unknown);
+    }
 
     return StringUtil.isolateBidi(name);
   }
 
   public @NonNull String getDisplayNameOrUsername(@NonNull Context context) {
-    String name = Util.getFirstNonEmpty(getName(context),
-            getProfileName().toString(),
-            e164,
-            email,
-            username,
-            context.getString(R.string.Recipient_unknown));
+    String name = getName(context);
+
+    if (Util.isEmpty(name)) {
+      name = getProfileName().toString();
+    }
+
+    if (Util.isEmpty(name) && !Util.isEmpty(e164)) {
+      name = e164;
+    }
+
+    if (Util.isEmpty(name)) {
+      name = email;
+    }
+
+    if (Util.isEmpty(name)) {
+      name = username;
+    }
+
+    if (Util.isEmpty(name)) {
+      name = context.getString(R.string.Recipient_unknown);
+    }
 
     return StringUtil.isolateBidi(name);
   }
 
   public @NonNull String getMentionDisplayName(@NonNull Context context) {
-    String name = Util.getFirstNonEmpty(isSelf ? getProfileName().toString() : getName(context),
-            isSelf ? getName(context) : getProfileName().toString(),
-            e164,
-            email,
-            context.getString(R.string.Recipient_unknown));
+    String name = isSelf ? getProfileName().toString() : getName(context);
+
+    if (Util.isEmpty(name)) {
+      name = isSelf ? getName(context) : getProfileName().toString();
+    }
+
+    if (Util.isEmpty(name) && !Util.isEmpty(e164)) {
+      name = e164;
+    }
+
+    if (Util.isEmpty(name)) {
+      name = email;
+    }
+
+    if (Util.isEmpty(name)) {
+      name = context.getString(R.string.Recipient_unknown);
+    }
 
     return StringUtil.isolateBidi(name);
   }

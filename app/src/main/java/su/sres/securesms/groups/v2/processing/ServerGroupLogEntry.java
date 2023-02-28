@@ -4,7 +4,7 @@ import androidx.annotation.Nullable;
 
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 /**
  * Pair of a group state and optionally the corresponding change from the server.

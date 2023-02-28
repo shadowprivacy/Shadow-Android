@@ -4,12 +4,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 
-import net.sqlcipher.database.SQLiteDatabase;
-
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
-import su.sres.securesms.logging.Log;
-
-
+import su.sres.core.util.logging.Log;
 public class ConfigDatabase extends Database {
 
     private static final String TAG = Log.tag(ConfigDatabase.class);

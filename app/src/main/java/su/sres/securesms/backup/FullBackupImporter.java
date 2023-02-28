@@ -7,7 +7,8 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.StreamUtil;
+import su.sres.core.util.logging.Log;
 
 import android.net.Uri;
 import android.util.Pair;
@@ -27,19 +28,16 @@ import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.SearchDatabase;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.profiles.AvatarHelper;
-import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.BackupUtil;
-import su.sres.securesms.util.Conversions;
+import su.sres.core.util.Conversions;
 import su.sres.securesms.util.SqlUtil;
-import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.kdf.HKDFv3;
 import org.whispersystems.libsignal.util.ByteUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -240,11 +238,11 @@ public class FullBackupImporter extends FullBackupBase {
         this.in = in;
 
         byte[] headerLengthBytes = new byte[4];
-        Util.readFully(in, headerLengthBytes);
+        StreamUtil.readFully(in, headerLengthBytes);
 
         int headerLength = Conversions.byteArrayToInt(headerLengthBytes);
         byte[] headerFrame = new byte[headerLength];
-        Util.readFully(in, headerFrame);
+        StreamUtil.readFully(in, headerFrame);
 
         BackupFrame frame = BackupFrame.parseFrom(headerFrame);
 
@@ -316,7 +314,7 @@ public class FullBackupImporter extends FullBackupBase {
         byte[] theirMac = new byte[10];
 
         try {
-          Util.readFully(in, theirMac);
+          StreamUtil.readFully(in, theirMac);
         } catch (IOException e) {
           throw new IOException(e);
         }
@@ -332,10 +330,10 @@ public class FullBackupImporter extends FullBackupBase {
     private BackupFrame readFrame(InputStream in) throws IOException {
       try {
         byte[] length = new byte[4];
-        Util.readFully(in, length);
+        StreamUtil.readFully(in, length);
 
         byte[] frame = new byte[Conversions.byteArrayToInt(length)];
-        Util.readFully(in, frame);
+        StreamUtil.readFully(in, frame);
 
         byte[] theirMac = new byte[10];
         System.arraycopy(frame, frame.length - 10, theirMac, 0, theirMac.length);

@@ -17,7 +17,7 @@ import android.widget.FrameLayout;
 import su.sres.securesms.R;
 import su.sres.securesms.components.InputAwareLayout.InputView;
 import su.sres.securesms.components.RepeatableImageKey;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.GlideApp;
 
 import java.util.Arrays;

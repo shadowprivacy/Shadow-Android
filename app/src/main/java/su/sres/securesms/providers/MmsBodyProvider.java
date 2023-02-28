@@ -26,7 +26,7 @@ import android.os.ParcelFileDescriptor;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.BuildConfig;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.io.File;
 import java.io.FileNotFoundException;

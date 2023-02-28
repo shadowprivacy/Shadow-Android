@@ -6,7 +6,7 @@ import android.net.ConnectivityManager;
 import androidx.annotation.NonNull;
 import android.telephony.TelephonyManager;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.Locale;
 

@@ -1,7 +1,7 @@
 package su.sres.securesms.storage;
 
 import org.junit.Test;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.storage.StorageSyncHelper.KeyGenerator;
 import org.whispersystems.libsignal.util.guava.Optional;

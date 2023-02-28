@@ -1,17 +1,10 @@
 package su.sres.securesms.push;
 
 import android.content.Context;
-import android.os.AsyncTask;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.logging.Log;
-
-import com.google.android.gms.security.ProviderInstaller;
-
 import su.sres.securesms.BuildConfig;
-import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 
 import java.util.UUID;

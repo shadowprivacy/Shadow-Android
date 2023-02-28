@@ -10,7 +10,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobmanager.impl.ChargingConstraint;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.R;
 import su.sres.securesms.backup.FullBackupExporter;
@@ -45,7 +45,7 @@ public final class LocalBackupJob extends BaseJob {
     JobManager jobManager = ApplicationDependencies.getJobManager();
     Parameters.Builder parameters = new Parameters.Builder()
             .setQueue(QUEUE)
-            .setMaxInstances(1)
+            .setMaxInstancesForFactory(1)
             .setMaxAttempts(3);
     if (force) {
       jobManager.cancelAllInQueue(QUEUE);

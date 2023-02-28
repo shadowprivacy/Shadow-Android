@@ -30,6 +30,7 @@ import android.content.ClipboardManager;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.PassphraseRequiredActivity;
@@ -52,7 +53,7 @@ import su.sres.securesms.groups.ui.migration.GroupsV1MigrationInfoBottomSheetDia
 import su.sres.securesms.jobs.DirectorySyncJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.linkpreview.LinkPreview;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -115,7 +116,6 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment;
 import su.sres.securesms.revealable.ViewOnceMessageActivity;
 import su.sres.securesms.revealable.ViewOnceUtil;
-import su.sres.securesms.sharing.ShareActivity;
 import su.sres.securesms.sharing.ShareIntents;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.sms.OutgoingTextMessage;
@@ -135,7 +135,7 @@ import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.WindowUtil;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
 import su.sres.securesms.util.views.AdaptiveActionsToolbar;
@@ -248,14 +248,13 @@ public class ConversationFragment extends LoggingFragment {
 
     this.messageCountsViewModel = ViewModelProviders.of(requireActivity()).get(MessageCountsViewModel.class);
     this.conversationViewModel  = ViewModelProviders.of(requireActivity(), new ConversationViewModel.Factory()).get(ConversationViewModel.class);
-    conversationViewModel.getMessages().observe(this, list -> {
-      if (getListAdapter() != null && !list.getDataSource().isInvalid()) {
-        Log.i(TAG, "submitList");
-        getListAdapter().submitList(list);
-      } else if (list.getDataSource().isInvalid()) {
-        Log.i(TAG, "submitList skipped an invalid list");
+    conversationViewModel.getMessages().observe(this, messages -> {
+      ConversationAdapter adapter = getListAdapter();
+      if (adapter != null) {
+        getListAdapter().submitList(messages);
       }
     });
+
     conversationViewModel.getConversationMetadata().observe(this, this::presentConversationMetadata);
 
     conversationViewModel.getShowMentionsButton().observe(this, shouldShow -> {
@@ -505,6 +504,7 @@ public class ConversationFragment extends LoggingFragment {
     if (this.recipient != null && this.threadId != -1) {
       Log.d(TAG, "Initializing adapter for " + recipient.getId());
       ConversationAdapter adapter = new ConversationAdapter(this, GlideApp.with(this), locale, selectionClickListener, this.recipient.get());
+      adapter.setPagingController(conversationViewModel.getPagingController());
       list.setAdapter(adapter);
       setStickyHeaderDecoration(adapter);
       ConversationAdapter.initializePool(list.getRecycledViewPool());
@@ -819,7 +819,7 @@ public class ConversationFragment extends LoggingFragment {
 
                 if (mediaMessage.getSlideDeck().getTextSlide() != null && mediaMessage.getSlideDeck().getTextSlide().getUri() != null) {
                   try (InputStream stream = PartAuthority.getAttachmentStream(requireContext(), mediaMessage.getSlideDeck().getTextSlide().getUri())) {
-                    String fullBody = Util.readFullyAsString(stream);
+                    String fullBody = StreamUtil.readFullyAsString(stream);
                     shareIntentBuilder.setText(fullBody);
                   } catch (IOException e) {
                     Log.w(TAG, "Failed to read long message text when forwarding.");
@@ -1007,7 +1007,8 @@ public class ConversationFragment extends LoggingFragment {
   }
 
   private void moveToPosition(int position, @Nullable Runnable onMessageNotFound) {
-    conversationViewModel.onConversationDataAvailable(threadId, position);
+    Log.d(TAG, "moveToPosition(" + position + ")");
+    conversationViewModel.getPagingController().onDataNeededAroundIndex(position);
     snapToTopDataObserver.buildScrollPosition(position)
             .withOnPerformScroll(((layoutManager, p) ->
                     list.post(() -> {

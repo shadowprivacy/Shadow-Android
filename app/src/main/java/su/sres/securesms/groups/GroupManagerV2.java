@@ -43,7 +43,7 @@ import su.sres.securesms.database.model.databaseprotos.DecryptedGroupV2Context;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.v2.GroupCandidateHelper;
 import su.sres.securesms.groups.v2.processing.GroupsV2StateProcessor;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.OutgoingGroupUpdateMessage;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
@@ -764,6 +764,13 @@ final class GroupManagerV2 {
             } catch (GroupJoinAlreadyAMemberException e) {
                 Log.i(TAG, "Server reports that we are already a member of " + groupId);
                 alreadyAMember = true;
+            }
+
+            Optional<GroupDatabase.GroupRecord> unmigratedV1Group = groupDatabase.getGroupV1ByExpectedV2(groupId);
+
+            if (unmigratedV1Group.isPresent()) {
+                Log.i(TAG, "Group link was for a migrated V1 group we know about! Migrating it and using that as the base.");
+                GroupsV1MigrationUtil.performLocalMigration(context, unmigratedV1Group.get().getId().requireV1());
             }
 
             DecryptedGroup decryptedGroup = createPlaceholderGroup(joinInfo, requestToJoin);

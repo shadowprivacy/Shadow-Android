@@ -8,9 +8,11 @@ import androidx.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Pair;
 
-import net.sqlcipher.database.SQLiteDatabase;
+
 
 import org.greenrobot.eventbus.EventBus;
+
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.crypto.AttachmentSecret;
 import su.sres.securesms.crypto.ModernDecryptingPartInputStream;
 import su.sres.securesms.crypto.ModernEncryptingPartOutputStream;
@@ -18,21 +20,18 @@ import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.IncomingSticker;
 import su.sres.securesms.database.model.StickerPackRecord;
 import su.sres.securesms.database.model.StickerRecord;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
 import su.sres.securesms.stickers.BlessedPacks;
 import su.sres.securesms.stickers.StickerPackInstallEvent;
 import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.SqlUtil;
-import su.sres.securesms.util.Util;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -362,7 +361,7 @@ public class StickerDatabase extends Database {
         File                       partsDirectory = context.getDir(DIRECTORY, Context.MODE_PRIVATE);
         File                       file           = File.createTempFile("sticker", ".mms", partsDirectory);
         Pair<byte[], OutputStream> out            = ModernEncryptingPartOutputStream.createFor(attachmentSecret, file, false);
-        long                       length         = Util.copy(inputStream, out.second);
+        long                       length         = StreamUtil.copy(inputStream, out.second);
 
         return new FileInfo(file, length, out.first);
     }

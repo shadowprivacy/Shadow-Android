@@ -3,7 +3,7 @@ package su.sres.securesms.service.webrtc;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.events.WebRtcViewModel;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.signalservice.api.messages.calls.OfferMessage;

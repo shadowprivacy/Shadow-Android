@@ -6,7 +6,7 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 import su.sres.securesms.util.LRUCache;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.ArrayList;
 import java.util.Iterator;

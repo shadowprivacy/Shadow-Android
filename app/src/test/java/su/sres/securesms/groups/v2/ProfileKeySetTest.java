@@ -3,10 +3,9 @@ package su.sres.securesms.groups.v2;
 import org.junit.Test;
 import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.crypto.ProfileKeyUtil;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.testutil.LogRecorder;
 
-import java.util.Collection;
 import java.util.UUID;
 
 import edu.emory.mathcs.backport.java.util.Collections;

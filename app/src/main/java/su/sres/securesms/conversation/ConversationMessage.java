@@ -13,7 +13,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MentionUtil;
 import su.sres.securesms.database.model.Mention;
 import su.sres.securesms.database.model.MessageRecord;
-import su.sres.securesms.util.Conversions;
+import su.sres.core.util.Conversions;
 
 import java.security.MessageDigest;
 import java.util.Collections;

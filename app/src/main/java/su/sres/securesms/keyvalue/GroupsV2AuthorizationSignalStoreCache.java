@@ -10,7 +10,7 @@ import org.signal.zkgroup.auth.AuthCredentialResponse;
 import su.sres.securesms.database.model.databaseprotos.TemporalAuthCredentialResponse;
 import su.sres.securesms.database.model.databaseprotos.TemporalAuthCredentialResponses;
 import su.sres.securesms.groups.GroupsV2Authorization;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.Collections;
 import java.util.HashMap;

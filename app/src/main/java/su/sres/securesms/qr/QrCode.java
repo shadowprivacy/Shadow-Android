@@ -7,7 +7,7 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;

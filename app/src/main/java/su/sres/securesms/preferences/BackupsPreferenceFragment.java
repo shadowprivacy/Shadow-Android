@@ -18,7 +18,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.text.HtmlCompat;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 
 import org.greenrobot.eventbus.EventBus;
@@ -30,7 +29,7 @@ import su.sres.securesms.backup.FullBackupBase;
 import su.sres.securesms.database.NoExternalStorageException;
 import su.sres.securesms.jobs.LocalBackupJob;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.util.BackupUtil;
 import su.sres.securesms.util.StorageUtil;

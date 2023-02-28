@@ -12,19 +12,14 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.groups.ui.GroupChangeErrorCallback;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.profiles.spoofing.ReviewUtil;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.recipients.RecipientUtil;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.SingleLiveEvent;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.livedata.LiveDataTriple;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 

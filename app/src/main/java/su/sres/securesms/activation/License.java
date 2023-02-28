@@ -4,8 +4,6 @@
 
 package su.sres.securesms.activation;
 
-import android.annotation.SuppressLint;
-
 import javax.crypto.Cipher;
 import java.lang.reflect.Modifier;
 import java.nio.BufferUnderflowException;
@@ -13,7 +11,6 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.PublicKey;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -23,10 +20,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
-
-import su.sres.securesms.logging.Log;
-
-import com.annimon.stream.Stream;
 
 /**
  * A license describes the rights that a certain user has. The rights are represented by {@link Feature}s.

@@ -3,7 +3,7 @@ package su.sres.securesms.groups.v2.processing;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.signalservice.api.groupsv2.DecryptedGroupUtil;
 import su.sres.signalservice.api.groupsv2.GroupChangeReconstruct;
 import su.sres.signalservice.api.groupsv2.GroupChangeUtil;
@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 final class GroupStateMapper {
 

@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.preference.PreferenceDataStore;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.SignalUncaughtExceptionHandler;
+import su.sres.securesms.util.SignalUncaughtExceptionHandler;
 
 /**
  * Simple, encrypted key-value store.

@@ -2,7 +2,6 @@ package su.sres.securesms.messages;
 
 import android.app.Service;
 import androidx.lifecycle.DefaultLifecycleObserver;
-import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
 
@@ -17,14 +16,11 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
-import su.sres.securesms.jobmanager.ConstraintObserver;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
-import su.sres.securesms.jobmanager.impl.NetworkConstraintObserver;
-import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.R;
+import su.sres.securesms.jobs.PushDecryptDrainedJob;
 import su.sres.securesms.messages.IncomingMessageProcessor.Processor;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.notifications.NotificationChannels;
@@ -37,6 +33,7 @@ import su.sres.signalservice.api.SignalServiceMessagePipe;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.messages.SignalServiceEnvelope;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -54,16 +51,17 @@ public class IncomingMessageObserver {
 
     private final Context                    context;
     private final SignalServiceNetworkAccess networkAccess;
-    private final List<Runnable> websocketDrainedListeners;
+    private final List<Runnable> decryptionDrainedListeners;
 
     private boolean appVisible;
 
-    private volatile boolean websocketDrained;
+    private volatile boolean networkDrained;
+    private volatile boolean decryptionDrained;
 
     public IncomingMessageObserver(@NonNull Context context) {
-        this.context                   = context;
-        this.networkAccess             = ApplicationDependencies.getSignalServiceNetworkAccess();
-        this.websocketDrainedListeners = new CopyOnWriteArrayList<>();
+        this.context                    = context;
+        this.networkAccess              = ApplicationDependencies.getSignalServiceNetworkAccess();
+        this.decryptionDrainedListeners = new CopyOnWriteArrayList<>();
 
         new MessageRetrievalThread().start();
 
@@ -89,7 +87,8 @@ public class IncomingMessageObserver {
                 synchronized (IncomingMessageObserver.this) {
                     if (!NetworkConstraint.isMet(context)) {
                         Log.w(TAG, "Lost network connection. Shutting down our websocket connections and resetting the drained state.");
-                        websocketDrained = false;
+                        networkDrained    = false;
+                        decryptionDrained = false;
                         shutdown(pipe, unidentifiedPipe);
                     }
                     IncomingMessageObserver.this.notifyAll();
@@ -98,15 +97,31 @@ public class IncomingMessageObserver {
         }, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
     }
 
-    public synchronized void addWebsocketDrainedListener(@NonNull Runnable listener) {
-        websocketDrainedListeners.add(listener);
-        if (websocketDrained) {
+    public synchronized void addDecryptionDrainedListener(@NonNull Runnable listener) {
+        decryptionDrainedListeners.add(listener);
+        if (decryptionDrained) {
             listener.run();
         }
     }
 
-    public boolean isWebsocketDrained() {
-        return websocketDrained;
+    public boolean isDecryptionDrained() {
+        return decryptionDrained;
+    }
+
+    public void notifyDecryptionsDrained() {
+        List<Runnable> listenersToTrigger = new ArrayList<>(decryptionDrainedListeners.size());
+
+        synchronized (this) {
+            if (networkDrained && !decryptionDrained) {
+                Log.i(TAG, "Decryptions newly drained.");
+                decryptionDrained = true;
+                listenersToTrigger.addAll(decryptionDrainedListeners);
+            }
+        }
+
+        for (Runnable listener : listenersToTrigger) {
+            listener.run();
+        }
     }
 
     private synchronized void onAppForegrounded() {
@@ -203,13 +218,10 @@ public class IncomingMessageObserver {
                                 }
                             });
 
-                            if (!result.isPresent() && !websocketDrained) {
-                                Log.i(TAG, "Websocket was newly-drained. Triggering listeners.");
-                                websocketDrained = true;
-
-                                for (Runnable listener : websocketDrainedListeners) {
-                                    listener.run();
-                                }
+                            if (!result.isPresent() && !networkDrained) {
+                                Log.i(TAG, "Network was newly-drained. Enqueuing a job to listen for decryption draining.");
+                                networkDrained = true;
+                                ApplicationDependencies.getJobManager().add(new PushDecryptDrainedJob());
                             }
                         } catch (TimeoutException e) {
                             Log.w(TAG, "Application level read timeout...");

@@ -1,12 +1,12 @@
 package su.sres.securesms.util;
 
+import android.os.Build;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
 import com.annimon.stream.Stream;
-import com.google.android.collect.Sets;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,10 +15,9 @@ import su.sres.securesms.BuildConfig;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.SelectionLimits;
 import su.sres.securesms.jobs.RefreshAttributesJob;
-import su.sres.securesms.jobs.RefreshOwnProfileJob;
 import su.sres.securesms.jobs.RemoteConfigRefreshJob;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -61,10 +60,10 @@ public final class FeatureFlags {
     private static final String USER_LOGIN_PRIVACY_VERSION = "android.UserLoginPrivacyVersion";
     private static final String CLIENT_EXPIRATION            = "android.clientExpiration";
     private static final String VIEWED_RECEIPTS              = "android.viewed.receipts";
-    private static final String GROUP_CALLING                = "android.groupsv2.calling";
-    private static final String GV1_AUTO_MIGRATE             = "android.groupsV1Migration.auto.3";
+    private static final String GROUP_CALLING                = "android.groupsv2.calling.2";
     private static final String GV1_MANUAL_MIGRATE           = "android.groupsV1Migration.manual";
     private static final String GV1_FORCED_MIGRATE           = "android.groupsV1Migration.forced";
+    private static final String GV1_MIGRATION_JOB            = "android.groupsV1Migration.job";
     private static final String SEND_VIEWED_RECEIPTS         = "android.sendViewedReceipts";
 
     /**
@@ -81,7 +80,7 @@ public final class FeatureFlags {
             VERIFY_V2,
             CLIENT_EXPIRATION,
             VIEWED_RECEIPTS,
-            GV1_AUTO_MIGRATE,
+            GV1_MIGRATION_JOB,
             GV1_MANUAL_MIGRATE,
             GV1_FORCED_MIGRATE,
             GROUP_CALLING,
@@ -108,7 +107,9 @@ public final class FeatureFlags {
     private static final Set<String> HOT_SWAPPABLE = SetUtil.newHashSet(
             ATTACHMENTS_V3,
             VERIFY_V2,
-            CLIENT_EXPIRATION
+            CLIENT_EXPIRATION,
+            GROUP_CALLING,
+            GV1_MIGRATION_JOB
     );
 
     /**
@@ -130,7 +131,6 @@ public final class FeatureFlags {
      * desired test state.
      */
     private static final Map<String, OnFlagChange> FLAG_CHANGE_LISTENERS = new HashMap<String, OnFlagChange>() {{
-        put(GV1_AUTO_MIGRATE, change -> ApplicationDependencies.getJobManager().add(new RefreshAttributesJob()));
     }};
 
     private static final Map<String, Object> REMOTE_VALUES = new TreeMap<>();
@@ -225,22 +225,22 @@ public final class FeatureFlags {
 
     /** Whether or not group calling is enabled. */
     public static boolean groupCalling() {
-        return getBoolean(GROUP_CALLING, false);
+        return Build.VERSION.SDK_INT > 19 && getBoolean(GROUP_CALLING, false);
     }
 
-    /** Whether or not auto-migration from GV1->GV2 is enabled. */
-    public static boolean groupsV1AutoMigration() {
-        return getBoolean(GV1_AUTO_MIGRATE, false);
+    /** Whether or not we should run the job to proactively migrate groups. */
+    public static boolean groupsV1MigrationJob() {
+        return getBoolean(GV1_MIGRATION_JOB, false);
     }
 
     /** Whether or not manual migration from GV1->GV2 is enabled. */
     public static boolean groupsV1ManualMigration() {
-        return getBoolean(GV1_MANUAL_MIGRATE, false) && groupsV1AutoMigration();
+        return getBoolean(GV1_MANUAL_MIGRATE, false);
     }
 
     /** Whether or not forced migration from GV1->GV2 is enabled. */
     public static boolean groupsV1ForcedMigration() {
-        return getBoolean(GV1_FORCED_MIGRATE, false) && groupsV1ManualMigration() && groupsV1AutoMigration();
+        return getBoolean(GV1_FORCED_MIGRATE, false) && groupsV1ManualMigration();
     }
 
     /** Whether or not to send viewed receipts. */

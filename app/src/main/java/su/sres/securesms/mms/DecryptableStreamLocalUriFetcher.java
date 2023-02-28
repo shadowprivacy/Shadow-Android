@@ -4,7 +4,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import com.bumptech.glide.load.data.StreamLocalUriFetcher;
 

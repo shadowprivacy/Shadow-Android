@@ -17,7 +17,6 @@
 package su.sres.securesms.contacts;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.provider.ContactsContract;
 import androidx.annotation.NonNull;
@@ -37,13 +36,12 @@ import su.sres.securesms.components.RecyclerViewFastScroller.FastScrollAdapter;
 import su.sres.securesms.contacts.ContactSelectionListAdapter.HeaderViewHolder;
 import su.sres.securesms.contacts.ContactSelectionListAdapter.ViewHolder;
 import su.sres.securesms.database.CursorRecyclerViewAdapter;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.StickyHeaderDecoration.StickyHeaderAdapter;
 import su.sres.securesms.util.Util;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;

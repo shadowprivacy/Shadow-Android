@@ -12,14 +12,14 @@ import org.signal.ringrtc.CallId;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.WebRtcViewModel;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.ringrtc.CallState;
 import su.sres.securesms.ringrtc.CameraState;
 import su.sres.securesms.ringrtc.IceCandidateParcel;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.WebRtcData.CallMetadata;
-import su.sres.securesms.service.webrtc.WebRtcData.GroupCallUpdateMetadata;
 import su.sres.securesms.service.webrtc.WebRtcData.HttpData;
 import su.sres.securesms.service.webrtc.WebRtcData.OfferMetadata;
 import su.sres.securesms.service.webrtc.WebRtcData.ReceivedOfferMetadata;
@@ -62,10 +62,12 @@ import static su.sres.securesms.service.WebRtcCallService.ACTION_ENDED_REMOTE_HA
 import static su.sres.securesms.service.WebRtcCallService.ACTION_ENDED_SIGNALING_FAILURE;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_ENDED_TIMEOUT;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_FLIP_CAMERA;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_APPROVE_SAFETY_CHANGE;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_CALL_ENDED;
-import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_CALL_UPDATE_MESSAGE;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_CALL_PEEK;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_JOINED_MEMBERSHIP_CHANGED;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_LOCAL_DEVICE_STATE_CHANGED;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_MESSAGE_SENT_ERROR;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_REMOTE_DEVICE_STATE_CHANGED;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_REQUEST_MEMBERSHIP_PROOF;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_GROUP_REQUEST_UPDATE_MEMBERS;
@@ -107,9 +109,9 @@ import static su.sres.securesms.service.WebRtcCallService.ACTION_TURN_SERVER_UPD
 import static su.sres.securesms.service.WebRtcCallService.ACTION_WIRED_HEADSET_CHANGE;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_ANSWER_WITH_VIDEO;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_BLUETOOTH;
-import static su.sres.securesms.service.WebRtcCallService.EXTRA_CAMERA_STATE;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_IS_ALWAYS_TURN;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_MUTE;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_RECIPIENT_IDS;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_RESULT_RECEIVER;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_SPEAKER;
 import static su.sres.securesms.service.webrtc.WebRtcData.AnswerMetadata;
@@ -240,7 +242,9 @@ public abstract class WebRtcActionProcessor {
             case ACTION_GROUP_REQUEST_UPDATE_MEMBERS:        return handleGroupRequestUpdateMembers(currentState);
             case ACTION_GROUP_UPDATE_RENDERED_RESOLUTIONS:   return handleUpdateRenderedResolutions(currentState);
             case ACTION_GROUP_CALL_ENDED:                    return handleGroupCallEnded(currentState, getGroupCallHash(intent), getGroupCallEndReason(intent));
-            case ACTION_GROUP_CALL_UPDATE_MESSAGE:           return handleGroupCallUpdateMessage(currentState, GroupCallUpdateMetadata.fromIntent(intent));
+            case ACTION_GROUP_CALL_PEEK:                     return handleGroupCallPeek(currentState, getRemotePeer(intent));
+            case ACTION_GROUP_MESSAGE_SENT_ERROR:            return handleGroupMessageSentError(currentState, getRemotePeer(intent), getErrorCallState(intent), getErrorIdentityKey(intent));
+            case ACTION_GROUP_APPROVE_SAFETY_CHANGE:         return handleGroupApproveSafetyNumberChange(currentState, RecipientId.fromSerializedList(intent.getStringExtra(EXTRA_RECIPIENT_IDS)));
 
             case ACTION_HTTP_SUCCESS:                        return handleHttpSuccess(currentState, HttpData.fromIntent(intent));
             case ACTION_HTTP_FAILURE:                        return handleHttpFailure(currentState, HttpData.fromIntent(intent));
@@ -725,8 +729,24 @@ public abstract class WebRtcActionProcessor {
         return currentState;
     }
 
-    protected @NonNull WebRtcServiceState handleGroupCallUpdateMessage(@NonNull WebRtcServiceState currentState, @NonNull WebRtcData.GroupCallUpdateMetadata groupCallUpdateMetadata) {
-        webRtcInteractor.peekGroupCall(groupCallUpdateMetadata);
+    protected @NonNull WebRtcServiceState handleGroupCallPeek(@NonNull WebRtcServiceState currentState, @NonNull RemotePeer remotePeer) {
+        webRtcInteractor.peekGroupCall(remotePeer.getId());
+        return currentState;
+    }
+
+    protected @NonNull WebRtcServiceState handleGroupMessageSentError(@NonNull WebRtcServiceState currentState,
+                                                                      @NonNull RemotePeer remotePeer,
+                                                                      @NonNull WebRtcViewModel.State errorCallState,
+                                                                      @NonNull Optional<IdentityKey> identityKey)
+    {
+        Log.i(tag, "handleGroupMessageSentError not processed");
+        return currentState;
+    }
+
+    protected @NonNull WebRtcServiceState handleGroupApproveSafetyNumberChange(@NonNull WebRtcServiceState currentState,
+                                                                               @NonNull List<RecipientId> recipientIds)
+    {
+        Log.i(tag, "handleGroupApproveSafetyNumberChange not processed");
         return currentState;
     }
 

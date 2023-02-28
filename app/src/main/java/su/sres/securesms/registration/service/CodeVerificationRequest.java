@@ -31,14 +31,14 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.RotateCertificateJob;
 import su.sres.securesms.lock.RegistrationLockReminders;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.push.AccountManagerFactory;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.service.DirectoryRefreshListener;
 import su.sres.securesms.service.RotateSignedPreKeyListener;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import org.greenrobot.eventbus.EventBus;
 import org.whispersystems.libsignal.IdentityKeyPair;

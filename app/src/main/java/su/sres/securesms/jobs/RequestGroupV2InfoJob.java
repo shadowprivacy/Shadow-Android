@@ -8,8 +8,8 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.v2.processing.GroupsV2StateProcessor;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.jobmanager.impl.WebsocketDrainedConstraint;
-import su.sres.securesms.logging.Log;
+import su.sres.securesms.jobmanager.impl.DecryptionsDrainedConstraint;
+import su.sres.core.util.logging.Log;
 
 /**
  * Schedules a {@link RequestGroupV2InfoWorkerJob} to happen after message queues are drained.
@@ -33,7 +33,7 @@ public final class RequestGroupV2InfoJob extends BaseJob {
     public RequestGroupV2InfoJob(@NonNull GroupId.V2 groupId, int toRevision) {
         this(new Parameters.Builder()
                         .setQueue("RequestGroupV2InfoSyncJob")
-                        .addConstraint(WebsocketDrainedConstraint.KEY)
+                        .addConstraint(DecryptionsDrainedConstraint.KEY)
                         .setMaxAttempts(Parameters.UNLIMITED)
                         .build(),
                 groupId,

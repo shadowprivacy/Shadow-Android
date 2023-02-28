@@ -45,7 +45,7 @@ import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.VideoSlide;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.video.exo.AttachmentDataSourceFactory;

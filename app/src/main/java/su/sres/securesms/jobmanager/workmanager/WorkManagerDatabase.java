@@ -13,7 +13,7 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.jobmanager.persistence.ConstraintSpec;
 import su.sres.securesms.jobmanager.persistence.FullSpec;
 import su.sres.securesms.jobmanager.persistence.JobSpec;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.Collections;
 import java.util.LinkedList;

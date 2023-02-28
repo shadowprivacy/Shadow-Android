@@ -5,14 +5,11 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.LicenseManagementJob;
-import su.sres.securesms.jobs.ProfileUploadJob;
-import su.sres.securesms.jobs.PushProcessMessageJob;
 import su.sres.securesms.keyvalue.MiscellaneousValues;
 import su.sres.securesms.keyvalue.ServiceConfigurationValues;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.TextSecurePreferences;
 
 /**

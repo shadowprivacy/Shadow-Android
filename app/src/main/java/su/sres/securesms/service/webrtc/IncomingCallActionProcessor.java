@@ -11,7 +11,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.WebRtcViewModel;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.notifications.DoNotDisturbUtil;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.ringrtc.CallState;

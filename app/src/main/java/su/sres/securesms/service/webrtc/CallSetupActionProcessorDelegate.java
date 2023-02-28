@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.CallManager;
 import su.sres.securesms.events.WebRtcViewModel;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.ringrtc.CallState;
 import su.sres.securesms.ringrtc.Camera;
 import su.sres.securesms.ringrtc.RemotePeer;

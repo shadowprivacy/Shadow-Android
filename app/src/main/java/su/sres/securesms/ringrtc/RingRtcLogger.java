@@ -1,6 +1,6 @@
 package su.sres.securesms.ringrtc;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 public class RingRtcLogger implements org.signal.ringrtc.Log.Logger {
     @Override

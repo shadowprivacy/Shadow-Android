@@ -4,18 +4,15 @@ import android.app.Application;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.Debouncer;
 import su.sres.securesms.util.SingleLiveEvent;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.UsernameUtil;
 import su.sres.securesms.util.UsernameUtil.InvalidReason;
 import su.sres.securesms.util.Util;

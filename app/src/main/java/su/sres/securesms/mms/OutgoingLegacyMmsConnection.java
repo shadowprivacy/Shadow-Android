@@ -22,7 +22,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import com.google.android.mms.pdu_alt.PduParser;
 import com.google.android.mms.pdu_alt.SendConf;

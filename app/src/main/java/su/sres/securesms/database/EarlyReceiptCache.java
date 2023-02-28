@@ -2,13 +2,10 @@ package su.sres.securesms.database;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.logging.Log;
-
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.LRUCache;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 public class EarlyReceiptCache {

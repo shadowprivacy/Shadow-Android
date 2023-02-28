@@ -5,7 +5,7 @@ import android.os.Bundle;
 import androidx.core.app.ActivityOptionsCompat;
 
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.Menu;

@@ -26,8 +26,7 @@ import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageProxy;
 
-import su.sres.securesms.logging.Log;
-import su.sres.securesms.mediasend.LegacyCameraModels;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.BitmapDecodingException;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.Stopwatch;

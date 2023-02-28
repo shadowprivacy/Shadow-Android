@@ -6,13 +6,12 @@ import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.components.webrtc.BroadcastVideoSink;
-import su.sres.securesms.components.webrtc.TextureViewRenderer;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.ringrtc.CameraState;
-import org.webrtc.SurfaceViewRenderer;
-import org.whispersystems.libsignal.IdentityKey;
+import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 
 import java.util.List;
+import java.util.Set;
 
 public class WebRtcViewModel {
 
@@ -95,27 +94,26 @@ public class WebRtcViewModel {
 
   private final CallParticipant       localParticipant;
   private final List<CallParticipant> remoteParticipants;
+  private final Set<RecipientId> identityChangedRecipients;
 
-  public WebRtcViewModel(@NonNull State state,
-                         @NonNull GroupCallState groupState,
-                         @NonNull Recipient recipient,
-                         @NonNull CameraState localCameraState,
-                         @Nullable BroadcastVideoSink localSink,
-                         boolean isBluetoothAvailable,
-                         boolean isMicrophoneEnabled,
-                         boolean isRemoteVideoOffer,
-                         long callConnectedTime,
-                         @NonNull List<CallParticipant> remoteParticipants)
-  {
-    this.state                = state;
-    this.groupState           = groupState;
-    this.recipient            = recipient;
-    this.isBluetoothAvailable = isBluetoothAvailable;
-    this.isRemoteVideoOffer   = isRemoteVideoOffer;
-    this.callConnectedTime    = callConnectedTime;
-    this.remoteParticipants   = remoteParticipants;
+  private final long                  remoteDevicesCount;
+  private final Long                  participantLimit;
 
-    localParticipant = CallParticipant.createLocal(localCameraState, localSink != null ? localSink : new BroadcastVideoSink(null), isMicrophoneEnabled);
+  public WebRtcViewModel(@NonNull WebRtcServiceState state) {
+    this.state                     = state.getCallInfoState().getCallState();
+    this.groupState                = state.getCallInfoState().getGroupCallState();
+    this.recipient                 = state.getCallInfoState().getCallRecipient();
+    this.isRemoteVideoOffer        = state.getCallSetupState().isRemoteVideoOffer();
+    this.isBluetoothAvailable      = state.getLocalDeviceState().isBluetoothAvailable();
+    this.remoteParticipants        = state.getCallInfoState().getRemoteCallParticipants();
+    this.identityChangedRecipients = state.getCallInfoState().getIdentityChangedRecipients();
+    this.callConnectedTime         = state.getCallInfoState().getCallConnectedTime();
+    this.remoteDevicesCount        = state.getCallInfoState().getRemoteDevicesCount();
+    this.participantLimit          = state.getCallInfoState().getParticipantLimit();
+    this.localParticipant          = CallParticipant.createLocal(state.getLocalDeviceState().getCameraState(),
+            state.getVideoState().getLocalSink() != null ? state.getVideoState().getLocalSink()
+                    : new BroadcastVideoSink(null),
+            state.getLocalDeviceState().isMicrophoneEnabled());
   }
 
   public @NonNull State getState() {
@@ -154,7 +152,20 @@ public class WebRtcViewModel {
     return remoteParticipants;
   }
 
-  @Override public @NonNull String toString() {
+  public @NonNull Set<RecipientId> getIdentityChangedParticipants() {
+    return identityChangedRecipients;
+  }
+
+  public long getRemoteDevicesCount() {
+    return remoteDevicesCount;
+  }
+
+  public @Nullable Long getParticipantLimit() {
+    return participantLimit;
+  }
+
+  @Override
+  public @NonNull String toString() {
     return "WebRtcViewModel{" +
             "state=" + state +
             ", recipient=" + recipient.getId() +
@@ -163,6 +174,9 @@ public class WebRtcViewModel {
             ", callConnectedTime=" + callConnectedTime +
             ", localParticipant=" + localParticipant +
             ", remoteParticipants=" + remoteParticipants +
+            ", identityChangedRecipients=" + identityChangedRecipients +
+            ", remoteDevicesCount=" + remoteDevicesCount +
+            ", participantLimit=" + participantLimit +
             '}';
   }
 }

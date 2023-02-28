@@ -13,13 +13,12 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.BubbleUtil;
 import su.sres.securesms.util.ConversationUtil;
 import su.sres.securesms.util.ServiceUtil;
 
-import java.util.Collection;
 import java.util.Objects;
 
 /**

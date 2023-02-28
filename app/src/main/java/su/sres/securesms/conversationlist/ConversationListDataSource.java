@@ -15,13 +15,13 @@ import su.sres.securesms.conversationlist.model.Conversation;
 import su.sres.securesms.conversationlist.model.ConversationReader;
 import su.sres.securesms.database.DatabaseContentProviders;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.DatabaseObserver;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.ThrottledDebouncer;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.paging.Invalidator;
 import su.sres.securesms.util.paging.SizeFixResult;
 
@@ -34,8 +34,6 @@ abstract class ConversationListDataSource extends PositionalDataSource<Conversat
 
     public static final Executor EXECUTOR = SignalExecutors.newFixedLifoThreadExecutor("signal-conversation-list", 1, 1);
 
-    private static final ThrottledDebouncer THROTTLER = new ThrottledDebouncer(500);
-
     private static final String TAG = Log.tag(ConversationListDataSource.class);
 
     protected final ThreadDatabase threadDatabase;
@@ -43,22 +41,20 @@ abstract class ConversationListDataSource extends PositionalDataSource<Conversat
     protected ConversationListDataSource(@NonNull Context context, @NonNull Invalidator invalidator) {
         this.threadDatabase = DatabaseFactory.getThreadDatabase(context);
 
-        ContentObserver contentObserver = new ContentObserver(null) {
+        DatabaseObserver.Observer observer = new DatabaseObserver.Observer() {
             @Override
-            public void onChange(boolean selfChange) {
-                THROTTLER.publish(() -> {
-                    invalidate();
-                    context.getContentResolver().unregisterContentObserver(this);
-                });
+            public void onChanged() {
+                invalidate();
+                ApplicationDependencies.getDatabaseObserver().unregisterObserver(this);
             }
         };
 
         invalidator.observe(() -> {
             invalidate();
-            context.getContentResolver().unregisterContentObserver(contentObserver);
+            ApplicationDependencies.getDatabaseObserver().unregisterObserver(observer);
         });
 
-        context.getContentResolver().registerContentObserver(DatabaseContentProviders.ConversationList.CONTENT_URI,  true, contentObserver);
+        ApplicationDependencies.getDatabaseObserver().registerConversationListObserver(observer);
     }
 
     private static ConversationListDataSource create(@NonNull Context context, @NonNull Invalidator invalidator, boolean isArchived) {

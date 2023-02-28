@@ -9,12 +9,12 @@ import androidx.annotation.WorkerThread;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.logsubmit.util.Scrubber;
 import su.sres.securesms.net.StandardUserAgentInterceptor;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.push.SignalServiceTrustStore;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
@@ -22,9 +22,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLContext;

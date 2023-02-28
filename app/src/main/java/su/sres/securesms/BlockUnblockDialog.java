@@ -11,9 +11,6 @@ import androidx.lifecycle.Lifecycle;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.recipients.RecipientUtil;
-import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 
 /**

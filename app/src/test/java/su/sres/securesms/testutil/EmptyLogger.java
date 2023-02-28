@@ -1,6 +1,6 @@
 package su.sres.securesms.testutil;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 public class EmptyLogger extends Log.Logger {
     @Override

@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.Conversions;
+import su.sres.core.util.Conversions;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;

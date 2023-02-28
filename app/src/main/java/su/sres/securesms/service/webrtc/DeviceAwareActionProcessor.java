@@ -4,7 +4,7 @@ import android.media.AudioManager;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.ringrtc.CameraState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.util.ServiceUtil;

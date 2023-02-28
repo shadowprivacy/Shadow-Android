@@ -28,7 +28,7 @@ import androidx.annotation.RequiresApi;
 import androidx.annotation.StringDef;
 import androidx.annotation.WorkerThread;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.media.MediaInput;
 
 import java.io.File;

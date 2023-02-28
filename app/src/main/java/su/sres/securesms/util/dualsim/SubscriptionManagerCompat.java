@@ -9,7 +9,7 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.ServiceUtil;
 import org.whispersystems.libsignal.util.guava.Function;
 import org.whispersystems.libsignal.util.guava.Optional;

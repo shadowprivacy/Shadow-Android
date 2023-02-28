@@ -1,0 +1,50 @@
+ext.flavorConfig = {
+    flavorDimensions 'distribution', 'environment'
+
+    productFlavors {
+        play {
+            dimension 'distribution'
+            ext.websiteUpdateUrl = "null"
+            buildConfigField "boolean", "PLAY_STORE_DISABLED", "false"
+            buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
+        }
+
+        website {
+            dimension 'distribution'
+            isDefault true
+            ext.websiteUpdateUrl = "https://shadowupdate.sres.su:19080/android"
+            buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
+            buildConfigField "String", "NOPLAY_UPDATE_URL", "\"$ext.websiteUpdateUrl\""
+        }
+
+        internal {
+            dimension 'distribution'
+            ext.websiteUpdateUrl = "null"
+            buildConfigField "boolean", "PLAY_STORE_DISABLED", "false"
+            buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
+            buildConfigField "int", "TRACE_EVENT_MAX", "30_000"
+        }
+
+        prod {
+            dimension 'environment'
+            isDefault true
+        }
+
+        staging {
+            dimension 'environment'
+            myApplicationIdSuffix ".staging"
+        }
+    }
+
+    productFlavors.all { flavor ->
+        if (flavor.hasProperty('myApplicationIdSuffix') && isApplicationProject()) {
+            flavor.applicationIdSuffix = flavor.myApplicationIdSuffix
+        }
+    }
+}
+
+def isApplicationProject() {
+    return project.android.class.simpleName.startsWith('BaseAppModuleExtension')
+    // in AGP 3.1.x with library modules instead of feature modules:
+    // return project.android instanceof com.android.build.gradle.AppExtension
+}

@@ -12,7 +12,7 @@ import android.provider.ContactsContract;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.text.TextUtils;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.util.BitmapDecodingException;

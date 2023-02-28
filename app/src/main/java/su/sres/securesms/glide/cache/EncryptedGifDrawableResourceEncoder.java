@@ -2,7 +2,7 @@ package su.sres.securesms.glide.cache;
 
 
 import androidx.annotation.NonNull;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import com.bumptech.glide.load.EncodeStrategy;
 import com.bumptech.glide.load.Options;

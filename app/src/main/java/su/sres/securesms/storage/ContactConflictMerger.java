@@ -5,7 +5,7 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.push.SignalServiceAddress;

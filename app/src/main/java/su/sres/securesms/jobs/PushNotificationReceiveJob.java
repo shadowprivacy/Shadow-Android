@@ -9,7 +9,7 @@ import su.sres.securesms.messages.RestStrategy;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
@@ -25,7 +25,7 @@ public class PushNotificationReceiveJob extends BaseJob {
             .addConstraint(NetworkConstraint.KEY)
             .setQueue("__notification_received")
             .setMaxAttempts(3)
-            .setMaxInstances(1)
+            .setMaxInstancesForFactory(1)
             .build());
     setContext(context);
   }

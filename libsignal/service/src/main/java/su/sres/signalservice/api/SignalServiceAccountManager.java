@@ -165,8 +165,8 @@ public class SignalServiceAccountManager {
         }
     }
 
-    public void selfUnregister() throws IOException {
-        this.pushServiceSocket.selfDeleteAccount();
+    public void deleteAccount() throws IOException {
+        this.pushServiceSocket.deleteAccount();
     }
 
     /**

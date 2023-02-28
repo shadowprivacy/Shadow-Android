@@ -7,11 +7,12 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 import androidx.core.util.Consumer;
 
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.groups.GroupChangeException;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
@@ -46,7 +47,7 @@ class EditGroupProfileRepository implements EditProfileRepository {
 
             if (AvatarHelper.hasAvatar(context, recipientId)) {
                 try {
-                    return Util.readFully(AvatarHelper.getAvatar(context, recipientId));
+                    return StreamUtil.readFully(AvatarHelper.getAvatar(context, recipientId));
                 } catch (IOException e) {
                     Log.w(TAG, e);
                     return null;

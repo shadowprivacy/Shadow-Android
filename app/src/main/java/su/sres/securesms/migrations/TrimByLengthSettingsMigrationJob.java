@@ -9,7 +9,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import static su.sres.securesms.keyvalue.SettingsValues.THREAD_TRIM_ENABLED;
 import static su.sres.securesms.keyvalue.SettingsValues.THREAD_TRIM_LENGTH;

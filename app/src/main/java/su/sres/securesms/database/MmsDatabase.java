@@ -19,7 +19,6 @@ package su.sres.securesms.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.net.Uri;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,7 +30,6 @@ import com.annimon.stream.Stream;
 import com.google.android.mms.pdu_alt.NotificationInd;
 import com.google.android.mms.pdu_alt.PduHeaders;
 
-import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteStatement;
 
 import org.json.JSONArray;
@@ -60,7 +58,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupMigrationMembershipChange;
 import su.sres.securesms.jobs.TrimThreadJob;
 import su.sres.securesms.linkpreview.LinkPreview;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.IncomingMediaMessage;
 import su.sres.securesms.mms.MessageGroupContext;
 import su.sres.securesms.mms.MmsException;
@@ -85,7 +83,6 @@ import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -472,13 +469,27 @@ public class MmsDatabase extends MessageDatabase {
     }
 
     @Override
-    public @NonNull void insertOrUpdateGroupCall(@NonNull RecipientId groupRecipientId,
-                                                 @NonNull RecipientId sender,
-                                                 long timestamp,
-                                                 @Nullable String messageGroupCallEraId,
-                                                 @Nullable String peekGroupCallEraId,
-                                                 @NonNull Collection<UUID> peekJoinedUuids)
+    public void insertOrUpdateGroupCall(@NonNull RecipientId groupRecipientId,
+                                        @NonNull RecipientId sender,
+                                        long timestamp,
+                                        @Nullable String peekGroupCallEraId,
+                                        @NonNull Collection<UUID> peekJoinedUuids,
+                                        boolean isCallFull)
     {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void insertOrUpdateGroupCall(@NonNull RecipientId groupRecipientId,
+                                        @NonNull RecipientId sender,
+                                        long timestamp,
+                                        @Nullable String messageGroupCallEraId)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean updatePreviousGroupCall(long threadId, @Nullable String peekGroupCallEraId, @NonNull Collection<UUID> peekJoinedUuids, boolean isCallFull) {
         throw new UnsupportedOperationException();
     }
 
@@ -1296,7 +1307,6 @@ public class MmsDatabase extends MessageDatabase {
         }
 
         notifyConversationListeners(threadId);
-        ApplicationDependencies.getJobManager().add(new TrimThreadJob(threadId));
 
         return Optional.of(new InsertResult(messageId, threadId));
     }

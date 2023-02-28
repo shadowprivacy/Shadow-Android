@@ -15,10 +15,10 @@ import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.MissingRecipientException;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.ThreadRecord;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.LRUCache;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.ArrayList;
 import java.util.Collection;

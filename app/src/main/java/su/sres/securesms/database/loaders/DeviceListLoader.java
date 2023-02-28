@@ -8,7 +8,7 @@ import com.annimon.stream.Stream;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.devicelist.Device;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.AsyncLoader;
 import su.sres.securesms.util.Base64;
 import org.whispersystems.libsignal.InvalidKeyException;

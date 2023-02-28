@@ -14,7 +14,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.service.GenericForegroundService;
 import su.sres.securesms.service.NotificationController;
@@ -116,6 +116,7 @@ public final class LocalBackupJobApi29 extends BaseJob {
                 }
 
             } catch (IOException e) {
+                Log.w(TAG, "Error during backup!", e);
                 BackupFileIOError.postNotificationForException(context, e, getRunAttempt());
                 throw e;
             } finally {

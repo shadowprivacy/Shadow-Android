@@ -26,7 +26,8 @@ import androidx.core.app.ActivityCompat;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.StreamUtil;
+import su.sres.core.util.logging.Log;
 
 import org.apache.http.Header;
 import org.apache.http.auth.AuthScope;
@@ -46,7 +47,6 @@ import su.sres.securesms.database.ApnDatabase;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TelephonyUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.BufferedInputStream;
@@ -155,7 +155,7 @@ public abstract class LegacyMmsConnection {
   protected static byte[] parseResponse(InputStream is) throws IOException {
     InputStream           in   = new BufferedInputStream(is);
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    Util.copy(in, baos);
+    StreamUtil.copy(in, baos);
 
     Log.i(TAG, "Received full server response, " + baos.size() + " bytes");
 

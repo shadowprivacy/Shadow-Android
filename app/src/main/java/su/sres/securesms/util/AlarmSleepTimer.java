@@ -11,7 +11,7 @@ import android.os.SystemClock;
 
 import java.util.concurrent.ConcurrentSkipListSet;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.signalservice.api.util.SleepTimer;
 
 /**

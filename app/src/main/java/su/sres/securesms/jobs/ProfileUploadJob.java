@@ -4,7 +4,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import org.signal.zkgroup.profiles.ProfileKey;
 
@@ -19,7 +19,6 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.util.StreamDetails;
@@ -41,7 +40,7 @@ public final class ProfileUploadJob extends BaseJob {
                 .setQueue(QUEUE)
                 .setLifespan(TimeUnit.DAYS.toMillis(30))
                 .setMaxAttempts(Parameters.UNLIMITED)
-                .setMaxInstances(2)
+                .setMaxInstancesForFactory(2)
                 .build());
     }
 

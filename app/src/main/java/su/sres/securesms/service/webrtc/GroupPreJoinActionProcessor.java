@@ -12,10 +12,11 @@ import org.signal.ringrtc.PeekInfo;
 
 import su.sres.securesms.components.webrtc.BroadcastVideoSink;
 import su.sres.securesms.events.CallParticipant;
+import su.sres.securesms.events.CallParticipantId;
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.securesms.keyvalue.ServiceConfigurationValues;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
@@ -59,6 +60,8 @@ public class GroupPreJoinActionProcessor extends GroupActionProcessor {
         } catch (CallException e) {
             return groupCallFailure(currentState, "Unable to connect to group call", e);
         }
+
+        SignalStore.tooltips().markGroupCallingLobbyEntered();
 
         return currentState.builder()
                 .changeCallInfoState()
@@ -115,10 +118,13 @@ public class GroupPreJoinActionProcessor extends GroupActionProcessor {
                 .toList();
 
         WebRtcServiceStateBuilder.CallInfoStateBuilder builder = currentState.builder()
-                .changeCallInfoState();
+                .changeCallInfoState()
+                .remoteDevicesCount(peekInfo.getDeviceCount())
+                .participantLimit(peekInfo.getMaxDevices())
+                .clearParticipantMap();
 
         for (Recipient recipient : callParticipants) {
-            builder.putParticipant(recipient, CallParticipant.createRemote(recipient, null, new BroadcastVideoSink(null), true, true, 0));
+            builder.putParticipant(recipient, CallParticipant.createRemote(new CallParticipantId(recipient), recipient, null, new BroadcastVideoSink(null), true, true, 0, false, 0));
         }
 
         return builder.build();

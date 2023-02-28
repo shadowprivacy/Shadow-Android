@@ -14,7 +14,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MegaphoneDatabase;
 import su.sres.securesms.database.model.MegaphoneRecord;
 import su.sres.securesms.megaphone.Megaphones.Event;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.HashMap;
 import java.util.List;
@@ -53,6 +53,7 @@ public class MegaphoneRepository {
             database.markFinished(Event.REACTIONS);
             database.markFinished(Event.MESSAGE_REQUESTS);
             database.markFinished(Event.LINK_PREVIEWS);
+            database.markFinished(Event.GROUP_CALLING);
             resetDatabaseCache();
         });
     }

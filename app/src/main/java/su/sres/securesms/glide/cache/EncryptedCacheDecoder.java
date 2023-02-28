@@ -7,7 +7,7 @@ import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.ResourceDecoder;
 import com.bumptech.glide.load.engine.Resource;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.io.File;
 import java.io.IOException;

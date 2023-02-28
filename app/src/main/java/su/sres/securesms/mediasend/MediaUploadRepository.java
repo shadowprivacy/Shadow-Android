@@ -14,7 +14,7 @@ import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.JobManager;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.GifSlide;
 import su.sres.securesms.mms.ImageSlide;
 import su.sres.securesms.mms.TextSlide;
@@ -23,7 +23,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.sms.MessageSender.PreUploadResult;
 import su.sres.securesms.util.MediaUtil;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.Collection;
 import java.util.HashMap;

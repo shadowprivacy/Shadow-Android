@@ -20,11 +20,10 @@ import com.dd.CircularProgressButton;
 import su.sres.securesms.R;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.StorageAccountRestoreJob;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.registration.service.CodeVerificationRequest;
 import su.sres.securesms.registration.service.RegistrationService;
 import su.sres.securesms.registration.viewmodel.RegistrationViewModel;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.concurrent.SimpleTask;
 

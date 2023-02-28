@@ -9,9 +9,9 @@ import androidx.annotation.WorkerThread;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.KeyValueDatabase;
-import su.sres.securesms.logging.Log;
-import su.sres.securesms.logging.SignalUncaughtExceptionHandler;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.logging.Log;
+import su.sres.securesms.util.SignalUncaughtExceptionHandler;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.Collection;
 import java.util.HashSet;

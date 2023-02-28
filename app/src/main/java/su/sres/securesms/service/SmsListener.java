@@ -24,9 +24,8 @@ import android.provider.Telephony;
 import android.telephony.SmsMessage;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.jobs.SmsReceiveJob;
 import su.sres.securesms.util.Util;
 

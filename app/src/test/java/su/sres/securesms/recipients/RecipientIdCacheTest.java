@@ -5,7 +5,7 @@ import androidx.annotation.Nullable;
 
 import org.junit.Before;
 import org.junit.Test;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.testutil.LogRecorder;
 import org.whispersystems.libsignal.util.guava.Optional;
 

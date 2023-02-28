@@ -18,7 +18,7 @@ import androidx.annotation.RequiresApi;
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat;
 
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.MemoryUnitFormat;
 
 import java.util.Locale;

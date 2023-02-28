@@ -27,7 +27,9 @@ import androidx.annotation.Nullable;
 import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.text.TextUtils;
-import su.sres.securesms.logging.Log;
+
+import su.sres.core.util.StreamUtil;
+import su.sres.core.util.logging.Log;
 
 import com.google.android.mms.InvalidHeaderValueException;
 import com.google.android.mms.pdu_alt.NotifyRespInd;
@@ -117,7 +119,7 @@ public class IncomingLollipopMmsConnection extends LollipopMmsConnection impleme
       waitForResult();
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      Util.copy(pointer.getInputStream(), baos);
+      StreamUtil.copy(pointer.getInputStream(), baos);
       pointer.close();
 
       Log.i(TAG, baos.size() + "-byte response: ");// + Hex.dump(baos.toByteArray()));

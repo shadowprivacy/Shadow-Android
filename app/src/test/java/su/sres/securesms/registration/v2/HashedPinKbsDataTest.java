@@ -1,8 +1,9 @@
 package su.sres.securesms.registration.v2;
 
 import org.junit.Test;
+
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.registration.v2.testdata.KbsTestVector;
-import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.crypto.InvalidCiphertextException;
 import su.sres.signalservice.api.kbs.HashedPin;
 import su.sres.signalservice.api.kbs.KbsData;
@@ -50,7 +51,7 @@ public final class HashedPinKbsDataTest {
     private static KbsTestVector[] getKbsTestVectorList() throws IOException {
         try (InputStream resourceAsStream = ClassLoader.getSystemClassLoader().getResourceAsStream("data/kbs_vectors.json")) {
 
-            KbsTestVector[] data = JsonUtil.fromJson(Util.readFullyAsString(resourceAsStream), KbsTestVector[].class);
+            KbsTestVector[] data = JsonUtil.fromJson(StreamUtil.readFullyAsString(resourceAsStream), KbsTestVector[].class);
 
             assertTrue(data.length > 0);
 

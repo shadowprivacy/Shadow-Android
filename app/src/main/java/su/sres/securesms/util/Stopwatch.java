@@ -2,7 +2,7 @@ package su.sres.securesms.util;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.LinkedList;
 import java.util.List;

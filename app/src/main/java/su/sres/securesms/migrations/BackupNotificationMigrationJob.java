@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.backup.BackupFileIOError;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.BackupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 

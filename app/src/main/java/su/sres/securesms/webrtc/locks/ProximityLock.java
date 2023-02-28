@@ -2,7 +2,7 @@ package su.sres.securesms.webrtc.locks;
 
 import android.os.Build;
 import android.os.PowerManager;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 

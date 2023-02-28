@@ -6,7 +6,7 @@ import androidx.annotation.Nullable;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobLogger;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 public abstract class BaseJob extends Job {
 

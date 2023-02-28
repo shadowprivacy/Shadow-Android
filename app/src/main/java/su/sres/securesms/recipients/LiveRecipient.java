@@ -1,7 +1,6 @@
 package su.sres.securesms.recipients;
 
 import android.content.Context;
-import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
@@ -12,14 +11,12 @@ import androidx.lifecycle.Observer;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupDatabase.GroupRecord;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
-import su.sres.securesms.logging.Log;
-import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 

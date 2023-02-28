@@ -5,26 +5,15 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.util.AttributeSet;
-import android.util.Log;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.Nullable;
-import androidx.annotation.WorkerThread;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
 
 import su.sres.securesms.R;
 import su.sres.securesms.components.SquareImageView;
 import su.sres.securesms.qr.QrCode;
-import su.sres.securesms.util.Stopwatch;
-import su.sres.securesms.util.concurrent.SerialMonoLifoExecutor;
-import su.sres.securesms.util.concurrent.SignalExecutors;
-import su.sres.securesms.util.concurrent.SimpleTask;
-
-import java.util.concurrent.Executor;
 
 /**
  * Generates a bitmap asynchronously for the supplied {@link BitMatrix} data and displays it.

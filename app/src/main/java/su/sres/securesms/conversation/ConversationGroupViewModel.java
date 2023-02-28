@@ -17,7 +17,6 @@ import com.annimon.stream.Stream;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupDatabase.GroupRecord;
-import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupChangeBusyException;
 import su.sres.securesms.groups.GroupChangeFailedException;
@@ -32,7 +31,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.AsynchronousCallback;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.SetUtil;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 
 import java.io.IOException;
@@ -83,10 +82,10 @@ final class ConversationGroupViewModel extends ViewModel {
         liveRecipient.setValue(recipient);
     }
 
-    void onSuggestedMembersBannerDismissed(@NonNull GroupId groupId) {
+    void onSuggestedMembersBannerDismissed(@NonNull GroupId groupId, @NonNull List<RecipientId> suggestions) {
         SignalExecutors.BOUNDED.execute(() -> {
             if (groupId.isV2()) {
-                DatabaseFactory.getGroupDatabase(ApplicationDependencies.getApplication()).clearFormerV1Members(groupId.requireV2());
+                DatabaseFactory.getGroupDatabase(ApplicationDependencies.getApplication()).removeUnmigratedV1Members(groupId.requireV2(), suggestions);
                 liveRecipient.postValue(liveRecipient.getValue());
             }
         });
@@ -177,9 +176,9 @@ final class ConversationGroupViewModel extends ViewModel {
             return Collections.emptyList();
         }
 
-        Set<RecipientId> difference = SetUtil.difference(record.getFormerV1Members(), record.getMembers());
-
-        return Stream.of(Recipient.resolvedList(difference))
+        return Stream.of(record.getUnmigratedV1Members())
+                .filterNot(m -> record.getMembers().contains(m))
+                .map(Recipient::resolved)
                 .filter(GroupsV1MigrationUtil::isAutoMigratable)
                 .map(Recipient::getId)
                 .toList();

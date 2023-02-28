@@ -6,10 +6,8 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.util.Pair;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Transformations;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 
@@ -20,10 +18,9 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.model.MessageRecord;
-import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.AbstractCursorLoader;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.Collections;
 import java.util.List;

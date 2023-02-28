@@ -6,7 +6,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import org.junit.Before;
 import org.junit.runner.RunWith;

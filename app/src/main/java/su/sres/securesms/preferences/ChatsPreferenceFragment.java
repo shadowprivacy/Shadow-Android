@@ -1,6 +1,5 @@
 package su.sres.securesms.preferences;
 
-import android.Manifest;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -11,24 +10,15 @@ import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 
 import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
+
 import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
-import su.sres.securesms.backup.BackupDialog;
-import su.sres.securesms.backup.FullBackupBase.BackupEvent;
-import su.sres.securesms.components.SwitchPreferenceCompat;
-import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.jobs.LocalBackupJob;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.permissions.Permissions;
-import su.sres.securesms.preferences.widgets.ProgressPreference;
-import su.sres.securesms.util.BackupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 public class ChatsPreferenceFragment extends ListSummaryPreferenceFragment {

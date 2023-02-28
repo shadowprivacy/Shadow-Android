@@ -1,7 +1,7 @@
 package su.sres.securesms.net;
 
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.BuildConfig;
 

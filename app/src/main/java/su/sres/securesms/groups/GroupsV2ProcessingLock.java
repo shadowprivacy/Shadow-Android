@@ -2,7 +2,7 @@ package su.sres.securesms.groups;
 
 import androidx.annotation.WorkerThread;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.Util;
 
 import java.io.Closeable;

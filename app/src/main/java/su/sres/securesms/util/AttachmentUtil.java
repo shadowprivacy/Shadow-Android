@@ -9,7 +9,7 @@ import androidx.annotation.WorkerThread;
 import android.text.TextUtils;
 
 import su.sres.securesms.database.NoSuchMessageException;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.attachments.DatabaseAttachment;

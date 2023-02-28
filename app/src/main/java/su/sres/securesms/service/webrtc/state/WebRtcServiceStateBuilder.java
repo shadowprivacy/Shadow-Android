@@ -8,6 +8,7 @@ import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.CallParticipantId;
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.ringrtc.Camera;
 import su.sres.securesms.ringrtc.CameraState;
 import su.sres.securesms.ringrtc.RemotePeer;
@@ -15,6 +16,8 @@ import su.sres.securesms.service.webrtc.WebRtcActionProcessor;
 
 import org.signal.ringrtc.GroupCall;
 import org.webrtc.EglBase;
+
+import java.util.Collection;
 
 /**
  * Builder that creates a new {@link WebRtcServiceState} from an existing one and allows
@@ -242,6 +245,26 @@ public class WebRtcServiceStateBuilder {
 
         public @NonNull CallInfoStateBuilder groupCallState(@Nullable WebRtcViewModel.GroupCallState groupState) {
             toBuild.groupState = groupState;
+            return this;
+        }
+
+        public @NonNull CallInfoStateBuilder addIdentityChangedRecipient(@NonNull RecipientId id) {
+            toBuild.identityChangedRecipients.add(id);
+            return this;
+        }
+
+        public @NonNull CallInfoStateBuilder removeIdentityChangedRecipients(@NonNull Collection<RecipientId> ids) {
+            toBuild.identityChangedRecipients.removeAll(ids);
+            return this;
+        }
+
+        public @NonNull CallInfoStateBuilder remoteDevicesCount(long remoteDevicesCount) {
+            toBuild.remoteDevicesCount = remoteDevicesCount;
+            return this;
+        }
+
+        public @NonNull CallInfoStateBuilder participantLimit(@Nullable Long participantLimit) {
+            toBuild.participantLimit = participantLimit;
             return this;
         }
     }

@@ -27,11 +27,9 @@ import su.sres.securesms.conversation.ConversationIntents;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.v2.GroupInviteLinkUrl;
 import su.sres.securesms.jobs.RetrieveProfileJob;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.BottomSheetUtil;
-import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.PlayStoreUtil;
 import su.sres.securesms.util.ThemeUtil;
 
 public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogFragment {

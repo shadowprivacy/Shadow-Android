@@ -13,13 +13,11 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.groups.v2.GroupLinkPassword;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 
-import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.groupsv2.GroupLinkNotActiveException;
 import su.sres.storageservice.protos.groups.GroupExternalCredential;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;

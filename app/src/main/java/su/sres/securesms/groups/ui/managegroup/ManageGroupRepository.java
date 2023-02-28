@@ -22,13 +22,13 @@ import su.sres.securesms.groups.MembershipNotSuitableForV2Exception;
 import su.sres.securesms.groups.SelectionLimits;
 import su.sres.securesms.groups.ui.GroupChangeErrorCallback;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.util.AsynchronousCallback;
 import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 

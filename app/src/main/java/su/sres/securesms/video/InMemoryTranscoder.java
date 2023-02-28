@@ -10,7 +10,7 @@ import androidx.annotation.RequiresApi;
 
 import com.google.android.exoplayer2.util.MimeTypes;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.MediaStream;
 import su.sres.securesms.util.MemoryFileDescriptor;
 import su.sres.securesms.video.videoconverter.EncodingException;

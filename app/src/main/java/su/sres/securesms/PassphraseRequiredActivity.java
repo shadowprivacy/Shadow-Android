@@ -11,7 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.crypto.MasterSecretUtil;
 import su.sres.securesms.migrations.ApplicationMigrationActivity;
@@ -21,6 +21,7 @@ import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.registration.RegistrationNavigationActivity;
 import su.sres.securesms.service.KeyCachingService;
+import su.sres.securesms.tracing.Tracer;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import java.util.Locale;
@@ -43,6 +44,7 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
 
   @Override
   protected final void onCreate(Bundle savedInstanceState) {
+    Tracer.getInstance().start(Log.tag(getClass()) + "#onCreate()");
     this.networkAccess = new SignalServiceNetworkAccess(this);
     onPreCreate();
 
@@ -55,6 +57,8 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
       initializeClearKeyReceiver();
       onCreate(savedInstanceState, true);
     }
+
+    Tracer.getInstance().end(Log.tag(getClass()) + "#onCreate()");
   }
 
   protected void onPreCreate() {}

@@ -36,7 +36,7 @@ import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.preferences.widgets.StoragePreferenceCategory;
 import su.sres.securesms.util.MappingModelList;
 import su.sres.securesms.util.StringUtil;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 public class StoragePreferenceFragment extends ListSummaryPreferenceFragment {
 

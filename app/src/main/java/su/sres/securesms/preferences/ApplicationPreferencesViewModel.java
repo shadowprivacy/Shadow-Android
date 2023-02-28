@@ -14,7 +14,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MediaDatabase;
 import su.sres.securesms.preferences.widgets.StorageGraphView;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.Arrays;
 

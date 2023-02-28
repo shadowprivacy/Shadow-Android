@@ -5,7 +5,7 @@ import android.view.Choreographer;
 import android.view.Display;
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;

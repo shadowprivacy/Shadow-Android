@@ -11,7 +11,7 @@ import su.sres.securesms.groups.GroupNotAMemberException;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.signalservice.api.groupsv2.NoCredentialForRedemptionTimeException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 

@@ -12,13 +12,11 @@ import su.sres.securesms.database.PushDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.PushDecryptMessageJob;
-import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.signalservice.api.messages.SignalServiceEnvelope;
 
 import java.io.Closeable;
-import java.util.Locale;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**

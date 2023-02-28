@@ -22,7 +22,7 @@ import su.sres.securesms.groups.v2.GroupLinkUrlAndStatus;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.storageservice.protos.groups.AccessControl;

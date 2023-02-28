@@ -17,15 +17,13 @@ import com.google.android.exoplayer2.ui.PlayerNotificationManager;
 import su.sres.securesms.R;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.contacts.avatars.ContactColors;
-import su.sres.securesms.conversation.ConversationActivity;
 import su.sres.securesms.conversation.ConversationIntents;
-import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.Objects;
 

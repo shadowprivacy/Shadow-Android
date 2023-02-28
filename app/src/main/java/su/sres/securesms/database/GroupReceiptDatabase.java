@@ -5,7 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import androidx.annotation.NonNull;
 
-import net.sqlcipher.database.SQLiteDatabase;
+
 
 import org.whispersystems.libsignal.util.Pair;
 

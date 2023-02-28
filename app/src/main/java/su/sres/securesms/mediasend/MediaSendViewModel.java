@@ -21,7 +21,7 @@ import com.annimon.stream.Stream;
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.Mention;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.OutgoingSecureMediaMessage;

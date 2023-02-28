@@ -11,7 +11,7 @@ import su.sres.securesms.jobmanager.JobTracker;
 import su.sres.securesms.jobs.MarkerJob;
 import su.sres.securesms.jobs.PushDecryptMessageJob;
 import su.sres.securesms.jobs.PushProcessMessageJob;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 
 import java.io.IOException;

@@ -19,6 +19,8 @@ import com.bumptech.glide.load.model.ModelLoader;
 import com.bumptech.glide.load.model.ModelLoaderFactory;
 import com.bumptech.glide.load.model.MultiModelLoaderFactory;
 
+import org.whispersystems.libsignal.util.ByteUtil;
+
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.FallbackPhoto80dp;
@@ -26,27 +28,52 @@ import su.sres.securesms.contacts.avatars.GeneratedContactPhoto;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequest;
+import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
 
 import java.security.MessageDigest;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 public final class ConversationShortcutPhoto implements Key {
 
     private final Recipient recipient;
+    private final String    avatarObject;
 
     @WorkerThread
     public ConversationShortcutPhoto(@NonNull Recipient recipient) {
-        this.recipient = recipient.resolve();
+        this.recipient    = recipient.resolve();
+        this.avatarObject = Util.firstNonNull(recipient.getProfileAvatar(), "");
     }
 
     @Override
     public void updateDiskCacheKey(@NonNull MessageDigest messageDigest) {
         messageDigest.update(recipient.getDisplayName(ApplicationDependencies.getApplication()).getBytes());
+        messageDigest.update(avatarObject.getBytes());
+        messageDigest.update(ByteUtil.longToByteArray(getFileLastModified()));
+    }
 
-        if (recipient.getProfileAvatar() != null) {
-            messageDigest.update(recipient.getProfileAvatar().getBytes());
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ConversationShortcutPhoto that = (ConversationShortcutPhoto) o;
+        return Objects.equals(recipient, that.recipient) &&
+                Objects.equals(avatarObject, that.avatarObject) &&
+                getFileLastModified() == that.getFileLastModified();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(recipient, avatarObject, getFileLastModified());
+    }
+
+    private long getFileLastModified() {
+        if (!recipient.isSelf()) {
+            return 0;
         }
+
+        return AvatarHelper.getLastModified(ApplicationDependencies.getApplication(), recipient.getId());
     }
 
     public static final class Loader implements ModelLoader<ConversationShortcutPhoto, Bitmap> {
@@ -58,7 +85,7 @@ public final class ConversationShortcutPhoto implements Key {
         }
 
         @Override
-        public @Nullable LoadData<Bitmap> buildLoadData(@NonNull ConversationShortcutPhoto conversationShortcutPhoto, int width, int height, @NonNull Options options) {
+        public @NonNull LoadData<Bitmap> buildLoadData(@NonNull ConversationShortcutPhoto conversationShortcutPhoto, int width, int height, @NonNull Options options) {
             return new LoadData<>(conversationShortcutPhoto, new Fetcher(context, conversationShortcutPhoto));
         }
 

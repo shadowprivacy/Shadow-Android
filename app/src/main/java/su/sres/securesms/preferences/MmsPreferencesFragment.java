@@ -25,7 +25,7 @@ import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.CustomDefaultPreference;
 import su.sres.securesms.database.ApnDatabase;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.LegacyMmsConnection;
 import su.sres.securesms.util.TelephonyUtil;
 import su.sres.securesms.util.TextSecurePreferences;

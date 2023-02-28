@@ -3,23 +3,15 @@ package su.sres.securesms.conversation;
 import android.app.Application;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
-import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
 
-import su.sres.securesms.contacts.ContactAccessor;
-import su.sres.securesms.contacts.ContactRepository;
 import su.sres.securesms.conversationlist.model.MessageResult;
-import su.sres.securesms.conversationlist.model.SearchResult;
 import su.sres.securesms.database.CursorList;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.search.SearchRepository;
-import su.sres.securesms.util.CloseableLiveData;
 import su.sres.securesms.util.Debouncer;
 import su.sres.securesms.util.Util;
-import su.sres.securesms.util.concurrent.SignalExecutors;
 
-import java.io.Closeable;
 import java.util.List;
 
 public class ConversationSearchViewModel extends AndroidViewModel {

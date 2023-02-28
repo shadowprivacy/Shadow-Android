@@ -1,6 +1,6 @@
 package su.sres.securesms.webrtc;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.ArrayList;
 import java.util.List;

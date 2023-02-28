@@ -11,16 +11,15 @@ import androidx.annotation.ArrayRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
 
 import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraintObserver;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.R;
 import su.sres.securesms.lock.RegistrationLockReminders;
 import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
-import su.sres.securesms.profiles.ProfileName;
+
 import org.whispersystems.libsignal.util.Medium;
 
 import su.sres.signalservice.api.util.UuidUtil;

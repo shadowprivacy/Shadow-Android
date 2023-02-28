@@ -14,7 +14,7 @@ import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.contactshare.ContactUtil;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.GifSlide;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.mms.StickerSlide;

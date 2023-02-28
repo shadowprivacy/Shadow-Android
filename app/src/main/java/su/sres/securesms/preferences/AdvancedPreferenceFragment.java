@@ -1,5 +1,6 @@
 package su.sres.securesms.preferences;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -11,17 +12,21 @@ import android.provider.ContactsContract;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.Preference;
 
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.components.SwitchPreferenceCompat;
+import su.sres.securesms.delete.DeleteAccountFragment;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.CertificatePullJob;
 import su.sres.securesms.keyvalue.SettingsValues;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -46,6 +51,7 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
 
   private static final String CERT_PULL             = "pref_cert_pull";
   private static final String INTERNAL_PREF         = "pref_internal";
+  private static final String DELETE_ACCOUNT        = "pref_delete_account";
   private static final String LICENSE_INFO          = "pref_license_info";
   private static final String PUSH_MESSAGING_PREF   = "pref_toggle_push_messaging";
   private static final String SUBMIT_DEBUG_LOG_PREF = "pref_submit_debug_logs";
@@ -66,17 +72,32 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
     internalPreference.setVisible(FeatureFlags.internalUser());
     internalPreference.setOnPreferenceClickListener(preference -> {
       if (FeatureFlags.internalUser()) {
-        requireActivity().getSupportFragmentManager()
-                .beginTransaction()
-                .setCustomAnimations(R.anim.slide_from_end, R.anim.slide_to_start, R.anim.slide_from_start, R.anim.slide_to_end)
-                .replace(android.R.id.content, new InternalOptionsPreferenceFragment())
-                .addToBackStack(null)
-                .commit();
+        getApplicationPreferencesActivity().pushFragment(new InternalOptionsPreferenceFragment());
         return true;
       } else {
         return false;
       }
     });
+
+    Preference deleteAccount = this.findPreference(DELETE_ACCOUNT);
+    deleteAccount.setOnPreferenceClickListener(preference -> {
+      getApplicationPreferencesActivity().pushFragment(new DeleteAccountFragment());
+      return false;
+    });
+  }
+
+  @Override
+  public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
+
+    view.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.signal_background_tertiary));
+
+    View list   = view.findViewById(R.id.recycler_view);
+    ViewGroup.LayoutParams params = list.getLayoutParams();
+
+    params.height = ActionBar.LayoutParams.WRAP_CONTENT;
+    list.setLayoutParams(params);
+    list.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.signal_background_primary));
 
     Preference licenseInfo = this.findPreference(LICENSE_INFO);
     licenseInfo.setOnPreferenceClickListener(new LicenseInfoListener());
@@ -100,7 +121,7 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
   @Override
   public void onResume() {
     super.onResume();
-    ((ApplicationPreferencesActivity) getActivity()).getSupportActionBar().setTitle(R.string.preferences__advanced);
+    getApplicationPreferencesActivity().getSupportActionBar().setTitle(R.string.preferences__advanced);
 
     initializePushMessagingToggle();
   }
@@ -113,6 +134,10 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
     if (resultCode == Activity.RESULT_OK && reqCode == PICK_IDENTITY_CONTACT) {
       handleIdentitySelection(data);
     }
+  }
+
+  private @NonNull ApplicationPreferencesActivity getApplicationPreferencesActivity() {
+    return (ApplicationPreferencesActivity) requireActivity();
   }
 
   private void initializePushMessagingToggle() {

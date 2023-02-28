@@ -6,7 +6,7 @@ import androidx.annotation.WorkerThread;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 

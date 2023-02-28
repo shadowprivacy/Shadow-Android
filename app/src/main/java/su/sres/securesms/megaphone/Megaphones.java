@@ -12,12 +12,10 @@ import su.sres.securesms.R;
 import su.sres.securesms.conversationlist.ConversationListFragment;
 import su.sres.securesms.database.model.MegaphoneRecord;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.messagerequests.MessageRequestMegaphoneActivity;
 import su.sres.securesms.profiles.ProfileName;
-import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -25,7 +23,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Creating a new megaphone:
@@ -82,6 +79,7 @@ public final class Megaphones {
             put(Event.MESSAGE_REQUESTS, shouldShowMessageRequestsMegaphone() ? ALWAYS : NEVER);
             put(Event.LINK_PREVIEWS, shouldShowLinkPreviewsMegaphone(context) ? ALWAYS : NEVER);
             put(Event.CLIENT_DEPRECATED, SignalStore.misc().isClientDeprecated() ? ALWAYS : NEVER);
+            put(Event.GROUP_CALLING, shouldShowGroupCallingMegaphone() ? ALWAYS : NEVER);
         }};
     }
 
@@ -95,6 +93,8 @@ public final class Megaphones {
                 return buildLinkPreviewsMegaphone();
             case CLIENT_DEPRECATED:
                 return buildClientDeprecatedMegaphone(context);
+            case GROUP_CALLING:
+                return buildGroupCallingMegaphone(context);
             default:
                 throw new IllegalArgumentException("Event not handled!");
         }
@@ -132,6 +132,19 @@ public final class Megaphones {
                 .build();
     }
 
+    private static @NonNull Megaphone buildGroupCallingMegaphone(@NonNull Context context) {
+        return new Megaphone.Builder(Event.GROUP_CALLING, Megaphone.Style.BASIC)
+                .disableSnooze()
+                .setTitle(R.string.GroupCallingMegaphone__introducing_group_calls)
+                .setBody(R.string.GroupCallingMegaphone__open_a_new_group_to_start)
+                .setImage(R.drawable.ic_group_calls_megaphone)
+                .setActionButton(android.R.string.ok, (megaphone, controller) -> {
+                    controller.onMegaphoneCompleted(megaphone.getEvent());
+                })
+                .setPriority(Megaphone.Priority.DEFAULT)
+                .build();
+    }
+
     private static boolean shouldShowMessageRequestsMegaphone() {
         return Recipient.self().getProfileName() == ProfileName.EMPTY;
     }
@@ -140,11 +153,16 @@ public final class Megaphones {
         return TextSecurePreferences.wereLinkPreviewsEnabled(context) && !SignalStore.settings().isLinkPreviewsEnabled();
     }
 
+    private static boolean shouldShowGroupCallingMegaphone() {
+        return FeatureFlags.groupCalling();
+    }
+
     public enum Event {
         REACTIONS("reactions"),
         MESSAGE_REQUESTS("message_requests"),
         LINK_PREVIEWS("link_previews"),
-        CLIENT_DEPRECATED("client_deprecated");
+        CLIENT_DEPRECATED("client_deprecated"),
+        GROUP_CALLING("group_calling");
 
         private final String key;
 

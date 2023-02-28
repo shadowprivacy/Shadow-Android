@@ -34,7 +34,7 @@ import androidx.core.app.NotificationCompat;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.MainActivity;
 import su.sres.securesms.DummyActivity;

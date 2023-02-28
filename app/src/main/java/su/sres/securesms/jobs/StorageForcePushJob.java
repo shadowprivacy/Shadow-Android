@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.storage.StorageSyncModels;
@@ -16,7 +15,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.storage.StorageSyncValidations;
 import su.sres.securesms.transport.RetryLaterException;
@@ -37,7 +36,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -53,7 +51,7 @@ public class StorageForcePushJob extends BaseJob {
     public StorageForcePushJob() {
         this(new Parameters.Builder().addConstraint(NetworkConstraint.KEY)
                 .setQueue(StorageSyncJob.QUEUE_KEY)
-                .setMaxInstances(1)
+                .setMaxInstancesForFactory(1)
                 .setLifespan(TimeUnit.DAYS.toMillis(1))
                 .build());
     }

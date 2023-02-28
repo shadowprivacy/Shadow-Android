@@ -8,7 +8,9 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.os.Build;
-import su.sres.securesms.logging.Log;
+
+import su.sres.core.util.StreamUtil;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.util.Util;
 
@@ -81,7 +83,7 @@ public class AudioCodec {
           mediaCodec.release();
           audioRecord.release();
 
-          Util.close(outputStream);
+          StreamUtil.close(outputStream);
           setFinished();
         }
       }

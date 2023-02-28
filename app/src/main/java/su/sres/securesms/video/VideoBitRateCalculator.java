@@ -1,7 +1,5 @@
 package su.sres.securesms.video;
 
-import su.sres.securesms.logging.Log;
-
 /**
  * Calculates a target quality output for a video to fit within a specified size.
  */

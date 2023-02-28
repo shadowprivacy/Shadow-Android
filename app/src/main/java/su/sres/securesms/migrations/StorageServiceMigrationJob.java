@@ -8,7 +8,7 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.MultiDeviceKeysUpdateJob;
 import su.sres.securesms.jobs.StorageSyncJob;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.TextSecurePreferences;
 
 public class StorageServiceMigrationJob extends MigrationJob {

@@ -16,13 +16,13 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.signalservice.api.groupsv2.NoCredentialForRedemptionTimeException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
@@ -31,8 +31,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
-import static su.sres.securesms.groups.v2.processing.GroupsV2StateProcessor.LATEST;
 
 public class GroupV1MigrationJob extends BaseJob {
 
@@ -63,6 +61,11 @@ public class GroupV1MigrationJob extends BaseJob {
     }
 
     public static void enqueuePossibleAutoMigrate(@NonNull RecipientId recipientId) {
+        if (!FeatureFlags.groupsV1MigrationJob()) {
+            Log.w(TAG, "Migration job is disabled.");
+            return;
+        }
+
         SignalExecutors.BOUNDED.execute(() -> {
             if (Recipient.resolved(recipientId).isPushV1Group()) {
                 ApplicationDependencies.getJobManager().add(new GroupV1MigrationJob(recipientId));
@@ -71,6 +74,11 @@ public class GroupV1MigrationJob extends BaseJob {
     }
 
     public static void enqueueRoutineMigrationsIfNecessary(@NonNull Application application) {
+        if (!FeatureFlags.groupsV1MigrationJob()) {
+            Log.w(TAG, "Migration job is disabled.");
+            return;
+        }
+
         if (!SignalStore.registrationValues().isRegistrationComplete() ||
                 !TextSecurePreferences.isPushRegistered(application)       ||
                 TextSecurePreferences.getLocalUuid(application) == null)
@@ -79,16 +87,13 @@ public class GroupV1MigrationJob extends BaseJob {
             return;
         }
 
-        if (!FeatureFlags.groupsV1AutoMigration()) {
-            Log.i(TAG, "Auto-migration disabled. Not proactively searching for groups.");
-            return;
-        }
-
-        long timeSinceRefresh = System.currentTimeMillis() - SignalStore.misc().getLastProfileRefreshTime();
+        long timeSinceRefresh = System.currentTimeMillis() - SignalStore.misc().getLastGv1RoutineMigrationTime();
         if (timeSinceRefresh < REFRESH_INTERVAL) {
             Log.i(TAG, "Too soon to refresh. Did the last refresh " + timeSinceRefresh + " ms ago.");
             return;
         }
+
+        SignalStore.misc().setLastGv1RoutineMigrationTime(System.currentTimeMillis());
 
         SignalExecutors.BOUNDED.execute(() -> {
             JobManager         jobManager   = ApplicationDependencies.getJobManager();

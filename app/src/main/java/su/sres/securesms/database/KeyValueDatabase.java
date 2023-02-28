@@ -6,7 +6,7 @@ import android.database.Cursor;
 
 import androidx.annotation.NonNull;
 
-import net.sqlcipher.database.SQLiteDatabase;
+
 
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.keyvalue.KeyValueDataSet;

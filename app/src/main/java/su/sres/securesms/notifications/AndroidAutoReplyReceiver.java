@@ -32,7 +32,7 @@ import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.sms.OutgoingTextMessage;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.Collections;
 import java.util.LinkedList;

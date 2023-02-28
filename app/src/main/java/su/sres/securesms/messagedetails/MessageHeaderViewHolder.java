@@ -21,7 +21,7 @@ import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.ExpirationUtil;
 import su.sres.securesms.util.Util;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.sql.Date;

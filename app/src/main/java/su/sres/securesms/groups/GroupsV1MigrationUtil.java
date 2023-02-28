@@ -13,7 +13,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.MmsException;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.recipients.Recipient;
@@ -86,21 +86,18 @@ public final class GroupsV1MigrationUtil {
                     throw new InvalidMigrationStateException();
                 }
 
-                if (!forced && !FeatureFlags.groupsV1AutoMigration()) {
-                    Log.w(TAG, "Auto migration is not enabled! Skipping.");
-                    throw new InvalidMigrationStateException();
-                }
-
                 if (forced && !FeatureFlags.groupsV1ManualMigration()) {
                     Log.w(TAG, "Manual migration is not enabled! Skipping.");
                     throw new InvalidMigrationStateException();
                 }
 
-                RecipientUtil.ensureUuidsAreAvailable(context, groupRecipient.getParticipants());
-                groupRecipient = groupRecipient.fresh();
-
                 List<Recipient> registeredMembers = RecipientUtil.getEligibleForSending(groupRecipient.getParticipants());
-                List<Recipient> possibleMembers   = forced ? getMigratableManualMigrationMembers(registeredMembers)
+                if (RecipientUtil.ensureUuidsAreAvailable(context, registeredMembers)) {
+                    Log.i(TAG, "Newly-discovered UUIDs. Getting fresh recipients.");
+                    registeredMembers = Stream.of(registeredMembers).map(Recipient::fresh).toList();
+                }
+
+                List<Recipient> possibleMembers = forced ? getMigratableManualMigrationMembers(registeredMembers)
                         : getMigratableAutoMigrationMembers(registeredMembers);
 
                 if (!forced && possibleMembers.size() != registeredMembers.size()) {

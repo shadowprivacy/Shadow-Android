@@ -8,7 +8,7 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import net.sqlcipher.database.SQLiteDatabase;
+
 
 import su.sres.securesms.R;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;

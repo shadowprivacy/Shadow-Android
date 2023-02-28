@@ -9,6 +9,7 @@ import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
+import su.sres.securesms.database.DatabaseObserver;
 import su.sres.securesms.jobmanager.impl.FactoryJobPredicate;
 import su.sres.securesms.jobs.GroupCallUpdateSendJob;
 import su.sres.securesms.jobs.MarkerJob;
@@ -30,7 +31,7 @@ import su.sres.securesms.jobmanager.JobMigrator;
 import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
 import su.sres.securesms.jobs.FastJobStorage;
 import su.sres.securesms.jobs.JobManagerFactories;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.notifications.DefaultMessageNotifier;
 import su.sres.securesms.notifications.MessageNotifier;
@@ -47,7 +48,7 @@ import su.sres.securesms.util.FrameRateTracker;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.SignalServiceMessageSender;
@@ -152,7 +153,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
                 .setJobFactories(JobManagerFactories.getJobFactories(context))
                 .setConstraintFactories(JobManagerFactories.getConstraintFactories(context))
                 .setConstraintObservers(JobManagerFactories.getConstraintObservers(context))
-                .setJobStorage(new FastJobStorage(DatabaseFactory.getJobDatabase(context), SignalExecutors.newCachedSingleThreadExecutor("signal-fast-job-storage")))
+                .setJobStorage(new FastJobStorage(DatabaseFactory.getJobDatabase(context)))
                 .setJobMigrator(new JobMigrator(TextSecurePreferences.getJobManagerVersion(context), JobManager.CURRENT_VERSION, JobManagerFactories.getJobMigrations(context)))
                 .addReservedJobRunner(new FactoryJobPredicate(PushDecryptMessageJob.KEY, PushProcessMessageJob.KEY, MarkerJob.KEY))
                 .addReservedJobRunner(new FactoryJobPredicate(PushTextSendJob.KEY, PushMediaSendJob.KEY, PushGroupSendJob.KEY, ReactionSendJob.KEY, TypingSendJob.KEY, GroupCallUpdateSendJob.KEY))
@@ -202,6 +203,11 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     @Override
     public @NonNull TypingStatusSender provideTypingStatusSender() {
         return new TypingStatusSender(context);
+    }
+
+    @Override
+    public @NonNull DatabaseObserver provideDatabaseObserver() {
+        return new DatabaseObserver(context);
     }
 
     private static class DynamicCredentialsProvider implements CredentialsProvider {

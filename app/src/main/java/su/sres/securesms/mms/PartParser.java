@@ -5,7 +5,7 @@ import com.google.android.mms.pdu_alt.CharacterSets;
 import com.google.android.mms.pdu_alt.PduBody;
 import com.google.android.mms.pdu_alt.PduPart;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.Util;
 
 import java.io.UnsupportedEncodingException;

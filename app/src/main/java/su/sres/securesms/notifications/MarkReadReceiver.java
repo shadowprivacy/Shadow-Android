@@ -18,7 +18,7 @@ import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceReadUpdateJob;
 import su.sres.securesms.jobs.SendReadReceiptJob;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.service.ExpiringMessageManager;
 

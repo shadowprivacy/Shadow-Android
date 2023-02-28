@@ -3,7 +3,7 @@ package su.sres.securesms.qr;
 import android.content.res.Configuration;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.ChecksumException;

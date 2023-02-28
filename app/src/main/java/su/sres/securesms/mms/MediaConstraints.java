@@ -4,7 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import androidx.annotation.NonNull;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.util.Pair;
 
 import su.sres.securesms.attachments.Attachment;

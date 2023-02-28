@@ -15,9 +15,8 @@ import su.sres.securesms.contactshare.Contact.Email;
 import su.sres.securesms.contactshare.Contact.Name;
 import su.sres.securesms.contactshare.Contact.Phone;
 import su.sres.securesms.contactshare.Contact.PostalAddress;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
-import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.recipients.Recipient;
 

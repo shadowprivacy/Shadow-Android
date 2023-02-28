@@ -15,7 +15,7 @@ import com.annimon.stream.Stream;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.stickers.StickerUrl;
 
 import java.util.Collections;

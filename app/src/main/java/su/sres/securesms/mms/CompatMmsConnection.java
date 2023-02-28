@@ -5,7 +5,7 @@ import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import com.google.android.mms.pdu_alt.PduHeaders;
 import com.google.android.mms.pdu_alt.RetrieveConf;

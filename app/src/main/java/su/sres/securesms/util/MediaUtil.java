@@ -17,7 +17,7 @@ import android.text.TextUtils;
 
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.util.Pair;
 import android.webkit.MimeTypeMap;
 

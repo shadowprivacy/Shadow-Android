@@ -9,7 +9,7 @@ import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobmanager.JobTracker;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.storage.StorageSyncHelper;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -21,7 +21,6 @@ import su.sres.signalservice.api.storage.SignalStorageRecord;
 import su.sres.signalservice.api.storage.StorageId;
 import su.sres.signalservice.api.storage.StorageKey;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +41,7 @@ public class StorageAccountRestoreJob extends BaseJob {
         this(new Parameters.Builder()
                 .setQueue(StorageSyncJob.QUEUE_KEY)
                 .addConstraint(NetworkConstraint.KEY)
-                .setMaxInstances(1)
+                .setMaxInstancesForFactory(1)
                 .setMaxAttempts(1)
                 .setLifespan(LIFESPAN)
                 .build());

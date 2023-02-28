@@ -16,7 +16,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.model.StickerRecord;
 import su.sres.securesms.stickers.StickerKeyboardProvider;
 import su.sres.securesms.stickers.StickerManagementActivity;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 public final class ImageEditorStickerSelectActivity extends FragmentActivity {
 

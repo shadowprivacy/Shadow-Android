@@ -17,18 +17,18 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiStrings;
 import su.sres.securesms.contactshare.Contact.Email;
 import su.sres.securesms.contactshare.Contact.Phone;
 import su.sres.securesms.contactshare.Contact.PostalAddress;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.SpanUtil;
-import su.sres.securesms.util.Util;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -190,7 +190,7 @@ public final class ContactUtil {
       try {
         ContentValues values = new ContentValues();
         values.put(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE);
-        values.put(ContactsContract.CommonDataKinds.Photo.PHOTO, Util.readFully(PartAuthority.getAttachmentStream(context, contact.getAvatarAttachment().getUri())));
+        values.put(ContactsContract.CommonDataKinds.Photo.PHOTO, StreamUtil.readFully(PartAuthority.getAttachmentStream(context, contact.getAvatarAttachment().getUri())));
 
         ArrayList<ContentValues> valuesArray = new ArrayList<>(1);
         valuesArray.add(values);

@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import android.util.AttributeSet;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;

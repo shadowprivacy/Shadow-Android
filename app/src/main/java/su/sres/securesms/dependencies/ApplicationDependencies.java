@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
+import su.sres.securesms.database.DatabaseObserver;
 import su.sres.securesms.messages.BackgroundMessageRetriever;
 import su.sres.securesms.messages.IncomingMessageObserver;
 import su.sres.securesms.messages.IncomingMessageProcessor;
@@ -68,6 +69,7 @@ public class ApplicationDependencies {
     private static volatile EarlyMessageCache            earlyMessageCache;
     private static volatile TypingStatusRepository       typingStatusRepository;
     private static volatile TypingStatusSender           typingStatusSender;
+    private static volatile DatabaseObserver databaseObserver;
     private static volatile KeyValueStore keyValueStore;
 
     public static void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
@@ -306,6 +308,18 @@ public class ApplicationDependencies {
         return typingStatusSender;
     }
 
+    public static @NonNull DatabaseObserver getDatabaseObserver() {
+        if (databaseObserver == null) {
+            synchronized (LOCK) {
+                if (databaseObserver == null) {
+                    databaseObserver = provider.provideDatabaseObserver();
+                }
+            }
+        }
+
+        return databaseObserver;
+    }
+
     public interface Provider {
         @NonNull
         GroupsV2Operations provideGroupsV2Operations();
@@ -325,9 +339,11 @@ public class ApplicationDependencies {
         @NonNull TrimThreadsByDateManager provideTrimThreadsByDateManager();
         @NonNull TypingStatusRepository provideTypingStatusRepository();
         @NonNull TypingStatusSender provideTypingStatusSender();
+        @NonNull DatabaseObserver provideDatabaseObserver();
     }
 
     public interface NetworkIndependentProvider {
         @NonNull KeyValueStore provideKeyValueStore();
+
     }
 }

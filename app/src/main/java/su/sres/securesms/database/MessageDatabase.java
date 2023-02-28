@@ -12,7 +12,6 @@ import com.annimon.stream.Stream;
 import com.google.android.mms.pdu_alt.NotificationInd;
 import com.google.protobuf.InvalidProtocolBufferException;
 
-import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteStatement;
 
 import su.sres.securesms.database.documents.Document;
@@ -26,7 +25,7 @@ import su.sres.securesms.database.model.databaseprotos.ReactionList;
 import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.groups.GroupMigrationMembershipChange;
 import su.sres.securesms.insights.InsightsConstants;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.IncomingMediaMessage;
 import su.sres.securesms.mms.MmsException;
 import su.sres.securesms.mms.OutgoingMediaMessage;
@@ -141,12 +140,17 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   public abstract @NonNull Pair<Long, Long> insertReceivedCall(@NonNull RecipientId address, boolean isVideoOffer);
   public abstract @NonNull Pair<Long, Long> insertOutgoingCall(@NonNull RecipientId address, boolean isVideoOffer);
   public abstract @NonNull Pair<Long, Long> insertMissedCall(@NonNull RecipientId address, long timestamp, boolean isVideoOffer);
-  public abstract @NonNull void insertOrUpdateGroupCall(@NonNull RecipientId groupRecipientId,
-                                                        @NonNull RecipientId sender,
-                                                        long timestamp,
-                                                        @Nullable String messageGroupCallEraId,
-                                                        @Nullable String peekGroupCallEraId,
-                                                        @NonNull Collection<UUID> peekJoinedUuids);
+  public abstract void insertOrUpdateGroupCall(@NonNull RecipientId groupRecipientId,
+                                               @NonNull RecipientId sender,
+                                               long timestamp,
+                                               @Nullable String peekGroupCallEraId,
+                                               @NonNull Collection<UUID> peekJoinedUuids,
+                                               boolean isCallFull);
+  public abstract void insertOrUpdateGroupCall(@NonNull RecipientId groupRecipientId,
+                                               @NonNull RecipientId sender,
+                                               long timestamp,
+                                               @Nullable String messageGroupCallEraId);
+  public abstract boolean updatePreviousGroupCall(long threadId, @Nullable String peekGroupCallEraId, @NonNull Collection<UUID> peekJoinedUuids, boolean isCallFull);
 
   public abstract Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type);
   public abstract Optional<InsertResult> insertMessageInbox(IncomingTextMessage message);

@@ -2,7 +2,7 @@ package su.sres.securesms.util.paging;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.List;
 

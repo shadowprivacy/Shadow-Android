@@ -13,11 +13,11 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.messages.BackgroundMessageRetriever;
 import su.sres.securesms.messages.RestStrategy;
 import su.sres.securesms.util.concurrent.SerialMonoLifoExecutor;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

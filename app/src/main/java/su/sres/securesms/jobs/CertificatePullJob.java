@@ -24,7 +24,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.push.SignalServiceTrustStore;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.messages.calls.SystemCertificates;
@@ -56,7 +56,7 @@ public class CertificatePullJob extends BaseJob {
                 .addConstraint(NetworkConstraint.KEY)
                 // default
                 .setMaxAttempts(1)
-                .setMaxInstances(1)
+                .setMaxInstancesForFactory(1)
                 .build()
         );
     }

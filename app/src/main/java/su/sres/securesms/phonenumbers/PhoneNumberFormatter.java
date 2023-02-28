@@ -13,7 +13,8 @@ import com.google.i18n.phonenumbers.ShortNumberInfo;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
+import su.sres.securesms.util.StringUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.Pair;
@@ -100,13 +101,13 @@ public class PhoneNumberFormatter {
                     localNumber.get().countryCode == parsedNumber.getCountryCode() &&
                     NATIONAL_FORMAT_COUNTRY_CODES.contains(localNumber.get().getCountryCode()))
             {
-                return phoneNumberUtil.format(parsedNumber, PhoneNumberUtil.PhoneNumberFormat.NATIONAL);
+                return StringUtil.isolateBidi(phoneNumberUtil.format(parsedNumber, PhoneNumberUtil.PhoneNumberFormat.NATIONAL));
             } else {
-                return phoneNumberUtil.format(parsedNumber, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
+                return StringUtil.isolateBidi(phoneNumberUtil.format(parsedNumber, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL));
             }
         } catch (NumberParseException e) {
             Log.w(TAG, "Failed to format number.");
-            return e164;
+            return StringUtil.isolateBidi(e164);
         }
     }
 

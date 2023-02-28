@@ -6,14 +6,13 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
-import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.notifications.MarkReadReceiver;
 import su.sres.securesms.util.Debouncer;
 import su.sres.securesms.util.concurrent.SerialMonoLifoExecutor;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.List;
 import java.util.concurrent.Executor;

@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobLogger;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 /**
  * A base class for jobs that are intended to be used in {@link ApplicationMigrations}. Some
@@ -22,7 +22,7 @@ abstract class MigrationJob extends Job {
     MigrationJob(@NonNull Parameters parameters) {
         super(parameters.toBuilder()
                 .setQueue(Parameters.MIGRATION_QUEUE_KEY)
-                .setMaxInstances(1)
+                .setMaxInstancesForFactory(1)
                 .setLifespan(Parameters.IMMORTAL)
                 .setMaxAttempts(Parameters.UNLIMITED)
                 .build());

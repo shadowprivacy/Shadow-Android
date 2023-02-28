@@ -6,9 +6,9 @@ import android.text.TextUtils;
 import com.annimon.stream.Stream;
 import com.bumptech.glide.util.ContentLengthInputStream;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.Util;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 

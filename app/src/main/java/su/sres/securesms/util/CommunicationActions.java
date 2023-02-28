@@ -29,13 +29,13 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.ui.invitesandrequests.joining.GroupJoinBottomSheetDialogFragment;
 import su.sres.securesms.groups.ui.invitesandrequests.joining.GroupJoinUpdateRequiredBottomSheetDialogFragment;
 import su.sres.securesms.groups.v2.GroupInviteLinkUrl;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.WebRtcCallService;
 import su.sres.securesms.sms.MessageSender;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.signalservice.api.messages.calls.OfferMessage;
 

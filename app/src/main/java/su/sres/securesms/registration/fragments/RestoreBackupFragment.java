@@ -44,7 +44,7 @@ import su.sres.securesms.crypto.AttachmentSecretProvider;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoExternalStorageException;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.service.LocalBackupListener;
 import su.sres.securesms.util.BackupUtil;

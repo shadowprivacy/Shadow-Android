@@ -4,7 +4,7 @@ package su.sres.securesms.util;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;

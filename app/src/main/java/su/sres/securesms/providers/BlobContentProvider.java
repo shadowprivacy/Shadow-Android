@@ -9,8 +9,9 @@ import android.os.ParcelFileDescriptor;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.MemoryFileUtil;
 import su.sres.securesms.util.Util;
 
@@ -52,7 +53,7 @@ public final class BlobContentProvider extends BaseContentProvider {
         MemoryFile memoryFile = new MemoryFile(null, fileSize);
 
         try (OutputStream out = memoryFile.getOutputStream()) {
-            Util.copy(in, out);
+            StreamUtil.copy(in, out);
         }
 
         return MemoryFileUtil.getParcelFileDescriptor(memoryFile);

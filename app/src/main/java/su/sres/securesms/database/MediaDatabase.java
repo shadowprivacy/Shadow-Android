@@ -7,7 +7,7 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import net.sqlcipher.database.SQLiteDatabase;
+;
 
 import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;

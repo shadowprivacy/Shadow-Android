@@ -5,36 +5,29 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.WorkerThread;
 import androidx.core.util.Consumer;
 
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceProfileContentUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceProfileKeyUpdateJob;
 import su.sres.securesms.jobs.ProfileUploadJob;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.profiles.ProfileMediaConstraints;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.profiles.SystemProfileUtil;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.ProfileUtil;
-import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.ListenableFuture;
-import su.sres.securesms.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import org.whispersystems.libsignal.util.guava.Optional;
-import su.sres.signalservice.api.profiles.SignalServiceProfile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 class EditSelfProfileRepository implements EditProfileRepository {
 
@@ -82,7 +75,7 @@ class EditSelfProfileRepository implements EditProfileRepository {
         if (AvatarHelper.hasAvatar(context, selfId)) {
             SimpleTask.run(() -> {
                 try {
-                    return Util.readFully(AvatarHelper.getAvatar(context, selfId));
+                    return StreamUtil.readFully(AvatarHelper.getAvatar(context, selfId));
                 } catch (IOException e) {
                     Log.w(TAG, e);
                     return null;

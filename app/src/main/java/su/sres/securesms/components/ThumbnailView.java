@@ -9,7 +9,7 @@ import androidx.annotation.UiThread;
 import android.util.AttributeSet;
 
 import su.sres.securesms.blurhash.BlurHash;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;

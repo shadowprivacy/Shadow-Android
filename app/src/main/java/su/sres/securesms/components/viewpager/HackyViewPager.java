@@ -4,7 +4,7 @@ package su.sres.securesms.components.viewpager;
 import android.content.Context;
 import androidx.viewpager.widget.ViewPager;
 import android.util.AttributeSet;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.view.MotionEvent;
 
 /**

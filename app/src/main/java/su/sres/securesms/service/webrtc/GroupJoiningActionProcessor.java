@@ -6,7 +6,7 @@ import androidx.annotation.Nullable;
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.GroupCall;
 import su.sres.securesms.events.WebRtcViewModel;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.ringrtc.Camera;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceStateBuilder;

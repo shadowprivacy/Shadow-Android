@@ -6,9 +6,9 @@ import android.database.Cursor;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
-import net.sqlcipher.database.SQLiteDatabase;
+
 
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.util.Base64;

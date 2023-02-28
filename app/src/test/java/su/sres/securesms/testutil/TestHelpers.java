@@ -3,7 +3,7 @@ package su.sres.securesms.testutil;
 import com.annimon.stream.Stream;
 import com.google.common.collect.Sets;
 
-import su.sres.securesms.util.Conversions;
+import su.sres.core.util.Conversions;
 import org.whispersystems.libsignal.util.ByteUtil;
 
 import java.nio.ByteBuffer;

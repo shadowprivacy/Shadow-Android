@@ -9,19 +9,16 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.ViewModelProvider;
 
 import su.sres.securesms.database.DatabaseContentProviders;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
-import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.concurrent.SerialMonoLifoExecutor;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 import org.whispersystems.libsignal.util.Pair;
 
-import java.util.Objects;
 import java.util.concurrent.Executor;
 
 public class MessageCountsViewModel extends ViewModel {

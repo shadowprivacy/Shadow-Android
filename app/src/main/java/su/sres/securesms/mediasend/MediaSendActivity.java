@@ -1,9 +1,7 @@
 package su.sres.securesms.mediasend;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.core.util.Pair;
 import androidx.core.util.Supplier;
 import androidx.lifecycle.LiveData;
@@ -54,7 +52,7 @@ import su.sres.securesms.components.mention.MentionAnnotation;
 import su.sres.securesms.contactshare.SimpleTextWatcher;
 import su.sres.securesms.conversation.ui.mentions.MentionsPickerViewModel;
 import su.sres.securesms.imageeditor.model.EditorModel;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mediapreview.MediaRailAdapter;
 import su.sres.securesms.mediasend.MediaSendViewModel.HudState;
 import su.sres.securesms.mediasend.MediaSendViewModel.ViewOnceState;;
@@ -71,7 +69,6 @@ import su.sres.securesms.util.IOFunction;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.SimpleTask;

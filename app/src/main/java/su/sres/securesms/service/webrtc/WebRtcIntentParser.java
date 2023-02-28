@@ -9,7 +9,7 @@ import org.signal.ringrtc.CallId;
 
 import su.sres.securesms.crypto.IdentityKeyParcelable;
 import su.sres.securesms.events.WebRtcViewModel;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.ringrtc.CameraState;
 import su.sres.securesms.ringrtc.IceCandidateParcel;

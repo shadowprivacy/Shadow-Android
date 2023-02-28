@@ -20,7 +20,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.sharing.ShareActivity;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.stickers.StickerManifest.Sticker;

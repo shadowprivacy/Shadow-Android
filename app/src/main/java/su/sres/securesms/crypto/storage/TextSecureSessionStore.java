@@ -3,22 +3,18 @@ package su.sres.securesms.crypto.storage;
 import android.content.Context;
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.SessionDatabase;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import org.whispersystems.libsignal.SignalProtocolAddress;
 import org.whispersystems.libsignal.protocol.CiphertextMessage;
 import org.whispersystems.libsignal.state.SessionRecord;
 import org.whispersystems.libsignal.state.SessionStore;
-import su.sres.signalservice.api.util.UuidUtil;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class TextSecureSessionStore implements SessionStore {
 

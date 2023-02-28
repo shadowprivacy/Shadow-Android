@@ -11,9 +11,9 @@ import su.sres.securesms.util.TextSecurePreferences;
 import java.io.IOException;
 import java.security.SecureRandom;
 
-class LogSecretProvider {
+public class LogSecretProvider {
 
-  static byte[] getOrCreateAttachmentSecret(@NonNull Context context) {
+  public static byte[] getOrCreateAttachmentSecret(@NonNull Context context) {
     String unencryptedSecret = TextSecurePreferences.getLogUnencryptedSecret(context);
     String encryptedSecret   = TextSecurePreferences.getLogEncryptedSecret(context);
 

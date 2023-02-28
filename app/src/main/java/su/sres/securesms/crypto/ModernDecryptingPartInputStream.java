@@ -3,7 +3,7 @@ package su.sres.securesms.crypto;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.util.Conversions;
+import su.sres.core.util.Conversions;
 
 import java.io.File;
 import java.io.FileInputStream;

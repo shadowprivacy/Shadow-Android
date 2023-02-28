@@ -21,7 +21,7 @@ import android.os.Bundle;
 
 import su.sres.securesms.BaseActivity;
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 /**
  * An activity that can be shown to block access to the rest of the app when a long-running or

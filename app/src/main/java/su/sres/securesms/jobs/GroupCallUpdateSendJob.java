@@ -10,7 +10,7 @@ import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -58,6 +58,7 @@ public class GroupCallUpdateSendJob extends BaseJob {
 
         List<RecipientId> recipients = Stream.of(RecipientUtil.getEligibleForSending(conversationRecipient.getParticipants()))
                 .filterNot(Recipient::isSelf)
+                .filterNot(Recipient::isBlocked)
                 .map(Recipient::getId)
                 .toList();
 

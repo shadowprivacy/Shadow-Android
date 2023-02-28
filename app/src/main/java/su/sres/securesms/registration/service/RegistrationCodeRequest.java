@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.gcm.FcmUtil;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.push.AccountManagerFactory;
 import su.sres.securesms.registration.PushChallengeRequest;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -62,7 +62,7 @@ public final class RegistrationCodeRequest {
 
                     return new VerificationRequestResult(fcmToken.orNull(), Optional.absent());
                 } catch (IOException e) {
-                    su.sres.securesms.logging.Log.w(TAG, "Error during account registration", e);
+                    Log.w(TAG, "Error during account registration", e);
                     return new VerificationRequestResult(null, Optional.of(e));
                 }
             }

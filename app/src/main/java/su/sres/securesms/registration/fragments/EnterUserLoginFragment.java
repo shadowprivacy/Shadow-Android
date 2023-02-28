@@ -28,7 +28,7 @@ import com.google.android.gms.tasks.Task;
 
 import su.sres.securesms.R;
 import su.sres.securesms.components.LabeledEditText;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.registration.service.RegistrationCodeRequest;
 import su.sres.securesms.registration.service.RegistrationService;
 import su.sres.securesms.registration.viewmodel.RegistrationViewModel;

@@ -10,10 +10,9 @@ import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.List;
 import java.util.UUID;

@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 import android.text.TextUtils;
 
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -12,7 +13,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobLogger;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.webkit.MimeTypeMap;
 
 import com.android.mms.dom.smil.parser.SmilXmlSerializer;
@@ -295,7 +296,7 @@ public final class MmsSendJob extends SendJob {
         int index = fileName.lastIndexOf(".");
         String contentId = (index == -1) ? fileName : fileName.substring(0, index);
         part.setContentId(contentId.getBytes());
-        part.setData(Util.readFully(PartAuthority.getAttachmentStream(context, attachment.getUri())));
+        part.setData(StreamUtil.readFully(PartAuthority.getAttachmentStream(context, attachment.getUri())));
 
         body.addPart(part);
         size += getPartSize(part);

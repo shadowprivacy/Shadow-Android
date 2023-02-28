@@ -14,7 +14,7 @@ import su.sres.securesms.keyvalue.CertificateType;
 import su.sres.securesms.keyvalue.UserLoginPrivacyValues;
 import su.sres.securesms.keyvalue.SignalStore;
 import org.signal.zkgroup.profiles.ProfileKey;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;

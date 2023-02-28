@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.database.model.databaseprotos.GroupCallUpdateDetails;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.Util;
 
@@ -34,8 +34,9 @@ public final class GroupCallUpdateDetailsUtil {
         return groupCallUpdateDetails;
     }
 
-    public static @NonNull String createUpdatedBody(@NonNull GroupCallUpdateDetails groupCallUpdateDetails, @NonNull List<String> inCallUuids) {
+    public static @NonNull String createUpdatedBody(@NonNull GroupCallUpdateDetails groupCallUpdateDetails, @NonNull List<String> inCallUuids, boolean isCallFull) {
         GroupCallUpdateDetails.Builder builder = groupCallUpdateDetails.toBuilder()
+                .setIsCallFull(isCallFull)
                 .clearInCallUuids();
 
         if (Util.hasItems(inCallUuids)) {

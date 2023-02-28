@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 
 public class PersistentConnectionBootListener extends BroadcastReceiver {

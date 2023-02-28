@@ -6,7 +6,7 @@ import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 import su.sres.storageservice.protos.groups.local.DecryptedMember;
 import su.sres.storageservice.protos.groups.local.DecryptedString;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.testutil.LogRecorder;
 import su.sres.signalservice.api.util.UuidUtil;
 

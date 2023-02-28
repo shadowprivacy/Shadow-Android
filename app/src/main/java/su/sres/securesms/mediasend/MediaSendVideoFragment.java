@@ -14,7 +14,7 @@ import android.view.ViewGroup;
 import androidx.annotation.RequiresApi;
 
 import su.sres.securesms.R;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.mms.VideoSlide;
 import su.sres.securesms.scribbles.VideoEditorHud;

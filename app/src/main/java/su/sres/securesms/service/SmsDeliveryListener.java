@@ -7,9 +7,8 @@ import android.telephony.SmsMessage;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.JobManager;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.jobs.SmsSentJob;
 

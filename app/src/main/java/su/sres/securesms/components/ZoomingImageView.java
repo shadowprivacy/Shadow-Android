@@ -7,7 +7,7 @@ import android.os.AsyncTask;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.util.AttributeSet;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.util.Pair;
 import android.view.View;
 import android.widget.FrameLayout;

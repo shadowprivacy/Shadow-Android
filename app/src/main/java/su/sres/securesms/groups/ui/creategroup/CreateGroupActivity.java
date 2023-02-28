@@ -21,7 +21,7 @@ import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.groups.GroupsV2CapabilityChecker;
 import su.sres.securesms.groups.ui.creategroup.details.AddGroupDetailsActivity;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.FeatureFlags;

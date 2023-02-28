@@ -34,7 +34,7 @@ import su.sres.securesms.conversation.ConversationStickerSuggestionAdapter;
 import su.sres.securesms.database.model.StickerRecord;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.linkpreview.LinkPreviewRepository;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.mms.QuoteModel;

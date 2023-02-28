@@ -3,7 +3,7 @@ package su.sres.securesms.jobmanager.workmanager;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.jobmanager.Data;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

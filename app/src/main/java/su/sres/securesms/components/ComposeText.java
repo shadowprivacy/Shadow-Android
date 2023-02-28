@@ -7,12 +7,10 @@ import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.inputmethod.EditorInfoCompat;
 import androidx.core.view.inputmethod.InputConnectionCompat;
 import androidx.core.view.inputmethod.InputContentInfoCompat;
-import androidx.core.os.BuildCompat;
 
 import android.text.Annotation;
 import android.text.Editable;
@@ -23,7 +21,6 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
-import android.text.method.QwertyKeyListener;
 import android.text.style.RelativeSizeSpan;
 import android.util.AttributeSet;
 
@@ -32,21 +29,18 @@ import su.sres.securesms.components.mention.MentionDeleter;
 import su.sres.securesms.components.mention.MentionRendererDelegate;
 import su.sres.securesms.components.mention.MentionValidatorWatcher;
 import su.sres.securesms.database.model.Mention;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 
 import java.util.List;
-import java.util.UUID;
 
 import su.sres.securesms.R;
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.components.emoji.EmojiEditText;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.StringUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.ThemeUtil;
 
 import static su.sres.securesms.database.MentionUtil.MENTION_STARTER;
 

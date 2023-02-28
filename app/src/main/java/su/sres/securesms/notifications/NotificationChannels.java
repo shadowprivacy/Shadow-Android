@@ -28,7 +28,7 @@ import su.sres.securesms.database.RecipientDatabase.VibrateState;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;

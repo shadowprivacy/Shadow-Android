@@ -25,14 +25,11 @@ import android.view.MenuItem;
 import androidx.appcompat.app.AlertDialog;
 
 import su.sres.securesms.contacts.sync.DirectoryHelper;
-import su.sres.securesms.conversation.ConversationActivity;
 import su.sres.securesms.conversation.ConversationIntents;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.groups.ui.creategroup.CreateGroupActivity;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
-import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import org.whispersystems.libsignal.util.guava.Optional;

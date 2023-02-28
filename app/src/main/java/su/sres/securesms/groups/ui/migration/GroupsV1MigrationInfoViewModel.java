@@ -8,8 +8,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import su.sres.securesms.groups.GroupMigrationMembershipChange;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.concurrent.SignalExecutors;
+import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.List;
 

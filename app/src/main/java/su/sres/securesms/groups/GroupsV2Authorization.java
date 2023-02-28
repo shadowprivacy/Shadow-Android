@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import org.signal.zkgroup.VerificationFailedException;
 import org.signal.zkgroup.auth.AuthCredentialResponse;
 import org.signal.zkgroup.groups.GroupSecretParams;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.signalservice.api.groupsv2.GroupsV2Api;
 import su.sres.signalservice.api.groupsv2.GroupsV2AuthorizationString;
 import su.sres.signalservice.api.groupsv2.NoCredentialForRedemptionTimeException;

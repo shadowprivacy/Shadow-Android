@@ -1,7 +1,7 @@
 package su.sres.securesms.crypto.storage;
 
 import android.content.Context;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.SessionUtil;

@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.BuildConfig;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 import android.webkit.MimeTypeMap;
 
 import su.sres.securesms.crypto.AttachmentSecret;

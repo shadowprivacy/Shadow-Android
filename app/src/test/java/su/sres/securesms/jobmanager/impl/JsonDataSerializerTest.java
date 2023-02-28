@@ -1,8 +1,9 @@
 package su.sres.securesms.jobmanager.impl;
 
 import org.junit.Test;
+
+import su.sres.core.util.StreamUtil;
 import su.sres.securesms.jobmanager.Data;
-import su.sres.securesms.util.Util;
 
 import java.io.IOException;
 
@@ -14,7 +15,7 @@ public final class JsonDataSerializerTest {
 
     @Test
     public void deserialize_dataMatchesExpected() throws IOException {
-        Data data = new JsonDataSerializer().deserialize(Util.readFullyAsString(ClassLoader.getSystemClassLoader().getResourceAsStream("data/data_serialized.json")));
+        Data data = new JsonDataSerializer().deserialize(StreamUtil.readFullyAsString(ClassLoader.getSystemClassLoader().getResourceAsStream("data/data_serialized.json")));
 
         assertEquals("s1 value", data.getString("s1"));
         assertEquals("s2 value", data.getString("s2"));

@@ -8,7 +8,7 @@ import androidx.annotation.WorkerThread;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.persistence.FullSpec;
 import su.sres.securesms.jobmanager.persistence.JobStorage;
-import su.sres.securesms.logging.Log;
+import su.sres.core.util.logging.Log;
 
 import java.util.List;
 
