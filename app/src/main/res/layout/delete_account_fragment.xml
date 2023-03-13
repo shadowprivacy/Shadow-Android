@@ -75,7 +75,7 @@
                 android:id="@+id/delete_account_fragment_number"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="3"
+                android:layout_weight="4"
                 app:labeledEditText_background="?android:windowBackground"
                 app:labeledEditText_label="@string/RegistrationActivity_user_login_description"
                 app:labeledEditText_textLayout="@layout/phone_text" />
