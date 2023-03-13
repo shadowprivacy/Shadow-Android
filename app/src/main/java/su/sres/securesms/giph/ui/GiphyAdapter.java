@@ -55,8 +55,8 @@ class GiphyAdapter extends RecyclerView.Adapter<GiphyAdapter.GiphyViewHolder> {
 
     GiphyViewHolder(View view) {
       super(view);
-      thumbnail   = ViewUtil.findById(view, R.id.thumbnail);
-      gifProgress = ViewUtil.findById(view, R.id.gif_progress);
+      thumbnail   = view.findViewById(R.id.thumbnail);
+      gifProgress = view.findViewById(R.id.gif_progress);
       thumbnail.setOnClickListener(this);
       gifProgress.setVisibility(View.GONE);
     }

@@ -28,12 +28,13 @@ import su.sres.securesms.crypto.AttachmentSecretProvider;
 import su.sres.securesms.crypto.DatabaseSecret;
 import su.sres.securesms.crypto.DatabaseSecretProvider;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
+import su.sres.securesms.util.SqlUtil;
 
 public class DatabaseFactory {
 
     private static final Object lock = new Object();
 
-    private static DatabaseFactory instance;
+    private static volatile DatabaseFactory instance;
 
     private final SQLCipherOpenHelper databaseHelper;
     private final SmsDatabase sms;
@@ -53,20 +54,19 @@ public class DatabaseFactory {
     private final SignedPreKeyDatabase signedPreKeyDatabase;
     private final SessionDatabase sessionDatabase;
     private final SearchDatabase searchDatabase;
-    private final JobDatabase jobDatabase;
     private final StickerDatabase stickerDatabase;
     private final StorageKeyDatabase storageKeyDatabase;
-    private final KeyValueDatabase      keyValueDatabase;
-    private final MegaphoneDatabase     megaphoneDatabase;
     private final MentionDatabase         mentionDatabase;
 
     public static DatabaseFactory getInstance(Context context) {
-        synchronized (lock) {
-            if (instance == null)
-                instance = new DatabaseFactory(context.getApplicationContext());
-
-            return instance;
+        if (instance == null) {
+            synchronized (lock) {
+                if (instance == null) {
+                    instance = new DatabaseFactory(context.getApplicationContext());
+                }
+            }
         }
+        return instance;
     }
 
     public static MmsSmsDatabase getMmsSmsDatabase(Context context) {
@@ -137,24 +137,12 @@ public class DatabaseFactory {
         return getInstance(context).searchDatabase;
     }
 
-    public static JobDatabase getJobDatabase(Context context) {
-        return getInstance(context).jobDatabase;
-    }
-
     public static StickerDatabase getStickerDatabase(Context context) {
         return getInstance(context).stickerDatabase;
     }
 
     public static StorageKeyDatabase getStorageKeyDatabase(Context context) {
         return getInstance(context).storageKeyDatabase;
-    }
-
-    public static KeyValueDatabase getKeyValueDatabase(Context context) {
-        return getInstance(context).keyValueDatabase;
-    }
-
-    public static MegaphoneDatabase getMegaphoneDatabase(Context context) {
-        return getInstance(context).megaphoneDatabase;
     }
 
     public static MentionDatabase getMentionDatabase(Context context) {
@@ -170,6 +158,11 @@ public class DatabaseFactory {
             getInstance(context).databaseHelper.onUpgrade(database, database.getVersion(), -1);
             getInstance(context).databaseHelper.markCurrent(database);
             getInstance(context).mms.trimEntriesForExpiredMessages();
+            getInstance(context).getRawDatabase().rawExecSQL("DROP TABLE IF EXISTS key_value");
+            getInstance(context).getRawDatabase().rawExecSQL("DROP TABLE IF EXISTS megaphone");
+            getInstance(context).getRawDatabase().rawExecSQL("DROP TABLE IF EXISTS job_spec");
+            getInstance(context).getRawDatabase().rawExecSQL("DROP TABLE IF EXISTS constraint_spec");
+            getInstance(context).getRawDatabase().rawExecSQL("DROP TABLE IF EXISTS dependency_spec");
 
             instance.databaseHelper.close();
             instance = null;
@@ -183,7 +176,7 @@ public class DatabaseFactory {
     private DatabaseFactory(@NonNull Context context) {
         SQLiteDatabase.loadLibs(context);
 
-        DatabaseSecret databaseSecret = new DatabaseSecretProvider(context).getOrCreateDatabaseSecret();
+        DatabaseSecret   databaseSecret   = DatabaseSecretProvider.getOrCreateDatabaseSecret(context);
         AttachmentSecret attachmentSecret = AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret();
 
         this.databaseHelper = new SQLCipherOpenHelper(context, databaseSecret);
@@ -204,15 +197,20 @@ public class DatabaseFactory {
         this.signedPreKeyDatabase = new SignedPreKeyDatabase(context, databaseHelper);
         this.sessionDatabase = new SessionDatabase(context, databaseHelper);
         this.searchDatabase = new SearchDatabase(context, databaseHelper);
-        this.jobDatabase = new JobDatabase(context, databaseHelper);
         this.stickerDatabase = new StickerDatabase(context, databaseHelper, attachmentSecret);
         this.storageKeyDatabase = new StorageKeyDatabase(context, databaseHelper);
-        this.keyValueDatabase     = new KeyValueDatabase(context, databaseHelper);
-        this.megaphoneDatabase    = new MegaphoneDatabase(context, databaseHelper);
         this.mentionDatabase         = new MentionDatabase(context, databaseHelper);
     }
 
     public void triggerDatabaseAccess() {
         databaseHelper.getWritableDatabase();
+    }
+
+    public SQLiteDatabase getRawDatabase() {
+        return databaseHelper.getWritableDatabase().getSqlCipherDatabase();
+    }
+
+    public boolean hasTable(String table) {
+        return SqlUtil.tableExists(databaseHelper.getReadableDatabase().getSqlCipherDatabase(), table);
     }
 }

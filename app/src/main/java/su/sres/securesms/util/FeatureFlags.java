@@ -65,13 +65,15 @@ public final class FeatureFlags {
     private static final String GV1_FORCED_MIGRATE           = "android.groupsV1Migration.forced";
     private static final String GV1_MIGRATION_JOB            = "android.groupsV1Migration.job";
     private static final String SEND_VIEWED_RECEIPTS         = "android.sendViewedReceipts";
+    private static final String CUSTOM_VIDEO_MUXER           = "android.customVideoMuxer";
 
     /**
      * We will only store remote values for flags in this set. If you want a flag to be controllable
      * remotely, place it in here.
      */
 
-    private static final Set<String> REMOTE_CAPABLE = SetUtil.newHashSet(
+    @VisibleForTesting
+    static final Set<String> REMOTE_CAPABLE = SetUtil.newHashSet(
             ATTACHMENTS_V3,
             GROUPS_V2_RECOMMENDED_LIMIT,
             GROUPS_V2_HARD_LIMIT,
@@ -84,7 +86,13 @@ public final class FeatureFlags {
             GV1_MANUAL_MIGRATE,
             GV1_FORCED_MIGRATE,
             GROUP_CALLING,
-            SEND_VIEWED_RECEIPTS
+            SEND_VIEWED_RECEIPTS,
+            CUSTOM_VIDEO_MUXER
+    );
+
+    @VisibleForTesting
+    static final Set<String> NOT_REMOTE_CAPABLE = SetUtil.newHashSet(
+            USER_LOGIN_PRIVACY_VERSION
     );
 
     /**
@@ -94,7 +102,8 @@ public final class FeatureFlags {
      * an addition to this map.
      */
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-    private static final Map<String, Object> FORCED_VALUES = new HashMap<String, Object>() {{
+    @VisibleForTesting
+    static final Map<String, Object> FORCED_VALUES = new HashMap<String, Object>() {{
     }};
 
     /**
@@ -104,18 +113,21 @@ public final class FeatureFlags {
      * will be updated arbitrarily at runtime. This will make values more responsive, but also places
      * more burden on the reader to ensure that the app experience remains consistent.
      */
-    private static final Set<String> HOT_SWAPPABLE = SetUtil.newHashSet(
+    @VisibleForTesting
+    static final Set<String> HOT_SWAPPABLE = SetUtil.newHashSet(
             ATTACHMENTS_V3,
             VERIFY_V2,
             CLIENT_EXPIRATION,
             GROUP_CALLING,
-            GV1_MIGRATION_JOB
+            GV1_MIGRATION_JOB,
+            CUSTOM_VIDEO_MUXER
     );
 
     /**
      * Flags in this set will stay true forever once they receive a true value from a remote config.
      */
-    private static final Set<String> STICKY = SetUtil.newHashSet(
+    @VisibleForTesting
+    static final Set<String> STICKY = SetUtil.newHashSet(
             VERIFY_V2
     );
 
@@ -246,6 +258,11 @@ public final class FeatureFlags {
     /** Whether or not to send viewed receipts. */
     public static boolean sendViewedReceipts() {
         return getBoolean(SEND_VIEWED_RECEIPTS, false);
+    }
+
+    /** Whether to use the custom streaming muxer or built in android muxer. */
+    public static boolean useStreamingVideoMuxer() {
+        return getBoolean(CUSTOM_VIDEO_MUXER, false);
     }
 
     /** Only for rendering debug info. */

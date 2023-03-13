@@ -9,6 +9,8 @@ import androidx.lifecycle.ViewModelProvider;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Handler;
+import android.os.Looper;
+
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.DatabaseContentProviders;
@@ -30,7 +32,7 @@ class LongMessageViewModel extends ViewModel {
         this.messageId       = messageId;
         this.isMms           = isMms;
         this.message         = new MutableLiveData<>();
-        this.messageObserver = new MessageObserver(new Handler());
+        this.messageObserver = new MessageObserver(new Handler(Looper.getMainLooper()));
 
         repository.getMessage(application, messageId, isMms, longMessage -> {
             if (longMessage.isPresent()) {

@@ -12,7 +12,9 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import su.sres.securesms.database.ThreadDatabase;
+import su.sres.securesms.groups.v2.GroupInviteLinkUrl;
 import su.sres.securesms.groups.v2.GroupLinkPassword;
+import su.sres.securesms.jobs.ProfileUploadJob;
 import su.sres.securesms.jobs.PushGroupSilentUpdateSendJob;
 import su.sres.securesms.jobs.RequestGroupV2InfoJob;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -463,12 +465,15 @@ final class GroupManagerV2 {
             if (Arrays.equals(profileKey.serialize(), selfInGroup.get().getProfileKey().toByteArray())) {
                 Log.i(TAG, "Own Profile Key is already up to date in group " + groupId);
                 return null;
+            } else {
+                Log.i(TAG, "Profile Key does not match that in group " + groupId);
             }
 
             GroupCandidate groupCandidate = groupCandidateHelper.recipientIdToCandidate(Recipient.self().getId());
 
             if (!groupCandidate.hasProfileKeyCredential()) {
-                Log.w(TAG, "No credential available");
+                Log.w(TAG, "No credential available, repairing");
+                ApplicationDependencies.getJobManager().add(new ProfileUploadJob());
                 return null;
             }
 
@@ -505,7 +510,7 @@ final class GroupManagerV2 {
         }
 
         @WorkerThread
-        public GroupManager.GroupActionResult setJoinByGroupLinkState(@NonNull GroupManager.GroupLinkState state)
+        public @Nullable GroupInviteLinkUrl setJoinByGroupLinkState(@NonNull GroupManager.GroupLinkState state)
                 throws GroupChangeFailedException, GroupNotAMemberException, GroupInsufficientRightsException, IOException
         {
             AccessControl.AccessRequired access;
@@ -528,7 +533,17 @@ final class GroupManagerV2 {
                 }
             }
 
-            return commitChangeWithConflictResolution(change);
+            commitChangeWithConflictResolution(change);
+
+            if (state != GroupManager.GroupLinkState.DISABLED) {
+                GroupDatabase.V2GroupProperties v2GroupProperties = groupDatabase.requireGroup(groupId).requireV2GroupProperties();
+                GroupMasterKey                  groupMasterKey    = v2GroupProperties.getGroupMasterKey();
+                DecryptedGroup                  decryptedGroup    = v2GroupProperties.getDecryptedGroup();
+
+                return GroupInviteLinkUrl.forGroup(groupMasterKey, decryptedGroup);
+            } else {
+                return null;
+            }
         }
 
         private @NonNull GroupManager.GroupActionResult commitChangeWithConflictResolution(@NonNull GroupChange.Actions.Builder change)

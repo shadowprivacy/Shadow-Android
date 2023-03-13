@@ -49,6 +49,7 @@ import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupMigrationMembershipChange;
+import su.sres.securesms.groups.ui.invitesandrequests.invite.GroupLinkInviteFriendsBottomSheetDialogFragment;
 import su.sres.securesms.groups.ui.migration.GroupsV1MigrationInfoBottomSheetDialogFragment;
 import su.sres.securesms.jobs.DirectorySyncJob;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -1418,6 +1419,11 @@ public class ConversationFragment extends LoggingFragment {
     @Override
     public void onJoinGroupCallClicked() {
       CommunicationActions.startVideoCall(requireActivity(), recipient.get());
+    }
+
+    @Override
+    public void onInviteFriendsToGroupClicked(@NonNull GroupId.V2 groupId) {
+      GroupLinkInviteFriendsBottomSheetDialogFragment.show(requireActivity().getSupportFragmentManager(), groupId);
     }
   }
 

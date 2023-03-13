@@ -3,6 +3,8 @@ package su.sres.securesms.service.webrtc.state;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.annimon.stream.OptionalLong;
+
 import su.sres.securesms.components.webrtc.BroadcastVideoSink;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.CallParticipantId;
@@ -259,7 +261,7 @@ public class WebRtcServiceStateBuilder {
         }
 
         public @NonNull CallInfoStateBuilder remoteDevicesCount(long remoteDevicesCount) {
-            toBuild.remoteDevicesCount = remoteDevicesCount;
+            toBuild.remoteDevicesCount = OptionalLong.of(remoteDevicesCount);
             return this;
         }
 

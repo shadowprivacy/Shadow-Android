@@ -37,6 +37,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 import su.sres.securesms.database.MessageDatabase.MarkedMessageInfo;
+import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.MediaMmsMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
@@ -560,6 +561,8 @@ public class ThreadDatabase extends Database {
             query += " AND " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.GROUP_TYPE + " != " + RecipientDatabase.GroupType.SIGNAL_V1.getId();
         }
 
+        query += " AND " + ARCHIVED + " = 0";
+
         return db.rawQuery(createQuery(query, 0, limit, true), null);
     }
 
@@ -600,10 +603,6 @@ public class ThreadDatabase extends Database {
             }
         }
         return threadRecords;
-    }
-
-    public Cursor getConversationList() {
-        return getConversationList("0");
     }
 
     public Cursor getArchivedConversationList() {
@@ -1202,64 +1201,19 @@ public class ThreadDatabase extends Database {
         return Objects.requireNonNull(getThreadRecord(getThreadIdFor(recipient)));
     }
 
-  /* @NonNull MergeResult merge(@NonNull RecipientId primaryRecipientId, @NonNull RecipientId secondaryRecipientId) {
-    if (!databaseHelper.getWritableDatabase().inTransaction()) {
-      throw new IllegalStateException("Must be in a transaction!");
-    }
+    public @NonNull Set<RecipientId> getAllThreadRecipients() {
+        SQLiteDatabase   db  = databaseHelper.getReadableDatabase();
+        Set<RecipientId> ids = new HashSet<>();
 
-    Log.w(TAG, "Merging threads. Primary: " + primaryRecipientId + ", Secondary: " + secondaryRecipientId);
 
-    ThreadRecord primary   = getThreadRecord(getThreadIdFor(primaryRecipientId));
-    ThreadRecord secondary = getThreadRecord(getThreadIdFor(secondaryRecipientId));
-
-    if (primary != null && secondary == null) {
-      Log.w(TAG, "[merge] Only had a thread for primary. Returning that.");
-      return new MergeResult(primary.getThreadId(), -1, false);
-    } else if (primary == null && secondary != null) {
-      Log.w(TAG, "[merge] Only had a thread for secondary. Updating it to have the recipientId of the primary.");
-
-      ContentValues values = new ContentValues();
-      values.put(RECIPIENT_ID, primaryRecipientId.serialize());
-
-      databaseHelper.getWritableDatabase().update(TABLE_NAME, values, ID_WHERE, SqlUtil.buildArgs(secondary.getThreadId()));
-      return new MergeResult(secondary.getThreadId(), -1, false);
-    } else if (primary == null && secondary == null) {
-      Log.w(TAG, "[merge] No thread for either.");
-      return new MergeResult(-1, -1, false);
-    } else {
-      Log.w(TAG, "[merge] Had a thread for both. Deleting the secondary and merging the attributes together.");
-
-      SQLiteDatabase db = databaseHelper.getWritableDatabase();
-
-      db.delete(TABLE_NAME, ID_WHERE, SqlUtil.buildArgs(secondary.getThreadId()));
-
-      if (primary.getExpiresIn() != secondary.getExpiresIn()) {
-        ContentValues values = new ContentValues();
-        if (primary.getExpiresIn() == 0) {
-          values.put(EXPIRES_IN, secondary.getExpiresIn());
-        } else if (secondary.getExpiresIn() == 0) {
-          values.put(EXPIRES_IN, primary.getExpiresIn());
-        } else {
-          values.put(EXPIRES_IN, Math.min(primary.getExpiresIn(), secondary.getExpiresIn()));
+        try (Cursor cursor = db.query(TABLE_NAME, new String[] { RECIPIENT_ID }, null, null, null, null, null)) {
+            while (cursor.moveToNext()) {
+                ids.add(RecipientId.from(CursorUtil.requireString(cursor, RECIPIENT_ID)));
+            }
         }
 
-        db.update(TABLE_NAME, values, ID_WHERE, SqlUtil.buildArgs(primary.getThreadId()));
-      }
-
-      ContentValues draftValues = new ContentValues();
-      draftValues.put(DraftDatabase.THREAD_ID, primary.getThreadId());
-      db.update(DraftDatabase.TABLE_NAME, draftValues, DraftDatabase.THREAD_ID + " = ?", SqlUtil.buildArgs(secondary.getThreadId()));
-
-      ContentValues searchValues = new ContentValues();
-      searchValues.put(SearchDatabase.THREAD_ID, primary.getThreadId());
-      db.update(SearchDatabase.SMS_FTS_TABLE_NAME, searchValues, SearchDatabase.THREAD_ID + " = ?", SqlUtil.buildArgs(secondary.getThreadId()));
-      db.update(SearchDatabase.MMS_FTS_TABLE_NAME, searchValues, SearchDatabase.THREAD_ID + " = ?", SqlUtil.buildArgs(secondary.getThreadId()));
-
-      RemappedRecords.getInstance().addThread(context, secondary.getThreadId(), primary.getThreadId());
-
-      return new MergeResult(primary.getThreadId(), secondary.getThreadId(), true);
+        return ids;
     }
-  } */
 
     private @Nullable
     ThreadRecord getThreadRecord(@Nullable Long threadId) {
@@ -1429,7 +1383,7 @@ public class ThreadDatabase extends Database {
 
         public ThreadRecord getCurrent() {
             RecipientId recipientId = RecipientId.from(CursorUtil.requireLong(cursor, ThreadDatabase.RECIPIENT_ID));
-            RecipientDatabase.RecipientSettings recipientSettings = RecipientDatabase.getRecipientSettings(context, cursor);
+            RecipientSettings recipientSettings = RecipientDatabase.getRecipientSettings(context, cursor, ThreadDatabase.RECIPIENT_ID);
 
             Recipient recipient;
 
@@ -1449,7 +1403,7 @@ public class ThreadDatabase extends Database {
                 }
             } else {
                 RecipientDetails details = RecipientDetails.forIndividual(context, recipientSettings);
-                recipient = new Recipient(recipientId, details, false);
+                recipient = new Recipient(recipientId, details, true);
             }
 
             int readReceiptCount = TextSecurePreferences.isReadReceiptsEnabled(context) ? cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.READ_RECEIPT_COUNT))

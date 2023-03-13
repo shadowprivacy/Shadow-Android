@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import android.database.ContentObserver;
 import android.os.Handler;
+import android.os.Looper;
+
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.DatabaseContentProviders;
@@ -32,7 +34,7 @@ final class StickerKeyboardPageViewModel extends ViewModel {
         this.repository        = repository;
         this.stickers          = new MutableLiveData<>();
         this.observerThrottler = new Throttler(500);
-        this.observer          = new ContentObserver(new Handler()) {
+        this.observer          = new ContentObserver(new Handler(Looper.getMainLooper())) {
             @Override
             public void onChange(boolean selfChange) {
                 observerThrottler.publish(() -> getStickers(packId));

@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.graphics.drawable.RippleDrawable;
+import android.os.Build;
 import android.os.Build.VERSION;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -27,6 +28,7 @@ import android.text.SpannableString;
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
@@ -74,7 +76,7 @@ import java.util.Set;
 
 import static su.sres.securesms.database.model.LiveUpdateMessage.recipientToStringAsync;
 
-public final class ConversationListItem extends RelativeLayout
+public final class ConversationListItem extends ConstraintLayout
         implements RecipientForeverObserver,
         BindableConversationListItem,
         Unbindable,
@@ -91,7 +93,6 @@ public final class ConversationListItem extends RelativeLayout
   private LiveRecipient       recipient;
   private long                threadId;
   private GlideRequests       glideRequests;
-  private View                subjectContainer;
   private TextView            subjectView;
   private TypingIndicatorView typingView;
   private FromTextView        fromView;
@@ -123,21 +124,17 @@ public final class ConversationListItem extends RelativeLayout
   @Override
   protected void onFinishInflate() {
     super.onFinishInflate();
-    this.subjectContainer        = findViewById(R.id.subject_container);
-    this.subjectView             = findViewById(R.id.subject);
-    this.typingView              = findViewById(R.id.typing_indicator);
-    this.fromView                = findViewById(R.id.from);
-    this.dateView                = findViewById(R.id.date);
-    this.deliveryStatusIndicator = findViewById(R.id.delivery_status);
-    this.alertView               = findViewById(R.id.indicators_parent);
-    this.contactPhotoImage       = findViewById(R.id.contact_photo_image);
-    this.thumbnailView           = findViewById(R.id.thumbnail);
-    this.archivedView            = findViewById(R.id.archived);
-    this.unreadIndicator         = findViewById(R.id.unread_indicator);
+    this.subjectView             = findViewById(R.id.conversation_list_item_summary);
+    this.typingView              = findViewById(R.id.conversation_list_item_typing_indicator);
+    this.fromView                = findViewById(R.id.conversation_list_item_name);
+    this.dateView                = findViewById(R.id.conversation_list_item_date);
+    this.deliveryStatusIndicator = findViewById(R.id.conversation_list_item_status);
+    this.alertView               = findViewById(R.id.conversation_list_item_alert);
+    this.contactPhotoImage       = findViewById(R.id.conversation_list_item_avatar);
+    this.thumbnailView           = findViewById(R.id.conversation_list_item_thumbnail);
+    this.archivedView            = findViewById(R.id.conversation_list_item_archived);
+    this.unreadIndicator         = findViewById(R.id.conversation_list_item_unread_indicator);
     thumbnailView.setClickable(false);
-
-    ViewUtil.setTextViewGravityStart(this.fromView, getContext());
-    ViewUtil.setTextViewGravityStart(this.subjectView, getContext());
   }
 
   @Override
@@ -160,19 +157,17 @@ public final class ConversationListItem extends RelativeLayout
                    @Nullable String highlightSubstring)
   {
 
-          if (this.recipient != null) this.recipient.removeForeverObserver(this);
+    observeRecipient(thread.getRecipient().live());
     observeDisplayBody(null);
     setSubjectViewText(null);
 
     this.selectedThreads = selectedThreads;
-    this.recipient       = thread.getRecipient().live();
     this.threadId        = thread.getThreadId();
     this.glideRequests   = glideRequests;
     this.unreadCount     = thread.getUnreadCount();
     this.lastSeen        = thread.getLastSeen();
     this.thread          = thread;
 
-    this.recipient.observeForever(this);
     if (highlightSubstring != null) {
       String name = recipient.get().isSelf() ? getContext().getString(R.string.note_to_self) : recipient.get().getDisplayName(getContext());
 
@@ -217,15 +212,12 @@ public final class ConversationListItem extends RelativeLayout
                    @NonNull  Locale        locale,
                    @Nullable String        highlightSubstring)
   {
-    if (this.recipient != null) this.recipient.removeForeverObserver(this);
+    observeRecipient(contact.live());
     observeDisplayBody(null);
     setSubjectViewText(null);
 
     this.selectedThreads = Collections.emptySet();
-    this.recipient       = contact.live();
     this.glideRequests   = glideRequests;
-
-    this.recipient.observeForever(this);
 
     fromView.setText(contact);
     fromView.setText(SearchUtil.getHighlightedSpan(locale, () -> new StyleSpan(Typeface.BOLD), new SpannableString(fromView.getText()), highlightSubstring));
@@ -247,15 +239,12 @@ public final class ConversationListItem extends RelativeLayout
                    @NonNull  Locale        locale,
                    @Nullable String        highlightSubstring)
   {
-    if (this.recipient != null) this.recipient.removeForeverObserver(this);
+    observeRecipient(messageResult.conversationRecipient.live());
     observeDisplayBody(null);
     setSubjectViewText(null);
 
     this.selectedThreads = Collections.emptySet();
-    this.recipient       = messageResult.conversationRecipient.live();
     this.glideRequests   = glideRequests;
-
-    this.recipient.observeForever(this);
 
     fromView.setText(recipient.get(), true);
     setSubjectViewText(SearchUtil.getHighlightedSpan(locale, () -> new StyleSpan(Typeface.BOLD), messageResult.bodySnippet, highlightSubstring));
@@ -274,8 +263,7 @@ public final class ConversationListItem extends RelativeLayout
   @Override
   public void unbind() {
     if (this.recipient != null) {
-      this.recipient.removeForeverObserver(this);
-      this.recipient = null;
+      observeRecipient(null);
       setBatchMode(false);
       contactPhotoImage.setAvatar(glideRequests, null, !batchMode);
     }
@@ -323,6 +311,18 @@ public final class ConversationListItem extends RelativeLayout
     return lastSeen;
   }
 
+  private void observeRecipient(@Nullable LiveRecipient newRecipient) {
+    if (this.recipient != null) {
+      this.recipient.removeForeverObserver(this);
+    }
+
+    this.recipient = newRecipient;
+
+    if (this.recipient != null) {
+      this.recipient.observeForever(this);
+    }
+  }
+
   private void observeDisplayBody(@Nullable LiveData<SpannableString> displayBody) {
     if (this.displayBody != null) {
       this.displayBody.removeObserver(this);
@@ -349,19 +349,8 @@ public final class ConversationListItem extends RelativeLayout
     if (thread.getSnippetUri() != null) {
       this.thumbnailView.setVisibility(View.VISIBLE);
       this.thumbnailView.setImageResource(glideRequests, thread.getSnippetUri());
-
-      LayoutParams subjectParams = (RelativeLayout.LayoutParams)this.subjectContainer .getLayoutParams();
-      subjectParams.addRule(RelativeLayout.LEFT_OF, R.id.thumbnail);
-      subjectParams.addRule(RelativeLayout.START_OF, R.id.thumbnail);
-      this.subjectContainer.setLayoutParams(subjectParams);
-      this.post(new ThumbnailPositioner(thumbnailView, archivedView, deliveryStatusIndicator, dateView));
     } else {
       this.thumbnailView.setVisibility(View.GONE);
-
-      LayoutParams subjectParams = (RelativeLayout.LayoutParams)this.subjectContainer.getLayoutParams();
-      subjectParams.addRule(RelativeLayout.LEFT_OF, R.id.status);
-      subjectParams.addRule(RelativeLayout.START_OF, R.id.status);
-      this.subjectContainer.setLayoutParams(subjectParams);
     }
   }
 
@@ -403,7 +392,7 @@ public final class ConversationListItem extends RelativeLayout
   }
 
   private void setRippleColor(Recipient recipient) {
-    if (VERSION.SDK_INT >= 21) {
+    if (Build.VERSION.SDK_INT >= 21) {
       ((RippleDrawable)(getBackground()).mutate())
           .setColor(ColorStateList.valueOf(recipient.getColor().toConversationColor(getContext())));
     }
@@ -421,6 +410,11 @@ public final class ConversationListItem extends RelativeLayout
 
   @Override
   public void onRecipientChanged(@NonNull Recipient recipient) {
+    if (this.recipient == null || !this.recipient.getId().equals(recipient.getId())) {
+      Log.w(TAG, "Bad change! Local recipient doesn't match. Ignoring. Local: " + (this.recipient == null ? "null" : this.recipient.getId()) + ", Changed: " + recipient.getId());
+      return;
+    }
+
     fromView.setText(recipient, unreadCount == 0);
     contactPhotoImage.setAvatar(glideRequests, recipient, !batchMode);
     setRippleColor(recipient);
@@ -549,37 +543,4 @@ public final class ConversationListItem extends RelativeLayout
       updateTypingIndicator(typingThreads);
     }
   }
-
-  private static class ThumbnailPositioner implements Runnable {
-
-    private final View thumbnailView;
-    private final View archivedView;
-    private final View deliveryStatusView;
-    private final View dateView;
-
-    ThumbnailPositioner(View thumbnailView, View archivedView, View deliveryStatusView, View dateView) {
-      this.thumbnailView      = thumbnailView;
-      this.archivedView       = archivedView;
-      this.deliveryStatusView = deliveryStatusView;
-      this.dateView           = dateView;
-    }
-
-    @Override
-    public void run() {
-      LayoutParams thumbnailParams = (RelativeLayout.LayoutParams)thumbnailView.getLayoutParams();
-
-      if (archivedView.getVisibility() == View.VISIBLE &&
-          (archivedView.getWidth() + deliveryStatusView.getWidth()) > dateView.getWidth())
-      {
-        thumbnailParams.addRule(RelativeLayout.LEFT_OF, R.id.status);
-        thumbnailParams.addRule(RelativeLayout.START_OF, R.id.status);
-      } else {
-        thumbnailParams.addRule(RelativeLayout.LEFT_OF, R.id.date);
-        thumbnailParams.addRule(RelativeLayout.START_OF, R.id.date);
-      }
-
-      thumbnailView.setLayoutParams(thumbnailParams);
-    }
-  }
-
 }

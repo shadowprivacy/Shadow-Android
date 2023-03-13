@@ -31,6 +31,7 @@ import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.AvatarUtil;
+import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 
 import java.util.Objects;
@@ -50,6 +51,7 @@ public class CallParticipantView extends ConstraintLayout {
 
     private RecipientId recipientId;
     private boolean     infoMode;
+    private Runnable    missingMediaKeysUpdater;
     private AppCompatImageView  backgroundAvatar;
     private AvatarImageView     avatar;
     private TextureViewRenderer renderer;
@@ -101,7 +103,7 @@ public class CallParticipantView extends ConstraintLayout {
     void setCallParticipant(@NonNull CallParticipant participant) {
         boolean participantChanged = recipientId == null || !recipientId.equals(participant.getRecipient().getId());
         recipientId = participant.getRecipient().getId();
-        infoMode    = participant.getRecipient().isBlocked() || (!participant.isMediaKeysReceived() && (System.currentTimeMillis() - participant.getAddedToCallTime()) > DELAY_SHOWING_MISSING_MEDIA_KEYS);
+        infoMode    = participant.getRecipient().isBlocked() || isMissingMediaKeys(participant);
 
         if (infoMode) {
             renderer.setVisibility(View.GONE);
@@ -146,6 +148,28 @@ public class CallParticipantView extends ConstraintLayout {
             setPipAvatar(participant.getRecipient());
             contactPhoto = participant.getRecipient().getContactPhoto();
         }
+    }
+
+    private boolean isMissingMediaKeys(@NonNull CallParticipant participant) {
+        if (missingMediaKeysUpdater != null) {
+            Util.cancelRunnableOnMain(missingMediaKeysUpdater);
+            missingMediaKeysUpdater = null;
+        }
+
+        if (!participant.isMediaKeysReceived()) {
+            long time = System.currentTimeMillis() - participant.getAddedToCallTime();
+            if (time > DELAY_SHOWING_MISSING_MEDIA_KEYS) {
+                return true;
+            } else {
+                missingMediaKeysUpdater = () -> {
+                    if (recipientId.equals(participant.getRecipient().getId())) {
+                        setCallParticipant(participant);
+                    }
+                };
+                Util.runOnMainDelayed(missingMediaKeysUpdater, DELAY_SHOWING_MISSING_MEDIA_KEYS - time);
+            }
+        }
+        return false;
     }
 
     void setRenderInPip(boolean shouldRenderInPip) {

@@ -31,7 +31,9 @@ import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.SupportEmailUtil;
 import su.sres.securesms.util.concurrent.AssertedSuccessListener;
 
-public final class EnterCodeFragment extends BaseRegistrationFragment {
+
+public final class EnterCodeFragment extends BaseRegistrationFragment
+{
 
     private static final String TAG = Log.tag(EnterCodeFragment.class);
 
@@ -39,6 +41,7 @@ public final class EnterCodeFragment extends BaseRegistrationFragment {
     private TextView                header;
     private VerificationCodeView    verificationCodeView;
     private VerificationPinKeyboard keyboard;
+    private View                    serviceWarning;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -56,6 +59,7 @@ public final class EnterCodeFragment extends BaseRegistrationFragment {
         header               = view.findViewById(R.id.verify_header);
         verificationCodeView = view.findViewById(R.id.code);
         keyboard             = view.findViewById(R.id.keyboard);
+        serviceWarning       = view.findViewById(R.id.cell_service_warning);
 
         connectKeyboard(verificationCodeView, keyboard);
 
@@ -190,4 +194,5 @@ public final class EnterCodeFragment extends BaseRegistrationFragment {
     public void onEventServerCertError(ServerCertErrorEvent event) {
         Toast.makeText(getActivity(), event.message, Toast.LENGTH_LONG).show();
     }
+
 }

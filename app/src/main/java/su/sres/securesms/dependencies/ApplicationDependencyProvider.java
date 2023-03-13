@@ -10,6 +10,7 @@ import su.sres.securesms.BuildConfig;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.database.DatabaseObserver;
+import su.sres.securesms.database.JobDatabase;
 import su.sres.securesms.jobmanager.impl.FactoryJobPredicate;
 import su.sres.securesms.jobs.GroupCallUpdateSendJob;
 import su.sres.securesms.jobs.MarkerJob;
@@ -23,7 +24,6 @@ import su.sres.securesms.jobs.TypingSendJob;
 import su.sres.securesms.messages.IncomingMessageObserver;
 import su.sres.securesms.messages.IncomingMessageProcessor;
 import su.sres.securesms.crypto.storage.SignalProtocolStoreImpl;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.events.ReminderUpdateEvent;
 import su.sres.securesms.messages.BackgroundMessageRetriever;
 import su.sres.securesms.jobmanager.JobManager;
@@ -40,6 +40,7 @@ import su.sres.securesms.push.SecurityEventListener;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.TrimThreadsByDateManager;
+import su.sres.securesms.shakereport.ShakeToReport;
 import su.sres.securesms.util.AlarmSleepTimer;
 import su.sres.securesms.util.ByteUnit;
 import su.sres.securesms.util.EarlyMessageCache;
@@ -148,27 +149,23 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
 
     @Override
     public @NonNull JobManager provideJobManager() {
-        return new JobManager(context, new JobManager.Configuration.Builder()
+        JobManager.Configuration config = new JobManager.Configuration.Builder()
                 .setDataSerializer(new JsonDataSerializer())
                 .setJobFactories(JobManagerFactories.getJobFactories(context))
                 .setConstraintFactories(JobManagerFactories.getConstraintFactories(context))
                 .setConstraintObservers(JobManagerFactories.getConstraintObservers(context))
-                .setJobStorage(new FastJobStorage(DatabaseFactory.getJobDatabase(context)))
+                .setJobStorage(new FastJobStorage(JobDatabase.getInstance(context)))
                 .setJobMigrator(new JobMigrator(TextSecurePreferences.getJobManagerVersion(context), JobManager.CURRENT_VERSION, JobManagerFactories.getJobMigrations(context)))
                 .addReservedJobRunner(new FactoryJobPredicate(PushDecryptMessageJob.KEY, PushProcessMessageJob.KEY, MarkerJob.KEY))
                 .addReservedJobRunner(new FactoryJobPredicate(PushTextSendJob.KEY, PushMediaSendJob.KEY, PushGroupSendJob.KEY, ReactionSendJob.KEY, TypingSendJob.KEY, GroupCallUpdateSendJob.KEY))
-                .build());
+                .build();
+        return new JobManager(context, config);
     }
 
     @Override
     public @NonNull FrameRateTracker provideFrameRateTracker() {
         return new FrameRateTracker(context);
     }
-
-//    @Override
-//    public @NonNull KeyValueStore provideKeyValueStore() {
-//        return new KeyValueStore(context);
-//    }
 
     @Override
     public @NonNull MegaphoneRepository provideMegaphoneRepository() {
@@ -202,7 +199,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
 
     @Override
     public @NonNull TypingStatusSender provideTypingStatusSender() {
-        return new TypingStatusSender(context);
+        return new TypingStatusSender();
     }
 
     @Override

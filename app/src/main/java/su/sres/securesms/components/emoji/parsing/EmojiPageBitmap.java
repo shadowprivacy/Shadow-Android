@@ -13,6 +13,7 @@ import su.sres.securesms.components.emoji.EmojiPageModel;
 import su.sres.securesms.util.ListenableFutureTask;
 import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.util.concurrent.SimpleTask;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,16 +56,11 @@ public class EmojiPageBitmap {
         return null;
       };
       task = new ListenableFutureTask<>(callable);
-      new AsyncTask<Void, Void, Void>() {
-        @Override protected Void doInBackground(Void... params) {
-          task.run();
-          return null;
-        }
-
-        @Override protected void onPostExecute(Void aVoid) {
-          task = null;
-        }
-      }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+      SimpleTask.run(() -> {
+                task.run();
+                return null;
+              },
+              unused -> task = null);
     }
     return task;
   }

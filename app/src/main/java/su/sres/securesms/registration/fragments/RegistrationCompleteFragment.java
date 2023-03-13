@@ -34,7 +34,7 @@ public final class RegistrationCompleteFragment extends BaseRegistrationFragment
         FragmentActivity activity = requireActivity();
 
         if (!isReregister()) {
-            final Intent main    = new Intent(activity, MainActivity.class);
+            final Intent main    = MainActivity.clearTop(activity);
             final Intent profile = EditProfileActivity.getIntentForUserProfile(activity);
 
             activity.startActivity(chainIntents(profile, main));
@@ -49,33 +49,4 @@ public final class RegistrationCompleteFragment extends BaseRegistrationFragment
         if (nextIntent != null) sourceIntent.putExtra("next_intent", nextIntent);
         return sourceIntent;
     }
-
-/**    private static Intent getRoutedIntent(@NonNull Context context, Class<?> destination, @Nullable Intent nextIntent) {
-        final Intent intent = new Intent(context, destination);
-        if (nextIntent != null) intent.putExtra("next_intent", nextIntent);
-        return intent;
-    }  */
-
-/**    private void doRestart(FragmentActivity activity) {
-        try {
-             Intent mStartActivity = getRoutedIntent(activity, EditProfileActivity.class, new Intent(activity, MainActivity.class));
-
-            mStartActivity.putExtra(EditProfileActivity.SHOW_TOOLBAR, false);
-
-            mStartActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-                        //create a pending intent so the application is restarted after System.exit(0) was called.
-                        // We use an AlarmManager to call this intent in 100ms
-                        int mPendingIntentId = 223344;
-                        PendingIntent mPendingIntent = PendingIntent.getActivity(activity, mPendingIntentId, mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
-                        AlarmManager mgr = (AlarmManager) activity.getSystemService(Context.ALARM_SERVICE);
-                        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
-
-                        //kill the application
-                        System.exit(0);
-
-        } catch (Exception ex) {
-            Log.e(TAG, "Was not able to restart application");
-        }
-    } */
 }

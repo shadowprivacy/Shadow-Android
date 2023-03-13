@@ -65,23 +65,19 @@ final class AudioOutputAdapter extends RecyclerView.Adapter<AudioOutputAdapter.V
 
     static class ViewHolder extends RecyclerView.ViewHolder implements CompoundButton.OnCheckedChangeListener {
 
-        private final TextView          textView;
         private final RadioButton       radioButton;
         private final Consumer<Integer> onPressed;
-
-
         public ViewHolder(@NonNull View itemView, @NonNull Consumer<Integer> onPressed) {
             super(itemView);
 
-            this.textView    = itemView.findViewById(R.id.text);
             this.radioButton = itemView.findViewById(R.id.radio);
             this.onPressed   = onPressed;
         }
 
         @CallSuper
         void bind(@NonNull WebRtcAudioOutput audioOutput, @Nullable WebRtcAudioOutput selected) {
-            textView.setText(audioOutput.getLabelRes());
-            textView.setCompoundDrawablesRelativeWithIntrinsicBounds(audioOutput.getIconRes(), 0, 0, 0);
+            radioButton.setText(audioOutput.getLabelRes());
+            radioButton.setCompoundDrawablesRelativeWithIntrinsicBounds(audioOutput.getIconRes(), 0, 0, 0);
 
             radioButton.setOnCheckedChangeListener(null);
             radioButton.setChecked(audioOutput == selected);

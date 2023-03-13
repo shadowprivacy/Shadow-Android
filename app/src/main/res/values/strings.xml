@@ -703,6 +703,7 @@
     <string name="AddGroupDetailsFragment__create_group">Create group</string>
     <string name="AddGroupDetailsFragment__create">Create</string>
     <string name="AddGroupDetailsFragment__members">Members</string>
+    <string name="AddGroupDetailsFragment__you_can_add_or_invite_friends_after_creating_this_group">You can add or invite friends after creating this group.</string>
     <string name="AddGroupDetailsFragment__group_name_required">Group name (required)</string>
     <string name="AddGroupDetailsFragment__group_name_optional">Group name (optional)</string>
     <string name="AddGroupDetailsFragment__this_field_is_required">This field is required.</string>
@@ -888,6 +889,18 @@
     <string name="GroupJoinUpdateRequiredBottomSheetDialogFragment_update_linked_device_message">One or more of your linked devices are running a version of Shadow that doesn\'t support group links. Update Shadow on your linked device(s) to join this group.</string>
     <string name="GroupJoinUpdateRequiredBottomSheetDialogFragment_group_link_is_not_valid">Group link is not valid</string>
 
+    <!-- GroupInviteLinkEnableAndShareBottomSheetDialogFragment -->
+    <string name="GroupInviteLinkEnableAndShareBottomSheetDialogFragment_invite_friends">Invite friends</string>
+    <string name="GroupInviteLinkEnableAndShareBottomSheetDialogFragment_share_a_link_with_friends_to_let_them_quickly_join_this_group">Share a link with friends to let them quickly join this group.</string>
+
+    <string name="GroupInviteLinkEnableAndShareBottomSheetDialogFragment_enable_and_share_link">Enable and share link</string>
+    <string name="GroupInviteLinkEnableAndShareBottomSheetDialogFragment_share_link">Share link</string>
+
+    <string name="GroupInviteLinkEnableAndShareBottomSheetDialogFragment_unable_to_enable_group_link_please_try_again_later">Unable to enable group link. Please try again later</string>
+    <string name="GroupInviteLinkEnableAndShareBottomSheetDialogFragment_encountered_a_network_error">Encountered a network error.</string>
+    <string name="GroupInviteLinkEnableAndShareBottomSheetDialogFragment_you_dont_have_the_right_to_enable_group_link">You don\'t have the right to enable the group link. Please ask an admin.</string>
+    <string name="GroupInviteLinkEnableAndShareBottomSheetDialogFragment_you_are_not_currently_a_member_of_the_group">You are not currently a member of the group.</string>
+
     <!-- GV2 Request confirmation dialog -->
     <string name="RequestConfirmationDialog_add_s_to_the_group">Add “%1$s” to the group?</string>
     <string name="RequestConfirmationDialog_deny_request_from_s">Deny request from “%1$s”?</string>
@@ -1011,6 +1024,8 @@
     <string name="Megaphones_introducing_reactions">Introducing Reactions</string>
     <string name="Megaphones_tap_and_hold_any_message_to_quicky_share_how_you_feel">Tap and hold any message to quickly share how you feel.</string>
     <string name="Megaphones_remind_me_later">Remind me later</string>
+    <string name="Megaphones_get_started">Get started</string>
+    <string name="Megaphones_new_group">New group</string>
 
     <!-- NotificationBarManager -->
     <string name="NotificationBarManager_signal_call_in_progress">Shadow call in progress</string>
@@ -1090,6 +1105,7 @@
     <!-- GV2 specific -->
     <string name="MessageRecord_you_created_the_group">You created the group.</string>
     <string name="MessageRecord_group_updated">Group updated.</string>
+    <string name="MessageRecord_invite_friends_to_this_group">Invite friends to this group via a group link</string>
 
     <!-- GV2 member additions -->
     <string name="MessageRecord_you_added_s">You added %1$s.</string>
@@ -1460,8 +1476,10 @@
     <string name="RegistrationActivity_continue">Continue</string>
     <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">Communicate\nwithout anxiety</string>
     <string name="RegistrationActivity_enter_your_user_login_to_get_started">Enter the login obtained from your administrator</string>
+    <string name="RegistrationActivity_enter_your_user_login">Enter your user login</string>
     <string name="RegistrationActivity_you_will_receive_a_verification_code">Prepare the verification code received from your administrator.</string>
     <string name="RegistrationActivity_enter_the_code_we_sent_to_s">Enter the code obtained from your administrator</string>
+    <string name="RegistrationActivity_make_sure_your_phone_has_a_cellular_signal">Make sure your phone has internet access to connect to the system server</string>
     <string name="RegistrationActivity_user_login_description">Login</string>
     <string name="RegistrationActivity_call">Call</string>
     <string name="RegistrationActivity_user_login">Login</string>
@@ -1482,6 +1500,14 @@
     <string name="SearchFragment_header_conversations">Conversations</string>
     <string name="SearchFragment_header_contacts">Contacts</string>
     <string name="SearchFragment_header_messages">Messages</string>
+
+    <!-- ShakeToReport -->
+    <string name="ShakeToReport_shake_detected" translatable="false">Shake detected</string>
+    <string name="ShakeToReport_submit_debug_log" translatable="false">Submit debug log?</string>
+    <string name="ShakeToReport_submit" translatable="false">Submit</string>
+    <string name="ShakeToReport_failed_to_submit" translatable="false">Failed to submit :(</string>
+    <string name="ShakeToReport_success" translatable="false">Success!</string>
+    <string name="ShakeToReport_share" translatable="false">Share</string>
 
     <!-- SharedContactDetailsActivity -->
     <string name="SharedContactDetailsActivity_add_to_contacts">Add to Contacts</string>
@@ -1903,6 +1929,7 @@
     <string name="ConversationUpdateItem_join_call">Join call</string>
     <string name="ConversationUpdateItem_return_to_call">Return to call</string>
     <string name="ConversationUpdateItem_call_is_full">Call is full</string>
+    <string name="ConversationUpdateItem_invite_friends">Invite friends</string>
 
     <!-- audio_view -->
     <string name="audio_view__play_pause_accessibility_description">Play … Pause</string>
@@ -2089,7 +2116,6 @@
     <string name="registration_activity__phone_number">PHONE NUMBER</string>
     <string name="registration_activity__registration_will_transmit_some_contact_information_to_the_server_temporariliy">Shadow makes it easy to communicate by using your existing phone number and address book. Friends and contacts who already know how to contact you by phone will be able to easily get in touch by Shadow.\n\nRegistration transmits some contact information to the server. It is not stored.</string>
     <string name="registration_activity__verify_your_number">Verify Your Number</string>
-    <string name="registration_activity__please_enter_your_mobile_number_to_receive_a_verification_code_carrier_rates_may_apply">Please enter your mobile number</string>
 
     <!-- recipients_panel -->
     <string name="recipients_panel__to"><small>Enter a name</small></string>
@@ -2472,14 +2498,11 @@
     <string name="conversation_list_item_inbox_zero__inbox_zeeerrro">Inbox zeeerrro</string>
     <string name="conversation_list_item_inbox_zero__zip_zilch_zero_nada_nyou_re_all_caught_up">Zip. Zilch. Zero. Nada.\nYou\'re all caught up!</string>
 
-
     <!-- conversation_list_fragment -->
     <string name="conversation_list_fragment__fab_content_description">New conversation</string>
     <string name="conversation_list_fragment__open_camera_description">Open Camera</string>
-    <string name="conversation_list_fragment__give_your_inbox_something_to_write_home_about_get_started_by_messaging_a_friend">Get started by messaging another user.</string>
-
-
-    <!-- conversation_secure_verified -->
+    <string name="conversation_list_fragment__no_chats_yet_get_started_by_messaging_a_friend">No chats yet.\nGet started by messaging another user.</string>
+        <!-- conversation_secure_verified -->
     <string name="conversation_secure_verified__menu_reset_secure_session">Reset secure session</string>
 
     <!-- conversation_muted -->
@@ -2524,8 +2547,6 @@
     <string name="verify_display_fragment_context_menu__compare_with_clipboard">Compare with clipboard</string>
 
     <!-- reminder_header -->
-    <string name="reminder_header_sms_default_title">Use as default SMS app</string>
-    <string name="reminder_header_sms_default_text">Tap to make Shadow your default SMS app.</string>
     <string name="reminder_header_sms_import_title">Import system SMS</string>
     <string name="reminder_header_sms_import_text">Tap to copy your phone\'s SMS messages into Shadow\'s encrypted database.</string>
     <string name="reminder_header_push_title">Enable Shadow messages and calls</string>
@@ -2630,6 +2651,7 @@
     <string name="BackupDialog_to_enable_backups_choose_a_folder">To enable backups, choose a folder. Backups will be saved to this location.</string>
     <string name="BackupDialog_choose_folder">Choose folder</string>
     <string name="BackupDialog_copied_to_clipboard">Copied to clipboard</string>
+    <string name="BackupDialog_no_file_picker_available">No file picker available.</string>
     <string name="BackupDialog_enter_backup_passphrase_to_verify">Enter your backup passphrase to verify</string>
     <string name="BackupDialog_verify">Verify</string>
     <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">You successfully entered your backup passphrase</string>
@@ -2832,6 +2854,9 @@
     <string name="DeleteAccountFragment__failed_to_delete_account">Failed to delete account. Do you have a network connection?</string>
     <string name="DeleteAccountFragment__failed_to_delete_local_data">Failed to delete local data. You can manually clear it in the system application settings.</string>
     <string name="DeleteAccountFragment__launch_app_settings">Launch App Settings</string>
+
+    <!--CreateGroupActivity-->
+    <string name="CreateGroupActivity__skip">Skip</string>
 
     <!-- EOF -->
 

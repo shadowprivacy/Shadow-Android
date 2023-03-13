@@ -80,6 +80,7 @@ public final class Megaphones {
             put(Event.LINK_PREVIEWS, shouldShowLinkPreviewsMegaphone(context) ? ALWAYS : NEVER);
             put(Event.CLIENT_DEPRECATED, SignalStore.misc().isClientDeprecated() ? ALWAYS : NEVER);
             put(Event.GROUP_CALLING, shouldShowGroupCallingMegaphone() ? ALWAYS : NEVER);
+            put(Event.ONBOARDING, shouldShowOnboardingMegaphone(context) ? ALWAYS : NEVER);
         }};
     }
 
@@ -95,6 +96,8 @@ public final class Megaphones {
                 return buildClientDeprecatedMegaphone(context);
             case GROUP_CALLING:
                 return buildGroupCallingMegaphone(context);
+            case ONBOARDING:
+                return buildOnboardingMegaphone();
             default:
                 throw new IllegalArgumentException("Event not handled!");
         }
@@ -145,6 +148,12 @@ public final class Megaphones {
                 .build();
     }
 
+    private static @NonNull Megaphone buildOnboardingMegaphone() {
+        return new Megaphone.Builder(Event.ONBOARDING, Megaphone.Style.ONBOARDING)
+                .setPriority(Megaphone.Priority.DEFAULT)
+                .build();
+    }
+
     private static boolean shouldShowMessageRequestsMegaphone() {
         return Recipient.self().getProfileName() == ProfileName.EMPTY;
     }
@@ -157,12 +166,17 @@ public final class Megaphones {
         return FeatureFlags.groupCalling();
     }
 
+    private static boolean shouldShowOnboardingMegaphone(@NonNull Context context) {
+        return SignalStore.onboarding().hasOnboarding(context);
+    }
+
     public enum Event {
         REACTIONS("reactions"),
         MESSAGE_REQUESTS("message_requests"),
         LINK_PREVIEWS("link_previews"),
         CLIENT_DEPRECATED("client_deprecated"),
-        GROUP_CALLING("group_calling");
+        GROUP_CALLING("group_calling"),
+        ONBOARDING("onboarding");
 
         private final String key;
 

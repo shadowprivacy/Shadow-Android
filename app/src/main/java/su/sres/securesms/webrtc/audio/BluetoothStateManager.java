@@ -1,7 +1,6 @@
 package su.sres.securesms.webrtc.audio;
 
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothHeadset;
 import android.bluetooth.BluetoothProfile;
@@ -10,10 +9,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
-import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.util.ServiceUtil;
@@ -145,7 +142,6 @@ public class BluetoothStateManager {
 
   private void requestHeadsetProxyProfile() {
     this.bluetoothAdapter.getProfileProxy(context, new BluetoothProfile.ServiceListener() {
-      @RequiresApi(api = Build.VERSION_CODES.HONEYCOMB)
       @Override
       public void onServiceConnected(int profile, BluetoothProfile proxy) {
         if (destroyed.get()) {
@@ -208,8 +204,9 @@ public class BluetoothStateManager {
                   }
                 }
               }
-
             }
+          } else if (status == AudioManager.SCO_AUDIO_STATE_DISCONNECTED) {
+            setWantsConnection(false);
           }
         }
       }

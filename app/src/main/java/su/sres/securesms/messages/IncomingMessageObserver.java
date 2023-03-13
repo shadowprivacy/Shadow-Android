@@ -1,5 +1,6 @@
 package su.sres.securesms.messages;
 
+import android.app.Application;
 import android.app.Service;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
@@ -49,7 +50,7 @@ public class IncomingMessageObserver {
     private static SignalServiceMessagePipe pipe             = null;
     private static SignalServiceMessagePipe unidentifiedPipe = null;
 
-    private final Context                    context;
+    private final Application context;
     private final SignalServiceNetworkAccess networkAccess;
     private final List<Runnable> decryptionDrainedListeners;
 
@@ -58,7 +59,7 @@ public class IncomingMessageObserver {
     private volatile boolean networkDrained;
     private volatile boolean decryptionDrained;
 
-    public IncomingMessageObserver(@NonNull Context context) {
+    public IncomingMessageObserver(@NonNull Application context) {
         this.context                    = context;
         this.networkAccess              = ApplicationDependencies.getSignalServiceNetworkAccess();
         this.decryptionDrainedListeners = new CopyOnWriteArrayList<>();

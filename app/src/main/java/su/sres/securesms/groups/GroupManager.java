@@ -11,6 +11,7 @@ import org.signal.zkgroup.groups.UuidCiphertext;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.groups.v2.GroupInviteLinkUrl;
 import su.sres.securesms.groups.v2.GroupLinkPassword;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
@@ -300,13 +301,13 @@ public final class GroupManager {
   }
 
   @WorkerThread
-  public static void setGroupLinkEnabledState(@NonNull Context context,
-                                              @NonNull GroupId.V2 groupId,
-                                              @NonNull GroupLinkState state)
+  public static GroupInviteLinkUrl setGroupLinkEnabledState(@NonNull Context context,
+                                                            @NonNull GroupId.V2 groupId,
+                                                            @NonNull GroupLinkState state)
           throws GroupChangeFailedException, GroupInsufficientRightsException, IOException, GroupNotAMemberException, GroupChangeBusyException
   {
     try (GroupManagerV2.GroupEditor editor = new GroupManagerV2(context).edit(groupId.requireV2())) {
-      editor.setJoinByGroupLinkState(state);
+      return editor.setJoinByGroupLinkState(state);
     }
   }
 

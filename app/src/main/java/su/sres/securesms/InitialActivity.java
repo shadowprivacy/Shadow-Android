@@ -1,12 +1,14 @@
 package su.sres.securesms;
 
 import android.Manifest;
+import android.animation.Animator;
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.Configuration;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.util.Pair;
 import androidx.fragment.app.Fragment;
@@ -62,6 +64,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.qr.ScanListener;
 import su.sres.securesms.qr.ScanningThread;
+import su.sres.securesms.util.NetworkConnectionStateListener;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.validator.UrlValidator;
@@ -91,7 +94,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
         if (SignalStore.registrationValues().isServerSet()) {
             Log.i(TAG, "The server is already set up, quitting the activity");
-            startActivity(new Intent(this, MainActivity.class));
+            startActivity(MainActivity.clearTop(this));
             finish();
         } else {
             Log.i(TAG, "The server is not set up, proceeding to set its address and import its certificate");
@@ -148,21 +151,13 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
         super.onDestroy();
     }
 
-/**    @Override
-    public void onAttachFragment(Fragment fragment) {
-        if (fragment instanceof InitializationFragment) {
-            InitializationFragment initializationFragment = (InitializationFragment) fragment;
-            initializationFragment.setServiceConfigurationSetupListener(this);
-        }
-    }  */
-
     @Override
     public void onServiceConfigurationSet() {
-        startActivity(new Intent(this, MainActivity.class));
+        startActivity(MainActivity.clearTop(this));
         finish();
     }
 
-    public static class InitializationFragment extends Fragment {
+    public static class InitializationFragment extends Fragment implements NetworkConnectionStateListener.Callback {
 
         private ApplicationContext app;
 
@@ -172,9 +167,12 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
         private View container;
         private Button buttonScan;
+        private View                    serviceWarning;
 
         private OnClickListener clickListener;
         private ServiceConfigurationSetupListener callback;
+
+        private NetworkConnectionStateListener networkConnectionListener;
 
         @Override public void onActivityCreated(Bundle savedInstanceState) {
             super.onActivityCreated(savedInstanceState);
@@ -190,11 +188,21 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
         @Override
         public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup viewGroup, Bundle bundle) {
             this.container = ViewUtil.inflate(inflater, viewGroup, R.layout.initialization_fragment);
-            this.buttonScan = ViewUtil.findById(container, R.id.buttonScan);
-
-            this.buttonScan.setOnClickListener(clickListener);
 
             return container;
+        }
+
+        @Override
+        public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+            super.onViewCreated(view, savedInstanceState);
+
+            this.buttonScan = container.findViewById(R.id.buttonScan);
+            this.buttonScan.setOnClickListener(clickListener);
+            serviceWarning       = view.findViewById(R.id.cell_service_warning);
+
+            ConnectivityManager connManager = getContext().getSystemService(ConnectivityManager.class);
+
+            networkConnectionListener = new NetworkConnectionStateListener(this, this, connManager);
         }
 
         @Override
@@ -467,6 +475,36 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
             callback.onServiceConfigurationSet();
         }
 
+        @Override
+        public void onNoConnectionPresent() {
+            if (serviceWarning.getVisibility() == View.VISIBLE) {
+                return;
+            }
+            serviceWarning.setVisibility(View.VISIBLE);
+            serviceWarning.animate()
+                    .alpha(1)
+                    .setListener(null)
+                    .start();
+        }
+
+        @Override
+        public void onConnectionPresent() {
+            if (serviceWarning.getVisibility() != View.VISIBLE) {
+                return;
+            }
+            serviceWarning.animate()
+                    .alpha(0)
+                    .setListener(new Animator.AnimatorListener() {
+                        @Override public void onAnimationEnd(Animator animation) {
+                            serviceWarning.setVisibility(View.GONE);
+                        }
+                        @Override public void onAnimationStart(Animator animation) {}
+                        @Override public void onAnimationCancel(Animator animation) {}
+                        @Override public void onAnimationRepeat(Animator animation) {}
+                    })
+                    .start();
+        }
+
     }
 
     public static class VerifyScanFragment extends Fragment {
@@ -478,7 +516,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
         public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup viewGroup, Bundle bundle) {
             this.container = ViewUtil.inflate(inflater, viewGroup, R.layout.verify_scan_fragment);
-            this.cameraView = ViewUtil.findById(container, R.id.scanner);
+            this.cameraView = container.findViewById(R.id.scanner);
 
             return container;
         }

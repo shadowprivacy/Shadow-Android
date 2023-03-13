@@ -46,5 +46,23 @@ public final class AppInitialization {
 
         ApplicationDependencies.getMegaphoneRepository().onFirstEverAppLaunch();
         SignalStore.onFirstEverAppLaunch();
+        SignalStore.onboarding().clearAll();
+    }
+
+    /**
+     * Temporary migration method that does the safest bits of {@link #onFirstEverAppLaunch(Context)}
+     */
+    public static void onRepairFirstEverAppLaunch(@NonNull Context context) {
+        Log.w(TAG, "onRepairFirstEverAppLaunch()");
+
+        InsightsOptOut.userRequestedOptOut(context);
+        TextSecurePreferences.setAppMigrationVersion(context, ApplicationMigrations.CURRENT_VERSION);
+        TextSecurePreferences.setJobManagerVersion(context, JobManager.CURRENT_VERSION);
+        TextSecurePreferences.setLastExperienceVersionCode(context, Util.getCanonicalVersionCode());
+        TextSecurePreferences.setHasSeenStickerIntroTooltip(context, true);
+        TextSecurePreferences.setPasswordDisabled(context, true);
+        TextSecurePreferences.setLastExperienceVersionCode(context, Util.getCanonicalVersionCode());
+        ApplicationDependencies.getMegaphoneRepository().onFirstEverAppLaunch();
+        SignalStore.onFirstEverAppLaunch();
     }
 }

@@ -1,6 +1,7 @@
 package su.sres.securesms;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.securesms.util.AppStartup;
 import su.sres.securesms.util.CachedInflater;
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
@@ -20,8 +22,19 @@ public class MainActivity extends PassphraseRequiredActivity {
     private final DynamicTheme  dynamicTheme = new DynamicNoActionBarTheme();
     private final MainNavigator navigator    = new MainNavigator(this);
 
+    public static @NonNull Intent clearTop(@NonNull Context context) {
+        Intent intent = new Intent(context, MainActivity.class);
+
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                Intent.FLAG_ACTIVITY_NEW_TASK  |
+                Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+        return intent;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState, boolean ready) {
+        AppStartup.getInstance().onCriticalRenderEventStart();
         super.onCreate(savedInstanceState, ready);
         setContentView(R.layout.main_activity);
 
@@ -30,6 +43,13 @@ public class MainActivity extends PassphraseRequiredActivity {
         handleGroupLinkInIntent(getIntent());
 
         CachedInflater.from(this).clear();
+    }
+
+    @Override
+    public Intent getIntent() {
+        return super.getIntent().setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                Intent.FLAG_ACTIVITY_NEW_TASK  |
+                Intent.FLAG_ACTIVITY_SINGLE_TOP);
     }
 
     @Override

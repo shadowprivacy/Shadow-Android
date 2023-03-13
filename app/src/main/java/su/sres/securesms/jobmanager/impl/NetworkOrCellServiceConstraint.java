@@ -27,19 +27,11 @@ public class NetworkOrCellServiceConstraint implements Constraint {
 
     @Override
     public boolean isMet() {
-        if (TextSecurePreferences.isWifiSmsEnabled(application)) {
-            return networkConstraint.isMet() || hasCellService(application);
-        } else {
-            return hasCellService(application);
-        }
+            return networkConstraint.isMet();
     }
 
     @Override
     public void applyToJobInfo(@NonNull JobInfo.Builder jobInfoBuilder) {
-    }
-
-    private static boolean hasCellService(@NonNull Application application) {
-        return CellServiceConstraintObserver.getInstance(application).hasService();
     }
 
     public static class Factory implements Constraint.Factory<NetworkOrCellServiceConstraint> {

@@ -8,6 +8,8 @@ import androidx.annotation.NonNull;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.jobs.RemoteConfigRefreshJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
 
@@ -28,6 +30,7 @@ public class VersionTracker {
         Log.i(TAG, "Upgraded from " + lastVersionCode + " to " + currentVersionCode);
         SignalStore.misc().clearClientDeprecated();
         TextSecurePreferences.setLastVersionCode(context, currentVersionCode);
+        ApplicationDependencies.getJobManager().add(new RemoteConfigRefreshJob());
       }
     } catch (IOException ioe) {
       throw new AssertionError(ioe);

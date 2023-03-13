@@ -11,6 +11,8 @@ import su.sres.securesms.database.JobDatabase;
 import su.sres.securesms.database.KeyValueDatabase;
 import su.sres.securesms.database.MegaphoneDatabase;
 import su.sres.securesms.database.MentionDatabase;
+import su.sres.securesms.database.SignalDatabase;
+import su.sres.securesms.database.SqlCipherDatabaseHook;
 import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;
 
@@ -48,7 +50,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-public class SQLCipherOpenHelper extends SQLiteOpenHelper {
+public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatabase {
 
     @SuppressWarnings("unused")
     private static final String TAG = SQLCipherOpenHelper.class.getSimpleName();
@@ -65,27 +67,16 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     private static final int NOTIFIED_TIMESTAMP_AND_GV1_MIGRATION_LAST_SEEN = 73;
     private static final int VIEWED_RECEIPTS_CLEAN_UP_GV1_IDS = 74;
     private static final int GV1_MIGRATION_REFACTOR = 75;
+    private static final int CLEAR_PROFILE_KEY_CREDENTIALS    = 76;
 
-    private static final int DATABASE_VERSION = 75;
+    private static final int DATABASE_VERSION = 76;
     private static final String DATABASE_NAME = "shadow.db";
 
     private final Context context;
     private final DatabaseSecret databaseSecret;
 
     public SQLCipherOpenHelper(@NonNull Context context, @NonNull DatabaseSecret databaseSecret) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION, new SQLiteDatabaseHook() {
-            @Override
-            public void preKey(SQLiteDatabase db) {
-                db.rawExecSQL("PRAGMA cipher_default_kdf_iter = 1;");
-                db.rawExecSQL("PRAGMA cipher_default_page_size = 4096;");
-            }
-
-            @Override
-            public void postKey(SQLiteDatabase db) {
-                db.rawExecSQL("PRAGMA kdf_iter = '1';");
-                db.rawExecSQL("PRAGMA cipher_page_size = 4096;");
-            }
-        });
+        super(context, DATABASE_NAME, null, DATABASE_VERSION, new SqlCipherDatabaseHook());
 
         this.context = context.getApplicationContext();
         this.databaseSecret = databaseSecret;
@@ -108,12 +99,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(SessionDatabase.CREATE_TABLE);
         db.execSQL(StickerDatabase.CREATE_TABLE);
         db.execSQL(StorageKeyDatabase.CREATE_TABLE);
-        db.execSQL(KeyValueDatabase.CREATE_TABLE);
-        db.execSQL(MegaphoneDatabase.CREATE_TABLE);
         db.execSQL(MentionDatabase.CREATE_TABLE);
 
         executeStatements(db, SearchDatabase.CREATE_TABLE);
-        executeStatements(db, JobDatabase.CREATE_TABLE);
 
         executeStatements(db, RecipientDatabase.CREATE_INDEXS);
         executeStatements(db, SmsDatabase.CREATE_INDEXS);
@@ -411,6 +399,15 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
                 Log.i(TAG, "Cleared former_v1_members for " + count + " rows");
             }
 
+            if (oldVersion < CLEAR_PROFILE_KEY_CREDENTIALS) {
+                ContentValues values = new ContentValues(1);
+                values.putNull("profile_key_credential");
+
+                int count = db.update("recipient", values, "profile_key_credential NOT NULL", null);
+
+                Log.i(TAG, "Cleared profile key credentials for " + count + " rows");
+            }
+
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
@@ -425,6 +422,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
     public su.sres.securesms.database.SQLiteDatabase getWritableDatabase() {
         return new su.sres.securesms.database.SQLiteDatabase(getWritableDatabase(databaseSecret.asString()));
+    }
+
+    @Override
+    public @NonNull SQLiteDatabase getSqlCipherDatabase() {
+        return getWritableDatabase().getSqlCipherDatabase();
     }
 
     public void markCurrent(SQLiteDatabase db) {

@@ -407,7 +407,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         if (ConversationIntents.isInvalid(getIntent())) {
             Log.w(TAG, "[onCreate] Missing recipientId!");
             // TODO [greyson] Navigation
-            startActivity(new Intent(this, MainActivity.class));
+            startActivity(MainActivity.clearTop(this));
             finish();
             return;
         }
@@ -487,7 +487,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         if (ConversationIntents.isInvalid(intent)) {
             Log.w(TAG, "[onNewIntent] Missing recipientId!");
             // TODO [greyson] Navigation
-            startActivity(new Intent(this, MainActivity.class));
+            startActivity(MainActivity.clearTop(this));
             finish();
             return;
         }
@@ -536,6 +536,9 @@ public class ConversationActivity extends PassphraseRequiredActivity
                     .startChain(new RequestGroupV2InfoJob(groupId))
                     .then(new GroupV2UpdateSelfProfileKeyJob(groupId))
                     .enqueue();
+            if (viewModel.getArgs().isFirstTimeInSelfCreatedGroup()) {
+                groupViewModel.inviteFriendsOneTimeIfJustSelfInGroup(getSupportFragmentManager(), groupId);
+            }
         }
 
         if (groupCallViewModel != null) {
@@ -1897,31 +1900,31 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
     private void initializeViews() {
         titleView = findViewById(R.id.conversation_title_view);
-        buttonToggle = ViewUtil.findById(this, R.id.button_toggle);
-        sendButton = ViewUtil.findById(this, R.id.send_button);
-        attachButton = ViewUtil.findById(this, R.id.attach_button);
-        composeText = ViewUtil.findById(this, R.id.embedded_text_editor);
-        charactersLeft = ViewUtil.findById(this, R.id.space_left);
+        buttonToggle             = findViewById(R.id.button_toggle);
+        sendButton               = findViewById(R.id.send_button);
+        attachButton             = findViewById(R.id.attach_button);
+        composeText              = findViewById(R.id.embedded_text_editor);
+        charactersLeft           = findViewById(R.id.space_left);
         emojiDrawerStub = ViewUtil.findStubById(this, R.id.emoji_drawer_stub);
         attachmentKeyboardStub = ViewUtil.findStubById(this, R.id.attachment_keyboard_stub);
-        unblockButton = ViewUtil.findById(this, R.id.unblock_button);
-        makeDefaultSmsButton = ViewUtil.findById(this, R.id.make_default_sms_button);
-        registerButton = ViewUtil.findById(this, R.id.register_button);
-        container = ViewUtil.findById(this, R.id.layout_container);
+        unblockButton            = findViewById(R.id.unblock_button);
+        makeDefaultSmsButton     = findViewById(R.id.make_default_sms_button);
+        registerButton           = findViewById(R.id.register_button);
+        container                = findViewById(R.id.layout_container);
         reminderView = ViewUtil.findStubById(this, R.id.reminder_stub);
         unverifiedBannerView = ViewUtil.findStubById(this, R.id.unverified_banner_stub);
         reviewBanner             = ViewUtil.findStubById(this, R.id.review_banner_stub);
-        quickAttachmentToggle = ViewUtil.findById(this, R.id.quick_attachment_toggle);
-        inlineAttachmentToggle = ViewUtil.findById(this, R.id.inline_attachment_container);
-        inputPanel = ViewUtil.findById(this, R.id.bottom_panel);
-        panelParent = ViewUtil.findById(this, R.id.conversation_activity_panel_parent);
-        searchNav = ViewUtil.findById(this, R.id.conversation_search_nav);
-        messageRequestBottomView = ViewUtil.findById(this, R.id.conversation_activity_message_request_bottom_bar);
-        reactionOverlay = ViewUtil.findById(this, R.id.conversation_reaction_scrubber);
+        quickAttachmentToggle    = findViewById(R.id.quick_attachment_toggle);
+        inlineAttachmentToggle   = findViewById(R.id.inline_attachment_container);
+        inputPanel               = findViewById(R.id.bottom_panel);
+        panelParent              = findViewById(R.id.conversation_activity_panel_parent);
+        searchNav                = findViewById(R.id.conversation_search_nav);
+        messageRequestBottomView = findViewById(R.id.conversation_activity_message_request_bottom_bar);
+        reactionOverlay          = findViewById(R.id.conversation_reaction_scrubber);
         mentionsSuggestions = ViewUtil.findStubById(this, R.id.conversation_mention_suggestions_stub);
 
-        ImageButton quickCameraToggle = ViewUtil.findById(this, R.id.quick_camera_toggle);
-        ImageButton inlineAttachmentButton = ViewUtil.findById(this, R.id.inline_attachment_button);
+        ImageButton quickCameraToggle      = findViewById(R.id.quick_camera_toggle);
+        ImageButton inlineAttachmentButton = findViewById(R.id.inline_attachment_button);
 
         noLongerMemberBanner = findViewById(R.id.conversation_no_longer_member_banner);
         requestingMemberBanner = findViewById(R.id.conversation_requesting_banner);
@@ -1994,7 +1997,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
         if (isInBubble()) {
             supportActionBar.setHomeAsUpIndicator(ContextCompat.getDrawable(this, R.drawable.ic_notification));
-            toolbar.setNavigationOnClickListener(unused -> startActivity(new Intent(Intent.ACTION_MAIN).setClass(this, MainActivity.class)));
+            toolbar.setNavigationOnClickListener(unused -> startActivity(MainActivity.clearTop(this)));
         }
     }
 

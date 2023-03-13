@@ -12,19 +12,10 @@ import su.sres.securesms.jobmanager.ConstraintObserver;
 public class DecryptionsDrainedConstraintObserver implements ConstraintObserver {
 
     private static final String REASON = DecryptionsDrainedConstraintObserver.class.getSimpleName();
-
-    private volatile Notifier notifier;
-
-    public DecryptionsDrainedConstraintObserver() {
-        ApplicationDependencies.getIncomingMessageObserver().addDecryptionDrainedListener(() -> {
-            if (notifier != null) {
-                notifier.onConstraintMet(REASON);
-            }
-        });
-    }
-
     @Override
     public void register(@NonNull Notifier notifier) {
-        this.notifier = notifier;
+        ApplicationDependencies.getIncomingMessageObserver().addDecryptionDrainedListener(() -> {
+            notifier.onConstraintMet(REASON);
+        });
     }
 }

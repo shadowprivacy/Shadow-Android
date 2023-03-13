@@ -7,22 +7,21 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.paging.PagedListAdapter;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import su.sres.paging.PagingController;
 import su.sres.securesms.BindableConversationListItem;
 import su.sres.securesms.R;
 import su.sres.securesms.conversationlist.model.Conversation;
-import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.mms.GlideRequests;
-import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.CachedInflater;
 import su.sres.securesms.util.ViewUtil;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,7 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-class ConversationListAdapter extends PagedListAdapter<Conversation, RecyclerView.ViewHolder> {
+class ConversationListAdapter extends ListAdapter<Conversation, RecyclerView.ViewHolder> {
 
     private static final int TYPE_THREAD      = 1;
     private static final int TYPE_ACTION      = 2;
@@ -48,6 +47,9 @@ class ConversationListAdapter extends PagedListAdapter<Conversation, RecyclerVie
     private final Map<Long, Conversation>     batchSet  = Collections.synchronizedMap(new LinkedHashMap<>());
     private       boolean                     batchMode = false;
     private final Set<Long>                   typingSet = new HashSet<>();
+
+    private PagingController pagingController;
+
     protected ConversationListAdapter(@NonNull GlideRequests glideRequests,
                                       @NonNull OnConversationClickListener onConversationClickListener)
     {
@@ -157,6 +159,19 @@ class ConversationListAdapter extends PagedListAdapter<Conversation, RecyclerVie
         if (holder instanceof ConversationViewHolder) {
             ((ConversationViewHolder) holder).getConversationListItem().unbind();
         }
+    }
+
+    @Override
+    protected Conversation getItem(int position) {
+        if (pagingController != null) {
+            pagingController.onDataNeededAroundIndex(position);
+        }
+
+        return super.getItem(position);
+    }
+
+    public void setPagingController(@Nullable PagingController pagingController) {
+        this.pagingController = pagingController;
     }
 
     void setTypingThreads(@NonNull Set<Long> typingThreadSet) {

@@ -6,7 +6,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import android.database.ContentObserver;
-import android.os.Handler;
 import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
@@ -33,7 +32,7 @@ final class StickerPackPreviewViewModel extends ViewModel {
         this.previewRepository    = previewRepository;
         this.managementRepository = managementRepository;
         this.stickerManifest      = new MutableLiveData<>();
-        this.packObserver         = new ContentObserver(new Handler()) {
+        this.packObserver         = new ContentObserver(null) {
             @Override
             public void onChange(boolean selfChange) {
                 if (!TextUtils.isEmpty(packId) && !TextUtils.isEmpty(packKey)) {

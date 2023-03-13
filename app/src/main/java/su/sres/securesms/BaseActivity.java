@@ -17,6 +17,8 @@ import androidx.core.app.ActivityOptionsCompat;
 import java.util.Objects;
 
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.util.AppStartup;
 import su.sres.securesms.util.ConfigurationUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
@@ -31,8 +33,10 @@ public abstract class BaseActivity extends AppCompatActivity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+    AppStartup.getInstance().onCriticalRenderEventStart();
     logEvent("onCreate()");
     super.onCreate(savedInstanceState);
+    AppStartup.getInstance().onCriticalRenderEventEnd();
   }
 
   @Override
@@ -44,6 +48,7 @@ public abstract class BaseActivity extends AppCompatActivity {
   @Override
   protected void onStart() {
     logEvent("onStart()");
+    ApplicationDependencies.getShakeToReport().registerActivity(this);
     super.onStart();
   }
 

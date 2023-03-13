@@ -18,6 +18,8 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
+
+import org.signal.zkgroup.profiles.ProfileKeyCredential;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.LinkedList;
@@ -50,7 +52,7 @@ public class RecipientDetails {
     final Optional<Integer>      defaultSubscriptionId;
     final RegisteredState        registered;
     final byte[]                 profileKey;
-    final byte[]                 profileKeyCredential;
+    final ProfileKeyCredential profileKeyCredential;
     final String                 profileAvatar;
     final boolean                hasProfileImage;
     final boolean                profileSharing;

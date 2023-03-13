@@ -11,6 +11,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
+import su.sres.securesms.util.concurrent.SimpleTask;
 
 import java.util.List;
 
@@ -41,23 +42,15 @@ public class UntrustedSendDialog extends AlertDialog.Builder implements DialogIn
   public void onClick(DialogInterface dialog, int which) {
     final IdentityDatabase identityDatabase = DatabaseFactory.getIdentityDatabase(getContext());
 
-    new AsyncTask<Void, Void, Void>() {
-      @Override
-      protected Void doInBackground(Void... params) {
-        synchronized (SESSION_LOCK) {
-          for (IdentityRecord identityRecord : untrustedRecords) {
-            identityDatabase.setApproval(identityRecord.getRecipientId(), true);
-          }
+    SimpleTask.run(() -> {
+      synchronized (SESSION_LOCK) {
+        for (IdentityRecord identityRecord : untrustedRecords) {
+          identityDatabase.setApproval(identityRecord.getRecipientId(), true);
         }
-
-        return null;
       }
 
-      @Override
-      protected void onPostExecute(Void result) {
-        resendListener.onResendMessage();
-      }
-    }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+      return null;
+    }, unused -> resendListener.onResendMessage());
   }
 
   public interface ResendListener {

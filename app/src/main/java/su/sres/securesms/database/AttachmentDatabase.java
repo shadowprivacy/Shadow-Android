@@ -758,7 +758,7 @@ public class AttachmentDatabase extends Database {
     }
 
     /**
-     * @param onlyModifyThisAttachment If false and more than one attachment shares this file, they will all up updated.
+     * @param onlyModifyThisAttachment If false and more than one attachment shares this file, they will all be updated.
      *                                 If true, then guarantees not to affect other attachments.
      */
     public void updateAttachmentData(@NonNull DatabaseAttachment databaseAttachment,
@@ -1040,7 +1040,7 @@ public class AttachmentDatabase extends Database {
         }
     }
 
-    private File newFile() throws IOException {
+    public File newFile() throws IOException {
         File partsDirectory = context.getDir(DIRECTORY, Context.MODE_PRIVATE);
         return File.createTempFile("part", ".mms", partsDirectory);
     }

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Build;
 import androidx.annotation.NonNull;
 import android.util.AttributeSet;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -17,7 +18,7 @@ import su.sres.securesms.util.ViewUtil;
 import java.util.Locale;
 import java.util.Set;
 
-public class ConversationListItemAction extends LinearLayout implements BindableConversationListItem {
+public class ConversationListItemAction extends FrameLayout implements BindableConversationListItem {
 
   private TextView description;
 
@@ -37,7 +38,7 @@ public class ConversationListItemAction extends LinearLayout implements Bindable
   @Override
   public void onFinishInflate() {
     super.onFinishInflate();
-    this.description = ViewUtil.findById(this, R.id.description);
+    this.description = findViewById(R.id.description);
   }
 
   @Override

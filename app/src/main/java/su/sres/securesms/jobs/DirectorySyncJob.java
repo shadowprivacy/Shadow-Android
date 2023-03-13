@@ -64,6 +64,11 @@ public class DirectorySyncJob extends BaseJob {
     }
 
     @Override
+    protected boolean shouldTrace() {
+        return true;
+    }
+
+    @Override
     public void onRun() throws IOException {
         Log.i(TAG, "DirectorySyncJob.onRun()");
 

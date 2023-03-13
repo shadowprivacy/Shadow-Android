@@ -21,11 +21,9 @@ public class TypingStatusSender {
     private static final long REFRESH_TYPING_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
     private static final long PAUSE_TYPING_TIMEOUT   = TimeUnit.SECONDS.toMillis(3);
 
-    private final Context              context;
     private final Map<Long, TimerPair> selfTypingTimers;
 
-    public TypingStatusSender(@NonNull Context context) {
-        this.context          = context;
+    public TypingStatusSender() {
         this.selfTypingTimers = new HashMap<>();
     }
 

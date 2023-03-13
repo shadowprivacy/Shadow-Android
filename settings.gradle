@@ -4,6 +4,7 @@ include ':lintchecks'
 include ':paging'
 include ':paging-app'
 include ':core-util'
+include ':video'
 
 project(':app').name = 'Shadow-Client'
 project(':paging').projectDir = file('paging/lib')

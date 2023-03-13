@@ -17,10 +17,12 @@
 package su.sres.securesms;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
+
 import android.content.Context;
 import android.os.Build;
 
@@ -32,6 +34,7 @@ import org.conscrypt.Conscrypt;
 import org.signal.aesgcmprovider.AesGcmProvider;
 import org.signal.ringrtc.CallManager;
 
+import su.sres.core.util.tracing.Tracer;
 import su.sres.glide.SignalGlideCodecs;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
@@ -55,7 +58,7 @@ import su.sres.securesms.logging.CustomSignalProtocolLogger;
 import su.sres.core.util.logging.Log;
 import su.sres.core.util.logging.PersistentLogger;
 import su.sres.securesms.logging.LogSecretProvider;
-import su.sres.securesms.tracing.Tracer;
+import su.sres.securesms.util.AppStartup;
 import su.sres.securesms.util.SignalUncaughtExceptionHandler;
 import su.sres.securesms.migrations.ApplicationMigrations;
 import su.sres.securesms.notifications.NotificationChannels;
@@ -76,6 +79,7 @@ import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.core.util.concurrent.SignalExecutors;
+import su.sres.securesms.util.VersionTracker;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
 
 import org.webrtc.voiceengine.WebRtcAudioManager;
@@ -89,421 +93,446 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Will be called once when the TextSecure process is created.
- *
+ * <p>
  * We're using this as an insertion point to patch up the Android PRNG disaster,
  * to initialize the job manager, and to check for GCM registration freshness.
  *
- * @author Moxie Marlinspike
+ * @author Moxie Marlinspike *
  */
 
 public class ApplicationContext extends MultiDexApplication implements DefaultLifecycleObserver {
 
-  private static final String TAG = ApplicationContext.class.getSimpleName();
+    private static final String TAG = ApplicationContext.class.getSimpleName();
 
-  private ExpiringMessageManager expiringMessageManager;
-  private ViewOnceMessageManager viewOnceMessageManager;
-  private PersistentLogger       persistentLogger;
+    private ExpiringMessageManager expiringMessageManager;
+    private ViewOnceMessageManager viewOnceMessageManager;
+    private PersistentLogger persistentLogger;
 
-  private volatile boolean isAppVisible;
+    private volatile boolean isAppVisible;
 
-  private boolean
-                  initializedOnCreate = false,
-                  initializedOnStart  = false;
+    private boolean
+            initializedOnCreate = false,
+            initializedOnStart = false;
 
-  final InitWorker initWorker = new InitWorker();
+    final InitWorker initWorker = new InitWorker();
 
-  public static ApplicationContext getInstance(Context context) {
-    return (ApplicationContext)context.getApplicationContext();
-  }
-
-  @Override
-  public void onCreate() {
-    Tracer.getInstance().start("Application#onCreate()");
-    super.onCreate();
-
-    Log.i(TAG, "onCreate()");
-
-    initializeSecurityProvider();
-    initializeLogging();
-    initializeCrashHandling();
-    initializeNetworkIndependentProvider();
-
-      // checking at subsequent launches of the app, if the server is already known as set in SignalStore, then no need for delay, just initialize immediately
-      if (SignalStore.registrationValues().isServerSet()) {
-          initializeOnCreate();
-      } else {
-
-          initWorker.execute(() -> {
-
-              while (!initializedOnCreate) {
-
-                  if (SignalStore.registrationValues().isServerSet()) {
-                      initializeOnCreate();
-                  } else {
-                      Log.i(TAG, "Waiting for the server URL to be configured...");
-                      try {
-                          Thread.sleep(2000);
-                      } catch (InterruptedException e) {
-                          e.printStackTrace();
-                      }
-                  }
-              }
-          });
-      }
-
-    NotificationChannels.create(this);
-    ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
-
-    if (Build.VERSION.SDK_INT < 21) {
-      AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+    public static ApplicationContext getInstance(Context context) {
+        return (ApplicationContext) context.getApplicationContext();
     }
 
-    DynamicTheme.setDefaultDayNightMode(this);
-    Tracer.getInstance().end("Application#onCreate()");
-  }
+    @Override
+    public void onCreate() {
+        Tracer.getInstance().start("Application#onCreate()");
+        AppStartup.getInstance().onApplicationCreate();
 
-  @Override
-  public void onStart(@NonNull LifecycleOwner owner) {
+        long startTime = System.currentTimeMillis();
 
-    isAppVisible = true;
-    Log.i(TAG, "App is now visible.");
-
-    initWorker.execute(() -> {
-
-      while(!initializedOnStart) {
-
-        if (SignalStore.registrationValues().isServerSet() && initializedOnCreate) {
-          FeatureFlags.refreshIfNecessary();
-          ApplicationDependencies.getRecipientCache().warmUp();
-          RetrieveProfileJob.enqueueRoutineFetchIfNecessary(this);
-          GroupV1MigrationJob.enqueueRoutineMigrationsIfNecessary(this);
-          ApplicationDependencies.getFrameRateTracker().begin();
-          ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
-          launchCertificateRefresh();
-          launchLicenseRefresh();
-          launchServiceConfigRefresh();
-          checkBuildExpiration();
-
-          initializedOnStart = true;
-
-        } else {
-          Log.i(TAG, "Waiting for initialization to complete...");
-          try {
-            Thread.sleep(2000);
-          } catch (InterruptedException e) {
-            e.printStackTrace();
-          }
+        if (FeatureFlags.internalUser()) {
+            Tracer.getInstance().setMaxBufferSize(35_000);
         }
-      }
-    });
 
-    executePendingContactSync();
-    KeyCachingService.onAppForegrounded(this);
-  }
+        super.onCreate();
 
-  @Override
-  public void onStop(@NonNull LifecycleOwner owner) {
-    isAppVisible = false;
-    Log.i(TAG, "App is no longer visible.");
-    KeyCachingService.onAppBackgrounded(this);
+        AppStartup.getInstance().addForemost("security-provider", this::initializeSecurityProvider)
+                .addForemost("logging", () -> {
+                    initializeLogging();
+                    Log.i(TAG, "onCreate()");
+                })
+                .addForemost("crash-handling", this::initializeCrashHandling)
+                .addForemost("eat-db", () -> DatabaseFactory.getInstance(this))
+                .addForemost("app-network-independent-dependencies", this::initializeNetworkIndependentProvider)
+                .executeForemost();
 
-    // the if clause is to prevent crash when going out of focus in unprovisioned state
-    if (initializedOnCreate) {
-      ApplicationDependencies.getMessageNotifier().clearVisibleThread();
+        // checking at subsequent launches of the app, if the server is already known as set in SignalStore, then no need for delay, just initialize immediately
+        if (SignalStore.registrationValues().isServerSet()) {
+            initializeOnCreate();
+        } else {
+
+            SignalExecutors.BOUNDED.execute(() -> {
+
+                while (!initializedOnCreate) {
+
+                    if (SignalStore.registrationValues().isServerSet()) {
+                        initializeOnCreate();
+                    } else {
+                        Log.i(TAG, "Waiting for the server URL to be configured...");
+                        try {
+                            Thread.sleep(3000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+        }
+
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
+
+        Log.d(TAG, "onCreate() took " + (System.currentTimeMillis() - startTime) + " ms");
+        Tracer.getInstance().end("Application#onCreate()");
     }
 
-    initWorker.execute(() -> {
+    @Override
+    public void onStart(@NonNull LifecycleOwner owner) {
+        long startTime = System.currentTimeMillis();
+
+        isAppVisible = true;
+        Log.i(TAG, "App is now visible.");
+
+        initWorker.execute(() -> {
+
+            while (!initializedOnStart) {
+
+                if (SignalStore.registrationValues().isServerSet() && initializedOnCreate) {
+                    FeatureFlags.refreshIfNecessary();
+                    ApplicationDependencies.getRecipientCache().warmUp();
+                    RetrieveProfileJob.enqueueRoutineFetchIfNecessary(this);
+                    GroupV1MigrationJob.enqueueRoutineMigrationsIfNecessary(this);
+                    executePendingContactSync();
+                    KeyCachingService.onAppForegrounded(this);
+                    ApplicationDependencies.getShakeToReport().enable();
+                    ApplicationDependencies.getFrameRateTracker().begin();
+                    ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
+                    launchCertificateRefresh();
+                    launchLicenseRefresh();
+                    launchServiceConfigRefresh();
+                    checkBuildExpiration();
+
+                    initializedOnStart = true;
+
+                } else {
+                    Log.i(TAG, "Waiting for initialization to complete...");
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        Log.d(TAG, "onStart() took " + (System.currentTimeMillis() - startTime) + " ms");
+    }
+
+    @Override
+    public void onStop(@NonNull LifecycleOwner owner) {
+        isAppVisible = false;
+        Log.i(TAG, "App is no longer visible.");
+        KeyCachingService.onAppBackgrounded(this);
+
+        // the if clause is to prevent crash when going out of focus in unprovisioned state
+        if (initializedOnCreate) {
+            ApplicationDependencies.getMessageNotifier().clearVisibleThread();
+            ApplicationDependencies.getShakeToReport().disable();
+            initWorker.execute(() -> {
                 ApplicationDependencies.getFrameRateTracker().end();
             });
+        }
 
-    initializedOnStart = false;
-  }
 
-  public ExpiringMessageManager getExpiringMessageManager() {
-    return expiringMessageManager;
-  }
-
-  public ViewOnceMessageManager getViewOnceMessageManager() {
-    return viewOnceMessageManager;
-  }
-
-  public boolean isAppVisible() {
-    return isAppVisible;
-  }
-
-  public PersistentLogger getPersistentLogger() {
-    return persistentLogger;
-  }
-
-  public void checkBuildExpiration() {
-    if (Util.getTimeUntilBuildExpiry() <= 0 && !SignalStore.misc().isClientDeprecated()) {
-      Log.w(TAG, "Build expired!");
-      SignalStore.misc().markClientDeprecated();
-    }
-  }
-
-  private void initializeSecurityProvider() {
-    try {
-      Class.forName("org.signal.aesgcmprovider.AesGcmCipher");
-    } catch (ClassNotFoundException e) {
-      Log.e(TAG, "Failed to find AesGcmCipher class");
-      throw new ProviderInitializationException();
+        initializedOnStart = false;
     }
 
-    int aesPosition = Security.insertProviderAt(new AesGcmProvider(), 1);
-    Log.i(TAG, "Installed AesGcmProvider: " + aesPosition);
-
-    if (aesPosition < 0) {
-      Log.e(TAG, "Failed to install AesGcmProvider()");
-      throw new ProviderInitializationException();
+    public ExpiringMessageManager getExpiringMessageManager() {
+        if (expiringMessageManager == null) {
+            initializeExpiringMessageManager();
+        }
+        return expiringMessageManager;
     }
 
-    int conscryptPosition = Security.insertProviderAt(Conscrypt.newProvider(), 2);
-    Log.i(TAG, "Installed Conscrypt provider: " + conscryptPosition);
-
-    if (conscryptPosition < 0) {
-      Log.w(TAG, "Did not install Conscrypt provider. May already be present.");
+    public ViewOnceMessageManager getViewOnceMessageManager() {
+        return viewOnceMessageManager;
     }
-  }
 
-  private void initializeLogging() {
-    persistentLogger = new PersistentLogger(this, LogSecretProvider.getOrCreateAttachmentSecret(this), BuildConfig.VERSION_NAME);
-    su.sres.core.util.logging.Log.initialize(new AndroidLogger(), persistentLogger);
-
-    SignalProtocolLoggerProvider.setProvider(new CustomSignalProtocolLogger());
-  }
-
-  private void initializeCrashHandling() {
-    final Thread.UncaughtExceptionHandler originalHandler = Thread.getDefaultUncaughtExceptionHandler();
-    Thread.setDefaultUncaughtExceptionHandler(new SignalUncaughtExceptionHandler(originalHandler));
-  }
-
-  private void initializeApplicationMigrations() {
-    ApplicationMigrations.onApplicationCreate(this, ApplicationDependencies.getJobManager());
-  }
-
-  public void initializeMessageRetrieval() {
-    ApplicationDependencies.getIncomingMessageObserver();
-  }
-
-  private void initializeNetworkDependentProvider() {
-    ApplicationDependencies.networkDependentProviderInit(new ApplicationDependencyProvider(this, new SignalServiceNetworkAccess(this)));
-  }
-
-  private void initializeNetworkIndependentProvider() {
-      ApplicationDependencies.networkIndependentProviderInit(this, new NetworkIndependentProvider(this));
-  }
-
-  private void initializeFirstEverAppLaunch() {
-    if (TextSecurePreferences.getFirstInstallVersion(this) == -1) {
-      if (!SQLCipherOpenHelper.databaseFileExists(this)) {
-        Log.i(TAG, "First ever app launch!");
-
-        AppInitialization.onFirstEverAppLaunch(this);
-      }
-
-      Log.i(TAG, "Setting first install version to " + BuildConfig.CANONICAL_VERSION_CODE);
-      TextSecurePreferences.setFirstInstallVersion(this, BuildConfig.CANONICAL_VERSION_CODE);
+    public boolean isAppVisible() {
+        return isAppVisible;
     }
-  }
 
-  private void initializeGcmCheck() {
-    if (TextSecurePreferences.isPushRegistered(this)) {
-      long nextSetTime = TextSecurePreferences.getFcmTokenLastSetTime(this) + TimeUnit.HOURS.toMillis(6);
-
-      if (TextSecurePreferences.getFcmToken(this) == null || nextSetTime <= System.currentTimeMillis()) {
-        ApplicationDependencies.getJobManager().add(new FcmRefreshJob());
-      }
+    public PersistentLogger getPersistentLogger() {
+        return persistentLogger;
     }
-  }
 
-  private void initializeSignedPreKeyCheck() {
-    if (!TextSecurePreferences.isSignedPreKeyRegistered(this)) {
-      ApplicationDependencies.getJobManager().add(new CreateSignedPreKeyJob(this));
+    public void checkBuildExpiration() {
+        if (Util.getTimeUntilBuildExpiry() <= 0 && !SignalStore.misc().isClientDeprecated()) {
+            Log.w(TAG, "Build expired!");
+            SignalStore.misc().markClientDeprecated();
+        }
     }
-  }
 
-  private void initializeExpiringMessageManager() {
-    this.expiringMessageManager = new ExpiringMessageManager(this);
-  }
+    private void initializeSecurityProvider() {
+        try {
+            Class.forName("org.signal.aesgcmprovider.AesGcmCipher");
+        } catch (ClassNotFoundException e) {
+            Log.e(TAG, "Failed to find AesGcmCipher class");
+            throw new ProviderInitializationException();
+        }
 
-  private void initializeRevealableMessageManager() {
-    this.viewOnceMessageManager = new ViewOnceMessageManager(this);
-  }
+        int aesPosition = Security.insertProviderAt(new AesGcmProvider(), 1);
+        Log.i(TAG, "Installed AesGcmProvider: " + aesPosition);
 
-  private void initializePeriodicTasks() {
-    RotateSignedPreKeyListener.schedule(this);
-    DirectoryRefreshListener.schedule(this);
-    LocalBackupListener.schedule(this);
-    RotateSenderCertificateListener.schedule(this);
+        if (aesPosition < 0) {
+            Log.e(TAG, "Failed to install AesGcmProvider()");
+            throw new ProviderInitializationException();
+        }
 
-    if (BuildConfig.PLAY_STORE_DISABLED) {
-      UpdateApkRefreshListener.schedule(this);
+        int conscryptPosition = Security.insertProviderAt(Conscrypt.newProvider(), 2);
+        Log.i(TAG, "Installed Conscrypt provider: " + conscryptPosition);
+
+        if (conscryptPosition < 0) {
+            Log.w(TAG, "Did not install Conscrypt provider. May already be present.");
+        }
     }
-  }
 
-  private void initializeRingRtc() {
-    try {
-      Set<String> HARDWARE_AEC_BLACKLIST = new HashSet<String>() {{
-        add("Pixel");
-        add("Pixel XL");
-        add("Moto G5");
-        add("Moto G (5S) Plus");
-        add("Moto G4");
-        add("TA-1053");
-        add("Mi A1");
-        add("Mi A2");
-        add("E5823"); // Sony z5 compact
-        add("Redmi Note 5");
-        add("FP2"); // Fairphone FP2
-        add("MI 5");
-      }};
+    private void initializeLogging() {
+        persistentLogger = new PersistentLogger(this, LogSecretProvider.getOrCreateAttachmentSecret(this), BuildConfig.VERSION_NAME);
+        su.sres.core.util.logging.Log.initialize(new AndroidLogger(), persistentLogger);
 
-      Set<String> OPEN_SL_ES_WHITELIST = new HashSet<String>() {{
-        add("Pixel");
-        add("Pixel XL");
-      }};
-
-      if (HARDWARE_AEC_BLACKLIST.contains(Build.MODEL)) {
-        WebRtcAudioUtils.setWebRtcBasedAcousticEchoCanceler(true);
-      }
-
-      if (!OPEN_SL_ES_WHITELIST.contains(Build.MODEL)) {
-        WebRtcAudioManager.setBlacklistDeviceForOpenSLESUsage(true);
-      }
-
-        CallManager.initialize(this, new RingRtcLogger());
-    } catch (UnsatisfiedLinkError e) {
-        throw new AssertionError("Unable to load ringrtc library", e);
+        SignalProtocolLoggerProvider.setProvider(new CustomSignalProtocolLogger());
     }
-  }
 
-  private void executePendingContactSync() {
-    if (TextSecurePreferences.needsFullContactSync(this)) {
-      ApplicationDependencies.getJobManager().add(new MultiDeviceContactUpdateJob(true));
+    private void initializeCrashHandling() {
+        final Thread.UncaughtExceptionHandler originalHandler = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler(new SignalUncaughtExceptionHandler(originalHandler));
     }
-  }
 
-  private void initializePendingMessages() {
-    if (TextSecurePreferences.getNeedsMessagePull(this)) {
-      Log.i(TAG, "Scheduling a message fetch.");
-      if (Build.VERSION.SDK_INT >= 26) {
-        FcmJobService.schedule(this);
-      } else {
-        ApplicationDependencies.getJobManager().add(new PushNotificationReceiveJob(this));
-      }
-      TextSecurePreferences.setNeedsMessagePull(this, false);
+    private void initializeApplicationMigrations() {
+        ApplicationMigrations.onApplicationCreate(this, ApplicationDependencies.getJobManager());
     }
-  }
 
-  private void initializeBlobProvider() {
-      SignalExecutors.BOUNDED.execute(() -> {
-      BlobProvider.getInstance().onSessionStart(this);
-    });
-  }
+    public void initializeMessageRetrieval() {
+        ApplicationDependencies.getIncomingMessageObserver();
+    }
 
+    private void initializeNetworkDependentProvider() {
+        ApplicationDependencies.networkDependentProviderInit(new ApplicationDependencyProvider(this, new SignalServiceNetworkAccess(this)));
+    }
+
+    private void initializeNetworkIndependentProvider() {
+        ApplicationDependencies.networkIndependentProviderInit(this, new NetworkIndependentProvider(this));
+    }
+
+    private void initializeFirstEverAppLaunch() {
+        if (TextSecurePreferences.getFirstInstallVersion(this) == -1) {
+            if (!SQLCipherOpenHelper.databaseFileExists(this) || VersionTracker.getDaysSinceFirstInstalled(this) < 365) {
+                Log.i(TAG, "First ever app launch!");
+
+                AppInitialization.onFirstEverAppLaunch(this);
+            }
+
+            Log.i(TAG, "Setting first install version to " + BuildConfig.CANONICAL_VERSION_CODE);
+            TextSecurePreferences.setFirstInstallVersion(this, BuildConfig.CANONICAL_VERSION_CODE);
+        } else if (!TextSecurePreferences.isPasswordDisabled(this) && VersionTracker.getDaysSinceFirstInstalled(this) < 90) {
+            Log.i(TAG, "Detected a new install that doesn't have passphrases disabled -- assuming bad initialization.");
+            AppInitialization.onRepairFirstEverAppLaunch(this);
+        }
+    }
+
+    private void initializeGcmCheck() {
+        if (TextSecurePreferences.isPushRegistered(this)) {
+            long nextSetTime = TextSecurePreferences.getFcmTokenLastSetTime(this) + TimeUnit.HOURS.toMillis(6);
+
+            if (TextSecurePreferences.getFcmToken(this) == null || nextSetTime <= System.currentTimeMillis()) {
+                ApplicationDependencies.getJobManager().add(new FcmRefreshJob());
+            }
+        }
+    }
+
+    private void initializeSignedPreKeyCheck() {
+        if (!TextSecurePreferences.isSignedPreKeyRegistered(this)) {
+            ApplicationDependencies.getJobManager().add(new CreateSignedPreKeyJob(this));
+        }
+    }
+
+    private void initializeExpiringMessageManager() {
+        this.expiringMessageManager = new ExpiringMessageManager(this);
+    }
+
+    private void initializeRevealableMessageManager() {
+        this.viewOnceMessageManager = new ViewOnceMessageManager(this);
+    }
+
+    private void initializePeriodicTasks() {
+        RotateSignedPreKeyListener.schedule(this);
+        DirectoryRefreshListener.schedule(this);
+        LocalBackupListener.schedule(this);
+        RotateSenderCertificateListener.schedule(this);
+
+        if (BuildConfig.PLAY_STORE_DISABLED) {
+            UpdateApkRefreshListener.schedule(this);
+        }
+    }
+
+    private void initializeRingRtc() {
+        try {
+            Set<String> HARDWARE_AEC_BLACKLIST = new HashSet<String>() {{
+                add("Pixel");
+                add("Pixel XL");
+                add("Moto G5");
+                add("Moto G (5S) Plus");
+                add("Moto G4");
+                add("TA-1053");
+                add("Mi A1");
+                add("Mi A2");
+                add("E5823"); // Sony z5 compact
+                add("Redmi Note 5");
+                add("FP2"); // Fairphone FP2
+                add("MI 5");
+            }};
+
+            Set<String> OPEN_SL_ES_WHITELIST = new HashSet<String>() {{
+                add("Pixel");
+                add("Pixel XL");
+            }};
+
+            if (HARDWARE_AEC_BLACKLIST.contains(Build.MODEL)) {
+                WebRtcAudioUtils.setWebRtcBasedAcousticEchoCanceler(true);
+            }
+
+            if (!OPEN_SL_ES_WHITELIST.contains(Build.MODEL)) {
+                WebRtcAudioManager.setBlacklistDeviceForOpenSLESUsage(true);
+            }
+
+            CallManager.initialize(this, new RingRtcLogger());
+        } catch (UnsatisfiedLinkError e) {
+            throw new AssertionError("Unable to load ringrtc library", e);
+        }
+    }
+
+    private void executePendingContactSync() {
+        if (TextSecurePreferences.needsFullContactSync(this)) {
+            ApplicationDependencies.getJobManager().add(new MultiDeviceContactUpdateJob(true));
+        }
+    }
+
+    private void initializePendingMessages() {
+        if (TextSecurePreferences.getNeedsMessagePull(this)) {
+            Log.i(TAG, "Scheduling a message fetch.");
+            if (Build.VERSION.SDK_INT >= 26) {
+                FcmJobService.schedule(this);
+            } else {
+                ApplicationDependencies.getJobManager().add(new PushNotificationReceiveJob(this));
+            }
+            TextSecurePreferences.setNeedsMessagePull(this, false);
+        }
+    }
+
+    @WorkerThread
+    private void initializeBlobProvider() {
+        BlobProvider.getInstance().onSessionStart(this);
+    }
+
+    @WorkerThread
     private void initializeCleanup() {
-        SignalExecutors.BOUNDED.execute(() -> {
-            int deleted = DatabaseFactory.getAttachmentDatabase(this).deleteAbandonedPreuploadedAttachments();
-            Log.i(TAG, "Deleted " + deleted + " abandoned attachments.");
-        });
+        int deleted = DatabaseFactory.getAttachmentDatabase(this).deleteAbandonedPreuploadedAttachments();
+        Log.i(TAG, "Deleted " + deleted + " abandoned attachments.");
     }
 
-  private void initializeMasterKey() {
-    // generate a random "master key"
+    private void initializeMasterKey() {
+        // generate a random "master key"
 //    byte[] masterKey = new byte[32];
 //    SecureRandom random = new SecureRandom();
 //    random.nextBytes(masterKey);
 
-    // set just a filler for now
-    SignalStore.kbsValues().setKbsMasterKey(SignalStore.kbsValues().getOrCreateMasterKey());
-  }
-
-  private void initializeGlideCodecs() {
-    SignalGlideCodecs.setLogProvider(new su.sres.glide.Log.Provider() {
-      @Override
-      public void v(@NonNull String tag, @NonNull String message) {
-        Log.v(tag, message);
-      }
-
-      @Override
-      public void d(@NonNull String tag, @NonNull String message) {
-        Log.d(tag, message);
-      }
-
-      @Override
-      public void i(@NonNull String tag, @NonNull String message) {
-        Log.i(tag, message);
-      }
-
-      @Override
-      public void w(@NonNull String tag, @NonNull String message) {
-        Log.w(tag, message);
-      }
-
-      @Override
-      public void e(@NonNull String tag, @NonNull String message, @Nullable Throwable throwable) {
-        Log.e(tag, message, throwable);
-      }
-    });
-  }
-
-  @Override
-  protected void attachBaseContext(Context base) {
-    DynamicLanguageContextWrapper.updateContext(base);
-    super.attachBaseContext(base);
-  }
-
-  private static class ProviderInitializationException extends RuntimeException {
-  }
-
-  private void initializeOnCreate() {
-
-    initializeNetworkDependentProvider();
-    initializeFirstEverAppLaunch();
-    initializeApplicationMigrations();
-    initializeMessageRetrieval();
-    initializeExpiringMessageManager();
-    initializeRevealableMessageManager();
-    initializeGcmCheck();
-    initializeSignedPreKeyCheck();
-    initializePeriodicTasks();
-    initializeRingRtc();
-    initializePendingMessages();
-    initializeBlobProvider();
-    initializeCleanup();
-    initializeGlideCodecs();
-    FeatureFlags.init();
-    initializeMasterKey();
-    ApplicationDependencies.getJobManager().beginJobLoop();
-//    StorageSyncHelper.scheduleRoutineSync();
-    RegistrationUtil.maybeMarkRegistrationComplete(this);
-    RefreshPreKeysJob.scheduleIfNecessary();
-
-    initializedOnCreate = true;
-  }
-
-  private void launchCertificateRefresh() {
-      if (TextSecurePreferences.isPushRegistered(this)) {
-          CertificateRefreshJob.scheduleIfNecessary();
-      } else {
-          Log.i(TAG, "The client is not registered. Certificate refresh will not be triggered.");
-      }
-  }
-
-  private void launchLicenseRefresh() {
-      if (TextSecurePreferences.isPushRegistered(this)) {
-          LicenseManagementJob.scheduleIfNecessary();
-      } else {
-          Log.i(TAG, "The client is not registered. License refresh will not be triggered.");
-      }
-  }
-
-  private void launchServiceConfigRefresh() {
-    if (TextSecurePreferences.isPushRegistered(this)) {
-      ServiceConfigRefreshJob.scheduleIfNecessary();
-    } else {
-      Log.i(TAG, "The client is not registered. Service configuration refresh will not be triggered.");
+        // set just a filler for now
+        SignalStore.kbsValues().setKbsMasterKey(SignalStore.kbsValues().getOrCreateMasterKey());
     }
-  }
+
+    private void initializeGlideCodecs() {
+        SignalGlideCodecs.setLogProvider(new su.sres.glide.Log.Provider() {
+            @Override
+            public void v(@NonNull String tag, @NonNull String message) {
+                Log.v(tag, message);
+            }
+
+            @Override
+            public void d(@NonNull String tag, @NonNull String message) {
+                Log.d(tag, message);
+            }
+
+            @Override
+            public void i(@NonNull String tag, @NonNull String message) {
+                Log.i(tag, message);
+            }
+
+            @Override
+            public void w(@NonNull String tag, @NonNull String message) {
+                Log.w(tag, message);
+            }
+
+            @Override
+            public void e(@NonNull String tag, @NonNull String message, @Nullable Throwable throwable) {
+                Log.e(tag, message, throwable);
+            }
+        });
+    }
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        DynamicLanguageContextWrapper.updateContext(base);
+        super.attachBaseContext(base);
+    }
+
+    private static class ProviderInitializationException extends RuntimeException {
+    }
+
+    private void initializeOnCreate() {
+
+        AppStartup.getInstance()
+                .addBlocking("app-network-dependent-dependencies", this::initializeNetworkDependentProvider)
+                .addBlocking("first-launch", this::initializeFirstEverAppLaunch)
+                .addBlocking("app-migrations", this::initializeApplicationMigrations)
+                .addBlocking("ring-rtc", this::initializeRingRtc)
+                .addBlocking("mark-registration", () -> RegistrationUtil.maybeMarkRegistrationComplete(this))
+                .addBlocking("lifecycle-observer", () -> ProcessLifecycleOwner.get().getLifecycle().addObserver(this))
+                .addBlocking("message-retriever", this::initializeMessageRetrieval)
+                .addBlocking("dynamic-theme", () -> DynamicTheme.setDefaultDayNightMode(this))
+                .addBlocking("vector-compat", () -> {
+                    if (Build.VERSION.SDK_INT < 21) {
+                        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+                    }
+                })
+                .addNonBlocking(this::initializeRevealableMessageManager)
+                .addNonBlocking(this::initializeGcmCheck)
+                .addNonBlocking(this::initializeSignedPreKeyCheck)
+                .addNonBlocking(this::initializePeriodicTasks)
+                .addNonBlocking(this::initializePendingMessages)
+                .addNonBlocking(this::initializeCleanup)
+                .addNonBlocking(this::initializeGlideCodecs)
+                .addNonBlocking(FeatureFlags::init)
+                .addNonBlocking(this::initializeMasterKey)
+                .addNonBlocking(RefreshPreKeysJob::scheduleIfNecessary)
+                // .addNonBlocking(StorageSyncHelper::scheduleRoutineSync)
+                .addNonBlocking(() -> ApplicationDependencies.getJobManager().beginJobLoop())
+                .addPostRender(this::initializeExpiringMessageManager)
+                .addPostRender(this::initializeBlobProvider)
+                .addPostRender(() -> NotificationChannels.create(this))
+                .execute();
+
+        initializedOnCreate = true;
+
+    }
+
+    private void launchCertificateRefresh() {
+        if (TextSecurePreferences.isPushRegistered(this)) {
+            CertificateRefreshJob.scheduleIfNecessary();
+        } else {
+            Log.i(TAG, "The client is not registered. Certificate refresh will not be triggered.");
+        }
+    }
+
+    private void launchLicenseRefresh() {
+        if (TextSecurePreferences.isPushRegistered(this)) {
+            LicenseManagementJob.scheduleIfNecessary();
+        } else {
+            Log.i(TAG, "The client is not registered. License refresh will not be triggered.");
+        }
+    }
+
+    private void launchServiceConfigRefresh() {
+        if (TextSecurePreferences.isPushRegistered(this)) {
+            ServiceConfigRefreshJob.scheduleIfNecessary();
+        } else {
+            Log.i(TAG, "The client is not registered. Service configuration refresh will not be triggered.");
+        }
+    }
 }

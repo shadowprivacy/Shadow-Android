@@ -10,6 +10,7 @@ import android.util.Pair;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.util.BitmapDecodingException;
 import su.sres.securesms.util.BitmapUtil;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.MemoryFileDescriptor;
 
@@ -75,7 +76,6 @@ public abstract class MediaConstraints {
   }
 
   public static boolean isVideoTranscodeAvailable() {
-    return Build.VERSION.SDK_INT >= 26 && MemoryFileDescriptor.supported();
-
+    return Build.VERSION.SDK_INT >= 26 && (FeatureFlags.useStreamingVideoMuxer() || MemoryFileDescriptor.supported());
   }
 }

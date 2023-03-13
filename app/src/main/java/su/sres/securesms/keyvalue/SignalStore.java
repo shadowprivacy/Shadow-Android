@@ -27,6 +27,7 @@ public final class SignalStore {
     private final SettingsValues settingsValues;
     private final CertificateValues certificateValues;
     private final UserLoginPrivacyValues userLoginPrivacyValues;
+    private final OnboardingValues         onboardingValues;
 
     private SignalStore() {
         this.store = ApplicationDependencies.getKeyValueStore();
@@ -43,6 +44,7 @@ public final class SignalStore {
         this.settingsValues = new SettingsValues(store);
         this.certificateValues = new CertificateValues(store);
         this.userLoginPrivacyValues = new UserLoginPrivacyValues(store);
+        this.onboardingValues         = new OnboardingValues(store);
     }
 
     public static void onFirstEverAppLaunch() {
@@ -58,6 +60,7 @@ public final class SignalStore {
         settings().onFirstEverAppLaunch();
         certificateValues().onFirstEverAppLaunch();
         userLoginPrivacy().onFirstEverAppLaunch();
+        onboarding().onFirstEverAppLaunch();
     }
 
     public static @NonNull
@@ -123,6 +126,10 @@ public final class SignalStore {
     public static @NonNull
     UserLoginPrivacyValues userLoginPrivacy() {
         return INSTANCE.userLoginPrivacyValues;
+    }
+
+    public static @NonNull OnboardingValues onboarding() {
+        return INSTANCE.onboardingValues;
     }
 
     public static @NonNull

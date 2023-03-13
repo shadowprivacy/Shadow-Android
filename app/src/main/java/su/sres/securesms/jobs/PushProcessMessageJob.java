@@ -1807,9 +1807,10 @@ public final class PushProcessMessageJob extends BaseJob {
   }
 
   private Optional<List<LinkPreview>> getLinkPreviews(Optional<List<Preview>> previews, @NonNull String message) {
-    if (!previews.isPresent()) return Optional.absent();
+    if (!previews.isPresent() || previews.get().isEmpty()) return Optional.absent();
 
-    List<LinkPreview> linkPreviews = new ArrayList<>(previews.get().size());
+    List<LinkPreview>     linkPreviews  = new ArrayList<>(previews.get().size());
+    LinkPreviewUtil.Links urlsInMessage = LinkPreviewUtil.findValidPreviewUrls(message);
 
     for (Preview preview : previews.get()) {
       Optional<Attachment> thumbnail     = PointerAttachment.forPointer(preview.getImage());
@@ -1817,7 +1818,7 @@ public final class PushProcessMessageJob extends BaseJob {
       Optional<String>     title         = Optional.fromNullable(preview.getTitle());
       Optional<String>     description   = Optional.fromNullable(preview.getDescription());
       boolean              hasTitle      = !TextUtils.isEmpty(title.or(""));
-      boolean              presentInBody = url.isPresent() && Stream.of(LinkPreviewUtil.findValidPreviewUrls(message)).map(Link::getUrl).collect(Collectors.toSet()).contains(url.get());
+      boolean              presentInBody = url.isPresent() && urlsInMessage.containsUrl(url.get());
       boolean              validDomain   = url.isPresent() && LinkPreviewUtil.isValidPreviewUrl(url.get());
 
       if (hasTitle && presentInBody && validDomain) {

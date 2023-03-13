@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import su.sres.core.util.tracing.Tracer;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
 
@@ -21,7 +22,7 @@ import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.registration.RegistrationNavigationActivity;
 import su.sres.securesms.service.KeyCachingService;
-import su.sres.securesms.tracing.Tracer;
+import su.sres.securesms.util.AppStartup;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import java.util.Locale;
@@ -45,6 +46,7 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
   @Override
   protected final void onCreate(Bundle savedInstanceState) {
     Tracer.getInstance().start(Log.tag(getClass()) + "#onCreate()");
+    AppStartup.getInstance().onCriticalRenderEventStart();
     this.networkAccess = new SignalServiceNetworkAccess(this);
     onPreCreate();
 
@@ -58,6 +60,7 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
       onCreate(savedInstanceState, true);
     }
 
+    AppStartup.getInstance().onCriticalRenderEventEnd();
     Tracer.getInstance().end(Log.tag(getClass()) + "#onCreate()");
   }
 
@@ -186,7 +189,7 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
 
   private Intent getConversationListIntent() {
     // TODO [greyson] Navigation
-    return new Intent(this, MainActivity.class);
+    return MainActivity.clearTop(this);
   }
 
   private void initializeClearKeyReceiver() {

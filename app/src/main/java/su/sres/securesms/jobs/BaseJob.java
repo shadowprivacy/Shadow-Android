@@ -3,6 +3,7 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.core.util.tracing.Tracer;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobLogger;
@@ -20,6 +21,10 @@ public abstract class BaseJob extends Job {
 
     @Override
     public @NonNull Result run() {
+        if (shouldTrace()) {
+            Tracer.getInstance().start(getClass().getSimpleName());
+        }
+
         try {
             onRun();
             return Result.success(outputData);
@@ -34,12 +39,23 @@ public abstract class BaseJob extends Job {
                 Log.w(TAG, JobLogger.format(this, "Encountered a failing exception."), e);
                 return Result.failure();
             }
+        } finally {
+            if (shouldTrace()) {
+                Tracer.getInstance().end(getClass().getSimpleName());
+            }
         }
     }
 
     protected abstract void onRun() throws Exception;
 
     protected abstract boolean onShouldRetry(@NonNull Exception e);
+
+    /**
+     * Whether or not the job should be traced with the {@link su.sres.core.util.tracing.Tracer}.
+     */
+    protected boolean shouldTrace() {
+        return false;
+    }
 
     /**
      * If this job is part of a {@link Chain}, data set here will be passed as input data to the next

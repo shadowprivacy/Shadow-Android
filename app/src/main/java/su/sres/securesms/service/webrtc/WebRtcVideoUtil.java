@@ -11,7 +11,10 @@ import su.sres.securesms.ringrtc.CameraState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceStateBuilder;
 import su.sres.securesms.util.Util;
+
+import org.webrtc.CapturerObserver;
 import org.webrtc.EglBase;
+import org.webrtc.VideoFrame;
 
 /**
  * Helper for initializing, reinitializing, and deinitializing the camera and it's related
@@ -91,6 +94,32 @@ public final class WebRtcVideoUtil {
                 .commit()
                 .changeLocalDeviceState()
                 .cameraState(CameraState.UNKNOWN)
+                .build();
+    }
+
+    public static @NonNull WebRtcServiceState initializeVanityCamera(@NonNull WebRtcServiceState currentState) {
+        Camera             camera = currentState.getVideoState().requireCamera();
+        BroadcastVideoSink sink   = currentState.getVideoState().requireLocalSink();
+
+        if (camera.hasCapturer()) {
+            camera.initCapturer(new CapturerObserver() {
+                @Override
+                public void onFrameCaptured(VideoFrame videoFrame) {
+                    sink.onFrame(videoFrame);
+                }
+
+                @Override
+                public void onCapturerStarted(boolean success) {}
+
+                @Override
+                public void onCapturerStopped() {}
+            });
+            camera.setEnabled(true);
+        }
+
+        return currentState.builder()
+                .changeLocalDeviceState()
+                .cameraState(camera.getCameraState())
                 .build();
     }
 }

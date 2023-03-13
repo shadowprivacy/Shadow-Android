@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase.ExpirationInfo;
@@ -44,24 +45,19 @@ public class MarkReadReceiver extends BroadcastReceiver {
     if (threadIds != null) {
       NotificationCancellationHelper.cancelLegacy(context, intent.getIntExtra(NOTIFICATION_ID_EXTRA, -1));
 
-      new AsyncTask<Void, Void, Void>() {
-        @Override
-        protected Void doInBackground(Void... params) {
-          List<MarkedMessageInfo> messageIdsCollection = new LinkedList<>();
+      SignalExecutors.BOUNDED.execute(() -> {
+        List<MarkedMessageInfo> messageIdsCollection = new LinkedList<>();
 
-          for (long threadId : threadIds) {
-            Log.i(TAG, "Marking as read: " + threadId);
-            List<MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context).setRead(threadId, true);
-            messageIdsCollection.addAll(messageIds);
-          }
-
-          process(context, messageIdsCollection);
-
-          ApplicationDependencies.getMessageNotifier().updateNotification(context);
-
-          return null;
+        for (long threadId : threadIds) {
+          Log.i(TAG, "Marking as read: " + threadId);
+          List<MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context).setRead(threadId, true);
+          messageIdsCollection.addAll(messageIds);
         }
-      }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
+        process(context, messageIdsCollection);
+
+        ApplicationDependencies.getMessageNotifier().updateNotification(context);
+      });
     }
   }
 

@@ -173,9 +173,12 @@ public final class StringUtil {
      * For more details, see:
      * https://www.w3.org/International/questions/qa-bidi-unicode-controls
      */
-    public static @NonNull String isolateBidi(@NonNull String text) {
+    public static @NonNull String isolateBidi(@Nullable String text) {
+        if (text == null) {
+            return "";
+        }
 
-        if (text.isEmpty()) {
+        if (Util.isEmpty(text)) {
             return text;
         }
 

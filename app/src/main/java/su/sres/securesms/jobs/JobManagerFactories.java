@@ -8,7 +8,6 @@ import su.sres.securesms.jobmanager.Constraint;
 import su.sres.securesms.jobmanager.ConstraintObserver;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobMigration;
-import su.sres.securesms.jobmanager.impl.CellServiceConstraintObserver;
 import su.sres.securesms.jobmanager.impl.ChargingConstraint;
 import su.sres.securesms.jobmanager.impl.ChargingConstraintObserver;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -177,8 +176,7 @@ public final class JobManagerFactories {
     }
 
     public static List<ConstraintObserver> getConstraintObservers(@NonNull Application application) {
-        return Arrays.asList(CellServiceConstraintObserver.getInstance(application),
-                new ChargingConstraintObserver(application),
+        return Arrays.asList(new ChargingConstraintObserver(application),
                 new NetworkConstraintObserver(application),
                 new SqlCipherMigrationConstraintObserver(),
                 new DecryptionsDrainedConstraintObserver());

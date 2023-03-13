@@ -4,10 +4,12 @@ import android.content.Context;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
+import okhttp3.ResponseBody;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.logsubmit.util.Scrubber;
@@ -15,12 +17,16 @@ import su.sres.securesms.net.StandardUserAgentInterceptor;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.push.SignalServiceTrustStore;
 import su.sres.core.util.concurrent.SignalExecutors;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Pattern;
@@ -54,9 +60,7 @@ public class SubmitDebugLogRepository {
     private static final char   TITLE_DECORATION = '=';
     private static final int    MIN_DECORATIONS  = 5;
     private static final int    SECTION_SPACING  = 3;
-    private static final String DEBUG_LOGS_PATH = "/debuglogs/";
-
-    private final SignalServiceAccountManager accountManager;
+    private static final String API_ENDPOINT     = "https://debuglogs.org";
 
     /** Ordered list of log sections. */
     private static final List<LogSection> SECTIONS = new ArrayList<LogSection>() {{
@@ -68,7 +72,9 @@ public class SubmitDebugLogRepository {
         add(new LogSectionCapabilities());
         add(new LogSectionFeatureFlags());
         add(new LogSectionPermissions());
+        add(new LogSectionTrace());
         add(new LogSectionThreads());
+        add(new LogSectionBlockedThreads());
         add(new LogSectionLogcat());
         add(new LogSectionLogger());
     }};
@@ -79,7 +85,6 @@ public class SubmitDebugLogRepository {
     public SubmitDebugLogRepository() {
         this.context  = ApplicationDependencies.getApplication();
         this.executor = SignalExecutors.SERIAL;
-        this.accountManager = ApplicationDependencies.getSignalServiceAccountManager();
     }
 
     public void getLogLines(@NonNull Callback<List<LogLine>> callback) {
@@ -87,55 +92,83 @@ public class SubmitDebugLogRepository {
     }
 
     public void submitLog(@NonNull List<LogLine> lines, Callback<Optional<String>> callback) {
-        SignalExecutors.UNBOUNDED.execute(() -> callback.onResult(submitLogInternal(lines)));
+        SignalExecutors.UNBOUNDED.execute(() -> callback.onResult(submitLogInternal(lines, null)));
+    }
+
+    public void submitLog(@NonNull List<LogLine> lines, @Nullable byte[] trace, Callback<Optional<String>> callback) {
+        SignalExecutors.UNBOUNDED.execute(() -> callback.onResult(submitLogInternal(lines, trace)));
     }
 
     @WorkerThread
-    private @NonNull Optional<String> submitLogInternal(@NonNull List<LogLine> lines) {
+    private @NonNull Optional<String> submitLogInternal(@NonNull List<LogLine> lines, @Nullable byte[] trace) {
+        String traceUrl = null;
+        if (trace != null) {
+            try {
+                traceUrl = uploadContent("application/octet-stream", trace);
+            } catch (IOException e) {
+                Log.w(TAG, "Error during trace upload.", e);
+                return Optional.absent();
+            }
+        }
+
         StringBuilder bodyBuilder = new StringBuilder();
         for (LogLine line : lines) {
-            bodyBuilder.append(line.getText()).append('\n');
+            switch (line.getPlaceholderType()) {
+                case NONE:
+                    bodyBuilder.append(line.getText()).append('\n');
+                    break;
+                case TRACE:
+                    bodyBuilder.append(traceUrl).append('\n');
+                    break;
+            }
         }
 
         try {
+            String logUrl = uploadContent("text/plain", bodyBuilder.toString().getBytes());
+            return Optional.of(logUrl);
+        } catch (IOException e) {
+            Log.w(TAG, "Error during log upload.", e);
+            return Optional.absent();
+        }
+    }
 
-            String cloudUrl = accountManager.getConfigurationInfo().getCloudUri() + DEBUG_LOGS_PATH;
+    @WorkerThread
+    private @NonNull String uploadContent(@NonNull String contentType, @NonNull byte[] content) throws IOException {
+        try {
+            OkHttpClient client   = new OkHttpClient.Builder().addInterceptor(new StandardUserAgentInterceptor()).dns(SignalServiceNetworkAccess.DNS).build();
+            Response     response = client.newCall(new Request.Builder().url(API_ENDPOINT).get().build()).execute();
+            ResponseBody body     = response.body();
 
-            TrustManager[] trustManagers = BlacklistingTrustManager.createFor(new SignalServiceTrustStore(context));
-            SSLContext context = SSLContext.getInstance("TLS");
-            context.init(null, trustManagers, null);
+            if (!response.isSuccessful() || body == null) {
+                throw new IOException("Unsuccessful response: " + response);
+            }
 
-            OkHttpClient client   = new OkHttpClient.Builder()
-                    .addInterceptor(new StandardUserAgentInterceptor())
-                    .dns(SignalServiceNetworkAccess.DNS)
-                    .sslSocketFactory(new Tls12SocketFactory(context.getSocketFactory()), (X509TrustManager)trustManagers[0])
-                    .build();
+            JSONObject json   = new JSONObject(body.string());
+            String                url    = json.getString("url");
+            JSONObject            fields = json.getJSONObject("fields");
+            String                item   = fields.getString("key");
+            MultipartBody.Builder post   = new MultipartBody.Builder();
+            Iterator<String> keys   = fields.keys();
 
-            AttachmentV2UploadAttributes debugLogUploadAttributes = accountManager.getDebugLogUploadAttributes();
+            post.addFormDataPart("Content-Type", contentType);
 
-            RequestBody requestBody   = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("acl", debugLogUploadAttributes.getAcl())
-                    .addFormDataPart("key", debugLogUploadAttributes.getKey())
-                    .addFormDataPart("policy", debugLogUploadAttributes.getPolicy())
-                    .addFormDataPart("x-amz-algorithm", debugLogUploadAttributes.getAlgorithm())
-                    .addFormDataPart("x-amz-credential", debugLogUploadAttributes.getCredential())
-                    .addFormDataPart("x-amz-date", debugLogUploadAttributes.getDate())
-                    .addFormDataPart("x-amz-signature", debugLogUploadAttributes.getSignature())
-                    .addFormDataPart("Content-Type", "text/plain")
-                    .addFormDataPart("file", "file", RequestBody.create(MediaType.parse("text/plain"), bodyBuilder.toString()))
-                    .build();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                post.addFormDataPart(key, fields.getString(key));
+            }
 
-            Response postResponse = client.newCall(new Request.Builder().url(cloudUrl).post(requestBody).build()).execute();
+            post.addFormDataPart("file", "file", RequestBody.create(MediaType.parse(contentType), content));
+
+            Response postResponse = client.newCall(new Request.Builder().url(url).post(post.build()).build()).execute();
 
             if (!postResponse.isSuccessful()) {
                 throw new IOException("Bad response: " + postResponse);
             }
 
-            return Optional.of(cloudUrl + debugLogUploadAttributes.getKey());
-        } catch (IOException | NoSuchAlgorithmException | KeyManagementException e) {
+            return API_ENDPOINT + "/" + item;
+        } catch (JSONException e) {
             Log.w(TAG, "Error during upload.", e);
-            return Optional.absent();
+            throw new IOException(e);
         }
     }
 
@@ -175,12 +208,12 @@ public class SubmitDebugLogRepository {
         long startTime = System.currentTimeMillis();
 
         List<LogLine> out = new ArrayList<>();
-        out.add(new SimpleLogLine(formatTitle(section.getTitle(), maxTitleLength), LogLine.Style.NONE));
+        out.add(new SimpleLogLine(formatTitle(section.getTitle(), maxTitleLength), LogLine.Style.NONE, LogLine.Placeholder.NONE));
 
         CharSequence content = Scrubber.scrub(section.getContent(context));
 
         List<LogLine> lines = Stream.of(Pattern.compile("\\n").split(content))
-                .map(s -> new SimpleLogLine(s, LogStyleParser.parseStyle(s)))
+                .map(s -> new SimpleLogLine(s, LogStyleParser.parseStyle(s), LogStyleParser.parsePlaceholderType(s)))
                 .map(line -> (LogLine) line)
                 .toList();
 

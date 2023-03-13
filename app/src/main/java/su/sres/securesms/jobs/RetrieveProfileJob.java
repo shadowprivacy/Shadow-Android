@@ -233,6 +233,11 @@ public class RetrieveProfileJob extends BaseJob  {
   }
 
   @Override
+  protected boolean shouldTrace() {
+    return true;
+  }
+
+  @Override
   public void onRun() throws IOException, RetryLaterException {
     Stopwatch         stopwatch         = new Stopwatch("RetrieveProfile");
     RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
@@ -257,7 +262,7 @@ public class RetrieveProfileJob extends BaseJob  {
               Recipient recipient = pair.first();
 
               try {
-                ProfileAndCredential profile = pair.second().get(5, TimeUnit.SECONDS);
+                ProfileAndCredential profile = pair.second().get(10, TimeUnit.SECONDS);
                 return new Pair<>(recipient, profile);
               } catch (InterruptedException | TimeoutException e) {
                 retries.add(recipient.getId());

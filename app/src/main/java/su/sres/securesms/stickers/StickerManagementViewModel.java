@@ -6,12 +6,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import android.database.ContentObserver;
-import android.os.Handler;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.DatabaseContentProviders;
 import su.sres.securesms.database.model.StickerPackRecord;
-import su.sres.securesms.database.model.StickerRecord;
 import su.sres.securesms.stickers.StickerManagementRepository.PackResult;
 
 import java.util.List;
@@ -27,7 +25,7 @@ final class StickerManagementViewModel extends ViewModel {
         this.application = application;
         this.repository  = repository;
         this.packs       = new MutableLiveData<>();
-        this.observer    = new ContentObserver(new Handler()) {
+        this.observer    = new ContentObserver(null) {
             @Override
             public void onChange(boolean selfChange) {
                 repository.deleteOrphanedStickerPacks();

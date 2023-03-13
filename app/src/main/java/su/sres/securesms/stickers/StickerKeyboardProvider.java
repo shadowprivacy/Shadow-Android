@@ -39,6 +39,8 @@ public final class StickerKeyboardProvider implements MediaKeyboardProvider,
         StickerKeyboardPageFragment.EventListener
 {
 
+    private static final int UNSET = -1;
+
     private final Context              context;
     private final StickerEventListener eventListener;
     private final StickerPagerAdapter  pagerAdapter;
@@ -48,6 +50,7 @@ public final class StickerKeyboardProvider implements MediaKeyboardProvider,
     private Presenter                presenter;
     private boolean                  isSoloProvider;
     private StickerKeyboardViewModel viewModel;
+    private int                      currentPosition;
 
     public StickerKeyboardProvider(@NonNull FragmentActivity activity,
                                    @NonNull StickerEventListener eventListener)
@@ -56,6 +59,7 @@ public final class StickerKeyboardProvider implements MediaKeyboardProvider,
         this.eventListener    = eventListener;
         this.pagerAdapter     = new StickerPagerAdapter(activity.getSupportFragmentManager(), this);
         this.stickerThrottler = new Throttler(100);
+        this.currentPosition  = UNSET;
 
         initViewModel(activity);
     }
@@ -77,7 +81,7 @@ public final class StickerKeyboardProvider implements MediaKeyboardProvider,
         PackListResult result = viewModel.getPacks().getValue();
 
         if (result != null) {
-            present(presenter, result, true);
+            present(presenter, result, false);
         }
     }
 
@@ -110,6 +114,11 @@ public final class StickerKeyboardProvider implements MediaKeyboardProvider,
         }
     }
 
+    @Override
+    public void setCurrentPosition(int currentPosition) {
+        this.currentPosition = currentPosition;
+    }
+
     private void initViewModel(@NonNull FragmentActivity activity) {
         StickerKeyboardRepository repository = new StickerKeyboardRepository(DatabaseFactory.getStickerDatabase(activity));
         viewModel = ViewModelProviders.of(activity, new StickerKeyboardViewModel.Factory(activity.getApplication(), repository)).get(StickerKeyboardViewModel.class);
@@ -134,9 +143,9 @@ public final class StickerKeyboardProvider implements MediaKeyboardProvider,
             return;
         }
 
-        int startingIndex = presenter.getCurrentPosition();
+        int startingIndex = currentPosition;
 
-        if (calculateStartingIndex) {
+        if (calculateStartingIndex || startingIndex == UNSET) {
             startingIndex = !result.hasRecents() && result.getPacks().size() > 0 ? 1 : 0;
         }
 

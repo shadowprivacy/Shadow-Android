@@ -47,7 +47,6 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import su.sres.securesms.R;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.VideoSlide;
-import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.video.exo.AttachmentDataSourceFactory;
 
 import java.util.concurrent.TimeUnit;
@@ -80,7 +79,7 @@ public class VideoPlayer extends FrameLayout {
 
     inflate(context, R.layout.video_player, this);
 
-    this.exoView   = ViewUtil.findById(this, R.id.video_view);
+    this.exoView     = findViewById(R.id.video_view);
     this.exoControls = new PlayerControlView(getContext());
     this.exoControls.setShowTimeoutMs(-1);
   }

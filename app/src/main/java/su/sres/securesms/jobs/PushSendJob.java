@@ -110,6 +110,10 @@ public abstract class PushSendJob extends SendJob {
     }
   }
 
+  @Override
+  protected boolean shouldTrace() {
+    return true;
+  }
   protected Optional<byte[]> getProfileKey(@NonNull Recipient recipient) {
     if (!recipient.resolve().isSystemContact() && !recipient.resolve().isProfileSharing()) {
       return Optional.absent();

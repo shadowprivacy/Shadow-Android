@@ -74,8 +74,8 @@ public final class RecyclerViewFastScroller extends LinearLayout {
     setClipChildren(false);
     setScrollContainer(true);
     inflate(context, R.layout.recycler_view_fast_scroller, this);
-    bubble = ViewUtil.findById(this, R.id.fastscroller_bubble);
-    handle = ViewUtil.findById(this, R.id.fastscroller_handle);
+    bubble = findViewById(R.id.fastscroller_bubble);
+    handle = findViewById(R.id.fastscroller_handle);
   }
 
   @Override

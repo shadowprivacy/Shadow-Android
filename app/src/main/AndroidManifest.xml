@@ -272,6 +272,17 @@
                     android:host="group.shadowprivacy.com" />
             </intent-filter>
 
+            <meta-data android:name="com.sec.minimode.icon.portrait.normal"
+                android:resource="@mipmap/ic_launcher" />
+            <meta-data android:name="com.sec.minimode.icon.landscape.normal"
+                android:resource="@mipmap/ic_launcher" />
+
+        </activity-alias>
+
+        <activity android:name=".deeplinks.DeepLinkEntryActivity"
+            android:noHistory="true"
+            android:theme="@style/Signal.Transparent">
+
             <intent-filter android:autoVerify="true"
                 tools:targetApi="23">
                 <action android:name="android.intent.action.VIEW" />
@@ -281,14 +292,7 @@
                     android:host="group.shadowprivacy.com"/>
             </intent-filter>
 
-            <meta-data
-                android:name="com.sec.minimode.icon.portrait.normal"
-                android:resource="@mipmap/ic_launcher" />
-            <meta-data
-                android:name="com.sec.minimode.icon.landscape.normal"
-                android:resource="@mipmap/ic_launcher" />
-
-        </activity-alias>
+        </activity>
 
         <activity
             android:name=".conversation.ConversationActivity"
@@ -579,7 +583,6 @@
         <activity
             android:name=".MainActivity"
             android:theme="@style/Theme.Signal.DayNight.NoActionBar"
-            android:launchMode="singleTask"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
         <activity android:name=".groups.ui.creategroup.CreateGroupActivity"

@@ -2,21 +2,17 @@ package su.sres.securesms.database;
 
 import android.content.ContentValues;
 
-import androidx.annotation.Nullable;
-
-import com.google.android.gms.vision.Tracker;
-
 import net.sqlcipher.Cursor;
 import net.sqlcipher.SQLException;
 import net.sqlcipher.database.SQLiteQueryStats;
 import net.sqlcipher.database.SQLiteStatement;
 import net.sqlcipher.database.SQLiteTransactionListener;
 
-import su.sres.securesms.tracing.Tracer;
-
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+
+import su.sres.core.util.tracing.Tracer;
 
 /**
  * This is a wrapper around {@link net.sqlcipher.database.SQLiteDatabase}. There's difficulties
@@ -38,7 +34,7 @@ public class SQLiteDatabase {
     private static final String NAME_LOCK  = "LOCK";
 
     private final net.sqlcipher.database.SQLiteDatabase wrapped;
-    private final Tracer                                tracer;
+    private final Tracer tracer;
 
     public SQLiteDatabase(net.sqlcipher.database.SQLiteDatabase wrapped) {
         this.wrapped = wrapped;

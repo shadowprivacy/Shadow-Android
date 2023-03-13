@@ -144,9 +144,9 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
       EventBus.getDefault().unregister(this);
     }
 
-    if (!viewModel.isCallingStarted()) {
+    if (!viewModel.isCallStarting()) {
       CallParticipantsState state = viewModel.getCallParticipantsState().getValue();
-      if (state != null && state.getCallState() == WebRtcViewModel.State.CALL_PRE_JOIN) {
+      if (state != null && state.getCallState().isPreJoinOrNetworkUnavailable()) {
         finish();
       }
     }
@@ -158,9 +158,9 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
     super.onStop();
 
     EventBus.getDefault().unregister(this);
-    if (!viewModel.isCallingStarted()) {
+    if (!viewModel.isCallStarting()) {
       CallParticipantsState state = viewModel.getCallParticipantsState().getValue();
-      if (state != null && state.getCallState() == WebRtcViewModel.State.CALL_PRE_JOIN) {
+      if (state != null && state.getCallState().isPreJoinOrNetworkUnavailable()) {
         Intent intent = new Intent(this, WebRtcCallService.class);
         intent.setAction(WebRtcCallService.ACTION_CANCEL_PRE_JOIN_CALL);
         startService(intent);
@@ -473,7 +473,6 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
   private void handleServerFailure() {
     EventBus.getDefault().removeStickyEvent(WebRtcViewModel.class);
     callScreen.setStatus(getString(R.string.RedPhone_network_failed));
-    delayedFinish();
   }
 
   private void handleNoSuchUser(final @NonNull WebRtcViewModel event) {
@@ -531,7 +530,7 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
               .putExtra(WebRtcCallService.EXTRA_RECIPIENT_IDS, RecipientId.toSerializedList(changedRecipients));
       startService(intent);
     } else {
-      startCall(state.getLocalParticipant().isVideoEnabled());
+      viewModel.startCall(state.getLocalParticipant().isVideoEnabled());
     }
   }
 
@@ -542,7 +541,7 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
   public void onCanceled() {
     CallParticipantsState state = viewModel.getCallParticipantsState().getValue();
     if (state != null && state.getGroupCallState().isNotIdle()) {
-      if (state.getCallState() == WebRtcViewModel.State.CALL_PRE_JOIN) {
+      if (state.getCallState().isPreJoinOrNetworkUnavailable()) {
         Intent intent = new Intent(this, WebRtcCallService.class);
         intent.setAction(WebRtcCallService.ACTION_CANCEL_PRE_JOIN_CALL);
         startService(intent);

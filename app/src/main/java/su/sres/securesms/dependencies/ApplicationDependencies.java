@@ -22,6 +22,7 @@ import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.TrimThreadsByDateManager;
+import su.sres.securesms.shakereport.ShakeToReport;
 import su.sres.securesms.util.EarlyMessageCache;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
@@ -45,13 +46,13 @@ public class ApplicationDependencies {
     private static final Object LOCK                    = new Object();
     private static final Object NI_LOCK                    = new Object();
     private static final Object FRAME_RATE_TRACKER_LOCK = new Object();
+    private static final Object JOB_MANAGER_LOCK        = new Object();
 
     private static Application application;
     private static Provider    provider;
     private static NetworkIndependentProvider networkIndependentProvider;
 
     private static MessageNotifier          messageNotifier;
-    private static TrimThreadsByDateManager trimThreadsByDateManager;
 
     private static volatile SignalServiceAccountManager  accountManager;
     private static volatile SignalServiceMessageSender   messageSender;
@@ -70,6 +71,8 @@ public class ApplicationDependencies {
     private static volatile TypingStatusRepository       typingStatusRepository;
     private static volatile TypingStatusSender           typingStatusSender;
     private static volatile DatabaseObserver databaseObserver;
+    private static volatile TrimThreadsByDateManager     trimThreadsByDateManager;
+    private static volatile ShakeToReport                shakeToReport;
     private static volatile KeyValueStore keyValueStore;
 
     public static void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
@@ -95,7 +98,6 @@ public class ApplicationDependencies {
 
         ApplicationDependencies.provider        = provider;
         ApplicationDependencies.messageNotifier = provider.provideMessageNotifier();
-        ApplicationDependencies.trimThreadsByDateManager = provider.provideTrimThreadsByDateManager();
     }
 
 
@@ -219,7 +221,7 @@ public class ApplicationDependencies {
 
     public static @NonNull JobManager getJobManager() {
 
-        synchronized (LOCK) {
+        synchronized (JOB_MANAGER_LOCK) {
             if (jobManager == null) {
                 jobManager = provider.provideJobManager();
             }
@@ -287,6 +289,14 @@ public class ApplicationDependencies {
     }
 
     public static @NonNull TrimThreadsByDateManager getTrimThreadsByDateManager() {
+        if (trimThreadsByDateManager == null) {
+            synchronized (LOCK) {
+                if (trimThreadsByDateManager == null) {
+                    trimThreadsByDateManager = provider.provideTrimThreadsByDateManager();
+                }
+            }
+        }
+
         return trimThreadsByDateManager;
     }
 
@@ -320,6 +330,18 @@ public class ApplicationDependencies {
         return databaseObserver;
     }
 
+    public static @NonNull ShakeToReport getShakeToReport() {
+        if (shakeToReport == null) {
+            synchronized (NI_LOCK) {
+                if (shakeToReport == null) {
+                    shakeToReport = networkIndependentProvider.provideShakeToReport();
+                }
+            }
+        }
+
+        return shakeToReport;
+    }
+
     public interface Provider {
         @NonNull
         GroupsV2Operations provideGroupsV2Operations();
@@ -344,6 +366,8 @@ public class ApplicationDependencies {
 
     public interface NetworkIndependentProvider {
         @NonNull KeyValueStore provideKeyValueStore();
+        @NonNull
+        ShakeToReport provideShakeToReport();
 
     }
 }

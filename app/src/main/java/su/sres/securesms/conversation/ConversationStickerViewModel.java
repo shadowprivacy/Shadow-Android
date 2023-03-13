@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModelProvider;
 import android.database.ContentObserver;
 import android.os.Handler;
 import androidx.annotation.NonNull;
+
+import android.os.Looper;
 import android.text.TextUtils;
 
 import su.sres.securesms.components.emoji.EmojiUtil;
@@ -35,7 +37,7 @@ class ConversationStickerViewModel extends ViewModel {
         this.stickers              = new MutableLiveData<>();
         this.stickersAvailable     = new MutableLiveData<>();
         this.availabilityThrottler = new Throttler(500);
-        this.packObserver          = new ContentObserver(new Handler()) {
+        this.packObserver          = new ContentObserver(new Handler(Looper.getMainLooper())) {
             @Override
             public void onChange(boolean selfChange) {
                 availabilityThrottler.publish(() -> repository.getStickerFeatureAvailability(stickersAvailable::postValue));

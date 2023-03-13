@@ -40,13 +40,15 @@ import su.sres.securesms.R;
 import su.sres.securesms.components.registration.PulsingFloatingActionButton;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.util.task.SnackbarAsyncTask;
+import su.sres.securesms.util.views.Stub;
 
 public class ConversationListArchiveFragment extends ConversationListFragment implements ActionMode.Callback
 {
     private RecyclerView                list;
-    private View                        emptyState;
+    private Stub<View> emptyState;
     private PulsingFloatingActionButton fab;
     private PulsingFloatingActionButton cameraFab;
+    private Stub<Toolbar>               toolbar;
 
     public static ConversationListArchiveFragment newInstance() {
         return new ConversationListArchiveFragment();
@@ -60,27 +62,29 @@ public class ConversationListArchiveFragment extends ConversationListFragment im
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        toolbar = new Stub<>(view.findViewById(R.id.toolbar_basic));
         super.onViewCreated(view, savedInstanceState);
 
         list          = view.findViewById(R.id.list);
         fab           = view.findViewById(R.id.fab);
         cameraFab     = view.findViewById(R.id.camera_fab);
-        emptyState    = view.findViewById(R.id.empty_state);
+        emptyState = new Stub<>(view.findViewById(R.id.empty_state));
 
         ((AppCompatActivity) requireActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        Toolbar toolbar = view.findViewById(R.id.toolbar_basic);
-        toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
-        toolbar.setTitle(R.string.AndroidManifest_archived_conversations);
+        toolbar.get().setNavigationOnClickListener(v -> requireActivity().onBackPressed());
+        toolbar.get().setTitle(R.string.AndroidManifest_archived_conversations);
 
         fab.hide();
         cameraFab.hide();
     }
 
     @Override
-    protected void onPostSubmitList() {
+    protected void onPostSubmitList(int conversationCount) {
 
         list.setVisibility(View.VISIBLE);
-        emptyState.setVisibility(View.GONE);
+        if (emptyState.resolved()) {
+            emptyState.get().setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -89,8 +93,8 @@ public class ConversationListArchiveFragment extends ConversationListFragment im
     }
 
     @Override
-    protected int getToolbarRes() {
-        return R.id.toolbar_basic;
+    protected @NonNull Toolbar getToolbar(@NonNull View rootView) {
+        return toolbar.get();
     }
 
     @Override
@@ -141,5 +145,10 @@ public class ConversationListArchiveFragment extends ConversationListFragment im
                 DatabaseFactory.getThreadDatabase(getActivity()).archiveConversation(threadId);
             }
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, threadId);
+    }
+
+    @Override
+    void updateEmptyState(boolean isConversationEmpty) {
+        // Do nothing
     }
 }

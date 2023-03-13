@@ -23,7 +23,6 @@ public class AddMembersActivity extends PushContactSelectionActivity {
     public static final String GROUP_ID = "group_id";
 
     private View                done;
-    private AlertDialog         alert;
     private AddMembersViewModel viewModel;
 
     @Override
@@ -34,17 +33,12 @@ public class AddMembersActivity extends PushContactSelectionActivity {
         AddMembersViewModel.Factory factory = new AddMembersViewModel.Factory(getGroupId());
 
         done      = findViewById(R.id.done);
-        alert     = buildConfirmationAlertDialog();
         viewModel = ViewModelProviders.of(this, factory)
                 .get(AddMembersViewModel.class);
 
-        viewModel.getAddMemberDialogState().observe(this, state -> AddMembersActivity.updateAlertMessage(alert, state));
-
-        //noinspection CodeBlock2Expr
-        done.setOnClickListener(v -> {
-            viewModel.setDialogStateForSelectedContacts(contactsFragment.getSelectedContacts());
-            alert.show();
-        });
+        done.setOnClickListener(v ->
+                viewModel.getDialogStateForSelectedContacts(contactsFragment.getSelectedContacts(), this::displayAlertMessage)
+        );
 
         disableDone();
     }
@@ -99,23 +93,20 @@ public class AddMembersActivity extends PushContactSelectionActivity {
         return GroupId.parseOrThrow(getIntent().getStringExtra(GROUP_ID));
     }
 
-    private AlertDialog buildConfirmationAlertDialog() {
-        return new AlertDialog.Builder(this)
-                .setMessage(" ")
+    private void displayAlertMessage(@NonNull AddMembersViewModel.AddMemberDialogMessageState state) {
+        Recipient recipient = Util.firstNonNull(state.getRecipient(), Recipient.UNKNOWN);
+
+        String message = getResources().getQuantityString(R.plurals.AddMembersActivity__add_d_members_to_s, state.getSelectionCount(),
+                recipient.getDisplayName(this), state.getGroupTitle(), state.getSelectionCount());
+
+        new AlertDialog.Builder(this)
+                .setMessage(message)
                 .setNegativeButton(android.R.string.cancel, (dialog, which) -> dialog.cancel())
                 .setPositiveButton(R.string.AddMembersActivity__add, (dialog, which) -> {
                     dialog.dismiss();
                     onFinishedSelection();
                 })
                 .setCancelable(true)
-                .create();
-    }
-
-    private static void updateAlertMessage(@NonNull AlertDialog alertDialog, @NonNull AddMembersViewModel.AddMemberDialogMessageState state) {
-        Context   context   = alertDialog.getContext();
-        Recipient recipient = Util.firstNonNull(state.getRecipient(), Recipient.UNKNOWN);
-
-        alertDialog.setMessage(context.getResources().getQuantityString(R.plurals.AddMembersActivity__add_d_members_to_s, state.getSelectionCount(),
-                recipient.getDisplayName(context), state.getGroupTitle(), state.getSelectionCount()));
+                .show();
     }
 }

@@ -51,6 +51,10 @@ public final class WebRtcControls {
         this.participantLimit             = participantLimit;
     }
 
+    boolean displayErrorControls() {
+        return isError();
+    }
+
     boolean displayStartCallControls() {
         return isPreJoin();
     }
@@ -146,6 +150,10 @@ public final class WebRtcControls {
         return audioOutput;
     }
 
+    private boolean isError() {
+        return callState == CallState.ERROR;
+    }
+
     private boolean isPreJoin() {
         return callState == CallState.PRE_JOIN;
     }
@@ -168,6 +176,7 @@ public final class WebRtcControls {
 
     public enum CallState {
         NONE,
+        ERROR,
         PRE_JOIN,
         INCOMING,
         OUTGOING,

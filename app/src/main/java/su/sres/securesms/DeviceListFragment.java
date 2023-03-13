@@ -68,7 +68,7 @@ public class DeviceListFragment extends ListFragment
 
     this.empty             = view.findViewById(R.id.empty);
     this.progressContainer = view.findViewById(R.id.progress_container);
-    this.addDeviceButton   = ViewUtil.findById(view, R.id.add_device);
+    this.addDeviceButton   = view.findViewById(R.id.add_device);
     this.addDeviceButton.setOnClickListener(this);
 
     return view;

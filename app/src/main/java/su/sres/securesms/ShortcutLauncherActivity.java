@@ -34,7 +34,7 @@ public class ShortcutLauncherActivity extends AppCompatActivity {
     if (rawId == null) {
       Toast.makeText(this, R.string.ShortcutLauncherActivity_invalid_shortcut, Toast.LENGTH_SHORT).show();
       // TODO [greyson] Navigation
-      startActivity(new Intent(this, MainActivity.class));
+      startActivity(MainActivity.clearTop(this));
       finish();
       return;
     }
@@ -42,7 +42,7 @@ public class ShortcutLauncherActivity extends AppCompatActivity {
     Recipient        recipient = Recipient.live(RecipientId.from(rawId)).get();
     // TODO [greyson] Navigation
     TaskStackBuilder backStack = TaskStackBuilder.create(this)
-            .addNextIntent(new Intent(this, MainActivity.class));
+            .addNextIntent(MainActivity.clearTop(this));
 
     CommunicationActions.startConversation(this, recipient, null, backStack);
     finish();
