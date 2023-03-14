@@ -308,9 +308,9 @@ dependencies {
     implementation 'org.signal:aesgcmprovider:0.0.3'
 
     implementation project(':libsignal-service')
-    implementation project(path: ':paging', configuration: 'default')
-    implementation project(path: ':core-util', configuration: 'default')
-    implementation project(path: ':video', configuration: 'default')
+    implementation project(':paging')
+    implementation project(':core-util')
+    implementation project(':video')
     implementation 'org.signal:zkgroup-android:0.7.0'
     implementation 'org.signal:ringrtc-android:2.8.9'
     implementation 'org.whispersystems:signal-client-android:0.1.5'

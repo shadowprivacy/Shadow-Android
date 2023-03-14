@@ -3,6 +3,8 @@ apply plugin: 'com.google.protobuf'
 apply plugin: 'witness'
 apply from: 'witness-verifications.gradle'
 
+group = 'Shadow'
+
 android {
     buildToolsVersion BUILD_TOOL_VERSION
     compileSdkVersion COMPILE_SDK

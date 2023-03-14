@@ -62,7 +62,7 @@ class WitnessPlugin implements Plugin<Project> {
                                 throw new InvalidUserDataException("Checksum failed for $assertion")
                             }
                         }
-                    }
+                }
             }
         }
 
@@ -105,7 +105,6 @@ class WitnessPlugin implements Plugin<Project> {
                 .findAll {
                     // Exclude locally built modules
                     it.module.id.group != 'Shadow'
-                    it.module.id.group != 'Signal'
                 }
                 .collectMany {
                     it.allModuleArtifacts
