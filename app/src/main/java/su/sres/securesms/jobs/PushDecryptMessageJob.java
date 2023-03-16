@@ -36,6 +36,7 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -179,20 +180,10 @@ public final class PushDecryptMessageJob extends BaseJob {
                     smsMessageId,
                     envelope.getTimestamp()));
 
-        } catch (ProtocolInvalidMessageException | ProtocolInvalidKeyIdException | ProtocolInvalidKeyException | ProtocolUntrustedIdentityException e) {
+        } catch (ProtocolInvalidMessageException | ProtocolInvalidKeyIdException | ProtocolInvalidKeyException | ProtocolUntrustedIdentityException | ProtocolNoSessionException e) {
             Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
-            return Collections.singletonList(new PushProcessMessageJob(PushProcessMessageJob.MessageState.CORRUPT_MESSAGE,
-                    toExceptionMetadata(e),
-                    messageId,
-                    smsMessageId,
-                    envelope.getTimestamp()));
-
-        } catch (ProtocolNoSessionException e) {
-            Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
-            return Collections.singletonList(new PushProcessMessageJob(PushProcessMessageJob.MessageState.NO_SESSION,
-                    toExceptionMetadata(e),
-                    messageId,
-                    smsMessageId,
+            return Collections.singletonList(new AutomaticSessionResetJob(Recipient.external(context, e.getSender()).getId(),
+                    e.getSenderDevice(),
                     envelope.getTimestamp()));
 
         } catch (ProtocolLegacyMessageException e) {

@@ -10,6 +10,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.ringrtc.Camera;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceStateBuilder;
+import su.sres.securesms.util.NetworkUtil;
 import su.sres.securesms.webrtc.locks.LockManager;
 
 import static su.sres.securesms.webrtc.CallNotificationBuilder.TYPE_ESTABLISHED;
@@ -74,6 +75,7 @@ public class GroupJoiningActionProcessor extends GroupActionProcessor {
                     try {
                         groupCall.setOutgoingVideoMuted(!currentState.getLocalDeviceState().getCameraState().isEnabled());
                         groupCall.setOutgoingAudioMuted(!currentState.getLocalDeviceState().isMicrophoneEnabled());
+                        groupCall.setBandwidthMode(NetworkUtil.useLowBandwidthCalling(context) ? GroupCall.BandwidthMode.LOW : GroupCall.BandwidthMode.NORMAL);
                     } catch (CallException e) {
                         Log.e(tag, e);
                         throw new RuntimeException(e);

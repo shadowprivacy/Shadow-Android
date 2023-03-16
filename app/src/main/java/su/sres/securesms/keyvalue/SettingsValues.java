@@ -6,6 +6,8 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.securesms.webrtc.CallBandwidthMode;
+
 public final class SettingsValues extends SignalStoreValues {
 
     public static final String LINK_PREVIEWS          = "settings.link_previews";
@@ -13,6 +15,8 @@ public final class SettingsValues extends SignalStoreValues {
 
     private static final String SHADOW_BACKUP_DIRECTORY = "settings.shadow.backup.directory";
     private static final String SHADOW_LATEST_BACKUP_DIRECTORY = "settings.shadow.backup.directory,latest";
+
+    private static final String CALL_BANDWIDTH_MODE = "settings.shadow.call.bandwidth.mode";
 
     public static final String THREAD_TRIM_LENGTH     = "pref_trim_length";
     public static final String THREAD_TRIM_ENABLED    = "pref_trim_threads";
@@ -87,6 +91,13 @@ public final class SettingsValues extends SignalStoreValues {
         putString(SHADOW_BACKUP_DIRECTORY, null);
     }
 
+    public void setCallBandwidthMode(@NonNull CallBandwidthMode callBandwidthMode) {
+        putInteger(CALL_BANDWIDTH_MODE, callBandwidthMode.getCode());
+    }
+
+    public @NonNull CallBandwidthMode getCallBandwidthMode() {
+        return CallBandwidthMode.fromCode(getInteger(CALL_BANDWIDTH_MODE, CallBandwidthMode.HIGH_ALWAYS.getCode()));
+    }
     private @Nullable Uri getUri(@NonNull String key) {
         String uri = getString(key, "");
 

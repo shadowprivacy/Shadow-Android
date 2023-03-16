@@ -108,12 +108,13 @@ public class TextSecurePreferences {
   public  static final String REPEAT_ALERTS_PREF               = "pref_repeat_alerts";
   public  static final String NOTIFICATION_PRIVACY_PREF        = "pref_notification_privacy";
   public  static final String NOTIFICATION_PRIORITY_PREF       = "pref_notification_priority";
-//  public  static final String NEW_CONTACTS_NOTIFICATIONS       = "pref_enable_new_contacts_notifications";
   public  static final String WEBRTC_CALLING_PREF              = "pref_webrtc_calling";
 
   public  static final String MEDIA_DOWNLOAD_MOBILE_PREF       = "pref_media_download_mobile";
   public  static final String MEDIA_DOWNLOAD_WIFI_PREF         = "pref_media_download_wifi";
   public  static final String MEDIA_DOWNLOAD_ROAMING_PREF      = "pref_media_download_roaming";
+
+  public  static final String CALL_BANDWIDTH_PREF              = "pref_data_call_bandwidth";
 
   public  static final String SYSTEM_EMOJI_PREF                = "pref_system_emoji";
   private static final String MULTI_DEVICE_PROVISIONED_PREF    = "pref_multi_device";

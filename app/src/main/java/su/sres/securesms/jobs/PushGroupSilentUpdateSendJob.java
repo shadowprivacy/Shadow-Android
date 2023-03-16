@@ -10,6 +10,7 @@ import com.annimon.stream.Stream;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -144,6 +145,7 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
 
     @Override
     protected boolean onShouldRetry(@NonNull Exception e) {
+        if (e instanceof ServerRejectedException) return false;
         return e instanceof IOException ||
                 e instanceof RetryLaterException;
     }

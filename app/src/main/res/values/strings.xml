@@ -364,6 +364,11 @@
     <string name="ConversationFragment__tap_to_review">Tap to review</string>
     <string name="ConversationFragment__review_requests_carefully">Review requests carefully</string>
     <string name="ConversationFragment__signal_found_another_contact_with_the_same_name">Shadow found another contact with the same name.</string>
+    <string name="ConversationFragment_contact_us">Contact us</string>
+    <string name="ConversationFragment_verify">Verify</string>
+    <string name="ConversationFragment_not_now">Not now</string>
+    <string name="ConversationFragment_your_safety_number_with_s_changed">Your safety number with %s changed</string>
+    <string name="ConversationFragment_your_safety_number_with_s_changed_likey_because_they_reinstalled_signal">Your safety Number with %s changed, likely because they reinstalled Shadow or changed devices. Tap Verify to confirm the new safety number. This is optional.</string>
 
     <!-- ConversationListActivity -->
     <string name="ConversationListActivity_there_is_no_browser_installed_on_your_device">There is no browser installed on your device.</string>
@@ -460,6 +465,10 @@
     <string name="DateUtils_minutes_ago">%dm</string>
     <string name="DateUtils_today">Today</string>
     <string name="DateUtils_yesterday">Yesterday</string>
+
+    <!-- DecryptionFailedDialog -->
+    <string name="DecryptionFailedDialog_chat_session_refreshed">Chat session refreshed</string>
+    <string name="DecryptionFailedDialog_signal_uses_end_to_end_encryption">Shadow uses end-to-end encryption and it may need to refresh your chat session sometimes. This doesn\'t affect your chat\'s security, but you may have missed a message from this contact, and you can ask them to resend it.</string>
 
     <!-- DeliveryStatus -->
     <string name="DeliveryStatus_sending">Sending</string>
@@ -1088,6 +1097,7 @@
     <string name="MessageRecord_disappearing_message_time_set_to_s">The disappearing message timer has been set to %1$s.</string>
     <string name="MessageRecord_this_group_was_updated_to_a_new_group">This group was updated to a New Group.</string>
     <string name="MessageRecord_you_couldnt_be_added_to_the_new_group_and_have_been_invited_to_join">You couldn\'t be added to the New Group and have been invited to join.</string>
+    <string name="MessageRecord_chat_session_refreshed">Chat session refreshed</string>
     <plurals name="MessageRecord_members_couldnt_be_added_to_the_new_group_and_have_been_invited">
         <item quantity="one">A member couldn\'t be added to the New Group and has been invited to join.</item>
         <item quantity="other">%1$s members couldn\'t be added to the New Group and have been invited to join.</item>
@@ -1613,6 +1623,7 @@
     <string name="ThreadRecord_contact">Contact</string>
     <string name="ThreadRecord_file">File</string>
     <string name="ThreadRecord_video">Video</string>
+    <string name="ThreadRecord_chat_session_refreshed">Chat session refreshed</string>
 
     <!-- UpdateApkReadyListener -->
     <string name="UpdateApkReadyListener_Signal_update">Shadow update</string>
@@ -1659,7 +1670,6 @@
     <string name="AudioView_duration" translatable="false">%1$d:%2$02d</string>
 
     <!-- MessageDisplayHelper -->
-    <string name="MessageDisplayHelper_bad_encrypted_message">Bad encrypted message</string>
     <string name="MessageDisplayHelper_message_encrypted_for_non_existing_session">Message encrypted for non-existing session</string>
 
     <!-- MmsMessageRecord -->
@@ -2318,7 +2328,7 @@
     <string name="preferences__mmsc_password">MMSC Password</string>
     <string name="preferences__sms_delivery_reports">SMS delivery reports</string>
     <string name="preferences__request_a_delivery_report_for_each_sms_message_you_send">Request a delivery report for each SMS message you send</string>
-    <string name="preferences__chats">Chats and media</string>
+    <string name="preferences__data_and_storage">Data and storage</string>
     <string name="preferences__storage">Storage</string>
     <string name="preferences__conversation_length_limit">Conversation length limit</string>
     <string name="preferences__keep_messages">Keep messages</string>
@@ -2381,6 +2391,13 @@
     <string name="preferences_app_protection__app_access">App access</string>
     <string name="preferences_app_protection__communication">Communication</string>
     <string name="preferences_chats__chats">Chats</string>
+    <string name="preferences_data_and_storage__manage_storage">Manage storage</string>
+    <string name="preferences_data_and_storage__calls">Calls</string>
+    <string name="preferences_data_and_storage__use_less_data_for_calls">Use less data for calls</string>
+    <string name="preferences_data_and_storage__never">Never</string>
+    <string name="preferences_data_and_storage__wifi_and_cellular">WiFi and Cellular</string>
+    <string name="preferences_data_and_storage__cellular_only">Cellular only</string>
+    <string name="preference_data_and_storage__using_less_data_may_improve_calls_on_bad_networks">Using less data may improve calls on bad networks</string>
     <string name="preferences_notifications__messages">Messages</string>
     <string name="preferences_notifications__events">Events</string>
     <string name="preferences_notifications__in_chat_sounds">In-chat sounds</string>
@@ -2838,8 +2855,9 @@
     <string name="CallParticipantsListUpdatePopupWindow__s_and_s_left">%1$s and %2$s left</string>
     <string name="CallParticipantsListUpdatePopupWindow__s_s_and_s_left">%1$s, %2$s and %3$s left</string>
     <string name="CallParticipantsListUpdatePopupWindow__s_s_and_d_others_left">%1$s, %2$s and %3$d others left</string>
-    <string name="CallParticipantsListUpdatePopupWindow__you_on_another_device">You (on another device)</string>
-    <string name="CallParticipantsListUpdatePopupWindow__s_on_another_device">%1$s (on another device)</string>
+    <string name="CallParticipant__you">You</string>
+    <string name="CallParticipant__you_on_another_device">You (on another device)</string>
+    <string name="CallParticipant__s_on_another_device">%1$s (on another device)</string>
 
     <!-- DeleteAccountFragment -->
     <string name="DeleteAccountFragment__deleting_your_account_will">Deleting your account will:</string>

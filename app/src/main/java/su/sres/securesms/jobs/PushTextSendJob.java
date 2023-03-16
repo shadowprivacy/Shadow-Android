@@ -20,6 +20,7 @@ import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.transport.InsecureFallbackApprovalException;
 import su.sres.securesms.transport.RetryLaterException;
+import su.sres.securesms.transport.UndeliverableMessageException;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -29,6 +30,7 @@ import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.push.SignalServiceAddress;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 
 import java.io.IOException;
@@ -68,7 +70,7 @@ public class PushTextSendJob extends PushSendJob  {
   }
 
   @Override
-  public void onPushSend() throws NoSuchMessageException, RetryLaterException {
+  public void onPushSend() throws NoSuchMessageException, RetryLaterException, UndeliverableMessageException {
     ExpiringMessageManager expirationManager = ApplicationContext.getInstance(context).getExpiringMessageManager();
     MessageDatabase database          = DatabaseFactory.getSmsDatabase(context);
     SmsMessageRecord       record            = database.getSmsMessage(messageId);
@@ -150,7 +152,7 @@ public class PushTextSendJob extends PushSendJob  {
   }
 
   private boolean deliver(SmsMessageRecord message)
-      throws UntrustedIdentityException, InsecureFallbackApprovalException, RetryLaterException
+          throws UntrustedIdentityException, InsecureFallbackApprovalException, RetryLaterException, UndeliverableMessageException
   {
     try {
       rotateSenderCertificateIfNecessary();
@@ -183,6 +185,8 @@ public class PushTextSendJob extends PushSendJob  {
     } catch (UnregisteredUserException e) {
       warn(TAG, "Failure", e);
       throw new InsecureFallbackApprovalException(e);
+    } catch (ServerRejectedException e) {
+      throw new UndeliverableMessageException(e);
     } catch (IOException e) {
       warn(TAG, "Failure", e);
       throw new RetryLaterException(e);

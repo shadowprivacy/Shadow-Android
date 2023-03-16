@@ -10,6 +10,7 @@ import su.sres.securesms.ringrtc.CallState;
 import su.sres.securesms.ringrtc.Camera;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
+import su.sres.securesms.util.NetworkUtil;
 import su.sres.securesms.webrtc.locks.LockManager;
 
 import static su.sres.securesms.webrtc.CallNotificationBuilder.TYPE_ESTABLISHED;
@@ -62,6 +63,7 @@ public class CallSetupActionProcessorDelegate extends WebRtcActionProcessor {
             callManager.setCommunicationMode();
             callManager.setAudioEnable(currentState.getLocalDeviceState().isMicrophoneEnabled());
             callManager.setVideoEnable(currentState.getLocalDeviceState().getCameraState().isEnabled());
+            callManager.setLowBandwidthMode(NetworkUtil.useLowBandwidthCalling(context));
         } catch (CallException e) {
             return callFailure(currentState, "Enabling audio/video failed: ", e);
         }

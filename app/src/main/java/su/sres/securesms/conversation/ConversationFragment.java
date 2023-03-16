@@ -32,9 +32,11 @@ import android.text.TextUtils;
 
 import su.sres.core.util.StreamUtil;
 import su.sres.securesms.ApplicationContext;
+import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.VerifyIdentityActivity;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.components.ConversationScrollToView;
 import su.sres.securesms.components.ConversationTypingView;
@@ -148,6 +150,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 
 @SuppressLint("StaticFieldLeak")
@@ -1414,6 +1417,55 @@ public class ConversationFragment extends LoggingFragment {
     @Override
     public void onGroupMigrationLearnMoreClicked(@NonNull GroupMigrationMembershipChange membershipChange) {
       GroupsV1MigrationInfoBottomSheetDialogFragment.show(requireFragmentManager(), membershipChange);
+    }
+
+    @Override
+    public void onDecryptionFailedLearnMoreClicked() {
+      new AlertDialog.Builder(requireContext())
+              .setView(R.layout.decryption_failed_dialog)
+              .setPositiveButton(android.R.string.ok, (d, w) -> {
+                d.dismiss();
+              })
+              .setNeutralButton(R.string.ConversationFragment_contact_us, (d, w) -> {
+                Intent intent = new Intent(requireContext(), ApplicationPreferencesActivity.class);
+                intent.putExtra(ApplicationPreferencesActivity.LAUNCH_TO_HELP_FRAGMENT, true);
+
+                startActivity(intent);
+                d.dismiss();
+              })
+              .show();
+    }
+
+    @Override
+    public void onSafetyNumberLearnMoreClicked(@NonNull Recipient recipient) {
+      if (recipient.isGroup()) {
+        throw new AssertionError("Must be individual");
+      }
+
+      AlertDialog dialog = new AlertDialog.Builder(requireContext())
+              .setView(R.layout.safety_number_changed_learn_more_dialog)
+              .setPositiveButton(R.string.ConversationFragment_verify, (d, w) -> {
+                SimpleTask.run(getLifecycle(), () -> {
+                  return DatabaseFactory.getIdentityDatabase(requireContext()).getIdentity(recipient.getId());
+                }, identityRecord -> {
+                  if (identityRecord.isPresent()) {
+                    startActivity(VerifyIdentityActivity.newIntent(requireContext(), identityRecord.get()));
+                  }});
+                d.dismiss();
+              })
+              .setNegativeButton(R.string.ConversationFragment_not_now, (d, w) -> {
+                d.dismiss();
+              })
+              .create();
+      dialog.setOnShowListener(d -> {
+        TextView title = Objects.requireNonNull(dialog.findViewById(R.id.safety_number_learn_more_title));
+        TextView body  = Objects.requireNonNull(dialog.findViewById(R.id.safety_number_learn_more_body));
+
+        title.setText(getString(R.string.ConversationFragment_your_safety_number_with_s_changed, recipient.getDisplayName(requireContext())));
+        body.setText(getString(R.string.ConversationFragment_your_safety_number_with_s_changed_likey_because_they_reinstalled_signal, recipient.getDisplayName(requireContext())));
+      });
+
+      dialog.show();
     }
 
     @Override

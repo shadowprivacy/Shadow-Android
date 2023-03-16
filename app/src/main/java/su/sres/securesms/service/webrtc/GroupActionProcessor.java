@@ -31,8 +31,11 @@ import su.sres.signalservice.api.messages.calls.OpaqueMessage;
 import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Base group call action processor that handles general callbacks around call members
@@ -75,8 +78,16 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
                 .changeCallInfoState()
                 .clearParticipantMap();
 
+        List<GroupCall.RemoteDeviceState> remoteDeviceStates = new ArrayList<>(remoteDevices.size());
         for (int i = 0; i < remoteDevices.size(); i++) {
-            GroupCall.RemoteDeviceState device            = remoteDevices.get(remoteDevices.keyAt(i));
+            remoteDeviceStates.add(remoteDevices.get(remoteDevices.keyAt(i)));
+        }
+        Collections.sort(remoteDeviceStates, (a, b) -> Long.compare(a.getAddedTime(), b.getAddedTime()));
+
+        Set<Recipient> seen = new HashSet<>();
+        seen.add(Recipient.self());
+
+        for (GroupCall.RemoteDeviceState device : remoteDeviceStates) {
             Recipient                   recipient         = Recipient.externalPush(context, device.getUserId(), null, false);
             CallParticipantId           callParticipantId = new CallParticipantId(device.getDemuxId(), recipient.getId());
             CallParticipant             callParticipant   = participants.get(callParticipantId);
@@ -100,7 +111,11 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
                             Boolean.FALSE.equals(device.getVideoMuted()),
                             device.getSpeakerTime(),
                             device.getMediaKeysReceived(),
-                            device.getAddedTime()));
+                            device.getAddedTime(),
+                            seen.contains(recipient) ? CallParticipant.DeviceOrdinal.SECONDARY
+                                    : CallParticipant.DeviceOrdinal.PRIMARY));
+
+            seen.add(recipient);
         }
 
         builder.remoteDevicesCount(remoteDevices.size());

@@ -54,6 +54,7 @@ import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.AuthorizationFailedException;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 import su.sres.signalservice.api.util.CredentialsProvider;
 import su.sres.signalservice.internal.configuration.SignalServiceConfiguration;
@@ -152,8 +153,10 @@ public class SignalServiceMessageSender {
                                       Optional<SignalServiceMessagePipe> unidentifiedPipe,
                                       Optional<EventListener> eventListener,
                                       ClientZkProfileOperations clientZkProfileOperations,
-                                      ExecutorService executor) {
-        this(urls, new StaticCredentialsProvider(uuid, e164, password, null), store, signalAgent, isMultiDevice, attachmentsV3, pipe, unidentifiedPipe, eventListener, clientZkProfileOperations, executor, 0);
+                                      ExecutorService executor,
+                                      boolean automaticNetworkRetry)
+    {
+        this(urls, new StaticCredentialsProvider(uuid, e164, password, null), store, signalAgent, isMultiDevice, attachmentsV3, pipe, unidentifiedPipe, eventListener, clientZkProfileOperations, executor, 0, automaticNetworkRetry);
     }
 
     public SignalServiceMessageSender(SignalServiceConfiguration urls,
@@ -167,10 +170,11 @@ public class SignalServiceMessageSender {
                                       Optional<EventListener> eventListener,
                                       ClientZkProfileOperations clientZkProfileOperations,
                                       ExecutorService executor,
-                                      long maxEnvelopeSize)
+                                      long maxEnvelopeSize,
+                                      boolean automaticNetworkRetry)
     {
 
-        this.socket = new PushServiceSocket(urls, credentialsProvider, signalAgent, clientZkProfileOperations);
+        this.socket           = new PushServiceSocket(urls, credentialsProvider, signalAgent, clientZkProfileOperations, automaticNetworkRetry);
         this.store = store;
         this.localAddress = new SignalServiceAddress(credentialsProvider.getUuid(), credentialsProvider.getUserLogin());
         this.pipe = new AtomicReference<>(pipe);
@@ -278,6 +282,7 @@ public class SignalServiceMessageSender {
             sendMessage(localAddress, Optional.<UnidentifiedAccess>absent(), timestamp, syncMessage, false, null);
         }
 
+        // TODO [greyson][session] Delete this when we delete the button
         if (message.isEndSession()) {
             if (recipient.getUuid().isPresent()) {
                 store.deleteAllSessions(recipient.getUuid().get().toString());
@@ -507,6 +512,26 @@ public class SignalServiceMessageSender {
             byte[] syncMessage = createMultiDeviceVerifiedContent(message, nullMessage.toByteArray());
             sendMessage(localAddress, Optional.<UnidentifiedAccess>absent(), message.getTimestamp(), syncMessage, false, null);
         }
+    }
+
+    public SendMessageResult sendNullMessage(SignalServiceAddress address, Optional<UnidentifiedAccessPair> unidentifiedAccess)
+            throws UntrustedIdentityException, IOException
+    {
+        byte[] nullMessageBody = DataMessage.newBuilder()
+                .setBody(Base64.encodeBytes(Util.getRandomLengthBytes(140)))
+                .build()
+                .toByteArray();
+
+        NullMessage nullMessage = NullMessage.newBuilder()
+                .setPadding(ByteString.copyFrom(nullMessageBody))
+                .build();
+
+        byte[] content = Content.newBuilder()
+                .setNullMessage(nullMessage)
+                .build()
+                .toByteArray();
+
+        return sendMessage(address, getTargetUnidentifiedAccess(unidentifiedAccess), System.currentTimeMillis(), content, false, null);
     }
 
     private byte[] createTypingContent(SignalServiceTypingMessage message) {
@@ -1360,6 +1385,9 @@ public class SignalServiceMessageSender {
                 } else if (e.getCause() instanceof PushNetworkException) {
                     Log.w(TAG, e);
                     results.add(SendMessageResult.networkFailure(recipient));
+                } else if (e.getCause() instanceof ServerRejectedException) {
+                    Log.w(TAG, e);
+                    throw ((ServerRejectedException) e.getCause());
                 } else {
                     throw new IOException(e);
                 }

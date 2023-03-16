@@ -15,6 +15,7 @@ import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.model.MessageRecord;
+import su.sres.securesms.jobmanager.impl.NotInCallConstraint;
 import su.sres.securesms.recipients.Recipient;
 
 import java.util.Collections;
@@ -45,9 +46,9 @@ public class AttachmentUtil {
     {
       return true;
     } else if (isNonDocumentType(contentType)) {
-      return allowedTypes.contains(MediaUtil.getDiscreteMimeType(contentType));
+      return NotInCallConstraint.isNotInConnectedCall() && allowedTypes.contains(MediaUtil.getDiscreteMimeType(contentType));
     } else {
-      return allowedTypes.contains("documents");
+      return NotInCallConstraint.isNotInConnectedCall() && allowedTypes.contains("documents");
     }
   }
 
@@ -80,29 +81,10 @@ public class AttachmentUtil {
   }
 
   private static @NonNull Set<String> getAllowedAutoDownloadTypes(@NonNull Context context) {
-    if      (isConnectedWifi(context))    return TextSecurePreferences.getWifiMediaDownloadAllowed(context);
-    else if (isConnectedRoaming(context)) return TextSecurePreferences.getRoamingMediaDownloadAllowed(context);
-    else if (isConnectedMobile(context))  return TextSecurePreferences.getMobileMediaDownloadAllowed(context);
-    else                                  return Collections.emptySet();
-  }
-
-  private static NetworkInfo getNetworkInfo(@NonNull Context context) {
-    return ServiceUtil.getConnectivityManager(context).getActiveNetworkInfo();
-  }
-
-  private static boolean isConnectedWifi(@NonNull Context context) {
-    final NetworkInfo info = getNetworkInfo(context);
-    return info != null && info.isConnected() && info.getType() == ConnectivityManager.TYPE_WIFI;
-  }
-
-  private static boolean isConnectedMobile(@NonNull Context context) {
-    final NetworkInfo info = getNetworkInfo(context);
-    return info != null && info.isConnected() && info.getType() == ConnectivityManager.TYPE_MOBILE;
-  }
-
-  private static boolean isConnectedRoaming(@NonNull Context context) {
-    final NetworkInfo info = getNetworkInfo(context);
-    return info != null && info.isConnected() && info.isRoaming() && info.getType() == ConnectivityManager.TYPE_MOBILE;
+    if      (NetworkUtil.isConnectedWifi(context))    return TextSecurePreferences.getWifiMediaDownloadAllowed(context);
+    else if (NetworkUtil.isConnectedRoaming(context)) return TextSecurePreferences.getRoamingMediaDownloadAllowed(context);
+    else if (NetworkUtil.isConnectedMobile(context))  return TextSecurePreferences.getMobileMediaDownloadAllowed(context);
+    else                                              return Collections.emptySet();
   }
 
   @WorkerThread

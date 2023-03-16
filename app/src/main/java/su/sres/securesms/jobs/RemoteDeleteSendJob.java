@@ -29,6 +29,7 @@ import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SendMessageResult;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.push.SignalServiceAddress;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.IOException;
 import java.util.List;
@@ -153,6 +154,7 @@ public class RemoteDeleteSendJob extends BaseJob {
 
     @Override
     protected boolean onShouldRetry(@NonNull Exception e) {
+        if (e instanceof ServerRejectedException) return false;
         return e instanceof IOException ||
                 e instanceof RetryLaterException;
     }

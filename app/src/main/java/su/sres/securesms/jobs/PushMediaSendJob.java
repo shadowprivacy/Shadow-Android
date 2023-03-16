@@ -40,6 +40,7 @@ import su.sres.signalservice.api.messages.SignalServiceDataMessage.Preview;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.messages.shared.SharedContact;
 import su.sres.signalservice.api.push.SignalServiceAddress;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 
 import java.io.FileNotFoundException;
@@ -236,6 +237,8 @@ public class PushMediaSendJob extends PushSendJob  {
       throw new InsecureFallbackApprovalException(e);
     } catch (FileNotFoundException e) {
       warn(TAG, String.valueOf(message.getSentTimeMillis()), e);
+      throw new UndeliverableMessageException(e);
+    } catch (ServerRejectedException e) {
       throw new UndeliverableMessageException(e);
     } catch (IOException e) {
       warn(TAG, String.valueOf(message.getSentTimeMillis()), e);

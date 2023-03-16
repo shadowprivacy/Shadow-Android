@@ -25,6 +25,7 @@ import su.sres.securesms.service.webrtc.WebRtcData.OfferMetadata;
 import su.sres.securesms.service.webrtc.WebRtcData.ReceivedOfferMetadata;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceStateBuilder;
+import su.sres.securesms.util.NetworkUtil;
 import su.sres.securesms.util.TelephonyUtil;
 import su.sres.securesms.webrtc.locks.LockManager;
 
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static su.sres.securesms.service.WebRtcCallService.ACTION_ACCEPT_CALL;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_BANDWIDTH_MODE_UPDATE;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_BLUETOOTH_CHANGE;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_CALL_CONCLUDED;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_CALL_CONNECTED;
@@ -217,6 +219,7 @@ public abstract class WebRtcActionProcessor {
             case ACTION_BLUETOOTH_CHANGE:                    return handleBluetoothChange(currentState, getAvailable(intent));
             case ACTION_CAMERA_SWITCH_COMPLETED:             return handleCameraSwitchCompleted(currentState, getCameraState(intent));
             case ACTION_NETWORK_CHANGE:                      return handleNetworkChanged(currentState, getAvailable(intent));
+            case ACTION_BANDWIDTH_MODE_UPDATE:               return handleBandwidthModeUpdate(currentState);
 
             // End Call Actions
             case ACTION_ENDED_REMOTE_HANGUP:
@@ -604,6 +607,16 @@ public abstract class WebRtcActionProcessor {
 
     public @NonNull WebRtcServiceState handleNetworkChanged(@NonNull WebRtcServiceState currentState, boolean available) {
         Log.i(tag, "handleNetworkChanged not processed");
+        return currentState;
+    }
+
+    protected @NonNull WebRtcServiceState handleBandwidthModeUpdate(@NonNull WebRtcServiceState currentState) {
+        try {
+            webRtcInteractor.getCallManager().setLowBandwidthMode(NetworkUtil.useLowBandwidthCalling(context));
+        } catch (CallException e) {
+            Log.i(tag, "handleBandwidthModeUpdate: could not update bandwidth mode.");
+        }
+
         return currentState;
     }
 

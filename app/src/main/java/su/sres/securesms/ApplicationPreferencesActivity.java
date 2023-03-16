@@ -40,6 +40,7 @@ import su.sres.securesms.preferences.AppearancePreferenceFragment;
 import su.sres.securesms.preferences.BackupsPreferenceFragment;
 import su.sres.securesms.preferences.ChatsPreferenceFragment;
 import su.sres.securesms.preferences.CorrectedPreferenceFragment;
+import su.sres.securesms.preferences.DataAndStoragePreferenceFragment;
 import su.sres.securesms.preferences.NotificationsPreferenceFragment;
 import su.sres.securesms.preferences.SmsMmsPreferenceFragment;
 import su.sres.securesms.preferences.StoragePreferenceFragment;
@@ -65,6 +66,7 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
         implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     public static final String LAUNCH_TO_BACKUPS_FRAGMENT = "launch.to.backups.fragment";
+    public static final String LAUNCH_TO_HELP_FRAGMENT    = "launch.to.help.fragment";
 
     @SuppressWarnings("unused")
     private static final String TAG = ApplicationPreferencesActivity.class.getSimpleName();
@@ -100,6 +102,8 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
             initFragment(android.R.id.content, new NotificationsPreferenceFragment());
         } else if (getIntent() != null && getIntent().getBooleanExtra(LAUNCH_TO_BACKUPS_FRAGMENT, false)) {
             initFragment(android.R.id.content, new BackupsPreferenceFragment());
+        } else if (getIntent() != null && getIntent().getBooleanExtra(LAUNCH_TO_HELP_FRAGMENT, false)) {
+            initFragment(android.R.id.content, new HelpFragment());
         } else if (icicle == null) {
             initFragment(android.R.id.content, new ApplicationPreferenceFragment());
         } else {
@@ -303,7 +307,7 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
                         fragment = new ChatsPreferenceFragment();
                         break;
                     case PREFERENCE_CATEGORY_STORAGE:
-                        fragment = new StoragePreferenceFragment();
+                        fragment = new DataAndStoragePreferenceFragment();
                         break;
                     case PREFERENCE_CATEGORY_DEVICES:
                         Intent intent = new Intent(getActivity(), DeviceActivity.class);

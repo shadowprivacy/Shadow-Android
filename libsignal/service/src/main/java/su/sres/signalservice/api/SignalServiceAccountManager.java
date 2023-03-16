@@ -114,19 +114,22 @@ public class SignalServiceAccountManager {
      */
     public SignalServiceAccountManager(SignalServiceConfiguration configuration,
                                        UUID uuid, String userLogin, String password,
-                                       String signalAgent) {
+                                       String signalAgent, boolean automaticNetworkRetry) {
         this(configuration,
                 new StaticCredentialsProvider(uuid, userLogin, password, null),
                 signalAgent,
-                new GroupsV2Operations(ClientZkOperations.create(configuration)));
+                new GroupsV2Operations(ClientZkOperations.create(configuration)),
+                automaticNetworkRetry);
     }
 
     public SignalServiceAccountManager(SignalServiceConfiguration configuration,
                                        CredentialsProvider credentialsProvider,
                                        String signalAgent,
-                                       GroupsV2Operations groupsV2Operations) {
+                                       GroupsV2Operations groupsV2Operations,
+                                       boolean automaticNetworkRetry)
+    {
         this.groupsV2Operations = groupsV2Operations;
-        this.pushServiceSocket = new PushServiceSocket(configuration, credentialsProvider, signalAgent, groupsV2Operations.getProfileOperations());
+        this.pushServiceSocket = new PushServiceSocket(configuration, credentialsProvider, signalAgent, groupsV2Operations.getProfileOperations(), automaticNetworkRetry);
         this.credentials = credentialsProvider;
         this.userAgent = signalAgent;
     }
@@ -174,7 +177,7 @@ public class SignalServiceAccountManager {
      * during SMS/call requests to bypass the CAPTCHA.
      *
      * @param gcmRegistrationId The GCM (FCM) id to use.
-     * @param userLoginnumber        The number to associate it with.
+     * @param userLoginnumber   The number to associate it with.
      * @throws IOException
      */
     public void requestPushChallenge(String gcmRegistrationId, String userLoginnumber) throws IOException {

@@ -27,12 +27,12 @@
     <Preference
         android:icon="@drawable/ic_photo_24"
         android:key="preference_category_chats"
-        android:title="@string/preferences__chats" />
+        android:title="@string/preferences_chats__chats" />
 
     <Preference
         android:icon="@drawable/ic_archive_24dp"
         android:key="preference_category_storage"
-        android:title="@string/preferences__storage" />
+        android:title="@string/preferences__data_and_storage" />
 
     <!--    <Preference android:key="preference_category_devices"
                     android:title="@string/preferences__linked_devices"

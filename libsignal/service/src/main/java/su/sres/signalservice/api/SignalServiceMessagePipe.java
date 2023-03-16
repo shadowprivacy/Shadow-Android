@@ -27,6 +27,7 @@ import su.sres.signalservice.api.profiles.SignalServiceProfile;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import su.sres.signalservice.api.push.exceptions.NotFoundException;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 import su.sres.signalservice.api.util.CredentialsProvider;
 import su.sres.signalservice.internal.push.AttachmentV2UploadAttributes;
@@ -201,6 +202,8 @@ public class SignalServiceMessagePipe {
     return FutureTransformers.map(response, value -> {
       if (value.getStatus() == 404) {
         throw new UnregisteredUserException(list.getDestination(), new NotFoundException("not found"));
+      } else if (value.getStatus() == 508) {
+        throw new ServerRejectedException();
       } else if (value.getStatus() < 200 || value.getStatus() >= 300) {
         throw new IOException("Non-successful response: " + value.getStatus());
       }

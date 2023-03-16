@@ -55,6 +55,7 @@ public final class FeatureFlags {
     private static final String ATTACHMENTS_V3             = "android.attachmentsV3.2";
     private static final String GROUPS_V2_RECOMMENDED_LIMIT  = "global.groupsv2.maxGroupSize";
     private static final String GROUPS_V2_HARD_LIMIT         = "global.groupsv2.groupSizeHardLimit";
+    private static final String GROUP_NAME_MAX_LENGTH        = "global.groupsv2.maxNameLength";
     private static final String INTERNAL_USER              = "android.internalUser";
     private static final String VERIFY_V2                  = "android.verifyV2";
     private static final String USER_LOGIN_PRIVACY_VERSION = "android.UserLoginPrivacyVersion";
@@ -66,6 +67,10 @@ public final class FeatureFlags {
     private static final String GV1_MIGRATION_JOB            = "android.groupsV1Migration.job";
     private static final String SEND_VIEWED_RECEIPTS         = "android.sendViewedReceipts";
     private static final String CUSTOM_VIDEO_MUXER           = "android.customVideoMuxer";
+    private static final String AUTOMATIC_SESSION_RESET      = "android.automaticSessionReset.2";
+    private static final String DEFAULT_MAX_BACKOFF          = "android.defaultMaxBackoff";
+    private static final String OKHTTP_AUTOMATIC_RETRY       = "android.okhttpAutomaticRetry";
+    private static final String AUTOMATIC_SESSION_INTERVAL   = "android.automaticSessionResetInterval";
 
     /**
      * We will only store remote values for flags in this set. If you want a flag to be controllable
@@ -87,7 +92,12 @@ public final class FeatureFlags {
             GV1_FORCED_MIGRATE,
             GROUP_CALLING,
             SEND_VIEWED_RECEIPTS,
-            CUSTOM_VIDEO_MUXER
+            CUSTOM_VIDEO_MUXER,
+            GROUP_NAME_MAX_LENGTH,
+            AUTOMATIC_SESSION_RESET,
+            DEFAULT_MAX_BACKOFF,
+            AUTOMATIC_SESSION_INTERVAL,
+            OKHTTP_AUTOMATIC_RETRY
     );
 
     @VisibleForTesting
@@ -120,7 +130,11 @@ public final class FeatureFlags {
             CLIENT_EXPIRATION,
             GROUP_CALLING,
             GV1_MIGRATION_JOB,
-            CUSTOM_VIDEO_MUXER
+            CUSTOM_VIDEO_MUXER,
+            GROUP_NAME_MAX_LENGTH,
+            AUTOMATIC_SESSION_RESET,
+            DEFAULT_MAX_BACKOFF,
+            OKHTTP_AUTOMATIC_RETRY
     );
 
     /**
@@ -263,6 +277,30 @@ public final class FeatureFlags {
     /** Whether to use the custom streaming muxer or built in android muxer. */
     public static boolean useStreamingVideoMuxer() {
         return getBoolean(CUSTOM_VIDEO_MUXER, false);
+    }
+
+    /** The maximum number of grapheme */
+    public static int getMaxGroupNameGraphemeLength() {
+        return Math.max(32, getInteger(GROUP_NAME_MAX_LENGTH, -1));
+    }
+
+    /** Whether or not to allow automatic session resets. */
+    public static boolean automaticSessionReset() {
+        return getBoolean(AUTOMATIC_SESSION_RESET, true);
+    }
+
+    public static int getDefaultMaxBackoffSeconds() {
+        return getInteger(DEFAULT_MAX_BACKOFF, 60);
+    }
+
+    /** How often we allow an automatic session reset. */
+    public static int automaticSessionResetIntervalSeconds() {
+        return getInteger(AUTOMATIC_SESSION_RESET, (int) TimeUnit.HOURS.toSeconds(1));
+    }
+
+    /** Whether or not to allow automatic retries from OkHttp */
+    public static boolean okHttpAutomaticRetry() {
+        return getBoolean(OKHTTP_AUTOMATIC_RETRY, false);
     }
 
     /** Only for rendering debug info. */

@@ -15,6 +15,7 @@ import su.sres.securesms.jobmanager.persistence.JobSpec;
 import su.sres.securesms.jobmanager.persistence.JobStorage;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.Debouncer;
+import su.sres.securesms.util.FeatureFlags;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manages the queue of jobs. This is the only class that should write to {@link JobStorage} to
@@ -160,7 +162,7 @@ class JobController {
     @WorkerThread
     synchronized void onRetry(@NonNull Job job) {
         int    nextRunAttempt     = job.getRunAttempt() + 1;
-        long   nextRunAttemptTime = calculateNextRunAttemptTime(System.currentTimeMillis(), nextRunAttempt, job.getParameters().getMaxBackoff());
+        long   nextRunAttemptTime = calculateNextRunAttemptTime(System.currentTimeMillis(), nextRunAttempt, TimeUnit.SECONDS.toMillis(FeatureFlags.getDefaultMaxBackoffSeconds()));
         String serializedData     = dataSerializer.serialize(job.serialize());
 
         jobStorage.updateJobAfterRetry(job.getId(), false, nextRunAttempt, nextRunAttemptTime, serializedData);
@@ -450,6 +452,9 @@ class JobController {
         int  boundedAttempt     = Math.min(nextAttempt, 30);
         long exponentialBackoff = (long) Math.pow(2, boundedAttempt) * 1000;
         long actualBackoff      = Math.min(exponentialBackoff, maxBackoff);
+        double jitter             = 0.75 + (Math.random() * 0.5);
+
+        actualBackoff = (long) (actualBackoff * jitter);
 
         return currentTime + actualBackoff;
     }

@@ -27,6 +27,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.dd.CircularProgressButton;
 
+import su.sres.core.util.EditTextUtil;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.groups.ui.GroupMemberListView;
@@ -105,6 +106,7 @@ public class AddGroupDetailsFragment extends LoggingFragment {
         avatar.setOnClickListener(v -> showAvatarSelectionBottomSheet());
 
         members.setRecipientClickListener(this::handleRecipientClick);
+        EditTextUtil.addGraphemeClusterLimitFilter(name, FeatureFlags.getMaxGroupNameGraphemeLength());
         name.addTextChangedListener(new AfterTextChanged(editable -> viewModel.setName(editable.toString())));
         toolbar.setNavigationOnClickListener(unused -> callback.onNavigationButtonPressed());
         create.setOnClickListener(v -> handleCreateClicked());

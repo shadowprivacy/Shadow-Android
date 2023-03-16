@@ -11,11 +11,13 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
+import su.sres.securesms.transport.UndeliverableMessageException;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SignalServiceReceiptMessage;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -40,6 +42,7 @@ public class SendDeliveryReceiptJob extends BaseJob  {
                         .addConstraint(NetworkConstraint.KEY)
                         .setLifespan(TimeUnit.DAYS.toMillis(1))
                         .setMaxAttempts(Parameters.UNLIMITED)
+                        .setQueue(recipientId.toQueueKey())
                         .build(),
                 recipientId,
                 messageId,
@@ -72,7 +75,7 @@ public class SendDeliveryReceiptJob extends BaseJob  {
     }
 
     @Override
-    public void onRun() throws IOException, UntrustedIdentityException {
+    public void onRun() throws IOException, UntrustedIdentityException, UndeliverableMessageException {
         SignalServiceMessageSender  messageSender  = ApplicationDependencies.getSignalServiceMessageSender();
         Recipient                   recipient      = Recipient.resolved(recipientId);
         SignalServiceAddress        remoteAddress  = RecipientUtil.toSignalServiceAddress(context, recipient);
@@ -87,6 +90,7 @@ public class SendDeliveryReceiptJob extends BaseJob  {
 
     @Override
     public boolean onShouldRetry(@NonNull Exception e) {
+        if (e instanceof ServerRejectedException) return false;
         if (e instanceof PushNetworkException) return true;
         return false;
     }

@@ -19,6 +19,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.PartProgressEvent;
 import su.sres.securesms.mms.MmsException;
+import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.AttachmentUtil;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.Hex;
@@ -31,13 +32,14 @@ import su.sres.signalservice.api.messages.SignalServiceAttachmentRemoteId;
 import su.sres.signalservice.api.push.exceptions.MissingConfigurationException;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
+import su.sres.signalservice.api.push.exceptions.RangeException;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
-public class AttachmentDownloadJob extends BaseJob {
+public final class AttachmentDownloadJob extends BaseJob {
 
   public static final String KEY = "AttachmentDownloadJob";
 
@@ -107,12 +109,12 @@ public class AttachmentDownloadJob extends BaseJob {
   }
 
   @Override
-  public void onRun() throws IOException {
+  public void onRun() throws Exception {
     doWork();
     ApplicationDependencies.getMessageNotifier().updateNotification(context, 0);
   }
 
-  public void doWork() throws IOException {
+  public void doWork() throws IOException, RetryLaterException {
     Log.i(TAG, "onRun() messageId: " + messageId + "  partRowId: " + partRowId + "  partUniqueId: " + partUniqueId + "  manual: " + manual);
 
     final AttachmentDatabase database     = DatabaseFactory.getAttachmentDatabase(context);
@@ -151,13 +153,14 @@ public class AttachmentDownloadJob extends BaseJob {
 
   @Override
   protected boolean onShouldRetry(@NonNull Exception exception) {
-    return (exception instanceof PushNetworkException);
+    return exception instanceof PushNetworkException ||
+            exception instanceof RetryLaterException;
   }
 
   private void retrieveAttachment(long messageId,
                                   final AttachmentId attachmentId,
                                   final Attachment attachment)
-      throws IOException
+          throws IOException, RetryLaterException
   {
 
     AttachmentDatabase database       = DatabaseFactory.getAttachmentDatabase(context);
@@ -170,6 +173,14 @@ public class AttachmentDownloadJob extends BaseJob {
       InputStream                    stream          = messageReceiver.retrieveAttachment(pointer, attachmentFile, MAX_ATTACHMENT_SIZE, (total, progress) -> EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress)));
 
       database.insertAttachmentsForPlaceholder(messageId, attachmentId, stream);
+    } catch (RangeException e) {
+      Log.w(TAG, "Range exception, file size " + attachmentFile.length(), e);
+      if (attachmentFile.delete()) {
+        Log.i(TAG, "Deleted temp download file to recover");
+        throw new RetryLaterException(e);
+      } else {
+        throw new IOException("Failed to delete temp download file following range exception");
+      }
     } catch (InvalidPartException | NonSuccessfulResponseCodeException | InvalidMessageException | MmsException | MissingConfigurationException e) {
       Log.w(TAG, "Experienced exception while trying to download an attachment.", e);
       markFailed(messageId, attachmentId);

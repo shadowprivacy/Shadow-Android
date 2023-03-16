@@ -67,9 +67,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     private static final int NOTIFIED_TIMESTAMP_AND_GV1_MIGRATION_LAST_SEEN = 73;
     private static final int VIEWED_RECEIPTS_CLEAN_UP_GV1_IDS = 74;
     private static final int GV1_MIGRATION_REFACTOR = 75;
-    private static final int CLEAR_PROFILE_KEY_CREDENTIALS    = 76;
+    private static final int CLEAR_PROFILE_KEY_CREDENTIALS = 76;
+    private static final int LAST_RESET_SESSION_TIME = 77;
 
-    private static final int DATABASE_VERSION = 76;
+    private static final int DATABASE_VERSION = 77;
     private static final String DATABASE_NAME = "shadow.db";
 
     private final Context context;
@@ -406,6 +407,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
                 int count = db.update("recipient", values, "profile_key_credential NOT NULL", null);
 
                 Log.i(TAG, "Cleared profile key credentials for " + count + " rows");
+            }
+
+            if (oldVersion < LAST_RESET_SESSION_TIME) {
+                db.execSQL("ALTER TABLE recipient ADD COLUMN last_session_reset BLOB DEFAULT NULL");
             }
 
             db.setTransactionSuccessful();
