@@ -60,7 +60,9 @@ public class SubmitDebugLogRepository {
     private static final char   TITLE_DECORATION = '=';
     private static final int    MIN_DECORATIONS  = 5;
     private static final int    SECTION_SPACING  = 3;
-    private static final String API_ENDPOINT     = "https://debuglogs.org";
+    private static final String DEBUG_LOGS_PATH     = "/debuglogs/";
+
+    private final SignalServiceAccountManager accountManager;
 
     /** Ordered list of log sections. */
     private static final List<LogSection> SECTIONS = new ArrayList<LogSection>() {{
@@ -87,6 +89,7 @@ public class SubmitDebugLogRepository {
     public SubmitDebugLogRepository() {
         this.context  = ApplicationDependencies.getApplication();
         this.executor = SignalExecutors.SERIAL;
+        this.accountManager = ApplicationDependencies.getSignalServiceAccountManager();
     }
 
     public void getLogLines(@NonNull Callback<List<LogLine>> callback) {
@@ -137,38 +140,42 @@ public class SubmitDebugLogRepository {
     @WorkerThread
     private @NonNull String uploadContent(@NonNull String contentType, @NonNull byte[] content) throws IOException {
         try {
-            OkHttpClient client   = new OkHttpClient.Builder().addInterceptor(new StandardUserAgentInterceptor()).dns(SignalServiceNetworkAccess.DNS).build();
-            Response     response = client.newCall(new Request.Builder().url(API_ENDPOINT).get().build()).execute();
-            ResponseBody body     = response.body();
+            String cloudUrl = accountManager.getConfigurationInfo().getCloudUri() + DEBUG_LOGS_PATH;
 
-            if (!response.isSuccessful() || body == null) {
-                throw new IOException("Unsuccessful response: " + response);
+            TrustManager[] trustManagers = BlacklistingTrustManager.createFor(new SignalServiceTrustStore(context));
+            SSLContext context = SSLContext.getInstance("TLS");
+            context.init(null, trustManagers, null);
+
+            OkHttpClient client   = new OkHttpClient.Builder()
+                    .addInterceptor(new StandardUserAgentInterceptor())
+                    .dns(SignalServiceNetworkAccess.DNS)
+                    .sslSocketFactory(new Tls12SocketFactory(context.getSocketFactory()), (X509TrustManager)trustManagers[0])
+                    .build();
+
+            AttachmentV2UploadAttributes debugLogUploadAttributes = accountManager.getDebugLogUploadAttributes();
+
+            RequestBody requestBody   = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("acl", debugLogUploadAttributes.getAcl())
+                    .addFormDataPart("key", debugLogUploadAttributes.getKey())
+                    .addFormDataPart("policy", debugLogUploadAttributes.getPolicy())
+                    .addFormDataPart("x-amz-algorithm", debugLogUploadAttributes.getAlgorithm())
+                    .addFormDataPart("x-amz-credential", debugLogUploadAttributes.getCredential())
+                    .addFormDataPart("x-amz-date", debugLogUploadAttributes.getDate())
+                    .addFormDataPart("x-amz-signature", debugLogUploadAttributes.getSignature())
+                    .addFormDataPart("Content-Type", contentType)
+                    .addFormDataPart("file", "file", RequestBody.create(MediaType.parse(contentType), content))
+                    .build();
+
+            Response postResponse = client.newCall(new Request.Builder().url(cloudUrl).post(requestBody).build()).execute();
+            ResponseBody body     = postResponse.body();
+
+            if (!postResponse.isSuccessful() || body == null) {
+                throw new IOException("Unsuccessful response: " + postResponse);
             }
 
-            JSONObject json   = new JSONObject(body.string());
-            String                url    = json.getString("url");
-            JSONObject            fields = json.getJSONObject("fields");
-            String                item   = fields.getString("key");
-            MultipartBody.Builder post   = new MultipartBody.Builder();
-            Iterator<String> keys   = fields.keys();
-
-            post.addFormDataPart("Content-Type", contentType);
-
-            while (keys.hasNext()) {
-                String key = keys.next();
-                post.addFormDataPart(key, fields.getString(key));
-            }
-
-            post.addFormDataPart("file", "file", RequestBody.create(MediaType.parse(contentType), content));
-
-            Response postResponse = client.newCall(new Request.Builder().url(url).post(post.build()).build()).execute();
-
-            if (!postResponse.isSuccessful()) {
-                throw new IOException("Bad response: " + postResponse);
-            }
-
-            return API_ENDPOINT + "/" + item;
-        } catch (JSONException e) {
+            return cloudUrl + debugLogUploadAttributes.getKey();
+        } catch (IOException | NoSuchAlgorithmException | KeyManagementException e) {
             Log.w(TAG, "Error during upload.", e);
             throw new IOException(e);
         }
