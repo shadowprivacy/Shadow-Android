@@ -60,6 +60,11 @@ public final class ShadowLogDetector extends Detector implements Detector.UastSc
             context.report(LOG_NOT_SHADOW, call, context.getLocation(call), "Using 'android.util.Log' instead of a Shadow Logger", fix);
         }
 
+        if (evaluator.isMemberInClass(method, "su.sres.glide.Log")) {
+            LintFix fix = quickFixIssueLog(call);
+            context.report(LOG_NOT_SHADOW, call, context.getLocation(call), "Using 'su.sres.glide.Log' instead of a Shadow Logger", fix);
+        }
+
         if (evaluator.isMemberInClass(method, "org.whispersystems.libsignal.logging.Log")) {
             LintFix fix = quickFixIssueLog(call);
             context.report(LOG_NOT_APP, call, context.getLocation(call), "Using Signal server logger instead of app level Logger", fix);

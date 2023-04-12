@@ -21,6 +21,7 @@ import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.core.util.concurrent.SignalExecutors;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;

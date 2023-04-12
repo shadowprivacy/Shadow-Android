@@ -53,6 +53,7 @@ import su.sres.securesms.util.LifecycleCursorWrapper;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.Util;
 import su.sres.core.util.concurrent.SignalExecutors;
+import su.sres.securesms.wallpaper.ChatWallpaperActivity;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -69,6 +70,7 @@ public class ManageRecipientFragment extends LoggingFragment {
     private GroupMemberListView                    sharedGroupList;
     private Toolbar                                toolbar;
     private TextView                               title;
+    private TextView                               about;
     private TextView                               subtitle;
     private ViewGroup                              internalDetails;
     private TextView                               internalDetailsText;
@@ -103,6 +105,7 @@ public class ManageRecipientFragment extends LoggingFragment {
     private View                                   messageButton;
     private View                                   secureCallButton;
     private View                                   secureVideoCallButton;
+    private View                                   chatWallpaperButton;
 
     static ManageRecipientFragment newInstance(@NonNull RecipientId recipientId, boolean fromConversation) {
         ManageRecipientFragment fragment = new ManageRecipientFragment();
@@ -128,6 +131,7 @@ public class ManageRecipientFragment extends LoggingFragment {
        // contactText                 = view.findViewById(R.id.recipient_contact_text);
        //  contactIcon                 = view.findViewById(R.id.recipient_contact_icon);
         title                       = view.findViewById(R.id.name);
+        about                       = view.findViewById(R.id.about);
         subtitle                    = view.findViewById(R.id.username_number);
         internalDetails             = view.findViewById(R.id.recipient_internal_details);
         internalDetailsText         = view.findViewById(R.id.recipient_internal_details_text);
@@ -158,6 +162,7 @@ public class ManageRecipientFragment extends LoggingFragment {
         messageButton               = view.findViewById(R.id.recipient_message);
         secureCallButton            = view.findViewById(R.id.recipient_voice_call);
         secureVideoCallButton       = view.findViewById(R.id.recipient_video_call);
+        chatWallpaperButton         = view.findViewById(R.id.chat_wallpaper);
 
         return view;
     }
@@ -252,10 +257,11 @@ public class ManageRecipientFragment extends LoggingFragment {
             });
         }
 
-        viewModel.getCanBlock().observe(getViewLifecycleOwner(), canBlock -> {
-            block.setVisibility(canBlock ? View.VISIBLE : View.GONE);
-            unblock.setVisibility(canBlock ? View.GONE : View.VISIBLE);
-        });
+        viewModel.getCanBlock().observe(getViewLifecycleOwner(),
+                canBlock -> block.setVisibility(canBlock ? View.VISIBLE : View.GONE));
+
+        viewModel.getCanUnblock().observe(getViewLifecycleOwner(),
+                canUnblock -> unblock.setVisibility(canUnblock ? View.VISIBLE : View.GONE));
 
         messageButton.setOnClickListener(v -> {
             if (fromConversation) {
@@ -266,6 +272,7 @@ public class ManageRecipientFragment extends LoggingFragment {
         });
         secureCallButton.setOnClickListener(v -> viewModel.onSecureCall(requireActivity()));
         secureVideoCallButton.setOnClickListener(v -> viewModel.onSecureVideoCall(requireActivity()));
+        chatWallpaperButton.setOnClickListener(v -> startActivity(ChatWallpaperActivity.createIntent(requireContext(), recipientId)));
     }
 
     @Override
@@ -295,6 +302,10 @@ public class ManageRecipientFragment extends LoggingFragment {
                 startActivityForResult(RecipientExporter.export(recipient).asAddContactIntent(), REQUEST_CODE_ADD_CONTACT);
             });
         } */
+
+        String aboutText = recipient.getCombinedAboutAndEmoji();
+        about.setText(aboutText);
+        about.setVisibility(Util.isEmpty(aboutText) ? View.GONE : View.VISIBLE);
 
         disappearingMessagesCard.setVisibility(recipient.isRegistered() ? View.VISIBLE : View.GONE);
         addToAGroup.setVisibility(recipient.isRegistered() ? View.VISIBLE : View.GONE);

@@ -7,7 +7,6 @@ import androidx.annotation.Nullable;
 
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.CallId;
-import org.signal.ringrtc.IceCandidate;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.WebRtcViewModel;
@@ -96,7 +95,7 @@ public class ActiveCallActionProcessorDelegate extends WebRtcActionProcessor {
     {
         Log.i(tag, "handleReceivedIceCandidates(): id: " + callMetadata.getCallId().format(callMetadata.getRemoteDevice()) + ", count: " + iceCandidateParcels.size());
 
-        LinkedList<IceCandidate> iceCandidates = new LinkedList<>();
+        LinkedList<byte[]> iceCandidates = new LinkedList<>();
         for (IceCandidateParcel parcel : iceCandidateParcels) {
             iceCandidates.add(parcel.getIceCandidate());
         }

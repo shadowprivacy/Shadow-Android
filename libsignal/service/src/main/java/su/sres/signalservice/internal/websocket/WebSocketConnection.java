@@ -11,7 +11,9 @@ import su.sres.signalservice.api.push.TrustStore;
 import su.sres.signalservice.api.util.CredentialsProvider;
 import su.sres.signalservice.api.util.SleepTimer;
 import su.sres.signalservice.api.util.Tls12SocketFactory;
+import su.sres.signalservice.api.util.TlsProxySocketFactory;
 import su.sres.signalservice.api.websocket.ConnectivityListener;
+import su.sres.signalservice.internal.configuration.ShadowProxy;
 import su.sres.signalservice.internal.util.BlacklistingTrustManager;
 import su.sres.signalservice.internal.util.Util;
 import su.sres.signalservice.internal.util.concurrent.ListenableFuture;
@@ -64,6 +66,7 @@ public class WebSocketConnection extends WebSocketListener {
   private final SleepTimer                    sleepTimer;
   private final List<Interceptor>             interceptors;
   private final Optional<Dns>                 dns;
+  private final Optional<ShadowProxy>         shadowProxy;
 
   private WebSocket           client;
   private KeepAliveSender     keepAliveSender;
@@ -77,7 +80,8 @@ public class WebSocketConnection extends WebSocketListener {
                              ConnectivityListener listener,
                              SleepTimer timer,
                              List<Interceptor> interceptors,
-                             Optional<Dns> dns)
+                             Optional<Dns> dns,
+                             Optional<ShadowProxy> shadowProxy)
   {
     this.trustStore          = trustStore;
     this.credentialsProvider = credentialsProvider;
@@ -86,6 +90,7 @@ public class WebSocketConnection extends WebSocketListener {
     this.sleepTimer          = timer;
     this.interceptors        = interceptors;
     this.dns                 = dns;
+    this.shadowProxy         = shadowProxy;
     this.attempts            = 0;
     this.connected           = false;
 
@@ -119,6 +124,10 @@ public class WebSocketConnection extends WebSocketListener {
 
       for (Interceptor interceptor : interceptors) {
         clientBuilder.addInterceptor(interceptor);
+      }
+
+      if (shadowProxy.isPresent()) {
+        clientBuilder.socketFactory(new TlsProxySocketFactory(shadowProxy.get().getHost(), shadowProxy.get().getPort(), dns));
       }
 
       OkHttpClient okHttpClient = clientBuilder.build();
@@ -295,7 +304,15 @@ public class WebSocketConnection extends WebSocketListener {
     Log.w(TAG, "onFailure()", t);
 
     if (response != null && (response.code() == 401 || response.code() == 403)) {
-      if (listener != null) listener.onAuthenticationFailure();
+      if (listener != null) {
+        listener.onAuthenticationFailure();
+      }
+    } else if (listener != null) {
+      boolean shouldRetryConnection = listener.onGenericFailure(response, t);
+      if (!shouldRetryConnection) {
+        Log.w(TAG, "Experienced a failure, and the listener indicated we should not retry the connection. Disconnecting.");
+        disconnect();
+      }
     }
 
     if (client != null) {

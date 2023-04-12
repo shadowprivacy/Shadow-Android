@@ -19,11 +19,13 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.glide.cache.ApngOptions;
 import su.sres.securesms.sharing.ShareActivity;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.stickers.StickerManifest.Sticker;
+import su.sres.securesms.util.DeviceProperties;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
 
@@ -140,7 +142,7 @@ public final class StickerPackPreviewActivity extends PassphraseRequiredActivity
         this.shareButton      = findViewById(R.id.sticker_install_share_button);
         this.shareButtonImage = findViewById(R.id.sticker_install_share_button_image);
 
-        this.adapter       = new StickerPackPreviewAdapter(GlideApp.with(this), this);
+        this.adapter       = new StickerPackPreviewAdapter(GlideApp.with(this), this, DeviceProperties.shouldAllowApngStickerAnimation(this));
         this.layoutManager = new GridLayoutManager(this, 2);
         this.touchListener = new StickerRolloverTouchListener(this, GlideApp.with(this), this, this);
         onScreenWidthChanged(getScreenWidth());
@@ -192,6 +194,7 @@ public final class StickerPackPreviewActivity extends PassphraseRequiredActivity
                     : new StickerRemoteUri(cover.getPackId(), cover.getPackKey(), cover.getId());
             GlideApp.with(this).load(model)
                     .transition(DrawableTransitionOptions.withCrossFade())
+                    .set(ApngOptions.ANIMATE, DeviceProperties.shouldAllowApngStickerAnimation(this))
                     .into(coverImage);
         } else {
             coverImage.setImageDrawable(null);

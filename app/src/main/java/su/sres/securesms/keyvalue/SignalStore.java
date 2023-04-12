@@ -27,7 +27,9 @@ public final class SignalStore {
     private final SettingsValues settingsValues;
     private final CertificateValues certificateValues;
     private final UserLoginPrivacyValues userLoginPrivacyValues;
-    private final OnboardingValues         onboardingValues;
+    private final OnboardingValues onboardingValues;
+    private final WallpaperValues wallpaperValues;
+    private final ProxyValues              proxyValues;
 
     private SignalStore() {
         this.store = ApplicationDependencies.getKeyValueStore();
@@ -44,7 +46,9 @@ public final class SignalStore {
         this.settingsValues = new SettingsValues(store);
         this.certificateValues = new CertificateValues(store);
         this.userLoginPrivacyValues = new UserLoginPrivacyValues(store);
-        this.onboardingValues         = new OnboardingValues(store);
+        this.onboardingValues = new OnboardingValues(store);
+        this.wallpaperValues = new WallpaperValues(store);
+        this.proxyValues              = new ProxyValues(store);
     }
 
     public static void onFirstEverAppLaunch() {
@@ -61,6 +65,8 @@ public final class SignalStore {
         certificateValues().onFirstEverAppLaunch();
         userLoginPrivacy().onFirstEverAppLaunch();
         onboarding().onFirstEverAppLaunch();
+        wallpaper().onFirstEverAppLaunch();
+        proxy().onFirstEverAppLaunch();
     }
 
     public static @NonNull
@@ -130,6 +136,14 @@ public final class SignalStore {
 
     public static @NonNull OnboardingValues onboarding() {
         return INSTANCE.onboardingValues;
+    }
+
+    public static @NonNull WallpaperValues wallpaper() {
+        return INSTANCE.wallpaperValues;
+    }
+
+    public static @NonNull ProxyValues proxy() {
+        return INSTANCE.proxyValues;
     }
 
     public static @NonNull

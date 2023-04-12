@@ -115,7 +115,7 @@ public class RecipientUtil {
 
     public static boolean isBlockable(@NonNull Recipient recipient) {
         Recipient resolved = recipient.resolve();
-        return resolved.isPushGroup() || resolved.hasServiceIdentifier();
+        return !resolved.isMmsGroup();
     }
 
     public static List<Recipient> getEligibleForSending(@NonNull List<Recipient> recipients) {
@@ -182,7 +182,9 @@ public class RecipientUtil {
         ApplicationDependencies.getJobManager().add(new MultiDeviceBlockedUpdateJob());
 //        StorageSyncHelper.scheduleSyncForDataChange();
 
-        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(recipient.getId()));
+        if (recipient.hasServiceIdentifier()) {
+            ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(recipient.getId()));
+        }
     }
 
     /**

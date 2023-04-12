@@ -22,6 +22,8 @@ import su.sres.securesms.mms.DecryptableStreamUriLoader;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.stickers.StickerKeyboardPageAdapter.StickerKeyboardPageViewHolder;
+import su.sres.securesms.util.DeviceProperties;
+
 import org.whispersystems.libsignal.util.Pair;
 
 /**
@@ -68,7 +70,7 @@ public final class StickerKeyboardPageFragment extends Fragment implements Stick
         GlideRequests glideRequests = GlideApp.with(this);
 
         this.list              = view.findViewById(R.id.sticker_keyboard_list);
-        this.adapter           = new StickerKeyboardPageAdapter(glideRequests, this);
+        this.adapter           = new StickerKeyboardPageAdapter(glideRequests, this, DeviceProperties.shouldAllowApngStickerAnimation(requireContext()));
         this.layoutManager     = new GridLayoutManager(requireContext(), 2);
         this.listTouchListener = new StickerRolloverTouchListener(requireContext(), glideRequests, eventListener, this);
         this.packId            = getArguments().getString(KEY_PACK_ID);

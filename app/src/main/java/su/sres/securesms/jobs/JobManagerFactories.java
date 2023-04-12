@@ -36,6 +36,7 @@ import su.sres.securesms.migrations.DatabaseMigrationJob;
 import su.sres.securesms.migrations.MigrationCompleteJob;
 import su.sres.securesms.migrations.ProfileMigrationJob;
 import su.sres.securesms.migrations.RecipientSearchMigrationJob;
+import su.sres.securesms.migrations.StickerDayByDayMigrationJob;
 import su.sres.securesms.migrations.StickerLaunchMigrationJob;
 import su.sres.securesms.migrations.StorageCapabilityMigrationJob;
 import su.sres.securesms.migrations.StorageServiceMigrationJob;
@@ -150,6 +151,7 @@ public final class JobManagerFactories {
             put(RecipientSearchMigrationJob.KEY,           new RecipientSearchMigrationJob.Factory());
             put(StickerLaunchMigrationJob.KEY,             new StickerLaunchMigrationJob.Factory());
             put(StickerAdditionMigrationJob.KEY,           new StickerAdditionMigrationJob.Factory());
+            put(StickerDayByDayMigrationJob.KEY,           new StickerDayByDayMigrationJob.Factory());
             put(StorageCapabilityMigrationJob.KEY,         new StorageCapabilityMigrationJob.Factory());
             put(StorageServiceMigrationJob.KEY,            new StorageServiceMigrationJob.Factory());
             put(TrimByLengthSettingsMigrationJob.KEY,      new TrimByLengthSettingsMigrationJob.Factory());

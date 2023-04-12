@@ -98,10 +98,10 @@ public class FastJobStorageTest {
 
     @Test
     public void updateAllJobsToBePending_allArePending() {
-        FullSpec fullSpec1 = new FullSpec(new JobSpec("1", "f1", null, 1, 1, 1, 1, 1, 1, EMPTY_DATA, null, true, false),
+        FullSpec fullSpec1 = new FullSpec(new JobSpec("1", "f1", null, 1, 1, 1, 1, 1, EMPTY_DATA, null, true, false),
                 Collections.emptyList(),
                 Collections.emptyList());
-        FullSpec fullSpec2 = new FullSpec(new JobSpec("2", "f2", null, 1, 1, 1, 1, 1, 1, EMPTY_DATA, null, true, false),
+        FullSpec fullSpec2 = new FullSpec(new JobSpec("2", "f2", null, 1, 1, 1, 1, 1, EMPTY_DATA, null, true, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
@@ -118,7 +118,7 @@ public class FastJobStorageTest {
     public void updateJobs_writesToDatabase() {
         JobDatabase    database = fixedDataDatabase(DataSet1.FULL_SPECS);
         FastJobStorage subject  = new FastJobStorage(database);
-        List<JobSpec>  jobs     = Collections.singletonList(new JobSpec("id1", "f1", null, 1, 1, 1, 1, 1, 1, EMPTY_DATA, null, false, false));
+        List<JobSpec>  jobs     = Collections.singletonList(new JobSpec("id1", "f1", null, 1, 1, 1, 1, 1, EMPTY_DATA, null, false, false));
 
         subject.init();
         subject.updateJobs(jobs);
@@ -130,7 +130,7 @@ public class FastJobStorageTest {
     public void updateJobs_memoryOnly_doesNotWriteToDatabase() {
         JobDatabase    database = fixedDataDatabase(DataSetMemory.FULL_SPECS);
         FastJobStorage subject  = new FastJobStorage(database);
-        List<JobSpec>  jobs     = Collections.singletonList(new JobSpec("id1", "f1", null, 1, 1, 1, 1, 1, 1, EMPTY_DATA, null, false, false));
+        List<JobSpec>  jobs     = Collections.singletonList(new JobSpec("id1", "f1", null, 1, 1, 1, 1, 1, EMPTY_DATA, null, false, false));
 
         subject.init();
         subject.updateJobs(jobs);
@@ -140,20 +140,20 @@ public class FastJobStorageTest {
 
     @Test
     public void updateJobs_updatesAllFields() {
-        FullSpec fullSpec1 = new FullSpec(new JobSpec("1", "f1", null, 1, 1, 1, 1, 1, 1, EMPTY_DATA, null, false, false),
+        FullSpec fullSpec1 = new FullSpec(new JobSpec("1", "f1", null, 1, 1, 1, 1, 1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
-        FullSpec fullSpec2 = new FullSpec(new JobSpec("2", "f2", null, 1, 1, 1, 1, 1, 1, EMPTY_DATA, null, false, false),
+        FullSpec fullSpec2 = new FullSpec(new JobSpec("2", "f2", null, 1, 1, 1, 1, 1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
-        FullSpec fullSpec3 = new FullSpec(new JobSpec("3", "f3", null, 1, 1, 1, 1, 1, 1, EMPTY_DATA, null, false, false),
+        FullSpec fullSpec3 = new FullSpec(new JobSpec("3", "f3", null, 1, 1, 1, 1, 1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
         FastJobStorage subject = new FastJobStorage(fixedDataDatabase(Arrays.asList(fullSpec1, fullSpec2, fullSpec3)));
 
-        JobSpec update1 = new JobSpec("1", "g1", "q1", 2, 2, 2, 2, 2, 2, "abc", null, true, false);
-        JobSpec update2 = new JobSpec("2", "g2", "q2", 3, 3, 3, 3, 3, 3, "def", "ghi", true, false);
+        JobSpec update1 = new JobSpec("1", "g1", "q1", 2, 2, 2, 2, 2, "abc", null, true, false);
+        JobSpec update2 = new JobSpec("2", "g2", "q2", 3, 3, 3, 3, 3, "def", "ghi", true, false);
 
         subject.init();
         subject.updateJobs(Arrays.asList(update1, update2));
@@ -210,7 +210,7 @@ public class FastJobStorageTest {
 
     @Test
     public void updateJobAfterRetry_stateUpdated() {
-        FullSpec fullSpec = new FullSpec(new JobSpec("1", "f1", null, 0, 0, 0, 3, 30000, -1, EMPTY_DATA, null, true, false),
+        FullSpec fullSpec = new FullSpec(new JobSpec("1", "f1", null, 0, 0, 0, 3, -1, EMPTY_DATA, null, true, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
@@ -230,10 +230,10 @@ public class FastJobStorageTest {
 
     @Test
     public void getPendingJobsWithNoDependenciesInCreatedOrder_noneWhenEarlierItemInQueueInRunning() {
-        FullSpec fullSpec1 = new FullSpec(new JobSpec("1", "f1", "q", 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, true, false),
+        FullSpec fullSpec1 = new FullSpec(new JobSpec("1", "f1", "q", 0, 0, 0, 0, -1, EMPTY_DATA, null, true, false),
                 Collections.emptyList(),
                 Collections.emptyList());
-        FullSpec fullSpec2 = new FullSpec(new JobSpec("2", "f2", "q", 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec fullSpec2 = new FullSpec(new JobSpec("2", "f2", "q", 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
@@ -245,7 +245,7 @@ public class FastJobStorageTest {
 
     @Test
     public void getPendingJobsWithNoDependenciesInCreatedOrder_noneWhenAllJobsAreRunning() {
-        FullSpec fullSpec = new FullSpec(new JobSpec("1", "f1", "q", 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, true, false),
+        FullSpec fullSpec = new FullSpec(new JobSpec("1", "f1", "q", 0, 0, 0, 0, -1, EMPTY_DATA, null, true, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
@@ -257,7 +257,7 @@ public class FastJobStorageTest {
 
     @Test
     public void getPendingJobsWithNoDependenciesInCreatedOrder_noneWhenNextRunTimeIsAfterCurrentTime() {
-        FullSpec fullSpec = new FullSpec(new JobSpec("1", "f1", "q", 0, 10, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec fullSpec = new FullSpec(new JobSpec("1", "f1", "q", 0, 10, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
@@ -269,10 +269,10 @@ public class FastJobStorageTest {
 
     @Test
     public void getPendingJobsWithNoDependenciesInCreatedOrder_noneWhenDependentOnAnotherJob() {
-        FullSpec fullSpec1 = new FullSpec(new JobSpec("1", "f1", null, 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, true, false),
+        FullSpec fullSpec1 = new FullSpec(new JobSpec("1", "f1", null, 0, 0, 0, 0, -1, EMPTY_DATA, null, true, false),
                 Collections.emptyList(),
                 Collections.emptyList());
-        FullSpec fullSpec2 = new FullSpec(new JobSpec("2", "f2", null, 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec fullSpec2 = new FullSpec(new JobSpec("2", "f2", null, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.singletonList(new DependencySpec("2", "1", false)));
 
@@ -285,7 +285,7 @@ public class FastJobStorageTest {
 
     @Test
     public void getPendingJobsWithNoDependenciesInCreatedOrder_singleEligibleJob() {
-        FullSpec fullSpec = new FullSpec(new JobSpec("1", "f1", "q", 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec fullSpec = new FullSpec(new JobSpec("1", "f1", "q", 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
@@ -297,10 +297,10 @@ public class FastJobStorageTest {
 
     @Test
     public void getPendingJobsWithNoDependenciesInCreatedOrder_multipleEligibleJobs() {
-        FullSpec fullSpec1 = new FullSpec(new JobSpec("1", "f1", null, 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec fullSpec1 = new FullSpec(new JobSpec("1", "f1", null, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
-        FullSpec fullSpec2 = new FullSpec(new JobSpec("2", "f2", null, 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec fullSpec2 = new FullSpec(new JobSpec("2", "f2", null, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
@@ -313,10 +313,10 @@ public class FastJobStorageTest {
 
     @Test
     public void getPendingJobsWithNoDependenciesInCreatedOrder_singleEligibleJobInMixedList() {
-        FullSpec fullSpec1 = new FullSpec(new JobSpec("1", "f1", null, 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, true, false),
+        FullSpec fullSpec1 = new FullSpec(new JobSpec("1", "f1", null, 0, 0, 0, 0, -1, EMPTY_DATA, null, true, false),
                 Collections.emptyList(),
                 Collections.emptyList());
-        FullSpec fullSpec2 = new FullSpec(new JobSpec("2", "f2", null, 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec fullSpec2 = new FullSpec(new JobSpec("2", "f2", null, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
@@ -332,10 +332,10 @@ public class FastJobStorageTest {
 
     @Test
     public void getPendingJobsWithNoDependenciesInCreatedOrder_firstItemInQueue() {
-        FullSpec fullSpec1 = new FullSpec(new JobSpec("1", "f1", "q", 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec fullSpec1 = new FullSpec(new JobSpec("1", "f1", "q", 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
-        FullSpec fullSpec2 = new FullSpec(new JobSpec("2", "f2", "q", 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec fullSpec2 = new FullSpec(new JobSpec("2", "f2", "q", 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
@@ -351,10 +351,10 @@ public class FastJobStorageTest {
 
     @Test
     public void getPendingJobsWithNoDependenciesInCreatedOrder_migrationJobTakesPrecedence() {
-        FullSpec plainSpec     = new FullSpec(new JobSpec("1", "f1", "q", 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec plainSpec     = new FullSpec(new JobSpec("1", "f1", "q", 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
-        FullSpec migrationSpec = new FullSpec(new JobSpec("2", "f2", Job.Parameters.MIGRATION_QUEUE_KEY, 5, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec migrationSpec = new FullSpec(new JobSpec("2", "f2", Job.Parameters.MIGRATION_QUEUE_KEY, 5, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
@@ -369,10 +369,10 @@ public class FastJobStorageTest {
 
     @Test
     public void getPendingJobsWithNoDependenciesInCreatedOrder_runningMigrationBlocksNormalJobs() {
-        FullSpec plainSpec     = new FullSpec(new JobSpec("1", "f1", "q", 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec plainSpec     = new FullSpec(new JobSpec("1", "f1", "q", 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
-        FullSpec migrationSpec = new FullSpec(new JobSpec("2", "f2", Job.Parameters.MIGRATION_QUEUE_KEY, 5, 0, 0, 0, 0, -1, EMPTY_DATA, null, true, false),
+        FullSpec migrationSpec = new FullSpec(new JobSpec("2", "f2", Job.Parameters.MIGRATION_QUEUE_KEY, 5, 0, 0, 0, -1, EMPTY_DATA, null, true, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
@@ -386,10 +386,10 @@ public class FastJobStorageTest {
 
     @Test
     public void getPendingJobsWithNoDependenciesInCreatedOrder_runningMigrationBlocksLaterMigrationJobs() {
-        FullSpec migrationSpec1 = new FullSpec(new JobSpec("1", "f1", Job.Parameters.MIGRATION_QUEUE_KEY, 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, true, false),
+        FullSpec migrationSpec1 = new FullSpec(new JobSpec("1", "f1", Job.Parameters.MIGRATION_QUEUE_KEY, 0, 0, 0, 0, -1, EMPTY_DATA, null, true, false),
                 Collections.emptyList(),
                 Collections.emptyList());
-        FullSpec migrationSpec2 = new FullSpec(new JobSpec("2", "f2", Job.Parameters.MIGRATION_QUEUE_KEY, 5, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec migrationSpec2 = new FullSpec(new JobSpec("2", "f2", Job.Parameters.MIGRATION_QUEUE_KEY, 5, 0, 0, 0,  -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
@@ -403,10 +403,10 @@ public class FastJobStorageTest {
 
     @Test
     public void getPendingJobsWithNoDependenciesInCreatedOrder_onlyReturnFirstEligibleMigrationJob() {
-        FullSpec migrationSpec1 = new FullSpec(new JobSpec("1", "f1", Job.Parameters.MIGRATION_QUEUE_KEY, 0, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec migrationSpec1 = new FullSpec(new JobSpec("1", "f1", Job.Parameters.MIGRATION_QUEUE_KEY, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
-        FullSpec migrationSpec2 = new FullSpec(new JobSpec("2", "f2", Job.Parameters.MIGRATION_QUEUE_KEY, 5, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec migrationSpec2 = new FullSpec(new JobSpec("2", "f2", Job.Parameters.MIGRATION_QUEUE_KEY, 5, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
@@ -421,10 +421,10 @@ public class FastJobStorageTest {
 
     @Test
     public void getPendingJobsWithNoDependenciesInCreatedOrder_onlyMigrationJobWithAppropriateNextRunTime() {
-        FullSpec migrationSpec1 = new FullSpec(new JobSpec("1", "f1", Job.Parameters.MIGRATION_QUEUE_KEY, 0, 999, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec migrationSpec1 = new FullSpec(new JobSpec("1", "f1", Job.Parameters.MIGRATION_QUEUE_KEY, 0, 999, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
-        FullSpec migrationSpec2 = new FullSpec(new JobSpec("2", "f2", Job.Parameters.MIGRATION_QUEUE_KEY, 5, 0, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
+        FullSpec migrationSpec2 = new FullSpec(new JobSpec("2", "f2", Job.Parameters.MIGRATION_QUEUE_KEY, 5, 0, 0, 0, -1, EMPTY_DATA, null, false, false),
                 Collections.emptyList(),
                 Collections.emptyList());
 
@@ -579,9 +579,9 @@ public class FastJobStorageTest {
     }
 
     private static final class DataSet1 {
-        static final JobSpec        JOB_1        = new JobSpec("id1", "f1", "q1", 1, 2, 3, 4, 5, 6, EMPTY_DATA, null, false, false);
-        static final JobSpec        JOB_2        = new JobSpec("id2", "f2", "q2", 1, 2, 3, 4, 5, 6, EMPTY_DATA, null, false, false);
-        static final JobSpec        JOB_3        = new JobSpec("id3", "f3", "q3", 1, 2, 3, 4, 5, 6, EMPTY_DATA, null, false, false);
+        static final JobSpec        JOB_1        = new JobSpec("id1", "f1", "q1", 1, 2, 3, 4, 5, EMPTY_DATA, null, false, false);
+        static final JobSpec        JOB_2        = new JobSpec("id2", "f2", "q2", 1, 2, 3, 4, 5, EMPTY_DATA, null, false, false);
+        static final JobSpec        JOB_3        = new JobSpec("id3", "f3", "q3", 1, 2, 3, 4, 5, EMPTY_DATA, null, false, false);
         static final ConstraintSpec CONSTRAINT_1 = new ConstraintSpec("id1", "f1", false);
         static final ConstraintSpec CONSTRAINT_2 = new ConstraintSpec("id2", "f2", false);
         static final DependencySpec DEPENDENCY_2 = new DependencySpec("id2", "id1", false);
@@ -612,7 +612,7 @@ public class FastJobStorageTest {
     }
 
     private static final class DataSetMemory {
-        static final JobSpec        JOB_1        = new JobSpec("id1", "f1", "q1", 1, 2, 3, 4, 5, 6, EMPTY_DATA, null, false, true);
+        static final JobSpec        JOB_1        = new JobSpec("id1", "f1", "q1", 1, 2, 3, 4, 5, EMPTY_DATA, null, false, true);
         static final ConstraintSpec CONSTRAINT_1 = new ConstraintSpec("id1", "f1", true);
         static final FullSpec       FULL_SPEC_1  = new FullSpec(JOB_1, Collections.singletonList(CONSTRAINT_1), Collections.emptyList());
         static final List<FullSpec> FULL_SPECS   = Collections.singletonList(FULL_SPEC_1);

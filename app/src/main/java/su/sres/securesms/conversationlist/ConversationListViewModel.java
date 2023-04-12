@@ -24,6 +24,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.megaphone.Megaphone;
 import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.megaphone.Megaphones;
+import su.sres.securesms.net.PipeConnectivityListener;
 import su.sres.securesms.search.SearchRepository;
 import su.sres.securesms.util.Debouncer;
 import su.sres.securesms.util.Util;
@@ -100,6 +101,10 @@ class ConversationListViewModel extends ViewModel {
     @NonNull
     PagingController getPagingController() {
         return pagedData.getController();
+    }
+
+    @NonNull LiveData<PipeConnectivityListener.State> getPipeState() {
+        return ApplicationDependencies.getPipeListener().getState();
     }
 
     public int getPinnedCount() {

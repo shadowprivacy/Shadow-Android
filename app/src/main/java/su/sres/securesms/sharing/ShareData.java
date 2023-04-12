@@ -30,10 +30,10 @@ class ShareData {
     }
 
     private ShareData(Optional<Uri> uri, Optional<String> mimeType, Optional<ArrayList<Media>> media, boolean external) {
-        this.uri      = uri;
-        this.mimeType = mimeType;
-        this.media    = media;
-        this.external = external;
+        this.uri                 = uri;
+        this.mimeType            = mimeType;
+        this.media               = media;
+        this.external            = external;
     }
 
     boolean isForIntent() {
@@ -62,5 +62,9 @@ class ShareData {
 
     public boolean isExternal() {
         return external;
+    }
+
+    public boolean isMmsOrSmsSupported() {
+        return false;
     }
 }

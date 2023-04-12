@@ -68,7 +68,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     private static final int VIEWED_RECEIPTS_CLEAN_UP_GV1_IDS = 74;
     private static final int GV1_MIGRATION_REFACTOR = 75;
     private static final int CLEAR_PROFILE_KEY_CREDENTIALS = 76;
-    private static final int LAST_RESET_SESSION_TIME = 77;
+    private static final int LAST_RESET_SESSION_TIME_AND_WALLPAPER_AND_ABOUT = 77;
 
     private static final int DATABASE_VERSION = 77;
     private static final String DATABASE_NAME = "shadow.db";
@@ -409,8 +409,14 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
                 Log.i(TAG, "Cleared profile key credentials for " + count + " rows");
             }
 
-            if (oldVersion < LAST_RESET_SESSION_TIME) {
+            if (oldVersion < LAST_RESET_SESSION_TIME_AND_WALLPAPER_AND_ABOUT) {
                 db.execSQL("ALTER TABLE recipient ADD COLUMN last_session_reset BLOB DEFAULT NULL");
+
+                db.execSQL("ALTER TABLE recipient ADD COLUMN wallpaper BLOB DEFAULT NULL");
+                db.execSQL("ALTER TABLE recipient ADD COLUMN wallpaper_file TEXT DEFAULT NULL");
+
+                db.execSQL("ALTER TABLE recipient ADD COLUMN about TEXT DEFAULT NULL");
+                db.execSQL("ALTER TABLE recipient ADD COLUMN about_emoji TEXT DEFAULT NULL");
             }
 
             db.setTransactionSuccessful();

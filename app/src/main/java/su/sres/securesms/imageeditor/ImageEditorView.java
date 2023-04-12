@@ -61,6 +61,9 @@ public final class ImageEditorView extends FrameLayout {
   private DrawingChangedListener drawingChangedListener;
 
   @Nullable
+  private SizeChangedListener sizeChangedListener;
+
+  @Nullable
   private UndoRedoStackListener undoRedoStackListener;
 
   private final Matrix viewMatrix      = new Matrix();
@@ -92,7 +95,7 @@ public final class ImageEditorView extends FrameLayout {
 
   private void init() {
     setWillNotDraw(false);
-    setModel(new EditorModel());
+    setModel(EditorModel.create());
 
     editText = createAHiddenTextEntryField();
 
@@ -169,6 +172,10 @@ public final class ImageEditorView extends FrameLayout {
   protected void onSizeChanged(int w, int h, int oldw, int oldh) {
     super.onSizeChanged(w, h, oldw, oldh);
     updateViewMatrix();
+
+    if (sizeChangedListener != null) {
+      sizeChangedListener.onSizeChanged(w, h);
+    }
   }
 
   private void updateViewMatrix() {
@@ -392,6 +399,10 @@ public final class ImageEditorView extends FrameLayout {
     this.drawingChangedListener = drawingChangedListener;
   }
 
+  public void setSizeChangedListener(@Nullable SizeChangedListener sizeChangedListener) {
+    this.sizeChangedListener = sizeChangedListener;
+  }
+
   public void setUndoRedoStackListener(@Nullable UndoRedoStackListener undoRedoStackListener) {
     this.undoRedoStackListener = undoRedoStackListener;
   }
@@ -460,6 +471,10 @@ public final class ImageEditorView extends FrameLayout {
 
   public interface DrawingChangedListener {
     void onDrawingChanged();
+  }
+
+  public interface SizeChangedListener {
+    void onSizeChanged(int newWidth, int newHeight);
   }
 
   public interface TapListener {

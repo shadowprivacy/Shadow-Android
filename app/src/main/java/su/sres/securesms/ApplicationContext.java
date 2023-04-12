@@ -141,6 +141,13 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
                 .addForemost("crash-handling", this::initializeCrashHandling)
                 .addForemost("eat-db", () -> DatabaseFactory.getInstance(this))
                 .addForemost("app-network-independent-dependencies", this::initializeNetworkIndependentProvider)
+                .addForemost("app-network-dependent-dependencies", this::initializeNetworkDependentProvider)
+                .addForemost("proxy-init", () -> {
+                    if (SignalStore.proxy().isProxyEnabled()) {
+                        Log.w(TAG, "Proxy detected. Enabling Conscrypt.setUseEngineSocketByDefault()");
+                        Conscrypt.setUseEngineSocketByDefault(true);
+                    }
+                })
                 .executeForemost();
 
         // checking at subsequent launches of the app, if the server is already known as set in SignalStore, then no need for delay, just initialize immediately
@@ -304,7 +311,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     }
 
     private void initializeNetworkDependentProvider() {
-        ApplicationDependencies.networkDependentProviderInit(new ApplicationDependencyProvider(this, new SignalServiceNetworkAccess(this)));
+        ApplicationDependencies.networkDependentProviderInit(new ApplicationDependencyProvider(this));
     }
 
     private void initializeNetworkIndependentProvider() {
@@ -324,6 +331,9 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         } else if (!TextSecurePreferences.isPasswordDisabled(this) && VersionTracker.getDaysSinceFirstInstalled(this) < 90) {
             Log.i(TAG, "Detected a new install that doesn't have passphrases disabled -- assuming bad initialization.");
             AppInitialization.onRepairFirstEverAppLaunch(this);
+        } else if (!TextSecurePreferences.isPasswordDisabled(this) && VersionTracker.getDaysSinceFirstInstalled(this) < 912) {
+            Log.i(TAG, "Detected a not-recent install that doesn't have passphrases disabled -- disabling now.");
+            TextSecurePreferences.setPasswordDisabled(this, true);
         }
     }
 
@@ -478,7 +488,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     private void initializeOnCreate() {
 
         AppStartup.getInstance()
-                .addBlocking("app-network-dependent-dependencies", this::initializeNetworkDependentProvider)
                 .addBlocking("first-launch", this::initializeFirstEverAppLaunch)
                 .addBlocking("app-migrations", this::initializeApplicationMigrations)
                 .addBlocking("ring-rtc", this::initializeRingRtc)

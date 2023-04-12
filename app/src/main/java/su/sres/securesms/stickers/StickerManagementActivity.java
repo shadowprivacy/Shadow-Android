@@ -14,6 +14,7 @@ import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.sharing.ShareActivity;
 import su.sres.securesms.mms.GlideApp;
+import su.sres.securesms.util.DeviceProperties;
 import su.sres.securesms.util.DynamicTheme;
 
 /**
@@ -93,7 +94,7 @@ public final class StickerManagementActivity extends PassphraseRequiredActivity 
 
     private void initView() {
         this.list    = findViewById(R.id.sticker_management_list);
-        this.adapter = new StickerManagementAdapter(GlideApp.with(this), this);
+        this.adapter = new StickerManagementAdapter(GlideApp.with(this), this, DeviceProperties.shouldAllowApngStickerAnimation(this));
 
         list.setLayoutManager(new LinearLayoutManager(this));
         list.setAdapter(adapter);

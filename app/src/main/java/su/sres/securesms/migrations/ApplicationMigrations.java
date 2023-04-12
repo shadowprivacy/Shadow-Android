@@ -40,6 +40,8 @@ public class ApplicationMigrations {
 
     public static final int CURRENT_VERSION = 23;
 
+//    public static final int CURRENT_VERSION = 24;
+
     private static final class Version {
         static final int VERSIONED_PROFILE = 15;
         static final int NEW_ACTIVATION_MODEL = 16;
@@ -50,6 +52,7 @@ public class ApplicationMigrations {
         static final int DIR = 21;
         static final int BACKUP_NOTIFICATION = 22;
         static final int GV1_MIGRATION = 23;
+//        static final int DAY_BY_DAY_STICKERS = 24;
     }
 
     /**
@@ -197,6 +200,10 @@ public class ApplicationMigrations {
         if (lastSeenVersion < Version.GV1_MIGRATION) {
             jobs.put(Version.GV1_MIGRATION, new AttributesMigrationJob());
         }
+
+      /*  if (lastSeenVersion < Version.DAY_BY_DAY_STICKERS) {
+            jobs.put(Version.DAY_BY_DAY_STICKERS, new StickerDayByDayMigrationJob());
+        } */
 
         return jobs;
     }

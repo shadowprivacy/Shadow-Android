@@ -8,6 +8,6 @@ package su.sres.signalservice.api.push.exceptions;
 
 public class NoContentException extends NonSuccessfulResponseCodeException {
     public NoContentException(String s) {
-        super(s);
+        super(204, s);
     }
 }

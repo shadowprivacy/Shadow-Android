@@ -56,8 +56,10 @@ import su.sres.securesms.crypto.InvalidPassphraseException;
 import su.sres.securesms.crypto.MasterSecret;
 import su.sres.securesms.crypto.MasterSecretUtil;
 import su.sres.securesms.logsubmit.SubmitDebugLogActivity;
+import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.DynamicIntroTheme;
 import su.sres.securesms.util.DynamicLanguage;
+import su.sres.securesms.util.SupportEmailUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 
 /**
@@ -136,7 +138,7 @@ public class PassphrasePromptActivity extends PassphraseActivity {
     MenuInflater inflater = this.getMenuInflater();
     menu.clear();
 
-    inflater.inflate(R.menu.log_submit, menu);
+    inflater.inflate(R.menu.passphrase_prompt, menu);
     super.onCreateOptionsMenu(menu);
     return true;
   }
@@ -144,8 +146,12 @@ public class PassphrasePromptActivity extends PassphraseActivity {
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     super.onOptionsItemSelected(item);
-    switch (item.getItemId()) {
-    case R.id.menu_submit_debug_logs: handleLogSubmit(); return true;
+    if (item.getItemId() == R.id.menu_submit_debug_logs) {
+      handleLogSubmit();
+      return true;
+    } else if (item.getItemId() == R.id.menu_contact_support) {
+      sendEmailToSupport();
+      return true;
     }
 
     return false;
@@ -290,6 +296,17 @@ public class PassphrasePromptActivity extends PassphraseActivity {
     if (fingerprintCancellationSignal != null) {
       fingerprintCancellationSignal.cancel();
     }
+  }
+
+  private void sendEmailToSupport() {
+    String body = SupportEmailUtil.generateSupportEmailBody(this,
+            R.string.PassphrasePromptActivity_signal_android_lock_screen,
+            null,
+            null);
+    CommunicationActions.openEmail(this,
+            SupportEmailUtil.getSupportEmailAddress(),
+            getString(R.string.PassphrasePromptActivity_signal_android_lock_screen),
+            body);
   }
 
   private class PassphraseActionListener implements TextView.OnEditorActionListener {

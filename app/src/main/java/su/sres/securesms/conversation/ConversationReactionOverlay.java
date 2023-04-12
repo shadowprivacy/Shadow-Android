@@ -1,5 +1,7 @@
 package su.sres.securesms.conversation;
 
+
+
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.app.Activity;
@@ -15,7 +17,6 @@ import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.RelativeLayout;
-
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,9 +25,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
 import androidx.vectordrawable.graphics.drawable.AnimatorInflaterCompat;
-
 import com.annimon.stream.Stream;
-
 import su.sres.securesms.R;
 import su.sres.securesms.animation.AnimationCompleteListener;
 import su.sres.securesms.components.MaskView;
@@ -40,7 +39,6 @@ import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.WindowUtil;
-
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -56,7 +54,6 @@ public final class ConversationReactionOverlay extends RelativeLayout {
     private final Boundary horizontalEmojiBoundary = new Boundary();
     private final Boundary verticalScrubBoundary   = new Boundary();
     private final PointF   deadzoneTouchPoint      = new PointF();
-    private final PointF   lastSeenDownPoint       = new PointF();
 
     private Activity      activity;
     private Recipient     conversationRecipient;
@@ -149,7 +146,8 @@ public final class ConversationReactionOverlay extends RelativeLayout {
                      @NonNull View maskTarget,
                      @NonNull Recipient conversationRecipient,
                      @NonNull MessageRecord messageRecord,
-                     int maskPaddingBottom)
+                     int maskPaddingBottom,
+                     @NonNull PointF lastSeenDownPoint)
     {
 
         if (overlayState != OverlayState.HIDDEN) {
@@ -294,10 +292,7 @@ public final class ConversationReactionOverlay extends RelativeLayout {
 
     public boolean applyTouchEvent(@NonNull MotionEvent motionEvent) {
         if (!isShowing()) {
-            if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-                lastSeenDownPoint.set(motionEvent.getX(), motionEvent.getY());
-            }
-            return false;
+            throw new IllegalStateException("Touch events should only be propagated to this method if we are displaying the scrubber.");
         }
 
         if ((motionEvent.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK) != 0) {

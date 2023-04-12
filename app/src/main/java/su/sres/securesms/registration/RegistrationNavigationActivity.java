@@ -5,11 +5,13 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
 import su.sres.securesms.R;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.util.CommunicationActions;
 
 public final class RegistrationNavigationActivity extends AppCompatActivity {
 
@@ -17,9 +19,16 @@ public final class RegistrationNavigationActivity extends AppCompatActivity {
 
     public static final String RE_REGISTRATION_EXTRA = "re_registration";
 
-    public static Intent newIntentForNewRegistration(@NonNull Context context) {
+    /**
+     */
+    public static Intent newIntentForNewRegistration(@NonNull Context context, @Nullable Intent originalIntent) {
         Intent intent = new Intent(context, RegistrationNavigationActivity.class);
         intent.putExtra(RE_REGISTRATION_EXTRA, false);
+
+        if (intent != null) {
+            intent.setData(originalIntent.getData());
+        }
+
         return intent;
     }
 
@@ -39,6 +48,19 @@ public final class RegistrationNavigationActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registration_navigation);
+
+        if (getIntent() != null && getIntent().getData() != null) {
+            CommunicationActions.handlePotentialProxyLinkUrl(this, getIntent().getDataString());
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        if (intent.getData() != null) {
+            CommunicationActions.handlePotentialProxyLinkUrl(this, intent.getDataString());
+        }
     }
 
     @Override

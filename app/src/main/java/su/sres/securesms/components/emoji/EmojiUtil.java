@@ -1,6 +1,10 @@
 package su.sres.securesms.components.emoji;
 
+import android.content.Context;
+import android.graphics.drawable.Drawable;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.whispersystems.libsignal.util.Pair;
 
@@ -9,6 +13,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import su.sres.securesms.util.Util;
 
 public final class EmojiUtil {
 
@@ -71,5 +77,16 @@ public final class EmojiUtil {
     public static @NonNull String getCanonicalRepresentation(@NonNull String emoji) {
         String canonical = VARIATION_MAP.get(emoji);
         return canonical != null ? canonical : emoji;
+    }
+
+    /**
+     * Converts the provided emoji string into a single drawable, if possible.
+     */
+    public static @Nullable Drawable convertToDrawable(@NonNull Context context, @Nullable String emoji) {
+        if (Util.isEmpty(emoji)) {
+            return null;
+        } else {
+            return EmojiProvider.getInstance(context).getEmojiDrawable(emoji);
+        }
     }
 }

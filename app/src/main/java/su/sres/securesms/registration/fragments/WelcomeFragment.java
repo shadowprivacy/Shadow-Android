@@ -82,8 +82,6 @@ public final class WelcomeFragment extends BaseRegistrationFragment {
                 return;
             }
 
- //           initializeNumber();
-
             Log.i(TAG, "Skipping restore because this is a reregistration.");
             model.setWelcomeSkippedOnRestore();
             Navigation.findNavController(view)
@@ -150,8 +148,6 @@ public final class WelcomeFragment extends BaseRegistrationFragment {
 
             TextSecurePreferences.setHasSeenWelcomeScreen(requireContext(), true);
 
- //           initializeNumber();
-
             cancelSpinning(continueButton);
 
             if (backup == null) {
@@ -167,8 +163,6 @@ public final class WelcomeFragment extends BaseRegistrationFragment {
 
     private void gatherInformationAndChooseBackup(@NonNull View view) {
         TextSecurePreferences.setHasSeenWelcomeScreen(requireContext(), true);
-
-   //     initializeNumber();
 
         Navigation.findNavController(view)
                 .navigate(WelcomeFragmentDirections.actionChooseBackup());

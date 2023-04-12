@@ -18,6 +18,7 @@ import su.sres.securesms.jobs.ProfileUploadJob;
 import su.sres.securesms.jobs.PushGroupSilentUpdateSendJob;
 import su.sres.securesms.jobs.RequestGroupV2InfoJob;
 import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.groupsv2.GroupChangeReconstruct;
 import su.sres.signalservice.api.groupsv2.GroupLinkNotActiveException;
 import su.sres.signalservice.api.groupsv2.NotAbleToApplyGroupV2ChangeException;
@@ -77,6 +78,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -218,7 +220,7 @@ final class GroupManagerV2 {
         GroupMasterKey            groupMasterKey    = groupIdV1.deriveV2MigrationMasterKey();
         GroupSecretParams         groupSecretParams = GroupSecretParams.deriveFromMasterKey(groupMasterKey);
         GroupDatabase.GroupRecord groupRecord       = groupDatabase.requireGroup(groupIdV1);
-        String                    name              = groupRecord.getTitle();
+        String                    name              = Util.emptyIfNull(groupRecord.getTitle());
         byte[]                    avatar            = groupRecord.hasAvatar() ? AvatarHelper.getAvatarBytes(context, groupRecord.getRecipientId()) : null;
         int                       messageTimer      = Recipient.resolved(groupRecord.getRecipientId()).getExpireMessages();
         Set<RecipientId>          memberIds         = Stream.of(members)
@@ -580,7 +582,16 @@ final class GroupManagerV2 {
             GroupsV2StateProcessor.GroupUpdateResult groupUpdateResult = groupsV2StateProcessor.forGroup(groupMasterKey)
                     .updateLocalGroupToRevision(GroupsV2StateProcessor.LATEST, System.currentTimeMillis(), null);
 
-            if (groupUpdateResult.getGroupState() != GroupsV2StateProcessor.GroupState.GROUP_UPDATED || groupUpdateResult.getLatestServer() == null) {
+            if (groupUpdateResult.getLatestServer() == null) {
+                Log.w(TAG, "Latest server state null.");
+                throw new GroupChangeFailedException();
+            }
+
+            if (groupUpdateResult.getGroupState() != GroupsV2StateProcessor.GroupState.GROUP_UPDATED) {
+                int serverRevision = groupUpdateResult.getLatestServer().getRevision();
+                int localRevision  = groupDatabase.requireGroup(groupId).requireV2GroupProperties().getGroupRevision();
+                int revisionDelta  = serverRevision - localRevision;
+                Log.w(TAG, String.format(Locale.US, "Server is ahead by %d revisions", revisionDelta));
                 throw new GroupChangeFailedException();
             }
 

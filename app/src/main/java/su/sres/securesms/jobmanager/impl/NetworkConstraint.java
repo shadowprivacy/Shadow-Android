@@ -36,6 +36,11 @@ public class NetworkConstraint implements Constraint {
         jobInfoBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
     }
 
+    @Override
+    public String getJobSchedulerKeyPart() {
+        return "NETWORK";
+    }
+
     public static boolean isMet(@NonNull Context context) {
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo         activeNetworkInfo   = connectivityManager.getActiveNetworkInfo();

@@ -32,6 +32,7 @@ import su.sres.securesms.database.RecipientDatabase.VibrateState;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.phonenumbers.NumberUtil;
 import su.sres.securesms.profiles.ProfileName;
@@ -44,6 +45,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
 
 import su.sres.core.util.concurrent.SignalExecutors;
+import su.sres.securesms.wallpaper.ChatWallpaper;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.util.UuidUtil;
 
@@ -105,6 +107,9 @@ public class Recipient {
   private final InsightsBannerTier     insightsBannerTier;
   private final byte[]                 storageId;
   private final MentionSetting mentionSetting;
+  private final ChatWallpaper wallpaper;
+  private final String                 about;
+  private final String                 aboutEmoji;
 
   /**
    * Returns a {@link LiveRecipient}, which contains a {@link Recipient} that may or may not be
@@ -338,6 +343,9 @@ public class Recipient {
     this.groupsV1MigrationCapability = Capability.UNKNOWN;
     this.storageId                   = null;
     this.mentionSetting              = MentionSetting.ALWAYS_NOTIFY;
+    this.wallpaper                   = null;
+    this.about                       = null;
+    this.aboutEmoji                  = null;
   }
 
   public Recipient(@NonNull RecipientId id, @NonNull RecipientDetails details, boolean resolved) {
@@ -380,6 +388,9 @@ public class Recipient {
     this.groupsV1MigrationCapability = details.groupsV1MigrationCapability;
     this.storageId                   = details.storageId;
     this.mentionSetting              = details.mentionSetting;
+    this.wallpaper                   = details.wallpaper;
+    this.about                       = details.about;
+    this.aboutEmoji                  = details.aboutEmoji;
   }
 
   public @NonNull RecipientId getId() {
@@ -408,6 +419,10 @@ public class Recipient {
     } else {
       return this.name;
     }
+  }
+
+  public boolean hasName() {
+    return name != null;
   }
 
   /**
@@ -494,6 +509,15 @@ public class Recipient {
     String name = Util.getFirstNonEmpty(getName(context),
             getProfileName().getGivenName(),
             getDisplayName(context));
+
+    return StringUtil.isolateBidi(name);
+  }
+
+  public @NonNull String getShortDisplayNameIncludingUsername(@NonNull Context context) {
+    String name = Util.getFirstNonEmpty(getName(context),
+            getProfileName().getGivenName(),
+            getDisplayName(context),
+            getUsername().orNull());
 
     return StringUtil.isolateBidi(name);
   }
@@ -831,8 +855,49 @@ public class Recipient {
     return unidentifiedAccessMode;
   }
 
+  public @Nullable ChatWallpaper getWallpaper() {
+    if (wallpaper != null) {
+      return wallpaper;
+    } else {
+      return SignalStore.wallpaper().getWallpaper();
+    }
+  }
+
+  public boolean hasOwnWallpaper() {
+    return wallpaper != null;
+  }
+
+  /**
+   * A cheap way to check if wallpaper is set without doing any unnecessary proto parsing.
+   */
+  public boolean hasWallpaper() {
+    return wallpaper != null || SignalStore.wallpaper().hasWallpaperSet();
+  }
+
   public boolean isSystemContact() {
     return contactUri != null;
+  }
+
+  public @Nullable String getAbout() {
+    return about;
+  }
+
+  public @Nullable String getAboutEmoji() {
+    return aboutEmoji;
+  }
+
+  public @Nullable String getCombinedAboutAndEmoji() {
+    if (!Util.isEmpty(aboutEmoji)) {
+      if (!Util.isEmpty(about)) {
+        return aboutEmoji + " " + about;
+      } else {
+        return aboutEmoji;
+      }
+    } else if (!Util.isEmpty(about)) {
+      return about;
+    } else {
+      return null;
+    }
   }
 
   /**
@@ -947,7 +1012,10 @@ public class Recipient {
             groupsV1MigrationCapability == other.groupsV1MigrationCapability &&
             insightsBannerTier == other.insightsBannerTier &&
             Arrays.equals(storageId, other.storageId) &&
-            mentionSetting == other.mentionSetting;
+            mentionSetting == other.mentionSetting &&
+            Objects.equals(wallpaper, other.wallpaper) &&
+            Objects.equals(about, other.about) &&
+            Objects.equals(aboutEmoji, other.aboutEmoji);
   }
 
   private static boolean allContentsAreTheSame(@NonNull List<Recipient> a, @NonNull List<Recipient> b) {

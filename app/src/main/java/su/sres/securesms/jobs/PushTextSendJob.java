@@ -70,7 +70,7 @@ public class PushTextSendJob extends PushSendJob  {
   }
 
   @Override
-  public void onPushSend() throws NoSuchMessageException, RetryLaterException, UndeliverableMessageException {
+  public void onPushSend() throws IOException, NoSuchMessageException, UndeliverableMessageException {
     ExpiringMessageManager expirationManager = ApplicationContext.getInstance(context).getExpiringMessageManager();
     MessageDatabase database          = DatabaseFactory.getSmsDatabase(context);
     SmsMessageRecord       record            = database.getSmsMessage(messageId);
@@ -133,13 +133,6 @@ public class PushTextSendJob extends PushSendJob  {
   }
 
   @Override
-  public boolean onShouldRetry(@NonNull Exception exception) {
-    if (exception instanceof RetryLaterException) return true;
-
-    return false;
-  }
-
-  @Override
   public void onFailure() {
     DatabaseFactory.getSmsDatabase(context).markAsSentFailed(messageId);
 
@@ -152,7 +145,7 @@ public class PushTextSendJob extends PushSendJob  {
   }
 
   private boolean deliver(SmsMessageRecord message)
-          throws UntrustedIdentityException, InsecureFallbackApprovalException, RetryLaterException, UndeliverableMessageException
+          throws UntrustedIdentityException, InsecureFallbackApprovalException, UndeliverableMessageException, IOException
   {
     try {
       rotateSenderCertificateIfNecessary();
@@ -187,9 +180,6 @@ public class PushTextSendJob extends PushSendJob  {
       throw new InsecureFallbackApprovalException(e);
     } catch (ServerRejectedException e) {
       throw new UndeliverableMessageException(e);
-    } catch (IOException e) {
-      warn(TAG, "Failure", e);
-      throw new RetryLaterException(e);
     }
   }
 

@@ -18,6 +18,7 @@ import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.keyvalue.KeyValueStore;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.megaphone.MegaphoneRepository;
+import su.sres.securesms.net.PipeConnectivityListener;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
@@ -105,6 +106,10 @@ public class ApplicationDependencies {
         return application;
     }
 
+    public static @NonNull PipeConnectivityListener getPipeListener() {
+        return provider.providePipeListener();
+    }
+
     public static @NonNull SignalServiceAccountManager getSignalServiceAccountManager() {
         synchronized (LOCK) {
             if (accountManager == null) {
@@ -180,6 +185,31 @@ public class ApplicationDependencies {
     public static void resetSignalServiceMessageReceiver() {
         synchronized (LOCK) {
             messageReceiver = null;
+        }
+    }
+
+    public static void closeConnectionsAfterProxyFailure() {
+        synchronized (LOCK) {
+
+            if (incomingMessageObserver != null) {
+                incomingMessageObserver.terminateAsync();
+            }
+
+            if (messageSender != null) {
+                messageSender.cancelInFlightRequests();
+            }
+
+            incomingMessageObserver = null;
+            messageReceiver         = null;
+            accountManager          = null;
+            messageSender           = null;
+        }
+    }
+
+    public static void resetNetworkConnectionsAfterProxyChange() {
+        synchronized (LOCK) {
+            getPipeListener().reset();
+            closeConnectionsAfterProxyFailure();
         }
     }
 
@@ -343,6 +373,8 @@ public class ApplicationDependencies {
     }
 
     public interface Provider {
+        @NonNull
+        PipeConnectivityListener providePipeListener();
         @NonNull
         GroupsV2Operations provideGroupsV2Operations();
         @NonNull SignalServiceAccountManager provideSignalServiceAccountManager();

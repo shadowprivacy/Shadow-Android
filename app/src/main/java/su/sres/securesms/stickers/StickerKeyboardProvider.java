@@ -18,10 +18,12 @@ import su.sres.securesms.components.emoji.MediaKeyboardProvider;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.model.StickerPackRecord;
 import su.sres.securesms.database.model.StickerRecord;
+import su.sres.securesms.glide.cache.ApngOptions;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.stickers.StickerKeyboardPageFragment.EventListener;
 import su.sres.securesms.stickers.StickerKeyboardRepository.PackListResult;
+import su.sres.securesms.util.DeviceProperties;
 import su.sres.securesms.util.ResUtil;
 import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Throttler;
@@ -149,7 +151,7 @@ public final class StickerKeyboardProvider implements MediaKeyboardProvider,
             startingIndex = !result.hasRecents() && result.getPacks().size() > 0 ? 1 : 0;
         }
 
-        presenter.present(this, pagerAdapter, new IconProvider(context, result.getPacks()), null, this, null, startingIndex);
+        presenter.present(this, pagerAdapter, new IconProvider(context, result.getPacks(), DeviceProperties.shouldAllowApngStickerAnimation(context)), null, this, null, startingIndex);
 
         if (isSoloProvider && result.getPacks().isEmpty()) {
             context.startActivity(StickerManagementActivity.getIntent(context));
@@ -240,10 +242,12 @@ public final class StickerKeyboardProvider implements MediaKeyboardProvider,
 
         private final Context                 context;
         private final List<StickerPackRecord> packs;
+        private final boolean                 allowApngAnimation;
 
-        private IconProvider(@NonNull Context context, List<StickerPackRecord> packs) {
-            this.context    = context;
-            this.packs      = packs;
+        private IconProvider(@NonNull Context context, List<StickerPackRecord> packs, boolean allowApngAnimation) {
+            this.context            = context;
+            this.packs              = packs;
+            this.allowApngAnimation = allowApngAnimation;
         }
 
         @Override
@@ -255,6 +259,7 @@ public final class StickerKeyboardProvider implements MediaKeyboardProvider,
                 Uri uri = packs.get(index - 1).getCover().getUri();
 
                 glideRequests.load(new DecryptableStreamUriLoader.DecryptableUri(uri))
+                        .set(ApngOptions.ANIMATE, allowApngAnimation)
                         .into(imageView);
             }
         }

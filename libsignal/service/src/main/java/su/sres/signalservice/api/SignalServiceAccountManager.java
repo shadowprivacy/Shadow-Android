@@ -300,43 +300,6 @@ public class SignalServiceAccountManager {
         return this.pushServiceSocket.getCurrentSignedPreKey();
     }
 
-    /**
-     * Checks whether a contact is currently registered with the server.
-     *
-     * @param userLoginnumber The contact to check.
-     * @return An optional ContactTokenDetails, present if registered, absent if not.
-     * @throws IOException
-     */
-    public Optional<ContactTokenDetails> getContact(String userLoginnumber) throws IOException {
-        String contactToken = createDirectoryServerToken(userLoginnumber, true);
-        ContactTokenDetails contactTokenDetails = this.pushServiceSocket.getContactTokenDetails(contactToken);
-
-        if (contactTokenDetails != null) {
-            contactTokenDetails.setNumber(userLoginnumber);
-        }
-
-        return Optional.fromNullable(contactTokenDetails);
-    }
-
-    /**
-     * Checks which contacts in a set are registered with the server.
-     *
-     * @param userLoginnumbers The contacts to check.
-     * @return A list of ContactTokenDetails for the registered users.
-     * @throws IOException
-     */
-    public List<ContactTokenDetails> getContacts(Set<String> userLoginnumbers)
-            throws IOException {
-        Map<String, String> contactTokensMap = createDirectoryServerTokenMap(userLoginnumbers);
-        List<ContactTokenDetails> activeTokens = this.pushServiceSocket.retrieveDirectory(contactTokensMap.keySet());
-
-        for (ContactTokenDetails activeToken : activeTokens) {
-            activeToken.setNumber(contactTokensMap.get(activeToken.getToken()));
-        }
-
-        return activeTokens;
-    }
-
     public DirectoryResponse getDirectoryResponse(long directoryVersion, boolean forceFull) throws IOException {
 
         return this.pushServiceSocket.getDirectoryResponse(directoryVersion, forceFull);
@@ -578,14 +541,20 @@ public class SignalServiceAccountManager {
         return this.pushServiceSocket.getDebugLogUploadAttributes();
     }
 
+    public void checkNetworkConnection() throws IOException {
+        this.pushServiceSocket.pingStorageService();
+    }
+
     /**
      * @return The avatar URL path, if one was written.
      */
-    public Optional<String> setVersionedProfile(UUID uuid, ProfileKey profileKey, String name, StreamDetails avatar)
+    public Optional<String> setVersionedProfile(UUID uuid, ProfileKey profileKey, String name, String about, String aboutEmoji, StreamDetails avatar)
             throws IOException {
         if (name == null) name = "";
 
-        byte[] ciphertextName = new ProfileCipher(profileKey).encryptName(name.getBytes(StandardCharsets.UTF_8), ProfileCipher.NAME_PADDED_LENGTH);
+        byte[]            ciphertextName    = new ProfileCipher(profileKey).encryptName(name.getBytes(StandardCharsets.UTF_8), ProfileCipher.getTargetNameLength(name));
+        byte[]            ciphertextAbout   = new ProfileCipher(profileKey).encryptName(about.getBytes(StandardCharsets.UTF_8), ProfileCipher.getTargetAboutLength(about));
+        byte[]            ciphertextEmoji   = new ProfileCipher(profileKey).encryptName(aboutEmoji.getBytes(StandardCharsets.UTF_8), ProfileCipher.EMOJI_PADDED_LENGTH);
         boolean hasAvatar = avatar != null;
         ProfileAvatarData profileAvatarData = null;
 
@@ -598,6 +567,8 @@ public class SignalServiceAccountManager {
 
         return this.pushServiceSocket.writeProfile(new SignalServiceProfileWrite(profileKey.getProfileKeyVersion(uuid).serialize(),
                         ciphertextName,
+                        ciphertextAbout,
+                        ciphertextEmoji,
                         hasAvatar,
                         profileKey.getCommitment(uuid).serialize()),
                 profileAvatarData);
@@ -635,29 +606,6 @@ public class SignalServiceAccountManager {
 
     public void cancelInFlightRequests() {
         this.pushServiceSocket.cancelInFlightRequests();
-    }
-
-    private String createDirectoryServerToken(String userLoginnumber, boolean urlSafe) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA1");
-            byte[] token = Util.trim(digest.digest(userLoginnumber.getBytes()), 10);
-            String encoded = Base64.encodeBytesWithoutPadding(token);
-
-            if (urlSafe) return encoded.replace('+', '-').replace('/', '_');
-            else return encoded;
-        } catch (NoSuchAlgorithmException e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    private Map<String, String> createDirectoryServerTokenMap(Collection<String> userLoginnumbers) {
-        Map<String, String> tokenMap = new HashMap<>(userLoginnumbers.size());
-
-        for (String number : userLoginnumbers) {
-            tokenMap.put(createDirectoryServerToken(number, false), number);
-        }
-
-        return tokenMap;
     }
 
     public void updatePushServiceSocket(SignalServiceConfiguration configuration) {

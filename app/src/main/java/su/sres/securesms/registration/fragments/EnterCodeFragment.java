@@ -90,17 +90,6 @@ public final class EnterCodeFragment extends BaseRegistrationFragment
                         }
 
                         @Override
-                        public void onIncorrectRegistrationLockPin(long timeRemaining) {
-                            keyboard.displayLocked().addListener(new AssertedSuccessListener<Boolean>() {
-                                @Override
-                                public void onSuccess(Boolean r) {
-                                    Navigation.findNavController(requireView())
-                                            .navigate(EnterCodeFragmentDirections.actionRequireRegistrationLockPin(timeRemaining));
-                                }
-                            });
-                        }
-
-                        @Override
                         public void onTooManyAttempts() {
                             keyboard.displayFailure().addListener(new AssertedSuccessListener<Boolean>() {
                                 @Override
@@ -180,7 +169,7 @@ public final class EnterCodeFragment extends BaseRegistrationFragment
     private void sendEmailToSupport() {
 
         String body = SupportEmailUtil.generateSupportEmailBody(requireContext(),
-                getString(R.string.RegistrationActivity_code_support_subject),
+                R.string.RegistrationActivity_code_support_subject,
                 null,
                 null);
 

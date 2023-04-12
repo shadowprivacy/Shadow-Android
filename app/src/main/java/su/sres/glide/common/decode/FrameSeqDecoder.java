@@ -15,7 +15,7 @@ import android.os.Looper;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
-import su.sres.glide.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.glide.common.executor.FrameDecoderExecutor;
 import su.sres.glide.common.io.Reader;
 import su.sres.glide.common.io.Writer;

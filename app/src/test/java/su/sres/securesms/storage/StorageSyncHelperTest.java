@@ -6,6 +6,7 @@ import com.annimon.stream.Stream;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runners.JUnit4;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -14,6 +15,8 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.storage.StorageSyncHelper.KeyDifferenceResult;
 import su.sres.securesms.storage.StorageSyncHelper.MergeResult;
+
+import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.securesms.util.FeatureFlags;
@@ -43,6 +46,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static su.sres.securesms.testutil.LibSignalLibraryUtil.assumeLibSignalSupportedOnOS;
 import static su.sres.securesms.testutil.TestHelpers.assertByteListEquals;
 import static su.sres.securesms.testutil.TestHelpers.assertContentsEqual;
 import static su.sres.securesms.testutil.TestHelpers.byteArray;
@@ -52,6 +56,7 @@ import static su.sres.securesms.testutil.TestHelpers.setOf;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ Recipient.class, FeatureFlags.class})
 @PowerMockIgnore("javax.crypto.*")
+@PowerMockRunnerDelegate(JUnit4.class)
 public final class StorageSyncHelperTest {
 
     private static final UUID UUID_A    = UuidUtil.parseOrThrow("ebef429e-695e-4f51-bcc4-526a60ac68c7");
@@ -215,6 +220,8 @@ public final class StorageSyncHelperTest {
 
     @Test
     public void resolveConflict_group_v1_sameAsRemote() {
+        assumeLibSignalSupportedOnOS();
+
         SignalGroupV1Record remote1 = groupV1(1, 1, true, false);
         SignalGroupV1Record local1  = groupV1(2, 1, true, false);
 
@@ -280,6 +287,8 @@ public final class StorageSyncHelperTest {
 
     @Test
     public void resolveConflict_complex() {
+        assumeLibSignalSupportedOnOS();
+
         SignalContactRecord remote1 = contact(1, UUID_A, null, "a");
         SignalContactRecord local1  = contact(2, UUID_A, E164_A, "a");
         SignalContactRecord remote2 = contact(3, UUID_B, E164_B, null);

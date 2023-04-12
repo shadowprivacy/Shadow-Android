@@ -343,6 +343,13 @@ public abstract class WebRtcActionProcessor {
             return currentState;
         }
 
+        if (offerMetadata.getOpaque() == null) {
+            Log.w(tag, "Opaque data is required.");
+            currentState = currentState.getActionProcessor().handleSendHangup(currentState, callMetadata, WebRtcData.HangupMetadata.fromType(HangupMessage.Type.NORMAL), true);
+            webRtcInteractor.insertMissedCall(callMetadata.getRemotePeer(), true, receivedOfferMetadata.getServerReceivedTimestamp(), offerMetadata.getOfferType() == OfferMessage.Type.VIDEO_CALL);
+            return currentState;
+        }
+
         Log.i(tag, "add remotePeer callId: " + callMetadata.getRemotePeer().getCallId() + " key: " + callMetadata.getRemotePeer().hashCode());
 
         callMetadata.getRemotePeer().setCallStartTimestamp(receivedOfferMetadata.getServerReceivedTimestamp());
@@ -366,7 +373,6 @@ public abstract class WebRtcActionProcessor {
                     callMetadata.getRemotePeer(),
                     callMetadata.getRemoteDevice(),
                     offerMetadata.getOpaque(),
-                    offerMetadata.getSdp(),
                     messageAgeSec,
                     WebRtcUtil.getCallMediaTypeFromOfferType(offerMetadata.getOfferType()),
                     1,
@@ -612,7 +618,7 @@ public abstract class WebRtcActionProcessor {
 
     protected @NonNull WebRtcServiceState handleBandwidthModeUpdate(@NonNull WebRtcServiceState currentState) {
         try {
-            webRtcInteractor.getCallManager().setLowBandwidthMode(NetworkUtil.useLowBandwidthCalling(context));
+            webRtcInteractor.getCallManager().updateBandwidthMode(NetworkUtil.getCallingBandwidthMode(context));
         } catch (CallException e) {
             Log.i(tag, "handleBandwidthModeUpdate: could not update bandwidth mode.");
         }

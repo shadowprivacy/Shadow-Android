@@ -9,6 +9,7 @@ public class LockedException extends NonSuccessfulResponseCodeException {
   private long timeRemaining;
 
   LockedException(int length, long timeRemaining) {
+    super(423);
     this.length        = length;
     this.timeRemaining = timeRemaining;
   }

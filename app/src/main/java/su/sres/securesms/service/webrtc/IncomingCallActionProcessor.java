@@ -19,6 +19,7 @@ import su.sres.securesms.ringrtc.IceCandidateParcel;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.state.VideoState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
+import su.sres.securesms.util.NetworkUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.webrtc.locks.LockManager;
 
@@ -92,6 +93,7 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
                     videoState.requireCamera(),
                     iceServers,
                     hideIp,
+                    NetworkUtil.getCallingBandwidthMode(context),
                     false);
         } catch (CallException e) {
             return callFailure(currentState, "Unable to proceed with call: ", e);

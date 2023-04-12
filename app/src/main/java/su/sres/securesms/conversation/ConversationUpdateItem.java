@@ -8,12 +8,17 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 
+import android.content.res.ColorStateList;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.google.android.material.button.MaterialButton;
 
 import su.sres.securesms.BindableConversationItem;
 import su.sres.securesms.R;
@@ -27,9 +32,12 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.ListenableFuture;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 
@@ -42,21 +50,22 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-public final class ConversationUpdateItem extends LinearLayout
+public final class ConversationUpdateItem extends FrameLayout
         implements BindableConversationItem
 {
   private static final String TAG = ConversationUpdateItem.class.getSimpleName();
 
   private Set<ConversationMessage> batchSelected;
 
-  private TextView                body;
-  private TextView                actionButton;
-  private ConversationMessage     conversationMessage;
-  private Recipient               conversationRecipient;
-  private Optional<MessageRecord> nextMessageRecord;
-  private MessageRecord           messageRecord;
-  private LiveData<Spannable>     displayBody;
-  private EventListener           eventListener;
+  private TextView                  body;
+  private MaterialButton            actionButton;
+  private View                      background;
+  private ConversationMessage       conversationMessage;
+  private Recipient                 conversationRecipient;
+  private Optional<MessageRecord>   nextMessageRecord;
+  private MessageRecord             messageRecord;
+  private LiveData<SpannableString> displayBody;
+  private EventListener             eventListener;
 
   private final UpdateObserver updateObserver = new UpdateObserver();
 
@@ -78,6 +87,7 @@ public final class ConversationUpdateItem extends LinearLayout
 
     this.body         = findViewById(R.id.conversation_update_body);
     this.actionButton = findViewById(R.id.conversation_update_action);
+    this.background   = findViewById(R.id.conversation_update_background);
 
     this.setOnClickListener(new InternalClickListener(null));
   }
@@ -92,11 +102,13 @@ public final class ConversationUpdateItem extends LinearLayout
                    @NonNull Set<ConversationMessage> batchSelected,
                    @NonNull Recipient conversationRecipient,
                    @Nullable String searchQuery,
-                   boolean pulseMention)
+                   boolean pulseMention,
+                   boolean hasWallpaper,
+                   boolean isMessageRequestAccepted)
   {
     this.batchSelected = batchSelected;
 
-    bind(lifecycleOwner, conversationMessage, nextMessageRecord, conversationRecipient);
+    bind(lifecycleOwner, conversationMessage, previousMessageRecord, nextMessageRecord, conversationRecipient, hasWallpaper);
   }
 
   @Override
@@ -111,8 +123,10 @@ public final class ConversationUpdateItem extends LinearLayout
 
   private void bind(@NonNull LifecycleOwner lifecycleOwner,
                     @NonNull ConversationMessage conversationMessage,
+                    @NonNull Optional<MessageRecord> previousMessageRecord,
                     @NonNull Optional<MessageRecord> nextMessageRecord,
-                    @NonNull Recipient conversationRecipient)
+                    @NonNull Recipient conversationRecipient,
+                    boolean hasWallpaper)
   {
 
     this.conversationMessage   = conversationMessage;
@@ -128,15 +142,41 @@ public final class ConversationUpdateItem extends LinearLayout
       groupObserver.observe(lifecycleOwner, null);
     }
 
-    UpdateDescription   updateDescription = Objects.requireNonNull(messageRecord.getUpdateDisplayBody(getContext()));
-    LiveData<Spannable> liveUpdateMessage = LiveUpdateMessage.fromMessageDescription(getContext(), updateDescription, ContextCompat.getColor(getContext(), R.color.conversation_item_update_text_color));
-    LiveData<Spannable> spannableMessage  = loading(liveUpdateMessage);
+    int textColor = ContextCompat.getColor(getContext(), R.color.conversation_item_update_text_color);
+    if (ThemeUtil.isDarkTheme(getContext()) && hasWallpaper) {
+      textColor = ContextCompat.getColor(getContext(), R.color.core_grey_15);
+    }
+
+    if (!ThemeUtil.isDarkTheme(getContext())) {
+      if (hasWallpaper) {
+        actionButton.setStrokeColor(ColorStateList.valueOf(getResources().getColor(R.color.core_grey_45)));
+      } else {
+        actionButton.setStrokeColor(ColorStateList.valueOf(getResources().getColor(R.color.signal_button_secondary_stroke)));
+      }
+    }
+
+    UpdateDescription         updateDescription = Objects.requireNonNull(messageRecord.getUpdateDisplayBody(getContext()));
+    LiveData<SpannableString> liveUpdateMessage = LiveUpdateMessage.fromMessageDescription(getContext(), updateDescription, textColor);
+    LiveData<SpannableString> spannableMessage  = loading(liveUpdateMessage);
 
     observeDisplayBody(lifecycleOwner, spannableMessage);
+
+    present(conversationMessage, nextMessageRecord, conversationRecipient);
+
+    presentBackground(shouldCollapse(messageRecord, previousMessageRecord),
+            shouldCollapse(messageRecord, nextMessageRecord),
+            hasWallpaper);
+  }
+
+  private static boolean shouldCollapse(@NonNull MessageRecord current, @NonNull Optional<MessageRecord> candidate) {
+    return candidate.isPresent()      &&
+            candidate.get().isUpdate() &&
+            DateUtils.isSameDay(current.getTimestamp(), candidate.get().getTimestamp()) &&
+            isSameType(current, candidate.get());
   }
 
   /** After a short delay, if the main data hasn't shown yet, then a loading message is displayed. */
-  private @NonNull LiveData<Spannable> loading(@NonNull LiveData<Spannable> string) {
+  private @NonNull LiveData<SpannableString> loading(@NonNull LiveData<SpannableString> string) {
     return LiveDataUtil.until(string, LiveDataUtil.delay(250, new SpannableString(getContext().getString(R.string.ConversationUpdateItem_loading))));
   }
 
@@ -172,7 +212,7 @@ public final class ConversationUpdateItem extends LinearLayout
     }
   }
 
-  private void observeDisplayBody(@NonNull LifecycleOwner lifecycleOwner, @Nullable LiveData<Spannable> displayBody) {
+  private void observeDisplayBody(@NonNull LifecycleOwner lifecycleOwner, @Nullable LiveData<SpannableString> displayBody) {
     if (this.displayBody != displayBody) {
       if (this.displayBody != null) {
         this.displayBody.removeObserver(updateObserver);
@@ -269,6 +309,78 @@ public final class ConversationUpdateItem extends LinearLayout
     }
   }
 
+  private void presentBackground(boolean collapseAbove, boolean collapseBelow, boolean hasWallpaper) {
+    int marginDefault    = getContext().getResources().getDimensionPixelOffset(R.dimen.conversation_update_vertical_margin);
+    int marginCollapsed  = 0;
+    int paddingDefault   = getContext().getResources().getDimensionPixelOffset(R.dimen.conversation_update_vertical_padding);
+    int paddingCollapsed = getContext().getResources().getDimensionPixelOffset(R.dimen.conversation_update_vertical_padding_collapsed);
+
+    if (collapseAbove && collapseBelow) {
+      ViewUtil.setTopMargin(background, marginCollapsed);
+      ViewUtil.setBottomMargin(background, marginCollapsed);
+
+      ViewUtil.setPaddingTop(background, paddingCollapsed);
+      ViewUtil.setPaddingBottom(background, paddingCollapsed);
+
+      ViewUtil.updateLayoutParams(background, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+      if (hasWallpaper) {
+        background.setBackgroundResource(R.drawable.conversation_update_wallpaper_background_middle);
+      } else {
+        background.setBackground(null);
+      }
+    } else if (collapseAbove) {
+      ViewUtil.setTopMargin(background, marginCollapsed);
+      ViewUtil.setBottomMargin(background, marginDefault);
+
+      ViewUtil.setPaddingTop(background, paddingCollapsed);
+      ViewUtil.setPaddingBottom(background, paddingDefault);
+
+      ViewUtil.updateLayoutParams(background, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+      if (hasWallpaper) {
+        background.setBackgroundResource(R.drawable.conversation_update_wallpaper_background_bottom);
+      } else {
+        background.setBackground(null);
+      }
+    } else if (collapseBelow) {
+      ViewUtil.setTopMargin(background, marginDefault);
+      ViewUtil.setBottomMargin(background, marginCollapsed);
+
+      ViewUtil.setPaddingTop(background, paddingDefault);
+      ViewUtil.setPaddingBottom(background, paddingCollapsed);
+
+      ViewUtil.updateLayoutParams(background, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+      if (hasWallpaper) {
+        background.setBackgroundResource(R.drawable.conversation_update_wallpaper_background_top);
+      } else {
+        background.setBackground(null);
+      }
+    } else {
+      ViewUtil.setTopMargin(background, marginDefault);
+      ViewUtil.setBottomMargin(background, marginDefault);
+
+      ViewUtil.setPaddingTop(background, paddingDefault);
+      ViewUtil.setPaddingBottom(background, paddingDefault);
+
+      ViewUtil.updateLayoutParams(background, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+      if (hasWallpaper) {
+        background.setBackgroundResource(R.drawable.conversation_update_wallpaper_background_singular);
+      } else {
+        background.setBackground(null);
+      }
+    }
+  }
+
+  private static boolean isSameType(@NonNull MessageRecord current, @NonNull MessageRecord candidate) {
+    return (current.isGroupUpdate()           && candidate.isGroupUpdate())   ||
+            (current.isProfileChange()         && candidate.isProfileChange()) ||
+            (current.isGroupCall()             && candidate.isGroupCall())     ||
+            (current.isExpirationTimerUpdate() && candidate.isExpirationTimerUpdate());
+  }
+
   @Override
   public void setOnClickListener(View.OnClickListener l) {
     super.setOnClickListener(new InternalClickListener(l));
@@ -277,10 +389,10 @@ public final class ConversationUpdateItem extends LinearLayout
   private final class PresentOnChange implements Observer<Recipient> {
     @Override
     public void onChanged(Recipient recipient) {
-      if (recipient.getId() == conversationRecipient.getId()) {
+      if (recipient.getId() == conversationRecipient.getId() && (conversationRecipient == null || !conversationRecipient.hasSameContent(recipient))) {
         conversationRecipient = recipient;
+        present(conversationMessage, nextMessageRecord, conversationRecipient);
       }
-      present(conversationMessage, nextMessageRecord, conversationRecipient);
     }
   }
 

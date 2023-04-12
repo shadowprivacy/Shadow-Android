@@ -7,14 +7,21 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import org.signal.zkgroup.profiles.ProfileKey;
+
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
+import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.profiles.AvatarHelper;
+import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.messages.IncomingMessageObserver;
 import org.whispersystems.libsignal.util.guava.Optional;
+
+import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessagePipe;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.crypto.InvalidCiphertextException;
@@ -26,6 +33,7 @@ import su.sres.signalservice.api.profiles.SignalServiceProfile;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.NotFoundException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
+import su.sres.signalservice.api.util.StreamDetails;
 import su.sres.signalservice.internal.util.concurrent.CascadingFuture;
 import su.sres.signalservice.internal.util.concurrent.ListenableFuture;
 
@@ -39,6 +47,8 @@ import java.util.concurrent.TimeoutException;
  * Aids in the retrieval and decryption of profiles.
  */
 public final class ProfileUtil {
+
+    private static final String TAG = Log.tag(ProfileUtil.class);
 
     private ProfileUtil() {}
 
@@ -95,6 +105,60 @@ public final class ProfileUtil {
 
         ProfileCipher profileCipher = new ProfileCipher(profileKey);
         return new String(profileCipher.decryptName(Base64.decode(encryptedName)));
+    }
+
+    /**
+     * Uploads the profile based on all state that's written to disk, except we'll use the provided
+     * profile name instead. This is useful when you want to ensure that the profile has been uploaded
+     * successfully before persisting the change to disk.
+     */
+    public static void uploadProfileWithName(@NonNull Context context, @NonNull ProfileName profileName) throws IOException {
+        uploadProfile(context,
+                profileName,
+                Optional.fromNullable(Recipient.self().getAbout()).or(""),
+                Optional.fromNullable(Recipient.self().getAboutEmoji()).or(""));
+    }
+
+    /**
+     * Uploads the profile based on all state that's written to disk, except we'll use the provided
+     * about/emoji instead. This is useful when you want to ensure that the profile has been uploaded
+     * successfully before persisting the change to disk.
+     */
+    public static void uploadProfileWithAbout(@NonNull Context context, @NonNull String about, @NonNull String emoji) throws IOException {
+        uploadProfile(context,
+                Recipient.self().getProfileName(),
+                about,
+                emoji);
+    }
+
+    /**
+     * Uploads the profile based on all state that's already written to disk.
+     */
+    public static void uploadProfile(@NonNull Context context) throws IOException {
+        uploadProfile(context,
+                Recipient.self().getProfileName(),
+                Optional.fromNullable(Recipient.self().getAbout()).or(""),
+                Optional.fromNullable(Recipient.self().getAboutEmoji()).or(""));
+    }
+
+    public static void uploadProfile(@NonNull Context context,
+                                     @NonNull ProfileName profileName,
+                                     @Nullable String about,
+                                     @Nullable String aboutEmoji)
+            throws IOException
+    {
+        Log.d(TAG, "Uploading " + (!Util.isEmpty(about) ? "non-" : "") + "empty about.");
+        Log.d(TAG, "Uploading " + (!Util.isEmpty(aboutEmoji) ? "non-" : "") + "empty emoji.");
+
+        ProfileKey  profileKey  = ProfileKeyUtil.getSelfProfileKey();
+        String      avatarPath;
+
+        try (StreamDetails avatar = AvatarHelper.getSelfProfileAvatarStream(context)) {
+            SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
+            avatarPath = accountManager.setVersionedProfile(Recipient.self().getUuid().get(), profileKey, profileName.serialize(), about, aboutEmoji, avatar).orNull();
+        }
+
+        DatabaseFactory.getRecipientDatabase(context).setProfileAvatar(Recipient.self().getId(), avatarPath);
     }
 
     @WorkerThread

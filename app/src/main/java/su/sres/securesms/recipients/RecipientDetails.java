@@ -18,6 +18,7 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.wallpaper.ChatWallpaper;
 
 import org.signal.zkgroup.profiles.ProfileKeyCredential;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -67,6 +68,9 @@ public class RecipientDetails {
     final InsightsBannerTier     insightsBannerTier;
     final byte[]                 storageId;
     final MentionSetting         mentionSetting;
+    final ChatWallpaper wallpaper;
+    final String                 about;
+    final String                 aboutEmoji;
 
     public RecipientDetails(@Nullable String name,
                             @NonNull Optional<Long> groupAvatarId,
@@ -112,6 +116,9 @@ public class RecipientDetails {
         this.insightsBannerTier          = settings.getInsightsBannerTier();
         this.storageId                   = settings.getStorageId();
         this.mentionSetting              = settings.getMentionSetting();
+        this.wallpaper                   = settings.getWallpaper();
+        this.about                       = settings.getAbout();
+        this.aboutEmoji                  = settings.getAboutEmoji();
 
         if (name == null) this.name = settings.getSystemDisplayName();
         else              this.name = name;
@@ -159,6 +166,9 @@ public class RecipientDetails {
         this.groupsV1MigrationCapability = Recipient.Capability.UNKNOWN;
         this.storageId                   = null;
         this.mentionSetting              = MentionSetting.ALWAYS_NOTIFY;
+        this.wallpaper                   = null;
+        this.about                       = null;
+        this.aboutEmoji                  = null;
     }
 
     public static @NonNull RecipientDetails forIndividual(@NonNull Context context, @NonNull RecipientSettings settings) {

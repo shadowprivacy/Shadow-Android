@@ -1,6 +1,7 @@
 package su.sres.securesms.components.emoji;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,7 +27,12 @@ public class EmojiEditText extends AppCompatEditText {
 
   public EmojiEditText(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
-    if (!TextSecurePreferences.isSystemEmojiPreferred(getContext())) {
+
+    TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.EmojiTextView, 0, 0);
+    boolean forceCustom = a.getBoolean(R.styleable.EmojiTextView_emoji_forceCustom, false);
+    a.recycle();
+
+    if (forceCustom || !TextSecurePreferences.isSystemEmojiPreferred(getContext())) {
       setFilters(appendEmojiFilter(this.getFilters()));
     }
   }

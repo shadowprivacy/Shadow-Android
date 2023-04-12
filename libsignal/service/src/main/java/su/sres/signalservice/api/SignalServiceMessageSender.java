@@ -52,6 +52,7 @@ import su.sres.signalservice.api.messages.multidevice.VerifiedMessage;
 import su.sres.signalservice.api.messages.shared.SharedContact;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.AuthorizationFailedException;
+import su.sres.signalservice.api.push.exceptions.MalformedResponseException;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
@@ -414,7 +415,9 @@ public class SignalServiceMessageSender {
         }
     }
 
-    private SignalServiceAttachmentPointer uploadAttachmentV2(SignalServiceAttachmentStream attachment, byte[] attachmentKey, PushAttachmentData attachmentData) throws NonSuccessfulResponseCodeException, PushNetworkException {
+    private SignalServiceAttachmentPointer uploadAttachmentV2(SignalServiceAttachmentStream attachment, byte[] attachmentKey, PushAttachmentData attachmentData)
+            throws NonSuccessfulResponseCodeException, PushNetworkException, MalformedResponseException
+    {
         AttachmentV2UploadAttributes v2UploadAttributes = null;
         Optional<SignalServiceMessagePipe> localPipe = pipe.get();
 

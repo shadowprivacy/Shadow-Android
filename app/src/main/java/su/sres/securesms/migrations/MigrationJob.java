@@ -6,6 +6,8 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobLogger;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.jobmanager.impl.BackoffUtil;
+import su.sres.securesms.util.FeatureFlags;
 
 /**
  * A base class for jobs that are intended to be used in {@link ApplicationMigrations}. Some
@@ -45,7 +47,7 @@ abstract class MigrationJob extends Job {
         } catch (Exception e) {
             if (shouldRetry(e)) {
                 Log.w(TAG, JobLogger.format(this, "Encountered a retryable exception."), e);
-                return Result.retry();
+                return Result.retry(BackoffUtil.exponentialBackoff(getRunAttempt(), FeatureFlags.getDefaultMaxBackoff()));
             } else {
                 Log.w(TAG, JobLogger.format(this, "Encountered a non-runtime fatal exception."), e);
                 throw new FailedMigrationError(e);

@@ -83,7 +83,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
 
     <!-- So we can add a TextSecure 'Account' -->
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
@@ -193,12 +192,15 @@
             android:name=".preferences.MmsPreferencesActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
+        <activity android:name=".sharing.interstitial.ShareInterstitialActivity"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
+            android:windowSoftInputMode="adjustResize" />
+
         <activity android:name=".sharing.ShareActivity"
             android:theme="@style/Theme.Signal.DayNight.NoActionBar"
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
             android:taskAffinity=""
-            android:noHistory="true"
             android:windowSoftInputMode="stateHidden"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize">
 
@@ -290,6 +292,16 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https"
                     android:host="group.shadowprivacy.com"/>
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                    android:host="proxy.shadowprivacy.com" />
+                <data android:scheme="sgnl"
+                    android:host="proxy.shadowprivacy.com" />
             </intent-filter>
 
         </activity>
@@ -400,11 +412,22 @@
 
         <activity
             android:name=".ApplicationPreferencesActivity"
-            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize">
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.NOTIFICATION_PREFERENCES" />
             </intent-filter>
+        </activity>
+
+        <activity android:name=".wallpaper.ChatWallpaperActivity"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
+            android:windowSoftInputMode="stateAlwaysHidden">
+        </activity>
+
+        <activity android:name=".wallpaper.ChatWallpaperPreviewActivity"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
+            android:windowSoftInputMode="stateAlwaysHidden">
         </activity>
 
         <activity
@@ -529,6 +552,10 @@
             android:theme="@style/TextSecure.LightRegistrationTheme"
             android:windowSoftInputMode="stateVisible|adjustResize" />
 
+        <activity android:name=".profiles.manage.ManageProfileActivity"
+            android:theme="@style/TextSecure.LightTheme"
+            android:windowSoftInputMode="stateVisible|adjustResize" />
+
         <activity android:name=".ClearAvatarPromptActivity"
             android:theme="@style/Theme.AppCompat.Dialog.Alert"
             android:icon="@drawable/clear_profile_avatar"
@@ -604,6 +631,15 @@
             android:theme="@style/Theme.Signal.DayNight.NoActionBar"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
             android:launchMode="singleTask" />
+
+        <activity android:name=".wallpaper.crop.WallpaperImageSelectionActivity"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
+            android:theme="@style/TextSecure.FullScreenMedia" />
+
+        <activity android:name=".wallpaper.crop.WallpaperCropActivity"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Signal.WallpaperCropper" />
 
         <service android:enabled="true" android:name=".service.WebRtcCallService"/>
         <service

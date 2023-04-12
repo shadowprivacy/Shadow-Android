@@ -7,12 +7,16 @@ import androidx.preference.ListPreference;
 
 import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.util.ActivityTransitionUtil;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.wallpaper.ChatWallpaperActivity;
 
 import java.util.Arrays;
 
 public class AppearancePreferenceFragment extends ListSummaryPreferenceFragment {
+
+  private static final String WALLPAPER_PREF = "pref_wallpaper";
 
   @Override
   public void onCreate(Bundle paramBundle) {
@@ -20,6 +24,12 @@ public class AppearancePreferenceFragment extends ListSummaryPreferenceFragment 
 
     this.findPreference(TextSecurePreferences.THEME_PREF).setOnPreferenceChangeListener(new ListSummaryListener());
     this.findPreference(TextSecurePreferences.LANGUAGE_PREF).setOnPreferenceChangeListener(new ListSummaryListener());
+    this.findPreference(WALLPAPER_PREF).setOnPreferenceClickListener(preference -> {
+      startActivity(ChatWallpaperActivity.createIntent(requireContext()));
+      ActivityTransitionUtil.setSlideInTransition(requireActivity());
+      return true;
+    });
+
     initializeListSummary((ListPreference)findPreference(TextSecurePreferences.THEME_PREF));
     initializeListSummary((ListPreference)findPreference(TextSecurePreferences.LANGUAGE_PREF));
   }

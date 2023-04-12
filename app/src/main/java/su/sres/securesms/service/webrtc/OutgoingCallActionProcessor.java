@@ -19,6 +19,7 @@ import su.sres.securesms.service.webrtc.WebRtcData.OfferMetadata;
 import su.sres.securesms.service.webrtc.state.VideoState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceStateBuilder;
+import su.sres.securesms.util.NetworkUtil;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.webrtc.audio.OutgoingRinger;
 
@@ -118,6 +119,7 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
                     videoState.requireCamera(),
                     iceServers,
                     isAlwaysTurn,
+                    NetworkUtil.getCallingBandwidthMode(context),
                     currentState.getCallSetupState().isEnableVideoOnCreate());
         } catch (CallException e) {
             return callFailure(currentState, "Unable to proceed with call: ", e);
@@ -148,11 +150,15 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
     {
         Log.i(TAG, "handleReceivedAnswer(): id: " + callMetadata.getCallId().format(callMetadata.getRemoteDevice()));
 
+        if (answerMetadata.getOpaque() == null) {
+            return callFailure(currentState, "receivedAnswer() failed: answerMetadata did not contain opaque", null);
+        }
+
         try {
             byte[] remoteIdentityKey = WebRtcUtil.getPublicKeyBytes(receivedAnswerMetadata.getRemoteIdentityKey());
             byte[] localIdentityKey  = WebRtcUtil.getPublicKeyBytes(IdentityKeyUtil.getIdentityKey(context).serialize());
 
-            webRtcInteractor.getCallManager().receivedAnswer(callMetadata.getCallId(), callMetadata.getRemoteDevice(), answerMetadata.getOpaque(), answerMetadata.getSdp(), receivedAnswerMetadata.isMultiRing(), remoteIdentityKey, localIdentityKey);
+            webRtcInteractor.getCallManager().receivedAnswer(callMetadata.getCallId(), callMetadata.getRemoteDevice(), answerMetadata.getOpaque(), receivedAnswerMetadata.isMultiRing(), remoteIdentityKey, localIdentityKey);
         } catch (CallException | InvalidKeyException e) {
             return callFailure(currentState, "receivedAnswer() failed: ", e);
         }

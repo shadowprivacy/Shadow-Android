@@ -174,7 +174,7 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
   }
 
   private Intent getPushRegistrationIntent() {
-    return RegistrationNavigationActivity.newIntentForNewRegistration(this);
+    return RegistrationNavigationActivity.newIntentForNewRegistration(this, getIntent());
   }
 
   private Intent getCreateProfileNameIntent() {

@@ -14,22 +14,26 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.providers.DeprecatedPersistentBlobProvider;
 import su.sres.securesms.providers.PartProvider;
+import su.sres.securesms.wallpaper.WallpaperStorage;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public class PartAuthority {
 
-  private static final String AUTHORITY           = BuildConfig.APPLICATION_ID;
-  private static final String PART_URI_STRING     = "content://" + AUTHORITY + "/part";
-  private static final String STICKER_URI_STRING  = "content://" + AUTHORITY + "/sticker";
-  private static final Uri    PART_CONTENT_URI    = Uri.parse(PART_URI_STRING);
-  private static final Uri    STICKER_CONTENT_URI = Uri.parse(STICKER_URI_STRING);
+  private static final String AUTHORITY             = BuildConfig.APPLICATION_ID;
+  private static final String PART_URI_STRING       = "content://" + AUTHORITY + "/part";
+  private static final String STICKER_URI_STRING    = "content://" + AUTHORITY + "/sticker";
+  private static final String WALLPAPER_URI_STRING  = "content://" + AUTHORITY + "/wallpaper";
+  private static final Uri    PART_CONTENT_URI      = Uri.parse(PART_URI_STRING);
+  private static final Uri    STICKER_CONTENT_URI   = Uri.parse(STICKER_URI_STRING);
+  private static final Uri    WALLPAPER_CONTENT_URI = Uri.parse(WALLPAPER_URI_STRING);
 
   private static final int PART_ROW       = 1;
   private static final int PERSISTENT_ROW = 2;
   private static final int BLOB_ROW       = 3;
   private static final int STICKER_ROW    = 4;
+  private static final int WALLPAPER_ROW  = 5;
 
   private static final UriMatcher uriMatcher;
 
@@ -37,6 +41,7 @@ public class PartAuthority {
     uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     uriMatcher.addURI(AUTHORITY, "part/*/#", PART_ROW);
     uriMatcher.addURI(AUTHORITY, "sticker/#", STICKER_ROW);
+    uriMatcher.addURI(AUTHORITY, "wallpaper/*", WALLPAPER_ROW);
     uriMatcher.addURI(DeprecatedPersistentBlobProvider.AUTHORITY, DeprecatedPersistentBlobProvider.EXPECTED_PATH_OLD, PERSISTENT_ROW);
     uriMatcher.addURI(DeprecatedPersistentBlobProvider.AUTHORITY, DeprecatedPersistentBlobProvider.EXPECTED_PATH_NEW, PERSISTENT_ROW);
     uriMatcher.addURI(BlobProvider.AUTHORITY, BlobProvider.PATH, BLOB_ROW);
@@ -58,6 +63,7 @@ public class PartAuthority {
         case STICKER_ROW:    return DatabaseFactory.getStickerDatabase(context).getStickerStream(ContentUris.parseId(uri));
         case PERSISTENT_ROW: return DeprecatedPersistentBlobProvider.getInstance(context).getStream(context, ContentUris.parseId(uri));
         case BLOB_ROW:       return BlobProvider.getInstance().getStream(context, uri);
+        case WALLPAPER_ROW:  return WallpaperStorage.read(context, getWallpaperFilename(uri));
       default:             return context.getContentResolver().openInputStream(uri);
       }
     } catch (SecurityException se) {
@@ -135,6 +141,14 @@ public class PartAuthority {
 
   public static Uri getStickerUri(long id) {
     return ContentUris.withAppendedId(STICKER_CONTENT_URI, id);
+  }
+
+  public static Uri getWallpaperUri(String filename) {
+    return Uri.withAppendedPath(WALLPAPER_CONTENT_URI, filename);
+  }
+
+  public static String getWallpaperFilename(Uri uri) {
+    return uri.getPathSegments().get(1);
   }
 
   public static boolean isLocalUri(final @NonNull Uri uri) {

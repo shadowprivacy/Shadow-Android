@@ -9,6 +9,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.util.Pair;
 import androidx.fragment.app.Fragment;
@@ -31,6 +32,10 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
@@ -45,6 +50,7 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 
 import java.security.cert.Certificate;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -56,7 +62,9 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.components.camera.CameraView;
+import su.sres.securesms.events.ProxyErrorEvent;
 import su.sres.securesms.events.ServerCertErrorEvent;
 import su.sres.securesms.events.ServerSetEvent;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -66,20 +74,22 @@ import su.sres.securesms.qr.ScanListener;
 import su.sres.securesms.qr.ScanningThread;
 import su.sres.securesms.util.NetworkConnectionStateListener;
 import su.sres.securesms.util.Base64;
+import su.sres.securesms.util.ShadowProxyUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.validator.UrlValidator;
 import su.sres.securesms.util.ViewUtil;
+import su.sres.signalservice.internal.configuration.ShadowProxy;
 
 public class InitialActivity extends AppCompatActivity implements OnClickListener, ScanListener, ServiceConfigurationSetupListener {
 
     private static final String TAG = InitialActivity.class.getSimpleName();
 
-    private static final String FCM_SENDER_ID_COLUMN    = "FCMSID";
+    private static final String FCM_SENDER_ID_COLUMN = "FCMSID";
     private static final String SERVER_CERT_HASH_COLUMN = "SRVCH";
-    private static final String SERVICE_URI_COLUMN      = "SRVURL";
+    private static final String SERVICE_URI_COLUMN = "SRVURL";
+    private static final String PROXY_COLUMN = "PRX";
 
     private static final String EXAMPLE_HASH = "sha256/example";
-    private static final String NULL_HASH = "sha256/null";
 
     public static final String TRUSTSTORE_FILE_NAME = "shadow.store";
     private static final String SHADOW_SERVER_CERT_ALIAS_A = "shadow_a";
@@ -162,19 +172,21 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
         private ApplicationContext app;
 
         private String fcmSenderId,
-                       serviceUrl,
-                       serverCertHash;
+                serviceUrl,
+                serverCertHash,
+                proxyHost;
 
         private View container;
         private Button buttonScan;
-        private View                    serviceWarning;
+        private View serviceWarning;
 
         private OnClickListener clickListener;
         private ServiceConfigurationSetupListener callback;
 
         private NetworkConnectionStateListener networkConnectionListener;
 
-        @Override public void onActivityCreated(Bundle savedInstanceState) {
+        @Override
+        public void onActivityCreated(Bundle savedInstanceState) {
             super.onActivityCreated(savedInstanceState);
             app = ((ApplicationContext) getActivity().getApplication());
         }
@@ -198,7 +210,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
             this.buttonScan = container.findViewById(R.id.buttonScan);
             this.buttonScan.setOnClickListener(clickListener);
-            serviceWarning       = view.findViewById(R.id.cell_service_warning);
+            serviceWarning = view.findViewById(R.id.cell_service_warning);
 
             ConnectivityManager connManager = getContext().getSystemService(ConnectivityManager.class);
 
@@ -214,8 +226,9 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
         void analyzeQrCode(String scanned) {
 
             int fcmSenderIdIndex,
-                serviceUrlIndex,
-                serverCertHashIndex;
+                    serviceUrlIndex,
+                    serverCertHashIndex,
+                    proxyIndex;
 
             try {
                 CSVParser qrparser = CSVParser.parse(scanned, CSVFormat.RFC4180.withHeader());
@@ -225,9 +238,10 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
                     Toast.makeText(getActivity(), R.string.InitialActivity_qr_code_invalid, Toast.LENGTH_LONG).show();
                 } else {
 
-                    serviceUrlIndex     = csvHeaderList.indexOf(SERVICE_URI_COLUMN);
+                    serviceUrlIndex = csvHeaderList.indexOf(SERVICE_URI_COLUMN);
                     serverCertHashIndex = csvHeaderList.indexOf(SERVER_CERT_HASH_COLUMN);
-                    fcmSenderIdIndex    = csvHeaderList.indexOf(FCM_SENDER_ID_COLUMN);
+                    fcmSenderIdIndex = csvHeaderList.indexOf(FCM_SENDER_ID_COLUMN);
+                    proxyIndex = csvHeaderList.indexOf(PROXY_COLUMN);
 
                     List<CSVRecord> csvRecordList = qrparser.getRecords();
                     serviceUrl = csvRecordList.get(0).get(serviceUrlIndex);
@@ -242,6 +256,19 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
                         fcmSenderId = csvRecordList.get(0).get(fcmSenderIdIndex);
                     }
 
+                    if (proxyIndex != -1) {
+                        proxyHost = csvRecordList.get(0).get(proxyIndex);
+                        if (!validateServiceUrls("https://" + proxyHost)) {
+                            Log.w(TAG, "Proxy configuration is invalid, ignoring");
+                            proxyHost = null;
+                        } else {
+                            Log.i(TAG, "Proxy configuration found, testing...");
+                            enableProxy(proxyHost);
+                        }
+                    } else {
+                        Log.i(TAG, "Proxy configuration not found, ignoring");
+                    }
+
                     if (serviceUrl != null) {
 
                         if (validateServiceUrls(serviceUrl)) {
@@ -253,12 +280,16 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
                             new Thread(() -> {
 
                                 X509Certificate candidateCert = null;
-                                String hash = NULL_HASH;
+                                String hash;
 
                                 try {
                                     candidateCert = probeServerCert();
                                 } catch (ServerCertProbeException e) {
                                     Log.w(TAG, "Attempt to probe the server for a certificate failed with exception");
+                                    if (SignalStore.proxy().isProxyEnabled()) {
+                                        Log.w(TAG, "The proxy does not seem to be operable, disabling");
+                                        ShadowProxyUtil.disableProxy();
+                                    }
                                 }
 
                                 if (candidateCert != null) {
@@ -283,7 +314,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
                                             if (hash.equals(serverCertHash)) {
 
-                                                try(FileOutputStream fos = getActivity().openFileOutput(TRUSTSTORE_FILE_NAME, Context.MODE_PRIVATE)) {
+                                                try (FileOutputStream fos = getActivity().openFileOutput(TRUSTSTORE_FILE_NAME, Context.MODE_PRIVATE)) {
 
                                                     Pair tuple = initializeKeyStore(candidateCert);
 
@@ -293,8 +324,10 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
                                                     EventBus.getDefault().post(new ServerSetEvent());
                                                 } catch (IOException e) {
-                                                    Log.e (TAG, e);
-                                                } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
+                                                    Log.e(TAG, e);
+                                                } catch (KeyStoreException |
+                                                         NoSuchAlgorithmException |
+                                                         CertificateException e) {
                                                     Log.w(TAG, e);
                                                     EventBus.getDefault().post(new ServerCertErrorEvent(R.string.InitialActivity_server_certificate_import_error));
                                                 }
@@ -304,11 +337,13 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
                                                 EventBus.getDefault().post(new ServerCertErrorEvent(R.string.InitialActivity_server_cert_hash_mismatch));
                                             }
 
-                                        } catch (NoSuchAlgorithmException | CertificateEncodingException e) {
+                                        } catch (NoSuchAlgorithmException |
+                                                 CertificateEncodingException e) {
                                             Log.w(TAG, e);
                                         }
 
-                                    } catch (CertificateExpiredException | CertificateNotYetValidException e) {
+                                    } catch (CertificateExpiredException |
+                                             CertificateNotYetValidException e) {
                                         Log.w(TAG, "The server certificate is expired or not yet valid");
                                         EventBus.getDefault().post(new ServerCertErrorEvent(R.string.InitialActivity_server_certificate_validity_error));
                                     } catch (CertificateInvalidCNException e) {
@@ -345,10 +380,10 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
             this.callback = callback;
         }
 
-        private boolean validateServiceUrls(String shadowUrl) {
+        private boolean validateServiceUrls(String url) {
 
-            if (isUrlInvalid(shadowUrl)) {
-                Log.w(TAG, "Shadow service URL is invalid");
+            if (isUrlInvalid(url)) {
+                Log.w(TAG, "Service URL is invalid");
                 return false;
             } else {
                 return true;
@@ -362,20 +397,48 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
             return !validator.isValid(url);
         }
 
+        @WorkerThread
+        private void enableProxy(String host) {
+
+            SignalExecutors.UNBOUNDED.execute(() -> {
+
+                try {
+                    final URL url = new URL("http://" + host + "/ping");
+                    final HttpURLConnection conn =  (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.connect();
+                    int code = conn.getResponseCode();
+                    conn.getInputStream().close();
+                    if (code == 200) {
+                        Log.i(TAG, "Proxy accessible, enabling");
+                        ShadowProxyUtil.enableProxy(new ShadowProxy(host, 443));
+                    } else {
+                        Log.w(TAG, "Proxy inaccessible, will not enable");
+                        EventBus.getDefault().post(new ProxyErrorEvent(R.string.InitialActivity_proxy_inaccessible));
+                    }
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                } catch (IOException e) {
+                    Log.w(TAG, "Proxy inaccessible, will not enable");
+                    EventBus.getDefault().post(new ProxyErrorEvent(R.string.InitialActivity_proxy_inaccessible));
+                }
+            });
+        }
+
         private X509Certificate probeServerCert() throws ServerCertProbeException {
             String hostname = SignalStore.serviceConfigurationValues().getShadowUrl();
             OkHttpClient probeClient;
 
             try {
-                 probeClient = getUnsafeOkHttpClient();
+                probeClient = getUnsafeOkHttpClient();
 
             } catch (UnsafeOkHttpClientException e) {
                 throw new ServerCertProbeException();
             }
 
             Request request = new Request.Builder()
-                   .url(hostname)
-                   .build();
+                    .url(hostname)
+                    .build();
 
             Response response;
             List<Certificate> peerCertList;
@@ -384,17 +447,17 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
                 response = probeClient.newCall(request).execute();
                 peerCertList = response.handshake().peerCertificates();
                 response.close();
-            } catch(IOException e) {
+            } catch (IOException e) {
                 Log.w(TAG, "Failed to extract the server certificate");
                 throw new ServerCertProbeException();
             }
-                return (X509Certificate) peerCertList.get(0);
+            return (X509Certificate) peerCertList.get(0);
         }
 
         private OkHttpClient getUnsafeOkHttpClient() throws UnsafeOkHttpClientException {
             try {
                 // Create a trust manager that does not validate certificate chains
-                final TrustManager[] trustAllCerts = new TrustManager[] {
+                final TrustManager[] trustAllCerts = new TrustManager[]{
                         new X509TrustManager() {
 
                             @Override
@@ -418,8 +481,8 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
                 // Create an ssl socket factory with our all-trusting manager
                 final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
 
-                return new OkHttpClient.Builder().sslSocketFactory(sslSocketFactory, (X509TrustManager)trustAllCerts[0])
-                                                 .build();
+                return new OkHttpClient.Builder().sslSocketFactory(sslSocketFactory, (X509TrustManager) trustAllCerts[0])
+                        .build();
 
             } catch (Exception e) {
                 Log.w(TAG, "Failed to construct unsafe OkHttp client");
@@ -445,17 +508,16 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
             return Base64.encodeBytes(messageDigest.digest(cert));
         }
 
-        private String extractCommonName (Principal principal) {
+        private String extractCommonName(Principal principal) {
 
             int start = principal.getName().indexOf("CN");
             String tmpName, name = "";
             if (start >= 0) {
-                tmpName = principal.getName().substring(start+3);
+                tmpName = principal.getName().substring(start + 3);
                 int end = tmpName.indexOf(",");
                 if (end > 0) {
                     name = tmpName.substring(0, end);
-                }
-                else {
+                } else {
                     name = tmpName;
                 }
             }
@@ -465,6 +527,11 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
         @Subscribe(threadMode = ThreadMode.MAIN)
         public void onEventServerCertError(ServerCertErrorEvent event) {
+            Toast.makeText(getActivity(), event.message, Toast.LENGTH_LONG).show();
+        }
+
+        @Subscribe(threadMode = ThreadMode.MAIN)
+        public void onProxyError(ProxyErrorEvent event) {
             Toast.makeText(getActivity(), event.message, Toast.LENGTH_LONG).show();
         }
 
@@ -495,12 +562,22 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
             serviceWarning.animate()
                     .alpha(0)
                     .setListener(new Animator.AnimatorListener() {
-                        @Override public void onAnimationEnd(Animator animation) {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
                             serviceWarning.setVisibility(View.GONE);
                         }
-                        @Override public void onAnimationStart(Animator animation) {}
-                        @Override public void onAnimationCancel(Animator animation) {}
-                        @Override public void onAnimationRepeat(Animator animation) {}
+
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animation) {
+                        }
                     })
                     .start();
         }
@@ -553,8 +630,12 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
         }
     }
 
-    private static class UnsafeOkHttpClientException extends Exception {}
+    private static class UnsafeOkHttpClientException extends Exception {
+    }
 
-    private static class ServerCertProbeException extends Exception {}
-    private static class CertificateInvalidCNException extends Exception {}
+    private static class ServerCertProbeException extends Exception {
+    }
+
+    private static class CertificateInvalidCNException extends Exception {
+    }
 }

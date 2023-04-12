@@ -15,9 +15,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import su.sres.securesms.R;
 import su.sres.securesms.components.AvatarImageView;
+import su.sres.securesms.components.emoji.EmojiTextView;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.LifecycleRecyclerAdapter;
 import su.sres.securesms.util.LifecycleViewHolder;
+import su.sres.securesms.util.Util;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -170,6 +172,7 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
         final Context context;
         final AvatarImageView avatar;
         final TextView recipient;
+        final EmojiTextView about;
         final CheckBox selected;
         final PopupMenuView popupMenu;
         final View popupMenuContainer;
@@ -194,6 +197,7 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
             this.context = itemView.getContext();
             this.avatar = itemView.findViewById(R.id.recipient_avatar);
             this.recipient = itemView.findViewById(R.id.recipient_name);
+            this.about                      = itemView.findViewById(R.id.recipient_about);
             this.selected = itemView.findViewById(R.id.recipient_selected);
             this.popupMenu = itemView.findViewById(R.id.popupMenu);
             this.popupMenuContainer = itemView.findViewById(R.id.popupMenuProgressContainer);
@@ -208,12 +212,16 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
         void bindRecipient(@NonNull Recipient recipient) {
             String displayName = recipient.isSelf() ? context.getString(R.string.GroupMembersDialog_you)
                     : recipient.getDisplayName(itemView.getContext());
-            bindImageAndText(recipient, displayName);
+            bindImageAndText(recipient, displayName, recipient.getCombinedAboutAndEmoji());
         }
 
-        void bindImageAndText(@NonNull Recipient recipient, @NonNull String displayText) {
+        void bindImageAndText(@NonNull Recipient recipient, @NonNull String displayText, @Nullable String about) {
             this.recipient.setText(displayText);
             this.avatar.setRecipient(recipient);
+            if (this.about != null) {
+                this.about.setText(about);
+                this.about.setVisibility(Util.isEmpty(about) ? View.GONE : View.VISIBLE);
+            }
         }
 
         void bindRecipientClick(@NonNull Recipient recipient) {
@@ -339,7 +347,7 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
 
             GroupMemberEntry.PendingMember pendingMember = (GroupMemberEntry.PendingMember) memberEntry;
 
-            bindImageAndText(pendingMember.getInvitee(), pendingMember.getInvitee().getDisplayNameOrUsername(context));
+            bindImageAndText(pendingMember.getInvitee(), pendingMember.getInvitee().getDisplayNameOrUsername(context), pendingMember.getInvitee().getCombinedAboutAndEmoji());
             bindRecipientClick(pendingMember.getInvitee());
 
             if (pendingMember.isCancellable() && adminActionsListener != null) {
@@ -375,7 +383,7 @@ final class GroupMemberListAdapter extends LifecycleRecyclerAdapter<GroupMemberL
                     pendingMembers.getInviteCount(),
                     displayName, pendingMembers.getInviteCount());
 
-            bindImageAndText(inviter, displayText);
+            bindImageAndText(inviter, displayText, inviter.getAbout());
 
             if (pendingMembers.isCancellable() && adminActionsListener != null) {
                 popupMenu.setMenu(R.menu.others_invite_pending_menu,

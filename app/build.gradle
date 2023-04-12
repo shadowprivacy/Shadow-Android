@@ -142,10 +142,6 @@ android {
         exclude 'META-INF/proguard/androidx-annotations.pro'
     }
 
-    aaptOptions {
-        ignoreAssetsPattern '!contours.tfl:!LMprec_600.emd:!blazeface.tfl'
-    }
-
     buildTypes {
         debug {
             if (keystores['debug'] != null) {
@@ -289,8 +285,6 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:1.0.0-beta11"
     implementation "androidx.camera:camera-view:1.0.0-alpha18"
     implementation "androidx.concurrent:concurrent-futures:1.0.0"
-    implementation 'com.google.firebase:firebase-ml-vision:24.0.3'
-    implementation 'com.google.firebase:firebase-ml-vision-face-model:20.0.1'
 
     implementation ('com.google.firebase:firebase-messaging:20.2.0') {
         exclude group: 'com.google.firebase', module: 'firebase-core'
@@ -312,7 +306,7 @@ dependencies {
     implementation project(':core-util')
     implementation project(':video')
     implementation 'org.signal:zkgroup-android:0.7.0'
-    implementation 'org.signal:ringrtc-android:2.8.9'
+    implementation 'org.signal:ringrtc-android:2.9.0'
     implementation 'org.whispersystems:signal-client-android:0.1.5'
     implementation 'com.google.protobuf:protobuf-javalite:3.10.0'
     implementation 'org.signal:argon2:13.1@aar'

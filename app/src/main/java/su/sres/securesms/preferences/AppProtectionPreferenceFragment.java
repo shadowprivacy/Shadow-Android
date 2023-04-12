@@ -53,6 +53,7 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
 
   private static final String PREFERENCE_CATEGORY_BLOCKED             = "preference_category_blocked";
   private static final String PREFERENCE_UNIDENTIFIED_LEARN_MORE      = "pref_unidentified_learn_more";
+  private static final String PREFERENCE_INCOGNITO_LEARN_MORE         = "pref_incognito_learn_more";
   private static final String PREFERENCE_WHO_CAN_SEE_USER_LOGIN     = "pref_who_can_see_user_login";
   private static final String PREFERENCE_WHO_CAN_FIND_BY_USER_LOGIN = "pref_who_can_find_by_user_login";
 
@@ -75,6 +76,7 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
     this.findPreference(TextSecurePreferences.SHOW_UNIDENTIFIED_DELIVERY_INDICATORS).setOnPreferenceChangeListener(new ShowUnidentifiedDeliveryIndicatorsChangedListener());
 //    this.findPreference(TextSecurePreferences.UNIVERSAL_UNIDENTIFIED_ACCESS).setOnPreferenceChangeListener(new UniversalUnidentifiedAccessChangedListener());
     this.findPreference(PREFERENCE_UNIDENTIFIED_LEARN_MORE).setOnPreferenceClickListener(new UnidentifiedLearnMoreClickListener());
+    this.findPreference(PREFERENCE_INCOGNITO_LEARN_MORE).setOnPreferenceClickListener(new IncognitoLearnMoreClickListener());
     disablePassphrase.setOnPreferenceChangeListener(new DisablePassphraseClickListener());
 
     if (FeatureFlags.UserLoginPrivacy()) {
@@ -381,6 +383,14 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
     @Override
     public boolean onPreferenceClick(Preference preference) {
       CommunicationActions.openBrowserLink(preference.getContext(), "https://signal.org/blog/sealed-sender/");
+      return true;
+    }
+  }
+
+  private class IncognitoLearnMoreClickListener implements Preference.OnPreferenceClickListener {
+    @Override
+    public boolean onPreferenceClick(Preference preference) {
+      CommunicationActions.openBrowserLink(preference.getContext(), "https://support.signal.org/hc/en-us/articles/360055276112");
       return true;
     }
   }

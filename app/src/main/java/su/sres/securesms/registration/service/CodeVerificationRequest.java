@@ -131,8 +131,6 @@ public final class CodeVerificationRequest {
                     handleSuccessfulRegistration(context, pin);
 
                     callback.onSuccessfulRegistration();
-                } else if (result == Result.PIN_LOCKED) {
-                    callback.onIncorrectRegistrationLockPin(timeRemaining);
                 } else if (result == Result.RATE_LIMITED) {
                     callback.onTooManyAttempts();
                 }  else if (result == Result.RETRY_AFTER) {
@@ -387,6 +385,7 @@ public final class CodeVerificationRequest {
 
             ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
             ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
+            ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.DAY_BY_DAY.getPackId(), BlessedPacks.DAY_BY_DAY.getPackKey(), false));
             ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forReference(BlessedPacks.SWOON_HANDS.getPackId(), BlessedPacks.SWOON_HANDS.getPackKey()));
             ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forReference(BlessedPacks.SWOON_FACES.getPackId(), BlessedPacks.SWOON_FACES.getPackKey()));
 
@@ -397,11 +396,6 @@ public final class CodeVerificationRequest {
     public interface VerifyCallback {
 
         void onSuccessfulRegistration();
-
-        /**
-         * @param timeRemaining Time until pin expires and number can be reused.
-         */
-        void onIncorrectRegistrationLockPin(long timeRemaining);
 
         void onTooManyAttempts();
 

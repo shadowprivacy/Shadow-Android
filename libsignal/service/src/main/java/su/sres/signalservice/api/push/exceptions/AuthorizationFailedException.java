@@ -7,7 +7,7 @@
 package su.sres.signalservice.api.push.exceptions;
 
 public class AuthorizationFailedException extends NonSuccessfulResponseCodeException {
-  public AuthorizationFailedException(String s) {
-    super(s);
+  public AuthorizationFailedException(int code, String s) {
+    super(code, s);
   }
 }

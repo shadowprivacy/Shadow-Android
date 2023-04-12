@@ -27,6 +27,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.PartProgressEvent;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
+import su.sres.securesms.jobmanager.impl.BackoffUtil;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.keyvalue.CertificateType;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -38,6 +39,7 @@ import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
+import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.BitmapDecodingException;
 import su.sres.securesms.util.BitmapUtil;
@@ -57,6 +59,8 @@ import su.sres.signalservice.api.messages.multidevice.SentTranscriptMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.messages.shared.SharedContact;
 import su.sres.signalservice.api.push.SignalServiceAddress;
+import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -114,6 +118,28 @@ public abstract class PushSendJob extends SendJob {
   protected boolean shouldTrace() {
     return true;
   }
+
+  @Override
+  public boolean onShouldRetry(@NonNull Exception exception) {
+    if (exception instanceof ServerRejectedException) {
+      return false;
+    }
+
+    return exception instanceof IOException ||
+            exception instanceof RetryLaterException;
+  }
+
+  @Override
+  public long getNextRunAttemptBackoff(int pastAttemptCount, @NonNull Exception exception) {
+    if (exception instanceof NonSuccessfulResponseCodeException) {
+      if (((NonSuccessfulResponseCodeException) exception).is5xx()) {
+        return BackoffUtil.exponentialBackoff(pastAttemptCount, FeatureFlags.getServerErrorMaxBackoff());
+      }
+    }
+
+    return super.getNextRunAttemptBackoff(pastAttemptCount, exception);
+  }
+
   protected Optional<byte[]> getProfileKey(@NonNull Recipient recipient) {
     if (!recipient.resolve().isSystemContact() && !recipient.resolve().isProfileSharing()) {
       return Optional.absent();

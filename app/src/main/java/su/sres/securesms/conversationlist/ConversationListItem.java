@@ -35,6 +35,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.Transformations;
 
 import android.text.style.StyleSpan;
+import android.text.style.TextAppearanceSpan;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.RelativeLayout;
@@ -62,6 +63,7 @@ import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
 import su.sres.securesms.conversationlist.model.MessageResult;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.Debouncer;
 import su.sres.securesms.util.ExpirationUtil;
@@ -490,9 +492,48 @@ public final class ConversationListItem extends ConstraintLayout
       } else if (extra != null && extra.isRemoteDelete()) {
         return emphasisAdded(context, context.getString(thread.isOutgoing() ? R.string.ThreadRecord_you_deleted_this_message : R.string.ThreadRecord_this_message_was_deleted), defaultTint);
       } else {
-        return LiveDataUtil.just(new SpannableString(removeNewlines(thread.getBody())));
+        String body = removeNewlines(thread.getBody());
+        if (thread.getRecipient().isGroup()) {
+          RecipientId groupMessageSender = thread.getGroupMessageSender();
+          if (!groupMessageSender.isUnknown()) {
+            return describeGroupMessage(context, body, groupMessageSender, thread.isRead());
+          }
+        }
+        return LiveDataUtil.just(new SpannableString(body));
       }
     }
+  }
+
+  private static LiveData<SpannableString> describeGroupMessage(@NonNull Context context,
+                                                                @NonNull String body,
+                                                                @NonNull RecipientId groupMessageSender,
+                                                                boolean read)
+  {
+    return whileLoadingShow(body, recipientToStringAsync(groupMessageSender,
+            r -> createGroupMessageUpdateString(context, body, r, read)));
+  }
+
+  private static SpannableString createGroupMessageUpdateString(@NonNull Context context,
+                                                                @NonNull String body,
+                                                                @NonNull Recipient recipient,
+                                                                boolean read)
+  {
+    String sender = (recipient.isSelf() ? context.getString(R.string.MessageRecord_you)
+            : recipient.getShortDisplayName(context)) + ": ";
+
+    SpannableString spannable = new SpannableString(sender + body);
+    spannable.setSpan(new TextAppearanceSpan(context, read ? R.style.Signal_Text_Preview_Medium_Secondary
+                    : R.style.Signal_Text_Preview_Medium_Primary),
+            0,
+            sender.length(),
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+    return spannable;
+  }
+
+  /** After a short delay, if the main data hasn't shown yet, then a loading message is displayed. */
+  private static @NonNull LiveData<SpannableString> whileLoadingShow(@NonNull String loading, @NonNull LiveData<SpannableString> string) {
+    return LiveDataUtil.until(string, LiveDataUtil.delay(250, new SpannableString(loading)));
   }
 
   private static @NonNull String removeNewlines(@Nullable String text) {
@@ -515,7 +556,7 @@ public final class ConversationListItem extends ConstraintLayout
     return emphasisAdded(LiveUpdateMessage.fromMessageDescription(context, description, defaultTint));
   }
 
-  private static @NonNull LiveData<SpannableString> emphasisAdded(@NonNull LiveData<Spannable> description) {
+  private static @NonNull LiveData<SpannableString> emphasisAdded(@NonNull LiveData<SpannableString> description) {
     return Transformations.map(description, sequence -> {
       SpannableString spannable = new SpannableString(sequence);
       spannable.setSpan(new StyleSpan(Typeface.ITALIC),

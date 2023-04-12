@@ -43,12 +43,7 @@ public class SignalServiceNetworkAccess {
         renewConfiguration(context, interceptors, dns);
     }
 
-    public SignalServiceConfiguration getConfiguration(Context context) {
-        String localNumber = TextSecurePreferences.getLocalNumber(context);
-        return getConfiguration(localNumber);
-    }
-
-    public SignalServiceConfiguration getConfiguration(@Nullable String localNumber) {
+    public SignalServiceConfiguration getConfiguration() {
         return this.Configuration;
     }
 
@@ -58,6 +53,7 @@ public class SignalServiceNetworkAccess {
                                        new SignalCdnUrl[] {new SignalCdnUrl(SignalStore.serviceConfigurationValues().getCloud2Url(), new SignalServiceTrustStore(context))}),
                 new SignalStorageUrl[]{new SignalStorageUrl(SignalStore.serviceConfigurationValues().getStorageUrl(), new SignalServiceTrustStore(context))}, interceptors,
                 dns,
+                SignalStore.proxy().isProxyEnabled() ? Optional.of(SignalStore.proxy().getProxy()) : Optional.absent(),
                 SignalStore.serviceConfigurationValues().getZkPublicKey());
     }
 

@@ -31,6 +31,7 @@ import su.sres.securesms.groups.ui.invitesandrequests.joining.GroupJoinUpdateReq
 import su.sres.securesms.groups.v2.GroupInviteLinkUrl;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.permissions.Permissions;
+import su.sres.securesms.proxy.ProxyBottomSheetFragment;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.WebRtcCallService;
@@ -202,6 +203,21 @@ public class CommunicationActions {
   private static void startCallInternal(@NonNull FragmentActivity activity, @NonNull Recipient recipient, boolean isVideo) {
     if (isVideo) startVideoCallInternal(activity, recipient);
     else         startAudioCallInternal(activity, recipient);
+  }
+
+  /**
+   * If the url is a proxy link it will handle it.
+   * Otherwise returns false, indicating was not a proxy link.
+   */
+  public static boolean handlePotentialProxyLinkUrl(@NonNull FragmentActivity activity, @NonNull String potentialProxyLinkUrl) {
+    String proxy = ShadowProxyUtil.parseHostFromProxyDeepLink(potentialProxyLinkUrl);
+
+    if (proxy != null) {
+      ProxyBottomSheetFragment.showForProxy(activity.getSupportFragmentManager(), proxy);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private static void startAudioCallInternal(@NonNull FragmentActivity activity, @NonNull Recipient recipient) {

@@ -20,7 +20,7 @@ public class AccountManagerFactory {
                                                                          @NonNull String password)
   {
 
-    return new SignalServiceAccountManager(new SignalServiceNetworkAccess(context).getConfiguration(userLogin),
+    return new SignalServiceAccountManager(new SignalServiceNetworkAccess(context).getConfiguration(),
             uuid, userLogin, password, BuildConfig.SIGNAL_AGENT, FeatureFlags.okHttpAutomaticRetry());
   }
 
@@ -32,7 +32,7 @@ public class AccountManagerFactory {
                                                                            @NonNull String password)
   {
 
-    return new SignalServiceAccountManager(new SignalServiceNetworkAccess(context).getConfiguration(userLogin),
+    return new SignalServiceAccountManager(new SignalServiceNetworkAccess(context).getConfiguration(),
             null, userLogin, password, BuildConfig.SIGNAL_AGENT, FeatureFlags.okHttpAutomaticRetry());
   }
 

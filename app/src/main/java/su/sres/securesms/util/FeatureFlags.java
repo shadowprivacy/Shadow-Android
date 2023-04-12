@@ -69,8 +69,12 @@ public final class FeatureFlags {
     private static final String CUSTOM_VIDEO_MUXER           = "android.customVideoMuxer";
     private static final String AUTOMATIC_SESSION_RESET      = "android.automaticSessionReset.2";
     private static final String DEFAULT_MAX_BACKOFF          = "android.defaultMaxBackoff";
+    private static final String SERVER_ERROR_MAX_BACKOFF          = "android.serverErrorMaxBackoff";
     private static final String OKHTTP_AUTOMATIC_RETRY       = "android.okhttpAutomaticRetry";
     private static final String AUTOMATIC_SESSION_INTERVAL   = "android.automaticSessionResetInterval";
+    private static final String SHARE_SELECTION_LIMIT        = "android.share.limit";
+    private static final String ANIMATED_STICKER_MIN_MEMORY  = "android.animatedStickerMinMemory";
+    private static final String ANIMATED_STICKER_MIN_TOTAL_MEMORY = "android.animatedStickerMinTotalMemory";
 
     /**
      * We will only store remote values for flags in this set. If you want a flag to be controllable
@@ -96,8 +100,12 @@ public final class FeatureFlags {
             GROUP_NAME_MAX_LENGTH,
             AUTOMATIC_SESSION_RESET,
             DEFAULT_MAX_BACKOFF,
+            SERVER_ERROR_MAX_BACKOFF,
             AUTOMATIC_SESSION_INTERVAL,
-            OKHTTP_AUTOMATIC_RETRY
+            OKHTTP_AUTOMATIC_RETRY,
+            SHARE_SELECTION_LIMIT,
+            ANIMATED_STICKER_MIN_MEMORY,
+            ANIMATED_STICKER_MIN_TOTAL_MEMORY
     );
 
     @VisibleForTesting
@@ -134,7 +142,11 @@ public final class FeatureFlags {
             GROUP_NAME_MAX_LENGTH,
             AUTOMATIC_SESSION_RESET,
             DEFAULT_MAX_BACKOFF,
-            OKHTTP_AUTOMATIC_RETRY
+            SERVER_ERROR_MAX_BACKOFF,
+            OKHTTP_AUTOMATIC_RETRY,
+            SHARE_SELECTION_LIMIT,
+            ANIMATED_STICKER_MIN_MEMORY,
+            ANIMATED_STICKER_MIN_TOTAL_MEMORY
     );
 
     /**
@@ -237,7 +249,7 @@ public final class FeatureFlags {
     }
 
     /**
-     * Whether the user can choose phone number privacy settings, and;
+     * Whether the user can choose user login privacy settings, and;
      * Whether to fetch and store the secondary certificate
      */
     public static boolean UserLoginPrivacy() {
@@ -279,6 +291,11 @@ public final class FeatureFlags {
         return getBoolean(CUSTOM_VIDEO_MUXER, false);
     }
 
+    public static @NonNull SelectionLimits shareSelectionLimit() {
+        int limit = getInteger(SHARE_SELECTION_LIMIT, 5);
+        return new SelectionLimits(limit, limit);
+    }
+
     /** The maximum number of grapheme */
     public static int getMaxGroupNameGraphemeLength() {
         return Math.max(32, getInteger(GROUP_NAME_MAX_LENGTH, -1));
@@ -289,8 +306,14 @@ public final class FeatureFlags {
         return getBoolean(AUTOMATIC_SESSION_RESET, true);
     }
 
-    public static int getDefaultMaxBackoffSeconds() {
-        return getInteger(DEFAULT_MAX_BACKOFF, 60);
+    /** The default maximum backoff for jobs. */
+    public static long getDefaultMaxBackoff() {
+        return TimeUnit.SECONDS.toMillis(getInteger(DEFAULT_MAX_BACKOFF, 60));
+    }
+
+    /** The maximum backoff for network jobs that hit a 5xx error. */
+    public static long getServerErrorMaxBackoff() {
+        return TimeUnit.SECONDS.toMillis(getInteger(SERVER_ERROR_MAX_BACKOFF, (int) TimeUnit.HOURS.toSeconds(6)));
     }
 
     /** How often we allow an automatic session reset. */
@@ -301,6 +324,16 @@ public final class FeatureFlags {
     /** Whether or not to allow automatic retries from OkHttp */
     public static boolean okHttpAutomaticRetry() {
         return getBoolean(OKHTTP_AUTOMATIC_RETRY, false);
+    }
+
+    /** The minimum memory class required for rendering animated stickers in the keyboard and such */
+    public static int animatedStickerMinimumMemoryClass() {
+        return getInteger(ANIMATED_STICKER_MIN_MEMORY, 193);
+    }
+
+    /** The minimum total memory for rendering animated stickers in the keyboard and such */
+    public static int animatedStickerMinimumTotalMemoryMb() {
+        return getInteger(ANIMATED_STICKER_MIN_TOTAL_MEMORY, (int) ByteUnit.GIGABYTES.toMegabytes(3));
     }
 
     /** Only for rendering debug info. */

@@ -5,6 +5,6 @@ package su.sres.signalservice.api.push.exceptions;
  */
 public class ConflictException extends NonSuccessfulResponseCodeException {
     public ConflictException() {
-        super("Conflict");
+        super(409, "Conflict");
     }
 }

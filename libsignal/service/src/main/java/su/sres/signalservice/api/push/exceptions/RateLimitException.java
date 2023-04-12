@@ -8,6 +8,6 @@ package su.sres.signalservice.api.push.exceptions;
 
 public class RateLimitException extends NonSuccessfulResponseCodeException {
   public RateLimitException(String s) {
-    super(s);
+    super(429, s);
   }
 }

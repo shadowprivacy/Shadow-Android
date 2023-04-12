@@ -16,6 +16,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.util.AppSignatureUtil;
 import su.sres.securesms.util.ByteUnit;
+import su.sres.securesms.util.DeviceProperties;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -53,6 +54,7 @@ public class LogSectionSystemInfo implements LogSection {
         builder.append("ABIs         : ").append(TextUtils.join(", ", getSupportedAbis())).append("\n");
         builder.append("Memory       : ").append(getMemoryUsage()).append("\n");
         builder.append("Memclass     : ").append(getMemoryClass(context)).append("\n");
+        builder.append("MemInfo       : ").append(getMemoryInfo(context)).append("\n");
         builder.append("OS Host      : ").append(Build.HOST).append("\n");
         builder.append("Play Services: ").append(getPlayServicesString(context)).append("\n");
         builder.append("FCM          : ").append(!TextSecurePreferences.isFcmDisabled(context)).append("\n");
@@ -99,6 +101,12 @@ public class LogSectionSystemInfo implements LogSection {
         }
 
         return activityManager.getMemoryClass() + lowMem;
+    }
+
+    private static @NonNull String getMemoryInfo(Context context) {
+        ActivityManager.MemoryInfo info = DeviceProperties.getMemoryInfo(context);
+        return String.format(Locale.US, "availMem: %d mb, totalMem: %d mb, threshold: %d mb, lowMemory: %b",
+                ByteUnit.BYTES.toMegabytes(info.availMem), ByteUnit.BYTES.toMegabytes(info.totalMem), ByteUnit.BYTES.toMegabytes(info.threshold), info.lowMemory);
     }
 
     private static @NonNull Iterable<String> getSupportedAbis() {

@@ -23,7 +23,10 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mediasend.MediaRepository;
+import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.livedata.LiveDataUtil;
+import su.sres.securesms.wallpaper.ChatWallpaper;
 
 import java.util.List;
 import java.util.Objects;
@@ -44,6 +47,8 @@ class ConversationViewModel extends ViewModel {
     private final LiveData<Boolean>                   canShowAsBubble;
     private final ProxyPagingController pagingController;
     private final DatabaseObserver.Observer           messageObserver;
+    private final MutableLiveData<RecipientId>        recipientId;
+    private final LiveData<ChatWallpaper>             wallpaper;
 
     private ConversationIntents.Args args;
     private int                      jumpToPosition;
@@ -56,6 +61,7 @@ class ConversationViewModel extends ViewModel {
         this.threadId               = new MutableLiveData<>();
         this.showScrollButtons      = new MutableLiveData<>(false);
         this.hasUnreadMentions      = new MutableLiveData<>(false);
+        this.recipientId            = new MutableLiveData<>();
         this.pagingController       = new ProxyPagingController();
         this.messageObserver        = pagingController::onDataInvalidated;
 
@@ -101,6 +107,9 @@ class ConversationViewModel extends ViewModel {
 
         conversationMetadata = Transformations.switchMap(messages, m -> metadata);
         canShowAsBubble      = LiveDataUtil.mapAsync(threadId, conversationRepository::canShowAsBubble);
+        wallpaper            = Transformations.distinctUntilChanged(Transformations.map(Transformations.switchMap(recipientId,
+                        id -> Recipient.live(id).getLiveData()),
+                Recipient::getWallpaper));
     }
 
     void onAttachmentKeyboardOpen() {
@@ -108,11 +117,12 @@ class ConversationViewModel extends ViewModel {
     }
 
     @MainThread
-    void onConversationDataAvailable(long threadId, int startingPosition) {
+    void onConversationDataAvailable(@NonNull RecipientId recipientId, long threadId, int startingPosition) {
         Log.d(TAG, "[onConversationDataAvailable] threadId: " + threadId + ", startingPosition: " + startingPosition);
         this.jumpToPosition = startingPosition;
 
         this.threadId.setValue(threadId);
+        this.recipientId.setValue(recipientId);
     }
 
     void clearThreadId() {
@@ -130,6 +140,10 @@ class ConversationViewModel extends ViewModel {
 
     @NonNull LiveData<Boolean> getShowMentionsButton() {
         return Transformations.distinctUntilChanged(LiveDataUtil.combineLatest(showScrollButtons, hasUnreadMentions, (a, b) -> a && b));
+    }
+
+    @NonNull LiveData<ChatWallpaper> getWallpaper() {
+        return wallpaper;
     }
 
     void setHasUnreadMentions(boolean hasUnreadMentions) {

@@ -17,11 +17,13 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.R;
 import su.sres.securesms.jobs.PushDecryptDrainedJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.messages.IncomingMessageProcessor.Processor;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.notifications.NotificationChannels;
@@ -58,6 +60,7 @@ public class IncomingMessageObserver {
 
     private volatile boolean networkDrained;
     private volatile boolean decryptionDrained;
+    private volatile boolean terminated;
 
     public IncomingMessageObserver(@NonNull Application context) {
         this.context                    = context;
@@ -140,9 +143,10 @@ public class IncomingMessageObserver {
         boolean websocketRegistered = TextSecurePreferences.isWebsocketRegistered(context);
         boolean isGcmDisabled       = TextSecurePreferences.isFcmDisabled(context);
         boolean hasNetwork          = NetworkConstraint.isMet(context);
+        boolean hasProxy            = SignalStore.proxy().isProxyEnabled();
 
-        Log.d(TAG, String.format("Network: %s, Foreground: %s, FCM: %s, Registered: %s, Websocket Registered: %s",
-                hasNetwork, appVisible, !isGcmDisabled, registered, websocketRegistered));
+        Log.d(TAG, String.format("Network: %s, Foreground: %s, FCM: %s, Registered: %s, Websocket Registered: %s, Proxy: %s",
+                hasNetwork, appVisible, !isGcmDisabled, registered, websocketRegistered, hasProxy));
 
         return registered                     &&
                 websocketRegistered           &&
@@ -160,10 +164,21 @@ public class IncomingMessageObserver {
         }
     }
 
+    public void terminateAsync() {
+        SignalExecutors.BOUNDED.execute(() -> {
+            Log.w(TAG, "Beginning termination.");
+            terminated = true;
+            shutdown(pipe, unidentifiedPipe);
+        });
+    }
+
     private void shutdown(@Nullable SignalServiceMessagePipe pipe, @Nullable SignalServiceMessagePipe unidentifiedPipe) {
         try {
             if (pipe != null) {
+                Log.w(TAG, "Shutting down normal pipe.");
                 pipe.shutdown();
+            } else {
+                Log.w(TAG, "No need to shutdown normal pipe, it doesn't exist.");
             }
         } catch (Throwable t) {
             Log.w(TAG, "Closing normal pipe failed!", t);
@@ -171,7 +186,10 @@ public class IncomingMessageObserver {
 
         try {
             if (unidentifiedPipe != null) {
+                Log.w(TAG, "Shutting down unidentified pipe.");
                 unidentifiedPipe.shutdown();
+            } else {
+                Log.w(TAG, "No need to shutdown unidentified pipe, it doesn't exist.");
             }
         } catch (Throwable t) {
             Log.w(TAG, "Closing unidentified pipe failed!", t);
@@ -190,12 +208,13 @@ public class IncomingMessageObserver {
 
         MessageRetrievalThread() {
             super("MessageRetrievalService");
+            Log.i(TAG, "Initializing! (" + this.hashCode() + ")");
             setUncaughtExceptionHandler(this);
         }
 
         @Override
         public void run() {
-            while (true) {
+            while (!terminated) {
                 Log.i(TAG, "Waiting for websocket state change....");
                 waitForConnectionNecessary();
 
@@ -239,6 +258,8 @@ public class IncomingMessageObserver {
 
                 Log.i(TAG, "Looping...");
             }
+
+            Log.w(TAG, "Terminated! (" + this.hashCode() + ")");
         }
 
         @Override

@@ -33,6 +33,7 @@ import su.sres.securesms.jobs.FastJobStorage;
 import su.sres.securesms.jobs.JobManagerFactories;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.megaphone.MegaphoneRepository;
+import su.sres.securesms.net.PipeConnectivityListener;
 import su.sres.securesms.notifications.DefaultMessageNotifier;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.OptimizedMessageNotifier;
@@ -40,7 +41,6 @@ import su.sres.securesms.push.SecurityEventListener;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.TrimThreadsByDateManager;
-import su.sres.securesms.shakereport.ShakeToReport;
 import su.sres.securesms.util.AlarmSleepTimer;
 import su.sres.securesms.util.ByteUnit;
 import su.sres.securesms.util.EarlyMessageCache;
@@ -70,16 +70,21 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     private static final String TAG = Log.tag(ApplicationDependencyProvider.class);
 
     private final Application                context;
-    private final SignalServiceNetworkAccess networkAccess;
+    private final PipeConnectivityListener pipeListener;
 
-    public ApplicationDependencyProvider(@NonNull Application context, @NonNull SignalServiceNetworkAccess networkAccess) {
+    public ApplicationDependencyProvider(@NonNull Application context) {
         this.context       = context;
-        this.networkAccess = networkAccess;
+        this.pipeListener = new PipeConnectivityListener(context);
     }
 
     private @NonNull
     ClientZkOperations provideClientZkOperations() {
-        return ClientZkOperations.create(networkAccess.getConfiguration(context));
+        return ClientZkOperations.create(provideSignalServiceNetworkAccess().getConfiguration());
+    }
+
+    @Override
+    public @NonNull PipeConnectivityListener providePipeListener() {
+        return pipeListener;
     }
 
     @Override
@@ -90,8 +95,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
 
     @Override
     public @NonNull SignalServiceAccountManager provideSignalServiceAccountManager() {
-        networkAccess.renewConfiguration(context);
-        return new SignalServiceAccountManager(networkAccess.getConfiguration(context),
+        return new SignalServiceAccountManager(provideSignalServiceNetworkAccess().getConfiguration(),
                 new DynamicCredentialsProvider(context),
                 BuildConfig.SIGNAL_AGENT,
                 provideGroupsV2Operations(),
@@ -100,8 +104,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
 
     @Override
     public @NonNull SignalServiceMessageSender provideSignalServiceMessageSender() {
-        networkAccess.renewConfiguration(context);
-        return new SignalServiceMessageSender(networkAccess.getConfiguration(context),
+        return new SignalServiceMessageSender(provideSignalServiceNetworkAccess().getConfiguration(),
                 new DynamicCredentialsProvider(context),
                 new SignalProtocolStoreImpl(context),
                 BuildConfig.SIGNAL_AGENT,
@@ -120,11 +123,10 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     public @NonNull SignalServiceMessageReceiver provideSignalServiceMessageReceiver() {
         SleepTimer sleepTimer = TextSecurePreferences.isFcmDisabled(context) ? new AlarmSleepTimer(context)
                 : new UptimeSleepTimer();
-        networkAccess.renewConfiguration(context);
-        return new SignalServiceMessageReceiver(networkAccess.getConfiguration(context),
+        return new SignalServiceMessageReceiver(provideSignalServiceNetworkAccess().getConfiguration(),
                 new DynamicCredentialsProvider(context),
                 BuildConfig.SIGNAL_AGENT,
-                new PipeConnectivityListener(),
+                pipeListener,
                 sleepTimer,
                 provideClientZkOperations().getProfileOperations(),
                 FeatureFlags.okHttpAutomaticRetry());
@@ -132,7 +134,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
 
     @Override
     public @NonNull SignalServiceNetworkAccess provideSignalServiceNetworkAccess() {
-        return networkAccess;
+        return new SignalServiceNetworkAccess(context);
     }
 
     @Override
@@ -236,36 +238,6 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
         @Override
         public String getSignalingKey() {
             return TextSecurePreferences.getSignalingKey(context);
-        }
-    }
-
-    private class PipeConnectivityListener implements ConnectivityListener {
-
-        @Override
-        public void onConnected() {
-            Log.i(TAG, "onConnected()");
-            TextSecurePreferences.setUnauthorizedReceived(context, false);
-        }
-
-        @Override
-        public void onConnecting() {
-            Log.i(TAG, "onConnecting()");
-        }
-
-        @Override
-        public void onDisconnected() {
-            Log.w(TAG, "onDisconnected()");
-        }
-
-        @Override
-        public void onAuthenticationFailure() {
-            Log.w(TAG, "onAuthenticationFailure()");
-            TextSecurePreferences.setUnauthorizedReceived(context, true);
-
-            // this is to prevent unauthorized clients from sending messages and to trigger the unregistered reminder instantly
-            TextSecurePreferences.setPushRegistered(context, false);
-
-            EventBus.getDefault().post(new ReminderUpdateEvent());
         }
     }
 }

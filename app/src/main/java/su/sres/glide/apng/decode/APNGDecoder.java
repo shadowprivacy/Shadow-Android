@@ -12,7 +12,7 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 
-import su.sres.glide.Log;
+import su.sres.core.util.logging.Log;
 import su.sres.glide.apng.io.APNGReader;
 import su.sres.glide.apng.io.APNGWriter;
 import su.sres.glide.common.decode.Frame;
