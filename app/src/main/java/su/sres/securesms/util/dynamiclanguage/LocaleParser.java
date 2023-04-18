@@ -2,6 +2,8 @@ package su.sres.securesms.util.dynamiclanguage;
 
 import android.content.res.Configuration;
 import android.content.res.Resources;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.os.ConfigurationCompat;
 
@@ -19,7 +21,7 @@ final class LocaleParser {
      * Given a language, gets the best choice from the apps list of supported languages and the
      * Systems set of languages.
      */
-    static Locale findBestMatchingLocaleForLanguage(@Nullable String language) {
+    static @NonNull Locale findBestMatchingLocaleForLanguage(@Nullable String language) {
         final Locale locale = LanguageString.parseLocale(language);
         if (appSupportsTheExactLocale(locale)) {
             return locale;
@@ -38,7 +40,7 @@ final class LocaleParser {
     /**
      * Get the first preferred language the app supports.
      */
-    private static Locale findBestSystemLocale() {
+    private static @NonNull Locale findBestSystemLocale() {
         final Configuration config = Resources.getSystem().getConfiguration();
 
         final Locale firstMatch = ConfigurationCompat.getLocales(config)

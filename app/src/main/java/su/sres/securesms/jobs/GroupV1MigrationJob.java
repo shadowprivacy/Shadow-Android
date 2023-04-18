@@ -61,10 +61,6 @@ public class GroupV1MigrationJob extends BaseJob {
     }
 
     public static void enqueuePossibleAutoMigrate(@NonNull RecipientId recipientId) {
-        if (!FeatureFlags.groupsV1MigrationJob()) {
-            Log.w(TAG, "Migration job is disabled.");
-            return;
-        }
 
         SignalExecutors.BOUNDED.execute(() -> {
             if (Recipient.resolved(recipientId).isPushV1Group()) {
@@ -74,10 +70,6 @@ public class GroupV1MigrationJob extends BaseJob {
     }
 
     public static void enqueueRoutineMigrationsIfNecessary(@NonNull Application application) {
-        if (!FeatureFlags.groupsV1MigrationJob()) {
-            Log.w(TAG, "Migration job is disabled.");
-            return;
-        }
 
         if (!SignalStore.registrationValues().isRegistrationComplete() ||
                 !TextSecurePreferences.isPushRegistered(application)       ||

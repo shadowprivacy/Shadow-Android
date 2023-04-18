@@ -13,15 +13,12 @@ import java.util.UUID;
 public class StaticCredentialsProvider implements CredentialsProvider {
 
   private final UUID   uuid;
-  private final String e164;
+  private final String userLogin;
   private final String password;
-  private final String signalingKey;
-
-  public StaticCredentialsProvider(UUID uuid, String e164, String password, String signalingKey) {
+  public StaticCredentialsProvider(UUID uuid, String userLogin, String password) {
     this.uuid         = uuid;
-    this.e164         = e164;
+    this.userLogin         = userLogin;
     this.password     = password;
-    this.signalingKey = signalingKey;
   }
 
   @Override
@@ -31,16 +28,11 @@ public class StaticCredentialsProvider implements CredentialsProvider {
 
   @Override
   public String getUserLogin() {
-    return e164;
+    return userLogin;
   }
 
   @Override
   public String getPassword() {
     return password;
-  }
-
-  @Override
-  public String getSignalingKey() {
-    return signalingKey;
   }
 }

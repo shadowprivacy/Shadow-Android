@@ -10,19 +10,20 @@ import org.whispersystems.libsignal.state.IdentityKeyStore;
 import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.PreKeyStore;
 import org.whispersystems.libsignal.state.SessionRecord;
-import org.whispersystems.libsignal.state.SessionStore;
-import org.whispersystems.libsignal.state.SignalProtocolStore;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 import org.whispersystems.libsignal.state.SignedPreKeyStore;
 
 import java.util.List;
 
-public class SignalProtocolStoreImpl implements SignalProtocolStore {
+import su.sres.signalservice.api.SignalServiceProtocolStore;
+import su.sres.signalservice.api.SignalServiceSessionStore;
 
-  private final PreKeyStore       preKeyStore;
-  private final SignedPreKeyStore signedPreKeyStore;
-  private final IdentityKeyStore  identityKeyStore;
-  private final SessionStore      sessionStore;
+public class SignalProtocolStoreImpl implements SignalServiceProtocolStore {
+
+  private final PreKeyStore               preKeyStore;
+  private final SignedPreKeyStore         signedPreKeyStore;
+  private final IdentityKeyStore          identityKeyStore;
+  private final SignalServiceSessionStore sessionStore;
 
   public SignalProtocolStoreImpl(Context context) {
     this.preKeyStore       = new TextSecurePreKeyStore(context);
@@ -104,6 +105,11 @@ public class SignalProtocolStoreImpl implements SignalProtocolStore {
   @Override
   public void deleteAllSessions(String number) {
     sessionStore.deleteAllSessions(number);
+  }
+
+  @Override
+  public void archiveSession(SignalProtocolAddress address) {
+    sessionStore.archiveSession(address);
   }
 
   @Override

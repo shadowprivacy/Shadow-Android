@@ -28,6 +28,7 @@ import su.sres.securesms.messages.IncomingMessageProcessor.Processor;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
+import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.InvalidVersionException;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class IncomingMessageObserver {
 
@@ -48,6 +50,8 @@ public class IncomingMessageObserver {
 
     public  static final  int FOREGROUND_ID            = 313399;
     private static final long REQUEST_TIMEOUT_MINUTES  = 1;
+
+    private static final AtomicInteger INSTANCE_COUNT = new AtomicInteger(0);
 
     private static SignalServiceMessagePipe pipe             = null;
     private static SignalServiceMessagePipe unidentifiedPipe = null;
@@ -63,6 +67,10 @@ public class IncomingMessageObserver {
     private volatile boolean terminated;
 
     public IncomingMessageObserver(@NonNull Application context) {
+        if (INSTANCE_COUNT.incrementAndGet() != 1) {
+            throw new AssertionError("Multiple observers!");
+        }
+
         this.context                    = context;
         this.networkAccess              = ApplicationDependencies.getSignalServiceNetworkAccess();
         this.decryptionDrainedListeners = new CopyOnWriteArrayList<>();
@@ -73,14 +81,14 @@ public class IncomingMessageObserver {
             ContextCompat.startForegroundService(context, new Intent(context, ForegroundService.class));
         }
 
-        ProcessLifecycleOwner.get().getLifecycle().addObserver(new DefaultLifecycleObserver() {
+        ApplicationDependencies.getAppForegroundObserver().addListener(new AppForegroundObserver.Listener() {
             @Override
-            public void onStart(@NonNull LifecycleOwner owner) {
+            public void onForeground() {
                 onAppForegrounded();
             }
 
             @Override
-            public void onStop(@NonNull LifecycleOwner owner) {
+            public void onBackground() {
                 onAppBackgrounded();
             }
         });
@@ -165,6 +173,8 @@ public class IncomingMessageObserver {
     }
 
     public void terminateAsync() {
+        INSTANCE_COUNT.decrementAndGet();
+
         SignalExecutors.BOUNDED.execute(() -> {
             Log.w(TAG, "Beginning termination.");
             terminated = true;
@@ -245,8 +255,6 @@ public class IncomingMessageObserver {
                             }
                         } catch (TimeoutException e) {
                             Log.w(TAG, "Application level read timeout...");
-                        } catch (InvalidVersionException e) {
-                            Log.w(TAG, e);
                         }
                     }
                 } catch (Throwable e) {

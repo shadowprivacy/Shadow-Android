@@ -2,27 +2,35 @@ package su.sres.securesms.megaphone;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
+import android.provider.Settings;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
+import su.sres.core.util.TranslationDetection;
+import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.conversationlist.ConversationListFragment;
 import su.sres.securesms.database.model.MegaphoneRecord;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.messagerequests.MessageRequestMegaphoneActivity;
+import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Creating a new megaphone:
@@ -81,6 +89,7 @@ public final class Megaphones {
             put(Event.CLIENT_DEPRECATED, SignalStore.misc().isClientDeprecated() ? ALWAYS : NEVER);
             put(Event.GROUP_CALLING, shouldShowGroupCallingMegaphone() ? ALWAYS : NEVER);
             put(Event.ONBOARDING, shouldShowOnboardingMegaphone(context) ? ALWAYS : NEVER);
+            put(Event.NOTIFICATIONS, shouldShowNotificationsMegaphone(context) ? RecurringSchedule.every(TimeUnit.DAYS.toMillis(30)) : NEVER);
         }};
     }
 
@@ -98,6 +107,8 @@ public final class Megaphones {
                 return buildGroupCallingMegaphone(context);
             case ONBOARDING:
                 return buildOnboardingMegaphone();
+            case NOTIFICATIONS:
+                return buildNotificationsMegaphone(context);
             default:
                 throw new IllegalArgumentException("Event not handled!");
         }
@@ -154,6 +165,35 @@ public final class Megaphones {
                 .build();
     }
 
+    private static @NonNull Megaphone buildNotificationsMegaphone(@NonNull Context context) {
+        return new Megaphone.Builder(Event.NOTIFICATIONS, Megaphone.Style.BASIC)
+                .setTitle(R.string.NotificationsMegaphone_turn_on_notifications)
+                .setBody(R.string.NotificationsMegaphone_never_miss_a_message)
+                .setImage(R.drawable.megaphone_notifications_64)
+                .setActionButton(R.string.NotificationsMegaphone_turn_on, (megaphone, controller) -> {
+
+                    if (Build.VERSION.SDK_INT >= 26 && !NotificationChannels.isMessageChannelEnabled(context)) {
+                        Intent intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS);
+                        intent.putExtra(Settings.EXTRA_CHANNEL_ID, NotificationChannels.getMessagesChannel(context));
+                        intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName());
+                        controller.onMegaphoneNavigationRequested(intent);
+                    } else if (Build.VERSION.SDK_INT >= 26 &&
+                            (!NotificationChannels.areNotificationsEnabled(context) || !NotificationChannels.isMessagesChannelGroupEnabled(context)))
+                    {
+                        Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+                        intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName());
+                        controller.onMegaphoneNavigationRequested(intent);
+                    } else {
+                        Intent intent = new Intent(context, ApplicationPreferencesActivity.class);
+                        intent.putExtra(ApplicationPreferencesActivity.LAUNCH_TO_NOTIFICATIONS_FRAGMENT, true);
+                        controller.onMegaphoneNavigationRequested(intent);
+                    }
+                })
+                .setSecondaryButton(R.string.NotificationsMegaphone_not_now, (megaphone, controller) -> controller.onMegaphoneSnooze(Event.NOTIFICATIONS))
+                .setPriority(Megaphone.Priority.DEFAULT)
+                .build();
+    }
+
     private static boolean shouldShowMessageRequestsMegaphone() {
         return Recipient.self().getProfileName() == ProfileName.EMPTY;
     }
@@ -170,13 +210,33 @@ public final class Megaphones {
         return SignalStore.onboarding().hasOnboarding(context);
     }
 
+    private static boolean shouldShowNotificationsMegaphone(@NonNull Context context) {
+        boolean shouldShow = !TextSecurePreferences.isNotificationsEnabled(context)       ||
+                !NotificationChannels.isMessageChannelEnabled(context)       ||
+                !NotificationChannels.isMessagesChannelGroupEnabled(context) ||
+                !NotificationChannels.areNotificationsEnabled(context);
+        if (shouldShow) {
+            Locale locale = DynamicLanguageContextWrapper.getUsersSelectedLocale(context);
+            if (!new TranslationDetection(context, locale)
+                    .textExistsInUsersLanguage(R.string.NotificationsMegaphone_turn_on_notifications,
+                            R.string.NotificationsMegaphone_never_miss_a_message,
+                            R.string.NotificationsMegaphone_turn_on,
+                            R.string.NotificationsMegaphone_not_now)) {
+                Log.i(TAG, "Would show NotificationsMegaphone but is not yet translated in " + locale);
+                return false;
+            }
+        }
+        return shouldShow;
+    }
+
     public enum Event {
         REACTIONS("reactions"),
         MESSAGE_REQUESTS("message_requests"),
         LINK_PREVIEWS("link_previews"),
         CLIENT_DEPRECATED("client_deprecated"),
         GROUP_CALLING("group_calling"),
-        ONBOARDING("onboarding");
+        ONBOARDING("onboarding"),
+        NOTIFICATIONS("notifications");
 
         private final String key;
 

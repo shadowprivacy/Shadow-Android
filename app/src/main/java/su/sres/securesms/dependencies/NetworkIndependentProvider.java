@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.keyvalue.KeyValueStore;
 import su.sres.securesms.shakereport.ShakeToReport;
+import su.sres.securesms.util.AppForegroundObserver;
 
 // Here goes all the stuff that must be initialized prior to the service URL having been set
 public class NetworkIndependentProvider implements ApplicationDependencies.NetworkIndependentProvider {
@@ -24,6 +25,11 @@ public class NetworkIndependentProvider implements ApplicationDependencies.Netwo
     @Override
     public @NonNull ShakeToReport provideShakeToReport() {
         return new ShakeToReport(context);
+    }
+
+    @Override
+    public @NonNull AppForegroundObserver provideAppForegroundObserver() {
+        return new AppForegroundObserver();
     }
 
 }

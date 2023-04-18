@@ -97,6 +97,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
             String fcmSenderId                   = configRequested.getFcmSenderId();
             String oldFcmSenderId                = values.getFcmSenderId();
             Integer maxImageSize                 = configRequested.getMaxImageSize();
+            Integer maxImageDimension            = configRequested.getMaxImageDimension();
             Integer maxGifSize                   = configRequested.getMaxGifSize();
             Integer maxAudioSize                 = configRequested.getMaxAudioSize();
             Integer maxVideoSize                 = configRequested.getMaxVideoSize();
@@ -104,6 +105,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
             boolean updatesAllowed               = configRequested.getUpdatesAllowed();
 
             if (maxImageSize !=null && maxImageSize !=0) values.setImageMaxSize(maxImageSize); else values.removeImageKey();
+            if (maxImageDimension !=null && maxImageDimension !=0) values.setImageMaxDimension(maxImageDimension); else values.removeImageDimenKey();
             if (maxGifSize !=null && maxGifSize !=0) values.setGifMaxSize(maxGifSize); else values.removeGifKey();
             if (maxAudioSize !=null && maxAudioSize !=0) values.setAudioMaxSize(maxAudioSize); else values.removeAudioKey();
             if (maxVideoSize !=null && maxVideoSize !=0) values.setVideoMaxSize(maxVideoSize); else values.removeVideoKey();

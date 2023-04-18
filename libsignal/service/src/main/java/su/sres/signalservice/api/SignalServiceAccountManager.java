@@ -116,7 +116,7 @@ public class SignalServiceAccountManager {
                                        UUID uuid, String userLogin, String password,
                                        String signalAgent, boolean automaticNetworkRetry) {
         this(configuration,
-                new StaticCredentialsProvider(uuid, userLogin, password, null),
+                new StaticCredentialsProvider(uuid, userLogin, password),
                 signalAgent,
                 new GroupsV2Operations(ClientZkOperations.create(configuration)),
                 automaticNetworkRetry);

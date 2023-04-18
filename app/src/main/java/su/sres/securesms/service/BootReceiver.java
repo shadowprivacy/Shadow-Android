@@ -12,6 +12,6 @@ public class BootReceiver extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
-    ApplicationDependencies.getJobManager().add(new PushNotificationReceiveJob(context));
+    ApplicationDependencies.getJobManager().add(new PushNotificationReceiveJob());
   }
 }

@@ -24,8 +24,10 @@ import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
-import androidx.core.hardware.fingerprint.FingerprintManagerCompat;
-import androidx.core.os.CancellationSignal;
+
+import androidx.annotation.NonNull;
+import androidx.biometric.BiometricManager;
+import androidx.biometric.BiometricPrompt;
 import androidx.appcompat.widget.Toolbar;
 import android.text.Editable;
 import android.text.InputType;
@@ -62,6 +64,8 @@ import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.SupportEmailUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 
+import androidx.biometric.BiometricManager.Authenticators;
+
 /**
  * Activity that prompts for a user's passphrase.
  *
@@ -69,7 +73,12 @@ import su.sres.securesms.util.TextSecurePreferences;
  */
 public class PassphrasePromptActivity extends PassphraseActivity {
 
-  private static final String TAG = PassphrasePromptActivity.class.getSimpleName();
+  private static final String TAG                       = Log.tag(PassphrasePromptActivity.class);
+  private static final int    BIOMETRIC_AUTHENTICATORS  = Authenticators.BIOMETRIC_STRONG | Authenticators.BIOMETRIC_WEAK;
+  private static final int    ALLOWED_AUTHENTICATORS    = BIOMETRIC_AUTHENTICATORS | Authenticators.DEVICE_CREDENTIAL;
+  private static final short  AUTHENTICATE_REQUEST_CODE = 1007;
+  private static final String BUNDLE_ALREADY_SHOWN      = "bundle_already_shown";
+  public static final  String FROM_FOREGROUND           = "from_foreground";
 
   private DynamicIntroTheme dynamicTheme    = new DynamicIntroTheme();
   private DynamicLanguage   dynamicLanguage = new DynamicLanguage();
@@ -83,12 +92,13 @@ public class PassphrasePromptActivity extends PassphraseActivity {
   private ImageButton     hideButton;
   private AnimatingToggle visibilityToggle;
 
-  private FingerprintManagerCompat fingerprintManager;
-  private CancellationSignal       fingerprintCancellationSignal;
-  private FingerprintListener      fingerprintListener;
+  private BiometricManager           biometricManager;
+  private BiometricPrompt            biometricPrompt;
+  private BiometricPrompt.PromptInfo biometricPromptInfo;
 
   private boolean authenticated;
-  private boolean failure;
+  private boolean hadFailure;
+  private boolean alreadyShown;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -101,6 +111,15 @@ public class PassphrasePromptActivity extends PassphraseActivity {
 
     setContentView(R.layout.prompt_passphrase_activity);
     initializeResources();
+
+    alreadyShown = (savedInstanceState != null && savedInstanceState.getBoolean(BUNDLE_ALREADY_SHOWN)) ||
+            getIntent().getBooleanExtra(FROM_FOREGROUND, false);
+  }
+
+  @Override
+  protected void onSaveInstanceState(@NonNull Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putBoolean(BUNDLE_ALREADY_SHOWN, alreadyShown);
   }
 
   @Override
@@ -111,20 +130,12 @@ public class PassphrasePromptActivity extends PassphraseActivity {
 
     setLockTypeVisibility();
 
-    if (TextSecurePreferences.isScreenLockEnabled(this) && !authenticated && !failure) {
-      resumeScreenLock();
+    if (TextSecurePreferences.isScreenLockEnabled(this) && !authenticated && !hadFailure) {
+      resumeScreenLock(!alreadyShown);
+      alreadyShown = true;
     }
 
-    failure = false;
-  }
-
-  @Override
-  public void onPause() {
-    super.onPause();
-
-    if (TextSecurePreferences.isScreenLockEnabled(this)) {
-      pauseScreenLock();
-    }
+    hadFailure = false;
   }
 
   @Override
@@ -158,15 +169,16 @@ public class PassphrasePromptActivity extends PassphraseActivity {
   }
 
   @Override
-  @SuppressLint("MissingSuperCall") // no fragments to dispatch to
-  public void onActivityResult(int requestCode, int resultcode, Intent data) {
-    if (requestCode != 1) return;
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
 
-    if (resultcode == RESULT_OK) {
+    if (requestCode != AUTHENTICATE_REQUEST_CODE) return;
+
+    if (resultCode == RESULT_OK) {
       handleAuthenticated();
     } else {
       Log.w(TAG, "Authentication failed");
-      failure = true;
+      hadFailure = true;
     }
   }
 
@@ -217,16 +229,20 @@ public class PassphrasePromptActivity extends PassphraseActivity {
     ImageButton okButton = findViewById(R.id.ok_button);
     Toolbar     toolbar  = findViewById(R.id.toolbar);
 
-    showButton                    = findViewById(R.id.passphrase_visibility);
-    hideButton                    = findViewById(R.id.passphrase_visibility_off);
-    visibilityToggle              = findViewById(R.id.button_toggle);
-    passphraseText                = findViewById(R.id.passphrase_edit);
-    passphraseAuthContainer       = findViewById(R.id.password_auth_container);
-    fingerprintPrompt             = findViewById(R.id.fingerprint_auth_container);
-    lockScreenButton              = findViewById(R.id.lock_screen_auth_container);
-    fingerprintManager            = FingerprintManagerCompat.from(this);
-    fingerprintCancellationSignal = new CancellationSignal();
-    fingerprintListener           = new FingerprintListener();
+    showButton              = findViewById(R.id.passphrase_visibility);
+    hideButton              = findViewById(R.id.passphrase_visibility_off);
+    visibilityToggle        = findViewById(R.id.button_toggle);
+    passphraseText          = findViewById(R.id.passphrase_edit);
+    passphraseAuthContainer = findViewById(R.id.password_auth_container);
+    fingerprintPrompt       = findViewById(R.id.fingerprint_auth_container);
+    lockScreenButton        = findViewById(R.id.lock_screen_auth_container);
+    biometricManager        = BiometricManager.from(this);
+    biometricPrompt         = new BiometricPrompt(this, new BiometricAuthenticationListener());
+    biometricPromptInfo     = new BiometricPrompt.PromptInfo
+            .Builder()
+            .setAllowedAuthenticators(ALLOWED_AUTHENTICATORS)
+            .setTitle(getString(R.string.PassphrasePromptActivity_unlock_signal))
+            .build();
 
     setSupportActionBar(toolbar);
     getSupportActionBar().setTitle("");
@@ -246,20 +262,16 @@ public class PassphrasePromptActivity extends PassphraseActivity {
     fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp);
     fingerprintPrompt.getBackground().setColorFilter(getResources().getColor(R.color.core_ultramarine), PorterDuff.Mode.SRC_IN);
 
-    lockScreenButton.setOnClickListener(v -> resumeScreenLock());
+    lockScreenButton.setOnClickListener(v -> resumeScreenLock(true));
   }
 
   private void setLockTypeVisibility() {
     if (TextSecurePreferences.isScreenLockEnabled(this)) {
       passphraseAuthContainer.setVisibility(View.GONE);
 
-      if (fingerprintManager.isHardwareDetected() && fingerprintManager.hasEnrolledFingerprints()) {
-        fingerprintPrompt.setVisibility(View.VISIBLE);
-        lockScreenButton.setVisibility(View.GONE);
-      } else {
-        fingerprintPrompt.setVisibility(View.GONE);
-        lockScreenButton.setVisibility(View.VISIBLE);
-      }
+      fingerprintPrompt.setVisibility(biometricManager.canAuthenticate(BIOMETRIC_AUTHENTICATORS) == BiometricManager.BIOMETRIC_SUCCESS ? View.VISIBLE
+              : View.GONE);
+      lockScreenButton.setVisibility(View.VISIBLE);
     } else {
       passphraseAuthContainer.setVisibility(View.VISIBLE);
       fingerprintPrompt.setVisibility(View.GONE);
@@ -267,7 +279,7 @@ public class PassphrasePromptActivity extends PassphraseActivity {
     }
   }
 
-  private void resumeScreenLock() {
+  private void resumeScreenLock(boolean force) {
     KeyguardManager keyguardManager = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
 
     assert keyguardManager != null;
@@ -278,23 +290,21 @@ public class PassphrasePromptActivity extends PassphraseActivity {
       return;
     }
 
-    if (fingerprintManager.isHardwareDetected() && fingerprintManager.hasEnrolledFingerprints()) {
-      Log.i(TAG, "Listening for fingerprints...");
-      fingerprintCancellationSignal = new CancellationSignal();
-      fingerprintManager.authenticate(null, 0, fingerprintCancellationSignal, fingerprintListener, null);
-    } else if (Build.VERSION.SDK_INT >= 21){
-      Log.i(TAG, "firing intent...");
-      Intent intent = keyguardManager.createConfirmDeviceCredentialIntent(getString(R.string.PassphrasePromptActivity_unlock_signal), "");
-      startActivityForResult(intent, 1);
+    if (Build.VERSION.SDK_INT != 29 && biometricManager.canAuthenticate(ALLOWED_AUTHENTICATORS) == BiometricManager.BIOMETRIC_SUCCESS) {
+      if (force) {
+        Log.i(TAG, "Listening for biometric authentication...");
+        biometricPrompt.authenticate(biometricPromptInfo);
+      } else {
+        Log.i(TAG, "Skipping show system biometric dialog unless forced");
+      }
     } else {
-      Log.w(TAG, "Not compatible...");
-      handleAuthenticated();
-    }
-  }
-
-  private void pauseScreenLock() {
-    if (fingerprintCancellationSignal != null) {
-      fingerprintCancellationSignal.cancel();
+      if (force) {
+        Log.i(TAG, "firing intent...");
+        Intent intent = keyguardManager.createConfirmDeviceCredentialIntent(getString(R.string.PassphrasePromptActivity_unlock_signal), "");
+        startActivityForResult(intent, AUTHENTICATE_REQUEST_CODE);
+      } else {
+        Log.i(TAG, "Skipping firing intent unless forced");
+      }
     }
   }
 
@@ -357,15 +367,19 @@ public class PassphrasePromptActivity extends PassphraseActivity {
     System.gc();
   }
 
-  private class FingerprintListener extends FingerprintManagerCompat.AuthenticationCallback {
+  private class BiometricAuthenticationListener extends BiometricPrompt.AuthenticationCallback {
     @Override
-    public void onAuthenticationError(int errMsgId, CharSequence errString) {
-      Log.w(TAG, "Authentication error: " + errMsgId + " " + errString);
-      onAuthenticationFailed();
+    public void onAuthenticationError(int errorCode, @NonNull CharSequence errorString) {
+      Log.w(TAG, "Authentication error: " + errorCode);
+      hadFailure = true;
+
+      if (errorCode != BiometricPrompt.ERROR_CANCELED && errorCode != BiometricPrompt.ERROR_USER_CANCELED) {
+        onAuthenticationFailed();
+      }
     }
 
     @Override
-    public void onAuthenticationSucceeded(FingerprintManagerCompat.AuthenticationResult result) {
+    public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
       Log.i(TAG, "onAuthenticationSucceeded");
       fingerprintPrompt.setImageResource(R.drawable.ic_check_white_48dp);
       fingerprintPrompt.getBackground().setColorFilter(getResources().getColor(R.color.green_500), PorterDuff.Mode.SRC_IN);
@@ -382,8 +396,7 @@ public class PassphrasePromptActivity extends PassphraseActivity {
 
     @Override
     public void onAuthenticationFailed() {
-      Log.w(TAG, "onAuthenticatoinFailed()");
-      FingerprintManagerCompat.AuthenticationCallback callback = this;
+      Log.w(TAG, "onAuthenticationFailed()");
 
       fingerprintPrompt.setImageResource(R.drawable.ic_close_white_48dp);
       fingerprintPrompt.getBackground().setColorFilter(getResources().getColor(R.color.red_500), PorterDuff.Mode.SRC_IN);

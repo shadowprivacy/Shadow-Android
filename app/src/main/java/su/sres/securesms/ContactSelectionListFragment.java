@@ -77,6 +77,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.UsernameUtil;
+import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.adapter.FixedViewsAdapter;
 import su.sres.securesms.util.adapter.RecyclerViewConcatenateAdapterStickyHeader;
 import su.sres.securesms.util.concurrent.SimpleTask;
@@ -680,7 +681,7 @@ public final class ContactSelectionListFragment extends LoggingFragment
     }
 
     private void smoothScrollChipsToEnd() {
-        int x = chipGroupScrollContainer.getLayoutDirection() == View.LAYOUT_DIRECTION_LTR ? chipGroup.getWidth() : 0;
+        int x = ViewUtil.isLtr(chipGroupScrollContainer) ? chipGroup.getWidth() : 0;
         chipGroupScrollContainer.smoothScrollTo(x, 0);
     }
 

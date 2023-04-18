@@ -5,7 +5,13 @@
     android:id="@+id/review_banner"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="108dp">
+    android:orientation="vertical">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="108dp"
+        android:background="@color/signal_background_primary">
 
     <FrameLayout
         android:id="@+id/banner_icon_frame"
@@ -91,5 +97,13 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@id/banner_message"
         app:layout_constraintTop_toBottomOf="@id/banner_message" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="5dp"
+        android:background="@drawable/toolbar_shadow"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
 </su.sres.securesms.profiles.spoofing.ReviewBannerView>

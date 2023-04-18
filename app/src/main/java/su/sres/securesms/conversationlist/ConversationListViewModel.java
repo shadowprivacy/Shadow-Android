@@ -27,6 +27,7 @@ import su.sres.securesms.megaphone.Megaphones;
 import su.sres.securesms.net.PipeConnectivityListener;
 import su.sres.securesms.search.SearchRepository;
 import su.sres.securesms.util.Debouncer;
+import su.sres.securesms.util.ThrottledDebouncer;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 import su.sres.securesms.util.paging.Invalidator;
@@ -43,7 +44,8 @@ class ConversationListViewModel extends ViewModel {
     private final LiveData<Boolean>              hasNoConversations;
     private final SearchRepository               searchRepository;
     private final MegaphoneRepository            megaphoneRepository;
-    private final Debouncer                      debouncer;
+    private final Debouncer                      searchDebouncer;
+    private final ThrottledDebouncer updateDebouncer;
     private final DatabaseObserver.Observer      observer;
     private final Invalidator                    invalidator;
 
@@ -55,7 +57,8 @@ class ConversationListViewModel extends ViewModel {
         this.searchResult        = new MutableLiveData<>();
         this.searchRepository    = searchRepository;
         this.megaphoneRepository = ApplicationDependencies.getMegaphoneRepository();
-        this.debouncer           = new Debouncer(300);
+        this.searchDebouncer     = new Debouncer(300);
+        this.updateDebouncer     = new ThrottledDebouncer(500);
         this.invalidator         = new Invalidator();
         this.pagedData           = PagedData.create(ConversationListDataSource.create(application, isArchived),
                 new PagingConfig.Builder()
@@ -63,10 +66,12 @@ class ConversationListViewModel extends ViewModel {
                         .setBufferPages(2)
                         .build());
         this.observer            = () -> {
-            if (!TextUtils.isEmpty(getLastQuery())) {
-                searchRepository.query(getLastQuery(), searchResult::postValue);
-            }
-            pagedData.getController().onDataInvalidated();
+            updateDebouncer.publish(() -> {
+                if (!TextUtils.isEmpty(getLastQuery())) {
+                    searchRepository.query(getLastQuery(), searchResult::postValue);
+                }
+                pagedData.getController().onDataInvalidated();
+            });
         };
 
         this.hasNoConversations = LiveDataUtil.mapAsync(pagedData.getData(), conversations -> {
@@ -136,7 +141,7 @@ class ConversationListViewModel extends ViewModel {
 
     void updateQuery(String query) {
         lastQuery = query;
-        debouncer.publish(() -> searchRepository.query(query, result -> {
+        searchDebouncer.publish(() -> searchRepository.query(query, result -> {
             Util.runOnMain(() -> {
                 if (query.equals(lastQuery)) {
                     searchResult.setValue(result);
@@ -152,7 +157,8 @@ class ConversationListViewModel extends ViewModel {
     @Override
     protected void onCleared() {
         invalidator.invalidate();
-        debouncer.clear();
+        searchDebouncer.clear();
+        updateDebouncer.clear();
         ApplicationDependencies.getDatabaseObserver().unregisterObserver(observer);
     }
 

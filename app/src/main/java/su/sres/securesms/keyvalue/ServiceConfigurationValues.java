@@ -21,6 +21,7 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
     private static final String IS_LICENSED                       = "service_configuration.is_licensed";
     private static final String LICENSE                           = "service_configuration.license";
     private static final String IMAGE_MAX_SIZE                    = "service_configuration.maxsize_image";
+    private static final String IMAGE_MAX_DIMENSION               = "service_configuration.maxdimen_image";
     private static final String GIF_MAX_SIZE                      = "service_configuration.maxsize_gif";
     private static final String AUDIO_MAX_SIZE                    = "service_configuration.maxsize_audio";
     private static final String VIDEO_MAX_SIZE                    = "service_configuration.maxsize_video";
@@ -28,8 +29,6 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
     private static final String UPDATES_ALLOWED                   = "service_configuration.updates_allowed";
 
     public static final String EXAMPLE_URI                        = "https://example.com";
-
-    private static final int MB                     = 1048576;
 
     // obsoleted
     private static final String TRIAL_STATUS                      = "service_configuration.trial_status";
@@ -119,6 +118,10 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
         removeKey(IMAGE_MAX_SIZE);
     }
 
+    public synchronized void removeImageDimenKey() {
+        removeKey(IMAGE_MAX_DIMENSION);
+    }
+
     public synchronized void removeGifKey() {
         removeKey(GIF_MAX_SIZE);
     }
@@ -141,6 +144,10 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
 
     public synchronized void setImageMaxSize(int size) {
         putInteger(IMAGE_MAX_SIZE, size);
+    }
+
+    public synchronized void setImageMaxDimension(int dimension) {
+        putInteger(IMAGE_MAX_DIMENSION, dimension);
     }
 
     public synchronized void setGifMaxSize(int size) {
@@ -226,24 +233,33 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
         return getString(FCM_SENDER_ID, "null");
     }
 
+    // in MB
     public int getImageMaxSize() {
-        return getInteger(IMAGE_MAX_SIZE, 6 * MB);
+        return getInteger(IMAGE_MAX_SIZE, 6);
     }
 
+    public int getImageMaxDimension() {
+        return getInteger(IMAGE_MAX_DIMENSION, 4096);
+    }
+
+    // in MB
     public int getGifMaxSize() {
-        return getInteger(GIF_MAX_SIZE, 25 * MB);
+        return getInteger(GIF_MAX_SIZE, 25);
     }
 
+    // in MB
     public int getAudioMaxSize() {
-        return getInteger(AUDIO_MAX_SIZE, 100 * MB);
+        return getInteger(AUDIO_MAX_SIZE, 100);
     }
 
+    // in MB
     public int getVideoMaxSize() {
-        return getInteger(VIDEO_MAX_SIZE, 100 * MB);
+        return getInteger(VIDEO_MAX_SIZE, 100);
     }
 
+    // in MB
     public int getDocMaxSize() {
-        return getInteger(DOC_MAX_SIZE, 100 * MB);
+        return getInteger(DOC_MAX_SIZE, 100);
     }
 
     public boolean getUpdatesAllowed() {

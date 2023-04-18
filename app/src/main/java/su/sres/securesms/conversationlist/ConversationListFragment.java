@@ -115,6 +115,7 @@ import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.sms.MessageSender;
+import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.AppStartup;
 import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.PlayStoreUtil;
@@ -172,7 +173,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     private Stub<ViewGroup>                   megaphoneContainer;
     private SnapToTopDataObserver             snapToTopDataObserver;
     private Drawable                          archiveDrawable;
-    private LifecycleObserver visibilityLifecycleObserver;
+    private AppForegroundObserver.Listener    appForegroundObserver;
 
     private Stopwatch startupStopwatch;
 
@@ -273,7 +274,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     public void onStart() {
         super.onStart();
         ConversationFragment.prepare(requireContext());
-        ProcessLifecycleOwner.get().getLifecycle().addObserver(visibilityLifecycleObserver);
+        ApplicationDependencies.getAppForegroundObserver().addListener(appForegroundObserver);
     }
 
     @Override
@@ -288,7 +289,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     @Override
     public void onStop() {
         super.onStop();
-        ProcessLifecycleOwner.get().getLifecycle().removeObserver(visibilityLifecycleObserver);
+        ApplicationDependencies.getAppForegroundObserver().removeListener(appForegroundObserver);
     }
 
     @Override
@@ -517,7 +518,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }
 
     private void initializeTypingObserver() {
-        ApplicationDependencies.getTypingStatusRepository().getTypingThreads().observe(this, threadIds -> {
+        ApplicationDependencies.getTypingStatusRepository().getTypingThreads().observe(getViewLifecycleOwner(), threadIds -> {
             if (threadIds == null) {
                 threadIds = Collections.emptySet();
             }
@@ -539,11 +540,14 @@ public class ConversationListFragment extends MainFragment implements ActionMode
         viewModel.hasNoConversations().observe(getViewLifecycleOwner(), this::updateEmptyState);
         viewModel.getPipeState().observe(getViewLifecycleOwner(), this::updateProxyStatus);
 
-        visibilityLifecycleObserver = new DefaultLifecycleObserver() {
+        appForegroundObserver = new AppForegroundObserver.Listener() {
             @Override
-            public void onStart(@NonNull LifecycleOwner owner) {
+            public void onForeground() {
                 viewModel.onVisible();
             }
+
+            @Override
+            public void onBackground() { }
         };
     }
 

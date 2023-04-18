@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.OptionalLong;
 
+import su.sres.securesms.components.sensors.Orientation;
 import su.sres.securesms.components.webrtc.BroadcastVideoSink;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.CallParticipantId;
@@ -98,6 +99,11 @@ public class WebRtcServiceStateBuilder {
 
         public @NonNull LocalDeviceStateBuilder isBluetoothAvailable(boolean available) {
             toBuild.bluetoothAvailable = available;
+            return this;
+        }
+
+        public @NonNull LocalDeviceStateBuilder setOrientation(@NonNull Orientation orientation) {
+            toBuild.orientation = orientation;
             return this;
         }
     }

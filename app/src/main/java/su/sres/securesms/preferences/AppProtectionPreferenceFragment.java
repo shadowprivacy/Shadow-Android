@@ -24,6 +24,7 @@ import su.sres.securesms.components.SwitchPreferenceCompat;
 import su.sres.securesms.crypto.MasterSecretUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.jobs.ConversationShortcutUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceConfigurationUpdateJob;
 import su.sres.securesms.jobs.RefreshAttributesJob;
 import su.sres.securesms.keyvalue.UserLoginPrivacyValues;
@@ -34,6 +35,7 @@ import su.sres.securesms.megaphone.Megaphones;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.util.CommunicationActions;
+import su.sres.securesms.util.ConversationUtil;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.core.util.concurrent.SignalExecutors;
@@ -177,12 +179,17 @@ public class AppProtectionPreferenceFragment extends CorrectedPreferenceFragment
   private class ScreenLockListener implements Preference.OnPreferenceChangeListener {
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
+      Log.w(TAG, "Screen lock preference changed: " + newValue);
+
       boolean enabled = (Boolean)newValue;
       TextSecurePreferences.setScreenLockEnabled(getContext(), enabled);
 
       Intent intent = new Intent(getContext(), KeyCachingService.class);
       intent.setAction(KeyCachingService.LOCK_TOGGLED_EVENT);
       getContext().startService(intent);
+
+      ConversationUtil.refreshRecipientShortcuts();
+
       return true;
     }
   }

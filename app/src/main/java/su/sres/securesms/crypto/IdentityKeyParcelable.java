@@ -19,8 +19,12 @@ package su.sres.securesms.crypto;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import androidx.annotation.Nullable;
+
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
+
+import su.sres.securesms.util.ParcelUtil;
 
 public class IdentityKeyParcelable implements Parcelable {
 
@@ -40,19 +44,17 @@ public class IdentityKeyParcelable implements Parcelable {
 
   private final IdentityKey identityKey;
 
-  public IdentityKeyParcelable(IdentityKey identityKey) {
+  public IdentityKeyParcelable(@Nullable IdentityKey identityKey) {
     this.identityKey = identityKey;
   }
 
   public IdentityKeyParcelable(Parcel in) throws InvalidKeyException {
-    int    serializedLength = in.readInt();
-    byte[] serialized       = new byte[serializedLength];
+    byte[] serialized = ParcelUtil.readByteArray(in);
 
-    in.readByteArray(serialized);
-    this.identityKey = new IdentityKey(serialized, 0);
+    this.identityKey = serialized != null ? new IdentityKey(serialized, 0) : null;
   }
 
-  public IdentityKey get() {
+  public @Nullable IdentityKey get() {
     return identityKey;
   }
 
@@ -63,7 +65,6 @@ public class IdentityKeyParcelable implements Parcelable {
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
-    dest.writeInt(identityKey.serialize().length);
-    dest.writeByteArray(identityKey.serialize());
+    ParcelUtil.writeByteArray(dest, identityKey != null ? identityKey.serialize() : null);
   }
 }

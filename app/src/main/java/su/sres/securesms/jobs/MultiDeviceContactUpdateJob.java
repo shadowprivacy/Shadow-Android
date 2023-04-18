@@ -1,5 +1,6 @@
 package su.sres.securesms.jobs;
 
+import android.Manifest;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.net.Uri;
@@ -20,6 +21,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.recipients.Recipient;
@@ -135,7 +137,7 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
             Set<RecipientId>                          archived        = DatabaseFactory.getThreadDatabase(context).getArchivedRecipients();
 
             out.write(new DeviceContact(RecipientUtil.toSignalServiceAddress(context, recipient),
-                    Optional.of(recipient.getDisplayName(context)),
+                    Optional.fromNullable(recipient.getName(context)),
                     getAvatar(recipient.getId(), recipient.getContactUri()),
                     Optional.fromNullable(recipient.getColor().serialize()),
                     verifiedMessage,
@@ -165,7 +167,7 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
     private void generateFullContactUpdate()
             throws IOException, UntrustedIdentityException, NetworkException
     {
-        boolean isAppVisible      = ApplicationContext.getInstance(context).isAppVisible();
+        boolean isAppVisible      = ApplicationDependencies.getAppForegroundObserver().isForegrounded();
         long    timeSinceLastSync = System.currentTimeMillis() - TextSecurePreferences.getLastFullContactSyncTime(context);
 
         Log.d(TAG, "Requesting a full contact sync. forced = " + forceSync + ", appVisible = " + isAppVisible + ", timeSinceLastSync = " + timeSinceLastSync + " ms");
@@ -307,6 +309,10 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
 
     private Optional<SignalServiceAttachmentStream> getSystemAvatar(@Nullable Uri uri) {
         if (uri == null) {
+            return Optional.absent();
+        }
+
+        if (!Permissions.hasAny(context, Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)) {
             return Optional.absent();
         }
 

@@ -13,10 +13,7 @@ import com.annimon.stream.Stream;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.TransportOptions;
-import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.ThreadDatabase;
-import su.sres.securesms.database.model.StickerRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mms.OutgoingMediaMessage;
@@ -24,10 +21,8 @@ import su.sres.securesms.mms.SlideDeck;
 import su.sres.securesms.mms.SlideFactory;
 import su.sres.securesms.mms.StickerSlide;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.recipients.RecipientFormattingException;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.sms.OutgoingTextMessage;
-import su.sres.securesms.stickers.StickerLocator;
 import su.sres.securesms.util.MessageUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SimpleTask;
@@ -72,7 +67,8 @@ public final class MultiShareSender {
             boolean         forceSms       = recipient.isForceSmsSelection();
             int             subscriptionId = transport.getSimSubscriptionId().or(-1);
             long            expiresIn      = recipient.getExpireMessages() * 1000L;
-            boolean         needsSplit     = message.length() > transport.calculateCharacters(message).maxPrimaryMessageSize;
+            boolean         needsSplit     = message != null    &&
+                    message.length() > transport.calculateCharacters(message).maxPrimaryMessageSize;
             boolean         isMediaMessage = !multiShareArgs.getMedia().isEmpty()                                              ||
                     (multiShareArgs.getDataUri() != null && multiShareArgs.getDataUri() != Uri.EMPTY) ||
                     multiShareArgs.getStickerLocator() != null                                        ||
@@ -95,7 +91,7 @@ public final class MultiShareSender {
         return new MultiShareSendResultCollection(results);
     }
 
-    public static @NonNull TransportOption getWorseTransportOption(@NonNull Context context, @NonNull Set<ShareContactAndThread> shareContactAndThreads) {
+    public static @NonNull TransportOption getWorstTransportOption(@NonNull Context context, @NonNull Set<ShareContactAndThread> shareContactAndThreads) {
 
         return TransportOptions.getPushTransportOption(context);
     }
@@ -112,7 +108,7 @@ public final class MultiShareSender {
                                          int subscriptionId)
     {
         String body = multiShareArgs.getDraftText();
-        if (transportOption.isType(TransportOption.Type.TEXTSECURE) && !forceSms) {
+        if (transportOption.isType(TransportOption.Type.TEXTSECURE) && !forceSms && body != null) {
             MessageUtil.SplitResult splitMessage = MessageUtil.getSplitMessage(context, body, transportOption.calculateCharacters(body).maxPrimaryMessageSize);
             body = splitMessage.getBody();
 

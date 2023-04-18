@@ -74,6 +74,7 @@ public class SubmitDebugLogRepository {
         }
         add(new LogSectionCapabilities());
         add(new LogSectionFeatureFlags());
+        add(new LogSectionNotifications());
         add(new LogSectionKeyPreferences());
         add(new LogSectionPermissions());
         add(new LogSectionTrace());

@@ -3,19 +3,25 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.ThreadRecord;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.ConversationUtil;
+import su.sres.securesms.util.TextSecurePreferences;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static su.sres.securesms.util.ConversationUtil.CONVERSATION_SUPPORT_VERSION;
+
+import android.os.Build;
 
 /**
  * On some devices, interacting with the ShortcutManager can take a very long time (several seconds).
@@ -24,9 +30,17 @@ import java.util.concurrent.TimeUnit;
  */
 public class ConversationShortcutUpdateJob extends BaseJob {
 
+    private static final String TAG = Log.tag(ConversationShortcutUpdateJob.class);
+
     public static final String KEY = "ConversationShortcutUpdateJob";
 
-    public ConversationShortcutUpdateJob() {
+    public static void enqueue() {
+        if (Build.VERSION.SDK_INT >= CONVERSATION_SUPPORT_VERSION) {
+            ApplicationDependencies.getJobManager().add(new ConversationShortcutUpdateJob());
+        }
+    }
+
+    private ConversationShortcutUpdateJob() {
         this(new Parameters.Builder()
                 .setQueue("ConversationShortcutUpdateJob")
                 .setLifespan(TimeUnit.MINUTES.toMillis(15))
@@ -49,8 +63,14 @@ public class ConversationShortcutUpdateJob extends BaseJob {
     }
 
     @Override
-    @RequiresApi(ConversationUtil.CONVERSATION_SUPPORT_VERSION)
+    @RequiresApi(CONVERSATION_SUPPORT_VERSION)
     protected void onRun() throws Exception {
+        if (TextSecurePreferences.isScreenLockEnabled(context)) {
+            Log.i(TAG, "Screen lock enabled. Clearing shortcuts.");
+            ConversationUtil.clearAllShortcuts(context);
+            return;
+        }
+
         ThreadDatabase  threadDatabase = DatabaseFactory.getThreadDatabase(context);
         int             maxShortcuts   = ConversationUtil.getMaxShortcuts(context);
         List<Recipient> ranked         = new ArrayList<>(maxShortcuts);

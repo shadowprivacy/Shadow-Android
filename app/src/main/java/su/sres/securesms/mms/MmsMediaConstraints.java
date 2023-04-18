@@ -6,61 +6,74 @@ import com.android.mms.service_alt.MmsConfig;
 
 final class MmsMediaConstraints extends MediaConstraints {
 
-  private final int subscriptionId;
+    private final int subscriptionId;
 
-  private static final int MIN_IMAGE_DIMEN = 1024;
+    private static final int MIN_IMAGE_DIMEN = 1024;
 
-  MmsMediaConstraints(int subscriptionId) {
-    this.subscriptionId = subscriptionId;
-  }
-
-  @Override
-  public int getImageMaxWidth(Context context) {
-    return Math.max(MIN_IMAGE_DIMEN, getOverriddenMmsConfig(context).getMaxImageWidth());
-  }
-
-  @Override
-  public int getImageMaxHeight(Context context) {
-    return Math.max(MIN_IMAGE_DIMEN, getOverriddenMmsConfig(context).getMaxImageHeight());
+    MmsMediaConstraints(int subscriptionId) {
+        this.subscriptionId = subscriptionId;
     }
 
-  @Override
-  public long getImageMaxSize(Context context) {
-    return getMaxMessageSize(context);
-  }
+    @Override
+    public int getImageMaxWidth(Context context) {
+        return Math.max(MIN_IMAGE_DIMEN, getOverriddenMmsConfig(context).getMaxImageWidth());
+    }
 
-  @Override
-  public long getGifMaxSize(Context context) {
-    return getMaxMessageSize(context);
-  }
+    @Override
+    public int getImageMaxHeight(Context context) {
+        return Math.max(MIN_IMAGE_DIMEN, getOverriddenMmsConfig(context).getMaxImageHeight());
+    }
 
-  @Override
-  public long getVideoMaxSize(Context context) {
-    return getMaxMessageSize(context);
-  }
+    @Override
+    public int[] getImageDimensionTargets(Context context) {
+        int[] targets = new int[4];
 
-  @Override
-  public long getUncompressedVideoMaxSize(Context context) {
-    return Math.max(getVideoMaxSize(context), 15 * 1024 * 1024);
-  }
+        targets[0] = getImageMaxHeight(context);
 
-  @Override
-  public long getAudioMaxSize(Context context) {
-    return getMaxMessageSize(context);
-  }
+        for (int i = 1; i < targets.length; i++) {
+            targets[i] = targets[i - 1] / 2;
+        }
 
-  @Override
-  public long getDocumentMaxSize(Context context) {
-    return getMaxMessageSize(context);
-  }
+        return targets;
+    }
 
-  private int getMaxMessageSize(Context context) {
-    return getOverriddenMmsConfig(context).getMaxMessageSize();
-  }
+    @Override
+    public long getImageMaxSize(Context context) {
+        return getMaxMessageSize(context);
+    }
 
-  private MmsConfig.Overridden getOverriddenMmsConfig(Context context) {
-    MmsConfig mmsConfig = MmsConfigManager.getMmsConfig(context, subscriptionId);
+    @Override
+    public long getGifMaxSize(Context context) {
+        return getMaxMessageSize(context);
+    }
 
-    return new MmsConfig.Overridden(mmsConfig, null);
-  }
+    @Override
+    public long getVideoMaxSize(Context context) {
+        return getMaxMessageSize(context);
+    }
+
+    @Override
+    public long getUncompressedVideoMaxSize(Context context) {
+        return Math.max(getVideoMaxSize(context), 15 * 1024 * 1024);
+    }
+
+    @Override
+    public long getAudioMaxSize(Context context) {
+        return getMaxMessageSize(context);
+    }
+
+    @Override
+    public long getDocumentMaxSize(Context context) {
+        return getMaxMessageSize(context);
+    }
+
+    private int getMaxMessageSize(Context context) {
+        return getOverriddenMmsConfig(context).getMaxMessageSize();
+    }
+
+    private MmsConfig.Overridden getOverriddenMmsConfig(Context context) {
+        MmsConfig mmsConfig = MmsConfigManager.getMmsConfig(context, subscriptionId);
+
+        return new MmsConfig.Overridden(mmsConfig, null);
+    }
 }

@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.annimon.stream.Stream;
 
+import su.sres.securesms.crypto.DatabaseSessionLock;
 import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
@@ -23,13 +24,13 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.core.util.concurrent.SignalExecutors;
+import su.sres.signalservice.api.SignalSessionLock;
+
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.SignalProtocolAddress;
 
 import java.util.Collection;
 import java.util.List;
-
-import static org.whispersystems.libsignal.SessionCipher.SESSION_LOCK;
 
 final class SafetyNumberChangeRepository {
 
@@ -90,7 +91,7 @@ final class SafetyNumberChangeRepository {
     private TrustAndVerifyResult trustOrVerifyChangedRecipientsInternal(@NonNull List<ChangedRecipient> changedRecipients) {
         IdentityDatabase identityDatabase = DatabaseFactory.getIdentityDatabase(context);
 
-        synchronized (SESSION_LOCK) {
+        try(SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
             for (ChangedRecipient changedRecipient : changedRecipients) {
                 IdentityRecord identityRecord = changedRecipient.getIdentityRecord();
 
@@ -110,7 +111,7 @@ final class SafetyNumberChangeRepository {
     @WorkerThread
     private TrustAndVerifyResult trustOrVerifyChangedRecipientsAndResendInternal(@NonNull List<ChangedRecipient> changedRecipients,
                                                                                  @NonNull MessageRecord messageRecord) {
-        synchronized (SESSION_LOCK) {
+        try(SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
             for (ChangedRecipient changedRecipient : changedRecipients) {
                 SignalProtocolAddress      mismatchAddress  = new SignalProtocolAddress(changedRecipient.getRecipient().requireServiceId(), 1);
                 TextSecureIdentityKeyStore identityKeyStore = new TextSecureIdentityKeyStore(context);

@@ -7,6 +7,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.ringrtc.CallException;
+
+import su.sres.securesms.components.webrtc.OrientationAwareVideoSink;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.events.CallParticipant;
@@ -114,8 +116,8 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
             webRtcInteractor.getCallManager().proceed(activePeer.getCallId(),
                     context,
                     videoState.requireEglBase(),
-                    videoState.requireLocalSink(),
-                    callParticipant.getVideoSink(),
+                    new OrientationAwareVideoSink(videoState.requireLocalSink()),
+                    new OrientationAwareVideoSink(callParticipant.getVideoSink()),
                     videoState.requireCamera(),
                     iceServers,
                     isAlwaysTurn,
@@ -229,14 +231,6 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
                                                                   @NonNull ArrayList<IceCandidateParcel> iceCandidates)
     {
         return activeCallDelegate.handleSendIceCandidates(currentState, callMetadata, broadcast, iceCandidates);
-    }
-
-    @Override
-    protected @NonNull WebRtcServiceState handleReceivedIceCandidates(@NonNull WebRtcServiceState currentState,
-                                                                      @NonNull WebRtcData.CallMetadata callMetadata,
-                                                                      @NonNull ArrayList<IceCandidateParcel> iceCandidateParcels)
-    {
-        return activeCallDelegate.handleReceivedIceCandidates(currentState, callMetadata, iceCandidateParcels);
     }
 
     @Override

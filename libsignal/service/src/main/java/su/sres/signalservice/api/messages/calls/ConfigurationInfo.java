@@ -43,6 +43,9 @@ public class ConfigurationInfo {
     private int maxImageSize;
 
     @JsonProperty
+    private int maxImageDimension;
+
+    @JsonProperty
     private int maxGifSize;
 
     @JsonProperty
@@ -93,6 +96,10 @@ public class ConfigurationInfo {
         return maxImageSize;
     }
 
+    public Integer getMaxImageDimension() {
+        return maxImageDimension;
+    }
+
     public Integer getMaxGifSize() {
         return maxGifSize;
     }
@@ -120,6 +127,4 @@ public class ConfigurationInfo {
             return Base64.decodeWithoutPadding(p.getValueAsString());
         }
     }
-
-
 }

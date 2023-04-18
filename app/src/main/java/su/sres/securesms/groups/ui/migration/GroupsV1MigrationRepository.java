@@ -83,7 +83,11 @@ final class GroupsV1MigrationRepository {
         }
 
         try {
-            RecipientUtil.ensureUuidsAreAvailable(ApplicationDependencies.getApplication(), group.getParticipants());
+            List<Recipient> registered = Stream.of(group.getParticipants())
+                    .filter(Recipient::isRegistered)
+                    .toList();
+
+            RecipientUtil.ensureUuidsAreAvailable(ApplicationDependencies.getApplication(), registered);
         } catch (IOException e) {
             Log.w(TAG, "Failed to refresh UUIDs!", e);
         }

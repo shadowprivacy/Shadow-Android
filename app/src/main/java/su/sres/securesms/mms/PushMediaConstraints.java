@@ -11,13 +11,14 @@ public class PushMediaConstraints extends MediaConstraints {
   private final ServiceConfigurationValues config = SignalStore.serviceConfigurationValues();
 
   private static final int MAX_IMAGE_DIMEN_LOWMEM = 768;
-  private static final int MAX_IMAGE_DIMEN        = 4096;
   private static final int KB                     = 1024;
   private static final int MB                     = 1024 * KB;
 
+  private static final int[] FALLBACKS_LOWMEM = { MAX_IMAGE_DIMEN_LOWMEM, 512 };
+
   @Override
   public int getImageMaxWidth(Context context) {
-    return Util.isLowMemory(context) ? MAX_IMAGE_DIMEN_LOWMEM : MAX_IMAGE_DIMEN;
+    return Util.isLowMemory(context) ? MAX_IMAGE_DIMEN_LOWMEM : config.getImageMaxDimension();
   }
 
   @Override
@@ -28,6 +29,11 @@ public class PushMediaConstraints extends MediaConstraints {
   @Override
   public long getImageMaxSize(Context context) {
     return (long) MB * config.getImageMaxSize();
+  }
+
+  @Override
+  public int[] getImageDimensionTargets(Context context) {
+    return Util.isLowMemory(context) ? FALLBACKS_LOWMEM : new int[]{config.getImageMaxDimension(), 1024, 768, 512};
   }
 
   @Override

@@ -13,6 +13,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.core.util.tracing.Tracer;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.R;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.logsubmit.SubmitDebugLogRepository;
 import su.sres.securesms.sharing.ShareIntents;
 import su.sres.securesms.util.FeatureFlags;
@@ -131,7 +132,7 @@ public final class ShakeToReport implements ShakeDetector.Listener {
     }
 
     private void enableIfVisible() {
-        if (ApplicationContext.getInstance(application).isAppVisible()) {
+        if (ApplicationDependencies.getAppForegroundObserver().isForegrounded()) {
             enable();
         }
     }

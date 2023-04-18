@@ -1,5 +1,6 @@
 package su.sres.securesms.notifications;
 
+import android.Manifest;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.database.Cursor;
@@ -12,7 +13,9 @@ import androidx.annotation.WorkerThread;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.ServiceUtil;
 
 import java.util.concurrent.TimeUnit;
@@ -83,9 +86,13 @@ public final class DoNotDisturbUtil {
     private static boolean isContactStarred(@NonNull Context context, @NonNull Recipient recipient) {
         if (!recipient.resolve().isSystemContact()) return false;
 
+        if (!Permissions.hasAny(context, Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)) {
+            return false;
+        }
+
         try (Cursor cursor = context.getContentResolver().query(recipient.resolve().getContactUri(), new String[]{ContactsContract.Contacts.STARRED}, null, null, null)) {
             if (cursor == null || !cursor.moveToFirst()) return false;
-            return cursor.getInt(cursor.getColumnIndex(ContactsContract.Contacts.STARRED)) == 1;
+            return CursorUtil.requireInt(cursor, ContactsContract.Contacts.STARRED) == 1;
         }
     }
 

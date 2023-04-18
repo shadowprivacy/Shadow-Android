@@ -19,6 +19,7 @@ import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraint;
 import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraintObserver;
 import su.sres.securesms.jobmanager.impl.DecryptionsDrainedConstraint;
 import su.sres.securesms.jobmanager.impl.DecryptionsDrainedConstraintObserver;
+import su.sres.securesms.jobmanager.migrations.PushDecryptMessageJobEnvelopeMigration;
 import su.sres.securesms.jobmanager.migrations.PushProcessMessageQueueJobMigration;
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration;
 import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration2;
@@ -28,6 +29,7 @@ import su.sres.securesms.jobmanager.migrations.SendReadReceiptsJobMigration;
 import su.sres.securesms.migrations.AttributesMigrationJob;
 import su.sres.securesms.migrations.AvatarIdRemovalMigrationJob;
 import su.sres.securesms.migrations.BackupNotificationMigrationJob;
+import su.sres.securesms.migrations.BlobStorageLocationMigrationJob;
 import su.sres.securesms.migrations.DirectoryRefreshMigrationJob;
 import su.sres.securesms.migrations.LicenseMigrationJob;
 import su.sres.securesms.migrations.PassingMigrationJob;
@@ -142,6 +144,7 @@ public final class JobManagerFactories {
             put(AttributesMigrationJob.KEY,                new AttributesMigrationJob.Factory());
             put(AvatarIdRemovalMigrationJob.KEY,           new AvatarIdRemovalMigrationJob.Factory());
             put(BackupNotificationMigrationJob.KEY,        new BackupNotificationMigrationJob.Factory());
+            put(BlobStorageLocationMigrationJob.KEY,       new BlobStorageLocationMigrationJob.Factory());
             put(CachedAttachmentsMigrationJob.KEY,         new CachedAttachmentsMigrationJob.Factory());
             put(DatabaseMigrationJob.KEY,                  new DatabaseMigrationJob.Factory());
             put(DirectoryRefreshMigrationJob.KEY,          new DirectoryRefreshMigrationJob.Factory());
@@ -195,6 +198,7 @@ public final class JobManagerFactories {
                 new RecipientIdFollowUpJobMigration2(),
                 new SendReadReceiptsJobMigration(DatabaseFactory.getMmsSmsDatabase(application)),
                 new PushProcessMessageQueueJobMigration(application),
-                new RetrieveProfileJobMigration());
+                new RetrieveProfileJobMigration(),
+                new PushDecryptMessageJobEnvelopeMigration(application));
     }
 }

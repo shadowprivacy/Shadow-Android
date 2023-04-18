@@ -19,9 +19,6 @@ package su.sres.securesms;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.lifecycle.DefaultLifecycleObserver;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.ProcessLifecycleOwner;
 
 import android.content.Context;
 import android.os.Build;
@@ -58,6 +55,8 @@ import su.sres.securesms.logging.CustomSignalProtocolLogger;
 import su.sres.core.util.logging.Log;
 import su.sres.core.util.logging.PersistentLogger;
 import su.sres.securesms.logging.LogSecretProvider;
+import su.sres.securesms.messageprocessingalarm.MessageProcessReceiver;
+import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.AppStartup;
 import su.sres.securesms.util.SignalUncaughtExceptionHandler;
 import su.sres.securesms.migrations.ApplicationMigrations;
@@ -100,15 +99,13 @@ import java.util.concurrent.TimeUnit;
  * @author Moxie Marlinspike *
  */
 
-public class ApplicationContext extends MultiDexApplication implements DefaultLifecycleObserver {
+public class ApplicationContext extends MultiDexApplication implements AppForegroundObserver.Listener {
 
     private static final String TAG = ApplicationContext.class.getSimpleName();
 
     private ExpiringMessageManager expiringMessageManager;
     private ViewOnceMessageManager viewOnceMessageManager;
     private PersistentLogger persistentLogger;
-
-    private volatile boolean isAppVisible;
 
     private boolean
             initializedOnCreate = false,
@@ -142,6 +139,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
                 .addForemost("eat-db", () -> DatabaseFactory.getInstance(this))
                 .addForemost("app-network-independent-dependencies", this::initializeNetworkIndependentProvider)
                 .addForemost("app-network-dependent-dependencies", this::initializeNetworkDependentProvider)
+                .addForemost("notification-channels", () -> NotificationChannels.create(this))
                 .addForemost("proxy-init", () -> {
                     if (SignalStore.proxy().isProxyEnabled()) {
                         Log.w(TAG, "Proxy detected. Enabling Conscrypt.setUseEngineSocketByDefault()");
@@ -173,17 +171,14 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
             });
         }
 
-        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
-
         Log.d(TAG, "onCreate() took " + (System.currentTimeMillis() - startTime) + " ms");
         Tracer.getInstance().end("Application#onCreate()");
     }
 
     @Override
-    public void onStart(@NonNull LifecycleOwner owner) {
+    public void onForeground() {
         long startTime = System.currentTimeMillis();
 
-        isAppVisible = true;
         Log.i(TAG, "App is now visible.");
 
         initWorker.execute(() -> {
@@ -222,8 +217,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     }
 
     @Override
-    public void onStop(@NonNull LifecycleOwner owner) {
-        isAppVisible = false;
+    public void onBackground() {
         Log.i(TAG, "App is no longer visible.");
         KeyCachingService.onAppBackgrounded(this);
 
@@ -249,10 +243,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
     public ViewOnceMessageManager getViewOnceMessageManager() {
         return viewOnceMessageManager;
-    }
-
-    public boolean isAppVisible() {
-        return isAppVisible;
     }
 
     public PersistentLogger getPersistentLogger() {
@@ -366,6 +356,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
         DirectoryRefreshListener.schedule(this);
         LocalBackupListener.schedule(this);
         RotateSenderCertificateListener.schedule(this);
+        MessageProcessReceiver.startOrUpdateAlarm(this);
 
         if (BuildConfig.PLAY_STORE_DISABLED) {
             UpdateApkRefreshListener.schedule(this);
@@ -420,7 +411,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
             if (Build.VERSION.SDK_INT >= 26) {
                 FcmJobService.schedule(this);
             } else {
-                ApplicationDependencies.getJobManager().add(new PushNotificationReceiveJob(this));
+                ApplicationDependencies.getJobManager().add(new PushNotificationReceiveJob());
             }
             TextSecurePreferences.setNeedsMessagePull(this, false);
         }
@@ -428,7 +419,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
     @WorkerThread
     private void initializeBlobProvider() {
-        BlobProvider.getInstance().onSessionStart(this);
+        BlobProvider.getInstance().initialize(this);
     }
 
     @WorkerThread
@@ -492,14 +483,11 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
                 .addBlocking("app-migrations", this::initializeApplicationMigrations)
                 .addBlocking("ring-rtc", this::initializeRingRtc)
                 .addBlocking("mark-registration", () -> RegistrationUtil.maybeMarkRegistrationComplete(this))
-                .addBlocking("lifecycle-observer", () -> ProcessLifecycleOwner.get().getLifecycle().addObserver(this))
+                .addBlocking("lifecycle-observer", () -> ApplicationDependencies.getAppForegroundObserver().addListener(this))
                 .addBlocking("message-retriever", this::initializeMessageRetrieval)
                 .addBlocking("dynamic-theme", () -> DynamicTheme.setDefaultDayNightMode(this))
-                .addBlocking("vector-compat", () -> {
-                    if (Build.VERSION.SDK_INT < 21) {
-                        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
-                    }
-                })
+                .addBlocking("vector-compat", () -> {AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);})
+                .addBlocking("blob-provider", this::initializeBlobProvider)
                 .addNonBlocking(this::initializeRevealableMessageManager)
                 .addNonBlocking(this::initializeGcmCheck)
                 .addNonBlocking(this::initializeSignedPreKeyCheck)
@@ -513,8 +501,6 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
                 // .addNonBlocking(StorageSyncHelper::scheduleRoutineSync)
                 .addNonBlocking(() -> ApplicationDependencies.getJobManager().beginJobLoop())
                 .addPostRender(this::initializeExpiringMessageManager)
-                .addPostRender(this::initializeBlobProvider)
-                .addPostRender(() -> NotificationChannels.create(this))
                 .execute();
 
         initializedOnCreate = true;

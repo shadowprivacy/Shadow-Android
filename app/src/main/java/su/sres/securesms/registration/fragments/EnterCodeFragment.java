@@ -156,7 +156,7 @@ public final class EnterCodeFragment extends BaseRegistrationFragment
     public void onResume() {
         super.onResume();
 
-        getModel().getLiveUserLogin().observe(this, (s) -> header.setText(requireContext().getString(R.string.RegistrationActivity_enter_the_code_we_sent_to_s)));
+        getModel().getLiveUserLogin().observe(getViewLifecycleOwner(), (s) -> header.setText(requireContext().getString(R.string.RegistrationActivity_enter_the_code_we_sent_to_s)));
 
     }
 

@@ -165,7 +165,7 @@ public class ShareActivity extends PassphraseRequiredActivity
       switch (requestCode) {
         case RESULT_MEDIA_CONFIRMATION:
         case RESULT_TEXT_CONFIRMATION:
-          viewModel.onSuccessulShare();
+          viewModel.onSuccessfulShare();
           finish();
           break;
         default:
@@ -509,7 +509,7 @@ public class ShareActivity extends PassphraseRequiredActivity
       Log.i(TAG, "Shared data was not external.");
     }
 
-    viewModel.onSuccessulShare();
+    viewModel.onSuccessfulShare();
 
     startActivity(builder.build());
   }
@@ -563,14 +563,14 @@ public class ShareActivity extends PassphraseRequiredActivity
                         media,
                         Stream.of(multiShareArgs.getShareContactAndThreads()).map(ShareContactAndThread::getRecipientId).toList(),
                         multiShareArgs.getDraftText(),
-                        MultiShareSender.getWorseTransportOption(this, multiShareArgs.getShareContactAndThreads())),
+                        MultiShareSender.getWorstTransportOption(this, multiShareArgs.getShareContactAndThreads())),
                 RESULT_MEDIA_CONFIRMATION);
         break;
       default:
         //noinspection CodeBlock2Expr
         MultiShareSender.send(multiShareArgs, results -> {
           MultiShareDialogs.displayResultDialog(this, results, () -> {
-            viewModel.onSuccessulShare();
+            viewModel.onSuccessfulShare();
             finish();
           });
         });

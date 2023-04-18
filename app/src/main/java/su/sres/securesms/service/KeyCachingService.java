@@ -27,6 +27,7 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.SystemClock;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -58,48 +59,49 @@ import java.util.concurrent.TimeUnit;
 
 public class KeyCachingService extends Service {
 
-  private static final String TAG = KeyCachingService.class.getSimpleName();
+    private static final String TAG = KeyCachingService.class.getSimpleName();
 
-  public static final int SERVICE_RUNNING_ID = 4141;
+    public static final int SERVICE_RUNNING_ID = 4141;
 
-  public  static final String KEY_PERMISSION           = BuildConfig.APPLICATION_ID + ".ACCESS_SECRETS";
-  public  static final String NEW_KEY_EVENT            = BuildConfig.APPLICATION_ID + ".service.action.NEW_KEY_EVENT";
-  public  static final String CLEAR_KEY_EVENT          = BuildConfig.APPLICATION_ID + ".service.action.CLEAR_KEY_EVENT";
-  public  static final String LOCK_TOGGLED_EVENT       = BuildConfig.APPLICATION_ID + ".service.action.LOCK_ENABLED_EVENT";
-  private static final String PASSPHRASE_EXPIRED_EVENT = BuildConfig.APPLICATION_ID + ".service.action.PASSPHRASE_EXPIRED_EVENT";
-  public  static final String CLEAR_KEY_ACTION         = BuildConfig.APPLICATION_ID + ".service.action.CLEAR_KEY";
-  public  static final String DISABLE_ACTION           = BuildConfig.APPLICATION_ID + ".service.action.DISABLE";
-  public  static final String LOCALE_CHANGE_EVENT      = BuildConfig.APPLICATION_ID + ".service.action.LOCALE_CHANGE_EVENT";
+    public static final String KEY_PERMISSION = BuildConfig.APPLICATION_ID + ".ACCESS_SECRETS";
+    public static final String NEW_KEY_EVENT = BuildConfig.APPLICATION_ID + ".service.action.NEW_KEY_EVENT";
+    public static final String CLEAR_KEY_EVENT = BuildConfig.APPLICATION_ID + ".service.action.CLEAR_KEY_EVENT";
+    public static final String LOCK_TOGGLED_EVENT = BuildConfig.APPLICATION_ID + ".service.action.LOCK_ENABLED_EVENT";
+    private static final String PASSPHRASE_EXPIRED_EVENT = BuildConfig.APPLICATION_ID + ".service.action.PASSPHRASE_EXPIRED_EVENT";
+    public static final String CLEAR_KEY_ACTION = BuildConfig.APPLICATION_ID + ".service.action.CLEAR_KEY";
+    public static final String DISABLE_ACTION = BuildConfig.APPLICATION_ID + ".service.action.DISABLE";
+    public static final String LOCALE_CHANGE_EVENT = BuildConfig.APPLICATION_ID + ".service.action.LOCALE_CHANGE_EVENT";
 
-  private DynamicLanguage dynamicLanguage = new DynamicLanguage();
+    private DynamicLanguage dynamicLanguage = new DynamicLanguage();
 
-  private final IBinder binder  = new KeySetBinder();
+    private final IBinder binder = new KeySetBinder();
 
-  private static MasterSecret masterSecret;
+    private static MasterSecret masterSecret;
 
-  public KeyCachingService() {}
-
-  public static synchronized boolean isLocked(Context context) {
-    boolean locked = masterSecret == null && (!TextSecurePreferences.isPasswordDisabled(context) || TextSecurePreferences.isScreenLockEnabled(context));
-
-    if (locked) {
-      Log.d(TAG, "Locked! PasswordDisabled: " + TextSecurePreferences.isPasswordDisabled(context) + ", ScreenLock: " + TextSecurePreferences.isScreenLockEnabled(context));
+    public KeyCachingService() {
     }
 
-    return locked;
-  }
+    public static synchronized boolean isLocked(Context context) {
+        boolean locked = masterSecret == null && (!TextSecurePreferences.isPasswordDisabled(context) || TextSecurePreferences.isScreenLockEnabled(context));
 
-  public static synchronized @Nullable MasterSecret getMasterSecret(Context context) {
-    if (masterSecret == null && (TextSecurePreferences.isPasswordDisabled(context) && !TextSecurePreferences.isScreenLockEnabled(context))) {
-      try {
-        return MasterSecretUtil.getMasterSecret(context, MasterSecretUtil.UNENCRYPTED_PASSPHRASE);
-      } catch (InvalidPassphraseException e) {
-        Log.w(TAG, e);
-      }
+        if (locked) {
+            Log.d(TAG, "Locked! PasswordDisabled: " + TextSecurePreferences.isPasswordDisabled(context) + ", ScreenLock: " + TextSecurePreferences.isScreenLockEnabled(context));
+        }
+
+        return locked;
     }
 
-    return masterSecret;
-  }
+    public static synchronized @Nullable MasterSecret getMasterSecret(Context context) {
+        if (masterSecret == null && (TextSecurePreferences.isPasswordDisabled(context) && !TextSecurePreferences.isScreenLockEnabled(context))) {
+            try {
+                return MasterSecretUtil.getMasterSecret(context, MasterSecretUtil.UNENCRYPTED_PASSPHRASE);
+            } catch (InvalidPassphraseException e) {
+                Log.w(TAG, e);
+            }
+        }
+
+        return masterSecret;
+    }
 
     public static void onAppForegrounded(@NonNull Context context) {
         ServiceUtil.getAlarmManager(context).cancel(buildExpirationPendingIntent(context));
@@ -109,208 +111,218 @@ public class KeyCachingService extends Service {
         startTimeoutIfAppropriate(context);
     }
 
-  @SuppressLint("StaticFieldLeak")
-  public void setMasterSecret(final MasterSecret masterSecret) {
-    synchronized (KeyCachingService.class) {
-      KeyCachingService.masterSecret = masterSecret;
+    @SuppressLint("StaticFieldLeak")
+    public void setMasterSecret(final MasterSecret masterSecret) {
+        synchronized (KeyCachingService.class) {
+            KeyCachingService.masterSecret = masterSecret;
 
-      foregroundService();
-      broadcastNewSecret();
-        startTimeoutIfAppropriate(this);
-      
-      new AsyncTask<Void, Void, Void>() {
-        @Override
-        protected Void doInBackground(Void... params) {
-          if (!ApplicationMigrations.isUpdate(KeyCachingService.this)) {
-            ApplicationDependencies.getMessageNotifier().updateNotification(KeyCachingService.this);
-          }
-          return null;
+            foregroundService();
+            broadcastNewSecret();
+            startTimeoutIfAppropriate(this);
+
+            new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... params) {
+                    if (!ApplicationMigrations.isUpdate(KeyCachingService.this)) {
+                        ApplicationDependencies.getMessageNotifier().updateNotification(KeyCachingService.this);
+                    }
+                    return null;
+                }
+            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
-      }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-    }
-  }
-
-  @Override
-  public int onStartCommand(Intent intent, int flags, int startId) {
-    if (intent == null) return START_NOT_STICKY;
-    Log.d(TAG, "onStartCommand, " + intent.getAction());
-
-    if (intent.getAction() != null) {
-      switch (intent.getAction()) {
-        case CLEAR_KEY_ACTION:         handleClearKey();        break;
-        case PASSPHRASE_EXPIRED_EVENT: handleClearKey();        break;
-        case DISABLE_ACTION:           handleDisableService();  break;
-        case LOCALE_CHANGE_EVENT:      handleLocaleChanged();   break;
-        case LOCK_TOGGLED_EVENT:       handleLockToggled();     break;
-      }
     }
 
-    return START_NOT_STICKY;
-  }
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent == null) return START_NOT_STICKY;
+        Log.d(TAG, "onStartCommand, " + intent.getAction());
 
-  @Override
-  public void onCreate() {
-    Log.i(TAG, "onCreate()");
-    super.onCreate();
+        if (intent.getAction() != null) {
+            switch (intent.getAction()) {
+                case CLEAR_KEY_ACTION:
+                    handleClearKey();
+                    break;
+                case PASSPHRASE_EXPIRED_EVENT:
+                    handleClearKey();
+                    break;
+                case DISABLE_ACTION:
+                    handleDisableService();
+                    break;
+                case LOCALE_CHANGE_EVENT:
+                    handleLocaleChanged();
+                    break;
+                case LOCK_TOGGLED_EVENT:
+                    handleLockToggled();
+                    break;
+            }
+        }
 
-    if (TextSecurePreferences.isPasswordDisabled(this) && !TextSecurePreferences.isScreenLockEnabled(this)) {
-      try {
-        MasterSecret masterSecret = MasterSecretUtil.getMasterSecret(this, MasterSecretUtil.UNENCRYPTED_PASSPHRASE);
-        setMasterSecret(masterSecret);
-      } catch (InvalidPassphraseException e) {
-        Log.w(TAG, e);
-      }
+        return START_NOT_STICKY;
     }
-  }
 
-  @Override
-  public void onDestroy() {
-    super.onDestroy();
-    Log.w(TAG, "KCS Is Being Destroyed!");
-    handleClearKey();
-  }
+    @Override
+    public void onCreate() {
+        Log.i(TAG, "onCreate()");
+        super.onCreate();
 
-  /**
-   * Workaround for Android bug:
-   * https://code.google.com/p/android/issues/detail?id=53313
-   */
-  @Override
-  public void onTaskRemoved(Intent rootIntent) {
-    Intent intent = new Intent(this, DummyActivity.class);
-    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-    startActivity(intent);
-  }
-
-
-  @SuppressLint("StaticFieldLeak")
-  private void handleClearKey() {
-    Log.i(TAG, "handleClearKey()");
-    KeyCachingService.masterSecret = null;
-    stopForeground(true);
-
-    Intent intent = new Intent(CLEAR_KEY_EVENT);
-    intent.setPackage(getApplicationContext().getPackageName());
-
-    sendBroadcast(intent, KEY_PERMISSION);
-
-    new AsyncTask<Void, Void, Void>() {
-      @Override
-      protected Void doInBackground(Void... params) {
-        ApplicationDependencies.getMessageNotifier().updateNotification(KeyCachingService.this);
-        return null;
-      }
-    }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-  }
-
-  private void handleLockToggled() {
-    stopForeground(true);
-
-    try {
-      MasterSecret masterSecret = MasterSecretUtil.getMasterSecret(this, MasterSecretUtil.UNENCRYPTED_PASSPHRASE);
-      setMasterSecret(masterSecret);
-    } catch (InvalidPassphraseException e) {
-      Log.w(TAG, e);
+        if (TextSecurePreferences.isPasswordDisabled(this) && !TextSecurePreferences.isScreenLockEnabled(this)) {
+            try {
+                MasterSecret masterSecret = MasterSecretUtil.getMasterSecret(this, MasterSecretUtil.UNENCRYPTED_PASSPHRASE);
+                setMasterSecret(masterSecret);
+            } catch (InvalidPassphraseException e) {
+                Log.w(TAG, e);
+            }
+        }
     }
-  }
 
-  private void handleDisableService() {
-    if (TextSecurePreferences.isPasswordDisabled(this) &&
-        !TextSecurePreferences.isScreenLockEnabled(this))
-    {
-      stopForeground(true);
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.w(TAG, "KCS Is Being Destroyed!");
+        handleClearKey();
     }
-  }
 
-  private void handleLocaleChanged() {
-    dynamicLanguage.updateServiceLocale(this);
-    foregroundService();
-  }
+    /**
+     * Workaround for Android bug:
+     * https://code.google.com/p/android/issues/detail?id=53313
+     */
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        Intent intent = new Intent(this, DummyActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+    }
+
+
+    @SuppressLint("StaticFieldLeak")
+    private void handleClearKey() {
+        Log.i(TAG, "handleClearKey()");
+        KeyCachingService.masterSecret = null;
+        stopForeground(true);
+
+        Intent intent = new Intent(CLEAR_KEY_EVENT);
+        intent.setPackage(getApplicationContext().getPackageName());
+
+        sendBroadcast(intent, KEY_PERMISSION);
+
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                ApplicationDependencies.getMessageNotifier().updateNotification(KeyCachingService.this);
+                return null;
+            }
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
+    private void handleLockToggled() {
+        stopForeground(true);
+
+        try {
+            MasterSecret masterSecret = MasterSecretUtil.getMasterSecret(this, MasterSecretUtil.UNENCRYPTED_PASSPHRASE);
+            setMasterSecret(masterSecret);
+        } catch (InvalidPassphraseException e) {
+            Log.w(TAG, e);
+        }
+    }
+
+    private void handleDisableService() {
+        if (TextSecurePreferences.isPasswordDisabled(this) &&
+                !TextSecurePreferences.isScreenLockEnabled(this)) {
+            stopForeground(true);
+        }
+    }
+
+    private void handleLocaleChanged() {
+        dynamicLanguage.updateServiceLocale(this);
+        foregroundService();
+    }
 
     private static void startTimeoutIfAppropriate(@NonNull Context context) {
-        boolean appVisible       = ApplicationContext.getInstance(context).isAppVisible();
-        boolean secretSet        = KeyCachingService.masterSecret != null;
+        boolean appVisible = ApplicationDependencies.getAppForegroundObserver().isForegrounded();
+        boolean secretSet = KeyCachingService.masterSecret != null;
 
-        boolean timeoutEnabled   = TextSecurePreferences.isPassphraseTimeoutEnabled(context);
-        boolean passLockActive   = timeoutEnabled && !TextSecurePreferences.isPasswordDisabled(context);
+        boolean timeoutEnabled = TextSecurePreferences.isPassphraseTimeoutEnabled(context);
+        boolean passLockActive = timeoutEnabled && !TextSecurePreferences.isPasswordDisabled(context);
 
-        long    screenTimeout    = TextSecurePreferences.getScreenLockTimeout(context);
+        long screenTimeout = TextSecurePreferences.getScreenLockTimeout(context);
         boolean screenLockActive = screenTimeout >= 60 && TextSecurePreferences.isScreenLockEnabled(context);
 
         if (!appVisible && secretSet && (passLockActive || screenLockActive)) {
-        long passphraseTimeoutMinutes = TextSecurePreferences.getPassphraseTimeoutInterval(context);
-        long screenLockTimeoutSeconds = TextSecurePreferences.getScreenLockTimeout(context);
+            long passphraseTimeoutMinutes = TextSecurePreferences.getPassphraseTimeoutInterval(context);
+            long screenLockTimeoutSeconds = TextSecurePreferences.getScreenLockTimeout(context);
 
-      long timeoutMillis;
+            long timeoutMillis;
 
-        if (!TextSecurePreferences.isPasswordDisabled(context)) timeoutMillis = TimeUnit.MINUTES.toMillis(passphraseTimeoutMinutes);
-        else                                                    timeoutMillis = TimeUnit.SECONDS.toMillis(screenLockTimeoutSeconds);
+            if (!TextSecurePreferences.isPasswordDisabled(context))
+                timeoutMillis = TimeUnit.MINUTES.toMillis(passphraseTimeoutMinutes);
+            else timeoutMillis = TimeUnit.SECONDS.toMillis(screenLockTimeoutSeconds);
 
             Log.i(TAG, "Starting timeout: " + timeoutMillis);
 
-        AlarmManager  alarmManager     = ServiceUtil.getAlarmManager(context);
-        PendingIntent expirationIntent = buildExpirationPendingIntent(context);
+            AlarmManager alarmManager = ServiceUtil.getAlarmManager(context);
+            PendingIntent expirationIntent = buildExpirationPendingIntent(context);
 
-        alarmManager.cancel(expirationIntent);
-        alarmManager.set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + timeoutMillis, expirationIntent);
-    }
-  }
-
-  private void foregroundService() {
-    if (TextSecurePreferences.isPasswordDisabled(this) && !TextSecurePreferences.isScreenLockEnabled(this)) {
-      stopForeground(true);
-      return;
+            alarmManager.cancel(expirationIntent);
+            alarmManager.set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + timeoutMillis, expirationIntent);
+        }
     }
 
-    Log.i(TAG, "foregrounding KCS");
-    NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NotificationChannels.LOCKED_STATUS);
+    private void foregroundService() {
+        if (TextSecurePreferences.isPasswordDisabled(this) && !TextSecurePreferences.isScreenLockEnabled(this)) {
+            stopForeground(true);
+            return;
+        }
 
-    builder.setContentTitle(getString(R.string.KeyCachingService_passphrase_cached));
-    builder.setContentText(getString(R.string.KeyCachingService_signal_passphrase_cached));
-    builder.setSmallIcon(R.drawable.icon_cached);
-    builder.setWhen(0);
-    builder.setPriority(Notification.PRIORITY_MIN);
+        Log.i(TAG, "foregrounding KCS");
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NotificationChannels.LOCKED_STATUS);
 
-    builder.addAction(R.drawable.ic_menu_lock_dark, getString(R.string.KeyCachingService_lock), buildLockIntent());
-    builder.setContentIntent(buildLaunchIntent());
+        builder.setContentTitle(getString(R.string.KeyCachingService_passphrase_cached));
+        builder.setContentText(getString(R.string.KeyCachingService_signal_passphrase_cached));
+        builder.setSmallIcon(R.drawable.icon_cached);
+        builder.setWhen(0);
+        builder.setPriority(Notification.PRIORITY_MIN);
 
-    stopForeground(true);
-    startForeground(SERVICE_RUNNING_ID, builder.build());
-  }
+        builder.addAction(R.drawable.ic_menu_lock_dark, getString(R.string.KeyCachingService_lock), buildLockIntent());
+        builder.setContentIntent(buildLaunchIntent());
 
-  private void broadcastNewSecret() {
-    Log.i(TAG, "Broadcasting new secret...");
+        stopForeground(true);
+        startForeground(SERVICE_RUNNING_ID, builder.build());
+    }
 
-    Intent intent = new Intent(NEW_KEY_EVENT);
-    intent.setPackage(getApplicationContext().getPackageName());
+    private void broadcastNewSecret() {
+        Log.i(TAG, "Broadcasting new secret...");
 
-    sendBroadcast(intent, KEY_PERMISSION);
-  }
+        Intent intent = new Intent(NEW_KEY_EVENT);
+        intent.setPackage(getApplicationContext().getPackageName());
 
-  private PendingIntent buildLockIntent() {
-    Intent intent = new Intent(this, KeyCachingService.class);
-    intent.setAction(PASSPHRASE_EXPIRED_EVENT);
-    return PendingIntent.getService(getApplicationContext(), 0, intent, 0);
-  }
+        sendBroadcast(intent, KEY_PERMISSION);
+    }
 
-  private PendingIntent buildLaunchIntent() {
-    // TODO [greyson] Navigation
-    return PendingIntent.getActivity(getApplicationContext(), 0, MainActivity.clearTop(this), 0);
-  }
+    private PendingIntent buildLockIntent() {
+        Intent intent = new Intent(this, KeyCachingService.class);
+        intent.setAction(PASSPHRASE_EXPIRED_EVENT);
+        return PendingIntent.getService(getApplicationContext(), 0, intent, 0);
+    }
+
+    private PendingIntent buildLaunchIntent() {
+        // TODO [greyson] Navigation
+        return PendingIntent.getActivity(getApplicationContext(), 0, MainActivity.clearTop(this), 0);
+    }
 
     private static PendingIntent buildExpirationPendingIntent(@NonNull Context context) {
         Intent expirationIntent = new Intent(PASSPHRASE_EXPIRED_EVENT, null, context, KeyCachingService.class);
         return PendingIntent.getService(context, 0, expirationIntent, 0);
     }
 
-  @Override
-  public IBinder onBind(Intent arg0) {
-    return binder;
-  }
-
-  public class KeySetBinder extends Binder {
-    public KeyCachingService getService() {
-      return KeyCachingService.this;
+    @Override
+    public IBinder onBind(Intent arg0) {
+        return binder;
     }
-  }
+
+    public class KeySetBinder extends Binder {
+        public KeyCachingService getService() {
+            return KeyCachingService.this;
+        }
+    }
 
 }

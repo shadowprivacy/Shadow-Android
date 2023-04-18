@@ -32,6 +32,13 @@ public abstract class MediaConstraints {
   public abstract int getImageMaxHeight(Context context);
   public abstract long getImageMaxSize(Context context);
 
+  /**
+   * Provide a list of dimensions that should be attempted during compression. We will keep moving
+   * down the list until the image can be scaled to fit under {@link #getImageMaxSize(Context)}.
+   * The first entry in the list should match your max width/height.
+   */
+  public abstract int[] getImageDimensionTargets(Context context);
+
   public abstract long getGifMaxSize(Context context);
   public abstract long getVideoMaxSize(Context context);
 

@@ -2,7 +2,6 @@ package su.sres.securesms.jobs;
 
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -22,19 +21,21 @@ import org.signal.libsignal.metadata.ProtocolUntrustedIdentityException;
 import org.signal.libsignal.metadata.SelfSendException;
 import su.sres.securesms.MainActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.crypto.DatabaseSessionLock;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.crypto.storage.SignalProtocolStoreImpl;
-import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.NoSuchMessageException;
-import su.sres.securesms.database.PushDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.BadGroupIdException;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.jobmanager.JobManager;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.messages.MessageContentProcessor;
+import su.sres.securesms.messages.MessageContentProcessor.ExceptionMetadata;
+import su.sres.securesms.messages.MessageContentProcessor.MessageState;
+import su.sres.securesms.messages.MessageDecryptionUtil;
+import su.sres.securesms.messages.MessageDecryptionUtil.DecryptionResult;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.transport.RetryLaterException;
@@ -50,8 +51,13 @@ import su.sres.signalservice.internal.push.UnsupportedDataMessageException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Decrypts an envelope. Enqueues a separate job, {@link PushProcessMessageJob}, to actually insert
+ * the result into our database.
+ */
 public final class PushDecryptMessageJob extends BaseJob {
 
     public static final String KEY   = "PushDecryptJob";
@@ -59,36 +65,36 @@ public final class PushDecryptMessageJob extends BaseJob {
 
     public static final String TAG = Log.tag(PushDecryptMessageJob.class);
 
-    private static final String KEY_MESSAGE_ID     = "message_id";
     private static final String KEY_SMS_MESSAGE_ID = "sms_message_id";
+    private static final String KEY_ENVELOPE       = "envelope";
 
-    private final long messageId;
-    private final long smsMessageId;
+    private final long                  smsMessageId;
+    private final SignalServiceEnvelope envelope;
 
-    public PushDecryptMessageJob(Context context, long pushMessageId) {
-        this(context, pushMessageId, -1);
+    public PushDecryptMessageJob(Context context, @NonNull SignalServiceEnvelope envelope) {
+        this(context, envelope, -1);
     }
 
-    public PushDecryptMessageJob(Context context, long pushMessageId, long smsMessageId) {
+    public PushDecryptMessageJob(Context context, @NonNull SignalServiceEnvelope envelope, long smsMessageId) {
         this(new Parameters.Builder()
                         .setQueue(QUEUE)
                         .setMaxAttempts(Parameters.UNLIMITED)
                         .build(),
-                pushMessageId,
+                envelope,
                 smsMessageId);
         setContext(context);
     }
 
-    private PushDecryptMessageJob(@NonNull Parameters parameters, long pushMessageId, long smsMessageId) {
+    private PushDecryptMessageJob(@NonNull Parameters parameters, @NonNull SignalServiceEnvelope envelope, long smsMessageId) {
         super(parameters);
 
-        this.messageId    = pushMessageId;
+        this.envelope     = envelope;
         this.smsMessageId = smsMessageId;
     }
 
     @Override
     public @NonNull Data serialize() {
-        return new Data.Builder().putLong(KEY_MESSAGE_ID, messageId)
+        return new Data.Builder().putBlobAsString(KEY_ENVELOPE, envelope.serialize())
                 .putLong(KEY_SMS_MESSAGE_ID, smsMessageId)
                 .build();
     }
@@ -99,28 +105,27 @@ public final class PushDecryptMessageJob extends BaseJob {
     }
 
     @Override
-    public void onRun() throws NoSuchMessageException, RetryLaterException {
+    public void onRun() throws RetryLaterException {
         if (needsMigration()) {
             Log.w(TAG, "Migration is still needed.");
             postMigrationNotification();
             throw new RetryLaterException();
         }
 
-        PushDatabase          database   = DatabaseFactory.getPushDatabase(context);
-        SignalServiceEnvelope envelope   = database.get(messageId);
-        JobManager            jobManager = ApplicationDependencies.getJobManager();
+        List<Job>        jobs = new LinkedList<>();
+        DecryptionResult result = MessageDecryptionUtil.decrypt(context, envelope);
 
-        try {
-            List<Job> jobs = handleMessage(envelope);
-
-            for (Job job: jobs) {
-                jobManager.add(job);
-            }
-        } catch (NoSenderException e) {
-            Log.w(TAG, "Invalid message, but no sender info!");
+        if (result.getContent() != null) {
+            jobs.add(new PushProcessMessageJob(result.getContent(), smsMessageId, envelope.getTimestamp()));
+        } else if (result.getException() != null && result.getState() != MessageState.NOOP) {
+            jobs.add(new PushProcessMessageJob(result.getState(), result.getException(), smsMessageId, envelope.getTimestamp()));
         }
 
-        database.delete(messageId);
+        jobs.addAll(result.getJobs());
+
+        for (Job job: jobs) {
+            ApplicationDependencies.getJobManager().add(job);
+        }
     }
 
     @Override
@@ -137,7 +142,6 @@ public final class PushDecryptMessageJob extends BaseJob {
     }
 
     private void postMigrationNotification() {
-        // TODO [greyson] Navigation
         NotificationManagerCompat.from(context).notify(494949,
                 new NotificationCompat.Builder(context, NotificationChannels.getMessagesChannel(context))
                         .setSmallIcon(R.drawable.ic_notification)
@@ -151,121 +155,12 @@ public final class PushDecryptMessageJob extends BaseJob {
 
     }
 
-    private @NonNull List<Job> handleMessage(@NonNull SignalServiceEnvelope envelope) throws NoSenderException {
-        Log.i(TAG, "Processing message ID " + envelope.getTimestamp());
-        try {
-            SignalProtocolStore  axolotlStore = new SignalProtocolStoreImpl(context);
-            SignalServiceAddress localAddress = new SignalServiceAddress(Optional.of(TextSecurePreferences.getLocalUuid(context)), Optional.of(TextSecurePreferences.getLocalNumber(context)));
-            SignalServiceCipher  cipher       = new SignalServiceCipher(localAddress, axolotlStore, UnidentifiedAccessUtil.getCertificateValidator());
-
-            SignalServiceContent content = cipher.decrypt(envelope);
-
-            List<Job> jobs = new ArrayList<>(2);
-
-            if (content != null) {
-                jobs.add(new PushProcessMessageJob(content, messageId, smsMessageId, envelope.getTimestamp()));
-            }
-
-            if (envelope.isPreKeySignalMessage()) {
-                jobs.add(new RefreshPreKeysJob());
-            }
-
-            return jobs;
-
-        } catch (ProtocolInvalidVersionException e) {
-            Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
-            return Collections.singletonList(new PushProcessMessageJob(PushProcessMessageJob.MessageState.INVALID_VERSION,
-                    toExceptionMetadata(e),
-                    messageId,
-                    smsMessageId,
-                    envelope.getTimestamp()));
-
-        } catch (ProtocolInvalidMessageException | ProtocolInvalidKeyIdException | ProtocolInvalidKeyException | ProtocolUntrustedIdentityException | ProtocolNoSessionException e) {
-            Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
-            return Collections.singletonList(new AutomaticSessionResetJob(Recipient.external(context, e.getSender()).getId(),
-                    e.getSenderDevice(),
-                    envelope.getTimestamp()));
-
-        } catch (ProtocolLegacyMessageException e) {
-            Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
-            return Collections.singletonList(new PushProcessMessageJob(PushProcessMessageJob.MessageState.LEGACY_MESSAGE,
-                    toExceptionMetadata(e),
-                    messageId,
-                    smsMessageId,
-                    envelope.getTimestamp()));
-
-        } catch (ProtocolDuplicateMessageException e) {
-            Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
-            return Collections.singletonList(new PushProcessMessageJob(PushProcessMessageJob.MessageState.DUPLICATE_MESSAGE,
-                    toExceptionMetadata(e),
-                    messageId,
-                    smsMessageId,
-                    envelope.getTimestamp()));
-
-        } catch (InvalidMetadataVersionException | InvalidMetadataMessageException e) {
-            Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
-            return Collections.emptyList();
-
-        } catch (SelfSendException e) {
-            Log.i(TAG, "Dropping UD message from self.");
-            return Collections.emptyList();
-
-        } catch (UnsupportedDataMessageException e) {
-            Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
-            return Collections.singletonList(new PushProcessMessageJob(PushProcessMessageJob.MessageState.UNSUPPORTED_DATA_MESSAGE,
-                    toExceptionMetadata(e),
-                    messageId,
-                    smsMessageId,
-                    envelope.getTimestamp()));
-        }
-    }
-
-    private static PushProcessMessageJob.ExceptionMetadata toExceptionMetadata(@NonNull UnsupportedDataMessageException e)
-            throws NoSenderException
-    {
-        String sender = e.getSender();
-
-        if (sender == null) throw new NoSenderException();
-
-        GroupId groupId = null;
-        if (e.getGroup().isPresent()) {
-            try {
-                groupId = GroupUtil.idFromGroupContext(e.getGroup().get());
-            } catch (BadGroupIdException ex) {
-                Log.w(TAG, "Bad group id found in unsupported data message", ex);
-            }
-        }
-
-        return new PushProcessMessageJob.ExceptionMetadata(sender,
-                e.getSenderDevice(),
-                groupId);
-    }
-
-    private static PushProcessMessageJob.ExceptionMetadata toExceptionMetadata(@NonNull ProtocolDuplicateMessageException e) throws NoSenderException {
-        String sender = e.getSender();
-        int senderDevice = e.getSenderDevice();
-
-        if (sender == null) throw new NoSenderException();
-
-        Log.w(TAG, String.format("Sender of the duplicate message is: '%s', sender device is '%d'", sender, senderDevice));
-
-        return new PushProcessMessageJob.ExceptionMetadata(sender, e.getSenderDevice());
-    }
-
-    private static PushProcessMessageJob.ExceptionMetadata toExceptionMetadata(@NonNull ProtocolException e) throws NoSenderException {
-        String sender = e.getSender();
-
-        if (sender == null) throw new NoSenderException();
-
-        return new PushProcessMessageJob.ExceptionMetadata(sender, e.getSenderDevice());
-    }
-
     public static final class Factory implements Job.Factory<PushDecryptMessageJob> {
         @Override
         public @NonNull PushDecryptMessageJob create(@NonNull Parameters parameters, @NonNull Data data) {
-            return new PushDecryptMessageJob(parameters, data.getLong(KEY_MESSAGE_ID), data.getLong(KEY_SMS_MESSAGE_ID));
+            return new PushDecryptMessageJob(parameters,
+                    SignalServiceEnvelope.deserialize(data.getStringAsBlob(KEY_ENVELOPE)),
+                    data.getLong(KEY_SMS_MESSAGE_ID));
         }
     }
-
-    private static class NoSenderException extends Exception {}
 }

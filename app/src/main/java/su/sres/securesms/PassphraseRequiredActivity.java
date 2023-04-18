@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import su.sres.core.util.tracing.Tracer;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
 
@@ -81,8 +82,8 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
   @Override
   public void onMasterSecretCleared() {
     Log.d(TAG, "onMasterSecretCleared()");
-    if (ApplicationContext.getInstance(this).isAppVisible()) routeApplicationState(true);
-    else                                                     finish();
+    if (ApplicationDependencies.getAppForegroundObserver().isForegrounded()) routeApplicationState(true);
+    else                                                                     finish();
   }
 
   protected <T extends Fragment> T initFragment(@IdRes int target,
@@ -178,7 +179,9 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
   }
 
   private Intent getCreateProfileNameIntent() {
-    return getRoutedIntent(EditProfileActivity.class, getIntent());
+    Intent intent = getRoutedIntent(PassphrasePromptActivity.class, getIntent());
+    intent.putExtra(PassphrasePromptActivity.FROM_FOREGROUND, ApplicationDependencies.getAppForegroundObserver().isForegrounded());
+    return intent;
   }
 
   private Intent getRoutedIntent(Class<?> destination, @Nullable Intent nextIntent) {

@@ -38,9 +38,9 @@ public class ApplicationMigrations {
 
     private static final MutableLiveData<Boolean> UI_BLOCKING_MIGRATION_RUNNING = new MutableLiveData<>();
 
-    public static final int CURRENT_VERSION = 23;
+    public static final int CURRENT_VERSION = 24;
 
-//    public static final int CURRENT_VERSION = 24;
+    // public static final int CURRENT_VERSION = 25;
 
     private static final class Version {
         static final int VERSIONED_PROFILE = 15;
@@ -52,7 +52,8 @@ public class ApplicationMigrations {
         static final int DIR = 21;
         static final int BACKUP_NOTIFICATION = 22;
         static final int GV1_MIGRATION = 23;
-//        static final int DAY_BY_DAY_STICKERS = 24;
+        static final int BLOB_LOCATION       = 24;
+//        static final int DAY_BY_DAY_STICKERS = 25;
     }
 
     /**
@@ -199,6 +200,10 @@ public class ApplicationMigrations {
 
         if (lastSeenVersion < Version.GV1_MIGRATION) {
             jobs.put(Version.GV1_MIGRATION, new AttributesMigrationJob());
+        }
+
+        if (lastSeenVersion < Version.BLOB_LOCATION) {
+            jobs.put(Version.BLOB_LOCATION, new BlobStorageLocationMigrationJob());
         }
 
       /*  if (lastSeenVersion < Version.DAY_BY_DAY_STICKERS) {

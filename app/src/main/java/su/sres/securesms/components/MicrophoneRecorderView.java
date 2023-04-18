@@ -224,8 +224,8 @@ public final class MicrophoneRecorderView extends FrameLayout implements View.On
     }
 
     private float getXOffset(float x) {
-      return ViewCompat.getLayoutDirection(recordButtonFab) == ViewCompat.LAYOUT_DIRECTION_LTR ?
-          -Math.max(0, this.startPositionX - x) : Math.max(0, x - this.startPositionX);
+      return ViewUtil.isLtr(recordButtonFab) ? -Math.max(0, this.startPositionX - x)
+              : Math.max(0, x - this.startPositionX);
     }
 
     private float getYOffset(float y) {

@@ -40,6 +40,8 @@ import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.WindowUtil;
 import su.sres.securesms.util.concurrent.ListenableFuture.Listener;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
+import su.sres.securesms.util.text.AfterTextChanged;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.concurrent.ExecutionException;
@@ -105,6 +107,14 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
     contactsFragment  = (ContactSelectionListFragment)getSupportFragmentManager().findFragmentById(R.id.contact_selection_list_fragment);
 
     inviteText.setText(getString(R.string.InviteActivity_lets_switch_to_signal, getString(R.string.install_url)));
+    inviteText.addTextChangedListener(new AfterTextChanged(editable -> {
+      boolean isEnabled = editable.length() > 0;
+      smsButton.setEnabled(isEnabled);
+      shareButton.setEnabled(isEnabled);
+      smsButton.animate().alpha(isEnabled ? 1f : 0.5f);
+      shareButton.animate().alpha(isEnabled ? 1f : 0.5f);
+    }));
+
     updateSmsButtonText(contactsFragment.getSelectedContacts().size());
 
     smsCancelButton.setOnClickListener(new SmsCancelClickListener());

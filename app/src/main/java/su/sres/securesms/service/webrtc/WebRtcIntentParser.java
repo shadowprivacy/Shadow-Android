@@ -50,6 +50,7 @@ import static su.sres.securesms.service.WebRtcCallService.EXTRA_OFFER_OPAQUE;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_OFFER_SDP;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_OFFER_TYPE;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_OPAQUE_MESSAGE;
+import static su.sres.securesms.service.WebRtcCallService.EXTRA_ORIENTATION_DEGREES;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_REMOTE_DEVICE;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_REMOTE_IDENTITY_KEY;
 import static su.sres.securesms.service.WebRtcCallService.EXTRA_REMOTE_PEER_KEY;
@@ -142,6 +143,10 @@ public final class WebRtcIntentParser {
 
     public static boolean getAvailable(@NonNull Intent intent) {
         return intent.getBooleanExtra(EXTRA_AVAILABLE, false);
+    }
+
+    public static int getOrientationDegrees(@NonNull Intent intent) {
+        return intent.getIntExtra(EXTRA_ORIENTATION_DEGREES, 0);
     }
 
     public static @NonNull ArrayList<IceCandidateParcel> getIceCandidates(@NonNull Intent intent) {

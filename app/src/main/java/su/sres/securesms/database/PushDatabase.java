@@ -19,6 +19,7 @@ import su.sres.signalservice.api.messages.SignalServiceEnvelope;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.internal.util.Util;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 public class PushDatabase extends Database {
@@ -153,7 +154,7 @@ public class PushDatabase extends Database {
         }
     }
 
-    public static class Reader {
+    public static class Reader implements Closeable {
         private final Cursor cursor;
 
         public Reader(Cursor cursor) {
@@ -190,6 +191,7 @@ public class PushDatabase extends Database {
             }
         }
 
+        @Override
         public void close() {
             this.cursor.close();
         }

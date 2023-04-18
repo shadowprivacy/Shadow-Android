@@ -7,13 +7,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
 import su.sres.securesms.R;
+import su.sres.securesms.crypto.DatabaseSessionLock;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
+import su.sres.signalservice.api.SignalSessionLock;
 
 import java.util.List;
-
-import static org.whispersystems.libsignal.SessionCipher.SESSION_LOCK;
 
 public class UnverifiedSendDialog extends AlertDialog.Builder implements DialogInterface.OnClickListener {
 
@@ -43,7 +43,7 @@ public class UnverifiedSendDialog extends AlertDialog.Builder implements DialogI
     new AsyncTask<Void, Void, Void>() {
       @Override
       protected Void doInBackground(Void... params) {
-        synchronized (SESSION_LOCK) {
+        try(SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
           for (IdentityRecord identityRecord : untrustedRecords) {
             identityDatabase.setVerified(identityRecord.getRecipientId(),
                                          identityRecord.getIdentityKey(),

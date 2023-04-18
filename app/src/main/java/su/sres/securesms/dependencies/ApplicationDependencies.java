@@ -24,6 +24,7 @@ import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.TrimThreadsByDateManager;
 import su.sres.securesms.shakereport.ShakeToReport;
+import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.EarlyMessageCache;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
@@ -54,6 +55,7 @@ public class ApplicationDependencies {
     private static NetworkIndependentProvider networkIndependentProvider;
 
     private static MessageNotifier          messageNotifier;
+    private static AppForegroundObserver appForegroundObserver;
 
     private static volatile SignalServiceAccountManager  accountManager;
     private static volatile SignalServiceMessageSender   messageSender;
@@ -85,6 +87,9 @@ public class ApplicationDependencies {
 
         ApplicationDependencies.application                = application;
         ApplicationDependencies.networkIndependentProvider = networkIndependentProvider;
+        ApplicationDependencies.appForegroundObserver = networkIndependentProvider.provideAppForegroundObserver();
+
+        ApplicationDependencies.appForegroundObserver.begin();
 
     }
 
@@ -99,6 +104,7 @@ public class ApplicationDependencies {
 
         ApplicationDependencies.provider        = provider;
         ApplicationDependencies.messageNotifier = provider.provideMessageNotifier();
+
     }
 
 
@@ -111,50 +117,61 @@ public class ApplicationDependencies {
     }
 
     public static @NonNull SignalServiceAccountManager getSignalServiceAccountManager() {
+        SignalServiceAccountManager local = accountManager;
+
+        if (local != null) {
+            return local;
+        }
+
         synchronized (LOCK) {
             if (accountManager == null) {
                 accountManager = provider.provideSignalServiceAccountManager();
             }
+            return accountManager;
         }
-
-        return accountManager;
     }
 
     public static @NonNull GroupsV2Authorization getGroupsV2Authorization() {
-
-        synchronized (LOCK) {
-            if (groupsV2Authorization == null) {
-                GroupsV2Authorization.ValueCache authCache = new GroupsV2AuthorizationMemoryValueCache(SignalStore.groupsV2AuthorizationCache());
-                groupsV2Authorization = new GroupsV2Authorization(getSignalServiceAccountManager().getGroupsV2Api(), authCache);
+        if (groupsV2Authorization == null) {
+            synchronized (LOCK) {
+                if (groupsV2Authorization == null) {
+                    GroupsV2Authorization.ValueCache authCache = new GroupsV2AuthorizationMemoryValueCache(SignalStore.groupsV2AuthorizationCache());
+                    groupsV2Authorization = new GroupsV2Authorization(getSignalServiceAccountManager().getGroupsV2Api(), authCache);
+                }
             }
         }
-
         return groupsV2Authorization;
     }
 
     public static @NonNull GroupsV2Operations getGroupsV2Operations() {
-
-        synchronized (LOCK) {
-            if (groupsV2Operations == null) {
-                groupsV2Operations = provider.provideGroupsV2Operations();
+        if (groupsV2Operations == null) {
+            synchronized (LOCK) {
+                if (groupsV2Operations == null) {
+                    groupsV2Operations = provider.provideGroupsV2Operations();
+                }
             }
         }
-
         return groupsV2Operations;
     }
 
     public static @NonNull GroupsV2StateProcessor getGroupsV2StateProcessor() {
-
-        synchronized (LOCK) {
-            if (groupsV2StateProcessor == null) {
-                groupsV2StateProcessor = new GroupsV2StateProcessor(application);
+        if (groupsV2StateProcessor == null) {
+            synchronized (LOCK) {
+                if (groupsV2StateProcessor == null) {
+                    groupsV2StateProcessor = new GroupsV2StateProcessor(application);
+                }
             }
         }
-
         return groupsV2StateProcessor;
     }
 
     public static @NonNull SignalServiceMessageSender getSignalServiceMessageSender() {
+
+        SignalServiceMessageSender local = messageSender;
+
+        if (local != null) {
+            return local;
+        }
 
         synchronized (LOCK) {
             if (messageSender == null) {
@@ -166,20 +183,24 @@ public class ApplicationDependencies {
                         TextSecurePreferences.isMultiDevice(application),
                         FeatureFlags.attachmentsV3());
             }
+            return messageSender;
         }
-
-        return messageSender;
     }
 
     public static @NonNull SignalServiceMessageReceiver getSignalServiceMessageReceiver() {
+
+        SignalServiceMessageReceiver local = messageReceiver;
+
+        if (local != null) {
+            return local;
+        }
 
         synchronized (LOCK) {
             if (messageReceiver == null) {
                 messageReceiver = provider.provideSignalServiceMessageReceiver();
             }
+            return messageReceiver;
         }
-
-        return messageReceiver;
     }
 
     public static void resetSignalServiceMessageReceiver() {
@@ -218,64 +239,68 @@ public class ApplicationDependencies {
     }
 
     public static @NonNull IncomingMessageProcessor getIncomingMessageProcessor() {
-        synchronized (LOCK) {
-            if (incomingMessageProcessor == null) {
-                incomingMessageProcessor = provider.provideIncomingMessageProcessor();
+        if (incomingMessageProcessor == null) {
+            synchronized (LOCK) {
+                if (incomingMessageProcessor == null) {
+                    incomingMessageProcessor = provider.provideIncomingMessageProcessor();
+                }
             }
         }
-
         return incomingMessageProcessor;
     }
 
     public static @NonNull BackgroundMessageRetriever getBackgroundMessageRetriever() {
-
-        synchronized (LOCK) {
-            if (backgroundMessageRetriever == null) {
-                backgroundMessageRetriever = provider.provideBackgroundMessageRetriever();
+        if (backgroundMessageRetriever == null) {
+            synchronized (LOCK) {
+                if (backgroundMessageRetriever == null) {
+                    backgroundMessageRetriever = provider.provideBackgroundMessageRetriever();
+                }
             }
         }
-
         return backgroundMessageRetriever;
     }
 
     public static @NonNull LiveRecipientCache getRecipientCache() {
-
-        synchronized (LOCK) {
-            if (recipientCache == null) {
-                recipientCache = provider.provideRecipientCache();
+        if (recipientCache == null) {
+            synchronized (LOCK) {
+                if (recipientCache == null) {
+                    recipientCache = provider.provideRecipientCache();
+                }
             }
         }
-
         return recipientCache;
     }
 
     public static @NonNull JobManager getJobManager() {
-
-        synchronized (JOB_MANAGER_LOCK) {
-            if (jobManager == null) {
-                jobManager = provider.provideJobManager();
+        if (jobManager == null) {
+            synchronized (JOB_MANAGER_LOCK) {
+                if (jobManager == null) {
+                    jobManager = provider.provideJobManager();
+                }
             }
         }
-
         return jobManager;
     }
 
     public static @NonNull FrameRateTracker getFrameRateTracker() {
-
-        synchronized (FRAME_RATE_TRACKER_LOCK) {
-            if (frameRateTracker == null) {
-                frameRateTracker = provider.provideFrameRateTracker();
+        if (frameRateTracker == null) {
+            synchronized (FRAME_RATE_TRACKER_LOCK) {
+                if (frameRateTracker == null) {
+                    frameRateTracker = provider.provideFrameRateTracker();
+                }
             }
         }
-
         return frameRateTracker;
     }
 
     public static @NonNull KeyValueStore getKeyValueStore() {
 
-        synchronized (NI_LOCK) {
-            if (keyValueStore == null) {
-                keyValueStore = networkIndependentProvider.provideKeyValueStore();
+        if (keyValueStore == null) {
+
+            synchronized (NI_LOCK) {
+                if (keyValueStore == null) {
+                    keyValueStore = networkIndependentProvider.provideKeyValueStore();
+                }
             }
         }
 
@@ -283,24 +308,24 @@ public class ApplicationDependencies {
     }
 
     public static @NonNull MegaphoneRepository getMegaphoneRepository() {
-
-        synchronized (LOCK) {
-            if (megaphoneRepository == null) {
-                megaphoneRepository = provider.provideMegaphoneRepository();
+        if (megaphoneRepository == null) {
+            synchronized (LOCK) {
+                if (megaphoneRepository == null) {
+                    megaphoneRepository = provider.provideMegaphoneRepository();
+                }
             }
         }
-
         return megaphoneRepository;
     }
 
     public static @NonNull EarlyMessageCache getEarlyMessageCache() {
-
-        synchronized (LOCK) {
-            if (earlyMessageCache == null) {
-                earlyMessageCache = provider.provideEarlyMessageCache();
+        if (earlyMessageCache == null) {
+            synchronized (LOCK) {
+                if (earlyMessageCache == null) {
+                    earlyMessageCache = provider.provideEarlyMessageCache();
+                }
             }
         }
-
         return earlyMessageCache;
     }
 
@@ -309,13 +334,18 @@ public class ApplicationDependencies {
     }
 
     public static @NonNull IncomingMessageObserver getIncomingMessageObserver() {
+        IncomingMessageObserver local = incomingMessageObserver;
+
+        if (local != null) {
+            return local;
+        }
+
         synchronized (LOCK) {
             if (incomingMessageObserver == null) {
                 incomingMessageObserver = provider.provideIncomingMessageObserver();
             }
+            return incomingMessageObserver;
         }
-
-        return incomingMessageObserver;
     }
 
     public static @NonNull TrimThreadsByDateManager getTrimThreadsByDateManager() {
@@ -372,6 +402,10 @@ public class ApplicationDependencies {
         return shakeToReport;
     }
 
+    public static @NonNull AppForegroundObserver getAppForegroundObserver() {
+        return appForegroundObserver;
+    }
+
     public interface Provider {
         @NonNull
         PipeConnectivityListener providePipeListener();
@@ -400,6 +434,7 @@ public class ApplicationDependencies {
         @NonNull KeyValueStore provideKeyValueStore();
         @NonNull
         ShakeToReport provideShakeToReport();
+        @NonNull AppForegroundObserver provideAppForegroundObserver();
 
     }
 }

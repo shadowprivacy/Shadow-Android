@@ -53,63 +53,64 @@ import su.sres.securesms.util.LifecycleCursorWrapper;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.Util;
 import su.sres.core.util.concurrent.SignalExecutors;
+import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.wallpaper.ChatWallpaperActivity;
 
 import java.util.Locale;
 import java.util.Objects;
 
 public class ManageRecipientFragment extends LoggingFragment {
-    private static final String RECIPIENT_ID      = "RECIPIENT_ID";
+    private static final String RECIPIENT_ID = "RECIPIENT_ID";
     private static final String FROM_CONVERSATION = "FROM_CONVERSATION";
 
     private static final int REQUEST_CODE_RETURN_FROM_MEDIA = 405;
-    private static final int REQUEST_CODE_ADD_CONTACT       = 588;
-    private static final int REQUEST_CODE_VIEW_CONTACT      = 610;
+    private static final int REQUEST_CODE_ADD_CONTACT = 588;
+    private static final int REQUEST_CODE_VIEW_CONTACT = 610;
 
-    private ManageRecipientViewModel               viewModel;
-    private GroupMemberListView                    sharedGroupList;
-    private Toolbar                                toolbar;
-    private TextView                               title;
-    private TextView                               about;
-    private TextView                               subtitle;
-    private ViewGroup                              internalDetails;
-    private TextView                               internalDetailsText;
-    private View                                   disableProfileSharingButton;
-    private View                                   contactRow;
- //   private TextView                               contactText;
- //   private ImageView                              contactIcon;
-    private AvatarImageView                        avatar;
-    private ThreadPhotoRailView                    threadPhotoRailView;
-    private View                                   mediaCard;
+    private ManageRecipientViewModel viewModel;
+    private GroupMemberListView sharedGroupList;
+    private Toolbar toolbar;
+    private TextView title;
+    private TextView about;
+    private TextView subtitle;
+    private ViewGroup internalDetails;
+    private TextView internalDetailsText;
+    private View disableProfileSharingButton;
+    private View contactRow;
+    //   private TextView                               contactText;
+    //   private ImageView                              contactIcon;
+    private AvatarImageView avatar;
+    private ThreadPhotoRailView threadPhotoRailView;
+    private View mediaCard;
     private ManageRecipientViewModel.CursorFactory cursorFactory;
-    private View                                   sharedMediaRow;
-    private View                                   disappearingMessagesCard;
-    private View                                   disappearingMessagesRow;
-    private TextView                               disappearingMessages;
-    private View                                   colorRow;
-    private ImageView                              colorChip;
-    private View                                   blockUnblockCard;
-    private TextView                               block;
-    private TextView                               unblock;
-    private View                                   groupMembershipCard;
-    private TextView                               addToAGroup;
-    private SwitchCompat                           muteNotificationsSwitch;
-    private View                                   muteNotificationsRow;
-    private TextView                               muteNotificationsUntilLabel;
-    private View                                   notificationsCard;
-    private TextView                               customNotificationsButton;
-    private View                                   customNotificationsRow;
-    private View                                   toggleAllGroups;
-    private View                                   viewSafetyNumber;
-    private TextView                               groupsInCommonCount;
-    private View                                   messageButton;
-    private View                                   secureCallButton;
-    private View                                   secureVideoCallButton;
-    private View                                   chatWallpaperButton;
+    private View sharedMediaRow;
+    private View disappearingMessagesCard;
+    private View disappearingMessagesRow;
+    private TextView disappearingMessages;
+    private View colorRow;
+    private ImageView colorChip;
+    private View blockUnblockCard;
+    private TextView block;
+    private TextView unblock;
+    private View groupMembershipCard;
+    private TextView addToAGroup;
+    private SwitchCompat muteNotificationsSwitch;
+    private View muteNotificationsRow;
+    private TextView muteNotificationsUntilLabel;
+    private View notificationsCard;
+    private TextView customNotificationsButton;
+    private View customNotificationsRow;
+    private View toggleAllGroups;
+    private View viewSafetyNumber;
+    private TextView groupsInCommonCount;
+    private View messageButton;
+    private View secureCallButton;
+    private View secureVideoCallButton;
+    private View chatWallpaperButton;
 
     static ManageRecipientFragment newInstance(@NonNull RecipientId recipientId, boolean fromConversation) {
         ManageRecipientFragment fragment = new ManageRecipientFragment();
-        Bundle                  args     = new Bundle();
+        Bundle args = new Bundle();
 
         args.putParcelable(RECIPIENT_ID, recipientId);
         args.putBoolean(FROM_CONVERSATION, fromConversation);
@@ -121,48 +122,47 @@ public class ManageRecipientFragment extends LoggingFragment {
     @Override
     public @Nullable View onCreateView(@NonNull LayoutInflater inflater,
                                        @Nullable ViewGroup container,
-                                       @Nullable Bundle savedInstanceState)
-    {
+                                       @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.recipient_manage_fragment, container, false);
 
-        avatar                      = view.findViewById(R.id.recipient_avatar);
-        toolbar                     = view.findViewById(R.id.toolbar);
-        contactRow                  = view.findViewById(R.id.recipient_contact_row);
-       // contactText                 = view.findViewById(R.id.recipient_contact_text);
-       //  contactIcon                 = view.findViewById(R.id.recipient_contact_icon);
-        title                       = view.findViewById(R.id.name);
-        about                       = view.findViewById(R.id.about);
-        subtitle                    = view.findViewById(R.id.username_number);
-        internalDetails             = view.findViewById(R.id.recipient_internal_details);
-        internalDetailsText         = view.findViewById(R.id.recipient_internal_details_text);
+        avatar = view.findViewById(R.id.recipient_avatar);
+        toolbar = view.findViewById(R.id.toolbar);
+        contactRow = view.findViewById(R.id.recipient_contact_row);
+        // contactText                 = view.findViewById(R.id.recipient_contact_text);
+        //  contactIcon                 = view.findViewById(R.id.recipient_contact_icon);
+        title = view.findViewById(R.id.name);
+        about = view.findViewById(R.id.about);
+        subtitle = view.findViewById(R.id.username_number);
+        internalDetails = view.findViewById(R.id.recipient_internal_details);
+        internalDetailsText = view.findViewById(R.id.recipient_internal_details_text);
         disableProfileSharingButton = view.findViewById(R.id.recipient_internal_details_disable_profile_sharing_button);
-        sharedGroupList             = view.findViewById(R.id.shared_group_list);
-        groupsInCommonCount         = view.findViewById(R.id.groups_in_common_count);
-        threadPhotoRailView         = view.findViewById(R.id.recent_photos);
-        mediaCard                   = view.findViewById(R.id.recipient_media_card);
-        sharedMediaRow              = view.findViewById(R.id.shared_media_row);
-        disappearingMessagesCard    = view.findViewById(R.id.recipient_disappearing_messages_card);
-        disappearingMessagesRow     = view.findViewById(R.id.disappearing_messages_row);
-        disappearingMessages        = view.findViewById(R.id.disappearing_messages);
-        colorRow                    = view.findViewById(R.id.color_row);
-        colorChip                   = view.findViewById(R.id.color_chip);
-        blockUnblockCard            = view.findViewById(R.id.recipient_block_and_leave_card);
-        block                       = view.findViewById(R.id.block);
-        unblock                     = view.findViewById(R.id.unblock);
-        viewSafetyNumber            = view.findViewById(R.id.view_safety_number);
-        groupMembershipCard         = view.findViewById(R.id.recipient_membership_card);
-        addToAGroup                 = view.findViewById(R.id.add_to_a_group);
+        sharedGroupList = view.findViewById(R.id.shared_group_list);
+        groupsInCommonCount = view.findViewById(R.id.groups_in_common_count);
+        threadPhotoRailView = view.findViewById(R.id.recent_photos);
+        mediaCard = view.findViewById(R.id.recipient_media_card);
+        sharedMediaRow = view.findViewById(R.id.shared_media_row);
+        disappearingMessagesCard = view.findViewById(R.id.recipient_disappearing_messages_card);
+        disappearingMessagesRow = view.findViewById(R.id.disappearing_messages_row);
+        disappearingMessages = view.findViewById(R.id.disappearing_messages);
+        colorRow = view.findViewById(R.id.color_row);
+        colorChip = view.findViewById(R.id.color_chip);
+        blockUnblockCard = view.findViewById(R.id.recipient_block_and_leave_card);
+        block = view.findViewById(R.id.block);
+        unblock = view.findViewById(R.id.unblock);
+        viewSafetyNumber = view.findViewById(R.id.view_safety_number);
+        groupMembershipCard = view.findViewById(R.id.recipient_membership_card);
+        addToAGroup = view.findViewById(R.id.add_to_a_group);
         muteNotificationsUntilLabel = view.findViewById(R.id.recipient_mute_notifications_until);
-        muteNotificationsSwitch     = view.findViewById(R.id.recipient_mute_notifications_switch);
-        muteNotificationsRow        = view.findViewById(R.id.recipient_mute_notifications_row);
-        notificationsCard           = view.findViewById(R.id.recipient_notifications_card);
-        customNotificationsButton   = view.findViewById(R.id.recipient_custom_notifications_button);
-        customNotificationsRow      = view.findViewById(R.id.recipient_custom_notifications_row);
-        toggleAllGroups             = view.findViewById(R.id.toggle_all_groups);
-        messageButton               = view.findViewById(R.id.recipient_message);
-        secureCallButton            = view.findViewById(R.id.recipient_voice_call);
-        secureVideoCallButton       = view.findViewById(R.id.recipient_video_call);
-        chatWallpaperButton         = view.findViewById(R.id.chat_wallpaper);
+        muteNotificationsSwitch = view.findViewById(R.id.recipient_mute_notifications_switch);
+        muteNotificationsRow = view.findViewById(R.id.recipient_mute_notifications_row);
+        notificationsCard = view.findViewById(R.id.recipient_notifications_card);
+        customNotificationsButton = view.findViewById(R.id.recipient_custom_notifications_button);
+        customNotificationsRow = view.findViewById(R.id.recipient_custom_notifications_row);
+        toggleAllGroups = view.findViewById(R.id.toggle_all_groups);
+        messageButton = view.findViewById(R.id.recipient_message);
+        secureCallButton = view.findViewById(R.id.recipient_voice_call);
+        secureVideoCallButton = view.findViewById(R.id.recipient_video_call);
+        chatWallpaperButton = view.findViewById(R.id.chat_wallpaper);
 
         return view;
     }
@@ -171,9 +171,9 @@ public class ManageRecipientFragment extends LoggingFragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        RecipientId                      recipientId      = Objects.requireNonNull(requireArguments().getParcelable(RECIPIENT_ID));
-        boolean                          fromConversation = requireArguments().getBoolean(FROM_CONVERSATION, false);
-        ManageRecipientViewModel.Factory factory          = new ManageRecipientViewModel.Factory(recipientId);
+        RecipientId recipientId = Objects.requireNonNull(requireArguments().getParcelable(RECIPIENT_ID));
+        boolean fromConversation = requireArguments().getBoolean(FROM_CONVERSATION, false);
+        ManageRecipientViewModel.Factory factory = new ManageRecipientViewModel.Factory(recipientId);
 
         viewModel = ViewModelProviders.of(requireActivity(), factory).get(ManageRecipientViewModel.class);
 
@@ -329,7 +329,7 @@ public class ManageRecipientFragment extends LoggingFragment {
                     AvatarPreviewActivity.createTransitionBundle(activity, avatar));
         });
 
-        @ColorInt int        color         = recipientColor.toActionBarColor(requireContext());
+        @ColorInt int color = recipientColor.toActionBarColor(requireContext());
         Drawable[] colorDrawable = new Drawable[]{ContextCompat.getDrawable(requireContext(), R.drawable.colorpickerpreference_pref_swatch)};
         colorChip.setImageDrawable(new ColorStateDrawable(colorDrawable, color));
         colorRow.setOnClickListener(v -> handleColorSelection(color));
@@ -346,8 +346,8 @@ public class ManageRecipientFragment extends LoggingFragment {
 
         threadPhotoRailView.setListener(mediaRecord ->
                 startActivityForResult(MediaPreviewActivity.intentFromMediaRecord(requireContext(),
-                        mediaRecord,
-                        ViewCompat.getLayoutDirection(threadPhotoRailView) == ViewCompat.LAYOUT_DIRECTION_LTR),
+                                mediaRecord,
+                                ViewUtil.isLtr(threadPhotoRailView)),
                         REQUEST_CODE_RETURN_FROM_MEDIA));
     }
 

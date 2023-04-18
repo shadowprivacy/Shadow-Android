@@ -355,6 +355,11 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
         return terminateGroupCall(currentState, true);
     }
 
+    @Override
+    protected @NonNull WebRtcServiceState handleOrientationChanged(@NonNull WebRtcServiceState currentState, int orientationDegrees) {
+        return currentState;
+    }
+
     public synchronized @NonNull WebRtcServiceState terminateGroupCall(@NonNull WebRtcServiceState currentState, boolean terminateVideo) {
         webRtcInteractor.updatePhoneState(LockManager.PhoneState.PROCESSING);
         webRtcInteractor.stopForegroundService();

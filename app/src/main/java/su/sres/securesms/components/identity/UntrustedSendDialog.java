@@ -1,21 +1,19 @@
 package su.sres.securesms.components.identity;
 
-
 import android.content.Context;
 import android.content.DialogInterface;
-import android.os.AsyncTask;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
 import su.sres.securesms.R;
+import su.sres.securesms.crypto.DatabaseSessionLock;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
 import su.sres.securesms.util.concurrent.SimpleTask;
+import su.sres.signalservice.api.SignalSessionLock;
 
 import java.util.List;
-
-import static org.whispersystems.libsignal.SessionCipher.SESSION_LOCK;
 
 public class UntrustedSendDialog extends AlertDialog.Builder implements DialogInterface.OnClickListener {
 
@@ -43,7 +41,7 @@ public class UntrustedSendDialog extends AlertDialog.Builder implements DialogIn
     final IdentityDatabase identityDatabase = DatabaseFactory.getIdentityDatabase(getContext());
 
     SimpleTask.run(() -> {
-      synchronized (SESSION_LOCK) {
+      try(SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
         for (IdentityRecord identityRecord : untrustedRecords) {
           identityDatabase.setApproval(identityRecord.getRecipientId(), true);
         }

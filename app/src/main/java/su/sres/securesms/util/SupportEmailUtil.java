@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 
-import su.sres.core.util.EnglishResourceUtil;
+import su.sres.core.util.ResourceUtil;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.R;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -37,7 +37,7 @@ public final class SupportEmailUtil {
     }
 
     private static @NonNull String buildSystemInfo(@NonNull Context context, @StringRes int subject) {
-        Resources englishResources = EnglishResourceUtil.getEnglishResources(context);
+        Resources englishResources = ResourceUtil.getEnglishResources(context);
         return "--- " + context.getString(R.string.HelpFragment__support_info) + " ---" +
                 "\n" +
                 context.getString(R.string.SupportEmailUtil_filter) + " " + englishResources.getString(subject) +

@@ -53,6 +53,7 @@ public class Camera implements CameraControl, CameraVideoCapturer.CameraSwitchHa
     private CameraState.Direction activeDirection;
     private boolean enabled;
     private boolean isInitialized;
+    private       int                   orientation;
 
     public Camera(@NonNull Context context,
                   @NonNull CameraEventListener cameraEventListener,
@@ -87,6 +88,7 @@ public class Camera implements CameraControl, CameraVideoCapturer.CameraSwitchHa
             capturer.initialize(SurfaceTextureHelper.create("WebRTC-SurfaceTextureHelper", eglBase.getEglBaseContext()),
                     context,
                     observer);
+            capturer.setOrientation(orientation);
             isInitialized = true;
         }
     }
@@ -103,6 +105,15 @@ public class Camera implements CameraControl, CameraVideoCapturer.CameraSwitchHa
         }
         activeDirection = PENDING;
         capturer.switchCamera(this);
+    }
+
+    @Override
+    public void setOrientation(@Nullable Integer orientation) {
+        this.orientation = orientation;
+
+        if (isInitialized && capturer != null) {
+            capturer.setOrientation(orientation);
+        }
     }
 
     @Override

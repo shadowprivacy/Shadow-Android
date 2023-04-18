@@ -165,7 +165,7 @@ public final class ViewUtil {
 
   @SuppressLint("RtlHardcoded")
   public static void setTextViewGravityStart(final @NonNull TextView textView, @NonNull Context context) {
-    if (DynamicLanguage.getLayoutDirection(context) == View.LAYOUT_DIRECTION_RTL) {
+    if (isRtl(context)) {
       textView.setGravity(Gravity.RIGHT);
     } else {
       textView.setGravity(Gravity.LEFT);
@@ -173,9 +173,25 @@ public final class ViewUtil {
   }
 
   public static void mirrorIfRtl(View view, Context context) {
-    if (DynamicLanguage.getLayoutDirection(context) == View.LAYOUT_DIRECTION_RTL) {
+    if (isRtl(context)) {
       view.setScaleX(-1.0f);
     }
+  }
+
+  public static boolean isLtr(@NonNull View view) {
+    return isLtr(view.getContext());
+  }
+
+  public static boolean isLtr(@NonNull Context context) {
+    return context.getResources().getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_LTR;
+  }
+
+  public static boolean isRtl(@NonNull View view) {
+    return isRtl(view.getContext());
+  }
+
+  public static boolean isRtl(@NonNull Context context) {
+    return context.getResources().getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
   }
 
   public static float pxToDp(float px) {
@@ -211,21 +227,21 @@ public final class ViewUtil {
   }
 
   public static int getLeftMargin(@NonNull View view) {
-    if (ViewCompat.getLayoutDirection(view) == ViewCompat.LAYOUT_DIRECTION_LTR) {
+    if (isLtr(view)) {
       return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).leftMargin;
     }
     return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).rightMargin;
   }
 
   public static int getRightMargin(@NonNull View view) {
-    if (ViewCompat.getLayoutDirection(view) == ViewCompat.LAYOUT_DIRECTION_LTR) {
+    if (isLtr(view)) {
       return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).rightMargin;
     }
     return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).leftMargin;
   }
 
   public static void setLeftMargin(@NonNull View view, int margin) {
-    if (ViewCompat.getLayoutDirection(view) == ViewCompat.LAYOUT_DIRECTION_LTR) {
+    if (isLtr(view)) {
       ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).leftMargin = margin;
     } else {
       ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).rightMargin = margin;
@@ -235,7 +251,7 @@ public final class ViewUtil {
   }
 
   public static void setRightMargin(@NonNull View view, int margin) {
-    if (ViewCompat.getLayoutDirection(view) == ViewCompat.LAYOUT_DIRECTION_LTR) {
+    if (isLtr(view)) {
       ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).rightMargin = margin;
     } else {
       ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).leftMargin = margin;
@@ -267,7 +283,7 @@ public final class ViewUtil {
   }
 
   public static void setPaddingStart(@NonNull View view, int padding) {
-    if (view.getLayoutDirection() == View.LAYOUT_DIRECTION_LTR) {
+    if (isLtr(view)) {
       view.setPadding(padding, view.getPaddingTop(), view.getPaddingRight(), view.getPaddingBottom());
     } else {
       view.setPadding(view.getPaddingLeft(), view.getPaddingTop(), padding, view.getPaddingBottom());
@@ -275,10 +291,10 @@ public final class ViewUtil {
   }
 
   public static void setPaddingEnd(@NonNull View view, int padding) {
-    if (view.getLayoutDirection() != View.LAYOUT_DIRECTION_LTR) {
-      view.setPadding(padding, view.getPaddingTop(), view.getPaddingRight(), view.getPaddingBottom());
-    } else {
+    if (isLtr(view)) {
       view.setPadding(view.getPaddingLeft(), view.getPaddingTop(), padding, view.getPaddingBottom());
+    } else {
+      view.setPadding(padding, view.getPaddingTop(), view.getPaddingRight(), view.getPaddingBottom());
     }
   }
 

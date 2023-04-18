@@ -9,6 +9,8 @@ import androidx.annotation.Nullable;
 
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.CallId;
+
+import su.sres.securesms.components.sensors.Orientation;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.WebRtcViewModel;
@@ -16,6 +18,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.ringrtc.CallState;
+import su.sres.securesms.ringrtc.Camera;
 import su.sres.securesms.ringrtc.CameraState;
 import su.sres.securesms.ringrtc.IceCandidateParcel;
 import su.sres.securesms.ringrtc.RemotePeer;
@@ -41,6 +44,7 @@ import su.sres.signalservice.api.messages.calls.OfferMessage;
 import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -82,6 +86,7 @@ import static su.sres.securesms.service.WebRtcCallService.ACTION_LOCAL_RINGING;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_MESSAGE_SENT_ERROR;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_MESSAGE_SENT_SUCCESS;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_NETWORK_CHANGE;
+import static su.sres.securesms.service.WebRtcCallService.ACTION_ORIENTATION_CHANGED;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_OUTGOING_CALL;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_PRE_JOIN_CALL;
 import static su.sres.securesms.service.WebRtcCallService.ACTION_RECEIVED_OFFER_EXPIRED;
@@ -135,6 +140,7 @@ import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getIceCandidat
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getIceServers;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getNullableRemotePeerFromMap;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getOfferMessageType;
+import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getOrientationDegrees;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getRemotePeer;
 import static su.sres.securesms.service.webrtc.WebRtcIntentParser.getRemotePeerFromMap;
 
@@ -220,6 +226,7 @@ public abstract class WebRtcActionProcessor {
             case ACTION_CAMERA_SWITCH_COMPLETED:             return handleCameraSwitchCompleted(currentState, getCameraState(intent));
             case ACTION_NETWORK_CHANGE:                      return handleNetworkChanged(currentState, getAvailable(intent));
             case ACTION_BANDWIDTH_MODE_UPDATE:               return handleBandwidthModeUpdate(currentState);
+            case ACTION_ORIENTATION_CHANGED:                 return handleOrientationChanged(currentState, getOrientationDegrees(intent));
 
             // End Call Actions
             case ACTION_ENDED_REMOTE_HANGUP:
@@ -528,7 +535,7 @@ public abstract class WebRtcActionProcessor {
 
         if (errorCallState == WebRtcViewModel.State.UNTRUSTED_IDENTITY) {
             CallParticipant participant = Objects.requireNonNull(currentState.getCallInfoState().getRemoteCallParticipant(activePeer.getRecipient()));
-            CallParticipant untrusted   = participant.withIdentityKey(identityKey.get());
+            CallParticipant untrusted   = participant.withIdentityKey(identityKey.orNull());
 
             builder.changeCallInfoState()
                     .callState(WebRtcViewModel.State.UNTRUSTED_IDENTITY)
@@ -553,7 +560,18 @@ public abstract class WebRtcActionProcessor {
     }
 
     protected @NonNull WebRtcServiceState handleReceivedIceCandidates(@NonNull WebRtcServiceState currentState, @NonNull CallMetadata callMetadata, @NonNull ArrayList<IceCandidateParcel> iceCandidateParcels) {
-        Log.i(tag, "handleReceivedIceCandidates not processed");
+        Log.i(tag, "handleReceivedIceCandidates(): id: " + callMetadata.getCallId().format(callMetadata.getRemoteDevice()) + ", count: " + iceCandidateParcels.size());
+
+        LinkedList<byte[]> iceCandidates = new LinkedList<>();
+        for (IceCandidateParcel parcel : iceCandidateParcels) {
+            iceCandidates.add(parcel.getIceCandidate());
+        }
+
+        try {
+            webRtcInteractor.getCallManager().receivedIceCandidates(callMetadata.getCallId(), callMetadata.getRemoteDevice(), iceCandidates);
+        } catch (CallException e) {
+            return callFailure(currentState, "receivedIceCandidates() failed: ", e);
+        }
         return currentState;
     }
 
@@ -624,6 +642,18 @@ public abstract class WebRtcActionProcessor {
         }
 
         return currentState;
+    }
+
+    protected @NonNull WebRtcServiceState handleOrientationChanged(@NonNull WebRtcServiceState currentState, int orientationDegrees) {
+        Camera camera = currentState.getVideoState().getCamera();
+        if (camera != null) {
+            camera.setOrientation(orientationDegrees);
+        }
+
+        return currentState.builder()
+                .changeLocalDeviceState()
+                .setOrientation(Orientation.fromDegrees(orientationDegrees))
+                .build();
     }
 
     //endregion Local device

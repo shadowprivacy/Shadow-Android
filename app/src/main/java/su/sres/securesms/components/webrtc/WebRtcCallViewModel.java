@@ -10,13 +10,17 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.annimon.stream.Stream;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
+import su.sres.securesms.components.sensors.DeviceOrientationMonitor;
+import su.sres.securesms.components.sensors.Orientation;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.CallParticipant;
@@ -34,20 +38,21 @@ import su.sres.securesms.util.livedata.LiveDataUtil;
 
 public class WebRtcCallViewModel extends ViewModel {
 
-    private final MutableLiveData<Boolean>                    microphoneEnabled         = new MutableLiveData<>(true);
-    private final MutableLiveData<Boolean>                    isInPipMode               = new MutableLiveData<>(false);
-    private final MutableLiveData<WebRtcControls>             webRtcControls            = new MutableLiveData<>(WebRtcControls.NONE);
-    private final LiveData<WebRtcControls>                    realWebRtcControls        = LiveDataUtil.combineLatest(isInPipMode, webRtcControls, this::getRealWebRtcControls);
-    private final SingleLiveEvent<Event>                      events                    = new SingleLiveEvent<Event>();
-    private final MutableLiveData<Long>                       elapsed                   = new MutableLiveData<>(-1L);
-    private final MutableLiveData<LiveRecipient>              liveRecipient             = new MutableLiveData<>(Recipient.UNKNOWN.live());
-    private final MutableLiveData<CallParticipantsState>      participantsState         = new MutableLiveData<>(CallParticipantsState.STARTING_STATE);
-    private final SingleLiveEvent<CallParticipantListUpdate>  callParticipantListUpdate = new SingleLiveEvent<>();
-    private final MutableLiveData<Collection<RecipientId>>    identityChangedRecipients = new MutableLiveData<>(Collections.emptyList());
-    private final LiveData<SafetyNumberChangeEvent>           safetyNumberChangeEvent   = LiveDataUtil.combineLatest(isInPipMode, identityChangedRecipients, SafetyNumberChangeEvent::new);
-    private final LiveData<Recipient>                         groupRecipient            = LiveDataUtil.filter(Transformations.switchMap(liveRecipient, LiveRecipient::getLiveData), Recipient::isActiveGroup);
-    private final LiveData<List<GroupMemberEntry.FullMember>> groupMembers              = LiveDataUtil.skip(Transformations.switchMap(groupRecipient, r -> Transformations.distinctUntilChanged(new LiveGroup(r.requireGroupId()).getFullMembers())), 1);
-    private final LiveData<Boolean>                           shouldShowSpeakerHint     = Transformations.map(participantsState, this::shouldShowSpeakerHint);
+    private final MutableLiveData<Boolean>                       microphoneEnabled         = new MutableLiveData<>(true);
+    private final MutableLiveData<Boolean>                       isInPipMode               = new MutableLiveData<>(false);
+    private final MutableLiveData<WebRtcControls>                webRtcControls            = new MutableLiveData<>(WebRtcControls.NONE);
+    private final LiveData<WebRtcControls>                       realWebRtcControls        = LiveDataUtil.combineLatest(isInPipMode, webRtcControls, this::getRealWebRtcControls);
+    private final SingleLiveEvent<Event>                         events                    = new SingleLiveEvent<Event>();
+    private final MutableLiveData<Long>                          elapsed                   = new MutableLiveData<>(-1L);
+    private final MutableLiveData<LiveRecipient>                 liveRecipient             = new MutableLiveData<>(Recipient.UNKNOWN.live());
+    private final MutableLiveData<CallParticipantsState>         participantsState         = new MutableLiveData<>(CallParticipantsState.STARTING_STATE);
+    private final SingleLiveEvent<CallParticipantListUpdate>     callParticipantListUpdate = new SingleLiveEvent<>();
+    private final MutableLiveData<Collection<RecipientId>>       identityChangedRecipients = new MutableLiveData<>(Collections.emptyList());
+    private final LiveData<SafetyNumberChangeEvent>              safetyNumberChangeEvent   = LiveDataUtil.combineLatest(isInPipMode, identityChangedRecipients, SafetyNumberChangeEvent::new);
+    private final LiveData<Recipient>                            groupRecipient            = LiveDataUtil.filter(Transformations.switchMap(liveRecipient, LiveRecipient::getLiveData), Recipient::isActiveGroup);
+    private final LiveData<List<GroupMemberEntry.FullMember>>    groupMembers              = LiveDataUtil.skip(Transformations.switchMap(groupRecipient, r -> Transformations.distinctUntilChanged(new LiveGroup(r.requireGroupId()).getFullMembers())), 1);
+    private final LiveData<Boolean>                              shouldShowSpeakerHint     = Transformations.map(participantsState, this::shouldShowSpeakerHint);
+    private final LiveData<Orientation>                          orientation;
 
     private boolean               canDisplayTooltipIfNeeded = true;
     private boolean               hasEnabledLocalVideo      = false;
@@ -60,6 +65,20 @@ public class WebRtcCallViewModel extends ViewModel {
     private boolean               callStarting             = false;
 
     private final WebRtcCallRepository repository = new WebRtcCallRepository(ApplicationDependencies.getApplication());
+
+    private WebRtcCallViewModel(@NonNull DeviceOrientationMonitor deviceOrientationMonitor) {
+        orientation = LiveDataUtil.combineLatest(deviceOrientationMonitor.getOrientation(), webRtcControls, (deviceOrientation, controls) -> {
+            if (controls.canRotateControls()) {
+                return deviceOrientation;
+            } else {
+                return Orientation.PORTRAIT_BOTTOM_EDGE;
+            }
+        });
+    }
+
+    public LiveData<Orientation> getOrientation() {
+        return Transformations.distinctUntilChanged(orientation);
+    }
 
     public LiveData<Boolean> getMicrophoneEnabled() {
         return Transformations.distinctUntilChanged(microphoneEnabled);
@@ -394,6 +413,20 @@ public class WebRtcCallViewModel extends ViewModel {
 
         public @NonNull Collection<RecipientId> getRecipientIds() {
             return recipientIds;
+        }
+    }
+
+    public static class Factory implements ViewModelProvider.Factory {
+
+        private final DeviceOrientationMonitor deviceOrientationMonitor;
+
+        public Factory(@NonNull DeviceOrientationMonitor deviceOrientationMonitor) {
+            this.deviceOrientationMonitor = deviceOrientationMonitor;
+        }
+
+        @Override
+        public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
+            return Objects.requireNonNull(modelClass.cast(new WebRtcCallViewModel(deviceOrientationMonitor)));
         }
     }
 }

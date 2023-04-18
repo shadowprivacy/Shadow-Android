@@ -60,6 +60,7 @@ import su.sres.securesms.util.AsynchronousCallback;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.LifecycleCursorWrapper;
+import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.views.LearnMoreTextView;
 import su.sres.securesms.util.views.SimpleProgressDialog;
 import su.sres.securesms.wallpaper.ChatWallpaperActivity;
@@ -73,49 +74,49 @@ public class ManageGroupFragment extends LoggingFragment {
 
     private static final String TAG = Log.tag(ManageGroupFragment.class);
 
-    private static final int    RETURN_FROM_MEDIA = 33114;
-    private static final int    PICK_CONTACT      = 61341;
-    public  static final String DIALOG_TAG        = "DIALOG";
+    private static final int RETURN_FROM_MEDIA = 33114;
+    private static final int PICK_CONTACT = 61341;
+    public static final String DIALOG_TAG = "DIALOG";
 
-    private ManageGroupViewModel               viewModel;
-    private GroupMemberListView                groupMemberList;
-    private View                               pendingAndRequestingRow;
-    private TextView                           pendingAndRequestingCount;
-    private Toolbar                            toolbar;
-    private TextView                           groupName;
-    private LearnMoreTextView                  groupInfoText;
-    private TextView                           memberCountUnderAvatar;
-    private TextView                           memberCountAboveList;
-    private AvatarImageView                    avatar;
-    private ThreadPhotoRailView                threadPhotoRailView;
-    private View                               groupMediaCard;
-    private View                               accessControlCard;
-    private View                               groupLinkCard;
+    private ManageGroupViewModel viewModel;
+    private GroupMemberListView groupMemberList;
+    private View pendingAndRequestingRow;
+    private TextView pendingAndRequestingCount;
+    private Toolbar toolbar;
+    private TextView groupName;
+    private LearnMoreTextView groupInfoText;
+    private TextView memberCountUnderAvatar;
+    private TextView memberCountAboveList;
+    private AvatarImageView avatar;
+    private ThreadPhotoRailView threadPhotoRailView;
+    private View groupMediaCard;
+    private View accessControlCard;
+    private View groupLinkCard;
     private ManageGroupViewModel.CursorFactory cursorFactory;
-    private View                               sharedMediaRow;
-    private View                               editGroupAccessRow;
-    private TextView                           editGroupAccessValue;
-    private View                               editGroupMembershipRow;
-    private TextView                           editGroupMembershipValue;
-    private View                               disappearingMessagesCard;
-    private View                               disappearingMessagesRow;
-    private TextView                           disappearingMessages;
-    private View                               blockAndLeaveCard;
-    private TextView                           blockGroup;
-    private TextView                           unblockGroup;
-    private TextView                           leaveGroup;
-    private TextView                           addMembers;
-    private SwitchCompat                       muteNotificationsSwitch;
-    private View                               muteNotificationsRow;
-    private TextView                           muteNotificationsUntilLabel;
-    private TextView                           customNotificationsButton;
-    private View                               customNotificationsRow;
-    private View                               mentionsRow;
-    private TextView                           mentionsValue;
-    private View                               toggleAllMembers;
-    private View                               groupLinkRow;
-    private TextView                           groupLinkButton;
-    private View                               wallpaperButton;
+    private View sharedMediaRow;
+    private View editGroupAccessRow;
+    private TextView editGroupAccessValue;
+    private View editGroupMembershipRow;
+    private TextView editGroupMembershipValue;
+    private View disappearingMessagesCard;
+    private View disappearingMessagesRow;
+    private TextView disappearingMessages;
+    private View blockAndLeaveCard;
+    private TextView blockGroup;
+    private TextView unblockGroup;
+    private TextView leaveGroup;
+    private TextView addMembers;
+    private SwitchCompat muteNotificationsSwitch;
+    private View muteNotificationsRow;
+    private TextView muteNotificationsUntilLabel;
+    private TextView customNotificationsButton;
+    private View customNotificationsRow;
+    private View mentionsRow;
+    private TextView mentionsValue;
+    private View toggleAllMembers;
+    private View groupLinkRow;
+    private TextView groupLinkButton;
+    private View wallpaperButton;
 
     private final Recipient.FallbackPhotoProvider fallbackPhotoProvider = new Recipient.FallbackPhotoProvider() {
         @Override
@@ -126,7 +127,7 @@ public class ManageGroupFragment extends LoggingFragment {
 
     static ManageGroupFragment newInstance(@NonNull String groupId) {
         ManageGroupFragment fragment = new ManageGroupFragment();
-        Bundle              args     = new Bundle();
+        Bundle args = new Bundle();
 
         args.putString(GROUP_ID, groupId);
         fragment.setArguments(args);
@@ -137,47 +138,46 @@ public class ManageGroupFragment extends LoggingFragment {
     @Override
     public @Nullable View onCreateView(@NonNull LayoutInflater inflater,
                                        @Nullable ViewGroup container,
-                                       @Nullable Bundle savedInstanceState)
-    {
+                                       @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.group_manage_fragment, container, false);
 
-        avatar                      = view.findViewById(R.id.group_avatar);
-        toolbar                     = view.findViewById(R.id.toolbar);
-        groupName                   = view.findViewById(R.id.name);
-        groupInfoText               = view.findViewById(R.id.manage_group_info_text);
-        memberCountUnderAvatar      = view.findViewById(R.id.member_count);
-        memberCountAboveList        = view.findViewById(R.id.member_count_2);
-        groupMemberList             = view.findViewById(R.id.group_members);
-        pendingAndRequestingRow     = view.findViewById(R.id.pending_and_requesting_members_row);
-        pendingAndRequestingCount   = view.findViewById(R.id.pending_and_requesting_members_count);
-        threadPhotoRailView         = view.findViewById(R.id.recent_photos);
-        groupMediaCard              = view.findViewById(R.id.group_media_card);
-        accessControlCard           = view.findViewById(R.id.group_access_control_card);
-        groupLinkCard               = view.findViewById(R.id.group_link_card);
-        sharedMediaRow              = view.findViewById(R.id.shared_media_row);
-        editGroupAccessRow          = view.findViewById(R.id.edit_group_access_row);
-        editGroupAccessValue        = view.findViewById(R.id.edit_group_access_value);
-        editGroupMembershipRow      = view.findViewById(R.id.edit_group_membership_row);
-        editGroupMembershipValue    = view.findViewById(R.id.edit_group_membership_value);
-        disappearingMessagesCard    = view.findViewById(R.id.group_disappearing_messages_card);
-        disappearingMessagesRow     = view.findViewById(R.id.disappearing_messages_row);
-        disappearingMessages        = view.findViewById(R.id.disappearing_messages);
-        blockAndLeaveCard           = view.findViewById(R.id.group_block_and_leave_card);
-        blockGroup                  = view.findViewById(R.id.blockGroup);
-        unblockGroup                = view.findViewById(R.id.unblockGroup);
-        leaveGroup                  = view.findViewById(R.id.leaveGroup);
-        addMembers                  = view.findViewById(R.id.add_members);
+        avatar = view.findViewById(R.id.group_avatar);
+        toolbar = view.findViewById(R.id.toolbar);
+        groupName = view.findViewById(R.id.name);
+        groupInfoText = view.findViewById(R.id.manage_group_info_text);
+        memberCountUnderAvatar = view.findViewById(R.id.member_count);
+        memberCountAboveList = view.findViewById(R.id.member_count_2);
+        groupMemberList = view.findViewById(R.id.group_members);
+        pendingAndRequestingRow = view.findViewById(R.id.pending_and_requesting_members_row);
+        pendingAndRequestingCount = view.findViewById(R.id.pending_and_requesting_members_count);
+        threadPhotoRailView = view.findViewById(R.id.recent_photos);
+        groupMediaCard = view.findViewById(R.id.group_media_card);
+        accessControlCard = view.findViewById(R.id.group_access_control_card);
+        groupLinkCard = view.findViewById(R.id.group_link_card);
+        sharedMediaRow = view.findViewById(R.id.shared_media_row);
+        editGroupAccessRow = view.findViewById(R.id.edit_group_access_row);
+        editGroupAccessValue = view.findViewById(R.id.edit_group_access_value);
+        editGroupMembershipRow = view.findViewById(R.id.edit_group_membership_row);
+        editGroupMembershipValue = view.findViewById(R.id.edit_group_membership_value);
+        disappearingMessagesCard = view.findViewById(R.id.group_disappearing_messages_card);
+        disappearingMessagesRow = view.findViewById(R.id.disappearing_messages_row);
+        disappearingMessages = view.findViewById(R.id.disappearing_messages);
+        blockAndLeaveCard = view.findViewById(R.id.group_block_and_leave_card);
+        blockGroup = view.findViewById(R.id.blockGroup);
+        unblockGroup = view.findViewById(R.id.unblockGroup);
+        leaveGroup = view.findViewById(R.id.leaveGroup);
+        addMembers = view.findViewById(R.id.add_members);
         muteNotificationsUntilLabel = view.findViewById(R.id.group_mute_notifications_until);
-        muteNotificationsSwitch     = view.findViewById(R.id.group_mute_notifications_switch);
-        muteNotificationsRow        = view.findViewById(R.id.group_mute_notifications_row);
-        customNotificationsButton   = view.findViewById(R.id.group_custom_notifications_button);
-        customNotificationsRow      = view.findViewById(R.id.group_custom_notifications_row);
-        mentionsRow                 = view.findViewById(R.id.group_mentions_row);
-        mentionsValue               = view.findViewById(R.id.group_mentions_value);
-        toggleAllMembers            = view.findViewById(R.id.toggle_all_members);
-        groupLinkRow                = view.findViewById(R.id.group_link_row);
-        groupLinkButton             = view.findViewById(R.id.group_link_button);
-        wallpaperButton             = view.findViewById(R.id.chat_wallpaper);
+        muteNotificationsSwitch = view.findViewById(R.id.group_mute_notifications_switch);
+        muteNotificationsRow = view.findViewById(R.id.group_mute_notifications_row);
+        customNotificationsButton = view.findViewById(R.id.group_custom_notifications_button);
+        customNotificationsRow = view.findViewById(R.id.group_custom_notifications_row);
+        mentionsRow = view.findViewById(R.id.group_mentions_row);
+        mentionsValue = view.findViewById(R.id.group_mentions_value);
+        toggleAllMembers = view.findViewById(R.id.toggle_all_members);
+        groupLinkRow = view.findViewById(R.id.group_link_row);
+        groupLinkButton = view.findViewById(R.id.group_link_button);
+        wallpaperButton = view.findViewById(R.id.chat_wallpaper);
 
         return view;
     }
@@ -186,8 +186,8 @@ public class ManageGroupFragment extends LoggingFragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        Context                      context = requireContext();
-        GroupId                      groupId = getGroupId();
+        Context context = requireContext();
+        GroupId groupId = getGroupId();
         ManageGroupViewModel.Factory factory = new ManageGroupViewModel.Factory(context, groupId);
 
         disappearingMessagesCard.setVisibility(groupId.isPush() ? View.VISIBLE : View.GONE);
@@ -260,8 +260,8 @@ public class ManageGroupFragment extends LoggingFragment {
 
             threadPhotoRailView.setListener(mediaRecord ->
                     startActivityForResult(MediaPreviewActivity.intentFromMediaRecord(context,
-                            mediaRecord,
-                            ViewCompat.getLayoutDirection(threadPhotoRailView) == ViewCompat.LAYOUT_DIRECTION_LTR),
+                                    mediaRecord,
+                                    ViewUtil.isLtr(threadPhotoRailView)),
                             RETURN_FROM_MEDIA));
 
             groupLinkCard.setVisibility(vs.getGroupRecipient().requireGroupId().isV2() ? View.VISIBLE : View.GONE);
@@ -433,7 +433,7 @@ public class ManageGroupFragment extends LoggingFragment {
         if (requestCode == RETURN_FROM_MEDIA) {
             applyMediaCursorFactory();
         } else if (requestCode == PICK_CONTACT && data != null) {
-            List<RecipientId>                      selected = data.getParcelableArrayListExtra(PushContactSelectionActivity.KEY_SELECTED_RECIPIENTS);
+            List<RecipientId> selected = data.getParcelableArrayListExtra(PushContactSelectionActivity.KEY_SELECTED_RECIPIENTS);
             SimpleProgressDialog.DismissibleDialog progress = SimpleProgressDialog.showDelayed(requireContext());
 
             viewModel.onAddMembers(selected, new AsynchronousCallback.MainThread<ManageGroupViewModel.AddMembersResult, GroupChangeFailureReason>() {

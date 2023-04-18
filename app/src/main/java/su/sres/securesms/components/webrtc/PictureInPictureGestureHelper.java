@@ -17,6 +17,7 @@ import androidx.core.view.GestureDetectorCompat;
 
 import su.sres.securesms.R;
 import su.sres.securesms.animation.AnimationCompleteListener;
+import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.views.TouchInterceptingFrameLayout;
 
 import java.util.Arrays;
@@ -258,7 +259,7 @@ public class PictureInPictureGestureHelper extends GestureDetector.SimpleOnGestu
 
     private Point findNearestCornerPosition(Point projection) {
         if (isLockedToBottomEnd) {
-            return parent.getLayoutDirection() == View.LAYOUT_DIRECTION_LTR ? calculateBottomRightCoordinates(parent)
+            return ViewUtil.isLtr(parent) ? calculateBottomRightCoordinates(parent)
                     : calculateBottomLeftCoordinates(parent);
         }
         Point  maxPoint     = null;

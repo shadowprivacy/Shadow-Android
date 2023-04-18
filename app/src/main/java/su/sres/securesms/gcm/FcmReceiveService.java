@@ -8,6 +8,8 @@ import androidx.annotation.NonNull;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import java.util.Locale;
+
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.core.util.logging.Log;
@@ -21,7 +23,13 @@ public class FcmReceiveService extends FirebaseMessagingService {
   @Override
   public void onMessageReceived(RemoteMessage remoteMessage) {
 
-    Log.i(TAG, "onMessageReceived() ID: " + remoteMessage.getMessageId() + ", Delay: " + (System.currentTimeMillis() - remoteMessage.getSentTime()) + ", Original Priority: " + remoteMessage.getOriginalPriority());
+    Log.i(TAG, String.format(Locale.US,
+            "onMessageReceived() ID: %s, Delay: %d, Priority: %d, Original Priority: %d",
+            remoteMessage.getMessageId(),
+            (System.currentTimeMillis() - remoteMessage.getSentTime()),
+            remoteMessage.getPriority(),
+            remoteMessage.getOriginalPriority()));
+
     String challenge = remoteMessage.getData().get("challenge");
     if (challenge != null) {
       handlePushChallenge(challenge);

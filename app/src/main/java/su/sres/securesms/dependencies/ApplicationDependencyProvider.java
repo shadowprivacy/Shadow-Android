@@ -5,10 +5,10 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
+import su.sres.securesms.crypto.DatabaseSessionLock;
 import su.sres.securesms.database.DatabaseObserver;
 import su.sres.securesms.database.JobDatabase;
 import su.sres.securesms.jobmanager.impl.FactoryJobPredicate;
@@ -24,7 +24,6 @@ import su.sres.securesms.jobs.TypingSendJob;
 import su.sres.securesms.messages.IncomingMessageObserver;
 import su.sres.securesms.messages.IncomingMessageProcessor;
 import su.sres.securesms.crypto.storage.SignalProtocolStoreImpl;
-import su.sres.securesms.events.ReminderUpdateEvent;
 import su.sres.securesms.messages.BackgroundMessageRetriever;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobmanager.JobMigrator;
@@ -58,7 +57,6 @@ import su.sres.signalservice.api.groupsv2.GroupsV2Operations;
 import su.sres.signalservice.api.util.CredentialsProvider;
 import su.sres.signalservice.api.util.SleepTimer;
 import su.sres.signalservice.api.util.UptimeSleepTimer;
-import su.sres.signalservice.api.websocket.ConnectivityListener;
 
 import java.util.UUID;
 
@@ -107,6 +105,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
         return new SignalServiceMessageSender(provideSignalServiceNetworkAccess().getConfiguration(),
                 new DynamicCredentialsProvider(context),
                 new SignalProtocolStoreImpl(context),
+                DatabaseSessionLock.INSTANCE,
                 BuildConfig.SIGNAL_AGENT,
                 TextSecurePreferences.isMultiDevice(context),
                 FeatureFlags.attachmentsV3(),
@@ -233,11 +232,6 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
         @Override
         public String getPassword() {
             return TextSecurePreferences.getPushServerPassword(context);
-        }
-
-        @Override
-        public String getSignalingKey() {
-            return TextSecurePreferences.getSignalingKey(context);
         }
     }
 }

@@ -71,7 +71,10 @@
     <!--AttachmentUploadJob-->
     <string name="AttachmentUploadJob_uploading_media">Загружаем медиафайл…</string>
     <string name="AttachmentUploadJob_compressing_video_start">Сжимаем видео…</string>
-    <!--AudioSlidePlayer-->
+
+    <!--BackgroundMessageRetriever-->
+    <string name="BackgroundMessageRetriever_checking_for_messages">Проверяем наличие новых сообщений…</string>
+
     <!--BlockedUsersActivity-->
     <string name="BlockedUsersActivity__blocked_users">Заблокированные пользователи</string>
     <string name="BlockedUsersActivity__add_blocked_user">Добавить заблокированного пользователя</string>
@@ -207,7 +210,7 @@
     <string name="ConversationItem_not_sent_recipient_inactive">Не отправлено. Получатель отключен.</string>
 
     <!--ConversationActivity-->
-    <string name="ConversationActivity_reset_secure_session_question">Сбросить защищенный сеанс?</string>
+    <string name="ConversationActivity_reset_secure_session_question">Сбросить защищённый сеанс?</string>
     <string name="ConversationActivity_this_may_help_if_youre_having_encryption_problems">Это может помочь, если у вас возникли проблемы с шифрованием в этом разговоре. Ваши сообщения будут сохранены.</string>
     <string name="ConversationActivity_reset">Сбросить</string>
     <string name="ConversationActivity_add_attachment">Добавить вложение</string>
@@ -262,6 +265,7 @@
     <string name="ConversationActivity__more_options_now_in_group_settings">В «Настройках группы» стало больше опций</string>
     <string name="ConversationActivity_join">Войти</string>
     <string name="ConversationActivity_full">Заполнен</string>
+    <string name="ConversationActivity_error_sending_media">Ошибка при отправке медиафайла</string>
 
     <!--ConversationAdapter-->
     <plurals name="ConversationAdapter_n_unread_messages">
@@ -327,10 +331,10 @@
     <string name="ConversationFragment__review_requests_carefully">Внимательно проверяйте запросы</string>
     <string name="ConversationFragment__signal_found_another_contact_with_the_same_name">Shadow нашёл другой контакт с тем же именем.</string>
     <string name="ConversationFragment_contact_us">Связаться с нами</string>
-    <string name="ConversationFragment_verify">Подтверждение</string>
+    <string name="ConversationFragment_verify">Подтвердить</string>
     <string name="ConversationFragment_not_now">Не сейчас</string>
-    <string name="ConversationFragment_your_safety_number_with_s_changed">Ваш код безопасности с %s изменился</string>
-    <string name="ConversationFragment_your_safety_number_with_s_changed_likey_because_they_reinstalled_signal">Ваш код безопасности с %s изменился, скорее всего потому что этот собеседник переустановил Shadow или сменил устройство. Нажмите «Подтверждение», чтобы проверить новый код безопасности. Это необязательно.</string>
+    <string name="ConversationFragment_your_safety_number_with_s_changed">Ваш с %s код безопасности изменился</string>
+    <string name="ConversationFragment_your_safety_number_with_s_changed_likey_because_they_reinstalled_signal">Ваш с %s код безопасности изменился — скорее всего потому, что этот собеседник переустановил Shadow или сменил устройство. Нажмите «Подтвердить», чтобы проверить новый код безопасности. Это необязательно.</string>
 
     <!--ConversationListActivity-->
     <!--ConversationListFragment-->
@@ -429,7 +433,7 @@
 
     <!--DecryptionFailedDialog-->
     <string name="DecryptionFailedDialog_chat_session_refreshed">Сессия чата обновлена</string>
-    <string name="DecryptionFailedDialog_signal_uses_end_to_end_encryption">Shadow использует сквозное шифрование, и ему иногда может быть необходимо обновить сессию вашего чата. Это не затрагивает безопасность чата, но вы могли пропустить сообщение от этого собеседника. Вы можете попросить его отправить сообщение заново.</string>
+    <string name="DecryptionFailedDialog_signal_uses_end_to_end_encryption">Shadow использует сквозное шифрование, и ему иногда требуется обновить сессию вашего чата. Это не затрагивает безопасность чата, но вы могли пропустить сообщение от этого собеседника. Вы можете попросить его отправить сообщение заново.</string>
     <!--DeliveryStatus-->
     <!--DeviceListActivity-->
     <string name="DeviceListActivity_unlink_s">Отвязать «%s»?</string>
@@ -1007,6 +1011,12 @@
     <string name="NotificationBarManager__answer_call">Ответить</string>
     <string name="NotificationBarManager__end_call">Завершить</string>
     <string name="NotificationBarManager__cancel_call">Отменить</string>
+    <!--NotificationsMegaphone-->
+    <string name="NotificationsMegaphone_turn_on_notifications">Включить уведомления?</string>
+    <string name="NotificationsMegaphone_never_miss_a_message">Чтобы не пропускать сообщения от ваших контактов и групп.</string>
+    <string name="NotificationsMegaphone_turn_on">Включить</string>
+    <string name="NotificationsMegaphone_not_now">Не сейчас</string>
+
     <!--NotificationMmsMessageRecord-->
     <string name="NotificationMmsMessageRecord_multimedia_message">MMS-сообщение</string>
     <string name="NotificationMmsMessageRecord_downloading_mms_message">Скачивание MMS-сообщения</string>
@@ -1158,7 +1168,7 @@
     <!--GV2 title change-->
     <string name="MessageRecord_you_changed_the_group_name_to_s">Вы изменили имя группы на «%1$s».</string>
     <string name="MessageRecord_s_changed_the_group_name_to_s">%1$s изменил(-а) имя группы на «%2$s».</string>
-    <string name="MessageRecord_the_group_name_has_changed_to_s">Имя группы было изменено на «%1$s».</string>
+    <string name="MessageRecord_the_group_name_has_changed_to_s">Имя группы изменилось на «%1$s».</string>
 
     <!--GV2 avatar change-->
     <string name="MessageRecord_you_changed_the_group_avatar">Вы изменили аватару группы.</string>
@@ -1178,11 +1188,11 @@
     <string name="MessageRecord_you_turned_on_the_group_link_with_admin_approval_off">Вы включили ссылку на группу с отключённым одобрением администратора.</string>
     <string name="MessageRecord_you_turned_on_the_group_link_with_admin_approval_on">Вы включили ссылку на группу с включённым одобрением администратора.</string>
     <string name="MessageRecord_you_turned_off_the_group_link">Вы отключили ссылку на группу.</string>
-    <string name="MessageRecord_s_turned_on_the_group_link_with_admin_approval_off">%1$s включил(-а) ссылку на группу с отключённым одобрением администратора.</string>
-    <string name="MessageRecord_s_turned_on_the_group_link_with_admin_approval_on">%1$s включил(-а) ссылку на группу со включённым одобрением администратора.</string>
+    <string name="MessageRecord_s_turned_on_the_group_link_with_admin_approval_off">%1$s включил(-а) ссылку на группу (одобрение администратором отключено).</string>
+    <string name="MessageRecord_s_turned_on_the_group_link_with_admin_approval_on">%1$s включил(-а) ссылку на группу (одобрение администратором включено).</string>
     <string name="MessageRecord_s_turned_off_the_group_link">%1$s отключил(-а) ссылку на группу.</string>
-    <string name="MessageRecord_the_group_link_has_been_turned_on_with_admin_approval_off">Ссылка на группу была включена с отключённым одобрением администратора.</string>
-    <string name="MessageRecord_the_group_link_has_been_turned_on_with_admin_approval_on">Ссылка на группу была включена со включённым одобрением администратора.</string>
+    <string name="MessageRecord_the_group_link_has_been_turned_on_with_admin_approval_off">Была включена ссылка на группу (одобрение администратором отключено).</string>
+    <string name="MessageRecord_the_group_link_has_been_turned_on_with_admin_approval_on">Была включена ссылка на группу (одобрение администратором включено).</string>
     <string name="MessageRecord_the_group_link_has_been_turned_off">Ссылка на группу была отключена.</string>
     <string name="MessageRecord_you_turned_off_admin_approval_for_the_group_link">Вы отключили одобрение администратора для ссылки на группу.</string>
     <string name="MessageRecord_s_turned_off_admin_approval_for_the_group_link">%1$s отключил(-а) одобрение администратора для ссылки на группу.</string>
@@ -1202,7 +1212,7 @@
 
     <!--GV2 group link requests-->
     <string name="MessageRecord_you_sent_a_request_to_join_the_group">Вы отправили запрос на присоединение к группе.</string>
-    <string name="MessageRecord_s_requested_to_join_via_the_group_link">%1$s запросил(-а) присоединиться по ссылке на группу.</string>
+    <string name="MessageRecord_s_requested_to_join_via_the_group_link">%1$s запросил(-а) присоединение к группе по ссылке.</string>
 
     <!--GV2 group link approvals-->
     <string name="MessageRecord_s_approved_your_request_to_join_the_group">%1$s принял(-а) ваш запрос на присоединение к группе.</string>
@@ -1254,15 +1264,15 @@
     <string name="MessageRequestBottomView_delete">Удалить</string>
     <string name="MessageRequestBottomView_block">Заблокировать</string>
     <string name="MessageRequestBottomView_unblock">Разблокировать</string>
-    <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_they_wont_know_youve_seen_their_messages_until_you_accept">Разрешить %1$s отправлять вам сообщения и поделиться своими именем и фото с этим человеком? Он не узнает, что вы видели его сообщение, пока вы не примете.</string>
-    <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_wont_receive_any_messages_until_you_unblock_them">Разрешить %1$s отправлять вам сообщения и поделиться своими именем и фото с этим человеком? Вы не получите никаких сообщений, пока не разблокируете его.</string>
-    <string name="MessageRequestBottomView_continue_your_conversation_with_this_group_and_share_your_name_and_photo">Продолжить ваш разговор с этой группой и поделиться своими именем и фото с её участниками?</string>
-    <string name="MessageRequestBottomView_upgrade_this_group_to_activate_new_features">Обновите эту группу, чтобы активировать такие новые функции, как @упоминания и администраторы групп. Участники, которые ещё не поделились своими именем или фото с этой группой, будут приглашены присоединиться.</string>
+    <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_they_wont_know_youve_seen_their_messages_until_you_accept">Разрешить %1$s отправлять вам сообщения и открыть ваше имя и фото этому человеку? Он не узнает, что вы видели его сообщение, пока вы не примете запрос.</string>
+    <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_wont_receive_any_messages_until_you_unblock_them">Разрешить %1$s отправлять вам сообщения и открыть ваше имя и фото этому человеку? Вы не получите никаких сообщений, пока не разблокируете его.</string>
+    <string name="MessageRequestBottomView_continue_your_conversation_with_this_group_and_share_your_name_and_photo">Продолжить ваш разговор с этой группой и открыть ваше имя и фото её участникам?</string>
+    <string name="MessageRequestBottomView_upgrade_this_group_to_activate_new_features">Обновите эту группу, чтобы активировать такие новые функции, как @упоминания и администраторы групп. Участники, которые ещё не открыли свои имена или фото этой группе получат приглашение присоединиться.</string>
     <string name="MessageRequestBottomView_this_legacy_group_can_no_longer_be_used">Эта Старая группа больше не может быть использована, потому что она слишком большая. Максимальный размер группы — %1$d.</string>
-    <string name="MessageRequestBottomView_continue_your_conversation_with_s_and_share_your_name_and_photo">Продолжить ваш разговор с %1$s и поделиться своими именем и фото с этим человеком?</string>
-    <string name="MessageRequestBottomView_do_you_want_to_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">Присоединиться к этой группе и поделиться своими именем и фото с её участниками? Они не узнают, что вы видели их сообщения, пока вы не примете.</string>
+    <string name="MessageRequestBottomView_continue_your_conversation_with_s_and_share_your_name_and_photo">Продолжить ваш разговор с %1$s и открыть ваше имя и фото этому человеку?</string>
+    <string name="MessageRequestBottomView_do_you_want_to_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">Присоединиться к этой группе и открыть ваше имя и фото её участникам? Они не узнают, что вы видели их сообщения, пока вы не примете запрос.</string>
     <string name="MessageRequestBottomView_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">Присоединиться к этой группе? Её участники не узнают, что вы видели их сообщения, пока вы не примете запрос.</string>
-    <string name="MessageRequestBottomView_unblock_this_group_and_share_your_name_and_photo_with_its_members">Разблокировать эту группу и поделиться своими именем и фото с её участниками? Вы не будете получать сообщений, пока не разблокируете эту группу.</string>
+    <string name="MessageRequestBottomView_unblock_this_group_and_share_your_name_and_photo_with_its_members">Разблокировать эту группу и открыть ваше имя и фото её участникам? Вы не будете получать сообщений, пока не разблокируете эту группу.</string>
 
     <string name="MessageRequestProfileView_member_of_one_group">Состоит в %1$s</string>
     <string name="MessageRequestProfileView_member_of_two_groups">Состоит в %1$s и %2$s</string>
@@ -1274,10 +1284,10 @@
         <item quantity="other">%1$d участников</item>
     </plurals>
     <plurals name="MessageRequestProfileView_members_and_invited">
-        <item quantity="one">%1$d участник (+%2$d приглашен(-о))</item>
-        <item quantity="few">%1$d участника (+%2$d приглашен(-о))</item>
-        <item quantity="many">%1$d участников (+%2$d приглашен(-о))</item>
-        <item quantity="other">%1$d участников (+%2$d приглашен(-о))</item>
+        <item quantity="one">%1$d участник (+%2$d приглашён))</item>
+        <item quantity="few">%1$d участника (+%2$d приглашено)</item>
+        <item quantity="many">%1$d участников (+%2$d приглашено)</item>
+        <item quantity="other">%1$d участников (+%2$d приглашено)</item>
     </plurals>
     <plurals name="MessageRequestProfileView_member_of_d_additional_groups">
         <item quantity="one">ещё %d группы</item>
@@ -1389,7 +1399,7 @@
     <string name="WebRtcCallView__your_video_is_off">Ваше видео отключено</string>
     <string name="WebRtcCallView__reconnecting">Переподключаемся…</string>
     <string name="WebRtcCallView__joining">Присоединяемся…</string>
-    <string name="WebRtcCallView__disconnected">Отключён</string>
+    <string name="WebRtcCallView__disconnected">Отключено</string>
     <string name="WebRtcCallView__no_one_else_is_here">Здесь нет никого, кроме вас</string>
     <string name="WebRtcCallView__s_is_in_this_call">%1$s в этом звонке</string>
     <string name="WebRtcCallView__s_and_s_are_in_this_call">%1$s и %2$s в этом звонке</string>
@@ -1413,7 +1423,7 @@
     <string name="CallParticipantView__you_wont_receive_their_audio_or_video">Вы не будете получать аудио и видео этого участника, и он не будет получать ваши.</string>
     <string name="CallParticipantView__cant_receive_audio_video_from_s">Невозможно получать аудио и видео от %1$s</string>
     <string name="CallParticipantView__cant_receive_audio_and_video_from_s">Невозможно получать аудио и видео от %1$s</string>
-    <string name="CallParticipantView__this_may_be_Because_they_have_not_verified_your_safety_number_change">Причина может заключаться в том, что этот участник не проверил изменение вашего кода безопасности, что есть какая-то проблема с его устройством или что он вас заблокировал.</string>
+    <string name="CallParticipantView__this_may_be_Because_they_have_not_verified_your_safety_number_change">Возможно, это из-за того, что этот участник не подтвердил изменение вашего кода безопасности, что есть какая-то проблема с его устройством или что он вас заблокировал.</string>
 
     <!--ProxyBottomSheetFragment-->
     <string name="ProxyBottomSheetFragment_proxy_server">Прокси-сервер</string>
@@ -1448,6 +1458,7 @@
     <string name="RegistrationActivity_continue">Продолжить</string>
     <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">Общайтесь\nбез тревог</string>
     <string name="RegistrationActivity_enter_your_user_login_to_get_started">Введите логин, полученный от администратора</string>
+    <string name="RegistrationActivity_enter_your_user_login">Введите свой логин</string>
     <string name="RegistrationActivity_you_will_receive_a_verification_code">Подготовьте проверочный код, полученный от администратора.</string>
     <string name="RegistrationActivity_enter_the_code_we_sent_to_s">Введите код, полученный от администратора</string>
     <string name="RegistrationActivity_make_sure_your_phone_has_a_cellular_signal">Убедитесь, что ваш телефон имеет доступ к Интернет</string>
@@ -1590,7 +1601,7 @@
     <string name="UsernameEditFragment_usernames_cannot_begin_with_a_number">Имена пользователей не могут начинаться с цифр.</string>
     <string name="UsernameEditFragment_username_is_invalid">Имя пользователя недействительно.</string>
     <string name="UsernameEditFragment_usernames_must_be_between_a_and_b_characters">Имена пользователей должны содержать от %1$d до %2$d символов.</string>
-    <string name="UsernameEditFragment_usernames_on_signal_are_optional">Имена пользователей в Shadow необязательны. Если вы решите создать имя пользователя, другие пользователи Shadow смогут найти вас по этому имени пользователя и связаться с вами, не зная вашего номера телефона.</string>
+    <string name="UsernameEditFragment_usernames_on_signal_are_optional">Имена пользователей в Shadow необязательны. Если вы решите создать имя пользователя, другие пользователи Shadow смогут найти вас по нему и связаться с вами, не зная вашего логина.</string>
 
     <!--VerifyIdentityActivity-->
     <string name="VerifyIdentityActivity_your_contact_is_running_an_old_version_of_signal">У вашего контакта старая версия Shadow. Пожалуйста, попросите его обновиться, чтобы подтвердить код безопасности.</string>
@@ -1634,7 +1645,7 @@
     <string name="MediaPreviewActivity_media_delete_confirmation_title">Удалить сообщение?</string>
     <string name="MediaPreviewActivity_media_delete_confirmation_message">Это сообщение будет навсегда удалено.</string>
     <string name="MediaPreviewActivity_s_to_s">%1$s для %2$s</string>
-    <string name="MediaPreviewActivity_media_no_longer_available">Медиа больше не доступно.</string>
+    <string name="MediaPreviewActivity_media_no_longer_available">Медиафайл больше не доступен.</string>
     <string name="MediaPreviewActivity_cant_find_an_app_able_to_share_this_media">Не найдено приложение, которое может поделиться этим медиафайлом.</string>
 
     <!--MessageNotifier-->
@@ -1727,8 +1738,8 @@
 
     <!--WebRtcAudioOutputToggle-->
     <string name="WebRtcAudioOutputToggle__audio_output">Аудиовыход</string>
-    <string name="WebRtcAudioOutputToggle__phone_earpiece">Наушник телефона</string>
-    <string name="WebRtcAudioOutputToggle__speaker">Динамик</string>
+    <string name="WebRtcAudioOutputToggle__phone_earpiece">Динамик телефона</string>
+    <string name="WebRtcAudioOutputToggle__speaker">Громкая связь</string>
     <string name="WebRtcAudioOutputToggle__bluetooth">Bluetooth</string>
 
     <!--WebRtcCallControls-->
@@ -1759,7 +1770,7 @@
     <string name="ContactSelectionListFragment_error_retrieving_contacts_check_your_network_connection">Ошибка при получении контактов, проверьте подключение к сети</string>
     <string name="ContactSelectionListFragment_username_not_found">Имя пользователя не найдено</string>
     <string name="ContactSelectionListFragment_s_is_not_a_signal_user">«%1$s» — не пользователь Shadow. Пожалуйста, проверьте имя пользователя и попробуйте ещё раз.</string>
-    <string name="ContactSelectionListFragment_you_do_not_need_to_add_yourself_to_the_group">Вам не нужно добавлять самого себя в группу</string>
+    <string name="ContactSelectionListFragment_you_do_not_need_to_add_yourself_to_the_group">Вам не нужно добавлять себя в группу</string>
     <string name="ContactSelectionListFragment_maximum_group_size_reached">Достигнут максимальный размер группы</string>
     <string name="ContactSelectionListFragment_signal_groups_can_have_a_maximum_of_d_members">В группах Shadow могут находиться максимум %1$d участников.</string>
     <string name="ContactSelectionListFragment_recommended_member_limit_reached">Достигнут рекомендуемый предел участников</string>
@@ -1952,7 +1963,7 @@
     <string name="CreateProfileActivity_next">Далее</string>
     <string name="CreateProfileActivity__username">Имя пользователя</string>
     <string name="CreateProfileActivity__create_a_username">Создать имя пользователя</string>
-    <string name="CreateProfileActivity_custom_mms_group_names_and_photos_will_only_be_visible_to_you">Пользовательские имена и фото групп MMS будут видны только вам.</string>
+    <string name="CreateProfileActivity_custom_mms_group_names_and_photos_will_only_be_visible_to_you">Имена и фото групп MMS будут видны только вам.</string>
 
     <!--EditAboutFragment-->
     <string name="EditAboutFragment_about">Обо мне</string>
@@ -2063,7 +2074,7 @@
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__objects">Предметы</string>
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__symbols">Символы</string>
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__flags">Флаги</string>
-    <string name="ReactWithAnyEmojiBottomSheetDialogFragment__emoticons">Текстовые смайлы</string>
+    <string name="ReactWithAnyEmojiBottomSheetDialogFragment__emoticons">Смайлы</string>
 
     <!--arrays.xml-->
     <string name="arrays__use_default">Использовать настройку по умолчанию</string>
@@ -2200,10 +2211,10 @@
     <string name="preferences_storage__clear_message_history">Очистить историю сообщений?</string>
     <string name="preferences_storage__this_will_permanently_delete_all_message_history_and_media">Все сообщения и медиа, которые старее, чем %1$s, будут безвозвратно удалены с вашего устройства.</string>
     <string name="preferences_storage__this_will_permanently_trim_all_conversations_to_the_d_most_recent_messages">Все разговоры будут безвозвратно обрезаны до %1$s самых новых сообщений.</string>
-    <string name="preferences_storage__this_will_delete_all_message_history_and_media_from_your_device">Все сообщения и медиа будут безвозвратно удалены с вашего устройства.</string>
+    <string name="preferences_storage__this_will_delete_all_message_history_and_media_from_your_device">Все сообщения и медиафайлы будут безвозвратно удалены с вашего устройства.</string>
     <string name="preferences_storage__are_you_sure_you_want_to_delete_all_message_history">Вы действительно хотите удалить всю историю сообщений?</string>
-    <string name="preferences_storage__all_message_history_will_be_permanently_removed_this_action_cannot_be_undone">Вся история сообщений будет безвозвратно удалена. Это действие не может быть отменено.</string>
-    <string name="preferences_storage__delete_all_now">Удалить все сейчас</string>
+    <string name="preferences_storage__all_message_history_will_be_permanently_removed_this_action_cannot_be_undone">Вся история сообщений будет безвозвратно удалена. Это действие невозможно отменить.</string>
+    <string name="preferences_storage__delete_all_now">Удалить всё сейчас</string>
     <string name="preferences_storage__forever">Бессрочно</string>
     <string name="preferences_storage__one_year">1 год</string>
     <string name="preferences_storage__six_months">6 месяцев</string>
@@ -2221,11 +2232,11 @@
     <string name="preferences_chats__chats">Чаты</string>
     <string name="preferences_data_and_storage__manage_storage">Управлять хранилищем</string>
     <string name="preferences_data_and_storage__calls">Звонки</string>
-    <string name="preferences_data_and_storage__use_less_data_for_calls">Использовать меньше данных для звонков</string>
+    <string name="preferences_data_and_storage__use_less_data_for_calls">Экономить трафик для звонков</string>
     <string name="preferences_data_and_storage__never">Никогда</string>
     <string name="preferences_data_and_storage__wifi_and_cellular">Wi-Fi и мобильный интернет</string>
     <string name="preferences_data_and_storage__cellular_only">Только мобильный интернет</string>
-    <string name="preference_data_and_storage__using_less_data_may_improve_calls_on_bad_networks">Использование меньшего количества данных может улучшить звонки при плохой связи</string>
+    <string name="preference_data_and_storage__using_less_data_may_improve_calls_on_bad_networks">Экономия трафика может улучшить звонки при плохой связи</string>
     <string name="preferences_notifications__messages">Сообщения</string>
     <string name="preferences_notifications__events">События</string>
     <string name="preferences_notifications__in_chat_sounds">Звуки внутри чата</string>
@@ -2243,22 +2254,24 @@
     <string name="preferences_communication__sealed_sender_allow_from_anyone">Разрешить от всех</string>
     <string name="preferences_communication__sealed_sender_allow_from_anyone_description">Разрешить скрытого отправителя для входящих сообщений от людей, которых нет в ваших контактах и кому вы ещё не открывали свой профиль.</string>
     <string name="preferences_communication__sealed_sender_learn_more">Узнать больше</string>
-    <string name="preferences_setup_a_username">Настройте имя пользователя</string>
+    <string name="preferences_setup_a_username">Задать имя пользователя</string>
     <string name="preferences_proxy">Прокси</string>
     <string name="preferences_use_proxy">Использовать прокси</string>
     <string name="preferences_off">Отключено</string>
     <string name="preferences_on">Включено</string>
     <string name="preferences_proxy_address">Адрес прокси</string>
+    <string name="preferences_only_use_a_proxy_if">Используйте прокси только если вы не можете подключиться к Shadow через мобильный интернет или Wi-Fi.</string>
     <string name="preferences_share">Поделиться</string>
     <string name="preferences_save">Сохранить</string>
-    <string name="preferences_connecting_to_proxy">Подключение к прокси…</string>
-    <string name="preferences_connected_to_proxy">Shadow подключен к прокси</string>
+    <string name="preferences_connecting_to_proxy">Подключаемся к прокси…</string>
+    <string name="preferences_connected_to_proxy">Подключено к прокси</string>
     <string name="preferences_connection_failed">Подключение не удалось</string>
     <string name="preferences_couldnt_connect_to_the_proxy">Не удалось подключиться к прокси. Проверьте адрес прокси и попробуйте ещё раз.</string>
-    <string name="preferences_you_are_connected_to_the_proxy">Shadow подключён к прокси. Вы можете отключить прокси в любое время в настройках.</string>
+    <string name="preferences_you_are_connected_to_the_proxy">Вы подключены к прокси. Вы можете отключить прокси в любое время в настройках.</string>
     <string name="preferences_success">Успех</string>
     <string name="preferences_failed_to_connect">Не удалось подключиться</string>
-    <string name="configurable_single_select__customize_option">Изменить опцию</string>
+    <string name="preferences_enter_proxy_address">Введите адрес прокси</string>
+    <string name="configurable_single_select__customize_option">Настроить опцию</string>
 
     <!--Internal only preferences-->
 
@@ -2391,7 +2404,7 @@
     <string name="InsightsReminder__invite">Пригласить</string>
 
     <!--CalleeMustAcceptMessageRequestActivity-->
-    <string name="CalleeMustAcceptMessageRequestDialogFragment__s_will_get_a_message_request_from_you">%1$s получит от вас запрос на общение. Вы сможете звонить после того, как ваш запрос на общение будет принят.</string>
+    <string name="CalleeMustAcceptMessageRequestDialogFragment__s_will_get_a_message_request_from_you">%1$s получит от вас запрос на общение. Вы сможете позвонить после того, как ваш запрос на общение будет принят.</string>
 
     <!--transport_selection_list_item-->
     <string name="transport_selection_list_item__transport_icon">Значок транспорта</string>
@@ -2407,7 +2420,7 @@
     <string name="PushDecryptJob_unlock_to_view_pending_messages">Разблокируйте для просмотра ожидающих сообщений</string>
     <string name="enter_backup_passphrase_dialog__backup_passphrase">Парольная фраза резервной копии</string>
     <string name="backup_enable_dialog__backups_will_be_saved_to_external_storage_and_encrypted_with_the_passphrase_below_you_must_have_this_passphrase_in_order_to_restore_a_backup">Резервные копии будут сохранены во внешнем хранилище и зашифрованы с помощью приведённой ниже парольной фразы. У вас должна быть эта фраза, чтобы восстановить резервную копию.</string>
-    <string name="backup_enable_dialog__you_must_have_this_passphrase">У вас должна быть эта парольная фраза, чтобы восстановить резервную копию.</string>
+    <string name="backup_enable_dialog__you_must_have_this_passphrase">Вам понадобится эта парольная фраза, чтобы восстановить резервную копию.</string>
     <string name="backup_enable_dialog__folder">Папка</string>
     <string name="backup_enable_dialog__i_have_written_down_this_passphrase">Я записал(-а) эту парольную фразу. Без неё я не смогу восстановить резервную копию.</string>
     <string name="registration_activity__restore_backup">Восстановить резервную копию</string>
@@ -2520,6 +2533,8 @@
     <string name="GroupsLearnMore_paragraph_3">Shadow предоставит возможность обновить Старые группы в будущем.</string>
 
     <!--GroupLinkBottomSheetDialogFragment-->
+    <string name="GroupLinkBottomSheet_share_hint_requiring_approval">Любой пользователь, у которого есть эта ссылка, может просмотреть имя и фото этой группы и отправить запрос на присоединение. Делитесь ей с людьми, которым вы доверяете.</string>
+    <string name="GroupLinkBottomSheet_share_hint_not_requiring_approval">Любой пользователь, у которого есть эта ссылка, может просмотреть имя и фото этой группы и присоединиться к ней. Делитесь ей с людьми, которым вы доверяете.</string>
     <string name="GroupLinkBottomSheet_share_via_signal">Поделиться через Shadow</string>
     <string name="GroupLinkBottomSheet_copy">Копировать</string>
     <string name="GroupLinkBottomSheet_qr_code">QR-код</string>
@@ -2540,7 +2555,7 @@
     <!--ReviewCardDialogFragment-->
     <string name="ReviewCardDialogFragment__review_members">Проверьте участников</string>
     <string name="ReviewCardDialogFragment__review_request">Проверьте запрос</string>
-    <string name="ReviewCardDialogFragment__d_group_members_have_the_same_name">%1$d участников группы имеют одинаковое имя. Просмотрите участников ниже и, если это необходимо, примите меры.</string>
+    <string name="ReviewCardDialogFragment__d_group_members_have_the_same_name">%1$d участников группы имеют одинаковое имя. Просмотрите участников ниже и, если необходимо, примите меры.</string>
     <string name="ReviewCardDialogFragment__if_youre_not_sure">Если вы не уверены, от кого этот запрос, просмотрите участников ниже и примите меры.</string>
     <string name="ReviewCardDialogFragment__no_other_groups_in_common">Нет других общих групп.</string>
     <string name="ReviewCardDialogFragment__no_groups_in_common">Нет общих групп.</string>
@@ -2592,9 +2607,9 @@
     <string name="DeleteAccountFragment__the_phone_number">Логин, который вы ввели, не совпадает с логином вашей учётной записи.</string>
     <string name="DeleteAccountFragment__are_you_sure">Вы действительно хотите удалить свою учётную запись?</string>
     <string name="DeleteAccountFragment__this_will_delete_your_signal_account">Ваша учётная запись Shadow будет удалена, и приложение будет сброшено. Приложение закроется после завершения этого процесса.</string>
-    <string name="DeleteAccountFragment__failed_to_delete_account">Не удалось удалить учётную запись. Есть ли у вас подключение к сети?</string>
+    <string name="DeleteAccountFragment__failed_to_delete_account">Не удалось удалить учётную запись. Вы подключены к интернет?</string>
     <string name="DeleteAccountFragment__failed_to_delete_local_data">Не удалось удалить локальные данные. Вы можете удалить их вручную в системных настройках приложения.</string>
-    <string name="DeleteAccountFragment__launch_app_settings">Запустить настройки приложения</string>
+    <string name="DeleteAccountFragment__launch_app_settings">Открыть настройки приложения</string>
 
     <!--CreateGroupActivity-->
     <string name="CreateGroupActivity__skip">Пропустить</string>

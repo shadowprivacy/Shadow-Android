@@ -23,6 +23,7 @@ import org.signal.zkgroup.groups.GroupMasterKey;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.signalservice.api.messages.SignalServiceContent;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.messages.SignalServiceGroup;
 import su.sres.signalservice.api.messages.SignalServiceGroupContext;
@@ -39,6 +40,24 @@ public final class GroupUtil {
   }
 
   private static final String TAG = Log.tag(GroupUtil.class);
+
+  /**
+   * @return The group context present on the content if one exists, otherwise null.
+   */
+  public static @Nullable SignalServiceGroupContext getGroupContextIfPresent(@Nullable SignalServiceContent content) {
+    if (content == null) {
+      return null;
+    } else if (content.getDataMessage().isPresent() && content.getDataMessage().get().getGroupContext().isPresent()) {
+      return content.getDataMessage().get().getGroupContext().get();
+    } else if (content.getSyncMessage().isPresent()                 &&
+            content.getSyncMessage().get().getSent().isPresent() &&
+            content.getSyncMessage().get().getSent().get().getMessage().getGroupContext().isPresent())
+    {
+      return content.getSyncMessage().get().getSent().get().getMessage().getGroupContext().get();
+    } else {
+      return null;
+    }
+  }
 
   /**
    * Result may be a v1 or v2 GroupId.
