@@ -10,6 +10,7 @@ import okhttp3.Dns;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.net.CustomDns;
 import su.sres.securesms.net.DeprecatedClientPreventionInterceptor;
+import su.sres.securesms.net.DeviceTransferBlockingInterceptor;
 import su.sres.securesms.net.RemoteDeprecationDetectorInterceptor;
 import su.sres.securesms.net.SequentialDns;
 import su.sres.securesms.net.StandardUserAgentInterceptor;
@@ -36,7 +37,10 @@ public class SignalServiceNetworkAccess {
 
     private SignalServiceConfiguration Configuration;
 
-    final List<Interceptor> interceptors = Arrays.asList(new StandardUserAgentInterceptor(), new RemoteDeprecationDetectorInterceptor(), new DeprecatedClientPreventionInterceptor());
+    final List<Interceptor> interceptors = Arrays.asList(new StandardUserAgentInterceptor(),
+            new RemoteDeprecationDetectorInterceptor(),
+            new DeprecatedClientPreventionInterceptor(),
+            DeviceTransferBlockingInterceptor.getInstance());
     final Optional<Dns>     dns          = Optional.of(DNS);
 
     public SignalServiceNetworkAccess(Context context) {

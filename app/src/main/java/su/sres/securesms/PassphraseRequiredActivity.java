@@ -10,8 +10,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import org.greenrobot.eventbus.EventBus;
+
 import su.sres.core.util.tracing.Tracer;
+import su.sres.devicetransfer.TransferStatus;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.devicetransfer.olddevice.OldDeviceTransferActivity;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
 
@@ -40,6 +44,8 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
   private static final int STATE_UI_BLOCKING_UPGRADE = 3;
   private static final int STATE_WELCOME_PUSH_SCREEN = 4;
   private static final int STATE_CREATE_PROFILE_NAME = 5;
+  private static final int STATE_TRANSFER_ONGOING    = 6;
+  private static final int STATE_TRANSFER_LOCKED     = 9;
 
   private SignalServiceNetworkAccess networkAccess;
   private BroadcastReceiver          clearKeyReceiver;
@@ -135,6 +141,8 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
       case STATE_UI_BLOCKING_UPGRADE: return getUiBlockingUpgradeIntent();
       case STATE_WELCOME_PUSH_SCREEN: return getPushRegistrationIntent();
       case STATE_CREATE_PROFILE_NAME: return getCreateProfileNameIntent();
+      case STATE_TRANSFER_ONGOING:    return getOldDeviceTransferIntent();
+      case STATE_TRANSFER_LOCKED:     return getOldDeviceTransferLockedIntent();
       default:                        return null;
     }
   }
@@ -150,6 +158,10 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
       return STATE_WELCOME_PUSH_SCREEN;
     } else if (userMustSetProfileName()) {
       return STATE_CREATE_PROFILE_NAME;
+    } else if (EventBus.getDefault().getStickyEvent(TransferStatus.class) != null && getClass() != OldDeviceTransferActivity.class) {
+      return STATE_TRANSFER_ONGOING;
+    } else if (SignalStore.misc().isOldDeviceTransferLocked()) {
+      return STATE_TRANSFER_LOCKED;
     } else {
       return STATE_NORMAL;
     }
@@ -182,6 +194,19 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
     Intent intent = getRoutedIntent(PassphrasePromptActivity.class, getIntent());
     intent.putExtra(PassphrasePromptActivity.FROM_FOREGROUND, ApplicationDependencies.getAppForegroundObserver().isForegrounded());
     return intent;
+  }
+
+  private Intent getOldDeviceTransferIntent() {
+    Intent intent = new Intent(this, OldDeviceTransferActivity.class);
+    intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    return intent;
+  }
+
+  private @Nullable Intent getOldDeviceTransferLockedIntent() {
+    if (getClass() == MainActivity.class) {
+      return null;
+    }
+    return MainActivity.clearTop(this);
   }
 
   private Intent getRoutedIntent(Class<?> destination, @Nullable Intent nextIntent) {

@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
 import su.sres.core.util.ShakeDetector;
+import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.logging.Log;
 import su.sres.core.util.tracing.Tracer;
 import su.sres.securesms.ApplicationContext;
@@ -96,7 +97,7 @@ public final class ShakeToReport implements ShakeDetector.Listener {
             repo.submitLog(lines, Tracer.getInstance().serialize(), url -> {
                 Log.i(TAG, "Logs uploaded!");
 
-                Util.runOnMain(() -> {
+                ThreadUtil.runOnMain(() -> {
                     spinner.dismiss();
 
                     if (url.isPresent()) {

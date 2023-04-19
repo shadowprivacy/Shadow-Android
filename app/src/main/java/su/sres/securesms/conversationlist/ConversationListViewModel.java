@@ -12,6 +12,7 @@ import android.text.TextUtils;
 
 import java.util.List;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.paging.PagedData;
 import su.sres.paging.PagingConfig;
 import su.sres.paging.PagingController;
@@ -142,7 +143,7 @@ class ConversationListViewModel extends ViewModel {
     void updateQuery(String query) {
         lastQuery = query;
         searchDebouncer.publish(() -> searchRepository.query(query, result -> {
-            Util.runOnMain(() -> {
+            ThreadUtil.runOnMain(() -> {
                 if (query.equals(lastQuery)) {
                     searchResult.setValue(result);
                 }

@@ -19,6 +19,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import org.webrtc.RendererCommon;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.R;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.components.emoji.EmojiTextView;
@@ -152,7 +153,7 @@ public class CallParticipantView extends ConstraintLayout {
 
     private boolean isMissingMediaKeys(@NonNull CallParticipant participant) {
         if (missingMediaKeysUpdater != null) {
-            Util.cancelRunnableOnMain(missingMediaKeysUpdater);
+            ThreadUtil.cancelRunnableOnMain(missingMediaKeysUpdater);
             missingMediaKeysUpdater = null;
         }
 
@@ -166,7 +167,7 @@ public class CallParticipantView extends ConstraintLayout {
                         setCallParticipant(participant);
                     }
                 };
-                Util.runOnMainDelayed(missingMediaKeysUpdater, DELAY_SHOWING_MISSING_MEDIA_KEYS - time);
+                ThreadUtil.runOnMainDelayed(missingMediaKeysUpdater, DELAY_SHOWING_MISSING_MEDIA_KEYS - time);
             }
         }
         return false;

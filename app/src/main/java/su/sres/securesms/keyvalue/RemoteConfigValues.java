@@ -2,6 +2,9 @@ package su.sres.securesms.keyvalue;
 
 import androidx.annotation.NonNull;
 
+import java.util.Collections;
+import java.util.List;
+
 import su.sres.core.util.logging.Log;
 
 public final class RemoteConfigValues extends SignalStoreValues {
@@ -18,6 +21,12 @@ public final class RemoteConfigValues extends SignalStoreValues {
 
     @Override
     void onFirstEverAppLaunch() {
+    }
+
+    @Override
+    @NonNull
+    List<String> getKeysToIncludeInBackup() {
+        return Collections.emptyList();
     }
 
     public String getCurrentConfig() {

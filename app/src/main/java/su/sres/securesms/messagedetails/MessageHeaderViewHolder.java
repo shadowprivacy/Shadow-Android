@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.R;
 import su.sres.securesms.conversation.ConversationItem;
 import su.sres.securesms.conversation.ConversationMessage;
@@ -156,7 +157,7 @@ final class MessageHeaderViewHolder extends RecyclerView.ViewHolder {
         expiresGroup.setVisibility(View.VISIBLE);
         if (running) {
             expiresUpdater = new ExpiresUpdater(messageRecord);
-            Util.runOnMain(expiresUpdater);
+            ThreadUtil.runOnMain(expiresUpdater);
         }
     }
 
@@ -203,7 +204,7 @@ final class MessageHeaderViewHolder extends RecyclerView.ViewHolder {
             expiresIn.setText(duration);
 
             if (running && expirationTime > 1) {
-                Util.runOnMainDelayed(this, 500);
+                ThreadUtil.runOnMainDelayed(this, 500);
             }
         }
 

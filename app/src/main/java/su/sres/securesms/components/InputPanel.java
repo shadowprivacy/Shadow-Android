@@ -25,6 +25,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.R;
 import su.sres.securesms.animation.AnimationCompleteListener;
 import su.sres.securesms.components.emoji.EmojiKeyboardProvider;
@@ -499,7 +500,7 @@ public class InputPanel extends LinearLayout
       this.startTime = System.currentTimeMillis();
       this.recordTimeView.setText(DateUtils.formatElapsedTime(0));
       ViewUtil.fadeIn(this.recordTimeView, FADE_TIME);
-      Util.runOnMainDelayed(this, TimeUnit.SECONDS.toMillis(1));
+      ThreadUtil.runOnMainDelayed(this, TimeUnit.SECONDS.toMillis(1));
       microphone.setVisibility(View.VISIBLE);
       microphone.startAnimation(pulseAnimation());
     }
@@ -525,7 +526,7 @@ public class InputPanel extends LinearLayout
           onLimitHit.run();
         } else {
           recordTimeView.setText(DateUtils.formatElapsedTime(elapsedSeconds));
-          Util.runOnMainDelayed(this, TimeUnit.SECONDS.toMillis(1));
+          ThreadUtil.runOnMainDelayed(this, TimeUnit.SECONDS.toMillis(1));
         }
       }
     }

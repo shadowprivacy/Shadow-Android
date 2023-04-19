@@ -3,6 +3,9 @@ package su.sres.securesms.keyvalue;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
+
 import su.sres.securesms.util.Util;
 import su.sres.signalservice.internal.configuration.ShadowProxy;
 
@@ -20,6 +23,11 @@ public final class ProxyValues extends SignalStoreValues {
     void onFirstEverAppLaunch() {
     }
 
+    @Override
+    @NonNull
+    List<String> getKeysToIncludeInBackup() {
+        return Arrays.asList(KEY_PROXY_ENABLED, KEY_HOST, KEY_PORT);
+    }
 
     public void enableProxy(@NonNull ShadowProxy proxy) {
         if (Util.isEmpty(proxy.getHost())) {

@@ -10,6 +10,8 @@ import androidx.lifecycle.ProcessLifecycleOwner;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import su.sres.core.util.ThreadUtil;
+
 /**
  * A wrapper around {@link ProcessLifecycleOwner} that allows for safely adding/removing observers
  * on multiple threads.
@@ -22,7 +24,7 @@ public final class AppForegroundObserver {
 
     @MainThread
     public void begin() {
-        Util.assertMainThread();
+        ThreadUtil.assertMainThread();
 
         ProcessLifecycleOwner.get().getLifecycle().addObserver(new DefaultLifecycleObserver() {
             @Override

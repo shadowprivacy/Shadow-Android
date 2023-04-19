@@ -81,7 +81,7 @@ public class PushTextSendJob extends PushSendJob  {
     }
 
     try {
-      log(TAG, String.valueOf(record.getDateSent()), "Sending message: " + messageId);
+      log(TAG, String.valueOf(record.getDateSent()), "Sending message: " + messageId + ",  Recipient: " + record.getRecipient().getId() + ", Thread: " + record.getThreadId());
 
       RecipientUtil.shareProfileIfFirstSecureMessage(context, record.getRecipient());
 

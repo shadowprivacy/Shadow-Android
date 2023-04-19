@@ -69,8 +69,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     private static final int GV1_MIGRATION_REFACTOR = 75;
     private static final int CLEAR_PROFILE_KEY_CREDENTIALS = 76;
     private static final int LAST_RESET_SESSION_TIME_AND_WALLPAPER_AND_ABOUT = 77;
+    private static final int SPLIT_SYSTEM_NAMES               = 78;
 
-    private static final int DATABASE_VERSION = 77;
+    private static final int DATABASE_VERSION = 78;
     private static final String DATABASE_NAME = "shadow.db";
 
     private final Context context;
@@ -417,6 +418,12 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
 
                 db.execSQL("ALTER TABLE recipient ADD COLUMN about TEXT DEFAULT NULL");
                 db.execSQL("ALTER TABLE recipient ADD COLUMN about_emoji TEXT DEFAULT NULL");
+            }
+
+            if (oldVersion < SPLIT_SYSTEM_NAMES) {
+                db.execSQL("ALTER TABLE recipient ADD COLUMN system_family_name TEXT DEFAULT NULL");
+                db.execSQL("ALTER TABLE recipient ADD COLUMN system_given_name TEXT DEFAULT NULL");
+                db.execSQL("UPDATE recipient SET system_given_name = system_display_name");
             }
 
             db.setTransactionSuccessful();

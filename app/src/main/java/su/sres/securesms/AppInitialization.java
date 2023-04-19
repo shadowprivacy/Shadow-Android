@@ -47,6 +47,7 @@ public final class AppInitialization {
         ApplicationDependencies.getMegaphoneRepository().onFirstEverAppLaunch();
         SignalStore.onFirstEverAppLaunch();
         SignalStore.onboarding().clearAll();
+        TextSecurePreferences.onPostBackupRestore(context);
     }
 
     /**

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import androidx.annotation.NonNull;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.TypingSendJob;
@@ -35,16 +36,16 @@ public class TypingStatusSender {
             sendTyping(threadId, true);
 
             Runnable start = new StartRunnable(threadId);
-            Util.runOnMainDelayed(start, REFRESH_TYPING_TIMEOUT);
+            ThreadUtil.runOnMainDelayed(start, REFRESH_TYPING_TIMEOUT);
             pair.setStart(start);
         }
 
         if (pair.getStop() != null) {
-            Util.cancelRunnableOnMain(pair.getStop());
+            ThreadUtil.cancelRunnableOnMain(pair.getStop());
         }
 
         Runnable stop = () -> onTypingStopped(threadId, true);
-        Util.runOnMainDelayed(stop, PAUSE_TYPING_TIMEOUT);
+        ThreadUtil.runOnMainDelayed(stop, PAUSE_TYPING_TIMEOUT);
         pair.setStop(stop);
     }
 
@@ -61,7 +62,7 @@ public class TypingStatusSender {
         selfTypingTimers.put(threadId, pair);
 
         if (pair.getStart() != null) {
-            Util.cancelRunnableOnMain(pair.getStart());
+            ThreadUtil.cancelRunnableOnMain(pair.getStart());
 
             if (notify) {
                 sendTyping(threadId, false);
@@ -69,7 +70,7 @@ public class TypingStatusSender {
         }
 
         if (pair.getStop() != null) {
-            Util.cancelRunnableOnMain(pair.getStop());
+            ThreadUtil.cancelRunnableOnMain(pair.getStop());
         }
 
         pair.setStart(null);
@@ -91,7 +92,7 @@ public class TypingStatusSender {
         @Override
         public void run() {
             sendTyping(threadId, true);
-            Util.runOnMainDelayed(this, REFRESH_TYPING_TIMEOUT);
+            ThreadUtil.runOnMainDelayed(this, REFRESH_TYPING_TIMEOUT);
         }
     }
 

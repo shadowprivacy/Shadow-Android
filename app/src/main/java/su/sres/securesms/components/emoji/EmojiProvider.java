@@ -17,6 +17,7 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.widget.TextView;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.parsing.EmojiDrawInfo;
 import su.sres.securesms.components.emoji.parsing.EmojiPageBitmap;
@@ -117,7 +118,7 @@ class EmojiProvider {
     final EmojiDrawable drawable = new EmojiDrawable(drawInfo, decodeScale);
     drawInfo.getPage().get().addListener(new FutureTaskListener<Bitmap>() {
       @Override public void onSuccess(final Bitmap result) {
-        Util.runOnMain(() -> drawable.setBitmap(result));
+        ThreadUtil.runOnMain(() -> drawable.setBitmap(result));
       }
 
       @Override public void onFailure(ExecutionException error) {
@@ -167,10 +168,9 @@ class EmojiProvider {
                         paint);
     }
 
-    @TargetApi(VERSION_CODES.HONEYCOMB_MR1)
     public void setBitmap(Bitmap bitmap) {
-      Util.assertMainThread();
-      if (VERSION.SDK_INT < VERSION_CODES.HONEYCOMB_MR1 || bmp == null || !bmp.sameAs(bitmap)) {
+      ThreadUtil.assertMainThread();
+      if (bmp == null || !bmp.sameAs(bitmap)) {
         bmp = bitmap;
         invalidateSelf();
       }

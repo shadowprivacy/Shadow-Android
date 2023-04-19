@@ -14,7 +14,6 @@ import org.json.JSONObject;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.SelectionLimits;
-import su.sres.securesms.jobs.RefreshAttributesJob;
 import su.sres.securesms.jobs.RemoteConfigRefreshJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
@@ -75,6 +74,7 @@ public final class FeatureFlags {
     private static final String ANIMATED_STICKER_MIN_MEMORY  = "android.animatedStickerMinMemory";
     private static final String ANIMATED_STICKER_MIN_TOTAL_MEMORY = "android.animatedStickerMinTotalMemory";
     private static final String MESSAGE_PROCESSOR_ALARM_INTERVAL  = "android.messageProcessor.alarmIntervalMins";
+    private static final String MESSAGE_PROCESSOR_DELAY           = "android.messageProcessor.foregroundDelayMs";
 
     /**
      * We will only store remote values for flags in this set. If you want a flag to be controllable
@@ -104,7 +104,8 @@ public final class FeatureFlags {
             SHARE_SELECTION_LIMIT,
             ANIMATED_STICKER_MIN_MEMORY,
             ANIMATED_STICKER_MIN_TOTAL_MEMORY,
-            MESSAGE_PROCESSOR_ALARM_INTERVAL
+            MESSAGE_PROCESSOR_ALARM_INTERVAL,
+            MESSAGE_PROCESSOR_DELAY
     );
 
     @VisibleForTesting
@@ -145,7 +146,8 @@ public final class FeatureFlags {
             SHARE_SELECTION_LIMIT,
             ANIMATED_STICKER_MIN_MEMORY,
             ANIMATED_STICKER_MIN_TOTAL_MEMORY,
-            MESSAGE_PROCESSOR_ALARM_INTERVAL
+            MESSAGE_PROCESSOR_ALARM_INTERVAL,
+            MESSAGE_PROCESSOR_DELAY
     );
 
     /**
@@ -313,7 +315,7 @@ public final class FeatureFlags {
 
     /** Whether or not to allow automatic retries from OkHttp */
     public static boolean okHttpAutomaticRetry() {
-        return getBoolean(OKHTTP_AUTOMATIC_RETRY, false);
+        return getBoolean(OKHTTP_AUTOMATIC_RETRY, true);
     }
 
     /** The minimum memory class required for rendering animated stickers in the keyboard and such */
@@ -456,9 +458,16 @@ public final class FeatureFlags {
         }
     }
 
-    public static long getBackgroundMessageProcessDelay() {
+    public static long getBackgroundMessageProcessInterval() {
         int delayMinutes = getInteger(MESSAGE_PROCESSOR_ALARM_INTERVAL, (int) TimeUnit.HOURS.toMinutes(6));
         return TimeUnit.MINUTES.toMillis(delayMinutes);
+    }
+
+    /**
+     * How long before a "Checking messages" foreground notification is shown to the user.
+     */
+    public static long getBackgroundMessageProcessForegroundDelay() {
+        return getInteger(MESSAGE_PROCESSOR_DELAY, 300);
     }
 
     private enum VersionFlag {

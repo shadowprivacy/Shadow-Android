@@ -40,6 +40,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.MediaPreviewActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.TransportOption;
@@ -209,7 +210,7 @@ public class AttachmentManager {
                 .createForSingleSessionInMemory();
         LocationSlide locationSlide = new LocationSlide(context, uri, blob.length, place);
 
-        Util.runOnMain(() -> {
+        ThreadUtil.runOnMain(() -> {
           setSlide(locationSlide);
           attachmentListener.onAttachmentChanged();
           returnResult.set(true);

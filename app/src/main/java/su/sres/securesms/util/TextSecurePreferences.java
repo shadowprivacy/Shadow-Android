@@ -12,12 +12,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import su.sres.securesms.backup.BackupProtos;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraintObserver;
 import su.sres.core.util.logging.Log;
 
 import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.R;
 import su.sres.securesms.lock.RegistrationLockReminders;
+import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 
 import org.whispersystems.libsignal.util.Medium;
@@ -27,9 +30,11 @@ import su.sres.signalservice.api.util.UuidUtil;
 
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -146,6 +151,8 @@ public class TextSecurePreferences {
   private static final String ENCRYPTED_BACKUP_PASSPHRASE = "pref_encrypted_backup_passphrase";
   private static final String BACKUP_TIME                 = "pref_backup_next_time";
 
+  public static final String TRANSFER = "pref_transfer";
+
   public static final String SCREEN_LOCK         = "pref_android_screen_lock";
   public static final String SCREEN_LOCK_TIMEOUT = "pref_android_screen_lock_timeout";
 
@@ -198,6 +205,79 @@ public class TextSecurePreferences {
   private static final String HAS_SEEN_VIDEO_RECORDING_TOOLTIP = "camerax.fragment.has.dismissed.video.recording.tooltip";
 
   private static final String HAS_STICKERS_DOWNLOADED = "pref_has_stickers_downloaded";
+
+  private static final String[] booleanPreferencesToBackup = {SCREEN_SECURITY_PREF,
+          INCOGNITO_KEYBORAD_PREF,
+          ALWAYS_RELAY_CALLS_PREF,
+          READ_RECEIPTS_PREF,
+          TYPING_INDICATORS,
+          SHOW_UNIDENTIFIED_DELIVERY_INDICATORS,
+          UNIVERSAL_UNIDENTIFIED_ACCESS,
+          NOTIFICATION_PREF,
+          VIBRATE_PREF,
+          IN_THREAD_NOTIFICATION_PREF,
+          CALL_NOTIFICATIONS_PREF,
+          CALL_VIBRATE_PREF,
+          SHOW_INVITE_REMINDER_PREF,
+          SYSTEM_EMOJI_PREF,
+          ENTER_SENDS_PREF};
+
+  private static final String[] stringPreferencesToBackup = {LED_COLOR_PREF,
+          LED_BLINK_PREF,
+          REPEAT_ALERTS_PREF,
+          NOTIFICATION_PRIVACY_PREF,
+          THEME_PREF,
+          LANGUAGE_PREF,
+          MESSAGE_BODY_TEXT_SIZE_PREF};
+
+  private static final String[] stringSetPreferencesToBackup = {MEDIA_DOWNLOAD_MOBILE_PREF,
+          MEDIA_DOWNLOAD_WIFI_PREF,
+          MEDIA_DOWNLOAD_ROAMING_PREF};
+
+  public static List<BackupProtos.SharedPreference> getPreferencesToSaveToBackup(@NonNull Context context) {
+    SharedPreferences                   preferences  = PreferenceManager.getDefaultSharedPreferences(context);
+    List<BackupProtos.SharedPreference> backupProtos = new ArrayList<>();
+    String                              defaultFile  = context.getPackageName() + "_preferences";
+
+    for (String booleanPreference : booleanPreferencesToBackup) {
+      if (preferences.contains(booleanPreference)) {
+        backupProtos.add(BackupProtos.SharedPreference.newBuilder()
+                .setFile(defaultFile)
+                .setKey(booleanPreference)
+                .setBooleanValue(preferences.getBoolean(booleanPreference, false))
+                .build());
+      }
+    }
+
+    for (String stringPreference : stringPreferencesToBackup) {
+      if (preferences.contains(stringPreference)) {
+        backupProtos.add(BackupProtos.SharedPreference.newBuilder()
+                .setFile(defaultFile)
+                .setKey(stringPreference)
+                .setValue(preferences.getString(stringPreference, null))
+                .build());
+      }
+    }
+
+    for (String stringSetPreference : stringSetPreferencesToBackup) {
+      if (preferences.contains(stringSetPreference)) {
+        backupProtos.add(BackupProtos.SharedPreference.newBuilder()
+                .setFile(defaultFile)
+                .setKey(stringSetPreference)
+                .setIsStringSetValue(true)
+                .addAllStringSetValue(preferences.getStringSet(stringSetPreference, Collections.emptySet()))
+                .build());
+      }
+    }
+
+    return backupProtos;
+  }
+
+  public static void onPostBackupRestore(@NonNull Context context) {
+    if (NotificationChannels.supported() && PreferenceManager.getDefaultSharedPreferences(context).contains(VIBRATE_PREF)) {
+      NotificationChannels.updateMessageVibrate(context, isNotificationVibrateEnabled(context));
+    }
+  }
 
   public static boolean isScreenLockEnabled(@NonNull Context context) {
     return getBooleanPreference(context, SCREEN_LOCK, false);
@@ -807,6 +887,7 @@ public class TextSecurePreferences {
   public static void setPushRegistered(Context context, boolean registered) {
     Log.i(TAG, "Setting push registered: " + registered);
     setBooleanPreference(context, REGISTERED_GCM_PREF, registered);
+    ApplicationDependencies.getIncomingMessageObserver().notifyRegistrationChanged();
   }
 
   public static boolean isShowInviteReminders(Context context) {

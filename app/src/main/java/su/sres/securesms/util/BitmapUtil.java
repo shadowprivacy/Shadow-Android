@@ -20,6 +20,7 @@ import android.util.Pair;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.MediaConstraints;
@@ -410,7 +411,7 @@ public class BitmapUtil {
       }
     };
 
-    Util.runOnMain(runnable);
+    ThreadUtil.runOnMain(runnable);
 
     synchronized (result) {
       while (!created.get()) Util.wait(result, 0);

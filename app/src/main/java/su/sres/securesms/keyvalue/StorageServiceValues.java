@@ -7,6 +7,8 @@ import su.sres.signalservice.api.kbs.MasterKey;
 import su.sres.signalservice.api.storage.StorageKey;
 
 import java.security.SecureRandom;
+import java.util.Collections;
+import java.util.List;
 
 public class StorageServiceValues extends SignalStoreValues {
 
@@ -19,6 +21,12 @@ public class StorageServiceValues extends SignalStoreValues {
 
     @Override
     void onFirstEverAppLaunch() {
+    }
+
+    @Override
+    @NonNull
+    List<String> getKeysToIncludeInBackup() {
+        return Collections.emptyList();
     }
 
     public synchronized StorageKey getOrCreateStorageKey() {

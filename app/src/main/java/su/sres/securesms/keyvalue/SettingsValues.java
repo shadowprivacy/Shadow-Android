@@ -6,6 +6,9 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
+
 import su.sres.securesms.webrtc.CallBandwidthMode;
 
 public final class SettingsValues extends SignalStoreValues {
@@ -29,9 +32,22 @@ public final class SettingsValues extends SignalStoreValues {
 
     @Override
     void onFirstEverAppLaunch() {
-        getStore().beginWrite()
-                .putBoolean(LINK_PREVIEWS, true)
-                .apply();
+        if (!getStore().containsKey(LINK_PREVIEWS)) {
+            getStore().beginWrite()
+                    .putBoolean(LINK_PREVIEWS, true)
+                    .apply();
+        }
+    }
+
+    @Override
+    @NonNull
+    List<String> getKeysToIncludeInBackup() {
+        return Arrays.asList(LINK_PREVIEWS,
+                KEEP_MESSAGES_DURATION,
+                CALL_BANDWIDTH_MODE,
+                THREAD_TRIM_LENGTH,
+                THREAD_TRIM_ENABLED,
+                UPDATE_IN_ROAMING);
     }
 
     public boolean isLinkPreviewsEnabled() {

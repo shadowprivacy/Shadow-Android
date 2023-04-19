@@ -209,7 +209,7 @@ public class ApplicationDependencies {
         }
     }
 
-    public static void closeConnectionsAfterProxyFailure() {
+    public static void closeConnections() {
         synchronized (LOCK) {
 
             if (incomingMessageObserver != null) {
@@ -230,7 +230,7 @@ public class ApplicationDependencies {
     public static void resetNetworkConnectionsAfterProxyChange() {
         synchronized (LOCK) {
             getPipeListener().reset();
-            closeConnectionsAfterProxyFailure();
+            closeConnections();
         }
     }
 

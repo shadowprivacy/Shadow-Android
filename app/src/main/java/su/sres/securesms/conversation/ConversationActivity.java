@@ -94,6 +94,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.BlockUnblockDialog;
 import su.sres.securesms.MainActivity;
 import su.sres.securesms.ExpirationDialog;
@@ -399,8 +400,8 @@ public class ConversationActivity extends PassphraseRequiredActivity
     private int           reactWithAnyEmojiStartPage    = -1;
     private boolean isSecureText;
     private boolean isDefaultSms = true;
-    private boolean isMmsEnabled = true;
     private boolean isSecurityInitialized = false;
+    private volatile boolean screenInitialized = false;
 
     private IdentityRecordList identityRecords = new IdentityRecordList(Collections.emptyList());
     private final DynamicTheme       dynamicTheme    = new DynamicNoActionBarTheme();
@@ -452,6 +453,11 @@ public class ConversationActivity extends PassphraseRequiredActivity
         initializeSecurity(recipient.get().isRegistered(), isDefaultSms).addListener(new AssertedSuccessListener<Boolean>() {
             @Override
             public void onSuccess(Boolean result) {
+                if (isFinishing()) {
+                    Log.w(TAG, "Activity is finishing. Not proceeding with initialization.");
+                    return;
+                }
+
                 initializeProfiles();
                 initializeGv1Migration();
                 initializeDraft(args).addListener(new AssertedSuccessListener<Boolean>() {
@@ -459,7 +465,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
                     public void onSuccess(Boolean loadedDraft) {
                         if (loadedDraft != null && loadedDraft) {
                             Log.i(TAG, "Finished loading draft");
-                            Util.runOnMain(() -> {
+                            ThreadUtil.runOnMain(() -> {
                                 if (fragment != null && fragment.isResumed()) {
                                     fragment.moveToLastSeen();
                                 } else {
@@ -472,6 +478,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
                             composeText.addTextChangedListener(typingTextWatcher);
                         }
                         composeText.setSelection(composeText.length(), composeText.length());
+                        screenInitialized = true;
                     }
                 });
             }
@@ -487,6 +494,13 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
         if (isFinishing()) {
             Log.w(TAG, "Activity is finishing...");
+            return;
+        }
+
+        if (!screenInitialized) {
+            Log.w(TAG, "Activity is in the middle of initialization. Restarting.");
+            finish();
+            startActivity(intent);
             return;
         }
 
@@ -535,7 +549,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
         WindowUtil.setLightStatusBarFromTheme(this);
 
         EventBus.getDefault().register(this);
-        initializeMmsEnabledCheck();
         initializeIdentityRecords();
         composeText.setTransport(sendButton.getSelectedTransport());
 
@@ -1416,7 +1429,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     private void handleAddAttachment() {
-        if (this.isMmsEnabled || isSecureText) {
             viewModel.getRecentMedia().removeObservers(this);
 
             if (attachmentKeyboardStub.resolved() && container.isInputOpen() && container.getCurrentInput() == attachmentKeyboardStub.get()) {
@@ -1429,18 +1441,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
                 viewModel.onAttachmentKeyboardOpen();
             }
-        } else {
-            handleManualMmsRequired();
-        }
-    }
-
-    private void handleManualMmsRequired() {
-        Toast.makeText(this, R.string.MmsDownloader_error_reading_mms_settings, Toast.LENGTH_LONG).show();
-
-        Bundle extras = getIntent().getExtras();
-        Intent intent = new Intent(this, PromptMmsActivity.class);
-        if (extras != null) intent.putExtras(extras);
-        startActivity(intent);
     }
 
     private void handleRecentSafetyNumberChange() {
@@ -1851,20 +1851,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
         sendButton.setDefaultSubscriptionId(defaultSubscriptionId);
     }
 
-    private void initializeMmsEnabledCheck() {
-        new AsyncTask<Void, Void, Boolean>() {
-            @Override
-            protected Boolean doInBackground(Void... params) {
-                return Util.isMmsCapable(ConversationActivity.this);
-            }
-
-            @Override
-            protected void onPostExecute(Boolean isMmsEnabled) {
-                ConversationActivity.this.isMmsEnabled = isMmsEnabled;
-            }
-        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-    }
-
     private ListenableFuture<Boolean> initializeIdentityRecords() {
         final SettableFuture<Boolean> future = new SettableFuture<>();
 
@@ -2076,6 +2062,8 @@ public class ConversationActivity extends PassphraseRequiredActivity
         threadId         = args.getThreadId();
         distributionType = args.getDistributionType();
         glideRequests = GlideApp.with(this);
+
+        Log.i(TAG, "[initializeResources] Recipient: " + recipient.getId() + ", Thread: " + threadId);
 
         recipient.observe(this, this::onRecipientChanged);
     }
@@ -2717,12 +2705,9 @@ public class ConversationActivity extends PassphraseRequiredActivity
                     linkPreviewViewModel.hasLinkPreview() ||
                     needsSplit;
 
-            Log.i(TAG, "isManual Selection: " + sendButton.isManualSelection());
-            Log.i(TAG, "forceSms: " + forceSms);
+            Log.i(TAG, "[sendMessage] recipient: " + recipient.getId() + ", threadId: " + threadId + ",  forceSms: " + forceSms + ", isManual: " + sendButton.isManualSelection());
 
-            if ((recipient.isMmsGroup() || recipient.getEmail().isPresent()) && !isMmsEnabled) {
-                handleManualMmsRequired();
-            } else if (!forceSms && (identityRecords.isUnverified(true) || identityRecords.isUntrusted(true))) {
+            if (!forceSms && (identityRecords.isUnverified(true) || identityRecords.isUntrusted(true))) {
                 handleRecentSafetyNumberChange();
             } else if (isMediaMessage) {
                 sendMediaMessage(forceSms, expiresIn, false, subscriptionId, initiating);
@@ -2878,18 +2863,9 @@ public class ConversationActivity extends PassphraseRequiredActivity
                     silentlySetComposeText("");
                     final long id = fragment.stageOutgoingMessage(message);
 
-                    new AsyncTask<OutgoingTextMessage, Void, Long>() {
-                        @Override
-                        protected Long doInBackground(OutgoingTextMessage... messages) {
-                            return MessageSender.send(context, messages[0], thread, forceSms, () -> fragment.releaseOutgoingMessage(id));
-                        }
-
-                        @Override
-                        protected void onPostExecute(Long result) {
-                            sendComplete(result);
-                        }
-                    }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, message);
-
+                    SimpleTask.run(() -> {
+                        return MessageSender.send(context, message, thread, forceSms, () -> fragment.releaseOutgoingMessage(id));
+                    }, this::sendComplete);
                 })
                 .execute();
     }

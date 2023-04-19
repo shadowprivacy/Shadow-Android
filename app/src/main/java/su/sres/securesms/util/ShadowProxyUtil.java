@@ -7,6 +7,7 @@ import androidx.lifecycle.Observer;
 
 import org.conscrypt.Conscrypt;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -37,7 +38,7 @@ public final class ShadowProxyUtil {
     public static void startListeningToWebsocket() {
         if (SignalStore.proxy().isProxyEnabled() && ApplicationDependencies.getPipeListener().getState().getValue() == PipeConnectivityListener.State.FAILURE) {
             Log.w(TAG, "Proxy is in a failed state. Restarting.");
-            ApplicationDependencies.closeConnectionsAfterProxyFailure();
+            ApplicationDependencies.closeConnections();
         }
 
         ApplicationDependencies.getIncomingMessageObserver();
@@ -94,14 +95,14 @@ public final class ShadowProxyUtil {
             }
         };
 
-        Util.runOnMainSync(() -> ApplicationDependencies.getPipeListener().getState().observeForever(observer));
+        ThreadUtil.runOnMainSync(() -> ApplicationDependencies.getPipeListener().getState().observeForever(observer));
 
         try {
             latch.await(timeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             Log.w(TAG, "Interrupted!", e);
         } finally {
-            Util.runOnMainSync(() -> ApplicationDependencies.getPipeListener().getState().removeObserver(observer));
+            ThreadUtil.runOnMainSync(() -> ApplicationDependencies.getPipeListener().getState().removeObserver(observer));
         }
 
         return success.get();

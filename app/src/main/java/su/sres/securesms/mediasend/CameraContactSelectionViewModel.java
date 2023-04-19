@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.SingleLiveEvent;
 import su.sres.securesms.util.Util;
@@ -34,7 +35,7 @@ class CameraContactSelectionViewModel extends ViewModel {
         this.selected   = new LinkedHashSet<>();
 
         repository.getCameraContacts(cameraContacts -> {
-            Util.runOnMain(() -> {
+            ThreadUtil.runOnMain(() -> {
                 contacts.postValue(new ContactState(cameraContacts, new ArrayList<>(selected), currentQuery));
             });
         });
@@ -55,7 +56,7 @@ class CameraContactSelectionViewModel extends ViewModel {
     void onQueryUpdated(String query) {
         this.currentQuery = query;
         repository.getCameraContacts(query, cameraContacts -> {
-            Util.runOnMain(() -> {
+            ThreadUtil.runOnMain(() -> {
                 contacts.postValue(new ContactState(cameraContacts, new ArrayList<>(selected), query));
             });
         });
@@ -63,7 +64,7 @@ class CameraContactSelectionViewModel extends ViewModel {
 
     void onRefresh() {
         repository.getCameraContacts(cameraContacts -> {
-            Util.runOnMain(() -> {
+            ThreadUtil.runOnMain(() -> {
                 contacts.postValue(new ContactState(cameraContacts, new ArrayList<>(selected), currentQuery));
             });
         });

@@ -62,6 +62,7 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.components.camera.CameraView;
 import su.sres.securesms.events.ProxyErrorEvent;
@@ -122,7 +123,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
 
     @Override
     public void onQrDataFound(final String data) {
-        Util.runOnMain(() -> {
+        ThreadUtil.runOnMain(() -> {
             ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(50);
 
             // return back to Initialization Fragment

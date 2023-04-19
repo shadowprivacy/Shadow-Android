@@ -11,8 +11,7 @@ import su.sres.securesms.BuildConfig;
 
 public final class PlayStoreUtil {
 
-    private PlayStoreUtil() {
-    }
+    private PlayStoreUtil() {}
 
     public static void openPlayStoreOrOurApkDownloadPage(@NonNull Context context) {
         if (BuildConfig.PLAY_STORE_DISABLED) {

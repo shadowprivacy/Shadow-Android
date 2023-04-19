@@ -1,5 +1,10 @@
 package su.sres.securesms.keyvalue;
 
+import androidx.annotation.NonNull;
+
+import java.util.Collections;
+import java.util.List;
+
 import su.sres.securesms.util.FeatureFlags;
 
 public final class InternalValues extends SignalStoreValues {
@@ -18,6 +23,12 @@ public final class InternalValues extends SignalStoreValues {
 
     @Override
     void onFirstEverAppLaunch() {
+    }
+
+    @Override
+    @NonNull
+    List<String> getKeysToIncludeInBackup() {
+        return Collections.emptyList();
     }
 
     /**

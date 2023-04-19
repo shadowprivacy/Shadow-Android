@@ -16,6 +16,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.annimon.stream.Stream;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.BlockUnblockDialog;
 import su.sres.securesms.ExpirationDialog;
 import su.sres.securesms.R;
@@ -206,11 +207,11 @@ public final class ManageRecipientViewModel extends ViewModel {
     }
 
     void onAddToGroupButton(@NonNull Activity activity) {
-        manageRecipientRepository.getGroupMembership(existingGroups -> Util.runOnMain(() -> activity.startActivity(AddToGroupsActivity.newIntent(activity, manageRecipientRepository.getRecipientId(), existingGroups))));
+        manageRecipientRepository.getGroupMembership(existingGroups -> ThreadUtil.runOnMain(() -> activity.startActivity(AddToGroupsActivity.newIntent(activity, manageRecipientRepository.getRecipientId(), existingGroups))));
     }
 
     private void withRecipient(@NonNull Consumer<Recipient> mainThreadRecipientCallback) {
-        manageRecipientRepository.getRecipient(recipient -> Util.runOnMain(() -> mainThreadRecipientCallback.accept(recipient)));
+        manageRecipientRepository.getRecipient(recipient -> ThreadUtil.runOnMain(() -> mainThreadRecipientCallback.accept(recipient)));
     }
 
     private static @NonNull List<Recipient> filterSharedGroupList(@NonNull List<Recipient> groups,

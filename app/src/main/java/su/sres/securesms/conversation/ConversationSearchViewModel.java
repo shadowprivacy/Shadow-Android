@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.conversationlist.model.MessageResult;
 import su.sres.securesms.database.CursorList;
 import su.sres.securesms.search.SearchRepository;
@@ -100,7 +101,7 @@ public class ConversationSearchViewModel extends AndroidViewModel {
             firstSearch = false;
 
             searchRepository.query(query, threadId, messages -> {
-                Util.runOnMain(() -> {
+                ThreadUtil.runOnMain(() -> {
                     if (searchOpen && query.equals(activeQuery)) {
                         result.setValue(new SearchResult(messages, 0));
                     }

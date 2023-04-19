@@ -5,6 +5,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.util.Util;
 
 import java.util.Arrays;
@@ -19,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static su.sres.securesms.testutil.MainThreadUtil.setMainThread;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(Util.class)
+@PrepareForTest(ThreadUtil.class)
 public final class UpdateDescriptionTest {
 
     @Before

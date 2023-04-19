@@ -1,7 +1,11 @@
 package su.sres.securesms.keyvalue;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 import androidx.preference.PreferenceDataStore;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.SignalUncaughtExceptionHandler;
@@ -61,12 +65,43 @@ public final class SignalStore {
         tooltips().onFirstEverAppLaunch();
         misc().onFirstEverAppLaunch();
         internalValues().onFirstEverAppLaunch();
+        emojiValues().onFirstEverAppLaunch();
         settings().onFirstEverAppLaunch();
         certificateValues().onFirstEverAppLaunch();
         userLoginPrivacy().onFirstEverAppLaunch();
         onboarding().onFirstEverAppLaunch();
         wallpaper().onFirstEverAppLaunch();
         proxy().onFirstEverAppLaunch();
+    }
+
+    public static List<String> getKeysToIncludeInBackup() {
+        List<String> keys = new ArrayList<>();
+        keys.addAll(kbsValues().getKeysToIncludeInBackup());
+        keys.addAll(registrationValues().getKeysToIncludeInBackup());
+        keys.addAll(remoteConfigValues().getKeysToIncludeInBackup());
+        keys.addAll(storageServiceValues().getKeysToIncludeInBackup());
+        keys.addAll(uiHints().getKeysToIncludeInBackup());
+        keys.addAll(tooltips().getKeysToIncludeInBackup());
+        keys.addAll(misc().getKeysToIncludeInBackup());
+        keys.addAll(internalValues().getKeysToIncludeInBackup());
+        keys.addAll(emojiValues().getKeysToIncludeInBackup());
+        keys.addAll(settings().getKeysToIncludeInBackup());
+        keys.addAll(certificateValues().getKeysToIncludeInBackup());
+        keys.addAll(userLoginPrivacy().getKeysToIncludeInBackup());
+        keys.addAll(onboarding().getKeysToIncludeInBackup());
+        keys.addAll(wallpaper().getKeysToIncludeInBackup());
+        keys.addAll(proxy().getKeysToIncludeInBackup());
+        keys.addAll(serviceConfigurationValues().getKeysToIncludeInBackup());
+        return keys;
+    }
+
+    /**
+     * Forces the store to re-fetch all of it's data from the database.
+     * Should only be used for testing!
+     */
+    @VisibleForTesting
+    public static void resetCache() {
+        INSTANCE.store.resetCache();
     }
 
     public static @NonNull

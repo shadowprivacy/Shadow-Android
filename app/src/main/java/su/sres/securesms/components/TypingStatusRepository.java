@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.Util;
@@ -57,11 +58,11 @@ public class TypingStatusRepository {
 
         Runnable timer = timers.get(typist);
         if (timer != null) {
-            Util.cancelRunnableOnMain(timer);
+            ThreadUtil.cancelRunnableOnMain(timer);
         }
 
         timer = () -> onTypingStopped(context, threadId, author, device, false);
-        Util.runOnMainDelayed(timer, RECIPIENT_TYPING_TIMEOUT);
+        ThreadUtil.runOnMainDelayed(timer, RECIPIENT_TYPING_TIMEOUT);
         timers.put(typist, timer);
     }
 
@@ -84,7 +85,7 @@ public class TypingStatusRepository {
 
         Runnable timer = timers.get(typist);
         if (timer != null) {
-            Util.cancelRunnableOnMain(timer);
+            ThreadUtil.cancelRunnableOnMain(timer);
             timers.remove(typist);
         }
     }

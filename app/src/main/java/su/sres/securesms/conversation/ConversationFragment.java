@@ -137,6 +137,7 @@ import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.ShadowProxyUtil;
 import su.sres.securesms.util.SnapToTopDataObserver;
 import su.sres.securesms.util.StickyHeaderDecoration;
+import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.StorageUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThemeUtil;
@@ -202,6 +203,7 @@ public class ConversationFragment extends LoggingFragment {
     private int pulsePosition = -1;
     private VoiceNoteMediaController voiceNoteMediaController;
     private View toolbarShadow;
+    private Stopwatch startupStopwatch;
 
     public static void prepare(@NonNull Context context) {
         FrameLayout parent = new FrameLayout(context);
@@ -219,6 +221,7 @@ public class ConversationFragment extends LoggingFragment {
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         this.locale = (Locale) getArguments().getSerializable(PassphraseRequiredActivity.LOCALE_EXTRA);
+        startupStopwatch = new Stopwatch("conversation-open");
     }
 
     @Override
@@ -328,6 +331,8 @@ public class ConversationFragment extends LoggingFragment {
     public void onActivityCreated(Bundle bundle) {
         super.onActivityCreated(bundle);
 
+        Log.d(TAG, "[onActivityCreated]");
+
         initializeScrollButtonAnimations();
         initializeResources();
         initializeMessageRequestViewModel();
@@ -378,6 +383,8 @@ public class ConversationFragment extends LoggingFragment {
     }
 
     public void onNewIntent() {
+        Log.d(TAG, "[onNewIntent]");
+
         if (actionMode != null) {
             actionMode.finish();
         }
@@ -561,6 +568,18 @@ public class ConversationFragment extends LoggingFragment {
             setLastSeen(conversationViewModel.getLastSeen());
 
             emptyConversationBanner.setVisibility(View.GONE);
+
+            adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+                @Override
+                public void onItemRangeInserted(int positionStart, int itemCount) {
+                    startupStopwatch.split("data-set");
+                    adapter.unregisterAdapterDataObserver(this);
+                    list.post(() -> {
+                        startupStopwatch.split("first-render");
+                        startupStopwatch.stop(TAG);
+                    });
+                }
+            });
         } else if (threadId == -1) {
             emptyConversationBanner.setVisibility(View.VISIBLE);
             toolbarShadow.setVisibility(View.GONE);
@@ -674,9 +693,13 @@ public class ConversationFragment extends LoggingFragment {
     }
 
     public void reload(Recipient recipient, long threadId) {
+        Log.d(TAG, "[reload] Recipient: " + recipient.getId() + ", ThreadId: " + threadId);
+
         this.recipient = recipient.live();
 
         if (this.threadId != threadId) {
+            Log.i(TAG, "ThreadId changed from " + this.threadId + " to " + threadId + ". Recipient was " + this.recipient.getId() + " and is now " + recipient.getId());
+
             this.threadId = threadId;
             messageRequestViewModel.setConversationInfo(recipient.getId(), threadId);
 

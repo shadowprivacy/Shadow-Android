@@ -2,6 +2,9 @@ package su.sres.securesms.keyvalue;
 
 import androidx.annotation.NonNull;
 
+import java.util.Collections;
+import java.util.List;
+
 import su.sres.securesms.components.emoji.EmojiUtil;
 
 public class EmojiValues extends SignalStoreValues {
@@ -15,6 +18,12 @@ public class EmojiValues extends SignalStoreValues {
     @Override
     void onFirstEverAppLaunch() {
 
+    }
+
+    @Override
+    @NonNull
+    List<String> getKeysToIncludeInBackup() {
+        return Collections.emptyList();
     }
 
     public void setPreferredVariation(@NonNull String emoji) {

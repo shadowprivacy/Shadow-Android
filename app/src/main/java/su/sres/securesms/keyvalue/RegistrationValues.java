@@ -3,6 +3,9 @@ package su.sres.securesms.keyvalue;
 import androidx.annotation.CheckResult;
 import androidx.annotation.NonNull;
 
+import java.util.Collections;
+import java.util.List;
+
 public final class RegistrationValues extends SignalStoreValues {
 
     private static final String REGISTRATION_COMPLETE = "registration.complete";
@@ -17,6 +20,12 @@ public final class RegistrationValues extends SignalStoreValues {
         getStore().beginWrite()
                   .putBoolean(REGISTRATION_COMPLETE, false)
                   .commit();
+    }
+
+    @Override
+    @NonNull
+    List<String> getKeysToIncludeInBackup() {
+        return Collections.emptyList();
     }
 
     public synchronized void clearRegistrationComplete() {

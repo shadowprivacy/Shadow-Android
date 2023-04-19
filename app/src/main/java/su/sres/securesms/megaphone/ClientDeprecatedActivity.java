@@ -4,6 +4,7 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AlertDialog;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -53,7 +54,7 @@ public class ClientDeprecatedActivity extends PassphraseRequiredActivity {
                 .setMessage(R.string.ClientDeprecatedActivity_your_version_of_signal_has_expired_you_can_view_your_message_history)
                 .setPositiveButton(R.string.ClientDeprecatedActivity_dont_update, (dialog, which) -> {
                     ApplicationDependencies.getMegaphoneRepository().markFinished(Megaphones.Event.CLIENT_DEPRECATED, () -> {
-                        Util.runOnMain(this::finish);
+                        ThreadUtil.runOnMain(this::finish);
                     });
                 })
                 .setNegativeButton(android.R.string.cancel, (dialog, which) -> dialog.dismiss())

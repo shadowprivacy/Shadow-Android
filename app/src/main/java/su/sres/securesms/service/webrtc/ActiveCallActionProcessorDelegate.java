@@ -7,6 +7,8 @@ import androidx.annotation.Nullable;
 
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.CallId;
+
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.WebRtcViewModel;
@@ -196,7 +198,7 @@ public class ActiveCallActionProcessorDelegate extends WebRtcActionProcessor {
 
             OutgoingRinger ringer = new OutgoingRinger(context);
             ringer.start(OutgoingRinger.Type.BUSY);
-            Util.runOnMainDelayed(ringer::stop, BUSY_TONE_LENGTH);
+            ThreadUtil.runOnMainDelayed(ringer::stop, BUSY_TONE_LENGTH);
         } else if (action.equals(ACTION_ENDED_REMOTE_GLARE) && incomingBeforeAccept) {
             webRtcInteractor.insertMissedCall(remotePeer, true, remotePeer.getCallStartTimestamp(), currentState.getCallSetupState().isRemoteVideoOffer());
         }

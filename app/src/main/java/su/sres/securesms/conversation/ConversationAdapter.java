@@ -29,6 +29,7 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.paging.PagingController;
 import su.sres.securesms.BindableConversationItem;
 import su.sres.securesms.R;
@@ -545,7 +546,7 @@ public class ConversationAdapter
 
   @MainThread
   private void cleanFastRecords() {
-    Util.assertMainThread();
+    ThreadUtil.assertMainThread();
 
     synchronized (releasedFastRecords) {
       Iterator<ConversationMessage> messageIterator = fastRecords.iterator();

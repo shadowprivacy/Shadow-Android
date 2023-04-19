@@ -43,6 +43,7 @@ import android.text.Html;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.crypto.DatabaseSessionLock;
 import su.sres.securesms.database.IdentityDatabase;
@@ -186,7 +187,7 @@ public class VerifyIdentityActivity extends PassphraseRequiredActivity implement
 
   @Override
   public void onQrDataFound(final String data) {
-    Util.runOnMain(() -> {
+    ThreadUtil.runOnMain(() -> {
       ((Vibrator)getSystemService(Context.VIBRATOR_SERVICE)).vibrate(50);
 
       getSupportFragmentManager().popBackStack();

@@ -11,6 +11,7 @@ import androidx.lifecycle.Observer;
 
 import com.annimon.stream.Stream;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupDatabase.GroupRecord;
@@ -80,14 +81,14 @@ public final class LiveRecipient {
      * use {@link #removeObservers(LifecycleOwner)}.
      */
     public void observe(@NonNull LifecycleOwner owner, @NonNull Observer<Recipient> observer) {
-        Util.postToMain(() -> observableLiveData.observe(owner, observer));
+        ThreadUtil.postToMain(() -> observableLiveData.observe(owner, observer));
     }
 
     /**
      * Removes all observers of this data registered for the given LifecycleOwner.
      */
     public void removeObservers(@NonNull LifecycleOwner owner) {
-        Util.runOnMain(() -> observableLiveData.removeObservers(owner));
+        ThreadUtil.runOnMain(() -> observableLiveData.removeObservers(owner));
     }
 
     /**
@@ -96,7 +97,7 @@ public final class LiveRecipient {
      * {@link #observe(LifecycleOwner, Observer<Recipient>)} if possible, as it is lifecycle-safe.
      */
     public void observeForever(@NonNull RecipientForeverObserver observer) {
-        Util.postToMain(() -> {
+        ThreadUtil.postToMain(() -> {
             if (observers.isEmpty()) {
                 observableLiveData.observeForever(foreverObserver);
             }
@@ -108,7 +109,7 @@ public final class LiveRecipient {
      * Unsubscribes the provided {@link RecipientForeverObserver} from future changes.
      */
     public void removeForeverObserver(@NonNull RecipientForeverObserver observer) {
-        Util.postToMain(() -> {
+        ThreadUtil.postToMain(() -> {
             observers.remove(observer);
 
             if (observers.isEmpty()) {
@@ -128,7 +129,7 @@ public final class LiveRecipient {
             return current;
         }
 
-        if (Util.isMainThread()) {
+        if (ThreadUtil.isMainThread()) {
             Log.w(TAG, "[Resolve][MAIN] " + getId(), new Throwable());
         }
 
@@ -162,7 +163,7 @@ public final class LiveRecipient {
             Log.w(TAG, "Switching ID from " + getId() + " to " + id);
         }
         if (getId().isUnknown()) return;
-        if (Util.isMainThread()) {
+        if (ThreadUtil.isMainThread()) {
             Log.w(TAG, "[Refresh][MAIN] " + id, new Throwable());
         }
 
@@ -211,10 +212,10 @@ public final class LiveRecipient {
                 avatarId = Optional.of(groupRecord.get().getAvatarId());
             }
 
-            return new RecipientDetails(title, avatarId, false, false, settings, members);
+            return new RecipientDetails(title, null,  avatarId, false, false, settings, members);
         }
 
-        return new RecipientDetails(null, Optional.absent(), false, false, settings, null);
+        return new RecipientDetails(null, null, Optional.absent(), false, false, settings, null);
     }
 
     synchronized void set(@NonNull Recipient recipient) {

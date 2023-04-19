@@ -4,6 +4,9 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
+import java.util.Collections;
+import java.util.List;
+
 import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.util.Util;
 
@@ -18,6 +21,12 @@ public final class OnboardingValues extends SignalStoreValues {
     @Override
     void onFirstEverAppLaunch() {
         putBoolean(SHOW_NEW_GROUP, true);
+    }
+
+    @Override
+    @NonNull
+    List<String> getKeysToIncludeInBackup() {
+        return Collections.emptyList();
     }
 
     public void clearAll() {

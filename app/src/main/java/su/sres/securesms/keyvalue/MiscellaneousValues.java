@@ -2,6 +2,10 @@ package su.sres.securesms.keyvalue;
 
 import androidx.annotation.NonNull;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public final class MiscellaneousValues extends SignalStoreValues {
 
     private static final String DIRECTORY_MIGRATED_TO_UUDS = "directory_migrated_to_uuids";
@@ -14,6 +18,7 @@ public final class MiscellaneousValues extends SignalStoreValues {
     private static final String CLIENT_DEPRECATED           = "misc.client_deprecated";
     private static final String LAST_SERVCONF_REFRESH_TIME    = "last_service_config_refresh_time";
     private static final String MESSAGE_REQUEST_ENABLE_TIME = "message_request_enable_time";
+    private static final String OLD_DEVICE_TRANSFER_LOCKED      = "misc.old_device.transfer.locked";
 
     MiscellaneousValues(@NonNull KeyValueStore store) {
         super(store);
@@ -22,6 +27,12 @@ public final class MiscellaneousValues extends SignalStoreValues {
     @Override
     void onFirstEverAppLaunch() {
         putLong(MESSAGE_REQUEST_ENABLE_TIME, 0);
+    }
+
+    @Override
+    @NonNull
+    List<String> getKeysToIncludeInBackup() {
+        return Collections.singletonList(DIRECTORY_MIGRATED_TO_UUDS);
     }
 
     public long getLastPrekeyRefreshTime() {
@@ -102,5 +113,17 @@ public final class MiscellaneousValues extends SignalStoreValues {
 
     public void clearClientDeprecated() {
         putBoolean(CLIENT_DEPRECATED, false);
+    }
+
+    public boolean isOldDeviceTransferLocked() {
+        return getBoolean(OLD_DEVICE_TRANSFER_LOCKED, false);
+    }
+
+    public void markOldDeviceTransferLocked() {
+        putBoolean(OLD_DEVICE_TRANSFER_LOCKED, true);
+    }
+
+    public void clearOldDeviceTransferLocked() {
+        putBoolean(OLD_DEVICE_TRANSFER_LOCKED, false);
     }
 }

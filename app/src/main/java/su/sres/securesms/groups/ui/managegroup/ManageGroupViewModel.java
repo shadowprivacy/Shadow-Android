@@ -16,6 +16,7 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.BlockUnblockDialog;
 import su.sres.securesms.ContactSelectionListFragment;
 import su.sres.securesms.ExpirationDialog;
@@ -320,7 +321,7 @@ public class ManageGroupViewModel extends ViewModel {
 
     @WorkerThread
     private void showErrorToast(@NonNull GroupChangeFailureReason e) {
-        Util.runOnMain(() -> Toast.makeText(context, GroupErrors.getUserDisplayMessage(e), Toast.LENGTH_LONG).show());
+        ThreadUtil.runOnMain(() -> Toast.makeText(context, GroupErrors.getUserDisplayMessage(e), Toast.LENGTH_LONG).show());
     }
 
     public void onAddMembersClick(@NonNull Fragment fragment, int resultCode) {

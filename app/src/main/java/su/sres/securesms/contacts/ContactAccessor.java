@@ -23,6 +23,7 @@ import android.database.MergeCursor;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.PhoneLookup;
@@ -37,6 +38,7 @@ import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 
@@ -65,6 +67,9 @@ public class ContactAccessor {
 
   public static final String PUSH_COLUMN = "push";
 
+  private static final String GIVEN_NAME  = ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME;
+  private static final String FAMILY_NAME = ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME;
+
   private static final ContactAccessor instance = new ContactAccessor();
 
   public static synchronized ContactAccessor getInstance() {
@@ -85,55 +90,42 @@ public class ContactAccessor {
     return results;
   }
 
+  /**
+   * Gets and returns a cursor of data for all contacts, containing both phone number data and
+   * structured name data.
+   *
+   * Cursor rows are ordered as follows:
+   *
+   * <ol>
+   *   <li>Contact Lookup Key</li>
+   *   <li>Mimetype</li>
+   *   <li>id</li>
+   * </ol>
+   *
+   * The lookup key is a fixed value that allows you to verify two rows in the database actually
+   * belong to the same contact, since the contact uri can be unstable (if a sync fails, say.)
+   *
+   * We order by id explicitly here for the same contact sync failure error, which could result in
+   * multiple structured name rows for the same user. By ordering by id DESC, we ensure we get
+   * whatever the latest input data was.
+   *
+   * What this results in is a cursor that looks like:
+   *
+   * Alice phone 1
+   * Alice phone 2
+   * Alice structured name 2
+   * Alice structured name 1
+   * Bob phone 1
+   * ... etc.
+   */
   public Cursor getAllSystemContacts(Context context) {
-    return context.getContentResolver().query(Phone.CONTENT_URI, new String[] {Phone.NUMBER, Phone.DISPLAY_NAME, Phone.LABEL, Phone.PHOTO_URI, Phone._ID, Phone.LOOKUP_KEY, Phone.TYPE}, null, null, null);
-  }
+    Uri      uri        = ContactsContract.Data.CONTENT_URI;
+    String[] projection = SqlUtil.buildArgs(ContactsContract.Data.MIMETYPE, Phone.NUMBER, Phone.DISPLAY_NAME, Phone.LABEL, Phone.PHOTO_URI, Phone._ID, Phone.LOOKUP_KEY, Phone.TYPE, GIVEN_NAME, FAMILY_NAME);
+    String   where      = ContactsContract.Data.MIMETYPE + " IN (?, ?)";
+    String[] args       = SqlUtil.buildArgs(Phone.CONTENT_ITEM_TYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE);
+    String   orderBy    = Phone.LOOKUP_KEY + " ASC, " + ContactsContract.Data.MIMETYPE + " DESC, " + ContactsContract.CommonDataKinds.Phone._ID + " DESC";
 
-  public boolean isSystemContact(Context context, String number) {
-    Uri      uri        = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number));
-    String[] projection = new String[]{PhoneLookup.DISPLAY_NAME, PhoneLookup.LOOKUP_KEY,
-                                       PhoneLookup._ID, PhoneLookup.NUMBER};
-    Cursor   cursor     = context.getContentResolver().query(uri, projection, null, null, null);
-
-    try {
-      if (cursor != null && cursor.moveToFirst()) {
-        return true;
-      }
-    } finally {
-      if (cursor != null) cursor.close();
-    }
-
-    return false;
-  }
-
-  public Collection<ContactData> getContactsWithPush(Context context) {
-    final ContentResolver resolver = context.getContentResolver();
-    final String[] inProjection    = new String[]{PhoneLookup._ID, PhoneLookup.DISPLAY_NAME};
-
-    final List<String>           registeredAddresses = Stream.of(DatabaseFactory.getRecipientDatabase(context).getRegistered())
-            .map(Recipient::resolved)
-            .filter(r -> r.getE164().isPresent())
-            .map(Recipient::requireE164)
-            .toList();
-    final Collection<ContactData> lookupData          = new ArrayList<>(registeredAddresses.size());
-
-    for (String registeredAddress : registeredAddresses) {
-      Uri    uri          = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(registeredAddress));
-      Cursor lookupCursor = resolver.query(uri, inProjection, null, null, null);
-
-      try {
-        if (lookupCursor != null && lookupCursor.moveToFirst()) {
-          final ContactData contactData = new ContactData(lookupCursor.getLong(0), lookupCursor.getString(1));
-          contactData.numbers.add(new NumberData("TextSecure", registeredAddress));
-          lookupData.add(contactData);
-        }
-      } finally {
-        if (lookupCursor != null)
-          lookupCursor.close();
-      }
-    }
-
-    return lookupData;
+    return context.getContentResolver().query(uri, projection, where, args, orderBy);
   }
 
   public String getNameFromContact(Context context, Uri uri) {
@@ -160,12 +152,12 @@ public class ContactAccessor {
 
   private ContactData getContactData(Context context, String displayName, long id) {
     ContactData contactData = new ContactData(id, displayName);
-    Cursor numberCursor     = null;
-
-    try {
-      numberCursor = context.getContentResolver().query(Phone.CONTENT_URI, null,
-                                                        Phone.CONTACT_ID + " = ?",
-                                                        new String[] {contactData.id + ""}, null);
+    try (Cursor numberCursor = context.getContentResolver().query(Phone.CONTENT_URI,
+            null,
+            Phone.CONTACT_ID + " = ?",
+            new String[] {contactData.id + ""},
+            null))
+    {
 
       while (numberCursor != null && numberCursor.moveToNext()) {
         int type         = numberCursor.getInt(numberCursor.getColumnIndexOrThrow(Phone.TYPE));
@@ -175,9 +167,6 @@ public class ContactAccessor {
 
         contactData.numbers.add(new NumberData(typeLabel, number));
       }
-    } finally {
-      if (numberCursor != null)
-        numberCursor.close();
     }
 
     return contactData;

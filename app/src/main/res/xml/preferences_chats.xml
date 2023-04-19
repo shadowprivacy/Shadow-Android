@@ -41,6 +41,12 @@
             android:persistent="false"
             android:title="@string/preferences_chats__chat_backups" />
 
+        <androidx.preference.Preference
+            android:key="pref_transfer"
+            android:summary="@string/preferences_chats__transfer_account_to_a_new_android_device"
+            android:persistent="false"
+            android:title="@string/preferences_chats__transfer_account" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

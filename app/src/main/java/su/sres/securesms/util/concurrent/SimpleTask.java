@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import java.util.concurrent.Executor;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.Util;
 
@@ -27,7 +28,7 @@ public class SimpleTask {
             final E result = backgroundTask.run();
 
             if (isValid(lifecycle)) {
-                Util.runOnMain(() -> {
+                ThreadUtil.runOnMain(() -> {
                     if (isValid(lifecycle)) {
                         foregroundTask.run(result);
                     }
@@ -51,7 +52,7 @@ public class SimpleTask {
     public static <E> void run(@NonNull Executor executor, @NonNull BackgroundTask<E> backgroundTask, @NonNull ForegroundTask<E> foregroundTask) {
         executor.execute(() -> {
             final E result = backgroundTask.run();
-            Util.runOnMain(() -> foregroundTask.run(result));
+            ThreadUtil.runOnMain(() -> foregroundTask.run(result));
         });
     }
 

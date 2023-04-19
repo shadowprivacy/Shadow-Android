@@ -10,6 +10,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.net.RequestController;
 import su.sres.securesms.util.Debouncer;
@@ -98,7 +99,7 @@ public class LinkPreviewViewModel extends ViewModel {
             activeRequest = repository.getLinkPreview(context, link.get().getUrl(), new LinkPreviewRepository.Callback() {
                 @Override
                 public void onSuccess(@NonNull LinkPreview linkPreview) {
-                    Util.runOnMain(() -> {
+                    ThreadUtil.runOnMain(() -> {
                         if (!userCanceled) {
                             if (activeUrl != null && activeUrl.equals(linkPreview.getUrl())) {
                                 linkPreviewState.setValue(LinkPreviewState.forPreview(linkPreview));
@@ -111,7 +112,7 @@ public class LinkPreviewViewModel extends ViewModel {
                     }
                 @Override
                 public void onError(@NonNull LinkPreviewRepository.Error error) {
-                    Util.runOnMain(() -> {
+                    ThreadUtil.runOnMain(() -> {
                         if (!userCanceled) {
                             linkPreviewState.setValue(LinkPreviewState.forLinksWithNoPreview(error));
                         }

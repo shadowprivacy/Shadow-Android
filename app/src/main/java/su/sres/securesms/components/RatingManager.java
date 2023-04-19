@@ -9,7 +9,9 @@ import androidx.appcompat.app.AlertDialog;
 import su.sres.core.util.logging.Log;
 import android.widget.Toast;
 
+import su.sres.securesms.BuildConfig;
 import su.sres.securesms.R;
+import su.sres.securesms.util.PlayStoreUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.VersionTracker;
 
@@ -23,16 +25,16 @@ public class RatingManager {
   private static final String TAG = RatingManager.class.getSimpleName();
 
   public static void showRatingDialogIfNecessary(Context context) {
-    if (!TextSecurePreferences.isRatingEnabled(context)) return;
+    if (!TextSecurePreferences.isRatingEnabled(context) || BuildConfig.PLAY_STORE_DISABLED) return;
 
     long daysSinceInstall = VersionTracker.getDaysSinceFirstInstalled(context);
     long laterTimestamp   = TextSecurePreferences.getRatingLaterTimestamp(context);
 
-//    if (daysSinceInstall >= DAYS_SINCE_INSTALL_THRESHOLD &&
-//        System.currentTimeMillis() >= laterTimestamp)
-//    {
-//      showRatingDialog(context);
-//    }
+    if (daysSinceInstall >= DAYS_SINCE_INSTALL_THRESHOLD &&
+        System.currentTimeMillis() >= laterTimestamp)
+    {
+      showRatingDialog(context);
+    }
   }
 
   private static void showRatingDialog(final Context context) {
@@ -43,7 +45,7 @@ public class RatingManager {
           @Override
           public void onClick(DialogInterface dialog, int which) {
             TextSecurePreferences.setRatingEnabled(context, false);
-            startPlayStore(context);
+            PlayStoreUtil.openPlayStoreOrOurApkDownloadPage(context);
          }
        })
        .setNegativeButton(R.string.RatingManager_no_thanks, new DialogInterface.OnClickListener() {
@@ -60,15 +62,5 @@ public class RatingManager {
          }
        })
        .show();
-  }
-
-  private static void startPlayStore(Context context) {
-    Uri uri = Uri.parse("market://details?id=" + context.getPackageName());
-    try {
-      context.startActivity(new Intent(Intent.ACTION_VIEW, uri));
-    } catch (ActivityNotFoundException e) {
-      Log.w(TAG, e);
-      Toast.makeText(context, R.string.RatingManager_whoops_the_play_store_app_does_not_appear_to_be_installed, Toast.LENGTH_LONG).show();
-    }
   }
 }

@@ -4,6 +4,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.components.webrtc.BroadcastVideoSink;
 import su.sres.securesms.components.webrtc.OrientationAwareVideoSink;
 import su.sres.securesms.ringrtc.Camera;
@@ -32,7 +33,7 @@ public final class WebRtcVideoUtil {
     {
         final WebRtcServiceStateBuilder builder = currentState.builder();
 
-        Util.runOnMainSync(() -> {
+        ThreadUtil.runOnMainSync(() -> {
             EglBase            eglBase   = EglBase.create();
             BroadcastVideoSink localSink = new BroadcastVideoSink(eglBase);
             Camera             camera    = new Camera(context, cameraEventListener, eglBase, CameraState.Direction.FRONT);
@@ -58,7 +59,7 @@ public final class WebRtcVideoUtil {
     {
         final WebRtcServiceStateBuilder builder = currentState.builder();
 
-        Util.runOnMainSync(() -> {
+        ThreadUtil.runOnMainSync(() -> {
             Camera camera = currentState.getVideoState().requireCamera();
             camera.setEnabled(false);
             camera.dispose();

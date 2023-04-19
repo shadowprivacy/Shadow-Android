@@ -7,6 +7,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import androidx.annotation.NonNull;
+
+import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.components.emoji.EmojiPageModel;
@@ -39,7 +41,7 @@ public class EmojiPageBitmap {
 
   @SuppressLint("StaticFieldLeak")
   public ListenableFutureTask<Bitmap> get() {
-    Util.assertMainThread();
+    ThreadUtil.assertMainThread();
 
     if (bitmapReference != null && bitmapReference.get() != null) {
       return new ListenableFutureTask<>(bitmapReference.get());

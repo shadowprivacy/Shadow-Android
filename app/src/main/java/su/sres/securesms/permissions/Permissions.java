@@ -60,8 +60,9 @@ public class Permissions {
     private Consumer<List<String>> someDeniedListener;
     private Consumer<List<String>> somePermanentlyDeniedListener;
 
-    private @DrawableRes int[]  rationalDialogHeader;
-    private              String rationaleDialogMessage;
+    private @DrawableRes int[]   rationalDialogHeader;
+    private              String  rationaleDialogMessage;
+    private              boolean rationaleDialogCancelable;
 
     private boolean ifNecesary;
 
@@ -88,8 +89,13 @@ public class Permissions {
     }
 
     public PermissionsBuilder withRationaleDialog(@NonNull String message, @NonNull @DrawableRes int... headers) {
-      this.rationalDialogHeader   = headers;
-      this.rationaleDialogMessage = message;
+      return withRationaleDialog(message, true, headers);
+    }
+
+    public PermissionsBuilder withRationaleDialog(@NonNull String message, boolean cancelable, @NonNull @DrawableRes int... headers) {
+      this.rationalDialogHeader      = headers;
+      this.rationaleDialogMessage    = message;
+      this.rationaleDialogCancelable = cancelable;
       return this;
     }
 
@@ -158,6 +164,7 @@ public class Permissions {
       RationaleDialog.createFor(permissionObject.getContext(), rationaleDialogMessage, rationalDialogHeader)
                      .setPositiveButton(R.string.Permissions_continue, (dialog, which) -> executePermissionsRequest(request))
                      .setNegativeButton(R.string.Permissions_not_now, (dialog, which) -> executeNoPermissionsRequest(request))
+                     .setCancelable(rationaleDialogCancelable)
                      .show()
                      .getWindow()
                      .setLayout((int)(permissionObject.getWindowWidth() * .75), ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -247,7 +254,7 @@ public class Permissions {
     resultListener.onResult(permissions, grantResults, shouldShowRationaleDialog);
   }
 
-  private static Intent getApplicationSettingsIntent(@NonNull Context context) {
+  public static Intent getApplicationSettingsIntent(@NonNull Context context) {
     Intent intent = new Intent();
     intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
     Uri uri = Uri.fromParts("package", context.getPackageName(), null);

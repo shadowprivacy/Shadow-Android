@@ -4,6 +4,9 @@ import androidx.annotation.CheckResult;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
+
 public final class ServiceConfigurationValues extends SignalStoreValues {
 
     private static final String SHADOW_SERVICE_URL                = "service_confifuration.shadow_service_url";
@@ -11,7 +14,7 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
     private static final String CLOUD2_URL                        = "service_configuration.cloud2_url";
     private static final String FCM_SENDER_ID                     = "service_configuration.fcm_sender_id";
     private static final String STORAGE_URL                       = "service_configuration.storage_url";
-    private static final String VOIP_URL                       = "service_configuration.storage_url";
+    private static final String VOIP_URL                          = "service_configuration.storage_url";
     private static final String STATUS_URL                        = "service_configuration.status_url";
     private static final String UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY = "service_configuration.unidentified_access_ca_public_key";
     private static final String ZK_PUBLIC_KEY                     = "service_configuration.zk_public_key";
@@ -41,6 +44,15 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
 
     @Override
     void onFirstEverAppLaunch() {}
+
+    @Override
+    @NonNull
+    List<String> getKeysToIncludeInBackup() {
+        return Arrays.asList(CURRENT_CERT_VERSION,
+                             CURRENT_DIR_VERSION,
+                             LICENSE,
+                             IS_LICENSED);
+    }
 
     public synchronized void setShadowUrl(String shadowUrl) {
         putString(SHADOW_SERVICE_URL, shadowUrl);

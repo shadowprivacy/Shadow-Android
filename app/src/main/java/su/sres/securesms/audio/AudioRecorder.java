@@ -6,6 +6,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import androidx.annotation.NonNull;
+
+import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.providers.BlobProvider;
@@ -89,10 +91,10 @@ public class AudioRecorder {
   }
 
   private <T> void sendToFuture(final SettableFuture<T> future, final Exception exception) {
-    Util.runOnMain(() -> future.setException(exception));
+    ThreadUtil.runOnMain(() -> future.setException(exception));
   }
 
   private <T> void sendToFuture(final SettableFuture<T> future, final T result) {
-    Util.runOnMain(() -> future.set(result));
+    ThreadUtil.runOnMain(() -> future.set(result));
   }
 }

@@ -8,6 +8,9 @@ import androidx.annotation.Nullable;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
+import java.util.Collections;
+import java.util.List;
+
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.database.model.databaseprotos.Wallpaper;
 import su.sres.securesms.wallpaper.ChatWallpaper;
@@ -26,6 +29,12 @@ public final class WallpaperValues extends SignalStoreValues {
 
     @Override
     void onFirstEverAppLaunch() {
+    }
+
+    @Override
+    @NonNull
+    List<String> getKeysToIncludeInBackup() {
+        return Collections.emptyList();
     }
 
     public void setWallpaper(@NonNull Context context, @Nullable ChatWallpaper wallpaper) {

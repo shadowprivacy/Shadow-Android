@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.util.AttributeSet;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.R;
 import su.sres.securesms.util.Util;
 
@@ -66,7 +67,7 @@ public class ExpirationTimerView extends androidx.appcompat.widget.AppCompatImag
       else          stopped = false;
     }
 
-    Util.runOnMainDelayed(new AnimationUpdateRunnable(this), calculateAnimationDelay(this.startedAt, this.expiresIn));
+    ThreadUtil.runOnMainDelayed(new AnimationUpdateRunnable(this), calculateAnimationDelay(this.startedAt, this.expiresIn));
   }
 
   public void stopAnimation() {
@@ -115,7 +116,7 @@ public class ExpirationTimerView extends androidx.appcompat.widget.AppCompatImag
         }
       }
 
-      Util.runOnMainDelayed(this, timerView.calculateAnimationDelay(timerView.startedAt, timerView.expiresIn));
+      ThreadUtil.runOnMainDelayed(this, timerView.calculateAnimationDelay(timerView.startedAt, timerView.expiresIn));
     }
   }
 

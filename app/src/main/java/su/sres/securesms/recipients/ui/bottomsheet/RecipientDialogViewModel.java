@@ -15,6 +15,7 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.BlockUnblockDialog;
 import su.sres.securesms.R;
 import su.sres.securesms.VerifyIdentityActivity;
@@ -197,7 +198,7 @@ final class RecipientDialogViewModel extends ViewModel {
 
     @WorkerThread
     private void showErrorToast(@NonNull GroupChangeFailureReason e) {
-        Util.runOnMain(() -> Toast.makeText(context, GroupErrors.getUserDisplayMessage(e), Toast.LENGTH_LONG).show());
+        ThreadUtil.runOnMain(() -> Toast.makeText(context, GroupErrors.getUserDisplayMessage(e), Toast.LENGTH_LONG).show());
     }
 
     static class AdminActionStatus {

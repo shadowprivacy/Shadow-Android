@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,9 +17,14 @@ import androidx.annotation.StringRes;
 import androidx.fragment.app.FragmentActivity;
 import androidx.navigation.ActivityNavigator;
 import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.dd.CircularProgressButton;
 
+import org.greenrobot.eventbus.EventBus;
+
+import su.sres.devicetransfer.DeviceToDeviceTransferService;
+import su.sres.devicetransfer.TransferStatus;
 import su.sres.securesms.R;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.permissions.Permissions;
@@ -54,7 +60,7 @@ public final class WelcomeFragment extends BaseRegistrationFragment {
     private static final            int[]          HEADERS_API_29     = { R.drawable.ic_contacts_white_48dp };
 
     private CircularProgressButton continueButton;
-    private View                   restoreFromBackup;
+    private Button restoreFromBackup;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -97,15 +103,14 @@ public final class WelcomeFragment extends BaseRegistrationFragment {
 
 
 
-            restoreFromBackup = view.findViewById(R.id.welcome_restore_backup);
+            restoreFromBackup = view.findViewById(R.id.welcome_transfer_or_restore);
             restoreFromBackup.setOnClickListener(this::restoreFromBackupClicked);
 
     //        TextView welcomeTermsButton = view.findViewById(R.id.welcome_terms_button);
     //        welcomeTermsButton.setOnClickListener(v -> onTermsClicked());
 
-            if (canUserSelectBackup()) {
-                restoreFromBackup.setVisibility(View.VISIBLE);
-    //            welcomeTermsButton.setTextColor(ContextCompat.getColor(requireActivity(), R.color.core_grey_60));
+            if (!canUserSelectBackup()) {
+                restoreFromBackup.setText(R.string.registration_activity__transfer_account);
             }
         }
     }
@@ -113,6 +118,17 @@ public final class WelcomeFragment extends BaseRegistrationFragment {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (EventBus.getDefault().getStickyEvent(TransferStatus.class) != null) {
+            Log.i(TAG, "Found existing transferStatus, redirect to transfer flow");
+            NavHostFragment.findNavController(this).navigate(R.id.action_welcomeFragment_to_deviceTransferSetup);
+        } else {
+            DeviceToDeviceTransferService.stop(requireContext());
+        }
     }
 
     private void continueClicked(@NonNull View view) {
@@ -165,7 +181,7 @@ public final class WelcomeFragment extends BaseRegistrationFragment {
         TextSecurePreferences.setHasSeenWelcomeScreen(requireContext(), true);
 
         Navigation.findNavController(view)
-                .navigate(WelcomeFragmentDirections.actionChooseBackup());
+                .navigate(WelcomeFragmentDirections.actionTransferOrRestore());
     }
 
     private boolean canUserSelectBackup() {

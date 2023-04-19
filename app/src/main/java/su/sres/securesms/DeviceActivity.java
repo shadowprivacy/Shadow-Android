@@ -12,6 +12,8 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import android.text.TextUtils;
 import android.transition.TransitionInflater;
+
+import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.logging.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -122,7 +124,7 @@ public class DeviceActivity extends PassphraseRequiredActivity
 
   @Override
   public void onQrDataFound(final String data) {
-    Util.runOnMain(() -> {
+    ThreadUtil.runOnMain(() -> {
       ((Vibrator)getSystemService(Context.VIBRATOR_SERVICE)).vibrate(50);
       Uri uri = Uri.parse(data);
       deviceLinkFragment.setLinkClickedListener(uri, DeviceActivity.this);

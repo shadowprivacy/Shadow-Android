@@ -18,6 +18,7 @@ import android.text.TextUtils;
 
 import com.annimon.stream.Stream;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.Mention;
@@ -142,7 +143,7 @@ class MediaSendViewModel extends ViewModel {
         }
 
         repository.getPopulatedMedia(context, newMedia, populatedMedia -> {
-            Util.runOnMain(() -> {
+            ThreadUtil.runOnMain(() -> {
 
                 List<Media> filteredMedia = getFilteredMedia(context, populatedMedia, mediaConstraints);
 
@@ -195,7 +196,7 @@ class MediaSendViewModel extends ViewModel {
         selectedMedia.setValue(Collections.singletonList(media));
 
         repository.getPopulatedMedia(context, Collections.singletonList(media), populatedMedia -> {
-            Util.runOnMain(() -> {
+            ThreadUtil.runOnMain(() -> {
                 List<Media> filteredMedia = getFilteredMedia(context, populatedMedia, mediaConstraints);
 
                 if (filteredMedia.isEmpty()) {
@@ -669,7 +670,7 @@ class MediaSendViewModel extends ViewModel {
 
             // XXX We must do this to avoid sending out messages to the same recipient with the same
             //     sentTimestamp. If we do this, they'll be considered dupes by the receiver.
-            Util.sleep(5);
+            ThreadUtil.sleep(5);
         }
 
         MessageSender.sendMediaBroadcast(application, messages, preUploadResults);

@@ -54,7 +54,7 @@ public final class MultiShareSender {
     @WorkerThread
     private static MultiShareSendResultCollection sendInternal(@NonNull MultiShareArgs multiShareArgs) {
         Context   context      = ApplicationDependencies.getApplication();
-        boolean   isMmsEnabled = Util.isMmsCapable(context);
+        boolean   isMmsEnabled = true;
         String    message      = multiShareArgs.getDraftText();
         SlideDeck slideDeck    = buildSlideDeck(context, multiShareArgs);
 

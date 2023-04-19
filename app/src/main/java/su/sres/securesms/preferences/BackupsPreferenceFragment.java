@@ -27,6 +27,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.backup.BackupDialog;
 import su.sres.securesms.backup.FullBackupBase;
 import su.sres.securesms.database.NoExternalStorageException;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.LocalBackupJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
@@ -251,5 +252,6 @@ public class BackupsPreferenceFragment extends Fragment {
         create.setVisibility(View.GONE);
         folder.setVisibility(View.GONE);
         verify.setVisibility(View.GONE);
+        ApplicationDependencies.getJobManager().cancelAllInQueue(LocalBackupJob.QUEUE);
     }
 }

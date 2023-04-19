@@ -7,6 +7,7 @@ import su.sres.securesms.util.FeatureFlags;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public final class UserLoginPrivacyValues extends SignalStoreValues {
 
@@ -27,6 +28,12 @@ public final class UserLoginPrivacyValues extends SignalStoreValues {
         //getStore().beginWrite()
         //          .putInteger(LISTING_MODE, UserLoginListingMode.UNLISTED.ordinal())
         //          .apply();
+    }
+
+    @Override
+    @NonNull
+    List<String> getKeysToIncludeInBackup() {
+        return Arrays.asList(SHARING_MODE, LISTING_MODE);
     }
 
     public @NonNull UserLoginSharingMode getUserLoginSharingMode() {

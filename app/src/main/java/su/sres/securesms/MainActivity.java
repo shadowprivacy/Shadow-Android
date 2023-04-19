@@ -9,6 +9,8 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.securesms.devicetransfer.olddevice.OldDeviceTransferLockedDialog;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.AppStartup;
 import su.sres.securesms.util.CachedInflater;
 import su.sres.securesms.util.CommunicationActions;
@@ -70,6 +72,9 @@ public class MainActivity extends PassphraseRequiredActivity {
     protected void onResume() {
         super.onResume();
         dynamicTheme.onResume(this);
+        if (SignalStore.misc().isOldDeviceTransferLocked()) {
+            OldDeviceTransferLockedDialog.show(getSupportFragmentManager());
+        }
     }
 
     @Override

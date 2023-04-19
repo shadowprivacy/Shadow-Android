@@ -18,6 +18,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+
+import su.sres.core.util.ThreadUtil;
 import su.sres.storageservice.protos.groups.AccessControl;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
@@ -47,7 +49,7 @@ import static su.sres.securesms.util.StringUtil.isolateBidi;
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE, application = Application.class)
 @PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "androidx.*" })
-@PrepareForTest(Util.class)
+@PrepareForTest(ThreadUtil.class)
 public final class GroupsV2UpdateMessageProducerTest {
 
     private UUID you;

@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.security.SecureRandom;
+import java.util.Collections;
+import java.util.List;
 
 import su.sres.signalservice.api.kbs.MasterKey;
 
@@ -18,6 +20,12 @@ public final class KbsValues extends SignalStoreValues {
 
     @Override
     void onFirstEverAppLaunch() {
+    }
+
+    @Override
+    @NonNull
+    List<String> getKeysToIncludeInBackup() {
+        return Collections.emptyList();
     }
 
     /** Should only be set by {@link su.sres.securesms.pin.PinState}. */

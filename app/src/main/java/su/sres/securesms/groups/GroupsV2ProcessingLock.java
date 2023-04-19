@@ -2,6 +2,7 @@ package su.sres.securesms.groups;
 
 import androidx.annotation.WorkerThread;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.Util;
 
@@ -26,7 +27,7 @@ final class GroupsV2ProcessingLock {
 
     @WorkerThread
     static Closeable acquireGroupProcessingLock(long timeoutMs) throws GroupChangeBusyException {
-        Util.assertNotMainThread();
+        ThreadUtil.assertNotMainThread();
 
         try {
             if (!lock.tryLock(timeoutMs, TimeUnit.MILLISECONDS)) {

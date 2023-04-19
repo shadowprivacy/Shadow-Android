@@ -1,6 +1,7 @@
 package su.sres.securesms.preferences;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 
@@ -14,6 +15,7 @@ import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.devicetransfer.olddevice.OldDeviceTransferActivity;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -32,6 +34,11 @@ public class ChatsPreferenceFragment extends ListSummaryPreferenceFragment {
 
     findPreference(TextSecurePreferences.BACKUP).setOnPreferenceClickListener(unused -> {
       goToBackupsPreferenceFragment();
+      return true;
+    });
+
+    findPreference(TextSecurePreferences.TRANSFER).setOnPreferenceClickListener(unused -> {
+      goToTransferAccount();
       return true;
     });
 
@@ -62,6 +69,10 @@ public class ChatsPreferenceFragment extends ListSummaryPreferenceFragment {
 
   private void goToBackupsPreferenceFragment() {
     ((ApplicationPreferencesActivity) requireActivity()).pushFragment(new BackupsPreferenceFragment());
+  }
+
+  private void goToTransferAccount() {
+    requireContext().startActivity(new Intent(requireContext(), OldDeviceTransferActivity.class));
   }
 
   public static CharSequence getSummary(Context context) {

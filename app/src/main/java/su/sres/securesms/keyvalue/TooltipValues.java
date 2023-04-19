@@ -2,6 +2,9 @@ package su.sres.securesms.keyvalue;
 
 import androidx.annotation.NonNull;
 
+import java.util.Collections;
+import java.util.List;
+
 import su.sres.signalservice.api.storage.StorageKey;
 
 public class TooltipValues extends SignalStoreValues {
@@ -18,6 +21,12 @@ public class TooltipValues extends SignalStoreValues {
 
     @Override
     public void onFirstEverAppLaunch() {
+    }
+
+    @Override
+    @NonNull
+    List<String> getKeysToIncludeInBackup() {
+        return Collections.emptyList();
     }
 
     public boolean hasSeenBlurHudIconTooltip() {

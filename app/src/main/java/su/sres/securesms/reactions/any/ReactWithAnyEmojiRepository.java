@@ -8,6 +8,7 @@ import androidx.annotation.StringRes;
 
 import com.annimon.stream.Stream;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiUtil;
 import su.sres.securesms.components.emoji.RecentEmojiPageModel;
@@ -80,7 +81,7 @@ final class ReactWithAnyEmojiRepository {
                     MessageSender.sendReactionRemoval(context, messageRecord.getId(), messageRecord.isMms(), oldRecord);
                 } else {
                     MessageSender.sendNewReaction(context, messageRecord.getId(), messageRecord.isMms(), emoji);
-                    Util.runOnMain(() -> recentEmojiPageModel.onCodePointSelected(emoji));
+                    ThreadUtil.runOnMain(() -> recentEmojiPageModel.onCodePointSelected(emoji));
                 }
             } catch (NoSuchMessageException e) {
                 Log.w(TAG, "Message not found! Ignoring.");

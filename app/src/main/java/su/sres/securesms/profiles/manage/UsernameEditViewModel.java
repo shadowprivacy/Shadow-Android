@@ -9,6 +9,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
@@ -73,7 +74,7 @@ class UsernameEditViewModel extends ViewModel {
         uiState.setValue(new State(ButtonState.SUBMIT_LOADING, UsernameStatus.NONE));
 
         repo.setUsername(username, (result) -> {
-            Util.runOnMain(() -> {
+            ThreadUtil.runOnMain(() -> {
                 switch (result) {
                     case SUCCESS:
                         uiState.setValue(new State(ButtonState.SUBMIT_DISABLED, UsernameStatus.NONE));
@@ -100,7 +101,7 @@ class UsernameEditViewModel extends ViewModel {
         uiState.setValue(new State(ButtonState.DELETE_LOADING, UsernameStatus.NONE));
 
         repo.deleteUsername((result) -> {
-            Util.runOnMain(() -> {
+            ThreadUtil.runOnMain(() -> {
                 switch (result) {
                     case SUCCESS:
                         uiState.postValue(new State(ButtonState.DELETE_DISABLED, UsernameStatus.NONE));

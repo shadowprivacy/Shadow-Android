@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.database.DatabaseContentProviders;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.core.util.logging.Log;
@@ -59,7 +60,7 @@ class ViewOnceMessageViewModel extends ViewModel {
     }
 
     private void onMessageRetrieved(@NonNull Optional<MmsMessageRecord> optionalMessage) {
-        Util.runOnMain(() -> {
+        ThreadUtil.runOnMain(() -> {
             MmsMessageRecord current  = message.getValue() != null ? message.getValue().orNull() : null;
             MmsMessageRecord proposed = optionalMessage.orNull();
 

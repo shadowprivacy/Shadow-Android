@@ -15,6 +15,7 @@ import su.sres.securesms.groups.GroupMutation;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobs.RequestGroupV2InfoJob;
 import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.signalservice.api.groupsv2.NotAbleToApplyGroupV2ChangeException;
 import su.sres.signalservice.internal.push.exceptions.GroupNotFoundException;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
@@ -407,8 +408,19 @@ public final class GroupsV2StateProcessor {
                 if (entry.getChange() != null && DecryptedGroupUtil.changeIsEmptyExceptForProfileKeyChanges(entry.getChange()) && !DecryptedGroupUtil.changeIsEmpty(entry.getChange())) {
                     Log.d(TAG, "Skipping profile key changes only update message");
                 } else {
-                    storeMessage(GroupProtoUtil.createDecryptedGroupV2Context(masterKey, new GroupMutation(previousGroupState, entry.getChange(), entry.getGroup()), null), timestamp);
-                    timestamp++;
+                    boolean insert = true;
+                    if (entry.getChange() != null && DecryptedGroupUtil.changeIsEmpty(entry.getChange())) {
+                        if (FeatureFlags.internalUser()) {
+                            Log.w(TAG, "Empty group update message seen. Inserting anyway.");
+                        } else {
+                            Log.w(TAG, "Empty group update message seen. Not inserting.");
+                            insert = false;
+                        }
+                    }
+                    if (insert) {
+                        storeMessage(GroupProtoUtil.createDecryptedGroupV2Context(masterKey, new GroupMutation(previousGroupState, entry.getChange(), entry.getGroup()), null), timestamp);
+                        timestamp++;
+                    }
                 }
                 previousGroupState = entry.getGroup();
             }

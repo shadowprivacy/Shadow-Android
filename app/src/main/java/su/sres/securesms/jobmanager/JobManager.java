@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.jobmanager.impl.DefaultExecutorFactory;
 import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
@@ -60,7 +61,7 @@ public class JobManager implements ConstraintObserver.Notifier {
   public JobManager(@NonNull Application application, @NonNull Configuration configuration) {
     this.application   = application;
     this.configuration = configuration;
-    this.executor      = new FilteredExecutor(configuration.getExecutorFactory().newSingleThreadExecutor("shadow-JobManager"), Util::isMainThread);
+    this.executor      = new FilteredExecutor(configuration.getExecutorFactory().newSingleThreadExecutor("shadow-JobManager"), ThreadUtil::isMainThread);
     this.jobTracker    = configuration.getJobTracker();
     this.jobController = new JobController(application,
             configuration.getJobStorage(),

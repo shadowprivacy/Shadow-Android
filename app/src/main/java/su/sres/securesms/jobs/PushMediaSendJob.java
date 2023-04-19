@@ -109,6 +109,7 @@ public class PushMediaSendJob extends PushSendJob  {
     ExpiringMessageManager expirationManager = ApplicationContext.getInstance(context).getExpiringMessageManager();
     MessageDatabase        database          = DatabaseFactory.getMmsDatabase(context);
     OutgoingMediaMessage   message           = database.getOutgoingMessage(messageId);
+    long                   threadId          = database.getMessageRecord(messageId).getThreadId();
 
     if (database.isSent(messageId)) {
       warn(TAG, String.valueOf(message.getSentTimeMillis()), "Message " + messageId + " was already sent. Ignoring.");
@@ -116,7 +117,7 @@ public class PushMediaSendJob extends PushSendJob  {
     }
 
     try {
-      log(TAG, String.valueOf(message.getSentTimeMillis()), "Sending message: " + messageId);
+      log(TAG, String.valueOf(message.getSentTimeMillis()), "Sending message: " + messageId + ", Recipient: " + message.getRecipient().getId() + ", Thread: " + threadId);
 
       RecipientUtil.shareProfileIfFirstSecureMessage(context, message.getRecipient());
 

@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.util.UuidUtil;
 
@@ -110,7 +111,7 @@ public final class UpdateDescription {
             return staticString;
         }
 
-        Util.assertNotMainThread();
+        ThreadUtil.assertNotMainThread();
 
         //noinspection ConstantConditions
         return stringFactory.create();
