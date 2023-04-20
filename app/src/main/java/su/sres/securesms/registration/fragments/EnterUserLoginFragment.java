@@ -52,7 +52,6 @@ public final class EnterUserLoginFragment extends BaseRegistrationFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
     }
 
     @Override
@@ -92,25 +91,6 @@ public final class EnterUserLoginFragment extends BaseRegistrationFragment {
 //        if (model.hasCaptchaToken()) {
             handleRegister(requireContext());
 //        }
-
-        Toolbar toolbar = view.findViewById(R.id.toolbar);
-        ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
-        ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle(null);
-    }
-
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        inflater.inflate(R.menu.enter_user_login, menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.phone_menu_use_proxy) {
-            Navigation.findNavController(requireView()).navigate(EnterUserLoginFragmentDirections.actionEditProxy());
-            return true;
-        } else {
-            return false;
-        }
 
     }
 
