@@ -142,7 +142,7 @@ public abstract class ContactSelectionActivity extends PassphraseRequiredActivit
     protected Void doInBackground(Context... params) {
 
       try {
-        DirectoryHelper.refreshDirectory(params[0]);
+        DirectoryHelper.reloadDirectory(params[0]);
       } catch (IOException e) {
         Log.w(TAG, e);
       }
