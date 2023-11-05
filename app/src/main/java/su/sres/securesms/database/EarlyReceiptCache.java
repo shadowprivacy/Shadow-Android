@@ -2,6 +2,7 @@ package su.sres.securesms.database;
 
 import androidx.annotation.NonNull;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.LRUCache;
 
@@ -10,7 +11,7 @@ import java.util.Map;
 
 public class EarlyReceiptCache {
 
-  private static final String TAG = EarlyReceiptCache.class.getSimpleName();
+  private static final String TAG = Log.tag(EarlyReceiptCache.class);
 
   private final LRUCache<Long, Map<RecipientId, Long>> cache = new LRUCache<>(100);
   private final String name;

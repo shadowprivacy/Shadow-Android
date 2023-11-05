@@ -12,9 +12,11 @@ import com.bumptech.glide.load.data.StreamLocalUriFetcher;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
+import su.sres.core.util.logging.Log;
+
 class ContactPhotoLocalUriFetcher extends StreamLocalUriFetcher {
 
-  private static final String TAG = ContactPhotoLocalUriFetcher.class.getSimpleName();
+  private static final String TAG = Log.tag(ContactPhotoLocalUriFetcher.class);
 
   ContactPhotoLocalUriFetcher(Context context, Uri uri) {
     super(context.getContentResolver(), uri);

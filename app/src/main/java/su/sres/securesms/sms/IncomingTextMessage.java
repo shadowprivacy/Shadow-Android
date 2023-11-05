@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.telephony.SmsMessage;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.recipients.RecipientId;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -26,7 +27,7 @@ public class IncomingTextMessage implements Parcelable {
       return new IncomingTextMessage[size];
     }
   };
-  private static final String TAG = IncomingTextMessage.class.getSimpleName();
+  private static final String TAG = Log.tag(IncomingTextMessage.class);
 
   private final String      message;
   private final RecipientId sender;

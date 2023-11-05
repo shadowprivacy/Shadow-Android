@@ -24,26 +24,25 @@ public enum DatabaseSessionLock implements SignalSessionLock {
 
     @Override
     public Lock acquire() {
-        if (FeatureFlags.internalUser()) {
-            SQLiteDatabase db = DatabaseFactory.getInstance(ApplicationDependencies.getApplication()).getRawDatabase();
+        LEGACY_LOCK.lock();
+        return LEGACY_LOCK::unlock;
 
-        if (db.isDbLockedByCurrentThread()) {
-            return () -> {};
-        }
-
-        db.beginTransaction();
-
-        ownerThreadId = Thread.currentThread().getId();
-
-            return () -> {
-                ownerThreadId = -1;
-                db.setTransactionSuccessful();
-                db.endTransaction();
-            };
-        } else {
-            LEGACY_LOCK.lock();
-            return LEGACY_LOCK::unlock;
-        }
+        // TODO [greyson][db] Revisit after improving database locking
+//    SQLiteDatabase db = DatabaseFactory.getInstance(ApplicationDependencies.getApplication()).getRawDatabase();
+//
+//    if (db.isDbLockedByCurrentThread()) {
+//      return () -> {};
+//    }
+//
+//    db.beginTransaction();
+//
+//    ownerThreadId = Thread.currentThread().getId();
+//
+//    return () -> {
+//      ownerThreadId = -1;
+//      db.setTransactionSuccessful();
+//      db.endTransaction();
+//    };
     }
 
     /**

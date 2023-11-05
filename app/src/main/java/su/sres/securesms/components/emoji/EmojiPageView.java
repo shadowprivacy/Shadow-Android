@@ -9,12 +9,13 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiKeyboardProvider.EmojiEventListener;
 import su.sres.securesms.components.emoji.EmojiPageViewGridAdapter.VariationSelectorListener;
 
 public class EmojiPageView extends FrameLayout implements VariationSelectorListener {
-  private static final String TAG = EmojiPageView.class.getSimpleName();
+  private static final String TAG = Log.tag(EmojiPageView.class);
 
   private EmojiPageModel                   model;
   private EmojiPageViewGridAdapter         adapter;

@@ -20,6 +20,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import com.annimon.stream.Stream;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.contacts.SelectedContact;
 import su.sres.securesms.recipients.RecipientId;
 
@@ -37,7 +38,7 @@ public class PushContactSelectionActivity extends ContactSelectionActivity {
   public static final String KEY_SELECTED_RECIPIENTS = "recipients";
 
   @SuppressWarnings("unused")
-  private final static String TAG = PushContactSelectionActivity.class.getSimpleName();
+  private final static String TAG = Log.tag(PushContactSelectionActivity.class);
 
   @Override
   protected void onCreate(Bundle icicle, boolean ready) {

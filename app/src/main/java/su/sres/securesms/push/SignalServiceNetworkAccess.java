@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import okhttp3.Dns;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.net.CustomDns;
 import su.sres.securesms.net.DeprecatedClientPreventionInterceptor;
@@ -31,7 +32,7 @@ import okhttp3.Interceptor;
 public class SignalServiceNetworkAccess {
 
     @SuppressWarnings("unused")
-    private static final String TAG = SignalServiceNetworkAccess.class.getSimpleName();
+    private static final String TAG = Log.tag(SignalServiceNetworkAccess.class);
 
     public static final Dns DNS = new SequentialDns(Dns.SYSTEM, new CustomDns("1.1.1.1"));
 

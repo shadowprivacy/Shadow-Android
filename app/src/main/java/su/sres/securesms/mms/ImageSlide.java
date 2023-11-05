@@ -23,6 +23,7 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.blurhash.BlurHash;
@@ -33,7 +34,7 @@ public class ImageSlide extends Slide {
   private final boolean borderless;
 
   @SuppressWarnings("unused")
-  private static final String TAG = ImageSlide.class.getSimpleName();
+  private static final String TAG = Log.tag(ImageSlide.class);
 
   public ImageSlide(@NonNull Context context, @NonNull Attachment attachment) {
     super(context, attachment);

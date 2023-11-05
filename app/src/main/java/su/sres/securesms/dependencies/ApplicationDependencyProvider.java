@@ -40,6 +40,7 @@ import su.sres.securesms.push.SecurityEventListener;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.TrimThreadsByDateManager;
+import su.sres.securesms.service.webrtc.SignalCallManager;
 import su.sres.securesms.util.AlarmSleepTimer;
 import su.sres.securesms.util.ByteUnit;
 import su.sres.securesms.util.EarlyMessageCache;
@@ -209,6 +210,11 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     @Override
     public @NonNull DatabaseObserver provideDatabaseObserver() {
         return new DatabaseObserver(context);
+    }
+
+    @Override
+    public @NonNull SignalCallManager provideSignalCallManager() {
+        return new SignalCallManager(context);
     }
 
     private static class DynamicCredentialsProvider implements CredentialsProvider {

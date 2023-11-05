@@ -65,7 +65,7 @@ import su.sres.storageservice.protos.groups.local.DecryptedGroupJoinInfo;
 
 public class LinkPreviewRepository  {
 
-    private static final String TAG = LinkPreviewRepository.class.getSimpleName();
+    private static final String TAG = Log.tag(LinkPreviewRepository.class);
 
     private static final CacheControl NO_CACHE = new CacheControl.Builder().noCache().build();
 

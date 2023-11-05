@@ -5,10 +5,12 @@ import android.os.Bundle;
 import androidx.appcompat.app.AlertDialog;
 import android.view.Window;
 
+import su.sres.core.util.logging.Log;
+
 public class DeviceProvisioningActivity extends PassphraseRequiredActivity {
 
   @SuppressWarnings("unused")
-  private static final String TAG = DeviceProvisioningActivity.class.getSimpleName();
+  private static final String TAG = Log.tag(DeviceProvisioningActivity.class);
 
   @Override
   protected void onPreCreate() {

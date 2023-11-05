@@ -4,6 +4,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.signalservice.api.SignalServiceAccountManager;
@@ -12,7 +13,7 @@ import java.util.UUID;
 
 public class AccountManagerFactory {
 
-  private static final String TAG = AccountManagerFactory.class.getSimpleName();
+  private static final String TAG = Log.tag(AccountManagerFactory.class);
 
   public static @NonNull SignalServiceAccountManager createAuthenticated(@NonNull Context context,
                                                                          @NonNull UUID uuid,

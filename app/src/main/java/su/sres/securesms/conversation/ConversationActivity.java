@@ -31,12 +31,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ShortcutManager;
-import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.net.Uri;
@@ -132,7 +130,6 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.mediaoverview.MediaOverviewActivity;
 import su.sres.securesms.MuteDialog;
 import su.sres.securesms.PassphraseRequiredActivity;
-import su.sres.securesms.PromptMmsActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.messagedetails.MessageDetailsActivity;
 import su.sres.securesms.messagerequests.MessageRequestState;
@@ -151,7 +148,6 @@ import su.sres.securesms.VerifyIdentityActivity;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.TombstoneAttachment;
 import su.sres.securesms.audio.AudioRecorder;
-import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.components.AnimatingToggle;
 import su.sres.securesms.components.ComposeText;
 import su.sres.securesms.components.ConversationSearchBottomBar;
@@ -257,11 +253,9 @@ import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.ContextUtil;
 import su.sres.securesms.util.ConversationUtil;
 import su.sres.securesms.util.DrawableUtil;
-import su.sres.securesms.util.DynamicDarkToolbarTheme;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FullscreenHelper;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.MediaUtil;
@@ -328,7 +322,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
     private static final int SHORTCUT_ICON_SIZE = Build.VERSION.SDK_INT >= 26 ? ViewUtil.dpToPx(72) : ViewUtil.dpToPx(48 + 16 * 2);
 
-    private static final String TAG = ConversationActivity.class.getSimpleName();
+    private static final String TAG = Log.tag(ConversationActivity.class);
 
     private static final String STATE_REACT_WITH_ANY_PAGE = "STATE_REACT_WITH_ANY_PAGE";
 
@@ -571,7 +565,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         }
 
         if (groupCallViewModel != null) {
-            groupCallViewModel.peekGroupCall(this);
+            groupCallViewModel.peekGroupCall();
         }
 
         setVisibleThread(threadId);
@@ -858,7 +852,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
             if (isSecureText) inflater.inflate(R.menu.conversation_callable_secure, menu);
             //    else inflater.inflate(R.menu.conversation_callable_insecure, menu);
         } else if (isGroupConversation()) {
-            if (isActiveV2Group && FeatureFlags.groupCalling()) {
+            if (isActiveV2Group && Build.VERSION.SDK_INT > 19) {
                 inflater.inflate(R.menu.conversation_callable_groupv2, menu);
                 if (groupCallViewModel != null && Boolean.TRUE.equals(groupCallViewModel.hasActiveGroupCall().getValue())) {
                     hideMenuItem(menu, R.id.menu_video_secure);
@@ -2187,7 +2181,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         groupCallViewModel = ViewModelProviders.of(this, new GroupCallViewModel.Factory()).get(GroupCallViewModel.class);
 
         recipient.observe(this, r -> {
-            groupCallViewModel.onRecipientChange(this, r);
+            groupCallViewModel.onRecipientChange(r);
         });
 
         groupCallViewModel.hasActiveGroupCall().observe(this, hasActiveCall -> {
@@ -2199,7 +2193,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     private void showGroupCallingTooltip() {
-        if (!FeatureFlags.groupCalling() || !SignalStore.tooltips().shouldShowGroupCallingTooltip() || callingTooltipShown) {
+        if (Build.VERSION.SDK_INT == 19 || !SignalStore.tooltips().shouldShowGroupCallingTooltip() || callingTooltipShown) {
             return;
         }
 
@@ -2339,7 +2333,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         }
 
         if (groupCallViewModel != null) {
-            groupCallViewModel.onRecipientChange(this, recipient);
+            groupCallViewModel.onRecipientChange(recipient);
         }
     }
 

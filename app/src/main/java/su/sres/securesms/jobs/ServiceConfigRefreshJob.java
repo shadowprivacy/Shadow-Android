@@ -20,7 +20,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
 
     public static final String KEY = "ServiceConfigRefreshJob";
 
-    private static final String TAG = ServiceConfigRefreshJob.class.getSimpleName();
+    private static final String TAG = Log.tag(ServiceConfigRefreshJob.class);
 
     private static final long REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(8);
 

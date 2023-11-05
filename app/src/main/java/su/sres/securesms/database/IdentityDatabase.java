@@ -25,6 +25,8 @@ import androidx.annotation.Nullable;
 
 
 import org.greenrobot.eventbus.EventBus;
+
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.identity.IdentityRecordList;
 import su.sres.securesms.recipients.Recipient;
@@ -43,7 +45,7 @@ import java.util.List;
 public class IdentityDatabase extends Database {
 
   @SuppressWarnings("unused")
-  private static final String TAG = IdentityDatabase.class.getSimpleName();
+  private static final String TAG = Log.tag(IdentityDatabase.class);
 
           static final String TABLE_NAME           = "identities";
   private static final String ID                   = "_id";

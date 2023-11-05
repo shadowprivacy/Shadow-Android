@@ -20,7 +20,7 @@ import su.sres.signalservice.api.util.SleepTimer;
  *
  */
 public class AlarmSleepTimer implements SleepTimer {
-    private static final String TAG = AlarmSleepTimer.class.getSimpleName();
+    private static final String TAG = Log.tag(AlarmSleepTimer.class);
     private static ConcurrentSkipListSet<Integer> actionIdList = new ConcurrentSkipListSet<>();
 
     private final Context context;

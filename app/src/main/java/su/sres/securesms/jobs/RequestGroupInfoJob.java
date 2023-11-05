@@ -2,6 +2,7 @@ package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
@@ -26,7 +27,7 @@ public class RequestGroupInfoJob extends BaseJob  {
   public static final String KEY = "RequestGroupInfoJob";
 
   @SuppressWarnings("unused")
-  private static final String TAG = RequestGroupInfoJob.class.getSimpleName();
+  private static final String TAG = Log.tag(RequestGroupInfoJob.class);
 
   private static final String KEY_SOURCE   = "source";
   private static final String KEY_GROUP_ID = "group_id";

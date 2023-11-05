@@ -9,13 +9,14 @@ import androidx.appcompat.widget.AppCompatEditText;
 import android.text.InputFilter;
 import android.util.AttributeSet;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiProvider.EmojiDrawable;
 import su.sres.securesms.util.TextSecurePreferences;
 
 
 public class EmojiEditText extends AppCompatEditText {
-  private static final String TAG = EmojiEditText.class.getSimpleName();
+  private static final String TAG = Log.tag(EmojiEditText.class);
 
   public EmojiEditText(Context context) {
     this(context, null);

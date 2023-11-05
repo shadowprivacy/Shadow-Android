@@ -32,6 +32,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.Preference;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.help.HelpFragment;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.preferences.AdvancedPreferenceFragment;
@@ -73,7 +74,7 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
     public static final String LAUNCH_TO_NOTIFICATIONS_FRAGMENT = "launch.to.notifications.fragment";
 
     @SuppressWarnings("unused")
-    private static final String TAG = ApplicationPreferencesActivity.class.getSimpleName();
+    private static final String TAG = Log.tag(ApplicationPreferencesActivity.class);
 
     private static final String PREFERENCE_CATEGORY_PROFILE = "preference_category_profile";
     private static final String PREFERENCE_CATEGORY_USERNAME       = "preference_category_username";

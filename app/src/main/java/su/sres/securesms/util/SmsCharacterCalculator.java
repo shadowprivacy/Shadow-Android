@@ -21,7 +21,7 @@ import su.sres.core.util.logging.Log;
 
 public class SmsCharacterCalculator extends CharacterCalculator {
 
-  private static final String TAG = SmsCharacterCalculator.class.getSimpleName();
+  private static final String TAG = Log.tag(SmsCharacterCalculator.class);
 
   @Override
   public CharacterState calculateCharacters(String messageBody) {

@@ -264,7 +264,7 @@ public class PushServiceSocket {
     }
 
     public void requestSmsVerificationCode(boolean androidSmsRetriever, Optional<String> captchaToken, Optional<String> challenge) throws IOException {
-        String path = String.format(CREATE_ACCOUNT_SMS_PATH, credentialsProvider.getUserLogin(), androidSmsRetriever ? "android-2020-01" : "android");
+        String path = String.format(CREATE_ACCOUNT_SMS_PATH, credentialsProvider.getUserLogin(), androidSmsRetriever ? "android-2021-03" : "android");
 
         if (captchaToken.isPresent()) {
             path += "&captcha=" + captchaToken.get();

@@ -23,6 +23,7 @@ import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.TrimThreadsByDateManager;
+import su.sres.securesms.service.webrtc.SignalCallManager;
 import su.sres.securesms.shakereport.ShakeToReport;
 import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.EarlyMessageCache;
@@ -76,6 +77,7 @@ public class ApplicationDependencies {
     private static volatile DatabaseObserver databaseObserver;
     private static volatile TrimThreadsByDateManager     trimThreadsByDateManager;
     private static volatile ShakeToReport                shakeToReport;
+    private static volatile SignalCallManager            signalCallManager;
     private static volatile KeyValueStore keyValueStore;
 
     public static void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
@@ -402,6 +404,18 @@ public class ApplicationDependencies {
         return shakeToReport;
     }
 
+    public static @NonNull SignalCallManager getSignalCallManager() {
+        if (signalCallManager == null) {
+            synchronized (LOCK) {
+                if (signalCallManager == null) {
+                    signalCallManager = provider.provideSignalCallManager();
+                }
+            }
+        }
+
+        return signalCallManager;
+    }
+
     public static @NonNull AppForegroundObserver getAppForegroundObserver() {
         return appForegroundObserver;
     }
@@ -428,6 +442,8 @@ public class ApplicationDependencies {
         @NonNull TypingStatusRepository provideTypingStatusRepository();
         @NonNull TypingStatusSender provideTypingStatusSender();
         @NonNull DatabaseObserver provideDatabaseObserver();
+        @NonNull
+        SignalCallManager provideSignalCallManager();
     }
 
     public interface NetworkIndependentProvider {

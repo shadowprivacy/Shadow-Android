@@ -34,7 +34,7 @@ import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
 
 public class UnidentifiedAccessUtil {
 
-    private static final String TAG = UnidentifiedAccessUtil.class.getSimpleName();
+    private static final String TAG = Log.tag(UnidentifiedAccessUtil.class);
 
     public static CertificateValidator getCertificateValidator() {
         try {

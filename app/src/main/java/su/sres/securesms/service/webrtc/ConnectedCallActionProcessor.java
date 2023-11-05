@@ -6,13 +6,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.ringrtc.CallException;
+import org.signal.ringrtc.CallManager;
+
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.ringrtc.IceCandidateParcel;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.webrtc.locks.LockManager;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Handles action for a connected/ongoing call. At this point it's mostly responding
@@ -85,7 +86,7 @@ public class ConnectedCallActionProcessor extends DeviceAwareActionProcessor {
     protected @NonNull WebRtcServiceState handleSendIceCandidates(@NonNull WebRtcServiceState currentState,
                                                                   @NonNull WebRtcData.CallMetadata callMetadata,
                                                                   boolean broadcast,
-                                                                  @NonNull ArrayList<IceCandidateParcel> iceCandidates)
+                                                                  @NonNull List<byte[]> iceCandidates)
     {
         return activeCallDelegate.handleSendIceCandidates(currentState, callMetadata, broadcast, iceCandidates);
     }
@@ -96,13 +97,13 @@ public class ConnectedCallActionProcessor extends DeviceAwareActionProcessor {
     }
 
     @Override
-    protected @NonNull WebRtcServiceState handleEndedRemote(@NonNull WebRtcServiceState currentState, @NonNull String action, @NonNull RemotePeer remotePeer) {
-        return activeCallDelegate.handleEndedRemote(currentState, action, remotePeer);
+    protected @NonNull WebRtcServiceState handleEndedRemote(@NonNull WebRtcServiceState currentState, @NonNull CallManager.CallEvent endedRemoteEvent, @NonNull RemotePeer remotePeer) {
+        return activeCallDelegate.handleEndedRemote(currentState, endedRemoteEvent, remotePeer);
     }
 
     @Override
-    protected @NonNull WebRtcServiceState handleEnded(@NonNull WebRtcServiceState currentState, @NonNull String action, @NonNull RemotePeer remotePeer) {
-        return activeCallDelegate.handleEnded(currentState, action, remotePeer);
+    protected @NonNull WebRtcServiceState handleEnded(@NonNull WebRtcServiceState currentState, @NonNull CallManager.CallEvent endedEvent, @NonNull RemotePeer remotePeer) {
+        return activeCallDelegate.handleEnded(currentState, endedEvent, remotePeer);
     }
 
     @Override

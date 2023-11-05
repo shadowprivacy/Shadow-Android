@@ -148,8 +148,8 @@ public class GroupPreJoinActionProcessor extends GroupActionProcessor {
 
         webRtcInteractor.updatePhoneState(WebRtcUtil.getInCallPhoneState(context));
         webRtcInteractor.initializeAudioForCall();
-        webRtcInteractor.setWantsBluetoothConnection(true);
         webRtcInteractor.setCallInProgressNotification(TYPE_OUTGOING_RINGING, currentState.getCallInfoState().getCallRecipient());
+        webRtcInteractor.setWantsBluetoothConnection(true);
 
         try {
             groupCall.setOutgoingVideoSource(currentState.getVideoState().requireLocalSink(), currentState.getVideoState().requireCamera());
@@ -167,6 +167,9 @@ public class GroupPreJoinActionProcessor extends GroupActionProcessor {
                 .changeCallInfoState()
                 .callState(WebRtcViewModel.State.CALL_OUTGOING)
                 .groupCallState(WebRtcViewModel.GroupCallState.CONNECTED_AND_JOINING)
+                .commit()
+                .changeLocalDeviceState()
+                .wantsBluetooth(true)
                 .build();
     }
 

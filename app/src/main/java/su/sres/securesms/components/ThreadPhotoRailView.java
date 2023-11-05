@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.database.CursorRecyclerViewAdapter;
 import su.sres.securesms.database.MediaDatabase;
@@ -61,7 +62,7 @@ public class ThreadPhotoRailView extends FrameLayout {
   private static class ThreadPhotoRailAdapter extends CursorRecyclerViewAdapter<ThreadPhotoRailAdapter.ThreadPhotoViewHolder> {
 
     @SuppressWarnings("unused")
-    private static final String TAG = ThreadPhotoRailAdapter.class.getSimpleName();
+    private static final String TAG = Log.tag(ThreadPhotoRailAdapter.class);
 
     @NonNull  private final GlideRequests glideRequests;
 

@@ -59,6 +59,13 @@ Your platform might also have its own preferred way of installing Docker. E.g. U
 
 In the following sections we will assume that your Docker installation works without issues. So after installing, please make sure that everything is running smoothly before continuing.
 
+### Configuring Docker runtime memory
+
+Docker seems to require at least 5GB runtime memory to be able to build the APK successfully. Docker behaves differently on each platform - please consult Docker documentation for the platform of choice to configure the runtime memory settings.
+
+* https://docs.docker.com/config/containers/resource_constraints/
+* OS X https://docs.docker.com/docker-for-mac/#resources
+* Windows https://docs.docker.com/docker-for-windows/#resources
 
 ## Building a Docker image for Shadow
 First, you need to pull down the source for Shadow-Android, which contains everything you need to build the project, including the `Dockerfile`. The `Dockerfile` contains instructions on how to automatically build a Docker image for Shadow. It's located in the `reproducible-builds` directory of the repository. To get it, go into the `reproducible-shadow` directory and clone the project:
@@ -113,7 +120,7 @@ cd ~/reproducible-shadow/shadow-source
 To build with the docker image you just built (`shadow-android`), run:
 
 ```
-docker run --rm -v $(pwd):/project -w /project shadow-android ./gradlew clean assembleWebsiteProdRelease
+docker run --rm -v $(pwd):/project -w /project shadow-android chmod +x gradlew && ./gradlew clean assembleWebsiteProdRelease
 ```
 
 ### Checking if the APKs match

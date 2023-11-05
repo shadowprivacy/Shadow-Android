@@ -23,6 +23,7 @@ import androidx.lifecycle.ViewModelProviders;
 import com.annimon.stream.Stream;
 import com.dd.CircularProgressButton;
 
+import su.sres.core.util.ResourceUtil;
 import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
@@ -194,7 +195,9 @@ public class HelpFragment extends LoggingFragment {
             suffix.append(getString(feeling.getStringId()));
         }
 
-        String category = categoryAdapter.getItem(helpViewModel.getCategoryIndex()).toString();
+        String[] englishCategories = ResourceUtil.getEnglishResources(getContext()).getStringArray(R.array.HelpFragment__categories);
+        String   category          = (helpViewModel.getCategoryIndex() >= 0 && helpViewModel.getCategoryIndex() < englishCategories.length) ? englishCategories[helpViewModel.getCategoryIndex()]
+                : categoryAdapter.getItem(helpViewModel.getCategoryIndex()).toString();
 
         return SupportEmailUtil.generateSupportEmailBody(requireContext(),
                 R.string.HelpFragment__signal_android_support_request,

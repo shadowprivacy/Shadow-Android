@@ -10,13 +10,14 @@ import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
 import android.util.AttributeSet;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiTextView;
 import su.sres.securesms.recipients.Recipient;
 
 public class FromTextView extends EmojiTextView {
 
-  private static final String TAG = FromTextView.class.getSimpleName();
+  private static final String TAG = Log.tag(FromTextView.class);
 
   public FromTextView(Context context) {
     super(context);

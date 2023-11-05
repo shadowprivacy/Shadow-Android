@@ -16,13 +16,14 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import su.sres.core.util.logging.Log;
 
 /**
  * Fetches an {@link InputStream} using the okhttp library.
  */
 class OkHttpStreamFetcher implements DataFetcher<InputStream> {
 
-  private static final String TAG = OkHttpStreamFetcher.class.getSimpleName();
+  private static final String TAG = Log.tag(OkHttpStreamFetcher.class);
 
   private final OkHttpClient client;
   private final GlideUrl     url;

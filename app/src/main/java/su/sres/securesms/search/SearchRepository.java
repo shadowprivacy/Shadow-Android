@@ -54,7 +54,7 @@ import static su.sres.securesms.database.SearchDatabase.SNIPPET_WRAP;
  */
 public class SearchRepository {
 
-  private static final String TAG = SearchRepository.class.getSimpleName();
+  private static final String TAG = Log.tag(SearchRepository.class);
 
   private static final Set<Character> BANNED_CHARACTERS = new HashSet<>();
   static {

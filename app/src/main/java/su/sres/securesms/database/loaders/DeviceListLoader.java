@@ -36,7 +36,7 @@ import static su.sres.securesms.devicelist.DeviceNameProtos.*;
 
 public class DeviceListLoader extends AsyncLoader<List<Device>> {
 
-  private static final String TAG = DeviceListLoader.class.getSimpleName();
+  private static final String TAG = Log.tag(DeviceListLoader.class);
 
   private final SignalServiceAccountManager accountManager;
 

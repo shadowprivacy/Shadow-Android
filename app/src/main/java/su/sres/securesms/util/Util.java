@@ -76,7 +76,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class Util {
-  private static final String TAG = Util.class.getSimpleName();
+  private static final String TAG = Log.tag(Util.class);
 
   // let's say if there's no build in 3 years, chances are that the project is dead
   private static final long BUILD_LIFESPAN = TimeUnit.DAYS.toMillis(1100);

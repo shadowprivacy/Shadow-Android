@@ -5,9 +5,11 @@ package su.sres.securesms.giph.util;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import su.sres.core.util.logging.Log;
+
 public abstract class InfiniteScrollListener extends RecyclerView.OnScrollListener {
 
-  public static String TAG = InfiniteScrollListener.class.getSimpleName();
+  public static String TAG = Log.tag(InfiniteScrollListener.class);
 
   private int     previousTotal    = 0;    // The total number of items in the dataset after the last load
   private boolean loading          = true; // True if we are still waiting for the last set of data to load.

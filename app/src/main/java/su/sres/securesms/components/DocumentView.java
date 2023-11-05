@@ -18,6 +18,8 @@ import com.pnikosis.materialishprogress.ProgressWheel;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.events.PartProgressEvent;
@@ -27,7 +29,7 @@ import su.sres.securesms.util.Util;
 
 public class DocumentView extends FrameLayout {
 
-  private static final String TAG = DocumentView.class.getSimpleName();
+  private static final String TAG = Log.tag(DocumentView.class);
 
   private final @NonNull AnimatingToggle controlToggle;
   private final @NonNull ImageView       downloadButton;

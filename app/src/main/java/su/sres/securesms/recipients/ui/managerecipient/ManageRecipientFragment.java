@@ -368,6 +368,8 @@ public class ManageRecipientFragment extends LoggingFragment {
         muteNotificationsUntilLabel.setVisibility(muteState.isMuted() ? View.VISIBLE : View.GONE);
 
         if (muteState.isMuted()) {
+            muteNotificationsUntilLabel.setText(R.string.ManageRecipientActivity_always);
+        } else {
             muteNotificationsUntilLabel.setText(getString(R.string.ManageRecipientActivity_until_s,
                     DateUtils.getTimeString(requireContext(),
                             Locale.getDefault(),

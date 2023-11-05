@@ -29,6 +29,7 @@ import su.sres.securesms.util.ThemeUtil;
 
 import okhttp3.HttpUrl;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.util.ViewUtil;
 
 /**
  * The view shown in the compose box or conversation that represents the state of the link preview.
@@ -183,11 +184,17 @@ public class LinkPreviewView extends FrameLayout {
         }
     }
 
-    public void setCorners(int topLeft, int topRight) {
-        cornerMask.setRadii(topLeft, topRight, 0, 0);
-        outliner.setRadii(topLeft, topRight, 0, 0);
-        thumbnail.setCorners(topLeft, defaultRadius, defaultRadius, defaultRadius);
-        postInvalidate();
+    public void setCorners(int topStart, int topEnd) {
+        if (ViewUtil.isRtl(this)) {
+            cornerMask.setRadii(topEnd, topStart, 0, 0);
+            outliner.setRadii(topEnd, topStart, 0, 0);
+            thumbnail.setCorners(defaultRadius, topEnd, defaultRadius, defaultRadius);
+        } else {
+            cornerMask.setRadii(topStart, topEnd, 0, 0);
+            outliner.setRadii(topStart, topEnd, 0, 0);
+            thumbnail.setCorners(topStart, defaultRadius, defaultRadius, defaultRadius);
+            postInvalidate();
+        }
     }
 
     private  @StringRes

@@ -40,7 +40,7 @@ public class UpdateApkJob extends BaseJob {
 
   public static final String KEY = "UpdateApkJob";
 
-  private static final String TAG = UpdateApkJob.class.getSimpleName();
+  private static final String TAG = Log.tag(UpdateApkJob.class);
 
   private final SettingsValues settingsConfig = SignalStore.settings();
   private final ServiceConfigurationValues serviceConfig = SignalStore.serviceConfigurationValues();

@@ -203,7 +203,7 @@ public final class Megaphones {
     }
 
     private static boolean shouldShowGroupCallingMegaphone() {
-        return FeatureFlags.groupCalling();
+        return true;
     }
 
     private static boolean shouldShowOnboardingMegaphone(@NonNull Context context) {

@@ -10,8 +10,8 @@ import androidx.preference.Preference;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.service.WebRtcCallService;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.webrtc.CallBandwidthMode;
@@ -129,7 +129,7 @@ public class DataAndStoragePreferenceFragment extends ListSummaryPreferenceFragm
                     throw new AssertionError();
             }
 
-            WebRtcCallService.notifyBandwidthModeUpdated(requireContext());
+            ApplicationDependencies.getSignalCallManager().bandwidthModeUpdate();
 
             return super.onPreferenceChange(preference, value);
         }

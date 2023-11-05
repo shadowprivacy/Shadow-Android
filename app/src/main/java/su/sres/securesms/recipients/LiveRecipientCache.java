@@ -7,6 +7,8 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
 
+import net.sqlcipher.database.SQLiteDatabase;
+
 import su.sres.securesms.crypto.DatabaseSessionLock;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
@@ -17,6 +19,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.LRUCache;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.core.util.concurrent.SignalExecutors;
+import su.sres.securesms.util.concurrent.FilteredExecutor;
 import su.sres.signalservice.api.SignalSessionLock;
 
 import java.util.ArrayList;
@@ -24,6 +27,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 
 public final class LiveRecipientCache {
 
@@ -36,6 +40,8 @@ public final class LiveRecipientCache {
     private final RecipientDatabase               recipientDatabase;
     private final Map<RecipientId, LiveRecipient> recipients;
     private final LiveRecipient                   unknown;
+    private final Executor executor;
+    private final SQLiteDatabase db;
 
     private volatile RecipientId localRecipientId;
 
@@ -47,6 +53,8 @@ public final class LiveRecipientCache {
         this.recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
         this.recipients        = new LRUCache<>(CACHE_MAX);
         this.unknown           = new LiveRecipient(context, Recipient.UNKNOWN);
+        this.db                = DatabaseFactory.getInstance(context).getRawDatabase();
+        this.executor          = new FilteredExecutor(SignalExecutors.BOUNDED, () -> !db.isDbLockedByCurrentThread());
     }
 
     @AnyThread
@@ -62,7 +70,7 @@ public final class LiveRecipientCache {
 
             MissingRecipientException prettyStackTraceError = new MissingRecipientException(newLive.getId());
 
-            SignalExecutors.BOUNDED.execute(() -> {
+            executor.execute(() -> {
                 try {
                     newLive.resolve();
                 } catch (MissingRecipientException e) {
@@ -99,7 +107,7 @@ public final class LiveRecipientCache {
 
             if (needsResolve) {
                 MissingRecipientException prettyStackTraceError = new MissingRecipientException(recipient.getId());
-                SignalExecutors.BOUNDED.execute(() -> {
+                executor.execute(() -> {
                     try {
                         recipient.resolve();
                     } catch (MissingRecipientException e) {
@@ -140,7 +148,7 @@ public final class LiveRecipientCache {
             warmedUp = true;
         }
 
-        SignalExecutors.BOUNDED.execute(() -> {
+        executor.execute(() -> {
             ThreadDatabase  threadDatabase = DatabaseFactory.getThreadDatabase(context);
             List<Recipient> recipients     = new ArrayList<>();
 

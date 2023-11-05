@@ -651,7 +651,7 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Signal.WallpaperCropper" />
 
-        <service android:enabled="true" android:name=".service.WebRtcCallService"/>
+        <service android:enabled="true" android:name=".service.webrtc.WebRtcCallService"/>
         <service
             android:enabled="true"
             android:name=".service.ApplicationMigrationService" />

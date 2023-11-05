@@ -83,7 +83,7 @@ import su.sres.signalservice.internal.configuration.ShadowProxy;
 
 public class InitialActivity extends AppCompatActivity implements OnClickListener, ScanListener, ServiceConfigurationSetupListener {
 
-    private static final String TAG = InitialActivity.class.getSimpleName();
+    private static final String TAG = Log.tag(InitialActivity.class);
 
     private static final String FCM_SENDER_ID_COLUMN = "FCMSID";
     private static final String SERVER_CERT_HASH_COLUMN = "SRVCH";

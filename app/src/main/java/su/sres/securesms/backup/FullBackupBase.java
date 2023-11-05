@@ -9,10 +9,12 @@ import org.whispersystems.libsignal.util.ByteUtil;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import su.sres.core.util.logging.Log;
+
 public abstract class FullBackupBase {
 
   @SuppressWarnings("unused")
-  private static final String TAG = FullBackupBase.class.getSimpleName();
+  private static final String TAG = Log.tag(FullBackupBase.class);
 
   static class BackupStream {
     static @NonNull byte[] getBackupKey(@NonNull String passphrase, @Nullable byte[] salt) {

@@ -36,7 +36,7 @@ public class CertificatePullJob extends BaseJob {
 
     public static final String KEY = "CertificatePullJob";
 
-    private static final String TAG = CertificatePullJob.class.getSimpleName();
+    private static final String TAG = Log.tag(CertificatePullJob.class);
 
     public final static String[] CERT_ALIASES = {
             "cloud_a",

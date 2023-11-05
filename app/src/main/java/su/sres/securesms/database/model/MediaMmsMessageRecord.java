@@ -21,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.text.SpannableString;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.database.MmsDatabase;
@@ -42,7 +43,7 @@ import java.util.List;
  */
 
 public class MediaMmsMessageRecord extends MmsMessageRecord {
-  private final static String TAG = MediaMmsMessageRecord.class.getSimpleName();
+  private final static String TAG = Log.tag(MediaMmsMessageRecord.class);
 
   private final int     partCount;
   private final boolean mentionsSelf;

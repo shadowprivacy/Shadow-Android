@@ -36,7 +36,7 @@ import static su.sres.securesms.contactshare.Contact.*;
 
 public class SharedContactRepository {
 
-  private static final String TAG = SharedContactRepository.class.getSimpleName();
+  private static final String TAG = Log.tag(SharedContactRepository.class);
 
   private final Context          context;
   private final Executor         executor;

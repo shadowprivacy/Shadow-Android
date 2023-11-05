@@ -3,6 +3,7 @@ package su.sres.securesms.crypto.storage;
 import android.content.Context;
 import androidx.annotation.NonNull;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.DatabaseSessionLock;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.signalservice.api.SignalSessionLock;
@@ -18,7 +19,7 @@ import java.util.List;
 public class TextSecurePreKeyStore implements PreKeyStore, SignedPreKeyStore {
 
   @SuppressWarnings("unused")
-  private static final String TAG = TextSecurePreKeyStore.class.getSimpleName();
+  private static final String TAG = Log.tag(TextSecurePreKeyStore.class);
 
   @NonNull
   private final Context context;

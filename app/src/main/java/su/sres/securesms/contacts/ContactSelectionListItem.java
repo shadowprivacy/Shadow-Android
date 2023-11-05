@@ -10,6 +10,7 @@ import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.components.FromTextView;
@@ -27,7 +28,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 public class ContactSelectionListItem extends LinearLayout implements RecipientForeverObserver {
 
   @SuppressWarnings("unused")
-  private static final String TAG = ContactSelectionListItem.class.getSimpleName();
+  private static final String TAG = Log.tag(ContactSelectionListItem.class);
 
   private AvatarImageView contactPhotoImage;
   private TextView        numberView;

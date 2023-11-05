@@ -1,8 +1,5 @@
 package su.sres.securesms.conversation.ui.groupcall;
 
-import android.content.Context;
-import android.content.Intent;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
@@ -10,12 +7,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.GroupCallPeekEvent;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.ringrtc.RemotePeer;
-import su.sres.securesms.service.WebRtcCallService;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 
 import java.util.Objects;
@@ -46,7 +41,7 @@ public class GroupCallViewModel extends ViewModel {
         return groupCallHasCapacity;
     }
 
-    public void onRecipientChange(@NonNull Context context, @Nullable Recipient recipient) {
+    public void onRecipientChange(@Nullable Recipient recipient) {
         activeGroup.postValue(recipient != null && recipient.isActiveGroup());
 
         if (Objects.equals(currentRecipient, recipient)) {
@@ -58,17 +53,13 @@ public class GroupCallViewModel extends ViewModel {
 
         currentRecipient = recipient;
 
-        peekGroupCall(context);
+        peekGroupCall();
     }
 
-    public void peekGroupCall(@NonNull Context context) {
+    public void peekGroupCall() {
         if (isGroupCallCapable(currentRecipient)) {
             Log.i(TAG, "peek call for " + currentRecipient.getId());
-            Intent intent = new Intent(context, WebRtcCallService.class);
-            intent.setAction(WebRtcCallService.ACTION_GROUP_CALL_PEEK)
-                    .putExtra(WebRtcCallService.EXTRA_REMOTE_PEER, new RemotePeer(currentRecipient.getId()));
-
-            context.startService(intent);
+            ApplicationDependencies.getSignalCallManager().peekGroupCall(currentRecipient.getId());
         }
     }
 
@@ -84,7 +75,7 @@ public class GroupCallViewModel extends ViewModel {
     }
 
     private static boolean isGroupCallCapable(@Nullable Recipient recipient) {
-        return recipient != null && recipient.isActiveGroup() && recipient.isPushV2Group() && FeatureFlags.groupCalling();
+        return recipient != null && recipient.isActiveGroup() && recipient.isPushV2Group();
     }
 
     public static final class Factory implements ViewModelProvider.Factory {

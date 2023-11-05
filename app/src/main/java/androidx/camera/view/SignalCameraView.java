@@ -63,6 +63,7 @@ import androidx.lifecycle.LiveData;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 
 import java.util.concurrent.Executor;
@@ -81,7 +82,7 @@ import java.util.concurrent.Executor;
 @RequiresApi(21)
 @SuppressLint("RestrictedApi")
 public final class SignalCameraView extends FrameLayout {
-    static final String TAG = SignalCameraView.class.getSimpleName();
+    static final String TAG = Log.tag(SignalCameraView.class);
 
     static final int INDEFINITE_VIDEO_DURATION = -1;
     static final int INDEFINITE_VIDEO_SIZE = -1;

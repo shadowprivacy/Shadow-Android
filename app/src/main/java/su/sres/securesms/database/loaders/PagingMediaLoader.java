@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
@@ -18,7 +19,7 @@ import su.sres.securesms.util.AsyncLoader;
 public final class PagingMediaLoader extends AsyncLoader<Pair<Cursor, Integer>> {
 
   @SuppressWarnings("unused")
-  private static final String TAG = PagingMediaLoader.class.getSimpleName();
+  private static final String TAG = Log.tag(PagingMediaLoader.class);
 
   private final Uri     uri;
   private final boolean leftIsRecent;

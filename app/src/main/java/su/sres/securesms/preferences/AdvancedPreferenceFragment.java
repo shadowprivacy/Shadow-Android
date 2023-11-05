@@ -47,7 +47,7 @@ import su.sres.signalservice.api.push.exceptions.AuthorizationFailedException;
 import java.io.IOException;
 
 public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
-  private static final String TAG = AdvancedPreferenceFragment.class.getSimpleName();
+  private static final String TAG = Log.tag(AdvancedPreferenceFragment.class);
 
   private static final String CERT_PULL             = "pref_cert_pull";
   private static final String INTERNAL_PREF         = "pref_internal";

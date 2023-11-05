@@ -5,11 +5,13 @@ import androidx.annotation.NonNull;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.jobmanager.ConstraintObserver;
 
 public class SqlCipherMigrationConstraintObserver implements ConstraintObserver {
 
-    private static final String REASON = SqlCipherMigrationConstraintObserver.class.getSimpleName();
+    private static final String REASON = Log.tag(SqlCipherMigrationConstraintObserver.class);
 
     private Notifier notifier;
 

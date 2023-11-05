@@ -14,11 +14,13 @@ import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import android.text.TextUtils;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.SwitchPreferenceCompat;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.notifications.NotificationChannels;
+import su.sres.securesms.util.RingtoneUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import static android.app.Activity.RESULT_OK;
@@ -26,9 +28,7 @@ import static android.app.Activity.RESULT_OK;
 public class NotificationsPreferenceFragment extends ListSummaryPreferenceFragment {
 
   @SuppressWarnings("unused")
-  private static final String TAG = NotificationsPreferenceFragment.class.getSimpleName();
-
-
+  private static final String TAG = Log.tag(NotificationsPreferenceFragment.class);
 
   @Override
   public void onCreate(Bundle paramBundle) {
@@ -176,10 +176,12 @@ public class NotificationsPreferenceFragment extends ListSummaryPreferenceFragme
       if (value == null || TextUtils.isEmpty(value.toString())) {
         preference.setSummary(R.string.preferences__silent);
       } else {
-        Ringtone tone = RingtoneManager.getRingtone(getActivity(), value);
+        Ringtone tone = RingtoneUtil.getRingtone(requireContext(), value);
 
         if (tone != null) {
           preference.setSummary(tone.getTitle(getActivity()));
+        } else {
+          preference.setSummary(R.string.preferences__default);
         }
       }
 

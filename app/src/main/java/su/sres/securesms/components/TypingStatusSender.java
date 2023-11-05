@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import su.sres.core.util.ThreadUtil;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.TypingSendJob;
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 @SuppressLint("UseSparseArrays")
 public class TypingStatusSender {
 
-    private static final String TAG = TypingStatusSender.class.getSimpleName();
+    private static final String TAG = Log.tag(TypingStatusSender.class);
 
     private static final long REFRESH_TYPING_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
     private static final long PAUSE_TYPING_TIMEOUT   = TimeUnit.SECONDS.toMillis(3);

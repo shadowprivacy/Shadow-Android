@@ -26,14 +26,18 @@ import com.annimon.stream.function.Consumer;
 
 import java.util.Objects;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.util.RingtoneUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThemeUtil;
 
 public class CustomNotificationsDialogFragment extends DialogFragment {
+
+    private static final String TAG = Log.tag(CustomNotificationsDialogFragment.class);
 
     private static final short MESSAGE_RINGTONE_PICKER_REQUEST_CODE = 13562;
     private static final short CALL_RINGTONE_PICKER_REQUEST_CODE    = 23621;
@@ -226,7 +230,7 @@ public class CustomNotificationsDialogFragment extends DialogFragment {
         } else if (ringtone.toString().isEmpty()) {
             return context.getString(R.string.preferences__silent);
         } else {
-            Ringtone tone = RingtoneManager.getRingtone(getActivity(), ringtone);
+            Ringtone tone = RingtoneUtil.getRingtone(requireContext(), ringtone);
 
             if (tone != null) {
                 return tone.getTitle(context);

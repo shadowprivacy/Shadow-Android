@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.util.CharacterCalculator;
 import su.sres.securesms.util.MmsCharacterCalculator;
@@ -24,7 +25,7 @@ import static su.sres.securesms.TransportOption.Type;
 
 public class TransportOptions {
 
-  private static final String TAG = TransportOptions.class.getSimpleName();
+  private static final String TAG = Log.tag(TransportOptions.class);
 
   private final List<OnTransportChangedListener> listeners = new LinkedList<>();
   private final Context                          context;

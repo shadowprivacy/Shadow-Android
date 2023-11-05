@@ -18,6 +18,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import su.sres.securesms.groups.GroupAccessControl;
 import su.sres.securesms.groups.GroupMigrationMembershipChange;
 import su.sres.securesms.util.CursorUtil;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.Util;
@@ -988,6 +989,8 @@ public final class GroupDatabase extends Database {
           return GroupAccessControl.ALL_MEMBERS;
         }
         return GroupAccessControl.ONLY_ADMINS;
+      } else if (isV1Group() && FeatureFlags.groupsV1ForcedMigration()) {
+        return GroupAccessControl.NO_ONE;
       } else {
         return id.isV1() ? GroupAccessControl.ALL_MEMBERS : GroupAccessControl.ONLY_ADMINS;
       }
@@ -1002,6 +1005,8 @@ public final class GroupDatabase extends Database {
           return GroupAccessControl.ALL_MEMBERS;
         }
         return GroupAccessControl.ONLY_ADMINS;
+      } else if (isV1Group() && FeatureFlags.groupsV1ForcedMigration()) {
+        return GroupAccessControl.NO_ONE;
       } else {
         return GroupAccessControl.ALL_MEMBERS;
       }

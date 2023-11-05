@@ -61,7 +61,6 @@ public final class FeatureFlags {
     private static final String USER_LOGIN_PRIVACY_VERSION = "android.UserLoginPrivacyVersion";
     private static final String CLIENT_EXPIRATION            = "android.clientExpiration";
     private static final String VIEWED_RECEIPTS              = "android.viewed.receipts";
-    private static final String GROUP_CALLING                = "android.groupsv2.calling.2";
     private static final String GV1_FORCED_MIGRATE           = "android.groupsV1Migration.forced";
     private static final String SEND_VIEWED_RECEIPTS         = "android.sendViewedReceipts";
     private static final String CUSTOM_VIDEO_MUXER           = "android.customVideoMuxer";
@@ -92,7 +91,6 @@ public final class FeatureFlags {
             CLIENT_EXPIRATION,
             VIEWED_RECEIPTS,
             GV1_FORCED_MIGRATE,
-            GROUP_CALLING,
             SEND_VIEWED_RECEIPTS,
             CUSTOM_VIDEO_MUXER,
             GROUP_NAME_MAX_LENGTH,
@@ -136,7 +134,6 @@ public final class FeatureFlags {
             ATTACHMENTS_V3,
             VERIFY_V2,
             CLIENT_EXPIRATION,
-            GROUP_CALLING,
             CUSTOM_VIDEO_MUXER,
             GROUP_NAME_MAX_LENGTH,
             AUTOMATIC_SESSION_RESET,
@@ -261,11 +258,6 @@ public final class FeatureFlags {
     /** Whether the user should display the content revealed dot in voice notes. */
     public static boolean viewedReceipts() {
         return getBoolean(VIEWED_RECEIPTS, false);
-    }
-
-    /** Whether or not group calling is enabled. */
-    public static boolean groupCalling() {
-        return Build.VERSION.SDK_INT > 19 && getBoolean(GROUP_CALLING, false);
     }
 
     /** Whether or not forced migration from GV1->GV2 is enabled. */

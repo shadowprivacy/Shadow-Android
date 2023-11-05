@@ -8,13 +8,14 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.util.ServiceUtil;
 
 public class SignalAudioManager {
 
   @SuppressWarnings("unused")
-  private static final String TAG = SignalAudioManager.class.getSimpleName();
+  private static final String TAG = Log.tag(SignalAudioManager.class);
 
   private final Context        context;
   private final IncomingRinger incomingRinger;

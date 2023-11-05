@@ -10,7 +10,7 @@ import su.sres.core.util.logging.Log;
 
 public class WakeLockUtil {
 
-    private static final String TAG = WakeLockUtil.class.getSimpleName();
+    private static final String TAG = Log.tag(WakeLockUtil.class);
 
     /**
      * Run a runnable with a wake lock. Ensures that the lock is safely acquired and released.

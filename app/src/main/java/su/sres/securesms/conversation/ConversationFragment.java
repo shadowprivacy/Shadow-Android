@@ -48,6 +48,7 @@ import su.sres.securesms.components.recyclerview.SmoothScrollingLinearLayoutMana
 import su.sres.securesms.components.voice.VoiceNoteMediaController;
 import su.sres.securesms.components.voice.VoiceNotePlaybackState;
 import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
+import su.sres.securesms.conversation.ui.error.EnableCallNotificationSettingsDialog;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.SmsDatabase;
@@ -163,7 +164,7 @@ import java.util.Set;
 
 @SuppressLint("StaticFieldLeak")
 public class ConversationFragment extends LoggingFragment {
-    private static final String TAG = ConversationFragment.class.getSimpleName();
+    private static final String TAG = Log.tag(ConversationFragment.class);
 
     private static final int SCROLL_ANIMATION_THRESHOLD = 50;
     private static final int CODE_ADD_EDIT_CONTACT = 77;
@@ -1571,6 +1572,23 @@ public class ConversationFragment extends LoggingFragment {
         @Override
         public void onInviteFriendsToGroupClicked(@NonNull GroupId.V2 groupId) {
             GroupLinkInviteFriendsBottomSheetDialogFragment.show(requireActivity().getSupportFragmentManager(), groupId);
+        }
+
+        @Override
+        public void onEnableCallNotificationsClicked() {
+            EnableCallNotificationSettingsDialog.fixAutomatically(requireContext());
+            if (EnableCallNotificationSettingsDialog.shouldShow(requireContext())) {
+                EnableCallNotificationSettingsDialog.show(getChildFragmentManager());
+            } else {
+                refreshList();
+            }
+        }
+    }
+
+    public void refreshList() {
+        ConversationAdapter listAdapter = getListAdapter();
+        if (listAdapter != null) {
+            listAdapter.notifyDataSetChanged();
         }
     }
 

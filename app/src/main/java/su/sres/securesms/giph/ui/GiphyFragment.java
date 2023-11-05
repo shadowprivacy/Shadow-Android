@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.giph.model.GiphyImage;
@@ -30,7 +31,7 @@ import java.util.List;
 
 public abstract class GiphyFragment extends LoggingFragment implements LoaderManager.LoaderCallbacks<List<GiphyImage>>, GiphyAdapter.OnItemClickListener {
 
-  private static final String TAG = GiphyFragment.class.getSimpleName();
+  private static final String TAG = Log.tag(GiphyFragment.class);
 
   private GiphyAdapter                     giphyAdapter;
   private RecyclerView                     recyclerView;

@@ -26,6 +26,7 @@ import android.os.Bundle;
 import androidx.core.app.RemoteInput;
 
 import su.sres.core.util.concurrent.SignalExecutors;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase.MarkedMessageInfo;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -45,7 +46,7 @@ import java.util.List;
  */
 public class RemoteReplyReceiver extends BroadcastReceiver {
 
-  public static final String TAG             = RemoteReplyReceiver.class.getSimpleName();
+  public static final String TAG             = Log.tag(RemoteReplyReceiver.class);
   public static final String REPLY_ACTION    = "su.sres.securesms.notifications.WEAR_REPLY";
   public static final String RECIPIENT_EXTRA = "recipient_extra";
   public static final String REPLY_METHOD    = "reply_method";

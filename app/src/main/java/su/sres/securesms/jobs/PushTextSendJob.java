@@ -2,6 +2,7 @@ package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
@@ -39,7 +40,7 @@ public class PushTextSendJob extends PushSendJob  {
 
   public static final String KEY = "PushTextSendJob";
 
-  private static final String TAG = PushTextSendJob.class.getSimpleName();
+  private static final String TAG = Log.tag(PushTextSendJob.class);
 
   private static final String KEY_MESSAGE_ID = "message_id";
 

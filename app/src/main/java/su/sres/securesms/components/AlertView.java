@@ -9,11 +9,12 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 
 public class AlertView extends LinearLayout {
 
-  private static final String TAG = AlertView.class.getSimpleName();
+  private static final String TAG = Log.tag(AlertView.class);
 
   private ImageView approvalIndicator;
   private ImageView failedIndicator;

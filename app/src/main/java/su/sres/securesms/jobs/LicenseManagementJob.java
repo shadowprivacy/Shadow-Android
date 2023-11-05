@@ -48,7 +48,7 @@ public class LicenseManagementJob extends BaseJob {
 
     public static final String KEY = "LicenseManagementJob";
 
-    private static final String TAG = LicenseManagementJob.class.getSimpleName();
+    private static final String TAG = Log.tag(LicenseManagementJob.class);
 
     private static final long REFRESH_INTERVAL = TimeUnit.MINUTES.toMillis(360);
 

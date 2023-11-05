@@ -27,6 +27,7 @@ import android.widget.RelativeLayout;
 
 import com.annimon.stream.Stream;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.RecipientsAdapter;
 import su.sres.securesms.contacts.RecipientsEditor;
@@ -44,7 +45,7 @@ import java.util.StringTokenizer;
  * @author Moxie Marlinspike
  */
 public class PushRecipientsPanel extends RelativeLayout implements RecipientForeverObserver {
-  private final String                         TAG = PushRecipientsPanel.class.getSimpleName();
+  private final String                         TAG = Log.tag(PushRecipientsPanel.class);
   private       RecipientsPanelChangedListener panelChangeListener;
 
   private RecipientsEditor recipientsText;

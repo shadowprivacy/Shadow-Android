@@ -14,7 +14,7 @@ import su.sres.securesms.jobs.SmsSentJob;
 
 public class SmsDeliveryListener extends BroadcastReceiver {
 
-  private static final String TAG = SmsDeliveryListener.class.getSimpleName();
+  private static final String TAG = Log.tag(SmsDeliveryListener.class);
 
   public static final String SENT_SMS_ACTION      = "su.sres.securesms.SendReceiveService.SENT_SMS_ACTION";
   public static final String DELIVERED_SMS_ACTION = "su.sres.securesms.SendReceiveService.DELIVERED_SMS_ACTION";

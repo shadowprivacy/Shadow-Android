@@ -11,13 +11,13 @@ import org.signal.ringrtc.CallException;
 import su.sres.securesms.components.webrtc.OrientationAwareVideoSink;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.notifications.DoNotDisturbUtil;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.ringrtc.CallState;
-import su.sres.securesms.ringrtc.IceCandidateParcel;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.state.VideoState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
@@ -26,11 +26,11 @@ import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.webrtc.locks.LockManager;
 
 import org.signal.ringrtc.CallId;
+import org.signal.ringrtc.CallManager;
 import org.webrtc.PeerConnection;
 import su.sres.signalservice.api.messages.calls.AnswerMessage;
 import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -102,7 +102,7 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
         }
 
         webRtcInteractor.updatePhoneState(LockManager.PhoneState.PROCESSING);
-        webRtcInteractor.sendMessage(currentState);
+        webRtcInteractor.postStateUpdate(currentState);
 
         return currentState;
     }
@@ -159,7 +159,11 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
 
         boolean shouldDisturbUserWithCall = DoNotDisturbUtil.shouldDisturbUserWithCall(context.getApplicationContext(), recipient);
         if (shouldDisturbUserWithCall) {
-            webRtcInteractor.startWebRtcCallActivityIfPossible();
+            boolean started = webRtcInteractor.startWebRtcCallActivityIfPossible();
+            if (!started) {
+                Log.i(TAG, "Unable to start call activity due to OS version or not being in the foreground");
+                ApplicationDependencies.getAppForegroundObserver().addListener(webRtcInteractor.getForegroundListener());
+            }
         }
 
         webRtcInteractor.initializeAudioForCall();
@@ -174,8 +178,8 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
             webRtcInteractor.startIncomingRinger(ringtone, vibrateState == RecipientDatabase.VibrateState.ENABLED || (vibrateState == RecipientDatabase.VibrateState.DEFAULT && TextSecurePreferences.isCallNotificationVibrateEnabled(context)));
         }
 
-        webRtcInteractor.registerPowerButtonReceiver();
         webRtcInteractor.setCallInProgressNotification(TYPE_INCOMING_RINGING, activePeer);
+        webRtcInteractor.registerPowerButtonReceiver();
 
         return currentState.builder()
                 .changeCallInfoState()
@@ -201,13 +205,13 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
     }
 
     @Override
-    protected @NonNull WebRtcServiceState handleEndedRemote(@NonNull WebRtcServiceState currentState, @NonNull String action, @NonNull RemotePeer remotePeer) {
-        return activeCallDelegate.handleEndedRemote(currentState, action, remotePeer);
+    protected @NonNull WebRtcServiceState handleEndedRemote(@NonNull WebRtcServiceState currentState, @NonNull CallManager.CallEvent endedRemoteEvent, @NonNull RemotePeer remotePeer) {
+        return activeCallDelegate.handleEndedRemote(currentState, endedRemoteEvent, remotePeer);
     }
 
     @Override
-    protected @NonNull WebRtcServiceState handleEnded(@NonNull WebRtcServiceState currentState, @NonNull String action, @NonNull RemotePeer remotePeer) {
-        return activeCallDelegate.handleEnded(currentState, action, remotePeer);
+    protected @NonNull WebRtcServiceState handleEnded(@NonNull WebRtcServiceState currentState, @NonNull CallManager.CallEvent endedEvent, @NonNull RemotePeer remotePeer) {
+        return activeCallDelegate.handleEnded(currentState, endedEvent, remotePeer);
     }
 
     @Override
@@ -224,7 +228,7 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
     protected @NonNull WebRtcServiceState handleSendIceCandidates(@NonNull WebRtcServiceState currentState,
                                                                   @NonNull WebRtcData.CallMetadata callMetadata,
                                                                   boolean broadcast,
-                                                                  @NonNull ArrayList<IceCandidateParcel> iceCandidates)
+                                                                  @NonNull List<byte[]> iceCandidates)
     {
         return activeCallDelegate.handleSendIceCandidates(currentState, callMetadata, broadcast, iceCandidates);
     }

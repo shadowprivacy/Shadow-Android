@@ -24,6 +24,7 @@ import androidx.preference.PreferenceViewHolder;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 
 /**
@@ -34,7 +35,7 @@ import su.sres.securesms.R;
 
 public class LEDColorListPreference extends ListPreference {
 
-  private static final String TAG = LEDColorListPreference.class.getSimpleName();
+  private static final String TAG = Log.tag(LEDColorListPreference.class);
 
   private ImageView colorImageView;
 

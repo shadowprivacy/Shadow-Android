@@ -15,7 +15,7 @@ import su.sres.core.util.logging.Log;
 public abstract class AbstractCursorLoader extends AsyncTaskLoader<Cursor> {
 
   @SuppressWarnings("unused")
-  private static final String TAG = AbstractCursorLoader.class.getSimpleName();
+  private static final String TAG = Log.tag(AbstractCursorLoader.class);
 
   @SuppressLint("StaticFieldLeak")
   protected final Context                  context;

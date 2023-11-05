@@ -18,7 +18,7 @@ import su.sres.securesms.recipients.RecipientId;
  */
 public class QuoteId {
 
-  private static final String TAG = QuoteId.class.getSimpleName();
+  private static final String TAG = Log.tag(QuoteId.class);
 
   private static final String ID                 = "id";
   private static final String AUTHOR_DEPRECATED  = "author";

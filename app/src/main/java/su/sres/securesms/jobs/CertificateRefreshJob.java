@@ -36,7 +36,7 @@ public class CertificateRefreshJob extends BaseJob {
 
     public static final String KEY = "CertificateRefreshJob";
 
-    private static final String TAG = CertificateRefreshJob.class.getSimpleName();
+    private static final String TAG = Log.tag(CertificateRefreshJob.class);
 
     private static final long REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(1);
 

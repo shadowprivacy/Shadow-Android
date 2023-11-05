@@ -10,6 +10,7 @@ import androidx.core.app.NotificationCompat;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
@@ -20,7 +21,7 @@ import su.sres.securesms.util.Util;
 public abstract class AbstractNotificationBuilder extends NotificationCompat.Builder {
 
   @SuppressWarnings("unused")
-  private static final String TAG = AbstractNotificationBuilder.class.getSimpleName();
+  private static final String TAG = Log.tag(AbstractNotificationBuilder.class);
 
   private static final int MAX_DISPLAY_LENGTH = 500;
 

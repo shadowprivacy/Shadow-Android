@@ -10,6 +10,7 @@ import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.widget.TextView;
 
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.DatabaseSessionLock;
 import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
 import su.sres.securesms.database.DatabaseFactory;
@@ -39,7 +40,7 @@ import java.io.IOException;
 public class ConfirmIdentityDialog extends AlertDialog {
 
   @SuppressWarnings("unused")
-  private static final String TAG = ConfirmIdentityDialog.class.getSimpleName();
+  private static final String TAG = Log.tag(ConfirmIdentityDialog.class);
 
   private OnClickListener callback;
 

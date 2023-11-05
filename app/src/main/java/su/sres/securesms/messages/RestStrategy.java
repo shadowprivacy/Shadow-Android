@@ -116,6 +116,6 @@ public class RestStrategy extends MessageRetrievalStrategy {
 
     @Override
     public @NonNull String toString() {
-        return RestStrategy.class.getSimpleName();
+        return Log.tag(RestStrategy.class);
     }
 }
