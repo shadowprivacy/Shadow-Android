@@ -115,7 +115,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
                             cloudUrl                      != null &&
                             statusUrl                     != null &&
                             storageUrl                    != null &&
-                            // voipUrl                    != null &&
+                            voipUrl                       != null &&
                             unidentifiedAccessCaPublicKey != null &&
                             zkPublicKey                   != null &&
                             fcmSenderId                   != null) {
