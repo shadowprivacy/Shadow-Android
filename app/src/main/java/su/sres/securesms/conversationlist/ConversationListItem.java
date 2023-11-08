@@ -21,7 +21,6 @@ import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.graphics.drawable.RippleDrawable;
 import android.os.Build;
-import android.os.Build.VERSION;
 import android.text.Spannable;
 import android.text.SpannableString;
 
