@@ -14,7 +14,7 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
     private static final String CLOUD2_URL                        = "service_configuration.cloud2_url";
     private static final String FCM_SENDER_ID                     = "service_configuration.fcm_sender_id";
     private static final String STORAGE_URL                       = "service_configuration.storage_url";
-    private static final String VOIP_URL                          = "service_configuration.storage_url";
+    private static final String VOIP_URL                          = "service_configuration.voip_url";
     private static final String STATUS_URL                        = "service_configuration.status_url";
     private static final String UNIDENTIFIED_ACCESS_CA_PUBLIC_KEY = "service_configuration.unidentified_access_ca_public_key";
     private static final String ZK_PUBLIC_KEY                     = "service_configuration.zk_public_key";
