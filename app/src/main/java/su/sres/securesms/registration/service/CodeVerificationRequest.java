@@ -201,6 +201,7 @@ public final class CodeVerificationRequest {
         String statusUrl                     = configRequested.getStatusUri();
         String storageUrl                    = configRequested.getStorageUri();
         String cloudUrl                      = configRequested.getCloudUri();
+        String voipUrl                       = configRequested.getSfuUri();
         byte[] unidentifiedAccessCaPublicKey = configRequested.getUnidentifiedDeliveryCaPublicKey();
         byte[] zkPublicKey                   = configRequested.getZkPublicKey();
         String supportEmail                  = configRequested.getSupportEmail();
@@ -219,6 +220,7 @@ public final class CodeVerificationRequest {
                         cloudUrl                      != null                      &&
                         statusUrl                     != null                      &&
                         storageUrl                    != null                      &&
+                        voipUrl                       != null                      &&
                         unidentifiedAccessCaPublicKey != null                      &&
                         zkPublicKey                   != null                      &&
                         fcmSenderId                   != null                      &&
@@ -229,6 +231,7 @@ public final class CodeVerificationRequest {
             SignalStore.serviceConfigurationValues().setCloudUrl(cloudUrl);
             SignalStore.serviceConfigurationValues().setCloud2Url(cloudUrl);
             SignalStore.serviceConfigurationValues().setStorageUrl(storageUrl);
+            SignalStore.serviceConfigurationValues().setVoipUrl(voipUrl);
             SignalStore.serviceConfigurationValues().setStatusUrl(statusUrl);
             SignalStore.serviceConfigurationValues().setUnidentifiedAccessCaPublicKey(unidentifiedAccessCaPublicKey);
             SignalStore.serviceConfigurationValues().setZkPublicKey(zkPublicKey);

@@ -72,7 +72,7 @@ public class ConfigurationInfo {
         return storageUri;
     }
 
-    public String getVoipUri() {
+    public String getSfuUri() {
         return sfuUri;
     }
 

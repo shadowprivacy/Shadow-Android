@@ -90,7 +90,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
             String statusUrl                     = configRequested.getStatusUri();
             String storageUrl                    = configRequested.getStorageUri();
             String cloudUrl                      = configRequested.getCloudUri();
-            String voipUrl                       = configRequested.getVoipUri();
+            String voipUrl                       = configRequested.getSfuUri();
             byte[] unidentifiedAccessCaPublicKey = configRequested.getUnidentifiedDeliveryCaPublicKey();
             byte[] zkPublicKey                   = configRequested.getZkPublicKey();
             String supportEmail                  = configRequested.getSupportEmail();
