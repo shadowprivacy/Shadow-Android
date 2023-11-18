@@ -10,7 +10,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.TextSecurePreferences;
 
 /**
- * Performs cleanup of keyvalues related to the old activation scheme, and substitutes server-side activation key for the old client-side key.
+ * Triggers a certificate pull to import the SFU certificate into the truststore.
  */
 public final class SfuCertJob extends MigrationJob {
 
