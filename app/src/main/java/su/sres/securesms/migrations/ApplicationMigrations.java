@@ -53,7 +53,7 @@ public class ApplicationMigrations {
         static final int GV1_MIGRATION = 23;
         static final int BLOB_LOCATION = 24;
         static final int SYSTEM_NAME_SPLIT = 25;
-//        static final int DAY_BY_DAY_STICKERS = 26;
+        static final int DAY_BY_DAY_STICKERS = 26;
         static final int SFU_CERT = 27;
     }
 
@@ -211,9 +211,9 @@ public class ApplicationMigrations {
             jobs.put(Version.SYSTEM_NAME_SPLIT, new DirectoryRefreshMigrationJob());
         }
 
-      /*  if (lastSeenVersion < Version.DAY_BY_DAY_STICKERS) {
+        if (lastSeenVersion < Version.DAY_BY_DAY_STICKERS) {
             jobs.put(Version.DAY_BY_DAY_STICKERS, new StickerDayByDayMigrationJob());
-        } */
+        }
 
         if (lastSeenVersion < Version.SFU_CERT) {
             jobs.put(Version.SFU_CERT, new SfuCertJob());
