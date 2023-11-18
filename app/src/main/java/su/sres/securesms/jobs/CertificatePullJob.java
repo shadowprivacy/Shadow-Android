@@ -44,7 +44,9 @@ public class CertificatePullJob extends BaseJob {
             "shadow_a",
             "shadow_b",
             "storage_a",
-            "storage_b"
+            "storage_b",
+            "sfu_a",
+            "sfu_b"
     };
 
     private final Context context;
@@ -82,7 +84,7 @@ public class CertificatePullJob extends BaseJob {
 
     @Override
     public void onRun() throws IOException {
-        Log.i(TAG, "CertificateRefreshJob.onRun()");
+        Log.i(TAG, "CertificatePullJob.onRun()");
 
         performPull();
     }
@@ -116,7 +118,9 @@ public class CertificatePullJob extends BaseJob {
                         receivedCerts.getShadowCertA(),
                         receivedCerts.getShadowCertB(),
                         receivedCerts.getStorageCertA(),
-                        receivedCerts.getStorageCertB()
+                        receivedCerts.getStorageCertB(),
+                        receivedCerts.getSfuCertA(),
+                        receivedCerts.getSfuCertB()
                 };
 
                 TrustStore trustStore = new SignalServiceTrustStore(context);
@@ -129,7 +133,7 @@ public class CertificatePullJob extends BaseJob {
 
                     CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
 
-                    for (int i = 0; i < 6; i++) {
+                    for (int i = 0; i < 8; i++) {
 
                         if (receivedCertBytes[i] != null) {
 
@@ -145,7 +149,7 @@ public class CertificatePullJob extends BaseJob {
 
                     Log.i(TAG, "Certificates pulled successfully. Proceeding to cleanup.");
 
-                    for (int i = 0; i < 6; i++) {
+                    for (int i = 0; i < 8; i++) {
 
                         if (shadowStore.containsAlias(CERT_ALIASES[i])) {
 

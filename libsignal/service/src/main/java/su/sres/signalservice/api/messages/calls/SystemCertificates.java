@@ -31,6 +31,14 @@ public class SystemCertificates {
     @JsonDeserialize(using = SenderCertificate.ByteArrayDesieralizer.class)
     private byte[] storageCertB;
 
+    @JsonProperty
+    @JsonDeserialize(using = SenderCertificate.ByteArrayDesieralizer.class)
+    private byte[] sfuCertA;
+
+    @JsonProperty
+    @JsonDeserialize(using = SenderCertificate.ByteArrayDesieralizer.class)
+    private byte[] sfuCertB;
+
 
     public byte[] getCloudCertA() {
         return cloudCertA;
@@ -46,6 +54,14 @@ public class SystemCertificates {
 
     public byte[] getShadowCertB() {
         return shadowCertB;
+    }
+
+    public byte[] getSfuCertA() {
+        return sfuCertA;
+    }
+
+    public byte[] getSfuCertB() {
+        return sfuCertB;
     }
 
     public byte[] getStorageCertA() {
@@ -70,6 +86,14 @@ public class SystemCertificates {
 
     public void setShadowCertB(byte[] cert) {
         shadowCertB = cert;
+    }
+
+    public void setSfuCertA(byte[] cert) {
+        sfuCertA = cert;
+    }
+
+    public void setSfuCertB(byte[] cert) {
+        sfuCertB = cert;
     }
 
     public void setStorageCertA(byte[] cert) {

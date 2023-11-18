@@ -46,7 +46,9 @@ public class CertificateRefreshJob extends BaseJob {
             "shadow_a",
             "shadow_b",
             "storage_a",
-            "storage_b"
+            "storage_b",
+            "sfu_a",
+            "sfu_b"
     };
 
     private final Context                     context;
@@ -125,7 +127,9 @@ public class CertificateRefreshJob extends BaseJob {
                         receivedCerts.getShadowCertA(),
                         receivedCerts.getShadowCertB(),
                         receivedCerts.getStorageCertA(),
-                        receivedCerts.getStorageCertB()
+                        receivedCerts.getStorageCertB(),
+                        receivedCerts.getSfuCertA(),
+                        receivedCerts.getSfuCertB()
                 };
 
                 TrustStore trustStore = new SignalServiceTrustStore(context);
@@ -138,7 +142,7 @@ public class CertificateRefreshJob extends BaseJob {
 
                     CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
 
-                    for (int i = 0; i < 6; i++) {
+                    for (int i = 0; i < 8; i++) {
 
                         if (receivedCertBytes[i] != null ) {
 
@@ -154,7 +158,7 @@ public class CertificateRefreshJob extends BaseJob {
 
                     Log.i(TAG, "Certificates imported successfully. Proceeding to cleanup.");
 
-                    for (int i = 0; i < 6; i++) {
+                    for (int i = 0; i < 8; i++) {
 
                         if (shadowStore.containsAlias(CERT_ALIASES[i])) {
 
