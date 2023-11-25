@@ -1,5 +1,7 @@
 package su.sres.securesms.jobs;
 
+import static su.sres.securesms.jobs.ServiceConfigRefreshJob.REFRESH_INTERVAL;
+
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
@@ -99,6 +101,8 @@ public class UpdateApkJob extends BaseJob {
         Log.i(TAG, "Download status missing, starting download...");
         handleDownloadStart(updateDescriptor.getUrl(), updateDescriptor.getVersionName(), digest);
       }
+
+      SignalStore.misc().setLastServiceConfigRefreshTime(System.currentTimeMillis() - REFRESH_INTERVAL);
     }
   }
 
