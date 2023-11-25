@@ -38,6 +38,7 @@ import su.sres.securesms.migrations.DatabaseMigrationJob;
 import su.sres.securesms.migrations.MigrationCompleteJob;
 import su.sres.securesms.migrations.ProfileMigrationJob;
 import su.sres.securesms.migrations.RecipientSearchMigrationJob;
+import su.sres.securesms.migrations.SfuCertJob;
 import su.sres.securesms.migrations.StickerDayByDayMigrationJob;
 import su.sres.securesms.migrations.StickerLaunchMigrationJob;
 import su.sres.securesms.migrations.StorageCapabilityMigrationJob;
@@ -152,6 +153,7 @@ public final class JobManagerFactories {
             put(MigrationCompleteJob.KEY,                  new MigrationCompleteJob.Factory());
             put(ProfileMigrationJob.KEY,                   new ProfileMigrationJob.Factory());
             put(RecipientSearchMigrationJob.KEY,           new RecipientSearchMigrationJob.Factory());
+            put(SfuCertJob.KEY,                            new SfuCertJob.Factory());
             put(StickerLaunchMigrationJob.KEY,             new StickerLaunchMigrationJob.Factory());
             put(StickerAdditionMigrationJob.KEY,           new StickerAdditionMigrationJob.Factory());
             put(StickerDayByDayMigrationJob.KEY,           new StickerDayByDayMigrationJob.Factory());
