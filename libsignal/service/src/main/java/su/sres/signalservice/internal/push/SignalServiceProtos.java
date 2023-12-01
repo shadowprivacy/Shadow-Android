@@ -7052,6 +7052,17 @@ public final class SignalServiceProtos {
      * @return The groupCallUpdate.
      */
     su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.GroupCallUpdate getGroupCallUpdate();
+
+    /**
+     * <code>optional .signalservice.DataMessage.Payment payment = 20;</code>
+     * @return Whether the payment field is set.
+     */
+    boolean hasPayment();
+    /**
+     * <code>optional .signalservice.DataMessage.Payment payment = 20;</code>
+     * @return The payment.
+     */
+    su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment getPayment();
   }
   /**
    * Protobuf type {@code signalservice.DataMessage}
@@ -7195,12 +7206,16 @@ public final class SignalServiceProtos {
        * <code>MENTIONS = 6;</code>
        */
       MENTIONS(6),
+      /**
+       * <code>PAYMENTS = 7;</code>
+       */
+      PAYMENTS(7),
       ;
 
       /**
-       * <code>CURRENT = 6;</code>
+       * <code>CURRENT = 7;</code>
        */
-      public static final ProtocolVersion CURRENT = MENTIONS;
+      public static final ProtocolVersion CURRENT = PAYMENTS;
       /**
        * <code>INITIAL = 0;</code>
        */
@@ -7230,9 +7245,13 @@ public final class SignalServiceProtos {
        */
       public static final int MENTIONS_VALUE = 6;
       /**
-       * <code>CURRENT = 6;</code>
+       * <code>PAYMENTS = 7;</code>
        */
-      public static final int CURRENT_VALUE = 6;
+      public static final int PAYMENTS_VALUE = 7;
+      /**
+       * <code>CURRENT = 7;</code>
+       */
+      public static final int CURRENT_VALUE = 7;
 
 
       @java.lang.Override
@@ -7259,6 +7278,7 @@ public final class SignalServiceProtos {
           case 4: return REACTIONS;
           case 5: return CDN_SELECTOR_ATTACHMENTS;
           case 6: return MENTIONS;
+          case 7: return PAYMENTS;
           default: return null;
         }
       }
@@ -17645,6 +17665,2400 @@ public final class SignalServiceProtos {
       }
     }
 
+    public interface PaymentOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:signalservice.DataMessage.Payment)
+        com.google.protobuf.MessageLiteOrBuilder {
+
+      /**
+       * <code>optional .signalservice.DataMessage.Payment.Notification notification = 1;</code>
+       * @return Whether the notification field is set.
+       */
+      boolean hasNotification();
+      /**
+       * <code>optional .signalservice.DataMessage.Payment.Notification notification = 1;</code>
+       * @return The notification.
+       */
+      su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification getNotification();
+
+      public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.ItemCase getItemCase();
+    }
+    /**
+     * Protobuf type {@code signalservice.DataMessage.Payment}
+     */
+    public  static final class Payment extends
+        com.google.protobuf.GeneratedMessageLite<
+            Payment, Payment.Builder> implements
+        // @@protoc_insertion_point(message_implements:signalservice.DataMessage.Payment)
+        PaymentOrBuilder {
+      private Payment() {
+      }
+      public interface AddressOrBuilder extends
+          // @@protoc_insertion_point(interface_extends:signalservice.DataMessage.Payment.Address)
+          com.google.protobuf.MessageLiteOrBuilder {
+
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Address.MobileCoin mobileCoin = 1;</code>
+         * @return Whether the mobileCoin field is set.
+         */
+        boolean hasMobileCoin();
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Address.MobileCoin mobileCoin = 1;</code>
+         * @return The mobileCoin.
+         */
+        su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin getMobileCoin();
+
+        public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.AddressCase getAddressCase();
+      }
+      /**
+       * Protobuf type {@code signalservice.DataMessage.Payment.Address}
+       */
+      public  static final class Address extends
+          com.google.protobuf.GeneratedMessageLite<
+              Address, Address.Builder> implements
+          // @@protoc_insertion_point(message_implements:signalservice.DataMessage.Payment.Address)
+          AddressOrBuilder {
+        private Address() {
+        }
+        public interface MobileCoinOrBuilder extends
+            // @@protoc_insertion_point(interface_extends:signalservice.DataMessage.Payment.Address.MobileCoin)
+            com.google.protobuf.MessageLiteOrBuilder {
+
+          /**
+           * <code>optional bytes address = 1;</code>
+           * @return Whether the address field is set.
+           */
+          boolean hasAddress();
+          /**
+           * <code>optional bytes address = 1;</code>
+           * @return The address.
+           */
+          com.google.protobuf.ByteString getAddress();
+        }
+        /**
+         * Protobuf type {@code signalservice.DataMessage.Payment.Address.MobileCoin}
+         */
+        public  static final class MobileCoin extends
+            com.google.protobuf.GeneratedMessageLite<
+                MobileCoin, MobileCoin.Builder> implements
+            // @@protoc_insertion_point(message_implements:signalservice.DataMessage.Payment.Address.MobileCoin)
+            MobileCoinOrBuilder {
+          private MobileCoin() {
+            address_ = com.google.protobuf.ByteString.EMPTY;
+          }
+          private int bitField0_;
+          public static final int ADDRESS_FIELD_NUMBER = 1;
+          private com.google.protobuf.ByteString address_;
+          /**
+           * <code>optional bytes address = 1;</code>
+           * @return Whether the address field is set.
+           */
+          @java.lang.Override
+          public boolean hasAddress() {
+            return ((bitField0_ & 0x00000001) != 0);
+          }
+          /**
+           * <code>optional bytes address = 1;</code>
+           * @return The address.
+           */
+          @java.lang.Override
+          public com.google.protobuf.ByteString getAddress() {
+            return address_;
+          }
+          /**
+           * <code>optional bytes address = 1;</code>
+           * @param value The address to set.
+           */
+          private void setAddress(com.google.protobuf.ByteString value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+            address_ = value;
+          }
+          /**
+           * <code>optional bytes address = 1;</code>
+           */
+          private void clearAddress() {
+            bitField0_ = (bitField0_ & ~0x00000001);
+            address_ = getDefaultInstance().getAddress();
+          }
+
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin parseFrom(
+              java.nio.ByteBuffer data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin parseFrom(
+              java.nio.ByteBuffer data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin parseFrom(
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin parseFrom(
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin parseFrom(byte[] data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin parseFrom(
+              byte[] data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin parseFrom(java.io.InputStream input)
+              throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, input);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin parseFrom(
+              java.io.InputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, input, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin parseDelimitedFrom(java.io.InputStream input)
+              throws java.io.IOException {
+            return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin parseDelimitedFrom(
+              java.io.InputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin parseFrom(
+              com.google.protobuf.CodedInputStream input)
+              throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, input);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin parseFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, input, extensionRegistry);
+          }
+
+          public static Builder newBuilder() {
+            return (Builder) DEFAULT_INSTANCE.createBuilder();
+          }
+          public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin prototype) {
+            return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+          }
+
+          /**
+           * Protobuf type {@code signalservice.DataMessage.Payment.Address.MobileCoin}
+           */
+          public static final class Builder extends
+              com.google.protobuf.GeneratedMessageLite.Builder<
+                su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin, Builder> implements
+              // @@protoc_insertion_point(builder_implements:signalservice.DataMessage.Payment.Address.MobileCoin)
+              su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoinOrBuilder {
+            // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin.newBuilder()
+            private Builder() {
+              super(DEFAULT_INSTANCE);
+            }
+
+
+            /**
+             * <code>optional bytes address = 1;</code>
+             * @return Whether the address field is set.
+             */
+            @java.lang.Override
+            public boolean hasAddress() {
+              return instance.hasAddress();
+            }
+            /**
+             * <code>optional bytes address = 1;</code>
+             * @return The address.
+             */
+            @java.lang.Override
+            public com.google.protobuf.ByteString getAddress() {
+              return instance.getAddress();
+            }
+            /**
+             * <code>optional bytes address = 1;</code>
+             * @param value The address to set.
+             * @return This builder for chaining.
+             */
+            public Builder setAddress(com.google.protobuf.ByteString value) {
+              copyOnWrite();
+              instance.setAddress(value);
+              return this;
+            }
+            /**
+             * <code>optional bytes address = 1;</code>
+             * @return This builder for chaining.
+             */
+            public Builder clearAddress() {
+              copyOnWrite();
+              instance.clearAddress();
+              return this;
+            }
+
+            // @@protoc_insertion_point(builder_scope:signalservice.DataMessage.Payment.Address.MobileCoin)
+          }
+          @java.lang.Override
+          @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+          protected final java.lang.Object dynamicMethod(
+              com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+              java.lang.Object arg0, java.lang.Object arg1) {
+            switch (method) {
+              case NEW_MUTABLE_INSTANCE: {
+                return new su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin();
+              }
+              case NEW_BUILDER: {
+                return new Builder();
+              }
+              case BUILD_MESSAGE_INFO: {
+                  java.lang.Object[] objects = new java.lang.Object[] {
+                    "bitField0_",
+                    "address_",
+                  };
+                  java.lang.String info =
+                      "\u0001\u0001\u0000\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0001\n\u0000";
+                  return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+              }
+              // fall through
+              case GET_DEFAULT_INSTANCE: {
+                return DEFAULT_INSTANCE;
+              }
+              case GET_PARSER: {
+                com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin> parser = PARSER;
+                if (parser == null) {
+                  synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin.class) {
+                    parser = PARSER;
+                    if (parser == null) {
+                      parser =
+                          new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin>(
+                              DEFAULT_INSTANCE);
+                      PARSER = parser;
+                    }
+                  }
+                }
+                return parser;
+            }
+            case GET_MEMOIZED_IS_INITIALIZED: {
+              return (byte) 1;
+            }
+            case SET_MEMOIZED_IS_INITIALIZED: {
+              return null;
+            }
+            }
+            throw new UnsupportedOperationException();
+          }
+
+
+          // @@protoc_insertion_point(class_scope:signalservice.DataMessage.Payment.Address.MobileCoin)
+          private static final su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin DEFAULT_INSTANCE;
+          static {
+            MobileCoin defaultInstance = new MobileCoin();
+            // New instances are implicitly immutable so no need to make
+            // immutable.
+            DEFAULT_INSTANCE = defaultInstance;
+            com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+              MobileCoin.class, defaultInstance);
+          }
+
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin getDefaultInstance() {
+            return DEFAULT_INSTANCE;
+          }
+
+          private static volatile com.google.protobuf.Parser<MobileCoin> PARSER;
+
+          public static com.google.protobuf.Parser<MobileCoin> parser() {
+            return DEFAULT_INSTANCE.getParserForType();
+          }
+        }
+
+        private int bitField0_;
+        private int addressCase_ = 0;
+        private java.lang.Object address_;
+        public enum AddressCase {
+          MOBILECOIN(1),
+          ADDRESS_NOT_SET(0);
+          private final int value;
+          private AddressCase(int value) {
+            this.value = value;
+          }
+          /**
+           * @deprecated Use {@link #forNumber(int)} instead.
+           */
+          @java.lang.Deprecated
+          public static AddressCase valueOf(int value) {
+            return forNumber(value);
+          }
+
+          public static AddressCase forNumber(int value) {
+            switch (value) {
+              case 1: return MOBILECOIN;
+              case 0: return ADDRESS_NOT_SET;
+              default: return null;
+            }
+          }
+          public int getNumber() {
+            return this.value;
+          }
+        };
+
+        @java.lang.Override
+        public AddressCase
+        getAddressCase() {
+          return AddressCase.forNumber(
+              addressCase_);
+        }
+
+        private void clearAddress() {
+          addressCase_ = 0;
+          address_ = null;
+        }
+
+        public static final int MOBILECOIN_FIELD_NUMBER = 1;
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Address.MobileCoin mobileCoin = 1;</code>
+         */
+        @java.lang.Override
+        public boolean hasMobileCoin() {
+          return addressCase_ == 1;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Address.MobileCoin mobileCoin = 1;</code>
+         */
+        @java.lang.Override
+        public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin getMobileCoin() {
+          if (addressCase_ == 1) {
+             return (su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin) address_;
+          }
+          return su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin.getDefaultInstance();
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Address.MobileCoin mobileCoin = 1;</code>
+         */
+        private void setMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          address_ = value;
+          addressCase_ = 1;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Address.MobileCoin mobileCoin = 1;</code>
+         */
+        private void setMobileCoin(
+            su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin.Builder builderForValue) {
+          address_ = builderForValue.build();
+          addressCase_ = 1;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Address.MobileCoin mobileCoin = 1;</code>
+         */
+        private void mergeMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          if (addressCase_ == 1 &&
+              address_ != su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin.getDefaultInstance()) {
+            address_ = su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin.newBuilder((su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin) address_)
+                .mergeFrom(value).buildPartial();
+          } else {
+            address_ = value;
+          }
+          addressCase_ = 1;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Address.MobileCoin mobileCoin = 1;</code>
+         */
+        private void clearMobileCoin() {
+          if (addressCase_ == 1) {
+            addressCase_ = 0;
+            address_ = null;
+          }
+        }
+
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+
+        public static Builder newBuilder() {
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
+        }
+        public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address prototype) {
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+        }
+
+        /**
+         * Protobuf type {@code signalservice.DataMessage.Payment.Address}
+         */
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address, Builder> implements
+            // @@protoc_insertion_point(builder_implements:signalservice.DataMessage.Payment.Address)
+            su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.AddressOrBuilder {
+          // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.newBuilder()
+          private Builder() {
+            super(DEFAULT_INSTANCE);
+          }
+
+          @java.lang.Override
+          public AddressCase
+              getAddressCase() {
+            return instance.getAddressCase();
+          }
+
+          public Builder clearAddress() {
+            copyOnWrite();
+            instance.clearAddress();
+            return this;
+          }
+
+
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Address.MobileCoin mobileCoin = 1;</code>
+           */
+          @java.lang.Override
+          public boolean hasMobileCoin() {
+            return instance.hasMobileCoin();
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Address.MobileCoin mobileCoin = 1;</code>
+           */
+          @java.lang.Override
+          public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin getMobileCoin() {
+            return instance.getMobileCoin();
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Address.MobileCoin mobileCoin = 1;</code>
+           */
+          public Builder setMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin value) {
+            copyOnWrite();
+            instance.setMobileCoin(value);
+            return this;
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Address.MobileCoin mobileCoin = 1;</code>
+           */
+          public Builder setMobileCoin(
+              su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin.Builder builderForValue) {
+            copyOnWrite();
+            instance.setMobileCoin(builderForValue);
+            return this;
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Address.MobileCoin mobileCoin = 1;</code>
+           */
+          public Builder mergeMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin value) {
+            copyOnWrite();
+            instance.mergeMobileCoin(value);
+            return this;
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Address.MobileCoin mobileCoin = 1;</code>
+           */
+          public Builder clearMobileCoin() {
+            copyOnWrite();
+            instance.clearMobileCoin();
+            return this;
+          }
+
+          // @@protoc_insertion_point(builder_scope:signalservice.DataMessage.Payment.Address)
+        }
+        @java.lang.Override
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        protected final java.lang.Object dynamicMethod(
+            com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+            java.lang.Object arg0, java.lang.Object arg1) {
+          switch (method) {
+            case NEW_MUTABLE_INSTANCE: {
+              return new su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address();
+            }
+            case NEW_BUILDER: {
+              return new Builder();
+            }
+            case BUILD_MESSAGE_INFO: {
+                java.lang.Object[] objects = new java.lang.Object[] {
+                  "address_",
+                  "addressCase_",
+                  "bitField0_",
+                  su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.MobileCoin.class,
+                };
+                java.lang.String info =
+                    "\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0001<\u0000";
+                return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+            }
+            // fall through
+            case GET_DEFAULT_INSTANCE: {
+              return DEFAULT_INSTANCE;
+            }
+            case GET_PARSER: {
+              com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address> parser = PARSER;
+              if (parser == null) {
+                synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address.class) {
+                  parser = PARSER;
+                  if (parser == null) {
+                    parser =
+                        new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address>(
+                            DEFAULT_INSTANCE);
+                    PARSER = parser;
+                  }
+                }
+              }
+              return parser;
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return (byte) 1;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            return null;
+          }
+          }
+          throw new UnsupportedOperationException();
+        }
+
+
+        // @@protoc_insertion_point(class_scope:signalservice.DataMessage.Payment.Address)
+        private static final su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address DEFAULT_INSTANCE;
+        static {
+          Address defaultInstance = new Address();
+          // New instances are implicitly immutable so no need to make
+          // immutable.
+          DEFAULT_INSTANCE = defaultInstance;
+          com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+            Address.class, defaultInstance);
+        }
+
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Address getDefaultInstance() {
+          return DEFAULT_INSTANCE;
+        }
+
+        private static volatile com.google.protobuf.Parser<Address> PARSER;
+
+        public static com.google.protobuf.Parser<Address> parser() {
+          return DEFAULT_INSTANCE.getParserForType();
+        }
+      }
+
+      public interface AmountOrBuilder extends
+          // @@protoc_insertion_point(interface_extends:signalservice.DataMessage.Payment.Amount)
+          com.google.protobuf.MessageLiteOrBuilder {
+
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Amount.MobileCoin mobileCoin = 1;</code>
+         * @return Whether the mobileCoin field is set.
+         */
+        boolean hasMobileCoin();
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Amount.MobileCoin mobileCoin = 1;</code>
+         * @return The mobileCoin.
+         */
+        su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin getMobileCoin();
+
+        public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.AmountCase getAmountCase();
+      }
+      /**
+       * Protobuf type {@code signalservice.DataMessage.Payment.Amount}
+       */
+      public  static final class Amount extends
+          com.google.protobuf.GeneratedMessageLite<
+              Amount, Amount.Builder> implements
+          // @@protoc_insertion_point(message_implements:signalservice.DataMessage.Payment.Amount)
+          AmountOrBuilder {
+        private Amount() {
+        }
+        public interface MobileCoinOrBuilder extends
+            // @@protoc_insertion_point(interface_extends:signalservice.DataMessage.Payment.Amount.MobileCoin)
+            com.google.protobuf.MessageLiteOrBuilder {
+
+          /**
+           * <code>optional uint64 picoMob = 1;</code>
+           * @return Whether the picoMob field is set.
+           */
+          boolean hasPicoMob();
+          /**
+           * <code>optional uint64 picoMob = 1;</code>
+           * @return The picoMob.
+           */
+          long getPicoMob();
+        }
+        /**
+         * Protobuf type {@code signalservice.DataMessage.Payment.Amount.MobileCoin}
+         */
+        public  static final class MobileCoin extends
+            com.google.protobuf.GeneratedMessageLite<
+                MobileCoin, MobileCoin.Builder> implements
+            // @@protoc_insertion_point(message_implements:signalservice.DataMessage.Payment.Amount.MobileCoin)
+            MobileCoinOrBuilder {
+          private MobileCoin() {
+          }
+          private int bitField0_;
+          public static final int PICOMOB_FIELD_NUMBER = 1;
+          private long picoMob_;
+          /**
+           * <code>optional uint64 picoMob = 1;</code>
+           * @return Whether the picoMob field is set.
+           */
+          @java.lang.Override
+          public boolean hasPicoMob() {
+            return ((bitField0_ & 0x00000001) != 0);
+          }
+          /**
+           * <code>optional uint64 picoMob = 1;</code>
+           * @return The picoMob.
+           */
+          @java.lang.Override
+          public long getPicoMob() {
+            return picoMob_;
+          }
+          /**
+           * <code>optional uint64 picoMob = 1;</code>
+           * @param value The picoMob to set.
+           */
+          private void setPicoMob(long value) {
+            bitField0_ |= 0x00000001;
+            picoMob_ = value;
+          }
+          /**
+           * <code>optional uint64 picoMob = 1;</code>
+           */
+          private void clearPicoMob() {
+            bitField0_ = (bitField0_ & ~0x00000001);
+            picoMob_ = 0L;
+          }
+
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin parseFrom(
+              java.nio.ByteBuffer data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin parseFrom(
+              java.nio.ByteBuffer data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin parseFrom(
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin parseFrom(
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin parseFrom(byte[] data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin parseFrom(
+              byte[] data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin parseFrom(java.io.InputStream input)
+              throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, input);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin parseFrom(
+              java.io.InputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, input, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin parseDelimitedFrom(java.io.InputStream input)
+              throws java.io.IOException {
+            return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin parseDelimitedFrom(
+              java.io.InputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin parseFrom(
+              com.google.protobuf.CodedInputStream input)
+              throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, input);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin parseFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, input, extensionRegistry);
+          }
+
+          public static Builder newBuilder() {
+            return (Builder) DEFAULT_INSTANCE.createBuilder();
+          }
+          public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin prototype) {
+            return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+          }
+
+          /**
+           * Protobuf type {@code signalservice.DataMessage.Payment.Amount.MobileCoin}
+           */
+          public static final class Builder extends
+              com.google.protobuf.GeneratedMessageLite.Builder<
+                su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin, Builder> implements
+              // @@protoc_insertion_point(builder_implements:signalservice.DataMessage.Payment.Amount.MobileCoin)
+              su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoinOrBuilder {
+            // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin.newBuilder()
+            private Builder() {
+              super(DEFAULT_INSTANCE);
+            }
+
+
+            /**
+             * <code>optional uint64 picoMob = 1;</code>
+             * @return Whether the picoMob field is set.
+             */
+            @java.lang.Override
+            public boolean hasPicoMob() {
+              return instance.hasPicoMob();
+            }
+            /**
+             * <code>optional uint64 picoMob = 1;</code>
+             * @return The picoMob.
+             */
+            @java.lang.Override
+            public long getPicoMob() {
+              return instance.getPicoMob();
+            }
+            /**
+             * <code>optional uint64 picoMob = 1;</code>
+             * @param value The picoMob to set.
+             * @return This builder for chaining.
+             */
+            public Builder setPicoMob(long value) {
+              copyOnWrite();
+              instance.setPicoMob(value);
+              return this;
+            }
+            /**
+             * <code>optional uint64 picoMob = 1;</code>
+             * @return This builder for chaining.
+             */
+            public Builder clearPicoMob() {
+              copyOnWrite();
+              instance.clearPicoMob();
+              return this;
+            }
+
+            // @@protoc_insertion_point(builder_scope:signalservice.DataMessage.Payment.Amount.MobileCoin)
+          }
+          @java.lang.Override
+          @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+          protected final java.lang.Object dynamicMethod(
+              com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+              java.lang.Object arg0, java.lang.Object arg1) {
+            switch (method) {
+              case NEW_MUTABLE_INSTANCE: {
+                return new su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin();
+              }
+              case NEW_BUILDER: {
+                return new Builder();
+              }
+              case BUILD_MESSAGE_INFO: {
+                  java.lang.Object[] objects = new java.lang.Object[] {
+                    "bitField0_",
+                    "picoMob_",
+                  };
+                  java.lang.String info =
+                      "\u0001\u0001\u0000\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0001\u0003\u0000";
+                  return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+              }
+              // fall through
+              case GET_DEFAULT_INSTANCE: {
+                return DEFAULT_INSTANCE;
+              }
+              case GET_PARSER: {
+                com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin> parser = PARSER;
+                if (parser == null) {
+                  synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin.class) {
+                    parser = PARSER;
+                    if (parser == null) {
+                      parser =
+                          new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin>(
+                              DEFAULT_INSTANCE);
+                      PARSER = parser;
+                    }
+                  }
+                }
+                return parser;
+            }
+            case GET_MEMOIZED_IS_INITIALIZED: {
+              return (byte) 1;
+            }
+            case SET_MEMOIZED_IS_INITIALIZED: {
+              return null;
+            }
+            }
+            throw new UnsupportedOperationException();
+          }
+
+
+          // @@protoc_insertion_point(class_scope:signalservice.DataMessage.Payment.Amount.MobileCoin)
+          private static final su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin DEFAULT_INSTANCE;
+          static {
+            MobileCoin defaultInstance = new MobileCoin();
+            // New instances are implicitly immutable so no need to make
+            // immutable.
+            DEFAULT_INSTANCE = defaultInstance;
+            com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+              MobileCoin.class, defaultInstance);
+          }
+
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin getDefaultInstance() {
+            return DEFAULT_INSTANCE;
+          }
+
+          private static volatile com.google.protobuf.Parser<MobileCoin> PARSER;
+
+          public static com.google.protobuf.Parser<MobileCoin> parser() {
+            return DEFAULT_INSTANCE.getParserForType();
+          }
+        }
+
+        private int bitField0_;
+        private int amountCase_ = 0;
+        private java.lang.Object amount_;
+        public enum AmountCase {
+          MOBILECOIN(1),
+          AMOUNT_NOT_SET(0);
+          private final int value;
+          private AmountCase(int value) {
+            this.value = value;
+          }
+          /**
+           * @deprecated Use {@link #forNumber(int)} instead.
+           */
+          @java.lang.Deprecated
+          public static AmountCase valueOf(int value) {
+            return forNumber(value);
+          }
+
+          public static AmountCase forNumber(int value) {
+            switch (value) {
+              case 1: return MOBILECOIN;
+              case 0: return AMOUNT_NOT_SET;
+              default: return null;
+            }
+          }
+          public int getNumber() {
+            return this.value;
+          }
+        };
+
+        @java.lang.Override
+        public AmountCase
+        getAmountCase() {
+          return AmountCase.forNumber(
+              amountCase_);
+        }
+
+        private void clearAmount() {
+          amountCase_ = 0;
+          amount_ = null;
+        }
+
+        public static final int MOBILECOIN_FIELD_NUMBER = 1;
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Amount.MobileCoin mobileCoin = 1;</code>
+         */
+        @java.lang.Override
+        public boolean hasMobileCoin() {
+          return amountCase_ == 1;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Amount.MobileCoin mobileCoin = 1;</code>
+         */
+        @java.lang.Override
+        public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin getMobileCoin() {
+          if (amountCase_ == 1) {
+             return (su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin) amount_;
+          }
+          return su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin.getDefaultInstance();
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Amount.MobileCoin mobileCoin = 1;</code>
+         */
+        private void setMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          amount_ = value;
+          amountCase_ = 1;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Amount.MobileCoin mobileCoin = 1;</code>
+         */
+        private void setMobileCoin(
+            su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin.Builder builderForValue) {
+          amount_ = builderForValue.build();
+          amountCase_ = 1;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Amount.MobileCoin mobileCoin = 1;</code>
+         */
+        private void mergeMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          if (amountCase_ == 1 &&
+              amount_ != su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin.getDefaultInstance()) {
+            amount_ = su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin.newBuilder((su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin) amount_)
+                .mergeFrom(value).buildPartial();
+          } else {
+            amount_ = value;
+          }
+          amountCase_ = 1;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Amount.MobileCoin mobileCoin = 1;</code>
+         */
+        private void clearMobileCoin() {
+          if (amountCase_ == 1) {
+            amountCase_ = 0;
+            amount_ = null;
+          }
+        }
+
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+
+        public static Builder newBuilder() {
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
+        }
+        public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount prototype) {
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+        }
+
+        /**
+         * Protobuf type {@code signalservice.DataMessage.Payment.Amount}
+         */
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount, Builder> implements
+            // @@protoc_insertion_point(builder_implements:signalservice.DataMessage.Payment.Amount)
+            su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.AmountOrBuilder {
+          // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.newBuilder()
+          private Builder() {
+            super(DEFAULT_INSTANCE);
+          }
+
+          @java.lang.Override
+          public AmountCase
+              getAmountCase() {
+            return instance.getAmountCase();
+          }
+
+          public Builder clearAmount() {
+            copyOnWrite();
+            instance.clearAmount();
+            return this;
+          }
+
+
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Amount.MobileCoin mobileCoin = 1;</code>
+           */
+          @java.lang.Override
+          public boolean hasMobileCoin() {
+            return instance.hasMobileCoin();
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Amount.MobileCoin mobileCoin = 1;</code>
+           */
+          @java.lang.Override
+          public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin getMobileCoin() {
+            return instance.getMobileCoin();
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Amount.MobileCoin mobileCoin = 1;</code>
+           */
+          public Builder setMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin value) {
+            copyOnWrite();
+            instance.setMobileCoin(value);
+            return this;
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Amount.MobileCoin mobileCoin = 1;</code>
+           */
+          public Builder setMobileCoin(
+              su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin.Builder builderForValue) {
+            copyOnWrite();
+            instance.setMobileCoin(builderForValue);
+            return this;
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Amount.MobileCoin mobileCoin = 1;</code>
+           */
+          public Builder mergeMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin value) {
+            copyOnWrite();
+            instance.mergeMobileCoin(value);
+            return this;
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Amount.MobileCoin mobileCoin = 1;</code>
+           */
+          public Builder clearMobileCoin() {
+            copyOnWrite();
+            instance.clearMobileCoin();
+            return this;
+          }
+
+          // @@protoc_insertion_point(builder_scope:signalservice.DataMessage.Payment.Amount)
+        }
+        @java.lang.Override
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        protected final java.lang.Object dynamicMethod(
+            com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+            java.lang.Object arg0, java.lang.Object arg1) {
+          switch (method) {
+            case NEW_MUTABLE_INSTANCE: {
+              return new su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount();
+            }
+            case NEW_BUILDER: {
+              return new Builder();
+            }
+            case BUILD_MESSAGE_INFO: {
+                java.lang.Object[] objects = new java.lang.Object[] {
+                  "amount_",
+                  "amountCase_",
+                  "bitField0_",
+                  su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.MobileCoin.class,
+                };
+                java.lang.String info =
+                    "\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0001<\u0000";
+                return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+            }
+            // fall through
+            case GET_DEFAULT_INSTANCE: {
+              return DEFAULT_INSTANCE;
+            }
+            case GET_PARSER: {
+              com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount> parser = PARSER;
+              if (parser == null) {
+                synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount.class) {
+                  parser = PARSER;
+                  if (parser == null) {
+                    parser =
+                        new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount>(
+                            DEFAULT_INSTANCE);
+                    PARSER = parser;
+                  }
+                }
+              }
+              return parser;
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return (byte) 1;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            return null;
+          }
+          }
+          throw new UnsupportedOperationException();
+        }
+
+
+        // @@protoc_insertion_point(class_scope:signalservice.DataMessage.Payment.Amount)
+        private static final su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount DEFAULT_INSTANCE;
+        static {
+          Amount defaultInstance = new Amount();
+          // New instances are implicitly immutable so no need to make
+          // immutable.
+          DEFAULT_INSTANCE = defaultInstance;
+          com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+            Amount.class, defaultInstance);
+        }
+
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Amount getDefaultInstance() {
+          return DEFAULT_INSTANCE;
+        }
+
+        private static volatile com.google.protobuf.Parser<Amount> PARSER;
+
+        public static com.google.protobuf.Parser<Amount> parser() {
+          return DEFAULT_INSTANCE.getParserForType();
+        }
+      }
+
+      public interface NotificationOrBuilder extends
+          // @@protoc_insertion_point(interface_extends:signalservice.DataMessage.Payment.Notification)
+          com.google.protobuf.MessageLiteOrBuilder {
+
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Notification.MobileCoin mobileCoin = 1;</code>
+         * @return Whether the mobileCoin field is set.
+         */
+        boolean hasMobileCoin();
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Notification.MobileCoin mobileCoin = 1;</code>
+         * @return The mobileCoin.
+         */
+        su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin getMobileCoin();
+
+        /**
+         * <code>optional string note = 2;</code>
+         * @return Whether the note field is set.
+         */
+        boolean hasNote();
+        /**
+         * <code>optional string note = 2;</code>
+         * @return The note.
+         */
+        java.lang.String getNote();
+        /**
+         * <code>optional string note = 2;</code>
+         * @return The bytes for note.
+         */
+        com.google.protobuf.ByteString
+            getNoteBytes();
+
+        public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.TransactionCase getTransactionCase();
+      }
+      /**
+       * Protobuf type {@code signalservice.DataMessage.Payment.Notification}
+       */
+      public  static final class Notification extends
+          com.google.protobuf.GeneratedMessageLite<
+              Notification, Notification.Builder> implements
+          // @@protoc_insertion_point(message_implements:signalservice.DataMessage.Payment.Notification)
+          NotificationOrBuilder {
+        private Notification() {
+          note_ = "";
+        }
+        public interface MobileCoinOrBuilder extends
+            // @@protoc_insertion_point(interface_extends:signalservice.DataMessage.Payment.Notification.MobileCoin)
+            com.google.protobuf.MessageLiteOrBuilder {
+
+          /**
+           * <code>optional bytes receipt = 1;</code>
+           * @return Whether the receipt field is set.
+           */
+          boolean hasReceipt();
+          /**
+           * <code>optional bytes receipt = 1;</code>
+           * @return The receipt.
+           */
+          com.google.protobuf.ByteString getReceipt();
+        }
+        /**
+         * Protobuf type {@code signalservice.DataMessage.Payment.Notification.MobileCoin}
+         */
+        public  static final class MobileCoin extends
+            com.google.protobuf.GeneratedMessageLite<
+                MobileCoin, MobileCoin.Builder> implements
+            // @@protoc_insertion_point(message_implements:signalservice.DataMessage.Payment.Notification.MobileCoin)
+            MobileCoinOrBuilder {
+          private MobileCoin() {
+            receipt_ = com.google.protobuf.ByteString.EMPTY;
+          }
+          private int bitField0_;
+          public static final int RECEIPT_FIELD_NUMBER = 1;
+          private com.google.protobuf.ByteString receipt_;
+          /**
+           * <code>optional bytes receipt = 1;</code>
+           * @return Whether the receipt field is set.
+           */
+          @java.lang.Override
+          public boolean hasReceipt() {
+            return ((bitField0_ & 0x00000001) != 0);
+          }
+          /**
+           * <code>optional bytes receipt = 1;</code>
+           * @return The receipt.
+           */
+          @java.lang.Override
+          public com.google.protobuf.ByteString getReceipt() {
+            return receipt_;
+          }
+          /**
+           * <code>optional bytes receipt = 1;</code>
+           * @param value The receipt to set.
+           */
+          private void setReceipt(com.google.protobuf.ByteString value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+            receipt_ = value;
+          }
+          /**
+           * <code>optional bytes receipt = 1;</code>
+           */
+          private void clearReceipt() {
+            bitField0_ = (bitField0_ & ~0x00000001);
+            receipt_ = getDefaultInstance().getReceipt();
+          }
+
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin parseFrom(
+              java.nio.ByteBuffer data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin parseFrom(
+              java.nio.ByteBuffer data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin parseFrom(
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin parseFrom(
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin parseFrom(byte[] data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin parseFrom(
+              byte[] data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin parseFrom(java.io.InputStream input)
+              throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, input);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin parseFrom(
+              java.io.InputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, input, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin parseDelimitedFrom(java.io.InputStream input)
+              throws java.io.IOException {
+            return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin parseDelimitedFrom(
+              java.io.InputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin parseFrom(
+              com.google.protobuf.CodedInputStream input)
+              throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, input);
+          }
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin parseFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, input, extensionRegistry);
+          }
+
+          public static Builder newBuilder() {
+            return (Builder) DEFAULT_INSTANCE.createBuilder();
+          }
+          public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin prototype) {
+            return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+          }
+
+          /**
+           * Protobuf type {@code signalservice.DataMessage.Payment.Notification.MobileCoin}
+           */
+          public static final class Builder extends
+              com.google.protobuf.GeneratedMessageLite.Builder<
+                su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin, Builder> implements
+              // @@protoc_insertion_point(builder_implements:signalservice.DataMessage.Payment.Notification.MobileCoin)
+              su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoinOrBuilder {
+            // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin.newBuilder()
+            private Builder() {
+              super(DEFAULT_INSTANCE);
+            }
+
+
+            /**
+             * <code>optional bytes receipt = 1;</code>
+             * @return Whether the receipt field is set.
+             */
+            @java.lang.Override
+            public boolean hasReceipt() {
+              return instance.hasReceipt();
+            }
+            /**
+             * <code>optional bytes receipt = 1;</code>
+             * @return The receipt.
+             */
+            @java.lang.Override
+            public com.google.protobuf.ByteString getReceipt() {
+              return instance.getReceipt();
+            }
+            /**
+             * <code>optional bytes receipt = 1;</code>
+             * @param value The receipt to set.
+             * @return This builder for chaining.
+             */
+            public Builder setReceipt(com.google.protobuf.ByteString value) {
+              copyOnWrite();
+              instance.setReceipt(value);
+              return this;
+            }
+            /**
+             * <code>optional bytes receipt = 1;</code>
+             * @return This builder for chaining.
+             */
+            public Builder clearReceipt() {
+              copyOnWrite();
+              instance.clearReceipt();
+              return this;
+            }
+
+            // @@protoc_insertion_point(builder_scope:signalservice.DataMessage.Payment.Notification.MobileCoin)
+          }
+          @java.lang.Override
+          @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+          protected final java.lang.Object dynamicMethod(
+              com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+              java.lang.Object arg0, java.lang.Object arg1) {
+            switch (method) {
+              case NEW_MUTABLE_INSTANCE: {
+                return new su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin();
+              }
+              case NEW_BUILDER: {
+                return new Builder();
+              }
+              case BUILD_MESSAGE_INFO: {
+                  java.lang.Object[] objects = new java.lang.Object[] {
+                    "bitField0_",
+                    "receipt_",
+                  };
+                  java.lang.String info =
+                      "\u0001\u0001\u0000\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0001\n\u0000";
+                  return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+              }
+              // fall through
+              case GET_DEFAULT_INSTANCE: {
+                return DEFAULT_INSTANCE;
+              }
+              case GET_PARSER: {
+                com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin> parser = PARSER;
+                if (parser == null) {
+                  synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin.class) {
+                    parser = PARSER;
+                    if (parser == null) {
+                      parser =
+                          new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin>(
+                              DEFAULT_INSTANCE);
+                      PARSER = parser;
+                    }
+                  }
+                }
+                return parser;
+            }
+            case GET_MEMOIZED_IS_INITIALIZED: {
+              return (byte) 1;
+            }
+            case SET_MEMOIZED_IS_INITIALIZED: {
+              return null;
+            }
+            }
+            throw new UnsupportedOperationException();
+          }
+
+
+          // @@protoc_insertion_point(class_scope:signalservice.DataMessage.Payment.Notification.MobileCoin)
+          private static final su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin DEFAULT_INSTANCE;
+          static {
+            MobileCoin defaultInstance = new MobileCoin();
+            // New instances are implicitly immutable so no need to make
+            // immutable.
+            DEFAULT_INSTANCE = defaultInstance;
+            com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+              MobileCoin.class, defaultInstance);
+          }
+
+          public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin getDefaultInstance() {
+            return DEFAULT_INSTANCE;
+          }
+
+          private static volatile com.google.protobuf.Parser<MobileCoin> PARSER;
+
+          public static com.google.protobuf.Parser<MobileCoin> parser() {
+            return DEFAULT_INSTANCE.getParserForType();
+          }
+        }
+
+        private int bitField0_;
+        private int transactionCase_ = 0;
+        private java.lang.Object transaction_;
+        public enum TransactionCase {
+          MOBILECOIN(1),
+          TRANSACTION_NOT_SET(0);
+          private final int value;
+          private TransactionCase(int value) {
+            this.value = value;
+          }
+          /**
+           * @deprecated Use {@link #forNumber(int)} instead.
+           */
+          @java.lang.Deprecated
+          public static TransactionCase valueOf(int value) {
+            return forNumber(value);
+          }
+
+          public static TransactionCase forNumber(int value) {
+            switch (value) {
+              case 1: return MOBILECOIN;
+              case 0: return TRANSACTION_NOT_SET;
+              default: return null;
+            }
+          }
+          public int getNumber() {
+            return this.value;
+          }
+        };
+
+        @java.lang.Override
+        public TransactionCase
+        getTransactionCase() {
+          return TransactionCase.forNumber(
+              transactionCase_);
+        }
+
+        private void clearTransaction() {
+          transactionCase_ = 0;
+          transaction_ = null;
+        }
+
+        public static final int MOBILECOIN_FIELD_NUMBER = 1;
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Notification.MobileCoin mobileCoin = 1;</code>
+         */
+        @java.lang.Override
+        public boolean hasMobileCoin() {
+          return transactionCase_ == 1;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Notification.MobileCoin mobileCoin = 1;</code>
+         */
+        @java.lang.Override
+        public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin getMobileCoin() {
+          if (transactionCase_ == 1) {
+             return (su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin) transaction_;
+          }
+          return su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin.getDefaultInstance();
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Notification.MobileCoin mobileCoin = 1;</code>
+         */
+        private void setMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          transaction_ = value;
+          transactionCase_ = 1;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Notification.MobileCoin mobileCoin = 1;</code>
+         */
+        private void setMobileCoin(
+            su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin.Builder builderForValue) {
+          transaction_ = builderForValue.build();
+          transactionCase_ = 1;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Notification.MobileCoin mobileCoin = 1;</code>
+         */
+        private void mergeMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          if (transactionCase_ == 1 &&
+              transaction_ != su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin.getDefaultInstance()) {
+            transaction_ = su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin.newBuilder((su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin) transaction_)
+                .mergeFrom(value).buildPartial();
+          } else {
+            transaction_ = value;
+          }
+          transactionCase_ = 1;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Notification.MobileCoin mobileCoin = 1;</code>
+         */
+        private void clearMobileCoin() {
+          if (transactionCase_ == 1) {
+            transactionCase_ = 0;
+            transaction_ = null;
+          }
+        }
+
+        public static final int NOTE_FIELD_NUMBER = 2;
+        private java.lang.String note_;
+        /**
+         * <code>optional string note = 2;</code>
+         * @return Whether the note field is set.
+         */
+        @java.lang.Override
+        public boolean hasNote() {
+          return ((bitField0_ & 0x00000002) != 0);
+        }
+        /**
+         * <code>optional string note = 2;</code>
+         * @return The note.
+         */
+        @java.lang.Override
+        public java.lang.String getNote() {
+          return note_;
+        }
+        /**
+         * <code>optional string note = 2;</code>
+         * @return The bytes for note.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getNoteBytes() {
+          return com.google.protobuf.ByteString.copyFromUtf8(note_);
+        }
+        /**
+         * <code>optional string note = 2;</code>
+         * @param value The note to set.
+         */
+        private void setNote(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+          note_ = value;
+        }
+        /**
+         * <code>optional string note = 2;</code>
+         */
+        private void clearNote() {
+          bitField0_ = (bitField0_ & ~0x00000002);
+          note_ = getDefaultInstance().getNote();
+        }
+        /**
+         * <code>optional string note = 2;</code>
+         * @param value The bytes for note to set.
+         */
+        private void setNoteBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+          note_ = value.toStringUtf8();
+        }
+
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+
+        public static Builder newBuilder() {
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
+        }
+        public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification prototype) {
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+        }
+
+        /**
+         * Protobuf type {@code signalservice.DataMessage.Payment.Notification}
+         */
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification, Builder> implements
+            // @@protoc_insertion_point(builder_implements:signalservice.DataMessage.Payment.Notification)
+            su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.NotificationOrBuilder {
+          // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.newBuilder()
+          private Builder() {
+            super(DEFAULT_INSTANCE);
+          }
+
+          @java.lang.Override
+          public TransactionCase
+              getTransactionCase() {
+            return instance.getTransactionCase();
+          }
+
+          public Builder clearTransaction() {
+            copyOnWrite();
+            instance.clearTransaction();
+            return this;
+          }
+
+
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Notification.MobileCoin mobileCoin = 1;</code>
+           */
+          @java.lang.Override
+          public boolean hasMobileCoin() {
+            return instance.hasMobileCoin();
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Notification.MobileCoin mobileCoin = 1;</code>
+           */
+          @java.lang.Override
+          public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin getMobileCoin() {
+            return instance.getMobileCoin();
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Notification.MobileCoin mobileCoin = 1;</code>
+           */
+          public Builder setMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin value) {
+            copyOnWrite();
+            instance.setMobileCoin(value);
+            return this;
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Notification.MobileCoin mobileCoin = 1;</code>
+           */
+          public Builder setMobileCoin(
+              su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin.Builder builderForValue) {
+            copyOnWrite();
+            instance.setMobileCoin(builderForValue);
+            return this;
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Notification.MobileCoin mobileCoin = 1;</code>
+           */
+          public Builder mergeMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin value) {
+            copyOnWrite();
+            instance.mergeMobileCoin(value);
+            return this;
+          }
+          /**
+           * <code>optional .signalservice.DataMessage.Payment.Notification.MobileCoin mobileCoin = 1;</code>
+           */
+          public Builder clearMobileCoin() {
+            copyOnWrite();
+            instance.clearMobileCoin();
+            return this;
+          }
+
+          /**
+           * <code>optional string note = 2;</code>
+           * @return Whether the note field is set.
+           */
+          @java.lang.Override
+          public boolean hasNote() {
+            return instance.hasNote();
+          }
+          /**
+           * <code>optional string note = 2;</code>
+           * @return The note.
+           */
+          @java.lang.Override
+          public java.lang.String getNote() {
+            return instance.getNote();
+          }
+          /**
+           * <code>optional string note = 2;</code>
+           * @return The bytes for note.
+           */
+          @java.lang.Override
+          public com.google.protobuf.ByteString
+              getNoteBytes() {
+            return instance.getNoteBytes();
+          }
+          /**
+           * <code>optional string note = 2;</code>
+           * @param value The note to set.
+           * @return This builder for chaining.
+           */
+          public Builder setNote(
+              java.lang.String value) {
+            copyOnWrite();
+            instance.setNote(value);
+            return this;
+          }
+          /**
+           * <code>optional string note = 2;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearNote() {
+            copyOnWrite();
+            instance.clearNote();
+            return this;
+          }
+          /**
+           * <code>optional string note = 2;</code>
+           * @param value The bytes for note to set.
+           * @return This builder for chaining.
+           */
+          public Builder setNoteBytes(
+              com.google.protobuf.ByteString value) {
+            copyOnWrite();
+            instance.setNoteBytes(value);
+            return this;
+          }
+
+          // @@protoc_insertion_point(builder_scope:signalservice.DataMessage.Payment.Notification)
+        }
+        @java.lang.Override
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        protected final java.lang.Object dynamicMethod(
+            com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+            java.lang.Object arg0, java.lang.Object arg1) {
+          switch (method) {
+            case NEW_MUTABLE_INSTANCE: {
+              return new su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification();
+            }
+            case NEW_BUILDER: {
+              return new Builder();
+            }
+            case BUILD_MESSAGE_INFO: {
+                java.lang.Object[] objects = new java.lang.Object[] {
+                  "transaction_",
+                  "transactionCase_",
+                  "bitField0_",
+                  su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.MobileCoin.class,
+                  "note_",
+                };
+                java.lang.String info =
+                    "\u0001\u0002\u0001\u0001\u0001\u0002\u0002\u0000\u0000\u0000\u0001<\u0000\u0002\b" +
+                    "\u0001";
+                return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+            }
+            // fall through
+            case GET_DEFAULT_INSTANCE: {
+              return DEFAULT_INSTANCE;
+            }
+            case GET_PARSER: {
+              com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification> parser = PARSER;
+              if (parser == null) {
+                synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.class) {
+                  parser = PARSER;
+                  if (parser == null) {
+                    parser =
+                        new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification>(
+                            DEFAULT_INSTANCE);
+                    PARSER = parser;
+                  }
+                }
+              }
+              return parser;
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return (byte) 1;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            return null;
+          }
+          }
+          throw new UnsupportedOperationException();
+        }
+
+
+        // @@protoc_insertion_point(class_scope:signalservice.DataMessage.Payment.Notification)
+        private static final su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification DEFAULT_INSTANCE;
+        static {
+          Notification defaultInstance = new Notification();
+          // New instances are implicitly immutable so no need to make
+          // immutable.
+          DEFAULT_INSTANCE = defaultInstance;
+          com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+            Notification.class, defaultInstance);
+        }
+
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification getDefaultInstance() {
+          return DEFAULT_INSTANCE;
+        }
+
+        private static volatile com.google.protobuf.Parser<Notification> PARSER;
+
+        public static com.google.protobuf.Parser<Notification> parser() {
+          return DEFAULT_INSTANCE.getParserForType();
+        }
+      }
+
+      private int bitField0_;
+      private int itemCase_ = 0;
+      private java.lang.Object item_;
+      public enum ItemCase {
+        NOTIFICATION(1),
+        ITEM_NOT_SET(0);
+        private final int value;
+        private ItemCase(int value) {
+          this.value = value;
+        }
+        /**
+         * @deprecated Use {@link #forNumber(int)} instead.
+         */
+        @java.lang.Deprecated
+        public static ItemCase valueOf(int value) {
+          return forNumber(value);
+        }
+
+        public static ItemCase forNumber(int value) {
+          switch (value) {
+            case 1: return NOTIFICATION;
+            case 0: return ITEM_NOT_SET;
+            default: return null;
+          }
+        }
+        public int getNumber() {
+          return this.value;
+        }
+      };
+
+      @java.lang.Override
+      public ItemCase
+      getItemCase() {
+        return ItemCase.forNumber(
+            itemCase_);
+      }
+
+      private void clearItem() {
+        itemCase_ = 0;
+        item_ = null;
+      }
+
+      public static final int NOTIFICATION_FIELD_NUMBER = 1;
+      /**
+       * <code>optional .signalservice.DataMessage.Payment.Notification notification = 1;</code>
+       */
+      @java.lang.Override
+      public boolean hasNotification() {
+        return itemCase_ == 1;
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.Payment.Notification notification = 1;</code>
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification getNotification() {
+        if (itemCase_ == 1) {
+           return (su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification) item_;
+        }
+        return su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.getDefaultInstance();
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.Payment.Notification notification = 1;</code>
+       */
+      private void setNotification(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        item_ = value;
+        itemCase_ = 1;
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.Payment.Notification notification = 1;</code>
+       */
+      private void setNotification(
+          su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.Builder builderForValue) {
+        item_ = builderForValue.build();
+        itemCase_ = 1;
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.Payment.Notification notification = 1;</code>
+       */
+      private void mergeNotification(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        if (itemCase_ == 1 &&
+            item_ != su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.getDefaultInstance()) {
+          item_ = su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.newBuilder((su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification) item_)
+              .mergeFrom(value).buildPartial();
+        } else {
+          item_ = value;
+        }
+        itemCase_ = 1;
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.Payment.Notification notification = 1;</code>
+       */
+      private void clearNotification() {
+        if (itemCase_ == 1) {
+          itemCase_ = 0;
+          item_ = null;
+        }
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+
+      public static Builder newBuilder() {
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
+      }
+      public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment prototype) {
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+      }
+
+      /**
+       * Protobuf type {@code signalservice.DataMessage.Payment}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageLite.Builder<
+            su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment, Builder> implements
+          // @@protoc_insertion_point(builder_implements:signalservice.DataMessage.Payment)
+          su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.PaymentOrBuilder {
+        // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.newBuilder()
+        private Builder() {
+          super(DEFAULT_INSTANCE);
+        }
+
+        @java.lang.Override
+        public ItemCase
+            getItemCase() {
+          return instance.getItemCase();
+        }
+
+        public Builder clearItem() {
+          copyOnWrite();
+          instance.clearItem();
+          return this;
+        }
+
+
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Notification notification = 1;</code>
+         */
+        @java.lang.Override
+        public boolean hasNotification() {
+          return instance.hasNotification();
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Notification notification = 1;</code>
+         */
+        @java.lang.Override
+        public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification getNotification() {
+          return instance.getNotification();
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Notification notification = 1;</code>
+         */
+        public Builder setNotification(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification value) {
+          copyOnWrite();
+          instance.setNotification(value);
+          return this;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Notification notification = 1;</code>
+         */
+        public Builder setNotification(
+            su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.Builder builderForValue) {
+          copyOnWrite();
+          instance.setNotification(builderForValue);
+          return this;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Notification notification = 1;</code>
+         */
+        public Builder mergeNotification(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification value) {
+          copyOnWrite();
+          instance.mergeNotification(value);
+          return this;
+        }
+        /**
+         * <code>optional .signalservice.DataMessage.Payment.Notification notification = 1;</code>
+         */
+        public Builder clearNotification() {
+          copyOnWrite();
+          instance.clearNotification();
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:signalservice.DataMessage.Payment)
+      }
+      @java.lang.Override
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      protected final java.lang.Object dynamicMethod(
+          com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+          java.lang.Object arg0, java.lang.Object arg1) {
+        switch (method) {
+          case NEW_MUTABLE_INSTANCE: {
+            return new su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment();
+          }
+          case NEW_BUILDER: {
+            return new Builder();
+          }
+          case BUILD_MESSAGE_INFO: {
+              java.lang.Object[] objects = new java.lang.Object[] {
+                "item_",
+                "itemCase_",
+                "bitField0_",
+                su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Notification.class,
+              };
+              java.lang.String info =
+                  "\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0001<\u0000";
+              return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+          }
+          // fall through
+          case GET_DEFAULT_INSTANCE: {
+            return DEFAULT_INSTANCE;
+          }
+          case GET_PARSER: {
+            com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment> parser = PARSER;
+            if (parser == null) {
+              synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.class) {
+                parser = PARSER;
+                if (parser == null) {
+                  parser =
+                      new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment>(
+                          DEFAULT_INSTANCE);
+                  PARSER = parser;
+                }
+              }
+            }
+            return parser;
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return (byte) 1;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          return null;
+        }
+        }
+        throw new UnsupportedOperationException();
+      }
+
+
+      // @@protoc_insertion_point(class_scope:signalservice.DataMessage.Payment)
+      private static final su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment DEFAULT_INSTANCE;
+      static {
+        Payment defaultInstance = new Payment();
+        // New instances are implicitly immutable so no need to make
+        // immutable.
+        DEFAULT_INSTANCE = defaultInstance;
+        com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+          Payment.class, defaultInstance);
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static volatile com.google.protobuf.Parser<Payment> PARSER;
+
+      public static com.google.protobuf.Parser<Payment> parser() {
+        return DEFAULT_INSTANCE.getParserForType();
+      }
+    }
+
     private int bitField0_;
     public static final int BODY_FIELD_NUMBER = 1;
     private java.lang.String body_;
@@ -18810,6 +21224,64 @@ public final class SignalServiceProtos {
       bitField0_ = (bitField0_ & ~0x00002000);
     }
 
+    public static final int PAYMENT_FIELD_NUMBER = 20;
+    private su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment payment_;
+    /**
+     * <code>optional .signalservice.DataMessage.Payment payment = 20;</code>
+     */
+    @java.lang.Override
+    public boolean hasPayment() {
+      return ((bitField0_ & 0x00004000) != 0);
+    }
+    /**
+     * <code>optional .signalservice.DataMessage.Payment payment = 20;</code>
+     */
+    @java.lang.Override
+    public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment getPayment() {
+      return payment_ == null ? su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.getDefaultInstance() : payment_;
+    }
+    /**
+     * <code>optional .signalservice.DataMessage.Payment payment = 20;</code>
+     */
+    private void setPayment(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      payment_ = value;
+      bitField0_ |= 0x00004000;
+      }
+    /**
+     * <code>optional .signalservice.DataMessage.Payment payment = 20;</code>
+     */
+    private void setPayment(
+        su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Builder builderForValue) {
+      payment_ = builderForValue.build();
+      bitField0_ |= 0x00004000;
+    }
+    /**
+     * <code>optional .signalservice.DataMessage.Payment payment = 20;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergePayment(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      if (payment_ != null &&
+          payment_ != su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.getDefaultInstance()) {
+        payment_ =
+          su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.newBuilder(payment_).mergeFrom(value).buildPartial();
+      } else {
+        payment_ = value;
+      }
+      bitField0_ |= 0x00004000;
+    }
+    /**
+     * <code>optional .signalservice.DataMessage.Payment payment = 20;</code>
+     */
+    private void clearPayment() {  payment_ = null;
+      bitField0_ = (bitField0_ & ~0x00004000);
+    }
+
     public static su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -19907,6 +22379,53 @@ public final class SignalServiceProtos {
         return this;
       }
 
+      /**
+       * <code>optional .signalservice.DataMessage.Payment payment = 20;</code>
+       */
+      @java.lang.Override
+      public boolean hasPayment() {
+        return instance.hasPayment();
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.Payment payment = 20;</code>
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment getPayment() {
+        return instance.getPayment();
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.Payment payment = 20;</code>
+       */
+      public Builder setPayment(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment value) {
+        copyOnWrite();
+        instance.setPayment(value);
+        return this;
+        }
+      /**
+       * <code>optional .signalservice.DataMessage.Payment payment = 20;</code>
+       */
+      public Builder setPayment(
+          su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment.Builder builderForValue) {
+        copyOnWrite();
+        instance.setPayment(builderForValue);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.Payment payment = 20;</code>
+       */
+      public Builder mergePayment(su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.Payment value) {
+        copyOnWrite();
+        instance.mergePayment(value);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.DataMessage.Payment payment = 20;</code>
+       */
+      public Builder clearPayment() {  copyOnWrite();
+        instance.clearPayment();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:signalservice.DataMessage)
     }
     @java.lang.Override
@@ -19946,12 +22465,13 @@ public final class SignalServiceProtos {
               "bodyRanges_",
               su.sres.signalservice.internal.push.SignalServiceProtos.DataMessage.BodyRange.class,
               "groupCallUpdate_",
+              "payment_",
             };
             java.lang.String info =
-                "\u0001\u0012\u0000\u0001\u0001\u0013\u0012\u0000\u0004\u0000\u0001\b\u0000\u0002" +
+                "\u0001\u0013\u0000\u0001\u0001\u0014\u0013\u0000\u0004\u0000\u0001\b\u0000\u0002" +
                 "\u001b\u0003\t\u0001\u0004\u000b\u0003\u0005\u000b\u0004\u0006\n\u0005\u0007\u0003" +
                 "\u0006\b\t\u0007\t\u001b\n\u001b\u000b\t\b\f\u000b\t\u000e\u0007\n\u000f\t\u0002" +
-                "\u0010\t\u000b\u0011\t\f\u0012\u001b\u0013\t\r";
+                "\u0010\t\u000b\u0011\t\f\u0012\u001b\u0013\t\r\u0014\t\u000e";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -22292,6 +24812,17 @@ public final class SignalServiceProtos {
      * @return The messageRequestResponse.
      */
     su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.MessageRequestResponse getMessageRequestResponse();
+
+    /**
+     * <code>optional .signalservice.SyncMessage.OutgoingPayment outgoingPayment = 15;</code>
+     * @return Whether the outgoingPayment field is set.
+     */
+    boolean hasOutgoingPayment();
+    /**
+     * <code>optional .signalservice.SyncMessage.OutgoingPayment outgoingPayment = 15;</code>
+     * @return The outgoingPayment.
+     */
+    su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment getOutgoingPayment();
   }
   /**
    * Protobuf type {@code signalservice.SyncMessage}
@@ -29328,6 +31859,1772 @@ public final class SignalServiceProtos {
       }
     }
 
+    public interface OutgoingPaymentOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:signalservice.SyncMessage.OutgoingPayment)
+        com.google.protobuf.MessageLiteOrBuilder {
+
+      /**
+       * <code>optional string recipientUuid = 1;</code>
+       * @return Whether the recipientUuid field is set.
+       */
+      boolean hasRecipientUuid();
+      /**
+       * <code>optional string recipientUuid = 1;</code>
+       * @return The recipientUuid.
+       */
+      java.lang.String getRecipientUuid();
+      /**
+       * <code>optional string recipientUuid = 1;</code>
+       * @return The bytes for recipientUuid.
+       */
+      com.google.protobuf.ByteString
+          getRecipientUuidBytes();
+
+      /**
+       * <code>optional string note = 2;</code>
+       * @return Whether the note field is set.
+       */
+      boolean hasNote();
+      /**
+       * <code>optional string note = 2;</code>
+       * @return The note.
+       */
+      java.lang.String getNote();
+      /**
+       * <code>optional string note = 2;</code>
+       * @return The bytes for note.
+       */
+      com.google.protobuf.ByteString
+          getNoteBytes();
+
+      /**
+       * <code>optional .signalservice.SyncMessage.OutgoingPayment.MobileCoin mobileCoin = 3;</code>
+       * @return Whether the mobileCoin field is set.
+       */
+      boolean hasMobileCoin();
+      /**
+       * <code>optional .signalservice.SyncMessage.OutgoingPayment.MobileCoin mobileCoin = 3;</code>
+       * @return The mobileCoin.
+       */
+      su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin getMobileCoin();
+
+      public su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.PaymentDetailCase getPaymentDetailCase();
+    }
+    /**
+     * Protobuf type {@code signalservice.SyncMessage.OutgoingPayment}
+     */
+    public  static final class OutgoingPayment extends
+        com.google.protobuf.GeneratedMessageLite<
+            OutgoingPayment, OutgoingPayment.Builder> implements
+        // @@protoc_insertion_point(message_implements:signalservice.SyncMessage.OutgoingPayment)
+        OutgoingPaymentOrBuilder {
+      private OutgoingPayment() {
+        recipientUuid_ = "";
+        note_ = "";
+      }
+      public interface MobileCoinOrBuilder extends
+          // @@protoc_insertion_point(interface_extends:signalservice.SyncMessage.OutgoingPayment.MobileCoin)
+          com.google.protobuf.MessageLiteOrBuilder {
+
+        /**
+         * <code>optional bytes recipientAddress = 1;</code>
+         * @return Whether the recipientAddress field is set.
+         */
+        boolean hasRecipientAddress();
+        /**
+         * <code>optional bytes recipientAddress = 1;</code>
+         * @return The recipientAddress.
+         */
+        com.google.protobuf.ByteString getRecipientAddress();
+
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 amountPicoMob = 2;</code>
+         * @return Whether the amountPicoMob field is set.
+         */
+        boolean hasAmountPicoMob();
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 amountPicoMob = 2;</code>
+         * @return The amountPicoMob.
+         */
+        long getAmountPicoMob();
+
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 feePicoMob = 3;</code>
+         * @return Whether the feePicoMob field is set.
+         */
+        boolean hasFeePicoMob();
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 feePicoMob = 3;</code>
+         * @return The feePicoMob.
+         */
+        long getFeePicoMob();
+
+        /**
+         * <code>optional bytes receipt = 4;</code>
+         * @return Whether the receipt field is set.
+         */
+        boolean hasReceipt();
+        /**
+         * <code>optional bytes receipt = 4;</code>
+         * @return The receipt.
+         */
+        com.google.protobuf.ByteString getReceipt();
+
+        /**
+         * <code>optional uint64 ledgerBlockTimestamp = 5;</code>
+         * @return Whether the ledgerBlockTimestamp field is set.
+         */
+        boolean hasLedgerBlockTimestamp();
+        /**
+         * <code>optional uint64 ledgerBlockTimestamp = 5;</code>
+         * @return The ledgerBlockTimestamp.
+         */
+        long getLedgerBlockTimestamp();
+
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 ledgerBlockIndex = 6;</code>
+         * @return Whether the ledgerBlockIndex field is set.
+         */
+        boolean hasLedgerBlockIndex();
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 ledgerBlockIndex = 6;</code>
+         * @return The ledgerBlockIndex.
+         */
+        long getLedgerBlockIndex();
+
+        /**
+         * <code>repeated bytes spentKeyImages = 7;</code>
+         * @return A list containing the spentKeyImages.
+         */
+        java.util.List<com.google.protobuf.ByteString> getSpentKeyImagesList();
+        /**
+         * <code>repeated bytes spentKeyImages = 7;</code>
+         * @return The count of spentKeyImages.
+         */
+        int getSpentKeyImagesCount();
+        /**
+         * <code>repeated bytes spentKeyImages = 7;</code>
+         * @param index The index of the element to return.
+         * @return The spentKeyImages at the given index.
+         */
+        com.google.protobuf.ByteString getSpentKeyImages(int index);
+
+        /**
+         * <code>repeated bytes outputPublicKeys = 8;</code>
+         * @return A list containing the outputPublicKeys.
+         */
+        java.util.List<com.google.protobuf.ByteString> getOutputPublicKeysList();
+        /**
+         * <code>repeated bytes outputPublicKeys = 8;</code>
+         * @return The count of outputPublicKeys.
+         */
+        int getOutputPublicKeysCount();
+        /**
+         * <code>repeated bytes outputPublicKeys = 8;</code>
+         * @param index The index of the element to return.
+         * @return The outputPublicKeys at the given index.
+         */
+        com.google.protobuf.ByteString getOutputPublicKeys(int index);
+      }
+      /**
+       * Protobuf type {@code signalservice.SyncMessage.OutgoingPayment.MobileCoin}
+       */
+      public  static final class MobileCoin extends
+          com.google.protobuf.GeneratedMessageLite<
+              MobileCoin, MobileCoin.Builder> implements
+          // @@protoc_insertion_point(message_implements:signalservice.SyncMessage.OutgoingPayment.MobileCoin)
+          MobileCoinOrBuilder {
+        private MobileCoin() {
+          recipientAddress_ = com.google.protobuf.ByteString.EMPTY;
+          receipt_ = com.google.protobuf.ByteString.EMPTY;
+          spentKeyImages_ = emptyProtobufList();
+          outputPublicKeys_ = emptyProtobufList();
+        }
+        private int bitField0_;
+        public static final int RECIPIENTADDRESS_FIELD_NUMBER = 1;
+        private com.google.protobuf.ByteString recipientAddress_;
+        /**
+         * <code>optional bytes recipientAddress = 1;</code>
+         * @return Whether the recipientAddress field is set.
+         */
+        @java.lang.Override
+        public boolean hasRecipientAddress() {
+          return ((bitField0_ & 0x00000001) != 0);
+        }
+        /**
+         * <code>optional bytes recipientAddress = 1;</code>
+         * @return The recipientAddress.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString getRecipientAddress() {
+          return recipientAddress_;
+        }
+        /**
+         * <code>optional bytes recipientAddress = 1;</code>
+         * @param value The recipientAddress to set.
+         */
+        private void setRecipientAddress(com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+          recipientAddress_ = value;
+        }
+        /**
+         * <code>optional bytes recipientAddress = 1;</code>
+         */
+        private void clearRecipientAddress() {
+          bitField0_ = (bitField0_ & ~0x00000001);
+          recipientAddress_ = getDefaultInstance().getRecipientAddress();
+        }
+
+        public static final int AMOUNTPICOMOB_FIELD_NUMBER = 2;
+        private long amountPicoMob_;
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 amountPicoMob = 2;</code>
+         * @return Whether the amountPicoMob field is set.
+         */
+        @java.lang.Override
+        public boolean hasAmountPicoMob() {
+          return ((bitField0_ & 0x00000002) != 0);
+        }
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 amountPicoMob = 2;</code>
+         * @return The amountPicoMob.
+         */
+        @java.lang.Override
+        public long getAmountPicoMob() {
+          return amountPicoMob_;
+        }
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 amountPicoMob = 2;</code>
+         * @param value The amountPicoMob to set.
+         */
+        private void setAmountPicoMob(long value) {
+          bitField0_ |= 0x00000002;
+          amountPicoMob_ = value;
+        }
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 amountPicoMob = 2;</code>
+         */
+        private void clearAmountPicoMob() {
+          bitField0_ = (bitField0_ & ~0x00000002);
+          amountPicoMob_ = 0L;
+        }
+
+        public static final int FEEPICOMOB_FIELD_NUMBER = 3;
+        private long feePicoMob_;
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 feePicoMob = 3;</code>
+         * @return Whether the feePicoMob field is set.
+         */
+        @java.lang.Override
+        public boolean hasFeePicoMob() {
+          return ((bitField0_ & 0x00000004) != 0);
+        }
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 feePicoMob = 3;</code>
+         * @return The feePicoMob.
+         */
+        @java.lang.Override
+        public long getFeePicoMob() {
+          return feePicoMob_;
+        }
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 feePicoMob = 3;</code>
+         * @param value The feePicoMob to set.
+         */
+        private void setFeePicoMob(long value) {
+          bitField0_ |= 0x00000004;
+          feePicoMob_ = value;
+        }
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 feePicoMob = 3;</code>
+         */
+        private void clearFeePicoMob() {
+          bitField0_ = (bitField0_ & ~0x00000004);
+          feePicoMob_ = 0L;
+        }
+
+        public static final int RECEIPT_FIELD_NUMBER = 4;
+        private com.google.protobuf.ByteString receipt_;
+        /**
+         * <code>optional bytes receipt = 4;</code>
+         * @return Whether the receipt field is set.
+         */
+        @java.lang.Override
+        public boolean hasReceipt() {
+          return ((bitField0_ & 0x00000008) != 0);
+        }
+        /**
+         * <code>optional bytes receipt = 4;</code>
+         * @return The receipt.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString getReceipt() {
+          return receipt_;
+        }
+        /**
+         * <code>optional bytes receipt = 4;</code>
+         * @param value The receipt to set.
+         */
+        private void setReceipt(com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000008;
+          receipt_ = value;
+        }
+        /**
+         * <code>optional bytes receipt = 4;</code>
+         */
+        private void clearReceipt() {
+          bitField0_ = (bitField0_ & ~0x00000008);
+          receipt_ = getDefaultInstance().getReceipt();
+        }
+
+        public static final int LEDGERBLOCKTIMESTAMP_FIELD_NUMBER = 5;
+        private long ledgerBlockTimestamp_;
+        /**
+         * <code>optional uint64 ledgerBlockTimestamp = 5;</code>
+         * @return Whether the ledgerBlockTimestamp field is set.
+         */
+        @java.lang.Override
+        public boolean hasLedgerBlockTimestamp() {
+          return ((bitField0_ & 0x00000010) != 0);
+        }
+        /**
+         * <code>optional uint64 ledgerBlockTimestamp = 5;</code>
+         * @return The ledgerBlockTimestamp.
+         */
+        @java.lang.Override
+        public long getLedgerBlockTimestamp() {
+          return ledgerBlockTimestamp_;
+        }
+        /**
+         * <code>optional uint64 ledgerBlockTimestamp = 5;</code>
+         * @param value The ledgerBlockTimestamp to set.
+         */
+        private void setLedgerBlockTimestamp(long value) {
+          bitField0_ |= 0x00000010;
+          ledgerBlockTimestamp_ = value;
+        }
+        /**
+         * <code>optional uint64 ledgerBlockTimestamp = 5;</code>
+         */
+        private void clearLedgerBlockTimestamp() {
+          bitField0_ = (bitField0_ & ~0x00000010);
+          ledgerBlockTimestamp_ = 0L;
+        }
+
+        public static final int LEDGERBLOCKINDEX_FIELD_NUMBER = 6;
+        private long ledgerBlockIndex_;
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 ledgerBlockIndex = 6;</code>
+         * @return Whether the ledgerBlockIndex field is set.
+         */
+        @java.lang.Override
+        public boolean hasLedgerBlockIndex() {
+          return ((bitField0_ & 0x00000020) != 0);
+        }
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 ledgerBlockIndex = 6;</code>
+         * @return The ledgerBlockIndex.
+         */
+        @java.lang.Override
+        public long getLedgerBlockIndex() {
+          return ledgerBlockIndex_;
+        }
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 ledgerBlockIndex = 6;</code>
+         * @param value The ledgerBlockIndex to set.
+         */
+        private void setLedgerBlockIndex(long value) {
+          bitField0_ |= 0x00000020;
+          ledgerBlockIndex_ = value;
+        }
+        /**
+         * <pre>
+         * &#64;required
+         * </pre>
+         *
+         * <code>optional uint64 ledgerBlockIndex = 6;</code>
+         */
+        private void clearLedgerBlockIndex() {
+          bitField0_ = (bitField0_ & ~0x00000020);
+          ledgerBlockIndex_ = 0L;
+        }
+
+        public static final int SPENTKEYIMAGES_FIELD_NUMBER = 7;
+        private com.google.protobuf.Internal.ProtobufList<com.google.protobuf.ByteString> spentKeyImages_;
+        /**
+         * <code>repeated bytes spentKeyImages = 7;</code>
+         * @return A list containing the spentKeyImages.
+         */
+        @java.lang.Override
+        public java.util.List<com.google.protobuf.ByteString>
+            getSpentKeyImagesList() {
+          return spentKeyImages_;
+        }
+        /**
+         * <code>repeated bytes spentKeyImages = 7;</code>
+         * @return The count of spentKeyImages.
+         */
+        @java.lang.Override
+        public int getSpentKeyImagesCount() {
+          return spentKeyImages_.size();
+        }
+        /**
+         * <code>repeated bytes spentKeyImages = 7;</code>
+         * @param index The index of the element to return.
+         * @return The spentKeyImages at the given index.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString getSpentKeyImages(int index) {
+          return spentKeyImages_.get(index);
+        }
+        private void ensureSpentKeyImagesIsMutable() {
+          if (!spentKeyImages_.isModifiable()) {
+            spentKeyImages_ =
+                com.google.protobuf.GeneratedMessageLite.mutableCopy(spentKeyImages_);
+           }
+        }
+        /**
+         * <code>repeated bytes spentKeyImages = 7;</code>
+         * @param index The index to set the value at.
+         * @param value The spentKeyImages to set.
+         */
+        private void setSpentKeyImages(
+            int index, com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureSpentKeyImagesIsMutable();
+          spentKeyImages_.set(index, value);
+        }
+        /**
+         * <code>repeated bytes spentKeyImages = 7;</code>
+         * @param value The spentKeyImages to add.
+         */
+        private void addSpentKeyImages(com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureSpentKeyImagesIsMutable();
+          spentKeyImages_.add(value);
+        }
+        /**
+         * <code>repeated bytes spentKeyImages = 7;</code>
+         * @param values The spentKeyImages to add.
+         */
+        private void addAllSpentKeyImages(
+            java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
+          ensureSpentKeyImagesIsMutable();
+          com.google.protobuf.AbstractMessageLite.addAll(
+              values, spentKeyImages_);
+        }
+        /**
+         * <code>repeated bytes spentKeyImages = 7;</code>
+         */
+        private void clearSpentKeyImages() {
+          spentKeyImages_ = emptyProtobufList();
+        }
+
+        public static final int OUTPUTPUBLICKEYS_FIELD_NUMBER = 8;
+        private com.google.protobuf.Internal.ProtobufList<com.google.protobuf.ByteString> outputPublicKeys_;
+        /**
+         * <code>repeated bytes outputPublicKeys = 8;</code>
+         * @return A list containing the outputPublicKeys.
+         */
+        @java.lang.Override
+        public java.util.List<com.google.protobuf.ByteString>
+            getOutputPublicKeysList() {
+          return outputPublicKeys_;
+        }
+        /**
+         * <code>repeated bytes outputPublicKeys = 8;</code>
+         * @return The count of outputPublicKeys.
+         */
+        @java.lang.Override
+        public int getOutputPublicKeysCount() {
+          return outputPublicKeys_.size();
+        }
+        /**
+         * <code>repeated bytes outputPublicKeys = 8;</code>
+         * @param index The index of the element to return.
+         * @return The outputPublicKeys at the given index.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString getOutputPublicKeys(int index) {
+          return outputPublicKeys_.get(index);
+        }
+        private void ensureOutputPublicKeysIsMutable() {
+          if (!outputPublicKeys_.isModifiable()) {
+            outputPublicKeys_ =
+                com.google.protobuf.GeneratedMessageLite.mutableCopy(outputPublicKeys_);
+           }
+        }
+        /**
+         * <code>repeated bytes outputPublicKeys = 8;</code>
+         * @param index The index to set the value at.
+         * @param value The outputPublicKeys to set.
+         */
+        private void setOutputPublicKeys(
+            int index, com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureOutputPublicKeysIsMutable();
+          outputPublicKeys_.set(index, value);
+        }
+        /**
+         * <code>repeated bytes outputPublicKeys = 8;</code>
+         * @param value The outputPublicKeys to add.
+         */
+        private void addOutputPublicKeys(com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureOutputPublicKeysIsMutable();
+          outputPublicKeys_.add(value);
+        }
+        /**
+         * <code>repeated bytes outputPublicKeys = 8;</code>
+         * @param values The outputPublicKeys to add.
+         */
+        private void addAllOutputPublicKeys(
+            java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
+          ensureOutputPublicKeysIsMutable();
+          com.google.protobuf.AbstractMessageLite.addAll(
+              values, outputPublicKeys_);
+        }
+        /**
+         * <code>repeated bytes outputPublicKeys = 8;</code>
+         */
+        private void clearOutputPublicKeys() {
+          outputPublicKeys_ = emptyProtobufList();
+        }
+
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input);
+        }
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, input, extensionRegistry);
+        }
+
+        public static Builder newBuilder() {
+          return (Builder) DEFAULT_INSTANCE.createBuilder();
+        }
+        public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin prototype) {
+          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+        }
+
+        /**
+         * Protobuf type {@code signalservice.SyncMessage.OutgoingPayment.MobileCoin}
+         */
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin, Builder> implements
+            // @@protoc_insertion_point(builder_implements:signalservice.SyncMessage.OutgoingPayment.MobileCoin)
+            su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoinOrBuilder {
+          // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin.newBuilder()
+          private Builder() {
+            super(DEFAULT_INSTANCE);
+          }
+
+
+          /**
+           * <code>optional bytes recipientAddress = 1;</code>
+           * @return Whether the recipientAddress field is set.
+           */
+          @java.lang.Override
+          public boolean hasRecipientAddress() {
+            return instance.hasRecipientAddress();
+          }
+          /**
+           * <code>optional bytes recipientAddress = 1;</code>
+           * @return The recipientAddress.
+           */
+          @java.lang.Override
+          public com.google.protobuf.ByteString getRecipientAddress() {
+            return instance.getRecipientAddress();
+          }
+          /**
+           * <code>optional bytes recipientAddress = 1;</code>
+           * @param value The recipientAddress to set.
+           * @return This builder for chaining.
+           */
+          public Builder setRecipientAddress(com.google.protobuf.ByteString value) {
+            copyOnWrite();
+            instance.setRecipientAddress(value);
+            return this;
+          }
+          /**
+           * <code>optional bytes recipientAddress = 1;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearRecipientAddress() {
+            copyOnWrite();
+            instance.clearRecipientAddress();
+            return this;
+          }
+
+          /**
+           * <pre>
+           * &#64;required
+           * </pre>
+           *
+           * <code>optional uint64 amountPicoMob = 2;</code>
+           * @return Whether the amountPicoMob field is set.
+           */
+          @java.lang.Override
+          public boolean hasAmountPicoMob() {
+            return instance.hasAmountPicoMob();
+          }
+          /**
+           * <pre>
+           * &#64;required
+           * </pre>
+           *
+           * <code>optional uint64 amountPicoMob = 2;</code>
+           * @return The amountPicoMob.
+           */
+          @java.lang.Override
+          public long getAmountPicoMob() {
+            return instance.getAmountPicoMob();
+          }
+          /**
+           * <pre>
+           * &#64;required
+           * </pre>
+           *
+           * <code>optional uint64 amountPicoMob = 2;</code>
+           * @param value The amountPicoMob to set.
+           * @return This builder for chaining.
+           */
+          public Builder setAmountPicoMob(long value) {
+            copyOnWrite();
+            instance.setAmountPicoMob(value);
+            return this;
+          }
+          /**
+           * <pre>
+           * &#64;required
+           * </pre>
+           *
+           * <code>optional uint64 amountPicoMob = 2;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearAmountPicoMob() {
+            copyOnWrite();
+            instance.clearAmountPicoMob();
+            return this;
+          }
+
+          /**
+           * <pre>
+           * &#64;required
+           * </pre>
+           *
+           * <code>optional uint64 feePicoMob = 3;</code>
+           * @return Whether the feePicoMob field is set.
+           */
+          @java.lang.Override
+          public boolean hasFeePicoMob() {
+            return instance.hasFeePicoMob();
+          }
+          /**
+           * <pre>
+           * &#64;required
+           * </pre>
+           *
+           * <code>optional uint64 feePicoMob = 3;</code>
+           * @return The feePicoMob.
+           */
+          @java.lang.Override
+          public long getFeePicoMob() {
+            return instance.getFeePicoMob();
+          }
+          /**
+           * <pre>
+           * &#64;required
+           * </pre>
+           *
+           * <code>optional uint64 feePicoMob = 3;</code>
+           * @param value The feePicoMob to set.
+           * @return This builder for chaining.
+           */
+          public Builder setFeePicoMob(long value) {
+            copyOnWrite();
+            instance.setFeePicoMob(value);
+            return this;
+          }
+          /**
+           * <pre>
+           * &#64;required
+           * </pre>
+           *
+           * <code>optional uint64 feePicoMob = 3;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearFeePicoMob() {
+            copyOnWrite();
+            instance.clearFeePicoMob();
+            return this;
+          }
+
+          /**
+           * <code>optional bytes receipt = 4;</code>
+           * @return Whether the receipt field is set.
+           */
+          @java.lang.Override
+          public boolean hasReceipt() {
+            return instance.hasReceipt();
+          }
+          /**
+           * <code>optional bytes receipt = 4;</code>
+           * @return The receipt.
+           */
+          @java.lang.Override
+          public com.google.protobuf.ByteString getReceipt() {
+            return instance.getReceipt();
+          }
+          /**
+           * <code>optional bytes receipt = 4;</code>
+           * @param value The receipt to set.
+           * @return This builder for chaining.
+           */
+          public Builder setReceipt(com.google.protobuf.ByteString value) {
+            copyOnWrite();
+            instance.setReceipt(value);
+            return this;
+          }
+          /**
+           * <code>optional bytes receipt = 4;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearReceipt() {
+            copyOnWrite();
+            instance.clearReceipt();
+            return this;
+          }
+
+          /**
+           * <code>optional uint64 ledgerBlockTimestamp = 5;</code>
+           * @return Whether the ledgerBlockTimestamp field is set.
+           */
+          @java.lang.Override
+          public boolean hasLedgerBlockTimestamp() {
+            return instance.hasLedgerBlockTimestamp();
+          }
+          /**
+           * <code>optional uint64 ledgerBlockTimestamp = 5;</code>
+           * @return The ledgerBlockTimestamp.
+           */
+          @java.lang.Override
+          public long getLedgerBlockTimestamp() {
+            return instance.getLedgerBlockTimestamp();
+          }
+          /**
+           * <code>optional uint64 ledgerBlockTimestamp = 5;</code>
+           * @param value The ledgerBlockTimestamp to set.
+           * @return This builder for chaining.
+           */
+          public Builder setLedgerBlockTimestamp(long value) {
+            copyOnWrite();
+            instance.setLedgerBlockTimestamp(value);
+            return this;
+          }
+          /**
+           * <code>optional uint64 ledgerBlockTimestamp = 5;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearLedgerBlockTimestamp() {
+            copyOnWrite();
+            instance.clearLedgerBlockTimestamp();
+            return this;
+          }
+
+          /**
+           * <pre>
+           * &#64;required
+           * </pre>
+           *
+           * <code>optional uint64 ledgerBlockIndex = 6;</code>
+           * @return Whether the ledgerBlockIndex field is set.
+           */
+          @java.lang.Override
+          public boolean hasLedgerBlockIndex() {
+            return instance.hasLedgerBlockIndex();
+          }
+          /**
+           * <pre>
+           * &#64;required
+           * </pre>
+           *
+           * <code>optional uint64 ledgerBlockIndex = 6;</code>
+           * @return The ledgerBlockIndex.
+           */
+          @java.lang.Override
+          public long getLedgerBlockIndex() {
+            return instance.getLedgerBlockIndex();
+          }
+          /**
+           * <pre>
+           * &#64;required
+           * </pre>
+           *
+           * <code>optional uint64 ledgerBlockIndex = 6;</code>
+           * @param value The ledgerBlockIndex to set.
+           * @return This builder for chaining.
+           */
+          public Builder setLedgerBlockIndex(long value) {
+            copyOnWrite();
+            instance.setLedgerBlockIndex(value);
+            return this;
+          }
+          /**
+           * <pre>
+           * &#64;required
+           * </pre>
+           *
+           * <code>optional uint64 ledgerBlockIndex = 6;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearLedgerBlockIndex() {
+            copyOnWrite();
+            instance.clearLedgerBlockIndex();
+            return this;
+          }
+
+          /**
+           * <code>repeated bytes spentKeyImages = 7;</code>
+           * @return A list containing the spentKeyImages.
+           */
+          @java.lang.Override
+          public java.util.List<com.google.protobuf.ByteString>
+              getSpentKeyImagesList() {
+            return java.util.Collections.unmodifiableList(
+                instance.getSpentKeyImagesList());
+          }
+          /**
+           * <code>repeated bytes spentKeyImages = 7;</code>
+           * @return The count of spentKeyImages.
+           */
+          @java.lang.Override
+          public int getSpentKeyImagesCount() {
+            return instance.getSpentKeyImagesCount();
+          }
+          /**
+           * <code>repeated bytes spentKeyImages = 7;</code>
+           * @param index The index of the element to return.
+           * @return The spentKeyImages at the given index.
+           */
+          @java.lang.Override
+          public com.google.protobuf.ByteString getSpentKeyImages(int index) {
+            return instance.getSpentKeyImages(index);
+          }
+          /**
+           * <code>repeated bytes spentKeyImages = 7;</code>
+           * @param value The spentKeyImages to set.
+           * @return This builder for chaining.
+           */
+          public Builder setSpentKeyImages(
+              int index, com.google.protobuf.ByteString value) {
+            copyOnWrite();
+            instance.setSpentKeyImages(index, value);
+            return this;
+          }
+          /**
+           * <code>repeated bytes spentKeyImages = 7;</code>
+           * @param value The spentKeyImages to add.
+           * @return This builder for chaining.
+           */
+          public Builder addSpentKeyImages(com.google.protobuf.ByteString value) {
+            copyOnWrite();
+            instance.addSpentKeyImages(value);
+            return this;
+          }
+          /**
+           * <code>repeated bytes spentKeyImages = 7;</code>
+           * @param values The spentKeyImages to add.
+           * @return This builder for chaining.
+           */
+          public Builder addAllSpentKeyImages(
+              java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
+            copyOnWrite();
+            instance.addAllSpentKeyImages(values);
+            return this;
+          }
+          /**
+           * <code>repeated bytes spentKeyImages = 7;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearSpentKeyImages() {
+            copyOnWrite();
+            instance.clearSpentKeyImages();
+            return this;
+          }
+
+          /**
+           * <code>repeated bytes outputPublicKeys = 8;</code>
+           * @return A list containing the outputPublicKeys.
+           */
+          @java.lang.Override
+          public java.util.List<com.google.protobuf.ByteString>
+              getOutputPublicKeysList() {
+            return java.util.Collections.unmodifiableList(
+                instance.getOutputPublicKeysList());
+          }
+          /**
+           * <code>repeated bytes outputPublicKeys = 8;</code>
+           * @return The count of outputPublicKeys.
+           */
+          @java.lang.Override
+          public int getOutputPublicKeysCount() {
+            return instance.getOutputPublicKeysCount();
+          }
+          /**
+           * <code>repeated bytes outputPublicKeys = 8;</code>
+           * @param index The index of the element to return.
+           * @return The outputPublicKeys at the given index.
+           */
+          @java.lang.Override
+          public com.google.protobuf.ByteString getOutputPublicKeys(int index) {
+            return instance.getOutputPublicKeys(index);
+          }
+          /**
+           * <code>repeated bytes outputPublicKeys = 8;</code>
+           * @param value The outputPublicKeys to set.
+           * @return This builder for chaining.
+           */
+          public Builder setOutputPublicKeys(
+              int index, com.google.protobuf.ByteString value) {
+            copyOnWrite();
+            instance.setOutputPublicKeys(index, value);
+            return this;
+          }
+          /**
+           * <code>repeated bytes outputPublicKeys = 8;</code>
+           * @param value The outputPublicKeys to add.
+           * @return This builder for chaining.
+           */
+          public Builder addOutputPublicKeys(com.google.protobuf.ByteString value) {
+            copyOnWrite();
+            instance.addOutputPublicKeys(value);
+            return this;
+          }
+          /**
+           * <code>repeated bytes outputPublicKeys = 8;</code>
+           * @param values The outputPublicKeys to add.
+           * @return This builder for chaining.
+           */
+          public Builder addAllOutputPublicKeys(
+              java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
+            copyOnWrite();
+            instance.addAllOutputPublicKeys(values);
+            return this;
+          }
+          /**
+           * <code>repeated bytes outputPublicKeys = 8;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearOutputPublicKeys() {
+            copyOnWrite();
+            instance.clearOutputPublicKeys();
+            return this;
+          }
+
+          // @@protoc_insertion_point(builder_scope:signalservice.SyncMessage.OutgoingPayment.MobileCoin)
+        }
+        @java.lang.Override
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        protected final java.lang.Object dynamicMethod(
+            com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+            java.lang.Object arg0, java.lang.Object arg1) {
+          switch (method) {
+            case NEW_MUTABLE_INSTANCE: {
+              return new su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin();
+            }
+            case NEW_BUILDER: {
+              return new Builder();
+            }
+            case BUILD_MESSAGE_INFO: {
+                java.lang.Object[] objects = new java.lang.Object[] {
+                  "bitField0_",
+                  "recipientAddress_",
+                  "amountPicoMob_",
+                  "feePicoMob_",
+                  "receipt_",
+                  "ledgerBlockTimestamp_",
+                  "ledgerBlockIndex_",
+                  "spentKeyImages_",
+                  "outputPublicKeys_",
+                };
+                java.lang.String info =
+                    "\u0001\b\u0000\u0001\u0001\b\b\u0000\u0002\u0000\u0001\n\u0000\u0002\u0003\u0001" +
+                    "\u0003\u0003\u0002\u0004\n\u0003\u0005\u0003\u0004\u0006\u0003\u0005\u0007\u001c" +
+                    "\b\u001c";
+                return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+            }
+            // fall through
+            case GET_DEFAULT_INSTANCE: {
+              return DEFAULT_INSTANCE;
+            }
+            case GET_PARSER: {
+              com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin> parser = PARSER;
+              if (parser == null) {
+                synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin.class) {
+                  parser = PARSER;
+                  if (parser == null) {
+                    parser =
+                        new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin>(
+                            DEFAULT_INSTANCE);
+                    PARSER = parser;
+                  }
+                }
+              }
+              return parser;
+          }
+          case GET_MEMOIZED_IS_INITIALIZED: {
+            return (byte) 1;
+          }
+          case SET_MEMOIZED_IS_INITIALIZED: {
+            return null;
+          }
+          }
+          throw new UnsupportedOperationException();
+        }
+
+
+        // @@protoc_insertion_point(class_scope:signalservice.SyncMessage.OutgoingPayment.MobileCoin)
+        private static final su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin DEFAULT_INSTANCE;
+        static {
+          MobileCoin defaultInstance = new MobileCoin();
+          // New instances are implicitly immutable so no need to make
+          // immutable.
+          DEFAULT_INSTANCE = defaultInstance;
+          com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+            MobileCoin.class, defaultInstance);
+        }
+
+        public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin getDefaultInstance() {
+          return DEFAULT_INSTANCE;
+        }
+
+        private static volatile com.google.protobuf.Parser<MobileCoin> PARSER;
+
+        public static com.google.protobuf.Parser<MobileCoin> parser() {
+          return DEFAULT_INSTANCE.getParserForType();
+        }
+      }
+
+      private int bitField0_;
+      private int paymentDetailCase_ = 0;
+      private java.lang.Object paymentDetail_;
+      public enum PaymentDetailCase {
+        MOBILECOIN(3),
+        PAYMENTDETAIL_NOT_SET(0);
+        private final int value;
+        private PaymentDetailCase(int value) {
+          this.value = value;
+        }
+        /**
+         * @deprecated Use {@link #forNumber(int)} instead.
+         */
+        @java.lang.Deprecated
+        public static PaymentDetailCase valueOf(int value) {
+          return forNumber(value);
+        }
+
+        public static PaymentDetailCase forNumber(int value) {
+          switch (value) {
+            case 3: return MOBILECOIN;
+            case 0: return PAYMENTDETAIL_NOT_SET;
+            default: return null;
+          }
+        }
+        public int getNumber() {
+          return this.value;
+        }
+      };
+
+      @java.lang.Override
+      public PaymentDetailCase
+      getPaymentDetailCase() {
+        return PaymentDetailCase.forNumber(
+            paymentDetailCase_);
+      }
+
+      private void clearPaymentDetail() {
+        paymentDetailCase_ = 0;
+        paymentDetail_ = null;
+      }
+
+      public static final int RECIPIENTUUID_FIELD_NUMBER = 1;
+      private java.lang.String recipientUuid_;
+      /**
+       * <code>optional string recipientUuid = 1;</code>
+       * @return Whether the recipientUuid field is set.
+       */
+      @java.lang.Override
+      public boolean hasRecipientUuid() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>optional string recipientUuid = 1;</code>
+       * @return The recipientUuid.
+       */
+      @java.lang.Override
+      public java.lang.String getRecipientUuid() {
+        return recipientUuid_;
+      }
+      /**
+       * <code>optional string recipientUuid = 1;</code>
+       * @return The bytes for recipientUuid.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getRecipientUuidBytes() {
+        return com.google.protobuf.ByteString.copyFromUtf8(recipientUuid_);
+      }
+      /**
+       * <code>optional string recipientUuid = 1;</code>
+       * @param value The recipientUuid to set.
+       */
+      private void setRecipientUuid(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        recipientUuid_ = value;
+      }
+      /**
+       * <code>optional string recipientUuid = 1;</code>
+       */
+      private void clearRecipientUuid() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        recipientUuid_ = getDefaultInstance().getRecipientUuid();
+      }
+      /**
+       * <code>optional string recipientUuid = 1;</code>
+       * @param value The bytes for recipientUuid to set.
+       */
+      private void setRecipientUuidBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        recipientUuid_ = value.toStringUtf8();
+      }
+
+      public static final int NOTE_FIELD_NUMBER = 2;
+      private java.lang.String note_;
+      /**
+       * <code>optional string note = 2;</code>
+       * @return Whether the note field is set.
+       */
+      @java.lang.Override
+      public boolean hasNote() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <code>optional string note = 2;</code>
+       * @return The note.
+       */
+      @java.lang.Override
+      public java.lang.String getNote() {
+        return note_;
+      }
+      /**
+       * <code>optional string note = 2;</code>
+       * @return The bytes for note.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getNoteBytes() {
+        return com.google.protobuf.ByteString.copyFromUtf8(note_);
+      }
+      /**
+       * <code>optional string note = 2;</code>
+       * @param value The note to set.
+       */
+      private void setNote(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        note_ = value;
+      }
+      /**
+       * <code>optional string note = 2;</code>
+       */
+      private void clearNote() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        note_ = getDefaultInstance().getNote();
+      }
+      /**
+       * <code>optional string note = 2;</code>
+       * @param value The bytes for note to set.
+       */
+      private void setNoteBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        note_ = value.toStringUtf8();
+      }
+
+      public static final int MOBILECOIN_FIELD_NUMBER = 3;
+      /**
+       * <code>optional .signalservice.SyncMessage.OutgoingPayment.MobileCoin mobileCoin = 3;</code>
+       */
+      @java.lang.Override
+      public boolean hasMobileCoin() {
+        return paymentDetailCase_ == 3;
+      }
+      /**
+       * <code>optional .signalservice.SyncMessage.OutgoingPayment.MobileCoin mobileCoin = 3;</code>
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin getMobileCoin() {
+        if (paymentDetailCase_ == 3) {
+           return (su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin) paymentDetail_;
+        }
+        return su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin.getDefaultInstance();
+      }
+      /**
+       * <code>optional .signalservice.SyncMessage.OutgoingPayment.MobileCoin mobileCoin = 3;</code>
+       */
+      private void setMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        paymentDetail_ = value;
+        paymentDetailCase_ = 3;
+      }
+      /**
+       * <code>optional .signalservice.SyncMessage.OutgoingPayment.MobileCoin mobileCoin = 3;</code>
+       */
+      private void setMobileCoin(
+          su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin.Builder builderForValue) {
+        paymentDetail_ = builderForValue.build();
+        paymentDetailCase_ = 3;
+      }
+      /**
+       * <code>optional .signalservice.SyncMessage.OutgoingPayment.MobileCoin mobileCoin = 3;</code>
+       */
+      private void mergeMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        if (paymentDetailCase_ == 3 &&
+            paymentDetail_ != su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin.getDefaultInstance()) {
+          paymentDetail_ = su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin.newBuilder((su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin) paymentDetail_)
+              .mergeFrom(value).buildPartial();
+        } else {
+          paymentDetail_ = value;
+        }
+        paymentDetailCase_ = 3;
+      }
+      /**
+       * <code>optional .signalservice.SyncMessage.OutgoingPayment.MobileCoin mobileCoin = 3;</code>
+       */
+      private void clearMobileCoin() {
+        if (paymentDetailCase_ == 3) {
+          paymentDetailCase_ = 0;
+          paymentDetail_ = null;
+        }
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+
+      public static Builder newBuilder() {
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
+      }
+      public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment prototype) {
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+      }
+
+      /**
+       * Protobuf type {@code signalservice.SyncMessage.OutgoingPayment}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageLite.Builder<
+            su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment, Builder> implements
+          // @@protoc_insertion_point(builder_implements:signalservice.SyncMessage.OutgoingPayment)
+          su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPaymentOrBuilder {
+        // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.newBuilder()
+        private Builder() {
+          super(DEFAULT_INSTANCE);
+        }
+
+        @java.lang.Override
+        public PaymentDetailCase
+            getPaymentDetailCase() {
+          return instance.getPaymentDetailCase();
+        }
+
+        public Builder clearPaymentDetail() {
+          copyOnWrite();
+          instance.clearPaymentDetail();
+          return this;
+        }
+
+
+        /**
+         * <code>optional string recipientUuid = 1;</code>
+         * @return Whether the recipientUuid field is set.
+         */
+        @java.lang.Override
+        public boolean hasRecipientUuid() {
+          return instance.hasRecipientUuid();
+        }
+        /**
+         * <code>optional string recipientUuid = 1;</code>
+         * @return The recipientUuid.
+         */
+        @java.lang.Override
+        public java.lang.String getRecipientUuid() {
+          return instance.getRecipientUuid();
+        }
+        /**
+         * <code>optional string recipientUuid = 1;</code>
+         * @return The bytes for recipientUuid.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getRecipientUuidBytes() {
+          return instance.getRecipientUuidBytes();
+        }
+        /**
+         * <code>optional string recipientUuid = 1;</code>
+         * @param value The recipientUuid to set.
+         * @return This builder for chaining.
+         */
+        public Builder setRecipientUuid(
+            java.lang.String value) {
+          copyOnWrite();
+          instance.setRecipientUuid(value);
+          return this;
+        }
+        /**
+         * <code>optional string recipientUuid = 1;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearRecipientUuid() {
+          copyOnWrite();
+          instance.clearRecipientUuid();
+          return this;
+        }
+        /**
+         * <code>optional string recipientUuid = 1;</code>
+         * @param value The bytes for recipientUuid to set.
+         * @return This builder for chaining.
+         */
+        public Builder setRecipientUuidBytes(
+            com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setRecipientUuidBytes(value);
+          return this;
+        }
+
+        /**
+         * <code>optional string note = 2;</code>
+         * @return Whether the note field is set.
+         */
+        @java.lang.Override
+        public boolean hasNote() {
+          return instance.hasNote();
+        }
+        /**
+         * <code>optional string note = 2;</code>
+         * @return The note.
+         */
+        @java.lang.Override
+        public java.lang.String getNote() {
+          return instance.getNote();
+        }
+        /**
+         * <code>optional string note = 2;</code>
+         * @return The bytes for note.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getNoteBytes() {
+          return instance.getNoteBytes();
+        }
+        /**
+         * <code>optional string note = 2;</code>
+         * @param value The note to set.
+         * @return This builder for chaining.
+         */
+        public Builder setNote(
+            java.lang.String value) {
+          copyOnWrite();
+          instance.setNote(value);
+          return this;
+        }
+        /**
+         * <code>optional string note = 2;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearNote() {
+          copyOnWrite();
+          instance.clearNote();
+          return this;
+        }
+        /**
+         * <code>optional string note = 2;</code>
+         * @param value The bytes for note to set.
+         * @return This builder for chaining.
+         */
+        public Builder setNoteBytes(
+            com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setNoteBytes(value);
+          return this;
+        }
+
+        /**
+         * <code>optional .signalservice.SyncMessage.OutgoingPayment.MobileCoin mobileCoin = 3;</code>
+         */
+        @java.lang.Override
+        public boolean hasMobileCoin() {
+          return instance.hasMobileCoin();
+        }
+        /**
+         * <code>optional .signalservice.SyncMessage.OutgoingPayment.MobileCoin mobileCoin = 3;</code>
+         */
+        @java.lang.Override
+        public su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin getMobileCoin() {
+          return instance.getMobileCoin();
+        }
+        /**
+         * <code>optional .signalservice.SyncMessage.OutgoingPayment.MobileCoin mobileCoin = 3;</code>
+         */
+        public Builder setMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin value) {
+          copyOnWrite();
+          instance.setMobileCoin(value);
+          return this;
+        }
+        /**
+         * <code>optional .signalservice.SyncMessage.OutgoingPayment.MobileCoin mobileCoin = 3;</code>
+         */
+        public Builder setMobileCoin(
+            su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin.Builder builderForValue) {
+          copyOnWrite();
+          instance.setMobileCoin(builderForValue);
+          return this;
+        }
+        /**
+         * <code>optional .signalservice.SyncMessage.OutgoingPayment.MobileCoin mobileCoin = 3;</code>
+         */
+        public Builder mergeMobileCoin(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin value) {
+          copyOnWrite();
+          instance.mergeMobileCoin(value);
+          return this;
+        }
+        /**
+         * <code>optional .signalservice.SyncMessage.OutgoingPayment.MobileCoin mobileCoin = 3;</code>
+         */
+        public Builder clearMobileCoin() {
+          copyOnWrite();
+          instance.clearMobileCoin();
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:signalservice.SyncMessage.OutgoingPayment)
+      }
+      @java.lang.Override
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      protected final java.lang.Object dynamicMethod(
+          com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+          java.lang.Object arg0, java.lang.Object arg1) {
+        switch (method) {
+          case NEW_MUTABLE_INSTANCE: {
+            return new su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment();
+          }
+          case NEW_BUILDER: {
+            return new Builder();
+          }
+          case BUILD_MESSAGE_INFO: {
+              java.lang.Object[] objects = new java.lang.Object[] {
+                "paymentDetail_",
+                "paymentDetailCase_",
+                "bitField0_",
+                "recipientUuid_",
+                "note_",
+                su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.MobileCoin.class,
+              };
+              java.lang.String info =
+                  "\u0001\u0003\u0001\u0001\u0001\u0003\u0003\u0000\u0000\u0000\u0001\b\u0000\u0002" +
+                  "\b\u0001\u0003<\u0000";
+              return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+          }
+          // fall through
+          case GET_DEFAULT_INSTANCE: {
+            return DEFAULT_INSTANCE;
+          }
+          case GET_PARSER: {
+            com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment> parser = PARSER;
+            if (parser == null) {
+              synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.class) {
+                parser = PARSER;
+                if (parser == null) {
+                  parser =
+                      new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment>(
+                          DEFAULT_INSTANCE);
+                  PARSER = parser;
+                }
+              }
+            }
+            return parser;
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return (byte) 1;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          return null;
+        }
+        }
+        throw new UnsupportedOperationException();
+      }
+
+
+      // @@protoc_insertion_point(class_scope:signalservice.SyncMessage.OutgoingPayment)
+      private static final su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment DEFAULT_INSTANCE;
+      static {
+        OutgoingPayment defaultInstance = new OutgoingPayment();
+        // New instances are implicitly immutable so no need to make
+        // immutable.
+        DEFAULT_INSTANCE = defaultInstance;
+        com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+          OutgoingPayment.class, defaultInstance);
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static volatile com.google.protobuf.Parser<OutgoingPayment> PARSER;
+
+      public static com.google.protobuf.Parser<OutgoingPayment> parser() {
+        return DEFAULT_INSTANCE.getParserForType();
+      }
+    }
+
     private int bitField0_;
     public static final int SENT_FIELD_NUMBER = 1;
     private su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Sent sent_;
@@ -30250,6 +34547,64 @@ public final class SignalServiceProtos {
       bitField0_ = (bitField0_ & ~0x00000800);
     }
 
+    public static final int OUTGOINGPAYMENT_FIELD_NUMBER = 15;
+    private su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment outgoingPayment_;
+    /**
+     * <code>optional .signalservice.SyncMessage.OutgoingPayment outgoingPayment = 15;</code>
+     */
+    @java.lang.Override
+    public boolean hasOutgoingPayment() {
+      return ((bitField0_ & 0x00001000) != 0);
+    }
+    /**
+     * <code>optional .signalservice.SyncMessage.OutgoingPayment outgoingPayment = 15;</code>
+     */
+    @java.lang.Override
+    public su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment getOutgoingPayment() {
+      return outgoingPayment_ == null ? su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.getDefaultInstance() : outgoingPayment_;
+    }
+    /**
+     * <code>optional .signalservice.SyncMessage.OutgoingPayment outgoingPayment = 15;</code>
+     */
+    private void setOutgoingPayment(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      outgoingPayment_ = value;
+      bitField0_ |= 0x00001000;
+      }
+    /**
+     * <code>optional .signalservice.SyncMessage.OutgoingPayment outgoingPayment = 15;</code>
+     */
+    private void setOutgoingPayment(
+        su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.Builder builderForValue) {
+      outgoingPayment_ = builderForValue.build();
+      bitField0_ |= 0x00001000;
+    }
+    /**
+     * <code>optional .signalservice.SyncMessage.OutgoingPayment outgoingPayment = 15;</code>
+     */
+    @java.lang.SuppressWarnings({"ReferenceEquality"})
+    private void mergeOutgoingPayment(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      if (outgoingPayment_ != null &&
+          outgoingPayment_ != su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.getDefaultInstance()) {
+        outgoingPayment_ =
+          su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.newBuilder(outgoingPayment_).mergeFrom(value).buildPartial();
+      } else {
+        outgoingPayment_ = value;
+      }
+      bitField0_ |= 0x00001000;
+    }
+    /**
+     * <code>optional .signalservice.SyncMessage.OutgoingPayment outgoingPayment = 15;</code>
+     */
+    private void clearOutgoingPayment() {  outgoingPayment_ = null;
+      bitField0_ = (bitField0_ & ~0x00001000);
+    }
+
     public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -31098,6 +35453,53 @@ public final class SignalServiceProtos {
         return this;
       }
 
+      /**
+       * <code>optional .signalservice.SyncMessage.OutgoingPayment outgoingPayment = 15;</code>
+       */
+      @java.lang.Override
+      public boolean hasOutgoingPayment() {
+        return instance.hasOutgoingPayment();
+      }
+      /**
+       * <code>optional .signalservice.SyncMessage.OutgoingPayment outgoingPayment = 15;</code>
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment getOutgoingPayment() {
+        return instance.getOutgoingPayment();
+      }
+      /**
+       * <code>optional .signalservice.SyncMessage.OutgoingPayment outgoingPayment = 15;</code>
+       */
+      public Builder setOutgoingPayment(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment value) {
+        copyOnWrite();
+        instance.setOutgoingPayment(value);
+        return this;
+        }
+      /**
+       * <code>optional .signalservice.SyncMessage.OutgoingPayment outgoingPayment = 15;</code>
+       */
+      public Builder setOutgoingPayment(
+          su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment.Builder builderForValue) {
+        copyOnWrite();
+        instance.setOutgoingPayment(builderForValue);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.SyncMessage.OutgoingPayment outgoingPayment = 15;</code>
+       */
+      public Builder mergeOutgoingPayment(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment value) {
+        copyOnWrite();
+        instance.mergeOutgoingPayment(value);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.SyncMessage.OutgoingPayment outgoingPayment = 15;</code>
+       */
+      public Builder clearOutgoingPayment() {  copyOnWrite();
+        instance.clearOutgoingPayment();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:signalservice.SyncMessage)
     }
     @java.lang.Override
@@ -31131,11 +35533,12 @@ public final class SignalServiceProtos {
               "fetchLatest_",
               "keys_",
               "messageRequestResponse_",
+              "outgoingPayment_",
             };
             java.lang.String info =
-                "\u0001\u000e\u0000\u0001\u0001\u000e\u000e\u0000\u0002\u0000\u0001\t\u0000\u0002" +
+                "\u0001\u000f\u0000\u0001\u0001\u000f\u000f\u0000\u0002\u0000\u0001\t\u0000\u0002" +
                 "\t\u0001\u0003\t\u0002\u0004\t\u0003\u0005\u001b\u0006\t\u0004\u0007\t\u0005\b\n" +
-                "\u0007\t\t\u0006\n\u001b\u000b\t\b\f\t\t\r\t\n\u000e\t\u000b";
+                "\u0007\t\t\u0006\n\u001b\u000b\t\b\f\t\t\r\t\n\u000e\t\u000b\u000f\t\f";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -39033,6 +43436,726 @@ public final class SignalServiceProtos {
     private static volatile com.google.protobuf.Parser<GroupDetails> PARSER;
 
     public static com.google.protobuf.Parser<GroupDetails> parser() {
+      return DEFAULT_INSTANCE.getParserForType();
+    }
+  }
+
+  public interface PaymentAddressOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:signalservice.PaymentAddress)
+      com.google.protobuf.MessageLiteOrBuilder {
+
+    /**
+     * <code>optional .signalservice.PaymentAddress.MobileCoinAddress mobileCoinAddress = 1;</code>
+     * @return Whether the mobileCoinAddress field is set.
+     */
+    boolean hasMobileCoinAddress();
+    /**
+     * <code>optional .signalservice.PaymentAddress.MobileCoinAddress mobileCoinAddress = 1;</code>
+     * @return The mobileCoinAddress.
+     */
+    su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress getMobileCoinAddress();
+
+    public su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.AddressCase getAddressCase();
+  }
+  /**
+   * Protobuf type {@code signalservice.PaymentAddress}
+   */
+  public  static final class PaymentAddress extends
+      com.google.protobuf.GeneratedMessageLite<
+          PaymentAddress, PaymentAddress.Builder> implements
+      // @@protoc_insertion_point(message_implements:signalservice.PaymentAddress)
+      PaymentAddressOrBuilder {
+    private PaymentAddress() {
+    }
+    public interface MobileCoinAddressOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:signalservice.PaymentAddress.MobileCoinAddress)
+        com.google.protobuf.MessageLiteOrBuilder {
+
+      /**
+       * <code>optional bytes address = 1;</code>
+       * @return Whether the address field is set.
+       */
+      boolean hasAddress();
+      /**
+       * <code>optional bytes address = 1;</code>
+       * @return The address.
+       */
+      com.google.protobuf.ByteString getAddress();
+
+      /**
+       * <code>optional bytes signature = 2;</code>
+       * @return Whether the signature field is set.
+       */
+      boolean hasSignature();
+      /**
+       * <code>optional bytes signature = 2;</code>
+       * @return The signature.
+       */
+      com.google.protobuf.ByteString getSignature();
+    }
+    /**
+     * Protobuf type {@code signalservice.PaymentAddress.MobileCoinAddress}
+     */
+    public  static final class MobileCoinAddress extends
+        com.google.protobuf.GeneratedMessageLite<
+            MobileCoinAddress, MobileCoinAddress.Builder> implements
+        // @@protoc_insertion_point(message_implements:signalservice.PaymentAddress.MobileCoinAddress)
+        MobileCoinAddressOrBuilder {
+      private MobileCoinAddress() {
+        address_ = com.google.protobuf.ByteString.EMPTY;
+        signature_ = com.google.protobuf.ByteString.EMPTY;
+      }
+      private int bitField0_;
+      public static final int ADDRESS_FIELD_NUMBER = 1;
+      private com.google.protobuf.ByteString address_;
+      /**
+       * <code>optional bytes address = 1;</code>
+       * @return Whether the address field is set.
+       */
+      @java.lang.Override
+      public boolean hasAddress() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>optional bytes address = 1;</code>
+       * @return The address.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getAddress() {
+        return address_;
+      }
+      /**
+       * <code>optional bytes address = 1;</code>
+       * @param value The address to set.
+       */
+      private void setAddress(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        address_ = value;
+      }
+      /**
+       * <code>optional bytes address = 1;</code>
+       */
+      private void clearAddress() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        address_ = getDefaultInstance().getAddress();
+      }
+
+      public static final int SIGNATURE_FIELD_NUMBER = 2;
+      private com.google.protobuf.ByteString signature_;
+      /**
+       * <code>optional bytes signature = 2;</code>
+       * @return Whether the signature field is set.
+       */
+      @java.lang.Override
+      public boolean hasSignature() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <code>optional bytes signature = 2;</code>
+       * @return The signature.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getSignature() {
+        return signature_;
+      }
+      /**
+       * <code>optional bytes signature = 2;</code>
+       * @param value The signature to set.
+       */
+      private void setSignature(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        signature_ = value;
+      }
+      /**
+       * <code>optional bytes signature = 2;</code>
+       */
+      private void clearSignature() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        signature_ = getDefaultInstance().getSignature();
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+
+      public static Builder newBuilder() {
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
+      }
+      public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress prototype) {
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+      }
+
+      /**
+       * Protobuf type {@code signalservice.PaymentAddress.MobileCoinAddress}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageLite.Builder<
+            su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress, Builder> implements
+          // @@protoc_insertion_point(builder_implements:signalservice.PaymentAddress.MobileCoinAddress)
+          su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddressOrBuilder {
+        // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress.newBuilder()
+        private Builder() {
+          super(DEFAULT_INSTANCE);
+        }
+
+
+        /**
+         * <code>optional bytes address = 1;</code>
+         * @return Whether the address field is set.
+         */
+        @java.lang.Override
+        public boolean hasAddress() {
+          return instance.hasAddress();
+        }
+        /**
+         * <code>optional bytes address = 1;</code>
+         * @return The address.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString getAddress() {
+          return instance.getAddress();
+        }
+        /**
+         * <code>optional bytes address = 1;</code>
+         * @param value The address to set.
+         * @return This builder for chaining.
+         */
+        public Builder setAddress(com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setAddress(value);
+          return this;
+        }
+        /**
+         * <code>optional bytes address = 1;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearAddress() {
+          copyOnWrite();
+          instance.clearAddress();
+          return this;
+        }
+
+        /**
+         * <code>optional bytes signature = 2;</code>
+         * @return Whether the signature field is set.
+         */
+        @java.lang.Override
+        public boolean hasSignature() {
+          return instance.hasSignature();
+        }
+        /**
+         * <code>optional bytes signature = 2;</code>
+         * @return The signature.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString getSignature() {
+          return instance.getSignature();
+        }
+        /**
+         * <code>optional bytes signature = 2;</code>
+         * @param value The signature to set.
+         * @return This builder for chaining.
+         */
+        public Builder setSignature(com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setSignature(value);
+          return this;
+        }
+        /**
+         * <code>optional bytes signature = 2;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearSignature() {
+          copyOnWrite();
+          instance.clearSignature();
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:signalservice.PaymentAddress.MobileCoinAddress)
+      }
+      @java.lang.Override
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      protected final java.lang.Object dynamicMethod(
+          com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+          java.lang.Object arg0, java.lang.Object arg1) {
+        switch (method) {
+          case NEW_MUTABLE_INSTANCE: {
+            return new su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress();
+          }
+          case NEW_BUILDER: {
+            return new Builder();
+          }
+          case BUILD_MESSAGE_INFO: {
+              java.lang.Object[] objects = new java.lang.Object[] {
+                "bitField0_",
+                "address_",
+                "signature_",
+              };
+              java.lang.String info =
+                  "\u0001\u0002\u0000\u0001\u0001\u0002\u0002\u0000\u0000\u0000\u0001\n\u0000\u0002" +
+                  "\n\u0001";
+              return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+          }
+          // fall through
+          case GET_DEFAULT_INSTANCE: {
+            return DEFAULT_INSTANCE;
+          }
+          case GET_PARSER: {
+            com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress> parser = PARSER;
+            if (parser == null) {
+              synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress.class) {
+                parser = PARSER;
+                if (parser == null) {
+                  parser =
+                      new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress>(
+                          DEFAULT_INSTANCE);
+                  PARSER = parser;
+                }
+              }
+            }
+            return parser;
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return (byte) 1;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          return null;
+        }
+        }
+        throw new UnsupportedOperationException();
+      }
+
+
+      // @@protoc_insertion_point(class_scope:signalservice.PaymentAddress.MobileCoinAddress)
+      private static final su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress DEFAULT_INSTANCE;
+      static {
+        MobileCoinAddress defaultInstance = new MobileCoinAddress();
+        // New instances are implicitly immutable so no need to make
+        // immutable.
+        DEFAULT_INSTANCE = defaultInstance;
+        com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+          MobileCoinAddress.class, defaultInstance);
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static volatile com.google.protobuf.Parser<MobileCoinAddress> PARSER;
+
+      public static com.google.protobuf.Parser<MobileCoinAddress> parser() {
+        return DEFAULT_INSTANCE.getParserForType();
+      }
+    }
+
+    private int bitField0_;
+    private int addressCase_ = 0;
+    private java.lang.Object address_;
+    public enum AddressCase {
+      MOBILECOINADDRESS(1),
+      ADDRESS_NOT_SET(0);
+      private final int value;
+      private AddressCase(int value) {
+        this.value = value;
+      }
+      /**
+       * @deprecated Use {@link #forNumber(int)} instead.
+       */
+      @java.lang.Deprecated
+      public static AddressCase valueOf(int value) {
+        return forNumber(value);
+      }
+
+      public static AddressCase forNumber(int value) {
+        switch (value) {
+          case 1: return MOBILECOINADDRESS;
+          case 0: return ADDRESS_NOT_SET;
+          default: return null;
+        }
+      }
+      public int getNumber() {
+        return this.value;
+      }
+    };
+
+    @java.lang.Override
+    public AddressCase
+    getAddressCase() {
+      return AddressCase.forNumber(
+          addressCase_);
+    }
+
+    private void clearAddress() {
+      addressCase_ = 0;
+      address_ = null;
+    }
+
+    public static final int MOBILECOINADDRESS_FIELD_NUMBER = 1;
+    /**
+     * <code>optional .signalservice.PaymentAddress.MobileCoinAddress mobileCoinAddress = 1;</code>
+     */
+    @java.lang.Override
+    public boolean hasMobileCoinAddress() {
+      return addressCase_ == 1;
+    }
+    /**
+     * <code>optional .signalservice.PaymentAddress.MobileCoinAddress mobileCoinAddress = 1;</code>
+     */
+    @java.lang.Override
+    public su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress getMobileCoinAddress() {
+      if (addressCase_ == 1) {
+         return (su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress) address_;
+      }
+      return su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress.getDefaultInstance();
+    }
+    /**
+     * <code>optional .signalservice.PaymentAddress.MobileCoinAddress mobileCoinAddress = 1;</code>
+     */
+    private void setMobileCoinAddress(su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      address_ = value;
+      addressCase_ = 1;
+    }
+    /**
+     * <code>optional .signalservice.PaymentAddress.MobileCoinAddress mobileCoinAddress = 1;</code>
+     */
+    private void setMobileCoinAddress(
+        su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress.Builder builderForValue) {
+      address_ = builderForValue.build();
+      addressCase_ = 1;
+    }
+    /**
+     * <code>optional .signalservice.PaymentAddress.MobileCoinAddress mobileCoinAddress = 1;</code>
+     */
+    private void mergeMobileCoinAddress(su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      if (addressCase_ == 1 &&
+          address_ != su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress.getDefaultInstance()) {
+        address_ = su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress.newBuilder((su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress) address_)
+            .mergeFrom(value).buildPartial();
+      } else {
+        address_ = value;
+      }
+      addressCase_ = 1;
+    }
+    /**
+     * <code>optional .signalservice.PaymentAddress.MobileCoinAddress mobileCoinAddress = 1;</code>
+     */
+    private void clearMobileCoinAddress() {
+      if (addressCase_ == 1) {
+        addressCase_ = 0;
+        address_ = null;
+      }
+    }
+
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input);
+    }
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() {
+      return (Builder) DEFAULT_INSTANCE.createBuilder();
+    }
+    public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress prototype) {
+      return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+    }
+
+    /**
+     * Protobuf type {@code signalservice.PaymentAddress}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageLite.Builder<
+          su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress, Builder> implements
+        // @@protoc_insertion_point(builder_implements:signalservice.PaymentAddress)
+        su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddressOrBuilder {
+      // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.newBuilder()
+      private Builder() {
+        super(DEFAULT_INSTANCE);
+      }
+
+      @java.lang.Override
+      public AddressCase
+          getAddressCase() {
+        return instance.getAddressCase();
+      }
+
+      public Builder clearAddress() {
+        copyOnWrite();
+        instance.clearAddress();
+        return this;
+      }
+
+
+      /**
+       * <code>optional .signalservice.PaymentAddress.MobileCoinAddress mobileCoinAddress = 1;</code>
+       */
+      @java.lang.Override
+      public boolean hasMobileCoinAddress() {
+        return instance.hasMobileCoinAddress();
+      }
+      /**
+       * <code>optional .signalservice.PaymentAddress.MobileCoinAddress mobileCoinAddress = 1;</code>
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress getMobileCoinAddress() {
+        return instance.getMobileCoinAddress();
+      }
+      /**
+       * <code>optional .signalservice.PaymentAddress.MobileCoinAddress mobileCoinAddress = 1;</code>
+       */
+      public Builder setMobileCoinAddress(su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress value) {
+        copyOnWrite();
+        instance.setMobileCoinAddress(value);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.PaymentAddress.MobileCoinAddress mobileCoinAddress = 1;</code>
+       */
+      public Builder setMobileCoinAddress(
+          su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress.Builder builderForValue) {
+        copyOnWrite();
+        instance.setMobileCoinAddress(builderForValue);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.PaymentAddress.MobileCoinAddress mobileCoinAddress = 1;</code>
+       */
+      public Builder mergeMobileCoinAddress(su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress value) {
+        copyOnWrite();
+        instance.mergeMobileCoinAddress(value);
+        return this;
+      }
+      /**
+       * <code>optional .signalservice.PaymentAddress.MobileCoinAddress mobileCoinAddress = 1;</code>
+       */
+      public Builder clearMobileCoinAddress() {
+        copyOnWrite();
+        instance.clearMobileCoinAddress();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:signalservice.PaymentAddress)
+    }
+    @java.lang.Override
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
+        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+        java.lang.Object arg0, java.lang.Object arg1) {
+      switch (method) {
+        case NEW_MUTABLE_INSTANCE: {
+          return new su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress();
+        }
+        case NEW_BUILDER: {
+          return new Builder();
+        }
+        case BUILD_MESSAGE_INFO: {
+            java.lang.Object[] objects = new java.lang.Object[] {
+              "address_",
+              "addressCase_",
+              "bitField0_",
+              su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.MobileCoinAddress.class,
+            };
+            java.lang.String info =
+                "\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0001<\u0000";
+            return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+        }
+        // fall through
+        case GET_DEFAULT_INSTANCE: {
+          return DEFAULT_INSTANCE;
+        }
+        case GET_PARSER: {
+          com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress> parser = PARSER;
+          if (parser == null) {
+            synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress.class) {
+              parser = PARSER;
+              if (parser == null) {
+                parser =
+                    new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress>(
+                        DEFAULT_INSTANCE);
+                PARSER = parser;
+              }
+            }
+          }
+          return parser;
+      }
+      case GET_MEMOIZED_IS_INITIALIZED: {
+        return (byte) 1;
+      }
+      case SET_MEMOIZED_IS_INITIALIZED: {
+        return null;
+      }
+      }
+      throw new UnsupportedOperationException();
+    }
+
+
+    // @@protoc_insertion_point(class_scope:signalservice.PaymentAddress)
+    private static final su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress DEFAULT_INSTANCE;
+    static {
+      PaymentAddress defaultInstance = new PaymentAddress();
+      // New instances are implicitly immutable so no need to make
+      // immutable.
+      DEFAULT_INSTANCE = defaultInstance;
+      com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+        PaymentAddress.class, defaultInstance);
+    }
+
+    public static su.sres.signalservice.internal.push.SignalServiceProtos.PaymentAddress getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static volatile com.google.protobuf.Parser<PaymentAddress> PARSER;
+
+    public static com.google.protobuf.Parser<PaymentAddress> parser() {
       return DEFAULT_INSTANCE.getParserForType();
     }
   }

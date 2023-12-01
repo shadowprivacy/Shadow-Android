@@ -566,6 +566,10 @@
             android:theme="@style/TextSecure.LightTheme"
             android:windowSoftInputMode="stateVisible|adjustResize" />
 
+        <activity android:name=".payments.preferences.PaymentsActivity"
+            android:theme="@style/TextSecure.LightRegistrationTheme"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+
         <activity android:name=".ClearAvatarPromptActivity"
             android:theme="@style/Theme.AppCompat.Dialog.Alert"
             android:icon="@drawable/clear_profile_avatar"
@@ -701,7 +705,7 @@
                 android:resource="@xml/authenticator" />
         </service>
 
-        <service
+<!--        <service
             android:name=".service.ContactsSyncAdapterService"
             android:exported="true">
             <intent-filter>
@@ -715,6 +719,7 @@
                 android:name="android.provider.CONTACTS_STRUCTURE"
                 android:resource="@xml/contactsformat" />
         </service>
+-->
 
         <service
             android:name=".service.DirectShareService"
@@ -809,6 +814,8 @@
         <receiver android:name=".revealable.ViewOnceMessageManager$ViewOnceAlarm" />
 
         <receiver android:name=".service.TrimThreadsByDateManager$TrimThreadsByDateAlarm" />
+
+        <receiver android:name=".payments.backup.phrase.ClearClipboardAlarmReceiver" />
 
         <provider
             android:name=".providers.PartProvider"

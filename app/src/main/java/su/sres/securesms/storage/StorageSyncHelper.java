@@ -18,6 +18,7 @@ import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.keyvalue.UserLoginPrivacyValues;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.payments.Entropy;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.Base64;
@@ -354,7 +355,7 @@ public final class StorageSyncHelper {
 
     @VisibleForTesting
     static void setTestKeyGenerator(@Nullable KeyGenerator testKeyGenerator) {
-        keyGenerator = testKeyGenerator;
+        keyGenerator = testKeyGenerator != null ? testKeyGenerator : KEY_GENERATOR;
     }
 
     private static @NonNull <E extends SignalRecord> RecordMergeResult<E> resolveRecordConflict(@NonNull Collection<E> remoteOnlyRecords,
@@ -433,6 +434,7 @@ public final class StorageSyncHelper {
                 .setUnlistedUserLogin(SignalStore.userLoginPrivacy().getUserLoginListingMode().isUnlisted())
                 .setUserLoginSharingMode(StorageSyncModels.localToRemoteUserLoginSharingMode(SignalStore.userLoginPrivacy().getUserLoginSharingMode()))
                 .setPinnedConversations(StorageSyncModels.localToRemotePinnedConversations(pinned))
+                .setPayments(SignalStore.paymentsValues().mobileCoinPaymentsEnabled(), Optional.fromNullable(SignalStore.paymentsValues().getPaymentsEntropy()).transform(Entropy::getBytes).orNull())
                 .build();
 
         return SignalStorageRecord.forAccount(account);
@@ -454,6 +456,7 @@ public final class StorageSyncHelper {
         SignalStore.settings().setLinkPreviewsEnabled(update.isLinkPreviewsEnabled());
         SignalStore.userLoginPrivacy().setUserLoginListingMode(update.isUserLoginUnlisted() ? UserLoginPrivacyValues.UserLoginListingMode.UNLISTED : UserLoginPrivacyValues.UserLoginListingMode.LISTED);
         SignalStore.userLoginPrivacy().setUserLoginSharingMode(StorageSyncModels.remoteToLocalUserLoginSharingMode(update.getUserLoginSharingMode()));
+        SignalStore.paymentsValues().setEnabledAndEntropy(update.getPayments().isEnabled(), Entropy.fromBytes(update.getPayments().getEntropy().orNull()));
 
         if (fetchProfile && update.getAvatarUrlPath().isPresent()) {
             ApplicationDependencies.getJobManager().add(new RetrieveProfileAvatarJob(Recipient.self(), update.getAvatarUrlPath().get()));

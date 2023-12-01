@@ -1,5 +1,8 @@
 package su.sres.securesms.preferences;
 
+import android.app.AlertDialog;
+import android.content.ClipData;
+import android.content.Context;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -7,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.PreferenceDataStore;
 
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.SwitchPreferenceCompat;
@@ -17,7 +21,9 @@ import su.sres.securesms.jobs.RotateProfileKeyJob;
 import su.sres.securesms.keyvalue.InternalValues;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.payments.DataExportUtil;
 import su.sres.securesms.util.ConversationUtil;
+import su.sres.securesms.util.concurrent.SimpleTask;
 
 public class InternalOptionsPreferenceFragment extends CorrectedPreferenceFragment {
     private static final String TAG = Log.tag(InternalOptionsPreferenceFragment.class);
@@ -40,6 +46,30 @@ public class InternalOptionsPreferenceFragment extends CorrectedPreferenceFragme
         initializeSwitchPreference(preferenceDataStore, InternalValues.GV2_IGNORE_P2P_CHANGES, SignalStore.internalValues().gv2IgnoreP2PChanges());
         initializeSwitchPreference(preferenceDataStore, InternalValues.GV2_DISABLE_AUTOMIGRATE_INITIATION, SignalStore.internalValues().disableGv1AutoMigrateInitiation());
         initializeSwitchPreference(preferenceDataStore, InternalValues.GV2_DISABLE_AUTOMIGRATE_NOTIFICATION, SignalStore.internalValues().disableGv1AutoMigrateNotification());
+
+        findPreference("pref_copy_payments_data").setOnPreferenceClickListener(preference -> {
+            new AlertDialog.Builder(getContext())
+                    .setMessage("Local payments history will be copied to the clipboard.\n" +
+                            "It may therefore compromise privacy.\n" +
+                            "However, no private keys will be copied.")
+                    .setPositiveButton("Copy", (dialog, which) -> {
+                        SimpleTask.run(SignalExecutors.UNBOUNDED,
+                                () -> {
+                                    Context context = ApplicationDependencies.getApplication();
+                                    android.content.ClipboardManager clipboard =
+                                            (android.content.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                                    String   tsv  = DataExportUtil.createTsv();
+                                    ClipData clip = ClipData.newPlainText(context.getString(R.string.app_name), tsv);
+                                    clipboard.setPrimaryClip(clip);
+                                    return null;
+                                },
+                                r -> Toast.makeText(getContext(), "Payments have been copied", Toast.LENGTH_SHORT).show()
+                        );
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+            return true;
+        });
 
         findPreference("pref_refresh_attributes").setOnPreferenceClickListener(preference -> {
             ApplicationDependencies.getJobManager()

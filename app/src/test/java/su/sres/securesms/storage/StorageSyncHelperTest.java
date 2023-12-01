@@ -20,6 +20,7 @@ import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.securesms.util.FeatureFlags;
+import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.storage.SignalAccountRecord;
 import su.sres.signalservice.api.storage.SignalContactRecord;
@@ -40,6 +41,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -86,6 +88,7 @@ public final class StorageSyncHelperTest {
         when(Recipient.self()).thenReturn(SELF);
         Log.initialize(new Log.Logger[0]);
         mockStatic(FeatureFlags.class);
+        StorageSyncHelper.setTestKeyGenerator(null);
     }
 
     @Test
@@ -389,6 +392,83 @@ public final class StorageSyncHelperTest {
         assertTrue(StorageSyncHelper.profileKeyChanged(update(a, b)));
     }
 
+    @Test
+    public void resolveConflict_payments_enabled_remotely() {
+        SignalAccountRecord remoteAccount = accountWithPayments(1, true, new byte[32]);
+        SignalAccountRecord localAccount  = accountWithPayments(2, false, new byte[32]);
+
+        Set<SignalStorageRecord> remoteOnly = recordSetOf(remoteAccount);
+        Set<SignalStorageRecord> localOnly  = recordSetOf(localAccount);
+
+        MergeResult result = StorageSyncHelper.resolveConflict(remoteOnly, localOnly, r -> false);
+
+        assertTrue(result.getLocalAccountUpdate().get().getNew().getPayments().isEnabled());
+    }
+
+    @Test
+    public void resolveConflict_payments_disabled_remotely() {
+        SignalAccountRecord remoteAccount = accountWithPayments(1, false, new byte[32]);
+        SignalAccountRecord localAccount  = accountWithPayments(2, true, new byte[32]);
+
+        Set<SignalStorageRecord> remoteOnly = recordSetOf(remoteAccount);
+        Set<SignalStorageRecord> localOnly  = recordSetOf(localAccount);
+
+        MergeResult result = StorageSyncHelper.resolveConflict(remoteOnly, localOnly, r -> false);
+
+        assertFalse(result.getLocalAccountUpdate().get().getNew().getPayments().isEnabled());
+    }
+
+    @Test
+    public void resolveConflict_payments_remote_entropy_overrides_local_if_correct_length_32() {
+        byte[]              remoteEntropy = Util.getSecretBytes(32);
+        byte[]              localEntropy  = Util.getSecretBytes(32);
+        SignalAccountRecord remoteAccount = accountWithPayments(1, true, remoteEntropy);
+        SignalAccountRecord localAccount  = accountWithPayments(2, true, localEntropy);
+
+        Set<SignalStorageRecord> remoteOnly = recordSetOf(remoteAccount);
+        Set<SignalStorageRecord> localOnly  = recordSetOf(localAccount);
+
+        MergeResult result = StorageSyncHelper.resolveConflict(remoteOnly, localOnly, r -> false);
+
+        SignalAccountRecord.Payments payments = result.getLocalAccountUpdate().get().getNew().getPayments();
+        assertTrue(payments.isEnabled());
+        assertArrayEquals(remoteEntropy, payments.getEntropy().get());
+    }
+
+    @Test
+    public void resolveConflict_payments_local_entropy_preserved_if_remote_empty() {
+        byte[]              remoteEntropy = new byte[0];
+        byte[]              localEntropy  = Util.getSecretBytes(32);
+        SignalAccountRecord remoteAccount = accountWithPayments(1, true, remoteEntropy);
+        SignalAccountRecord localAccount  = accountWithPayments(2, true, localEntropy);
+
+        Set<SignalStorageRecord> remoteOnly = recordSetOf(remoteAccount);
+        Set<SignalStorageRecord> localOnly  = recordSetOf(localAccount);
+
+        MergeResult result = StorageSyncHelper.resolveConflict(remoteOnly, localOnly, r -> false);
+
+        SignalAccountRecord.Payments payments = result.getLocalAccountUpdate().get().getNew().getPayments();
+        assertFalse(payments.isEnabled());
+        assertArrayEquals(localEntropy, payments.getEntropy().get());
+    }
+
+    @Test
+    public void resolveConflict_payments_local_entropy_preserved_if_remote_is_a_bad_length() {
+        byte[]              remoteEntropy = Util.getSecretBytes(30);
+        byte[]              localEntropy  = Util.getSecretBytes(32);
+        SignalAccountRecord remoteAccount = accountWithPayments(1, true, remoteEntropy);
+        SignalAccountRecord localAccount  = accountWithPayments(2, true, localEntropy);
+
+        Set<SignalStorageRecord> remoteOnly = recordSetOf(remoteAccount);
+        Set<SignalStorageRecord> localOnly  = recordSetOf(localAccount);
+
+        MergeResult result = StorageSyncHelper.resolveConflict(remoteOnly, localOnly, r -> false);
+
+        SignalAccountRecord.Payments payments = result.getLocalAccountUpdate().get().getNew().getPayments();
+        assertFalse(payments.isEnabled());
+        assertArrayEquals(localEntropy, payments.getEntropy().get());
+    }
+
     private static Set<SignalStorageRecord> recordSetOf(SignalRecord... records) {
         LinkedHashSet<SignalStorageRecord> storageRecords = new LinkedHashSet<>();
 
@@ -434,6 +514,10 @@ public final class StorageSyncHelperTest {
 
     private static SignalAccountRecord account(int key) {
         return new SignalAccountRecord.Builder(byteArray(key)).build();
+    }
+
+    private static SignalAccountRecord accountWithPayments(int key, boolean enabled, byte[] entropy) {
+        return new SignalAccountRecord.Builder(byteArray(key)).setPayments(enabled, entropy).build();
     }
 
     private static SignalContactRecord contact(int key,

@@ -34,6 +34,8 @@ import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MessageDatabase.InsertResult;
 import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.MmsSmsDatabase;
+import su.sres.securesms.database.PaymentDatabase;
+import su.sres.securesms.database.PaymentMetaDataUtil;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.ThreadDatabase;
@@ -60,6 +62,9 @@ import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceGroupUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceKeysUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceStickerPackSyncJob;
+import su.sres.securesms.jobs.PaymentLedgerUpdateJob;
+import su.sres.securesms.jobs.PaymentTransactionCheckJob;
+import su.sres.securesms.jobs.PushProcessMessageJob;
 import su.sres.securesms.jobs.RefreshOwnProfileJob;
 import su.sres.securesms.jobs.RequestGroupInfoJob;
 import su.sres.securesms.jobs.RetrieveProfileJob;
@@ -78,6 +83,7 @@ import su.sres.securesms.mms.QuoteModel;
 import su.sres.securesms.mms.SlideDeck;
 import su.sres.securesms.mms.StickerSlide;
 import su.sres.securesms.notifications.MessageNotifier;
+import su.sres.securesms.payments.MobileCoinPublicAddress;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.ringrtc.RemotePeer;
@@ -118,6 +124,7 @@ import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
 import su.sres.signalservice.api.messages.multidevice.BlockedListMessage;
 import su.sres.signalservice.api.messages.multidevice.ConfigurationMessage;
 import su.sres.signalservice.api.messages.multidevice.MessageRequestResponseMessage;
+import su.sres.signalservice.api.messages.multidevice.OutgoingPaymentMessage;
 import su.sres.signalservice.api.messages.multidevice.ReadMessage;
 import su.sres.signalservice.api.messages.multidevice.RequestMessage;
 import su.sres.signalservice.api.messages.multidevice.SentTranscriptMessage;
@@ -126,6 +133,7 @@ import su.sres.signalservice.api.messages.multidevice.StickerPackOperationMessag
 import su.sres.signalservice.api.messages.multidevice.VerifiedMessage;
 import su.sres.signalservice.api.messages.multidevice.ViewOnceOpenMessage;
 import su.sres.signalservice.api.messages.shared.SharedContact;
+import su.sres.signalservice.api.payments.Money;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.io.IOException;
@@ -137,6 +145,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Takes data about a decrypted message, transforms it into user-presentable data, and writes that
@@ -233,9 +242,10 @@ public final class MessageContentProcessor {
                 else if (message.isExpirationUpdate())                                            handleExpirationUpdate(content, message, smsMessageId, groupId);
                 else if (message.getReaction().isPresent())                                       handleReaction(content, message);
                 else if (message.getRemoteDelete().isPresent())                                   handleRemoteDelete(content, message);
+                else if (message.getPayment().isPresent())                                        handlePayment(content, message);
                 else if (isMediaMessage)                                                          handleMediaMessage(content, message, smsMessageId);
                 else if (message.getBody().isPresent())                                           handleTextMessage(content, message, smsMessageId, groupId);
-                else if (message.getGroupCallUpdate().isPresent()) handleGroupCallUpdateMessage(content, message, groupId);
+                else if (message.getGroupCallUpdate().isPresent())  handleGroupCallUpdateMessage(content, message, groupId);
 
                 if (groupId.isPresent() && groupDatabase.isUnknownGroup(groupId.get())) {
                     handleUnknownGroupMessage(content, message.getGroupContext().get());
@@ -263,6 +273,7 @@ public final class MessageContentProcessor {
                 else if (syncMessage.getBlockedList().isPresent())            handleSynchronizeBlockedListMessage(syncMessage.getBlockedList().get());
                 else if (syncMessage.getFetchType().isPresent())              handleSynchronizeFetchMessage(syncMessage.getFetchType().get());
                 else if (syncMessage.getMessageRequestResponse().isPresent()) handleSynchronizeMessageRequestResponse(syncMessage.getMessageRequestResponse().get());
+                else if (syncMessage.getOutgoingPaymentMessage().isPresent()) handleSynchronizeOutgoingPayment(syncMessage.getOutgoingPaymentMessage().get());
                 else                                                          warn(String.valueOf(content.getTimestamp()), "Contains no known sync types...");
             } else if (content.getCallMessage().isPresent()) {
                 log(String.valueOf(content.getTimestamp()), "Got call message...");
@@ -300,6 +311,41 @@ public final class MessageContentProcessor {
         } catch (BadGroupIdException e) {
             warn(String.valueOf(content.getTimestamp()), "Ignoring message with bad group id", e);
         }
+    }
+
+    private void handlePayment(@NonNull SignalServiceContent content, @NonNull SignalServiceDataMessage message) {
+        if (!message.getPayment().isPresent()) {
+            throw new AssertionError();
+        }
+
+        if (!message.getPayment().get().getPaymentNotification().isPresent()) {
+            Log.w(TAG, "Ignoring payment message without notification");
+            return;
+        }
+
+        SignalServiceDataMessage.PaymentNotification paymentNotification = message.getPayment().get().getPaymentNotification().get();
+        PaymentDatabase                              paymentDatabase     = DatabaseFactory.getPaymentDatabase(context);
+        UUID uuid                = UUID.randomUUID();
+        Recipient                                    recipient           = Recipient.externalHighTrustPush(context, content.getSender());
+        String                                       queue               = "Payment_" + PushProcessMessageJob.getQueueName(recipient.getId());
+
+        try {
+            paymentDatabase.createIncomingPayment(uuid,
+                    recipient.getId(),
+                    message.getTimestamp(),
+                    paymentNotification.getNote(),
+                    Money.MobileCoin.ZERO,
+                    Money.MobileCoin.ZERO,
+                    paymentNotification.getReceipt());
+        } catch (PaymentDatabase.PublicKeyConflictException e) {
+            Log.w(TAG, "Ignoring payment with public key already in database");
+            return;
+        }
+
+        ApplicationDependencies.getJobManager()
+                .startChain(new PaymentTransactionCheckJob(uuid, queue))
+                .then(PaymentLedgerUpdateJob.updateLedger())
+                .enqueue();
     }
 
     private static @Nullable
@@ -790,6 +836,38 @@ public final class MessageContentProcessor {
                 warn("Got an unknown response type! Skipping");
                 break;
         }
+    }
+
+    private void handleSynchronizeOutgoingPayment(@NonNull OutgoingPaymentMessage outgoingPaymentMessage) {
+        RecipientId recipientId = outgoingPaymentMessage.getRecipient()
+                .transform(uuid -> RecipientId.from(uuid, null))
+                .orNull();
+        long timestamp = outgoingPaymentMessage.getBlockTimestamp();
+        if (timestamp == 0) {
+            timestamp = System.currentTimeMillis();
+        }
+
+        Optional<MobileCoinPublicAddress> address = outgoingPaymentMessage.getAddress().transform(MobileCoinPublicAddress::fromBytes);
+        if (!address.isPresent() && recipientId == null) {
+            Log.i(TAG, "Inserting defrag");
+            address     = Optional.of(ApplicationDependencies.getPayments().getWallet().getMobileCoinPublicAddress());
+            recipientId = Recipient.self().getId();
+        }
+
+        UUID uuid = UUID.randomUUID();
+        DatabaseFactory.getPaymentDatabase(context)
+                .createSuccessfulPayment(uuid,
+                        recipientId,
+                        address.get(),
+                        timestamp,
+                        outgoingPaymentMessage.getBlockIndex(),
+                        outgoingPaymentMessage.getNote().or(""),
+                        outgoingPaymentMessage.getAmount(),
+                        outgoingPaymentMessage.getFee(),
+                        outgoingPaymentMessage.getReceipt().toByteArray(),
+                        PaymentMetaDataUtil.fromKeysAndImages(outgoingPaymentMessage.getPublicKeys(), outgoingPaymentMessage.getKeyImages()));
+
+        log("Inserted synchronized payment " + uuid);
     }
 
     private void handleSynchronizeSentMessage(@NonNull SignalServiceContent content,

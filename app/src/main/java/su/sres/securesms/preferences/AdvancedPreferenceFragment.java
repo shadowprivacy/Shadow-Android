@@ -33,15 +33,20 @@ import com.google.firebase.iid.FirebaseInstanceId;
 
 import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.payments.preferences.PaymentsActivity;
+import su.sres.securesms.payments.preferences.transfer.PaymentsTransferFragmentArgs;
 import su.sres.securesms.registration.RegistrationNavigationActivity;
 import su.sres.securesms.contacts.ContactAccessor;
 import su.sres.securesms.contacts.ContactIdentityManager;
 import su.sres.securesms.logsubmit.SubmitDebugLogActivity;
 import su.sres.securesms.util.FeatureFlags;
+import su.sres.securesms.util.SpanUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
+import su.sres.signalservice.api.payments.FormatterOptions;
+import su.sres.signalservice.api.payments.Money;
 import su.sres.signalservice.api.push.exceptions.AuthorizationFailedException;
 
 import java.io.IOException;
@@ -57,6 +62,7 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
   private static final String SUBMIT_DEBUG_LOG_PREF = "pref_submit_debug_logs";
 
   private static final int PICK_IDENTITY_CONTACT = 1;
+  private static final int TRANSFER_CURRENCY     = 2;
 
   @Override
   public void onCreate(Bundle paramBundle) {
@@ -81,7 +87,27 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
 
     Preference deleteAccount = this.findPreference(DELETE_ACCOUNT);
     deleteAccount.setOnPreferenceClickListener(preference -> {
-      getApplicationPreferencesActivity().pushFragment(new DeleteAccountFragment());
+      Money.MobileCoin latestBalance = SignalStore.paymentsValues().mobileCoinLatestBalance().getFullAmount().requireMobileCoin();
+
+      if (!latestBalance.equals(Money.MobileCoin.ZERO)) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.AdvancedPreferenceFragment__transfer_mob_balance)
+                .setMessage(getString(R.string.AdvancedPreferenceFragment__you_have_a_balance_of_s, latestBalance.toString(FormatterOptions.defaults())))
+                .setPositiveButton(R.string.AdvancedPreferenceFragment__transfer, (dialog, which) -> {
+                  Intent intent = new Intent(requireContext(), PaymentsActivity.class);
+                  intent.putExtra(PaymentsActivity.EXTRA_PAYMENTS_STARTING_ACTION, R.id.action_directly_to_paymentsTransfer);
+                  intent.putExtra(PaymentsActivity.EXTRA_STARTING_ARGUMENTS, new PaymentsTransferFragmentArgs.Builder().setFinishOnConfirm(true).build().toBundle());
+                  startActivityForResult(intent, TRANSFER_CURRENCY);
+                  dialog.dismiss();
+                })
+                .setNegativeButton(SpanUtil.color(ContextCompat.getColor(requireContext(), R.color.signal_alert_primary), getString(R.string.AdvancedPreferenceFragment__dont_transfer)), (dialog, which) -> {
+                  getApplicationPreferencesActivity().pushFragment(new DeleteAccountFragment());
+                  dialog.dismiss();
+                })
+                .show();
+      } else {
+        getApplicationPreferencesActivity().pushFragment(new DeleteAccountFragment());
+      }
       return false;
     });
   }
@@ -133,6 +159,8 @@ public class AdvancedPreferenceFragment extends CorrectedPreferenceFragment {
     Log.i(TAG, "Got result: " + resultCode + " for req: " + reqCode);
     if (resultCode == Activity.RESULT_OK && reqCode == PICK_IDENTITY_CONTACT) {
       handleIdentitySelection(data);
+    } else if (resultCode == Activity.RESULT_OK && reqCode == TRANSFER_CURRENCY) {
+      getApplicationPreferencesActivity().pushFragment(new DeleteAccountFragment());
     }
   }
 

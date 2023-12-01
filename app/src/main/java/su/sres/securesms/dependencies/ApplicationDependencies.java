@@ -20,6 +20,7 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.net.PipeConnectivityListener;
 import su.sres.securesms.notifications.MessageNotifier;
+import su.sres.securesms.payments.Payments;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.service.TrimThreadsByDateManager;
@@ -76,6 +77,7 @@ public class ApplicationDependencies {
     private static volatile TypingStatusSender           typingStatusSender;
     private static volatile DatabaseObserver databaseObserver;
     private static volatile TrimThreadsByDateManager     trimThreadsByDateManager;
+    private static volatile Payments payments;
     private static volatile ShakeToReport                shakeToReport;
     private static volatile SignalCallManager            signalCallManager;
     private static volatile KeyValueStore keyValueStore;
@@ -392,6 +394,18 @@ public class ApplicationDependencies {
         return databaseObserver;
     }
 
+    public static @NonNull Payments getPayments() {
+        if (payments == null) {
+            synchronized (LOCK) {
+                if (payments == null) {
+                    payments = provider.providePayments(getSignalServiceAccountManager());
+                }
+            }
+        }
+
+        return payments;
+    }
+
     public static @NonNull ShakeToReport getShakeToReport() {
         if (shakeToReport == null) {
             synchronized (NI_LOCK) {
@@ -442,6 +456,7 @@ public class ApplicationDependencies {
         @NonNull TypingStatusRepository provideTypingStatusRepository();
         @NonNull TypingStatusSender provideTypingStatusSender();
         @NonNull DatabaseObserver provideDatabaseObserver();
+        @NonNull Payments providePayments(@NonNull SignalServiceAccountManager signalServiceAccountManager);
         @NonNull
         SignalCallManager provideSignalCallManager();
     }

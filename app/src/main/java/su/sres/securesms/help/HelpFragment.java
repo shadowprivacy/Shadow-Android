@@ -31,12 +31,16 @@ import su.sres.securesms.components.emoji.EmojiImageView;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.CommunicationActions;
 import su.sres.securesms.util.SupportEmailUtil;
+import su.sres.securesms.util.Util;
 import su.sres.securesms.util.text.AfterTextChanged;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class HelpFragment extends LoggingFragment {
+
+    public static final String START_CATEGORY_INDEX = "start.category.index";
+    public static final int    PAYMENT_INDEX        = 5;
 
     private EditText                   problem;
     private CheckBox                   includeDebugLogs;
@@ -95,6 +99,11 @@ public class HelpFragment extends LoggingFragment {
         categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
         categorySpinner.setAdapter(categoryAdapter);
+
+        Bundle args = getArguments();
+        if (args != null) {
+            categorySpinner.setSelection(Util.clamp(args.getInt(START_CATEGORY_INDEX, 0), 0, categorySpinner.getCount() - 1));
+        }
     }
 
     private void initializeListeners() {

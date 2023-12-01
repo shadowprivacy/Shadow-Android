@@ -6,19 +6,29 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.profiles.ProfileKey;
 
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.payments.MobileCoinPublicAddress;
+import su.sres.securesms.payments.MobileCoinPublicAddressProfileUtil;
+import su.sres.securesms.payments.PaymentsAddressException;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.messages.IncomingMessageObserver;
+
+import org.whispersystems.libsignal.IdentityKey;
+import org.whispersystems.libsignal.IdentityKeyPair;
+import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.signalservice.api.SignalServiceAccountManager;
@@ -34,6 +44,7 @@ import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.NotFoundException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.util.StreamDetails;
+import su.sres.signalservice.internal.push.SignalServiceProtos;
 import su.sres.signalservice.internal.util.concurrent.CascadingFuture;
 import su.sres.signalservice.internal.util.concurrent.ListenableFuture;
 
@@ -96,15 +107,85 @@ public final class ProfileUtil {
         }
     }
 
-    public static @Nullable String decryptName(@NonNull ProfileKey profileKey, @Nullable String encryptedName)
+    public static @Nullable String decryptString(@NonNull ProfileKey profileKey, @Nullable byte[] encryptedString)
             throws InvalidCiphertextException, IOException
     {
-        if (encryptedName == null) {
+        if (encryptedString == null) {
             return null;
         }
 
         ProfileCipher profileCipher = new ProfileCipher(profileKey);
-        return new String(profileCipher.decryptName(Base64.decode(encryptedName)));
+        return profileCipher.decryptString(encryptedString);
+    }
+
+    public static @Nullable String decryptString(@NonNull ProfileKey profileKey, @Nullable String encryptedStringBase64)
+            throws InvalidCiphertextException, IOException
+    {
+        if (encryptedStringBase64 == null) {
+            return null;
+        }
+
+        return decryptString(profileKey, Base64.decode(encryptedStringBase64));
+    }
+
+    @WorkerThread
+    public static @NonNull MobileCoinPublicAddress getAddressForRecipient(@NonNull Recipient recipient)
+            throws InterruptedException, ExecutionException, PaymentsAddressException
+    {
+        ProfileKey profileKey;
+        try {
+            profileKey = getProfileKey(recipient);
+        } catch (IOException e) {
+            Log.w(TAG, "Profile key not available for " + recipient.getId());
+            throw new PaymentsAddressException(PaymentsAddressException.Code.NO_PROFILE_KEY);
+        }
+        ProfileAndCredential profileAndCredential     = ProfileUtil.retrieveProfile(ApplicationDependencies.getApplication(), recipient, SignalServiceProfile.RequestType.PROFILE).get();
+        SignalServiceProfile profile                  = profileAndCredential.getProfile();
+        byte[]               encryptedPaymentsAddress = profile.getPaymentAddress();
+
+        if (encryptedPaymentsAddress == null) {
+            Log.w(TAG, "Payments not enabled for " + recipient.getId());
+            throw new PaymentsAddressException(PaymentsAddressException.Code.NOT_ENABLED);
+        }
+
+        try {
+            IdentityKey                        identityKey             = new IdentityKey(Base64.decode(profileAndCredential.getProfile().getIdentityKey()), 0);
+            ProfileCipher                      profileCipher           = new ProfileCipher(profileKey);
+            byte[]                             decrypted               = profileCipher.decryptWithLength(encryptedPaymentsAddress);
+            SignalServiceProtos.PaymentAddress paymentAddress          = SignalServiceProtos.PaymentAddress.parseFrom(decrypted);
+            byte[]                             bytes                   = MobileCoinPublicAddressProfileUtil.verifyPaymentsAddress(paymentAddress, identityKey);
+            MobileCoinPublicAddress mobileCoinPublicAddress = MobileCoinPublicAddress.fromBytes(bytes);
+
+            if (mobileCoinPublicAddress == null) {
+                throw new PaymentsAddressException(PaymentsAddressException.Code.INVALID_ADDRESS);
+            }
+
+            return mobileCoinPublicAddress;
+        } catch (InvalidCiphertextException | IOException e) {
+            Log.w(TAG, "Could not decrypt payments address, ProfileKey may be outdated for " + recipient.getId(), e);
+            throw new PaymentsAddressException(PaymentsAddressException.Code.COULD_NOT_DECRYPT);
+        } catch (InvalidKeyException e) {
+            Log.w(TAG, "Could not verify payments address due to bad identity key " + recipient.getId(), e);
+            throw new PaymentsAddressException(PaymentsAddressException.Code.INVALID_ADDRESS_SIGNATURE);
+        }
+    }
+
+    private static ProfileKey getProfileKey(@NonNull Recipient recipient) throws IOException {
+        byte[] profileKeyBytes = recipient.getProfileKey();
+
+        if (profileKeyBytes == null) {
+            Log.w(TAG, "Profile key unknown for " + recipient.getId());
+            throw new IOException("No profile key");
+        }
+
+        ProfileKey profileKey;
+        try {
+            profileKey = new ProfileKey(profileKeyBytes);
+        } catch (InvalidInputException e) {
+            Log.w(TAG, "Profile key invalid for " + recipient.getId());
+            throw new IOException("Invalid profile key");
+        }
+        return profileKey;
     }
 
     /**
@@ -113,10 +194,14 @@ public final class ProfileUtil {
      * successfully before persisting the change to disk.
      */
     public static void uploadProfileWithName(@NonNull Context context, @NonNull ProfileName profileName) throws IOException {
-        uploadProfile(context,
-                profileName,
-                Optional.fromNullable(Recipient.self().getAbout()).or(""),
-                Optional.fromNullable(Recipient.self().getAboutEmoji()).or(""));
+        try (StreamDetails avatar = AvatarHelper.getSelfProfileAvatarStream(context)) {
+            uploadProfile(context,
+                    profileName,
+                    Optional.fromNullable(Recipient.self().getAbout()).or(""),
+                    Optional.fromNullable(Recipient.self().getAboutEmoji()).or(""),
+                    getSelfPaymentsAddressProtobuf(),
+                    avatar);
+        }
     }
 
     /**
@@ -125,40 +210,76 @@ public final class ProfileUtil {
      * successfully before persisting the change to disk.
      */
     public static void uploadProfileWithAbout(@NonNull Context context, @NonNull String about, @NonNull String emoji) throws IOException {
-        uploadProfile(context,
-                Recipient.self().getProfileName(),
-                about,
-                emoji);
+        try (StreamDetails avatar = AvatarHelper.getSelfProfileAvatarStream(context)) {
+            uploadProfile(context,
+                    Recipient.self().getProfileName(),
+                    about,
+                    emoji,
+                    getSelfPaymentsAddressProtobuf(),
+                    avatar);
+        }
     }
 
     /**
      * Uploads the profile based on all state that's already written to disk.
      */
-    public static void uploadProfile(@NonNull Context context) throws IOException {
+        public static void uploadProfile(@NonNull Context context) throws IOException {
+            try (StreamDetails avatar = AvatarHelper.getSelfProfileAvatarStream(context)) {
+                uploadProfileWithAvatar(context, avatar);
+            }
+        }
+
+    /**
+     * Uploads the profile based on all state that's written to disk, except we'll use the provided
+     * avatar instead. This is useful when you want to ensure that the profile has been uploaded
+     * successfully before persisting the change to disk.
+     */
+    public static void uploadProfileWithAvatar(@NonNull Context context, @Nullable StreamDetails avatar) throws IOException {
         uploadProfile(context,
                 Recipient.self().getProfileName(),
                 Optional.fromNullable(Recipient.self().getAbout()).or(""),
-                Optional.fromNullable(Recipient.self().getAboutEmoji()).or(""));
+                Optional.fromNullable(Recipient.self().getAboutEmoji()).or(""),
+                getSelfPaymentsAddressProtobuf(),
+                avatar);
     }
 
-    public static void uploadProfile(@NonNull Context context,
-                                     @NonNull ProfileName profileName,
-                                     @Nullable String about,
-                                     @Nullable String aboutEmoji)
+    private static void uploadProfile(@NonNull Context context,
+                                      @NonNull ProfileName profileName,
+                                      @Nullable String about,
+                                      @Nullable String aboutEmoji,
+                                      @Nullable SignalServiceProtos.PaymentAddress paymentsAddress,
+                                      @Nullable StreamDetails avatar)
             throws IOException
     {
         Log.d(TAG, "Uploading " + (!Util.isEmpty(about) ? "non-" : "") + "empty about.");
         Log.d(TAG, "Uploading " + (!Util.isEmpty(aboutEmoji) ? "non-" : "") + "empty emoji.");
+        Log.d(TAG, "Uploading " + (paymentsAddress != null ? "non-" : "") + "empty payments address.");
 
-        ProfileKey  profileKey  = ProfileKeyUtil.getSelfProfileKey();
-        String      avatarPath;
+        ProfileKey                  profileKey     = ProfileKeyUtil.getSelfProfileKey();
+        SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
 
-        try (StreamDetails avatar = AvatarHelper.getSelfProfileAvatarStream(context)) {
-            SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
-            avatarPath = accountManager.setVersionedProfile(Recipient.self().getUuid().get(), profileKey, profileName.serialize(), about, aboutEmoji, avatar).orNull();
-        }
+        String                      avatarPath     = accountManager.setVersionedProfile(Recipient.self().getUuid().get(),
+                profileKey,
+                profileName.serialize(),
+                about,
+                aboutEmoji,
+                Optional.fromNullable(paymentsAddress),
+                avatar).orNull();
 
         DatabaseFactory.getRecipientDatabase(context).setProfileAvatar(Recipient.self().getId(), avatarPath);
+    }
+
+    private static @Nullable SignalServiceProtos.PaymentAddress getSelfPaymentsAddressProtobuf() {
+        if (!SignalStore.paymentsValues().mobileCoinPaymentsEnabled()) {
+            return null;
+        } else {
+            IdentityKeyPair identityKeyPair = IdentityKeyUtil.getIdentityKeyPair(ApplicationDependencies.getApplication());
+            MobileCoinPublicAddress publicAddress   = ApplicationDependencies.getPayments()
+                    .getWallet()
+                    .getMobileCoinPublicAddress();
+
+            return MobileCoinPublicAddressProfileUtil.signPaymentsAddress(publicAddress.serialize(), identityKeyPair);
+        }
     }
 
     @WorkerThread

@@ -29,7 +29,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.ContactsContract;
 import android.provider.OpenableColumns;
-import android.text.TextUtils;
 
 import android.util.Pair;
 import android.view.View;
@@ -45,7 +44,6 @@ import su.sres.securesms.MediaPreviewActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.attachments.Attachment;
-import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.components.AudioView;
 import su.sres.securesms.components.DocumentView;
 import su.sres.securesms.components.RemovableEditableMediaView;
@@ -56,13 +54,16 @@ import su.sres.securesms.giph.ui.GiphyActivity;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.maps.PlacePickerActivity;
 import su.sres.securesms.mediasend.MediaSendActivity;
+import su.sres.securesms.payments.create.CreatePaymentFragmentArgs;
+import su.sres.securesms.payments.preferences.PaymentsActivity;
+import su.sres.securesms.payments.preferences.model.PayeeParcelable;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.providers.DeprecatedPersistentBlobProvider;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.MediaUtil;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.AssertedSuccessListener;
 import su.sres.securesms.util.concurrent.ListenableFuture;
@@ -405,6 +406,13 @@ public class AttachmentManager {
     intent.putExtra(GiphyActivity.EXTRA_IS_MMS, isForMms);
     intent.putExtra(GiphyActivity.EXTRA_COLOR, color);
     activity.startActivityForResult(intent, requestCode);
+  }
+
+  public static void selectPayment(@NonNull Activity activity, @NonNull RecipientId recipientId) {
+    Intent intent = new Intent(activity, PaymentsActivity.class);
+    intent.putExtra(PaymentsActivity.EXTRA_PAYMENTS_STARTING_ACTION, R.id.action_directly_to_createPayment);
+    intent.putExtra(PaymentsActivity.EXTRA_STARTING_ARGUMENTS, new CreatePaymentFragmentArgs.Builder(new PayeeParcelable(recipientId)).build().toBundle());
+    activity.startActivity(intent);
   }
 
   private @Nullable Uri getSlideUri() {

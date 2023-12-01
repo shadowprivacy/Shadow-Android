@@ -126,6 +126,7 @@ import su.sres.securesms.groups.ui.migration.GroupsV1MigrationSuggestionsDialog;
 import su.sres.securesms.jobs.GroupV1MigrationJob;
 import su.sres.securesms.jobs.GroupV2UpdateSelfProfileKeyJob;
 import su.sres.securesms.jobs.RequestGroupV2InfoJob;
+import su.sres.securesms.keyvalue.PaymentsValues;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.mediaoverview.MediaOverviewActivity;
 import su.sres.securesms.MuteDialog;
@@ -136,6 +137,7 @@ import su.sres.securesms.messagerequests.MessageRequestState;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
 import su.sres.securesms.mms.SlideFactory;
 import su.sres.securesms.mms.SlideFactory.MediaType;
+import su.sres.securesms.payments.CanNotSendPaymentDialog;
 import su.sres.securesms.profiles.spoofing.ReviewBannerView;
 import su.sres.securesms.profiles.spoofing.ReviewCardDialogFragment;
 import su.sres.securesms.reactions.ReactionsBottomSheetDialogFragment;
@@ -1113,6 +1115,13 @@ public class ConversationActivity extends PassphraseRequiredActivity
             case LOCATION:
                 AttachmentManager.selectLocation(this, PICK_LOCATION);
                 break;
+            case PAYMENT:
+                if (recipient.get().hasProfileKeyCredential()) {
+                    AttachmentManager.selectPayment(this, recipient.getId());
+                } else {
+                    CanNotSendPaymentDialog.show(this);
+                }
+                break;
         }
         container.hideCurrentInput(composeText);
     }
@@ -1431,10 +1440,32 @@ public class ConversationActivity extends PassphraseRequiredActivity
                 viewModel.getRecentMedia().observe(this, media -> attachmentKeyboardStub.get().onMediaChanged(media));
                 attachmentKeyboardStub.get().setCallback(this);
                 attachmentKeyboardStub.get().setWallpaperEnabled(recipient.get().hasWallpaper());
+
+                updatePaymentsAvailable();
+
                 container.show(composeText, attachmentKeyboardStub.get());
 
                 viewModel.onAttachmentKeyboardOpen();
             }
+    }
+
+    private void updatePaymentsAvailable() {
+        if (!attachmentKeyboardStub.resolved()) {
+            return;
+        }
+
+        PaymentsValues paymentsValues = SignalStore.paymentsValues();
+
+        if (paymentsValues.getPaymentsAvailability().isSendAllowed() &&
+                !recipient.get().isSelf()                                &&
+                !recipient.get().isGroup()                               &&
+                recipient.get().isRegistered()                           &&
+                !recipient.get().isForceSmsSelection())
+        {
+            attachmentKeyboardStub.get().filterAttachmentKeyboardButtons(null);
+        } else {
+            attachmentKeyboardStub.get().filterAttachmentKeyboardButtons(btn -> btn != AttachmentKeyboardButton.PAYMENT);
+        }
     }
 
     private void handleRecentSafetyNumberChange() {
@@ -2318,6 +2349,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         setBlockedUserState(recipient, isSecureText, isDefaultSms);
         updateReminders();
         updateDefaultSubscriptionId(recipient.getDefaultSubscriptionId());
+        updatePaymentsAvailable();
         initializeSecurity(isSecureText, isDefaultSms);
 
         if (searchViewItem == null || !searchViewItem.isActionViewExpanded()) {

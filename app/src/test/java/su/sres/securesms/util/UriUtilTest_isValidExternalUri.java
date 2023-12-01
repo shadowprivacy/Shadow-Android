@@ -16,6 +16,8 @@ import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
 
+import su.sres.securesms.BuildConfig;
+
 @RunWith(ParameterizedRobolectricTestRunner.class)
 @Config(manifest = Config.NONE, application = Application.class)
 public class UriUtilTest_isValidExternalUri {
@@ -23,14 +25,16 @@ public class UriUtilTest_isValidExternalUri {
     private final String  input;
     private final boolean output;
 
+    private static final String APPLICATION_ID = BuildConfig.APPLICATION_ID;
+
     @ParameterizedRobolectricTestRunner.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 { "content://other.app.package.name.org/path/public.txt",             true  },
                 { "file:///sdcard/public.txt",                                        true  },
-                { "file:///data/data/org.thoughtcrime.securesms/private.txt",         false },
-                { "file:///any/path/with/package/name/org.thoughtcrime.securesms",    false },
-                { "file:///org.thoughtcrime.securesms/any/path/with/package/name",    false },
+                {"file:///data/data/" + APPLICATION_ID + "/private.txt",              false },
+                {"file:///any/path/with/package/name/" + APPLICATION_ID,              false },
+                {"file:///" + APPLICATION_ID + "/any/path/with/package/name",         false },
                 { "file:///any/path/../with/back/references/private.txt",             false },
                 { "file:///any/path/with/back/references/../private.txt",             false },
                 { "file:///../any/path/with/back/references/private.txt",             false },

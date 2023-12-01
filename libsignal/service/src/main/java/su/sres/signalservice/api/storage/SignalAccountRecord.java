@@ -2,8 +2,10 @@ package su.sres.signalservice.api.storage;
 
 import com.google.protobuf.ByteString;
 
+import org.whispersystems.libsignal.logging.Log;
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import su.sres.signalservice.api.payments.PaymentsConstants;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.util.OptionalUtil;
 import su.sres.signalservice.api.util.ProtoUtil;
@@ -25,6 +27,7 @@ public final class SignalAccountRecord implements SignalRecord {
     private final Optional<String>         avatarUrlPath;
     private final Optional<byte[]>         profileKey;
     private final List<PinnedConversation> pinnedConversations;
+    private final Payments payments;
 
     public SignalAccountRecord(StorageId id, AccountRecord proto) {
         this.id               = id;
@@ -36,6 +39,7 @@ public final class SignalAccountRecord implements SignalRecord {
         this.profileKey          = OptionalUtil.absentIfEmpty(proto.getProfileKey());
         this.avatarUrlPath       = OptionalUtil.absentIfEmpty(proto.getAvatarUrlPath());
         this.pinnedConversations = new ArrayList<>(proto.getPinnedConversationsCount());
+        this.payments             = new Payments(proto.getPayments().getEnabled(), OptionalUtil.absentIfEmpty(proto.getPayments().getEntropy()));
 
         for (AccountRecord.PinnedConversation conversation : proto.getPinnedConversationsList()) {
             pinnedConversations.add(PinnedConversation.fromRemote(conversation));
@@ -105,6 +109,10 @@ public final class SignalAccountRecord implements SignalRecord {
 
     public List<PinnedConversation> getPinnedConversations() {
         return pinnedConversations;
+    }
+
+    public Payments getPayments() {
+        return payments;
     }
 
     AccountRecord toProto() {
@@ -215,6 +223,31 @@ public final class SignalAccountRecord implements SignalRecord {
         }
     }
 
+    public static class Payments {
+        private static final String TAG = Payments.class.getSimpleName();
+
+        private final boolean          enabled;
+        private final Optional<byte[]> entropy;
+
+        public Payments(boolean enabled, Optional<byte[]> entropy) {
+            byte[] entropyBytes = entropy.orNull();
+            if (entropyBytes != null && entropyBytes.length != PaymentsConstants.PAYMENTS_ENTROPY_LENGTH) {
+                Log.w(TAG, "Blocked entropy of length " + entropyBytes.length);
+                entropyBytes = null;
+            }
+            this.entropy = Optional.fromNullable(entropyBytes);
+            this.enabled = enabled && this.entropy.isPresent();
+        }
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public Optional<byte[]> getEntropy() {
+            return entropy;
+        }
+    }
+
     public static final class Builder {
         private final StorageId             id;
         private final AccountRecord.Builder builder;
@@ -297,6 +330,22 @@ public final class SignalAccountRecord implements SignalRecord {
             for (PinnedConversation pinned : pinnedConversations) {
                 builder.addPinnedConversations(pinned.toRemote());
             }
+
+            return this;
+        }
+
+        public Builder setPayments(boolean enabled, byte[] entropy) {
+            su.sres.signalservice.internal.storage.protos.Payments.Builder paymentsBuilder = su.sres.signalservice.internal.storage.protos.Payments.newBuilder();
+
+            boolean entropyPresent = entropy != null && entropy.length == PaymentsConstants.PAYMENTS_ENTROPY_LENGTH;
+
+            paymentsBuilder.setEnabled(enabled && entropyPresent);
+
+            if (entropyPresent) {
+                paymentsBuilder.setEntropy(ByteString.copyFrom(entropy));
+            }
+
+            builder.setPayments(paymentsBuilder);
 
             return this;
         }

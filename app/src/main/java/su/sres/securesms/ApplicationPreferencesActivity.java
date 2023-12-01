@@ -20,21 +20,21 @@ package su.sres.securesms;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.PorterDuff;
-import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.Preference;
 
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.conversationlist.model.UnreadPayments;
+import su.sres.securesms.conversationlist.model.UnreadPaymentsLiveData;
 import su.sres.securesms.help.HelpFragment;
 import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.payments.preferences.PaymentsActivity;
 import su.sres.securesms.preferences.AdvancedPreferenceFragment;
 import su.sres.securesms.preferences.AppProtectionPreferenceFragment;
 import su.sres.securesms.preferences.AppearancePreferenceFragment;
@@ -44,11 +44,9 @@ import su.sres.securesms.preferences.CorrectedPreferenceFragment;
 import su.sres.securesms.preferences.DataAndStoragePreferenceFragment;
 import su.sres.securesms.preferences.EditProxyFragment;
 import su.sres.securesms.preferences.NotificationsPreferenceFragment;
-import su.sres.securesms.preferences.SmsMmsPreferenceFragment;
-import su.sres.securesms.preferences.StoragePreferenceFragment;
+import su.sres.securesms.preferences.widgets.PaymentsPreference;
 import su.sres.securesms.preferences.widgets.ProfilePreference;
 import su.sres.securesms.preferences.widgets.UsernamePreference;
-import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.profiles.manage.ManageProfileActivity;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.KeyCachingService;
@@ -57,7 +55,6 @@ import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.ThemeUtil;
 
 /**
  * The Activity for application preference display and management.
@@ -86,6 +83,8 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
     private static final String PREFERENCE_CATEGORY_DEVICES = "preference_category_devices";
     private static final String PREFERENCE_CATEGORY_HELP           = "preference_category_help";
     private static final String PREFERENCE_CATEGORY_ADVANCED = "preference_category_advanced";
+    private static final String PREFERENCE_CATEGORY_PAYMENTS       = "preference_category_payments";
+
     private static final String WAS_CONFIGURATION_UPDATED          = "was_configuration_updated";
 
     private final DynamicTheme dynamicTheme = new DynamicTheme();
@@ -108,7 +107,10 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
         } else if (getIntent() != null && getIntent().getBooleanExtra(LAUNCH_TO_BACKUPS_FRAGMENT, false)) {
             initFragment(android.R.id.content, new BackupsPreferenceFragment());
         } else if (getIntent() != null && getIntent().getBooleanExtra(LAUNCH_TO_HELP_FRAGMENT, false)) {
-            initFragment(android.R.id.content, new HelpFragment());
+            Bundle bundle = new Bundle();
+            bundle.putInt(HelpFragment.START_CATEGORY_INDEX, getIntent().getIntExtra(HelpFragment.START_CATEGORY_INDEX, 0));
+
+            initFragment(android.R.id.content, new HelpFragment(), null, bundle);
         } else if (getIntent() != null && getIntent().getBooleanExtra(LAUNCH_TO_PROXY_FRAGMENT, false)) {
             initFragment(android.R.id.content, EditProxyFragment.newInstance());
         } else if (getIntent() != null && getIntent().getBooleanExtra(LAUNCH_TO_NOTIFICATIONS_FRAGMENT, false)) {
@@ -187,6 +189,8 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
 
     public static class ApplicationPreferenceFragment extends CorrectedPreferenceFragment {
 
+        private final UnreadPaymentsLiveData unreadPaymentsLiveData = new UnreadPaymentsLiveData();
+
         @Override
         public void onCreate(Bundle icicle) {
             super.onCreate(icicle);
@@ -214,11 +218,30 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
             this.findPreference(PREFERENCE_CATEGORY_ADVANCED)
                     .setOnPreferenceClickListener(new CategoryClickListener(PREFERENCE_CATEGORY_ADVANCED));
 
+            Preference paymentsPreference = this.findPreference(PREFERENCE_CATEGORY_PAYMENTS);
+
+            if (SignalStore.paymentsValues().getPaymentsAvailability().showPaymentsMenu()) {
+                paymentsPreference.setVisible(true);
+                paymentsPreference.setOnPreferenceClickListener(new CategoryClickListener(PREFERENCE_CATEGORY_PAYMENTS));
+            } else {
+                paymentsPreference.setVisible(false);
+            }
+
             tintIcons();
         }
 
+        @Override
+        public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+            super.onViewCreated(view, savedInstanceState);
+
+            if (SignalStore.paymentsValues().getPaymentsAvailability().showPaymentsMenu()) {
+                PaymentsPreference paymentsPreference = (PaymentsPreference) this.findPreference(PREFERENCE_CATEGORY_PAYMENTS);
+
+                unreadPaymentsLiveData.observe(getViewLifecycleOwner(), unreadPayments -> paymentsPreference.setUnreadCount(unreadPayments.transform(UnreadPayments::getUnreadCount).or(-1)));
+            }
+        }
+
         private void tintIcons() {
-            if (Build.VERSION.SDK_INT >= 21) return;
 
    //         Preference preference = this.findPreference(PREFERENCE_CATEGORY_SMS_MMS);
    //         preference.getIcon().setColorFilter(ContextCompat.getColor(requireContext(), R.color.signal_icon_tint_primary), PorterDuff.Mode.SRC_IN);
@@ -327,6 +350,9 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
                         break;
                     case PREFERENCE_CATEGORY_HELP:
                         fragment = new HelpFragment();
+                        break;
+                    case PREFERENCE_CATEGORY_PAYMENTS:
+                        startActivity(new Intent(requireContext(), PaymentsActivity.class));
                         break;
                     default:
                         throw new AssertionError();

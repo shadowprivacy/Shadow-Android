@@ -21,6 +21,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
+import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.LabeledEditText;
@@ -30,6 +32,7 @@ import su.sres.securesms.util.text.AfterTextChanged;
 import su.sres.securesms.util.views.SimpleProgressDialog;
 
 public class DeleteAccountFragment extends Fragment {
+    private TextView               bullets;
     private LabeledEditText        userLogin;
     private DeleteAccountViewModel viewModel;
     private DialogInterface        deletionProgressDialog;
@@ -41,18 +44,18 @@ public class DeleteAccountFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        TextView        bullets        = view.findViewById(R.id.delete_account_fragment_bullets);
         View            confirm        = view.findViewById(R.id.delete_account_fragment_delete);
 
+        bullets     = view.findViewById(R.id.delete_account_fragment_bullets);
         userLogin      = view.findViewById(R.id.delete_account_fragment_number);
 
         viewModel = ViewModelProviders.of(requireActivity(), new DeleteAccountViewModel.Factory(new DeleteAccountRepository()))
                 .get(DeleteAccountViewModel.class);
         viewModel.getEvents().observe(getViewLifecycleOwner(), this::handleEvent);
+        viewModel.getWalletBalance().observe(getViewLifecycleOwner(), this::updateBullets);
 
         initializeUserLoginInput();
         confirm.setOnClickListener(unused -> viewModel.submit());
-        bullets.setText(buildBulletsText());
     }
 
     @Override
@@ -61,10 +64,21 @@ public class DeleteAccountFragment extends Fragment {
         ((ApplicationPreferencesActivity) getActivity()).getSupportActionBar().setTitle(R.string.preferences__delete_account);
     }
 
-    private @NonNull CharSequence buildBulletsText() {
-        return new SpannableStringBuilder().append(SpanUtil.bullet(getString(R.string.DeleteAccountFragment__delete_your_account_info_and_profile_photo)))
+    private void updateBullets(@NonNull Optional<String> formattedBalance) {
+        bullets.setText(buildBulletsText(formattedBalance));
+    }
+
+    private @NonNull CharSequence buildBulletsText(@NonNull Optional<String> formattedBalance) {
+        SpannableStringBuilder builder =  new SpannableStringBuilder().append(SpanUtil.bullet(getString(R.string.DeleteAccountFragment__delete_your_account_info_and_profile_photo)))
                 .append("\n")
                 .append(SpanUtil.bullet(getString(R.string.DeleteAccountFragment__delete_all_your_messages)));
+
+        if (formattedBalance.isPresent()) {
+            builder.append("\n");
+            builder.append(SpanUtil.bullet(getString(R.string.DeleteAccountFragment__delete_s_in_your_payments_account, formattedBalance.get())));
+        }
+
+        return builder;
     }
 
     private String reformatText(Editable s) {

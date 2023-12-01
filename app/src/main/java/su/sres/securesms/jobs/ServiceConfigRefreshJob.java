@@ -22,7 +22,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
 
     private static final String TAG = Log.tag(ServiceConfigRefreshJob.class);
 
-    public static final long REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(8);
+    static final long REFRESH_INTERVAL = TimeUnit.HOURS.toMillis(8);
 
     private final SignalServiceAccountManager accountManager;
 

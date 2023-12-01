@@ -39,7 +39,7 @@ public class ApplicationMigrations {
 
     private static final MutableLiveData<Boolean> UI_BLOCKING_MIGRATION_RUNNING = new MutableLiveData<>();
 
-    public static final int CURRENT_VERSION = 27;
+    public static final int CURRENT_VERSION = 28;
 
     private static final class Version {
         static final int VERSIONED_PROFILE = 15;

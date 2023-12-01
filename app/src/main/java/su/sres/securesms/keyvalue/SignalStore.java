@@ -33,6 +33,7 @@ public final class SignalStore {
     private final UserLoginPrivacyValues userLoginPrivacyValues;
     private final OnboardingValues onboardingValues;
     private final WallpaperValues wallpaperValues;
+    private final PaymentsValues           paymentsValues;
     private final ProxyValues              proxyValues;
 
     private SignalStore() {
@@ -52,6 +53,7 @@ public final class SignalStore {
         this.userLoginPrivacyValues = new UserLoginPrivacyValues(store);
         this.onboardingValues = new OnboardingValues(store);
         this.wallpaperValues = new WallpaperValues(store);
+        this.paymentsValues           = new PaymentsValues(store);
         this.proxyValues              = new ProxyValues(store);
     }
 
@@ -71,6 +73,7 @@ public final class SignalStore {
         userLoginPrivacy().onFirstEverAppLaunch();
         onboarding().onFirstEverAppLaunch();
         wallpaper().onFirstEverAppLaunch();
+        paymentsValues().onFirstEverAppLaunch();
         proxy().onFirstEverAppLaunch();
     }
 
@@ -90,6 +93,7 @@ public final class SignalStore {
         keys.addAll(userLoginPrivacy().getKeysToIncludeInBackup());
         keys.addAll(onboarding().getKeysToIncludeInBackup());
         keys.addAll(wallpaper().getKeysToIncludeInBackup());
+        keys.addAll(paymentsValues().getKeysToIncludeInBackup());
         keys.addAll(proxy().getKeysToIncludeInBackup());
         keys.addAll(serviceConfigurationValues().getKeysToIncludeInBackup());
         return keys;
@@ -175,6 +179,10 @@ public final class SignalStore {
 
     public static @NonNull WallpaperValues wallpaper() {
         return INSTANCE.wallpaperValues;
+    }
+
+    public static @NonNull PaymentsValues paymentsValues() {
+        return INSTANCE.paymentsValues;
     }
 
     public static @NonNull ProxyValues proxy() {

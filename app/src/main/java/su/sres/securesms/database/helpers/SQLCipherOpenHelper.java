@@ -11,6 +11,7 @@ import su.sres.securesms.database.JobDatabase;
 import su.sres.securesms.database.KeyValueDatabase;
 import su.sres.securesms.database.MegaphoneDatabase;
 import su.sres.securesms.database.MentionDatabase;
+import su.sres.securesms.database.PaymentDatabase;
 import su.sres.securesms.database.SignalDatabase;
 import su.sres.securesms.database.SqlCipherDatabaseHook;
 import su.sres.securesms.groups.GroupId;
@@ -70,8 +71,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     private static final int CLEAR_PROFILE_KEY_CREDENTIALS = 76;
     private static final int LAST_RESET_SESSION_TIME_AND_WALLPAPER_AND_ABOUT = 77;
     private static final int SPLIT_SYSTEM_NAMES               = 78;
+    private static final int PAYMENTS                         = 79;
 
-    private static final int DATABASE_VERSION = 78;
+    private static final int DATABASE_VERSION = 79;
     private static final String DATABASE_NAME = "shadow.db";
 
     private final Context context;
@@ -102,6 +104,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
         db.execSQL(StickerDatabase.CREATE_TABLE);
         db.execSQL(StorageKeyDatabase.CREATE_TABLE);
         db.execSQL(MentionDatabase.CREATE_TABLE);
+        db.execSQL(PaymentDatabase.CREATE_TABLE);
 
         executeStatements(db, SearchDatabase.CREATE_TABLE);
 
@@ -116,6 +119,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
         executeStatements(db, StickerDatabase.CREATE_INDEXES);
         executeStatements(db, StorageKeyDatabase.CREATE_INDEXES);
         executeStatements(db, MentionDatabase.CREATE_INDEXES);
+        executeStatements(db, PaymentDatabase.CREATE_INDEXES);
     }
 
     @Override
@@ -424,6 +428,32 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
                 db.execSQL("ALTER TABLE recipient ADD COLUMN system_family_name TEXT DEFAULT NULL");
                 db.execSQL("ALTER TABLE recipient ADD COLUMN system_given_name TEXT DEFAULT NULL");
                 db.execSQL("UPDATE recipient SET system_given_name = system_display_name");
+            }
+
+            if (oldVersion < PAYMENTS) {
+                db.execSQL("CREATE TABLE payments(_id INTEGER PRIMARY KEY, " +
+                        "uuid TEXT DEFAULT NULL, " +
+                        "recipient INTEGER DEFAULT 0, " +
+                        "recipient_address TEXT DEFAULT NULL, " +
+                        "timestamp INTEGER, " +
+                        "note TEXT DEFAULT NULL, " +
+                        "direction INTEGER, " +
+                        "state INTEGER, " +
+                        "failure_reason INTEGER, " +
+                        "amount BLOB NOT NULL, " +
+                        "fee BLOB NOT NULL, " +
+                        "transaction_record BLOB DEFAULT NULL, " +
+                        "receipt BLOB DEFAULT NULL, " +
+                        "payment_metadata BLOB DEFAULT NULL, " +
+                        "receipt_public_key TEXT DEFAULT NULL, " +
+                        "block_index INTEGER DEFAULT 0, " +
+                        "block_timestamp INTEGER DEFAULT 0, " +
+                        "seen INTEGER, " +
+                        "UNIQUE(uuid) ON CONFLICT ABORT)");
+
+                db.execSQL("CREATE INDEX IF NOT EXISTS timestamp_direction_index ON payments (timestamp, direction);");
+                db.execSQL("CREATE INDEX IF NOT EXISTS timestamp_index ON payments (timestamp);");
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS receipt_public_key_index ON payments (receipt_public_key);");
             }
 
             db.setTransactionSuccessful();

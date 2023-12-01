@@ -57,6 +57,7 @@ public class DatabaseFactory {
     private final StickerDatabase stickerDatabase;
     private final StorageKeyDatabase storageKeyDatabase;
     private final MentionDatabase         mentionDatabase;
+    private final PaymentDatabase         paymentDatabase;
 
     public static DatabaseFactory getInstance(Context context) {
         if (instance == null) {
@@ -155,6 +156,10 @@ public class DatabaseFactory {
         return getInstance(context).mentionDatabase;
     }
 
+    public static PaymentDatabase getPaymentDatabase(Context context) {
+        return getInstance(context).paymentDatabase;
+    }
+
     public static SQLiteDatabase getBackupDatabase(Context context) {
         return getInstance(context).databaseHelper.getReadableDatabase().getSqlCipherDatabase();
     }
@@ -206,6 +211,7 @@ public class DatabaseFactory {
         this.stickerDatabase = new StickerDatabase(context, databaseHelper, attachmentSecret);
         this.storageKeyDatabase = new StorageKeyDatabase(context, databaseHelper);
         this.mentionDatabase         = new MentionDatabase(context, databaseHelper);
+        this.paymentDatabase         = new PaymentDatabase(context, databaseHelper);
     }
 
     public void triggerDatabaseAccess() {

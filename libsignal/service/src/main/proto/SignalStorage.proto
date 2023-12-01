@@ -99,6 +99,11 @@ message GroupV2Record {
     bool  markedUnread = 5;
 }
 
+message Payments {
+    bool  enabled = 1;
+    bytes entropy = 2;
+}
+
 message AccountRecord {
     enum UserLoginSharingMode {
         EVERYBODY     = 0;
@@ -132,4 +137,5 @@ message AccountRecord {
     UserLoginSharingMode   userLoginSharingMode   = 12;
     bool                   unlistedUserLogin      = 13;
     repeated PinnedConversation     pinnedConversations    = 14;
+    Payments               payments               = 16;
 }

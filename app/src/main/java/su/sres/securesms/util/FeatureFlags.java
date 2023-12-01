@@ -51,6 +51,7 @@ public final class FeatureFlags {
 
     private static final long FETCH_INTERVAL = TimeUnit.HOURS.toMillis(2);
 
+    private static final String PAYMENTS_KILL_SWITCH              = "android.payments.kill";
     private static final String USERNAMES                  = "android.usernames";
     private static final String ATTACHMENTS_V3             = "android.attachmentsV3.2";
     private static final String GROUPS_V2_RECOMMENDED_LIMIT  = "global.groupsv2.maxGroupSize";
@@ -61,7 +62,7 @@ public final class FeatureFlags {
     private static final String USER_LOGIN_PRIVACY_VERSION = "android.UserLoginPrivacyVersion";
     private static final String CLIENT_EXPIRATION            = "android.clientExpiration";
     private static final String VIEWED_RECEIPTS              = "android.viewed.receipts";
-    private static final String GV1_FORCED_MIGRATE           = "android.groupsV1Migration.forced";
+    private static final String GV1_FORCED_MIGRATE                = "android.groupsV1Migration.forced.2";
     private static final String SEND_VIEWED_RECEIPTS         = "android.sendViewedReceipts";
     private static final String CUSTOM_VIDEO_MUXER           = "android.customVideoMuxer";
     private static final String AUTOMATIC_SESSION_RESET      = "android.automaticSessionReset.2";
@@ -82,6 +83,7 @@ public final class FeatureFlags {
 
     @VisibleForTesting
     static final Set<String> REMOTE_CAPABLE = SetUtil.newHashSet(
+            PAYMENTS_KILL_SWITCH,
             ATTACHMENTS_V3,
             GROUPS_V2_RECOMMENDED_LIMIT,
             GROUPS_V2_HARD_LIMIT,
@@ -144,7 +146,8 @@ public final class FeatureFlags {
             ANIMATED_STICKER_MIN_MEMORY,
             ANIMATED_STICKER_MIN_TOTAL_MEMORY,
             MESSAGE_PROCESSOR_ALARM_INTERVAL,
-            MESSAGE_PROCESSOR_DELAY
+            MESSAGE_PROCESSOR_DELAY,
+            GV1_FORCED_MIGRATE
     );
 
     /**
@@ -230,6 +233,11 @@ public final class FeatureFlags {
     public static SelectionLimits groupLimits() {
         return new SelectionLimits(getInteger(GROUPS_V2_RECOMMENDED_LIMIT, 151),
                 getInteger(GROUPS_V2_HARD_LIMIT, 1001));
+    }
+
+    /** Payments Support */
+    public static boolean payments() {
+        return !getBoolean(PAYMENTS_KILL_SWITCH, false);
     }
 
     /** Internal testing extensions. */

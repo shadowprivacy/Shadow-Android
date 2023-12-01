@@ -71,8 +71,10 @@ class AccountConflictMerger implements StorageSyncHelper.ConflictMerger<SignalAc
         boolean                              unlisted               = remote.isUserLoginUnlisted();
         List<PinnedConversation> pinnedConversations    = remote.getPinnedConversations();
         AccountRecord.UserLoginSharingMode   userLoginSharingMode = remote.getUserLoginSharingMode();
-        boolean                              matchesRemote          = doParamsMatch(remote, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations);
-        boolean                              matchesLocal           = doParamsMatch(local, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations);
+        boolean                              paymentsEnabled        = remote.getPayments().isEnabled();
+        byte[]                               paymentsEntropy        = remote.getPayments().getEntropy().or(local.getPayments().getEntropy()).orNull();
+        boolean                              matchesRemote          = doParamsMatch(remote, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations, paymentsEnabled, paymentsEntropy);
+        boolean                              matchesLocal           = doParamsMatch(local, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations, paymentsEnabled, paymentsEntropy);
 
         if (matchesRemote) {
             return remote;
@@ -95,6 +97,7 @@ class AccountConflictMerger implements StorageSyncHelper.ConflictMerger<SignalAc
                     .setUserLoginSharingMode(userLoginSharingMode)
                     .setUnlistedUserLogin(unlisted)
                     .setPinnedConversations(pinnedConversations)
+                    .setPayments(paymentsEnabled, paymentsEntropy)
                     .build();
         }
     }
@@ -113,7 +116,9 @@ class AccountConflictMerger implements StorageSyncHelper.ConflictMerger<SignalAc
                                          boolean linkPreviewsEnabled,
                                          AccountRecord.UserLoginSharingMode userLoginSharingMode,
                                          boolean unlistedUserLogin,
-                                         @NonNull List<PinnedConversation> pinnedConversations)
+                                         @NonNull List<PinnedConversation> pinnedConversations,
+                                         boolean paymentsEnabled,
+                                         @Nullable byte[] paymentsEntropy)
     {
         return Arrays.equals(contact.serializeUnknownFields(), unknownFields)      &&
                 Objects.equals(contact.getGivenName().or(""), givenName)            &&
@@ -128,6 +133,8 @@ class AccountConflictMerger implements StorageSyncHelper.ConflictMerger<SignalAc
                 contact.isLinkPreviewsEnabled() == linkPreviewsEnabled              &&
                 contact.getUserLoginSharingMode() == userLoginSharingMode       &&
                 contact.isUserLoginUnlisted() == unlistedUserLogin              &&
-                Objects.equals(contact.getPinnedConversations(), pinnedConversations);
+                Objects.equals(contact.getPinnedConversations(), pinnedConversations) &&
+                contact.getPayments().isEnabled() == paymentsEnabled                  &&
+                Arrays.equals(contact.getPayments().getEntropy().orNull(), paymentsEntropy);
     }
 }

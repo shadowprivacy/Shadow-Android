@@ -44,6 +44,7 @@ import su.sres.signalservice.api.messages.multidevice.BlockedListMessage;
 import su.sres.signalservice.api.messages.multidevice.ConfigurationMessage;
 import su.sres.signalservice.api.messages.multidevice.MessageRequestResponseMessage;
 import su.sres.signalservice.api.messages.multidevice.KeysMessage;
+import su.sres.signalservice.api.messages.multidevice.OutgoingPaymentMessage;
 import su.sres.signalservice.api.messages.multidevice.ViewOnceOpenMessage;
 import su.sres.signalservice.api.messages.multidevice.ReadMessage;
 import su.sres.signalservice.api.messages.multidevice.SentTranscriptMessage;
@@ -59,6 +60,8 @@ import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 import su.sres.signalservice.api.util.CredentialsProvider;
+import su.sres.signalservice.api.util.Uint64RangeException;
+import su.sres.signalservice.api.util.Uint64Util;
 import su.sres.signalservice.internal.configuration.SignalServiceConfiguration;
 import su.sres.signalservice.internal.crypto.PaddingInputStream;
 import su.sres.signalservice.internal.push.AttachmentV2UploadAttributes;
@@ -368,6 +371,8 @@ public class SignalServiceMessageSender {
             content = createMultiDeviceFetchTypeContent(message.getFetchType().get());
         } else if (message.getMessageRequestResponse().isPresent()) {
             content = createMultiDeviceMessageRequestResponseContent(message.getMessageRequestResponse().get());
+        } else if (message.getOutgoingPaymentMessage().isPresent()) {
+            content = createMultiDeviceOutgoingPaymentContent(message.getOutgoingPaymentMessage().get());
         } else if (message.getKeys().isPresent()) {
             content = createMultiDeviceSyncKeysContent(message.getKeys().get());
         } else if (message.getVerified().isPresent()) {
@@ -753,6 +758,21 @@ public class SignalServiceMessageSender {
             builder.setGroupCallUpdate(DataMessage.GroupCallUpdate.newBuilder().setEraId(message.getGroupCallUpdate().get().getEraId()));
         }
 
+        if (message.getPayment().isPresent()) {
+            SignalServiceDataMessage.Payment payment = message.getPayment().get();
+
+            if (payment.getPaymentNotification().isPresent()) {
+                SignalServiceDataMessage.PaymentNotification        paymentNotification = payment.getPaymentNotification().get();
+                DataMessage.Payment.Notification.MobileCoin.Builder mobileCoinPayment   = DataMessage.Payment.Notification.MobileCoin.newBuilder().setReceipt(ByteString.copyFrom(paymentNotification.getReceipt()));
+                DataMessage.Payment.Notification.Builder            paymentBuilder      = DataMessage.Payment.Notification.newBuilder()
+                        .setNote(paymentNotification.getNote())
+                        .setMobileCoin(mobileCoinPayment);
+
+                builder.setPayment(DataMessage.Payment.newBuilder().setNotification(paymentBuilder));
+                builder.setRequiredProtocolVersion(Math.max(DataMessage.ProtocolVersion.PAYMENTS_VALUE, builder.getRequiredProtocolVersion()));
+            }
+        }
+
         builder.setTimestamp(message.getTimestamp());
 
         return enforceMaxContentSize(container.setDataMessage(builder).build().toByteArray());
@@ -1100,6 +1120,43 @@ public class SignalServiceMessageSender {
         }
 
         syncMessage.setMessageRequestResponse(responseMessage);
+
+        return container.setSyncMessage(syncMessage).build().toByteArray();
+    }
+
+    private byte[] createMultiDeviceOutgoingPaymentContent(OutgoingPaymentMessage message) {
+        Content.Builder                     container      = Content.newBuilder();
+        SyncMessage.Builder                 syncMessage    = createSyncMessageBuilder();
+        SyncMessage.OutgoingPayment.Builder paymentMessage = SyncMessage.OutgoingPayment.newBuilder();
+
+        if (message.getRecipient().isPresent()) {
+            paymentMessage.setRecipientUuid(message.getRecipient().get().toString());
+        }
+
+        if (message.getNote().isPresent()) {
+            paymentMessage.setNote(message.getNote().get());
+        }
+
+        try {
+            SyncMessage.OutgoingPayment.MobileCoin.Builder mobileCoinBuilder = SyncMessage.OutgoingPayment.MobileCoin.newBuilder();
+
+            if (message.getAddress().isPresent()) {
+                mobileCoinBuilder.setRecipientAddress(ByteString.copyFrom(message.getAddress().get()));
+            }
+            mobileCoinBuilder.setAmountPicoMob(Uint64Util.bigIntegerToUInt64(message.getAmount().toPicoMobBigInteger()))
+                    .setFeePicoMob(Uint64Util.bigIntegerToUInt64(message.getFee().toPicoMobBigInteger()))
+                    .setReceipt(message.getReceipt())
+                    .setLedgerBlockTimestamp(message.getBlockTimestamp())
+                    .setLedgerBlockIndex(message.getBlockIndex())
+                    .addAllOutputPublicKeys(message.getPublicKeys())
+                    .addAllSpentKeyImages(message.getKeyImages());
+
+            paymentMessage.setMobileCoin(mobileCoinBuilder);
+        } catch (Uint64RangeException e) {
+            throw new AssertionError(e);
+        }
+
+        syncMessage.setOutgoingPayment(paymentMessage);
 
         return container.setSyncMessage(syncMessage).build().toByteArray();
     }

@@ -19,6 +19,7 @@ import okhttp3.HttpUrl;
 import su.sres.signalservice.api.account.AccountAttributes;
 import su.sres.signalservice.api.groupsv2.GroupsV2AuthorizationString;
 import su.sres.signalservice.api.messages.calls.CallingResponse;
+import su.sres.signalservice.api.payments.CurrencyConversions;
 import su.sres.signalservice.api.push.exceptions.DeprecatedVersionException;
 import su.sres.signalservice.api.push.exceptions.MalformedResponseException;
 import su.sres.signalservice.api.push.exceptions.RangeException;
@@ -88,6 +89,7 @@ import su.sres.signalservice.internal.push.exceptions.GroupNotFoundException;
 import su.sres.signalservice.internal.push.exceptions.GroupPatchNotAcceptedException;
 import su.sres.signalservice.internal.push.exceptions.MismatchedDevicesException;
 import su.sres.signalservice.internal.push.exceptions.NotInGroupException;
+import su.sres.signalservice.internal.push.exceptions.PaymentsRegionException;
 import su.sres.signalservice.internal.push.exceptions.StaleDevicesException;
 import su.sres.signalservice.internal.push.http.CancelationSignal;
 import su.sres.signalservice.internal.push.http.DigestingRequestBody;
@@ -194,6 +196,9 @@ public class PushServiceSocket {
     private static final String UUID_ACK_MESSAGE_PATH = "/v1/messages/uuid/%s";
     private static final String ATTACHMENT_V2_PATH = "/v2/attachments/form/upload";
     private static final String ATTACHMENT_V3_PATH = "/v3/attachments/form/upload";
+
+    private static final String PAYMENTS_AUTH_PATH        = "/v1/payments/auth";
+
     private static final String DEBUG_LOG_PATH = "/v2/debuglogs/form/upload";
 
     private static final String PROFILE_PATH = "/v1/profile/%s";
@@ -219,6 +224,8 @@ public class PushServiceSocket {
     private static final String GROUPSV2_AVATAR_REQUEST = "/v1/groups/avatar/form";
     private static final String GROUPSV2_GROUP_JOIN       = "/v1/groups/join/%s";
     private static final String GROUPSV2_TOKEN            = "/v1/groups/token";
+
+    private static final String PAYMENTS_CONVERSIONS      = "/v1/payments/conversions";
 
     private static final String LICENSE_DOWNLOAD_PATH = "/v1/accounts/serverlicense";
     private static final String LICENSE_FILE_NAME = "shadowserver.bin";
@@ -713,7 +720,19 @@ public class PushServiceSocket {
         String requestBody = JsonUtil.toJson(signalServiceProfileWrite);
         ProfileAvatarUploadAttributes formAttributes;
 
-        String response = makeServiceRequest(String.format(PROFILE_PATH, ""), "PUT", requestBody);
+        String response = makeServiceRequest(String.format(PROFILE_PATH, ""),
+                "PUT",
+                requestBody,
+                NO_HEADERS,
+                new ResponseCodeHandler() {
+                    @Override
+                    public void handle(int responseCode, Headers responseHeaders) throws PaymentsRegionException {
+                        if (responseCode == 403) {
+                            throw new PaymentsRegionException(responseCode);
+                        }
+                    }
+                },
+                Optional.absent());
 
         if (signalServiceProfileWrite.hasAvatar() && profileAvatar != null) {
             try {
@@ -787,6 +806,20 @@ public class PushServiceSocket {
         } catch (NotFoundException nfe) {
             return null;
         }
+    }
+
+    private AuthCredentials getAuthCredentials(String authPath) throws IOException {
+        String              response = makeServiceRequest(authPath, "GET", null, NO_HEADERS);
+        AuthCredentials     token    = JsonUtil.fromJson(response, AuthCredentials.class);
+        return token;
+    }
+
+    private String getCredentials(String authPath) throws IOException {
+        return getAuthCredentials(authPath).asBasic();
+    }
+
+    public AuthCredentials getPaymentsAuthorization() throws IOException {
+        return getAuthCredentials(PAYMENTS_AUTH_PATH);
     }
 
     public TurnServerInfo getTurnServerInfo() throws IOException {
@@ -2054,6 +2087,18 @@ public class PushServiceSocket {
                 NO_HANDLER);
 
         return GroupExternalCredential.parseFrom(readBodyBytes(response));
+    }
+
+    public CurrencyConversions getCurrencyConversions()
+            throws NonSuccessfulResponseCodeException, PushNetworkException, MalformedResponseException
+    {
+        String response = makeServiceRequest(PAYMENTS_CONVERSIONS, "GET", null);
+        try {
+            return JsonUtil.fromJson(response, CurrencyConversions.class);
+        } catch (IOException e) {
+            Log.w(TAG, e);
+            throw new MalformedResponseException("Unable to parse entity", e);
+        }
     }
 
     public static final class GroupHistory {

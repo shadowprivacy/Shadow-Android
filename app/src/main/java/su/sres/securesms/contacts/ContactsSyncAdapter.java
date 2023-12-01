@@ -27,9 +27,11 @@ public class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
   {
     Log.i(TAG, "onPerformSync(" + authority +")");
 
-    if (TextSecurePreferences.isPushRegistered(getContext())) {
+    Context context = getContext();
+
+    if (TextSecurePreferences.isPushRegistered(context)) {
       try {
-        DirectoryHelper.refreshDirectory(getContext());
+        DirectoryHelper.refreshDirectory(context);
       } catch (IOException e) {
         Log.w(TAG, e);
       }

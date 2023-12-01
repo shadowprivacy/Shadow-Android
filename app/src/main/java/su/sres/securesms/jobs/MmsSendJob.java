@@ -242,9 +242,17 @@ public final class MmsSendJob extends SendJob {
       List<Recipient> members = DatabaseFactory.getGroupDatabase(context).getGroupMembers(message.getRecipient().requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
 
       for (Recipient member : members) {
+        if (!member.hasSmsAddress()) {
+          throw new UndeliverableMessageException("One of the group recipients did not have an SMS address! " + member.getId());
+        }
+
         if (message.getDistributionType() == ThreadDatabase.DistributionTypes.BROADCAST) {
           req.addBcc(new EncodedStringValue(member.requireSmsAddress()));
         } else {
+          if (!message.getRecipient().hasSmsAddress()) {
+            throw new UndeliverableMessageException("Recipient did not have an SMS address! " + message.getRecipient().getId());
+          }
+
           req.addTo(new EncodedStringValue(member.requireSmsAddress()));
         }
       }

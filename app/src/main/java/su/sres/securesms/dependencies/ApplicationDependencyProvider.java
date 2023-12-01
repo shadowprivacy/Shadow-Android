@@ -36,6 +36,8 @@ import su.sres.securesms.net.PipeConnectivityListener;
 import su.sres.securesms.notifications.DefaultMessageNotifier;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.OptimizedMessageNotifier;
+import su.sres.securesms.payments.MobileCoinConfig;
+import su.sres.securesms.payments.Payments;
 import su.sres.securesms.push.SecurityEventListener;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
@@ -210,6 +212,18 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     @Override
     public @NonNull DatabaseObserver provideDatabaseObserver() {
         return new DatabaseObserver(context);
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public @NonNull Payments providePayments(@NonNull SignalServiceAccountManager signalServiceAccountManager) {
+        MobileCoinConfig network;
+
+        if      (BuildConfig.MOBILE_COIN_ENVIRONMENT.equals("mainnet")) network = MobileCoinConfig.getMainNet(signalServiceAccountManager);
+        else if (BuildConfig.MOBILE_COIN_ENVIRONMENT.equals("testnet")) network = MobileCoinConfig.getTestNet(signalServiceAccountManager);
+        else throw new AssertionError("Unknown network " + BuildConfig.MOBILE_COIN_ENVIRONMENT);
+
+        return new Payments(network);
     }
 
     @Override

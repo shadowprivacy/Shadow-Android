@@ -15,6 +15,9 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.annimon.stream.Stream;
+import com.annimon.stream.function.Predicate;
+
 import su.sres.securesms.R;
 import su.sres.securesms.components.InputAwareLayout;
 import su.sres.securesms.mediasend.Media;
@@ -25,6 +28,15 @@ import java.util.Arrays;
 import java.util.List;
 
 public class AttachmentKeyboard extends FrameLayout implements InputAwareLayout.InputView {
+
+    private static final List<AttachmentKeyboardButton> DEFAULT_BUTTONS = Arrays.asList(
+            AttachmentKeyboardButton.GALLERY,
+    //      AttachmentKeyboardButton.GIF,
+            AttachmentKeyboardButton.FILE,
+            AttachmentKeyboardButton.PAYMENT,
+            AttachmentKeyboardButton.CONTACT,
+            AttachmentKeyboardButton.LOCATION
+    );
 
     private View                            container;
     private AttachmentKeyboardMediaAdapter  mediaAdapter;
@@ -73,17 +85,19 @@ public class AttachmentKeyboard extends FrameLayout implements InputAwareLayout.
         mediaList.setLayoutManager(new GridLayoutManager(context, 1, GridLayoutManager.HORIZONTAL, false));
         buttonList.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false));
 
-        buttonAdapter.setButtons(Arrays.asList(
-                AttachmentKeyboardButton.GALLERY,
-//                AttachmentKeyboardButton.GIF,
-                AttachmentKeyboardButton.FILE,
-                AttachmentKeyboardButton.CONTACT,
-                AttachmentKeyboardButton.LOCATION
-        ));
+        buttonAdapter.setButtons(DEFAULT_BUTTONS);
     }
 
     public void setCallback(@NonNull Callback callback) {
         this.callback = callback;
+    }
+
+    public void filterAttachmentKeyboardButtons(@Nullable Predicate<AttachmentKeyboardButton> buttonPredicate) {
+        if (buttonPredicate == null) {
+            buttonAdapter.setButtons(DEFAULT_BUTTONS);
+        } else {
+            buttonAdapter.setButtons(Stream.of(DEFAULT_BUTTONS).filter(buttonPredicate).toList());
+        }
     }
 
     public void onMediaChanged(@NonNull List<Media> media) {
