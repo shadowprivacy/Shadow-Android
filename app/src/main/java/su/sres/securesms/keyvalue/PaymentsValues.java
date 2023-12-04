@@ -19,7 +19,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 // import su.sres.securesms.lock.v2.PinKeyboardType;
 import su.sres.securesms.payments.Balance;
 import su.sres.securesms.payments.Entropy;
-import su.sres.securesms.payments.GeographicalRestrictions;
+// import su.sres.securesms.payments.GeographicalRestrictions;
 import su.sres.securesms.payments.Mnemonic;
 import su.sres.securesms.payments.MobileCoinLedgerWrapper;
 import su.sres.securesms.payments.currency.CurrencyUtil;
@@ -108,8 +108,9 @@ public final class PaymentsValues extends SignalStoreValues {
   public PaymentsAvailability getPaymentsAvailability() {
     Context context = ApplicationDependencies.getApplication();
 
-    if (!TextSecurePreferences.isPushRegistered(context) ||
-        !GeographicalRestrictions.e164Allowed(TextSecurePreferences.getLocalNumber(context)))
+    if (!TextSecurePreferences.isPushRegistered(context)
+//            || !GeographicalRestrictions.e164Allowed(TextSecurePreferences.getLocalNumber(context))
+            )
     {
       return PaymentsAvailability.NOT_IN_REGION;
     }
@@ -155,7 +156,7 @@ public final class PaymentsValues extends SignalStoreValues {
     }
 
     DatabaseFactory.getRecipientDatabase(ApplicationDependencies.getApplication()).markNeedsSync(Recipient.self().getId());
-    StorageSyncHelper.scheduleSyncForDataChange();
+    // StorageSyncHelper.scheduleSyncForDataChange();
   }
 
   public @NonNull Mnemonic getPaymentsMnemonic() {
@@ -318,7 +319,7 @@ public final class PaymentsValues extends SignalStoreValues {
     writer.putBoolean(MOB_PAYMENTS_ENABLED, enabled)
           .commit();
 
-    StorageSyncHelper.scheduleSyncForDataChange();
+    // StorageSyncHelper.scheduleSyncForDataChange();
   }
 
   @WorkerThread
@@ -348,7 +349,7 @@ public final class PaymentsValues extends SignalStoreValues {
 
     liveMobileCoinLedger.postValue(new MobileCoinLedgerWrapper(MobileCoinLedger.getDefaultInstance()));
 
-    StorageSyncHelper.scheduleSyncForDataChange();
+    // StorageSyncHelper.scheduleSyncForDataChange();
 
     return WalletRestoreResult.ENTROPY_CHANGED;
   }

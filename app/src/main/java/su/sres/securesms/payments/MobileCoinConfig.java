@@ -19,13 +19,16 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public abstract class MobileCoinConfig {
 
-  abstract @NonNull Uri getConsensusUri();
+  abstract @NonNull List<Uri> getConsensusUris();
 
   abstract @NonNull Uri getFogUri();
+
+  abstract @NonNull Uri getFogReportUri();
 
   abstract @NonNull byte[] getFogAuthoritySpki();
 
