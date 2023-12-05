@@ -9,8 +9,8 @@ dependencyVerification {
         ['androidx.annotation:annotation-experimental:1.0.0',
          'b219d2b568e7e4ba534e09f8c2fd242343df6ccbdfbbe938846f5d740e6b0b11'],
 
-        ['androidx.annotation:annotation:1.3.0',
-         '97dc45afefe3a1e421da42b8b6e9f90491477c45fc6178203e3a5e8a05ee8553'],
+        ['androidx.annotation:annotation:1.5.0',
+         '261fb7c0210858500bab66d34354972a75166ab4182add283780b05513d6ec4a'],
 
         ['androidx.appcompat:appcompat-resources:1.2.0',
          'c470297c03ff3de1c3d15dacf0be0cae63abc10b52f021dd07ae28daa3100fe5'],
@@ -297,14 +297,14 @@ dependencyVerification {
         ['com.google.code.findbugs:jsr305:3.0.2',
          '766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7'],
 
-        ['com.google.code.gson:gson:2.8.6',
-         'c8fb4839054d280b3033f800d1f5a97de2f028eb8ba2eb458ad287e536f3f25f'],
+        ['com.google.code.gson:gson:2.9.0',
+         'c96d60551331a196dac54b745aa642cd078ef89b6f267146b705f2c2cbef052d'],
 
         ['com.google.dagger:dagger:2.24',
          '550a6e46a6dfcdf1d764887b6090cea94f783327e50e5c73754f18facfc70b64'],
 
-        ['com.google.errorprone:error_prone_annotations:2.4.0',
-         '5f2a0648230a662e8be049df308d583d7369f13af683e44ddf5829b6d741a228'],
+        ['com.google.errorprone:error_prone_annotations:2.14.0',
+         '1494e24e7bd5496e7d6f705169dddd46081cefb882ea4fc60b4a58ca50767f34'],
 
         ['com.google.firebase:firebase-common:19.3.0',
          '7bd7971470ff943e3c3abb1d7809ef5cb4b81f1996be0867714372b3efa7405a'],
@@ -336,8 +336,8 @@ dependencyVerification {
         ['com.google.guava:failureaccess:1.0.1',
          'a171ee4c734dd2da837e4b16be9df4661afab72a41adaf31eb84dfdaf936ca26'],
 
-        ['com.google.guava:guava:30.1-android',
-         'ea0b5a62b707482eee5cf305c8f35ef91cf4ceaff504f011a5c49c41355f5781'],
+        ['com.google.guava:guava:31.1-android',
+         '32ac2ed709d96d278b5d2e3e5cea178fa4939939c525fb647532f013308db309'],
 
         ['com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava',
          'b372a037d4230aa57fbeffdef30fd6123f9c0c2db85d0aced00c91b974f33f99'],
@@ -387,11 +387,11 @@ dependencyVerification {
         ['com.melnykov:floatingactionbutton:1.3.0',
          '15d58d4fac0f7a288d0e5301bbaf501a146f5b3f5921277811bf99bd3b397263'],
 
-        ['com.mobilecoin:android-bindings:1.2.2',
-         '7f61d95d2616b0a39dc7449419102534f550d173f0721a3876546b7bdc746d34'],
+        ['com.mobilecoin:android-bindings:4.0.0.1',
+         'd7ee9b1b31e1c9ca6db3e398c3a5a98202648cb78c8fd079c2c47e06683e19b4'],
 
-        ['com.mobilecoin:android-sdk:1.2.2.1',
-         '25434813eef31de5f7b2d11bb744b8434be3750e3010fc9803e54671076f071d'],
+        ['com.mobilecoin:android-sdk:4.0.0.1',
+         '6f181b279fbf82c3a2f3ebdfb07cd2b330586fa3492ebb40cd77b1462c535c2b'],
 
         ['com.nineoldandroids:library:2.4.0',
          '68025a14e3e7673d6ad2f95e4b46d78d7d068343aa99256b686fe59de1b3163a'],
@@ -401,9 +401,6 @@ dependencyVerification {
 
         ['com.squareup.okhttp3:okhttp:3.12.10',
          '3cb8e21cd3ab10d390448f5a475c960732efab583a09c39f06f866a7ed819ebc'],
-
-        ['com.squareup.okhttp:okhttp:2.7.4',
-         'c88be9af1509d5aeec9394a818c0fa08e26fad9d64ba134e6f977e0bb20cb114'],
 
         ['com.squareup.okio:okio:1.17.5',
          '19a7ff48d86d3cf4497f7f250fbf295f430c13a528dd5b7b203f821802b886ad'],
@@ -417,26 +414,26 @@ dependencyVerification {
         ['dnsjava:dnsjava:2.1.9',
          '072bba34267ffad8907c30a99a6b68f900782f3191454d278e395e289d478446'],
 
-        ['io.grpc:grpc-api:1.38.0',
-         '0613290eca34cf034abf68d6556196239b612a8ba7182fde42d772147b3287c6'],
+        ['io.grpc:grpc-api:1.52.1',
+         '33b4caca6d2264de556810247233753ad6c360c3d31fac59ca02e324084cf3f6'],
 
-        ['io.grpc:grpc-context:1.38.0',
-         '681bcfa0c546336b42594b9547b75d93ae84925bb48ed22f5dd7c936e9efe285'],
+        ['io.grpc:grpc-context:1.52.1',
+         '461abbaea6ff26ca5225d1a9c592a3bbe2a67248b2062eaf9f50d31a0fe88bab'],
 
-        ['io.grpc:grpc-core:1.38.0',
-         '265a83df9c29f5114e291316c0a7b1c0bcfdeb7e567eeff73a85238ec35e9e05'],
+        ['io.grpc:grpc-core:1.52.1',
+         '9df18d2d994646cc6dd847f91009badb391089a8b2007ceb3184e850224d630e'],
 
-        ['io.grpc:grpc-okhttp:1.38.0',
-         'ae91ebb7abed7825f782df6a9997d31448f643b80e51d36498ce356ca9ebf0e4'],
+        ['io.grpc:grpc-okhttp:1.52.1',
+         'b593d7e1c308f8d4c7a18d4b5fcf1b96402d10a5d3d4d2ea5ea590e69088c3f7'],
 
-        ['io.grpc:grpc-protobuf-lite:1.38.0',
-         '9f97d178827123d838b9a7b8a73f31f6d747a4e4fac998a4f7c13612aaa93979'],
+        ['io.grpc:grpc-protobuf-lite:1.52.1',
+         'f940425b3491259059ed78ad46f8fdc963d4b3b6c25f63787ffe02e4a62bb1d6'],
 
-        ['io.grpc:grpc-stub:1.38.0',
-         'a6a8701ed35259ead9c7fc86e855e26559050e0a60a3be66a8f5c327c53eeaf8'],
+        ['io.grpc:grpc-stub:1.52.1',
+         'df93cb164e74b36e86068325a42287f28946804e0af1a9a8ea8fac127a6cfe0d'],
 
-        ['io.perfmark:perfmark-api:0.23.0',
-         'c705b5c10c18ff3032b9e81742bc2f6b0e5607f6a6dfc0c8ad0cff75d4913042'],
+        ['io.perfmark:perfmark-api:0.25.0',
+         '2044542933fcdf40ad18441bec37646d150c491871157f288847e29cb81de4cb'],
 
         ['javax.annotation:javax.annotation-api:1.3.2',
          'e04ba5195bcd555dc95650f7cc614d151e4bcd52d29a10b8aa2197f3ab89ab9b'],
@@ -456,17 +453,26 @@ dependencyVerification {
         ['org.apache.httpcomponents:httpclient-android:4.3.5',
          '6f56466a9bd0d42934b90bfbfe9977a8b654c058bf44a12bdc2877c4e1f033f1'],
 
-        ['org.checkerframework:checker-compat-qual:2.5.5',
-         '11d134b245e9cacc474514d2d66b5b8618f8039a1465cdc55bbc0b34e0008b7a'],
+        ['org.checkerframework:checker-qual:3.12.0',
+         'ff10785ac2a357ec5de9c293cb982a2cbb605c0309ea4cc1cb9b9bc6dbe7f3cb'],
 
-        ['org.codehaus.mojo:animal-sniffer-annotations:1.19',
-         'e67ec27ceeaf13ab5d54cf5fdbcc544c41b4db8d02d9f006678cca2c7c13ee9d'],
+        ['org.codehaus.mojo:animal-sniffer-annotations:1.21',
+         '2f25841c937e24959a57b630e2c4b8525b3d0f536f2e511c9b2bed30b1651d54'],
 
         ['org.conscrypt:conscrypt-android:2.0.0',
          '400ca559a49b860a82862b22cee0e3110764bdcf7ee7c79e7479895c25cdfc09'],
 
         ['org.greenrobot:eventbus:3.0.0',
          '180d4212467df06f2fbc9c8d8a2984533ac79c87769ad883bc421612f0b4e17c'],
+
+        ['org.jetbrains.kotlin:kotlin-stdlib-common:1.7.10',
+         '19f102efe9629f8eabc63853ad15c533e47c47f91fca09285c5bde86e59f91d4'],
+
+        ['org.jetbrains.kotlin:kotlin-stdlib:1.7.10',
+         'e771fe74250a943e8f6346713201ff1d8cb95c3a5d1a91a22b65a9e04f6a8901'],
+
+        ['org.jetbrains:annotations:13.0',
+         'ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478'],
 
         ['org.jsoup:jsoup:1.8.3',
          'abeaf34795a4de70f72aed6de5966d2955ec7eb348eeb813324f23c999575473'],
