@@ -207,6 +207,7 @@ public final class CodeVerificationRequest {
         String supportEmail                  = configRequested.getSupportEmail();
         String fcmSenderId                   = configRequested.getFcmSenderId();
         String oldFcmSenderId                = SignalStore.serviceConfigurationValues().getFcmSenderId();
+        boolean paymentsEnabled               = configRequested.getPaymentsEnabled();
 
         SystemCertificates systemCerts = accountManager.getSystemCerts();
 
@@ -236,6 +237,7 @@ public final class CodeVerificationRequest {
             SignalStore.serviceConfigurationValues().setUnidentifiedAccessCaPublicKey(unidentifiedAccessCaPublicKey);
             SignalStore.serviceConfigurationValues().setZkPublicKey(zkPublicKey);
             SignalStore.serviceConfigurationValues().setSupportEmail(supportEmail);
+            SignalStore.serviceConfigurationValues().setPaymentsEnabled(paymentsEnabled);
 
             // upon the initial registration the sender ID would have been already set from the QR code, but this is for subsequent re-registrations
             if (!fcmSenderId.equals(oldFcmSenderId)) {

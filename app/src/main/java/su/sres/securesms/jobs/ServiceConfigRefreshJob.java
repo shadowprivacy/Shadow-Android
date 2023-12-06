@@ -103,6 +103,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
             Integer maxVideoSize                 = configRequested.getMaxVideoSize();
             Integer maxDocSize                   = configRequested.getMaxDocSize();
             boolean updatesAllowed               = configRequested.getUpdatesAllowed();
+            boolean paymentsEnabled               = configRequested.getPaymentsEnabled();
 
             if (maxImageSize !=null && maxImageSize !=0) values.setImageMaxSize(maxImageSize); else values.removeImageKey();
             if (maxImageDimension !=null && maxImageDimension !=0) values.setImageMaxDimension(maxImageDimension); else values.removeImageDimenKey();
@@ -129,6 +130,7 @@ public class ServiceConfigRefreshJob extends BaseJob {
                 values.setZkPublicKey(zkPublicKey);
                 values.setSupportEmail(supportEmail);
                 values.setUpdatesAllowed(updatesAllowed);
+                values.setPaymentsEnabled(paymentsEnabled);
 
                 if (!fcmSenderId.equals(oldFcmSenderId)) {
                     values.setFcmSenderId(fcmSenderId);

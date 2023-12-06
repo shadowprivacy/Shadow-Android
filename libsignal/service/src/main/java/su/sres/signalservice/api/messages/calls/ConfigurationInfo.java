@@ -60,6 +60,9 @@ public class ConfigurationInfo {
     @JsonProperty
     private boolean updatesAllowed;
 
+    @JsonProperty
+    private boolean paymentsEnabled;
+
     public String getCloudUri() {
         return cloudUri;
     }
@@ -118,6 +121,10 @@ public class ConfigurationInfo {
 
     public boolean getUpdatesAllowed() {
         return updatesAllowed;
+    }
+
+    public boolean getPaymentsEnabled() {
+        return paymentsEnabled;
     }
 
     static class ByteArrayDeserializer extends JsonDeserializer<byte[]> {

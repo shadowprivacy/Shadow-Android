@@ -30,6 +30,7 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
     private static final String VIDEO_MAX_SIZE                    = "service_configuration.maxsize_video";
     private static final String DOC_MAX_SIZE                      = "service_configuration.maxsize_doc";
     private static final String UPDATES_ALLOWED                   = "service_configuration.updates_allowed";
+    private static final String PAYMENTS_ENABLED                   = "service_configuration.payments_enabled";
 
     public static final String EXAMPLE_URI                        = "https://example.com";
 
@@ -182,6 +183,10 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
         putBoolean(UPDATES_ALLOWED, allowed);
     }
 
+    public synchronized void setPaymentsEnabled(boolean enabled) {
+        putBoolean(PAYMENTS_ENABLED, enabled);
+    }
+
     public @Nullable
     String getShadowUrl() {
         return getString(SHADOW_SERVICE_URL, EXAMPLE_URI);
@@ -276,5 +281,9 @@ public final class ServiceConfigurationValues extends SignalStoreValues {
 
     public boolean getUpdatesAllowed() {
         return getBoolean(UPDATES_ALLOWED, true);
+    }
+
+    public boolean getPaymentsEnabled() {
+        return getBoolean(PAYMENTS_ENABLED, false);
     }
 }

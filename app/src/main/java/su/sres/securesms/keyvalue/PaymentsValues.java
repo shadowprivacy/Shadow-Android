@@ -115,7 +115,7 @@ public final class PaymentsValues extends SignalStoreValues {
       return PaymentsAvailability.NOT_IN_REGION;
     }
 
-    if (FeatureFlags.payments()) {
+    if (FeatureFlags.payments() && SignalStore.serviceConfigurationValues().getPaymentsEnabled()) {
       if (mobileCoinPaymentsEnabled()) {
         return PaymentsAvailability.WITHDRAW_AND_SEND;
       } else {
