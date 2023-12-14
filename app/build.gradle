@@ -345,7 +345,7 @@ dependencies {
     implementation 'org.signal:ringrtc-android:2.9.4'
     implementation 'org.whispersystems:signal-client-android:0.1.7'
     implementation 'com.google.protobuf:protobuf-javalite:3.10.0'
-    implementation('com.mobilecoin:android-sdk:4.0.0.1') {
+    implementation('com.mobilecoin:android-sdk:5.0.1') {
         exclude group: 'com.google.protobuf'
     }
     implementation 'org.signal:argon2:13.1@aar'

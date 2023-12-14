@@ -303,8 +303,8 @@ dependencyVerification {
         ['com.google.dagger:dagger:2.24',
          '550a6e46a6dfcdf1d764887b6090cea94f783327e50e5c73754f18facfc70b64'],
 
-        ['com.google.errorprone:error_prone_annotations:2.14.0',
-         '1494e24e7bd5496e7d6f705169dddd46081cefb882ea4fc60b4a58ca50767f34'],
+        ['com.google.errorprone:error_prone_annotations:2.18.0',
+         '9e6814cb71816988a4fd1b07a993a8f21bb7058d522c162b1de849e19bea54ae'],
 
         ['com.google.firebase:firebase-common:19.3.0',
          '7bd7971470ff943e3c3abb1d7809ef5cb4b81f1996be0867714372b3efa7405a'],
@@ -387,11 +387,11 @@ dependencyVerification {
         ['com.melnykov:floatingactionbutton:1.3.0',
          '15d58d4fac0f7a288d0e5301bbaf501a146f5b3f5921277811bf99bd3b397263'],
 
-        ['com.mobilecoin:android-bindings:4.0.0.1',
-         'd7ee9b1b31e1c9ca6db3e398c3a5a98202648cb78c8fd079c2c47e06683e19b4'],
+        ['com.mobilecoin:android-bindings:5.0.0',
+         'bb0b3e9b6b03f4f845299d9f7abd47fa86a4465bbe5f0cda93d260ff84ac9345'],
 
-        ['com.mobilecoin:android-sdk:4.0.0.1',
-         '6f181b279fbf82c3a2f3ebdfb07cd2b330586fa3492ebb40cd77b1462c535c2b'],
+        ['com.mobilecoin:android-sdk:5.0.1',
+         '34e1b0d095797fcafd6865c1b8f54adc58906c7d4c9c7c24f854ad051a90bfff'],
 
         ['com.nineoldandroids:library:2.4.0',
          '68025a14e3e7673d6ad2f95e4b46d78d7d068343aa99256b686fe59de1b3163a'],
@@ -414,23 +414,23 @@ dependencyVerification {
         ['dnsjava:dnsjava:2.1.9',
          '072bba34267ffad8907c30a99a6b68f900782f3191454d278e395e289d478446'],
 
-        ['io.grpc:grpc-api:1.52.1',
-         '33b4caca6d2264de556810247233753ad6c360c3d31fac59ca02e324084cf3f6'],
+        ['io.grpc:grpc-api:1.55.1',
+         '9f21b1585b1c578cf905fb4c926ce895494207cb5bf456a64a24c458850f51d3'],
 
-        ['io.grpc:grpc-context:1.52.1',
-         '461abbaea6ff26ca5225d1a9c592a3bbe2a67248b2062eaf9f50d31a0fe88bab'],
+        ['io.grpc:grpc-context:1.55.1',
+         '541ec1d7ad3389f0b302461432a44b16fc1329153cd0e16faf2d2028b446340d'],
 
-        ['io.grpc:grpc-core:1.52.1',
-         '9df18d2d994646cc6dd847f91009badb391089a8b2007ceb3184e850224d630e'],
+        ['io.grpc:grpc-core:1.55.1',
+         'c4782555fefb61c72898759a7d11f5f221811935bcf983efb478d796228b65dc'],
 
-        ['io.grpc:grpc-okhttp:1.52.1',
-         'b593d7e1c308f8d4c7a18d4b5fcf1b96402d10a5d3d4d2ea5ea590e69088c3f7'],
+        ['io.grpc:grpc-okhttp:1.55.1',
+         '58d3e2903f67357670b962941635926df3a167ee38f06d66dee82c3646b9514f'],
 
-        ['io.grpc:grpc-protobuf-lite:1.52.1',
-         'f940425b3491259059ed78ad46f8fdc963d4b3b6c25f63787ffe02e4a62bb1d6'],
+        ['io.grpc:grpc-protobuf-lite:1.55.1',
+         'd0253390609c72ec09c31ae46e79b01cd72a2ce2ccae11176de550ffd475c853'],
 
-        ['io.grpc:grpc-stub:1.52.1',
-         'df93cb164e74b36e86068325a42287f28946804e0af1a9a8ea8fac127a6cfe0d'],
+        ['io.grpc:grpc-stub:1.55.1',
+         '58c114817d42237ce50a5f7677cf142564df64200e59c956e49302b6c8af616a'],
 
         ['io.perfmark:perfmark-api:0.25.0',
          '2044542933fcdf40ad18441bec37646d150c491871157f288847e29cb81de4cb'],
