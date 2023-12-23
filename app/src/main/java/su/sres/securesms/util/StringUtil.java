@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
+import su.sres.core.util.BreakIteratorCompat;
+
 public final class StringUtil {
 
     private static final Set<Character> WHITESPACE = SetUtil.newHashSet('\u200E',  // left-to-right mark
@@ -275,5 +277,14 @@ public final class StringUtil {
         int start = (maxChars - 1) / 2;
         int end   = (maxChars - 1) - start;
         return text.subSequence(0, start) + "…" + text.subSequence(text.length() - end, text.length());
+    }
+
+    /**
+     * @return The number of graphemes in the provided string.
+     */
+    public static int getGraphemeCount(@NonNull CharSequence text) {
+        BreakIteratorCompat iterator = BreakIteratorCompat.getInstance();
+        iterator.setText(text);
+        return iterator.countBreaks();
     }
 }

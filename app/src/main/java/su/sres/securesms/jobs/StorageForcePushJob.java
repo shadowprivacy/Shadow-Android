@@ -9,7 +9,7 @@ import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.storage.StorageSyncModels;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
-import su.sres.securesms.database.StorageKeyDatabase;
+import su.sres.securesms.database.UnknownStorageIdDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -75,7 +75,7 @@ public class StorageForcePushJob extends BaseJob {
         StorageKey                  storageServiceKey  = SignalStore.storageServiceValues().getOrCreateStorageKey();
         SignalServiceAccountManager accountManager     = ApplicationDependencies.getSignalServiceAccountManager();
         RecipientDatabase           recipientDatabase  = DatabaseFactory.getRecipientDatabase(context);
-        StorageKeyDatabase          storageKeyDatabase = DatabaseFactory.getStorageKeyDatabase(context);
+        UnknownStorageIdDatabase storageIdDatabase = DatabaseFactory.getUnknownStorageIdDatabase(context);
 
         long                        currentVersion       = accountManager.getStorageManifestVersion();
         Map<RecipientId, StorageId> oldContactStorageIds = recipientDatabase.getContactStorageSyncIdsMap();
@@ -95,17 +95,17 @@ public class StorageForcePushJob extends BaseJob {
         allNewStorageIds.add(accountRecord.getId());
 
         SignalStorageManifest manifest = new SignalStorageManifest(newVersion, allNewStorageIds);
-        StorageSyncValidations.validateForcePush(manifest, inserts);
+        StorageSyncValidations.validateForcePush(manifest, inserts, Recipient.self().fresh());
 
         try {
             if (newVersion > 1) {
-                Log.i(TAG, String.format(Locale.ENGLISH, "Force-pushing data. Inserting %d keys.", inserts.size()));
+                Log.i(TAG, String.format(Locale.ENGLISH, "Force-pushing data. Inserting %d IDs.", inserts.size()));
                 if (accountManager.resetStorageRecords(storageServiceKey, manifest, inserts).isPresent()) {
                     Log.w(TAG, "Hit a conflict. Trying again.");
                     throw new RetryLaterException();
                 }
             } else {
-                Log.i(TAG, String.format(Locale.ENGLISH, "First version, normal push. Inserting %d keys.", inserts.size()));
+                Log.i(TAG, String.format(Locale.ENGLISH, "First version, normal push. Inserting %d IDs.", inserts.size()));
                 if (accountManager.writeStorageRecords(storageServiceKey, manifest, inserts, Collections.emptyList()).isPresent()) {
                     Log.w(TAG, "Hit a conflict. Trying again.");
                     throw new RetryLaterException();
@@ -120,7 +120,7 @@ public class StorageForcePushJob extends BaseJob {
         TextSecurePreferences.setStorageManifestVersion(context, newVersion);
         recipientDatabase.applyStorageIdUpdates(newContactStorageIds);
         recipientDatabase.applyStorageIdUpdates(Collections.singletonMap(Recipient.self().getId(), accountRecord.getId()));
-        storageKeyDatabase.deleteAll();
+        storageIdDatabase.deleteAll();
     }
 
     @Override

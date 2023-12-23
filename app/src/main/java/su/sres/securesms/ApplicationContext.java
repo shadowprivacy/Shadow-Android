@@ -63,10 +63,8 @@ import su.sres.securesms.migrations.ApplicationMigrations;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.registration.RegistrationUtil;
-import su.sres.securesms.revealable.ViewOnceMessageManager;
 import su.sres.securesms.ringrtc.RingRtcLogger;
 import su.sres.securesms.service.DirectoryRefreshListener;
-import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.service.LocalBackupListener;
 import su.sres.securesms.service.RotateSenderCertificateListener;
@@ -100,8 +98,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
     private static final String TAG = Log.tag(ApplicationContext.class);
 
-    private ExpiringMessageManager expiringMessageManager;
-    private ViewOnceMessageManager viewOnceMessageManager;
     private PersistentLogger persistentLogger;
 
     private boolean
@@ -231,17 +227,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
         initializedOnStart = false;
     }
 
-    public ExpiringMessageManager getExpiringMessageManager() {
-        if (expiringMessageManager == null) {
-            initializeExpiringMessageManager();
-        }
-        return expiringMessageManager;
-    }
-
-    public ViewOnceMessageManager getViewOnceMessageManager() {
-        return viewOnceMessageManager;
-    }
-
     public PersistentLogger getPersistentLogger() {
         return persistentLogger;
     }
@@ -279,7 +264,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
     private void initializeLogging() {
         persistentLogger = new PersistentLogger(this, LogSecretProvider.getOrCreateAttachmentSecret(this), BuildConfig.VERSION_NAME);
-        su.sres.core.util.logging.Log.initialize(new AndroidLogger(), persistentLogger);
+        su.sres.core.util.logging.Log.initialize(FeatureFlags::internalUser, new AndroidLogger(), persistentLogger);
 
         SignalProtocolLoggerProvider.setProvider(new CustomSignalProtocolLogger());
     }
@@ -341,11 +326,11 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     }
 
     private void initializeExpiringMessageManager() {
-        this.expiringMessageManager = new ExpiringMessageManager(this);
+        ApplicationDependencies.getExpiringMessageManager().checkSchedule();
     }
 
     private void initializeRevealableMessageManager() {
-        this.viewOnceMessageManager = new ViewOnceMessageManager(this);
+        ApplicationDependencies.getViewOnceMessageManager().scheduleIfNecessary();
     }
 
     private void initializePeriodicTasks() {
@@ -465,6 +450,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
                 .addBlocking("dynamic-theme", () -> DynamicTheme.setDefaultDayNightMode(this))
                 .addBlocking("vector-compat", () -> {AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);})
                 .addBlocking("blob-provider", this::initializeBlobProvider)
+                .addBlocking("feature-flags", FeatureFlags::init)
                 .addNonBlocking(this::initializeRevealableMessageManager)
                 .addNonBlocking(this::initializeGcmCheck)
                 .addNonBlocking(this::initializeSignedPreKeyCheck)
@@ -472,7 +458,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
                 .addNonBlocking(this::initializePendingMessages)
                 .addNonBlocking(this::initializeCleanup)
                 .addNonBlocking(this::initializeGlideCodecs)
-                .addNonBlocking(FeatureFlags::init)
                 .addNonBlocking(this::initializeMasterKey)
                 .addNonBlocking(RefreshPreKeysJob::scheduleIfNecessary)
                 // .addNonBlocking(StorageSyncHelper::scheduleRoutineSync)

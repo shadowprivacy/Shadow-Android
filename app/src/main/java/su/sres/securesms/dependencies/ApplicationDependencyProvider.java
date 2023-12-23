@@ -33,7 +33,6 @@ import su.sres.securesms.jobs.JobManagerFactories;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.net.PipeConnectivityListener;
-import su.sres.securesms.notifications.DefaultMessageNotifier;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.OptimizedMessageNotifier;
 import su.sres.securesms.payments.MobileCoinConfig;
@@ -41,6 +40,8 @@ import su.sres.securesms.payments.Payments;
 import su.sres.securesms.push.SecurityEventListener;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
+import su.sres.securesms.revealable.ViewOnceMessageManager;
+import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.service.TrimThreadsByDateManager;
 import su.sres.securesms.service.webrtc.SignalCallManager;
 import su.sres.securesms.util.AlarmSleepTimer;
@@ -186,7 +187,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
 
     @Override
     public @NonNull MessageNotifier provideMessageNotifier() {
-        return new OptimizedMessageNotifier(new DefaultMessageNotifier());
+        return new OptimizedMessageNotifier(context);
     }
 
     @Override
@@ -197,6 +198,16 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     @Override
     public @NonNull TrimThreadsByDateManager provideTrimThreadsByDateManager() {
         return new TrimThreadsByDateManager(context);
+    }
+
+    @Override
+    public @NonNull ViewOnceMessageManager provideViewOnceMessageManager() {
+        return new ViewOnceMessageManager(context);
+    }
+
+    @Override
+    public @NonNull ExpiringMessageManager provideExpiringMessageManager() {
+        return new ExpiringMessageManager(context);
     }
 
     @Override

@@ -26,14 +26,12 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.content.ClipboardManager;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 
 import su.sres.core.util.StreamUtil;
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.PassphraseRequiredActivity;
@@ -104,6 +102,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.model.MediaMmsMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
+import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceViewOnceOpenJob;
 import su.sres.securesms.longmessage.LongMessageActivity;
@@ -1162,10 +1161,13 @@ public class ConversationFragment extends LoggingFragment {
         if (position >= (isTypingIndicatorShowing() ? 1 : 0)) {
             ConversationMessage item = getListAdapter().getItem(position);
             if (item != null) {
-                long timestamp = item.getMessageRecord()
-                        .getDateReceived();
+                MessageRecord record                 = item.getMessageRecord();
+                long          latestReactionReceived = Stream.of(record.getReactions())
+                        .map(ReactionRecord::getDateReceived)
+                        .max(Long::compareTo)
+                        .orElse(0L);
 
-                markReadHelper.onViewsRevealed(timestamp);
+                markReadHelper.onViewsRevealed(Math.max(record.getDateReceived(), latestReactionReceived));
             }
         }
     }
@@ -1394,9 +1396,7 @@ public class ConversationFragment extends LoggingFragment {
 
                     DatabaseFactory.getAttachmentDatabase(requireContext()).deleteAttachmentFilesForViewOnceMessage(messageRecord.getId());
 
-                    ApplicationContext.getInstance(requireContext())
-                            .getViewOnceMessageManager()
-                            .scheduleIfNecessary();
+                    ApplicationDependencies.getViewOnceMessageManager().scheduleIfNecessary();
 
                     ApplicationDependencies.getJobManager().add(new MultiDeviceViewOnceOpenJob(new MessageDatabase.SyncMessageId(messageRecord.getIndividualRecipient().getId(), messageRecord.getDateSent())));
 
@@ -1630,6 +1630,12 @@ public class ConversationFragment extends LoggingFragment {
             }
 
             super.onItemRangeInserted(positionStart, itemCount);
+        }
+
+        @Override
+        public void onItemRangeChanged(int positionStart, int itemCount) {
+            super.onItemRangeChanged(positionStart, itemCount);
+            list.post(ConversationFragment.this::postMarkAsReadRequest);
         }
     }
 

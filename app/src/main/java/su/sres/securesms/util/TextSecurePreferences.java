@@ -538,10 +538,6 @@ public class TextSecurePreferences {
     return new NotificationPrivacyPreference(getStringPreference(context, NOTIFICATION_PRIVACY_PREF, "all"));
   }
 
-//  public static boolean isNewContactsNotificationEnabled(Context context) {
-//    return getBooleanPreference(context, NEW_CONTACTS_NOTIFICATIONS, true);
-//  }
-
   public static long getRatingLaterTimestamp(Context context) {
     return getLongPreference(context, RATING_LATER_PREF, 0);
   }

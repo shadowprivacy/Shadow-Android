@@ -7,9 +7,6 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.JobDatabase;
-import su.sres.securesms.database.KeyValueDatabase;
-import su.sres.securesms.database.MegaphoneDatabase;
 import su.sres.securesms.database.MentionDatabase;
 import su.sres.securesms.database.PaymentDatabase;
 import su.sres.securesms.database.SignalDatabase;
@@ -18,7 +15,6 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;
 
 import net.sqlcipher.database.SQLiteDatabase;
-import net.sqlcipher.database.SQLiteDatabaseHook;
 import net.sqlcipher.database.SQLiteOpenHelper;
 
 import su.sres.securesms.crypto.DatabaseSecret;
@@ -36,7 +32,7 @@ import su.sres.securesms.database.SessionDatabase;
 import su.sres.securesms.database.SignedPreKeyDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.StickerDatabase;
-import su.sres.securesms.database.StorageKeyDatabase;
+import su.sres.securesms.database.UnknownStorageIdDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.Hex;
@@ -71,7 +67,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     private static final int CLEAR_PROFILE_KEY_CREDENTIALS = 76;
     private static final int LAST_RESET_SESSION_TIME_AND_WALLPAPER_AND_ABOUT = 77;
     private static final int SPLIT_SYSTEM_NAMES               = 78;
-    private static final int PAYMENTS                         = 79;
+    private static final int PAYMENTS_AND_CLEAN_STORAGE_IDS = 79;
 
     private static final int DATABASE_VERSION = 79;
     private static final String DATABASE_NAME = "shadow.db";
@@ -102,7 +98,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
         db.execSQL(SignedPreKeyDatabase.CREATE_TABLE);
         db.execSQL(SessionDatabase.CREATE_TABLE);
         db.execSQL(StickerDatabase.CREATE_TABLE);
-        db.execSQL(StorageKeyDatabase.CREATE_TABLE);
+        db.execSQL(UnknownStorageIdDatabase.CREATE_TABLE);
         db.execSQL(MentionDatabase.CREATE_TABLE);
         db.execSQL(PaymentDatabase.CREATE_TABLE);
 
@@ -117,7 +113,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
         executeStatements(db, GroupDatabase.CREATE_INDEXS);
         executeStatements(db, GroupReceiptDatabase.CREATE_INDEXES);
         executeStatements(db, StickerDatabase.CREATE_INDEXES);
-        executeStatements(db, StorageKeyDatabase.CREATE_INDEXES);
+        executeStatements(db, UnknownStorageIdDatabase.CREATE_INDEXES);
         executeStatements(db, MentionDatabase.CREATE_INDEXES);
         executeStatements(db, PaymentDatabase.CREATE_INDEXES);
     }
@@ -430,7 +426,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
                 db.execSQL("UPDATE recipient SET system_given_name = system_display_name");
             }
 
-            if (oldVersion < PAYMENTS) {
+            if (oldVersion < PAYMENTS_AND_CLEAN_STORAGE_IDS) {
                 db.execSQL("CREATE TABLE payments(_id INTEGER PRIMARY KEY, " +
                         "uuid TEXT DEFAULT NULL, " +
                         "recipient INTEGER DEFAULT 0, " +
@@ -454,6 +450,13 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
                 db.execSQL("CREATE INDEX IF NOT EXISTS timestamp_direction_index ON payments (timestamp, direction);");
                 db.execSQL("CREATE INDEX IF NOT EXISTS timestamp_index ON payments (timestamp);");
                 db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS receipt_public_key_index ON payments (receipt_public_key);");
+
+                ///
+
+                ContentValues values = new ContentValues();
+                values.putNull("storage_service_key");
+                int count = db.update("recipient", values, "storage_service_key NOT NULL AND ((phone NOT NULL AND INSTR(phone, '+') = 0) OR (group_id NOT NULL AND (LENGTH(group_id) != 85 and LENGTH(group_id) != 53)))", null);
+                Log.i(TAG, "There were " + count + " bad rows that had their storageID removed.");
             }
 
             db.setTransactionSuccessful();

@@ -2,8 +2,6 @@ package su.sres.securesms.push;
 
 import android.content.Context;
 
-import androidx.annotation.Nullable;
-
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import okhttp3.Dns;
@@ -15,7 +13,6 @@ import su.sres.securesms.net.DeviceTransferBlockingInterceptor;
 import su.sres.securesms.net.RemoteDeprecationDetectorInterceptor;
 import su.sres.securesms.net.SequentialDns;
 import su.sres.securesms.net.StandardUserAgentInterceptor;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.internal.configuration.SignalCdnUrl;
 import su.sres.signalservice.internal.configuration.SignalServiceConfiguration;
 import su.sres.signalservice.internal.configuration.SignalServiceUrl;

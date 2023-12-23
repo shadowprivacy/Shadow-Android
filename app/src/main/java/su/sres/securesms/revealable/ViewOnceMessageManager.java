@@ -15,6 +15,7 @@ import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.service.TimedEventManager;
 
 /**
@@ -79,7 +80,7 @@ public class ViewOnceMessageManager extends TimedEventManager<ViewOnceExpiration
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "onReceive()");
-            ApplicationContext.getInstance(context).getViewOnceMessageManager().scheduleIfNecessary();
+            ApplicationDependencies.getViewOnceMessageManager().scheduleIfNecessary();
         }
     }
 }

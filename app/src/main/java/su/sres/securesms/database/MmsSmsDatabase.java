@@ -32,6 +32,7 @@ import su.sres.securesms.database.MessageDatabase.ThreadUpdate;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.notifications.v2.MessageNotifierV2;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.CursorUtil;
@@ -214,6 +215,28 @@ public class MmsSmsDatabase extends Database {
     public Cursor getUnread() {
         String order = MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " ASC";
         String selection       = MmsSmsColumns.NOTIFIED + " = 0 AND (" + MmsSmsColumns.READ + " = 0 OR " + MmsSmsColumns.REACTIONS_UNREAD + " = 1)";
+
+        return queryTables(PROJECTION, selection, order, null);
+    }
+
+    public Cursor getMessagesForNotificationState(Collection<MessageNotifierV2.StickyThread> stickyThreads) {
+        StringBuilder stickyQuery = new StringBuilder();
+        for (MessageNotifierV2.StickyThread stickyThread : stickyThreads) {
+            if (stickyQuery.length() > 0) {
+                stickyQuery.append(" OR ");
+            }
+            stickyQuery.append("(")
+                    .append(MmsSmsColumns.THREAD_ID + " = ")
+                    .append(stickyThread.getThreadId())
+                    .append(" AND ")
+                    .append(MmsSmsColumns.NORMALIZED_DATE_RECEIVED)
+                    .append(" >= ")
+                    .append(stickyThread.getEarliestTimestamp())
+                    .append(")");
+        }
+
+        String order     = MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " ASC";
+        String selection = MmsSmsColumns.NOTIFIED + " = 0 AND (" + MmsSmsColumns.READ + " = 0 OR " + MmsSmsColumns.REACTIONS_UNREAD + " = 1" + (stickyQuery.length() > 0 ? " OR (" + stickyQuery.toString() + ")" : "") + ")";
 
         return queryTables(PROJECTION, selection, order, null);
     }
@@ -745,11 +768,11 @@ public class MmsSmsDatabase extends Database {
         return db.rawQuery(query, null);
     }
 
-    public Reader readerFor(@NonNull Cursor cursor) {
+    public static Reader readerFor(@NonNull Cursor cursor) {
         return new Reader(cursor);
     }
 
-    public class Reader implements Closeable {
+    public static class Reader implements Closeable {
 
         private final Cursor cursor;
         private SmsDatabase.Reader smsReader;

@@ -13,6 +13,8 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.storage.StorageSyncHelper;
 import org.whispersystems.libsignal.util.guava.Optional;
+
+import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.storage.SignalAccountRecord;
@@ -75,6 +77,9 @@ public class StorageAccountRestoreJob extends BaseJob {
             return;
         }
 
+        Log.i(TAG, "Updating local manifest version to 0.");
+        TextSecurePreferences.setStorageManifestVersion(context, 0);
+
         Optional<StorageId> accountId = manifest.get().getAccountStorageId();
 
         if (!accountId.isPresent()) {
@@ -98,8 +103,7 @@ public class StorageAccountRestoreJob extends BaseJob {
         }
 
         Log.i(TAG, "Applying changes locally...");
-        StorageId selfStorageId = StorageId.forAccount(Recipient.self().getStorageServiceId());
-        StorageSyncHelper.applyAccountStorageSyncUpdates(context, selfStorageId, accountRecord, false);
+        StorageSyncHelper.applyAccountStorageSyncUpdates(context, Recipient.self(), accountRecord, false);
 
         JobManager jobManager = ApplicationDependencies.getJobManager();
 

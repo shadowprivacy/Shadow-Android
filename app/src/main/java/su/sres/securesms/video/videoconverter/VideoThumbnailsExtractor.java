@@ -7,7 +7,6 @@ import android.media.MediaFormat;
 import android.opengl.GLES20;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.media.MediaInput;
@@ -16,7 +15,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-@RequiresApi(api = 23)
 final class VideoThumbnailsExtractor {
 
     private static final String TAG = Log.tag(VideoThumbnailsExtractor.class);
@@ -104,7 +102,11 @@ final class VideoThumbnailsExtractor {
                 outputSurface.release();
             }
             if (decoder != null) {
-                decoder.stop();
+                try {
+                    decoder.stop();
+                } catch (MediaCodec.CodecException codecException) {
+                    Log.w(TAG, "Decoder stop failed: " + codecException.getDiagnosticInfo(), codecException);
+                }
                 decoder.release();
             }
             if (extractor != null) {

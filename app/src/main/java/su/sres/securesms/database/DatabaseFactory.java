@@ -55,7 +55,7 @@ public class DatabaseFactory {
     private final SessionDatabase sessionDatabase;
     private final SearchDatabase searchDatabase;
     private final StickerDatabase stickerDatabase;
-    private final StorageKeyDatabase storageKeyDatabase;
+    private final UnknownStorageIdDatabase storageIdDatabase;
     private final MentionDatabase         mentionDatabase;
     private final PaymentDatabase         paymentDatabase;
 
@@ -148,8 +148,8 @@ public class DatabaseFactory {
         return getInstance(context).stickerDatabase;
     }
 
-    public static StorageKeyDatabase getStorageKeyDatabase(Context context) {
-        return getInstance(context).storageKeyDatabase;
+    public static UnknownStorageIdDatabase getUnknownStorageIdDatabase(Context context) {
+        return getInstance(context).storageIdDatabase;
     }
 
     public static MentionDatabase getMentionDatabase(Context context) {
@@ -209,7 +209,7 @@ public class DatabaseFactory {
         this.sessionDatabase = new SessionDatabase(context, databaseHelper);
         this.searchDatabase = new SearchDatabase(context, databaseHelper);
         this.stickerDatabase = new StickerDatabase(context, databaseHelper, attachmentSecret);
-        this.storageKeyDatabase = new StorageKeyDatabase(context, databaseHelper);
+        this.storageIdDatabase = new UnknownStorageIdDatabase(context, databaseHelper);
         this.mentionDatabase         = new MentionDatabase(context, databaseHelper);
         this.paymentDatabase         = new PaymentDatabase(context, databaseHelper);
     }

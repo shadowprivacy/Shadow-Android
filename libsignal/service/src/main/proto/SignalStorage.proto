@@ -81,6 +81,7 @@ message ContactRecord {
     bool          whitelisted   = 10;
     bool          archived      = 11;
     bool          markedUnread  = 12;
+    uint64        mutedUntilTimestamp = 13;
 }
 
 message GroupV1Record {
@@ -89,6 +90,7 @@ message GroupV1Record {
     bool  whitelisted  = 3;
     bool  archived     = 4;
     bool  markedUnread = 5;
+    uint64 mutedUntilTimestamp = 6;
 }
 
 message GroupV2Record {
@@ -97,6 +99,7 @@ message GroupV2Record {
     bool  whitelisted  = 3;
     bool  archived     = 4;
     bool  markedUnread = 5;
+    uint64 mutedUntilTimestamp = 6;
 }
 
 message Payments {

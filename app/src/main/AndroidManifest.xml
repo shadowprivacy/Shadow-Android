@@ -852,11 +852,6 @@
             android:exported="false" />
 
         <provider
-            android:name=".database.DatabaseContentProviders$ConversationList"
-            android:authorities="${applicationId}.database.conversationlist"
-            android:exported="false" />
-
-        <provider
             android:name=".database.DatabaseContentProviders$Attachment"
             android:authorities="${applicationId}.database.attachment"
             android:exported="false" />

@@ -101,8 +101,8 @@ public class DefaultMessageNotifier implements MessageNotifier {
     public static final  String NOTIFICATION_GROUP = "messages";
 
     private static final String EMOJI_REPLACEMENT_STRING  = "__EMOJI__";
-    private static final long   MIN_AUDIBLE_PERIOD_MILLIS = TimeUnit.SECONDS.toMillis(2);
-    private static final long   DESKTOP_ACTIVITY_PERIOD   = TimeUnit.MINUTES.toMillis(1);
+    public static final long   MIN_AUDIBLE_PERIOD_MILLIS = TimeUnit.SECONDS.toMillis(2);
+    public static final long   DESKTOP_ACTIVITY_PERIOD   = TimeUnit.MINUTES.toMillis(1);
 
     private volatile long                     visibleThread                = -1;
     private volatile long                     lastDesktopActivityTimestamp = -1;
@@ -575,7 +575,9 @@ public class DefaultMessageNotifier implements MessageNotifier {
             if (isUnreadMessage) {
                 boolean canReply = false;
 
-                if (KeyCachingService.isLocked(context)) {
+                if (!RecipientUtil.isMessageRequestAccepted(context, threadId)) {
+                    body = SpanUtil.italic(context.getString(R.string.SingleRecipientNotificationBuilder_message_request));
+                } else if (KeyCachingService.isLocked(context)) {
                     body = SpanUtil.italic(context.getString(R.string.MessageNotifier_locked_message));
                 } else if (record.isMms() && !((MmsMessageRecord) record).getSharedContacts().isEmpty()) {
                     Contact contact = ((MmsMessageRecord) record).getSharedContacts().get(0);
@@ -740,6 +742,12 @@ public class DefaultMessageNotifier implements MessageNotifier {
 
         alarmManager.cancel(pendingIntent);
     }
+
+    @Override
+    public void addStickyThread(long threadId, long earliestTimestamp) {}
+
+    @Override
+    public void removeStickyThread(long threadId) {}
 
     private static class DelayedNotification implements Runnable {
 

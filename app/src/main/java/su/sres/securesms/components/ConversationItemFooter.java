@@ -27,6 +27,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.util.DateUtils;
@@ -199,11 +200,11 @@ public class ConversationItemFooter extends LinearLayout {
         this.timerView.startAnimation();
 
         if (messageRecord.getExpireStarted() + messageRecord.getExpiresIn() <= System.currentTimeMillis()) {
-          ApplicationContext.getInstance(getContext()).getExpiringMessageManager().checkSchedule();
+          ApplicationDependencies.getExpiringMessageManager().checkSchedule();
         }
       } else if (!messageRecord.isOutgoing() && !messageRecord.isMediaPending()) {
         SignalExecutors.BOUNDED.execute(() -> {
-          ExpiringMessageManager expirationManager = ApplicationContext.getInstance(getContext()).getExpiringMessageManager();
+          ExpiringMessageManager expirationManager = ApplicationDependencies.getExpiringMessageManager();
           long                   id                = messageRecord.getId();
           boolean                mms               = messageRecord.isMms();
 

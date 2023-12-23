@@ -46,10 +46,10 @@ import java.util.List;
  */
 public class RemoteReplyReceiver extends BroadcastReceiver {
 
-  public static final String TAG             = Log.tag(RemoteReplyReceiver.class);
-  public static final String REPLY_ACTION    = "su.sres.securesms.notifications.WEAR_REPLY";
-  public static final String RECIPIENT_EXTRA = "recipient_extra";
-  public static final String REPLY_METHOD    = "reply_method";
+  public static final String REPLY_ACTION       = "org.thoughtcrime.securesms.notifications.WEAR_REPLY";
+  public static final String RECIPIENT_EXTRA    = "recipient_extra";
+  public static final String REPLY_METHOD       = "reply_method";
+  public static final String EARLIEST_TIMESTAMP = "earliest_timestamp";
 
   @SuppressLint("StaticFieldLeak")
   @Override
@@ -107,6 +107,8 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
           default:
             throw new AssertionError("Unknown Reply method");
         }
+
+        ApplicationDependencies.getMessageNotifier().addStickyThread(threadId, intent.getLongExtra(EARLIEST_TIMESTAMP, System.currentTimeMillis()));
 
         List<MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context).setRead(threadId, true);
 

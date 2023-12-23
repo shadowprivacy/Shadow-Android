@@ -238,9 +238,8 @@ public final class PushGroupSendJob extends PushSendJob {
 
         if (message.getExpiresIn() > 0 && !message.isExpirationUpdate()) {
           database.markExpireStarted(messageId);
-          ApplicationContext.getInstance(context)
-                            .getExpiringMessageManager()
-                            .scheduleDeletion(messageId, true, message.getExpiresIn());
+          ApplicationDependencies.getExpiringMessageManager()
+                  .scheduleDeletion(messageId, true, message.getExpiresIn());
         }
 
         if (message.isViewOnce()) {

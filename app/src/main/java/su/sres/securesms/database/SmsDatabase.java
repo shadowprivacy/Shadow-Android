@@ -509,7 +509,7 @@ public class SmsDatabase extends MessageDatabase {
     }
 
     @Override
-    public List<Pair<Long, Long>> setTimestampRead(SyncMessageId messageId, long proposedExpireStarted) {
+    public List<Pair<Long, Long>> setTimestampRead(SyncMessageId messageId, long proposedExpireStarted, @NonNull Map<Long, Long> threadToLatestRead) {
         SQLiteDatabase database = databaseHelper.getWritableDatabase();
         List<Pair<Long, Long>> expiring = new LinkedList<>();
         Cursor cursor = null;
@@ -546,6 +546,9 @@ public class SmsDatabase extends MessageDatabase {
                     DatabaseFactory.getThreadDatabase(context).updateReadState(threadId);
                     DatabaseFactory.getThreadDatabase(context).setLastSeen(threadId);
                     notifyConversationListeners(threadId);
+
+                    Long latest = threadToLatestRead.get(threadId);
+                    threadToLatestRead.put(threadId, (latest != null) ? Math.max(latest, messageId.getTimetamp()) : messageId.getTimetamp());
                 }
             }
         } finally {

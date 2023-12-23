@@ -191,6 +191,13 @@ public final class PaymentDatabase extends Database {
                       boolean seen)
           throws PublicKeyConflictException, SerializationException
   {
+    // remove after testing
+    List<PaymentTransaction> result = getContents();
+    for(PaymentTransaction trans : result) {
+      Log.d(TAG, "payment database contains UUID = " + trans.getUuid().toString() +  ", payee = " + trans.getPayee().toString() + ", amount = " + trans.getAmountWithDirection().toString());
+    }
+    Log.d(TAG, "Now trying to add UUID = " + uuid.toString() + ", Recipient ID = " + recipientId.toString());
+
     if (recipientId == null && publicAddress == null) {
       throw new AssertionError();
     }
@@ -360,6 +367,22 @@ public final class PaymentDatabase extends Database {
     List<PaymentTransaction> results = new LinkedList<>();
 
     try (Cursor cursor = db.query(TABLE_NAME, null, query, null, null, null, null)) {
+      while (cursor.moveToNext()) {
+        results.add(readPayment(cursor));
+      }
+    }
+
+    return results;
+  }
+
+  //remove after testing
+  @WorkerThread
+  public @NonNull List<PaymentTransaction> getContents() {
+    SQLiteDatabase           db      = databaseHelper.getReadableDatabase();
+    //String                   query   = SEEN + " = 0 AND " + STATE + " = " + State.SUCCESSFUL.serialize();
+    List<PaymentTransaction> results = new LinkedList<>();
+
+    try (Cursor cursor = db.query(TABLE_NAME, null, null, null, null, null, null)) {
       while (cursor.moveToNext()) {
         results.add(readPayment(cursor));
       }

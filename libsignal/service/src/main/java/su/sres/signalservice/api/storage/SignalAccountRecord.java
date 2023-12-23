@@ -13,6 +13,8 @@ import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.storage.protos.AccountRecord;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -49,6 +51,87 @@ public final class SignalAccountRecord implements SignalRecord {
     @Override
     public StorageId getId() {
         return id;
+    }
+
+    @Override
+    public SignalStorageRecord asStorageRecord() {
+        return SignalStorageRecord.forAccount(this);
+    }
+
+    @Override
+    public String describeDiff(SignalRecord other) {
+        if (other instanceof SignalAccountRecord) {
+            SignalAccountRecord that = (SignalAccountRecord) other;
+            List<String>        diff = new LinkedList<>();
+
+            if (!Arrays.equals(this.id.getRaw(), that.id.getRaw())) {
+                diff.add("ID");
+            }
+
+            if (!Objects.equals(this.givenName, that.givenName)) {
+                diff.add("GivenName");
+            }
+
+            if (!Objects.equals(this.familyName, that.familyName)) {
+                diff.add("FamilyName");
+            }
+
+            if (!OptionalUtil.byteArrayEquals(this.profileKey, that.profileKey)) {
+                diff.add("ProfileKey");
+            }
+
+            if (!Objects.equals(this.avatarUrlPath, that.avatarUrlPath)) {
+                diff.add("AvatarUrlPath");
+            }
+
+            if (!Objects.equals(this.isNoteToSelfArchived(), that.isNoteToSelfArchived())) {
+                diff.add("NoteToSelfArchived");
+            }
+
+            if (!Objects.equals(this.isNoteToSelfForcedUnread(), that.isNoteToSelfForcedUnread())) {
+                diff.add("NoteToSelfForcedUnread");
+            }
+
+            if (!Objects.equals(this.isReadReceiptsEnabled(), that.isReadReceiptsEnabled())) {
+                diff.add("ReadReceipts");
+            }
+
+            if (!Objects.equals(this.isTypingIndicatorsEnabled(), that.isTypingIndicatorsEnabled())) {
+                diff.add("TypingIndicators");
+            }
+
+            if (!Objects.equals(this.isSealedSenderIndicatorsEnabled(), that.isSealedSenderIndicatorsEnabled())) {
+                diff.add("SealedSenderIndicators");
+            }
+
+            if (!Objects.equals(this.isLinkPreviewsEnabled(), that.isLinkPreviewsEnabled())) {
+                diff.add("LinkPreviews");
+            }
+
+            if (!Objects.equals(this.getUserLoginSharingMode(), that.getUserLoginSharingMode())) {
+                diff.add("PhoneNumberSharingMode");
+            }
+
+            if (!Objects.equals(this.isUserLoginUnlisted(), that.isUserLoginUnlisted())) {
+                diff.add("PhoneNumberUnlisted");
+            }
+
+            if (!Objects.equals(this.pinnedConversations, that.pinnedConversations)) {
+                diff.add("PinnedConversations");
+            }
+
+            if (!Objects.equals(this.payments, that.payments)) {
+                diff.add("PreferContactAvatars");
+            }
+
+            if (!Objects.equals(this.hasUnknownFields(), that.hasUnknownFields())) {
+                diff.add("UnknownFields");
+            }
+
+            return diff.toString();
+        } else {
+            return "Different class. " + getClass().getSimpleName() + " | " + other.getClass().getSimpleName();
+        }
     }
 
     public boolean hasUnknownFields() {
@@ -245,6 +328,20 @@ public final class SignalAccountRecord implements SignalRecord {
 
         public Optional<byte[]> getEntropy() {
             return entropy;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Payments payments = (Payments) o;
+            return enabled == payments.enabled &&
+                    OptionalUtil.byteArrayEquals(entropy, payments.entropy);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(enabled, entropy);
         }
     }
 
