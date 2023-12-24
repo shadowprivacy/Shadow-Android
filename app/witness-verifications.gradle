@@ -468,6 +468,12 @@ dependencyVerification {
         ['org.jetbrains.kotlin:kotlin-stdlib-common:1.7.10',
          '19f102efe9629f8eabc63853ad15c533e47c47f91fca09285c5bde86e59f91d4'],
 
+        ['org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.10',
+         '54f61351b1936ad88f4e53059fe781e723eae51d78ed9e7422d8b403574ec682'],
+
+        ['org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.10',
+         '8aafdd60c94f454c92e5066d266a5ed53ecc63c78f623b3fd9db56fea4032873'],
+
         ['org.jetbrains.kotlin:kotlin-stdlib:1.7.10',
          'e771fe74250a943e8f6346713201ff1d8cb95c3a5d1a91a22b65a9e04f6a8901'],
 
