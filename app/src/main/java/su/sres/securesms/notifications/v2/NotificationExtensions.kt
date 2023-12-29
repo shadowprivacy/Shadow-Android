@@ -5,16 +5,21 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import com.bumptech.glide.load.MultiTransformation
+import com.bumptech.glide.load.Transformation
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.CircleCrop
 import su.sres.securesms.R
 import su.sres.securesms.contacts.avatars.ContactPhoto
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto
 import su.sres.securesms.contacts.avatars.GeneratedContactPhoto
 import su.sres.securesms.contacts.avatars.ProfileContactPhoto
+import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.mms.DecryptableStreamUriLoader.DecryptableUri
 import su.sres.securesms.mms.GlideApp
 import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.util.BitmapUtil
+import su.sres.securesms.util.BlurTransformation
 import java.util.concurrent.ExecutionException
 
 fun Drawable?.toLargeBitmap(context: Context): Bitmap? {
@@ -32,10 +37,16 @@ fun Recipient.getContactDrawable(context: Context): Drawable? {
   val fallbackContactPhoto: FallbackContactPhoto = if (isSelf) getFallback(context) else fallbackContactPhoto
   return if (contactPhoto != null) {
     try {
+      val transforms: MutableList<Transformation<Bitmap>> = mutableListOf()
+      if (shouldBlurAvatar()) {
+        transforms += BlurTransformation(ApplicationDependencies.getApplication(), 0.25f, BlurTransformation.MAX_RADIUS)
+      }
+      transforms += CircleCrop()
+
       GlideApp.with(context.applicationContext)
         .load(contactPhoto)
         .diskCacheStrategy(DiskCacheStrategy.ALL)
-        .circleCrop()
+        .transform(MultiTransformation(transforms))
         .submit(
           context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
           context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_height)

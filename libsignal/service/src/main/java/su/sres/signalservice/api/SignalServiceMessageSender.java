@@ -94,6 +94,7 @@ import su.sres.signalservice.internal.util.StaticCredentialsProvider;
 import su.sres.signalservice.internal.util.Util;
 
 import su.sres.util.Base64;
+import su.sres.util.FlagUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -458,6 +459,7 @@ public class SignalServiceMessageSender {
                 attachment.getFileName(),
                 attachment.getVoiceNote(),
                 attachment.isBorderless(),
+                attachment.isGif(),
                 attachment.getCaption(),
                 attachment.getBlurHash(),
                 attachment.getUploadTimestamp());
@@ -498,6 +500,7 @@ public class SignalServiceMessageSender {
                 attachment.getFileName(),
                 attachment.getVoiceNote(),
                 attachment.isBorderless(),
+                attachment.isGif(),
                 attachment.getCaption(),
                 attachment.getBlurHash(),
                 attachment.getUploadTimestamp());
@@ -1609,13 +1612,21 @@ public class SignalServiceMessageSender {
             builder.setHeight(attachment.getHeight());
         }
 
+        int flags = 0;
+
         if (attachment.getVoiceNote()) {
-            builder.setFlags(AttachmentPointer.Flags.VOICE_MESSAGE_VALUE);
+            flags |= FlagUtil.toBinaryFlag(AttachmentPointer.Flags.VOICE_MESSAGE_VALUE);
         }
 
         if (attachment.isBorderless()) {
-            builder.setFlags(AttachmentPointer.Flags.BORDERLESS_VALUE);
+            flags |= FlagUtil.toBinaryFlag(AttachmentPointer.Flags.BORDERLESS_VALUE);
         }
+
+        if (attachment.isGif()) {
+            flags |= FlagUtil.toBinaryFlag(AttachmentPointer.Flags.GIF_VALUE);
+        }
+
+        builder.setFlags(flags);
 
         if (attachment.getCaption().isPresent()) {
             builder.setCaption(attachment.getCaption().get());

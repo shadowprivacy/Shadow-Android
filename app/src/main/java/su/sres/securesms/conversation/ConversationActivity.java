@@ -97,6 +97,7 @@ import su.sres.securesms.BlockUnblockDialog;
 import su.sres.securesms.MainActivity;
 import su.sres.securesms.ExpirationDialog;
 import su.sres.securesms.GroupMembersDialog;
+import su.sres.securesms.components.MaskView;
 import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.components.mention.MentionAnnotation;
 import su.sres.securesms.components.reminder.GroupsV1MigrationInitiationReminder;
@@ -670,10 +671,11 @@ public class ConversationActivity extends PassphraseRequiredActivity
                 break;
 //    case PICK_GIF:
 //      setMedia(data.getData(),
-//               SlideFactory.MediaType.GIF,
+//               Objects.requireNonNull(MediaType.from(BlobProvider.getMimeType(data.getData()))),
 //               data.getIntExtra(GiphyActivity.EXTRA_WIDTH, 0),
 //               data.getIntExtra(GiphyActivity.EXTRA_HEIGHT, 0),
-//               data.getBooleanExtra(GiphyActivity.EXTRA_BORDERLESS, false));
+//               false,
+//               true);
 //      break;
 
             case SMS_DEFAULT:
@@ -704,7 +706,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
                 for (Media mediaItem : result.getNonUploadedMedia()) {
                     if (MediaUtil.isVideoType(mediaItem.getMimeType())) {
-                        slideDeck.addSlide(new VideoSlide(this, mediaItem.getUri(), mediaItem.getSize(), mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.getCaption().orNull(), mediaItem.getTransformProperties().orNull()));
+                        slideDeck.addSlide(new VideoSlide(this, mediaItem.getUri(), mediaItem.getSize(), mediaItem.isVideoGif(), mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.getCaption().orNull(), mediaItem.getTransformProperties().orNull()));
                     } else if (MediaUtil.isGif(mediaItem.getMimeType())) {
                         slideDeck.addSlide(new GifSlide(this, mediaItem.getUri(), mediaItem.getSize(), mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.isBorderless(), mediaItem.getCaption().orNull()));
                     } else if (MediaUtil.isImageType(mediaItem.getMimeType())) {
@@ -2411,10 +2413,10 @@ public class ConversationActivity extends PassphraseRequiredActivity
     //////// Helper Methods
 
     private ListenableFuture<Boolean> setMedia(@Nullable Uri uri, @NonNull MediaType mediaType) {
-        return setMedia(uri, mediaType, 0, 0, false);
+        return setMedia(uri, mediaType, 0, 0, false, false);
     }
 
-    private ListenableFuture<Boolean> setMedia(@Nullable Uri uri, @NonNull MediaType mediaType, int width, int height, boolean borderless) {
+    private ListenableFuture<Boolean> setMedia(@Nullable Uri uri, @NonNull MediaType mediaType, int width, int height, boolean borderless, boolean videoGif) {
         if (uri == null) {
             return new SettableFuture<>(false);
         }
@@ -2428,7 +2430,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
                 mimeType = mediaType.toFallbackMimeType();
             }
 
-            Media media = new Media(uri, mimeType, 0, width, height, 0, 0, borderless, Optional.absent(), Optional.absent(), Optional.absent());
+            Media media = new Media(uri, mimeType, 0, width, height, 0, 0, borderless, videoGif, Optional.absent(), Optional.absent(), Optional.absent());
             startActivityForResult(MediaSendActivity.buildEditorIntent(ConversationActivity.this, Collections.singletonList(media), recipient.get(), composeText.getTextTrimmed(), sendButton.getSelectedTransport()), MEDIA_SENDER);
             return new SettableFuture<>(false);
         } else {
@@ -3371,7 +3373,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     @Override
-    public void handleReaction(@NonNull View maskTarget,
+    public void handleReaction(@NonNull MaskView.MaskTarget maskTarget,
                                @NonNull MessageRecord messageRecord,
                                @NonNull Toolbar.OnMenuItemClickListener toolbarListener,
                                @NonNull ConversationReactionOverlay.OnHideListener onHideListener) {
@@ -3401,7 +3403,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     @Override
-    public void handleReactionDetails(@NonNull View maskTarget) {
+    public void handleReactionDetails(@NonNull MaskView.MaskTarget maskTarget) {
         reactionDelegate.showMask(maskTarget, titleView.getMeasuredHeight(), inputAreaHeight());
     }
 

@@ -15,6 +15,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteStatement;
 
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
+import su.sres.securesms.util.Hex;
 import su.sres.core.util.logging.Log;
 
 import java.lang.reflect.Field;
@@ -233,7 +234,12 @@ public class FlipperSqlCipherAdapter extends DatabaseDriver<FlipperSqlCipherAdap
             case Cursor.FIELD_TYPE_FLOAT:
                 return cursor.getDouble(column);
             case Cursor.FIELD_TYPE_BLOB:
-                return cursor.getBlob(column);
+                byte[] blob = cursor.getBlob(column);
+                String bytes = blob != null ? "(blob) " + Hex.toStringCondensed(Arrays.copyOf(blob, Math.min(blob.length, 32))) : null;
+                if (bytes != null && bytes.length() == 32 && blob.length > 32) {
+                    bytes += "...";
+                }
+                return bytes;
             case Cursor.FIELD_TYPE_STRING:
             default:
                 return cursor.getString(column);

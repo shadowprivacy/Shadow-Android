@@ -11,9 +11,11 @@ import android.view.View;
 import su.sres.securesms.components.voice.VoiceNotePlaybackState;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.conversation.ConversationMessage;
+import su.sres.securesms.database.model.InMemoryMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
+import su.sres.securesms.giph.mp4.GiphyMp4Playable;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupMigrationMembershipChange;
 import su.sres.securesms.linkpreview.LinkPreview;
@@ -21,13 +23,15 @@ import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.stickers.StickerLocator;
+import su.sres.securesms.video.exo.AttachmentMediaSourceFactory;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-public interface BindableConversationItem extends Unbindable {
+public interface BindableConversationItem extends Unbindable, GiphyMp4Playable {
   void bind(@NonNull LifecycleOwner lifecycleOwner,
             @NonNull ConversationMessage messageRecord,
             @NonNull Optional<MessageRecord> previousMessageRecord,
@@ -39,7 +43,9 @@ public interface BindableConversationItem extends Unbindable {
             @Nullable String searchQuery,
             boolean pulseMention,
             boolean hasWallpaper,
-            boolean isMessageRequestAccepted);
+            boolean isMessageRequestAccepted,
+            @NonNull AttachmentMediaSourceFactory attachmentMediaSourceFactory,
+            boolean canPlayInline);
 
   ConversationMessage getConversationMessage();
 
@@ -69,6 +75,8 @@ public interface BindableConversationItem extends Unbindable {
     void onJoinGroupCallClicked();
     void onInviteFriendsToGroupClicked(@NonNull GroupId.V2 groupId);
     void onEnableCallNotificationsClicked();
+    void onPlayInlineContent(ConversationMessage conversationMessage);
+    void onInMemoryMessageClicked(@NonNull InMemoryMessageRecord messageRecord);
 
     /** @return true if handled, false if you want to let the normal url handling continue */
     boolean onUrlClicked(@NonNull String url);

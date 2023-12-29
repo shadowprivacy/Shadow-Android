@@ -34,7 +34,7 @@
                 android:background="@android:color/transparent"
                 android:ellipsize="end"
                 android:gravity="center_vertical"
-                android:hint="@string/giphy_activity_toolbar__search_gifs_and_stickers"
+                android:hint="@string/giphy_activity_toolbar__search_gifs"
                 android:imeOptions="actionSearch"
                 android:maxLines="1"
                 android:singleLine="true"
@@ -54,41 +54,6 @@
                 android:tint="@color/signal_text_toolbar_subtitle"
                 android:visibility="invisible"
                 app:srcCompat="@drawable/ic_x" />
-
-            <su.sres.securesms.components.AnimatingToggle
-                android:id="@+id/button_toggle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp">
-
-                <ImageView
-                    android:id="@+id/view_grid"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:background="@drawable/circle_touch_highlight_background"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:visibility="visible"
-                    app:srcCompat="@drawable/ic_dashboard_24" />
-
-                <ImageView
-                    android:id="@+id/view_stream"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:background="@drawable/circle_touch_highlight_background"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:visibility="gone"
-                    app:srcCompat="@drawable/ic_view_stream_24" />
-
-            </su.sres.securesms.components.AnimatingToggle>
 
         </LinearLayout>
 

@@ -12,7 +12,6 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.jobs.CertificatePullJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -39,7 +38,7 @@ public class ApplicationMigrations {
 
     private static final MutableLiveData<Boolean> UI_BLOCKING_MIGRATION_RUNNING = new MutableLiveData<>();
 
-    public static final int CURRENT_VERSION = 28;
+    public static final int CURRENT_VERSION = 29;
 
     private static final class Version {
         static final int VERSIONED_PROFILE = 15;
@@ -55,6 +54,7 @@ public class ApplicationMigrations {
         static final int SYSTEM_NAME_SPLIT = 25;
         static final int DAY_BY_DAY_STICKERS = 26;
         static final int SFU_CERT = 27;
+        static final int PROFILE_SHARING_UPDATE = 29;
     }
 
     /**
@@ -217,6 +217,10 @@ public class ApplicationMigrations {
 
         if (lastSeenVersion < Version.SFU_CERT) {
             jobs.put(Version.SFU_CERT, new SfuCertJob());
+        }
+
+        if (lastSeenVersion < Version.PROFILE_SHARING_UPDATE) {
+            jobs.put(Version.PROFILE_SHARING_UPDATE, new ProfileSharingUpdateMigrationJob());
         }
 
         return jobs;

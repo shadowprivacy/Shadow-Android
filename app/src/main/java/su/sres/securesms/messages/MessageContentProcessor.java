@@ -1686,6 +1686,7 @@ public final class MessageContentProcessor {
                     false,
                     false,
                     false,
+                    false,
                     null,
                     stickerLocator,
                     null,

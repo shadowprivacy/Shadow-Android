@@ -46,12 +46,16 @@ import su.sres.securesms.BindableConversationItem;
 import su.sres.securesms.ConfirmIdentityDialog;
 import su.sres.securesms.MediaPreviewActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.components.CornerMask;
 import su.sres.securesms.components.LinkPreviewView;
 import su.sres.securesms.components.Outliner;
 import su.sres.securesms.components.emoji.EmojiTextView;
 import su.sres.securesms.components.mention.MentionAnnotation;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.giph.mp4.GiphyMp4PlaybackPolicy;
+import su.sres.securesms.giph.mp4.GiphyMp4PlaybackPolicyEnforcer;
+import su.sres.securesms.giph.mp4.GiphyMp4Projection;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.linkpreview.LinkPreviewUtil;
 import su.sres.core.util.logging.Log;
@@ -69,8 +73,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.annimon.stream.Stream;
+import com.google.android.exoplayer2.source.MediaSource;
 
 import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.components.AlertView;
@@ -81,6 +87,7 @@ import su.sres.securesms.components.ConversationItemThumbnail;
 import su.sres.securesms.components.DocumentView;
 import su.sres.securesms.components.QuoteView;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.mms.VideoSlide;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
 import su.sres.securesms.recipients.RecipientId;
@@ -121,6 +128,8 @@ import su.sres.securesms.util.Util;
 import su.sres.securesms.util.VibrateUtil;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.views.Stub;
+import su.sres.securesms.video.exo.AttachmentMediaSourceFactory;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.ArrayList;
@@ -199,8 +208,12 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   private final LinkPreviewClickListener        linkPreviewClickListener    = new LinkPreviewClickListener();
   private final ViewOnceMessageClickListener    revealableClickListener     = new ViewOnceMessageClickListener();
   private final UrlClickListener                urlClickListener            = new UrlClickListener();
+  private final Rect                            thumbnailMaskingRect        = new Rect();
 
   private final Context context;
+
+  private MediaSource mediaSource;
+  private boolean     canPlayContent;
 
   public ConversationItem(Context context) {
     this(context, null);
@@ -261,7 +274,9 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
                    @Nullable String searchQuery,
                    boolean pulse,
                    boolean hasWallpaper,
-                   boolean isMessageRequestAccepted)
+                   boolean isMessageRequestAccepted,
+                   @NonNull AttachmentMediaSourceFactory attachmentMediaSourceFactory,
+                   boolean allowedToPlayInline)
   {
     if (this.recipient != null) this.recipient.removeForeverObserver(this);
     if (this.conversationRecipient != null) this.conversationRecipient.removeForeverObserver(this);
@@ -276,13 +291,15 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     this.conversationRecipient  = conversationRecipient.live();
     this.groupThread            = conversationRecipient.isGroup();
     this.recipient              = messageRecord.getIndividualRecipient().live();
+    this.canPlayContent         = false;
+    this.mediaSource            = null;
 
     this.recipient.observeForever(this);
     this.conversationRecipient.observeForever(this);
 
     setGutterSizes(messageRecord, groupThread);
     setMessageShape(messageRecord, previousMessageRecord, nextMessageRecord, groupThread);
-    setMediaAttributes(messageRecord, previousMessageRecord, nextMessageRecord, groupThread, hasWallpaper, isMessageRequestAccepted);
+    setMediaAttributes(messageRecord, previousMessageRecord, nextMessageRecord, groupThread, hasWallpaper, isMessageRequestAccepted, attachmentMediaSourceFactory, allowedToPlayInline);
     setBodyText(messageRecord, searchQuery, isMessageRequestAccepted);
     setBubbleState(messageRecord, hasWallpaper);
     setInteractionState(conversationMessage, pulse);
@@ -681,7 +698,9 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
                                   @NonNull Optional<MessageRecord> nextRecord,
                                   boolean                 isGroupThread,
                                   boolean                 hasWallpaper,
-                                  boolean                 messageRequestAccepted)
+                                  boolean                      messageRequestAccepted,
+                                  @Nullable AttachmentMediaSourceFactory attachmentMediaSourceFactory,
+                                  boolean                      allowedToPlayInline)
   {
     boolean showControls = !messageRecord.isFailed();
 
@@ -864,6 +883,15 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       ViewUtil.updateLayoutParams(bodyText, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
       ViewUtil.updateLayoutParamsIfNonNull(groupSenderHolder, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
       footer.setVisibility(VISIBLE);
+
+      if (attachmentMediaSourceFactory != null &&
+              thumbnailSlides.size() == 1          &&
+              thumbnailSlides.get(0).isVideoGif()  &&
+              thumbnailSlides.get(0) instanceof VideoSlide)
+      {
+        canPlayContent = GiphyMp4PlaybackPolicy.autoplay() || allowedToPlayInline;
+        mediaSource    = attachmentMediaSourceFactory.createMediaSource(Objects.requireNonNull(thumbnailSlides.get(0).getUri()));
+      }
     } else {
       if (mediaThumbnailStub.resolved()) mediaThumbnailStub.get().setVisibility(View.GONE);
       if (audioViewStub.resolved())      audioViewStub.get().setVisibility(View.GONE);
@@ -1395,6 +1423,68 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     return span;
   }
 
+  @Override
+  public void showProjectionArea() {
+    if (mediaThumbnailStub != null && mediaThumbnailStub.resolved()) {
+      mediaThumbnailStub.get().showThumbnailView();
+      bodyBubble.setMask(null);
+    }
+  }
+
+  @Override
+  public void hideProjectionArea() {
+    if (mediaThumbnailStub != null && mediaThumbnailStub.resolved()) {
+      mediaThumbnailStub.get().hideThumbnailView();
+      mediaThumbnailStub.get().getDrawingRect(thumbnailMaskingRect);
+      bodyBubble.setMask(thumbnailMaskingRect);
+    }
+  }
+
+  @Override
+  public @Nullable MediaSource getMediaSource() {
+    return mediaSource;
+  }
+
+  @Override
+  public @Nullable GiphyMp4PlaybackPolicyEnforcer getPlaybackPolicyEnforcer() {
+    if (GiphyMp4PlaybackPolicy.autoplay()) {
+      return null;
+    } else {
+      return new GiphyMp4PlaybackPolicyEnforcer(() -> {
+        eventListener.onPlayInlineContent(null);
+      });
+    }
+  }
+
+  @Override
+  public int getAdapterPosition() {
+    throw new UnsupportedOperationException("Do not delegate to this method");
+  }
+
+  @Override
+  public @NonNull GiphyMp4Projection getProjection(@NonNull RecyclerView recyclerView) {
+    return GiphyMp4Projection.forView(recyclerView, mediaThumbnailStub.get(), mediaThumbnailStub.get().getCornerMask())
+            .translateX(bodyBubble.getTranslationX());
+  }
+
+  @Override
+  public boolean canPlayContent() {
+    return mediaThumbnailStub != null && canPlayContent;
+  }
+
+  public @NonNull Rect getThumbnailMaskingRect(@NonNull ViewGroup parent) {
+    Rect rect = new Rect();
+    rect.set(thumbnailMaskingRect);
+
+    parent.offsetDescendantRectToMyCoords(mediaThumbnailStub.get(), rect);
+
+    return rect;
+  }
+
+  public @NonNull CornerMask getThumbnailCornerMask(@NonNull View view) {
+    return new CornerMask(view, mediaThumbnailStub.get().getCornerMask());
+  }
+
   private class SharedContactEventListener implements SharedContactView.EventListener {
     @Override
     public void onAddToContactsClicked(@NonNull Contact contact) {
@@ -1522,6 +1612,8 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     public void onClick(final View v, final Slide slide) {
       if (shouldInterceptClicks(messageRecord) || !batchSelected.isEmpty()) {
         performClick();
+      } else if (!canPlayContent && mediaSource != null && eventListener != null) {
+        eventListener.onPlayInlineContent(conversationMessage);
       } else if (MediaPreviewActivity.isContentTypeSupported(slide.getContentType()) && slide.getUri() != null) {
         Intent intent = new Intent(context, MediaPreviewActivity.class);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

@@ -36,6 +36,9 @@ import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.ListenableFuture;
 import su.sres.securesms.util.concurrent.SettableFuture;
+import su.sres.securesms.util.views.Stub;
+import su.sres.securesms.video.VideoPlayer;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Collections;
@@ -55,11 +58,12 @@ public class ThumbnailView extends FrameLayout {
   private static final int    MIN_HEIGHT = 2;
   private static final int    MAX_HEIGHT = 3;
 
-  private ImageView       image;
-  private ImageView       blurhash;
-  private View            playOverlay;
-  private View            captionIcon;
-  private OnClickListener parentClickListener;
+  private ImageView         image;
+  private ImageView         blurhash;
+  private View              playOverlay;
+  private View              captionIcon;
+  private Stub<VideoPlayer> videoPlayer;
+  private OnClickListener   parentClickListener;
 
   private final int[] dimens        = new int[2];
   private final int[] bounds        = new int[4];
@@ -90,6 +94,7 @@ public class ThumbnailView extends FrameLayout {
     this.blurhash    = findViewById(R.id.thumbnail_blurhash);
     this.playOverlay = findViewById(R.id.play_overlay);
     this.captionIcon = findViewById(R.id.thumbnail_caption_icon);
+    this.videoPlayer = new Stub<>(findViewById(R.id.thumbnail_player_stub));
     super.setOnClickListener(new ThumbnailClickDispatcher());
 
     if (attrs != null) {

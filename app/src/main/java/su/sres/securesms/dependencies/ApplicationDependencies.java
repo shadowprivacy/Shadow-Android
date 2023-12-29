@@ -5,6 +5,7 @@ import android.app.Application;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 
+import okhttp3.OkHttpClient;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.database.DatabaseObserver;
@@ -18,7 +19,9 @@ import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.keyvalue.KeyValueStore;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.megaphone.MegaphoneRepository;
+import su.sres.securesms.net.ContentProxySelector;
 import su.sres.securesms.net.PipeConnectivityListener;
+import su.sres.securesms.net.StandardUserAgentInterceptor;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.payments.Payments;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
@@ -84,6 +87,7 @@ public class ApplicationDependencies {
     private static volatile Payments payments;
     private static volatile ShakeToReport                shakeToReport;
     private static volatile SignalCallManager            signalCallManager;
+    private static volatile OkHttpClient okHttpClient;
     private static volatile KeyValueStore keyValueStore;
 
     public static void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
@@ -458,6 +462,22 @@ public class ApplicationDependencies {
         }
 
         return signalCallManager;
+    }
+
+    public static @NonNull OkHttpClient getOkHttpClient() {
+        if (okHttpClient == null) {
+            synchronized (LOCK) {
+                if (okHttpClient == null) {
+                    okHttpClient = new OkHttpClient.Builder()
+                            .proxySelector(new ContentProxySelector())
+                            .addInterceptor(new StandardUserAgentInterceptor())
+                            .dns(SignalServiceNetworkAccess.DNS)
+                            .build();
+                }
+            }
+        }
+
+        return okHttpClient;
     }
 
     public static @NonNull AppForegroundObserver getAppForegroundObserver() {

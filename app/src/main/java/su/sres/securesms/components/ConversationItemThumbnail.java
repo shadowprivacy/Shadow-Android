@@ -20,6 +20,7 @@ import su.sres.securesms.mms.Slide;
 import su.sres.securesms.mms.SlideClickListener;
 import su.sres.securesms.mms.SlidesClickedListener;
 import su.sres.securesms.util.ThemeUtil;
+import su.sres.securesms.util.ViewUtil;
 
 import java.util.List;
 
@@ -34,6 +35,9 @@ public class ConversationItemThumbnail extends FrameLayout {
   private Outliner               outliner;
   private Outliner               pulseOutliner;
   private boolean                borderless;
+  private int[]                  normalBounds;
+  private int[]                  gifBounds;
+  private int                    minimumThumbnailWidth;
 
   public ConversationItemThumbnail(Context context) {
     super(context);
@@ -62,14 +66,29 @@ public class ConversationItemThumbnail extends FrameLayout {
 
     outliner.setColor(ContextCompat.getColor(getContext(), R.color.signal_inverse_transparent_20));
 
+    int gifWidth = ViewUtil.dpToPx(260);
     if (attrs != null) {
       TypedArray typedArray = getContext().getTheme().obtainStyledAttributes(attrs, R.styleable.ConversationItemThumbnail, 0, 0);
-      thumbnail.setBounds(typedArray.getDimensionPixelSize(R.styleable.ConversationItemThumbnail_conversationThumbnail_minWidth, 0),
-                          typedArray.getDimensionPixelSize(R.styleable.ConversationItemThumbnail_conversationThumbnail_maxWidth, 0),
-                          typedArray.getDimensionPixelSize(R.styleable.ConversationItemThumbnail_conversationThumbnail_minHeight, 0),
-                          typedArray.getDimensionPixelSize(R.styleable.ConversationItemThumbnail_conversationThumbnail_maxHeight, 0));
+      normalBounds = new int[]{
+              typedArray.getDimensionPixelSize(R.styleable.ConversationItemThumbnail_conversationThumbnail_minWidth, 0),
+              typedArray.getDimensionPixelSize(R.styleable.ConversationItemThumbnail_conversationThumbnail_maxWidth, 0),
+              typedArray.getDimensionPixelSize(R.styleable.ConversationItemThumbnail_conversationThumbnail_minHeight, 0),
+              typedArray.getDimensionPixelSize(R.styleable.ConversationItemThumbnail_conversationThumbnail_maxHeight, 0)
+      };
+
+      gifWidth = typedArray.getDimensionPixelSize(R.styleable.ConversationItemThumbnail_conversationThumbnail_gifWidth, gifWidth);
       typedArray.recycle();
+    } else {
+      normalBounds = new int[]{0, 0, 0, 0};
     }
+
+    gifBounds = new int[]{
+            gifWidth,
+            gifWidth,
+            1,
+            Integer.MAX_VALUE
+    };
+    minimumThumbnailWidth = -1;
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
@@ -89,6 +108,18 @@ public class ConversationItemThumbnail extends FrameLayout {
     if (pulseOutliner != null) {
       pulseOutliner.draw(canvas);
     }
+  }
+
+  public void hideThumbnailView() {
+    thumbnail.setAlpha(0f);
+  }
+
+  public void showThumbnailView() {
+    thumbnail.setAlpha(1f);
+  }
+
+  public @Nullable CornerMask getCornerMask() {
+    return cornerMask;
   }
 
   public void setPulseOutliner(@NonNull Outliner outliner) {
@@ -125,6 +156,7 @@ public class ConversationItemThumbnail extends FrameLayout {
   }
 
   public void setMinimumThumbnailWidth(int width) {
+    minimumThumbnailWidth = width;
     thumbnail.setMinimumThumbnailWidth(width);
   }
 
@@ -141,6 +173,17 @@ public class ConversationItemThumbnail extends FrameLayout {
                                boolean showControls, boolean isPreview)
   {
     if (slides.size() == 1) {
+      Slide slide = slides.get(0);
+      if (slide.isVideoGif()) {
+        setThumbnailBounds(gifBounds);
+      } else {
+        setThumbnailBounds(normalBounds);
+
+        if (minimumThumbnailWidth != -1) {
+          thumbnail.setMinimumThumbnailWidth(minimumThumbnailWidth);
+        }
+      }
+
       thumbnail.setVisibility(VISIBLE);
       album.setVisibility(GONE);
 
@@ -170,5 +213,9 @@ public class ConversationItemThumbnail extends FrameLayout {
   public void setDownloadClickListener(SlidesClickedListener listener) {
     thumbnail.setDownloadClickListener(listener);
     album.setDownloadClickListener(listener);
+  }
+
+  private void setThumbnailBounds(@NonNull int[] bounds) {
+    thumbnail.setBounds(bounds[0], bounds[1], bounds[2], bounds[3]);
   }
 }

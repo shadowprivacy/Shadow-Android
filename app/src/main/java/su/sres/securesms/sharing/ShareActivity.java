@@ -30,7 +30,6 @@ import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.util.Consumer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.transition.TransitionManager;
@@ -64,7 +63,6 @@ import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.views.SimpleProgressDialog;
-import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.ArrayList;
@@ -103,7 +101,8 @@ public class ShareActivity extends PassphraseRequiredActivity
   private ShareSelectionAdapter        adapter;
   private boolean                      disallowMultiShare;
 
-  private ShareViewModel viewModel;
+  private ShareIntents.Args args;
+  private ShareViewModel    viewModel;
 
   @Override
   protected void onPreCreate() {
@@ -116,6 +115,7 @@ public class ShareActivity extends PassphraseRequiredActivity
 
     setContentView(R.layout.share_activity);
 
+    initializeArgs();
     initializeViewModel();
     initializeMedia();
     initializeIntent();
@@ -216,7 +216,7 @@ public class ShareActivity extends PassphraseRequiredActivity
     if (!getIntent().hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
       int mode = DisplayMode.FLAG_PUSH | DisplayMode.FLAG_ACTIVE_GROUPS | DisplayMode.FLAG_SELF | DisplayMode.FLAG_HIDE_NEW;
 
-      if (TextSecurePreferences.isSmsEnabled(this) && viewModel.isExternalShare())  {
+      if (TextSecurePreferences.isSmsEnabled(this))  {
         mode |= DisplayMode.FLAG_SMS;
       }
 
@@ -294,7 +294,7 @@ public class ShareActivity extends PassphraseRequiredActivity
             return;
           }
 
-          if (TextSecurePreferences.isSmsEnabled(this) && viewModel.isExternalShare() && (displayMode & DisplayMode.FLAG_SMS) == 0) {
+          if (TextSecurePreferences.isSmsEnabled(this) && (displayMode & DisplayMode.FLAG_SMS) == 0) {
             getIntent().putExtra(ContactSelectionListFragment.DISPLAY_MODE, displayMode | DisplayMode.FLAG_SMS);
             contactsFragment.setQueryFilter(null);
           }
@@ -315,7 +315,12 @@ public class ShareActivity extends PassphraseRequiredActivity
           disallowMultiShare = true;
           break;
       }
+      validateAvailableRecipients();
     });
+  }
+
+  private void initializeArgs() {
+    this.args = ShareIntents.Args.from(getIntent());
   }
 
   private void initializeViewModel() {
@@ -379,8 +384,6 @@ public class ShareActivity extends PassphraseRequiredActivity
         contactsFragment.getView().setVisibility(View.GONE);
       }
       onSingleDestinationChosen(threadId, recipientId);
-    } else if (viewModel.isExternalShare()) {
-      validateAvailableRecipients();
     }
   }
 
@@ -434,7 +437,9 @@ public class ShareActivity extends PassphraseRequiredActivity
 
       if (mode == -1) return;
 
-      mode = data.isMmsOrSmsSupported() ? mode | DisplayMode.FLAG_SMS : mode & ~DisplayMode.FLAG_SMS;
+      boolean isMmsOrSmsSupported = data != null ? data.isMmsOrSmsSupported() : TextSecurePreferences.isSmsEnabled(this);
+
+      mode = isMmsOrSmsSupported ? mode | DisplayMode.FLAG_SMS : mode & ~DisplayMode.FLAG_SMS;
       getIntent().putExtra(ContactSelectionListFragment.DISPLAY_MODE, mode);
 
       contactsFragment.reset();
@@ -457,14 +462,14 @@ public class ShareActivity extends PassphraseRequiredActivity
         progressWheel.set(null);
       }
 
-      if (!data.isPresent()) {
+      if (!data.isPresent() && args.isEmpty()) {
         Log.w(TAG, "No data to share!");
         Toast.makeText(this, R.string.ShareActivity_multiple_attachments_are_only_supported, Toast.LENGTH_LONG).show();
         finish();
         return;
       }
 
-      onResolved.accept(data.get());
+      onResolved.accept(data.orNull());
     });
   }
 
@@ -487,7 +492,6 @@ public class ShareActivity extends PassphraseRequiredActivity
   }
 
   private void openConversation(long threadId, @NonNull RecipientId recipientId, @Nullable ShareData shareData) {
-    ShareIntents.Args           args    = ShareIntents.Args.from(getIntent());
     ConversationIntents.Builder builder = ConversationIntents.createBuilder(this, recipientId, threadId)
             .withMedia(args.getExtraMedia())
             .withDraftText(args.getExtraText() != null ? args.getExtraText().toString() : null)
@@ -515,7 +519,6 @@ public class ShareActivity extends PassphraseRequiredActivity
   }
 
   private void openInterstitial(@NonNull Set<ShareContactAndThread> shareContactAndThreads, @Nullable ShareData shareData) {
-    ShareIntents.Args      args    = ShareIntents.Args.from(getIntent());
     MultiShareArgs.Builder builder = new MultiShareArgs.Builder(shareContactAndThreads)
             .withMedia(args.getExtraMedia())
             .withDraftText(args.getExtraText() != null ? args.getExtraText().toString() : null)
@@ -553,6 +556,7 @@ public class ShareActivity extends PassphraseRequiredActivity
                   0,
                   0,
                   0,
+                  false,
                   false,
                   Optional.absent(),
                   Optional.absent(),

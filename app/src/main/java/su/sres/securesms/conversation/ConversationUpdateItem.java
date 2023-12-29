@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.res.ColorStateList;
 import android.text.Spannable;
@@ -26,10 +27,12 @@ import su.sres.securesms.VerifyIdentityActivity;
 import su.sres.securesms.conversation.ui.error.EnableCallNotificationSettingsDialog;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
 import su.sres.securesms.database.model.GroupCallUpdateDetailsUtil;
+import su.sres.securesms.database.model.InMemoryMessageRecord;
 import su.sres.securesms.database.model.LiveUpdateMessage;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.UpdateDescription;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.giph.mp4.GiphyMp4Projection;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
@@ -41,6 +44,7 @@ import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.ListenableFuture;
 import su.sres.securesms.util.livedata.LiveDataUtil;
+import su.sres.securesms.video.exo.AttachmentMediaSourceFactory;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -105,7 +109,9 @@ public final class ConversationUpdateItem extends FrameLayout
                    @Nullable String searchQuery,
                    boolean pulseMention,
                    boolean hasWallpaper,
-                   boolean isMessageRequestAccepted)
+                   boolean isMessageRequestAccepted,
+                   @NonNull AttachmentMediaSourceFactory attachmentMediaSourceFactory,
+                   boolean allowedToPlayInline)
   {
     this.batchSelected = batchSelected;
 
@@ -183,6 +189,30 @@ public final class ConversationUpdateItem extends FrameLayout
 
   @Override
   public void unbind() {
+  }
+
+  @Override
+  public void showProjectionArea() {
+  }
+
+  @Override
+  public void hideProjectionArea() {
+    throw new UnsupportedOperationException("Call makes no sense for a conversation update item");
+  }
+
+  @Override
+  public int getAdapterPosition() {
+    throw new UnsupportedOperationException("Don't delegate to this method.");
+  }
+
+  @Override
+  public @NonNull GiphyMp4Projection getProjection(@NonNull RecyclerView recyclerView) {
+    throw new UnsupportedOperationException("ConversationUpdateItems cannot be projected into.");
+  }
+
+  @Override
+  public boolean canPlayContent() {
+    return false;
   }
 
   static final class RecipientObserverManager {
@@ -310,6 +340,15 @@ public final class ConversationUpdateItem extends FrameLayout
       actionButton.setOnClickListener(v -> {
         if (eventListener != null) {
           eventListener.onEnableCallNotificationsClicked();
+        }
+      });
+    } else if (conversationMessage.getMessageRecord().isInMemoryMessageRecord() && ((InMemoryMessageRecord) conversationMessage.getMessageRecord()).showActionButton()) {
+      InMemoryMessageRecord inMemoryMessageRecord = (InMemoryMessageRecord) conversationMessage.getMessageRecord();
+      actionButton.setVisibility(VISIBLE);
+      actionButton.setText(inMemoryMessageRecord.getActionButtonText());
+      actionButton.setOnClickListener(v -> {
+        if (eventListener != null) {
+          eventListener.onInMemoryMessageClicked(inMemoryMessageRecord);
         }
       });
     } else {

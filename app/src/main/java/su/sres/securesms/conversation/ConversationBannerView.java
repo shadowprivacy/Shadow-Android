@@ -1,6 +1,8 @@
 package su.sres.securesms.conversation;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.graphics.PorterDuff;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
@@ -9,11 +11,15 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
+import androidx.core.widget.ImageViewCompat;
 
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.R;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
+import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 
@@ -24,6 +30,7 @@ public class ConversationBannerView extends ConstraintLayout {
     private TextView        contactAbout;
     private TextView        contactSubtitle;
     private TextView        contactDescription;
+    private View            tapToView;
 
     public ConversationBannerView(Context context) {
         this(context, null);
@@ -43,12 +50,24 @@ public class ConversationBannerView extends ConstraintLayout {
         contactAbout       = findViewById(R.id.message_request_about);
         contactSubtitle    = findViewById(R.id.message_request_subtitle);
         contactDescription = findViewById(R.id.message_request_description);
+        tapToView          = findViewById(R.id.message_request_avatar_tap_to_view);
 
         contactAvatar.setFallbackPhotoProvider(new FallbackPhotoProvider());
     }
 
     public void setAvatar(@NonNull GlideRequests requests, @Nullable Recipient recipient) {
         contactAvatar.setAvatar(requests, recipient, false);
+
+        if (recipient != null && recipient.shouldBlurAvatar() && recipient.getContactPhoto() != null) {
+            tapToView.setVisibility(VISIBLE);
+            tapToView.setOnClickListener(v -> {
+                SignalExecutors.BOUNDED.execute(() -> DatabaseFactory.getRecipientDatabase(getContext().getApplicationContext())
+                        .manuallyShowAvatar(recipient.getId()));
+            });
+        } else {
+            tapToView.setVisibility(GONE);
+            tapToView.setOnClickListener(null);
+        }
     }
 
     public void setTitle(@Nullable CharSequence title) {

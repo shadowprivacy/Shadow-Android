@@ -19,7 +19,10 @@ import androidx.core.graphics.drawable.IconCompat;
 import android.text.SpannableStringBuilder;
 
 import com.annimon.stream.Stream;
+import com.bumptech.glide.load.MultiTransformation;
+import com.bumptech.glide.load.Transformation;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.avatars.ContactColors;
@@ -29,6 +32,7 @@ import su.sres.securesms.contacts.avatars.GeneratedContactPhoto;
 import su.sres.securesms.conversation.ConversationIntents;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.Slide;
@@ -37,12 +41,14 @@ import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.BitmapUtil;
+import su.sres.securesms.util.BlurTransformation;
 import su.sres.securesms.util.BubbleUtil;
 import su.sres.securesms.util.ConversationUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -101,10 +107,16 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
 
     if (contactPhoto != null) {
       try {
+        List<Transformation<Bitmap>> transforms = new ArrayList<>();
+        if (recipient.shouldBlurAvatar()) {
+          transforms.add(new BlurTransformation(ApplicationDependencies.getApplication(), 0.25f, BlurTransformation.MAX_RADIUS));
+        }
+        transforms.add(new CircleCrop());
+
         return GlideApp.with(context.getApplicationContext())
                 .load(contactPhoto)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .circleCrop()
+                .transform(new MultiTransformation<>(transforms))
                 .submit(context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
                         context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_height))
                 .get();

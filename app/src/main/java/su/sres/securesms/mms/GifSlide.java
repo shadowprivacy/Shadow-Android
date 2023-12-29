@@ -6,6 +6,7 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.blurhash.BlurHash;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.MediaUtil;
 
 public class GifSlide extends ImageSlide {
@@ -22,12 +23,32 @@ public class GifSlide extends ImageSlide {
   }
 
   public GifSlide(Context context, Uri uri, long size, int width, int height, boolean borderless, @Nullable String caption) {
-    super(context, constructAttachmentFromUri(context, uri, MediaUtil.IMAGE_GIF, size, width, height, true, null, caption, null, null, null, false, borderless, false));
+    super(context, constructAttachmentFromUri(context,
+            uri,
+            MediaUtil.IMAGE_GIF,
+            size,
+            width,
+            height,
+            true,
+            null,
+            caption,
+            null,
+            null,
+            null,
+            false,
+            borderless,
+            FeatureFlags.mp4GifSendSupport(),
+            false));
     this.borderless = borderless;
   }
 
   @Override
   public boolean isBorderless() {
     return borderless;
+  }
+
+  @Override
+  public boolean isVideoGif() {
+    return true;
   }
 }

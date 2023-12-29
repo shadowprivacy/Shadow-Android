@@ -47,6 +47,7 @@ public class MarkReadReceiver extends BroadcastReceiver {
       }
       NotificationCancellationHelper.cancelLegacy(context, intent.getIntExtra(NOTIFICATION_ID_EXTRA, -1));
 
+      PendingResult finisher = goAsync();
       SignalExecutors.BOUNDED.execute(() -> {
         List<MarkedMessageInfo> messageIdsCollection = new LinkedList<>();
 
@@ -59,6 +60,7 @@ public class MarkReadReceiver extends BroadcastReceiver {
         process(context, messageIdsCollection);
 
         ApplicationDependencies.getMessageNotifier().updateNotification(context);
+        finisher.finish();
       });
     }
   }

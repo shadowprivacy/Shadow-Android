@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.arch.core.util.Function;
 
 import com.annimon.stream.Stream;
 import com.google.protobuf.ByteString;
@@ -25,6 +26,7 @@ import su.sres.securesms.contacts.avatars.ContactColors;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.database.model.databaseprotos.DeviceLastResetTime;
+import su.sres.securesms.database.model.databaseprotos.RecipientExtras;
 import su.sres.securesms.database.model.databaseprotos.Wallpaper;
 import su.sres.securesms.groups.v2.ProfileKeySet;
 import su.sres.securesms.groups.v2.processing.GroupsV2StateProcessor;
@@ -144,6 +146,8 @@ public class RecipientDatabase extends Database {
   private static final String WALLPAPER_URI             = "wallpaper_file";
   public  static final String ABOUT                     = "about";
   public  static final String ABOUT_EMOJI               = "about_emoji";
+  private static final String EXTRAS                    = "extras";
+  private static final String GROUPS_IN_COMMON          = "groups_in_common";
 
   public  static final String SEARCH_PROFILE_NAME      = "search_signal_profile";
   private static final String SORT_NAME                = "sort_name";
@@ -169,12 +173,13 @@ public class RecipientDatabase extends Database {
           STORAGE_SERVICE_ID, DIRTY,
           MENTION_SETTING, WALLPAPER, WALLPAPER_URI,
           MENTION_SETTING,
-          ABOUT, ABOUT_EMOJI
+          ABOUT, ABOUT_EMOJI,
+          EXTRAS, GROUPS_IN_COMMON
   };
 
   private static final String[] ID_PROJECTION              = new String[]{ID};
-  private static final String[] SEARCH_PROJECTION          = new String[]{ID, SYSTEM_JOINED_NAME, PHONE, EMAIL, SYSTEM_PHONE_LABEL, SYSTEM_PHONE_TYPE, REGISTERED, ABOUT, ABOUT_EMOJI, "COALESCE(" + nullIfEmpty(PROFILE_JOINED_NAME) + ", " + nullIfEmpty(PROFILE_GIVEN_NAME) + ") AS " + SEARCH_PROFILE_NAME, "COALESCE(" + nullIfEmpty(SYSTEM_JOINED_NAME) + ", " + nullIfEmpty(SYSTEM_GIVEN_NAME) + ", " + nullIfEmpty(PROFILE_JOINED_NAME) + ", " + nullIfEmpty(PROFILE_GIVEN_NAME) + ", " + nullIfEmpty(USERNAME) + ") AS " + SORT_NAME};
-  public  static final String[] SEARCH_PROJECTION_NAMES    = new String[]{ID, SYSTEM_JOINED_NAME, PHONE, EMAIL, SYSTEM_PHONE_LABEL, SYSTEM_PHONE_TYPE, REGISTERED, ABOUT, ABOUT_EMOJI, SEARCH_PROFILE_NAME, SORT_NAME};
+  private static final String[] SEARCH_PROJECTION          = new String[]{ID, SYSTEM_JOINED_NAME, PHONE, EMAIL, SYSTEM_PHONE_LABEL, SYSTEM_PHONE_TYPE, REGISTERED, ABOUT, ABOUT_EMOJI, EXTRAS, GROUPS_IN_COMMON, "COALESCE(" + nullIfEmpty(PROFILE_JOINED_NAME) + ", " + nullIfEmpty(PROFILE_GIVEN_NAME) + ") AS " + SEARCH_PROFILE_NAME, "COALESCE(" + nullIfEmpty(SYSTEM_JOINED_NAME) + ", " + nullIfEmpty(SYSTEM_GIVEN_NAME) + ", " + nullIfEmpty(PROFILE_JOINED_NAME) + ", " + nullIfEmpty(PROFILE_GIVEN_NAME) + ", " + nullIfEmpty(USERNAME) + ") AS " + SORT_NAME};
+  public  static final String[] SEARCH_PROJECTION_NAMES    = new String[]{ID, SYSTEM_JOINED_NAME, PHONE, EMAIL, SYSTEM_PHONE_LABEL, SYSTEM_PHONE_TYPE, REGISTERED, ABOUT, ABOUT_EMOJI, EXTRAS, GROUPS_IN_COMMON, SEARCH_PROFILE_NAME, SORT_NAME};
   private static final String[] TYPED_RECIPIENT_PROJECTION = Stream.of(RECIPIENT_PROJECTION)
           .map(columnName -> TABLE_NAME + "." + columnName)
           .toList().toArray(new String[0]);
@@ -369,7 +374,9 @@ public class RecipientDatabase extends Database {
                   WALLPAPER                 + " BLOB DEFAULT NULL, " +
                   WALLPAPER_URI             + " TEXT DEFAULT NULL, " +
                   ABOUT                     + " TEXT DEFAULT NULL, " +
-                  ABOUT_EMOJI               + " TEXT DEFAULT NULL);";
+                  ABOUT_EMOJI               + " TEXT DEFAULT NULL, " +
+                  EXTRAS + " BLOB DEFAULT NULL, " +
+                  GROUPS_IN_COMMON          + " INTEGER DEFAULT 0);";
 
 
 
@@ -1477,6 +1484,7 @@ public class RecipientDatabase extends Database {
     byte[]  wallpaper                  = CursorUtil.requireBlob(cursor, WALLPAPER);
     String  about                      = CursorUtil.requireString(cursor, ABOUT);
     String  aboutEmoji                 = CursorUtil.requireString(cursor, ABOUT_EMOJI);
+    boolean hasGroupsInCommon          = CursorUtil.requireBoolean(cursor, GROUPS_IN_COMMON);
 
     MaterialColor        color;
     byte[]               profileKey           = null;
@@ -1565,7 +1573,9 @@ public class RecipientDatabase extends Database {
             chatWallpaper,
             about,
             aboutEmoji,
-            getSyncExtras(cursor));
+            getSyncExtras(cursor),
+            getExtras(cursor),
+            hasGroupsInCommon);
   }
 
   private static @NonNull RecipientSettings.SyncExtras getSyncExtras(@NonNull Cursor cursor) {
@@ -1579,6 +1589,23 @@ public class RecipientDatabase extends Database {
 
 
     return new RecipientSettings.SyncExtras(storageProto, groupMasterKey, identityKey, identityStatus, archived, forcedUnread);
+  }
+
+  private static @Nullable Recipient.Extras getExtras(@NonNull Cursor cursor) {
+    return Recipient.Extras.from(getRecipientExtras(cursor));
+  }
+
+  private static @Nullable RecipientExtras getRecipientExtras(@NonNull Cursor cursor) {
+    final Optional<byte[]> blob = CursorUtil.getBlob(cursor, EXTRAS);
+
+    return blob.transform(b -> {
+      try {
+        return RecipientExtras.parseFrom(b);
+      } catch (InvalidProtocolBufferException e) {
+        Log.w(TAG, e);
+        throw new AssertionError(e);
+      }
+    }).orNull();
   }
 
   public BulkOperationsHandle beginBulkSystemContactUpdate() {
@@ -1998,6 +2025,14 @@ public class RecipientDatabase extends Database {
     contentValues.put(PROFILE_SHARING, enabled ? 1 : 0);
     boolean profiledUpdated = update(id, contentValues);
     boolean colorUpdated    = enabled && setColorIfNotSetInternal(id, ContactColors.generateFor(Recipient.resolved(id).getDisplayName(context)));
+
+    if (profiledUpdated && enabled) {
+      Optional<GroupDatabase.GroupRecord> group = DatabaseFactory.getGroupDatabase(context).getGroup(id);
+
+      if (group.isPresent()) {
+        setHasGroupsInCommon(group.get().getMembers());
+      }
+    }
 
     if (profiledUpdated || colorUpdated) {
       markDirty(id, DirtyState.UPDATE);
@@ -2589,10 +2624,70 @@ public class RecipientDatabase extends Database {
       pattern.append("[");
       pattern.append(point.toLowerCase());
       pattern.append(point.toUpperCase());
+      pattern.append(getAccentuatedCharRegex(point.toLowerCase()));
       pattern.append("]");
     }
 
     return "*" + pattern.toString() + "*";
+  }
+
+  private static @NonNull String getAccentuatedCharRegex(@NonNull String query) {
+    switch (query) {
+      case "a" :
+        return "À-Åà-åĀ-ąǍǎǞ-ǡǺ-ǻȀ-ȃȦȧȺɐ-ɒḀḁẚẠ-ặ";
+      case "b" :
+        return "ßƀ-ƅɃɓḂ-ḇ";
+      case "c" :
+        return "çÇĆ-čƆ-ƈȻȼɔḈḉ";
+      case "d" :
+        return "ÐðĎ-đƉ-ƍȡɖɗḊ-ḓ";
+      case "e" :
+        return "È-Ëè-ëĒ-ěƎ-ƐǝȄ-ȇȨȩɆɇɘ-ɞḔ-ḝẸ-ệ";
+      case "f" :
+        return "ƑƒḞḟ";
+      case "g" :
+        return "Ĝ-ģƓǤ-ǧǴǵḠḡ";
+      case "h" :
+        return "Ĥ-ħƕǶȞȟḢ-ḫẖ";
+      case "i" :
+        return "Ì-Ïì-ïĨ-ıƖƗǏǐȈ-ȋɨɪḬ-ḯỈ-ị";
+      case "j" :
+        return "ĴĵǰȷɈɉɟ";
+      case "k" :
+        return "Ķ-ĸƘƙǨǩḰ-ḵ";
+      case "l" :
+        return "Ĺ-łƚȴȽɫ-ɭḶ-ḽ";
+      case "m" :
+        return "Ɯɯ-ɱḾ-ṃ";
+      case "n" :
+        return "ÑñŃ-ŋƝƞǸǹȠȵɲ-ɴṄ-ṋ";
+      case "o" :
+        return "Ò-ÖØò-öøŌ-őƟ-ơǑǒǪ-ǭǾǿȌ-ȏȪ-ȱṌ-ṓỌ-ợ";
+      case "p" :
+        return "ƤƥṔ-ṗ";
+      case "q" :
+        return "";
+      case "r" :
+        return "Ŕ-řƦȐ-ȓɌɍṘ-ṟ";
+      case "s" :
+        return "Ś-šƧƨȘșȿṠ-ṩ";
+      case "t" :
+        return "Ţ-ŧƫ-ƮȚțȾṪ-ṱẗ";
+      case "u" :
+        return "Ù-Üù-üŨ-ųƯ-ƱǓ-ǜȔ-ȗɄṲ-ṻỤ-ự";
+      case "v" :
+        return "ƲɅṼ-ṿ";
+      case "w" :
+        return "ŴŵẀ-ẉẘ";
+      case "x" :
+        return "Ẋ-ẍ";
+      case "y" :
+        return "ÝýÿŶ-ŸƔƳƴȲȳɎɏẎẏỲ-ỹỾỿẙ";
+      case "z" :
+        return "Ź-žƵƶɀẐ-ẕ";
+      default :
+        return "";
+    }
   }
 
   public @NonNull List<Recipient> getRecipientsForMultiDeviceSync() {
@@ -2768,6 +2863,97 @@ public class RecipientDatabase extends Database {
     } finally {
       db.endTransaction();
     }
+  }
+
+  public void markPreMessageRequestRecipientsAsProfileSharingEnabled(long messageRequestEnableTime) {
+    String[] whereArgs = SqlUtil.buildArgs(messageRequestEnableTime, messageRequestEnableTime);
+
+    String select = "SELECT r." + ID + " FROM " + TABLE_NAME + " AS r "
+            + "INNER JOIN " + ThreadDatabase.TABLE_NAME + " AS t ON t." + ThreadDatabase.RECIPIENT_ID + " = r." + ID + " WHERE "
+            + "r." + PROFILE_SHARING + " = 0 AND "
+            + "("
+            + "EXISTS(SELECT 1 FROM " + SmsDatabase.TABLE_NAME + " WHERE " + SmsDatabase.THREAD_ID + " = t." + ThreadDatabase.ID + " AND " + SmsDatabase.DATE_RECEIVED + " < ?) "
+            + "OR "
+            + "EXISTS(SELECT 1 FROM " + MmsDatabase.TABLE_NAME + " WHERE " + MmsDatabase.THREAD_ID + " = t." + ThreadDatabase.ID + " AND " + MmsDatabase.DATE_RECEIVED + " < ?) "
+            + ")";
+
+    List<Long> idsToUpdate = new ArrayList<>();
+    try (Cursor cursor = databaseHelper.getReadableDatabase().rawQuery(select, whereArgs)) {
+      while (cursor.moveToNext()) {
+        idsToUpdate.add(CursorUtil.requireLong(cursor, ID));
+      }
+    }
+
+    if (Util.hasItems(idsToUpdate)) {
+      SqlUtil.Query query  = SqlUtil.buildCollectionQuery(ID, idsToUpdate);
+      ContentValues values = new ContentValues(1);
+      values.put(PROFILE_SHARING, 1);
+      databaseHelper.getWritableDatabase().update(TABLE_NAME, values, query.getWhere(), query.getWhereArgs());
+
+      for (long id : idsToUpdate) {
+        Recipient.live(RecipientId.from(id)).refresh();
+      }
+    }
+  }
+
+  public void setHasGroupsInCommon(@NonNull List<RecipientId> recipientIds) {
+    if (recipientIds.isEmpty()) {
+      return;
+    }
+
+    SqlUtil.Query  query = SqlUtil.buildCollectionQuery(ID, recipientIds);
+    SQLiteDatabase db    = databaseHelper.getWritableDatabase();
+    try (Cursor cursor = db.query(TABLE_NAME,
+            new String[]{ID},
+            query.getWhere() + " AND " + GROUPS_IN_COMMON + " = 0",
+            query.getWhereArgs(),
+            null,
+            null,
+            null))
+    {
+      List<Long> idsToUpdate = new ArrayList<>(cursor.getCount());
+      while (cursor.moveToNext()) {
+        idsToUpdate.add(CursorUtil.requireLong(cursor, ID));
+      }
+
+      if (Util.hasItems(idsToUpdate)) {
+        query = SqlUtil.buildCollectionQuery(ID, idsToUpdate);
+        ContentValues values = new ContentValues();
+        values.put(GROUPS_IN_COMMON, 1);
+        int count = db.update(TABLE_NAME, values, query.getWhere(), query.getWhereArgs());
+        if (count > 0) {
+          for (long id : idsToUpdate) {
+            Recipient.live(RecipientId.from(id)).refresh();
+          }
+        }
+      }
+    }
+  }
+
+  public void manuallyShowAvatar(@NonNull RecipientId recipientId) {
+    updateExtras(recipientId, b -> b.setManuallyShownAvatar(true));
+  }
+
+  private void updateExtras(@NonNull RecipientId recipientId, @NonNull Function<RecipientExtras.Builder, RecipientExtras.Builder> updater) {
+    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    db.beginTransaction();
+    try {
+      try (Cursor cursor = db.query(TABLE_NAME, new String[]{ID, EXTRAS}, ID_WHERE, SqlUtil.buildArgs(recipientId), null, null, null)) {
+        if (cursor.moveToNext()) {
+          RecipientExtras         state        = getRecipientExtras(cursor);
+          RecipientExtras.Builder builder      = state != null ? state.toBuilder() : RecipientExtras.newBuilder();
+          byte[]                  updatedState = updater.apply(builder).build().toByteArray();
+          ContentValues           values       = new ContentValues(1);
+          values.put(EXTRAS, updatedState);
+          db.update(TABLE_NAME, values, ID_WHERE, SqlUtil.buildArgs(CursorUtil.requireLong(cursor, ID)));
+        }
+      }
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+    }
+
+    Recipient.live(recipientId).refresh();
   }
 
   void markDirty(@NonNull RecipientId recipientId, @NonNull DirtyState dirtyState) {
@@ -3172,6 +3358,8 @@ public class RecipientDatabase extends Database {
     private final String                          about;
     private final String                          aboutEmoji;
     private final SyncExtras                      syncExtras;
+    private final Recipient.Extras extras;
+    private final boolean          hasGroupsInCommon;
 
     RecipientSettings(@NonNull RecipientId id,
                       @Nullable UUID uuid,
@@ -3212,7 +3400,9 @@ public class RecipientDatabase extends Database {
                       @Nullable ChatWallpaper wallpaper,
                       @Nullable String about,
                       @Nullable String aboutEmoji,
-                      @NonNull SyncExtras syncExtras)
+                      @NonNull SyncExtras syncExtras,
+                      @Nullable Recipient.Extras extras,
+                      boolean hasGroupsInCommon)
     {
       this.id                          = id;
       this.uuid                        = uuid;
@@ -3256,6 +3446,8 @@ public class RecipientDatabase extends Database {
       this.about                       = about;
       this.aboutEmoji                  = aboutEmoji;
       this.syncExtras                  = syncExtras;
+      this.extras            = extras;
+      this.hasGroupsInCommon = hasGroupsInCommon;
     }
 
     public RecipientId getId() {
@@ -3428,6 +3620,14 @@ public class RecipientDatabase extends Database {
 
     public @NonNull SyncExtras getSyncExtras() {
       return syncExtras;
+    }
+
+    public @Nullable Recipient.Extras getExtras() {
+      return extras;
+    }
+
+    public boolean hasGroupsInCommon() {
+      return hasGroupsInCommon;
     }
 
     long getCapabilities() {

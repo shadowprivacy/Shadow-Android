@@ -214,6 +214,7 @@ public final class AttachmentDownloadJob extends BaseJob {
                                                 Optional.fromNullable(attachment.getFileName()),
                                                 attachment.isVoiceNote(),
                                                 attachment.isBorderless(),
+                                                attachment.isVideoGif(),
                                                 Optional.absent(),
                                                 Optional.fromNullable(attachment.getBlurHash()).transform(BlurHash::getHash),
                                                 attachment.getUploadTimestamp());

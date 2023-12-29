@@ -72,6 +72,8 @@ public class RecipientDetails {
     final String                 about;
     final String                 aboutEmoji;
     final ProfileName            systemProfileName;
+    final Optional<Recipient.Extras> extras;
+    final boolean                    hasGroupsInCommon;
 
     public RecipientDetails(@Nullable String groupName,
                             @Nullable String systemContactName,
@@ -124,6 +126,8 @@ public class RecipientDetails {
         this.systemProfileName           = settings.getSystemProfileName();
         this.groupName                   = groupName;
         this.systemContactName           = systemContactName;
+        this.extras                      = Optional.fromNullable(settings.getExtras());
+        this.hasGroupsInCommon           = settings.hasGroupsInCommon();
     }
 
     /**
@@ -173,6 +177,8 @@ public class RecipientDetails {
         this.aboutEmoji                  = null;
         this.systemProfileName           = ProfileName.EMPTY;
         this.systemContactName           = null;
+        this.extras                      = Optional.absent();
+        this.hasGroupsInCommon           = false;
     }
 
     public static @NonNull RecipientDetails forIndividual(@NonNull Context context, @NonNull RecipientSettings settings) {

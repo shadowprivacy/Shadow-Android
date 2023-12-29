@@ -24,21 +24,10 @@
                 android:theme="?attr/actionBarStyle"
                 app:layout_scrollFlags="scroll|enterAlways" />
 
-            <com.google.android.material.tabs.TabLayout
-                android:id="@+id/tab_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:scrollbars="horizontal"
-                android:theme="@style/TextSecure.Conversation.TabBar"
-                app:tabBackground="@null"
-                app:tabIndicatorColor="@color/signal_text_toolbar_title"
-                app:tabSelectedTextColor="@color/signal_text_toolbar_title"
-                app:tabTextColor="@color/signal_text_toolbar_subtitle" />
-
         </com.google.android.material.appbar.AppBarLayout>
 
-        <androidx.viewpager.widget.ViewPager
-            android:id="@+id/giphy_pager"
+        <FrameLayout
+        android:id="@+id/fragment_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior" />

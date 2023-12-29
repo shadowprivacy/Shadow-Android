@@ -7,10 +7,13 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+
 import su.sres.securesms.database.MentionDatabase;
 import su.sres.securesms.database.PaymentDatabase;
 import su.sres.securesms.database.SignalDatabase;
 import su.sres.securesms.database.SqlCipherDatabaseHook;
+import su.sres.securesms.database.model.databaseprotos.ReactionList;
 import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;
 
@@ -41,6 +44,7 @@ import su.sres.securesms.util.Triple;
 import su.sres.securesms.util.Util;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -68,8 +72,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     private static final int LAST_RESET_SESSION_TIME_AND_WALLPAPER_AND_ABOUT = 77;
     private static final int SPLIT_SYSTEM_NAMES               = 78;
     private static final int PAYMENTS_AND_CLEAN_STORAGE_IDS = 79;
+    private static final int MP4_GIF_SUPPORT_AND_BLUR_AVATARS_AND_CLEAN_STORAGE_IDS_WITHOUT_INFO = 80;
+    private static final int CLEAN_REACTION_NOTIFICATIONS = 81;
 
-    private static final int DATABASE_VERSION = 79;
+    private static final int DATABASE_VERSION = 81;
     private static final String DATABASE_NAME = "shadow.db";
 
     private final Context context;
@@ -457,6 +463,96 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
                 values.putNull("storage_service_key");
                 int count = db.update("recipient", values, "storage_service_key NOT NULL AND ((phone NOT NULL AND INSTR(phone, '+') = 0) OR (group_id NOT NULL AND (LENGTH(group_id) != 85 and LENGTH(group_id) != 53)))", null);
                 Log.i(TAG, "There were " + count + " bad rows that had their storageID removed.");
+            }
+
+            if (oldVersion < MP4_GIF_SUPPORT_AND_BLUR_AVATARS_AND_CLEAN_STORAGE_IDS_WITHOUT_INFO) {
+                db.execSQL("ALTER TABLE part ADD COLUMN video_gif INTEGER DEFAULT 0");
+
+                ///
+
+                db.execSQL("ALTER TABLE recipient ADD COLUMN extras BLOB DEFAULT NULL");
+                db.execSQL("ALTER TABLE recipient ADD COLUMN groups_in_common INTEGER DEFAULT 0");
+
+                String secureOutgoingSms = "EXISTS(SELECT 1 FROM sms WHERE thread_id = t._id AND (type & 31) = 23 AND (type & 10485760) AND (type & 131072 = 0))";
+                String secureOutgoingMms = "EXISTS(SELECT 1 FROM mms WHERE thread_id = t._id AND (msg_box & 31) = 23 AND (msg_box & 10485760) AND (msg_box & 131072 = 0))";
+
+                String selectIdsToUpdateProfileSharing = "SELECT r._id FROM recipient AS r INNER JOIN thread AS t ON r._id = t.recipient_ids WHERE profile_sharing = 0 AND (" + secureOutgoingSms + " OR " + secureOutgoingMms + ")";
+
+                db.rawExecSQL("UPDATE recipient SET profile_sharing = 1 WHERE _id IN (" + selectIdsToUpdateProfileSharing + ")");
+
+                String selectIdsWithGroupsInCommon = "SELECT r._id FROM recipient AS r WHERE EXISTS("
+                        + "SELECT 1 FROM groups AS g INNER JOIN recipient AS gr ON (g.recipient_id = gr._id AND gr.profile_sharing = 1) WHERE g.active = 1 AND (g.members LIKE r._id || ',%' OR g.members LIKE '%,' || r._id || ',%' OR g.members LIKE '%,' || r._id)"
+                        + ")";
+                db.rawExecSQL("UPDATE recipient SET groups_in_common = 1 WHERE _id IN (" + selectIdsWithGroupsInCommon + ")");
+
+                ///
+
+                ContentValues values = new ContentValues();
+                values.putNull("storage_service_key");
+                int count = db.update("recipient", values, "storage_service_key NOT NULL AND phone IS NULL AND uuid IS NULL AND group_id IS NULL", null);
+                Log.i(TAG, "There were " + count + " bad rows that had their storageID removed due to not having any other identifier.");
+            }
+
+            if (oldVersion < CLEAN_REACTION_NOTIFICATIONS) {
+                ContentValues values = new ContentValues(1);
+                values.put("notified", 1);
+
+                int count = 0;
+                count += db.update("sms", values, "notified = 0 AND read = 1 AND reactions_unread = 1 AND NOT ((type & 31) = 23 AND (type & 10485760) AND (type & 131072 = 0))", null);
+                count += db.update("mms", values, "notified = 0 AND read = 1 AND reactions_unread = 1 AND NOT ((msg_box & 31) = 23 AND (msg_box & 10485760) AND (msg_box & 131072 = 0))", null);
+                Log.d(TAG, "Resetting notified for " + count + " read incoming messages that were incorrectly flipped when receiving reactions");
+
+                List<Long> smsIds = new ArrayList<>();
+
+                try (Cursor cursor = db.query("sms", new String[]{"_id", "reactions", "notified_timestamp"}, "notified = 0 AND reactions_unread = 1", null, null, null, null)) {
+                    while (cursor.moveToNext()) {
+                        byte[] reactions         = cursor.getBlob(cursor.getColumnIndexOrThrow("reactions"));
+                        long   notifiedTimestamp = cursor.getLong(cursor.getColumnIndexOrThrow("notified_timestamp"));
+
+                        try {
+                            boolean hasReceiveLaterThanNotified = ReactionList.parseFrom(reactions)
+                                    .getReactionsList()
+                                    .stream()
+                                    .anyMatch(r -> r.getReceivedTime() > notifiedTimestamp);
+                            if (!hasReceiveLaterThanNotified) {
+                                smsIds.add(cursor.getLong(cursor.getColumnIndexOrThrow("_id")));
+                            }
+                        } catch (InvalidProtocolBufferException e) {
+                            Log.e(TAG, e);
+                        }
+                    }
+                }
+
+                if (smsIds.size() > 0) {
+                    Log.d(TAG, "Updating " + smsIds.size() + " records in sms");
+                    db.execSQL("UPDATE sms SET reactions_last_seen = notified_timestamp WHERE _id in (" + Util.join(smsIds, ",") + ")");
+                }
+
+                List<Long> mmsIds = new ArrayList<>();
+
+                try (Cursor cursor = db.query("mms", new String[]{"_id", "reactions", "notified_timestamp"}, "notified = 0 AND reactions_unread = 1", null, null, null, null)) {
+                    while (cursor.moveToNext()) {
+                        byte[] reactions         = cursor.getBlob(cursor.getColumnIndexOrThrow("reactions"));
+                        long   notifiedTimestamp = cursor.getLong(cursor.getColumnIndexOrThrow("notified_timestamp"));
+
+                        try {
+                            boolean hasReceiveLaterThanNotified = ReactionList.parseFrom(reactions)
+                                    .getReactionsList()
+                                    .stream()
+                                    .anyMatch(r -> r.getReceivedTime() > notifiedTimestamp);
+                            if (!hasReceiveLaterThanNotified) {
+                                mmsIds.add(cursor.getLong(cursor.getColumnIndexOrThrow("_id")));
+                            }
+                        } catch (InvalidProtocolBufferException e) {
+                            Log.e(TAG, e);
+                        }
+                    }
+                }
+
+                if (mmsIds.size() > 0) {
+                    Log.d(TAG, "Updating " + mmsIds.size() + " records in mms");
+                    db.execSQL("UPDATE mms SET reactions_last_seen = notified_timestamp WHERE _id in (" + Util.join(mmsIds, ",") + ")");
+                }
             }
 
             db.setTransactionSuccessful();

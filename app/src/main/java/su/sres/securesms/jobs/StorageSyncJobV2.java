@@ -347,7 +347,7 @@ public class StorageSyncJobV2 extends BaseJob {
                 Log.i(TAG, "[Remote Sync] Updating local manifest version to: " + remoteManifest.get().getVersion());
                 TextSecurePreferences.setStorageManifestVersion(context, remoteManifest.get().getVersion());
             }
-        } else if (remoteManifest.isPresent()) {
+        } else if (remoteManifest.isPresent() && remoteManifestVersion < localManifestVersion) {
             Log.w(TAG, "[Remote Sync] Remote version was older. User might have switched accounts. Making our version match.");
             TextSecurePreferences.setStorageManifestVersion(context, remoteManifestVersion);
         }
@@ -395,7 +395,7 @@ public class StorageSyncJobV2 extends BaseJob {
                 throw new AssertionError("Decided there were local writes, but our write result was empty!");
             }
 
-            StorageSyncValidations.validate(localWrite, FeatureFlags.internalUser() ? remoteManifest : Optional.absent(), needsForcePush, self);
+            StorageSyncValidations.validate(localWrite, Optional.absent(), needsForcePush, self);
 
             Optional<SignalStorageManifest> conflict = accountManager.writeStorageRecords(storageServiceKey, localWrite.getManifest(), localWrite.getInserts(), localWrite.getDeletes());
 

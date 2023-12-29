@@ -35832,6 +35832,10 @@ public final class SignalServiceProtos {
        * <code>BORDERLESS = 2;</code>
        */
       BORDERLESS(2),
+      /**
+       * <code>GIF = 3;</code>
+       */
+      GIF(3),
       ;
 
       /**
@@ -35842,6 +35846,10 @@ public final class SignalServiceProtos {
        * <code>BORDERLESS = 2;</code>
        */
       public static final int BORDERLESS_VALUE = 2;
+      /**
+       * <code>GIF = 3;</code>
+       */
+      public static final int GIF_VALUE = 3;
 
 
       @java.lang.Override
@@ -35863,6 +35871,7 @@ public final class SignalServiceProtos {
         switch (value) {
           case 1: return VOICE_MESSAGE;
           case 2: return BORDERLESS;
+          case 3: return GIF;
           default: return null;
         }
       }

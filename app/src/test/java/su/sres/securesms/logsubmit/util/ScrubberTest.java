@@ -52,7 +52,7 @@ public final class ScrubberTest {
                 { "A email with multiple parts before the @ d.c+b.a@mulitpart.domain.com and a multipart domain",
                         "A email with multiple parts before the @ d...@... and a multipart domain" },
 
-                { "An avatar email filename: file:///data/user/0/su.sres.securesms/files/avatars/abc@signal.org",
+                { "An avatar email filename: file:///data/user/0/su.sres.securesms/files/avatars/abc@sres.su",
                         "An avatar email filename: file:///data/user/0/su.sres.securesms/files/avatars/a...@..." },
 
                 { "An email and a number abc@def.com +155556789012345",
@@ -79,8 +79,24 @@ public final class ScrubberTest {
                 { "JOB::a37cb654-c9e0-4c1e-93df-3d11ca3c97f4",
                         "JOB::a37cb654-c9e0-4c1e-93df-3d11ca3c97f4" },
 
-                { "All patterns in a row __textsecure_group__!abcdefg1234567890 +1234567890123456 abc@def.com a37cb654-c9e0-4c1e-93df-3d11ca3c97f4 with text after",
-                        "All patterns in a row __...group...90 +*************456 a...@... ********-****-****-****-**********f4 with text after"
+                { "All patterns in a row __textsecure_group__!abcdefg1234567890 +1234567890123456 abc@def.com a37cb654-c9e0-4c1e-93df-3d11ca3c97f4 nl.motorsport.com with text after",
+                        "All patterns in a row __...group...90 +*************456 a...@... ********-****-****-****-**********f4 ***.com with text after"
+                },
+
+                { "java.net.UnknownServiceException: CLEARTEXT communication to nl.motorsport.com not permitted by network security policy",
+                        "java.net.UnknownServiceException: CLEARTEXT communication to ***.com not permitted by network security policy"
+                },
+
+                { "nl.motorsport.com:443",
+                        "***.com:443"
+                },
+
+                { "Failed to resolve textsecure-service.shadowprivacy.com using . Continuing.",
+                        "Failed to resolve textsecure-service.shadowprivacy.com using . Continuing."
+                },
+
+                { " Caused by: java.io.IOException: unexpected end of stream on Connection{storage.shadowprivacy.com:443, proxy=DIRECT hostAddress=storage.shadowprivacy.com/142.251.32.211:443 cipherSuite=TLS_AES_128_GCM_SHA256 protocol=http/1.1}",
+                        " Caused by: java.io.IOException: unexpected end of stream on Connection{storage.shadowprivacy.com:443, proxy=DIRECT hostAddress=storage.shadowprivacy.com/142.251.32.211:443 cipherSuite=TLS_AES_128_GCM_SHA256 protocol=http/1.1}"
                 }
 
         });

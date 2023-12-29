@@ -8,7 +8,10 @@ import androidx.annotation.WorkerThread;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.recipients.Recipient;
@@ -17,6 +20,7 @@ import su.sres.securesms.util.BubbleUtil;
 import su.sres.securesms.util.ConversationUtil;
 import su.sres.core.util.concurrent.SignalExecutors;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 
 class ConversationRepository {
@@ -61,6 +65,7 @@ class ConversationRepository {
         int     lastScrolledPosition = 0;
 
         boolean isMessageRequestAccepted = RecipientUtil.isMessageRequestAccepted(context, threadId);
+        ConversationData.MessageRequestData messageRequestData       = new ConversationData.MessageRequestData(isMessageRequestAccepted);
 
         if (lastSeen > 0) {
             lastSeenPosition = DatabaseFactory.getMmsSmsDatabase(context).getMessagePositionOnOrAfterTimestamp(threadId, lastSeen);
@@ -74,6 +79,28 @@ class ConversationRepository {
             lastScrolledPosition = DatabaseFactory.getMmsSmsDatabase(context).getMessagePositionOnOrAfterTimestamp(threadId, lastScrolled);
         }
 
-        return new ConversationData(threadId, lastSeen, lastSeenPosition, lastScrolledPosition, hasSent, isMessageRequestAccepted, jumpToPosition, threadSize);
+        if (!isMessageRequestAccepted) {
+            boolean isGroup                             = false;
+            boolean recipientIsKnownOrHasGroupsInCommon = false;
+            Recipient threadRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
+            if (threadRecipient.isGroup()) {
+                Optional<GroupDatabase.GroupRecord> group = DatabaseFactory.getGroupDatabase(context).getGroup(threadRecipient.getId());
+                if (group.isPresent()) {
+                    List<Recipient> recipients = Recipient.resolvedList(group.get().getMembers());
+                    for (Recipient recipient : recipients) {
+                        if ((recipient.isProfileSharing() || recipient.hasGroupsInCommon()) && !recipient.isSelf()) {
+                            recipientIsKnownOrHasGroupsInCommon = true;
+                            break;
+                        }
+                    }
+                }
+                isGroup = true;
+            } else if (threadRecipient.hasGroupsInCommon()) {
+                recipientIsKnownOrHasGroupsInCommon = true;
+            }
+            messageRequestData = new ConversationData.MessageRequestData(isMessageRequestAccepted, recipientIsKnownOrHasGroupsInCommon, isGroup);
+        }
+
+        return new ConversationData(threadId, lastSeen, lastSeenPosition, lastScrolledPosition, hasSent, jumpToPosition, threadSize, messageRequestData);
     }
 }

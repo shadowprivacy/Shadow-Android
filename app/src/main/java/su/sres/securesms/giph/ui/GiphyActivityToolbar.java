@@ -26,16 +26,11 @@ import su.sres.securesms.components.AnimatingToggle;
 public class GiphyActivityToolbar extends Toolbar {
 
   @Nullable private OnFilterChangedListener filterListener;
-  @Nullable private OnLayoutChangedListener layoutListener;
 
   private EditText        searchText;
-  private AnimatingToggle toggle;
   private ImageView       action;
   private ImageView       clearToggle;
   private LinearLayout    toggleContainer;
-  private View            listLayoutToggle;
-  private View            gridLayoutToggle;
-  private Persistence     persistence;
 
   public GiphyActivityToolbar(Context context) {
     this(context, null);
@@ -51,13 +46,8 @@ public class GiphyActivityToolbar extends Toolbar {
 
     this.action           = findViewById(R.id.action_icon);
     this.searchText       = findViewById(R.id.search_view);
-    this.toggle           = findViewById(R.id.button_toggle);
     this.clearToggle      = findViewById(R.id.search_clear);
     this.toggleContainer  = findViewById(R.id.toggle_container);
-    this.listLayoutToggle = findViewById(R.id.view_stream);
-    this.gridLayoutToggle = findViewById(R.id.view_grid);
-
-    setupGridLayoutToggles();
 
     this.clearToggle.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -105,29 +95,6 @@ public class GiphyActivityToolbar extends Toolbar {
     expandTapArea(this, action);
   }
 
-  public void setPersistence(@NonNull Persistence persistence) {
-    this.persistence = persistence;
-    displayTogglingView(persistence.getGridSelected() ? listLayoutToggle : gridLayoutToggle);
-  }
-
-  private void setupGridLayoutToggles() {
-    setUpGridToggle(listLayoutToggle, gridLayoutToggle, false);
-    setUpGridToggle(gridLayoutToggle, listLayoutToggle, true);
-    displayTogglingView(gridLayoutToggle);
-  }
-
-  private void setUpGridToggle(View gridToggle, View otherToggle, boolean gridLayout) {
-    gridToggle.setOnClickListener(v -> {
-      displayTogglingView(otherToggle);
-      if (layoutListener != null) {
-        layoutListener.onLayoutChanged(gridLayout);
-      }
-      if (persistence != null) {
-        persistence.setGridSelected(gridLayout);
-      }
-    });
-  }
-
   @Override
   public void setNavigationIcon(int resId) {
     action.setImageResource(resId);
@@ -138,10 +105,6 @@ public class GiphyActivityToolbar extends Toolbar {
     notifyListener();
   }
 
-  public void setOnLayoutChangedListener(@Nullable OnLayoutChangedListener layoutListener) {
-    this.layoutListener = layoutListener;
-  }
-
   public void setOnFilterChangedListener(@Nullable  OnFilterChangedListener filterListener) {
     this.filterListener = filterListener;
   }
@@ -150,17 +113,10 @@ public class GiphyActivityToolbar extends Toolbar {
     if (filterListener != null) filterListener.onFilterChanged(searchText.getText().toString());
   }
 
-  private void displayTogglingView(View view) {
-    toggle.display(view);
-    expandTapArea(toggleContainer, view);
-  }
-
   private void expandTapArea(final View container, final View child) {
     final int padding = getResources().getDimensionPixelSize(R.dimen.contact_selection_actions_tap_area);
 
-    container.post(new Runnable() {
-      @Override
-      public void run() {
+    container.post(() -> {
         Rect rect = new Rect();
         child.getHitRect(rect);
 
@@ -170,7 +126,6 @@ public class GiphyActivityToolbar extends Toolbar {
         rect.bottom += padding;
 
         container.setTouchDelegate(new TouchDelegate(rect, child));
-      }
     });
   }
 
@@ -190,14 +145,5 @@ public class GiphyActivityToolbar extends Toolbar {
 
   public interface OnFilterChangedListener {
     void onFilterChanged(String filter);
-  }
-
-  public interface OnLayoutChangedListener {
-    void onLayoutChanged(boolean gridLayout);
-  }
-
-  public interface Persistence {
-    boolean getGridSelected();
-    void setGridSelected(boolean isGridSelected);
   }
 }

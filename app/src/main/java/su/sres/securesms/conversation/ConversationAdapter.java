@@ -42,7 +42,12 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import com.google.android.exoplayer2.source.MediaSource;
+
 import su.sres.securesms.database.model.MessageRecord;
+import su.sres.securesms.giph.mp4.GiphyMp4Playable;
+import su.sres.securesms.giph.mp4.GiphyMp4PlaybackPolicyEnforcer;
+import su.sres.securesms.giph.mp4.GiphyMp4Projection;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.CachedInflater;
@@ -51,6 +56,8 @@ import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
+import su.sres.securesms.video.exo.AttachmentMediaSourceFactory;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.security.MessageDigest;
@@ -107,6 +114,7 @@ public class ConversationAdapter
   private final Set<Long>                 releasedFastRecords;
   private final Calendar                  calendar;
   private final MessageDigest             digest;
+  private final AttachmentMediaSourceFactory attachmentMediaSourceFactory;
 
   private String              searchQuery;
   private ConversationMessage recordToPulse;
@@ -115,12 +123,14 @@ public class ConversationAdapter
   private PagingController pagingController;
   private boolean             hasWallpaper;
   private boolean             isMessageRequestAccepted;
+  private ConversationMessage inlineContent;
 
   ConversationAdapter(@NonNull LifecycleOwner lifecycleOwner,
                       @NonNull GlideRequests glideRequests,
                       @NonNull Locale locale,
                       @Nullable ItemClickListener clickListener,
-                      @NonNull Recipient recipient)
+                      @NonNull Recipient recipient,
+                      @NonNull AttachmentMediaSourceFactory attachmentMediaSourceFactory)
   {
     super(new DiffUtil.ItemCallback<ConversationMessage>() {
       @Override
@@ -147,6 +157,7 @@ public class ConversationAdapter
     this.digest              = getMessageDigestOrThrow();
     this.hasWallpaper        = recipient.hasWallpaper();
     this.isMessageRequestAccepted = true;
+    this.attachmentMediaSourceFactory = attachmentMediaSourceFactory;
 
     setHasStableIds(true);
   }
@@ -259,7 +270,9 @@ public class ConversationAdapter
                 searchQuery,
                 conversationMessage == recordToPulse,
                 hasWallpaper,
-                isMessageRequestAccepted);
+                isMessageRequestAccepted,
+                attachmentMediaSourceFactory,
+                conversationMessage == inlineContent);
 
         if (conversationMessage == recordToPulse) {
           recordToPulse = null;
@@ -611,13 +624,50 @@ public class ConversationAdapter
     }
   }
 
-  static class ConversationViewHolder extends RecyclerView.ViewHolder {
+  public void playInlineContent(@Nullable ConversationMessage conversationMessage) {
+    if (this.inlineContent != conversationMessage) {
+      this.inlineContent = conversationMessage;
+      notifyDataSetChanged();
+    }
+  }
+
+  final static class ConversationViewHolder extends RecyclerView.ViewHolder implements GiphyMp4Playable {
     public ConversationViewHolder(final @NonNull View itemView) {
       super(itemView);
     }
 
     public BindableConversationItem getBindable() {
       return (BindableConversationItem) itemView;
+    }
+
+    @Override
+    public void showProjectionArea() {
+      getBindable().showProjectionArea();
+    }
+
+    @Override
+    public void hideProjectionArea() {
+      getBindable().hideProjectionArea();
+    }
+
+    @Override
+    public @Nullable MediaSource getMediaSource() {
+      return getBindable().getMediaSource();
+    }
+
+    @Override
+    public @Nullable GiphyMp4PlaybackPolicyEnforcer getPlaybackPolicyEnforcer() {
+      return getBindable().getPlaybackPolicyEnforcer();
+    }
+
+    @NonNull
+    public @Override GiphyMp4Projection getProjection(@NonNull RecyclerView recyclerView) {
+      return getBindable().getProjection(recyclerView);
+    }
+
+    @Override
+    public boolean canPlayContent() {
+      return getBindable().canPlayContent();
     }
   }
 
@@ -689,7 +739,7 @@ public class ConversationAdapter
 
   interface ItemClickListener extends BindableConversationItem.EventListener {
     void onItemClick(ConversationMessage item);
-    void onItemLongClick(View maskTarget, ConversationMessage item);
+    void onItemLongClick(View itemView, ConversationMessage item);
   }
 
 }
