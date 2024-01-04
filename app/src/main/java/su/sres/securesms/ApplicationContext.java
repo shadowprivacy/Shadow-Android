@@ -38,8 +38,10 @@ import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.dependencies.ApplicationDependencyProvider;
 import su.sres.securesms.dependencies.NetworkIndependentProvider;
+import su.sres.securesms.emoji.EmojiSource;
 import su.sres.securesms.gcm.FcmJobService;
 import su.sres.securesms.jobs.CertificateRefreshJob;
+import su.sres.securesms.jobs.DownloadLatestEmojiDataJob;
 import su.sres.securesms.jobs.GroupV1MigrationJob;
 import su.sres.securesms.jobs.LicenseManagementJob;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
@@ -56,6 +58,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.core.util.logging.PersistentLogger;
 import su.sres.securesms.logging.LogSecretProvider;
 import su.sres.securesms.messageprocessingalarm.MessageProcessReceiver;
+import su.sres.securesms.ratelimit.RateLimitUtil;
 import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.AppStartup;
 import su.sres.securesms.util.SignalUncaughtExceptionHandler;
@@ -462,6 +465,9 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
                 .addNonBlocking(RefreshPreKeysJob::scheduleIfNecessary)
                 // .addNonBlocking(StorageSyncHelper::scheduleRoutineSync)
                 .addNonBlocking(() -> ApplicationDependencies.getJobManager().beginJobLoop())
+                .addNonBlocking(EmojiSource::refresh)
+                .addNonBlocking(() -> DownloadLatestEmojiDataJob.scheduleIfNecessary(this))
+                .addPostRender(() -> RateLimitUtil.retryAllRateLimitedMessages(this))
                 .addPostRender(this::initializeExpiringMessageManager)
                 .execute();
 

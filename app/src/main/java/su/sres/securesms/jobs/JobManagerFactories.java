@@ -8,6 +8,7 @@ import su.sres.securesms.jobmanager.Constraint;
 import su.sres.securesms.jobmanager.ConstraintObserver;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobMigration;
+import su.sres.securesms.jobmanager.impl.AutoDownloadEmojiConstraint;
 import su.sres.securesms.jobmanager.impl.ChargingConstraint;
 import su.sres.securesms.jobmanager.impl.ChargingConstraintObserver;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -71,6 +72,7 @@ public final class JobManagerFactories {
             put(ConversationShortcutUpdateJob.KEY,         new ConversationShortcutUpdateJob.Factory());
             put(CreateSignedPreKeyJob.KEY,                 new CreateSignedPreKeyJob.Factory());
             put(DirectorySyncJob.KEY,                      new DirectorySyncJob.Factory());
+            put(DownloadLatestEmojiDataJob.KEY,            new DownloadLatestEmojiDataJob.Factory());
             put(FcmRefreshJob.KEY,                         new FcmRefreshJob.Factory());
             put(GroupV1MigrationJob.KEY,                   new GroupV1MigrationJob.Factory());
             put(GroupCallUpdateSendJob.KEY,                new GroupCallUpdateSendJob.Factory());
@@ -98,6 +100,7 @@ public final class JobManagerFactories {
             put(MultiDeviceStorageSyncRequestJob.KEY,      new MultiDeviceStorageSyncRequestJob.Factory());
             put(MultiDeviceVerifiedUpdateJob.KEY,          new MultiDeviceVerifiedUpdateJob.Factory());
             put(MultiDeviceViewOnceOpenJob.KEY,            new MultiDeviceViewOnceOpenJob.Factory());
+            put(MultiDeviceViewedUpdateJob.KEY,            new MultiDeviceViewedUpdateJob.Factory());
             put(ProfileKeySendJob.KEY,                     new ProfileKeySendJob.Factory());
             put(PushDecryptMessageJob.KEY,                 new PushDecryptMessageJob.Factory());
             put(PushDecryptDrainedJob.KEY,                 new PushDecryptDrainedJob.Factory());
@@ -137,7 +140,7 @@ public final class JobManagerFactories {
             put(StickerPackDownloadJob.KEY,                new StickerPackDownloadJob.Factory());
             put(StorageForcePushJob.KEY,                   new StorageForcePushJob.Factory());
             put(StorageSyncJob.KEY,                        new StorageSyncJob.Factory());
-            put(StorageSyncJobV2.KEY,                      new StorageSyncJobV2.Factory());
+            put(SubmitRateLimitPushChallengeJob.KEY,       new SubmitRateLimitPushChallengeJob.Factory());
             put(TrimThreadJob.KEY,                         new TrimThreadJob.Factory());
             put(TypingSendJob.KEY,                         new TypingSendJob.Factory());
             put(UpdateApkJob.KEY,                          new UpdateApkJob.Factory());
@@ -177,6 +180,7 @@ public final class JobManagerFactories {
             put("AttachmentUploadJob",                     new FailingJob.Factory());
             put("MmsSendJob",                              new FailingJob.Factory());
             put("RefreshUnidentifiedDeliveryAbilityJob",   new FailingJob.Factory());
+            put("StorageSyncJob",                          new StorageSyncJob.Factory());
             put("WakeGroupV2Job",                          new FailingJob.Factory());
 
         }};
@@ -184,6 +188,7 @@ public final class JobManagerFactories {
 
     public static Map<String, Constraint.Factory> getConstraintFactories(@NonNull Application application) {
         return new HashMap<String, Constraint.Factory>() {{
+            put(AutoDownloadEmojiConstraint.KEY,           new AutoDownloadEmojiConstraint.Factory(application));
             put(ChargingConstraint.KEY,                    new ChargingConstraint.Factory());
             put(NetworkConstraint.KEY,                     new NetworkConstraint.Factory(application));
             put(NetworkOrCellServiceConstraint.KEY,        new NetworkOrCellServiceConstraint.Factory(application));

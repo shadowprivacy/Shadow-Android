@@ -117,6 +117,7 @@ import su.sres.securesms.payments.preferences.PaymentsActivity;
 import su.sres.securesms.payments.preferences.details.PaymentDetailsFragmentArgs;
 import su.sres.securesms.payments.preferences.details.PaymentDetailsParcelable;
 import su.sres.securesms.permissions.Permissions;
+import su.sres.securesms.ratelimit.RecaptchaProofBottomSheetFragment;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.sms.MessageSender;
@@ -280,6 +281,11 @@ public class ConversationListFragment extends MainFragment implements ActionMode
         }
 
         ShadowProxyUtil.startListeningToWebsocket();
+
+        if (SignalStore.rateLimit().needsRecaptcha()) {
+            Log.i(TAG, "Recaptcha required.");
+            RecaptchaProofBottomSheetFragment.show(getChildFragmentManager());
+        }
     }
 
     @Override

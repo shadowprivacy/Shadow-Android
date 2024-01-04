@@ -1,7 +1,6 @@
 package su.sres.securesms.keyvalue;
 
 import android.app.Application;
-import android.content.Context;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
@@ -9,7 +8,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.KeyValueDatabase;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.SignalUncaughtExceptionHandler;

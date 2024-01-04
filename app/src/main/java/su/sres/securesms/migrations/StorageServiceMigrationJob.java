@@ -7,8 +7,8 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.MultiDeviceKeysUpdateJob;
-import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.jobs.StorageSyncJob;
 import su.sres.securesms.util.TextSecurePreferences;
 
 /**
@@ -44,12 +44,12 @@ public class StorageServiceMigrationJob extends MigrationJob {
 
         if (TextSecurePreferences.isMultiDevice(context)) {
             Log.i(TAG, "Multi-device.");
-            jobManager.startChain(StorageSyncJob.create())
+            jobManager.startChain(new StorageSyncJob())
                     .then(new MultiDeviceKeysUpdateJob())
                     .enqueue();
         } else {
             Log.i(TAG, "Single-device.");
-            jobManager.add(StorageSyncJob.create());
+            jobManager.add(new StorageSyncJob());
         }
     }
 

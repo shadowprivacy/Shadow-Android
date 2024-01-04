@@ -21,7 +21,6 @@ import android.util.TypedValue;
 import android.view.ViewGroup;
 
 import su.sres.securesms.R;
-import su.sres.securesms.components.emoji.EmojiProvider.EmojiDrawable;
 import su.sres.securesms.components.emoji.parsing.EmojiParser;
 import su.sres.securesms.components.mention.MentionAnnotation;
 import su.sres.securesms.components.mention.MentionRendererDelegate;
@@ -30,7 +29,6 @@ import su.sres.securesms.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.List;
-
 
 public class EmojiTextView extends AppCompatTextView {
 
@@ -232,8 +230,8 @@ public class EmojiTextView extends AppCompatTextView {
 
   @Override
   public void invalidateDrawable(@NonNull Drawable drawable) {
-    if (drawable instanceof EmojiDrawable) invalidate();
-    else                                   super.invalidateDrawable(drawable);
+    if (drawable instanceof EmojiProvider.EmojiDrawable) invalidate();
+    else                                                 super.invalidateDrawable(drawable);
   }
 
   @Override

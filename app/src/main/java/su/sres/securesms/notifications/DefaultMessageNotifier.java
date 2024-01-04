@@ -130,7 +130,7 @@ public class DefaultMessageNotifier implements MessageNotifier {
     }
 
     @Override
-    public void notifyMessageDeliveryFailed(Context context, Recipient recipient, long threadId) {
+    public void notifyMessageDeliveryFailed(@NonNull Context context, @NonNull Recipient recipient, long threadId) {
         if (visibleThread == threadId) {
             sendInThreadNotification(context, recipient);
         } else {
@@ -141,6 +141,15 @@ public class DefaultMessageNotifier implements MessageNotifier {
             FailedNotificationBuilder builder = new FailedNotificationBuilder(context, TextSecurePreferences.getNotificationPrivacy(context), intent);
             ((NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE))
                     .notify((int)threadId, builder.build());
+        }
+    }
+
+    @Override
+    public void notifyProofRequired(@NonNull Context context, @NonNull Recipient recipient, long threadId) {
+        if (visibleThread == threadId) {
+            sendInThreadNotification(context, recipient);
+        } else {
+            Log.w(TAG, "[Proof Required] Not notifying on old notifier.");
         }
     }
 

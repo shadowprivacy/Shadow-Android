@@ -171,10 +171,6 @@ public class SignalServiceAccountManager {
         }
     }
 
-    public void deleteAccount() throws IOException {
-        this.pushServiceSocket.deleteAccount();
-    }
-
     /**
      * Request a push challenge. A number will be pushed to the GCM (FCM) id. This can then be used
      * during SMS/call requests to bypass the CAPTCHA.
@@ -183,8 +179,8 @@ public class SignalServiceAccountManager {
      * @param userLoginnumber   The number to associate it with.
      * @throws IOException
      */
-    public void requestPushChallenge(String gcmRegistrationId, String userLoginnumber) throws IOException {
-        this.pushServiceSocket.requestPushChallenge(gcmRegistrationId, userLoginnumber);
+    public void requestRegistrationPushChallenge(String gcmRegistrationId, String userLogin) throws IOException {
+        this.pushServiceSocket.requestPushChallenge(gcmRegistrationId, userLogin);
     }
 
     /**
@@ -614,6 +610,22 @@ public class SignalServiceAccountManager {
 
     public void deleteUsername() throws IOException {
         this.pushServiceSocket.deleteUsername();
+    }
+
+    public void deleteAccount() throws IOException {
+        this.pushServiceSocket.deleteAccount();
+    }
+
+    public void requestRateLimitPushChallenge() throws IOException {
+        this.pushServiceSocket.requestRateLimitPushChallenge();
+    }
+
+    public void submitRateLimitPushChallenge(String challenge) throws IOException {
+        this.pushServiceSocket.submitRateLimitPushChallenge(challenge);
+    }
+
+    public void submitRateLimitRecaptchaChallenge(String challenge, String recaptchaToken) throws IOException {
+        this.pushServiceSocket.submitRateLimitRecaptchaChallenge(challenge, recaptchaToken);
     }
 
     public void setSoTimeoutMillis(long soTimeoutMillis) {

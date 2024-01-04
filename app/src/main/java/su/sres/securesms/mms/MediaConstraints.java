@@ -3,6 +3,8 @@ package su.sres.securesms.mms;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
+
+import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import su.sres.core.util.logging.Log;
 import android.util.Pair;
@@ -41,6 +43,10 @@ public abstract class MediaConstraints {
 
   public abstract long getGifMaxSize(Context context);
   public abstract long getVideoMaxSize(Context context);
+
+  public @IntRange(from = 0, to = 100) int getImageCompressionQualitySetting(@NonNull Context context) {
+    return 70;
+  }
 
   public long getUncompressedVideoMaxSize(Context context) {
     return getVideoMaxSize(context);

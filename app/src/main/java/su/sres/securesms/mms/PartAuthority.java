@@ -11,6 +11,7 @@ import su.sres.securesms.BuildConfig;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.emoji.EmojiFiles;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.providers.DeprecatedPersistentBlobProvider;
 import su.sres.securesms.providers.PartProvider;
@@ -25,15 +26,18 @@ public class PartAuthority {
   private static final String PART_URI_STRING       = "content://" + AUTHORITY + "/part";
   private static final String STICKER_URI_STRING    = "content://" + AUTHORITY + "/sticker";
   private static final String WALLPAPER_URI_STRING  = "content://" + AUTHORITY + "/wallpaper";
+  private static final String EMOJI_URI_STRING      = "content://" + AUTHORITY + "/emoji";
   private static final Uri    PART_CONTENT_URI      = Uri.parse(PART_URI_STRING);
   private static final Uri    STICKER_CONTENT_URI   = Uri.parse(STICKER_URI_STRING);
   private static final Uri    WALLPAPER_CONTENT_URI = Uri.parse(WALLPAPER_URI_STRING);
+  private static final Uri    EMOJI_CONTENT_URI     = Uri.parse(EMOJI_URI_STRING);
 
   private static final int PART_ROW       = 1;
   private static final int PERSISTENT_ROW = 2;
   private static final int BLOB_ROW       = 3;
   private static final int STICKER_ROW    = 4;
   private static final int WALLPAPER_ROW  = 5;
+  private static final int EMOJI_ROW      = 6;
 
   private static final UriMatcher uriMatcher;
 
@@ -42,6 +46,7 @@ public class PartAuthority {
     uriMatcher.addURI(AUTHORITY, "part/*/#", PART_ROW);
     uriMatcher.addURI(AUTHORITY, "sticker/#", STICKER_ROW);
     uriMatcher.addURI(AUTHORITY, "wallpaper/*", WALLPAPER_ROW);
+    uriMatcher.addURI(AUTHORITY, "emoji/*", EMOJI_ROW);
     uriMatcher.addURI(DeprecatedPersistentBlobProvider.AUTHORITY, DeprecatedPersistentBlobProvider.EXPECTED_PATH_OLD, PERSISTENT_ROW);
     uriMatcher.addURI(DeprecatedPersistentBlobProvider.AUTHORITY, DeprecatedPersistentBlobProvider.EXPECTED_PATH_NEW, PERSISTENT_ROW);
     uriMatcher.addURI(BlobProvider.AUTHORITY, BlobProvider.PATH, BLOB_ROW);
@@ -64,6 +69,7 @@ public class PartAuthority {
         case PERSISTENT_ROW: return DeprecatedPersistentBlobProvider.getInstance(context).getStream(context, ContentUris.parseId(uri));
         case BLOB_ROW:       return BlobProvider.getInstance().getStream(context, uri);
         case WALLPAPER_ROW:  return WallpaperStorage.read(context, getWallpaperFilename(uri));
+        case EMOJI_ROW:      return EmojiFiles.openForReading(context, getEmojiFilename(uri));
       default:             return context.getContentResolver().openInputStream(uri);
       }
     } catch (SecurityException se) {
@@ -161,7 +167,15 @@ public class PartAuthority {
     return Uri.withAppendedPath(WALLPAPER_CONTENT_URI, filename);
   }
 
+  public static Uri getEmojiUri(String sprite) {
+    return Uri.withAppendedPath(EMOJI_CONTENT_URI, sprite);
+  }
+
   public static String getWallpaperFilename(Uri uri) {
+    return uri.getPathSegments().get(1);
+  }
+
+  public static String getEmojiFilename(Uri uri) {
     return uri.getPathSegments().get(1);
   }
 

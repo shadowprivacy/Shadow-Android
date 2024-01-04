@@ -3,7 +3,6 @@ package su.sres.securesms.notifications.v2
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.text.SpannableStringBuilder
@@ -24,13 +23,11 @@ import su.sres.securesms.service.KeyCachingService
 import su.sres.securesms.util.TextSecurePreferences
 import su.sres.securesms.util.Util
 
-private const val LARGE_ICON_DIMEN = 250
-
 /**
  * Encapsulate all the notifications for a given conversation (thread) and the top
  * level information about said conversation.
  */
-class NotificationConversation(
+data class NotificationConversation(
   val recipient: Recipient,
   val threadId: Long,
   val notificationItems: List<NotificationItemV2>
@@ -50,18 +47,7 @@ class NotificationConversation(
     }
   }
 
-  fun getLargeIcon(context: Context): Bitmap? {
-    if (TextSecurePreferences.getNotificationPrivacy(context).isDisplayMessage) {
-      val largeIconUri: Uri? = getSlideLargeIcon()
-      if (largeIconUri != null) {
-        return largeIconUri.toBitmap(context, LARGE_ICON_DIMEN)
-      }
-    }
-
-    return getContactLargeIcon(context).toLargeBitmap(context)
-  }
-
-  private fun getContactLargeIcon(context: Context): Drawable? {
+  fun getContactLargeIcon(context: Context): Drawable? {
     return if (TextSecurePreferences.getNotificationPrivacy(context).isDisplayContact) {
       recipient.getContactDrawable(context)
     } else {
@@ -75,10 +61,6 @@ class NotificationConversation(
     } else {
       null
     }
-  }
-
-  private fun getSlideLargeIcon(): Uri? {
-    return if (notificationItems.size == 1) mostRecentNotification.getLargeIconUri() else null
   }
 
   fun getSlideBigPictureUri(context: Context): Uri? {
@@ -105,14 +87,10 @@ class NotificationConversation(
   }
 
   fun getConversationTitle(context: Context): CharSequence? {
-    if (isGroup) {
-      return if (TextSecurePreferences.getNotificationPrivacy(context).isDisplayContact) {
-        recipient.getDisplayName(context)
-      } else {
-        context.getString(R.string.SingleRecipientNotificationBuilder_signal)
-      }
+    if (TextSecurePreferences.getNotificationPrivacy(context).isDisplayContact) {
+      return if (isGroup) recipient.getDisplayName(context) else null
     }
-    return null
+    return context.getString(R.string.SingleRecipientNotificationBuilder_signal)
   }
 
   fun getWhen(): Long {
@@ -125,6 +103,14 @@ class NotificationConversation(
 
   fun getChannelId(context: Context): String {
     return recipient.notificationChannel ?: NotificationChannels.getMessagesChannel(context)
+  }
+
+  fun hasSameContent(other: NotificationConversation?): Boolean {
+    if (other == null) {
+      return false
+    }
+
+    return messageCount == other.messageCount && notificationItems.zip(other.notificationItems).all { (item, otherItem) -> item.hasSameContent(otherItem) }
   }
 
   fun getPendingIntent(context: Context): PendingIntent {

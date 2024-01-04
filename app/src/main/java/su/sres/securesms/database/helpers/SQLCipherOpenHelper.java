@@ -37,6 +37,8 @@ import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.UnknownStorageIdDatabase;
 import su.sres.securesms.database.ThreadDatabase;
+import su.sres.securesms.storage.StorageSyncHelper;
+import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.Hex;
 import su.sres.securesms.util.SqlUtil;
@@ -70,12 +72,14 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     private static final int GV1_MIGRATION_REFACTOR = 75;
     private static final int CLEAR_PROFILE_KEY_CREDENTIALS = 76;
     private static final int LAST_RESET_SESSION_TIME_AND_WALLPAPER_AND_ABOUT = 77;
-    private static final int SPLIT_SYSTEM_NAMES               = 78;
+    private static final int SPLIT_SYSTEM_NAMES = 78;
     private static final int PAYMENTS_AND_CLEAN_STORAGE_IDS = 79;
     private static final int MP4_GIF_SUPPORT_AND_BLUR_AVATARS_AND_CLEAN_STORAGE_IDS_WITHOUT_INFO = 80;
     private static final int CLEAN_REACTION_NOTIFICATIONS = 81;
+    private static final int STORAGE_SERVICE_REFACTOR = 82;
+    private static final int CLEAR_MMS_STORAGE_IDS = 83;
 
-    private static final int DATABASE_VERSION = 81;
+    private static final int DATABASE_VERSION = 83;
     private static final String DATABASE_NAME = "shadow.db";
 
     private final Context context;
@@ -509,6 +513,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
                         byte[] reactions         = cursor.getBlob(cursor.getColumnIndexOrThrow("reactions"));
                         long   notifiedTimestamp = cursor.getLong(cursor.getColumnIndexOrThrow("notified_timestamp"));
 
+                        if (reactions == null) {
+                            continue;
+                        }
+
                         try {
                             boolean hasReceiveLaterThanNotified = ReactionList.parseFrom(reactions)
                                     .getReactionsList()
@@ -535,6 +543,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
                         byte[] reactions         = cursor.getBlob(cursor.getColumnIndexOrThrow("reactions"));
                         long   notifiedTimestamp = cursor.getLong(cursor.getColumnIndexOrThrow("notified_timestamp"));
 
+                        if (reactions == null) {
+                            continue;
+                        }
+
                         try {
                             boolean hasReceiveLaterThanNotified = ReactionList.parseFrom(reactions)
                                     .getReactionsList()
@@ -553,6 +565,56 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
                     Log.d(TAG, "Updating " + mmsIds.size() + " records in mms");
                     db.execSQL("UPDATE mms SET reactions_last_seen = notified_timestamp WHERE _id in (" + Util.join(mmsIds, ",") + ")");
                 }
+            }
+
+            if (oldVersion < STORAGE_SERVICE_REFACTOR) {
+                int deleteCount;
+                int insertCount;
+                int updateCount;
+                int dirtyCount;
+
+                ContentValues deleteValues = new ContentValues();
+                deleteValues.putNull("storage_service_key");
+                deleteCount = db.update("recipient", deleteValues, "storage_service_key NOT NULL AND (dirty = 3 OR group_type = 1 OR (group_type = 0 AND registered = 2))", null);
+
+                try (Cursor cursor = db.query("recipient", new String[]{"_id"}, "storage_service_key IS NULL AND (dirty = 2 OR registered = 1)", null, null, null, null)) {
+                    insertCount = cursor.getCount();
+
+                    while (cursor.moveToNext()) {
+                        ContentValues insertValues = new ContentValues();
+                        insertValues.put("storage_service_key", Base64.encodeBytes(StorageSyncHelper.generateKey()));
+
+                        long id = cursor.getLong(cursor.getColumnIndexOrThrow("_id"));
+                        db.update("recipient", insertValues, "_id = ?", SqlUtil.buildArgs(id));
+                    }
+                }
+
+                try (Cursor cursor = db.query("recipient", new String[]{"_id"}, "storage_service_key NOT NULL AND dirty = 1", null, null, null, null)) {
+                    updateCount = cursor.getCount();
+
+                    while (cursor.moveToNext()) {
+                        ContentValues updateValues = new ContentValues();
+                        updateValues.put("storage_service_key", Base64.encodeBytes(StorageSyncHelper.generateKey()));
+
+                        long id = cursor.getLong(cursor.getColumnIndexOrThrow("_id"));
+                        db.update("recipient", updateValues, "_id = ?", SqlUtil.buildArgs(id));
+                    }
+                }
+
+                ContentValues clearDirtyValues = new ContentValues();
+                clearDirtyValues.put("dirty", 0);
+                dirtyCount = db.update("recipient", clearDirtyValues, "dirty != 0", null);
+
+                Log.d(TAG, String.format(Locale.US, "For storage service refactor migration, there were %d inserts, %d updated, and %d deletes. Cleared the dirty status on %d rows.", insertCount, updateCount, deleteCount, dirtyCount));
+            }
+
+            if (oldVersion < CLEAR_MMS_STORAGE_IDS) {
+                ContentValues deleteValues = new ContentValues();
+                deleteValues.putNull("storage_service_key");
+
+                int deleteCount = db.update("recipient", deleteValues, "storage_service_key NOT NULL AND (group_type = 1 OR (group_type = 0 AND phone IS NULL AND uuid IS NULL))", null);
+
+                Log.d(TAG, "Cleared storageIds from " + deleteCount + " rows. They were either MMS groups or empty contacts.");
             }
 
             db.setTransactionSuccessful();

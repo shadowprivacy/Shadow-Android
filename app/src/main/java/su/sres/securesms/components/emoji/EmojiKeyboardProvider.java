@@ -12,10 +12,10 @@ import android.widget.ImageView;
 
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiPageViewGridAdapter.VariationSelectorListener;
+import su.sres.securesms.emoji.EmojiSource;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.util.ResUtil;
-import su.sres.securesms.util.ThemeUtil;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -66,7 +66,7 @@ public class EmojiKeyboardProvider implements MediaKeyboardProvider,
         }, this);
 
         models.add(recentModel);
-        models.addAll(EmojiPages.DISPLAY_PAGES);
+        models.addAll(EmojiSource.getLatest().getDisplayPages());
 
         currentPosition = recentModel.getEmoji().size() > 0 ? 0 : 1;
     }

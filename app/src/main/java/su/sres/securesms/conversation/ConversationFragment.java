@@ -123,6 +123,7 @@ import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.providers.BlobProvider;
+import su.sres.securesms.ratelimit.RecaptchaProofBottomSheetFragment;
 import su.sres.securesms.reactions.ReactionsBottomSheetDialogFragment;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
@@ -1511,6 +1512,11 @@ public class ConversationFragment extends LoggingFragment {
         @Override
         public void onMessageWithErrorClicked(@NonNull MessageRecord messageRecord) {
             listener.onMessageWithErrorClicked(messageRecord);
+        }
+
+        @Override
+        public void onMessageWithRecaptchaNeededClicked(@NonNull MessageRecord messageRecord) {
+            RecaptchaProofBottomSheetFragment.show(getChildFragmentManager());
         }
 
         @Override

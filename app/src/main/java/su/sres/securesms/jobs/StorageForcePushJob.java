@@ -19,7 +19,6 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.storage.StorageSyncValidations;
 import su.sres.securesms.transport.RetryLaterException;
-import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.InvalidKeyException;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.storage.StorageId;
@@ -72,7 +71,7 @@ public class StorageForcePushJob extends BaseJob {
 
     @Override
     protected void onRun() throws IOException, RetryLaterException {
-        StorageKey                  storageServiceKey  = SignalStore.storageServiceValues().getOrCreateStorageKey();
+        StorageKey                  storageServiceKey = SignalStore.storageService().getOrCreateStorageKey();
         SignalServiceAccountManager accountManager     = ApplicationDependencies.getSignalServiceAccountManager();
         RecipientDatabase           recipientDatabase  = DatabaseFactory.getRecipientDatabase(context);
         UnknownStorageIdDatabase storageIdDatabase = DatabaseFactory.getUnknownStorageIdDatabase(context);
@@ -117,7 +116,7 @@ public class StorageForcePushJob extends BaseJob {
         }
 
         Log.i(TAG, "Force push succeeded. Updating local manifest version to: " + newVersion);
-        TextSecurePreferences.setStorageManifestVersion(context, newVersion);
+        SignalStore.storageService().setManifest(manifest);
         recipientDatabase.applyStorageIdUpdates(newContactStorageIds);
         recipientDatabase.applyStorageIdUpdates(Collections.singletonMap(Recipient.self().getId(), accountRecord.getId()));
         storageIdDatabase.deleteAll();

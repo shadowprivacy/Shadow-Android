@@ -16,6 +16,7 @@ import su.sres.securesms.components.emoji.EmojiUtil;
 import su.sres.securesms.database.CursorList;
 import su.sres.securesms.database.DatabaseContentProviders;
 import su.sres.securesms.database.model.StickerRecord;
+import su.sres.securesms.emoji.EmojiSource;
 import su.sres.securesms.stickers.StickerSearchRepository;
 import su.sres.securesms.util.CloseableLiveData;
 import su.sres.securesms.util.Throttler;
@@ -57,7 +58,7 @@ class ConversationStickerViewModel extends ViewModel {
     }
 
     void onInputTextUpdated(@NonNull String text) {
-        if (TextUtils.isEmpty(text) || text.length() > EmojiUtil.MAX_EMOJI_LENGTH) {
+        if (TextUtils.isEmpty(text) || text.length() > EmojiSource.getLatest().getMaxEmojiLength()) {
             stickers.setValue(CursorList.emptyList());
         } else {
             repository.searchByEmoji(text, stickers::postValue);

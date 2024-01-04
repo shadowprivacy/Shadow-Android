@@ -6,7 +6,6 @@ import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
@@ -40,6 +39,7 @@ import su.sres.signalservice.api.messages.SignalServiceDataMessage.Preview;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.messages.shared.SharedContact;
 import su.sres.signalservice.api.push.SignalServiceAddress;
+import su.sres.signalservice.api.push.exceptions.ProofRequiredException;
 import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 
@@ -104,7 +104,7 @@ public class PushMediaSendJob extends PushSendJob  {
 
   @Override
   public void onPushSend()
-          throws IOException, MmsException, NoSuchMessageException, UndeliverableMessageException
+          throws IOException, MmsException, NoSuchMessageException, UndeliverableMessageException, RetryLaterException
   {
     ExpiringMessageManager expirationManager = ApplicationDependencies.getExpiringMessageManager();
     MessageDatabase        database          = DatabaseFactory.getMmsDatabase(context);
@@ -172,6 +172,9 @@ public class PushMediaSendJob extends PushSendJob  {
       database.addMismatchedIdentity(messageId, recipientId, uie.getIdentityKey());
       database.markAsSentFailed(messageId);
       RetrieveProfileJob.enqueue(recipientId);
+    } catch (ProofRequiredException e) {
+      // captcha off
+      // handleProofRequiredException(e, DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId), threadId, messageId, true);
     }
   }
 
@@ -233,6 +236,10 @@ public class PushMediaSendJob extends PushSendJob  {
     } catch (ServerRejectedException e) {
       throw new UndeliverableMessageException(e);
     }
+  }
+
+  public static long getMessageId(@NonNull Data data) {
+    return data.getLong(KEY_MESSAGE_ID);
   }
 
   public static final class Factory implements Job.Factory<PushMediaSendJob> {

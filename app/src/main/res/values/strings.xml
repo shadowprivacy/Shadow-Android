@@ -208,6 +208,7 @@
     <string name="ConversationItem_error_network_not_delivered">Send failed</string>
     <string name="ConversationItem_received_key_exchange_message_tap_to_process">Received key exchange message, tap to process.</string>
     <string name="ConversationItem_group_action_left">%1$s has left the group.</string>
+    <string name="ConversationItem_send_paused">Send paused</string>
     <string name="ConversationItem_click_to_approve_unencrypted">Send failed, tap for unsecured fallback</string>
     <string name="ConversationItem_click_to_approve_unencrypted_sms_dialog_title">Fallback to unencrypted SMS?</string>
     <string name="ConversationItem_click_to_approve_unencrypted_mms_dialog_title">Fallback to unencrypted MMS?</string>
@@ -1334,6 +1335,11 @@
     <!-- ReactionsRecipientAdapter -->
     <string name="ReactionsRecipientAdapter_you">You</string>
 
+    <!-- RecaptchaRequiredBottomSheetFragment -->
+    <string name="RecaptchaRequiredBottomSheetFragment_verify_to_continue_messaging">Verify to continue messaging</string>
+    <string name="RecaptchaRequiredBottomSheetFragment_to_help_prevent_spam_on_signal">To help prevent spam on Shadow, please complete verification.</string>
+    <string name="RecaptchaRequiredBottomSheetFragment_after_verifying_you_can_continue_messaging">After verifying, you can continue messaging. Any paused messages will automatically be sent.</string>
+
     <!-- RecipientPreferencesActivity -->
     <string name="RecipientPreferenceActivity_block">Block</string>
     <string name="RecipientPreferenceActivity_unblock">Unblock</string>
@@ -1401,6 +1407,10 @@
     <string name="ProxyBottomSheetFragment_do_you_want_to_use_this_proxy_address">Do you want to use this proxy address?</string>
     <string name="ProxyBottomSheetFragment_use_proxy">Use proxy</string>
     <string name="ProxyBottomSheetFragment_successfully_connected_to_proxy">Successfully connected to proxy.</string>
+
+    <!-- RecaptchaProofActivity -->
+    <string name="RecaptchaProofActivity_failed_to_submit">Failed to submit</string>
+    <string name="RecaptchaProofActivity_complete_verification">Complete verification</string>
 
 
     <!-- RegistrationActivity -->
@@ -1643,6 +1653,8 @@
     <string name="MessageNotifier_message_delivery_failed">Message delivery failed.</string>
     <string name="MessageNotifier_failed_to_deliver_message">Failed to deliver message.</string>
     <string name="MessageNotifier_error_delivering_message">Error delivering message.</string>
+    <string name="MessageNotifier_message_delivery_paused">Message delivery paused.</string>
+    <string name="MessageNotifier_verify_to_continue_messaging_on_signal">Verify to continue messaging on Shadow.</string>
     <string name="MessageNotifier_mark_all_as_read">Mark all as read</string>
     <string name="MessageNotifier_mark_read">Mark read</string>
     <string name="MessageNotifier_view_once_photo">View-once photo</string>
@@ -1698,6 +1710,7 @@
     <string name="SingleRecipientNotificationBuilder_signal">Shadow</string>
     <string name="SingleRecipientNotificationBuilder_new_message">New message</string>
     <string name="SingleRecipientNotificationBuilder_message_request">Message request</string>
+    <string name="SingleRecipientNotificationBuilder_you">You</string>
 
     <!-- ThumbnailView -->
     <string name="ThumbnailView_Play_video_description">Play video</string>
@@ -2354,6 +2367,10 @@
     <string name="preferences__internal_user_details" translatable="false">User Details</string>
     <string name="preferences__internal_user_details_description" translatable="false">See more information about a user when viewing conversation settings.</string>
     <string name="preferences__internal_conversations_and_shortcuts" translatable="false">Conversations and Shortcuts</string>
+    <string name="preferences__internal_emoji" translatable="false">Emoji</string>
+    <string name="preferences__internal_use_built_in_emoji_set" translatable="false">Use built-in emoji set.</string>
+    <string name="preferences__internal_current_version_builtin" translatable="false">Current version: Built-In</string>
+    <string name="preferences__internal_current_version_d_at_density_s" translatable="false">Current version: %1$d at density %2$s</string>
     <string name="preferences__internal_delete_all_dynamic_shortcuts" translatable="false">Delete all dynamic shortcuts</string>
     <string name="preferences__internal_click_to_delete_all_dynamic_shortcuts" translatable="false">Click to delete all dynamic shortcuts</string>
     <string name="preferences__internal_disable_profile_sharing" translatable="false">Disable Profile Sharing</string>

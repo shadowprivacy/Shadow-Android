@@ -15,6 +15,8 @@ import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.SwitchPreferenceCompat;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.emoji.EmojiFiles;
+import su.sres.securesms.emoji.EmojiSource;
 import su.sres.securesms.jobs.RefreshAttributesJob;
 import su.sres.securesms.jobs.RefreshOwnProfileJob;
 import su.sres.securesms.jobs.RotateProfileKeyJob;
@@ -46,6 +48,7 @@ public class InternalOptionsPreferenceFragment extends CorrectedPreferenceFragme
         initializeSwitchPreference(preferenceDataStore, InternalValues.GV2_IGNORE_P2P_CHANGES, SignalStore.internalValues().gv2IgnoreP2PChanges());
         initializeSwitchPreference(preferenceDataStore, InternalValues.GV2_DISABLE_AUTOMIGRATE_INITIATION, SignalStore.internalValues().disableGv1AutoMigrateInitiation());
         initializeSwitchPreference(preferenceDataStore, InternalValues.GV2_DISABLE_AUTOMIGRATE_NOTIFICATION, SignalStore.internalValues().disableGv1AutoMigrateNotification());
+        initializeSwitchPreference(preferenceDataStore, InternalValues.FORCE_BUILT_IN_EMOJI, SignalStore.internalValues().forceBuiltInEmoji());
 
         findPreference("pref_copy_payments_data").setOnPreferenceClickListener(preference -> {
             new AlertDialog.Builder(getContext())
@@ -120,5 +123,21 @@ public class InternalOptionsPreferenceFragment extends CorrectedPreferenceFragme
         super.onResume();
         //noinspection ConstantConditions
         ((ApplicationPreferencesActivity) getActivity()).getSupportActionBar().setTitle(R.string.preferences__internal_preferences);
+
+        SimpleTask.run(getViewLifecycleOwner().getLifecycle(),
+                () -> EmojiFiles.Version.readVersion(requireContext()),
+                version -> {
+                    if (version != null) {
+                        findPreference(InternalValues.FORCE_BUILT_IN_EMOJI).setSummary(getString(R.string.preferences__internal_current_version_d_at_density_s, version.getVersion(), version.getDensity()));
+                    } else {
+                        findPreference(InternalValues.FORCE_BUILT_IN_EMOJI).setSummary(getString(R.string.preferences__internal_current_version_builtin));
+                    }
+                });
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        SignalExecutors.BOUNDED.execute(EmojiSource::refresh);
     }
 }

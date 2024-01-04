@@ -10,6 +10,7 @@ import su.sres.securesms.components.emoji.EmojiUtil;
 public class EmojiValues extends SignalStoreValues {
 
     private static final String PREFIX = "emojiPref__";
+    private static final String NEXT_SCHEDULED_CHECK = PREFIX + "next_scheduled_check";
 
     EmojiValues(@NonNull KeyValueStore store) {
         super(store);
@@ -24,6 +25,14 @@ public class EmojiValues extends SignalStoreValues {
     @NonNull
     List<String> getKeysToIncludeInBackup() {
         return Collections.emptyList();
+    }
+
+    public long getNextScheduledCheck() {
+        return getStore().getLong(NEXT_SCHEDULED_CHECK, 0);
+    }
+
+    public void setNextScheduledCheck(long nextScheduledCheck) {
+        putLong(NEXT_SCHEDULED_CHECK, nextScheduledCheck);
     }
 
     public void setPreferredVariation(@NonNull String emoji) {

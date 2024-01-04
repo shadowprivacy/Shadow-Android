@@ -33,7 +33,15 @@ import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.ui.PlayerNotificationManager;
 
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.jobs.MultiDeviceViewedUpdateJob;
+import su.sres.securesms.jobs.SendViewedReceiptJob;
+import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.video.exo.AttachmentMediaSourceFactory;
 
 import java.util.Collections;
@@ -152,6 +160,7 @@ public class VoiceNotePlaybackService extends MediaBrowserServiceCompat {
                         becomingNoisyReceiver.unregister();
                         voiceNoteProximityManager.onPlayerEnded();
                     } else {
+                        sendViewedReceiptForCurrentWindowIndex();
                         becomingNoisyReceiver.register();
                         voiceNoteProximityManager.onPlayerReady();
                     }
@@ -172,6 +181,7 @@ public class VoiceNotePlaybackService extends MediaBrowserServiceCompat {
 
             if (reason == Player.DISCONTINUITY_REASON_PERIOD_TRANSITION) {
                 MediaDescriptionCompat mediaDescriptionCompat = queueDataAdapter.getMediaDescription(currentWindowIndex);
+                sendViewedReceiptForCurrentWindowIndex();
                 Log.d(TAG, "onPositionDiscontinuity: current window uri: " + mediaDescriptionCompat.getMediaUri());
             }
 
@@ -187,6 +197,36 @@ public class VoiceNotePlaybackService extends MediaBrowserServiceCompat {
         public void onPlayerError(ExoPlaybackException error) {
             Log.w(TAG, "ExoPlayer error occurred:", error);
             voiceNoteProximityManager.onPlayerError();
+        }
+    }
+
+    private void sendViewedReceiptForCurrentWindowIndex() {
+        if (player.getPlaybackState() == Player.STATE_READY &&
+                player.getPlayWhenReady() &&
+                player.getCurrentWindowIndex() != C.INDEX_UNSET &&
+                FeatureFlags.sendViewedReceipts()) {
+
+            final MediaDescriptionCompat descriptionCompat = queueDataAdapter.getMediaDescription(player.getCurrentWindowIndex());
+
+            if (!descriptionCompat.getMediaUri().getScheme().equals("content")) {
+                return;
+            }
+
+            SignalExecutors.BOUNDED.execute(() -> {
+                Bundle          extras          = descriptionCompat.getExtras();
+                long            messageId       = extras.getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_MESSAGE_ID);
+                RecipientId     recipientId     = RecipientId.from(extras.getString(VoiceNoteMediaDescriptionCompatFactory.EXTRA_THREAD_RECIPIENT_ID));
+                MessageDatabase messageDatabase = DatabaseFactory.getMmsDatabase(this);
+
+                MessageDatabase.MarkedMessageInfo markedMessageInfo = messageDatabase.setIncomingMessageViewed(messageId);
+
+                if (markedMessageInfo != null) {
+                    ApplicationDependencies.getJobManager().add(new SendViewedReceiptJob(markedMessageInfo.getThreadId(),
+                            recipientId,
+                            markedMessageInfo.getSyncMessageId().getTimetamp()));
+                    MultiDeviceViewedUpdateJob.enqueue(Collections.singletonList(markedMessageInfo.getSyncMessageId()));
+                }
+            });
         }
     }
 

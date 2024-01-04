@@ -5,17 +5,11 @@ import androidx.annotation.NonNull;
 import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
-import su.sres.securesms.jobmanager.impl.NetworkConstraint;
-import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.signalservice.api.SignalServiceAccountManager;
-import su.sres.signalservice.api.push.exceptions.PushNetworkException;
-import su.sres.signalservice.api.util.StreamDetails;
 
 import java.util.List;
 
@@ -52,8 +46,8 @@ public class RotateProfileKeyJob extends BaseJob  {
         DatabaseFactory.getRecipientDatabase(context).setProfileKey(self.getId(), newProfileKey);
 
         ApplicationDependencies.getJobManager().add(new ProfileUploadJob());
-
         ApplicationDependencies.getJobManager().add(new RefreshAttributesJob());
+        ApplicationDependencies.getJobManager().add(new MultiDeviceProfileKeyUpdateJob());
 
         updateProfileKeyOnAllV2Groups();
     }

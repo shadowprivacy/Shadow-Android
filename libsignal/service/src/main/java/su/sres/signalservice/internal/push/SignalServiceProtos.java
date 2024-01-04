@@ -24823,6 +24823,20 @@ public final class SignalServiceProtos {
      * @return The outgoingPayment.
      */
     su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.OutgoingPayment getOutgoingPayment();
+
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    java.util.List<su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed> 
+        getViewedList();
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed getViewed(int index);
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    int getViewedCount();
   }
   /**
    * Protobuf type {@code signalservice.SyncMessage}
@@ -24836,6 +24850,7 @@ public final class SignalServiceProtos {
       read_ = emptyProtobufList();
       padding_ = com.google.protobuf.ByteString.EMPTY;
       stickerPackOperation_ = emptyProtobufList();
+      viewed_ = emptyProtobufList();
     }
     public interface SentOrBuilder extends
         // @@protoc_insertion_point(interface_extends:signalservice.SyncMessage.Sent)
@@ -28822,6 +28837,543 @@ public final class SignalServiceProtos {
       private static volatile com.google.protobuf.Parser<Read> PARSER;
 
       public static com.google.protobuf.Parser<Read> parser() {
+        return DEFAULT_INSTANCE.getParserForType();
+      }
+    }
+
+    public interface ViewedOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:signalservice.SyncMessage.Viewed)
+        com.google.protobuf.MessageLiteOrBuilder {
+
+      /**
+       * <code>optional string senderE164 = 1;</code>
+       * @return Whether the senderE164 field is set.
+       */
+      boolean hasSenderE164();
+      /**
+       * <code>optional string senderE164 = 1;</code>
+       * @return The senderE164.
+       */
+      java.lang.String getSenderE164();
+      /**
+       * <code>optional string senderE164 = 1;</code>
+       * @return The bytes for senderE164.
+       */
+      com.google.protobuf.ByteString
+          getSenderE164Bytes();
+
+      /**
+       * <code>optional string senderUuid = 3;</code>
+       * @return Whether the senderUuid field is set.
+       */
+      boolean hasSenderUuid();
+      /**
+       * <code>optional string senderUuid = 3;</code>
+       * @return The senderUuid.
+       */
+      java.lang.String getSenderUuid();
+      /**
+       * <code>optional string senderUuid = 3;</code>
+       * @return The bytes for senderUuid.
+       */
+      com.google.protobuf.ByteString
+          getSenderUuidBytes();
+
+      /**
+       * <code>optional uint64 timestamp = 2;</code>
+       * @return Whether the timestamp field is set.
+       */
+      boolean hasTimestamp();
+      /**
+       * <code>optional uint64 timestamp = 2;</code>
+       * @return The timestamp.
+       */
+      long getTimestamp();
+    }
+    /**
+     * Protobuf type {@code signalservice.SyncMessage.Viewed}
+     */
+    public  static final class Viewed extends
+        com.google.protobuf.GeneratedMessageLite<
+            Viewed, Viewed.Builder> implements
+        // @@protoc_insertion_point(message_implements:signalservice.SyncMessage.Viewed)
+        ViewedOrBuilder {
+      private Viewed() {
+        senderE164_ = "";
+        senderUuid_ = "";
+      }
+      private int bitField0_;
+      public static final int SENDERE164_FIELD_NUMBER = 1;
+      private java.lang.String senderE164_;
+      /**
+       * <code>optional string senderE164 = 1;</code>
+       * @return Whether the senderE164 field is set.
+       */
+      @java.lang.Override
+      public boolean hasSenderE164() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>optional string senderE164 = 1;</code>
+       * @return The senderE164.
+       */
+      @java.lang.Override
+      public java.lang.String getSenderE164() {
+        return senderE164_;
+      }
+      /**
+       * <code>optional string senderE164 = 1;</code>
+       * @return The bytes for senderE164.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getSenderE164Bytes() {
+        return com.google.protobuf.ByteString.copyFromUtf8(senderE164_);
+      }
+      /**
+       * <code>optional string senderE164 = 1;</code>
+       * @param value The senderE164 to set.
+       */
+      private void setSenderE164(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        senderE164_ = value;
+      }
+      /**
+       * <code>optional string senderE164 = 1;</code>
+       */
+      private void clearSenderE164() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        senderE164_ = getDefaultInstance().getSenderE164();
+      }
+      /**
+       * <code>optional string senderE164 = 1;</code>
+       * @param value The bytes for senderE164 to set.
+       */
+      private void setSenderE164Bytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        senderE164_ = value.toStringUtf8();
+      }
+
+      public static final int SENDERUUID_FIELD_NUMBER = 3;
+      private java.lang.String senderUuid_;
+      /**
+       * <code>optional string senderUuid = 3;</code>
+       * @return Whether the senderUuid field is set.
+       */
+      @java.lang.Override
+      public boolean hasSenderUuid() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <code>optional string senderUuid = 3;</code>
+       * @return The senderUuid.
+       */
+      @java.lang.Override
+      public java.lang.String getSenderUuid() {
+        return senderUuid_;
+      }
+      /**
+       * <code>optional string senderUuid = 3;</code>
+       * @return The bytes for senderUuid.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getSenderUuidBytes() {
+        return com.google.protobuf.ByteString.copyFromUtf8(senderUuid_);
+      }
+      /**
+       * <code>optional string senderUuid = 3;</code>
+       * @param value The senderUuid to set.
+       */
+      private void setSenderUuid(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        senderUuid_ = value;
+      }
+      /**
+       * <code>optional string senderUuid = 3;</code>
+       */
+      private void clearSenderUuid() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        senderUuid_ = getDefaultInstance().getSenderUuid();
+      }
+      /**
+       * <code>optional string senderUuid = 3;</code>
+       * @param value The bytes for senderUuid to set.
+       */
+      private void setSenderUuidBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        senderUuid_ = value.toStringUtf8();
+      }
+
+      public static final int TIMESTAMP_FIELD_NUMBER = 2;
+      private long timestamp_;
+      /**
+       * <code>optional uint64 timestamp = 2;</code>
+       * @return Whether the timestamp field is set.
+       */
+      @java.lang.Override
+      public boolean hasTimestamp() {
+        return ((bitField0_ & 0x00000004) != 0);
+      }
+      /**
+       * <code>optional uint64 timestamp = 2;</code>
+       * @return The timestamp.
+       */
+      @java.lang.Override
+      public long getTimestamp() {
+        return timestamp_;
+      }
+      /**
+       * <code>optional uint64 timestamp = 2;</code>
+       * @param value The timestamp to set.
+       */
+      private void setTimestamp(long value) {
+        bitField0_ |= 0x00000004;
+        timestamp_ = value;
+      }
+      /**
+       * <code>optional uint64 timestamp = 2;</code>
+       */
+      private void clearTimestamp() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        timestamp_ = 0L;
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input);
+      }
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, input, extensionRegistry);
+      }
+
+      public static Builder newBuilder() {
+        return (Builder) DEFAULT_INSTANCE.createBuilder();
+      }
+      public static Builder newBuilder(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed prototype) {
+        return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
+      }
+
+      /**
+       * Protobuf type {@code signalservice.SyncMessage.Viewed}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageLite.Builder<
+            su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed, Builder> implements
+          // @@protoc_insertion_point(builder_implements:signalservice.SyncMessage.Viewed)
+          su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.ViewedOrBuilder {
+        // Construct using su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed.newBuilder()
+        private Builder() {
+          super(DEFAULT_INSTANCE);
+        }
+
+
+        /**
+         * <code>optional string senderE164 = 1;</code>
+         * @return Whether the senderE164 field is set.
+         */
+        @java.lang.Override
+        public boolean hasSenderE164() {
+          return instance.hasSenderE164();
+        }
+        /**
+         * <code>optional string senderE164 = 1;</code>
+         * @return The senderE164.
+         */
+        @java.lang.Override
+        public java.lang.String getSenderE164() {
+          return instance.getSenderE164();
+        }
+        /**
+         * <code>optional string senderE164 = 1;</code>
+         * @return The bytes for senderE164.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getSenderE164Bytes() {
+          return instance.getSenderE164Bytes();
+        }
+        /**
+         * <code>optional string senderE164 = 1;</code>
+         * @param value The senderE164 to set.
+         * @return This builder for chaining.
+         */
+        public Builder setSenderE164(
+            java.lang.String value) {
+          copyOnWrite();
+          instance.setSenderE164(value);
+          return this;
+        }
+        /**
+         * <code>optional string senderE164 = 1;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearSenderE164() {
+          copyOnWrite();
+          instance.clearSenderE164();
+          return this;
+        }
+        /**
+         * <code>optional string senderE164 = 1;</code>
+         * @param value The bytes for senderE164 to set.
+         * @return This builder for chaining.
+         */
+        public Builder setSenderE164Bytes(
+            com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setSenderE164Bytes(value);
+          return this;
+        }
+
+        /**
+         * <code>optional string senderUuid = 3;</code>
+         * @return Whether the senderUuid field is set.
+         */
+        @java.lang.Override
+        public boolean hasSenderUuid() {
+          return instance.hasSenderUuid();
+        }
+        /**
+         * <code>optional string senderUuid = 3;</code>
+         * @return The senderUuid.
+         */
+        @java.lang.Override
+        public java.lang.String getSenderUuid() {
+          return instance.getSenderUuid();
+        }
+        /**
+         * <code>optional string senderUuid = 3;</code>
+         * @return The bytes for senderUuid.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getSenderUuidBytes() {
+          return instance.getSenderUuidBytes();
+        }
+        /**
+         * <code>optional string senderUuid = 3;</code>
+         * @param value The senderUuid to set.
+         * @return This builder for chaining.
+         */
+        public Builder setSenderUuid(
+            java.lang.String value) {
+          copyOnWrite();
+          instance.setSenderUuid(value);
+          return this;
+        }
+        /**
+         * <code>optional string senderUuid = 3;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearSenderUuid() {
+          copyOnWrite();
+          instance.clearSenderUuid();
+          return this;
+        }
+        /**
+         * <code>optional string senderUuid = 3;</code>
+         * @param value The bytes for senderUuid to set.
+         * @return This builder for chaining.
+         */
+        public Builder setSenderUuidBytes(
+            com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.setSenderUuidBytes(value);
+          return this;
+        }
+
+        /**
+         * <code>optional uint64 timestamp = 2;</code>
+         * @return Whether the timestamp field is set.
+         */
+        @java.lang.Override
+        public boolean hasTimestamp() {
+          return instance.hasTimestamp();
+        }
+        /**
+         * <code>optional uint64 timestamp = 2;</code>
+         * @return The timestamp.
+         */
+        @java.lang.Override
+        public long getTimestamp() {
+          return instance.getTimestamp();
+        }
+        /**
+         * <code>optional uint64 timestamp = 2;</code>
+         * @param value The timestamp to set.
+         * @return This builder for chaining.
+         */
+        public Builder setTimestamp(long value) {
+          copyOnWrite();
+          instance.setTimestamp(value);
+          return this;
+        }
+        /**
+         * <code>optional uint64 timestamp = 2;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearTimestamp() {
+          copyOnWrite();
+          instance.clearTimestamp();
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:signalservice.SyncMessage.Viewed)
+      }
+      @java.lang.Override
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      protected final java.lang.Object dynamicMethod(
+          com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
+          java.lang.Object arg0, java.lang.Object arg1) {
+        switch (method) {
+          case NEW_MUTABLE_INSTANCE: {
+            return new su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed();
+          }
+          case NEW_BUILDER: {
+            return new Builder();
+          }
+          case BUILD_MESSAGE_INFO: {
+              java.lang.Object[] objects = new java.lang.Object[] {
+                "bitField0_",
+                "senderE164_",
+                "timestamp_",
+                "senderUuid_",
+              };
+              java.lang.String info =
+                  "\u0001\u0003\u0000\u0001\u0001\u0003\u0003\u0000\u0000\u0000\u0001\b\u0000\u0002" +
+                  "\u0003\u0002\u0003\b\u0001";
+              return newMessageInfo(DEFAULT_INSTANCE, info, objects);
+          }
+          // fall through
+          case GET_DEFAULT_INSTANCE: {
+            return DEFAULT_INSTANCE;
+          }
+          case GET_PARSER: {
+            com.google.protobuf.Parser<su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed> parser = PARSER;
+            if (parser == null) {
+              synchronized (su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed.class) {
+                parser = PARSER;
+                if (parser == null) {
+                  parser =
+                      new DefaultInstanceBasedParser<su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed>(
+                          DEFAULT_INSTANCE);
+                  PARSER = parser;
+                }
+              }
+            }
+            return parser;
+        }
+        case GET_MEMOIZED_IS_INITIALIZED: {
+          return (byte) 1;
+        }
+        case SET_MEMOIZED_IS_INITIALIZED: {
+          return null;
+        }
+        }
+        throw new UnsupportedOperationException();
+      }
+
+
+      // @@protoc_insertion_point(class_scope:signalservice.SyncMessage.Viewed)
+      private static final su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed DEFAULT_INSTANCE;
+      static {
+        Viewed defaultInstance = new Viewed();
+        // New instances are implicitly immutable so no need to make
+        // immutable.
+        DEFAULT_INSTANCE = defaultInstance;
+        com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
+          Viewed.class, defaultInstance);
+      }
+
+      public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static volatile com.google.protobuf.Parser<Viewed> PARSER;
+
+      public static com.google.protobuf.Parser<Viewed> parser() {
         return DEFAULT_INSTANCE.getParserForType();
       }
     }
@@ -34605,6 +35157,129 @@ public final class SignalServiceProtos {
       bitField0_ = (bitField0_ & ~0x00001000);
     }
 
+    public static final int VIEWED_FIELD_NUMBER = 16;
+    private com.google.protobuf.Internal.ProtobufList<su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed> viewed_;
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    @java.lang.Override
+    public java.util.List<su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed> getViewedList() {
+      return viewed_;
+    }
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    public java.util.List<? extends su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.ViewedOrBuilder> 
+        getViewedOrBuilderList() {
+      return viewed_;
+    }
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    @java.lang.Override
+    public int getViewedCount() {
+      return viewed_.size();
+    }
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    @java.lang.Override
+    public su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed getViewed(int index) {
+      return viewed_.get(index);
+    }
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    public su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.ViewedOrBuilder getViewedOrBuilder(
+        int index) {
+      return viewed_.get(index);
+    }
+    private void ensureViewedIsMutable() {
+      if (!viewed_.isModifiable()) {
+        viewed_ =
+            com.google.protobuf.GeneratedMessageLite.mutableCopy(viewed_);
+       }
+    }
+
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    private void setViewed(
+        int index, su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      ensureViewedIsMutable();
+      viewed_.set(index, value);
+    }
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    private void setViewed(
+        int index, su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed.Builder builderForValue) {
+      ensureViewedIsMutable();
+      viewed_.set(index, builderForValue.build());
+    }
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    private void addViewed(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      ensureViewedIsMutable();
+      viewed_.add(value);
+    }
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    private void addViewed(
+        int index, su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      ensureViewedIsMutable();
+      viewed_.add(index, value);
+    }
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    private void addViewed(
+        su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed.Builder builderForValue) {
+      ensureViewedIsMutable();
+      viewed_.add(builderForValue.build());
+    }
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    private void addViewed(
+        int index, su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed.Builder builderForValue) {
+      ensureViewedIsMutable();
+      viewed_.add(index, builderForValue.build());
+    }
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    private void addAllViewed(
+        java.lang.Iterable<? extends su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed> values) {
+      ensureViewedIsMutable();
+      com.google.protobuf.AbstractMessageLite.addAll(
+          values, viewed_);
+    }
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    private void clearViewed() {
+      viewed_ = emptyProtobufList();
+    }
+    /**
+     * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+     */
+    private void removeViewed(int index) {
+      ensureViewedIsMutable();
+      viewed_.remove(index);
+    }
+
     public static su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -35500,6 +36175,106 @@ public final class SignalServiceProtos {
         return this;
       }
 
+      /**
+       * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+       */
+      @java.lang.Override
+      public java.util.List<su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed> getViewedList() {
+        return java.util.Collections.unmodifiableList(
+            instance.getViewedList());
+      }
+      /**
+       * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+       */
+      @java.lang.Override
+      public int getViewedCount() {
+        return instance.getViewedCount();
+      }/**
+       * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed getViewed(int index) {
+        return instance.getViewed(index);
+      }
+      /**
+       * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+       */
+      public Builder setViewed(
+          int index, su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed value) {
+        copyOnWrite();
+        instance.setViewed(index, value);
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+       */
+      public Builder setViewed(
+          int index, su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed.Builder builderForValue) {
+        copyOnWrite();
+        instance.setViewed(index, builderForValue);
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+       */
+      public Builder addViewed(su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed value) {
+        copyOnWrite();
+        instance.addViewed(value);
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+       */
+      public Builder addViewed(
+          int index, su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed value) {
+        copyOnWrite();
+        instance.addViewed(index, value);
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+       */
+      public Builder addViewed(
+          su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed.Builder builderForValue) {
+        copyOnWrite();
+        instance.addViewed(builderForValue);
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+       */
+      public Builder addViewed(
+          int index, su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed.Builder builderForValue) {
+        copyOnWrite();
+        instance.addViewed(index, builderForValue);
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+       */
+      public Builder addAllViewed(
+          java.lang.Iterable<? extends su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed> values) {
+        copyOnWrite();
+        instance.addAllViewed(values);
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+       */
+      public Builder clearViewed() {
+        copyOnWrite();
+        instance.clearViewed();
+        return this;
+      }
+      /**
+       * <code>repeated .signalservice.SyncMessage.Viewed viewed = 16;</code>
+       */
+      public Builder removeViewed(int index) {
+        copyOnWrite();
+        instance.removeViewed(index);
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:signalservice.SyncMessage)
     }
     @java.lang.Override
@@ -35534,11 +36309,14 @@ public final class SignalServiceProtos {
               "keys_",
               "messageRequestResponse_",
               "outgoingPayment_",
+              "viewed_",
+              su.sres.signalservice.internal.push.SignalServiceProtos.SyncMessage.Viewed.class,
             };
             java.lang.String info =
-                "\u0001\u000f\u0000\u0001\u0001\u000f\u000f\u0000\u0002\u0000\u0001\t\u0000\u0002" +
+                "\u0001\u0010\u0000\u0001\u0001\u0010\u0010\u0000\u0003\u0000\u0001\t\u0000\u0002" +
                 "\t\u0001\u0003\t\u0002\u0004\t\u0003\u0005\u001b\u0006\t\u0004\u0007\t\u0005\b\n" +
-                "\u0007\t\t\u0006\n\u001b\u000b\t\b\f\t\t\r\t\n\u000e\t\u000b\u000f\t\f";
+                "\u0007\t\t\u0006\n\u001b\u000b\t\b\f\t\t\r\t\n\u000e\t\u000b\u000f\t\f\u0010\u001b" +
+                "";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through

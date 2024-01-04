@@ -56,6 +56,7 @@ import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.giph.mp4.GiphyMp4PlaybackPolicy;
 import su.sres.securesms.giph.mp4.GiphyMp4PlaybackPolicyEnforcer;
 import su.sres.securesms.giph.mp4.GiphyMp4Projection;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.linkpreview.LinkPreviewUtil;
 import su.sres.core.util.logging.Log;
@@ -118,6 +119,7 @@ import su.sres.securesms.revealable.ViewOnceUtil;
 import su.sres.securesms.stickers.StickerUrl;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.DynamicTheme;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.InterceptableLongClickCopyLinkSpan;
 import su.sres.securesms.util.LongClickMovementMethod;
 import su.sres.securesms.util.SearchUtil;
@@ -1051,6 +1053,8 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       alertView.setFailed();
     } else if (messageRecord.isPendingInsecureSmsFallback()) {
       alertView.setPendingApproval();
+    } else if (messageRecord.isRateLimited()) {
+      alertView.setRateLimited();
     } else {
       alertView.setNone();
     }
@@ -1162,8 +1166,8 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
     boolean differentTimestamps = next.isPresent() && !DateUtils.isSameExtendedRelativeTimestamp(context, locale, next.get().getTimestamp(), current.getTimestamp());
 
-    if (current.getExpiresIn() > 0 || !current.isSecure() || current.isPending() || current.isPendingInsecureSmsFallback() ||
-        current.isFailed() || differentTimestamps || isEndOfMessageCluster(current, next, isGroupThread))
+    if (forceFooter(messageRecord) || current.getExpiresIn() > 0 || !current.isSecure() || current.isPending() || current.isPendingInsecureSmsFallback() ||
+            current.isFailed() || current.isRateLimited() || differentTimestamps || isEndOfMessageCluster(current, next, isGroupThread))
     {
       ConversationItemFooter activeFooter = getActiveFooter(current);
       activeFooter.setVisibility(VISIBLE);
@@ -1187,6 +1191,10 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     }
   }
 
+  private boolean forceFooter(@NonNull MessageRecord messageRecord) {
+    return FeatureFlags.viewedReceipts() && hasAudio(messageRecord) && messageRecord.getViewedReceiptCount() == 0;
+  }
+
   private ConversationItemFooter getActiveFooter(@NonNull MessageRecord messageRecord) {
     if (hasNoBubble(messageRecord)) {
       return stickerFooter;
@@ -1204,10 +1212,11 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   }
 
   private boolean shouldInterceptClicks(MessageRecord messageRecord) {
-    return batchSelected.isEmpty() &&
-            ((messageRecord.isFailed() && !messageRecord.isMmsNotification()) ||
-            messageRecord.isPendingInsecureSmsFallback() ||
-            messageRecord.isBundleKeyExchange());
+    return batchSelected.isEmpty()                                                     &&
+            ((messageRecord.isFailed() && !messageRecord.isMmsNotification())           ||
+                    (messageRecord.isRateLimited() && SignalStore.rateLimit().needsRecaptcha()) ||
+                    messageRecord.isPendingInsecureSmsFallback()                                ||
+                    messageRecord.isBundleKeyExchange());
   }
 
   @SuppressLint("SetTextI18n")
@@ -1672,6 +1681,10 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       } else if (messageRecord.isFailed()) {
         if (eventListener != null) {
           eventListener.onMessageWithErrorClicked(messageRecord);
+        }
+      } else if (messageRecord.isRateLimited() && SignalStore.rateLimit().needsRecaptcha()) {
+        if (eventListener != null) {
+          eventListener.onMessageWithRecaptchaNeededClicked(messageRecord);
         }
       } else if (!messageRecord.isOutgoing() && messageRecord.isIdentityMismatchFailure()) {
         handleApproveIdentity();

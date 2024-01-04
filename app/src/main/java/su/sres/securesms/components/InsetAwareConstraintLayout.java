@@ -1,8 +1,11 @@
 package su.sres.securesms.components;
 
 import android.content.Context;
+import android.graphics.Insets;
 import android.graphics.Rect;
+import android.os.Build;
 import android.util.AttributeSet;
+import android.view.WindowInsets;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,12 +29,30 @@ public class InsetAwareConstraintLayout extends ConstraintLayout {
         super(context, attrs, defStyleAttr);
     }
 
-    public InsetAwareConstraintLayout(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
+    @Override
+    public WindowInsets onApplyWindowInsets(WindowInsets insets) {
+        if (Build.VERSION.SDK_INT < 30) {
+            return super.onApplyWindowInsets(insets);
+        }
+
+        Insets windowInsets = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.ime() | WindowInsets.Type.displayCutout());
+        applyInsets(new Rect(windowInsets.left, windowInsets.top, windowInsets.right, windowInsets.bottom));
+
+        return super.onApplyWindowInsets(insets);
     }
 
     @Override
     protected boolean fitSystemWindows(Rect insets) {
+        if (Build.VERSION.SDK_INT >= 30) {
+            return true;
+        }
+
+        applyInsets(insets);
+
+        return true;
+    }
+
+    private void applyInsets(@NonNull Rect insets) {
         Guideline statusBarGuideline     = findViewById(R.id.status_bar_guideline);
         Guideline navigationBarGuideline = findViewById(R.id.navigation_bar_guideline);
         Guideline parentStartGuideline   = findViewById(R.id.parent_start_guideline);
@@ -60,7 +81,5 @@ public class InsetAwareConstraintLayout extends ConstraintLayout {
                 parentEndGuideline.setGuidelineEnd(insets.left);
             }
         }
-
-        return true;
     }
 }

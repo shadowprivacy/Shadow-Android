@@ -213,14 +213,17 @@ dependencyVerification {
         ['com.facebook.flipper:flipper-noop:0.75.0',
          '6ce38be11d4ec05ea8a78f5c5676116f3e9a4655fd503fd1c022906673b660fe'],
 
-        ['com.fasterxml.jackson.core:jackson-annotations:2.10.0',
-         '77a0846219774a8269bc1b38cc00294908d34e77f8a9da34d97673982f75853d'],
+        ['com.fasterxml.jackson.core:jackson-annotations:2.12.0',
+         'c28fbe62e7be1e29df75953fa8a887ff875d4482291fbfddb1aec5c91191ecda'],
 
-        ['com.fasterxml.jackson.core:jackson-core:2.10.0',
-         '69e7695b1e40834fa1242fc328a4010607911ced3706ab79abc769d451197513'],
+        ['com.fasterxml.jackson.core:jackson-core:2.12.0',
+         '8acab5ef6e4f332bbb331b3fcd24d716598770d13a47e7215aa5ee625d1fd9c9'],
 
-        ['com.fasterxml.jackson.core:jackson-databind:2.10.0',
-         '8e6c566c67fc61a96c5dfc4a71d430f2565765778ec9a6ef216c5460a9911b60'],
+        ['com.fasterxml.jackson.core:jackson-databind:2.12.0',
+         '75d470eda0dd559e43f2ad08209fa09ecd268833492ba93fa46f6f3607acbab7'],
+
+        ['com.fasterxml.jackson.module:jackson-module-kotlin:2.12.0',
+         'ee69650831f72ff2411026b507f3583e90ca88b40e9dae3067f87b34088e0ced'],
 
         ['com.github.bumptech.glide:annotations:4.11.0',
          'd219d238006d824962176229d4708abcdddcfe342c6a18a5d0fa48d6f0479b3e'],
@@ -465,6 +468,9 @@ dependencyVerification {
         ['org.greenrobot:eventbus:3.0.0',
          '180d4212467df06f2fbc9c8d8a2984533ac79c87769ad883bc421612f0b4e17c'],
 
+        ['org.jetbrains.kotlin:kotlin-reflect:1.4.10',
+         '3ab3413ec945f801448360ad97bc6e14fec6d606889ede3c707cc277b4467f45'],
+
         ['org.jetbrains.kotlin:kotlin-stdlib-common:1.7.10',
          '19f102efe9629f8eabc63853ad15c533e47c47f91fca09285c5bde86e59f91d4'],
 
@@ -501,8 +507,8 @@ dependencyVerification {
         ['org.signal:argon2:13.1',
          '0f686ccff0d4842bfcc74d92e8dc780a5f159b9376e37a1189fabbcdac458bef'],
 
-        ['org.signal:ringrtc-android:2.9.4',
-         'd4d26b26b096c553966f77229b3f7a0d3704d88caf9caca937388cff054f5257'],
+        ['org.signal:ringrtc-android:2.9.6',
+         'daa06a2a31fb2c6001319ba30d3f412d8ed8de5eae8b49214a73c507f2d0eee9'],
 
         ['org.signal:zkgroup-android:0.7.0',
          '52b172565bd01526e93ebf1796b834bdc449d4fe3422c1b827e49cb8d4f13fbd'],

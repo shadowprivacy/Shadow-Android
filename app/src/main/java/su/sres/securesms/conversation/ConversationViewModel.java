@@ -10,6 +10,9 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import org.whispersystems.libsignal.util.Pair;
 
 import su.sres.paging.PagedData;
@@ -21,15 +24,17 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mediasend.MediaRepository;
+import su.sres.securesms.ratelimit.RecaptchaRequiredEvent;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.util.SingleLiveEvent;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 import su.sres.securesms.wallpaper.ChatWallpaper;
 
 import java.util.List;
 import java.util.Objects;
 
-class ConversationViewModel extends ViewModel {
+public class ConversationViewModel extends ViewModel {
 
     private static final String TAG = Log.tag(ConversationViewModel.class);
 
@@ -47,6 +52,7 @@ class ConversationViewModel extends ViewModel {
     private final DatabaseObserver.Observer           messageObserver;
     private final MutableLiveData<RecipientId>        recipientId;
     private final LiveData<ChatWallpaper>             wallpaper;
+    private final SingleLiveEvent<Event>              events;
 
     private ConversationIntents.Args args;
     private int                      jumpToPosition;
@@ -60,6 +66,7 @@ class ConversationViewModel extends ViewModel {
         this.showScrollButtons      = new MutableLiveData<>(false);
         this.hasUnreadMentions      = new MutableLiveData<>(false);
         this.recipientId            = new MutableLiveData<>();
+        this.events                 = new SingleLiveEvent<>();
         this.pagingController       = new ProxyPagingController();
         this.messageObserver        = pagingController::onDataInvalidated;
 
@@ -110,6 +117,8 @@ class ConversationViewModel extends ViewModel {
         wallpaper            = Transformations.distinctUntilChanged(Transformations.map(Transformations.switchMap(recipientId,
                         id -> Recipient.live(id).getLiveData()),
                 Recipient::getWallpaper));
+
+        EventBus.getDefault().register(this);
     }
 
     void onAttachmentKeyboardOpen() {
@@ -144,6 +153,10 @@ class ConversationViewModel extends ViewModel {
 
     @NonNull LiveData<ChatWallpaper> getWallpaper() {
         return wallpaper;
+    }
+
+    @NonNull LiveData<Event> getEvents() {
+        return events;
     }
 
     void setHasUnreadMentions(boolean hasUnreadMentions) {
@@ -187,10 +200,20 @@ class ConversationViewModel extends ViewModel {
         return Objects.requireNonNull(args);
     }
 
+    @Subscribe(threadMode = ThreadMode.POSTING)
+    public void onRecaptchaRequiredEvent(@NonNull RecaptchaRequiredEvent event) {
+        events.postValue(Event.SHOW_RECAPTCHA);
+    }
+
     @Override
     protected void onCleared() {
         super.onCleared();
         ApplicationDependencies.getDatabaseObserver().unregisterObserver(messageObserver);
+        EventBus.getDefault().unregister(this);
+    }
+
+    enum Event {
+        SHOW_RECAPTCHA
     }
 
     static class Factory extends ViewModelProvider.NewInstanceFactory {

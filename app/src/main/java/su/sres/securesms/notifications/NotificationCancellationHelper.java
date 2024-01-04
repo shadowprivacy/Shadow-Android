@@ -75,10 +75,11 @@ public final class NotificationCancellationHelper {
     }
 
     public static void cancelMessageSummaryIfSoleNotification(@NonNull Context context) {
+        if (Build.VERSION.SDK_INT > 23) {
             try {
-                NotificationManager     notifications       = ServiceUtil.getNotificationManager(context);
+                NotificationManager notifications = ServiceUtil.getNotificationManager(context);
                 StatusBarNotification[] activeNotifications = notifications.getActiveNotifications();
-                boolean                 soleMessageSummary  = false;
+                boolean soleMessageSummary = false;
 
                 for (StatusBarNotification activeNotification : activeNotifications) {
                     if (isSingleThreadNotification(activeNotification)) {
@@ -96,6 +97,7 @@ public final class NotificationCancellationHelper {
             } catch (Throwable e) {
                 Log.w(TAG, e);
             }
+        }
     }
 
     /**

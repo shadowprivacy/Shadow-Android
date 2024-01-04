@@ -19,7 +19,6 @@ import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.keyvalue.KeyValueStore;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.megaphone.MegaphoneRepository;
-import su.sres.securesms.net.ContentProxySelector;
 import su.sres.securesms.net.PipeConnectivityListener;
 import su.sres.securesms.net.StandardUserAgentInterceptor;
 import su.sres.securesms.notifications.MessageNotifier;
@@ -469,7 +468,6 @@ public class ApplicationDependencies {
             synchronized (LOCK) {
                 if (okHttpClient == null) {
                     okHttpClient = new OkHttpClient.Builder()
-                            .proxySelector(new ContentProxySelector())
                             .addInterceptor(new StandardUserAgentInterceptor())
                             .dns(SignalServiceNetworkAccess.DNS)
                             .build();

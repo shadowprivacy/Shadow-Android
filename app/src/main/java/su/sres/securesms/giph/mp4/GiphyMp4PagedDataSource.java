@@ -6,11 +6,15 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.core.util.logging.Log;
 import su.sres.paging.PagedDataSource;
+import su.sres.securesms.BuildConfig;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.giph.model.GiphyImage;
 import su.sres.securesms.giph.model.GiphyResponse;
+import su.sres.securesms.net.ContentProxySelector;
 import su.sres.securesms.util.JsonUtils;
 
 import java.io.IOException;
@@ -26,14 +30,27 @@ import okhttp3.Response;
  */
 final class GiphyMp4PagedDataSource implements PagedDataSource<GiphyImage> {
 
+    private static final Uri BASE_GIPHY_URI = Uri.parse("https://api.giphy.com/v1/gifs/")
+            .buildUpon()
+            .appendQueryParameter("api_key", BuildConfig.GIPHY_API_KEY)
+            .build();
+
+    private static final Uri TRENDING_URI = BASE_GIPHY_URI.buildUpon()
+            .appendPath("trending")
+            .build();
+
+    private static final Uri SEARCH_URI = BASE_GIPHY_URI.buildUpon()
+            .appendPath("search")
+            .build();
+
     private static final String TAG = Log.tag(GiphyMp4PagedDataSource.class);
 
     private final String       searchString;
     private final OkHttpClient client;
 
     GiphyMp4PagedDataSource(@Nullable String searchQuery) {
-        this.searchString = searchQuery;
-        this.client       = ApplicationDependencies.getOkHttpClient();
+        this.searchString = Optional.fromNullable(searchQuery).transform(String::trim).or("");
+        this.client       = ApplicationDependencies.getOkHttpClient().newBuilder().proxySelector(new ContentProxySelector()).build();
     }
 
     @Override
@@ -63,7 +80,7 @@ final class GiphyMp4PagedDataSource implements PagedDataSource<GiphyImage> {
         String url;
 
         if (TextUtils.isEmpty(searchString)) url = getTrendingUrl(start, length);
-        else                                 url = getSearchUrl(start, length, Uri.encode(searchString));
+        else                                 url = getSearchUrl(start, length, searchString);
 
         Request request = new Request.Builder().url(url).build();
 
@@ -82,10 +99,19 @@ final class GiphyMp4PagedDataSource implements PagedDataSource<GiphyImage> {
     }
 
     private String getTrendingUrl(int start, int length) {
-        return "https://api.giphy.com/v1/gifs/trending?api_key=3o6ZsYH6U6Eri53TXy&offset=" + start + "&limit=" + length;
+        return TRENDING_URI.buildUpon()
+                .appendQueryParameter("offset", String.valueOf(start))
+                .appendQueryParameter("limit", String.valueOf(length))
+                .build()
+                .toString();
     }
 
     private String getSearchUrl(int start, int length, @NonNull String query) {
-        return "https://api.giphy.com/v1/gifs/search?api_key=3o6ZsYH6U6Eri53TXy&offset=" + start + "&limit=" + length + "&q=" + Uri.encode(query);
+        return SEARCH_URI.buildUpon()
+                .appendQueryParameter("offset", String.valueOf(start))
+                .appendQueryParameter("limit", String.valueOf(length))
+                .appendQueryParameter("q", query)
+                .build()
+                .toString();
     }
 }

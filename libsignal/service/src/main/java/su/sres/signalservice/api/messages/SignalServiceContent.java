@@ -36,6 +36,7 @@ import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.messages.multidevice.StickerPackOperationMessage;
 import su.sres.signalservice.api.messages.multidevice.VerifiedMessage;
 import su.sres.signalservice.api.messages.multidevice.ViewOnceOpenMessage;
+import su.sres.signalservice.api.messages.multidevice.ViewedMessage;
 import su.sres.signalservice.api.messages.shared.SharedContact;
 import su.sres.signalservice.api.payments.Money;
 import su.sres.signalservice.api.push.SignalServiceAddress;
@@ -460,6 +461,21 @@ public final class SignalServiceContent {
       }
 
       return SignalServiceSyncMessage.forRead(readMessages);
+    }
+
+    if (content.getViewedList().size() > 0) {
+      List<ViewedMessage> viewedMessages = new LinkedList<>();
+
+      for (SignalServiceProtos.SyncMessage.Viewed viewed : content.getViewedList()) {
+        if (SignalServiceAddress.isValidAddress(viewed.getSenderUuid(), viewed.getSenderE164())) {
+          SignalServiceAddress address = new SignalServiceAddress(UuidUtil.parseOrNull(viewed.getSenderUuid()), viewed.getSenderE164());
+          viewedMessages.add(new ViewedMessage(address, viewed.getTimestamp()));
+        } else {
+          Log.w(TAG, "Encountered an invalid ReadMessage! Ignoring.");
+        }
+      }
+
+      return SignalServiceSyncMessage.forViewed(viewedMessages);
     }
 
     if (content.hasViewOnceOpen()) {

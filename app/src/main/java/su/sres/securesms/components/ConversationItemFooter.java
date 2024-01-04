@@ -100,7 +100,7 @@ public class ConversationItemFooter extends LinearLayout {
     presentTimer(messageRecord);
     presentInsecureIndicator(messageRecord);
     presentDeliveryStatus(messageRecord);
-    hideAudioDurationViews();
+    presentAudioDuration(messageRecord);
   }
 
   public void setAudioDuration(long totalDurationMillis, long currentPostionMillis) {
@@ -163,6 +163,8 @@ public class ConversationItemFooter extends LinearLayout {
       dateView.setText(errorMsg);
     } else if (messageRecord.isPendingInsecureSmsFallback()) {
       dateView.setText(R.string.ConversationItem_not_sent_recipient_inactive);
+    } else if (messageRecord.isRateLimited()) {
+      dateView.setText(R.string.ConversationItem_send_paused);
     } else {
       dateView.setText(DateUtils.getExtendedRelativeTimeSpanString(getContext(), locale, messageRecord.getTimestamp()));
     }
@@ -261,6 +263,13 @@ public class ConversationItemFooter extends LinearLayout {
           moveAudioViewsForIncoming();
         }
         showAudioDurationViews();
+
+        if (messageRecord.getViewedReceiptCount() > 0) {
+          revealDot.setProgress(1f);
+        } else {
+          revealDot.setProgress(0f);
+        }
+
       } else {
         hideAudioDurationViews();
       }
@@ -297,7 +306,7 @@ public class ConversationItemFooter extends LinearLayout {
 
   private void showAudioDurationViews() {
     audioSpace.setVisibility(View.VISIBLE);
-    audioDuration.setVisibility(View.VISIBLE);
+    audioDuration.setVisibility(View.GONE);
 
     if (FeatureFlags.viewedReceipts()) {
       revealDot.setVisibility(View.VISIBLE);

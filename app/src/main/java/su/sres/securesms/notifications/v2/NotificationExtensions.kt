@@ -1,10 +1,12 @@
 package su.sres.securesms.notifications.v2
 
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.os.Build
 import com.bumptech.glide.load.MultiTransformation
 import com.bumptech.glide.load.Transformation
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -17,6 +19,7 @@ import su.sres.securesms.contacts.avatars.ProfileContactPhoto
 import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.mms.DecryptableStreamUriLoader.DecryptableUri
 import su.sres.securesms.mms.GlideApp
+import su.sres.securesms.notifications.NotificationIds
 import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.util.BitmapUtil
 import su.sres.securesms.util.BlurTransformation
@@ -83,4 +86,14 @@ fun Intent.makeUniqueToPreventMerging(): Intent {
 
 fun Recipient.getFallback(context: Context): FallbackContactPhoto {
   return GeneratedContactPhoto(getDisplayName(context), R.drawable.ic_profile_outline_40)
+}
+
+fun NotificationManager.isDisplayingSummaryNotification(): Boolean {
+  if (Build.VERSION.SDK_INT > 23) {
+    try {
+      return activeNotifications.any { notification -> notification.id == NotificationIds.MESSAGE_SUMMARY }
+    } catch (e: Throwable) {
+    }
+  }
+  return false
 }

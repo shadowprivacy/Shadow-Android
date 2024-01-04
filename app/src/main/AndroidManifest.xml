@@ -129,10 +129,6 @@
             android:value="@integer/google_play_services_version" />
 
         <meta-data
-            android:name="com.google.android.gms.car.application"
-            android:resource="@xml/automotive_app_desc" />
-
-        <meta-data
             android:name="firebase_analytics_collection_deactivated"
             android:value="true" />
         <meta-data
@@ -645,6 +641,10 @@
             android:theme="@style/Theme.Signal.DayNight.NoActionBar"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
             android:launchMode="singleTask" />
+
+        <activity android:name=".ratelimit.RecaptchaProofActivity"
+            android:theme="@style/Theme.Signal.DayNight.NoActionBar"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize|uiMode" />
 
         <activity android:name=".wallpaper.crop.WallpaperImageSelectionActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"

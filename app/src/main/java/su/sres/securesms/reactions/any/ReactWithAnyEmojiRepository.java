@@ -18,6 +18,7 @@ import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.emoji.EmojiSource;
 import su.sres.securesms.reactions.ReactionDetails;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.sms.MessageSender;
@@ -42,7 +43,7 @@ final class ReactWithAnyEmojiRepository {
         this.recentEmojiPageModel = new RecentEmojiPageModel(context, storageKey);
         this.emojiPages           = new LinkedList<>();
 
-        emojiPages.addAll(Stream.of(EmojiUtil.getDisplayPages())
+        emojiPages.addAll(Stream.of(EmojiSource.getLatest().getDisplayPages())
                 .map(page -> new ReactWithAnyEmojiPage(Collections.singletonList(new ReactWithAnyEmojiPageBlock(getCategoryLabel(page.getIconAttr()), page))))
                 .toList());
         emojiPages.remove(emojiPages.size() - 1);

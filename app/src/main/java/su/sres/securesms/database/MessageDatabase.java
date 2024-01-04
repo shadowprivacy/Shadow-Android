@@ -92,6 +92,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   ViewOnceExpirationInfo getNearestExpiringViewOnceMessage();
   public abstract boolean isSent(long messageId);
   public abstract List<MessageRecord> getProfileChangeDetailsRecords(long threadId, long afterTimestamp);
+  public abstract Set<Long> getAllRateLimitedMessageIds();
 
   public abstract void markExpireStarted(long messageId);
   public abstract void markExpireStarted(long messageId, long startTime);
@@ -104,6 +105,8 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   public abstract void markAsInsecure(long id);
   public abstract void markAsPush(long id);
   public abstract void markAsForcedSms(long id);
+  public abstract void markAsRateLimited(long id);
+  public abstract void clearRateLimitStatus(Collection<Long> ids);
   public abstract void markAsDecryptFailed(long id);
   public abstract void markAsDecryptDuplicate(long id);
   public abstract void markAsNoSession(long id);
@@ -135,6 +138,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   public abstract Pair<Long, Long> updateBundleMessageBody(long messageId, String body);
   public abstract @NonNull List<MarkedMessageInfo> getViewedIncomingMessages(long threadId);
   public abstract @Nullable MarkedMessageInfo setIncomingMessageViewed(long messageId);
+  public abstract @NonNull List<MarkedMessageInfo> setIncomingMessagesViewed(@NonNull List<Long> messageIds);
 
   public abstract void addFailures(long messageId, List<NetworkFailure> failure);
   public abstract void removeFailure(long messageId, NetworkFailure failure);

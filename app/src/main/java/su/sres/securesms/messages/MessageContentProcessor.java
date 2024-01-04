@@ -15,7 +15,6 @@ import su.sres.core.util.logging.Log;
 
 import org.signal.ringrtc.CallId;
 import org.signal.zkgroup.profiles.ProfileKey;
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.attachments.PointerAttachment;
@@ -87,6 +86,7 @@ import su.sres.securesms.mms.StickerSlide;
 import su.sres.securesms.notifications.MarkReadReceiver;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.payments.MobileCoinPublicAddress;
+import su.sres.securesms.ratelimit.RateLimitUtil;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.ringrtc.RemotePeer;
@@ -98,7 +98,6 @@ import su.sres.securesms.sms.OutgoingEncryptedMessage;
 import su.sres.securesms.sms.OutgoingEndSessionMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
 import su.sres.securesms.stickers.StickerLocator;
-import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.Hex;
 import su.sres.securesms.util.IdentityUtil;
@@ -135,6 +134,7 @@ import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.messages.multidevice.StickerPackOperationMessage;
 import su.sres.signalservice.api.messages.multidevice.VerifiedMessage;
 import su.sres.signalservice.api.messages.multidevice.ViewOnceOpenMessage;
+import su.sres.signalservice.api.messages.multidevice.ViewedMessage;
 import su.sres.signalservice.api.messages.shared.SharedContact;
 import su.sres.signalservice.api.payments.Money;
 import su.sres.signalservice.api.push.SignalServiceAddress;
@@ -270,6 +270,7 @@ public final class MessageContentProcessor {
                 if      (syncMessage.getSent().isPresent())                   handleSynchronizeSentMessage(content, syncMessage.getSent().get());
                 else if (syncMessage.getRequest().isPresent())                handleSynchronizeRequestMessage(syncMessage.getRequest().get());
                 else if (syncMessage.getRead().isPresent())                   handleSynchronizeReadMessage(syncMessage.getRead().get(), content.getTimestamp());
+                else if (syncMessage.getViewed().isPresent())                 handleSynchronizeViewedMessage(syncMessage.getViewed().get(), content.getTimestamp());
                 else if (syncMessage.getViewOnceOpen().isPresent())           handleSynchronizeViewOnceOpenMessage(syncMessage.getViewOnceOpen().get(), content.getTimestamp());
                 else if (syncMessage.getVerified().isPresent())               handleSynchronizeVerifiedMessage(syncMessage.getVerified().get());
                 else if (syncMessage.getStickerPackOperations().isPresent())  handleSynchronizeStickerPackOperation(syncMessage.getStickerPackOperations().get());
@@ -947,6 +948,11 @@ public final class MessageContentProcessor {
                 ApplicationDependencies.getMessageNotifier().updateNotification(context);
             }
 
+            if (SignalStore.rateLimit().needsRecaptcha()) {
+                Log.i(TAG, "Got a sent transcript while in reCAPTCHA mode. Assuming we're good to message again.");
+                RateLimitUtil.retryAllRateLimitedMessages(context);
+            }
+
             ApplicationDependencies.getMessageNotifier().setLastDesktopActivityTimestamp(message.getTimestamp());
         } catch (MmsException e) {
             throw new StorageFailedException(e, content.getSender().getIdentifier(), content.getSenderDevice());
@@ -1019,6 +1025,24 @@ public final class MessageContentProcessor {
             Log.i(TAG, "Updating past messages: " + markedMessages.size());
             MarkReadReceiver.process(context, markedMessages);
         }
+
+        MessageNotifier messageNotifier = ApplicationDependencies.getMessageNotifier();
+        messageNotifier.setLastDesktopActivityTimestamp(envelopeTimestamp);
+        messageNotifier.cancelDelayedNotifications();
+        messageNotifier.updateNotification(context);
+    }
+
+    private void handleSynchronizeViewedMessage(@NonNull List<ViewedMessage> viewedMessages, long envelopeTimestamp) {
+        List<Long> toMarkViewed = Stream.of(viewedMessages)
+                .map(message -> {
+                    RecipientId author = Recipient.externalPush(context, message.getSender()).getId();
+                    return DatabaseFactory.getMmsSmsDatabase(context).getMessageFor(message.getTimestamp(), author);
+                })
+                .filter(message -> message != null && message.isMms())
+                .map(MessageRecord::getId)
+                .toList();
+
+        DatabaseFactory.getMmsDatabase(context).setIncomingMessagesViewed(toMarkViewed);
 
         MessageNotifier messageNotifier = ApplicationDependencies.getMessageNotifier();
         messageNotifier.setLastDesktopActivityTimestamp(envelopeTimestamp);

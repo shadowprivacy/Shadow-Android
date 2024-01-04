@@ -31,6 +31,7 @@ import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.push.SignalServiceAddress;
+import su.sres.signalservice.api.push.exceptions.ProofRequiredException;
 import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import su.sres.signalservice.api.push.exceptions.UnregisteredUserException;
 
@@ -71,7 +72,7 @@ public class PushTextSendJob extends PushSendJob  {
   }
 
   @Override
-  public void onPushSend() throws IOException, NoSuchMessageException, UndeliverableMessageException {
+  public void onPushSend() throws IOException, NoSuchMessageException, UndeliverableMessageException, RetryLaterException {
     ExpiringMessageManager expirationManager = ApplicationDependencies.getExpiringMessageManager();
     MessageDatabase database          = DatabaseFactory.getSmsDatabase(context);
     SmsMessageRecord       record            = database.getSmsMessage(messageId);
@@ -130,6 +131,9 @@ public class PushTextSendJob extends PushSendJob  {
       database.markAsSentFailed(record.getId());
       database.markAsPush(record.getId());
       RetrieveProfileJob.enqueue(recipientId);
+    } catch (ProofRequiredException e) {
+      // captcha off
+      // handleProofRequiredException(e, record.getRecipient(), record.getThreadId(), messageId, false);
     }
   }
 
@@ -182,6 +186,10 @@ public class PushTextSendJob extends PushSendJob  {
     } catch (ServerRejectedException e) {
       throw new UndeliverableMessageException(e);
     }
+  }
+
+  public static long getMessageId(@NonNull Data data) {
+    return data.getLong(KEY_MESSAGE_ID);
   }
 
   public static class Factory implements Job.Factory<PushTextSendJob> {

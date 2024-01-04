@@ -14,7 +14,6 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.storage.StorageSyncHelper;
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.storage.SignalAccountRecord;
@@ -66,7 +65,7 @@ public class StorageAccountRestoreJob extends BaseJob {
     @Override
     protected void onRun() throws Exception {
         SignalServiceAccountManager accountManager    = ApplicationDependencies.getSignalServiceAccountManager();
-        StorageKey                  storageServiceKey = SignalStore.storageServiceValues().getOrCreateStorageKey();
+        StorageKey                  storageServiceKey = SignalStore.storageService().getOrCreateStorageKey();
 
         Log.i(TAG, "Retrieving manifest...");
         Optional<SignalStorageManifest> manifest = accountManager.getStorageManifest(storageServiceKey);
@@ -77,8 +76,8 @@ public class StorageAccountRestoreJob extends BaseJob {
             return;
         }
 
-        Log.i(TAG, "Updating local manifest version to 0.");
-        TextSecurePreferences.setStorageManifestVersion(context, 0);
+        Log.i(TAG, "Resetting the local manifest to an empty state so that it will sync later.");
+        SignalStore.storageService().setManifest(SignalStorageManifest.EMPTY);
 
         Optional<StorageId> accountId = manifest.get().getAccountStorageId();
 
