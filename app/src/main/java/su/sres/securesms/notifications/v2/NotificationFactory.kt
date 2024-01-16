@@ -22,6 +22,7 @@ import su.sres.securesms.MainActivity
 import su.sres.securesms.R
 import su.sres.securesms.conversation.ConversationIntents
 import su.sres.securesms.database.DatabaseFactory
+import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.notifications.DefaultMessageNotifier
 import su.sres.securesms.notifications.NotificationChannels
 import su.sres.securesms.notifications.NotificationIds
@@ -250,7 +251,7 @@ object NotificationFactory {
   }
 
   private fun notifyInThread(context: Context, recipient: Recipient, lastAudibleNotification: Long) {
-    if (!TextSecurePreferences.isInThreadNotifications(context) ||
+    if (!SignalStore.settings().isMessageNotificationsInChatSoundsEnabled ||
       ServiceUtil.getAudioManager(context).ringerMode != AudioManager.RINGER_MODE_NORMAL ||
       (System.currentTimeMillis() - lastAudibleNotification) < DefaultMessageNotifier.MIN_AUDIBLE_PERIOD_MILLIS
     ) {
@@ -261,7 +262,7 @@ object NotificationFactory {
       NotificationChannels.getMessageRingtone(context, recipient)
         ?: NotificationChannels.getMessageRingtone(context)
     } else {
-      recipient.messageRingtone ?: TextSecurePreferences.getNotificationRingtone(context)
+      recipient.messageRingtone ?: SignalStore.settings().messageNotificationSound
     }
 
     if (uri.toString().isEmpty()) {

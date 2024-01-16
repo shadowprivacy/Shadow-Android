@@ -12,7 +12,7 @@ import android.util.AttributeSet;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiProvider.EmojiDrawable;
-import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.keyvalue.SignalStore;
 
 
 public class EmojiEditText extends AppCompatEditText {
@@ -33,8 +33,10 @@ public class EmojiEditText extends AppCompatEditText {
     boolean forceCustom = a.getBoolean(R.styleable.EmojiTextView_emoji_forceCustom, false);
     a.recycle();
 
-    if (forceCustom || !TextSecurePreferences.isSystemEmojiPreferred(getContext())) {
-      setFilters(appendEmojiFilter(this.getFilters()));
+    if (forceCustom || !SignalStore.settings().isPreferSystemEmoji()) {
+      if (!isInEditMode()) {
+        setFilters(appendEmojiFilter(this.getFilters()));
+      }
     }
   }
 

@@ -26,21 +26,37 @@ public class RefreshAttributesJob extends BaseJob  {
 
   private static final String TAG = Log.tag(RefreshAttributesJob.class);
 
+  private static final String KEY_FORCED = "forced";
+
+  private static volatile boolean hasRefreshedThisAppCycle;
+
+  private final boolean forced;
+
   public RefreshAttributesJob() {
+    this(true);
+  }
+
+  /**
+   * @param forced True if you want this job to run no matter what. False if you only want this job
+   *               to run if it hasn't run yet this app cycle.
+   */
+  public RefreshAttributesJob(boolean forced) {
     this(new Job.Parameters.Builder()
             .addConstraint(NetworkConstraint.KEY)
             .setQueue("RefreshAttributesJob")
             .setMaxInstancesForFactory(2)
-            .build());
+                    .build(),
+            forced);
   }
 
-  private RefreshAttributesJob(@NonNull Job.Parameters parameters) {
+  private RefreshAttributesJob(@NonNull Job.Parameters parameters, boolean forced) {
     super(parameters);
+    this.forced = forced;
   }
 
   @Override
   public @NonNull Data serialize() {
-    return Data.EMPTY;
+    return new Data.Builder().putBoolean(KEY_FORCED, forced).build();
   }
 
   @Override
@@ -52,6 +68,11 @@ public class RefreshAttributesJob extends BaseJob  {
   public void onRun() throws IOException {
     if (!TextSecurePreferences.isPushRegistered(context) || TextSecurePreferences.getLocalNumber(context) == null) {
       Log.w(TAG, "Not yet registered. Skipping.");
+      return;
+    }
+
+    if (!forced && hasRefreshedThisAppCycle) {
+      Log.d(TAG, "Already refreshed this app cycle. Skipping.");
       return;
     }
 
@@ -80,6 +101,8 @@ public class RefreshAttributesJob extends BaseJob  {
             userLoginDiscoverable);
 
     ApplicationDependencies.getJobManager().add(new RefreshOwnProfileJob());
+
+    hasRefreshedThisAppCycle = true;
   }
 
   @Override
@@ -95,7 +118,7 @@ public class RefreshAttributesJob extends BaseJob  {
   public static class Factory implements Job.Factory<RefreshAttributesJob> {
     @Override
     public @NonNull RefreshAttributesJob create(@NonNull Parameters parameters, @NonNull su.sres.securesms.jobmanager.Data data) {
-      return new RefreshAttributesJob(parameters);
+      return new RefreshAttributesJob(parameters, data.getBooleanOrDefault(KEY_FORCED, true));
     }
   }
 }

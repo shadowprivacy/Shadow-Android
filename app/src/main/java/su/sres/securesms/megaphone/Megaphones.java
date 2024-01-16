@@ -11,8 +11,8 @@ import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 
 import su.sres.core.util.TranslationDetection;
-import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.components.settings.app.AppSettingsActivity;
 import su.sres.securesms.conversationlist.ConversationListFragment;
 import su.sres.securesms.database.model.MegaphoneRecord;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -184,9 +184,7 @@ public final class Megaphones {
                         intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName());
                         controller.onMegaphoneNavigationRequested(intent);
                     } else {
-                        Intent intent = new Intent(context, ApplicationPreferencesActivity.class);
-                        intent.putExtra(ApplicationPreferencesActivity.LAUNCH_TO_NOTIFICATIONS_FRAGMENT, true);
-                        controller.onMegaphoneNavigationRequested(intent);
+                        controller.onMegaphoneNavigationRequested(AppSettingsActivity.notifications(context));
                     }
                 })
                 .setSecondaryButton(R.string.NotificationsMegaphone_not_now, (megaphone, controller) -> controller.onMegaphoneSnooze(Event.NOTIFICATIONS))
@@ -211,8 +209,8 @@ public final class Megaphones {
     }
 
     private static boolean shouldShowNotificationsMegaphone(@NonNull Context context) {
-        boolean shouldShow = !TextSecurePreferences.isNotificationsEnabled(context)       ||
-                !NotificationChannels.isMessageChannelEnabled(context)       ||
+        boolean shouldShow = !SignalStore.settings().isMessageNotificationsEnabled() ||
+                !NotificationChannels.isMessageChannelEnabled(context) ||
                 !NotificationChannels.isMessagesChannelGroupEnabled(context) ||
                 !NotificationChannels.areNotificationsEnabled(context);
         if (shouldShow) {

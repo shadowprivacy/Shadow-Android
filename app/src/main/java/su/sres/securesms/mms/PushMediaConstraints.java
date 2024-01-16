@@ -25,8 +25,8 @@ public class PushMediaConstraints extends MediaConstraints {
 
   private final MediaConfig currentConfig;
 
-  public PushMediaConstraints() {
-    currentConfig = getCurrentConfig(ApplicationDependencies.getApplication());
+  public PushMediaConstraints(@Nullable SentMediaQuality sentMediaQuality) {
+    currentConfig = getCurrentConfig(ApplicationDependencies.getApplication(), sentMediaQuality);
   }
 
   @Override
@@ -89,10 +89,15 @@ public class PushMediaConstraints extends MediaConstraints {
     return currentConfig.qualitySetting;
   }
 
-  private static @NonNull MediaConfig getCurrentConfig(@NonNull Context context) {
+  private static @NonNull MediaConfig getCurrentConfig(@NonNull Context context, @Nullable SentMediaQuality sentMediaQuality) {
     if (Util.isLowMemory(context)) {
       return MediaConfig.LEVEL_1_LOW_MEMORY;
     }
+
+    // effectively circumvent the MQ levels in the code, treating everything as HIGH
+    // if (sentMediaQuality == SentMediaQuality.HIGH) {
+    //  return MediaConfig.LEVEL_3;
+    // }
 
     return MediaConfig.getDefault(context);
   }
@@ -102,7 +107,8 @@ public class PushMediaConstraints extends MediaConstraints {
 
     // LEVEL_1(false, 1, config.getImageMaxSize(), new int[] { 1600, 1024, 768, 512 }, 70),
     // LEVEL_2(false, 2, config.getImageMaxSize(), new int[] { 2048, 1600, 1024, 768, 512 }, 75),
-    LEVEL_3(false, 3, config.getImageMaxSize(), new int[] { config.getImageMaxDimension(), 3072, 2048, 1600, 1024, 768, 512 }, 80);
+    // max dimension currently hardcoded to 4096
+    LEVEL_3(false, 3, config.getImageMaxSize(), new int[] { config.getImageMaxDimension(), 3072, 2048, 1600, 1024, 768, 512 }, 75);
 
     private final boolean isLowMemory;
     private final int     level;

@@ -32,7 +32,6 @@ import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 
 import su.sres.core.util.StreamUtil;
-import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
@@ -44,6 +43,7 @@ import su.sres.securesms.components.MaskView;
 import su.sres.securesms.components.TooltipPopup;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.recyclerview.SmoothScrollingLinearLayoutManager;
+import su.sres.securesms.components.settings.app.AppSettingsActivity;
 import su.sres.securesms.components.voice.VoiceNoteMediaController;
 import su.sres.securesms.components.voice.VoiceNotePlaybackState;
 import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
@@ -59,7 +59,9 @@ import su.sres.securesms.giph.mp4.GiphyMp4ProjectionRecycler;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupMigrationMembershipChange;
 import su.sres.securesms.groups.ui.invitesandrequests.invite.GroupLinkInviteFriendsBottomSheetDialogFragment;
+import su.sres.securesms.groups.ui.managegroup.dialogs.GroupDescriptionDialog;
 import su.sres.securesms.groups.ui.migration.GroupsV1MigrationInfoBottomSheetDialogFragment;
+import su.sres.securesms.groups.v2.GroupDescriptionUtil;
 import su.sres.securesms.jobs.DirectorySyncJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.linkpreview.LinkPreview;
@@ -490,7 +492,7 @@ public class ConversationFragment extends LoggingFragment {
         });
     }
 
-    private static void presentMessageRequestProfileView(@NonNull Context context, @NonNull MessageRequestViewModel.RecipientInfo recipientInfo, @Nullable ConversationBannerView conversationBanner) {
+    private void presentMessageRequestProfileView(@NonNull Context context, @NonNull MessageRequestViewModel.RecipientInfo recipientInfo, @Nullable ConversationBannerView conversationBanner) {
 
         if (conversationBanner == null) {
             return;
@@ -535,7 +537,20 @@ public class ConversationFragment extends LoggingFragment {
         }
 
         if (groups.isEmpty() || isSelf) {
-            conversationBanner.hideDescription();
+            if (TextUtils.isEmpty(recipientInfo.getGroupDescription())) {
+                conversationBanner.setLinkifyDescription(false);
+                conversationBanner.hideDescription();
+            } else {
+                conversationBanner.setLinkifyDescription(true);
+                boolean linkifyWebLinks = recipientInfo.getMessageRequestState() == MessageRequestState.NONE;
+                conversationBanner.setDescription(GroupDescriptionUtil.style(context,
+                        recipientInfo.getGroupDescription(),
+                        linkifyWebLinks,
+                        () -> GroupDescriptionDialog.show(getChildFragmentManager(),
+                                recipient.getDisplayName(context),
+                                recipientInfo.getGroupDescription(),
+                                linkifyWebLinks)));
+            }
         } else {
             final String description;
 
@@ -1563,10 +1578,7 @@ public class ConversationFragment extends LoggingFragment {
                         d.dismiss();
                     })
                     .setNeutralButton(R.string.ConversationFragment_contact_us, (d, w) -> {
-                        Intent intent = new Intent(requireContext(), ApplicationPreferencesActivity.class);
-                        intent.putExtra(ApplicationPreferencesActivity.LAUNCH_TO_HELP_FRAGMENT, true);
-
-                        startActivity(intent);
+                        startActivity(AppSettingsActivity.help(requireContext(), 0));
                         d.dismiss();
                     })
                     .show();
@@ -1640,6 +1652,13 @@ public class ConversationFragment extends LoggingFragment {
                         .setNeutralButton(R.string.GroupsInCommonMessageRequest__about_message_requests, (d, w) -> CommunicationActions.openBrowserLink(requireContext(), getString(R.string.GroupsInCommonMessageRequest__support_article)))
                         .setPositiveButton(R.string.GroupsInCommonMessageRequest__okay, null)
                         .show();
+            }
+        }
+
+        @Override
+        public void onViewGroupDescriptionChange(@Nullable GroupId groupId, @NonNull String description, boolean isMessageRequestAccepted) {
+            if (groupId != null) {
+                GroupDescriptionDialog.show(getChildFragmentManager(), groupId, description, isMessageRequestAccepted);
             }
         }
     }

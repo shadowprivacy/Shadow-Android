@@ -10,6 +10,7 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.database.ThreadDatabase;
@@ -269,6 +270,25 @@ public class RecipientUtil {
                 threadRecipient.isSystemContact() ||
                 !threadRecipient.isRegistered()    ||
                 threadRecipient.isForceSmsSelection();
+    }
+
+    /**
+     * @return True if this recipient should already have your profile key, otherwise false.
+     */
+    public static boolean shouldHaveProfileKey(@NonNull Context context, @NonNull Recipient recipient) {
+        if (recipient.isBlocked()) {
+            return false;
+        }
+
+        if (recipient.isProfileSharing()) {
+            return true;
+        } else {
+            GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
+            return groupDatabase.getPushGroupsContainingMember(recipient.getId())
+                    .stream()
+                    .anyMatch(GroupDatabase.GroupRecord::isV2Group);
+
+        }
     }
 
     @WorkerThread

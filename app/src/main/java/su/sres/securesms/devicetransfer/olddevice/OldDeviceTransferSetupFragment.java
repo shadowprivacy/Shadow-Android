@@ -11,8 +11,8 @@ import androidx.annotation.StringRes;
 import androidx.navigation.fragment.NavHostFragment;
 
 import su.sres.devicetransfer.DeviceToDeviceTransferService;
-import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.components.settings.app.AppSettingsActivity;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.devicetransfer.DeviceTransferSetupFragment;
 import su.sres.securesms.devicetransfer.SetupStep;
@@ -46,9 +46,7 @@ public final class OldDeviceTransferSetupFragment extends DeviceTransferSetupFra
 
     @Override
     protected void navigateWhenWifiDirectUnavailable() {
-        Intent intent = new Intent(requireContext(), ApplicationPreferencesActivity.class);
-        intent.putExtra(ApplicationPreferencesActivity.LAUNCH_TO_BACKUPS_FRAGMENT, true);
-        startActivity(intent);
+        startActivity(AppSettingsActivity.backups(requireContext()));
         requireActivity().finish();
     }
 

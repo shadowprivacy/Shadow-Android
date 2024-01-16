@@ -20,6 +20,7 @@ import su.sres.signalservice.api.messages.multidevice.BlockedListMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -91,6 +92,7 @@ public class MultiDeviceBlockedUpdateJob extends BaseJob {
 
   @Override
   public boolean onShouldRetry(@NonNull Exception exception) {
+    if (exception instanceof ServerRejectedException) return false;
     if (exception instanceof PushNetworkException) return true;
     return false;
   }

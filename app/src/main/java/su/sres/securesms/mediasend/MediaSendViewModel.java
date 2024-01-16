@@ -26,6 +26,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.OutgoingSecureMediaMessage;
+import su.sres.securesms.mms.SentMediaQuality;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.recipients.Recipient;
@@ -70,6 +71,7 @@ class MediaSendViewModel extends ViewModel {
     private final MutableLiveData<HudState> hudState;
     private final SingleLiveEvent<Error> error;
     private final SingleLiveEvent<Event> event;
+    private final MutableLiveData<SentMediaQuality>  sentMediaQuality;
     private final Map<Uri, Object> savedDrawState;
 
     private TransportOption transport;
@@ -108,6 +110,7 @@ class MediaSendViewModel extends ViewModel {
         this.hudState = new MutableLiveData<>();
         this.error = new SingleLiveEvent<>();
         this.event = new SingleLiveEvent<>();
+        this.sentMediaQuality  = new MutableLiveData<>(SentMediaQuality.STANDARD);
         this.savedDrawState = new HashMap<>();
         this.lastCameraCapture = Optional.absent();
         this.body = "";
@@ -455,6 +458,16 @@ class MediaSendViewModel extends ViewModel {
         savedDrawState.putAll(state);
     }
 
+    public void setSentMediaQuality(@NonNull SentMediaQuality newQuality) {
+        if (newQuality == sentMediaQuality.getValue()) {
+            return;
+        }
+
+        sentMediaQuality.setValue(newQuality);
+        preUploadEnabled = false;
+        uploadRepository.cancelAllUploads();
+    }
+
     @NonNull
     LiveData<MediaSendActivityResult> onSendClicked(Map<Media, MediaTransform> modelsToTransform, @NonNull List<Recipient> recipients, @NonNull List<Mention> mentions) {
         if (isSms && recipients.size() > 0) {
@@ -571,6 +584,10 @@ class MediaSendViewModel extends ViewModel {
 
     boolean isViewOnce() {
         return viewOnceState == ViewOnceState.ENABLED;
+    }
+
+    @NonNull LiveData<SentMediaQuality> getSentMediaQuality() {
+        return sentMediaQuality;
     }
 
     @NonNull

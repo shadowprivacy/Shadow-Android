@@ -21,6 +21,7 @@ import androidx.core.graphics.drawable.IconCompat
 import su.sres.securesms.R
 import su.sres.securesms.conversation.ConversationIntents
 import su.sres.securesms.database.RecipientDatabase
+import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.notifications.DefaultMessageNotifier
 import su.sres.securesms.notifications.NotificationChannels
 import su.sres.securesms.notifications.ReplyMethod
@@ -46,7 +47,7 @@ private const val BIG_PICTURE_DIMEN = 500
  */
 sealed class NotificationBuilder(protected val context: Context) {
 
-  private val privacy: NotificationPrivacyPreference = TextSecurePreferences.getNotificationPrivacy(context)
+  private val privacy: NotificationPrivacyPreference = SignalStore.settings().messageNotificationsPrivacy
   private val isNotLocked: Boolean = !KeyCachingService.isLocked(context)
 
   abstract fun setSmallIcon(@DrawableRes drawable: Int)
@@ -146,10 +147,10 @@ sealed class NotificationBuilder(protected val context: Context) {
   }
 
   fun setLights() {
-    val ledColor: String = TextSecurePreferences.getNotificationLedColor(context)
+    val ledColor: String = SignalStore.settings().messageLedColor
 
     if (ledColor != "none") {
-      var blinkPattern = TextSecurePreferences.getNotificationLedPattern(context)
+      var blinkPattern = SignalStore.settings().messageLedBlinkPattern
       if (blinkPattern == "custom") {
         blinkPattern = TextSecurePreferences.getNotificationLedPatternCustom(context)
       }
@@ -298,8 +299,8 @@ sealed class NotificationBuilder(protected val context: Context) {
       val ringtone: Uri? = recipient?.messageRingtone
       val vibrate = recipient?.messageVibrate
 
-      val defaultRingtone: Uri = TextSecurePreferences.getNotificationRingtone(context)
-      val defaultVibrate: Boolean = TextSecurePreferences.isNotificationVibrateEnabled(context)
+      val defaultRingtone: Uri = SignalStore.settings().messageNotificationSound
+      val defaultVibrate: Boolean = SignalStore.settings().isMessageVibrateEnabled
 
       if (ringtone == null && !TextUtils.isEmpty(defaultRingtone.toString())) {
         builder.setSound(defaultRingtone)

@@ -1,6 +1,5 @@
 package su.sres.securesms.keyvalue;
 
-import androidx.annotation.CheckResult;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 

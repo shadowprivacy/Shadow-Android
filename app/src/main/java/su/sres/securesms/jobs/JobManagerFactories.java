@@ -27,6 +27,7 @@ import su.sres.securesms.jobmanager.migrations.RecipientIdFollowUpJobMigration2;
 import su.sres.securesms.jobmanager.migrations.RecipientIdJobMigration;
 import su.sres.securesms.jobmanager.migrations.RetrieveProfileJobMigration;
 import su.sres.securesms.jobmanager.migrations.SendReadReceiptsJobMigration;
+import su.sres.securesms.migrations.AccountRecordMigrationJob;
 import su.sres.securesms.migrations.AttributesMigrationJob;
 import su.sres.securesms.migrations.AvatarIdRemovalMigrationJob;
 import su.sres.securesms.migrations.BackupNotificationMigrationJob;
@@ -150,8 +151,10 @@ public final class JobManagerFactories {
             put(PaymentSendJob.KEY,                        new PaymentSendJob.Factory());
             put(PaymentTransactionCheckJob.KEY,            new PaymentTransactionCheckJob.Factory());
             put(ProfileUploadJob.KEY,                      new ProfileUploadJob.Factory());
+            put(ReportSpamJob.KEY,                         new ReportSpamJob.Factory());
 
             // Migrations
+            put(AccountRecordMigrationJob.KEY,             new AccountRecordMigrationJob.Factory());
             put(AttributesMigrationJob.KEY,                new AttributesMigrationJob.Factory());
             put(AvatarIdRemovalMigrationJob.KEY,           new AvatarIdRemovalMigrationJob.Factory());
             put(BackupNotificationMigrationJob.KEY,        new BackupNotificationMigrationJob.Factory());

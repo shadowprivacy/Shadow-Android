@@ -24,6 +24,7 @@ import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.messages.multidevice.ViewedMessage;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -119,6 +120,7 @@ public class MultiDeviceViewedUpdateJob extends BaseJob {
 
     @Override
     public boolean onShouldRetry(@NonNull Exception exception) {
+        if (exception instanceof ServerRejectedException) return false;
         return exception instanceof PushNetworkException;
     }
 

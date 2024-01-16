@@ -129,11 +129,11 @@ public class SignalServiceEnvelope {
     this.serverDeliveredTimestamp = serverDeliveredTimestamp;
   }
 
-  public String getUuid() {
+  public String getServerGuid() {
     return envelope.getServerGuid();
   }
 
-  public boolean hasUuid() {
+  public boolean hasServerGuid() {
     return envelope.hasServerGuid();
   }
 
@@ -287,8 +287,8 @@ public class SignalServiceEnvelope {
       builder.setContent(ByteString.copyFrom(getContent()));
     }
 
-    if (hasUuid()) {
-      builder.setServerGuid(getUuid());
+    if (hasServerGuid()) {
+      builder.setServerGuid(getServerGuid());
     }
 
     return builder.build().toByteArray();

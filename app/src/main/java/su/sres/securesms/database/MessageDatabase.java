@@ -34,6 +34,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.revealable.ViewOnceExpirationInfo;
 import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
+import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.Util;
@@ -411,6 +412,25 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
     }
   }
 
+  public @NonNull List<ReportSpamData> getReportSpamMessageServerGuids(long threadId, long timestamp) {
+    SQLiteDatabase db    = databaseHelper.getReadableDatabase();
+    String         query = THREAD_ID + " = ? AND " + getDateReceivedColumnName() + " <= ?";
+    String[]       args  = SqlUtil.buildArgs(threadId, timestamp);
+
+    List<ReportSpamData> data = new ArrayList<>();
+    try (Cursor cursor = db.query(getTableName(), new String[] { RECIPIENT_ID, SERVER_GUID, getDateReceivedColumnName() }, query, args, null, null, getDateReceivedColumnName() + " DESC", "3")) {
+      while (cursor.moveToNext()) {
+        RecipientId id         = RecipientId.from(CursorUtil.requireLong(cursor, RECIPIENT_ID));
+        String      serverGuid = CursorUtil.requireString(cursor, SERVER_GUID);
+        long        dateReceived = CursorUtil.requireLong(cursor, getDateReceivedColumnName());
+        if (!Util.isEmpty(serverGuid)) {
+          data.add(new ReportSpamData(id, serverGuid, dateReceived));
+        }
+      }
+    }
+    return data;
+  }
+
   protected static List<ReactionRecord> parseReactions(@NonNull Cursor cursor) {
     byte[] raw = cursor.getBlob(cursor.getColumnIndexOrThrow(REACTIONS));
 
@@ -776,5 +796,29 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
     MessageRecord getNext();
     MessageRecord getCurrent();
     void close();
+  }
+
+  public static class ReportSpamData {
+    private final RecipientId recipientId;
+    private final String      serverGuid;
+    private final long        dateReceived;
+
+    public ReportSpamData(RecipientId recipientId, String serverGuid, long dateReceived) {
+      this.recipientId  = recipientId;
+      this.serverGuid   = serverGuid;
+      this.dateReceived = dateReceived;
+    }
+
+    public @NonNull RecipientId getRecipientId() {
+      return recipientId;
+    }
+
+    public @NonNull String getServerGuid() {
+      return serverGuid;
+    }
+
+    public long getDateReceived() {
+      return dateReceived;
+    }
   }
 }

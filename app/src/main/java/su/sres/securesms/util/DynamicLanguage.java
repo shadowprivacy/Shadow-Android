@@ -5,6 +5,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.res.Configuration;
 
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.dynamiclanguage.LanguageString;
 import java.util.Locale;
 
@@ -46,7 +47,7 @@ public class DynamicLanguage {
   }
 
   private static Locale getSelectedLocale(Context context) {
-    Locale locale = LanguageString.parseLocale(TextSecurePreferences.getLanguage(context));
+    Locale locale = LanguageString.parseLocale(SignalStore.settings().getLanguage());
     if (locale == null) {
       return Locale.getDefault();
     } else {

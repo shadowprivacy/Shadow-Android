@@ -12,6 +12,7 @@ import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 
 public class MultiDeviceStorageSyncRequestJob extends BaseJob {
 
@@ -57,6 +58,7 @@ public class MultiDeviceStorageSyncRequestJob extends BaseJob {
 
     @Override
     protected boolean onShouldRetry(@NonNull Exception e) {
+        if (e instanceof ServerRejectedException) return false;
         return e instanceof PushNetworkException;
     }
 

@@ -20,7 +20,6 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.payments.Entropy;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -32,14 +31,8 @@ import su.sres.signalservice.api.storage.SignalStorageManifest;
 import su.sres.signalservice.api.storage.SignalStorageRecord;
 import su.sres.signalservice.api.storage.StorageId;
 import su.sres.signalservice.api.util.OptionalUtil;
-import su.sres.signalservice.internal.storage.protos.ManifestRecord;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -139,19 +132,24 @@ public final class StorageSyncHelper {
         return SignalStorageRecord.forAccount(account);
     }
 
-    public static void applyAccountStorageSyncUpdates(@NonNull Context context, @NonNull Recipient self, @NonNull SignalAccountRecord update, boolean fetchProfile) {
-        DatabaseFactory.getRecipientDatabase(context).applyStorageSyncAccountUpdate(StorageId.forAccount(self.getStorageServiceId()), update);
+    public static void applyAccountStorageSyncUpdates(@NonNull Context context, @NonNull Recipient self, @NonNull SignalAccountRecord updatedRecord, boolean fetchProfile) {
+        SignalAccountRecord localRecord = buildAccountRecord(context, self).getAccount().get();
+        applyAccountStorageSyncUpdates(context, self, new StorageRecordUpdate<>(localRecord, updatedRecord), fetchProfile);
+    }
 
-        TextSecurePreferences.setReadReceiptsEnabled(context, update.isReadReceiptsEnabled());
-        TextSecurePreferences.setTypingIndicatorsEnabled(context, update.isTypingIndicatorsEnabled());
-        TextSecurePreferences.setShowUnidentifiedDeliveryIndicatorsEnabled(context, update.isSealedSenderIndicatorsEnabled());
-        SignalStore.settings().setLinkPreviewsEnabled(update.isLinkPreviewsEnabled());
-        SignalStore.userLoginPrivacy().setUserLoginListingMode(update.isUserLoginUnlisted() ? UserLoginPrivacyValues.UserLoginListingMode.UNLISTED : UserLoginPrivacyValues.UserLoginListingMode.LISTED);
-        SignalStore.userLoginPrivacy().setUserLoginSharingMode(StorageSyncModels.remoteToLocalUserLoginSharingMode(update.getUserLoginSharingMode()));
-        SignalStore.paymentsValues().setEnabledAndEntropy(update.getPayments().isEnabled(), Entropy.fromBytes(update.getPayments().getEntropy().orNull()));
+    public static void applyAccountStorageSyncUpdates(@NonNull Context context, @NonNull Recipient self, @NonNull StorageRecordUpdate<SignalAccountRecord> update, boolean fetchProfile) {
+        DatabaseFactory.getRecipientDatabase(context).applyStorageSyncAccountUpdate(update);
 
-        if (fetchProfile && update.getAvatarUrlPath().isPresent()) {
-            ApplicationDependencies.getJobManager().add(new RetrieveProfileAvatarJob(self, update.getAvatarUrlPath().get()));
+        TextSecurePreferences.setReadReceiptsEnabled(context, update.getNew().isReadReceiptsEnabled());
+        TextSecurePreferences.setTypingIndicatorsEnabled(context, update.getNew().isTypingIndicatorsEnabled());
+        TextSecurePreferences.setShowUnidentifiedDeliveryIndicatorsEnabled(context, update.getNew().isSealedSenderIndicatorsEnabled());
+        SignalStore.settings().setLinkPreviewsEnabled(update.getNew().isLinkPreviewsEnabled());
+        SignalStore.userLoginPrivacy().setUserLoginListingMode(update.getNew().isUserLoginUnlisted() ? UserLoginPrivacyValues.UserLoginListingMode.UNLISTED : UserLoginPrivacyValues.UserLoginListingMode.LISTED);
+        SignalStore.userLoginPrivacy().setUserLoginSharingMode(StorageSyncModels.remoteToLocalUserLoginSharingMode(update.getNew().getUserLoginSharingMode()));
+        SignalStore.paymentsValues().setEnabledAndEntropy(update.getNew().getPayments().isEnabled(), Entropy.fromBytes(update.getNew().getPayments().getEntropy().orNull()));
+
+        if (fetchProfile && update.getNew().getAvatarUrlPath().isPresent()) {
+            ApplicationDependencies.getJobManager().add(new RetrieveProfileAvatarJob(self, update.getNew().getAvatarUrlPath().get()));
         }
     }
 

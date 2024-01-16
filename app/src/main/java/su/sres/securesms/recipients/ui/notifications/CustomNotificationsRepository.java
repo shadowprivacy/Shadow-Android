@@ -9,10 +9,10 @@ import androidx.annotation.WorkerThread;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.core.util.concurrent.SignalExecutors;
 
 class CustomNotificationsRepository {
@@ -67,7 +67,7 @@ class CustomNotificationsRepository {
     void setMessageSound(@Nullable Uri sound) {
         SignalExecutors.SERIAL.execute(() -> {
             Recipient recipient    = getRecipient();
-            Uri       defaultValue = TextSecurePreferences.getNotificationRingtone(context);
+            Uri       defaultValue = SignalStore.settings().getMessageNotificationSound();
             Uri       newValue;
 
             if (defaultValue.equals(sound)) newValue = null;
@@ -81,7 +81,7 @@ class CustomNotificationsRepository {
 
     void setCallSound(@Nullable Uri sound) {
         SignalExecutors.SERIAL.execute(() -> {
-            Uri defaultValue = TextSecurePreferences.getCallNotificationRingtone(context);
+            Uri defaultValue = SignalStore.settings().getCallRingtone();
             Uri newValue;
 
             if (defaultValue.equals(sound)) newValue = null;

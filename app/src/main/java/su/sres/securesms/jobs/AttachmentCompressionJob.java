@@ -30,11 +30,11 @@ import su.sres.securesms.mms.DecryptableStreamUriLoader;
 import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.mms.MediaStream;
 import su.sres.securesms.mms.MmsException;
+import su.sres.securesms.mms.SentMediaQuality;
 import su.sres.securesms.service.GenericForegroundService;
 import su.sres.securesms.service.NotificationController;
 import su.sres.securesms.transport.UndeliverableMessageException;
 import su.sres.securesms.util.BitmapDecodingException;
-import su.sres.securesms.util.BitmapUtil;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.ImageCompressionUtil;
 import su.sres.securesms.util.MediaUtil;
@@ -44,7 +44,6 @@ import su.sres.securesms.video.InMemoryTranscoder;
 import su.sres.securesms.video.StreamingTranscoder;
 import su.sres.securesms.video.TranscoderCancelationSignal;
 import su.sres.securesms.video.TranscoderOptions;
-import su.sres.securesms.video.VideoSizeException;
 import su.sres.securesms.video.VideoSourceException;
 import su.sres.securesms.video.videoconverter.EncodingException;
 
@@ -144,7 +143,7 @@ public final class AttachmentCompressionJob extends BaseJob {
         }
 
         MediaConstraints mediaConstraints = mms ? MediaConstraints.getMmsMediaConstraints(mmsSubscriptionId)
-                : MediaConstraints.getPushMediaConstraints();
+                : MediaConstraints.getPushMediaConstraints(SentMediaQuality.fromCode(databaseAttachment.getTransformProperties().getSentMediaQuality()));
 
         compress(database, mediaConstraints, databaseAttachment);
     }

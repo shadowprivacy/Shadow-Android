@@ -65,7 +65,7 @@ public class SignalServiceCipher {
   private static final String TAG = SignalServiceCipher.class.getSimpleName();
 
   private final SignalProtocolStore  signalProtocolStore;
-  private final SignalSessionLock sessionLock;
+  private final SignalSessionLock    sessionLock;
   private final SignalServiceAddress localAddress;
   private final CertificateValidator certificateValidator;
 
@@ -80,10 +80,10 @@ public class SignalServiceCipher {
     this.certificateValidator = certificateValidator;
   }
 
-  public OutgoingPushMessage encrypt(SignalProtocolAddress        destination,
+  public OutgoingPushMessage encrypt(SignalProtocolAddress destination,
                                      Optional<UnidentifiedAccess> unidentifiedAccess,
-                                     byte[]                       unpaddedMessage)
-          throws UntrustedIdentityException, InvalidKeyException
+                                     byte[] unpaddedMessage)
+      throws UntrustedIdentityException, InvalidKeyException
   {
     if (unidentifiedAccess.isPresent()) {
       SignalSealedSessionCipher sessionCipher        = new SignalSealedSessionCipher(sessionLock, new SealedSessionCipher(signalProtocolStore, localAddress.getUuid().orNull(), localAddress.getNumber().orNull(), 1));
@@ -103,9 +103,12 @@ public class SignalServiceCipher {
       int type;
 
       switch (message.getType()) {
-        case CiphertextMessage.PREKEY_TYPE:  type = Type.PREKEY_BUNDLE_VALUE; break;
-        case CiphertextMessage.WHISPER_TYPE: type = Type.CIPHERTEXT_VALUE;    break;
-        default: throw new AssertionError("Bad type: " + message.getType());
+        case CiphertextMessage.PREKEY_TYPE:
+          type = Type.PREKEY_BUNDLE_VALUE; break;
+        case CiphertextMessage.WHISPER_TYPE:
+          type = Type.CIPHERTEXT_VALUE; break;
+        default:
+          throw new AssertionError("Bad type: " + message.getType());
       }
 
       return new OutgoingPushMessage(type, destination.getDeviceId(), remoteRegistrationId, body);
@@ -116,16 +119,15 @@ public class SignalServiceCipher {
    * Decrypt a received {@link SignalServiceEnvelope}
    *
    * @param envelope The received SignalServiceEnvelope
-   *
    * @return a decrypted SignalServiceContent
    */
   public SignalServiceContent decrypt(SignalServiceEnvelope envelope)
-          throws InvalidMetadataMessageException, InvalidMetadataVersionException,
-          ProtocolInvalidKeyIdException, ProtocolLegacyMessageException,
-          ProtocolUntrustedIdentityException, ProtocolNoSessionException,
-          ProtocolInvalidVersionException, ProtocolInvalidMessageException,
-          ProtocolInvalidKeyException, ProtocolDuplicateMessageException,
-          SelfSendException, UnsupportedDataMessageException
+      throws InvalidMetadataMessageException, InvalidMetadataVersionException,
+             ProtocolInvalidKeyIdException, ProtocolLegacyMessageException,
+             ProtocolUntrustedIdentityException, ProtocolNoSessionException,
+             ProtocolInvalidVersionException, ProtocolInvalidMessageException,
+             ProtocolInvalidKeyException, ProtocolDuplicateMessageException,
+             SelfSendException, UnsupportedDataMessageException
 
   {
     try {
@@ -135,10 +137,10 @@ public class SignalServiceCipher {
         SignalServiceProtos.DataMessage dataMessage = SignalServiceProtos.DataMessage.parseFrom(plaintext.getData());
 
         SignalServiceContentProto contentProto = SignalServiceContentProto.newBuilder()
-                .setLocalAddress(SignalServiceAddressProtobufSerializer.toProtobuf(localAddress))
-                .setMetadata(SignalServiceMetadataProtobufSerializer.toProtobuf(plaintext.metadata))
-                .setLegacyDataMessage(dataMessage)
-                .build();
+                                                                          .setLocalAddress(SignalServiceAddressProtobufSerializer.toProtobuf(localAddress))
+                                                                          .setMetadata(SignalServiceMetadataProtobufSerializer.toProtobuf(plaintext.metadata))
+                                                                          .setLegacyDataMessage(dataMessage)
+                                                                          .build();
 
         return SignalServiceContent.createFromProto(contentProto);
       } else if (envelope.hasContent()) {
@@ -146,10 +148,10 @@ public class SignalServiceCipher {
         SignalServiceProtos.Content content   = SignalServiceProtos.Content.parseFrom(plaintext.getData());
 
         SignalServiceContentProto contentProto = SignalServiceContentProto.newBuilder()
-                .setLocalAddress(SignalServiceAddressProtobufSerializer.toProtobuf(localAddress))
-                .setMetadata(SignalServiceMetadataProtobufSerializer.toProtobuf(plaintext.metadata))
-                .setContent(content)
-                .build();
+                                                                          .setLocalAddress(SignalServiceAddressProtobufSerializer.toProtobuf(localAddress))
+                                                                          .setMetadata(SignalServiceMetadataProtobufSerializer.toProtobuf(plaintext.metadata))
+                                                                          .setContent(content)
+                                                                          .build();
 
         return SignalServiceContent.createFromProto(contentProto);
       }
@@ -161,12 +163,12 @@ public class SignalServiceCipher {
   }
 
   private Plaintext decrypt(SignalServiceEnvelope envelope, byte[] ciphertext)
-          throws InvalidMetadataMessageException, InvalidMetadataVersionException,
-          ProtocolDuplicateMessageException, ProtocolUntrustedIdentityException,
-          ProtocolLegacyMessageException, ProtocolInvalidKeyException,
-          ProtocolInvalidVersionException, ProtocolInvalidMessageException,
-          ProtocolInvalidKeyIdException, ProtocolNoSessionException,
-          SelfSendException
+      throws InvalidMetadataMessageException, InvalidMetadataVersionException,
+             ProtocolDuplicateMessageException, ProtocolUntrustedIdentityException,
+             ProtocolLegacyMessageException, ProtocolInvalidKeyException,
+             ProtocolInvalidVersionException, ProtocolInvalidMessageException,
+             ProtocolInvalidKeyIdException, ProtocolNoSessionException,
+             SelfSendException
   {
     try {
 
@@ -183,23 +185,23 @@ public class SignalServiceCipher {
         SignalSessionCipher   sessionCipher = new SignalSessionCipher(sessionLock, new SessionCipher(signalProtocolStore, sourceAddress));
 
         paddedMessage  = sessionCipher.decrypt(new PreKeySignalMessage(ciphertext));
-        metadata       = new SignalServiceMetadata(envelope.getSourceAddress(), envelope.getSourceDevice(), envelope.getTimestamp(), envelope.getServerReceivedTimestamp(), envelope.getServerDeliveredTimestamp(), false);
+        metadata       = new SignalServiceMetadata(envelope.getSourceAddress(), envelope.getSourceDevice(), envelope.getTimestamp(), envelope.getServerReceivedTimestamp(), envelope.getServerDeliveredTimestamp(), false, envelope.getServerGuid());
         sessionVersion = sessionCipher.getSessionVersion();
       } else if (envelope.isSignalMessage()) {
         SignalProtocolAddress sourceAddress = getPreferredProtocolAddress(signalProtocolStore, envelope.getSourceAddress(), envelope.getSourceDevice());
         SignalSessionCipher   sessionCipher = new SignalSessionCipher(sessionLock, new SessionCipher(signalProtocolStore, sourceAddress));
 
         paddedMessage  = sessionCipher.decrypt(new SignalMessage(ciphertext));
-        metadata       = new SignalServiceMetadata(envelope.getSourceAddress(), envelope.getSourceDevice(), envelope.getTimestamp(), envelope.getServerReceivedTimestamp(), envelope.getServerDeliveredTimestamp(), false);
+        metadata       = new SignalServiceMetadata(envelope.getSourceAddress(), envelope.getSourceDevice(), envelope.getTimestamp(), envelope.getServerReceivedTimestamp(), envelope.getServerDeliveredTimestamp(), false, envelope.getServerGuid());
         sessionVersion = sessionCipher.getSessionVersion();
       } else if (envelope.isUnidentifiedSender()) {
         SignalSealedSessionCipher sealedSessionCipher = new SignalSealedSessionCipher(sessionLock, new SealedSessionCipher(signalProtocolStore, localAddress.getUuid().orNull(), localAddress.getNumber().orNull(), 1));
         DecryptionResult          result              = sealedSessionCipher.decrypt(certificateValidator, ciphertext, envelope.getServerReceivedTimestamp());
-        SignalServiceAddress      resultAddress       = new SignalServiceAddress(UuidUtil.parse(result.getSenderUuid().orNull()), result.getSenderE164());
+        SignalServiceAddress      resultAddress       = new SignalServiceAddress(UuidUtil.parse(result.getSenderUuid()), result.getSenderE164());
         SignalProtocolAddress     protocolAddress     = getPreferredProtocolAddress(signalProtocolStore, resultAddress, result.getDeviceId());
 
         paddedMessage  = result.getPaddedMessage();
-        metadata       = new SignalServiceMetadata(resultAddress, result.getDeviceId(), envelope.getTimestamp(), envelope.getServerReceivedTimestamp(), envelope.getServerDeliveredTimestamp(), true);
+        metadata       = new SignalServiceMetadata(resultAddress, result.getDeviceId(), envelope.getTimestamp(), envelope.getServerReceivedTimestamp(), envelope.getServerDeliveredTimestamp(), true, envelope.getServerGuid());
         sessionVersion = sealedSessionCipher.getSessionVersion(protocolAddress);
       } else {
         throw new InvalidMetadataMessageException("Unknown type: " + envelope.getType());
@@ -243,7 +245,7 @@ public class SignalServiceCipher {
 
   private static class Plaintext {
     private final SignalServiceMetadata metadata;
-    private final byte[]   data;
+    private final byte[]                data;
 
     private Plaintext(SignalServiceMetadata metadata, byte[] data) {
       this.metadata = metadata;

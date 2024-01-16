@@ -561,7 +561,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
             ApplicationDependencies.getJobManager()
                     .startChain(new RequestGroupV2InfoJob(groupId))
-                    .then(new GroupV2UpdateSelfProfileKeyJob(groupId))
+                    .then(GroupV2UpdateSelfProfileKeyJob.withoutLimits(groupId))
                     .enqueue();
             if (viewModel.getArgs().isFirstTimeInSelfCreatedGroup()) {
                 groupViewModel.inviteFriendsOneTimeIfJustSelfInGroup(getSupportFragmentManager(), groupId);
@@ -715,7 +715,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
                     } else if (MediaUtil.isGif(mediaItem.getMimeType())) {
                         slideDeck.addSlide(new GifSlide(this, mediaItem.getUri(), mediaItem.getSize(), mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.isBorderless(), mediaItem.getCaption().orNull()));
                     } else if (MediaUtil.isImageType(mediaItem.getMimeType())) {
-                        slideDeck.addSlide(new ImageSlide(this, mediaItem.getUri(), mediaItem.getMimeType(), mediaItem.getSize(), mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.isBorderless(), mediaItem.getCaption().orNull(), null));
+                        slideDeck.addSlide(new ImageSlide(this, mediaItem.getUri(), mediaItem.getMimeType(), mediaItem.getSize(), mediaItem.getWidth(), mediaItem.getHeight(), mediaItem.isBorderless(), mediaItem.getCaption().orNull(), null, mediaItem.getTransformProperties().orNull()));
                     } else {
                         Log.w(TAG, "Asked to send an unexpected mimeType: '" + mediaItem.getMimeType() + "'. Skipping.");
                     }
@@ -2149,7 +2149,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         stickerViewModel.getStickersAvailability().observe(this, stickersAvailable -> {
             if (stickersAvailable == null) return;
 
-            boolean isSystemEmojiPreferred = TextSecurePreferences.isSystemEmojiPreferred(this);
+            boolean           isSystemEmojiPreferred = SignalStore.settings().isPreferSystemEmoji();
             MediaKeyboardMode keyboardMode = TextSecurePreferences.getMediaKeyboardMode(this);
             boolean stickerIntro = !TextSecurePreferences.hasSeenStickerIntroTooltip(this);
 
@@ -2599,7 +2599,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     private void initializeMediaKeyboardProviders(@NonNull MediaKeyboard mediaKeyboard, boolean stickersAvailable) {
-        boolean isSystemEmojiPreferred = TextSecurePreferences.isSystemEmojiPreferred(this);
+        boolean isSystemEmojiPreferred = SignalStore.settings().isPreferSystemEmoji();
 
         if (stickersAvailable) {
             if (isSystemEmojiPreferred) {
@@ -3222,7 +3222,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         public boolean onKey(View v, int keyCode, KeyEvent event) {
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
                 if (keyCode == KeyEvent.KEYCODE_ENTER) {
-                    if (TextSecurePreferences.isEnterSendsEnabled(ConversationActivity.this)) {
+                    if (SignalStore.settings().isEnterKeySends()) {
                         sendButton.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
                         sendButton.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER));
                         return true;
@@ -3313,6 +3313,10 @@ public class ConversationActivity extends PassphraseRequiredActivity
                     break;
                 case ACCEPTED:
                     hideMessageRequestBusy();
+                    break;
+                case BLOCKED_AND_REPORTED:
+                    hideMessageRequestBusy();
+                    Toast.makeText(this, R.string.ConversationActivity__reported_as_spam_and_blocked, Toast.LENGTH_SHORT).show();
                     break;
                 case DELETED:
                 case BLOCKED:
@@ -3567,7 +3571,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
             return;
         }
 
-        BlockUnblockDialog.showBlockAndDeleteFor(this, getLifecycle(), recipient, requestModel::onBlock, requestModel::onBlockAndDelete);
+        BlockUnblockDialog.showBlockAndReportSpamFor(this, getLifecycle(), recipient, requestModel::onBlock, requestModel::onBlockAndReportSpam);
     }
 
     private void onMessageRequestUnblockClicked(@NonNull MessageRequestViewModel requestModel) {

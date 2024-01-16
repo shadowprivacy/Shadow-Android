@@ -34,6 +34,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.mediasend.MediaSendPageFragment;
 import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.mms.PushMediaConstraints;
+import su.sres.securesms.mms.SentMediaQuality;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.scribbles.widget.VerticalSlideColorPicker;
@@ -135,7 +136,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
             throw new AssertionError("No KEY_IMAGE_URI supplied");
         }
 
-        MediaConstraints mediaConstraints = new PushMediaConstraints();
+        MediaConstraints mediaConstraints = new PushMediaConstraints(SentMediaQuality.HIGH);
 
         imageMaxWidth  = mediaConstraints.getImageMaxWidth(requireContext());
         imageMaxHeight = mediaConstraints.getImageMaxHeight(requireContext());

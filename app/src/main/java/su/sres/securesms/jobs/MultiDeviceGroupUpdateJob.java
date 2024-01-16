@@ -29,6 +29,7 @@ import su.sres.signalservice.api.messages.multidevice.DeviceGroupsOutputStream;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.File;
 import java.io.IOException;
@@ -141,6 +142,7 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
 
     @Override
     public boolean onShouldRetry(@NonNull Exception exception) {
+        if (exception instanceof ServerRejectedException) return false;
         if (exception instanceof PushNetworkException) return true;
         return false;
     }

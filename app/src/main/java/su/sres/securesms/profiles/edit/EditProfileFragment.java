@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.Editable;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewAnimationUtils;
@@ -17,12 +17,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.annotation.StringRes;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProviders;
-import androidx.navigation.NavDirections;
-import androidx.navigation.Navigation;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.dd.CircularProgressButton;
@@ -38,22 +34,20 @@ import su.sres.securesms.mediasend.AvatarSelectionActivity;
 import su.sres.securesms.mediasend.AvatarSelectionBottomSheetDialogFragment;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mms.GlideApp;
-import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.profiles.manage.EditProfileNameFragment;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.registration.RegistrationUtil;
 import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.StringUtil;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.text.AfterTextChanged;
-
-import org.whispersystems.libsignal.util.guava.Optional;
+import su.sres.securesms.util.views.LearnMoreTextView;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 import static android.app.Activity.RESULT_OK;
 
+import static su.sres.securesms.groups.v2.GroupDescriptionUtil.MAX_DESCRIPTION_LENGTH;
 import static su.sres.securesms.profiles.edit.EditProfileActivity.EXCLUDE_SYSTEM;
 import static su.sres.securesms.profiles.edit.EditProfileActivity.GROUP_ID;
 import static su.sres.securesms.profiles.edit.EditProfileActivity.NEXT_BUTTON_TEXT;
@@ -64,6 +58,8 @@ public class EditProfileFragment extends LoggingFragment {
 
     private static final String TAG                        = Log.tag(EditProfileFragment.class);
     private static final short  REQUEST_CODE_SELECT_AVATAR = 31726;
+    private static final int    MAX_DESCRIPTION_GLYPHS     = 480;
+    private static final int    MAX_DESCRIPTION_BYTES      = 8192;
 
     private Toolbar                toolbar;
     private View                   title;
@@ -100,8 +96,8 @@ public class EditProfileFragment extends LoggingFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         GroupId groupId = GroupId.parseNullableOrThrow(requireArguments().getString(GROUP_ID, null));
 
-        initializeResources(view, groupId);
         initializeViewModel(requireArguments().getBoolean(EXCLUDE_SYSTEM, false), groupId, savedInstanceState != null);
+        initializeResources(view, groupId);
         initializeProfileAvatar();
         initializeProfileName();
     }
@@ -186,9 +182,25 @@ public class EditProfileFragment extends LoggingFragment {
             givenName.requestFocus();
             toolbar.setTitle(R.string.EditProfileFragment__edit_group_name_and_photo);
             preview.setVisibility(View.GONE);
-            familyName.setVisibility(View.GONE);
-            familyName.setEnabled(false);
- //           view.findViewById(R.id.description_text).setVisibility(View.GONE);
+            if (FeatureFlags.groupsV2Description()) {
+                EditTextUtil.addGraphemeClusterLimitFilter(familyName, MAX_DESCRIPTION_GLYPHS);
+                familyName.addTextChangedListener(new AfterTextChanged(s -> {
+                    EditProfileNameFragment.trimFieldToMaxByteLength(s, MAX_DESCRIPTION_BYTES);
+                    viewModel.setFamilyName(s.toString());
+                }));
+                familyName.setHint(R.string.EditProfileFragment__group_description);
+                familyName.setSingleLine(false);
+                familyName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+
+                LearnMoreTextView descriptionText = view.findViewById(R.id.description_text);
+                descriptionText.setLearnMoreVisible(false);
+                descriptionText.setText(R.string.CreateProfileActivity_group_descriptions_will_be_visible_to_members_of_this_group_and_people_who_have_been_invited);
+            } else {
+                familyName.setVisibility(View.GONE);
+                familyName.setEnabled(false);
+                view.findViewById(R.id.description_text).setVisibility(View.GONE);
+            }
+
             view.<ImageView>findViewById(R.id.avatar_placeholder).setImageResource(R.drawable.ic_group_outline_40);
         } else {
             EditTextUtil.addGraphemeClusterLimitFilter(givenName, EditProfileNameFragment.NAME_MAX_GLYPHS);

@@ -2,21 +2,25 @@ package su.sres.securesms.sms;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import android.telephony.SmsMessage;
 
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.recipients.RecipientId;
+
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.util.List;
 
 public class IncomingTextMessage implements Parcelable {
 
-  public static final Parcelable.Creator<IncomingTextMessage> CREATOR = new Parcelable.Creator<IncomingTextMessage>() {
+  public static final  Parcelable.Creator<IncomingTextMessage> CREATOR = new Parcelable.Creator<IncomingTextMessage>() {
     @Override
     public IncomingTextMessage createFromParcel(Parcel in) {
       return new IncomingTextMessage(in);
@@ -27,22 +31,23 @@ public class IncomingTextMessage implements Parcelable {
       return new IncomingTextMessage[size];
     }
   };
-  private static final String TAG = Log.tag(IncomingTextMessage.class);
+  private static final String                                  TAG     = Log.tag(IncomingTextMessage.class);
 
-  private final String      message;
-  private final RecipientId sender;
-  private final int         senderDeviceId;
-  private final int         protocol;
-  private final String      serviceCenterAddress;
-  private final boolean     replyPathPresent;
-  private final String      pseudoSubject;
-  private final long        sentTimestampMillis;
-  private final long        serverTimestampMillis;
+  private final           String      message;
+  private final           RecipientId sender;
+  private final           int         senderDeviceId;
+  private final           int         protocol;
+  private final           String      serviceCenterAddress;
+  private final           boolean     replyPathPresent;
+  private final           String      pseudoSubject;
+  private final           long        sentTimestampMillis;
+  private final           long        serverTimestampMillis;
   @Nullable private final GroupId     groupId;
-  private final boolean     push;
-  private final int         subscriptionId;
-  private final long        expiresInMillis;
-  private final boolean     unidentified;
+  private final           boolean     push;
+  private final           int         subscriptionId;
+  private final           long        expiresInMillis;
+  private final           boolean     unidentified;
+  @Nullable private final String      serverGuid;
 
   public IncomingTextMessage(@NonNull RecipientId sender, @NonNull SmsMessage message, int subscriptionId) {
     this.message               = message.getDisplayMessageBody();
@@ -59,6 +64,7 @@ public class IncomingTextMessage implements Parcelable {
     this.groupId               = null;
     this.push                  = false;
     this.unidentified          = false;
+    this.serverGuid            = null;
   }
 
   public IncomingTextMessage(@NonNull RecipientId sender,
@@ -68,7 +74,8 @@ public class IncomingTextMessage implements Parcelable {
                              String encodedBody,
                              Optional<GroupId> groupId,
                              long expiresInMillis,
-                             boolean unidentified)
+                             boolean unidentified,
+                             String serverGuid)
   {
     this.message               = encodedBody;
     this.sender                = sender;
@@ -80,10 +87,11 @@ public class IncomingTextMessage implements Parcelable {
     this.sentTimestampMillis   = sentTimestampMillis;
     this.serverTimestampMillis = serverTimestampMillis;
     this.push                  = true;
-    this.subscriptionId        =    -1;
+    this.subscriptionId        = -1;
     this.expiresInMillis       = expiresInMillis;
     this.unidentified          = unidentified;
     this.groupId               = groupId.orNull();
+    this.serverGuid            = serverGuid;
   }
 
   public IncomingTextMessage(Parcel in) {
@@ -101,6 +109,7 @@ public class IncomingTextMessage implements Parcelable {
     this.subscriptionId        = in.readInt();
     this.expiresInMillis       = in.readLong();
     this.unidentified          = in.readInt() == 1;
+    this.serverGuid            = in.readString();
   }
 
   public IncomingTextMessage(IncomingTextMessage base, String newBody) {
@@ -118,6 +127,7 @@ public class IncomingTextMessage implements Parcelable {
     this.subscriptionId        = base.getSubscriptionId();
     this.expiresInMillis       = base.getExpiresIn();
     this.unidentified          = base.isUnidentified();
+    this.serverGuid            = base.getServerGuid();
   }
 
   public IncomingTextMessage(List<IncomingTextMessage> fragments) {
@@ -141,6 +151,7 @@ public class IncomingTextMessage implements Parcelable {
     this.subscriptionId        = fragments.get(0).getSubscriptionId();
     this.expiresInMillis       = fragments.get(0).getExpiresIn();
     this.unidentified          = fragments.get(0).isUnidentified();
+    this.serverGuid            = fragments.get(0).getServerGuid();
   }
 
   protected IncomingTextMessage(@NonNull RecipientId sender, @Nullable GroupId groupId)
@@ -159,6 +170,7 @@ public class IncomingTextMessage implements Parcelable {
     this.subscriptionId        = -1;
     this.expiresInMillis       = 0;
     this.unidentified          = false;
+    this.serverGuid            = null;
   }
 
   public int getSubscriptionId() {
@@ -257,6 +269,10 @@ public class IncomingTextMessage implements Parcelable {
     return unidentified;
   }
 
+  public @Nullable String getServerGuid() {
+    return serverGuid;
+  }
+
   @Override
   public int describeContents() {
     return 0;
@@ -277,5 +293,6 @@ public class IncomingTextMessage implements Parcelable {
     out.writeInt(subscriptionId);
     out.writeLong(expiresInMillis);
     out.writeInt(unidentified ? 1 : 0);
+    out.writeString(serverGuid);
   }
 }

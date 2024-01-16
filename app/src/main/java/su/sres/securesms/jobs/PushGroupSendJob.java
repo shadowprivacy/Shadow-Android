@@ -9,7 +9,6 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.google.protobuf.ByteString;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;

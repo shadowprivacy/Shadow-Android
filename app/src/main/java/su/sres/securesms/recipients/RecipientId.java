@@ -14,6 +14,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.DelimiterUtil;
 import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.push.SignalServiceAddress;
+import su.sres.signalservice.api.util.UuidUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,6 +53,20 @@ public class RecipientId implements Parcelable, Comparable<RecipientId> {
     @AnyThread
     public static @NonNull RecipientId from(@NonNull SignalServiceAddress address) {
         return from(address.getUuid().orNull(), address.getNumber().orNull(), false);
+    }
+
+    /**
+     * Used for when you have a string that could be either a UUID or an e164. This was primarily
+     * created for interacting with protocol stores.
+     * @param identifier A UUID or e164
+     */
+    @AnyThread
+    public static @NonNull RecipientId fromExternalPush(@NonNull String identifier) {
+        if (UuidUtil.isUuid(identifier)) {
+            return from(UuidUtil.parseOrThrow(identifier), null);
+        } else {
+            return from(null, identifier);
+        }
     }
 
     /**

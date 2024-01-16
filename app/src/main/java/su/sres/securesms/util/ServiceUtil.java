@@ -3,6 +3,7 @@ package su.sres.securesms.util;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlarmManager;
+import android.app.KeyguardManager;
 import android.app.NotificationManager;
 import android.app.job.JobScheduler;
 import android.content.ClipboardManager;
@@ -13,7 +14,6 @@ import android.hardware.display.DisplayManager;
 import android.location.LocationManager;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
-import android.os.Build;
 import android.os.PowerManager;
 import android.os.Vibrator;
 import androidx.annotation.NonNull;
@@ -27,6 +27,8 @@ import android.telephony.TelephonyManager;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityManager;
 import android.view.inputmethod.InputMethodManager;
+
+import org.jetbrains.annotations.NotNull;
 
 public class ServiceUtil {
   public static InputMethodManager getInputMethodManager(Context context) {
@@ -106,5 +108,9 @@ public class ServiceUtil {
 
   public static LocationManager getLocationManager(@NonNull Context context) {
     return ContextCompat.getSystemService(context, LocationManager.class);
+  }
+
+  public static KeyguardManager getKeyguardManager(@NotNull Context context) {
+    return ContextCompat.getSystemService(context, KeyguardManager.class);
   }
 }

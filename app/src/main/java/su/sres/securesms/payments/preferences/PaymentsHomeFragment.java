@@ -25,10 +25,10 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.PaymentPreferencesDirections;
 import su.sres.securesms.R;
+import su.sres.securesms.components.settings.app.AppSettingsActivity;
 import su.sres.securesms.help.HelpFragment;
 import su.sres.securesms.keyvalue.SignalStore;
 // import su.sres.securesms.lock.v2.CreateKbsPinActivity;
@@ -224,11 +224,7 @@ public class PaymentsHomeFragment extends LoggingFragment {
       NavHostFragment.findNavController(this).navigate(R.id.action_paymentsHome_to_paymentsBackup);
       return true;
     } else if (item.getItemId() == R.id.payments_home_fragment_menu_help) {
-      Intent intent = new Intent(requireContext(), ApplicationPreferencesActivity.class);
-      intent.putExtra(ApplicationPreferencesActivity.LAUNCH_TO_HELP_FRAGMENT, true);
-      intent.putExtra(HelpFragment.START_CATEGORY_INDEX, HelpFragment.PAYMENT_INDEX);
-
-      startActivity(intent);
+      startActivity(AppSettingsActivity.help(requireContext(), HelpFragment.PAYMENT_INDEX));
       return true;
     }
 

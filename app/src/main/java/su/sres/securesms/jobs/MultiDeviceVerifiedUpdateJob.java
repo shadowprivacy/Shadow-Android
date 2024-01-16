@@ -23,6 +23,7 @@ import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.messages.multidevice.VerifiedMessage;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -125,6 +126,7 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
 
   @Override
   public boolean onShouldRetry(@NonNull Exception exception) {
+    if (exception instanceof ServerRejectedException) return false;
     return exception instanceof PushNetworkException;
   }
 

@@ -18,6 +18,7 @@ import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.messages.SignalServiceGroup;
 import su.sres.signalservice.api.messages.SignalServiceGroup.Type;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -86,6 +87,7 @@ public class RequestGroupInfoJob extends BaseJob  {
 
   @Override
   public boolean onShouldRetry(@NonNull Exception e) {
+    if (e instanceof ServerRejectedException) return false;
     return e instanceof PushNetworkException;
   }
 

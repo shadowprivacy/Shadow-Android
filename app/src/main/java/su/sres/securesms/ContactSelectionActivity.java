@@ -30,6 +30,7 @@ import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.Util;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -65,7 +66,7 @@ public abstract class ContactSelectionActivity extends PassphraseRequiredActivit
   @Override
   protected void onCreate(Bundle icicle, boolean ready) {
     if (!getIntent().hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
-      int displayMode = TextSecurePreferences.isSmsEnabled(this) ? DisplayMode.FLAG_ALL
+      int displayMode = Util.isDefaultSmsProvider(this) ? DisplayMode.FLAG_ALL
               : DisplayMode.FLAG_PUSH | DisplayMode.FLAG_ACTIVE_GROUPS | DisplayMode.FLAG_INACTIVE_GROUPS | DisplayMode.FLAG_SELF;
       getIntent().putExtra(ContactSelectionListFragment.DISPLAY_MODE, displayMode);
     }

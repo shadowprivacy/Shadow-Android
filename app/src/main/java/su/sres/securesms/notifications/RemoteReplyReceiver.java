@@ -46,7 +46,7 @@ import java.util.List;
  */
 public class RemoteReplyReceiver extends BroadcastReceiver {
 
-  public static final String REPLY_ACTION       = "org.thoughtcrime.securesms.notifications.WEAR_REPLY";
+  public static final String REPLY_ACTION       = "su.sres.securesms.notifications.WEAR_REPLY";
   public static final String RECIPIENT_EXTRA    = "recipient_extra";
   public static final String REPLY_METHOD       = "reply_method";
   public static final String EARLIEST_TIMESTAMP = "earliest_timestamp";

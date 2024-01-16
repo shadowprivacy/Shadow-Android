@@ -7,45 +7,26 @@ import org.junit.Before;
 import org.junit.Test;
 import su.sres.storageservice.protos.groups.AccessControl;
 import su.sres.storageservice.protos.groups.Group;
-import su.sres.storageservice.protos.groups.GroupChange;
 import su.sres.storageservice.protos.groups.Member;
 import su.sres.storageservice.protos.groups.PendingMember;
 import su.sres.storageservice.protos.groups.RequestingMember;
-import su.sres.storageservice.protos.groups.local.DecryptedApproveMember;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
-import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 import su.sres.storageservice.protos.groups.local.DecryptedMember;
-import su.sres.storageservice.protos.groups.local.DecryptedModifyMemberRole;
 import su.sres.storageservice.protos.groups.local.DecryptedPendingMember;
-import su.sres.storageservice.protos.groups.local.DecryptedPendingMemberRemoval;
 import su.sres.storageservice.protos.groups.local.DecryptedRequestingMember;
-import su.sres.storageservice.protos.groups.local.DecryptedString;
-import su.sres.storageservice.protos.groups.local.DecryptedTimer;
 import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.VerificationFailedException;
 import org.signal.zkgroup.groups.ClientZkGroupCipher;
 import org.signal.zkgroup.groups.GroupMasterKey;
 import org.signal.zkgroup.groups.GroupSecretParams;
-import org.signal.zkgroup.groups.UuidCiphertext;
-import org.signal.zkgroup.profiles.ClientZkProfileOperations;
 import org.signal.zkgroup.profiles.ProfileKey;
-import org.signal.zkgroup.profiles.ProfileKeyCommitment;
-import org.signal.zkgroup.profiles.ProfileKeyCredential;
-import org.signal.zkgroup.profiles.ProfileKeyCredentialPresentation;
-import org.signal.zkgroup.profiles.ProfileKeyCredentialRequest;
-import org.signal.zkgroup.profiles.ProfileKeyCredentialRequestContext;
-import org.signal.zkgroup.profiles.ProfileKeyCredentialResponse;
-import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.util.Util;
 import su.sres.signalservice.testutil.ZkGroupLibraryUtil;
 
-import java.util.Collections;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static su.sres.signalservice.api.groupsv2.ProtobufTestUtils.getMaxDeclaredFieldNumber;
 
 public final class GroupsV2Operations_decrypt_group_Test {
@@ -74,7 +55,7 @@ public final class GroupsV2Operations_decrypt_group_Test {
         int maxFieldFound = getMaxDeclaredFieldNumber(Group.class);
 
         assertEquals("GroupOperations and its tests need updating to account for new fields on " + Group.class.getName(),
-                10, maxFieldFound);
+                11, maxFieldFound);
     }
 
     @Test
@@ -270,6 +251,17 @@ public final class GroupsV2Operations_decrypt_group_Test {
         DecryptedGroup decryptedGroup = groupOperations.decryptGroup(group);
 
         assertEquals(password, decryptedGroup.getInviteLinkPassword());
+    }
+
+    @Test
+    public void decrypt_description_field_11() throws VerificationFailedException, InvalidGroupStateException {
+        Group group = Group.newBuilder()
+                .setDescription(groupOperations.encryptDescription("Description!"))
+                .build();
+
+        DecryptedGroup decryptedGroup = groupOperations.decryptGroup(group);
+
+        assertEquals("Description!", decryptedGroup.getDescription());
     }
 
     private ByteString encryptProfileKey(UUID uuid, ProfileKey profileKey) {

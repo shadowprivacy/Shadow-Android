@@ -16,6 +16,7 @@ import su.sres.securesms.R
 import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.database.MessageDatabase
 import su.sres.securesms.dependencies.ApplicationDependencies
+import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.messages.IncomingMessageObserver
 import su.sres.securesms.notifications.DefaultMessageNotifier
 import su.sres.securesms.notifications.MessageNotifier
@@ -48,7 +49,7 @@ class MessageNotifierV2(context: Application) : MessageNotifier {
   @Volatile private var lastAudibleNotification: Long = -1
   @Volatile private var lastScheduledReminder: Long = 0
   @Volatile private var previousLockedStatus: Boolean = KeyCachingService.isLocked(context)
-  @Volatile private var previousPrivacyPreference: NotificationPrivacyPreference = TextSecurePreferences.getNotificationPrivacy(context)
+  @Volatile private var previousPrivacyPreference: NotificationPrivacyPreference = SignalStore.settings().messageNotificationsPrivacy
   @Volatile private var previousState: NotificationStateV2 = NotificationStateV2.EMPTY
 
   private val threadReminders: MutableMap<Long, Reminder> = ConcurrentHashMap()
@@ -117,12 +118,12 @@ class MessageNotifierV2(context: Application) : MessageNotifier {
     reminderCount: Int,
     defaultBubbleState: BubbleState
   ) {
-    if (!TextSecurePreferences.isNotificationsEnabled(context)) {
+    if (!SignalStore.settings().isMessageNotificationsEnabled) {
       return
     }
 
     val currentLockStatus: Boolean = KeyCachingService.isLocked(context)
-    val currentPrivacyPreference: NotificationPrivacyPreference = TextSecurePreferences.getNotificationPrivacy(context)
+    val currentPrivacyPreference: NotificationPrivacyPreference = SignalStore.settings().messageNotificationsPrivacy
     val notificationConfigurationChanged: Boolean = currentLockStatus != previousLockedStatus || currentPrivacyPreference != previousPrivacyPreference
     previousLockedStatus = currentLockStatus
     previousPrivacyPreference = currentPrivacyPreference
@@ -212,7 +213,7 @@ class MessageNotifierV2(context: Application) : MessageNotifier {
   }
 
   private fun updateReminderTimestamps(context: Context, alertOverrides: Set<Long>, threadsThatAlerted: Set<Long>) {
-    if (TextSecurePreferences.getRepeatAlertsCount(context) == 0) {
+    if (SignalStore.settings().messageNotificationsRepeatAlerts == 0) {
       return
     }
 
@@ -222,7 +223,7 @@ class MessageNotifierV2(context: Application) : MessageNotifier {
       val (id: Long, reminder: Reminder) = entry
       if (alertOverrides.contains(id)) {
         val notifyCount: Int = reminder.count + 1
-        if (notifyCount >= TextSecurePreferences.getRepeatAlertsCount(context)) {
+        if (notifyCount >= SignalStore.settings().messageNotificationsRepeatAlerts) {
           iterator.remove()
         } else {
           entry.setValue(Reminder(lastAudibleNotification, notifyCount))

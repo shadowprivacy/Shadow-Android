@@ -27,6 +27,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.blurhash.BlurHash;
+import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.util.MediaUtil;
 
 public class ImageSlide extends Slide {
@@ -46,7 +47,11 @@ public class ImageSlide extends Slide {
   }
 
   public ImageSlide(Context context, Uri uri, String contentType, long size, int width, int height, boolean borderless, @Nullable String caption, @Nullable BlurHash blurHash) {
-    super(context, constructAttachmentFromUri(context, uri, contentType, size, width, height, true, null, caption, null, blurHash, null, false, borderless, false, false));
+    this(context, uri, contentType, size, width, height, borderless, caption, blurHash, null);
+  }
+
+  public ImageSlide(Context context, Uri uri, String contentType, long size, int width, int height, boolean borderless, @Nullable String caption, @Nullable BlurHash blurHash, @Nullable AttachmentDatabase.TransformProperties transformProperties) {
+    super(context, constructAttachmentFromUri(context, uri, contentType, size, width, height, true, null, caption, null, blurHash, null, false, borderless, false, false, transformProperties));
     this.borderless = borderless;
   }
 

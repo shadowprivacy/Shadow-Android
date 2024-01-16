@@ -26,6 +26,7 @@ import su.sres.signalservice.api.messages.multidevice.DeviceContact;
 import su.sres.signalservice.api.messages.multidevice.DeviceContactsOutputStream;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -101,6 +102,7 @@ public class MultiDeviceProfileKeyUpdateJob extends BaseJob {
 
     @Override
     public boolean onShouldRetry(@NonNull Exception exception) {
+        if (exception instanceof ServerRejectedException) return false;
         if (exception instanceof PushNetworkException) return true;
         return false;
     }

@@ -1,6 +1,7 @@
 package su.sres.securesms.groups;
 
 import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -22,7 +23,9 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sms.IncomingGroupUpdateMessage;
 import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.util.Base64;
+
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
 import su.sres.signalservice.api.messages.SignalServiceContent;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
@@ -49,7 +52,7 @@ public final class GroupV1MessageProcessor {
                                        @NonNull SignalServiceContent content,
                                        @NonNull SignalServiceDataMessage message,
                                        boolean outgoing)
-          throws BadGroupIdException
+      throws BadGroupIdException
   {
     SignalServiceGroupContext    signalServiceGroupContext = message.getGroupContext().get();
     Optional<SignalServiceGroup> groupV1                   = signalServiceGroupContext.getGroupV1();
@@ -102,7 +105,7 @@ public final class GroupV1MessageProcessor {
     }
 
     database.create(id, group.getName().orNull(), members,
-            avatar != null && avatar.isPointer() ? avatar.asPointer() : null, null);
+                    avatar != null && avatar.isPointer() ? avatar.asPointer() : null, null);
 
     Recipient sender = Recipient.externalHighTrustPush(context, content.getSender());
 
@@ -122,7 +125,7 @@ public final class GroupV1MessageProcessor {
   {
 
     GroupDatabase database = DatabaseFactory.getGroupDatabase(context);
-    GroupId.V1           id       = GroupId.v1orThrow(group.getGroupId());
+    GroupId.V1    id       = GroupId.v1orThrow(group.getGroupId());
 
     Set<RecipientId> recordMembers  = new HashSet<>(groupRecord.getMembers());
     Set<RecipientId> messageMembers = new HashSet<>();
@@ -194,14 +197,14 @@ public final class GroupV1MessageProcessor {
     return null;
   }
 
-  private static Long handleGroupLeave(@NonNull Context               context,
-                                       @NonNull SignalServiceContent  content,
-                                       @NonNull SignalServiceGroup    group,
-                                       @NonNull GroupRecord           record,
-                                       boolean  outgoing)
+  private static Long handleGroupLeave(@NonNull Context context,
+                                       @NonNull SignalServiceContent content,
+                                       @NonNull SignalServiceGroup group,
+                                       @NonNull GroupRecord record,
+                                       boolean outgoing)
   {
     GroupDatabase     database = DatabaseFactory.getGroupDatabase(context);
-    GroupId.V1           id       = GroupId.v1orThrow(group.getGroupId());
+    GroupId.V1        id       = GroupId.v1orThrow(group.getGroupId());
     List<RecipientId> members  = record.getMembers();
 
     GroupContext.Builder builder = createGroupContext(group);
@@ -224,11 +227,11 @@ public final class GroupV1MessageProcessor {
                                              @NonNull SignalServiceContent content,
                                              @NonNull SignalServiceGroup group,
                                              @NonNull GroupContext storage,
-                                             boolean  outgoing)
+                                             boolean outgoing)
   {
     if (group.getAvatar().isPresent()) {
       ApplicationDependencies.getJobManager()
-              .add(new AvatarGroupsV1DownloadJob(GroupId.v1orThrow(group.getGroupId())));
+                             .add(new AvatarGroupsV1DownloadJob(GroupId.v1orThrow(group.getGroupId())));
     }
 
     try {
@@ -244,9 +247,10 @@ public final class GroupV1MessageProcessor {
 
         return threadId;
       } else {
-        MessageDatabase smsDatabase  = DatabaseFactory.getSmsDatabase(context);
+        MessageDatabase            smsDatabase  = DatabaseFactory.getSmsDatabase(context);
         String                     body         = Base64.encodeBytes(storage.toByteArray());
-        IncomingTextMessage        incoming     = new IncomingTextMessage(Recipient.externalHighTrustPush(context, content.getSender()).getId(), content.getSenderDevice(), content.getTimestamp(), content.getServerReceivedTimestamp(), body, Optional.of(GroupId.v1orThrow(group.getGroupId())), 0, content.isNeedsReceipt());
+        IncomingTextMessage        incoming     = new IncomingTextMessage(Recipient.externalHighTrustPush(context, content.getSender())
+                                                                                   .getId(), content.getSenderDevice(), content.getTimestamp(), content.getServerReceivedTimestamp(), body, Optional.of(GroupId.v1orThrow(group.getGroupId())), 0, content.isNeedsReceipt(), content.getServerUuid());
         IncomingGroupUpdateMessage groupMessage = new IncomingGroupUpdateMessage(incoming, storage, body);
 
         Optional<InsertResult> insertResult = smsDatabase.insertMessageInbox(groupMessage);
@@ -269,9 +273,9 @@ public final class GroupV1MessageProcessor {
     GroupContext.Builder builder = GroupContext.newBuilder();
     builder.setId(ByteString.copyFrom(group.getGroupId()));
 
-    if (group.getAvatar().isPresent()       &&
-            group.getAvatar().get().isPointer() &&
-            group.getAvatar().get().asPointer().getRemoteId().getV2().isPresent())
+    if (group.getAvatar().isPresent() &&
+        group.getAvatar().get().isPointer() &&
+        group.getAvatar().get().asPointer().getRemoteId().getV2().isPresent())
     {
       builder.setAvatar(AttachmentPointer.newBuilder()
                                          .setCdnId(group.getAvatar().get().asPointer().getRemoteId().getV2().get())
@@ -285,14 +289,14 @@ public final class GroupV1MessageProcessor {
 
     if (group.getMembers().isPresent()) {
       builder.addAllMembersE164(Stream.of(group.getMembers().get())
-              .filter(a -> a.getNumber().isPresent())
-              .map(a -> a.getNumber().get())
-              .toList());
+                                      .filter(a -> a.getNumber().isPresent())
+                                      .map(a -> a.getNumber().get())
+                                      .toList());
       builder.addAllMembers(Stream.of(group.getMembers().get())
-              .filter(address -> address.getNumber().isPresent())
-              .map(address -> address.getNumber().get())
-              .map(GroupV1MessageProcessor::createMember)
-              .toList());
+                                  .filter(address -> address.getNumber().isPresent())
+                                  .map(address -> address.getNumber().get())
+                                  .map(GroupV1MessageProcessor::createMember)
+                                  .toList());
     }
 
     return builder;

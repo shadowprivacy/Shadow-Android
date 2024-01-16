@@ -3,7 +3,6 @@ package su.sres.securesms.logsubmit;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
-import android.text.method.LinkMovementMethod;
 import android.text.style.URLSpan;
 import android.text.util.Linkify;
 import android.view.Menu;
@@ -62,7 +61,7 @@ public class SubmitDebugLogActivity extends BaseActivity implements SubmitDebugL
 
         setContentView(R.layout.submit_debug_log_activity);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle(R.string.AndroidManifest__log_submit);
+        getSupportActionBar().setTitle(R.string.HelpSettingsFragment__debug_log);
 
         initView();
         initViewModel();

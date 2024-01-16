@@ -16,7 +16,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.text.HtmlCompat;
 import androidx.fragment.app.Fragment;
 
@@ -34,7 +33,6 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.util.BackupUtil;
 import su.sres.securesms.util.StorageUtil;
-import su.sres.securesms.util.TextSecurePreferences;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -83,7 +81,6 @@ public class BackupsPreferenceFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.BackupsPreferenceFragment__chat_backups);
 
         setBackupStatus();
         setBackupSummary();
@@ -134,7 +131,7 @@ public class BackupsPreferenceFragment extends Fragment {
     }
 
     private void setBackupStatus() {
-        if (TextSecurePreferences.isBackupEnabled(requireContext())) {
+        if (SignalStore.settings().isBackupEnabled()) {
             if (BackupUtil.canUserAccessBackupDirectory(requireContext())) {
                 setBackupsEnabled();
             } else {
@@ -192,7 +189,7 @@ public class BackupsPreferenceFragment extends Fragment {
 
     @RequiresApi(29)
     private void onToggleClickedApi29() {
-        if (!TextSecurePreferences.isBackupEnabled(requireContext())) {
+        if (!SignalStore.settings().isBackupEnabled()) {
             BackupDialog.showChooseBackupLocationDialog(this, CHOOSE_BACKUPS_LOCATION_REQUEST_CODE);
         } else {
             BackupDialog.showDisableBackupDialog(requireContext(), this::setBackupsDisabled);
@@ -204,7 +201,7 @@ public class BackupsPreferenceFragment extends Fragment {
                 .request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 .ifNecessary()
                 .onAllGranted(() -> {
-                    if (!TextSecurePreferences.isBackupEnabled(requireContext())) {
+                    if (!SignalStore.settings().isBackupEnabled()) {
                         BackupDialog.showEnableBackupDialog(requireContext(), null, null, this::setBackupsEnabled);
                     } else {
                         BackupDialog.showDisableBackupDialog(requireContext(), this::setBackupsDisabled);

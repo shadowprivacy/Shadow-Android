@@ -166,12 +166,6 @@
         </activity>
 
         <activity
-            android:name=".PromptMmsActivity"
-            android:label="Configure MMS Settings"
-            android:windowSoftInputMode="stateUnchanged"
-            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
-
-        <activity
             android:name=".DeviceProvisioningActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize">
             <intent-filter>
@@ -183,10 +177,6 @@
                 <data android:scheme="tsdevice" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".preferences.MmsPreferencesActivity"
-            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
         <activity android:name=".sharing.interstitial.ShareInterstitialActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
@@ -406,9 +396,9 @@
             android:name=".VerifyIdentityActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
-        <activity
-            android:name=".ApplicationPreferencesActivity"
+        <activity android:name=".components.settings.app.AppSettingsActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
+            android:theme="@style/Signal.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -894,7 +884,7 @@
         <receiver android:name=".messageprocessingalarm.MessageProcessReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="org.thoughtcrime.securesms.action.PROCESS_MESSAGES" />
+                <action android:name="su.sres.securesms.action.PROCESS_MESSAGES" />
             </intent-filter>
         </receiver>
 

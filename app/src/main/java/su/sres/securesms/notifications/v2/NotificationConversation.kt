@@ -11,6 +11,7 @@ import su.sres.securesms.R
 import su.sres.securesms.contacts.avatars.ContactColors
 import su.sres.securesms.contacts.avatars.GeneratedContactPhoto
 import su.sres.securesms.conversation.ConversationIntents
+import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.notifications.DeleteNotificationReceiver
 import su.sres.securesms.notifications.MarkReadReceiver
 import su.sres.securesms.notifications.NotificationChannels
@@ -40,7 +41,7 @@ data class NotificationConversation(
   val isGroup: Boolean = recipient.isGroup
 
   fun getContentTitle(context: Context): CharSequence {
-    return if (TextSecurePreferences.getNotificationPrivacy(context).isDisplayContact) {
+    return if (SignalStore.settings().messageNotificationsPrivacy.isDisplayContact) {
       recipient.getDisplayName(context)
     } else {
       context.getString(R.string.SingleRecipientNotificationBuilder_signal)
@@ -48,7 +49,7 @@ data class NotificationConversation(
   }
 
   fun getContactLargeIcon(context: Context): Drawable? {
-    return if (TextSecurePreferences.getNotificationPrivacy(context).isDisplayContact) {
+    return if (SignalStore.settings().messageNotificationsPrivacy.isDisplayContact) {
       recipient.getContactDrawable(context)
     } else {
       GeneratedContactPhoto("Unknown", R.drawable.ic_profile_outline_40).asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context))
@@ -56,7 +57,7 @@ data class NotificationConversation(
   }
 
   fun getContactUri(context: Context): String? {
-    return if (TextSecurePreferences.getNotificationPrivacy(context).isDisplayContact) {
+    return if (SignalStore.settings().messageNotificationsPrivacy.isDisplayContact) {
       recipient.contactUri?.toString()
     } else {
       null
@@ -64,7 +65,7 @@ data class NotificationConversation(
   }
 
   fun getSlideBigPictureUri(context: Context): Uri? {
-    return if (notificationItems.size == 1 && TextSecurePreferences.getNotificationPrivacy(context).isDisplayMessage && !KeyCachingService.isLocked(context)) {
+    return if (notificationItems.size == 1 && SignalStore.settings().messageNotificationsPrivacy.isDisplayMessage && !KeyCachingService.isLocked(context)) {
       mostRecentNotification.getBigPictureUri()
     } else {
       null
@@ -72,7 +73,7 @@ data class NotificationConversation(
   }
 
   fun getContentText(context: Context): CharSequence? {
-    val privacy: NotificationPrivacyPreference = TextSecurePreferences.getNotificationPrivacy(context)
+    val privacy: NotificationPrivacyPreference = SignalStore.settings().messageNotificationsPrivacy
     val stringBuilder = SpannableStringBuilder()
 
     if (privacy.isDisplayContact && recipient.isGroup) {
@@ -87,7 +88,7 @@ data class NotificationConversation(
   }
 
   fun getConversationTitle(context: Context): CharSequence? {
-    if (TextSecurePreferences.getNotificationPrivacy(context).isDisplayContact) {
+    if (SignalStore.settings().messageNotificationsPrivacy.isDisplayContact) {
       return if (isGroup) recipient.getDisplayName(context) else null
     }
     return context.getString(R.string.SingleRecipientNotificationBuilder_signal)

@@ -7,10 +7,9 @@ import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
-import androidx.core.app.NotificationManagerCompat;
 
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.ServiceUtil;
-import su.sres.securesms.util.TextSecurePreferences;
 
 final class LogSectionNotifications implements LogSection {
 
@@ -23,11 +22,11 @@ final class LogSectionNotifications implements LogSection {
     public @NonNull CharSequence getContent(@NonNull Context context) {
         StringBuilder output = new StringBuilder();
 
-        output.append("Message notifications: ").append(TextSecurePreferences.isNotificationsEnabled(context)).append("\n")
-                .append("Call notifications   : ").append(TextSecurePreferences.isCallNotificationsEnabled(context)).append("\n")
-                .append("In-chat sounds       : ").append(TextSecurePreferences.isInThreadNotifications(context)).append("\n")
-                .append("Repeat alerts        : ").append(TextSecurePreferences.getRepeatAlertsCount(context)).append("\n")
-                .append("Notification display : ").append(TextSecurePreferences.getNotificationPrivacy(context)).append("\n\n");
+        output.append("Message notifications: ").append(SignalStore.settings().isMessageNotificationsEnabled()).append("\n")
+                .append("Call notifications   : ").append(SignalStore.settings().isCallNotificationsEnabled()).append("\n")
+                .append("In-chat sounds       : ").append(SignalStore.settings().isMessageNotificationsInChatSoundsEnabled()).append("\n")
+                .append("Repeat alerts        : ").append(SignalStore.settings().getMessageNotificationsRepeatAlerts()).append("\n")
+                .append("Notification display : ").append(SignalStore.settings().getMessageNotificationsPrivacy()).append("\n\n");
 
         if (Build.VERSION.SDK_INT >= 26) {
             NotificationManager manager = ServiceUtil.getNotificationManager(context);

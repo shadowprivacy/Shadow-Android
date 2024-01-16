@@ -3,49 +3,56 @@ package su.sres.signalservice.api.messages;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 public final class SignalServiceMetadata {
-    private final SignalServiceAddress sender;
-    private final int                  senderDevice;
-    private final long                 timestamp;
-    private final long                 serverReceivedTimestamp;
-    private final long                 serverDeliveredTimestamp;
-    private final boolean              needsReceipt;
+  private final SignalServiceAddress sender;
+  private final int                  senderDevice;
+  private final long                 timestamp;
+  private final long                 serverReceivedTimestamp;
+  private final long                 serverDeliveredTimestamp;
+  private final boolean              needsReceipt;
+  private final String               serverGuid;
 
-    public SignalServiceMetadata(SignalServiceAddress sender,
-                                 int senderDevice,
-                                 long timestamp,
-                                 long serverReceivedTimestamp,
-                                 long serverDeliveredTimestamp,
-                                 boolean needsReceipt)
-    {
-        this.sender                   = sender;
-        this.senderDevice             = senderDevice;
-        this.timestamp                = timestamp;
-        this.serverReceivedTimestamp  = serverReceivedTimestamp;
-        this.serverDeliveredTimestamp = serverDeliveredTimestamp;
-        this.needsReceipt             = needsReceipt;
-    }
+  public SignalServiceMetadata(SignalServiceAddress sender,
+                               int senderDevice,
+                               long timestamp,
+                               long serverReceivedTimestamp,
+                               long serverDeliveredTimestamp,
+                               boolean needsReceipt,
+                               String serverGuid)
+  {
+    this.sender                   = sender;
+    this.senderDevice             = senderDevice;
+    this.timestamp                = timestamp;
+    this.serverReceivedTimestamp  = serverReceivedTimestamp;
+    this.serverDeliveredTimestamp = serverDeliveredTimestamp;
+    this.needsReceipt             = needsReceipt;
+    this.serverGuid               = serverGuid;
+  }
 
-    public SignalServiceAddress getSender() {
-        return sender;
-    }
+  public SignalServiceAddress getSender() {
+    return sender;
+  }
 
-    public int getSenderDevice() {
-        return senderDevice;
-    }
+  public int getSenderDevice() {
+    return senderDevice;
+  }
 
-    public long getTimestamp() {
-        return timestamp;
-    }
+  public long getTimestamp() {
+    return timestamp;
+  }
 
-    public long getServerReceivedTimestamp() {
-        return serverReceivedTimestamp;
-    }
+  public long getServerReceivedTimestamp() {
+    return serverReceivedTimestamp;
+  }
 
-    public long getServerDeliveredTimestamp() {
-        return serverDeliveredTimestamp;
-    }
+  public long getServerDeliveredTimestamp() {
+    return serverDeliveredTimestamp;
+  }
 
-    public boolean isNeedsReceipt() {
-        return needsReceipt;
-    }
+  public boolean isNeedsReceipt() {
+    return needsReceipt;
+  }
+
+  public String getServerGuid() {
+    return serverGuid;
+  }
 }

@@ -1,0 +1,397 @@
+package su.sres.securesms.components.settings.app.privacy
+
+import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.TextAppearanceSpan
+import android.view.WindowManager
+import android.widget.Toast
+import androidx.annotation.StringRes
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProviders
+import androidx.navigation.Navigation
+import androidx.preference.PreferenceManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import mobi.upod.timedurationpicker.TimeDurationPicker
+import mobi.upod.timedurationpicker.TimeDurationPickerDialog
+import su.sres.core.util.logging.Log
+import su.sres.securesms.PassphraseChangeActivity
+import su.sres.securesms.R
+import su.sres.securesms.components.settings.DSLConfiguration
+import su.sres.securesms.components.settings.DSLSettingsAdapter
+import su.sres.securesms.components.settings.DSLSettingsFragment
+import su.sres.securesms.components.settings.DSLSettingsText
+import su.sres.securesms.components.settings.configure
+import su.sres.securesms.crypto.MasterSecretUtil
+import su.sres.securesms.keyvalue.UserLoginPrivacyValues
+import su.sres.securesms.keyvalue.UserLoginPrivacyValues.UserLoginListingMode
+import su.sres.securesms.service.KeyCachingService
+import su.sres.securesms.util.CommunicationActions
+import su.sres.securesms.util.ConversationUtil
+import su.sres.securesms.util.FeatureFlags
+import su.sres.securesms.util.ServiceUtil
+import su.sres.securesms.util.SpanUtil
+import su.sres.securesms.util.TextSecurePreferences
+import java.lang.Integer.max
+import java.util.ArrayList
+import java.util.LinkedHashMap
+import java.util.Locale
+import java.util.concurrent.TimeUnit
+
+private val TAG = Log.tag(PrivacySettingsFragment::class.java)
+
+class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privacy) {
+
+  private lateinit var viewModel: PrivacySettingsViewModel
+
+  private val incognitoSummary: CharSequence by lazy {
+    SpannableStringBuilder(getString(R.string.preferences__this_setting_is_not_a_guarantee))
+      .append(" ")
+      .append(
+        SpanUtil.learnMore(requireContext(), ContextCompat.getColor(requireContext(), R.color.signal_text_primary)) {
+          CommunicationActions.openBrowserLink(requireContext(), getString(R.string.preferences__incognito_keyboard_learn_more))
+        }
+      )
+  }
+
+  override fun onResume() {
+    super.onResume()
+    viewModel.refreshBlockedCount()
+  }
+
+  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+    val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+    val repository = PrivacySettingsRepository()
+    val factory = PrivacySettingsViewModel.Factory(sharedPreferences, repository)
+    viewModel = ViewModelProviders.of(this, factory)[PrivacySettingsViewModel::class.java]
+
+    viewModel.state.observe(viewLifecycleOwner) { state ->
+      adapter.submitList(getConfiguration(state).toMappingModelList())
+    }
+  }
+
+  private fun getConfiguration(state: PrivacySettingsState): DSLConfiguration {
+    return configure {
+      clickPref(
+        title = DSLSettingsText.from(R.string.PrivacySettingsFragment__blocked),
+        summary = DSLSettingsText.from(getString(R.string.PrivacySettingsFragment__d_contacts, state.blockedCount)),
+        onClick = {
+          Navigation.findNavController(requireView())
+            .navigate(R.id.action_privacySettingsFragment_to_blockedUsersActivity)
+        }
+      )
+
+      dividerPref()
+
+      if (FeatureFlags.UserLoginPrivacy()) {
+        sectionHeaderPref(R.string.preferences_app_protection__who_can)
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences_app_protection__see_my_phone_number),
+          summary = DSLSettingsText.from(getWhoCanSeeMyUserLoginSummary(state.seeMyUserLogin)),
+          onClick = {
+            onSeeMyUserLoginClicked(state.seeMyUserLogin)
+          }
+        )
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences_app_protection__find_me_by_phone_number),
+          summary = DSLSettingsText.from(getWhoCanFindMeByUserLoginSummary(state.findMeByUserLogin)),
+          onClick = {
+            onFindMyUserLoginClicked(state.findMeByUserLogin)
+          }
+        )
+
+        dividerPref()
+      }
+
+      sectionHeaderPref(R.string.PrivacySettingsFragment__messaging)
+
+      switchPref(
+        title = DSLSettingsText.from(R.string.preferences__read_receipts),
+        summary = DSLSettingsText.from(R.string.preferences__if_read_receipts_are_disabled_you_wont_be_able_to_see_read_receipts),
+        isChecked = state.readReceipts,
+        onClick = {
+          viewModel.setReadReceiptsEnabled(!state.readReceipts)
+        }
+      )
+
+      switchPref(
+        title = DSLSettingsText.from(R.string.preferences__typing_indicators),
+        summary = DSLSettingsText.from(R.string.preferences__if_typing_indicators_are_disabled_you_wont_be_able_to_see_typing_indicators),
+        isChecked = state.typingIndicators,
+        onClick = {
+          viewModel.setTypingIndicatorsEnabled(!state.typingIndicators)
+        }
+      )
+
+      dividerPref()
+
+      sectionHeaderPref(R.string.PrivacySettingsFragment__app_security)
+
+      if (state.isObsoletePasswordEnabled) {
+        switchPref(
+          title = DSLSettingsText.from(R.string.preferences__enable_passphrase),
+          summary = DSLSettingsText.from(R.string.preferences__lock_signal_and_message_notifications_with_a_passphrase),
+          isChecked = true,
+          onClick = {
+            MaterialAlertDialogBuilder(requireContext()).apply {
+              setTitle(R.string.ApplicationPreferencesActivity_disable_passphrase)
+              setMessage(R.string.ApplicationPreferencesActivity_this_will_permanently_unlock_signal_and_message_notifications)
+              setIcon(R.drawable.ic_warning)
+              setPositiveButton(R.string.ApplicationPreferencesActivity_disable) { dialog, which ->
+                MasterSecretUtil.changeMasterSecretPassphrase(
+                  activity,
+                  KeyCachingService.getMasterSecret(context),
+                  MasterSecretUtil.UNENCRYPTED_PASSPHRASE
+                )
+                TextSecurePreferences.setPasswordDisabled(activity, true)
+                val intent = Intent(activity, KeyCachingService::class.java)
+                intent.action = KeyCachingService.DISABLE_ACTION
+                requireActivity().startService(intent)
+                viewModel.refresh()
+              }
+              setNegativeButton(android.R.string.cancel, null)
+              show()
+            }
+          }
+        )
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__change_passphrase),
+          summary = DSLSettingsText.from(R.string.preferences__change_your_passphrase),
+          onClick = {
+            if (MasterSecretUtil.isPassphraseInitialized(activity)) {
+              startActivity(Intent(activity, PassphraseChangeActivity::class.java))
+            } else {
+              Toast.makeText(
+                activity,
+                R.string.ApplicationPreferenceActivity_you_havent_set_a_passphrase_yet,
+                Toast.LENGTH_LONG
+              ).show()
+            }
+          }
+        )
+
+        switchPref(
+          title = DSLSettingsText.from(R.string.preferences__inactivity_timeout_passphrase),
+          summary = DSLSettingsText.from(R.string.preferences__auto_lock_signal_after_a_specified_time_interval_of_inactivity),
+          isChecked = state.isObsoletePasswordTimeoutEnabled,
+          onClick = {
+            viewModel.setObsoletePasswordTimeoutEnabled(!state.isObsoletePasswordEnabled)
+          }
+        )
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__inactivity_timeout_interval),
+          onClick = {
+            TimeDurationPickerDialog(
+              context,
+              { _: TimeDurationPicker?, duration: Long ->
+                val timeoutMinutes = max(TimeUnit.MILLISECONDS.toMinutes(duration).toInt(), 1)
+                viewModel.setObsoletePasswordTimeout(timeoutMinutes)
+              },
+              0, TimeDurationPicker.HH_MM
+            ).show()
+          }
+        )
+      } else {
+        val isKeyguardSecure = ServiceUtil.getKeyguardManager(requireContext()).isKeyguardSecure
+
+        switchPref(
+          title = DSLSettingsText.from(R.string.preferences_app_protection__screen_lock),
+          summary = DSLSettingsText.from(R.string.preferences_app_protection__lock_signal_access_with_android_screen_lock_or_fingerprint),
+          isChecked = state.screenLock && isKeyguardSecure,
+          isEnabled = isKeyguardSecure,
+          onClick = {
+            viewModel.setScreenLockEnabled(!state.screenLock)
+
+            val intent = Intent(requireContext(), KeyCachingService::class.java)
+            intent.action = KeyCachingService.LOCK_TOGGLED_EVENT
+            requireContext().startService(intent)
+
+            ConversationUtil.refreshRecipientShortcuts()
+          }
+        )
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences_app_protection__screen_lock_inactivity_timeout),
+          summary = DSLSettingsText.from(getScreenLockInactivityTimeoutSummary(state.screenLockActivityTimeout)),
+          isEnabled = isKeyguardSecure && state.screenLock,
+          onClick = {
+            TimeDurationPickerDialog(
+              context,
+              { _: TimeDurationPicker?, duration: Long ->
+                val timeoutSeconds = TimeUnit.MILLISECONDS.toSeconds(duration)
+                viewModel.setScreenLockTimeout(timeoutSeconds)
+              },
+              0, TimeDurationPicker.HH_MM
+            ).show()
+          }
+        )
+      }
+
+      switchPref(
+        title = DSLSettingsText.from(R.string.preferences__screen_security),
+        summary = DSLSettingsText.from(R.string.PrivacySettingsFragment__block_screenshots_in_the_recents_list_and_inside_the_app),
+        isChecked = state.screenSecurity,
+        onClick = {
+          viewModel.setScreenSecurityEnabled(!state.screenSecurity)
+
+          if (TextSecurePreferences.isScreenSecurityEnabled(requireContext())) {
+            requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+          } else {
+            requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+          }
+        }
+      )
+
+      switchPref(
+        title = DSLSettingsText.from(R.string.preferences__incognito_keyboard),
+        summary = DSLSettingsText.from(R.string.preferences__request_keyboard_to_disable),
+        isChecked = state.incognitoKeyboard,
+        onClick = {
+          viewModel.setIncognitoKeyboard(!state.incognitoKeyboard)
+        }
+      )
+
+      textPref(
+        summary = DSLSettingsText.from(incognitoSummary),
+      )
+
+      dividerPref()
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__advanced),
+        summary = DSLSettingsText.from(R.string.PrivacySettingsFragment__signal_message_and_calls),
+        onClick = {
+          Navigation.findNavController(requireView()).navigate(R.id.action_privacySettingsFragment_to_advancedPrivacySettingsFragment)
+        }
+      )
+    }
+  }
+
+  private fun getScreenLockInactivityTimeoutSummary(timeoutSeconds: Long): String {
+    val hours = TimeUnit.SECONDS.toHours(timeoutSeconds)
+    val minutes =
+      TimeUnit.SECONDS.toMinutes(timeoutSeconds) - TimeUnit.SECONDS.toHours(timeoutSeconds) * 60
+
+    return if (timeoutSeconds <= 0) {
+      getString(R.string.AppProtectionPreferenceFragment_none)
+    } else {
+      String.format(Locale.getDefault(), "%02d:%02d:00", hours, minutes)
+    }
+  }
+
+  @StringRes
+  private fun getWhoCanSeeMyUserLoginSummary(UserLoginSharingMode: UserLoginPrivacyValues.UserLoginSharingMode): Int {
+    return when (UserLoginSharingMode) {
+      UserLoginPrivacyValues.UserLoginSharingMode.EVERYONE -> R.string.PhoneNumberPrivacy_everyone
+      UserLoginPrivacyValues.UserLoginSharingMode.NOBODY -> R.string.PhoneNumberPrivacy_nobody
+    }
+  }
+
+  @StringRes
+  private fun getWhoCanFindMeByUserLoginSummary(UserLoginListingMode: UserLoginListingMode): Int {
+    return when (UserLoginListingMode) {
+      UserLoginListingMode.LISTED -> R.string.PhoneNumberPrivacy_everyone
+      UserLoginListingMode.UNLISTED -> R.string.PhoneNumberPrivacy_nobody
+    }
+  }
+
+  private fun onSeeMyUserLoginClicked(UserLoginSharingMode: UserLoginPrivacyValues.UserLoginSharingMode) {
+    val value = arrayOf(UserLoginSharingMode)
+    val items = items(requireContext())
+    val modes: List<UserLoginPrivacyValues.UserLoginSharingMode> = ArrayList(items.keys)
+    val modeStrings = items.values.toTypedArray()
+    val selectedMode = modes.indexOf(value[0])
+
+    MaterialAlertDialogBuilder(requireActivity()).apply {
+      setTitle(R.string.preferences_app_protection__see_my_phone_number)
+      setCancelable(true)
+      setSingleChoiceItems(
+        modeStrings,
+        selectedMode
+      ) { _: DialogInterface?, which: Int -> value[0] = modes[which] }
+      setPositiveButton(android.R.string.ok) { _: DialogInterface?, _: Int ->
+        val newSharingMode = value[0]
+        Log.i(
+          TAG,
+          String.format(
+            "UserLoginSharingMode changed to %s. Scheduling storage value sync",
+            newSharingMode
+          )
+        )
+        viewModel.setUserLoginSharingMode(value[0])
+      }
+      setNegativeButton(android.R.string.cancel, null)
+      show()
+    }
+  }
+
+  private fun items(context: Context): Map<UserLoginPrivacyValues.UserLoginSharingMode, CharSequence> {
+    val map: MutableMap<UserLoginPrivacyValues.UserLoginSharingMode, CharSequence> = LinkedHashMap()
+    map[UserLoginPrivacyValues.UserLoginSharingMode.EVERYONE] = titleAndDescription(
+      context,
+      context.getString(R.string.PhoneNumberPrivacy_everyone),
+      context.getString(R.string.PhoneNumberPrivacy_everyone_see_description)
+    )
+    map[UserLoginPrivacyValues.UserLoginSharingMode.NOBODY] =
+      context.getString(R.string.PhoneNumberPrivacy_nobody)
+    return map
+  }
+
+  private fun titleAndDescription(
+    context: Context,
+    header: String,
+    description: String
+  ): CharSequence {
+    return SpannableStringBuilder().apply {
+      append("\n")
+      append(header)
+      append("\n")
+      setSpan(
+        TextAppearanceSpan(context, android.R.style.TextAppearance_Small),
+        length,
+        length,
+        Spanned.SPAN_INCLUSIVE_INCLUSIVE
+      )
+      append(description)
+      append("\n")
+    }
+  }
+
+  fun onFindMyUserLoginClicked(UserLoginListingMode: UserLoginListingMode) {
+    val context = requireContext()
+    val value = arrayOf(UserLoginListingMode)
+    MaterialAlertDialogBuilder(requireActivity()).apply {
+      setTitle(R.string.preferences_app_protection__find_me_by_phone_number)
+      setCancelable(true)
+      setSingleChoiceItems(
+        arrayOf(
+          titleAndDescription(
+            context,
+            context.getString(R.string.PhoneNumberPrivacy_everyone),
+            context.getString(R.string.PhoneNumberPrivacy_everyone_find_description)
+          ),
+          context.getString(R.string.PhoneNumberPrivacy_nobody)
+        ),
+        value[0].ordinal
+      ) { _: DialogInterface?, which: Int -> value[0] = UserLoginListingMode.values()[which] }
+      setPositiveButton(android.R.string.ok) { _: DialogInterface?, _: Int ->
+        Log.i(
+          TAG,
+          String.format(
+            "UserLoginListingMode changed to %s. Scheduling storage value sync",
+            value[0]
+          )
+        )
+        viewModel.setUserLoginListingMode(value[0])
+      }
+      setNegativeButton(android.R.string.cancel, null)
+      show()
+    }
+  }
+}

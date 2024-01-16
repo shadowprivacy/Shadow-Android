@@ -1,6 +1,7 @@
 package su.sres.securesms.mms;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.PointerAttachment;
@@ -10,7 +11,9 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.GroupUtil;
+
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
 import su.sres.signalservice.api.messages.SignalServiceGroupContext;
 
@@ -32,6 +35,7 @@ public class IncomingMediaMessage {
   private final QuoteModel  quote;
   private final boolean     unidentified;
   private final boolean     viewOnce;
+  private final String      serverGuid;
 
   private final List<Attachment>  attachments    = new LinkedList<>();
   private final List<Contact>     sharedContacts = new LinkedList<>();
@@ -63,6 +67,7 @@ public class IncomingMediaMessage {
     this.viewOnce         = viewOnce;
     this.quote            = null;
     this.unidentified     = unidentified;
+    this.serverGuid       = null;
 
     this.attachments.addAll(attachments);
     this.sharedContacts.addAll(sharedContacts.or(Collections.emptyList()));
@@ -83,7 +88,8 @@ public class IncomingMediaMessage {
                               Optional<List<Contact>> sharedContacts,
                               Optional<List<LinkPreview>> linkPreviews,
                               Optional<List<Mention>> mentions,
-                              Optional<Attachment> sticker)
+                              Optional<Attachment> sticker,
+                              @Nullable String serverGuid)
   {
     this.push             = true;
     this.from             = from;
@@ -98,7 +104,7 @@ public class IncomingMediaMessage {
     this.unidentified     = unidentified;
 
     if (group.isPresent()) this.groupId = GroupUtil.idFromGroupContextOrThrow(group.get());
-    else                   this.groupId = null;
+    else this.groupId = null;
 
     this.attachments.addAll(PointerAttachment.forPointers(attachments));
     this.sharedContacts.addAll(sharedContacts.or(Collections.emptyList()));
@@ -108,6 +114,8 @@ public class IncomingMediaMessage {
     if (sticker.isPresent()) {
       this.attachments.add(sticker.get());
     }
+
+    this.serverGuid = serverGuid;
   }
 
   public int getSubscriptionId() {
@@ -176,5 +184,9 @@ public class IncomingMediaMessage {
 
   public boolean isUnidentified() {
     return unidentified;
+  }
+
+  public @Nullable String getServerGuid() {
+    return serverGuid;
   }
 }

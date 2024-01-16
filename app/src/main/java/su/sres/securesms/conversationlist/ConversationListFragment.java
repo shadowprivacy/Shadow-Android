@@ -72,7 +72,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.MainFragment;
 import su.sres.securesms.MainNavigator;
 import su.sres.securesms.NewConversationActivity;
@@ -90,6 +89,7 @@ import su.sres.securesms.components.reminder.Reminder;
 import su.sres.securesms.components.reminder.ReminderView;
 import su.sres.securesms.components.reminder.ServiceOutageReminder;
 import su.sres.securesms.components.reminder.UnauthorizedReminder;
+import su.sres.securesms.components.settings.app.AppSettingsActivity;
 import su.sres.securesms.conversation.ConversationFragment;
 import su.sres.securesms.conversationlist.model.Conversation;
 import su.sres.securesms.conversationlist.model.MessageResult;
@@ -131,6 +131,7 @@ import su.sres.securesms.util.SnapToTopDataObserver;
 import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.WindowUtil;
 import su.sres.core.util.concurrent.SignalExecutors;
@@ -265,7 +266,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
         updateReminders();
         EventBus.getDefault().register(this);
 
-        if (TextSecurePreferences.isSmsEnabled(requireContext())) {
+        if (Util.isDefaultSmsProvider(requireContext())) {
             InsightsLauncher.showInsightsModal(requireContext(), requireFragmentManager());
         }
 
@@ -319,7 +320,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
-        menu.findItem(R.id.menu_insights).setVisible(TextSecurePreferences.isSmsEnabled(requireContext()));
+        menu.findItem(R.id.menu_insights).setVisible(Util.isDefaultSmsProvider(requireContext()));
         menu.findItem(R.id.menu_clear_passphrase).setVisible(!TextSecurePreferences.isPasswordDisabled(requireContext()));
     }
 
@@ -935,10 +936,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }
 
     private void onProxyStatusClicked() {
-        Intent intent = new Intent(requireContext(), ApplicationPreferencesActivity.class);
-        intent.putExtra(ApplicationPreferencesActivity.LAUNCH_TO_PROXY_FRAGMENT, true);
-
-        startActivity(intent);
+        startActivity(AppSettingsActivity.proxy(requireContext()));
     }
 
     protected void onPostSubmitList(int conversationCount) {

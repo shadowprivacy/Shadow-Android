@@ -183,11 +183,9 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
     primaryToolbar.getNavigationIcon().setColorFilter(null);
     primaryToolbar.setTitleTextColor(ContextCompat.getColor(this, R.color.signal_text_primary));
 
-    if (Build.VERSION.SDK_INT >= 23) {
-      WindowUtil.setStatusBarColor(getWindow(), ThemeUtil.getThemedColor(this, android.R.attr.statusBarColor));
-      getWindow().setNavigationBarColor(ThemeUtil.getThemedColor(this, android.R.attr.navigationBarColor));
-      WindowUtil.setLightStatusBarFromTheme(this);
-    }
+    WindowUtil.setStatusBarColor(getWindow(), ThemeUtil.getThemedColor(this, android.R.attr.statusBarColor));
+    getWindow().setNavigationBarColor(ThemeUtil.getThemedColor(this, android.R.attr.navigationBarColor));
+    WindowUtil.setLightStatusBarFromTheme(this);
 
     WindowUtil.setLightNavigationBarFromTheme(this);
   }
@@ -197,10 +195,8 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
     primaryToolbar.getNavigationIcon().setColorFilter(ContextCompat.getColor(this, R.color.signal_text_toolbar_subtitle), PorterDuff.Mode.SRC_IN);
     primaryToolbar.setTitleTextColor(ContextCompat.getColor(this, R.color.signal_text_toolbar_title));
 
-    if (Build.VERSION.SDK_INT >= 23) {
-      WindowUtil.setStatusBarColor(getWindow(), ContextCompat.getColor(this, R.color.core_ultramarine));
-      WindowUtil.clearLightStatusBar(getWindow());
-    }
+    WindowUtil.setStatusBarColor(getWindow(), ContextCompat.getColor(this, R.color.core_ultramarine));
+    WindowUtil.clearLightStatusBar(getWindow());
 
     if (Build.VERSION.SDK_INT >= 27) {
       getWindow().setNavigationBarColor(ContextCompat.getColor(this, R.color.core_ultramarine));

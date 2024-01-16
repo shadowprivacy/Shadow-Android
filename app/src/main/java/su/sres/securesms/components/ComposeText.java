@@ -39,6 +39,7 @@ import java.util.Objects;
 import su.sres.securesms.R;
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.components.emoji.EmojiEditText;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.StringUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -201,7 +202,7 @@ public class ComposeText extends EmojiEditText {
   }
 
   public void setTransport(TransportOption transport) {
-    final boolean useSystemEmoji = TextSecurePreferences.isSystemEmojiPreferred(getContext());
+    final boolean useSystemEmoji = SignalStore.settings().isPreferSystemEmoji();
 
     int imeOptions = (getImeOptions() & ~EditorInfo.IME_MASK_ACTION) | EditorInfo.IME_ACTION_SEND;
     int inputType  = getInputType();
@@ -225,7 +226,7 @@ public class ComposeText extends EmojiEditText {
   public InputConnection onCreateInputConnection(EditorInfo editorInfo) {
     InputConnection inputConnection = super.onCreateInputConnection(editorInfo);
 
-    if(TextSecurePreferences.isEnterSendsEnabled(getContext())) {
+    if(SignalStore.settings().isEnterKeySends()) {
       editorInfo.imeOptions &= ~EditorInfo.IME_FLAG_NO_ENTER_ACTION;
     }
 

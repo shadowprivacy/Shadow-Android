@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import su.sres.securesms.components.settings.app.AppSettingsActivity;
 import su.sres.securesms.conversation.ConversationActivity;
 import su.sres.securesms.conversation.ConversationIntents;
 import su.sres.securesms.conversationlist.ConversationListArchiveFragment;
@@ -70,8 +71,7 @@ public class MainNavigator {
     }
 
     public void goToAppSettings() {
-        Intent intent = new Intent(activity, ApplicationPreferencesActivity.class);
-        activity.startActivityForResult(intent, REQUEST_CONFIG_CHANGES);
+        activity.startActivityForResult(AppSettingsActivity.home(activity), REQUEST_CONFIG_CHANGES);
     }
 
 

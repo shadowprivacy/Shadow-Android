@@ -15,6 +15,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.notifications.DoNotDisturbUtil;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.ringrtc.CallState;
@@ -167,15 +168,15 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
         }
 
         webRtcInteractor.initializeAudioForCall();
-        if (shouldDisturbUserWithCall && TextSecurePreferences.isCallNotificationsEnabled(context)) {
+        if (shouldDisturbUserWithCall && SignalStore.settings().isCallNotificationsEnabled()) {
             Uri                            ringtone     = recipient.resolve().getCallRingtone();
             RecipientDatabase.VibrateState vibrateState = recipient.resolve().getCallVibrate();
 
             if (ringtone == null) {
-                ringtone = TextSecurePreferences.getCallNotificationRingtone(context);
+                ringtone = SignalStore.settings().getCallRingtone();
             }
 
-            webRtcInteractor.startIncomingRinger(ringtone, vibrateState == RecipientDatabase.VibrateState.ENABLED || (vibrateState == RecipientDatabase.VibrateState.DEFAULT && TextSecurePreferences.isCallNotificationVibrateEnabled(context)));
+            webRtcInteractor.startIncomingRinger(ringtone, vibrateState == RecipientDatabase.VibrateState.ENABLED || (vibrateState == RecipientDatabase.VibrateState.DEFAULT && SignalStore.settings().isCallVibrateEnabled()));
         }
 
         webRtcInteractor.setCallInProgressNotification(TYPE_INCOMING_RINGING, activePeer);

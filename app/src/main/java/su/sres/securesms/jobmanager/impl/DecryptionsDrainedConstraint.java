@@ -10,7 +10,7 @@ import su.sres.securesms.jobmanager.Constraint;
 
 /**
  * A constraint that is met once we have pulled down and decrypted all messages from the websocket
- * during initial load. See {@link org.thoughtcrime.securesms.messages.IncomingMessageObserver}.
+ * during initial load. See {@link su.sres.securesms.messages.IncomingMessageObserver}.
  */
 public final class DecryptionsDrainedConstraint implements Constraint {
 

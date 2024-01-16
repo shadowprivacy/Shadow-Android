@@ -13,11 +13,15 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.jobmanager.impl.DecryptionsDrainedConstraint;
+import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.transport.RetryLaterException;
+
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
@@ -33,20 +37,23 @@ import java.util.concurrent.TimeUnit;
 
 public class ProfileKeySendJob extends BaseJob {
 
-    private static final String TAG            = Log.tag(ProfileKeySendJob.class);
+    private static final String TAG = Log.tag(ProfileKeySendJob.class);
     private static final String KEY_RECIPIENTS = "recipients";
-    private static final String KEY_THREAD     = "thread";
+    private static final String KEY_THREAD = "thread";
 
     public static final String KEY = "ProfileKeySendJob";
 
-    private final long              threadId;
+    private final long threadId;
     private final List<RecipientId> recipients;
 
     /**
      * Suitable for a 1:1 conversation or a GV1 group only.
+     *
+     * @param queueLimits True if you only want one of these to be run per person after decryptions
+     *                    are drained, otherwise false.
      */
     @WorkerThread
-    public static ProfileKeySendJob create(@NonNull Context context, long threadId) {
+    public static ProfileKeySendJob create(@NonNull Context context, long threadId, boolean queueLimits) {
         Recipient conversationRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
 
         if (conversationRecipient == null) {
@@ -62,16 +69,27 @@ public class ProfileKeySendJob extends BaseJob {
 
         recipients.remove(Recipient.self().getId());
 
-        return new ProfileKeySendJob(new Parameters.Builder()
-                .setQueue(conversationRecipient.getId().toQueueKey())
-                .setLifespan(TimeUnit.DAYS.toMillis(1))
-                .setMaxAttempts(Parameters.UNLIMITED)
-                .build(), threadId, recipients);
+        if (queueLimits) {
+            return new ProfileKeySendJob(new Parameters.Builder()
+                    .setQueue(conversationRecipient.getId().toQueueKey())
+                    .addConstraint(NetworkConstraint.KEY)
+                    .setLifespan(TimeUnit.DAYS.toMillis(1))
+                    .setMaxAttempts(Parameters.UNLIMITED)
+                    .build(), threadId, recipients);
+        } else {
+            return new ProfileKeySendJob(new Parameters.Builder()
+                    .setQueue("ProfileKeySendJob_" + conversationRecipient.getId().toQueueKey())
+                    .addConstraint(NetworkConstraint.KEY)
+                    .addConstraint(DecryptionsDrainedConstraint.KEY)
+                    .setLifespan(TimeUnit.DAYS.toMillis(1))
+                    .setMaxAttempts(Parameters.UNLIMITED)
+                    .build(), threadId, recipients);
+        }
     }
 
     private ProfileKeySendJob(@NonNull Parameters parameters, long threadId, @NonNull List<RecipientId> recipients) {
         super(parameters);
-        this.threadId   = threadId;
+        this.threadId = threadId;
         this.recipients = recipients;
     }
 
@@ -85,7 +103,7 @@ public class ProfileKeySendJob extends BaseJob {
         }
 
         List<Recipient> destinations = Stream.of(recipients).map(Recipient::resolved).toList();
-        List<Recipient> completions  = deliver(conversationRecipient, destinations);
+        List<Recipient> completions = deliver(conversationRecipient, destinations);
 
         for (Recipient completion : completions) {
             recipients.remove(completion.getId());
@@ -125,10 +143,10 @@ public class ProfileKeySendJob extends BaseJob {
     }
 
     private List<Recipient> deliver(@NonNull Recipient conversationRecipient, @NonNull List<Recipient> destinations) throws IOException, UntrustedIdentityException {
-        SignalServiceMessageSender             messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-        List<SignalServiceAddress>             addresses          = RecipientUtil.toSignalServiceAddressesFromResolved(context, destinations);
+        SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
+        List<SignalServiceAddress> addresses = RecipientUtil.toSignalServiceAddressesFromResolved(context, destinations);
         List<Optional<UnidentifiedAccessPair>> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, destinations);
-        SignalServiceDataMessage.Builder       dataMessage        = SignalServiceDataMessage.newBuilder()
+        SignalServiceDataMessage.Builder dataMessage = SignalServiceDataMessage.newBuilder()
                 .asProfileKeyUpdate(true)
                 .withTimestamp(System.currentTimeMillis())
                 .withProfileKey(Recipient.self().resolve().getProfileKey());
@@ -146,7 +164,7 @@ public class ProfileKeySendJob extends BaseJob {
 
         @Override
         public @NonNull ProfileKeySendJob create(@NonNull Parameters parameters, @NonNull Data data) {
-            long              threadId   = data.getLong(KEY_THREAD);
+            long threadId = data.getLong(KEY_THREAD);
             List<RecipientId> recipients = RecipientId.fromSerializedList(data.getString(KEY_RECIPIENTS));
 
             return new ProfileKeySendJob(parameters, threadId, recipients);

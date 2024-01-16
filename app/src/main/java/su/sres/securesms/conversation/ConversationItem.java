@@ -124,7 +124,6 @@ import su.sres.securesms.util.InterceptableLongClickCopyLinkSpan;
 import su.sres.securesms.util.LongClickMovementMethod;
 import su.sres.securesms.util.SearchUtil;
 import su.sres.securesms.util.StringUtil;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.UrlClickHandler;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.VibrateUtil;
@@ -653,7 +652,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   {
     bodyText.setClickable(false);
     bodyText.setFocusable(false);
-    bodyText.setTextSize(TypedValue.COMPLEX_UNIT_SP, TextSecurePreferences.getMessageBodyTextSize(context));
+    bodyText.setTextSize(TypedValue.COMPLEX_UNIT_SP, SignalStore.settings().getMessageFontSize());
     bodyText.setMovementMethod(LongClickMovementMethod.getInstance(getContext()));
 
     if (messageRecord.isRemoteDelete()) {

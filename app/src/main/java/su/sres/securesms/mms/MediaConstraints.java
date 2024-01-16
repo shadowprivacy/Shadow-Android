@@ -6,6 +6,8 @@ import android.os.Build;
 
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import su.sres.core.util.logging.Log;
 import android.util.Pair;
 
@@ -23,7 +25,11 @@ public abstract class MediaConstraints {
   private static final String TAG = Log.tag(MediaConstraints.class);
 
   public static MediaConstraints getPushMediaConstraints() {
-    return new PushMediaConstraints();
+    return getPushMediaConstraints(null);
+  }
+
+  public static MediaConstraints getPushMediaConstraints(@Nullable SentMediaQuality sentMediaQuality) {
+    return new PushMediaConstraints(sentMediaQuality);
   }
 
   public static MediaConstraints getMmsMediaConstraints(int subscriptionId) {

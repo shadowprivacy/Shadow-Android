@@ -43,7 +43,6 @@ import su.sres.securesms.jobs.ResumableUploadSpecJob;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.core.util.logging.Log;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
@@ -90,7 +89,7 @@ public class MessageSender {
    */
   @WorkerThread
   public static void sendProfileKey(final Context context, final long threadId) {
-    ApplicationDependencies.getJobManager().add(ProfileKeySendJob.create(context, threadId));
+    ApplicationDependencies.getJobManager().add(ProfileKeySendJob.create(context, threadId, false));
   }
 
   public static long send(final Context context,

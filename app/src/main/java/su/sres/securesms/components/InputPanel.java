@@ -33,6 +33,7 @@ import su.sres.securesms.components.emoji.EmojiToggle;
 import su.sres.securesms.components.emoji.MediaKeyboard;
 import su.sres.securesms.conversation.ConversationStickerSuggestionAdapter;
 import su.sres.securesms.database.model.StickerRecord;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.linkpreview.LinkPreviewRepository;
 import su.sres.core.util.logging.Log;
@@ -125,7 +126,7 @@ public class InputPanel extends LinearLayout
 
     this.recordLockCancel.setOnClickListener(v -> microphoneRecorderView.cancelAction());
 
-    if (TextSecurePreferences.isSystemEmojiPreferred(getContext())) {
+    if (SignalStore.settings().isPreferSystemEmoji()) {
       mediaKeyboard.setVisibility(View.GONE);
       emojiVisible = false;
     } else {

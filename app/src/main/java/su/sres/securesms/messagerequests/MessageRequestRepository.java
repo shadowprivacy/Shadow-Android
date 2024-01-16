@@ -19,6 +19,7 @@ import su.sres.securesms.groups.GroupManager;
 import su.sres.securesms.groups.ui.GroupChangeErrorCallback;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.jobs.MultiDeviceMessageRequestResponseJob;
+import su.sres.securesms.jobs.ReportSpamJob;
 import su.sres.securesms.jobs.SendViewedReceiptJob;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.notifications.MarkReadReceiver;
@@ -40,251 +41,251 @@ import java.util.concurrent.Executor;
 
 final class MessageRequestRepository {
 
-    private static final String TAG = Log.tag(MessageRequestRepository.class);
+  private static final String TAG = Log.tag(MessageRequestRepository.class);
 
-    private final Context  context;
-    private final Executor executor;
+  private final Context  context;
+  private final Executor executor;
 
-    MessageRequestRepository(@NonNull Context context) {
-        this.context  = context.getApplicationContext();
-        this.executor = SignalExecutors.BOUNDED;
-    }
+  MessageRequestRepository(@NonNull Context context) {
+    this.context  = context.getApplicationContext();
+    this.executor = SignalExecutors.BOUNDED;
+  }
 
-    void getGroups(@NonNull RecipientId recipientId, @NonNull Consumer<List<String>> onGroupsLoaded) {
-        executor.execute(() -> {
-            GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
-            onGroupsLoaded.accept(groupDatabase.getPushGroupNamesContainingMember(recipientId));
-        });
-    }
+  void getGroups(@NonNull RecipientId recipientId, @NonNull Consumer<List<String>> onGroupsLoaded) {
+    executor.execute(() -> {
+      GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
+      onGroupsLoaded.accept(groupDatabase.getPushGroupNamesContainingMember(recipientId));
+    });
+  }
 
-    void getMemberCount(@NonNull RecipientId recipientId, @NonNull Consumer<GroupMemberCount> onMemberCountLoaded) {
-        executor.execute(() -> {
-            GroupDatabase                       groupDatabase = DatabaseFactory.getGroupDatabase(context);
-            Optional<GroupDatabase.GroupRecord> groupRecord   = groupDatabase.getGroup(recipientId);
-            onMemberCountLoaded.accept(groupRecord.transform(record -> {
-                if (record.isV2Group()) {
-                    DecryptedGroup decryptedGroup = record.requireV2GroupProperties().getDecryptedGroup();
-                    return new GroupMemberCount(decryptedGroup.getMembersCount(), decryptedGroup.getPendingMembersCount());
-                } else {
-                    return new GroupMemberCount(record.getMembers().size(), 0);
-                }
-            }).or(GroupMemberCount.ZERO));
-        });
-    }
-
-    @WorkerThread
-    @NonNull MessageRequestState getMessageRequestState(@NonNull Recipient recipient, long threadId) {
-        if (recipient.isBlocked()) {
-            if (recipient.isGroup()) {
-                return MessageRequestState.BLOCKED_GROUP;
-            } else {
-                return MessageRequestState.BLOCKED_INDIVIDUAL;
-            }
-        } else if (threadId <= 0) {
-            return MessageRequestState.NONE;
-        } else if (recipient.isPushV2Group()) {
-            switch (getGroupMemberLevel(recipient.getId())) {
-                case NOT_A_MEMBER:
-                    return MessageRequestState.NONE;
-                case PENDING_MEMBER:
-                    return MessageRequestState.GROUP_V2_INVITE;
-                default:
-                    if (RecipientUtil.isMessageRequestAccepted(context, threadId)) {
-                        return MessageRequestState.NONE;
-                    } else {
-                        return MessageRequestState.GROUP_V2_ADD;
-                    }
-            }
-        } else if (!RecipientUtil.isLegacyProfileSharingAccepted(recipient) && isLegacyThread(recipient)) {
-            if (recipient.isGroup()) {
-                return MessageRequestState.LEGACY_GROUP_V1;
-            } else {
-                return MessageRequestState.LEGACY_INDIVIDUAL;
-            }
-        } else if (recipient.isPushV1Group()) {
-            if (RecipientUtil.isMessageRequestAccepted(context, threadId)) {
-                if (FeatureFlags.groupsV1ForcedMigration()) {
-                    if (recipient.getParticipants().size() > FeatureFlags.groupLimits().getHardLimit()) {
-                        return MessageRequestState.DEPRECATED_GROUP_V1_TOO_LARGE;
-                    } else {
-                        return MessageRequestState.DEPRECATED_GROUP_V1;
-                    }
-                } else {
-                    return MessageRequestState.NONE;
-                }
-            } else if (!recipient.isActiveGroup()) {
-                return MessageRequestState.NONE;
-            } else {
-                return MessageRequestState.GROUP_V1;
-            }
+  void getGroupInfo(@NonNull RecipientId recipientId, @NonNull Consumer<GroupInfo> onGroupInfoLoaded) {
+    executor.execute(() -> {
+      GroupDatabase                       groupDatabase = DatabaseFactory.getGroupDatabase(context);
+      Optional<GroupDatabase.GroupRecord> groupRecord   = groupDatabase.getGroup(recipientId);
+      onGroupInfoLoaded.accept(groupRecord.transform(record -> {
+        if (record.isV2Group()) {
+          DecryptedGroup decryptedGroup = record.requireV2GroupProperties().getDecryptedGroup();
+          return new GroupInfo(decryptedGroup.getMembersCount(), decryptedGroup.getPendingMembersCount(), decryptedGroup.getDescription());
         } else {
-            if (RecipientUtil.isMessageRequestAccepted(context, threadId)) {
-                return MessageRequestState.NONE;
-            } else {
-                return MessageRequestState.INDIVIDUAL;
-            }
+          return new GroupInfo(record.getMembers().size(), 0, "");
         }
+      }).or(GroupInfo.ZERO));
+    });
+  }
+
+  @WorkerThread
+  @NonNull MessageRequestState getMessageRequestState(@NonNull Recipient recipient, long threadId) {
+    if (recipient.isBlocked()) {
+      if (recipient.isGroup()) {
+        return MessageRequestState.BLOCKED_GROUP;
+      } else {
+        return MessageRequestState.BLOCKED_INDIVIDUAL;
+      }
+    } else if (threadId <= 0) {
+      return MessageRequestState.NONE;
+    } else if (recipient.isPushV2Group()) {
+      switch (getGroupMemberLevel(recipient.getId())) {
+        case NOT_A_MEMBER:
+          return MessageRequestState.NONE;
+        case PENDING_MEMBER:
+          return MessageRequestState.GROUP_V2_INVITE;
+        default:
+          if (RecipientUtil.isMessageRequestAccepted(context, threadId)) {
+            return MessageRequestState.NONE;
+          } else {
+            return MessageRequestState.GROUP_V2_ADD;
+          }
+      }
+    } else if (!RecipientUtil.isLegacyProfileSharingAccepted(recipient) && isLegacyThread(recipient)) {
+      if (recipient.isGroup()) {
+        return MessageRequestState.LEGACY_GROUP_V1;
+      } else {
+        return MessageRequestState.LEGACY_INDIVIDUAL;
+      }
+    } else if (recipient.isPushV1Group()) {
+      if (RecipientUtil.isMessageRequestAccepted(context, threadId)) {
+        if (FeatureFlags.groupsV1ForcedMigration()) {
+          if (recipient.getParticipants().size() > FeatureFlags.groupLimits().getHardLimit()) {
+            return MessageRequestState.DEPRECATED_GROUP_V1_TOO_LARGE;
+          } else {
+            return MessageRequestState.DEPRECATED_GROUP_V1;
+          }
+        } else {
+          return MessageRequestState.NONE;
+        }
+      } else if (!recipient.isActiveGroup()) {
+        return MessageRequestState.NONE;
+      } else {
+        return MessageRequestState.GROUP_V1;
+      }
+    } else {
+      if (RecipientUtil.isMessageRequestAccepted(context, threadId)) {
+        return MessageRequestState.NONE;
+      } else {
+        return MessageRequestState.INDIVIDUAL;
+      }
     }
+  }
 
-    void acceptMessageRequest(@NonNull LiveRecipient liveRecipient,
-                              long threadId,
-                              @NonNull Runnable onMessageRequestAccepted,
-                              @NonNull GroupChangeErrorCallback error)
-    {
-        executor.execute(()-> {
-            if (liveRecipient.get().isPushV2Group()) {
-                try {
-                    Log.i(TAG, "GV2 accepting invite");
-                    GroupManager.acceptInvite(context, liveRecipient.get().requireGroupId().requireV2());
+  void acceptMessageRequest(@NonNull LiveRecipient liveRecipient,
+                            long threadId,
+                            @NonNull Runnable onMessageRequestAccepted,
+                            @NonNull GroupChangeErrorCallback error)
+  {
+    executor.execute(() -> {
+      if (liveRecipient.get().isPushV2Group()) {
+        try {
+          Log.i(TAG, "GV2 accepting invite");
+          GroupManager.acceptInvite(context, liveRecipient.get().requireGroupId().requireV2());
 
-                    RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-                    recipientDatabase.setProfileSharing(liveRecipient.getId(), true);
+          RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+          recipientDatabase.setProfileSharing(liveRecipient.getId(), true);
 
-                    onMessageRequestAccepted.run();
-                } catch (GroupChangeException | IOException e) {
-                    Log.w(TAG, e);
-                    error.onError(GroupChangeFailureReason.fromException(e));
-                }
-            } else {
-                RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-                recipientDatabase.setProfileSharing(liveRecipient.getId(), true);
+          onMessageRequestAccepted.run();
+        } catch (GroupChangeException | IOException e) {
+          Log.w(TAG, e);
+          error.onError(GroupChangeFailureReason.fromException(e));
+        }
+      } else {
+        RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+        recipientDatabase.setProfileSharing(liveRecipient.getId(), true);
 
-                MessageSender.sendProfileKey(context, threadId);
+        MessageSender.sendProfileKey(context, threadId);
 
-                List<MessageDatabase.MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context)
-                        .setEntireThreadRead(threadId);
-                ApplicationDependencies.getMessageNotifier().updateNotification(context);
-                MarkReadReceiver.process(context, messageIds);
+        List<MessageDatabase.MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context)
+                                                                            .setEntireThreadRead(threadId);
+        ApplicationDependencies.getMessageNotifier().updateNotification(context);
+        MarkReadReceiver.process(context, messageIds);
 
-                List<MessageDatabase.MarkedMessageInfo> viewedInfos = DatabaseFactory.getMmsDatabase(context)
-                        .getViewedIncomingMessages(threadId);
+        List<MessageDatabase.MarkedMessageInfo> viewedInfos = DatabaseFactory.getMmsDatabase(context)
+                                                                             .getViewedIncomingMessages(threadId);
 
-                ApplicationDependencies.getJobManager()
-                        .add(new SendViewedReceiptJob(threadId,
-                                liveRecipient.getId(),
-                                Stream.of(viewedInfos)
-                                        .map(info -> info.getSyncMessageId().getTimetamp())
-                                        .toList()));
+        ApplicationDependencies.getJobManager()
+                               .add(new SendViewedReceiptJob(threadId,
+                                                             liveRecipient.getId(),
+                                                             Stream.of(viewedInfos)
+                                                                   .map(info -> info.getSyncMessageId().getTimetamp())
+                                                                   .toList()));
 
-                if (TextSecurePreferences.isMultiDevice(context)) {
-                    ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(liveRecipient.getId()));
-                }
+        if (TextSecurePreferences.isMultiDevice(context)) {
+          ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(liveRecipient.getId()));
+        }
 
-                onMessageRequestAccepted.run();
-            }
-        });
-    }
+        onMessageRequestAccepted.run();
+      }
+    });
+  }
 
-    void deleteMessageRequest(@NonNull LiveRecipient recipient,
-                              long threadId,
-                              @NonNull Runnable onMessageRequestDeleted,
-                              @NonNull GroupChangeErrorCallback error)
-    {
-        executor.execute(() -> {
-            Recipient resolved = recipient.resolve();
+  void deleteMessageRequest(@NonNull LiveRecipient recipient,
+                            long threadId,
+                            @NonNull Runnable onMessageRequestDeleted,
+                            @NonNull GroupChangeErrorCallback error)
+  {
+    executor.execute(() -> {
+      Recipient resolved = recipient.resolve();
 
-            if (resolved.isGroup() && resolved.requireGroupId().isPush()) {
-                try {
-                    GroupManager.leaveGroupFromBlockOrMessageRequest(context, resolved.requireGroupId().requirePush());
-                } catch (GroupChangeException | IOException e) {
-                    Log.w(TAG, e);
-                    error.onError(GroupChangeFailureReason.fromException(e));
-                    return;
-                }
-            }
+      if (resolved.isGroup() && resolved.requireGroupId().isPush()) {
+        try {
+          GroupManager.leaveGroupFromBlockOrMessageRequest(context, resolved.requireGroupId().requirePush());
+        } catch (GroupChangeException | IOException e) {
+          Log.w(TAG, e);
+          error.onError(GroupChangeFailureReason.fromException(e));
+          return;
+        }
+      }
 
-            if (TextSecurePreferences.isMultiDevice(context)) {
-                ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forDelete(recipient.getId()));
-            }
+      if (TextSecurePreferences.isMultiDevice(context)) {
+        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forDelete(recipient.getId()));
+      }
 
-            ThreadDatabase threadDatabase = DatabaseFactory.getThreadDatabase(context);
-            threadDatabase.deleteConversation(threadId);
+      ThreadDatabase threadDatabase = DatabaseFactory.getThreadDatabase(context);
+      threadDatabase.deleteConversation(threadId);
 
-            onMessageRequestDeleted.run();
-        });
-    }
+      onMessageRequestDeleted.run();
+    });
+  }
 
-    void blockMessageRequest(@NonNull LiveRecipient liveRecipient,
-                             @NonNull Runnable onMessageRequestBlocked,
-                             @NonNull GroupChangeErrorCallback error)
-    {
-        executor.execute(() -> {
-            Recipient recipient = liveRecipient.resolve();
-            try {
-                RecipientUtil.block(context, recipient);
-            } catch (GroupChangeException | IOException e) {
-                Log.w(TAG, e);
-                error.onError(GroupChangeFailureReason.fromException(e));
-                return;
-            }
-            liveRecipient.refresh();
+  void blockMessageRequest(@NonNull LiveRecipient liveRecipient,
+                           @NonNull Runnable onMessageRequestBlocked,
+                           @NonNull GroupChangeErrorCallback error)
+  {
+    executor.execute(() -> {
+      Recipient recipient = liveRecipient.resolve();
+      try {
+        RecipientUtil.block(context, recipient);
+      } catch (GroupChangeException | IOException e) {
+        Log.w(TAG, e);
+        error.onError(GroupChangeFailureReason.fromException(e));
+        return;
+      }
+      liveRecipient.refresh();
 
-            if (TextSecurePreferences.isMultiDevice(context)) {
-                ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forBlock(liveRecipient.getId()));
-            }
+      if (TextSecurePreferences.isMultiDevice(context)) {
+        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forBlock(liveRecipient.getId()));
+      }
 
-            onMessageRequestBlocked.run();
-        });
-    }
+      onMessageRequestBlocked.run();
+    });
+  }
 
-    void blockAndDeleteMessageRequest(@NonNull LiveRecipient liveRecipient,
-                                      long threadId,
-                                      @NonNull Runnable onMessageRequestBlocked,
-                                      @NonNull GroupChangeErrorCallback error)
-    {
-        executor.execute(() -> {
-            Recipient recipient = liveRecipient.resolve();
-            try{
-                RecipientUtil.block(context, recipient);
-            } catch (GroupChangeException | IOException e) {
-                Log.w(TAG, e);
-                error.onError(GroupChangeFailureReason.fromException(e));
-                return;
-            }
-            liveRecipient.refresh();
+  void blockAndReportSpamMessageRequest(@NonNull LiveRecipient liveRecipient,
+                                        long threadId,
+                                        @NonNull Runnable onMessageRequestBlocked,
+                                        @NonNull GroupChangeErrorCallback error)
+  {
+    executor.execute(() -> {
+      Recipient recipient = liveRecipient.resolve();
+      try {
+        RecipientUtil.block(context, recipient);
+      } catch (GroupChangeException | IOException e) {
+        Log.w(TAG, e);
+        error.onError(GroupChangeFailureReason.fromException(e));
+        return;
+      }
+      liveRecipient.refresh();
 
-            DatabaseFactory.getThreadDatabase(context).deleteConversation(threadId);
+      ApplicationDependencies.getJobManager().add(new ReportSpamJob(threadId, System.currentTimeMillis()));
 
-            if (TextSecurePreferences.isMultiDevice(context)) {
-                ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forBlockAndDelete(liveRecipient.getId()));
-            }
+      if (TextSecurePreferences.isMultiDevice(context)) {
+        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forBlockAndReportSpam(liveRecipient.getId()));
+      }
 
-            onMessageRequestBlocked.run();
-        });
-    }
+      onMessageRequestBlocked.run();
+    });
+  }
 
-    void unblockAndAccept(@NonNull LiveRecipient liveRecipient, long threadId, @NonNull Runnable onMessageRequestUnblocked) {
-        executor.execute(() -> {
-            Recipient recipient = liveRecipient.resolve();
+  void unblockAndAccept(@NonNull LiveRecipient liveRecipient, long threadId, @NonNull Runnable onMessageRequestUnblocked) {
+    executor.execute(() -> {
+      Recipient recipient = liveRecipient.resolve();
 
-            RecipientUtil.unblock(context, recipient);
+      RecipientUtil.unblock(context, recipient);
 
-            List<MessageDatabase.MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context)
-                    .setEntireThreadRead(threadId);
-            ApplicationDependencies.getMessageNotifier().updateNotification(context);
-            MarkReadReceiver.process(context, messageIds);
+      List<MessageDatabase.MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context)
+                                                                          .setEntireThreadRead(threadId);
+      ApplicationDependencies.getMessageNotifier().updateNotification(context);
+      MarkReadReceiver.process(context, messageIds);
 
-            if (TextSecurePreferences.isMultiDevice(context)) {
-                ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(liveRecipient.getId()));
-            }
+      if (TextSecurePreferences.isMultiDevice(context)) {
+        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(liveRecipient.getId()));
+      }
 
-            onMessageRequestUnblocked.run();
-        });
-    }
+      onMessageRequestUnblocked.run();
+    });
+  }
 
-    private GroupDatabase.MemberLevel getGroupMemberLevel(@NonNull RecipientId recipientId) {
-        return DatabaseFactory.getGroupDatabase(context)
-                .getGroup(recipientId)
-                .transform(g -> g.memberLevel(Recipient.self()))
-                .or(GroupDatabase.MemberLevel.NOT_A_MEMBER);
-    }
+  private GroupDatabase.MemberLevel getGroupMemberLevel(@NonNull RecipientId recipientId) {
+    return DatabaseFactory.getGroupDatabase(context)
+                          .getGroup(recipientId)
+                          .transform(g -> g.memberLevel(Recipient.self()))
+                          .or(GroupDatabase.MemberLevel.NOT_A_MEMBER);
+  }
 
-    @WorkerThread
-    private boolean isLegacyThread(@NonNull Recipient recipient) {
-        Context context  = ApplicationDependencies.getApplication();
-        Long    threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient.getId());
+  @WorkerThread
+  private boolean isLegacyThread(@NonNull Recipient recipient) {
+    Context context  = ApplicationDependencies.getApplication();
+    Long    threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient.getId());
 
-        return threadId != null &&
-                (RecipientUtil.hasSentMessageInThread(context, threadId) || RecipientUtil.isPreMessageRequestThread(context, threadId));
-    }
+    return threadId != null &&
+           (RecipientUtil.hasSentMessageInThread(context, threadId) || RecipientUtil.isPreMessageRequestThread(context, threadId));
+  }
 }

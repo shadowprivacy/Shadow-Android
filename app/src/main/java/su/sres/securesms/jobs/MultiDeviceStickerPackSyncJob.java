@@ -17,6 +17,7 @@ import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.messages.multidevice.StickerPackOperationMessage;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -83,6 +84,7 @@ public class MultiDeviceStickerPackSyncJob extends BaseJob  {
 
     @Override
     protected boolean onShouldRetry(@NonNull Exception e) {
+        if (e instanceof ServerRejectedException) return false;
         return e instanceof PushNetworkException;
     }
 

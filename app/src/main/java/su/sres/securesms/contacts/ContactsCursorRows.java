@@ -9,7 +9,6 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.R;
 import su.sres.securesms.database.GroupDatabase;
-import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.recipients.Recipient;
 
 /**
@@ -46,7 +45,7 @@ public final class ContactsCursorRows {
      */
     public static @NonNull Object[] forRecipient(@NonNull Context context, @NonNull Recipient recipient) {
         String stringId = recipient.isGroup() ? recipient.requireGroupId().toString()
-                : recipient.getE164().transform(PhoneNumberFormatter::prettyPrint).or(recipient.getEmail()).or("");
+                : recipient.getE164().or(recipient.getEmail()).or("");
 
         return new Object[]{recipient.getId().serialize(),
                 recipient.getDisplayName(context),

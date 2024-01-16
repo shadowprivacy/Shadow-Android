@@ -18,6 +18,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.contacts.avatars.ContactColors;
 import su.sres.securesms.conversation.ConversationIntents;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -130,7 +131,7 @@ class VoiceNoteNotificationManager {
 
         @Override
         public @Nullable Bitmap getCurrentLargeIcon(Player player, PlayerNotificationManager.BitmapCallback callback) {
-            if (!hasMetadata() || !TextSecurePreferences.getNotificationPrivacy(context).isDisplayContact()) {
+            if (!hasMetadata() || !SignalStore.settings().getMessageNotificationsPrivacy().isDisplayContact()) {
                 cachedBitmap      = null;
                 cachedRecipientId = null;
                 return null;

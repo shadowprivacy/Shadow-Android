@@ -24,6 +24,7 @@ public final class DynamicLanguageContextWrapper {
         base.setLocale(newLocale);
     }
 
+    @SuppressWarnings("deprecated")
     public static @NonNull Locale getUsersSelectedLocale(@NonNull Context context) {
         String language  = TextSecurePreferences.getLanguage(context);
         return LocaleParser.findBestMatchingLocaleForLanguage(language);

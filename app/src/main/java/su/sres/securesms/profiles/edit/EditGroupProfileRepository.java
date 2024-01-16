@@ -17,7 +17,6 @@ import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -80,16 +79,33 @@ class EditGroupProfileRepository implements EditProfileRepository {
     }
 
     @Override
+    public void getCurrentDescription(@NonNull Consumer<String> descriptionConsumer) {
+        SimpleTask.run(() -> {
+            RecipientId recipientId = getRecipientId();
+
+            return DatabaseFactory.getGroupDatabase(context)
+                    .getGroup(recipientId)
+                    .transform(groupRecord -> {
+                        String description = groupRecord.getDescription();
+                        return description == null ? "" : description;
+                    })
+                    .or("");
+        }, descriptionConsumer::accept);
+    }
+
+    @Override
     public void uploadProfile(@NonNull ProfileName profileName,
                               @NonNull String displayName,
                               boolean displayNameChanged,
+                              @NonNull String description,
+                              boolean descriptionChanged,
                               @Nullable byte[] avatar,
                               boolean avatarChanged,
                               @NonNull Consumer<UploadResult> uploadResultConsumer)
     {
         SimpleTask.run(() -> {
             try {
-                GroupManager.updateGroupDetails(context, groupId, avatar, avatarChanged, displayName, displayNameChanged);
+                GroupManager.updateGroupDetails(context, groupId, avatar, avatarChanged, displayName, displayNameChanged, description, descriptionChanged);
 
                 return UploadResult.SUCCESS;
             } catch (GroupChangeException | IOException e) {

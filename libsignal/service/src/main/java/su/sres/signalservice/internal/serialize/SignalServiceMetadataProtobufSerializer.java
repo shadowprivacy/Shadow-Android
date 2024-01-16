@@ -5,26 +5,28 @@ import su.sres.signalservice.internal.serialize.protos.MetadataProto;
 
 public final class SignalServiceMetadataProtobufSerializer {
 
-    private SignalServiceMetadataProtobufSerializer() {
-    }
+  private SignalServiceMetadataProtobufSerializer() {
+  }
 
-    public static MetadataProto toProtobuf(SignalServiceMetadata metadata) {
-        return MetadataProto.newBuilder()
-                .setAddress(SignalServiceAddressProtobufSerializer.toProtobuf(metadata.getSender()))
-                .setSenderDevice(metadata.getSenderDevice())
-                .setNeedsReceipt(metadata.isNeedsReceipt())
-                .setTimestamp(metadata.getTimestamp())
-                .setServerReceivedTimestamp(metadata.getServerReceivedTimestamp())
-                .setServerDeliveredTimestamp(metadata.getServerDeliveredTimestamp())
-                .build();
-    }
+  public static MetadataProto toProtobuf(SignalServiceMetadata metadata) {
+    return MetadataProto.newBuilder()
+                        .setAddress(SignalServiceAddressProtobufSerializer.toProtobuf(metadata.getSender()))
+                        .setSenderDevice(metadata.getSenderDevice())
+                        .setNeedsReceipt(metadata.isNeedsReceipt())
+                        .setTimestamp(metadata.getTimestamp())
+                        .setServerReceivedTimestamp(metadata.getServerReceivedTimestamp())
+                        .setServerDeliveredTimestamp(metadata.getServerDeliveredTimestamp())
+                        .setServerGuid(metadata.getServerGuid())
+                        .build();
+  }
 
-    public static SignalServiceMetadata fromProtobuf(MetadataProto metadata) {
-        return new SignalServiceMetadata(SignalServiceAddressProtobufSerializer.fromProtobuf(metadata.getAddress()),
-                metadata.getSenderDevice(),
-                metadata.getTimestamp(),
-                metadata.getServerReceivedTimestamp(),
-                metadata.getServerDeliveredTimestamp(),
-                metadata.getNeedsReceipt());
-    }
+  public static SignalServiceMetadata fromProtobuf(MetadataProto metadata) {
+    return new SignalServiceMetadata(SignalServiceAddressProtobufSerializer.fromProtobuf(metadata.getAddress()),
+                                     metadata.getSenderDevice(),
+                                     metadata.getTimestamp(),
+                                     metadata.getServerReceivedTimestamp(),
+                                     metadata.getServerDeliveredTimestamp(),
+                                     metadata.getNeedsReceipt(),
+                                     metadata.getServerGuid());
+  }
 }

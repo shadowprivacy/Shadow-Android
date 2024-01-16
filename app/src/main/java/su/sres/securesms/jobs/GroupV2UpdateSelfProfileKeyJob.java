@@ -10,6 +10,7 @@ import su.sres.securesms.groups.GroupManager;
 import su.sres.securesms.groups.GroupNotAMemberException;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.jobmanager.impl.DecryptionsDrainedConstraint;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.core.util.logging.Log;
 import su.sres.signalservice.api.groupsv2.NoCredentialForRedemptionTimeException;
@@ -36,13 +37,32 @@ public final class GroupV2UpdateSelfProfileKeyJob extends BaseJob {
 
     private final GroupId.V2 groupId;
 
-    public GroupV2UpdateSelfProfileKeyJob(@NonNull GroupId.V2 groupId) {
-        this(new Parameters.Builder()
+    /**
+     * Job will run regardless of how many times you enqueue it.
+     */
+    public static @NonNull GroupV2UpdateSelfProfileKeyJob withoutLimits(@NonNull GroupId.V2 groupId) {
+        return new GroupV2UpdateSelfProfileKeyJob(new Parameters.Builder()
                         .addConstraint(NetworkConstraint.KEY)
                         .setLifespan(TimeUnit.DAYS.toMillis(1))
                         .setMaxAttempts(Parameters.UNLIMITED)
                         .setQueue(QUEUE)
                         .build(),
+                groupId);
+    }
+
+    /**
+     * Only one instance will be enqueued per group, and it won't run until after decryptions are
+     * drained.
+     */
+    public static @NonNull GroupV2UpdateSelfProfileKeyJob withQueueLimits(@NonNull GroupId.V2 groupId) {
+        return new GroupV2UpdateSelfProfileKeyJob(new Parameters.Builder()
+                .addConstraint(NetworkConstraint.KEY)
+                .addConstraint(DecryptionsDrainedConstraint.KEY)
+                .setLifespan(TimeUnit.DAYS.toMillis(1))
+                .setMaxAttempts(Parameters.UNLIMITED)
+                .setQueue(QUEUE + "_" + groupId.toString())
+                .setMaxInstancesForQueue(1)
+                .build(),
                 groupId);
     }
 

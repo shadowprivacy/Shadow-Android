@@ -32,7 +32,7 @@ public class TextSecureSessionStore implements SignalServiceSessionStore {
   @Override
   public SessionRecord loadSession(@NonNull SignalProtocolAddress address) {
     try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
-      RecipientId   recipientId   = Recipient.external(context, address.getName()).getId();
+      RecipientId   recipientId   = RecipientId.fromExternalPush(address.getName());
       SessionRecord sessionRecord = DatabaseFactory.getSessionDatabase(context).load(recipientId, address.getDeviceId());
 
       if (sessionRecord == null) {
@@ -47,7 +47,7 @@ public class TextSecureSessionStore implements SignalServiceSessionStore {
   @Override
   public void storeSession(@NonNull SignalProtocolAddress address, @NonNull SessionRecord record) {
     try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
-      RecipientId id = Recipient.external(context, address.getName()).getId();
+      RecipientId id = RecipientId.fromExternalPush(address.getName());
       DatabaseFactory.getSessionDatabase(context).store(id, address.getDeviceId(), record);
     }
   }
@@ -56,12 +56,12 @@ public class TextSecureSessionStore implements SignalServiceSessionStore {
   public boolean containsSession(SignalProtocolAddress address) {
     try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
       if (DatabaseFactory.getRecipientDatabase(context).containsPhoneOrUuid(address.getName())) {
-        RecipientId   recipientId   = Recipient.external(context, address.getName()).getId();
+        RecipientId   recipientId   = RecipientId.fromExternalPush(address.getName());
         SessionRecord sessionRecord = DatabaseFactory.getSessionDatabase(context).load(recipientId, address.getDeviceId());
 
         return sessionRecord != null &&
-                sessionRecord.getSessionState().hasSenderChain() &&
-                sessionRecord.getSessionState().getSessionVersion() == CiphertextMessage.CURRENT_VERSION;
+                sessionRecord.hasSenderChain() &&
+                sessionRecord.getSessionVersion() == CiphertextMessage.CURRENT_VERSION;
       } else {
         return false;
       }
@@ -72,7 +72,7 @@ public class TextSecureSessionStore implements SignalServiceSessionStore {
   public void deleteSession(SignalProtocolAddress address) {
     try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
       if (DatabaseFactory.getRecipientDatabase(context).containsPhoneOrUuid(address.getName())) {
-        RecipientId recipientId = Recipient.external(context, address.getName()).getId();
+        RecipientId   recipientId   = RecipientId.fromExternalPush(address.getName());
         DatabaseFactory.getSessionDatabase(context).delete(recipientId, address.getDeviceId());
       } else {
         Log.w(TAG, "Tried to delete session for " + address.toString() + ", but none existed!");
@@ -84,7 +84,7 @@ public class TextSecureSessionStore implements SignalServiceSessionStore {
   public void deleteAllSessions(String name) {
     try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
       if (DatabaseFactory.getRecipientDatabase(context).containsPhoneOrUuid(name)) {
-        RecipientId recipientId = Recipient.external(context, name).getId();
+        RecipientId recipientId = RecipientId.fromExternalPush(name);
         DatabaseFactory.getSessionDatabase(context).deleteAllFor(recipientId);
       }
     }
@@ -94,7 +94,7 @@ public class TextSecureSessionStore implements SignalServiceSessionStore {
   public List<Integer> getSubDeviceSessions(String name) {
     try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
       if (DatabaseFactory.getRecipientDatabase(context).containsPhoneOrUuid(name)) {
-        RecipientId recipientId = Recipient.external(context, name).getId();
+        RecipientId recipientId = RecipientId.fromExternalPush(name);
         return DatabaseFactory.getSessionDatabase(context).getSubDevices(recipientId);
       } else {
         Log.w(TAG, "Tried to get sub device sessions for " + name + ", but none existed!");
@@ -107,7 +107,7 @@ public class TextSecureSessionStore implements SignalServiceSessionStore {
   public void archiveSession(SignalProtocolAddress address) {
     try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
       if (DatabaseFactory.getRecipientDatabase(context).containsPhoneOrUuid(address.getName())) {
-        RecipientId recipientId = Recipient.external(context, address.getName()).getId();
+        RecipientId recipientId = RecipientId.fromExternalPush(address.getName());
         archiveSession(recipientId, address.getDeviceId());
       }
     }
@@ -126,7 +126,7 @@ public class TextSecureSessionStore implements SignalServiceSessionStore {
   public void archiveSiblingSessions(@NonNull SignalProtocolAddress address) {
     try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
       if (DatabaseFactory.getRecipientDatabase(context).containsPhoneOrUuid(address.getName())) {
-        RecipientId                      recipientId = Recipient.external(context, address.getName()).getId();
+        RecipientId                      recipientId = RecipientId.fromExternalPush(address.getName());
         List<SessionDatabase.SessionRow> sessions    = DatabaseFactory.getSessionDatabase(context).getAllFor(recipientId);
 
         for (SessionDatabase.SessionRow row : sessions) {

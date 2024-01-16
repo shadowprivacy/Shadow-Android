@@ -16,6 +16,7 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.notifications.DefaultMessageNotifier;
 import su.sres.securesms.notifications.NotificationIds;
 import su.sres.securesms.notifications.SingleRecipientNotificationBuilder;
@@ -51,7 +52,7 @@ public final class BubbleUtil {
             return false;
         }
 
-        NotificationPrivacyPreference privacyPreference = TextSecurePreferences.getNotificationPrivacy(context);
+        NotificationPrivacyPreference privacyPreference = SignalStore.settings().getMessageNotificationsPrivacy();
         if (!privacyPreference.isDisplayContact()) {
             Log.i(TAG, "Bubbles are not available when notification privacy settings are enabled.");
             return false;
@@ -90,7 +91,7 @@ public final class BubbleUtil {
                         ApplicationDependencies.getMessageNotifier().updateNotification(context, threadId, BubbleState.SHOWN);
                     } else {
                         Recipient                          recipient = Recipient.resolved(recipientId);
-                        SingleRecipientNotificationBuilder builder   = new SingleRecipientNotificationBuilder(context, TextSecurePreferences.getNotificationPrivacy(context));
+                        SingleRecipientNotificationBuilder builder   = new SingleRecipientNotificationBuilder(context, SignalStore.settings().getMessageNotificationsPrivacy());
 
                         builder.addMessageBody(recipient, recipient, "", System.currentTimeMillis(), null);
                         builder.setThread(recipient);

@@ -5,8 +5,8 @@ import android.content.Intent;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.LocalBackupJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import java.util.concurrent.TimeUnit;
@@ -22,7 +22,7 @@ public class LocalBackupListener extends PersistentAlarmManagerListener {
 
   @Override
   protected long onAlarm(Context context, long scheduledTime) {
-    if (TextSecurePreferences.isBackupEnabled(context)) {
+    if (SignalStore.settings().isBackupEnabled()) {
       LocalBackupJob.enqueue(false);
     }
 
@@ -30,7 +30,7 @@ public class LocalBackupListener extends PersistentAlarmManagerListener {
   }
 
   public static void schedule(Context context) {
-    if (TextSecurePreferences.isBackupEnabled(context)) {
+    if (SignalStore.settings().isBackupEnabled()) {
       new LocalBackupListener().onReceive(context, new Intent());
     }
   }

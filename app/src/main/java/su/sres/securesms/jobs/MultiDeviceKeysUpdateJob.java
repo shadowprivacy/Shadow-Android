@@ -13,6 +13,7 @@ import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
+import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import su.sres.signalservice.api.storage.StorageKey;
 import su.sres.signalservice.api.messages.multidevice.KeysMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
@@ -66,6 +67,7 @@ public class MultiDeviceKeysUpdateJob extends BaseJob {
 
     @Override
     public boolean onShouldRetry(@NonNull Exception e) {
+        if (e instanceof ServerRejectedException) return false;
         return e instanceof PushNetworkException;
     }
 

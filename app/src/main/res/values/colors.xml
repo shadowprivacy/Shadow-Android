@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <resources>
- <!--   <color name="signal_primary">#30b34d</color>
-    <color name="signal_primary_dark">#194B19</color>
-    <color name="signal_primary_alpha33">#B8FDB6</color>
-    <color name="signal_primary_alpha_focus">#66FF99</color> -->
+    <!--   <color name="signal_primary">#30b34d</color>
+       <color name="signal_primary_dark">#194B19</color>
+       <color name="signal_primary_alpha33">#B8FDB6</color>
+       <color name="signal_primary_alpha_focus">#66FF99</color> -->
 
     <color name="white">@color/core_white</color>
     <color name="black">@color/core_black</color>
@@ -19,10 +19,12 @@
     <color name="transparent_black_80">#CC000000</color>
     <color name="transparent_black_90">#e6000000</color>
 
+    <color name="transparent_white_05">#0Dffffff</color>
+    <color name="transparent_white_10">#18ffffff</color>
     <color name="transparent_white_15">#26ffffff</color>
     <color name="transparent_white_20">#33ffffff</color>
     <color name="transparent_white_30">#4Dffffff</color>
-   <color name="transparent_white_40">#66ffffff</color>
+    <color name="transparent_white_40">#66ffffff</color>
     <color name="transparent_white_60">#99ffffff</color>
     <color name="transparent_white_80">#ccffffff</color>
     <color name="transparent_white_90">#e6ffffff</color>

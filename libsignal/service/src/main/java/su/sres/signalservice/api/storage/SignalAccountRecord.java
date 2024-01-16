@@ -109,11 +109,11 @@ public final class SignalAccountRecord implements SignalRecord {
             }
 
             if (!Objects.equals(this.getUserLoginSharingMode(), that.getUserLoginSharingMode())) {
-                diff.add("PhoneNumberSharingMode");
+                diff.add("UserLoginSharingMode");
             }
 
             if (!Objects.equals(this.isUserLoginUnlisted(), that.isUserLoginUnlisted())) {
-                diff.add("PhoneNumberUnlisted");
+                diff.add("UserLoginUnlisted");
             }
 
             if (!Objects.equals(this.pinnedConversations, that.pinnedConversations)) {
@@ -121,7 +121,7 @@ public final class SignalAccountRecord implements SignalRecord {
             }
 
             if (!Objects.equals(this.payments, that.payments)) {
-                diff.add("PreferContactAvatars");
+                diff.add("Payments");
             }
 
             if (!Objects.equals(this.hasUnknownFields(), that.hasUnknownFields())) {

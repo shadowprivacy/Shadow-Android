@@ -8,20 +8,16 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ShareCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
-import androidx.navigation.Navigation;
 
 import com.dd.CircularProgressButton;
 
-import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.contactshare.SimpleTextWatcher;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -31,7 +27,6 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.securesms.util.ShadowProxyUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
-import su.sres.securesms.util.views.LearnMoreTextView;
 import su.sres.signalservice.internal.configuration.ShadowProxy;
 
 public class EditProxyFragment extends Fragment {
@@ -85,7 +80,6 @@ public class EditProxyFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle(R.string.preferences_use_proxy);
         ShadowProxyUtil.startListeningToWebsocket();
     }
 

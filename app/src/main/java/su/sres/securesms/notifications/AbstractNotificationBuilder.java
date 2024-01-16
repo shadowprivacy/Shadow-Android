@@ -13,6 +13,7 @@ import android.text.TextUtils;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -48,8 +49,8 @@ public abstract class AbstractNotificationBuilder extends NotificationCompat.Bui
   }
 
   public void setAlarms(@Nullable Uri ringtone, RecipientDatabase.VibrateState vibrate) {
-    Uri     defaultRingtone = NotificationChannels.supported() ? NotificationChannels.getMessageRingtone(context) : TextSecurePreferences.getNotificationRingtone(context);
-    boolean defaultVibrate  = NotificationChannels.supported() ? NotificationChannels.getMessageVibrate(context)  : TextSecurePreferences.isNotificationVibrateEnabled(context);
+    Uri     defaultRingtone = NotificationChannels.supported() ? NotificationChannels.getMessageRingtone(context) : SignalStore.settings().getMessageNotificationSound();
+    boolean defaultVibrate  = NotificationChannels.supported() ? NotificationChannels.getMessageVibrate(context)  : SignalStore.settings().isMessageVibrateEnabled();
 
     if      (ringtone == null && !TextUtils.isEmpty(defaultRingtone.toString())) setSound(defaultRingtone);
     else if (ringtone != null && !ringtone.toString().isEmpty())                 setSound(ringtone);
@@ -62,8 +63,8 @@ public abstract class AbstractNotificationBuilder extends NotificationCompat.Bui
   }
 
   private void setLed() {
-    String ledColor              = TextSecurePreferences.getNotificationLedColor(context);
-    String ledBlinkPattern       = TextSecurePreferences.getNotificationLedPattern(context);
+    String ledColor              = SignalStore.settings().getMessageLedColor();
+    String ledBlinkPattern       = SignalStore.settings().getMessageLedBlinkPattern();
     String ledBlinkPatternCustom = TextSecurePreferences.getNotificationLedPatternCustom(context);
 
     if (!ledColor.equals("none")) {

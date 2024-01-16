@@ -20,12 +20,7 @@ import android.Manifest;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.MatrixCursor;
-import android.database.MergeCursor;
-import android.provider.ContactsContract;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.loader.content.CursorLoader;
-import android.text.TextUtils;
 
 import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;

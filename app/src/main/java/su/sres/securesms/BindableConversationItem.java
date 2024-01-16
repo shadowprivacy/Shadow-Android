@@ -14,7 +14,6 @@ import su.sres.securesms.conversation.ConversationMessage;
 import su.sres.securesms.database.model.InMemoryMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
-import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.giph.mp4.GiphyMp4Playable;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupMigrationMembershipChange;
@@ -78,6 +77,7 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable {
     void onEnableCallNotificationsClicked();
     void onPlayInlineContent(ConversationMessage conversationMessage);
     void onInMemoryMessageClicked(@NonNull InMemoryMessageRecord messageRecord);
+    void onViewGroupDescriptionChange(@Nullable GroupId groupId, @NonNull String description, boolean isMessageRequestAccepted);
 
     /** @return true if handled, false if you want to let the normal url handling continue */
     boolean onUrlClicked(@NonNull String url);

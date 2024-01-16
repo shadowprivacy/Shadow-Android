@@ -27,6 +27,7 @@ import su.sres.devicetransfer.DeviceToDeviceTransferService;
 import su.sres.devicetransfer.TransferStatus;
 import su.sres.securesms.R;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.registration.viewmodel.RegistrationViewModel;
 import su.sres.securesms.util.BackupUtil;
@@ -187,7 +188,7 @@ public final class WelcomeFragment extends BaseRegistrationFragment {
     private boolean canUserSelectBackup() {
         return BackupUtil.isUserSelectionRequired(requireContext()) &&
                 !isReregister()                                      &&
-                !TextSecurePreferences.isBackupEnabled(requireContext());
+                !SignalStore.settings().isBackupEnabled();
     }
 
     @SuppressLint("NewApi")

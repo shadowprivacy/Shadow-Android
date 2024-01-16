@@ -29,11 +29,10 @@ import java.util.Objects;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.RingtoneUtil;
-import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.ThemeUtil;
 
 public class CustomNotificationsDialogFragment extends DialogFragment {
 
@@ -258,8 +257,8 @@ public class CustomNotificationsDialogFragment extends DialogFragment {
     private Uri defaultSound(boolean calls) {
         Uri defaultValue;
 
-        if (calls) defaultValue = TextSecurePreferences.getCallNotificationRingtone(requireContext());
-        else       defaultValue = TextSecurePreferences.getNotificationRingtone(requireContext());
+        if (calls) defaultValue = SignalStore.settings().getCallRingtone();
+        else       defaultValue = SignalStore.settings().getMessageNotificationSound();
         return defaultValue;
     }
 

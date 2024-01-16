@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.os.AsyncTask;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
@@ -22,7 +21,6 @@ import com.airbnb.lottie.LottieProperty;
 import com.airbnb.lottie.model.KeyPath;
 
 import su.sres.core.util.concurrent.SignalExecutors;
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.model.MessageRecord;

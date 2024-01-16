@@ -1,0 +1,28 @@
+package su.sres.securesms.database;
+
+import org.junit.Test;
+import su.sres.securesms.mms.SentMediaQuality;
+
+import static org.junit.Assert.assertEquals;
+
+public class AttachmentDatabaseTransformPropertiesTest {
+
+    @Test
+    public void transformProperties_verifyStructure() {
+        AttachmentDatabase.TransformProperties properties = AttachmentDatabase.TransformProperties.empty();
+        assertEquals("Added transform property, need to confirm default behavior for pre-existing payloads in database",
+                "{\"skipTransform\":false,\"videoTrim\":false,\"videoTrimStartTimeUs\":0,\"videoTrimEndTimeUs\":0,\"sentMediaQuality\":0,\"videoEdited\":false}",
+                properties.serialize());
+    }
+
+    @Test
+    public void transformProperties_verifyMissingSentMediaQualityDefaultBehavior() {
+        String json = "{\"skipTransform\":false,\"videoTrim\":false,\"videoTrimStartTimeUs\":0,\"videoTrimEndTimeUs\":0,\"videoEdited\":false}";
+
+        AttachmentDatabase.TransformProperties properties = AttachmentDatabase.TransformProperties.parse(json);
+
+        assertEquals(0, properties.getSentMediaQuality());
+        assertEquals(SentMediaQuality.STANDARD, SentMediaQuality.fromCode(properties.getSentMediaQuality()));
+    }
+
+}

@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import android.text.TextUtils;
 import android.transition.TransitionInflater;
@@ -27,6 +28,7 @@ import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.qr.ScanListener;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.DynamicLanguage;
+import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -48,7 +50,7 @@ public class DeviceActivity extends PassphraseRequiredActivity
 
   private static final String TAG = Log.tag(DeviceActivity.class);
 
-  private final DynamicTheme    dynamicTheme    = new DynamicTheme();
+  private final DynamicTheme    dynamicTheme    = new DynamicNoActionBarTheme();
   private final DynamicLanguage dynamicLanguage = new DynamicLanguage();
 
   private DeviceAddFragment  deviceAddFragment;
@@ -63,9 +65,14 @@ public class DeviceActivity extends PassphraseRequiredActivity
 
   @Override
   public void onCreate(Bundle bundle, boolean ready) {
-    getSupportActionBar().setHomeAsUpIndicator(ContextCompat.getDrawable(this, R.drawable.ic_arrow_left_24));
-    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-    getSupportActionBar().setTitle(R.string.AndroidManifest__linked_devices);
+    setContentView(R.layout.device_activity);
+
+    Toolbar toolbar = findViewById(R.id.toolbar);
+
+    setSupportActionBar(toolbar);
+    requireSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    requireSupportActionBar().setTitle(R.string.AndroidManifest__linked_devices);
+
     this.deviceAddFragment  = new DeviceAddFragment();
     this.deviceListFragment = new DeviceListFragment();
     this.deviceLinkFragment = new DeviceLinkFragment();
@@ -74,20 +81,10 @@ public class DeviceActivity extends PassphraseRequiredActivity
     this.deviceAddFragment.setScanListener(this);
 
     if (getIntent().getBooleanExtra("add", false)) {
-      initFragment(android.R.id.content, deviceAddFragment, dynamicLanguage.getCurrentLocale());
+      initFragment(R.id.fragment_container, deviceAddFragment, dynamicLanguage.getCurrentLocale());
     } else {
-      initFragment(android.R.id.content, deviceListFragment, dynamicLanguage.getCurrentLocale());
+      initFragment(R.id.fragment_container, deviceListFragment, dynamicLanguage.getCurrentLocale());
     }
-
-    overridePendingTransition(R.anim.slide_from_end, R.anim.slide_to_start);
-  }
-
-  @Override
-  protected void onPause() {
-    if (isFinishing()) {
-      overridePendingTransition(R.anim.slide_from_start, R.anim.slide_to_end);
-    }
-    super.onPause();
   }
 
   @Override
@@ -99,8 +96,9 @@ public class DeviceActivity extends PassphraseRequiredActivity
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-    switch (item.getItemId()) {
-      case android.R.id.home: finish(); return true;
+    if (item.getItemId() == android.R.id.home) {
+      finish();
+      return true;
     }
 
     return false;
@@ -114,7 +112,7 @@ public class DeviceActivity extends PassphraseRequiredActivity
                .withPermanentDenialDialog(getString(R.string.DeviceActivity_signal_needs_the_camera_permission_in_order_to_scan_a_qr_code))
                .onAllGranted(() -> {
                  getSupportFragmentManager().beginTransaction()
-                                            .replace(android.R.id.content, deviceAddFragment)
+                         .replace(R.id.fragment_container, deviceAddFragment)
                                             .addToBackStack(null)
                                             .commitAllowingStateLoss();
                })
@@ -129,27 +127,18 @@ public class DeviceActivity extends PassphraseRequiredActivity
       Uri uri = Uri.parse(data);
       deviceLinkFragment.setLinkClickedListener(uri, DeviceActivity.this);
 
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-        deviceAddFragment.setSharedElementReturnTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(R.transition.fragment_shared));
-        deviceAddFragment.setExitTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(android.R.transition.fade));
+      deviceAddFragment.setSharedElementReturnTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(R.transition.fragment_shared));
+      deviceAddFragment.setExitTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(android.R.transition.fade));
 
-        deviceLinkFragment.setSharedElementEnterTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(R.transition.fragment_shared));
-        deviceLinkFragment.setEnterTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(android.R.transition.fade));
+      deviceLinkFragment.setSharedElementEnterTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(R.transition.fragment_shared));
+      deviceLinkFragment.setEnterTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(android.R.transition.fade));
 
-        getSupportFragmentManager().beginTransaction()
-                                   .addToBackStack(null)
-                                   .addSharedElement(deviceAddFragment.getDevicesImage(), "devices")
-                                   .replace(android.R.id.content, deviceLinkFragment)
-                                   .commit();
+      getSupportFragmentManager().beginTransaction()
+                                 .addToBackStack(null)
+                                 .addSharedElement(deviceAddFragment.getDevicesImage(), "devices")
+              .replace(R.id.fragment_container, deviceLinkFragment)
+                                 .commit();
 
-      } else {
-        getSupportFragmentManager().beginTransaction()
-                                   .setCustomAnimations(R.anim.slide_from_bottom, R.anim.slide_to_bottom,
-                                                        R.anim.slide_from_bottom, R.anim.slide_to_bottom)
-                                   .replace(android.R.id.content, deviceLinkFragment)
-                                   .addToBackStack(null)
-                                   .commit();
-      }
     });
   }
 

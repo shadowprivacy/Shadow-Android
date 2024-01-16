@@ -23,7 +23,6 @@ import androidx.lifecycle.ViewModelProviders;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import su.sres.securesms.ApplicationPreferencesActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.LabeledEditText;
 import su.sres.securesms.util.SpanUtil;
@@ -56,12 +55,6 @@ public class DeleteAccountFragment extends Fragment {
 
         initializeUserLoginInput();
         confirm.setOnClickListener(unused -> viewModel.submit());
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        ((ApplicationPreferencesActivity) getActivity()).getSupportActionBar().setTitle(R.string.preferences__delete_account);
     }
 
     private void updateBullets(@NonNull Optional<String> formattedBalance) {

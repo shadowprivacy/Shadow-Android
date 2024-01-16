@@ -292,8 +292,11 @@ public class SignalServiceMessageReceiver {
             callback.onMessage(envelope);
             results.add(envelope);
 
-            if (envelope.hasUuid()) socket.acknowledgeMessage(envelope.getUuid());
-            else socket.acknowledgeMessage(entity.getSourceE164(), entity.getTimestamp());
+            if (envelope.hasServerGuid()) {
+                socket.acknowledgeMessage(envelope.getServerGuid());
+            } else {
+                socket.acknowledgeMessage(entity.getSourceE164(), entity.getTimestamp());
+            }
         }
 
         return results;

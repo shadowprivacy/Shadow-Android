@@ -31,7 +31,7 @@ public class DeviceLinkFragment extends Fragment implements View.OnClickListener
   }
 
   @Override
-  public void onConfigurationChanged(Configuration newConfiguration) {
+  public void onConfigurationChanged(@NonNull Configuration newConfiguration) {
     super.onConfigurationChanged(newConfiguration);
     if (newConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
       container.setOrientation(LinearLayout.HORIZONTAL);

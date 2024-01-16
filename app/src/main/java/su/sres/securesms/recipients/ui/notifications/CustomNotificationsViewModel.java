@@ -11,11 +11,10 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import su.sres.securesms.database.RecipientDatabase;
-import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.TextSecurePreferences;
 
 public final class CustomNotificationsViewModel extends ViewModel {
 
@@ -42,7 +41,7 @@ public final class CustomNotificationsViewModel extends ViewModel {
             switch (vibrateState) {
                 case DISABLED: return false;
                 case ENABLED : return true;
-                case DEFAULT : return TextSecurePreferences.isNotificationVibrateEnabled(ApplicationDependencies.getApplication());
+                case DEFAULT : return SignalStore.settings().isMessageVibrateEnabled();
                 default      : throw new AssertionError();
             }
         });

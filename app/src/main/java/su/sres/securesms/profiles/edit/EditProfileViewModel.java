@@ -1,6 +1,5 @@
 package su.sres.securesms.profiles.edit;
 
-import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Consumer;
@@ -13,27 +12,25 @@ import androidx.lifecycle.ViewModelProvider;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.util.StringUtil;
-import su.sres.securesms.util.livedata.LiveDataPair;
 import su.sres.securesms.util.livedata.LiveDataUtil;
-
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Arrays;
 import java.util.Objects;
 
 class EditProfileViewModel extends ViewModel {
 
-    private final MutableLiveData<String>           givenName           = new MutableLiveData<>();
-    private final MutableLiveData<String>           familyName          = new MutableLiveData<>();
-    private final LiveData<String>                  trimmedGivenName    = Transformations.map(givenName, StringUtil::trimToVisualBounds);
-    private final LiveData<String>                  trimmedFamilyName   = Transformations.map(familyName, StringUtil::trimToVisualBounds);
-    private final LiveData<ProfileName>             internalProfileName = LiveDataUtil.combineLatest(trimmedGivenName, trimmedFamilyName, ProfileName::fromParts);
-    private final MutableLiveData<byte[]>           internalAvatar      = new MutableLiveData<>();
-    private final MutableLiveData<byte[]>           originalAvatar      = new MutableLiveData<>();
-    private final MutableLiveData<String>           originalDisplayName = new MutableLiveData<>();
-    private final LiveData<Boolean>                 isFormValid;
-    private final EditProfileRepository repository;
-    private final GroupId groupId;
+    private final MutableLiveData<String> givenName           = new MutableLiveData<>();
+    private final MutableLiveData<String> familyName          = new MutableLiveData<>();
+    private final LiveData<String>        trimmedGivenName    = Transformations.map(givenName, StringUtil::trimToVisualBounds);
+    private final LiveData<String>        trimmedFamilyName   = Transformations.map(familyName, StringUtil::trimToVisualBounds);
+    private final LiveData<ProfileName>   internalProfileName = LiveDataUtil.combineLatest(trimmedGivenName, trimmedFamilyName, ProfileName::fromParts);
+    private final MutableLiveData<byte[]> internalAvatar      = new MutableLiveData<>();
+    private final MutableLiveData<byte[]> originalAvatar      = new MutableLiveData<>();
+    private final MutableLiveData<String> originalDisplayName = new MutableLiveData<>();
+    private final LiveData<Boolean>       isFormValid;
+    private final EditProfileRepository   repository;
+    private final GroupId                 groupId;
+    private       String                  originalDescription;
 
     private EditProfileViewModel(@NonNull EditProfileRepository repository, boolean hasInstanceState, @Nullable GroupId groupId) {
         this.repository  = repository;
@@ -45,6 +42,10 @@ class EditProfileViewModel extends ViewModel {
             if (groupId != null) {
                 repository.getCurrentDisplayName(originalDisplayName::setValue);
                 repository.getCurrentName(givenName::setValue);
+                repository.getCurrentDescription(d -> {
+                    originalDescription = d;
+                    familyName.setValue(d);
+                });
             } else {
                 repository.getCurrentProfileName(name -> {
                     givenName.setValue(name.getGivenName());
@@ -105,6 +106,7 @@ class EditProfileViewModel extends ViewModel {
     public void submitProfile(Consumer<EditProfileRepository.UploadResult> uploadResultConsumer) {
         ProfileName profileName = isGroup() ? ProfileName.EMPTY : internalProfileName.getValue();
         String      displayName = isGroup() ? givenName.getValue() : "";
+        String      description = isGroup() ? familyName.getValue() : "";
 
         if (profileName == null || displayName == null) {
             return;
@@ -113,10 +115,13 @@ class EditProfileViewModel extends ViewModel {
         byte[] oldAvatar      = originalAvatar.getValue();
         byte[] newAvatar      = internalAvatar.getValue();
         String oldDisplayName = isGroup() ? originalDisplayName.getValue() : null;
+        String oldDescription = isGroup() ? originalDescription : null;
 
         repository.uploadProfile(profileName,
                 displayName,
                 !Objects.equals(StringUtil.stripBidiProtection(oldDisplayName), displayName),
+                description,
+                !Objects.equals(StringUtil.stripBidiProtection(oldDescription), description),
                 newAvatar,
                 !Arrays.equals(oldAvatar, newAvatar),
                 uploadResultConsumer);

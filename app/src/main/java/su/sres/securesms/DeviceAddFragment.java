@@ -1,9 +1,7 @@
 package su.sres.securesms;
 
 import android.animation.Animator;
-import android.annotation.TargetApi;
 import android.content.res.Configuration;
-import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import android.view.LayoutInflater;
@@ -41,22 +39,18 @@ public class DeviceAddFragment extends LoggingFragment {
       this.overlay.setOrientation(LinearLayout.VERTICAL);
     }
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-      this.container.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-        @Override
-        public void onLayoutChange(View v, int left, int top, int right, int bottom,
-                                   int oldLeft, int oldTop, int oldRight, int oldBottom)
-        {
-          v.removeOnLayoutChangeListener(this);
+    this.container.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+      @Override
+      public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                 int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        v.removeOnLayoutChangeListener(this);
 
-          Animator reveal = ViewAnimationUtils.createCircularReveal(v, right, bottom, 0, (int) Math.hypot(right, bottom));
-          reveal.setInterpolator(new DecelerateInterpolator(2f));
-          reveal.setDuration(800);
-          reveal.start();
-        }
-      });
-    }
+        Animator reveal = ViewAnimationUtils.createCircularReveal(v, right, bottom, 0, (int) Math.hypot(right, bottom));
+        reveal.setInterpolator(new DecelerateInterpolator(2f));
+        reveal.setDuration(800);
+        reveal.start();
+      }
+    });
 
     return this.container;
   }
@@ -79,7 +73,7 @@ public class DeviceAddFragment extends LoggingFragment {
   }
 
   @Override
-  public void onConfigurationChanged(Configuration newConfiguration) {
+  public void onConfigurationChanged(@NonNull Configuration newConfiguration) {
     super.onConfigurationChanged(newConfiguration);
 
     this.scannerView.onPause();

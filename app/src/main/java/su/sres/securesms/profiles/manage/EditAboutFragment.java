@@ -28,15 +28,12 @@ import su.sres.core.util.BreakIteratorCompat;
 import su.sres.core.util.EditTextUtil;
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiUtil;
-import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.jobs.ProfileUploadJob;
+
 import su.sres.securesms.reactions.any.ReactWithAnyEmojiBottomSheetDialogFragment;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.StringUtil;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.adapter.AlwaysChangedDiffUtil;
-import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.text.AfterTextChanged;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -247,7 +244,7 @@ public class EditAboutFragment extends Fragment implements ManageProfileActivity
         }
 
         public void bind(@NonNull AboutPreset preset) {
-            this.emoji.setImageDrawable(EmojiUtil.convertToDrawable(itemView.getContext(), preset.getEmoji()));
+            this.emoji.setImageDrawable(EmojiUtil.convertToDrawable(requireContext(), preset.getEmoji()));
             this.body.setText(preset.getBodyRes());
         }
     }

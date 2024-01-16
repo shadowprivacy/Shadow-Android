@@ -14,7 +14,6 @@ import androidx.navigation.Navigation;
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.ActivityTransitionUtil;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
 
@@ -47,7 +46,6 @@ public final class ChatWallpaperActivity extends PassphraseRequiredActivity {
         toolbar.setNavigationOnClickListener(unused -> {
             if (!Navigation.findNavController(this, R.id.nav_host_fragment).popBackStack()) {
                 finish();
-                ActivityTransitionUtil.setSlideOutTransition(this);
             }
         });
 
@@ -57,12 +55,6 @@ public final class ChatWallpaperActivity extends PassphraseRequiredActivity {
 
             Navigation.findNavController(this, R.id.nav_host_fragment).setGraph(graph, extras != null ? extras : new Bundle());
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        ActivityTransitionUtil.setSlideOutTransition(this);
     }
 
     @Override
