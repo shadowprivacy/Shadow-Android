@@ -60,14 +60,6 @@ final class ManageRecipientRepository {
                 .orNull()));
     }
 
-    void setExpiration(int newExpirationTime) {
-        SignalExecutors.BOUNDED.execute(() -> {
-            DatabaseFactory.getRecipientDatabase(context).setExpireMessages(recipientId, newExpirationTime);
-            OutgoingExpirationUpdateMessage outgoingMessage = new OutgoingExpirationUpdateMessage(Recipient.resolved(recipientId), System.currentTimeMillis(), newExpirationTime * 1000L);
-            MessageSender.send(context, outgoingMessage, getThreadId(), false, null);
-        });
-    }
-
     void getGroupMembership(@NonNull Consumer<List<RecipientId>> onComplete) {
         SignalExecutors.BOUNDED.execute(() -> {
             GroupDatabase                   groupDatabase   = DatabaseFactory.getGroupDatabase(context);

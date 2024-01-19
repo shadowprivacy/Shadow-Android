@@ -19,7 +19,6 @@ import androidx.lifecycle.ViewModelProvider;
 import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.BlockUnblockDialog;
 import su.sres.securesms.ContactSelectionListFragment;
-import su.sres.securesms.ExpirationDialog;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.ContactsCursorLoader;
 import su.sres.securesms.database.MediaDatabase;
@@ -255,14 +254,6 @@ public class ManageGroupViewModel extends ViewModel {
 
     LiveData<GroupInfoMessage> getGroupInfoMessage() {
         return groupInfoMessage;
-    }
-
-    void handleExpirationSelection() {
-        manageGroupRepository.getRecipient(getGroupId(),
-                groupRecipient ->
-                ExpirationDialog.show(context,
-                        groupRecipient.getExpireMessages(),
-                        expirationTime -> manageGroupRepository.setExpiration(getGroupId(), expirationTime, this::showErrorToast)));
     }
 
     void applyMembershipRightsChange(@NonNull GroupAccessControl newRights) {

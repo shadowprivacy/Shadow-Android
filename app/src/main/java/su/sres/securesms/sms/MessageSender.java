@@ -19,6 +19,7 @@ package su.sres.securesms.sms;
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
@@ -40,6 +41,7 @@ import su.sres.securesms.jobs.AttachmentUploadJob;
 import su.sres.securesms.jobs.ProfileKeySendJob;
 import su.sres.securesms.jobs.RemoteDeleteSendJob;
 import su.sres.securesms.jobs.ResumableUploadSpecJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.core.util.logging.Log;
 
@@ -65,6 +67,7 @@ import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.OutgoingSecureMediaMessage;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.util.ParcelUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -104,7 +107,11 @@ public class MessageSender {
     boolean         keyExchange = message.isKeyExchange();
 
     long allocatedThreadId = DatabaseFactory.getThreadDatabase(context).getOrCreateValidThreadId(recipient, threadId);
-    long messageId         = database.insertMessageOutbox(allocatedThreadId, message, forceSms, System.currentTimeMillis(), insertListener);
+    long messageId = database.insertMessageOutbox(allocatedThreadId,
+                                                  applyUniversalExpireTimerIfNecessary(context, recipient, message, allocatedThreadId),
+                                                  forceSms,
+                                                  System.currentTimeMillis(),
+                                                  insertListener);
 
     sendTextMessage(context, recipient, forceSms, keyExchange, messageId);
     onMessageSent();
@@ -125,7 +132,7 @@ public class MessageSender {
 
       long      allocatedThreadId = threadDatabase.getOrCreateValidThreadId(message.getRecipient(), threadId, message.getDistributionType());
       Recipient recipient         = message.getRecipient();
-      long      messageId         = database.insertMessageOutbox(message, allocatedThreadId, forceSms, insertListener);
+      long      messageId         = database.insertMessageOutbox(applyUniversalExpireTimerIfNecessary(context, recipient, message, allocatedThreadId), allocatedThreadId, forceSms, insertListener);
 
       sendMediaMessage(context, recipient, forceSms, messageId, Collections.emptyList());
       onMessageSent();
@@ -160,7 +167,10 @@ public class MessageSender {
       }
 
       Recipient recipient = message.getRecipient();
-      long      messageId = mmsDatabase.insertMessageOutbox(message, allocatedThreadId, false, insertListener);
+      long messageId = mmsDatabase.insertMessageOutbox(applyUniversalExpireTimerIfNecessary(context, recipient, message, allocatedThreadId),
+                                                       allocatedThreadId,
+                                                       false,
+                                                       insertListener);
 
       List<AttachmentId> attachmentIds = Stream.of(preUploadResults).map(PreUploadResult::getAttachmentId).toList();
       List<String>       jobIds        = Stream.of(preUploadResults).map(PreUploadResult::getJobIds).flatMap(Stream::of).toList();
@@ -182,39 +192,45 @@ public class MessageSender {
     Preconditions.checkArgument(messages.size() > 0, "No messages!");
     Preconditions.checkArgument(Stream.of(messages).allMatch(m -> m.getAttachments().isEmpty()), "Messages can't have attachments! They should be pre-uploaded.");
 
-    JobManager                 jobManager             = ApplicationDependencies.getJobManager();
-    AttachmentDatabase         attachmentDatabase     = DatabaseFactory.getAttachmentDatabase(context);
-    MessageDatabase            mmsDatabase            = DatabaseFactory.getMmsDatabase(context);
-    ThreadDatabase             threadDatabase         = DatabaseFactory.getThreadDatabase(context);
-    List<AttachmentId>         preUploadAttachmentIds = Stream.of(preUploadResults).map(PreUploadResult::getAttachmentId).toList();
-    List<String>               preUploadJobIds        = Stream.of(preUploadResults).map(PreUploadResult::getJobIds).flatMap(Stream::of).toList();
-    List<Long>                 messageIds             = new ArrayList<>(messages.size());
-    List<String>               messageDependsOnIds    = new ArrayList<>(preUploadJobIds);
+    JobManager         jobManager             = ApplicationDependencies.getJobManager();
+    AttachmentDatabase attachmentDatabase     = DatabaseFactory.getAttachmentDatabase(context);
+    MessageDatabase    mmsDatabase            = DatabaseFactory.getMmsDatabase(context);
+    ThreadDatabase     threadDatabase         = DatabaseFactory.getThreadDatabase(context);
+    List<AttachmentId> preUploadAttachmentIds = Stream.of(preUploadResults).map(PreUploadResult::getAttachmentId).toList();
+    List<String>       preUploadJobIds        = Stream.of(preUploadResults).map(PreUploadResult::getJobIds).flatMap(Stream::of).toList();
+    List<Long>         messageIds             = new ArrayList<>(messages.size());
+    List<String>       messageDependsOnIds    = new ArrayList<>(preUploadJobIds);
 
     mmsDatabase.beginTransaction();
     try {
-      OutgoingSecureMediaMessage primaryMessage   = messages.get(0);
-      long                       primaryThreadId  = threadDatabase.getThreadIdFor(primaryMessage.getRecipient(), primaryMessage.getDistributionType());
-      long                       primaryMessageId = mmsDatabase.insertMessageOutbox(primaryMessage, primaryThreadId, false, null);
+      OutgoingSecureMediaMessage primaryMessage  = messages.get(0);
+      long                       primaryThreadId = threadDatabase.getThreadIdFor(primaryMessage.getRecipient(), primaryMessage.getDistributionType());
+      long primaryMessageId = mmsDatabase.insertMessageOutbox(applyUniversalExpireTimerIfNecessary(context, primaryMessage.getRecipient(), primaryMessage, primaryThreadId),
+                                                              primaryThreadId,
+                                                              false,
+                                                              null);
 
       attachmentDatabase.updateMessageId(preUploadAttachmentIds, primaryMessageId);
       messageIds.add(primaryMessageId);
 
       if (messages.size() > 0) {
-        List<OutgoingSecureMediaMessage> secondaryMessages    = messages.subList(1, messages.size());
-        List<List<AttachmentId>>         attachmentCopies     = new ArrayList<>();
-        List<DatabaseAttachment>         preUploadAttachments = Stream.of(preUploadAttachmentIds)
-                .map(attachmentDatabase::getAttachment)
-                .toList();
+        List<OutgoingSecureMediaMessage> secondaryMessages = messages.subList(1, messages.size());
+        List<List<AttachmentId>>         attachmentCopies  = new ArrayList<>();
+        List<DatabaseAttachment> preUploadAttachments = Stream.of(preUploadAttachmentIds)
+                                                              .map(attachmentDatabase::getAttachment)
+                                                              .toList();
 
         for (int i = 0; i < preUploadAttachmentIds.size(); i++) {
           attachmentCopies.add(new ArrayList<>(messages.size()));
         }
 
         for (OutgoingSecureMediaMessage secondaryMessage : secondaryMessages) {
-          long               allocatedThreadId = threadDatabase.getThreadIdFor(secondaryMessage.getRecipient(), secondaryMessage.getDistributionType());
-          long               messageId         = mmsDatabase.insertMessageOutbox(secondaryMessage, allocatedThreadId, false, null);
-          List<AttachmentId> attachmentIds     = new ArrayList<>(preUploadAttachmentIds.size());
+          long allocatedThreadId = threadDatabase.getThreadIdFor(secondaryMessage.getRecipient(), secondaryMessage.getDistributionType());
+          long messageId = mmsDatabase.insertMessageOutbox(applyUniversalExpireTimerIfNecessary(context, secondaryMessage.getRecipient(), secondaryMessage, allocatedThreadId),
+                                                           allocatedThreadId,
+                                                           false,
+                                                           null);
+          List<AttachmentId> attachmentIds = new ArrayList<>(preUploadAttachmentIds.size());
 
           for (int i = 0; i < preUploadAttachments.size(); i++) {
             AttachmentId attachmentId = attachmentDatabase.insertAttachmentForPreUpload(preUploadAttachments.get(i)).getAttachmentId();
@@ -258,7 +274,7 @@ public class MessageSender {
 
   /**
    * @return A result if the attachment was enqueued, or null if it failed to enqueue or shouldn't
-   *         be enqueued (like in the case of a local self-send).
+   * be enqueued (like in the case of a local self-send).
    */
   public static @Nullable PreUploadResult preUploadPushAttachment(@NonNull Context context, @NonNull Attachment attachment, @Nullable Recipient recipient) {
     if (isLocalSelfSend(context, recipient, false)) {
@@ -276,10 +292,10 @@ public class MessageSender {
       Job uploadJob              = new AttachmentUploadJob(databaseAttachment.getAttachmentId());
 
       ApplicationDependencies.getJobManager()
-              .startChain(compressionJob)
-              .then(resumableUploadSpecJob)
-              .then(uploadJob)
-              .enqueue();
+                             .startChain(compressionJob)
+                             .then(resumableUploadSpecJob)
+                             .then(uploadJob)
+                             .enqueue();
 
       return new PreUploadResult(databaseAttachment.getAttachmentId(), Arrays.asList(compressionJob.getId(), resumableUploadSpecJob.getId(), uploadJob.getId()));
     } catch (MmsException e) {
@@ -290,7 +306,7 @@ public class MessageSender {
 
   public static void sendNewReaction(@NonNull Context context, long messageId, boolean isMms, @NonNull String emoji) {
     MessageDatabase db       = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
-    ReactionRecord    reaction = new ReactionRecord(emoji, Recipient.self().getId(), System.currentTimeMillis(), System.currentTimeMillis());
+    ReactionRecord  reaction = new ReactionRecord(emoji, Recipient.self().getId(), System.currentTimeMillis(), System.currentTimeMillis());
 
     db.addReaction(messageId, reaction);
 
@@ -335,10 +351,10 @@ public class MessageSender {
   }
 
   public static void resend(Context context, MessageRecord messageRecord) {
-    long       messageId   = messageRecord.getId();
-    boolean    forceSms    = messageRecord.isForcedSms();
-    boolean    keyExchange = messageRecord.isKeyExchange();
-    Recipient  recipient   = messageRecord.getRecipient();
+    long      messageId   = messageRecord.getId();
+    boolean   forceSms    = messageRecord.isForcedSms();
+    boolean   keyExchange = messageRecord.isKeyExchange();
+    Recipient recipient   = messageRecord.getRecipient();
 
     if (messageRecord.isMms()) {
       sendMediaMessage(context, recipient, forceSms, messageId, Collections.emptyList());
@@ -351,6 +367,20 @@ public class MessageSender {
 
   public static void onMessageSent() {
     EventBus.getDefault().postSticky(MessageSentEvent.INSTANCE);
+  }
+
+  private static @NonNull OutgoingTextMessage applyUniversalExpireTimerIfNecessary(@NonNull Context context, @NonNull Recipient recipient, @NonNull OutgoingTextMessage outgoingTextMessage, long threadId) {
+    if (outgoingTextMessage.getExpiresIn() == 0 && RecipientUtil.setAndSendUniversalExpireTimerIfNecessary(context, recipient, threadId)) {
+      return new OutgoingTextMessage(outgoingTextMessage, SignalStore.settings().getUniversalExpireTimer() * 1000L);
+    }
+    return outgoingTextMessage;
+  }
+
+  private static @NonNull OutgoingMediaMessage applyUniversalExpireTimerIfNecessary(@NonNull Context context, @NonNull Recipient recipient, @NonNull OutgoingMediaMessage outgoingMediaMessage, long threadId) {
+    if (!outgoingMediaMessage.isExpirationUpdate() && outgoingMediaMessage.getExpiresIn() == 0 && RecipientUtil.setAndSendUniversalExpireTimerIfNecessary(context, recipient, threadId)) {
+      return new OutgoingMediaMessage(outgoingMediaMessage, SignalStore.settings().getUniversalExpireTimer() * 1000L);
+    }
+    return outgoingMediaMessage;
   }
 
   private static void sendMediaMessage(Context context, Recipient recipient, boolean forceSms, long messageId, @NonNull Collection<String> uploadJobIds)
@@ -452,58 +482,58 @@ public class MessageSender {
       return false;
     } else {
 
- // we don't need this, since all recipients in the db will be registered
- //     try {
- //       RecipientDatabase.RegisteredState state = DirectoryHelper.refreshDirectoryFor(context, destination, false);
- //       return state == RecipientDatabase.RegisteredState.REGISTERED;
- //     } catch (IOException e1) {
- //       Log.w(TAG, e1);
-        return false;
- //     }
+      // we don't need this, since all recipients in the db will be registered
+      //     try {
+      //       RecipientDatabase.RegisteredState state = DirectoryHelper.refreshDirectoryFor(context, destination, false);
+      //       return state == RecipientDatabase.RegisteredState.REGISTERED;
+      //     } catch (IOException e1) {
+      //       Log.w(TAG, e1);
+      return false;
+      //     }
     }
   }
 
   public static boolean isLocalSelfSend(@NonNull Context context, @Nullable Recipient recipient, boolean forceSms) {
-    return recipient != null                               &&
-            recipient.isSelf()                       &&
-            !forceSms                                       &&
-            TextSecurePreferences.isPushRegistered(context) &&
-            !TextSecurePreferences.isMultiDevice(context);
+    return recipient != null &&
+           recipient.isSelf() &&
+           !forceSms &&
+           TextSecurePreferences.isPushRegistered(context) &&
+           !TextSecurePreferences.isMultiDevice(context);
   }
 
   private static void sendLocalMediaSelf(Context context, long messageId) {
     try {
-      ExpiringMessageManager expirationManager  = ApplicationDependencies.getExpiringMessageManager();
-      MessageDatabase        mmsDatabase        = DatabaseFactory.getMmsDatabase(context);
-      MmsSmsDatabase         mmsSmsDatabase     = DatabaseFactory.getMmsSmsDatabase(context);
-      OutgoingMediaMessage   message            = mmsDatabase.getOutgoingMessage(messageId);
-      SyncMessageId          syncId             = new SyncMessageId(Recipient.self().getId(), message.getSentTimeMillis());
-      List<Attachment>       attachments        = new LinkedList<>();
+      ExpiringMessageManager expirationManager = ApplicationDependencies.getExpiringMessageManager();
+      MessageDatabase        mmsDatabase       = DatabaseFactory.getMmsDatabase(context);
+      MmsSmsDatabase         mmsSmsDatabase    = DatabaseFactory.getMmsSmsDatabase(context);
+      OutgoingMediaMessage   message           = mmsDatabase.getOutgoingMessage(messageId);
+      SyncMessageId          syncId            = new SyncMessageId(Recipient.self().getId(), message.getSentTimeMillis());
+      List<Attachment>       attachments       = new LinkedList<>();
 
       attachments.addAll(message.getAttachments());
 
       attachments.addAll(Stream.of(message.getLinkPreviews())
-              .map(LinkPreview::getThumbnail)
-              .filter(Optional::isPresent)
-              .map(Optional::get)
-              .toList());
+                               .map(LinkPreview::getThumbnail)
+                               .filter(Optional::isPresent)
+                               .map(Optional::get)
+                               .toList());
 
       attachments.addAll(Stream.of(message.getSharedContacts())
-              .map(Contact::getAvatar).withoutNulls()
-              .map(Contact.Avatar::getAttachment).withoutNulls()
-              .toList());
+                               .map(Contact::getAvatar).withoutNulls()
+                               .map(Contact.Avatar::getAttachment).withoutNulls()
+                               .toList());
 
       List<AttachmentCompressionJob> compressionJobs = Stream.of(attachments)
-              .map(a -> AttachmentCompressionJob.fromAttachment((DatabaseAttachment) a, false, -1))
-              .toList();
+                                                             .map(a -> AttachmentCompressionJob.fromAttachment((DatabaseAttachment) a, false, -1))
+                                                             .toList();
 
       List<AttachmentMarkUploadedJob> fakeUploadJobs = Stream.of(attachments)
-              .map(a -> new AttachmentMarkUploadedJob(messageId, ((DatabaseAttachment) a).getAttachmentId()))
-              .toList();
+                                                             .map(a -> new AttachmentMarkUploadedJob(messageId, ((DatabaseAttachment) a).getAttachmentId()))
+                                                             .toList();
 
       ApplicationDependencies.getJobManager().startChain(compressionJobs)
-              .then(fakeUploadJobs)
-              .enqueue();
+                             .then(fakeUploadJobs)
+                             .enqueue();
 
       mmsDatabase.markAsSent(messageId, true);
       mmsDatabase.markUnidentified(messageId, true);

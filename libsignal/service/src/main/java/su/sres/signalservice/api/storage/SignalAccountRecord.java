@@ -124,6 +124,10 @@ public final class SignalAccountRecord implements SignalRecord {
                 diff.add("Payments");
             }
 
+            if (this.getUniversalExpireTimer() != that.getUniversalExpireTimer()) {
+                diff.add("UniversalExpireTimer");
+            }
+
             if (!Objects.equals(this.hasUnknownFields(), that.hasUnknownFields())) {
                 diff.add("UnknownFields");
             }
@@ -196,6 +200,10 @@ public final class SignalAccountRecord implements SignalRecord {
 
     public Payments getPayments() {
         return payments;
+    }
+
+    public int getUniversalExpireTimer() {
+        return proto.getUniversalExpireTimer();
     }
 
     AccountRecord toProto() {
@@ -444,6 +452,11 @@ public final class SignalAccountRecord implements SignalRecord {
 
             builder.setPayments(paymentsBuilder);
 
+            return this;
+        }
+
+        public Builder setUniversalExpireTimer(int timer) {
+            builder.setUniversalExpireTimer(timer);
             return this;
         }
 

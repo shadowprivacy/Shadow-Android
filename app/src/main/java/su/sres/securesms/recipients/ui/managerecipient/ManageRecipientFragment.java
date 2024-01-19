@@ -47,6 +47,7 @@ import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.recipients.ui.disappearingmessages.RecipientDisappearingMessagesActivity;
 import su.sres.securesms.recipients.ui.notifications.CustomNotificationsDialogFragment;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.LifecycleCursorWrapper;
@@ -235,7 +236,7 @@ public class ManageRecipientFragment extends LoggingFragment {
             internalDetails.setVisibility(View.GONE);
         }
 
-        disappearingMessagesRow.setOnClickListener(v -> viewModel.handleExpirationSelection(requireContext()));
+        disappearingMessagesRow.setOnClickListener(v -> startActivity(RecipientDisappearingMessagesActivity.forRecipient(requireContext(), recipientId)));
         block.setOnClickListener(v -> viewModel.onBlockClicked(requireActivity()));
         unblock.setOnClickListener(v -> viewModel.onUnblockClicked(requireActivity()));
 

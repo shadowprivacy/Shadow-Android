@@ -6,12 +6,15 @@ import android.content.Intent
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.TextAppearanceSpan
+import android.view.View
 import android.view.WindowManager
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.Navigation
+import androidx.navigation.fragment.NavHostFragment
 import androidx.preference.PreferenceManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import mobi.upod.timedurationpicker.TimeDurationPicker
@@ -19,10 +22,14 @@ import mobi.upod.timedurationpicker.TimeDurationPickerDialog
 import su.sres.core.util.logging.Log
 import su.sres.securesms.PassphraseChangeActivity
 import su.sres.securesms.R
+import su.sres.securesms.components.settings.ClickPreference
+import su.sres.securesms.components.settings.ClickPreferenceViewHolder
 import su.sres.securesms.components.settings.DSLConfiguration
 import su.sres.securesms.components.settings.DSLSettingsAdapter
 import su.sres.securesms.components.settings.DSLSettingsFragment
 import su.sres.securesms.components.settings.DSLSettingsText
+import su.sres.securesms.components.settings.PreferenceModel
+import su.sres.securesms.components.settings.PreferenceViewHolder
 import su.sres.securesms.components.settings.configure
 import su.sres.securesms.crypto.MasterSecretUtil
 import su.sres.securesms.keyvalue.UserLoginPrivacyValues
@@ -30,7 +37,9 @@ import su.sres.securesms.keyvalue.UserLoginPrivacyValues.UserLoginListingMode
 import su.sres.securesms.service.KeyCachingService
 import su.sres.securesms.util.CommunicationActions
 import su.sres.securesms.util.ConversationUtil
+import su.sres.securesms.util.ExpirationUtil
 import su.sres.securesms.util.FeatureFlags
+import su.sres.securesms.util.MappingAdapter
 import su.sres.securesms.util.ServiceUtil
 import su.sres.securesms.util.SpanUtil
 import su.sres.securesms.util.TextSecurePreferences
@@ -62,6 +71,7 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
   }
 
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
+    adapter.registerFactory(ValueClickPreference::class.java, MappingAdapter.LayoutFactory(::ValueClickPreferenceViewHolder, R.layout.value_click_preference_item))
     val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
     val repository = PrivacySettingsRepository()
     val factory = PrivacySettingsViewModel.Factory(sharedPreferences, repository)
@@ -127,6 +137,25 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
         }
       )
 
+      if (FeatureFlags.defaultMessageTimer()) {
+        dividerPref()
+
+        sectionHeaderPref(R.string.PrivacySettingsFragment__disappearing_messages)
+
+        customPref(
+          ValueClickPreference(
+            value = DSLSettingsText.from(ExpirationUtil.getExpirationAbbreviatedDisplayValue(requireContext(), state.universalExpireTimer)),
+            clickPreference = ClickPreference(
+              title = DSLSettingsText.from(R.string.PrivacySettingsFragment__default_timer_for_new_changes),
+              summary = DSLSettingsText.from(R.string.PrivacySettingsFragment__set_a_default_disappearing_message_timer_for_all_new_chats_started_by_you),
+              onClick = {
+                NavHostFragment.findNavController(this@PrivacySettingsFragment).navigate(R.id.action_privacySettingsFragment_to_disappearingMessagesTimerSelectFragment)
+              }
+            )
+          )
+        )
+      }
+
       dividerPref()
 
       sectionHeaderPref(R.string.PrivacySettingsFragment__app_security)
@@ -141,7 +170,7 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
               setTitle(R.string.ApplicationPreferencesActivity_disable_passphrase)
               setMessage(R.string.ApplicationPreferencesActivity_this_will_permanently_unlock_signal_and_message_notifications)
               setIcon(R.drawable.ic_warning)
-              setPositiveButton(R.string.ApplicationPreferencesActivity_disable) { dialog, which ->
+              setPositiveButton(R.string.ApplicationPreferencesActivity_disable) { _, _ ->
                 MasterSecretUtil.changeMasterSecretPassphrase(
                   activity,
                   KeyCachingService.getMasterSecret(context),
@@ -392,6 +421,33 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
       }
       setNegativeButton(android.R.string.cancel, null)
       show()
+    }
+  }
+
+  private class ValueClickPreference(
+    val value: DSLSettingsText,
+    val clickPreference: ClickPreference
+  ) : PreferenceModel<ValueClickPreference>(
+    title = clickPreference.title,
+    summary = clickPreference.summary,
+    iconId = clickPreference.iconId,
+    isEnabled = clickPreference.isEnabled
+  ) {
+    override fun areContentsTheSame(newItem: ValueClickPreference): Boolean {
+      return super.areContentsTheSame(newItem) &&
+        clickPreference == newItem.clickPreference &&
+        value == newItem.value
+    }
+  }
+
+  private class ValueClickPreferenceViewHolder(itemView: View) : PreferenceViewHolder<ValueClickPreference>(itemView) {
+    private val clickPreferenceViewHolder = ClickPreferenceViewHolder(itemView)
+    private val valueText: TextView = findViewById(R.id.value_client_preference_value)
+
+    override fun bind(model: ValueClickPreference) {
+      super.bind(model)
+      clickPreferenceViewHolder.bind(model.clickPreference)
+      valueText.text = model.value.resolve(context)
     }
   }
 }

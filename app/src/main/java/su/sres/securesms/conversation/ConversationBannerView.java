@@ -1,10 +1,7 @@
 package su.sres.securesms.conversation;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
-import android.graphics.PorterDuff;
 import android.text.TextUtils;
-import android.text.method.LinkMovementMethod;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.TextView;
@@ -12,26 +9,26 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.content.ContextCompat;
-import androidx.core.widget.ImageViewCompat;
 
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.R;
 import su.sres.securesms.components.AvatarImageView;
+import su.sres.securesms.components.emoji.EmojiTextView;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.LongClickMovementMethod;
 
 public class ConversationBannerView extends ConstraintLayout {
 
     private AvatarImageView contactAvatar;
     private TextView        contactTitle;
     private TextView        contactAbout;
-    private TextView        contactSubtitle;
-    private TextView        contactDescription;
-    private View            tapToView;
+    private TextView      contactSubtitle;
+    private EmojiTextView contactDescription;
+    private View          tapToView;
 
     public ConversationBannerView(Context context) {
         this(context, null);
@@ -90,6 +87,10 @@ public class ConversationBannerView extends ConstraintLayout {
         contactDescription.setVisibility(TextUtils.isEmpty(description) ? GONE : VISIBLE);
     }
 
+    public @NonNull EmojiTextView getDescription() {
+        return contactDescription;
+    }
+
     public void showBackgroundBubble(boolean enabled) {
         if (enabled) {
             setBackgroundResource(R.drawable.wallpaper_bubble_background_12);
@@ -111,7 +112,7 @@ public class ConversationBannerView extends ConstraintLayout {
     }
 
     public void setLinkifyDescription(boolean enable) {
-        contactDescription.setMovementMethod(enable ? LinkMovementMethod.getInstance() : null);
+        contactDescription.setMovementMethod(enable ? LongClickMovementMethod.getInstance(getContext()) : null);
     }
 
     private static final class FallbackPhotoProvider extends Recipient.FallbackPhotoProvider {

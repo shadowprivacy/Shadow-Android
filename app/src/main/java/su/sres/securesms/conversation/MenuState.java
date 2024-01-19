@@ -11,174 +11,191 @@ import java.util.Set;
 
 final class MenuState {
 
-    private final boolean forward;
-    private final boolean reply;
-    private final boolean details;
-    private final boolean saveAttachment;
-    private final boolean resend;
-    private final boolean copy;
+  private final boolean forward;
+  private final boolean reply;
+  private final boolean details;
+  private final boolean saveAttachment;
+  private final boolean resend;
+  private final boolean copy;
+  private final boolean delete;
 
-    private MenuState(@NonNull Builder builder) {
-        forward        = builder.forward;
-        reply          = builder.reply;
-        details        = builder.details;
-        saveAttachment = builder.saveAttachment;
-        resend         = builder.resend;
-        copy           = builder.copy;
-    }
+  private MenuState(@NonNull Builder builder) {
+    forward        = builder.forward;
+    reply          = builder.reply;
+    details        = builder.details;
+    saveAttachment = builder.saveAttachment;
+    resend         = builder.resend;
+    copy           = builder.copy;
+    delete         = builder.delete;
+  }
 
-    boolean shouldShowForwardAction() {
-        return forward;
-    }
+  boolean shouldShowForwardAction() {
+    return forward;
+  }
 
-    boolean shouldShowReplyAction() {
-        return reply;
-    }
+  boolean shouldShowReplyAction() {
+    return reply;
+  }
 
-    boolean shouldShowDetailsAction() {
-        return details;
-    }
+  boolean shouldShowDetailsAction() {
+    return details;
+  }
 
-    boolean shouldShowSaveAttachmentAction() {
-        return saveAttachment;
-    }
+  boolean shouldShowSaveAttachmentAction() {
+    return saveAttachment;
+  }
 
-    boolean shouldShowResendAction() {
-        return resend;
-    }
+  boolean shouldShowResendAction() {
+    return resend;
+  }
 
-    boolean shouldShowCopyAction() {
-        return copy;
-    }
+  boolean shouldShowCopyAction() {
+    return copy;
+  }
 
-    static MenuState getMenuState(@NonNull Recipient conversationRecipient,
-                                  @NonNull Set<MessageRecord> messageRecords,
-                                  boolean shouldShowMessageRequest)
-    {
+  boolean shouldShowDeleteAction() {
+    return delete;
+  }
 
-        Builder builder       = new Builder();
-        boolean actionMessage = false;
-        boolean hasText       = false;
-        boolean sharedContact = false;
-        boolean viewOnce      = false;
-        boolean remoteDelete  = false;
+  static MenuState getMenuState(@NonNull Recipient conversationRecipient,
+                                @NonNull Set<MessageRecord> messageRecords,
+                                boolean shouldShowMessageRequest)
+  {
 
-        for (MessageRecord messageRecord : messageRecords) {
-            if (isActionMessage(messageRecord))
-            {
-                actionMessage = true;
-            }
+    Builder builder       = new Builder();
+    boolean actionMessage = false;
+    boolean hasText       = false;
+    boolean sharedContact = false;
+    boolean viewOnce      = false;
+    boolean remoteDelete  = false;
+    boolean hasInMemory   = false;
 
-            if (messageRecord.getBody().length() > 0) {
-                hasText = true;
-            }
-
-            if (messageRecord.isMms() && !((MmsMessageRecord) messageRecord).getSharedContacts().isEmpty()) {
-                sharedContact = true;
-            }
-
-            if (messageRecord.isViewOnce()) {
-                viewOnce = true;
-            }
-
-            if (messageRecord.isRemoteDelete()) {
-                remoteDelete = true;
-            }
+    for (MessageRecord messageRecord : messageRecords) {
+      if (isActionMessage(messageRecord)) {
+        actionMessage = true;
+        if (messageRecord.isInMemoryMessageRecord()) {
+          hasInMemory = true;
         }
+      }
 
-        if (messageRecords.size() > 1) {
-            builder.shouldShowForwardAction(false)
-                    .shouldShowReplyAction(false)
-                    .shouldShowDetailsAction(false)
-                    .shouldShowSaveAttachmentAction(false)
-                    .shouldShowResendAction(false);
-        } else {
-            MessageRecord messageRecord = messageRecords.iterator().next();
+      if (messageRecord.getBody().length() > 0) {
+        hasText = true;
+      }
 
-            builder.shouldShowResendAction(messageRecord.isFailed())
-                    .shouldShowSaveAttachmentAction(!actionMessage                      &&
-                            !viewOnce                                                   &&
-                            messageRecord.isMms()                                       &&
-                            !messageRecord.isMediaPending()                             &&
-                            !messageRecord.isMmsNotification()                          &&
-                            ((MediaMmsMessageRecord)messageRecord).containsMediaSlide() &&
-                            ((MediaMmsMessageRecord)messageRecord).getSlideDeck().getStickerSlide() == null)
-                    .shouldShowForwardAction(!actionMessage && !sharedContact && !viewOnce && !remoteDelete && !messageRecord.isMediaPending())
-                    .shouldShowDetailsAction(!actionMessage)
-                    .shouldShowReplyAction(canReplyToMessage(conversationRecipient, actionMessage, messageRecord, shouldShowMessageRequest));
-        }
+      if (messageRecord.isMms() && !((MmsMessageRecord) messageRecord).getSharedContacts().isEmpty()) {
+        sharedContact = true;
+      }
 
-        return builder.shouldShowCopyAction(!actionMessage && !remoteDelete && hasText)
-                .build();
+      if (messageRecord.isViewOnce()) {
+        viewOnce = true;
+      }
+
+      if (messageRecord.isRemoteDelete()) {
+        remoteDelete = true;
+      }
     }
 
-    static boolean canReplyToMessage(@NonNull Recipient conversationRecipient, boolean actionMessage, @NonNull MessageRecord messageRecord, boolean isDisplayingMessageRequest) {
-        return !actionMessage                                                              &&
-                !messageRecord.isRemoteDelete()                                             &&
-                !messageRecord.isPending()                                                  &&
-                !messageRecord.isFailed()                                                   &&
-                !isDisplayingMessageRequest                                                 &&
-                messageRecord.isSecure()                                                    &&
-                (!conversationRecipient.isGroup() || conversationRecipient.isActiveGroup()) &&
-                !messageRecord.getRecipient().isBlocked();
+    if (messageRecords.size() > 1) {
+      builder.shouldShowForwardAction(false)
+             .shouldShowReplyAction(false)
+             .shouldShowDetailsAction(false)
+             .shouldShowSaveAttachmentAction(false)
+             .shouldShowResendAction(false);
+    } else {
+      MessageRecord messageRecord = messageRecords.iterator().next();
+
+      builder.shouldShowResendAction(messageRecord.isFailed())
+             .shouldShowSaveAttachmentAction(!actionMessage &&
+                                             !viewOnce &&
+                                             messageRecord.isMms() &&
+                                             !messageRecord.isMediaPending() &&
+                                             !messageRecord.isMmsNotification() &&
+                                             ((MediaMmsMessageRecord) messageRecord).containsMediaSlide() &&
+                                             ((MediaMmsMessageRecord) messageRecord).getSlideDeck().getStickerSlide() == null)
+             .shouldShowForwardAction(!actionMessage && !sharedContact && !viewOnce && !remoteDelete && !messageRecord.isMediaPending())
+             .shouldShowDetailsAction(!actionMessage)
+             .shouldShowReplyAction(canReplyToMessage(conversationRecipient, actionMessage, messageRecord, shouldShowMessageRequest));
     }
 
-    static boolean isActionMessage(@NonNull MessageRecord messageRecord) {
-        return messageRecord.isGroupAction()           ||
-                messageRecord.isCallLog()               ||
-                messageRecord.isJoined()                ||
-                messageRecord.isExpirationTimerUpdate() ||
-                messageRecord.isEndSession()            ||
-                messageRecord.isIdentityUpdate()        ||
-                messageRecord.isIdentityVerified()      ||
-                messageRecord.isIdentityDefault()       ||
-                messageRecord.isProfileChange()         ||
-                messageRecord.isGroupV1MigrationEvent() ||
-                messageRecord.isFailedDecryptionType();
+    return builder.shouldShowCopyAction(!actionMessage && !remoteDelete && hasText)
+                  .shouldShowDeleteAction(!hasInMemory)
+                  .build();
+  }
+
+  static boolean canReplyToMessage(@NonNull Recipient conversationRecipient, boolean actionMessage, @NonNull MessageRecord messageRecord, boolean isDisplayingMessageRequest) {
+    return !actionMessage &&
+           !messageRecord.isRemoteDelete() &&
+           !messageRecord.isPending() &&
+           !messageRecord.isFailed() &&
+           !isDisplayingMessageRequest &&
+           messageRecord.isSecure() &&
+           (!conversationRecipient.isGroup() || conversationRecipient.isActiveGroup()) &&
+           !messageRecord.getRecipient().isBlocked();
+  }
+
+  static boolean isActionMessage(@NonNull MessageRecord messageRecord) {
+    return messageRecord.isGroupAction() ||
+           messageRecord.isCallLog() ||
+           messageRecord.isJoined() ||
+           messageRecord.isExpirationTimerUpdate() ||
+           messageRecord.isEndSession() ||
+           messageRecord.isIdentityUpdate() ||
+           messageRecord.isIdentityVerified() ||
+           messageRecord.isIdentityDefault() ||
+           messageRecord.isProfileChange() ||
+           messageRecord.isGroupV1MigrationEvent() ||
+           messageRecord.isFailedDecryptionType() ||
+           messageRecord.isInMemoryMessageRecord();
+  }
+
+  private final static class Builder {
+
+    private boolean forward;
+    private boolean reply;
+    private boolean details;
+    private boolean saveAttachment;
+    private boolean resend;
+    private boolean copy;
+    private boolean delete;
+
+    @NonNull Builder shouldShowForwardAction(boolean forward) {
+      this.forward = forward;
+      return this;
     }
 
-    private final static class Builder {
-
-        private boolean forward;
-        private boolean reply;
-        private boolean details;
-        private boolean saveAttachment;
-        private boolean resend;
-        private boolean copy;
-
-        @NonNull Builder shouldShowForwardAction(boolean forward) {
-            this.forward = forward;
-            return this;
-        }
-
-        @NonNull Builder shouldShowReplyAction(boolean reply) {
-            this.reply = reply;
-            return this;
-        }
-
-        @NonNull Builder shouldShowDetailsAction(boolean details) {
-            this.details = details;
-            return this;
-        }
-
-        @NonNull Builder shouldShowSaveAttachmentAction(boolean saveAttachment) {
-            this.saveAttachment = saveAttachment;
-            return this;
-        }
-
-        @NonNull Builder shouldShowResendAction(boolean resend) {
-            this.resend = resend;
-            return this;
-        }
-
-        @NonNull Builder shouldShowCopyAction(boolean copy) {
-            this.copy = copy;
-            return this;
-        }
-
-        @NonNull
-        MenuState build() {
-            return new MenuState(this);
-        }
+    @NonNull Builder shouldShowReplyAction(boolean reply) {
+      this.reply = reply;
+      return this;
     }
+
+    @NonNull Builder shouldShowDetailsAction(boolean details) {
+      this.details = details;
+      return this;
+    }
+
+    @NonNull Builder shouldShowSaveAttachmentAction(boolean saveAttachment) {
+      this.saveAttachment = saveAttachment;
+      return this;
+    }
+
+    @NonNull Builder shouldShowResendAction(boolean resend) {
+      this.resend = resend;
+      return this;
+    }
+
+    @NonNull Builder shouldShowCopyAction(boolean copy) {
+      this.copy = copy;
+      return this;
+    }
+
+    @NonNull Builder shouldShowDeleteAction(boolean delete) {
+      this.delete = delete;
+      return this;
+    }
+
+    @NonNull
+    MenuState build() {
+      return new MenuState(this);
+    }
+  }
 }

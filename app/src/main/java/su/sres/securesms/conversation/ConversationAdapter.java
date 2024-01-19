@@ -50,6 +50,7 @@ import su.sres.securesms.giph.mp4.GiphyMp4PlaybackPolicyEnforcer;
 import su.sres.securesms.giph.mp4.GiphyMp4Projection;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.CachedInflater;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.StickyHeaderDecoration;
@@ -373,6 +374,10 @@ public class ConversationAdapter
 
   public void setPagingController(@Nullable PagingController pagingController) {
     this.pagingController = pagingController;
+  }
+
+  public boolean isForRecipientId(@NonNull RecipientId recipientId) {
+    return recipient.getId().equals(recipientId);
   }
 
   void onBindLastSeenViewHolder(StickyHeaderViewHolder viewHolder, int position) {

@@ -95,7 +95,6 @@ import org.greenrobot.eventbus.ThreadMode;
 import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.BlockUnblockDialog;
 import su.sres.securesms.MainActivity;
-import su.sres.securesms.ExpirationDialog;
 import su.sres.securesms.GroupMembersDialog;
 import su.sres.securesms.components.MaskView;
 import su.sres.securesms.components.TypingStatusSender;
@@ -144,6 +143,7 @@ import su.sres.securesms.profiles.spoofing.ReviewCardDialogFragment;
 import su.sres.securesms.ratelimit.RecaptchaProofBottomSheetFragment;
 import su.sres.securesms.reactions.ReactionsBottomSheetDialogFragment;
 import su.sres.securesms.reactions.any.ReactWithAnyEmojiBottomSheetDialogFragment;
+import su.sres.securesms.recipients.ui.disappearingmessages.RecipientDisappearingMessagesActivity;
 import su.sres.securesms.recipients.ui.managerecipient.ManageRecipientActivity;
 import su.sres.securesms.registration.RegistrationNavigationActivity;
 import su.sres.securesms.ShortcutLauncherActivity;
@@ -219,7 +219,6 @@ import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.mms.ImageSlide;
 import su.sres.securesms.mms.LocationSlide;
 import su.sres.securesms.mms.MediaConstraints;
-import su.sres.securesms.mms.OutgoingExpirationUpdateMessage;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.OutgoingSecureMediaMessage;
 import su.sres.securesms.mms.QuoteId;
@@ -1145,42 +1144,11 @@ public class ConversationActivity extends PassphraseRequiredActivity
 //////// Event Handlers
 
     private void handleSelectMessageExpiration() {
-        boolean activeGroup = isActiveGroup();
-
-        if (isPushGroupConversation() && !activeGroup) {
+        if (isPushGroupConversation() && !isActiveGroup()) {
             return;
         }
 
-        final long thread = this.threadId;
-
-        ExpirationDialog.show(this, recipient.get().getExpireMessages(),
-                expirationTime ->
-                        SimpleTask.run(
-                                getLifecycle(),
-                                () -> {
-                                    if (activeGroup) {
-                                        try {
-                                            GroupManager.updateGroupTimer(ConversationActivity.this, getRecipient().requireGroupId().requirePush(), expirationTime);
-                                        } catch (GroupChangeException | IOException e) {
-                                            Log.w(TAG, e);
-                                            return GroupChangeResult.failure(GroupChangeFailureReason.fromException(e));
-                                        }
-                                    } else {
-                                        DatabaseFactory.getRecipientDatabase(ConversationActivity.this).setExpireMessages(recipient.getId(), expirationTime);
-                                        OutgoingExpirationUpdateMessage outgoingMessage = new OutgoingExpirationUpdateMessage(getRecipient(), System.currentTimeMillis(), expirationTime * 1000L);
-                                        MessageSender.send(ConversationActivity.this, outgoingMessage, thread, false, null);
-                                    }
-                                    return GroupChangeResult.SUCCESS;
-                                },
-                                (changeResult) -> {
-                                    if (!changeResult.isSuccess()) {
-                                        Toast.makeText(ConversationActivity.this, GroupErrors.getUserDisplayMessage(changeResult.getFailureReason()), Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        invalidateOptionsMenu();
-                                        if (fragment != null) fragment.setLastSeen(0);
-                                    }
-                                })
-        );
+        startActivity(RecipientDisappearingMessagesActivity.forRecipient(this, recipient.getId()));
     }
 
     private void handleMuteNotifications() {
@@ -2374,6 +2342,17 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
         if (groupCallViewModel != null) {
             groupCallViewModel.onRecipientChange(recipient);
+        }
+
+        if (this.threadId == -1) {
+            SimpleTask.run(() -> DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient.getId()), threadId -> {
+                if (this.threadId != threadId) {
+                    Log.d(TAG, "Thread id changed via recipient change");
+                    this.threadId = threadId;
+                    fragment.reload(recipient, this.threadId);
+                    setVisibleThread(this.threadId);
+                }
+            });
         }
     }
 

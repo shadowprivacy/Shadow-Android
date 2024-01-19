@@ -14,6 +14,8 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.WebRtcData.CallMetadata;
 import su.sres.securesms.service.webrtc.WebRtcData.OfferMetadata;
@@ -78,6 +80,7 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
         webRtcInteractor.setCallInProgressNotification(TYPE_OUTGOING_RINGING, remotePeer);
         webRtcInteractor.setWantsBluetoothConnection(true);
 
+        RecipientUtil.setAndSendUniversalExpireTimerIfNecessary(context, Recipient.resolved(remotePeer.getId()), DatabaseFactory.getThreadDatabase(context).getThreadIdIfExistsFor(remotePeer.getId()));
         DatabaseFactory.getSmsDatabase(context).insertOutgoingCall(remotePeer.getId(), currentState.getCallSetupState().isEnableVideoOnCreate());
 
         webRtcInteractor.retrieveTurnServers(remotePeer);
@@ -99,6 +102,8 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
         Integer                  destinationDeviceId = broadcast ? null : callMetadata.getRemoteDevice();
         SignalServiceCallMessage callMessage         = SignalServiceCallMessage.forOffer(offerMessage, true, destinationDeviceId);
 
+        Recipient callRecipient = currentState.getCallInfoState().getCallRecipient();
+        RecipientUtil.shareProfileIfFirstSecureMessage(context, callRecipient);
         webRtcInteractor.sendCallMessage(callMetadata.getRemotePeer(), callMessage);
 
         return currentState;

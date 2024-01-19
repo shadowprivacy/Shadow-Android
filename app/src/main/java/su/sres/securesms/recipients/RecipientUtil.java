@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
+import su.sres.securesms.mms.OutgoingExpirationUpdateMessage;
+import su.sres.securesms.sms.MessageSender;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 public class RecipientUtil {
@@ -289,6 +291,26 @@ public class RecipientUtil {
                     .anyMatch(GroupDatabase.GroupRecord::isV2Group);
 
         }
+    }
+
+    /**
+     * Checks if a universal timer is set and if the thread should have it set on it. Attempts to abort quickly and perform
+     * minimal database access.
+     */
+    @WorkerThread
+    public static boolean setAndSendUniversalExpireTimerIfNecessary(@NonNull Context context, @NonNull Recipient recipient, long threadId) {
+        int defaultTimer = SignalStore.settings().getUniversalExpireTimer();
+        if (defaultTimer == 0 || recipient.isGroup() || recipient.getExpireMessages() != 0) {
+            return false;
+        }
+
+        if (threadId == -1 || !DatabaseFactory.getMmsSmsDatabase(context).hasMeaningfulMessage(threadId)) {
+            DatabaseFactory.getRecipientDatabase(context).setExpireMessages(recipient.getId(), defaultTimer);
+            OutgoingExpirationUpdateMessage outgoingMessage = new OutgoingExpirationUpdateMessage(recipient, System.currentTimeMillis(), defaultTimer * 1000L);
+            MessageSender.send(context, outgoingMessage, DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient), false, null);
+            return true;
+        }
+        return false;
     }
 
     @WorkerThread

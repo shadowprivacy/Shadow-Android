@@ -2,11 +2,10 @@ package su.sres.securesms.groups.v2;
 
 import android.content.Context;
 import android.graphics.Typeface;
-import android.text.Spannable;
 import android.text.SpannableString;
-import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextPaint;
+import android.text.TextUtils;
 import android.text.style.ClickableSpan;
 import android.text.style.URLSpan;
 import android.text.util.Linkify;
@@ -18,52 +17,66 @@ import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.R;
+import su.sres.securesms.components.emoji.EmojiTextView;
 import su.sres.securesms.linkpreview.LinkPreviewUtil;
+import su.sres.securesms.util.LongClickCopySpan;
 
 public final class GroupDescriptionUtil {
 
-    public static final int MAX_DESCRIPTION_LENGTH = 80;
+  public static final int MAX_DESCRIPTION_LENGTH = 80;
 
-    /**
-     * Style a group description.
-     *
-     * @param description full description
-     * @param linkify     flag indicating if web urls should be linkified
-     * @param moreClick   Callback for when truncating and need to show more via another means. Required to enable truncating.
-     * @return styled group description
-     */
-    public static @NonNull Spannable style(@NonNull Context context, @NonNull String description, boolean linkify, @Nullable Runnable moreClick) {
-        SpannableString descriptionSpannable = new SpannableString(description);
+  /**
+   * Set a group description.
+   *
+   * @param description   full description
+   * @param emojiTextView Text view to update with description
+   * @param linkify       flag indicating if web urls should be linkified
+   * @param moreClick     Callback for when truncating and need to show more via another means. Required to enable truncating.
+   */
+  public static void setText(@NonNull Context context, @NonNull EmojiTextView emojiTextView, @NonNull String description, boolean linkify, @Nullable Runnable moreClick) {
+    SpannableString descriptionSpannable = new SpannableString(description);
 
-        if (linkify) {
-            int     linkPattern = Linkify.WEB_URLS | Linkify.EMAIL_ADDRESSES | Linkify.PHONE_NUMBERS;
-            boolean hasLinks    = Linkify.addLinks(descriptionSpannable, linkPattern);
+    if (linkify) {
+      int     linkPattern = Linkify.WEB_URLS | Linkify.EMAIL_ADDRESSES | Linkify.PHONE_NUMBERS;
+      boolean hasLinks    = Linkify.addLinks(descriptionSpannable, linkPattern);
 
-            if (hasLinks) {
-                Stream.of(descriptionSpannable.getSpans(0, descriptionSpannable.length(), URLSpan.class))
-                        .filterNot(url -> LinkPreviewUtil.isLegalUrl(url.getURL()))
-                        .forEach(descriptionSpannable::removeSpan);
-            }
+      if (hasLinks) {
+        Stream.of(descriptionSpannable.getSpans(0, descriptionSpannable.length(), URLSpan.class))
+              .filterNot(url -> LinkPreviewUtil.isLegalUrl(url.getURL()))
+              .forEach(descriptionSpannable::removeSpan);
+
+        URLSpan[] urlSpans = descriptionSpannable.getSpans(0, descriptionSpannable.length(), URLSpan.class);
+
+        for (URLSpan urlSpan : urlSpans) {
+          int     start = descriptionSpannable.getSpanStart(urlSpan);
+          int     end   = descriptionSpannable.getSpanEnd(urlSpan);
+          URLSpan span  = new LongClickCopySpan(urlSpan.getURL());
+          descriptionSpannable.setSpan(span, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-
-        if (moreClick != null && descriptionSpannable.length() > MAX_DESCRIPTION_LENGTH) {
-            ClickableSpan style = new ClickableSpan() {
-                @Override
-                public void onClick(@NonNull View widget) {
-                    moreClick.run();
-                }
-
-                @Override
-                public void updateDrawState(@NonNull TextPaint ds) {
-                    ds.setTypeface(Typeface.DEFAULT_BOLD);
-                }
-            };
-
-            SpannableStringBuilder builder = new SpannableStringBuilder(descriptionSpannable.subSequence(0, MAX_DESCRIPTION_LENGTH)).append(context.getString(R.string.ManageGroupActivity_more));
-            builder.setSpan(style, MAX_DESCRIPTION_LENGTH + 1, builder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            return builder;
-        }
-
-        return descriptionSpannable;
+      }
     }
+
+    if (moreClick != null) {
+      ClickableSpan style = new ClickableSpan() {
+        @Override
+        public void onClick(@NonNull View widget) {
+          moreClick.run();
+        }
+
+        @Override
+        public void updateDrawState(@NonNull TextPaint ds) {
+          ds.setTypeface(Typeface.DEFAULT_BOLD);
+        }
+      };
+
+      emojiTextView.setEllipsize(TextUtils.TruncateAt.END);
+      emojiTextView.setMaxLines(2);
+
+      SpannableString overflowText = new SpannableString(context.getString(R.string.ManageGroupActivity_more));
+      overflowText.setSpan(style, 0, overflowText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+      emojiTextView.setOverflowText(overflowText);
+    }
+
+    emojiTextView.setText(descriptionSpannable);
+  }
 }

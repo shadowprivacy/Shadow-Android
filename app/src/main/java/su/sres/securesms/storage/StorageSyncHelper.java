@@ -147,6 +147,7 @@ public final class StorageSyncHelper {
         SignalStore.userLoginPrivacy().setUserLoginListingMode(update.getNew().isUserLoginUnlisted() ? UserLoginPrivacyValues.UserLoginListingMode.UNLISTED : UserLoginPrivacyValues.UserLoginListingMode.LISTED);
         SignalStore.userLoginPrivacy().setUserLoginSharingMode(StorageSyncModels.remoteToLocalUserLoginSharingMode(update.getNew().getUserLoginSharingMode()));
         SignalStore.paymentsValues().setEnabledAndEntropy(update.getNew().getPayments().isEnabled(), Entropy.fromBytes(update.getNew().getPayments().getEntropy().orNull()));
+        SignalStore.settings().setUniversalExpireTimer(update.getNew().getUniversalExpireTimer());
 
         if (fetchProfile && update.getNew().getAvatarUrlPath().isPresent()) {
             ApplicationDependencies.getJobManager().add(new RetrieveProfileAvatarJob(self, update.getNew().getAvatarUrlPath().get()));
