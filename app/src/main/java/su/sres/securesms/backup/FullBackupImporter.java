@@ -25,6 +25,7 @@ import su.sres.securesms.backup.BackupProtos.Sticker;
 import su.sres.securesms.crypto.AttachmentSecret;
 import su.sres.securesms.crypto.ModernEncryptingPartOutputStream;
 import su.sres.securesms.database.AttachmentDatabase;
+import su.sres.securesms.database.EmojiSearchDatabase;
 import su.sres.securesms.database.KeyValueDatabase;
 import su.sres.securesms.database.SearchDatabase;
 import su.sres.securesms.database.StickerDatabase;
@@ -137,9 +138,10 @@ public class FullBackupImporter extends FullBackupBase {
   private static void processStatement(@NonNull SQLiteDatabase db, SqlStatement statement) {
     boolean isForSmsFtsSecretTable = statement.getStatement().contains(SearchDatabase.SMS_FTS_TABLE_NAME + "_");
     boolean isForMmsFtsSecretTable = statement.getStatement().contains(SearchDatabase.MMS_FTS_TABLE_NAME + "_");
+    boolean isForEmojiSecretTable  = statement.getStatement().contains(EmojiSearchDatabase.TABLE_NAME + "_");
     boolean isForSqliteSecretTable = statement.getStatement().toLowerCase().startsWith("create table sqlite_");
 
-    if (isForSmsFtsSecretTable || isForMmsFtsSecretTable || isForSqliteSecretTable) {
+    if (isForSmsFtsSecretTable || isForMmsFtsSecretTable || isForEmojiSecretTable || isForSqliteSecretTable) {
       Log.i(TAG, "Ignoring import for statement: " + statement.getStatement());
       return;
     }

@@ -40,6 +40,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.mms.PartAuthority;
+import su.sres.securesms.net.NotPushRegisteredException;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -109,6 +110,10 @@ public abstract class PushSendJob extends SendJob {
             throw new TextSecureExpiredException("Too many signed prekey rotation failures");
         }
 
+        if (!Recipient.self().isRegistered()) {
+            throw new NotPushRegisteredException();
+        }
+
         onPushSend();
 
         if (SignalStore.rateLimit().needsRecaptcha()) {
@@ -136,6 +141,10 @@ public abstract class PushSendJob extends SendJob {
     @Override
     public boolean onShouldRetry(@NonNull Exception exception) {
         if (exception instanceof ServerRejectedException) {
+            return false;
+        }
+
+        if (exception instanceof NotPushRegisteredException) {
             return false;
         }
 

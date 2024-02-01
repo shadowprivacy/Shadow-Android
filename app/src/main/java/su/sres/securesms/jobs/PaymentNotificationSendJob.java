@@ -9,6 +9,7 @@ import su.sres.securesms.database.PaymentDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.net.NotPushRegisteredException;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -75,6 +76,10 @@ public final class PaymentNotificationSendJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
+    if (!Recipient.self().isRegistered()) {
+      throw new NotPushRegisteredException();
+    }
+
     PaymentDatabase                  paymentDatabase    = DatabaseFactory.getPaymentDatabase(context);
     Recipient                        recipient          = Recipient.resolved(recipientId);
     SignalServiceMessageSender       messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
@@ -113,6 +118,7 @@ public final class PaymentNotificationSendJob extends BaseJob {
   @Override
   protected boolean onShouldRetry(@NonNull Exception e) {
     if (e instanceof ServerRejectedException) return false;
+    if (e instanceof NotPushRegisteredException) return false;
     return e instanceof IOException ||
            e instanceof RetryLaterException;
   }

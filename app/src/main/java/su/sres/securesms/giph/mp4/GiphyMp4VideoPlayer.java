@@ -2,7 +2,6 @@ package su.sres.securesms.giph.mp4;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
 
@@ -20,6 +19,7 @@ import com.google.android.exoplayer2.ui.PlayerView;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.components.CornerMask;
+import su.sres.securesms.util.Projection;
 
 /**
  * Video Player class specifically created for the GiphyMp4Fragment.
@@ -72,8 +72,13 @@ public final class GiphyMp4VideoPlayer extends FrameLayout implements DefaultLif
         exoPlayer.prepare(mediaSource);
     }
 
-    void setCornerMask(@Nullable CornerMask cornerMask) {
-        this.cornerMask = new CornerMask(this, cornerMask);
+    void setCorners(@Nullable Projection.Corners corners) {
+        if (corners == null) {
+            this.cornerMask = null;
+        } else {
+            this.cornerMask = new CornerMask(this);
+            this.cornerMask.setRadii(corners.getTopLeft(), corners.getTopRight(), corners.getBottomRight(), corners.getBottomLeft());
+        }
         invalidate();
     }
 

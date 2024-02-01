@@ -18,6 +18,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.contacts.avatars.ContactColors;
 import su.sres.securesms.conversation.ConversationIntents;
+import su.sres.securesms.conversation.colors.ChatColorsPalette;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.recipients.Recipient;
@@ -99,14 +100,13 @@ class VoiceNoteNotificationManager {
             int         startingPosition = (int) controller.getMetadata().getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_MESSAGE_POSITION);
             long        threadId         = controller.getMetadata().getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_THREAD_ID);
 
-            MaterialColor color;
-            try {
-                color = MaterialColor.fromSerialized(controller.getMetadata().getString(VoiceNoteMediaDescriptionCompatFactory.EXTRA_COLOR));
-            } catch (MaterialColor.UnknownColorException e) {
-                color = ContactColors.UNKNOWN_COLOR;
+            int color = (int) controller.getMetadata().getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_COLOR);
+
+            if (color == 0) {
+                color = ChatColorsPalette.UNKNOWN_CONTACT.asSingleColor();
             }
 
-            notificationManager.setColor(color.toNotificationColor(context));
+            notificationManager.setColor(color);
 
             Intent conversationActivity = ConversationIntents.createBuilder(context, recipientId, threadId)
                     .withStartingPosition(startingPosition)

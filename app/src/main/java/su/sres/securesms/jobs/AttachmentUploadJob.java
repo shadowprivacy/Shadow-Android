@@ -24,6 +24,8 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
+import su.sres.securesms.net.NotPushRegisteredException;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.GenericForegroundService;
 import su.sres.securesms.service.NotificationController;
 import su.sres.securesms.util.MediaUtil;
@@ -101,6 +103,10 @@ public final class AttachmentUploadJob extends BaseJob {
 
     @Override
     public void onRun() throws Exception {
+        if (!Recipient.self().isRegistered()) {
+            throw new NotPushRegisteredException();
+        }
+
         Data inputData = getInputData();
 
         ResumableUploadSpec resumableUploadSpec;
@@ -161,7 +167,7 @@ public final class AttachmentUploadJob extends BaseJob {
     protected boolean onShouldRetry(@NonNull Exception exception) {
         if (exception instanceof ResumeLocationInvalidException) return false;
 
-        return exception instanceof IOException;
+        return exception instanceof IOException && !(exception instanceof NotPushRegisteredException);
     }
 
     private @NonNull

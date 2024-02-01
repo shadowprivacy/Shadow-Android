@@ -19,7 +19,7 @@ import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.mms.SlideClickListener;
 import su.sres.securesms.mms.SlidesClickedListener;
-import su.sres.securesms.util.ThemeUtil;
+import su.sres.securesms.util.Projection;
 import su.sres.securesms.util.ViewUtil;
 
 import java.util.List;
@@ -118,8 +118,8 @@ public class ConversationItemThumbnail extends FrameLayout {
     thumbnail.setAlpha(1f);
   }
 
-  public @Nullable CornerMask getCornerMask() {
-    return cornerMask;
+  public @NonNull Projection.Corners getCorners() {
+    return new Projection.Corners(cornerMask.getRadii());
   }
 
   public void setPulseOutliner(@NonNull Outliner outliner) {

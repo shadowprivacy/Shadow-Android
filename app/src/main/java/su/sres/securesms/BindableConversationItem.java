@@ -11,6 +11,8 @@ import android.view.View;
 import su.sres.securesms.components.voice.VoiceNotePlaybackState;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.conversation.ConversationMessage;
+import su.sres.securesms.conversation.colors.Colorizable;
+import su.sres.securesms.conversation.colors.Colorizer;
 import su.sres.securesms.database.model.InMemoryMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
@@ -30,7 +32,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-public interface BindableConversationItem extends Unbindable, GiphyMp4Playable {
+public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, Colorizable {
   void bind(@NonNull LifecycleOwner lifecycleOwner,
             @NonNull ConversationMessage messageRecord,
             @NonNull Optional<MessageRecord> previousMessageRecord,
@@ -44,7 +46,8 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable {
             boolean hasWallpaper,
             boolean isMessageRequestAccepted,
             @NonNull AttachmentMediaSourceFactory attachmentMediaSourceFactory,
-            boolean canPlayInline);
+            boolean canPlayInline,
+            @NonNull Colorizer colorizer);
 
   ConversationMessage getConversationMessage();
 

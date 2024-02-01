@@ -5,7 +5,6 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.R;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.viewholders.RecipientMappingModel;
@@ -34,6 +33,10 @@ public final class CallParticipantViewState extends RecipientMappingModel<CallPa
 
     public int getAudioMutedVisibility() {
         return callParticipant.isMicrophoneEnabled() ? View.GONE : View.VISIBLE;
+    }
+
+    public int getScreenSharingVisibility() {
+        return callParticipant.isScreenSharing() ? View.VISIBLE : View.GONE;
     }
 
     @Override

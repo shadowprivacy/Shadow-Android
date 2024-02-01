@@ -23,7 +23,6 @@ import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.FallbackPhoto80dp;
 import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -126,7 +125,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
             avatar.setFallbackPhotoProvider(new Recipient.FallbackPhotoProvider() {
                 @Override
                 public @NonNull FallbackContactPhoto getPhotoForLocalNumber() {
-                    return new FallbackPhoto80dp(R.drawable.ic_note_80, recipient.getColor().toAvatarColor(requireContext()));
+                    return new FallbackPhoto80dp(R.drawable.ic_note_80, recipient.getAvatarColor().colorInt());
                 }
             });
             avatar.setAvatar(recipient);

@@ -21,9 +21,7 @@ import su.sres.securesms.webrtc.audio.OutgoingRinger;
 import su.sres.signalservice.api.messages.calls.IceUpdateMessage;
 import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -96,6 +94,21 @@ public class ActiveCallActionProcessorDelegate extends WebRtcActionProcessor {
                 .changeCallInfoState()
                 .putParticipant(activePeer.getRecipient(), newParticipant)
                 .build();
+    }
+
+    @Override
+    protected @NonNull WebRtcServiceState handleScreenSharingEnable(@NonNull WebRtcServiceState currentState, boolean enable) {
+        RemotePeer activePeer = currentState.getCallInfoState().requireActivePeer();
+
+        Log.i(tag, "handleScreenSharingEnable(): call_id: " + activePeer.getCallId() + " enable: " + enable);
+
+        CallParticipant oldParticipant = Objects.requireNonNull(currentState.getCallInfoState().getRemoteCallParticipant(activePeer.getRecipient()));
+        CallParticipant newParticipant = oldParticipant.withScreenSharingEnabled(enable);
+
+        return currentState.builder()
+                           .changeCallInfoState()
+                           .putParticipant(activePeer.getRecipient(), newParticipant)
+                           .build();
     }
 
     @Override

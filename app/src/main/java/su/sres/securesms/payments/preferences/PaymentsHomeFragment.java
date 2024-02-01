@@ -1,7 +1,6 @@
 package su.sres.securesms.payments.preferences;
 
 import android.app.AlertDialog;
-import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -90,7 +89,6 @@ public class PaymentsHomeFragment extends LoggingFragment {
     viewModel = ViewModelProviders.of(this, new PaymentsHomeViewModel.Factory()).get(PaymentsHomeViewModel.class);
 
     viewModel.getList().observe(getViewLifecycleOwner(), list -> {
-      // TODO [alex] -- this is a bit of a hack
       boolean hadPaymentItems = Stream.of(adapter.getCurrentList()).anyMatch(model -> model instanceof PaymentItem);
 
       if (!hadPaymentItems) {

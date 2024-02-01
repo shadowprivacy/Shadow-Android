@@ -17,6 +17,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.net.NotPushRegisteredException;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -134,6 +135,10 @@ public class ReactionSendJob extends BaseJob {
 
     @Override
     protected void onRun() throws Exception {
+        if (!Recipient.self().isRegistered()) {
+            throw new NotPushRegisteredException();
+        }
+
         MessageDatabase db;
         MessageRecord     message;
 
@@ -182,6 +187,7 @@ public class ReactionSendJob extends BaseJob {
     @Override
     protected boolean onShouldRetry(@NonNull Exception e) {
         if (e instanceof ServerRejectedException) return false;
+        if (e instanceof NotPushRegisteredException) return false;
         return e instanceof IOException ||
                 e instanceof RetryLaterException;
     }

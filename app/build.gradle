@@ -296,6 +296,7 @@ android {
 }
 
 dependencies {
+    implementation 'androidx.fragment:fragment-ktx:1.2.5'
     lintChecks project(':lintchecks')
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
@@ -346,7 +347,7 @@ dependencies {
     implementation project(':video')
     implementation project(':device-transfer')
     implementation 'org.signal:zkgroup-android:0.7.0'
-    implementation 'org.signal:ringrtc-android:2.9.6'
+    implementation 'org.signal:ringrtc-android:2.10.1.1'
     implementation 'org.whispersystems:signal-client-android:0.5.1'
     implementation 'com.google.protobuf:protobuf-javalite:3.10.0'
     implementation('com.mobilecoin:android-sdk:5.0.1') {
@@ -405,8 +406,8 @@ dependencies {
 
     implementation 'dnsjava:dnsjava:2.1.9'
 
-    flipperImplementation 'com.facebook.flipper:flipper:0.54.0'
-    flipperImplementation 'com.facebook.soloader:soloader:0.8.2'
+    flipperImplementation 'com.facebook.flipper:flipper:0.91.0'
+    flipperImplementation 'com.facebook.soloader:soloader:0.10.1'
 
     releaseImplementation 'com.facebook.flipper:flipper-noop:0.75.0'
 

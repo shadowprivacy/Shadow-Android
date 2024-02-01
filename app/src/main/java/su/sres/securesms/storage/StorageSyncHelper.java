@@ -127,6 +127,7 @@ public final class StorageSyncHelper {
                 .setUserLoginSharingMode(StorageSyncModels.localToRemoteUserLoginSharingMode(SignalStore.userLoginPrivacy().getUserLoginSharingMode()))
                 .setPinnedConversations(StorageSyncModels.localToRemotePinnedConversations(pinned))
                 .setPayments(SignalStore.paymentsValues().mobileCoinPaymentsEnabled(), Optional.fromNullable(SignalStore.paymentsValues().getPaymentsEntropy()).transform(Entropy::getBytes).orNull())
+                .setUniversalExpireTimer(SignalStore.settings().getUniversalExpireTimer())
                 .build();
 
         return SignalStorageRecord.forAccount(account);

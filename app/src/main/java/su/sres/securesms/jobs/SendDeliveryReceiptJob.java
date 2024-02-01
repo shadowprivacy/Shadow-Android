@@ -8,6 +8,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.net.NotPushRegisteredException;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -76,6 +77,10 @@ public class SendDeliveryReceiptJob extends BaseJob  {
 
     @Override
     public void onRun() throws IOException, UntrustedIdentityException, UndeliverableMessageException {
+        if (!Recipient.self().isRegistered()) {
+            throw new NotPushRegisteredException();
+        }
+
         SignalServiceMessageSender  messageSender  = ApplicationDependencies.getSignalServiceMessageSender();
         Recipient                   recipient      = Recipient.resolved(recipientId);
         SignalServiceAddress        remoteAddress  = RecipientUtil.toSignalServiceAddress(context, recipient);

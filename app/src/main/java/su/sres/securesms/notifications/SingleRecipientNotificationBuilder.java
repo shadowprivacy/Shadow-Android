@@ -25,11 +25,11 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 
 import su.sres.securesms.R;
-import su.sres.securesms.contacts.avatars.ContactColors;
 import su.sres.securesms.contacts.avatars.ContactPhoto;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.GeneratedContactPhoto;
 import su.sres.securesms.conversation.ConversationIntents;
+import su.sres.securesms.conversation.colors.AvatarColor;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -95,7 +95,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
 
     } else {
       setContentTitle(context.getString(R.string.SingleRecipientNotificationBuilder_signal));
-      setLargeIcon(new GeneratedContactPhoto("Unknown", R.drawable.ic_profile_outline_40).asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context)));
+      setLargeIcon(new GeneratedContactPhoto("Unknown", R.drawable.ic_profile_outline_40).asDrawable(context, AvatarColor.UNKNOWN.colorInt()));
     }
 
     setShortcutId(ConversationUtil.getShortcutId(recipient));
@@ -121,10 +121,10 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
                         context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_height))
                 .get();
       } catch (InterruptedException | ExecutionException e) {
-        return fallbackContactPhoto.asDrawable(context, recipient.getColor().toConversationColor(context));
+        return fallbackContactPhoto.asDrawable(context, recipient.getAvatarColor().colorInt());
       }
     } else {
-      return fallbackContactPhoto.asDrawable(context, recipient.getColor().toConversationColor(context));
+      return fallbackContactPhoto.asDrawable(context, recipient.getAvatarColor().colorInt());
     }
   }
 

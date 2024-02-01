@@ -19,8 +19,8 @@ import java.util.List;
  */
 public class ParticipantCollection {
 
-    private static final Comparator<CallParticipant> LEAST_RECENTLY_ADDED                           = (a, b) -> Long.compare(a.getAddedToCallTime(), b.getAddedToCallTime());
-    private static final Comparator<CallParticipant> MOST_RECENTLY_SPOKEN                           = (a, b) -> Long.compare(b.getLastSpoke(), a.getLastSpoke());
+    private static final Comparator<CallParticipant> LEAST_RECENTLY_ADDED = (a, b) -> Long.compare(a.getAddedToCallTime(), b.getAddedToCallTime());
+    private static final Comparator<CallParticipant> MOST_RECENTLY_SPOKEN = (a, b) -> Long.compare(b.getLastSpoke(), a.getLastSpoke());
     private static final Comparator<CallParticipant> MOST_RECENTLY_SPOKEN_THEN_LEAST_RECENTLY_ADDED = ComparatorCompat.chain(MOST_RECENTLY_SPOKEN).thenComparing(LEAST_RECENTLY_ADDED);
 
     private final int                   maxGridCellCount;

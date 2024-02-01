@@ -28,6 +28,7 @@ import su.sres.core.util.StreamUtil;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
+import su.sres.securesms.conversation.colors.AvatarColor;
 import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.mediasend.AvatarSelectionActivity;
@@ -47,7 +48,6 @@ import java.io.InputStream;
 
 import static android.app.Activity.RESULT_OK;
 
-import static su.sres.securesms.groups.v2.GroupDescriptionUtil.MAX_DESCRIPTION_LENGTH;
 import static su.sres.securesms.profiles.edit.EditProfileActivity.EXCLUDE_SYSTEM;
 import static su.sres.securesms.profiles.edit.EditProfileActivity.GROUP_ID;
 import static su.sres.securesms.profiles.edit.EditProfileActivity.NEXT_BUTTON_TEXT;
@@ -110,7 +110,7 @@ public class EditProfileFragment extends LoggingFragment {
 
             if (data != null && data.getBooleanExtra("delete", false)) {
                 viewModel.setAvatar(null);
-                avatar.setImageDrawable(new ResourceContactPhoto(R.drawable.ic_camera_solid_white_24).asDrawable(requireActivity(), getResources().getColor(R.color.grey_400)));
+                avatar.setImageDrawable(new ResourceContactPhoto(R.drawable.ic_camera_solid_white_24).asDrawable(requireActivity(), AvatarColor.UNKNOWN.colorInt()));
                 return;
             }
 
@@ -180,7 +180,7 @@ public class EditProfileFragment extends LoggingFragment {
             givenName.addTextChangedListener(new AfterTextChanged(s -> viewModel.setGivenName(s.toString())));
             givenName.setHint(R.string.EditProfileFragment__group_name);
             givenName.requestFocus();
-            toolbar.setTitle(R.string.EditProfileFragment__edit_group_name_and_photo);
+            toolbar.setTitle(R.string.EditProfileFragment__edit_group);
             preview.setVisibility(View.GONE);
             if (FeatureFlags.groupsV2Description()) {
                 EditTextUtil.addGraphemeClusterLimitFilter(familyName, MAX_DESCRIPTION_GLYPHS);

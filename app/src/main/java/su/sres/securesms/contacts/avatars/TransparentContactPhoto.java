@@ -2,6 +2,7 @@ package su.sres.securesms.contacts.avatars;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+
 import androidx.core.content.ContextCompat;
 
 import com.makeramen.roundedimageview.RoundedDrawable;
@@ -31,5 +32,4 @@ public class TransparentContactPhoto implements FallbackContactPhoto {
   public Drawable asCallCard(Context context) {
     return ContextCompat.getDrawable(context, R.drawable.ic_contact_picture_large);
   }
-
 }

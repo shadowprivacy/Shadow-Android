@@ -21,98 +21,103 @@ import java.util.List;
  */
 public class ConnectedCallActionProcessor extends DeviceAwareActionProcessor {
 
-    private static final String TAG = Log.tag(ConnectedCallActionProcessor.class);
+  private static final String TAG = Log.tag(ConnectedCallActionProcessor.class);
 
-    private final ActiveCallActionProcessorDelegate activeCallDelegate;
+  private final ActiveCallActionProcessorDelegate activeCallDelegate;
 
-    public ConnectedCallActionProcessor(@NonNull WebRtcInteractor webRtcInteractor) {
-        super(webRtcInteractor, TAG);
-        activeCallDelegate = new ActiveCallActionProcessorDelegate(webRtcInteractor, TAG);
+  public ConnectedCallActionProcessor(@NonNull WebRtcInteractor webRtcInteractor) {
+    super(webRtcInteractor, TAG);
+    activeCallDelegate = new ActiveCallActionProcessorDelegate(webRtcInteractor, TAG);
+  }
+
+  @Override
+  protected @NonNull WebRtcServiceState handleIsInCallQuery(@NonNull WebRtcServiceState currentState, @Nullable ResultReceiver resultReceiver) {
+    return activeCallDelegate.handleIsInCallQuery(currentState, resultReceiver);
+  }
+
+  @Override
+  protected @NonNull WebRtcServiceState handleSetEnableVideo(@NonNull WebRtcServiceState currentState, boolean enable) {
+    Log.i(TAG, "handleSetEnableVideo(): call_id: " + currentState.getCallInfoState().requireActivePeer().getCallId());
+
+    try {
+      webRtcInteractor.getCallManager().setVideoEnable(enable);
+    } catch (CallException e) {
+      return callFailure(currentState, "setVideoEnable() failed: ", e);
     }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleIsInCallQuery(@NonNull WebRtcServiceState currentState, @Nullable ResultReceiver resultReceiver) {
-        return activeCallDelegate.handleIsInCallQuery(currentState, resultReceiver);
+    currentState = currentState.builder()
+                               .changeLocalDeviceState()
+                               .cameraState(currentState.getVideoState().requireCamera().getCameraState())
+                               .build();
+
+    if (currentState.getLocalDeviceState().getCameraState().isEnabled()) {
+      webRtcInteractor.updatePhoneState(LockManager.PhoneState.IN_VIDEO);
+    } else {
+      webRtcInteractor.updatePhoneState(WebRtcUtil.getInCallPhoneState(context));
     }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleSetEnableVideo(@NonNull WebRtcServiceState currentState, boolean enable) {
-        Log.i(TAG, "handleSetEnableVideo(): call_id: " + currentState.getCallInfoState().requireActivePeer().getCallId());
+    WebRtcUtil.enableSpeakerPhoneIfNeeded(context, currentState.getLocalDeviceState().getCameraState().isEnabled());
 
-        try {
-            webRtcInteractor.getCallManager().setVideoEnable(enable);
-        } catch  (CallException e) {
-            return callFailure(currentState, "setVideoEnable() failed: ", e);
-        }
+    return currentState;
+  }
 
-        currentState = currentState.builder()
-                .changeLocalDeviceState()
-                .cameraState(currentState.getVideoState().requireCamera().getCameraState())
-                .build();
+  @Override
+  protected @NonNull WebRtcServiceState handleSetMuteAudio(@NonNull WebRtcServiceState currentState, boolean muted) {
+    currentState = currentState.builder()
+                               .changeLocalDeviceState()
+                               .isMicrophoneEnabled(!muted)
+                               .build();
 
-        if (currentState.getLocalDeviceState().getCameraState().isEnabled()) {
-            webRtcInteractor.updatePhoneState(LockManager.PhoneState.IN_VIDEO);
-        } else {
-            webRtcInteractor.updatePhoneState(WebRtcUtil.getInCallPhoneState(context));
-        }
-
-        WebRtcUtil.enableSpeakerPhoneIfNeeded(context, currentState.getLocalDeviceState().getCameraState().isEnabled());
-
-        return currentState;
+    try {
+      webRtcInteractor.getCallManager().setAudioEnable(currentState.getLocalDeviceState().isMicrophoneEnabled());
+    } catch (CallException e) {
+      return callFailure(currentState, "Enabling audio failed: ", e);
     }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleSetMuteAudio(@NonNull WebRtcServiceState currentState, boolean muted) {
-        currentState = currentState.builder()
-                .changeLocalDeviceState()
-                .isMicrophoneEnabled(!muted)
-                .build();
+    return currentState;
+  }
 
-        try {
-            webRtcInteractor.getCallManager().setAudioEnable(currentState.getLocalDeviceState().isMicrophoneEnabled());
-        } catch (CallException e) {
-            return callFailure(currentState, "Enabling audio failed: ", e);
-        }
+  @Override
+  protected @NonNull WebRtcServiceState handleRemoteVideoEnable(@NonNull WebRtcServiceState currentState, boolean enable) {
+    return activeCallDelegate.handleRemoteVideoEnable(currentState, enable);
+  }
 
-        return currentState;
-    }
+  @Override
+  protected @NonNull WebRtcServiceState handleScreenSharingEnable(@NonNull WebRtcServiceState currentState, boolean enable) {
+    return activeCallDelegate.handleScreenSharingEnable(currentState, enable);
+  }
 
-    @Override
-    protected @NonNull  WebRtcServiceState handleRemoteVideoEnable(@NonNull WebRtcServiceState currentState, boolean enable) {
-        return activeCallDelegate.handleRemoteVideoEnable(currentState, enable);
-    }
+  @Override
+  protected @NonNull WebRtcServiceState handleSendIceCandidates(@NonNull WebRtcServiceState currentState,
+                                                                @NonNull WebRtcData.CallMetadata callMetadata,
+                                                                boolean broadcast,
+                                                                @NonNull List<byte[]> iceCandidates)
+  {
+    return activeCallDelegate.handleSendIceCandidates(currentState, callMetadata, broadcast, iceCandidates);
+  }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleSendIceCandidates(@NonNull WebRtcServiceState currentState,
-                                                                  @NonNull WebRtcData.CallMetadata callMetadata,
-                                                                  boolean broadcast,
-                                                                  @NonNull List<byte[]> iceCandidates)
-    {
-        return activeCallDelegate.handleSendIceCandidates(currentState, callMetadata, broadcast, iceCandidates);
-    }
+  @Override
+  protected @NonNull WebRtcServiceState handleLocalHangup(@NonNull WebRtcServiceState currentState) {
+    return activeCallDelegate.handleLocalHangup(currentState);
+  }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleLocalHangup(@NonNull WebRtcServiceState currentState) {
-        return activeCallDelegate.handleLocalHangup(currentState);
-    }
+  @Override
+  protected @NonNull WebRtcServiceState handleEndedRemote(@NonNull WebRtcServiceState currentState, @NonNull CallManager.CallEvent endedRemoteEvent, @NonNull RemotePeer remotePeer) {
+    return activeCallDelegate.handleEndedRemote(currentState, endedRemoteEvent, remotePeer);
+  }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleEndedRemote(@NonNull WebRtcServiceState currentState, @NonNull CallManager.CallEvent endedRemoteEvent, @NonNull RemotePeer remotePeer) {
-        return activeCallDelegate.handleEndedRemote(currentState, endedRemoteEvent, remotePeer);
-    }
+  @Override
+  protected @NonNull WebRtcServiceState handleEnded(@NonNull WebRtcServiceState currentState, @NonNull CallManager.CallEvent endedEvent, @NonNull RemotePeer remotePeer) {
+    return activeCallDelegate.handleEnded(currentState, endedEvent, remotePeer);
+  }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleEnded(@NonNull WebRtcServiceState currentState, @NonNull CallManager.CallEvent endedEvent, @NonNull RemotePeer remotePeer) {
-        return activeCallDelegate.handleEnded(currentState, endedEvent, remotePeer);
-    }
+  @Override
+  protected @NonNull WebRtcServiceState handleReceivedOfferWhileActive(@NonNull WebRtcServiceState currentState, @NonNull RemotePeer remotePeer) {
+    return activeCallDelegate.handleReceivedOfferWhileActive(currentState, remotePeer);
+  }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleReceivedOfferWhileActive(@NonNull WebRtcServiceState currentState, @NonNull RemotePeer remotePeer) {
-        return activeCallDelegate.handleReceivedOfferWhileActive(currentState, remotePeer);
-    }
-
-    @Override
-    protected @NonNull WebRtcServiceState handleCallConcluded(@NonNull WebRtcServiceState currentState, @Nullable RemotePeer remotePeer) {
-        return activeCallDelegate.handleCallConcluded(currentState, remotePeer);
-    }
+  @Override
+  protected @NonNull WebRtcServiceState handleCallConcluded(@NonNull WebRtcServiceState currentState, @Nullable RemotePeer remotePeer) {
+    return activeCallDelegate.handleCallConcluded(currentState, remotePeer);
+  }
 }

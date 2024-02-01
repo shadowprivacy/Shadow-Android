@@ -12,6 +12,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.net.NotPushRegisteredException;
 import su.sres.securesms.payments.FailureReason;
 import su.sres.securesms.payments.MobileCoinPublicAddress;
 import su.sres.securesms.payments.PaymentSubmissionResult;
@@ -123,6 +124,10 @@ public final class PaymentSendJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
+    if (!Recipient.self().isRegistered()) {
+      throw new NotPushRegisteredException();
+    }
+
     if (!SignalStore.paymentsValues().mobileCoinPaymentsEnabled()) {
       Log.w(TAG, "Payments are not enabled");
       return;

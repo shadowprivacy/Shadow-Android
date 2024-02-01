@@ -11,6 +11,8 @@ import su.sres.securesms.R
 import su.sres.securesms.contacts.avatars.ContactColors
 import su.sres.securesms.contacts.avatars.GeneratedContactPhoto
 import su.sres.securesms.conversation.ConversationIntents
+import su.sres.securesms.conversation.colors.AvatarColor
+import su.sres.securesms.conversation.colors.ChatColorsPalette
 import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.notifications.DeleteNotificationReceiver
 import su.sres.securesms.notifications.MarkReadReceiver
@@ -52,7 +54,7 @@ data class NotificationConversation(
     return if (SignalStore.settings().messageNotificationsPrivacy.isDisplayContact) {
       recipient.getContactDrawable(context)
     } else {
-      GeneratedContactPhoto("Unknown", R.drawable.ic_profile_outline_40).asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context))
+      GeneratedContactPhoto("Unknown", R.drawable.ic_profile_outline_40).asDrawable(context, AvatarColor.UNKNOWN.colorInt())
     }
   }
 

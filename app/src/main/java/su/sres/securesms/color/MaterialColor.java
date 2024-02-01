@@ -92,14 +92,14 @@ public enum MaterialColor {
   }
 
   public @ColorRes int toQuoteBarColorResource(@NonNull Context context, boolean outgoing) {
-    if (outgoing) {
+    if (!outgoing) {
       return isDarkTheme(context) ? tintColor : shadeColor ;
     }
     return R.color.core_white;
   }
 
   public @ColorInt int toQuoteBackgroundColor(@NonNull Context context, boolean outgoing) {
-    if (outgoing) {
+    if (!outgoing) {
       int color = toConversationColor(context);
       int alpha = isDarkTheme(context) ? (int) (0.2 * 255) : (int) (0.4 * 255);
       return Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color));
@@ -109,7 +109,7 @@ public enum MaterialColor {
   }
 
   public @ColorInt int toQuoteFooterColor(@NonNull Context context, boolean outgoing) {
-    if (outgoing) {
+    if (!outgoing) {
       int color = toConversationColor(context);
       int alpha = isDarkTheme(context) ? (int) (0.4 * 255) : (int) (0.6 * 255);
       return Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color));

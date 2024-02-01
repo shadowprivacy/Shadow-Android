@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import su.sres.securesms.R;
 import su.sres.securesms.conversation.ConversationMessage;
+import su.sres.securesms.conversation.colors.Colorizer;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.mms.GlideRequests;
 
@@ -23,12 +24,14 @@ final class MessageDetailsAdapter extends ListAdapter<MessageDetailsAdapter.Mess
 
     private final LifecycleOwner lifecycleOwner;
     private final GlideRequests glideRequests;
+    private final Colorizer     colorizer;
     private       boolean       running;
 
-    MessageDetailsAdapter(@NonNull LifecycleOwner lifecycleOwner, @NonNull GlideRequests glideRequests) {
+    MessageDetailsAdapter(@NonNull LifecycleOwner lifecycleOwner, @NonNull GlideRequests glideRequests, @NonNull Colorizer colorizer) {
         super(new MessageDetailsDiffer());
         this.lifecycleOwner = lifecycleOwner;
         this.glideRequests  = glideRequests;
+        this.colorizer      = colorizer;
         this.running        = true;
     }
 
@@ -36,7 +39,7 @@ final class MessageDetailsAdapter extends ListAdapter<MessageDetailsAdapter.Mess
     public @NonNull RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         switch (viewType) {
             case MessageDetailsViewState.MESSAGE_HEADER:
-                return new MessageHeaderViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.message_details_header, parent, false), glideRequests);
+                return new MessageHeaderViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.message_details_header, parent, false), glideRequests, colorizer);
             case MessageDetailsViewState.RECIPIENT_HEADER:
                 return new RecipientHeaderViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.message_details_recipient_header, parent, false));
             case MessageDetailsViewState.RECIPIENT:

@@ -22,6 +22,7 @@ import su.sres.securesms.crypto.ClassicDecryptingPartInputStream;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.ModernDecryptingPartInputStream;
 import su.sres.securesms.database.AttachmentDatabase;
+import su.sres.securesms.database.EmojiSearchDatabase;
 import su.sres.securesms.database.GroupReceiptDatabase;
 import su.sres.securesms.database.JobDatabase;
 import su.sres.securesms.database.KeyValueDatabase;
@@ -72,11 +73,12 @@ public class FullBackupExporter extends FullBackupBase {
   private static final String TAG = Log.tag(FullBackupExporter.class);
 
   private static final Set<String> BLACKLISTED_TABLES = SetUtil.newHashSet(
-          SignedPreKeyDatabase.TABLE_NAME,
-          OneTimePreKeyDatabase.TABLE_NAME,
-          SessionDatabase.TABLE_NAME,
-          SearchDatabase.SMS_FTS_TABLE_NAME,
-          SearchDatabase.MMS_FTS_TABLE_NAME
+      SignedPreKeyDatabase.TABLE_NAME,
+      OneTimePreKeyDatabase.TABLE_NAME,
+      SessionDatabase.TABLE_NAME,
+      SearchDatabase.SMS_FTS_TABLE_NAME,
+      SearchDatabase.MMS_FTS_TABLE_NAME,
+      EmojiSearchDatabase.TABLE_NAME
   );
 
   public static void export(@NonNull Context context,
@@ -211,11 +213,11 @@ public class FullBackupExporter extends FullBackupBase {
         String type = cursor.getString(2);
 
         if (sql != null) {
+          boolean isSmsFtsSecretTable   = name != null && !name.equals(SearchDatabase.SMS_FTS_TABLE_NAME) && name.startsWith(SearchDatabase.SMS_FTS_TABLE_NAME);
+          boolean isMmsFtsSecretTable   = name != null && !name.equals(SearchDatabase.MMS_FTS_TABLE_NAME) && name.startsWith(SearchDatabase.MMS_FTS_TABLE_NAME);
+          boolean isEmojiFtsSecretTable = name != null && !name.equals(EmojiSearchDatabase.TABLE_NAME) && name.startsWith(EmojiSearchDatabase.TABLE_NAME);
 
-          boolean isSmsFtsSecretTable = name != null && !name.equals(SearchDatabase.SMS_FTS_TABLE_NAME) && name.startsWith(SearchDatabase.SMS_FTS_TABLE_NAME);
-          boolean isMmsFtsSecretTable = name != null && !name.equals(SearchDatabase.MMS_FTS_TABLE_NAME) && name.startsWith(SearchDatabase.MMS_FTS_TABLE_NAME);
-
-          if (!isSmsFtsSecretTable && !isMmsFtsSecretTable) {
+          if (!isSmsFtsSecretTable && !isMmsFtsSecretTable && !isEmojiFtsSecretTable) {
             if ("table".equals(type)) {
               tables.add(name);
             }

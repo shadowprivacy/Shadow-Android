@@ -20,12 +20,12 @@ import androidx.lifecycle.ViewModelProviders;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import su.sres.securesms.R;
-import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.components.emoji.EmojiTextView;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.conversation.ConversationIntents;
+import su.sres.securesms.conversation.colors.AvatarColor;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.ui.managegroup.dialogs.GroupDescriptionDialog;
 import su.sres.securesms.groups.v2.GroupDescriptionUtil;
@@ -88,7 +88,7 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
 
     groupCancelButton.setOnClickListener(v -> dismiss());
 
-    avatar.setImageBytesForGroup(null, new FallbackPhotoProvider(), MaterialColor.STEEL);
+    avatar.setImageBytesForGroup(null, new FallbackPhotoProvider(), AvatarColor.UNKNOWN);
 
     return view;
   }
@@ -130,7 +130,7 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
           break;
       }
 
-      avatar.setImageBytesForGroup(details.getAvatarBytes(), new FallbackPhotoProvider(), MaterialColor.STEEL);
+      avatar.setImageBytesForGroup(details.getAvatarBytes(), new FallbackPhotoProvider(), AvatarColor.UNKNOWN);
 
       groupCancelButton.setVisibility(View.VISIBLE);
     });

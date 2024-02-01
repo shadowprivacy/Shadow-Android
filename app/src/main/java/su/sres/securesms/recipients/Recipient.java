@@ -13,8 +13,6 @@ import androidx.annotation.WorkerThread;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.R;
-import su.sres.securesms.color.MaterialColor;
-import su.sres.securesms.contacts.avatars.ContactColors;
 import su.sres.securesms.contacts.avatars.ContactPhoto;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.GeneratedContactPhoto;
@@ -22,6 +20,9 @@ import su.sres.securesms.contacts.avatars.GroupRecordContactPhoto;
 import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.contacts.avatars.TransparentContactPhoto;
+import su.sres.securesms.conversation.colors.AvatarColor;
+import su.sres.securesms.conversation.colors.ChatColors;
+import su.sres.securesms.conversation.colors.ChatColorsPalette;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.MentionSetting;
@@ -44,7 +45,6 @@ import org.signal.zkgroup.profiles.ProfileKeyCredential;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
 
-import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.wallpaper.ChatWallpaper;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.util.UuidUtil;
@@ -84,12 +84,11 @@ public class Recipient {
   private final VibrateState           callVibrate;
   private final Uri                    messageRingtone;
   private final Uri                    callRingtone;
-  private final MaterialColor          color;
   private final Optional<Integer>      defaultSubscriptionId;
   private final int                    expireMessages;
   private final RegisteredState        registered;
   private final byte[]                 profileKey;
-  private final ProfileKeyCredential profileKeyCredential;
+  private final ProfileKeyCredential   profileKeyCredential;
   private final String                 groupName;
   private final Uri                    systemContactPhoto;
   private final String                 customLabel;
@@ -106,15 +105,17 @@ public class Recipient {
   private final Capability             groupsV1MigrationCapability;
   private final InsightsBannerTier     insightsBannerTier;
   private final byte[]                 storageId;
-  private final MentionSetting mentionSetting;
-  private final ChatWallpaper wallpaper;
+  private final MentionSetting         mentionSetting;
+  private final ChatWallpaper          wallpaper;
+  private final ChatColors             chatColors;
+  private final AvatarColor            avatarColor;
   private final String                 about;
   private final String                 aboutEmoji;
   private final ProfileName            systemProfileName;
   private final String                 systemContactName;
 
-  private final Optional<Extras>       extras;
-  private final boolean                hasGroupsInCommon;
+  private final Optional<Extras> extras;
+  private final boolean          hasGroupsInCommon;
 
   /**
    * Returns a {@link LiveRecipient}, which contains a {@link Recipient} that may or may not be
@@ -200,7 +201,7 @@ public class Recipient {
    * Returns a fully-populated {@link Recipient} based off of a UUID and phone number, creating one
    * in the database if necessary. We want both piece of information so we're able to associate them
    * both together, depending on which are available.
-   *
+   * <p>
    * In particular, while we'll eventually get the UUID of a user created via a phone number
    * (through a directory sync), the only way we can store the phone number is by retrieving it from
    * sent messages and whatnot. So we should store it when available.
@@ -232,7 +233,7 @@ public class Recipient {
    * A safety wrapper around {@link #external(Context, String)} for when you know you're using an
    * identifier for a system contact, and therefore always want to prevent interpreting it as a
    * UUID. This will crash if given a UUID.
-   *
+   * <p>
    * (This may seem strange, but apparently some devices are returning valid UUIDs for contacts)
    */
   @WorkerThread
@@ -253,7 +254,7 @@ public class Recipient {
   /**
    * A version of {@link #external(Context, String)} that should be used when you know the
    * identifier is a groupId.
-   *
+   * <p>
    * Important: This will throw an exception if the groupId you're using could have been migrated.
    * If you're dealing with inbound data, you should be using
    * {@link #externalPossiblyMigratedGroup(Context, GroupId)}, or checking the database before
@@ -271,7 +272,7 @@ public class Recipient {
    * - The recipient whose V1 ID would map to the provided V2 ID
    * - The recipient whose V2 ID would be derived from the provided V1 ID
    * - A newly-created recipient for the provided ID if none of the above match
-   *
+   * <p>
    * Important: You could get back a recipient with a different groupId than the one you provided.
    * You should be very cautious when using the groupId on the returned recipient.
    */
@@ -284,7 +285,7 @@ public class Recipient {
    * Returns a fully-populated {@link Recipient} based off of a string identifier, creating one in
    * the database if necessary. The identifier may be a uuid, phone number, email,
    * or serialized groupId.
-   *
+   * <p>
    * If the identifier is a UUID of a Signal user, prefer using
    * {@link #externalPush(Context, UUID, String, boolean)} or its overload, as this will let us associate
    * the phone number with the recipient.
@@ -332,7 +333,6 @@ public class Recipient {
     this.callVibrate                 = VibrateState.DEFAULT;
     this.messageRingtone             = null;
     this.callRingtone                = null;
-    this.color                       = null;
     this.insightsBannerTier          = InsightsBannerTier.TIER_TWO;
     this.defaultSubscriptionId       = Optional.absent();
     this.expireMessages              = 0;
@@ -356,6 +356,8 @@ public class Recipient {
     this.storageId                   = null;
     this.mentionSetting              = MentionSetting.ALWAYS_NOTIFY;
     this.wallpaper                   = null;
+    this.chatColors                  = null;
+    this.avatarColor                 = AvatarColor.UNKNOWN;
     this.about                       = null;
     this.aboutEmoji                  = null;
     this.systemProfileName           = ProfileName.EMPTY;
@@ -381,7 +383,6 @@ public class Recipient {
     this.callVibrate                 = details.callVibrateState;
     this.messageRingtone             = details.messageRingtone;
     this.callRingtone                = details.callRingtone;
-    this.color                       = details.color;
     this.insightsBannerTier          = details.insightsBannerTier;
     this.defaultSubscriptionId       = details.defaultSubscriptionId;
     this.expireMessages              = details.expireMessages;
@@ -405,6 +406,8 @@ public class Recipient {
     this.storageId                   = details.storageId;
     this.mentionSetting              = details.mentionSetting;
     this.wallpaper                   = details.wallpaper;
+    this.chatColors                  = details.chatColors;
+    this.avatarColor                 = details.avatarColor;
     this.about                       = details.about;
     this.aboutEmoji                  = details.aboutEmoji;
     this.systemProfileName           = details.systemProfileName;
@@ -449,9 +452,9 @@ public class Recipient {
    * False if it {@link #getDisplayName} would fall back to e164, email or unknown.
    */
   public boolean hasAUserSetDisplayName(@NonNull Context context) {
-    return !TextUtils.isEmpty(getGroupName(context))             ||
-            !TextUtils.isEmpty(systemContactName)                 ||
-            !TextUtils.isEmpty(getProfileName().toString());
+    return !TextUtils.isEmpty(getGroupName(context)) ||
+           !TextUtils.isEmpty(systemContactName) ||
+           !TextUtils.isEmpty(getProfileName().toString());
   }
 
   public @NonNull String getDisplayName(@NonNull Context context) {
@@ -541,39 +544,21 @@ public class Recipient {
 
   public @NonNull String getShortDisplayName(@NonNull Context context) {
     String name = Util.getFirstNonEmpty(getGroupName(context),
-            getSystemProfileName().getGivenName(),
-            getProfileName().getGivenName(),
-            getDisplayName(context));
+                                        getSystemProfileName().getGivenName(),
+                                        getProfileName().getGivenName(),
+                                        getDisplayName(context));
 
     return StringUtil.isolateBidi(name);
   }
 
   public @NonNull String getShortDisplayNameIncludingUsername(@NonNull Context context) {
     String name = Util.getFirstNonEmpty(getGroupName(context),
-            getSystemProfileName().getGivenName(),
-            getProfileName().getGivenName(),
-            getDisplayName(context),
-            getUsername().orNull());
+                                        getSystemProfileName().getGivenName(),
+                                        getProfileName().getGivenName(),
+                                        getDisplayName(context),
+                                        getUsername().orNull());
 
     return StringUtil.isolateBidi(name);
-  }
-
-  public @NonNull MaterialColor getColor() {
-    if (isGroupInternal()) {
-      return MaterialColor.GROUP;
-    } else if (color != null) {
-      return color;
-    } else if (groupName != null || profileSharing) {
-      Log.w(TAG, "Had no color for " + id + "! Saving a new one.");
-
-      Context       context = ApplicationDependencies.getApplication();
-      MaterialColor color   = ContactColors.generateFor(getDisplayName(context));
-
-      SignalExecutors.BOUNDED.execute(() -> DatabaseFactory.getRecipientDatabase(context).setColorIfNotSet(id, color));
-      return color;
-    } else {
-      return ContactColors.UNKNOWN_COLOR;
-    }
   }
 
   public @NonNull Optional<UUID> getUuid() {
@@ -692,7 +677,7 @@ public class Recipient {
 
   /**
    * @return A single string to represent the recipient, in order of precedence:
-   *
+   * <p>
    * Group ID > UUID > Phone > Email
    */
   public @NonNull String requireStringId() {
@@ -776,11 +761,11 @@ public class Recipient {
   }
 
   public @NonNull Drawable getFallbackContactPhotoDrawable(Context context, boolean inverted, @Nullable FallbackPhotoProvider fallbackPhotoProvider) {
-    return getFallbackContactPhoto(Util.firstNonNull(fallbackPhotoProvider, DEFAULT_FALLBACK_PHOTO_PROVIDER)).asDrawable(context, getColor().toAvatarColor(context), inverted);
+    return getFallbackContactPhoto(Util.firstNonNull(fallbackPhotoProvider, DEFAULT_FALLBACK_PHOTO_PROVIDER)).asDrawable(context, avatarColor.colorInt(), inverted);
   }
 
   public @NonNull Drawable getSmallFallbackContactPhotoDrawable(Context context, boolean inverted, @Nullable FallbackPhotoProvider fallbackPhotoProvider) {
-    return getFallbackContactPhoto(Util.firstNonNull(fallbackPhotoProvider, DEFAULT_FALLBACK_PHOTO_PROVIDER)).asSmallDrawable(context, getColor().toAvatarColor(context), inverted);
+    return getFallbackContactPhoto(Util.firstNonNull(fallbackPhotoProvider, DEFAULT_FALLBACK_PHOTO_PROVIDER)).asSmallDrawable(context, avatarColor.colorInt(), inverted);
   }
 
   public @NonNull FallbackContactPhoto getFallbackContactPhoto() {
@@ -788,22 +773,22 @@ public class Recipient {
   }
 
   public @NonNull FallbackContactPhoto getFallbackContactPhoto(@NonNull FallbackPhotoProvider fallbackPhotoProvider) {
-    if      (isSelf)                        return fallbackPhotoProvider.getPhotoForLocalNumber();
-    else if (isResolving())                 return fallbackPhotoProvider.getPhotoForResolvingRecipient();
-    else if (isGroupInternal())             return fallbackPhotoProvider.getPhotoForGroup();
-    else if (isGroup())                     return fallbackPhotoProvider.getPhotoForGroup();
+    if (isSelf) return fallbackPhotoProvider.getPhotoForLocalNumber();
+    else if (isResolving()) return fallbackPhotoProvider.getPhotoForResolvingRecipient();
+    else if (isGroupInternal()) return fallbackPhotoProvider.getPhotoForGroup();
+    else if (isGroup()) return fallbackPhotoProvider.getPhotoForGroup();
     else if (!TextUtils.isEmpty(groupName)) return fallbackPhotoProvider.getPhotoForRecipientWithName(groupName);
     else if (!TextUtils.isEmpty(systemContactName)) return fallbackPhotoProvider.getPhotoForRecipientWithName(systemContactName);
-    else if (!signalProfileName.isEmpty())          return fallbackPhotoProvider.getPhotoForRecipientWithName(signalProfileName.toString());
-    else                                    return fallbackPhotoProvider.getPhotoForRecipientWithoutName();
+    else if (!signalProfileName.isEmpty()) return fallbackPhotoProvider.getPhotoForRecipientWithName(signalProfileName.toString());
+    else return fallbackPhotoProvider.getPhotoForRecipientWithoutName();
   }
 
   public @Nullable ContactPhoto getContactPhoto() {
-    if      (isSelf)                                         return null;
+    if (isSelf) return null;
     else if (isGroupInternal() && groupAvatarId.isPresent()) return new GroupRecordContactPhoto(groupId, groupAvatarId.get());
-    // else if (systemContactPhoto != null)                     return new SystemContactPhoto(id, systemContactPhoto, 0);
-    else if (profileAvatar != null && hasProfileImage)       return new ProfileContactPhoto(this, profileAvatar);
-    else                                                     return null;
+      // else if (systemContactPhoto != null)                     return new SystemContactPhoto(id, systemContactPhoto, 0);
+    else if (profileAvatar != null && hasProfileImage) return new ProfileContactPhoto(this, profileAvatar);
+    else return null;
   }
 
   public @Nullable Uri getMessageRingtone() {
@@ -855,8 +840,8 @@ public class Recipient {
   }
 
   public @NonNull RegisteredState getRegistered() {
-    if      (isPushGroup()) return RegisteredState.REGISTERED;
-    else if (isMmsGroup())  return RegisteredState.NOT_REGISTERED;
+    if (isPushGroup()) return RegisteredState.REGISTERED;
+    else if (isMmsGroup()) return RegisteredState.NOT_REGISTERED;
 
     return registered;
   }
@@ -918,6 +903,37 @@ public class Recipient {
    */
   public boolean hasWallpaper() {
     return wallpaper != null || SignalStore.wallpaper().hasWallpaperSet();
+  }
+
+  public boolean hasOwnChatColors() {
+    return chatColors != null;
+  }
+
+  public @NonNull ChatColors getChatColors() {
+    if (chatColors != null && !(chatColors.getId() instanceof ChatColors.Id.Auto)) {
+      return chatColors;
+    } if (chatColors != null) {
+      return getAutoChatColor();
+    } else {
+      ChatColors global = SignalStore.chatColorsValues().getChatColors();
+      if (global != null && !(global.getId() instanceof ChatColors.Id.Auto)) {
+        return global;
+      } else {
+        return getAutoChatColor();
+      }
+    }
+  }
+
+  private @NonNull ChatColors getAutoChatColor() {
+    if (getWallpaper() != null) {
+      return getWallpaper().getAutoChatColors();
+    } else {
+      return ChatColorsPalette.Bubbles.getDefault().withId(ChatColors.Id.Auto.INSTANCE);
+    }
+  }
+
+  public @NonNull AvatarColor getAvatarColor() {
+    return avatarColor;
   }
 
   public boolean isSystemContact() {
@@ -1019,10 +1035,14 @@ public class Recipient {
 
     public static Capability deserialize(int value) {
       switch (value) {
-        case 0:  return UNKNOWN;
-        case 1:  return SUPPORTED;
-        case 2:  return NOT_SUPPORTED;
-        default: throw new IllegalArgumentException();
+        case 0:
+          return UNKNOWN;
+        case 1:
+          return SUPPORTED;
+        case 2:
+          return NOT_SUPPORTED;
+        default:
+          throw new IllegalArgumentException();
       }
     }
 
@@ -1066,49 +1086,50 @@ public class Recipient {
 
   public boolean hasSameContent(@NonNull Recipient other) {
     return Objects.equals(id, other.id) &&
-            resolving == other.resolving &&
-            isSelf == other.isSelf &&
-            blocked == other.blocked &&
-            muteUntil == other.muteUntil &&
-            expireMessages == other.expireMessages &&
-            hasProfileImage == other.hasProfileImage &&
-            profileSharing == other.profileSharing &&
-            lastProfileFetch == other.lastProfileFetch &&
-            forceSmsSelection == other.forceSmsSelection &&
-            Objects.equals(uuid, other.uuid) &&
-            Objects.equals(username, other.username) &&
-            Objects.equals(e164, other.e164) &&
-            Objects.equals(email, other.email) &&
-            Objects.equals(groupId, other.groupId) &&
-            allContentsAreTheSame(participants, other.participants) &&
-            Objects.equals(groupAvatarId, other.groupAvatarId) &&
-            messageVibrate == other.messageVibrate &&
-            callVibrate == other.callVibrate &&
-            Objects.equals(messageRingtone, other.messageRingtone) &&
-            Objects.equals(callRingtone, other.callRingtone) &&
-            color == other.color &&
-            Objects.equals(defaultSubscriptionId, other.defaultSubscriptionId) &&
-            registered == other.registered &&
-            Arrays.equals(profileKey, other.profileKey) &&
-            Objects.equals(profileKeyCredential, other.profileKeyCredential) &&
-            Objects.equals(groupName, other.groupName) &&
-            Objects.equals(systemContactPhoto, other.systemContactPhoto) &&
-            Objects.equals(customLabel, other.customLabel) &&
-            Objects.equals(contactUri, other.contactUri) &&
-            Objects.equals(signalProfileName, other.signalProfileName) &&
-            Objects.equals(systemProfileName, other.systemProfileName) &&
-            Objects.equals(profileAvatar, other.profileAvatar) &&
-            Objects.equals(notificationChannel, other.notificationChannel) &&
-            unidentifiedAccessMode == other.unidentifiedAccessMode &&
-            groupsV2Capability == other.groupsV2Capability &&
-            groupsV1MigrationCapability == other.groupsV1MigrationCapability &&
-            insightsBannerTier == other.insightsBannerTier &&
-            Arrays.equals(storageId, other.storageId) &&
-            mentionSetting == other.mentionSetting &&
-            Objects.equals(wallpaper, other.wallpaper) &&
-            Objects.equals(about, other.about) &&
-            Objects.equals(aboutEmoji, other.aboutEmoji) &&
-            Objects.equals(extras, other.extras);
+           resolving == other.resolving &&
+           isSelf == other.isSelf &&
+           blocked == other.blocked &&
+           muteUntil == other.muteUntil &&
+           expireMessages == other.expireMessages &&
+           hasProfileImage == other.hasProfileImage &&
+           profileSharing == other.profileSharing &&
+           lastProfileFetch == other.lastProfileFetch &&
+           forceSmsSelection == other.forceSmsSelection &&
+           Objects.equals(uuid, other.uuid) &&
+           Objects.equals(username, other.username) &&
+           Objects.equals(e164, other.e164) &&
+           Objects.equals(email, other.email) &&
+           Objects.equals(groupId, other.groupId) &&
+           allContentsAreTheSame(participants, other.participants) &&
+           Objects.equals(groupAvatarId, other.groupAvatarId) &&
+           messageVibrate == other.messageVibrate &&
+           callVibrate == other.callVibrate &&
+           Objects.equals(messageRingtone, other.messageRingtone) &&
+           Objects.equals(callRingtone, other.callRingtone) &&
+           Objects.equals(defaultSubscriptionId, other.defaultSubscriptionId) &&
+           registered == other.registered &&
+           Arrays.equals(profileKey, other.profileKey) &&
+           Objects.equals(profileKeyCredential, other.profileKeyCredential) &&
+           Objects.equals(groupName, other.groupName) &&
+           Objects.equals(systemContactPhoto, other.systemContactPhoto) &&
+           Objects.equals(customLabel, other.customLabel) &&
+           Objects.equals(contactUri, other.contactUri) &&
+           Objects.equals(signalProfileName, other.signalProfileName) &&
+           Objects.equals(systemProfileName, other.systemProfileName) &&
+           Objects.equals(profileAvatar, other.profileAvatar) &&
+           Objects.equals(notificationChannel, other.notificationChannel) &&
+           unidentifiedAccessMode == other.unidentifiedAccessMode &&
+           groupsV2Capability == other.groupsV2Capability &&
+           groupsV1MigrationCapability == other.groupsV1MigrationCapability &&
+           insightsBannerTier == other.insightsBannerTier &&
+           Arrays.equals(storageId, other.storageId) &&
+           mentionSetting == other.mentionSetting &&
+           Objects.equals(wallpaper, other.wallpaper) &&
+           Objects.equals(chatColors, other.chatColors) &&
+           Objects.equals(avatarColor, other.avatarColor) &&
+           Objects.equals(about, other.about) &&
+           Objects.equals(aboutEmoji, other.aboutEmoji) &&
+           Objects.equals(extras, other.extras);
   }
 
   private static boolean allContentsAreTheSame(@NonNull List<Recipient> a, @NonNull List<Recipient> b) {

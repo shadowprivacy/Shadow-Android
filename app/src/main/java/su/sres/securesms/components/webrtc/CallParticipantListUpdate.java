@@ -2,21 +2,15 @@ package su.sres.securesms.components.webrtc;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
-import androidx.collection.LongSparseArray;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.CallParticipantId;
-import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.SetUtil;
-import su.sres.securesms.util.Util;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 

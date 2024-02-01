@@ -549,7 +549,7 @@
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
         <activity android:name=".scribbles.ImageEditorStickerSelectActivity"
-            android:theme="@style/TextSecure.DarkTheme"
+            android:theme="@style/Signal.DayNight.NoActionBar"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
         <activity android:name=".profiles.edit.EditProfileActivity"
@@ -652,6 +652,10 @@
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Signal.WallpaperCropper" />
+
+        <activity android:name=".reactions.edit.EditReactionsActivity"
+            android:theme="@style/Theme.Signal.DayNight.NoActionBar"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
         <service android:enabled="true" android:name=".service.webrtc.WebRtcCallService"/>
         <service

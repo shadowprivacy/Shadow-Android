@@ -3,12 +3,13 @@ package su.sres.securesms.components;
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import androidx.annotation.DimenRes;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.text.format.DateUtils;
@@ -33,6 +34,7 @@ import su.sres.securesms.components.emoji.EmojiToggle;
 import su.sres.securesms.components.emoji.MediaKeyboard;
 import su.sres.securesms.conversation.ConversationStickerSuggestionAdapter;
 import su.sres.securesms.database.model.StickerRecord;
+import su.sres.securesms.keyboard.KeyboardPage;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.linkpreview.LinkPreviewRepository;
@@ -42,8 +44,6 @@ import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.mms.QuoteModel;
 import su.sres.securesms.mms.SlideDeck;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.AssertedSuccessListener;
 import su.sres.securesms.util.concurrent.ListenableFuture;
@@ -51,6 +51,7 @@ import su.sres.securesms.util.concurrent.SettableFuture;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class InputPanel extends LinearLayout
@@ -75,7 +76,7 @@ public class InputPanel extends LinearLayout
   private View            buttonToggle;
   private View            recordingContainer;
   private View            recordLockCancel;
-  private View            composeContainer;
+  private ViewGroup       composeContainer;
 
   private MicrophoneRecorderView microphoneRecorderView;
   private SlideToCancel          slideToCancel;
@@ -164,7 +165,7 @@ public class InputPanel extends LinearLayout
                        @NonNull CharSequence body,
                        @NonNull SlideDeck attachments)
   {
-    this.quoteView.setQuote(glideRequests, id, author, body, false, attachments);
+    this.quoteView.setQuote(glideRequests, id, author, body, false, attachments, null);
     int originalHeight = this.quoteView.getVisibility() == VISIBLE ? this.quoteView.getMeasuredHeight()
             : 0;
 
@@ -276,8 +277,8 @@ public class InputPanel extends LinearLayout
     mediaKeyboard.setVisibility(show ? View.VISIBLE : GONE);
   }
 
-  public void setMediaKeyboardToggleMode(boolean isSticker) {
-    mediaKeyboard.setStickerMode(isSticker);
+  public void setMediaKeyboardToggleMode(@NonNull KeyboardPage page) {
+    mediaKeyboard.setStickerMode(page);
   }
 
   public boolean isStickerMode() {
@@ -288,13 +289,17 @@ public class InputPanel extends LinearLayout
     return mediaKeyboard;
   }
 
+  public MediaKeyboard.MediaKeyboardListener getMediaKeyboardListener() {
+    return mediaKeyboard;
+  }
+
   public void setWallpaperEnabled(boolean enabled) {
     if (enabled) {
-      setBackgroundColor(getContext().getResources().getColor(R.color.wallpaper_compose_background));
-      composeContainer.setBackgroundResource(R.drawable.compose_background_wallpaper);
+      setBackground(new ColorDrawable(getContext().getResources().getColor(R.color.wallpaper_compose_background)));
+      composeContainer.setBackground(Objects.requireNonNull(ContextCompat.getDrawable(getContext(), R.drawable.compose_background_wallpaper)));
     } else {
-      setBackgroundColor(getResources().getColor(R.color.signal_background_primary));
-      composeContainer.setBackgroundResource(R.drawable.compose_background);
+      setBackground(new ColorDrawable(getContext().getResources().getColor(R.color.signal_background_primary)));
+      composeContainer.setBackground(Objects.requireNonNull(ContextCompat.getDrawable(getContext(), R.drawable.compose_background)));
     }
   }
 
@@ -421,6 +426,14 @@ public class InputPanel extends LinearLayout
 
   public void releaseRecordingLock() {
     microphoneRecorderView.unlockAction();
+  }
+
+  public void showGifMovedTooltip() {
+    TooltipPopup.forTarget(mediaKeyboard)
+                .setBackgroundTint(ContextCompat.getColor(getContext(), R.color.signal_accent_primary))
+                .setTextColor(getResources().getColor(R.color.core_white))
+                .setText(R.string.ConversationActivity__gifs_are_now_here)
+                .show(TooltipPopup.POSITION_ABOVE);
   }
 
   public interface Listener {

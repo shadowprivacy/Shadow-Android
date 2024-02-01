@@ -5,17 +5,18 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.Nullable;
 import androidx.appcompat.content.res.AppCompatResources;
+
 import android.text.TextUtils;
 
 import com.amulyakhare.textdrawable.TextDrawable;
 
 import su.sres.securesms.R;
 import su.sres.securesms.util.ContextUtil;
-import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.ViewUtil;
 
 import java.util.regex.Pattern;
@@ -43,26 +44,27 @@ public class GeneratedContactPhoto implements FallbackContactPhoto {
 
   @Override
   public Drawable asDrawable(Context context, int color) {
-    return asDrawable(context, color,false);
+    return asDrawable(context, color, false);
   }
 
   @Override
   public Drawable asDrawable(Context context, int color, boolean inverted) {
     int targetSize = this.targetSize != -1
-            ? this.targetSize
-            : context.getResources().getDimensionPixelSize(R.dimen.contact_photo_target_size);
+                     ? this.targetSize
+                     : context.getResources().getDimensionPixelSize(R.dimen.contact_photo_target_size);
     String character = getAbbreviation(name);
 
     if (!TextUtils.isEmpty(character)) {
+
       Drawable base = TextDrawable.builder()
-              .beginConfig()
-              .width(targetSize)
-              .height(targetSize)
-              .useFont(TYPEFACE)
-              .fontSize(fontSize)
-              .textColor(inverted ? color : Color.WHITE)
-              .endConfig()
-              .buildRound(character, inverted ? Color.WHITE : color);
+                                  .beginConfig()
+                                  .width(targetSize)
+                                  .height(targetSize)
+                                  .useFont(TYPEFACE)
+                                  .fontSize(fontSize)
+                                  .textColor(inverted ? color : Color.WHITE)
+                                  .endConfig()
+                                  .buildRound(character, inverted ? Color.WHITE : color);
 
       Drawable gradient = ContextUtil.requireDrawable(context, R.drawable.avatar_gradient);
       return new LayerDrawable(new Drawable[] { base, gradient });

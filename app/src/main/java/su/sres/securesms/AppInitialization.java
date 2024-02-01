@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.insights.InsightsOptOut;
 import su.sres.securesms.jobmanager.JobManager;
+import su.sres.securesms.jobs.EmojiSearchIndexDownloadJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.migrations.ApplicationMigrations;
@@ -48,6 +49,8 @@ public final class AppInitialization {
         SignalStore.onFirstEverAppLaunch();
         SignalStore.onboarding().clearAll();
         TextSecurePreferences.onPostBackupRestore(context);
+        // TODO: check if we still need this when emojis are locally offloaded
+        EmojiSearchIndexDownloadJob.scheduleImmediately();
     }
 
     /**

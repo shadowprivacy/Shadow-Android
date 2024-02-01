@@ -9,6 +9,8 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.webrtc.RendererCommon;
+
 import su.sres.securesms.R;
 import su.sres.securesms.events.CallParticipant;
 
@@ -62,6 +64,7 @@ class WebRtcCallParticipantsRecyclerAdapter extends ListAdapter<CallParticipant,
         void bind(@NonNull CallParticipant callParticipant) {
             callParticipantView.setCallParticipant(callParticipant);
             callParticipantView.setRenderInPip(true);
+            callParticipantView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL);
         }
     }
 

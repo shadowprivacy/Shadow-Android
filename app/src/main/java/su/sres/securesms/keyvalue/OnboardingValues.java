@@ -7,42 +7,50 @@ import androidx.annotation.NonNull;
 import java.util.Collections;
 import java.util.List;
 
-import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
-import su.sres.securesms.util.Util;
-
 public final class OnboardingValues extends SignalStoreValues {
 
-    private static final String SHOW_NEW_GROUP      = "onboarding.new_group";
+  private static final String SHOW_NEW_GROUP  = "onboarding.new_group";
+  private static final String SHOW_APPEARANCE = "onboarding.appearance";
 
-    OnboardingValues(@NonNull KeyValueStore store) {
-        super(store);
-    }
+  OnboardingValues(@NonNull KeyValueStore store) {
+    super(store);
+  }
 
-    @Override
-    void onFirstEverAppLaunch() {
-        putBoolean(SHOW_NEW_GROUP, true);
-    }
+  @Override
+  void onFirstEverAppLaunch() {
+    putBoolean(SHOW_NEW_GROUP, true);
+    putBoolean(SHOW_APPEARANCE, true);
+  }
 
-    @Override
-    @NonNull
-    List<String> getKeysToIncludeInBackup() {
-        return Collections.emptyList();
-    }
+  @Override
+  @NonNull
+  List<String> getKeysToIncludeInBackup() {
+    return Collections.emptyList();
+  }
 
-    public void clearAll() {
-        setShowNewGroup(false);
-    }
+  public void clearAll() {
+    setShowNewGroup(false);
+    setShowAppearance(false);
+  }
 
-    public boolean hasOnboarding(@NonNull Context context) {
-        return shouldShowNewGroup();
-    }
+  public boolean hasOnboarding(@NonNull Context context) {
+    return shouldShowNewGroup() ||
+           shouldShowAppearance();
+  }
 
-    public void setShowNewGroup(boolean value) {
-        putBoolean(SHOW_NEW_GROUP, value);
-    }
+  public void setShowNewGroup(boolean value) {
+    putBoolean(SHOW_NEW_GROUP, value);
+  }
 
-    public boolean shouldShowNewGroup() {
-        return getBoolean(SHOW_NEW_GROUP, false);
-    }
+  public boolean shouldShowNewGroup() {
+    return getBoolean(SHOW_NEW_GROUP, false);
+  }
 
+  public void setShowAppearance(boolean value) {
+    putBoolean(SHOW_APPEARANCE, value);
+  }
+
+  public boolean shouldShowAppearance() {
+    return getBoolean(SHOW_APPEARANCE, false);
+  }
 }

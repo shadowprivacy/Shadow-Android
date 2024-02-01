@@ -2,6 +2,7 @@ package su.sres.securesms.components.settings.app.appearance
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import su.sres.securesms.jobs.EmojiSearchIndexDownloadJob
 import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.util.livedata.Store
 
@@ -28,6 +29,7 @@ class AppearanceSettingsViewModel : ViewModel() {
   fun setLanguage(language: String) {
     store.update { it.copy(language = language) }
     SignalStore.settings().language = language
+    EmojiSearchIndexDownloadJob.scheduleImmediately()
   }
 
   fun setMessageFontSize(size: Int) {

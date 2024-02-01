@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -18,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProviders;
 
@@ -31,12 +33,12 @@ import su.sres.securesms.MuteDialog;
 import su.sres.securesms.PushContactSelectionActivity;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
-import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.components.ThreadPhotoRailView;
 import su.sres.securesms.components.emoji.EmojiTextView;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.FallbackPhoto80dp;
+import su.sres.securesms.conversation.colors.AvatarColor;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.groups.ui.GroupErrors;
@@ -122,14 +124,7 @@ public class ManageGroupFragment extends LoggingFragment {
   private View                               toggleAllMembers;
   private View                               groupLinkRow;
   private TextView                           groupLinkButton;
-  private View                               wallpaperButton;
-
-  private final Recipient.FallbackPhotoProvider fallbackPhotoProvider = new Recipient.FallbackPhotoProvider() {
-    @Override
-    public @NonNull FallbackContactPhoto getPhotoForGroup() {
-      return new FallbackPhoto80dp(R.drawable.ic_group_80, MaterialColor.ULTRAMARINE.toAvatarColor(requireContext()));
-    }
-  };
+  private TextView                           wallpaperButton;
 
   static ManageGroupFragment newInstance(@NonNull String groupId) {
     ManageGroupFragment fragment = new ManageGroupFragment();
@@ -227,8 +222,6 @@ public class ManageGroupFragment extends LoggingFragment {
       }
     });
 
-    avatar.setFallbackPhotoProvider(fallbackPhotoProvider);
-
     toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
     toolbar.setOnMenuItemClickListener(this::onMenuItemSelected);
     toolbar.inflateMenu(R.menu.manage_group_fragment);
@@ -244,6 +237,7 @@ public class ManageGroupFragment extends LoggingFragment {
     viewModel.getMemberCountSummary().observe(getViewLifecycleOwner(), memberCountUnderAvatar::setText);
     viewModel.getFullMemberCountSummary().observe(getViewLifecycleOwner(), memberCountAboveList::setText);
     viewModel.getGroupRecipient().observe(getViewLifecycleOwner(), groupRecipient -> {
+      avatar.setFallbackPhotoProvider(new FallbackPhotoProvider(groupRecipient.getAvatarColor()));
       avatar.setRecipient(groupRecipient);
       avatar.setOnClickListener(v -> {
         FragmentActivity activity = requireActivity();
@@ -253,6 +247,10 @@ public class ManageGroupFragment extends LoggingFragment {
       customNotificationsRow.setOnClickListener(v -> CustomNotificationsDialogFragment.create(groupRecipient.getId())
                                                                                       .show(requireFragmentManager(), DIALOG_TAG));
       wallpaperButton.setOnClickListener(v -> startActivity(ChatWallpaperActivity.createIntent(requireContext(), groupRecipient.getId())));
+
+      Drawable colorCircle = groupRecipient.getChatColors().asCircle();
+      colorCircle.setBounds(0, 0, ViewUtil.dpToPx(16), ViewUtil.dpToPx(16));
+      TextViewCompat.setCompoundDrawablesRelative(wallpaperButton, null, null, colorCircle, null);
     });
 
     if (groupId.isV2()) {
@@ -505,4 +503,18 @@ public class ManageGroupFragment extends LoggingFragment {
       });
     }
   }
+
+  private final class FallbackPhotoProvider extends Recipient.FallbackPhotoProvider {
+
+    private final AvatarColor groupColors;
+
+    private FallbackPhotoProvider(@NonNull AvatarColor groupColors) {
+      this.groupColors = groupColors;
+    }
+
+    @Override
+    public @NonNull FallbackContactPhoto getPhotoForGroup() {
+      return new FallbackPhoto80dp(R.drawable.ic_group_80, groupColors.colorInt());
+    }
+  };
 }

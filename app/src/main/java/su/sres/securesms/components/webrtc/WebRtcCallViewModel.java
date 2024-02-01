@@ -60,20 +60,16 @@ public class WebRtcCallViewModel extends ViewModel {
     private Handler               elapsedTimeHandler        = new Handler(Looper.getMainLooper());
     private boolean               answerWithVideoAvailable  = false;
     private Runnable              elapsedTimeRunnable       = this::handleTick;
-    private boolean               canEnterPipMode           = false;
-    private List<CallParticipant> previousParticipantsList = Collections.emptyList();
-    private boolean               callStarting             = false;
+    private boolean               canEnterPipMode          = false;
+    private List<CallParticipant> previousParticipantsList  = Collections.emptyList();
+    private boolean               callStarting              = false;
+    private boolean               switchOnFirstScreenShare  = true;
+    private boolean               showScreenShareTip        = true;
 
     private final WebRtcCallRepository repository = new WebRtcCallRepository(ApplicationDependencies.getApplication());
 
     private WebRtcCallViewModel(@NonNull DeviceOrientationMonitor deviceOrientationMonitor) {
-        orientation = LiveDataUtil.combineLatest(deviceOrientationMonitor.getOrientation(), webRtcControls, (deviceOrientation, controls) -> {
-            if (controls.canRotateControls()) {
-                return deviceOrientation;
-            } else {
-                return Orientation.PORTRAIT_BOTTOM_EDGE;
-            }
-        });
+        orientation = deviceOrientationMonitor.getOrientation();
     }
 
     public LiveData<Orientation> getOrientation() {
@@ -151,7 +147,16 @@ public class WebRtcCallViewModel extends ViewModel {
             SignalStore.tooltips().markGroupCallSpeakerViewSeen();
         }
 
-        //noinspection ConstantConditions
+        CallParticipantsState state = participantsState.getValue();
+        if (state != null &&
+            showScreenShareTip &&
+            state.getFocusedParticipant().isScreenSharing() &&
+            state.isViewingFocusedParticipant() &&
+            page == CallParticipantsState.SelectedPage.GRID) {
+            showScreenShareTip = false;
+            events.setValue(new Event.ShowSwipeToSpeakerHint());
+        }
+
         participantsState.setValue(CallParticipantsState.update(participantsState.getValue(), page));
     }
 
@@ -180,8 +185,16 @@ public class WebRtcCallViewModel extends ViewModel {
 
         microphoneEnabled.setValue(localParticipant.isMicrophoneEnabled());
 
-        //noinspection ConstantConditions
-        participantsState.setValue(CallParticipantsState.update(participantsState.getValue(), webRtcViewModel, enableVideo));
+        CallParticipantsState state = participantsState.getValue();
+        if (state != null) {
+            boolean wasScreenSharing = state.getFocusedParticipant().isScreenSharing();
+            CallParticipantsState newState = CallParticipantsState.update(state, webRtcViewModel, enableVideo);
+            participantsState.setValue(newState);
+            if (switchOnFirstScreenShare && !wasScreenSharing && newState.getFocusedParticipant().isScreenSharing()) {
+                switchOnFirstScreenShare = false;
+                events.setValue(new Event.SwitchToSpeaker());
+            }
+        }
 
         if (webRtcViewModel.getGroupState().isConnected()) {
             if (!containsPlaceholders(previousParticipantsList)) {
@@ -395,6 +408,12 @@ public class WebRtcCallViewModel extends ViewModel {
             public @NonNull List<IdentityDatabase.IdentityRecord> getIdentityRecords() {
                 return identityRecords;
             }
+        }
+
+        public static class SwitchToSpeaker extends Event {
+        }
+
+        public static class ShowSwipeToSpeakerHint extends Event {
         }
     }
 

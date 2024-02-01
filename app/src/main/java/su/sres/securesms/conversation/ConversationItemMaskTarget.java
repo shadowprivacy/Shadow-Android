@@ -2,58 +2,65 @@ package su.sres.securesms.conversation;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
-import su.sres.securesms.components.CornerMask;
+import com.annimon.stream.Stream;
+
 import su.sres.securesms.components.MaskView;
-import su.sres.securesms.giph.mp4.GiphyMp4Projection;
+import su.sres.securesms.util.Projection;
 
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Masking area to ensure proper rendering of Reactions overlay.
+ */
 public final class ConversationItemMaskTarget extends MaskView.MaskTarget {
 
-    private final ConversationItem conversationItem;
-    private final View             videoContainer;
+  private final ConversationItem conversationItem;
+  private final View             videoContainer;
+  private final Paint            paint;
 
-    public ConversationItemMaskTarget(@NonNull ConversationItem conversationItem,
-                                      @Nullable View videoContainer)
-    {
-        super(conversationItem);
-        this.conversationItem = conversationItem;
-        this.videoContainer   = videoContainer;
+  public ConversationItemMaskTarget(@NonNull ConversationItem conversationItem,
+                                    @Nullable View videoContainer)
+  {
+    super(conversationItem);
+    this.conversationItem = conversationItem;
+    this.videoContainer   = videoContainer;
+    this.paint            = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    paint.setColor(Color.BLACK);
+    paint.setStyle(Paint.Style.FILL);
+  }
+
+  @Override
+  protected @NonNull List<View> getAllTargets() {
+    if (videoContainer == null) {
+      return super.getAllTargets();
+    } else {
+      return Arrays.asList(conversationItem, videoContainer);
+    }
+  }
+
+  @Override
+  protected void draw(@NonNull Canvas canvas) {
+    super.draw(canvas);
+
+    List<Projection> projections = Stream.of(conversationItem.getColorizerProjections()).map(p ->
+                                                                                                 Projection.translateFromRootToDescendantCoords(p, conversationItem)
+    ).toList();
+
+    if (videoContainer != null) {
+      projections.add(conversationItem.getProjection((RecyclerView) conversationItem.getParent()));
     }
 
-    @Override
-    protected @NonNull List<View> getAllTargets() {
-        if (videoContainer == null) {
-            return super.getAllTargets();
-        } else {
-            return Arrays.asList(conversationItem, videoContainer);
-        }
+    for (Projection projection : projections) {
+      canvas.drawPath(projection.getPath(), paint);
     }
-
-    @Override
-    protected void draw(@NonNull Canvas canvas) {
-        super.draw(canvas);
-
-        if (videoContainer == null) {
-            return;
-        }
-
-        GiphyMp4Projection projection = conversationItem.getProjection((RecyclerView) conversationItem.getParent());
-        CornerMask         cornerMask = projection.getCornerMask();
-
-        canvas.clipRect(conversationItem.bodyBubble.getLeft(),
-                conversationItem.bodyBubble.getTop(),
-                conversationItem.bodyBubble.getRight(),
-                conversationItem.bodyBubble.getTop() + projection.getHeight());
-
-        canvas.drawColor(Color.BLACK);
-        cornerMask.mask(canvas);
-    }
+  }
 }

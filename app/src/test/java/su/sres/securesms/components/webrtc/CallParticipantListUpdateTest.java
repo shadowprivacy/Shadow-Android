@@ -4,6 +4,7 @@ import com.annimon.stream.Stream;
 
 import org.hamcrest.Matchers;
 import org.junit.Test;
+
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.CallParticipantId;
 import su.sres.securesms.recipients.Recipient;
@@ -130,7 +131,7 @@ public class CallParticipantListUpdateTest {
     @Test
     public void whenRecipientExistsMultipleTimes_thenIExpectOneInstancePrimaryAndOthersSecondary() {
         // GIVEN
-        List<CallParticipant> list = createParticipants(new long[]{1, 1, 1}, new long[]{1, 2, 3});
+        List<CallParticipant> list = createParticipants(new long[]{ 1, 1, 1}, new long[]{ 1, 2, 3});
 
         // WHEN
         CallParticipantListUpdate update = CallParticipantListUpdate.computeDeltaUpdate(Collections.emptyList(), list);
@@ -178,7 +179,7 @@ public class CallParticipantListUpdateTest {
     private static CallParticipant createParticipant(long recipientId, long deMuxId, @NonNull CallParticipant.DeviceOrdinal deviceOrdinal) {
         Recipient recipient = new Recipient(RecipientId.from(recipientId), mock(RecipientDetails.class), true);
 
-        return CallParticipant.createRemote(new CallParticipantId(deMuxId, recipient.getId()), recipient, null, new BroadcastVideoSink(null), false, false, -1, false, 0, deviceOrdinal);
+        return CallParticipant.createRemote(new CallParticipantId(deMuxId, recipient.getId()), recipient, null, new BroadcastVideoSink(), false, false, -1, false, 0, false, deviceOrdinal);
     }
 
 } 

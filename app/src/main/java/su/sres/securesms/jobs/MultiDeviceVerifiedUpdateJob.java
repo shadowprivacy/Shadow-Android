@@ -9,6 +9,7 @@ import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
+import su.sres.securesms.net.NotPushRegisteredException;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -87,6 +88,10 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
 
   @Override
   public void onRun() throws IOException, UntrustedIdentityException {
+    if (!Recipient.self().isRegistered()) {
+      throw new NotPushRegisteredException();
+    }
+
     try {
       if (!TextSecurePreferences.isMultiDevice(context)) {
         Log.i(TAG, "Not multi device...");

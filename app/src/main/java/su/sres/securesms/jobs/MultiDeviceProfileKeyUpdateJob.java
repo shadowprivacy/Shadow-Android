@@ -9,6 +9,7 @@ import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
+import su.sres.securesms.net.NotPushRegisteredException;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientUtil;
 import org.signal.zkgroup.profiles.ProfileKey;
@@ -66,6 +67,10 @@ public class MultiDeviceProfileKeyUpdateJob extends BaseJob {
 
     @Override
     public void onRun() throws IOException, UntrustedIdentityException {
+        if (!Recipient.self().isRegistered()) {
+            throw new NotPushRegisteredException();
+        }
+
         if (!TextSecurePreferences.isMultiDevice(context)) {
             Log.i(TAG, "Not multi device...");
             return;

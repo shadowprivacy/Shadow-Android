@@ -44,15 +44,17 @@ import android.widget.TextView;
 
 import com.google.android.exoplayer2.source.MediaSource;
 
+import su.sres.securesms.conversation.colors.Colorizable;
+import su.sres.securesms.conversation.colors.Colorizer;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.giph.mp4.GiphyMp4Playable;
 import su.sres.securesms.giph.mp4.GiphyMp4PlaybackPolicyEnforcer;
-import su.sres.securesms.giph.mp4.GiphyMp4Projection;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.CachedInflater;
 import su.sres.securesms.util.DateUtils;
+import su.sres.securesms.util.Projection;
 import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
@@ -75,15 +77,14 @@ import java.util.Set;
 
 /**
  * Adapter that renders a conversation.
- *
+ * <p>
  * Important spacial thing to keep in mind: The adapter is intended to be shown on a reversed layout
  * manager, so position 0 is at the bottom of the screen. That's why the "header" is at the bottom,
  * the "footer" is at the top, and we refer to the "next" record as having a lower index.
- *
  */
 public class ConversationAdapter
-        extends ListAdapter<ConversationMessage, RecyclerView.ViewHolder>
-        implements StickyHeaderDecoration.StickyHeaderAdapter<ConversationAdapter.StickyHeaderViewHolder>
+    extends ListAdapter<ConversationMessage, RecyclerView.ViewHolder>
+    implements StickyHeaderDecoration.StickyHeaderAdapter<ConversationAdapter.StickyHeaderViewHolder>
 {
 
   private static final String TAG = Log.tag(ConversationAdapter.class);
@@ -101,37 +102,39 @@ public class ConversationAdapter
   private static final int MESSAGE_TYPE_FOOTER              = 6;
   private static final int MESSAGE_TYPE_PLACEHOLDER         = 7;
 
-  private static final long HEADER_ID   = Long.MIN_VALUE;
-  private static final long FOOTER_ID   = Long.MIN_VALUE + 1;
+  private static final long HEADER_ID = Long.MIN_VALUE;
+  private static final long FOOTER_ID = Long.MIN_VALUE + 1;
 
   private final ItemClickListener clickListener;
-  private final LifecycleOwner lifecycleOwner;
+  private final LifecycleOwner    lifecycleOwner;
   private final GlideRequests     glideRequests;
   private final Locale            locale;
   private final Recipient         recipient;
 
-  private final Set<ConversationMessage>  selected;
-  private final List<ConversationMessage> fastRecords;
-  private final Set<Long>                 releasedFastRecords;
-  private final Calendar                  calendar;
-  private final MessageDigest             digest;
+  private final Set<ConversationMessage>     selected;
+  private final List<ConversationMessage>    fastRecords;
+  private final Set<Long>                    releasedFastRecords;
+  private final Calendar                     calendar;
+  private final MessageDigest                digest;
   private final AttachmentMediaSourceFactory attachmentMediaSourceFactory;
 
   private String              searchQuery;
   private ConversationMessage recordToPulse;
   private View                headerView;
   private View                footerView;
-  private PagingController pagingController;
+  private PagingController    pagingController;
   private boolean             hasWallpaper;
   private boolean             isMessageRequestAccepted;
   private ConversationMessage inlineContent;
+  private Colorizer           colorizer;
 
   ConversationAdapter(@NonNull LifecycleOwner lifecycleOwner,
                       @NonNull GlideRequests glideRequests,
                       @NonNull Locale locale,
                       @Nullable ItemClickListener clickListener,
                       @NonNull Recipient recipient,
-                      @NonNull AttachmentMediaSourceFactory attachmentMediaSourceFactory)
+                      @NonNull AttachmentMediaSourceFactory attachmentMediaSourceFactory,
+                      @NonNull Colorizer colorizer)
   {
     super(new DiffUtil.ItemCallback<ConversationMessage>() {
       @Override
@@ -147,18 +150,19 @@ public class ConversationAdapter
 
     this.lifecycleOwner = lifecycleOwner;
 
-    this.glideRequests       = glideRequests;
-    this.locale              = locale;
-    this.clickListener       = clickListener;
-    this.recipient           = recipient;
-    this.selected            = new HashSet<>();
-    this.fastRecords         = new ArrayList<>();
-    this.releasedFastRecords = new HashSet<>();
-    this.calendar            = Calendar.getInstance();
-    this.digest              = getMessageDigestOrThrow();
-    this.hasWallpaper        = recipient.hasWallpaper();
-    this.isMessageRequestAccepted = true;
+    this.glideRequests                = glideRequests;
+    this.locale                       = locale;
+    this.clickListener                = clickListener;
+    this.recipient                    = recipient;
+    this.selected                     = new HashSet<>();
+    this.fastRecords                  = new ArrayList<>();
+    this.releasedFastRecords          = new HashSet<>();
+    this.calendar                     = Calendar.getInstance();
+    this.digest                       = getMessageDigestOrThrow();
+    this.hasWallpaper                 = recipient.hasWallpaper();
+    this.isMessageRequestAccepted     = true;
     this.attachmentMediaSourceFactory = attachmentMediaSourceFactory;
+    this.colorizer                    = colorizer;
 
     setHasStableIds(true);
   }
@@ -213,7 +217,7 @@ public class ConversationAdapter
       case MESSAGE_TYPE_OUTGOING_MULTIMEDIA:
       case MESSAGE_TYPE_UPDATE:
 
-        View                     itemView = CachedInflater.from(parent.getContext()).inflate(getLayoutForViewType(viewType), parent, false);
+        View itemView = CachedInflater.from(parent.getContext()).inflate(getLayoutForViewType(viewType), parent, false);
         BindableConversationItem bindable = (BindableConversationItem) itemView;
 
         itemView.setOnClickListener(view -> {
@@ -254,26 +258,27 @@ public class ConversationAdapter
       case MESSAGE_TYPE_OUTGOING_MULTIMEDIA:
       case MESSAGE_TYPE_UPDATE:
         ConversationViewHolder conversationViewHolder = (ConversationViewHolder) holder;
-        ConversationMessage    conversationMessage    = Objects.requireNonNull(getItem(position));
-        int                    adapterPosition        = holder.getAdapterPosition();
+        ConversationMessage conversationMessage = Objects.requireNonNull(getItem(position));
+        int adapterPosition = holder.getAdapterPosition();
 
-        ConversationMessage previousMessage = adapterPosition < getItemCount() - 1  && !isFooterPosition(adapterPosition + 1) ? getItem(adapterPosition + 1) : null;
-        ConversationMessage nextMessage     = adapterPosition > 0                   && !isHeaderPosition(adapterPosition - 1) ? getItem(adapterPosition - 1) : null;
+        ConversationMessage previousMessage = adapterPosition < getItemCount() - 1 && !isFooterPosition(adapterPosition + 1) ? getItem(adapterPosition + 1) : null;
+        ConversationMessage nextMessage = adapterPosition > 0 && !isHeaderPosition(adapterPosition - 1) ? getItem(adapterPosition - 1) : null;
 
         conversationViewHolder.getBindable().bind(lifecycleOwner,
-                conversationMessage,
-                Optional.fromNullable(previousMessage != null ? previousMessage.getMessageRecord() : null),
-                Optional.fromNullable(nextMessage != null ? nextMessage.getMessageRecord() : null),
-                glideRequests,
-                locale,
-                selected,
-                recipient,
-                searchQuery,
-                conversationMessage == recordToPulse,
-                hasWallpaper,
-                isMessageRequestAccepted,
-                attachmentMediaSourceFactory,
-                conversationMessage == inlineContent);
+                                                  conversationMessage,
+                                                  Optional.fromNullable(previousMessage != null ? previousMessage.getMessageRecord() : null),
+                                                  Optional.fromNullable(nextMessage != null ? nextMessage.getMessageRecord() : null),
+                                                  glideRequests,
+                                                  locale,
+                                                  selected,
+                                                  recipient,
+                                                  searchQuery,
+                                                  conversationMessage == recordToPulse,
+                                                  hasWallpaper,
+                                                  isMessageRequestAccepted,
+                                                  attachmentMediaSourceFactory,
+                                                  conversationMessage == inlineContent,
+                                                  colorizer);
 
         if (conversationMessage == recordToPulse) {
           recordToPulse = null;
@@ -309,7 +314,7 @@ public class ConversationAdapter
     if (isHeaderPosition(position)) return -1;
     if (isFooterPosition(position)) return -1;
     if (position >= getItemCount()) return -1;
-    if (position < 0)               return -1;
+    if (position < 0) return -1;
 
     ConversationMessage conversationMessage = getItem(position);
 
@@ -326,7 +331,7 @@ public class ConversationAdapter
 
   @Override
   public void onBindHeaderViewHolder(StickyHeaderViewHolder viewHolder, int position, int type) {
-    Context context             = viewHolder.itemView.getContext();
+    Context             context             = viewHolder.itemView.getContext();
     ConversationMessage conversationMessage = Objects.requireNonNull(getItem(position));
     viewHolder.setText(DateUtils.getRelativeDate(viewHolder.itemView.getContext(), locale, conversationMessage.getMessageRecord().getDateReceived()));
 
@@ -414,7 +419,7 @@ public class ConversationAdapter
     if (isHeaderPosition(position)) return 0;
     if (isFooterPosition(position)) return 0;
     if (position >= getItemCount()) return 0;
-    if (position < 0)               return 0;
+    if (position < 0) return 0;
 
     ConversationMessage conversationMessage = getItem(position);
 
@@ -488,6 +493,7 @@ public class ConversationAdapter
 
   /**
    * Lets the adapter know that the wallpaper state has changed.
+   *
    * @return True if the internal wallpaper state changed, otherwise false.
    */
   boolean onHasWallpaperChanged(boolean hasWallpaper) {
@@ -596,12 +602,18 @@ public class ConversationAdapter
 
   private static @LayoutRes int getLayoutForViewType(int viewType) {
     switch (viewType) {
-      case MESSAGE_TYPE_OUTGOING_TEXT:       return R.layout.conversation_item_sent_text_only;
-      case MESSAGE_TYPE_OUTGOING_MULTIMEDIA: return R.layout.conversation_item_sent_multimedia;
-      case MESSAGE_TYPE_INCOMING_TEXT:       return R.layout.conversation_item_received_text_only;
-      case MESSAGE_TYPE_INCOMING_MULTIMEDIA: return R.layout.conversation_item_received_multimedia;
-      case MESSAGE_TYPE_UPDATE:              return R.layout.conversation_item_update;
-      default:                               throw new IllegalArgumentException("Unknown type!");
+      case MESSAGE_TYPE_OUTGOING_TEXT:
+        return R.layout.conversation_item_sent_text_only;
+      case MESSAGE_TYPE_OUTGOING_MULTIMEDIA:
+        return R.layout.conversation_item_sent_multimedia;
+      case MESSAGE_TYPE_INCOMING_TEXT:
+        return R.layout.conversation_item_received_text_only;
+      case MESSAGE_TYPE_INCOMING_MULTIMEDIA:
+        return R.layout.conversation_item_received_multimedia;
+      case MESSAGE_TYPE_UPDATE:
+        return R.layout.conversation_item_update;
+      default:
+        throw new IllegalArgumentException("Unknown type!");
     }
   }
 
@@ -636,7 +648,7 @@ public class ConversationAdapter
     }
   }
 
-  final static class ConversationViewHolder extends RecyclerView.ViewHolder implements GiphyMp4Playable {
+  final static class ConversationViewHolder extends RecyclerView.ViewHolder implements GiphyMp4Playable, Colorizable {
     public ConversationViewHolder(final @NonNull View itemView) {
       super(itemView);
     }
@@ -666,13 +678,18 @@ public class ConversationAdapter
     }
 
     @NonNull
-    public @Override GiphyMp4Projection getProjection(@NonNull RecyclerView recyclerView) {
+    public @Override Projection getProjection(@NonNull ViewGroup recyclerView) {
       return getBindable().getProjection(recyclerView);
     }
 
     @Override
     public boolean canPlayContent() {
       return getBindable().canPlayContent();
+    }
+
+    @Override
+    public @NonNull List<Projection> getColorizerProjections() {
+      return getBindable().getColorizerProjections();
     }
   }
 
@@ -744,6 +761,7 @@ public class ConversationAdapter
 
   interface ItemClickListener extends BindableConversationItem.EventListener {
     void onItemClick(ConversationMessage item);
+
     void onItemLongClick(View itemView, ConversationMessage item);
   }
 

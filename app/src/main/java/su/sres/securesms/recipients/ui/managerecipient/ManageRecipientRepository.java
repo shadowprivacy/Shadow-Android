@@ -8,19 +8,13 @@ import androidx.core.util.Consumer;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.color.MaterialColor;
-import su.sres.securesms.color.MaterialColors;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.ThreadDatabase;
-import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.mms.OutgoingExpirationUpdateMessage;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.sms.MessageSender;
 import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.ArrayList;
@@ -80,16 +74,6 @@ final class ManageRecipientRepository {
 
     void setMuteUntil(long until) {
         SignalExecutors.BOUNDED.execute(() -> DatabaseFactory.getRecipientDatabase(context).setMuted(recipientId, until));
-    }
-
-    void setColor(int color) {
-        SignalExecutors.BOUNDED.execute(() -> {
-            MaterialColor selectedColor = MaterialColors.CONVERSATION_PALETTE.getByColor(context, color);
-            if (selectedColor != null) {
-                DatabaseFactory.getRecipientDatabase(context).setColor(recipientId, selectedColor);
-                ApplicationDependencies.getJobManager().add(new MultiDeviceContactUpdateJob(recipientId));
-            }
-        });
     }
 
     @WorkerThread

@@ -27,12 +27,12 @@ import su.sres.securesms.contacts.avatars.ContactPhoto;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
+import su.sres.securesms.conversation.colors.ChatColors;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.AvatarUtil;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 
 import java.util.Objects;
@@ -55,6 +55,7 @@ public class CallParticipantView extends ConstraintLayout {
     private Runnable    missingMediaKeysUpdater;
     private AppCompatImageView  backgroundAvatar;
     private AvatarImageView     avatar;
+    private View                rendererFrame;
     private TextureViewRenderer renderer;
     private ImageView           pipAvatar;
     private ContactPhoto        contactPhoto;
@@ -82,6 +83,7 @@ public class CallParticipantView extends ConstraintLayout {
         backgroundAvatar = findViewById(R.id.call_participant_background_avatar);
         avatar           = findViewById(R.id.call_participant_item_avatar);
         pipAvatar        = findViewById(R.id.call_participant_item_pip_avatar);
+        rendererFrame    = findViewById(R.id.call_participant_renderer_frame);
         renderer         = findViewById(R.id.call_participant_renderer);
         audioMuted       = findViewById(R.id.call_participant_mic_muted);
         infoOverlay      = findViewById(R.id.call_participant_info_overlay);
@@ -107,6 +109,7 @@ public class CallParticipantView extends ConstraintLayout {
         infoMode    = participant.getRecipient().isBlocked() || isMissingMediaKeys(participant);
 
         if (infoMode) {
+            rendererFrame.setVisibility(View.GONE);
             renderer.setVisibility(View.GONE);
             renderer.attachBroadcastVideoSink(null);
             audioMuted.setVisibility(View.GONE);
@@ -129,7 +132,10 @@ public class CallParticipantView extends ConstraintLayout {
         } else {
             infoOverlay.setVisibility(View.GONE);
 
-            renderer.setVisibility(participant.isVideoEnabled() ? View.VISIBLE : View.GONE);
+            boolean hasContentToRender = participant.isVideoEnabled() || participant.isScreenSharing();
+
+            rendererFrame.setVisibility(hasContentToRender ? View.VISIBLE : View.GONE);
+            renderer.setVisibility(hasContentToRender ? View.VISIBLE : View.GONE);
 
             if (participant.isVideoEnabled()) {
                 if (participant.getVideoSink().getEglBase() != null) {
@@ -218,7 +224,9 @@ public class CallParticipantView extends ConstraintLayout {
                 .into(pipAvatar);
 
         pipAvatar.setScaleType(contactPhoto == null ? ImageView.ScaleType.CENTER_INSIDE : ImageView.ScaleType.CENTER_CROP);
-        pipAvatar.setBackgroundColor(recipient.getColor().toActionBarColor(getContext()));
+        ChatColors chatColors = recipient.getChatColors();
+
+        pipAvatar.setBackground(chatColors.getChatBubbleMask());
     }
 
     private void showBlockedDialog(@NonNull Recipient recipient) {

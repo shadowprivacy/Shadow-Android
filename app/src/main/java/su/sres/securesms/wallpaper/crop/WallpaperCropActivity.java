@@ -3,7 +3,6 @@ package su.sres.securesms.wallpaper.crop;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
-import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -26,6 +25,7 @@ import androidx.lifecycle.ViewModelProviders;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.BaseActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.conversation.colors.ColorizerView;
 import su.sres.securesms.imageeditor.ImageEditorView;
 import su.sres.securesms.imageeditor.model.EditorElement;
 import su.sres.securesms.imageeditor.model.EditorModel;
@@ -34,10 +34,13 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.scribbles.UriGlideRenderer;
 import su.sres.securesms.util.AsynchronousCallback;
 import su.sres.securesms.util.DynamicTheme;
+import su.sres.securesms.util.Projection;
+import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.views.SimpleProgressDialog;
 import su.sres.securesms.wallpaper.ChatWallpaper;
 import su.sres.securesms.wallpaper.ChatWallpaperPreviewActivity;
 
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -84,10 +87,11 @@ public final class WallpaperCropActivity extends BaseActivity {
         viewModel = ViewModelProviders.of(this, factory).get(WallpaperCropViewModel.class);
 
         imageEditor = findViewById(R.id.image_editor);
-        View         receivedBubble = findViewById(R.id.preview_bubble_1);
-        TextView     bubble2Text    = findViewById(R.id.chat_wallpaper_bubble2_text);
-        View         setWallPaper   = findViewById(R.id.preview_set_wallpaper);
-        SwitchCompat blur           = findViewById(R.id.preview_blur);
+        View          sentBubble     = findViewById(R.id.preview_bubble_2);
+        TextView      bubble2Text    = findViewById(R.id.chat_wallpaper_bubble2_text);
+        View          setWallPaper   = findViewById(R.id.preview_set_wallpaper);
+        SwitchCompat  blur          = findViewById(R.id.preview_blur);
+        ColorizerView colorizerView = findViewById(R.id.colorizer);
 
         setupImageEditor(inputImage);
 
@@ -115,9 +119,14 @@ public final class WallpaperCropActivity extends BaseActivity {
                         bubble2Text.setText(R.string.WallpaperCropActivity__set_wallpaper_for_all_chats);
                     } else {
                         bubble2Text.setText(getString(R.string.WallpaperCropActivity__set_wallpaper_for_s, r.getDisplayName(this)));
-                        receivedBubble.getBackground().setColorFilter(r.getColor().toConversationColor(this), PorterDuff.Mode.SRC_IN);
+                        sentBubble.getBackground().setColorFilter(r.getChatColors().getChatBubbleColorFilter());
+                        colorizerView.setBackground(r.getChatColors().getChatBubbleMask());
                     }
                 });
+
+        sentBubble.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            colorizerView.setProjections(Collections.singletonList(Projection.relativeToViewWithCommonRoot(sentBubble, colorizerView, new Projection.Corners(ViewUtil.dpToPx(18)))));
+        });
     }
 
     @Override

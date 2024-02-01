@@ -9,6 +9,8 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.net.NotPushRegisteredException;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
@@ -83,6 +85,10 @@ public class MultiDeviceConfigurationUpdateJob extends BaseJob {
 
     @Override
     public void onRun() throws IOException, UntrustedIdentityException {
+        if (!Recipient.self().isRegistered()) {
+            throw new NotPushRegisteredException();
+        }
+
         if (!TextSecurePreferences.isMultiDevice(context)) {
             Log.i(TAG, "Not multi device, aborting...");
             return;

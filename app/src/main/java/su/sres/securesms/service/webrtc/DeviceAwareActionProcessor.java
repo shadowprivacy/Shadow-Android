@@ -5,6 +5,7 @@ import android.media.AudioManager;
 import androidx.annotation.NonNull;
 
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.components.webrtc.BroadcastVideoSink;
 import su.sres.securesms.ringrtc.CameraState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.util.ServiceUtil;
@@ -108,6 +109,11 @@ public abstract class DeviceAwareActionProcessor extends WebRtcActionProcessor {
     @Override
     public @NonNull WebRtcServiceState handleCameraSwitchCompleted(@NonNull WebRtcServiceState currentState, @NonNull CameraState newCameraState) {
         Log.i(tag, "handleCameraSwitchCompleted():");
+
+        BroadcastVideoSink localSink = currentState.getVideoState().getLocalSink();
+        if (localSink != null) {
+            localSink.setRotateToRightSide(newCameraState.getActiveDirection() == CameraState.Direction.BACK);
+        }
 
         return currentState.builder()
                 .changeLocalDeviceState()

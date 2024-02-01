@@ -1,7 +1,6 @@
 package su.sres.securesms.megaphone;
 
 import android.app.Application;
-import android.content.Context;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
@@ -11,7 +10,6 @@ import androidx.annotation.WorkerThread;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MegaphoneDatabase;
 import su.sres.securesms.database.model.MegaphoneRecord;
 import su.sres.securesms.megaphone.Megaphones.Event;
@@ -55,6 +53,7 @@ public class MegaphoneRepository {
             database.markFinished(Event.MESSAGE_REQUESTS);
             database.markFinished(Event.LINK_PREVIEWS);
             database.markFinished(Event.GROUP_CALLING);
+            database.markFinished(Event.CHAT_COLORS);
             resetDatabaseCache();
         });
     }

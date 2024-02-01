@@ -78,6 +78,15 @@ final class UriChatWallpaper implements ChatWallpaper, Parcelable {
     }
 
     @Override
+    public boolean isSameSource(@NonNull ChatWallpaper chatWallpaper) {
+        if (this == chatWallpaper) return true;
+        if (getClass() != chatWallpaper.getClass()) return false;
+        UriChatWallpaper that = (UriChatWallpaper) chatWallpaper;
+
+        return uri.equals(that.uri);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

@@ -10,10 +10,16 @@ import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
+
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import su.sres.securesms.components.Outliner;
+import su.sres.securesms.util.Projection;
 import su.sres.securesms.util.Util;
 
 public class ConversationItemBodyBubble extends LinearLayout {
@@ -21,8 +27,9 @@ public class ConversationItemBodyBubble extends LinearLayout {
     @Nullable private List<Outliner> outliners = Collections.emptyList();
     @Nullable private OnSizeChangedListener sizeChangedListener;
 
-    private MaskDrawable maskDrawable;
-    private Rect mask;
+    private ClipProjectionDrawable clipProjectionDrawable;
+    private Projection quoteViewProjection;
+    private Projection videoPlayerProjection;
 
     public ConversationItemBodyBubble(Context context) {
         super(context);
@@ -46,14 +53,26 @@ public class ConversationItemBodyBubble extends LinearLayout {
 
     @Override
     public void setBackground(Drawable background) {
-        maskDrawable = new MaskDrawable(background);
-        maskDrawable.setMask(mask);
-        super.setBackground(maskDrawable);
+        clipProjectionDrawable = new ClipProjectionDrawable(background);
+
+        clipProjectionDrawable.setProjections(getProjections());
+        super.setBackground(clipProjectionDrawable);
     }
 
-    public void setMask(@Nullable Rect mask) {
-        this.mask = mask;
-        maskDrawable.setMask(mask);
+    public void setQuoteViewProjection(@Nullable Projection quoteViewProjection) {
+        this.quoteViewProjection = quoteViewProjection;
+        clipProjectionDrawable.setProjections(getProjections());
+    }
+
+    public void setVideoPlayerProjection(@Nullable Projection videoPlayerProjection) {
+        this.videoPlayerProjection = videoPlayerProjection;
+        clipProjectionDrawable.setProjections(getProjections());
+    }
+
+    public @NonNull Set<Projection> getProjections() {
+        return Stream.of(quoteViewProjection, videoPlayerProjection)
+                     .filterNot(Objects::isNull)
+                     .collect(Collectors.toSet());
     }
 
     @Override

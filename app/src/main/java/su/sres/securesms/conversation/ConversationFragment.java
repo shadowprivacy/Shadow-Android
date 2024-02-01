@@ -47,11 +47,14 @@ import su.sres.securesms.components.settings.app.AppSettingsActivity;
 import su.sres.securesms.components.voice.VoiceNoteMediaController;
 import su.sres.securesms.components.voice.VoiceNotePlaybackState;
 import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
+import su.sres.securesms.conversation.colors.Colorizer;
+import su.sres.securesms.conversation.colors.ColorizerView;
 import su.sres.securesms.conversation.ui.error.EnableCallNotificationSettingsDialog;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.model.InMemoryMessageRecord;
+import su.sres.securesms.giph.mp4.GiphyMp4Playable;
 import su.sres.securesms.giph.mp4.GiphyMp4PlaybackController;
 import su.sres.securesms.giph.mp4.GiphyMp4PlaybackPolicy;
 import su.sres.securesms.giph.mp4.GiphyMp4ProjectionPlayerHolder;
@@ -213,10 +216,12 @@ public class ConversationFragment extends LoggingFragment {
   private OnScrollListener            conversationScrollListener;
   private int                         pulsePosition = -1;
   private VoiceNoteMediaController    voiceNoteMediaController;
-  private View                        toolbarShadow;
-  private Stopwatch                   startupStopwatch;
+  private View          toolbarShadow;
+  private ColorizerView colorizerView;
+  private Stopwatch     startupStopwatch;
 
   private GiphyMp4ProjectionRecycler giphyMp4ProjectionRecycler;
+  private Colorizer                  colorizer;
 
   public static void prepare(@NonNull Context context) {
     FrameLayout parent = new FrameLayout(context);
@@ -248,6 +253,10 @@ public class ConversationFragment extends LoggingFragment {
     scrollToMentionButton = view.findViewById(R.id.scroll_to_mention);
     scrollDateHeader      = view.findViewById(R.id.scroll_date_header);
     toolbarShadow         = requireActivity().findViewById(R.id.conversation_toolbar_shadow);
+    colorizerView         = view.findViewById(R.id.conversation_colorizer_view);
+
+    ConversationIntents.Args args = ConversationIntents.Args.from(requireActivity().getIntent());
+    colorizerView.setBackground(args.getChatColors().getChatBubbleMask());
 
     final LinearLayoutManager layoutManager = new SmoothScrollingLinearLayoutManager(getActivity(), true);
     list.setHasFixedSize(false);
@@ -272,7 +281,7 @@ public class ConversationFragment extends LoggingFragment {
                                                            conversationMessage.getMessageRecord(),
                                                            messageRequestViewModel.shouldShowMessageRequest()),
         this::handleReplyMessage,
-        giphyMp4ProjectionRecycler
+        this::onViewHolderPositionTranslated
     ).attachToRecyclerView(list);
 
     setupListLayoutListeners();
@@ -308,6 +317,19 @@ public class ConversationFragment extends LoggingFragment {
     scrollToMentionButton.setOnClickListener(v -> scrollToNextMention());
 
     updateToolbarDependentMargins();
+
+    colorizer = new Colorizer(colorizerView);
+    colorizer.attachToRecyclerView(list);
+
+    conversationViewModel.getChatColors().observe(getViewLifecycleOwner(), chatColors -> colorizer.onChatColorsChanged(chatColors));
+    conversationViewModel.getNameColorsMap().observe(getViewLifecycleOwner(), nameColorsMap -> {
+      colorizer.onNameColorsChanged(nameColorsMap);
+
+      ConversationAdapter adapter = getListAdapter();
+      if (adapter != null) {
+        adapter.notifyDataSetChanged();
+      }
+    });
 
     return view;
   }
@@ -351,10 +373,12 @@ public class ConversationFragment extends LoggingFragment {
   private void setListVerticalTranslation() {
     if (list.canScrollVertically(1) || list.canScrollVertically(-1) || list.getChildCount() == 0) {
       list.setTranslationY(0);
+      colorizerView.setTranslationY(0);
       list.setOverScrollMode(RecyclerView.OVER_SCROLL_IF_CONTENT_SCROLLS);
     } else {
       int chTop = list.getChildAt(list.getChildCount() - 1).getTop();
       list.setTranslationY(Math.min(0, -chTop));
+      colorizerView.setTranslationY(Math.min(0, -chTop));
       list.setOverScrollMode(RecyclerView.OVER_SCROLL_NEVER);
     }
 
@@ -462,6 +486,16 @@ public class ConversationFragment extends LoggingFragment {
           setInlineDateDecoration(adapter);
         }
       }
+    }
+  }
+
+  private void onViewHolderPositionTranslated(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+    if (viewHolder instanceof GiphyMp4Playable) {
+      giphyMp4ProjectionRecycler.updateDisplay(recyclerView, (GiphyMp4Playable) viewHolder);
+    }
+
+    if (colorizer != null) {
+      colorizer.applyClipPathsToMaskedGradient(recyclerView);
     }
   }
 
@@ -615,7 +649,7 @@ public class ConversationFragment extends LoggingFragment {
       }
 
       Log.d(TAG, "Initializing adapter for " + recipient.getId());
-      ConversationAdapter adapter = new ConversationAdapter(this, GlideApp.with(this), locale, selectionClickListener, this.recipient.get(), new AttachmentMediaSourceFactory(requireContext()));
+      ConversationAdapter adapter = new ConversationAdapter(this, GlideApp.with(this), locale, selectionClickListener, this.recipient.get(), new AttachmentMediaSourceFactory(requireContext()), colorizer);
       adapter.setPagingController(conversationViewModel.getPagingController());
       list.setAdapter(adapter);
       setInlineDateDecoration(adapter);
@@ -666,7 +700,8 @@ public class ConversationFragment extends LoggingFragment {
         replacedByIncomingMessage = false;
       }
 
-      typingView.setTypists(GlideApp.with(ConversationFragment.this), recipients, recipient.get().isGroup());
+      Recipient resolved = recipient.get();
+      typingView.setTypists(GlideApp.with(ConversationFragment.this), recipients, resolved.isGroup(), resolved.hasWallpaper());
 
       ConversationAdapter adapter = getListAdapter();
 
@@ -1124,6 +1159,10 @@ public class ConversationFragment extends LoggingFragment {
     if (getListAdapter() != null) {
       getListAdapter().onSearchQueryUpdated(query);
     }
+  }
+
+  public @NonNull Colorizer getColorizer() {
+    return Objects.requireNonNull(colorizer);
   }
 
   @SuppressWarnings("CodeBlock2Expr")

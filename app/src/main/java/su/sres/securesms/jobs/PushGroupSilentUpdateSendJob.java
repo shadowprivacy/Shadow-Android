@@ -10,6 +10,7 @@ import com.annimon.stream.Stream;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.net.NotPushRegisteredException;
 import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
@@ -128,6 +129,10 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
 
     @Override
     protected void onRun() throws Exception {
+        if (!Recipient.self().isRegistered()) {
+            throw new NotPushRegisteredException();
+        }
+
         List<Recipient> destinations = Stream.of(recipients).map(Recipient::resolved).toList();
         List<Recipient> completions  = deliver(destinations);
 
@@ -146,6 +151,7 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
     @Override
     protected boolean onShouldRetry(@NonNull Exception e) {
         if (e instanceof ServerRejectedException) return false;
+        if (e instanceof NotPushRegisteredException) return false;
         return e instanceof IOException ||
                 e instanceof RetryLaterException;
     }

@@ -1,7 +1,6 @@
 package su.sres.securesms.service.webrtc;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.ResultReceiver;
 
 import androidx.annotation.NonNull;
@@ -11,6 +10,7 @@ import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.CallId;
 
 import su.sres.securesms.components.sensors.Orientation;
+import su.sres.securesms.components.webrtc.BroadcastVideoSink;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.CallParticipant;
@@ -43,8 +43,6 @@ import su.sres.signalservice.api.messages.calls.HangupMessage;
 import su.sres.signalservice.api.messages.calls.OfferMessage;
 import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -282,6 +280,11 @@ public abstract class WebRtcActionProcessor {
         return currentState;
     }
 
+    protected  @NonNull WebRtcServiceState handleScreenSharingEnable(@NonNull WebRtcServiceState currentState, boolean enable) {
+        Log.i(tag, "handleScreenSharingEnable not processed");
+        return currentState;
+    }
+
     protected @NonNull WebRtcServiceState handleReceivedHangup(@NonNull WebRtcServiceState currentState,
                                                                @NonNull CallMetadata callMetadata,
                                                                @NonNull HangupMetadata hangupMetadata)
@@ -456,6 +459,15 @@ public abstract class WebRtcActionProcessor {
         Camera camera = currentState.getVideoState().getCamera();
         if (camera != null) {
             camera.setOrientation(orientationDegrees);
+        }
+
+        BroadcastVideoSink sink = currentState.getVideoState().getLocalSink();
+        if (sink != null) {
+            sink.setDeviceOrientationDegrees(orientationDegrees);
+        }
+
+        for (CallParticipant callParticipant : currentState.getCallInfoState().getRemoteCallParticipants()) {
+            callParticipant.getVideoSink().setDeviceOrientationDegrees(orientationDegrees);
         }
 
         return currentState.builder()

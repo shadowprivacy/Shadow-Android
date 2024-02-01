@@ -9,6 +9,12 @@ import androidx.annotation.NonNull;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
+import su.sres.securesms.color.MaterialColor;
+import su.sres.securesms.conversation.colors.AvatarColor;
+import su.sres.securesms.conversation.colors.ChatColors;
+import su.sres.securesms.conversation.colors.ChatColorsMapper;
+import su.sres.securesms.database.ChatColorsDatabase;
+import su.sres.securesms.database.EmojiSearchDatabase;
 import su.sres.securesms.database.MentionDatabase;
 import su.sres.securesms.database.PaymentDatabase;
 import su.sres.securesms.database.SignalDatabase;
@@ -51,6 +57,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatabase {
@@ -79,8 +86,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
   private static final int STORAGE_SERVICE_REFACTOR                                                     = 82;
   private static final int CLEAR_MMS_STORAGE_IDS                                                        = 83;
   private static final int SERVER_GUID                                                                  = 84;
+  private static final int CHAT_COLORS_AND_AVATAR_COLORS_AND_EMOJI_SEARCH                               = 85;
 
-  private static final int    DATABASE_VERSION = 84;
+  private static final int    DATABASE_VERSION = 85;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -112,6 +120,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     db.execSQL(UnknownStorageIdDatabase.CREATE_TABLE);
     db.execSQL(MentionDatabase.CREATE_TABLE);
     db.execSQL(PaymentDatabase.CREATE_TABLE);
+    db.execSQL(ChatColorsDatabase.CREATE_TABLE);
+    db.execSQL(EmojiSearchDatabase.CREATE_TABLE);
 
     executeStatements(db, SearchDatabase.CREATE_TABLE);
 
@@ -623,6 +633,44 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
       if (oldVersion < SERVER_GUID) {
         db.execSQL("ALTER TABLE sms ADD COLUMN server_guid TEXT DEFAULT NULL");
         db.execSQL("ALTER TABLE mms ADD COLUMN server_guid TEXT DEFAULT NULL");
+      }
+
+      if (oldVersion < CHAT_COLORS_AND_AVATAR_COLORS_AND_EMOJI_SEARCH) {
+        db.execSQL("ALTER TABLE recipient ADD COLUMN chat_colors BLOB DEFAULT NULL");
+        db.execSQL("ALTER TABLE recipient ADD COLUMN custom_chat_colors_id INTEGER DEFAULT 0");
+        db.execSQL("CREATE TABLE chat_colors (" +
+                   "_id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                   "chat_colors BLOB)");
+
+        Set<Map.Entry<MaterialColor, ChatColors>> entrySet = ChatColorsMapper.getEntrySet();
+        String                                    where    = "color = ? AND group_id is NULL";
+
+        for (Map.Entry<MaterialColor, ChatColors> entry : entrySet) {
+          String[]      whereArgs = SqlUtil.buildArgs(entry.getKey().serialize());
+          ContentValues values    = new ContentValues(2);
+
+          values.put("chat_colors", entry.getValue().serialize().toByteArray());
+          values.put("custom_chat_colors_id", entry.getValue().getId().getLongValue());
+
+          db.update("recipient", values, where, whereArgs);
+        }
+
+        ///
+
+        try (Cursor cursor = db.query("recipient", new String[] { "_id" }, "color IS NULL", null, null, null, null)) {
+          while (cursor.moveToNext()) {
+            long id = cursor.getInt(cursor.getColumnIndexOrThrow("_id"));
+
+            ContentValues values = new ContentValues(1);
+            values.put("color", AvatarColor.random().serialize());
+
+            db.update("recipient", values, "_id = ?", new String[] { String.valueOf(id) });
+          }
+        }
+
+        ///
+
+        db.execSQL("CREATE VIRTUAL TABLE emoji_search USING fts5(label, emoji UNINDEXED)");
       }
 
       db.setTransactionSuccessful();

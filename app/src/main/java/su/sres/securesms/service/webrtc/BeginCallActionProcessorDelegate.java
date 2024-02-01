@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.CallManager;
+
 import su.sres.securesms.components.webrtc.BroadcastVideoSink;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.CallParticipantId;
@@ -24,79 +25,85 @@ import static su.sres.securesms.webrtc.CallNotificationBuilder.TYPE_INCOMING_CON
  */
 public class BeginCallActionProcessorDelegate extends WebRtcActionProcessor {
 
-    public BeginCallActionProcessorDelegate(@NonNull WebRtcInteractor webRtcInteractor, @NonNull String tag) {
-        super(webRtcInteractor, tag);
+  public BeginCallActionProcessorDelegate(@NonNull WebRtcInteractor webRtcInteractor, @NonNull String tag) {
+    super(webRtcInteractor, tag);
+  }
+
+  @Override
+  protected @NonNull WebRtcServiceState handleOutgoingCall(@NonNull WebRtcServiceState currentState,
+                                                           @NonNull RemotePeer remotePeer,
+                                                           @NonNull OfferMessage.Type offerType)
+  {
+    remotePeer.setCallStartTimestamp(System.currentTimeMillis());
+    currentState = currentState.builder()
+                               .actionProcessor(new OutgoingCallActionProcessor(webRtcInteractor))
+                               .changeCallInfoState()
+                               .callRecipient(remotePeer.getRecipient())
+                               .callState(WebRtcViewModel.State.CALL_OUTGOING)
+                               .putRemotePeer(remotePeer)
+                               .putParticipant(remotePeer.getRecipient(),
+                                               CallParticipant.createRemote(new CallParticipantId(remotePeer.getRecipient()),
+                                                                            remotePeer.getRecipient(),
+                                                                            null,
+                                                                            new BroadcastVideoSink(currentState.getVideoState().getEglBase(),
+                                                                                                   false,
+                                                                                                   true,
+                                                                                                   currentState.getLocalDeviceState().getOrientation().getDegrees()),
+                                                                            true,
+                                                                            false,
+                                                                            0,
+                                                                            true,
+                                                                            0,
+                                                                            false,
+                                                                            CallParticipant.DeviceOrdinal.PRIMARY
+                                               ))
+                               .build();
+
+    CallManager.CallMediaType callMediaType = WebRtcUtil.getCallMediaTypeFromOfferType(offerType);
+
+    try {
+      webRtcInteractor.getCallManager().call(remotePeer, callMediaType, 1);
+    } catch (CallException e) {
+      return callFailure(currentState, "Unable to create outgoing call: ", e);
     }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleOutgoingCall(@NonNull WebRtcServiceState currentState,
-                                                             @NonNull RemotePeer remotePeer,
-                                                             @NonNull OfferMessage.Type offerType)
-    {
-        remotePeer.setCallStartTimestamp(System.currentTimeMillis());
-        currentState = currentState.builder()
-                .actionProcessor(new OutgoingCallActionProcessor(webRtcInteractor))
-                .changeCallInfoState()
-                .callRecipient(remotePeer.getRecipient())
-                .callState(WebRtcViewModel.State.CALL_OUTGOING)
-                .putRemotePeer(remotePeer)
-                .putParticipant(remotePeer.getRecipient(),
-                        CallParticipant.createRemote(
-                                new CallParticipantId(remotePeer.getRecipient()),
-                                remotePeer.getRecipient(),
-                                null,
-                                new BroadcastVideoSink(currentState.getVideoState().getEglBase()),
-                                true,
-                                false,
-                                0,
-                                true,
-                                0,
-                                CallParticipant.DeviceOrdinal.PRIMARY
-                        ))
-                .build();
+    return currentState;
+  }
 
-        CallManager.CallMediaType callMediaType = WebRtcUtil.getCallMediaTypeFromOfferType(offerType);
+  @Override
+  protected @NonNull WebRtcServiceState handleStartIncomingCall(@NonNull WebRtcServiceState currentState, @NonNull RemotePeer remotePeer) {
+    remotePeer.answering();
 
-        try {
-            webRtcInteractor.getCallManager().call(remotePeer, callMediaType, 1);
-        } catch (CallException e) {
-            return callFailure(currentState, "Unable to create outgoing call: ", e);
-        }
+    Log.i(tag, "assign activePeer callId: " + remotePeer.getCallId() + " key: " + remotePeer.hashCode());
 
-        return currentState;
-    }
+    AudioManager androidAudioManager = ServiceUtil.getAudioManager(context);
+    androidAudioManager.setSpeakerphoneOn(false);
 
-    @Override
-    protected @NonNull WebRtcServiceState handleStartIncomingCall(@NonNull WebRtcServiceState currentState, @NonNull RemotePeer remotePeer) {
-        remotePeer.answering();
+    webRtcInteractor.setCallInProgressNotification(TYPE_INCOMING_CONNECTING, remotePeer);
+    webRtcInteractor.retrieveTurnServers(remotePeer);
 
-        Log.i(tag, "assign activePeer callId: " + remotePeer.getCallId() + " key: " + remotePeer.hashCode());
-
-        AudioManager androidAudioManager = ServiceUtil.getAudioManager(context);
-        androidAudioManager.setSpeakerphoneOn(false);
-
-        webRtcInteractor.setCallInProgressNotification(TYPE_INCOMING_CONNECTING, remotePeer);
-        webRtcInteractor.retrieveTurnServers(remotePeer);
-
-        return currentState.builder()
-                .actionProcessor(new IncomingCallActionProcessor(webRtcInteractor))
-                .changeCallInfoState()
-                .callRecipient(remotePeer.getRecipient())
-                .activePeer(remotePeer)
-                .callState(WebRtcViewModel.State.CALL_INCOMING)
-                .putParticipant(remotePeer.getRecipient(),
-                        CallParticipant.createRemote(
-                                new CallParticipantId(remotePeer.getRecipient()),
-                                remotePeer.getRecipient(),
-                                null,
-                                new BroadcastVideoSink(currentState.getVideoState().getEglBase()),
-                                true,
-                                false,
-                                0,
-                                true,
-                                0,
-                                CallParticipant.DeviceOrdinal.PRIMARY
-                        ))
-                .build();
-    }
+    return currentState.builder()
+                       .actionProcessor(new IncomingCallActionProcessor(webRtcInteractor))
+                       .changeCallInfoState()
+                       .callRecipient(remotePeer.getRecipient())
+                       .activePeer(remotePeer)
+                       .callState(WebRtcViewModel.State.CALL_INCOMING)
+                       .putParticipant(remotePeer.getRecipient(),
+                                       CallParticipant.createRemote(new CallParticipantId(remotePeer.getRecipient()),
+                                                                    remotePeer.getRecipient(),
+                                                                    null,
+                                                                    new BroadcastVideoSink(currentState.getVideoState().getEglBase(),
+                                                                                           false,
+                                                                                           true,
+                                                                                           currentState.getLocalDeviceState().getOrientation().getDegrees()),
+                                                                    true,
+                                                                    false,
+                                                                    0,
+                                                                    true,
+                                                                    0,
+                                                                    false,
+                                                                    CallParticipant.DeviceOrdinal.PRIMARY
+                                       ))
+                       .build();
+  }
 }

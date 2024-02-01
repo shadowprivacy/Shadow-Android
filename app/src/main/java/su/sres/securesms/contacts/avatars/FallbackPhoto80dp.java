@@ -10,8 +10,7 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.graphics.drawable.DrawableCompat;
 
 import su.sres.securesms.R;
-import su.sres.securesms.color.MaterialColor;
-import su.sres.securesms.util.ThemeUtil;
+import su.sres.securesms.conversation.colors.ChatColors;
 import su.sres.securesms.util.ViewUtil;
 
 import java.util.Objects;
@@ -25,6 +24,7 @@ public final class FallbackPhoto80dp implements FallbackContactPhoto {
         this.drawable80dp    = drawable80dp;
         this.backgroundColor = backgroundColor;
     }
+
     @Override
     public Drawable asDrawable(Context context, int color) {
         return buildDrawable(context);

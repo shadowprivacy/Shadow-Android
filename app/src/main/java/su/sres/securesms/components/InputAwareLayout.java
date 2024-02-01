@@ -1,8 +1,10 @@
 package su.sres.securesms.components;
 
 import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import android.util.AttributeSet;
 import android.widget.EditText;
 
@@ -25,8 +27,8 @@ public class InputAwareLayout extends KeyboardAwareLinearLayout implements OnKey
     addOnKeyboardShownListener(this);
   }
 
-  @Override public void onKeyboardShown() {
-    hideAttachedInput(true);
+  @Override
+  public void onKeyboardShown() {
   }
 
   public void show(@NonNull final EditText imeTarget, @NonNull final InputView input) {
@@ -51,7 +53,7 @@ public class InputAwareLayout extends KeyboardAwareLinearLayout implements OnKey
 
   public void hideCurrentInput(EditText imeTarget) {
     if (isKeyboardOpen()) hideSoftkey(imeTarget, null);
-    else                  hideAttachedInput(false);
+    else hideAttachedInput(false);
   }
 
   public void hideAttachedInput(boolean instant) {
@@ -86,7 +88,9 @@ public class InputAwareLayout extends KeyboardAwareLinearLayout implements OnKey
 
   public interface InputView {
     void show(int height, boolean immediate);
+
     void hide(boolean immediate);
+
     boolean isShowing();
   }
 }

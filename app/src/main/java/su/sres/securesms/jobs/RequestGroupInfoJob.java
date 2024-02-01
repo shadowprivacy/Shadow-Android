@@ -9,6 +9,7 @@ import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.net.NotPushRegisteredException;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.recipients.Recipient;
@@ -68,6 +69,10 @@ public class RequestGroupInfoJob extends BaseJob  {
 
   @Override
   public void onRun() throws IOException, UntrustedIdentityException {
+    if (!Recipient.self().isRegistered()) {
+      throw new NotPushRegisteredException();
+    }
+
     SignalServiceGroup       group   = SignalServiceGroup.newBuilder(Type.REQUEST_INFO)
             .withId(groupId.getDecodedId())
                                                          .build();

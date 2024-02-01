@@ -15,6 +15,7 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.jobmanager.impl.DecryptionsDrainedConstraint;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.net.NotPushRegisteredException;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -95,6 +96,10 @@ public class ProfileKeySendJob extends BaseJob {
 
     @Override
     protected void onRun() throws Exception {
+        if (!Recipient.self().isRegistered()) {
+            throw new NotPushRegisteredException();
+        }
+
         Recipient conversationRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
 
         if (conversationRecipient == null) {
@@ -120,6 +125,7 @@ public class ProfileKeySendJob extends BaseJob {
     @Override
     protected boolean onShouldRetry(@NonNull Exception e) {
         if (e instanceof ServerRejectedException) return false;
+        if (e instanceof NotPushRegisteredException) return false;
         return e instanceof IOException ||
                 e instanceof RetryLaterException;
     }

@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.hardware.Camera.CameraInfo;
 import android.net.Uri;
-import android.os.Build;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import androidx.annotation.ArrayRes;
@@ -26,8 +25,8 @@ import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 
 import org.whispersystems.libsignal.util.Medium;
 
+import su.sres.securesms.recipients.Recipient;
 import su.sres.signalservice.api.util.UuidUtil;
-// import su.sres.signalservice.internal.registrationpin.PinStretcher;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -435,7 +434,11 @@ public class TextSecurePreferences {
   }
 
   public static void setUnauthorizedReceived(Context context, boolean value) {
+    boolean previous = isUnauthorizedRecieved(context);
     setBooleanPreference(context, UNAUTHORIZED_RECEIVED, value);
+    if (previous != value) {
+      Recipient.self().live().refresh();
+    }
   }
 
   public static boolean isUnauthorizedRecieved(Context context) {
@@ -879,8 +882,12 @@ public class TextSecurePreferences {
 
   public static void setPushRegistered(Context context, boolean registered) {
     Log.i(TAG, "Setting push registered: " + registered);
+    boolean previous = isPushRegistered(context);
     setBooleanPreference(context, REGISTERED_GCM_PREF, registered);
     ApplicationDependencies.getIncomingMessageObserver().notifyRegistrationChanged();
+    if (previous != registered) {
+      Recipient.self().live().refresh();
+    }
   }
 
   public static boolean isShowInviteReminders(Context context) {
@@ -1252,6 +1259,6 @@ public class TextSecurePreferences {
 
   // NEVER rename these -- they're persisted by name
   public enum MediaKeyboardMode {
-    EMOJI, STICKER
+    EMOJI, STICKER, GIF
   }
 }

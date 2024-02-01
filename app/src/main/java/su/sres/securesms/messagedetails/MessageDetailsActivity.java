@@ -2,8 +2,6 @@ package su.sres.securesms.messagedetails;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.ColorDrawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
@@ -14,7 +12,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
-import su.sres.securesms.color.MaterialColor;
+import su.sres.securesms.conversation.colors.Colorizer;
+import su.sres.securesms.conversation.colors.ColorizerView;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.giph.mp4.GiphyMp4PlaybackController;
@@ -25,9 +24,7 @@ import su.sres.securesms.messagedetails.MessageDetailsViewModel.Factory;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.DynamicDarkActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
-import su.sres.securesms.util.WindowUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,7 +39,8 @@ public final class MessageDetailsActivity extends PassphraseRequiredActivity {
 
     private GlideRequests           glideRequests;
     private MessageDetailsViewModel viewModel;
-    private MessageDetailsAdapter   adapter;
+    private MessageDetailsAdapter adapter;
+    private Colorizer             colorizer;
 
     private DynamicTheme dynamicTheme = new DynamicTheme();
 
@@ -96,11 +94,15 @@ public final class MessageDetailsActivity extends PassphraseRequiredActivity {
     }
 
     private void initializeList() {
-        RecyclerView list = findViewById(R.id.message_details_list);
-        adapter           = new MessageDetailsAdapter(this, glideRequests);
+        RecyclerView  list          = findViewById(R.id.message_details_list);
+        ColorizerView colorizerView = findViewById(R.id.message_details_colorizer);
+
+        colorizer = new Colorizer(colorizerView);
+        adapter   = new MessageDetailsAdapter(this, glideRequests, colorizer);
 
         list.setAdapter(adapter);
         list.setItemAnimator(null);
+        colorizer.attachToRecyclerView(list);
     }
 
     private void initializeViewModel() {
@@ -117,6 +119,8 @@ public final class MessageDetailsActivity extends PassphraseRequiredActivity {
                 adapter.submitList(convertToRows(details));
             }
         });
+
+        viewModel.getRecipient().observe(this, recipient -> colorizer.onChatColorsChanged(recipient.getChatColors()));
     }
 
     private void initializeVideoPlayer() {

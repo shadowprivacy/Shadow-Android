@@ -30,6 +30,7 @@ import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.FeatureFlags;
+import su.sres.securesms.util.Projection;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.dualsim.SubscriptionInfoCompat;
 import su.sres.securesms.util.dualsim.SubscriptionManagerCompat;
@@ -143,6 +144,14 @@ public class ConversationItemFooter extends LinearLayout {
 
   public void disableBubbleBackground() {
     setBackground(null);
+  }
+
+  public @Nullable Projection getProjection() {
+    if (getVisibility() == VISIBLE) {
+      return Projection.relativeToViewRoot(this, new Projection.Corners(ViewUtil.dpToPx(11)));
+    } else {
+      return null;
+    }
   }
 
   private void presentDate(@NonNull MessageRecord messageRecord, @NonNull Locale locale) {

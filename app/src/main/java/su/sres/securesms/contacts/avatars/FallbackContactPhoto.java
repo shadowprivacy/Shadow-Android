@@ -9,5 +9,4 @@ public interface FallbackContactPhoto {
   public Drawable asDrawable(Context context, int color, boolean inverted);
   public Drawable asSmallDrawable(Context context, int color, boolean inverted);
   public Drawable asCallCard(Context context);
-
 }

@@ -10,7 +10,6 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.graphics.drawable.DrawableCompat;
 
 import su.sres.securesms.R;
-import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.ViewUtil;
 
 import java.util.Objects;
