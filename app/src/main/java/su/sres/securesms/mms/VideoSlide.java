@@ -26,8 +26,8 @@ import androidx.annotation.Nullable;
 import su.sres.securesms.R;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.database.AttachmentDatabase;
+import su.sres.securesms.giph.mp4.GiphyMp4PlaybackPolicy;
 import su.sres.securesms.util.MediaUtil;
-import su.sres.securesms.util.ResUtil;
 
 public class VideoSlide extends Slide {
 
@@ -54,7 +54,7 @@ public class VideoSlide extends Slide {
 
   @Override
   public boolean hasPlayOverlay() {
-    return true;
+    return !(isVideoGif() && GiphyMp4PlaybackPolicy.autoplay());
   }
 
   @Override

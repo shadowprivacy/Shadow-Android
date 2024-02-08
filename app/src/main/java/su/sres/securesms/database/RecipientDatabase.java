@@ -144,7 +144,6 @@ public class RecipientDatabase extends Database {
   private static final String PROFILE_JOINED_NAME       = "profile_joined_name";
   private static final String MENTION_SETTING           = "mention_setting";
   private static final String STORAGE_PROTO             = "storage_proto";
-  private static final String LAST_GV1_MIGRATE_REMINDER = "last_gv1_migrate_reminder";
   private static final String LAST_SESSION_RESET        = "last_session_reset";
   private static final String WALLPAPER                 = "wallpaper";
   private static final String WALLPAPER_URI             = "wallpaper_file";
@@ -160,10 +159,15 @@ public class RecipientDatabase extends Database {
   private static final String IDENTITY_STATUS     = "identity_status";
   private static final String IDENTITY_KEY        = "identity_key";
 
+  /**
+   * Values that represent the index in the capabilities bitmask. Each index can store a 2-bit
+   * value, which in this case is the value of {@link Recipient.Capability}.
+   */
   private static final class Capabilities {
     static final int BIT_LENGTH          = 2;
     static final int GROUPS_V2           = 0;
     static final int GROUPS_V1_MIGRATION = 1;
+    static final int SENDER_KEY          = 2;
   }
 
   private static final String[] RECIPIENT_PROJECTION = new String[] {
@@ -357,7 +361,6 @@ public class RecipientDatabase extends Database {
       MENTION_SETTING + " INTEGER DEFAULT " + MentionSetting.ALWAYS_NOTIFY.getId() + ", " +
       STORAGE_PROTO + " TEXT DEFAULT NULL, " +
       CAPABILITIES + " INTEGER DEFAULT 0, " +
-      LAST_GV1_MIGRATE_REMINDER + " INTEGER DEFAULT 0, " +
       LAST_SESSION_RESET + " BLOB DEFAULT NULL, " +
       WALLPAPER + " BLOB DEFAULT NULL, " +
       WALLPAPER_URI + " TEXT DEFAULT NULL, " +
@@ -1597,26 +1600,6 @@ public class RecipientDatabase extends Database {
     }
   }
 
-  public void markGroupsV1MigrationReminderSeen(@NonNull RecipientId id, long time) {
-    ContentValues values = new ContentValues(1);
-    values.put(LAST_GV1_MIGRATE_REMINDER, time);
-    if (update(id, values)) {
-      Recipient.live(id).refresh();
-    }
-  }
-
-  public long getGroupsV1MigrationReminderLastSeen(@NonNull RecipientId id) {
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
-
-    try (Cursor cursor = db.query(TABLE_NAME, new String[] { LAST_GV1_MIGRATE_REMINDER }, ID_WHERE, SqlUtil.buildArgs(id), null, null, null)) {
-      if (cursor.moveToFirst()) {
-        return CursorUtil.requireLong(cursor, LAST_GV1_MIGRATE_REMINDER);
-      }
-    }
-
-    return 0;
-  }
-
   public void setLastSessionResetTime(@NonNull RecipientId id, DeviceLastResetTime lastResetTime) {
     ContentValues values = new ContentValues(1);
     values.put(LAST_SESSION_RESET, lastResetTime.toByteArray());
@@ -1650,6 +1633,7 @@ public class RecipientDatabase extends Database {
 
     value = Bitmask.update(value, Capabilities.GROUPS_V2, Capabilities.BIT_LENGTH, Recipient.Capability.fromBoolean(capabilities.isGv2()).serialize());
     value = Bitmask.update(value, Capabilities.GROUPS_V1_MIGRATION, Capabilities.BIT_LENGTH, Recipient.Capability.fromBoolean(capabilities.isGv1Migration()).serialize());
+    value = Bitmask.update(value, Capabilities.SENDER_KEY,          Capabilities.BIT_LENGTH, Recipient.Capability.fromBoolean(capabilities.isSenderKey()).serialize());
 
     ContentValues values = new ContentValues(1);
     values.put(CAPABILITIES, value);
@@ -3125,6 +3109,7 @@ public class RecipientDatabase extends Database {
     private final Recipient.Capability   groupsV2Capability;
     private final Recipient.Capability   groupsV1MigrationCapability;
     private final InsightsBannerTier     insightsBannerTier;
+    private final Recipient.Capability            senderKeyCapability;
     private final byte[]                 storageId;
     private final MentionSetting         mentionSetting;
     private final ChatWallpaper          wallpaper;
@@ -3214,6 +3199,7 @@ public class RecipientDatabase extends Database {
       this.capabilities                = capabilities;
       this.groupsV2Capability          = Recipient.Capability.deserialize((int) Bitmask.read(capabilities, Capabilities.GROUPS_V2, Capabilities.BIT_LENGTH));
       this.groupsV1MigrationCapability = Recipient.Capability.deserialize((int) Bitmask.read(capabilities, Capabilities.GROUPS_V1_MIGRATION, Capabilities.BIT_LENGTH));
+      this.senderKeyCapability         = Recipient.Capability.deserialize((int) Bitmask.read(capabilities, Capabilities.SENDER_KEY, Capabilities.BIT_LENGTH));
       this.insightsBannerTier          = insightsBannerTier;
       this.storageId                   = storageId;
       this.mentionSetting              = mentionSetting;
@@ -3369,6 +3355,10 @@ public class RecipientDatabase extends Database {
 
     public @NonNull Recipient.Capability getGroupsV1MigrationCapability() {
       return groupsV1MigrationCapability;
+    }
+
+    public @NonNull Recipient.Capability getSenderKeyCapability() {
+      return senderKeyCapability;
     }
 
     public @Nullable byte[] getStorageId() {

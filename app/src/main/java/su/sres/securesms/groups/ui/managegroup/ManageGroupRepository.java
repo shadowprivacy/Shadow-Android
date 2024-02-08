@@ -23,6 +23,7 @@ import su.sres.securesms.groups.SelectionLimits;
 import su.sres.securesms.groups.ui.GroupChangeErrorCallback;
 import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -145,6 +146,15 @@ final class ManageGroupRepository {
             RecipientId recipientId = Recipient.externalGroupExact(context, groupId).getId();
             DatabaseFactory.getRecipientDatabase(context).setMentionSetting(recipientId, mentionSetting);
         });
+    }
+
+    @WorkerThread
+    boolean hasCustomNotifications(Recipient recipient) {
+        if (recipient.getNotificationChannel() != null || !NotificationChannels.supported()) {
+            return true;
+        }
+
+        return NotificationChannels.updateWithShortcutBasedChannel(context, recipient);
     }
 
     static final class GroupStateResult {

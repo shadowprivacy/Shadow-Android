@@ -14,27 +14,31 @@ import com.annimon.stream.Stream;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 
-
+import su.sres.securesms.crypto.SenderKeyUtil;
 import su.sres.securesms.groups.GroupAccessControl;
 import su.sres.securesms.groups.GroupMigrationMembershipChange;
 import su.sres.securesms.util.CursorUtil;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.groupsv2.GroupChangeReconstruct;
+import su.sres.signalservice.api.push.DistributionId;
 import su.sres.storageservice.protos.groups.AccessControl;
 import su.sres.storageservice.protos.groups.Member;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
+
 import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.groups.GroupMasterKey;
+
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.messages.SignalServiceAttachmentPointer;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.api.groupsv2.DecryptedGroupUtil;
@@ -50,6 +54,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -57,59 +62,68 @@ public final class GroupDatabase extends Database {
 
   private static final String TAG = Log.tag(GroupDatabase.class);
 
-  static final String TABLE_NAME          = "groups";
-  private static final String ID                  = "_id";
-  static final String GROUP_ID            = "group_id";
-          static final String RECIPIENT_ID        = "recipient_id";
-  private static final String TITLE               = "title";
-          static final String MEMBERS             = "members";
-  private static final String AVATAR_ID           = "avatar_id";
-  private static final String AVATAR_KEY          = "avatar_key";
-  private static final String AVATAR_CONTENT_TYPE = "avatar_content_type";
-  private static final String AVATAR_RELAY        = "avatar_relay";
-  private static final String AVATAR_DIGEST       = "avatar_digest";
-  private static final String TIMESTAMP           = "timestamp";
-  static final String ACTIVE              = "active";
-  static final String MMS                 = "mms";
-  private static final String EXPECTED_V2_ID      = "expected_v2_id";
+  static final         String TABLE_NAME            = "groups";
+  private static final String ID                    = "_id";
+  static final         String GROUP_ID              = "group_id";
+  static final         String RECIPIENT_ID          = "recipient_id";
+  private static final String TITLE                 = "title";
+  static final         String MEMBERS               = "members";
+  private static final String AVATAR_ID             = "avatar_id";
+  private static final String AVATAR_KEY            = "avatar_key";
+  private static final String AVATAR_CONTENT_TYPE   = "avatar_content_type";
+  private static final String AVATAR_RELAY          = "avatar_relay";
+  private static final String AVATAR_DIGEST         = "avatar_digest";
+  private static final String TIMESTAMP             = "timestamp";
+  static final         String ACTIVE                = "active";
+  static final         String MMS                   = "mms";
+  private static final String EXPECTED_V2_ID        = "expected_v2_id";
   private static final String UNMIGRATED_V1_MEMBERS = "former_v1_members";
+  private static final String DISTRIBUTION_ID       = "distribution_id";
 
   /* V2 Group columns */
-  /** 32 bytes serialized {@link GroupMasterKey} */
-  public static final String V2_MASTER_KEY       = "master_key";
-  /** Increments with every change to the group */
-  private static final String V2_REVISION         = "revision";
-  /** Serialized {@link DecryptedGroup} protobuf */
-  private static final String V2_DECRYPTED_GROUP  = "decrypted_group";
+  /**
+   * 32 bytes serialized {@link GroupMasterKey}
+   */
+  public static final  String V2_MASTER_KEY      = "master_key";
+  /**
+   * Increments with every change to the group
+   */
+  private static final String V2_REVISION        = "revision";
+  /**
+   * Serialized {@link DecryptedGroup} protobuf
+   */
+  private static final String V2_DECRYPTED_GROUP = "decrypted_group";
 
-  public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " (" + ID                  + " INTEGER PRIMARY KEY, " +
-          GROUP_ID            + " TEXT, " +
-          RECIPIENT_ID        + " INTEGER, " +
-          TITLE               + " TEXT, " +
-          MEMBERS             + " TEXT, " +
-          AVATAR_ID           + " INTEGER, " +
-          AVATAR_KEY          + " BLOB, " +
-          AVATAR_CONTENT_TYPE + " TEXT, " +
-          AVATAR_RELAY        + " TEXT, " +
-          TIMESTAMP           + " INTEGER, " +
-          ACTIVE              + " INTEGER DEFAULT 1, " +
-          AVATAR_DIGEST       + " BLOB, " +
-          MMS                 + " INTEGER DEFAULT 0, " +
-          V2_MASTER_KEY       + " BLOB, " +
-          V2_REVISION         + " BLOB, " +
-          V2_DECRYPTED_GROUP  + " BLOB, " +
-          EXPECTED_V2_ID      + " TEXT DEFAULT NULL, " +
-          UNMIGRATED_V1_MEMBERS + " TEXT DEFAULT NULL);";
+  public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " (" + ID + " INTEGER PRIMARY KEY, " +
+                                            GROUP_ID + " TEXT, " +
+                                            RECIPIENT_ID + " INTEGER, " +
+                                            TITLE + " TEXT, " +
+                                            MEMBERS + " TEXT, " +
+                                            AVATAR_ID + " INTEGER, " +
+                                            AVATAR_KEY + " BLOB, " +
+                                            AVATAR_CONTENT_TYPE + " TEXT, " +
+                                            AVATAR_RELAY + " TEXT, " +
+                                            TIMESTAMP + " INTEGER, " +
+                                            ACTIVE + " INTEGER DEFAULT 1, " +
+                                            AVATAR_DIGEST + " BLOB, " +
+                                            MMS + " INTEGER DEFAULT 0, " +
+                                            V2_MASTER_KEY + " BLOB, " +
+                                            V2_REVISION + " BLOB, " +
+                                            V2_DECRYPTED_GROUP + " BLOB, " +
+                                            EXPECTED_V2_ID + " TEXT DEFAULT NULL, " +
+                                            UNMIGRATED_V1_MEMBERS + " TEXT DEFAULT NULL, " +
+                                            DISTRIBUTION_ID + " TEXT DEFAULT NULL);";
 
   public static final String[] CREATE_INDEXS = {
-          "CREATE UNIQUE INDEX IF NOT EXISTS group_id_index ON " + TABLE_NAME + " (" + GROUP_ID + ");",
-          "CREATE UNIQUE INDEX IF NOT EXISTS group_recipient_id_index ON " + TABLE_NAME + " (" + RECIPIENT_ID + ");",
-          "CREATE UNIQUE INDEX IF NOT EXISTS expected_v2_id_index ON " + TABLE_NAME + " (" + EXPECTED_V2_ID + ");"
+      "CREATE UNIQUE INDEX IF NOT EXISTS group_id_index ON " + TABLE_NAME + " (" + GROUP_ID + ");",
+      "CREATE UNIQUE INDEX IF NOT EXISTS group_recipient_id_index ON " + TABLE_NAME + " (" + RECIPIENT_ID + ");",
+      "CREATE UNIQUE INDEX IF NOT EXISTS expected_v2_id_index ON " + TABLE_NAME + " (" + EXPECTED_V2_ID + ");",
+      "CREATE UNIQUE INDEX IF NOT EXISTS group_distribution_id_index ON " + TABLE_NAME + "(" + DISTRIBUTION_ID + ")"
   };
 
   private static final String[] GROUP_PROJECTION = {
-          GROUP_ID, RECIPIENT_ID, TITLE, MEMBERS, UNMIGRATED_V1_MEMBERS, AVATAR_ID, AVATAR_KEY, AVATAR_CONTENT_TYPE, AVATAR_RELAY, AVATAR_DIGEST,
-          TIMESTAMP, ACTIVE, MMS, V2_MASTER_KEY, V2_REVISION, V2_DECRYPTED_GROUP
+      GROUP_ID, RECIPIENT_ID, TITLE, MEMBERS, UNMIGRATED_V1_MEMBERS, AVATAR_ID, AVATAR_KEY, AVATAR_CONTENT_TYPE, AVATAR_RELAY, AVATAR_DIGEST,
+      TIMESTAMP, ACTIVE, MMS, V2_MASTER_KEY, V2_REVISION, V2_DECRYPTED_GROUP
   };
 
   static final List<String> TYPED_GROUP_PROJECTION = Stream.of(GROUP_PROJECTION).map(columnName -> TABLE_NAME + "." + columnName).toList();
@@ -119,7 +133,7 @@ public final class GroupDatabase extends Database {
   }
 
   public Optional<GroupRecord> getGroup(RecipientId recipientId) {
-    try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, RECIPIENT_ID + " = ?", new String[] {recipientId.serialize()}, null, null, null)) {
+    try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, RECIPIENT_ID + " = ?", new String[] { recipientId.serialize() }, null, null, null)) {
       if (cursor != null && cursor.moveToNext()) {
         return getGroup(cursor);
       }
@@ -130,8 +144,8 @@ public final class GroupDatabase extends Database {
 
   public Optional<GroupRecord> getGroup(@NonNull GroupId groupId) {
     try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, GROUP_ID + " = ?",
-            new String[] {groupId.toString()},
-            null, null, null))
+                                                                    new String[] { groupId.toString() },
+                                                                    null, null, null))
     {
       if (cursor != null && cursor.moveToNext()) {
         return getGroup(cursor);
@@ -143,8 +157,8 @@ public final class GroupDatabase extends Database {
 
   public boolean groupExists(@NonNull GroupId groupId) {
     try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, GROUP_ID + " = ?",
-            new String[] {groupId.toString()},
-            null, null, null))
+                                                                    new String[] { groupId.toString() },
+                                                                    null, null, null))
     {
       return cursor.moveToNext();
     }
@@ -195,8 +209,8 @@ public final class GroupDatabase extends Database {
    */
   public int getGroupV2Revision(@NonNull GroupId.V2 groupId) {
     try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, GROUP_ID + " = ?",
-            new String[] {groupId.toString()},
-            null, null, null))
+                                                                    new String[] { groupId.toString() },
+                                                                    null, null, null))
     {
       if (cursor != null && cursor.moveToNext()) {
         return cursor.getInt(cursor.getColumnIndexOrThrow(V2_REVISION));
@@ -240,10 +254,10 @@ public final class GroupDatabase extends Database {
 
     if (includeInactive) {
       query     = TITLE + " LIKE ? AND (" + ACTIVE + " = ? OR " + RECIPIENT_ID + " IN (SELECT " + ThreadDatabase.RECIPIENT_ID + " FROM " + ThreadDatabase.TABLE_NAME + "))";
-      queryArgs = new String[]{"%" + constraint + "%", "1"};
+      queryArgs = new String[] { "%" + constraint + "%", "1" };
     } else {
       query     = TITLE + " LIKE ? AND " + ACTIVE + " = ?";
-      queryArgs = new String[]{"%" + constraint + "%", "1"};
+      queryArgs = new String[] { "%" + constraint + "%", "1" };
     }
 
     if (excludeV1) {
@@ -255,17 +269,49 @@ public final class GroupDatabase extends Database {
     return new Reader(cursor);
   }
 
+  public @NonNull DistributionId getOrCreateDistributionId(@NonNull GroupId.V2 groupId) {
+    SQLiteDatabase db    = databaseHelper.getReadableDatabase();
+    String         query = GROUP_ID + " = ?";
+    String[]       args  = SqlUtil.buildArgs(groupId);
+
+    try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[] { DISTRIBUTION_ID }, query, args, null, null, null)) {
+      if (cursor.moveToFirst()) {
+        Optional<String> serialized = CursorUtil.getString(cursor, DISTRIBUTION_ID);
+
+        if (serialized.isPresent()) {
+          return DistributionId.from(serialized.get());
+        } else {
+          Log.w(TAG, "Missing distributionId! Creating one.");
+
+          DistributionId distributionId = DistributionId.create();
+
+          ContentValues values = new ContentValues(1);
+          values.put(DISTRIBUTION_ID, distributionId.toString());
+
+          int count = db.update(TABLE_NAME, values, query, args);
+          if (count < 1) {
+            throw new IllegalStateException("Tried to create a distributionId for " + groupId + ", but it doesn't exist!");
+          }
+
+          return distributionId;
+        }
+      } else {
+        throw new IllegalStateException("Group " + groupId + " doesn't exist!");
+      }
+    }
+  }
+
   public GroupId.Mms getOrCreateMmsGroupForMembers(List<RecipientId> members) {
     Collections.sort(members);
 
-    Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[] {GROUP_ID},
-            MEMBERS + " = ? AND " + MMS + " = ?",
-            new String[] {RecipientId.toSerializedList(members), "1"},
-            null, null, null);
+    Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[] { GROUP_ID },
+                                                               MEMBERS + " = ? AND " + MMS + " = ?",
+                                                               new String[] { RecipientId.toSerializedList(members), "1" },
+                                                               null, null, null);
     try {
       if (cursor != null && cursor.moveToNext()) {
         return GroupId.parseOrThrow(cursor.getString(cursor.getColumnIndexOrThrow(GROUP_ID)))
-                .requireMms();
+                      .requireMms();
       } else {
         GroupId.Mms groupId = GroupId.createMms(new SecureRandom());
         create(groupId, null, members);
@@ -279,8 +325,8 @@ public final class GroupDatabase extends Database {
   @WorkerThread
   public List<String> getPushGroupNamesContainingMember(@NonNull RecipientId recipientId) {
     return Stream.of(getPushGroupsContainingMember(recipientId))
-            .map(groupRecord -> Recipient.resolved(groupRecord.getRecipientId()).getDisplayName(context))
-            .toList();
+                 .map(groupRecord -> Recipient.resolved(groupRecord.getRecipientId()).getDisplayName(context))
+                 .toList();
   }
 
   @WorkerThread
@@ -294,11 +340,11 @@ public final class GroupDatabase extends Database {
 
   @WorkerThread
   public @NonNull List<GroupRecord> getGroupsContainingMember(@NonNull RecipientId recipientId, boolean pushOnly, boolean includeInactive) {
-    SQLiteDatabase database   = databaseHelper.getReadableDatabase();
-    String         table      = TABLE_NAME + " INNER JOIN " + ThreadDatabase.TABLE_NAME + " ON " + TABLE_NAME + "." + RECIPIENT_ID + " = " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.RECIPIENT_ID;
-    String         query      = MEMBERS + " LIKE ?";
-    String[]       args       = SqlUtil.buildArgs("%" + recipientId.serialize() + "%");
-    String         orderBy    = ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.DATE + " DESC";
+    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    String         table    = TABLE_NAME + " INNER JOIN " + ThreadDatabase.TABLE_NAME + " ON " + TABLE_NAME + "." + RECIPIENT_ID + " = " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.RECIPIENT_ID;
+    String         query    = MEMBERS + " LIKE ?";
+    String[]       args     = SqlUtil.buildArgs("%" + recipientId.serialize() + "%");
+    String         orderBy  = ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.DATE + " DESC";
 
     if (pushOnly) {
       query += " AND " + MMS + " = ?";
@@ -330,6 +376,7 @@ public final class GroupDatabase extends Database {
     Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, null, null, null, null, null);
     return new Reader(cursor);
   }
+
   public int getActiveGroupCount() {
     SQLiteDatabase db    = databaseHelper.getReadableDatabase();
     String[]       cols  = { "COUNT(*)" };
@@ -348,7 +395,7 @@ public final class GroupDatabase extends Database {
   public @NonNull List<Recipient> getGroupMembers(@NonNull GroupId groupId, @NonNull MemberSet memberSet) {
     if (groupId.isV2()) {
       return getGroup(groupId).transform(g -> g.requireV2GroupProperties().getMemberRecipients(memberSet))
-              .or(Collections.emptyList());
+                              .or(Collections.emptyList());
     } else {
       List<RecipientId> currentMembers = getCurrentMembers(groupId);
       List<Recipient>   recipients     = new ArrayList<>(currentMembers.size());
@@ -436,6 +483,7 @@ public final class GroupDatabase extends Database {
 
     if (groupId.isV2()) {
       contentValues.put(ACTIVE, groupState != null && gv2GroupActive(groupState) ? 1 : 0);
+      contentValues.put(DISTRIBUTION_ID, DistributionId.create().toString());
     } else if (groupId.isV1()) {
       contentValues.put(ACTIVE, 1);
       contentValues.put(EXPECTED_V2_ID, groupId.requireV1().deriveV2MigrationGroupId().toString());
@@ -494,8 +542,8 @@ public final class GroupDatabase extends Database {
     }
 
     databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues,
-            GROUP_ID + " = ?",
-            new String[] {groupId.toString()});
+                                                GROUP_ID + " = ?",
+                                                new String[] { groupId.toString() });
 
     RecipientId groupRecipient = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
     Recipient.live(groupRecipient).refresh();
@@ -524,6 +572,7 @@ public final class GroupDatabase extends Database {
       ContentValues contentValues = new ContentValues();
       contentValues.put(GROUP_ID, groupIdV2.toString());
       contentValues.put(V2_MASTER_KEY, groupMasterKey.serialize());
+      contentValues.put(DISTRIBUTION_ID, DistributionId.create().toString());
       contentValues.putNull(EXPECTED_V2_ID);
 
       List<RecipientId> newMembers     = uuidsToRecipientIds(DecryptedGroupUtil.membersToUuidList(decryptedGroup.getMembersList()));
@@ -547,8 +596,8 @@ public final class GroupDatabase extends Database {
       update(groupMasterKey, decryptedGroup);
 
       DatabaseFactory.getSmsDatabase(context).insertGroupV1MigrationEvents(record.getRecipientId(),
-              threadId,
-              new GroupMigrationMembershipChange(pendingMembers, droppedMembers));
+                                                                           threadId,
+                                                                           new GroupMigrationMembershipChange(pendingMembers, droppedMembers));
 
       db.setTransactionSuccessful();
     } finally {
@@ -563,11 +612,11 @@ public final class GroupDatabase extends Database {
   }
 
   public void update(@NonNull GroupId.V2 groupId, @NonNull DecryptedGroup decryptedGroup) {
-    RecipientDatabase     recipientDatabase   = DatabaseFactory.getRecipientDatabase(context);
-    RecipientId           groupRecipientId    = recipientDatabase.getOrInsertFromGroupId(groupId);
-    Optional<GroupRecord> existingGroup       = getGroup(groupId);
-    String                title               = decryptedGroup.getTitle();
-    ContentValues         contentValues       = new ContentValues();
+    RecipientDatabase     recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+    RecipientId           groupRecipientId  = recipientDatabase.getOrInsertFromGroupId(groupId);
+    Optional<GroupRecord> existingGroup     = getGroup(groupId);
+    String                title             = decryptedGroup.getTitle();
+    ContentValues         contentValues     = new ContentValues();
 
     if (existingGroup.isPresent() && existingGroup.get().getUnmigratedV1Members().size() > 0 && existingGroup.get().isV2Group()) {
       Set<RecipientId> unmigratedV1Members = new HashSet<>(existingGroup.get().getUnmigratedV1Members());
@@ -596,15 +645,27 @@ public final class GroupDatabase extends Database {
     contentValues.put(MEMBERS, RecipientId.toSerializedList(groupMembers));
     contentValues.put(ACTIVE, gv2GroupActive(decryptedGroup) ? 1 : 0);
 
+    DistributionId distributionId = Objects.requireNonNull(existingGroup.get().getDistributionId());
+
+    if (existingGroup.isPresent() && existingGroup.get().isV2Group()) {
+      DecryptedGroupChange change  = GroupChangeReconstruct.reconstructGroupChange(existingGroup.get().requireV2GroupProperties().getDecryptedGroup(), decryptedGroup);
+      List<UUID>           removed = DecryptedGroupUtil.removedMembersUuidList(change);
+
+      if (removed.size() > 0) {
+        Log.i(TAG, removed.size() + " members were removed from group " + groupId + ". Rotating the sender key.");
+        SenderKeyUtil.rotateOurKey(context, distributionId);
+      }
+    }
+
     databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues,
-            GROUP_ID + " = ?",
-            new String[]{ groupId.toString() });
+                                                GROUP_ID + " = ?",
+                                                new String[] { groupId.toString() });
 
     if (decryptedGroup.hasDisappearingMessagesTimer()) {
       recipientDatabase.setExpireMessages(groupRecipientId, decryptedGroup.getDisappearingMessagesTimer().getDuration());
     }
 
-    if (groupMembers != null && (groupId.isMms() || Recipient.resolved(groupRecipientId).isProfileSharing())) {
+    if (groupId.isMms() || Recipient.resolved(groupRecipientId).isProfileSharing()) {
       recipientDatabase.setHasGroupsInCommon(groupMembers);
     }
 
@@ -627,8 +688,8 @@ public final class GroupDatabase extends Database {
     }
     ContentValues contentValues = new ContentValues();
     contentValues.put(TITLE, title);
-    databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID +  " = ?",
-            new String[] {groupId.toString()});
+    databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID + " = ?",
+                                                new String[] { groupId.toString() });
 
     RecipientId groupRecipient = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
     Recipient.live(groupRecipient).refresh();
@@ -641,8 +702,8 @@ public final class GroupDatabase extends Database {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(AVATAR_ID, hasAvatar ? Math.abs(new SecureRandom().nextLong()) : 0);
 
-    databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID +  " = ?",
-            new String[] {groupId.toString()});
+    databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID + " = ?",
+                                                new String[] { groupId.toString() });
 
     RecipientId groupRecipient = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
     Recipient.live(groupRecipient).refresh();
@@ -656,7 +717,7 @@ public final class GroupDatabase extends Database {
     contents.put(ACTIVE, 1);
 
     databaseHelper.getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?",
-            new String[] {groupId.toString()});
+                                                new String[] { groupId.toString() });
 
     RecipientId groupRecipient = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
     Recipient.live(groupRecipient).refresh();
@@ -670,7 +731,7 @@ public final class GroupDatabase extends Database {
     contents.put(MEMBERS, RecipientId.toSerializedList(currentMembers));
 
     databaseHelper.getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?",
-            new String[] {groupId.toString()});
+                                                new String[] { groupId.toString() });
 
     RecipientId groupRecipient = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
     Recipient.live(groupRecipient).refresh();
@@ -680,17 +741,17 @@ public final class GroupDatabase extends Database {
     UUID uuid = Recipient.self().getUuid().get();
 
     return DecryptedGroupUtil.findMemberByUuid(decryptedGroup.getMembersList(), uuid).isPresent() ||
-            DecryptedGroupUtil.findPendingByUuid(decryptedGroup.getPendingMembersList(), uuid).isPresent();
+           DecryptedGroupUtil.findPendingByUuid(decryptedGroup.getPendingMembersList(), uuid).isPresent();
   }
 
   private List<RecipientId> getCurrentMembers(@NonNull GroupId groupId) {
     Cursor cursor = null;
 
     try {
-      cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[] {MEMBERS},
-              GROUP_ID + " = ?",
-              new String[] {groupId.toString()},
-              null, null, null);
+      cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[] { MEMBERS },
+                                                          GROUP_ID + " = ?",
+                                                          new String[] { groupId.toString() },
+                                                          null, null, null);
 
       if (cursor != null && cursor.moveToFirst()) {
         String serializedMembers = cursor.getString(cursor.getColumnIndexOrThrow(MEMBERS));
@@ -713,16 +774,16 @@ public final class GroupDatabase extends Database {
     SQLiteDatabase database = databaseHelper.getWritableDatabase();
     ContentValues  values   = new ContentValues();
     values.put(ACTIVE, active ? 1 : 0);
-    database.update(TABLE_NAME, values, GROUP_ID + " = ?", new String[] {groupId.toString()});
+    database.update(TABLE_NAME, values, GROUP_ID + " = ?", new String[] { groupId.toString() });
   }
 
   @WorkerThread
   public boolean isCurrentMember(@NonNull GroupId.Push groupId, @NonNull RecipientId recipientId) {
     SQLiteDatabase database = databaseHelper.getReadableDatabase();
 
-    try (Cursor cursor = database.query(TABLE_NAME, new String[] {MEMBERS},
-            GROUP_ID + " = ?", new String[] {groupId.toString()},
-            null, null, null))
+    try (Cursor cursor = database.query(TABLE_NAME, new String[] { MEMBERS },
+                                        GROUP_ID + " = ?", new String[] { groupId.toString() },
+                                        null, null, null))
     {
       if (cursor.moveToNext()) {
         String serializedMembers = cursor.getString(cursor.getColumnIndexOrThrow(MEMBERS));
@@ -733,8 +794,8 @@ public final class GroupDatabase extends Database {
     }
   }
 
-  private static List<RecipientId> uuidsToRecipientIds(@NonNull List<UUID> uuids) {
-    List<RecipientId> groupMembers  = new ArrayList<>(uuids.size());
+  private static @NonNull List<RecipientId> uuidsToRecipientIds(@NonNull List<UUID> uuids) {
+    List<RecipientId> groupMembers = new ArrayList<>(uuids.size());
 
     for (UUID uuid : uuids) {
       if (UuidUtil.UNKNOWN_UUID.equals(uuid)) {
@@ -749,17 +810,15 @@ public final class GroupDatabase extends Database {
     return groupMembers;
   }
 
-  private static List<RecipientId> getV2GroupMembers(@NonNull DecryptedGroup decryptedGroup) {
-    List<UUID>        uuids        = DecryptedGroupUtil.membersToUuidList(decryptedGroup.getMembersList());
-    List<RecipientId> recipientIds = uuidsToRecipientIds(uuids);
-
-    return recipientIds;
+  private static @NonNull List<RecipientId> getV2GroupMembers(@NonNull DecryptedGroup decryptedGroup) {
+    List<UUID> uuids = DecryptedGroupUtil.membersToUuidList(decryptedGroup.getMembersList());
+    return uuidsToRecipientIds(uuids);
   }
 
   public @NonNull List<GroupId.V2> getAllGroupV2Ids() {
     List<GroupId.V2> result = new LinkedList<>();
 
-    try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[]{ GROUP_ID }, null, null, null, null, null)) {
+    try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[] { GROUP_ID }, null, null, null, null, null)) {
       while (cursor.moveToNext()) {
         GroupId groupId = GroupId.parseOrThrow(cursor.getString(cursor.getColumnIndexOrThrow(GROUP_ID)));
         if (groupId.isV2()) {
@@ -778,7 +837,7 @@ public final class GroupDatabase extends Database {
   public @NonNull Map<GroupId.V2, GroupId.V1> getAllExpectedV2Ids() {
     Map<GroupId.V2, GroupId.V1> result = new HashMap<>();
 
-    String[] projection = new String[]{ GROUP_ID, EXPECTED_V2_ID };
+    String[] projection = new String[] { GROUP_ID, EXPECTED_V2_ID };
     String   query      = EXPECTED_V2_ID + " NOT NULL";
 
     try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, projection, query, null, null, null, null)) {
@@ -815,20 +874,21 @@ public final class GroupDatabase extends Database {
       }
 
       return new GroupRecord(GroupId.parseOrThrow(CursorUtil.requireString(cursor, GROUP_ID)),
-              RecipientId.from(CursorUtil.requireString(cursor, RECIPIENT_ID)),
-              CursorUtil.requireString(cursor, TITLE),
-              CursorUtil.requireString(cursor, MEMBERS),
-              CursorUtil.requireString(cursor, UNMIGRATED_V1_MEMBERS),
-              CursorUtil.requireLong(cursor, AVATAR_ID),
-              CursorUtil.requireBlob(cursor, AVATAR_KEY),
-              CursorUtil.requireString(cursor, AVATAR_CONTENT_TYPE),
-              CursorUtil.requireString(cursor, AVATAR_RELAY),
-              CursorUtil.requireBoolean(cursor, ACTIVE),
-              CursorUtil.requireBlob(cursor, AVATAR_DIGEST),
-              CursorUtil.requireBoolean(cursor, MMS),
-              CursorUtil.requireBlob(cursor, V2_MASTER_KEY),
-              CursorUtil.requireInt(cursor, V2_REVISION),
-              CursorUtil.requireBlob(cursor, V2_DECRYPTED_GROUP));
+                             RecipientId.from(CursorUtil.requireString(cursor, RECIPIENT_ID)),
+                             CursorUtil.requireString(cursor, TITLE),
+                             CursorUtil.requireString(cursor, MEMBERS),
+                             CursorUtil.requireString(cursor, UNMIGRATED_V1_MEMBERS),
+                             CursorUtil.requireLong(cursor, AVATAR_ID),
+                             CursorUtil.requireBlob(cursor, AVATAR_KEY),
+                             CursorUtil.requireString(cursor, AVATAR_CONTENT_TYPE),
+                             CursorUtil.requireString(cursor, AVATAR_RELAY),
+                             CursorUtil.requireBoolean(cursor, ACTIVE),
+                             CursorUtil.requireBlob(cursor, AVATAR_DIGEST),
+                             CursorUtil.requireBoolean(cursor, MMS),
+                             CursorUtil.requireBlob(cursor, V2_MASTER_KEY),
+                             CursorUtil.requireInt(cursor, V2_REVISION),
+                             CursorUtil.requireBlob(cursor, V2_DECRYPTED_GROUP),
+                             CursorUtil.getString(cursor, DISTRIBUTION_ID).transform(DistributionId::from).orNull());
     }
 
     @Override
@@ -840,19 +900,20 @@ public final class GroupDatabase extends Database {
 
   public static class GroupRecord {
 
-    private final GroupId           id;
-    private final RecipientId       recipientId;
-    private final String            title;
-    private final List<RecipientId> members;
-    private final List<RecipientId> unmigratedV1Members;
-    private final long              avatarId;
-    private final byte[]            avatarKey;
-    private final byte[]            avatarDigest;
-    private final String            avatarContentType;
-    private final String            relay;
-    private final boolean           active;
-    private final boolean           mms;
+    private final           GroupId           id;
+    private final           RecipientId       recipientId;
+    private final           String            title;
+    private final           List<RecipientId> members;
+    private final           List<RecipientId> unmigratedV1Members;
+    private final           long              avatarId;
+    private final           byte[]            avatarKey;
+    private final           byte[]            avatarDigest;
+    private final           String            avatarContentType;
+    private final           String            relay;
+    private final           boolean           active;
+    private final           boolean           mms;
     @Nullable private final V2GroupProperties v2GroupProperties;
+    private final           DistributionId    distributionId;
 
     public GroupRecord(@NonNull GroupId id,
                        @NonNull RecipientId recipientId,
@@ -868,7 +929,8 @@ public final class GroupDatabase extends Database {
                        boolean mms,
                        @Nullable byte[] groupMasterKeyBytes,
                        int groupRevision,
-                       @Nullable byte[] decryptedGroupBytes)
+                       @Nullable byte[] decryptedGroupBytes,
+                       @Nullable DistributionId distributionId)
     {
       this.id                = id;
       this.recipientId       = recipientId;
@@ -880,6 +942,7 @@ public final class GroupDatabase extends Database {
       this.relay             = relay;
       this.active            = active;
       this.mms               = mms;
+      this.distributionId    = distributionId;
 
       V2GroupProperties v2GroupProperties = null;
       if (groupMasterKeyBytes != null && decryptedGroupBytes != null) {
@@ -930,7 +993,9 @@ public final class GroupDatabase extends Database {
       return members;
     }
 
-    /** V1 members that were lost during the V1->V2 migration */
+    /**
+     * V1 members that were lost during the V1->V2 migration
+     */
     public @NonNull List<RecipientId> getUnmigratedV1Members() {
       return unmigratedV1Members;
     }
@@ -967,6 +1032,10 @@ public final class GroupDatabase extends Database {
       return mms;
     }
 
+    public @Nullable DistributionId getDistributionId() {
+      return distributionId;
+    }
+
     public boolean isV1Group() {
       return !mms && !isV2Group();
     }
@@ -994,7 +1063,7 @@ public final class GroupDatabase extends Database {
         return MemberLevel.FULL_MEMBER;
       } else {
         return members.contains(recipient.getId()) ? MemberLevel.FULL_MEMBER
-                : MemberLevel.NOT_A_MEMBER;
+                                                   : MemberLevel.NOT_A_MEMBER;
       }
     }
 
@@ -1007,7 +1076,7 @@ public final class GroupDatabase extends Database {
           return GroupAccessControl.ALL_MEMBERS;
         }
         return GroupAccessControl.ONLY_ADMINS;
-      } else if (isV1Group() && FeatureFlags.groupsV1ForcedMigration()) {
+      } else if (isV1Group()) {
         return GroupAccessControl.NO_ONE;
       } else {
         return id.isV1() ? GroupAccessControl.ALL_MEMBERS : GroupAccessControl.ONLY_ADMINS;
@@ -1023,7 +1092,7 @@ public final class GroupDatabase extends Database {
           return GroupAccessControl.ALL_MEMBERS;
         }
         return GroupAccessControl.ONLY_ADMINS;
-      } else if (isV1Group() && FeatureFlags.groupsV1ForcedMigration()) {
+      } else if (isV1Group()) {
         return GroupAccessControl.NO_ONE;
       } else {
         return GroupAccessControl.ALL_MEMBERS;
@@ -1038,7 +1107,7 @@ public final class GroupDatabase extends Database {
         Optional<UUID> uuid = recipient.getUuid();
         if (uuid.isPresent()) {
           return DecryptedGroupUtil.findPendingByUuid(requireV2GroupProperties().getDecryptedGroup().getPendingMembersList(), uuid.get())
-                  .isPresent();
+                                   .isPresent();
         }
       }
       return false;
@@ -1048,9 +1117,9 @@ public final class GroupDatabase extends Database {
   public static class V2GroupProperties {
 
     @NonNull private final GroupMasterKey groupMasterKey;
-    private final int            groupRevision;
+    private final          int            groupRevision;
     @NonNull private final byte[]         decryptedGroupBytes;
-    private       DecryptedGroup decryptedGroup;
+    private                DecryptedGroup decryptedGroup;
 
     private V2GroupProperties(@NonNull GroupMasterKey groupMasterKey, int groupRevision, @NonNull byte[] decryptedGroup) {
       this.groupMasterKey      = groupMasterKey;
@@ -1085,8 +1154,8 @@ public final class GroupDatabase extends Database {
       }
 
       return DecryptedGroupUtil.findMemberByUuid(getDecryptedGroup().getMembersList(), uuid.get())
-              .transform(t -> t.getRole() == Member.Role.ADMINISTRATOR)
-              .or(false);
+                               .transform(t -> t.getRole() == Member.Role.ADMINISTRATOR)
+                               .or(false);
     }
 
     public MemberLevel memberLevel(@NonNull Recipient recipient) {
@@ -1098,14 +1167,14 @@ public final class GroupDatabase extends Database {
       DecryptedGroup decryptedGroup = getDecryptedGroup();
 
       return DecryptedGroupUtil.findMemberByUuid(decryptedGroup.getMembersList(), uuid.get())
-              .transform(member -> member.getRole() == Member.Role.ADMINISTRATOR
-                      ? MemberLevel.ADMINISTRATOR
-                      : MemberLevel.FULL_MEMBER)
-              .or(() -> DecryptedGroupUtil.findPendingByUuid(decryptedGroup.getPendingMembersList(), uuid.get())
-                      .transform(m -> MemberLevel.PENDING_MEMBER)
-                      .or(() -> DecryptedGroupUtil.findRequestingByUuid(decryptedGroup.getRequestingMembersList(), uuid.get())
-                              .transform(m -> MemberLevel.REQUESTING_MEMBER)
-                              .or(MemberLevel.NOT_A_MEMBER)));
+                               .transform(member -> member.getRole() == Member.Role.ADMINISTRATOR
+                                                    ? MemberLevel.ADMINISTRATOR
+                                                    : MemberLevel.FULL_MEMBER)
+                               .or(() -> DecryptedGroupUtil.findPendingByUuid(decryptedGroup.getPendingMembersList(), uuid.get())
+                                                           .transform(m -> MemberLevel.PENDING_MEMBER)
+                                                           .or(() -> DecryptedGroupUtil.findRequestingByUuid(decryptedGroup.getRequestingMembersList(), uuid.get())
+                                                                                       .transform(m -> MemberLevel.REQUESTING_MEMBER)
+                                                                                       .or(MemberLevel.NOT_A_MEMBER)));
     }
 
     public List<Recipient> getMemberRecipients(@NonNull MemberSet memberSet) {
@@ -1169,7 +1238,7 @@ public final class GroupDatabase extends Database {
 
     private final boolean inGroup;
 
-    MemberLevel(boolean inGroup){
+    MemberLevel(boolean inGroup) {
       this.inGroup = inGroup;
     }
 

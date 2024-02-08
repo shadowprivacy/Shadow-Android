@@ -20,19 +20,19 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.DateUtils;
-import su.sres.securesms.util.TextSecurePreferences;
 
 /**
  * Factory responsible for building out MediaDescriptionCompat objects for voice notes.
  */
 class VoiceNoteMediaDescriptionCompatFactory {
 
-    public static final String EXTRA_MESSAGE_POSITION    = "voice.note.extra.MESSAGE_POSITION";
-    public static final String EXTRA_THREAD_RECIPIENT_ID = "voice.note.extra.RECIPIENT_ID";
-    public static final String EXTRA_AVATAR_RECIPIENT_ID = "voice.note.extra.SENDER_ID";
-    public static final String EXTRA_THREAD_ID           = "voice.note.extra.THREAD_ID";
-    public static final String EXTRA_COLOR               = "voice.note.extra.COLOR";
-    public static final String EXTRA_MESSAGE_ID          = "voice.note.extra.MESSAGE_ID";
+    public static final String EXTRA_MESSAGE_POSITION        = "voice.note.extra.MESSAGE_POSITION";
+    public static final String EXTRA_THREAD_RECIPIENT_ID     = "voice.note.extra.RECIPIENT_ID";
+    public static final String EXTRA_AVATAR_RECIPIENT_ID     = "voice.note.extra.AVATAR_ID";
+    public static final String EXTRA_INDIVIDUAL_RECIPIENT_ID = "voice.note.extras.INDIVIDUAL_ID";
+    public static final String EXTRA_THREAD_ID               = "voice.note.extra.THREAD_ID";
+    public static final String EXTRA_COLOR                   = "voice.note.extra.COLOR";
+    public static final String EXTRA_MESSAGE_ID              = "voice.note.extra.MESSAGE_ID";
 
     private static final String TAG = Log.tag(VoiceNoteMediaDescriptionCompatFactory.class);
 
@@ -64,6 +64,7 @@ class VoiceNoteMediaDescriptionCompatFactory {
         Bundle extras = new Bundle();
         extras.putString(EXTRA_THREAD_RECIPIENT_ID, threadRecipient.getId().serialize());
         extras.putString(EXTRA_AVATAR_RECIPIENT_ID, avatarRecipient.getId().serialize());
+        extras.putString(EXTRA_INDIVIDUAL_RECIPIENT_ID, sender.getId().serialize());
         extras.putLong(EXTRA_MESSAGE_POSITION, startingPosition);
         extras.putLong(EXTRA_THREAD_ID, messageRecord.getThreadId());
         extras.putLong(EXTRA_COLOR, threadRecipient.getChatColors().asSingleColor());

@@ -16,55 +16,72 @@ import su.sres.securesms.video.VideoPlayer;
 
 public final class VideoMediaPreviewFragment extends MediaPreviewFragment {
 
-    private static final String TAG = Log.tag(VideoMediaPreviewFragment.class);
+  private static final String TAG = Log.tag(VideoMediaPreviewFragment.class);
 
-    private VideoPlayer videoView;
+  private VideoPlayer videoView;
+  private boolean     isVideoGif;
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+  @Override
+  public void onCreate(@Nullable Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+  }
+
+  @Override
+  public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                           Bundle savedInstanceState)
+  {
+    View    itemView    = inflater.inflate(R.layout.media_preview_video_fragment, container, false);
+    Bundle  arguments   = requireArguments();
+    Uri     uri         = arguments.getParcelable(DATA_URI);
+    String  contentType = arguments.getString(DATA_CONTENT_TYPE);
+    long    size        = arguments.getLong(DATA_SIZE);
+    boolean autoPlay    = arguments.getBoolean(AUTO_PLAY);
+
+    isVideoGif = arguments.getBoolean(VIDEO_GIF);
+
+    if (!MediaUtil.isVideo(contentType)) {
+      throw new AssertionError("This fragment can only display video");
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View    itemView    = inflater.inflate(R.layout.media_preview_video_fragment, container, false);
-        Bundle  arguments   = requireArguments();
-        Uri     uri         = arguments.getParcelable(DATA_URI);
-        String  contentType = arguments.getString(DATA_CONTENT_TYPE);
-        long    size        = arguments.getLong(DATA_SIZE);
-        boolean autoPlay    = arguments.getBoolean(AUTO_PLAY);
+    videoView = itemView.findViewById(R.id.video_player);
 
-        if (!MediaUtil.isVideo(contentType)) {
-            throw new AssertionError("This fragment can only display video");
-        }
+    videoView.setWindow(requireActivity().getWindow());
+    videoView.setVideoSource(new VideoSlide(getContext(), uri, size, false), autoPlay);
 
-        videoView = itemView.findViewById(R.id.video_player);
-
-        videoView.setWindow(requireActivity().getWindow());
-        videoView.setVideoSource(new VideoSlide(getContext(), uri, size, false), autoPlay);
-
-        videoView.setOnClickListener(v -> events.singleTapOnMedia());
-
-        return itemView;
+    if (isVideoGif) {
+      videoView.hideControls();
+      videoView.loopForever();
     }
 
-    @Override
-    public void cleanUp() {
-        if (videoView != null) {
-            videoView.cleanup();
-        }
-    }
+    videoView.setOnClickListener(v -> events.singleTapOnMedia());
 
-    @Override
-    public void pause() {
-        if (videoView != null) {
-            videoView.pause();
-        }
-    }
+    return itemView;
+  }
 
-    @Override
-    public View getPlaybackControls() {
-        return videoView != null ? videoView.getControlView() : null;
+  @Override
+  public void cleanUp() {
+    if (videoView != null) {
+      videoView.cleanup();
     }
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    if (videoView != null && isVideoGif) {
+      videoView.play();
+    }
+  }
+
+  @Override
+  public void pause() {
+    if (videoView != null) {
+      videoView.pause();
+    }
+  }
+
+  @Override
+  public View getPlaybackControls() {
+    return videoView != null && !isVideoGif ? videoView.getControlView() : null;
+  }
 }

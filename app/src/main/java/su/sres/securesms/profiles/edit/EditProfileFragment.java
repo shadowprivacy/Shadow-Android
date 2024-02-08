@@ -182,7 +182,7 @@ public class EditProfileFragment extends LoggingFragment {
             givenName.requestFocus();
             toolbar.setTitle(R.string.EditProfileFragment__edit_group);
             preview.setVisibility(View.GONE);
-            if (FeatureFlags.groupsV2Description()) {
+            if (groupId.isV2()) {
                 EditTextUtil.addGraphemeClusterLimitFilter(familyName, MAX_DESCRIPTION_GLYPHS);
                 familyName.addTextChangedListener(new AfterTextChanged(s -> {
                     EditProfileNameFragment.trimFieldToMaxByteLength(s, MAX_DESCRIPTION_BYTES);
@@ -281,17 +281,16 @@ public class EditProfileFragment extends LoggingFragment {
 
     private void handleUpload() {
 
-        viewModel.submitProfile(uploadResult -> {
+        viewModel.getUploadResult().observe(getViewLifecycleOwner(), uploadResult -> {
             if (uploadResult == EditProfileRepository.UploadResult.SUCCESS) {
 
-                RegistrationUtil.maybeMarkRegistrationComplete(requireContext());
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) handleFinishedLollipop();
-                else                                                       handleFinishedLegacy();
+                handleFinishedLollipop();
             } else {
                 Toast.makeText(requireContext(), R.string.CreateProfileActivity_problem_setting_profile, Toast.LENGTH_LONG).show();
             }
         });
+
+        viewModel.submitProfile();
     }
 
     private void handleFinishedLegacy() {

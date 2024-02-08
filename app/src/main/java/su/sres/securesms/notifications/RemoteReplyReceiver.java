@@ -31,6 +31,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase.MarkedMessageInfo;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.mms.OutgoingMediaMessage;
+import su.sres.securesms.notifications.v2.MessageNotifierV2;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sms.MessageSender;
@@ -62,7 +63,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
 
     final RecipientId  recipientId  = intent.getParcelableExtra(RECIPIENT_EXTRA);
     final ReplyMethod  replyMethod  = (ReplyMethod) intent.getSerializableExtra(REPLY_METHOD);
-    final CharSequence responseText = remoteInput.getCharSequence(DefaultMessageNotifier.EXTRA_REMOTE_REPLY);
+    final CharSequence responseText = remoteInput.getCharSequence(MessageNotifierV2.EXTRA_REMOTE_REPLY);
 
     if (recipientId == null) throw new AssertionError("No recipientId specified");
     if (replyMethod == null) throw new AssertionError("No reply method specified");

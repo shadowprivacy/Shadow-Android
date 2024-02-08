@@ -216,12 +216,13 @@ public class ConversationFragment extends LoggingFragment {
   private OnScrollListener            conversationScrollListener;
   private int                         pulsePosition = -1;
   private VoiceNoteMediaController    voiceNoteMediaController;
-  private View          toolbarShadow;
-  private ColorizerView colorizerView;
-  private Stopwatch     startupStopwatch;
+  private View                        toolbarShadow;
+  private ColorizerView               colorizerView;
+  private Stopwatch                   startupStopwatch;
 
   private GiphyMp4ProjectionRecycler giphyMp4ProjectionRecycler;
   private Colorizer                  colorizer;
+  private ConversationUpdateTick     conversationUpdateTick;
 
   public static void prepare(@NonNull Context context) {
     FrameLayout parent = new FrameLayout(context);
@@ -331,6 +332,9 @@ public class ConversationFragment extends LoggingFragment {
       }
     });
 
+    conversationUpdateTick = new ConversationUpdateTick(this::updateConversationItemTimestamps);
+    getViewLifecycleOwner().getLifecycle().addObserver(conversationUpdateTick);
+
     return view;
   }
 
@@ -384,6 +388,13 @@ public class ConversationFragment extends LoggingFragment {
 
     int offset = WindowUtil.isStatusBarPresent(requireActivity().getWindow()) ? ViewUtil.getStatusBarHeight(list) : 0;
     listener.onListVerticalTranslationChanged(list.getTranslationY() - offset);
+  }
+
+  private void updateConversationItemTimestamps() {
+    ConversationAdapter conversationAdapter = getListAdapter();
+    if (conversationAdapter != null) {
+      getListAdapter().updateTimestamps();
+    }
   }
 
   @Override
@@ -1617,7 +1628,7 @@ public class ConversationFragment extends LoggingFragment {
     }
 
     @Override
-    public void onDecryptionFailedLearnMoreClicked() {
+    public void onChatSessionRefreshLearnMoreClicked() {
       new AlertDialog.Builder(requireContext())
           .setView(R.layout.decryption_failed_dialog)
           .setPositiveButton(android.R.string.ok, (d, w) -> {
@@ -1628,6 +1639,13 @@ public class ConversationFragment extends LoggingFragment {
             d.dismiss();
           })
           .show();
+    }
+
+    @Override
+    public void onBadDecryptLearnMoreClicked(@NonNull RecipientId author) {
+      SimpleTask.run(getLifecycle(),
+                     () -> Recipient.resolved(author).getDisplayName(requireContext()),
+                     name -> BadDecryptLearnMoreDialog.show(getParentFragmentManager(), name, recipient.get().isGroup()));
     }
 
     @Override

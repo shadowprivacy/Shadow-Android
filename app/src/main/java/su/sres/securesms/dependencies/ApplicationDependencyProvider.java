@@ -42,6 +42,7 @@ import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.revealable.ViewOnceMessageManager;
 import su.sres.securesms.service.ExpiringMessageManager;
+import su.sres.securesms.service.PendingRetryReceiptManager;
 import su.sres.securesms.service.TrimThreadsByDateManager;
 import su.sres.securesms.service.webrtc.SignalCallManager;
 import su.sres.securesms.util.AlarmSleepTimer;
@@ -50,6 +51,7 @@ import su.sres.securesms.util.EarlyMessageCache;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
 import su.sres.securesms.util.TextSecurePreferences;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.core.util.concurrent.SignalExecutors;
@@ -69,200 +71,205 @@ import java.util.UUID;
  */
 public class ApplicationDependencyProvider implements ApplicationDependencies.Provider {
 
-    private static final String TAG = Log.tag(ApplicationDependencyProvider.class);
+  private static final String TAG = Log.tag(ApplicationDependencyProvider.class);
 
-    private final Application                context;
-    private final PipeConnectivityListener pipeListener;
+  private final Application              context;
+  private final PipeConnectivityListener pipeListener;
 
-    public ApplicationDependencyProvider(@NonNull Application context) {
-        this.context       = context;
-        this.pipeListener = new PipeConnectivityListener(context);
-    }
+  public ApplicationDependencyProvider(@NonNull Application context) {
+    this.context      = context;
+    this.pipeListener = new PipeConnectivityListener(context);
+  }
 
-    private @NonNull
-    ClientZkOperations provideClientZkOperations() {
-        return ClientZkOperations.create(provideSignalServiceNetworkAccess().getConfiguration());
+  private @NonNull
+  ClientZkOperations provideClientZkOperations() {
+    return ClientZkOperations.create(provideSignalServiceNetworkAccess().getConfiguration());
+  }
+
+  @Override
+  public @NonNull PipeConnectivityListener providePipeListener() {
+    return pipeListener;
+  }
+
+  @Override
+  public @NonNull
+  GroupsV2Operations provideGroupsV2Operations() {
+    return new GroupsV2Operations(provideClientZkOperations());
+  }
+
+  @Override
+  public @NonNull SignalServiceAccountManager provideSignalServiceAccountManager() {
+    return new SignalServiceAccountManager(provideSignalServiceNetworkAccess().getConfiguration(),
+                                           new DynamicCredentialsProvider(context),
+                                           BuildConfig.SIGNAL_AGENT,
+                                           provideGroupsV2Operations(),
+                                           FeatureFlags.okHttpAutomaticRetry());
+  }
+
+  @Override
+  public @NonNull SignalServiceMessageSender provideSignalServiceMessageSender() {
+    return new SignalServiceMessageSender(provideSignalServiceNetworkAccess().getConfiguration(),
+                                          new DynamicCredentialsProvider(context),
+                                          new SignalProtocolStoreImpl(context),
+                                          DatabaseSessionLock.INSTANCE,
+                                          BuildConfig.SIGNAL_AGENT,
+                                          TextSecurePreferences.isMultiDevice(context),
+                                          FeatureFlags.attachmentsV3(),
+                                          Optional.fromNullable(IncomingMessageObserver.getPipe()),
+                                          Optional.fromNullable(IncomingMessageObserver.getUnidentifiedPipe()),
+                                          Optional.of(new SecurityEventListener(context)),
+                                          provideClientZkOperations().getProfileOperations(),
+                                          SignalExecutors.newCachedBoundedExecutor("signal-messages", 1, 16),
+                                          ByteUnit.KILOBYTES.toBytes(512),
+                                          FeatureFlags.okHttpAutomaticRetry());
+  }
+
+  @Override
+  public @NonNull SignalServiceMessageReceiver provideSignalServiceMessageReceiver() {
+    SleepTimer sleepTimer = TextSecurePreferences.isFcmDisabled(context) ? new AlarmSleepTimer(context)
+                                                                         : new UptimeSleepTimer();
+    return new SignalServiceMessageReceiver(provideSignalServiceNetworkAccess().getConfiguration(),
+                                            new DynamicCredentialsProvider(context),
+                                            BuildConfig.SIGNAL_AGENT,
+                                            pipeListener,
+                                            sleepTimer,
+                                            provideClientZkOperations().getProfileOperations(),
+                                            FeatureFlags.okHttpAutomaticRetry());
+  }
+
+  @Override
+  public @NonNull SignalServiceNetworkAccess provideSignalServiceNetworkAccess() {
+    return new SignalServiceNetworkAccess(context);
+  }
+
+  @Override
+  public @NonNull IncomingMessageProcessor provideIncomingMessageProcessor() {
+    return new IncomingMessageProcessor(context);
+  }
+
+  @Override
+  public @NonNull BackgroundMessageRetriever provideBackgroundMessageRetriever() {
+    return new BackgroundMessageRetriever();
+  }
+
+  @Override
+  public @NonNull LiveRecipientCache provideRecipientCache() {
+    return new LiveRecipientCache(context);
+  }
+
+  @Override
+  public @NonNull JobManager provideJobManager() {
+    JobManager.Configuration config = new JobManager.Configuration.Builder()
+        .setDataSerializer(new JsonDataSerializer())
+        .setJobFactories(JobManagerFactories.getJobFactories(context))
+        .setConstraintFactories(JobManagerFactories.getConstraintFactories(context))
+        .setConstraintObservers(JobManagerFactories.getConstraintObservers(context))
+        .setJobStorage(new FastJobStorage(JobDatabase.getInstance(context)))
+        .setJobMigrator(new JobMigrator(TextSecurePreferences.getJobManagerVersion(context), JobManager.CURRENT_VERSION, JobManagerFactories.getJobMigrations(context)))
+        .addReservedJobRunner(new FactoryJobPredicate(PushDecryptMessageJob.KEY, PushProcessMessageJob.KEY, MarkerJob.KEY))
+        .addReservedJobRunner(new FactoryJobPredicate(PushTextSendJob.KEY, PushMediaSendJob.KEY, PushGroupSendJob.KEY, ReactionSendJob.KEY, TypingSendJob.KEY, GroupCallUpdateSendJob.KEY))
+        .build();
+    return new JobManager(context, config);
+  }
+
+  @Override
+  public @NonNull FrameRateTracker provideFrameRateTracker() {
+    return new FrameRateTracker(context);
+  }
+
+  @Override
+  public @NonNull MegaphoneRepository provideMegaphoneRepository() {
+    return new MegaphoneRepository(context);
+  }
+
+  @Override
+  public @NonNull EarlyMessageCache provideEarlyMessageCache() {
+    return new EarlyMessageCache();
+  }
+
+  @Override
+  public @NonNull MessageNotifier provideMessageNotifier() {
+    return new OptimizedMessageNotifier(context);
+  }
+
+  @Override
+  public @NonNull IncomingMessageObserver provideIncomingMessageObserver() {
+    return new IncomingMessageObserver(context);
+  }
+
+  @Override
+  public @NonNull TrimThreadsByDateManager provideTrimThreadsByDateManager() {
+    return new TrimThreadsByDateManager(context);
+  }
+
+  @Override
+  public @NonNull ViewOnceMessageManager provideViewOnceMessageManager() {
+    return new ViewOnceMessageManager(context);
+  }
+
+  @Override
+  public @NonNull ExpiringMessageManager provideExpiringMessageManager() {
+    return new ExpiringMessageManager(context);
+  }
+
+  @Override
+  public @NonNull TypingStatusRepository provideTypingStatusRepository() {
+    return new TypingStatusRepository();
+  }
+
+  @Override
+  public @NonNull TypingStatusSender provideTypingStatusSender() {
+    return new TypingStatusSender();
+  }
+
+  @Override
+  public @NonNull DatabaseObserver provideDatabaseObserver() {
+    return new DatabaseObserver(context);
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  @Override
+  public @NonNull Payments providePayments(@NonNull SignalServiceAccountManager signalServiceAccountManager) {
+    MobileCoinConfig network;
+
+    if (BuildConfig.MOBILE_COIN_ENVIRONMENT.equals("mainnet")) network = MobileCoinConfig.getMainNet(signalServiceAccountManager);
+    else if (BuildConfig.MOBILE_COIN_ENVIRONMENT.equals("testnet")) network = MobileCoinConfig.getTestNet(signalServiceAccountManager);
+    else throw new AssertionError("Unknown network " + BuildConfig.MOBILE_COIN_ENVIRONMENT);
+
+    return new Payments(network);
+  }
+
+  @Override
+  public @NonNull SignalCallManager provideSignalCallManager() {
+    return new SignalCallManager(context);
+  }
+
+  @Override
+  public @NonNull PendingRetryReceiptManager providePendingRetryReceiptManager() {
+    return new PendingRetryReceiptManager(context);
+  }
+
+  private static class DynamicCredentialsProvider implements CredentialsProvider {
+
+    private final Context context;
+
+    private DynamicCredentialsProvider(Context context) {
+      this.context = context.getApplicationContext();
     }
 
     @Override
-    public @NonNull PipeConnectivityListener providePipeListener() {
-        return pipeListener;
+    public UUID getUuid() {
+      return TextSecurePreferences.getLocalUuid(context);
     }
 
     @Override
-    public @NonNull
-    GroupsV2Operations provideGroupsV2Operations() {
-        return new GroupsV2Operations(provideClientZkOperations());
+    public String getUserLogin() {
+      return TextSecurePreferences.getLocalNumber(context);
     }
 
     @Override
-    public @NonNull SignalServiceAccountManager provideSignalServiceAccountManager() {
-        return new SignalServiceAccountManager(provideSignalServiceNetworkAccess().getConfiguration(),
-                new DynamicCredentialsProvider(context),
-                BuildConfig.SIGNAL_AGENT,
-                provideGroupsV2Operations(),
-                FeatureFlags.okHttpAutomaticRetry());
+    public String getPassword() {
+      return TextSecurePreferences.getPushServerPassword(context);
     }
-
-    @Override
-    public @NonNull SignalServiceMessageSender provideSignalServiceMessageSender() {
-        return new SignalServiceMessageSender(provideSignalServiceNetworkAccess().getConfiguration(),
-                new DynamicCredentialsProvider(context),
-                new SignalProtocolStoreImpl(context),
-                DatabaseSessionLock.INSTANCE,
-                BuildConfig.SIGNAL_AGENT,
-                TextSecurePreferences.isMultiDevice(context),
-                FeatureFlags.attachmentsV3(),
-                Optional.fromNullable(IncomingMessageObserver.getPipe()),
-                Optional.fromNullable(IncomingMessageObserver.getUnidentifiedPipe()),
-                Optional.of(new SecurityEventListener(context)),
-                provideClientZkOperations().getProfileOperations(),
-                SignalExecutors.newCachedBoundedExecutor("signal-messages", 1, 16),
-                ByteUnit.KILOBYTES.toBytes(512),
-                FeatureFlags.okHttpAutomaticRetry());
-    }
-
-    @Override
-    public @NonNull SignalServiceMessageReceiver provideSignalServiceMessageReceiver() {
-        SleepTimer sleepTimer = TextSecurePreferences.isFcmDisabled(context) ? new AlarmSleepTimer(context)
-                : new UptimeSleepTimer();
-        return new SignalServiceMessageReceiver(provideSignalServiceNetworkAccess().getConfiguration(),
-                new DynamicCredentialsProvider(context),
-                BuildConfig.SIGNAL_AGENT,
-                pipeListener,
-                sleepTimer,
-                provideClientZkOperations().getProfileOperations(),
-                FeatureFlags.okHttpAutomaticRetry());
-    }
-
-    @Override
-    public @NonNull SignalServiceNetworkAccess provideSignalServiceNetworkAccess() {
-        return new SignalServiceNetworkAccess(context);
-    }
-
-    @Override
-    public @NonNull IncomingMessageProcessor provideIncomingMessageProcessor() {
-        return new IncomingMessageProcessor(context);
-    }
-
-    @Override
-    public @NonNull BackgroundMessageRetriever provideBackgroundMessageRetriever() {
-        return new BackgroundMessageRetriever();
-    }
-
-    @Override
-    public @NonNull LiveRecipientCache provideRecipientCache() {
-        return new LiveRecipientCache(context);
-    }
-
-    @Override
-    public @NonNull JobManager provideJobManager() {
-        JobManager.Configuration config = new JobManager.Configuration.Builder()
-                .setDataSerializer(new JsonDataSerializer())
-                .setJobFactories(JobManagerFactories.getJobFactories(context))
-                .setConstraintFactories(JobManagerFactories.getConstraintFactories(context))
-                .setConstraintObservers(JobManagerFactories.getConstraintObservers(context))
-                .setJobStorage(new FastJobStorage(JobDatabase.getInstance(context)))
-                .setJobMigrator(new JobMigrator(TextSecurePreferences.getJobManagerVersion(context), JobManager.CURRENT_VERSION, JobManagerFactories.getJobMigrations(context)))
-                .addReservedJobRunner(new FactoryJobPredicate(PushDecryptMessageJob.KEY, PushProcessMessageJob.KEY, MarkerJob.KEY))
-                .addReservedJobRunner(new FactoryJobPredicate(PushTextSendJob.KEY, PushMediaSendJob.KEY, PushGroupSendJob.KEY, ReactionSendJob.KEY, TypingSendJob.KEY, GroupCallUpdateSendJob.KEY))
-                .build();
-        return new JobManager(context, config);
-    }
-
-    @Override
-    public @NonNull FrameRateTracker provideFrameRateTracker() {
-        return new FrameRateTracker(context);
-    }
-
-    @Override
-    public @NonNull MegaphoneRepository provideMegaphoneRepository() {
-        return new MegaphoneRepository(context);
-    }
-
-    @Override
-    public @NonNull EarlyMessageCache provideEarlyMessageCache() {
-        return new EarlyMessageCache();
-    }
-
-    @Override
-    public @NonNull MessageNotifier provideMessageNotifier() {
-        return new OptimizedMessageNotifier(context);
-    }
-
-    @Override
-    public @NonNull IncomingMessageObserver provideIncomingMessageObserver() {
-        return new IncomingMessageObserver(context);
-    }
-
-    @Override
-    public @NonNull TrimThreadsByDateManager provideTrimThreadsByDateManager() {
-        return new TrimThreadsByDateManager(context);
-    }
-
-    @Override
-    public @NonNull ViewOnceMessageManager provideViewOnceMessageManager() {
-        return new ViewOnceMessageManager(context);
-    }
-
-    @Override
-    public @NonNull ExpiringMessageManager provideExpiringMessageManager() {
-        return new ExpiringMessageManager(context);
-    }
-
-    @Override
-    public @NonNull TypingStatusRepository provideTypingStatusRepository() {
-        return new TypingStatusRepository();
-    }
-
-    @Override
-    public @NonNull TypingStatusSender provideTypingStatusSender() {
-        return new TypingStatusSender();
-    }
-
-    @Override
-    public @NonNull DatabaseObserver provideDatabaseObserver() {
-        return new DatabaseObserver(context);
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public @NonNull Payments providePayments(@NonNull SignalServiceAccountManager signalServiceAccountManager) {
-        MobileCoinConfig network;
-
-        if      (BuildConfig.MOBILE_COIN_ENVIRONMENT.equals("mainnet")) network = MobileCoinConfig.getMainNet(signalServiceAccountManager);
-        else if (BuildConfig.MOBILE_COIN_ENVIRONMENT.equals("testnet")) network = MobileCoinConfig.getTestNet(signalServiceAccountManager);
-        else throw new AssertionError("Unknown network " + BuildConfig.MOBILE_COIN_ENVIRONMENT);
-
-        return new Payments(network);
-    }
-
-    @Override
-    public @NonNull SignalCallManager provideSignalCallManager() {
-        return new SignalCallManager(context);
-    }
-
-    private static class DynamicCredentialsProvider implements CredentialsProvider {
-
-        private final Context context;
-
-        private DynamicCredentialsProvider(Context context) {
-            this.context = context.getApplicationContext();
-        }
-
-        @Override
-        public UUID getUuid() {
-            return TextSecurePreferences.getLocalUuid(context);
-        }
-
-        @Override
-        public String getUserLogin() {
-            return TextSecurePreferences.getLocalNumber(context);
-        }
-
-        @Override
-        public String getPassword() {
-            return TextSecurePreferences.getPushServerPassword(context);
-        }
-    }
+  }
 }

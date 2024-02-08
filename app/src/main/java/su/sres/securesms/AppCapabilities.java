@@ -17,6 +17,6 @@ public final class AppCapabilities {
      *                       asking if the user has set a Signal PIN or not.
      */
     public static AccountAttributes.Capabilities getCapabilities(boolean storageCapable) {
-        return new AccountAttributes.Capabilities(UUID_CAPABLE, GV2_CAPABLE, storageCapable, GV1_MIGRATION);
+        return new AccountAttributes.Capabilities(UUID_CAPABLE, GV2_CAPABLE, storageCapable, GV1_MIGRATION, FeatureFlags.senderKey());
     }
 }

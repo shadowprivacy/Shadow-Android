@@ -1472,9 +1472,12 @@ public class MmsDatabase extends MessageDatabase {
   }
 
   @Override
-  public @NonNull InsertResult insertDecryptionFailedMessage(@NonNull RecipientId recipientId,
-                                                             long senderDeviceId, long sentTimestamp)
-  {
+  public @NonNull InsertResult insertChatSessionRefreshedMessage(@NonNull RecipientId recipientId, long senderDeviceId, long sentTimestamp) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void insertBadDecryptMessage(@NonNull RecipientId recipientId, int senderDevice, long sentTimestamp, long receivedTimestamp, long threadId) {
     throw new UnsupportedOperationException();
   }
 
@@ -2116,8 +2119,11 @@ public class MmsDatabase extends MessageDatabase {
       int                  viewedReceiptCount   = cursor.getInt(cursor.getColumnIndexOrThrow(MmsSmsColumns.VIEWED_RECEIPT_COUNT));
 
       if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
-        readReceiptCount   = 0;
-        viewedReceiptCount = 0;
+        readReceiptCount = 0;
+
+        if (MmsSmsColumns.Types.isOutgoingMessageType(box)) {
+          viewedReceiptCount = 0;
+        }
       }
 
       Recipient                 recipient          = Recipient.live(RecipientId.from(recipientId)).get();

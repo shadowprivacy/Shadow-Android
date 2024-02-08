@@ -12,8 +12,8 @@ import su.sres.securesms.R;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.conversationlist.model.MessageResult;
-import su.sres.securesms.conversationlist.model.SearchResult;
+import su.sres.securesms.search.MessageResult;
+import su.sres.securesms.search.SearchResult;
 import su.sres.securesms.util.StickyHeaderDecoration;
 
 import java.util.Collections;

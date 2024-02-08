@@ -5,9 +5,7 @@ import androidx.annotation.NonNull;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.components.emoji.Emoji;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.EmojiSearchDatabase;
 import su.sres.securesms.database.model.EmojiSearchData;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
@@ -111,6 +109,7 @@ public final class EmojiSearchIndexDownloadJob extends BaseJob {
 
     DatabaseFactory.getEmojiSearchDatabase(context).setSearchIndex(searchIndex);
     SignalStore.emojiValues().onSearchIndexUpdated(manifest.getVersion(), remoteLanguage);
+    SignalStore.emojiValues().setLastSearchIndexCheck(System.currentTimeMillis());
 
     Log.i(TAG, "Success! Now at version: " + manifest.getVersion() + ", language: " + remoteLanguage);
   }

@@ -2,7 +2,6 @@ package su.sres.securesms.notifications.v2
 
 import android.annotation.TargetApi
 import android.app.Notification
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -22,14 +21,13 @@ import su.sres.securesms.MainActivity
 import su.sres.securesms.R
 import su.sres.securesms.conversation.ConversationIntents
 import su.sres.securesms.database.DatabaseFactory
+import su.sres.securesms.database.model.InMemoryMessageRecord
 import su.sres.securesms.keyvalue.SignalStore
-import su.sres.securesms.notifications.DefaultMessageNotifier
 import su.sres.securesms.notifications.NotificationChannels
 import su.sres.securesms.notifications.NotificationIds
 import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.util.BubbleUtil
 import su.sres.securesms.util.ConversationUtil
-import su.sres.securesms.util.FeatureFlags
 import su.sres.securesms.util.ServiceUtil
 import su.sres.securesms.util.TextSecurePreferences
 
@@ -182,7 +180,7 @@ object NotificationFactory {
       setSmallIcon(R.drawable.ic_notification)
       setColor(ContextCompat.getColor(context, R.color.core_ultramarine))
       setCategory(NotificationCompat.CATEGORY_MESSAGE)
-      setGroup(DefaultMessageNotifier.NOTIFICATION_GROUP)
+      setGroup(MessageNotifierV2.NOTIFICATION_GROUP)
       setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
       setChannelId(conversation.getChannelId(context))
       setContentTitle(conversation.getContentTitle(context))
@@ -225,7 +223,7 @@ object NotificationFactory {
       setSmallIcon(R.drawable.ic_notification)
       setColor(ContextCompat.getColor(context, R.color.core_ultramarine))
       setCategory(NotificationCompat.CATEGORY_MESSAGE)
-      setGroup(DefaultMessageNotifier.NOTIFICATION_GROUP)
+      setGroup(MessageNotifierV2.NOTIFICATION_GROUP)
       setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
       setChannelId(NotificationChannels.getMessagesChannel(context))
       setContentTitle(context.getString(R.string.app_name))
@@ -253,7 +251,7 @@ object NotificationFactory {
   private fun notifyInThread(context: Context, recipient: Recipient, lastAudibleNotification: Long) {
     if (!SignalStore.settings().isMessageNotificationsInChatSoundsEnabled ||
       ServiceUtil.getAudioManager(context).ringerMode != AudioManager.RINGER_MODE_NORMAL ||
-      (System.currentTimeMillis() - lastAudibleNotification) < DefaultMessageNotifier.MIN_AUDIBLE_PERIOD_MILLIS
+      (System.currentTimeMillis() - lastAudibleNotification) < MessageNotifierV2.MIN_AUDIBLE_PERIOD_MILLIS
     ) {
       return
     }
@@ -337,6 +335,39 @@ object NotificationFactory {
     }
 
     NotificationManagerCompat.from(context).safelyNotify(context, recipient, threadId.toInt(), builder.build())
+  }
+
+  @JvmStatic
+  fun notifyToBubbleConversation(context: Context, recipient: Recipient, threadId: Long) {
+    val builder: NotificationBuilder = NotificationBuilder.create(context)
+
+    val conversation = NotificationConversation(
+      recipient = recipient,
+      threadId = threadId,
+      notificationItems = listOf(
+        MessageNotification(
+          threadRecipient = recipient,
+          record = InMemoryMessageRecord.ForceConversationBubble(recipient, threadId)
+        )
+      )
+    )
+
+    builder.apply {
+      setSmallIcon(R.drawable.ic_notification)
+      setColor(ContextCompat.getColor(context, R.color.core_ultramarine))
+      setCategory(NotificationCompat.CATEGORY_MESSAGE)
+      setGroup(MessageNotifierV2.NOTIFICATION_GROUP)
+      setChannelId(conversation.getChannelId(context))
+      setContentTitle(conversation.getContentTitle(context))
+      setLargeIcon(conversation.getContactLargeIcon(context).toLargeBitmap(context))
+      addPerson(conversation.recipient)
+      setShortcutId(ConversationUtil.getShortcutId(conversation.recipient))
+      addMessages(conversation)
+      setBubbleMetadata(conversation, BubbleUtil.BubbleState.SHOWN)
+    }
+
+    Log.d(TAG, "Posting Notification for requested bubble")
+    NotificationManagerCompat.from(context).safelyNotify(context, recipient, conversation.notificationId, builder.build())
   }
 
   private fun NotificationManagerCompat.safelyNotify(context: Context, threadRecipient: Recipient?, notificationId: Int, notification: Notification) {

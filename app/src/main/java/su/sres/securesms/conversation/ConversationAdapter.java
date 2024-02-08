@@ -102,6 +102,8 @@ public class ConversationAdapter
   private static final int MESSAGE_TYPE_FOOTER              = 6;
   private static final int MESSAGE_TYPE_PLACEHOLDER         = 7;
 
+  private static final int PAYLOAD_TIMESTAMP = 0;
+
   private static final long HEADER_ID = Long.MIN_VALUE;
   private static final long FOOTER_ID = Long.MIN_VALUE + 1;
 
@@ -246,7 +248,24 @@ public class ConversationAdapter
       default:
         throw new IllegalStateException("Cannot create viewholder for type: " + viewType);
     }
+  }
 
+  @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+    if (payloads.contains(PAYLOAD_TIMESTAMP)) {
+      switch (getItemViewType(position)) {
+        case MESSAGE_TYPE_INCOMING_TEXT:
+        case MESSAGE_TYPE_INCOMING_MULTIMEDIA:
+        case MESSAGE_TYPE_OUTGOING_TEXT:
+        case MESSAGE_TYPE_OUTGOING_MULTIMEDIA:
+        case MESSAGE_TYPE_UPDATE:
+          ConversationViewHolder conversationViewHolder = (ConversationViewHolder) holder;
+          conversationViewHolder.getBindable().updateTimestamps();
+        default:
+          return;
+      }
+    } else {
+      super.onBindViewHolder(holder, position, payloads);
+    }
   }
 
   @Override
@@ -646,6 +665,10 @@ public class ConversationAdapter
       this.inlineContent = conversationMessage;
       notifyDataSetChanged();
     }
+  }
+
+  public void updateTimestamps() {
+    notifyItemRangeChanged(0, getItemCount(), PAYLOAD_TIMESTAMP);
   }
 
   final static class ConversationViewHolder extends RecyclerView.ViewHolder implements GiphyMp4Playable, Colorizable {

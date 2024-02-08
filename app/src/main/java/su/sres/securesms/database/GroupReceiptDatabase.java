@@ -4,13 +4,14 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import androidx.annotation.NonNull;
-
+import androidx.annotation.Nullable;
 
 
 import org.whispersystems.libsignal.util.Pair;
 
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.util.SqlUtil;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -109,6 +110,23 @@ public class GroupReceiptDatabase extends Database {
     }
 
     return results;
+  }
+
+  public @Nullable GroupReceiptInfo getGroupReceiptInfo(long mmsId, @NonNull RecipientId recipientId) {
+    SQLiteDatabase db    = databaseHelper.getReadableDatabase();
+    String         query = MMS_ID + " = ? AND " + RECIPIENT_ID + " = ?";
+    String[]       args  = SqlUtil.buildArgs(mmsId, recipientId);
+
+    try (Cursor cursor = db.query(TABLE_NAME, null, query, args, null, null, "1")) {
+      if (cursor.moveToFirst()) {
+        return new GroupReceiptInfo(RecipientId.from(cursor.getLong(cursor.getColumnIndexOrThrow(RECIPIENT_ID))),
+                                    cursor.getInt(cursor.getColumnIndexOrThrow(STATUS)),
+                                    cursor.getLong(cursor.getColumnIndexOrThrow(TIMESTAMP)),
+                                    cursor.getInt(cursor.getColumnIndexOrThrow(UNIDENTIFIED)) == 1);
+      }
+    }
+
+    return null;
   }
 
   void deleteRowsForMessage(long mmsId) {

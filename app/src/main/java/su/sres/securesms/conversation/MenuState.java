@@ -144,7 +144,7 @@ final class MenuState {
            messageRecord.isIdentityDefault() ||
            messageRecord.isProfileChange() ||
            messageRecord.isGroupV1MigrationEvent() ||
-           messageRecord.isFailedDecryptionType() ||
+           messageRecord.isChatSessionRefresh() ||
            messageRecord.isInMemoryMessageRecord();
   }
 

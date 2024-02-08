@@ -20,6 +20,7 @@ import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.Base64;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
+import su.sres.signalservice.api.crypto.ContentHint;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SendMessageResult;
@@ -141,7 +142,7 @@ public class LeaveGroupJob extends BaseJob {
                 .asGroupMessage(serviceGroup);
 
 
-        List<SendMessageResult> results = messageSender.sendMessage(addresses, unidentifiedAccess, false, dataMessage.build());
+        List<SendMessageResult> results = messageSender.sendDataMessage(addresses, unidentifiedAccess, false, ContentHint.DEFAULT, dataMessage.build());
 
         return GroupSendJobHelper.getCompletedSends(context, results);
     }

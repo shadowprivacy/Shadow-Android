@@ -19,6 +19,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
+import su.sres.signalservice.api.crypto.ContentHint;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
 import su.sres.signalservice.api.messages.SignalServiceAttachmentStream;
@@ -123,9 +124,10 @@ public class PushGroupUpdateJob extends BaseJob  {
     SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
     Recipient                  recipient     = Recipient.resolved(source);
 
-    messageSender.sendMessage(RecipientUtil.toSignalServiceAddress(context, recipient),
-            UnidentifiedAccessUtil.getAccessFor(context, recipient),
-            message);
+    messageSender.sendDataMessage(RecipientUtil.toSignalServiceAddress(context, recipient),
+                                  UnidentifiedAccessUtil.getAccessFor(context, recipient),
+                                  ContentHint.DEFAULT,
+                                  message);
   }
 
   @Override

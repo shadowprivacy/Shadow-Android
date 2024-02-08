@@ -15,7 +15,6 @@ import su.sres.securesms.jobmanager.impl.DecryptionsDrainedConstraint;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
-import su.sres.securesms.transport.RetryLaterException;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.securesms.util.FeatureFlags;
@@ -87,6 +86,7 @@ public class AutomaticSessionResetJob extends BaseJob {
     @Override
     protected void onRun() throws Exception {
         SessionUtil.archiveSession(context, recipientId, deviceId);
+        DatabaseFactory.getSenderKeySharedDatabase(context).deleteAllFor(recipientId);
         insertLocalMessage();
         if (FeatureFlags.automaticSessionReset()) {
             long                resetInterval      = TimeUnit.SECONDS.toMillis(FeatureFlags.automaticSessionResetIntervalSeconds());
@@ -121,7 +121,7 @@ public class AutomaticSessionResetJob extends BaseJob {
     }
 
     private void insertLocalMessage() {
-        MessageDatabase.InsertResult result = DatabaseFactory.getSmsDatabase(context).insertDecryptionFailedMessage(recipientId, deviceId, sentTimestamp);
+        MessageDatabase.InsertResult result = DatabaseFactory.getSmsDatabase(context).insertChatSessionRefreshedMessage(recipientId, deviceId, sentTimestamp);
         ApplicationDependencies.getMessageNotifier().updateNotification(context, result.getThreadId());
     }
 

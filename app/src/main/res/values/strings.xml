@@ -384,6 +384,9 @@
     <string name="ConversationTitleView_verified">Verified</string>
     <string name="ConversationTitleView_you">You</string>
 
+    <!-- ConversationTypingView -->
+    <string name="ConversationTypingView__plus_d">+%1$d</string>
+
     <!-- CreateGroupActivity -->
     <string name="CreateGroupActivity_some_contacts_cannot_be_in_legacy_groups">Some contacts cannot be in legacy groups.</string>
 
@@ -568,11 +571,6 @@
         <item quantity="one">This member is not capable of joining New Groups, and will be removed from the group:</item>
         <item quantity="other">These members are not capable of joining New Groups, and will be removed from the group:</item>
     </plurals>
-
-    <!-- GroupsV1MigrationInitiationReminder -->
-    <string name="GroupsV1MigrationInitiationReminder_to_access_new_features_like_mentions">To access new features like @mentions and admins, upgrade this group.</string>
-    <string name="GroupsV1MigrationInitiationReminder_not_now">Not now</string>
-    <string name="GroupsV1MigrationInitiationReminder_upgrade_group">Upgrade group</string>
 
     <!-- GroupsV1MigrationSuggestionsReminder -->
     <plurals name="GroupsV1MigrationSuggestionsReminder_members_couldnt_be_added_to_the_new_group">
@@ -1018,6 +1016,8 @@
     <!-- MediaSendActivity -->
     <string name="MediaSendActivity_add_a_caption">Add a caption…</string>
     <string name="MediaSendActivity_an_item_was_removed_because_it_exceeded_the_size_limit">An item was removed because it exceeded the size limit</string>
+    <string name="MediaSendActivity_an_item_was_removed_because_it_had_an_unknown_type">An item was removed because it had an unknown type</string>
+    <string name="MediaSendActivity_an_item_was_removed_because_it_exceeded_the_size_limit_or_had_an_unknown_type">An item was removed because it exceeded the size limit or had an unknown type</string>
     <string name="MediaSendActivity_camera_unavailable">Camera unavailable.</string>
     <string name="MediaSendActivity_message_to_s">Message to %s</string>
     <string name="MediaSendActivity_message">Message</string>
@@ -1216,6 +1216,8 @@
     <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified">You marked your safety number with %s unverified</string>
     <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified_from_another_device">You marked your safety number with %s unverified from another device</string>
 
+    <string name="MessageRecord_a_message_from_s_couldnt_be_delivered">A message from %s couldn\'t be delivered</string>
+
     <!-- Group Calling update messages -->
     <string name="MessageRecord_s_started_a_group_call_s">%1$s started a group call · %2$s</string>
     <string name="MessageRecord_s_is_in_the_group_call_s">%1$s is in the group call · %2$s</string>
@@ -1348,6 +1350,9 @@
     <string name="RecaptchaRequiredBottomSheetFragment_verify_to_continue_messaging">Verify to continue messaging</string>
     <string name="RecaptchaRequiredBottomSheetFragment_to_help_prevent_spam_on_signal">To help prevent spam on Shadow, please complete verification.</string>
     <string name="RecaptchaRequiredBottomSheetFragment_after_verifying_you_can_continue_messaging">After verifying, you can continue messaging. Any paused messages will automatically be sent.</string>
+
+    <!-- Recipient -->
+    <string name="Recipient_you">You</string>
 
     <!-- RecipientPreferencesActivity -->
     <string name="RecipientPreferenceActivity_block">Block</string>
@@ -1576,6 +1581,7 @@
     <string name="ThreadRecord_you_marked_verified">You marked verified</string>
     <string name="ThreadRecord_you_marked_unverified">You marked unverified</string>
     <string name="ThreadRecord_message_could_not_be_processed">Message could not be processed</string>
+    <string name="ThreadRecord_delivery_issue">Delivery issue</string>
     <string name="ThreadRecord_message_request">Message Request</string>
     <string name="ThreadRecord_photo">Photo</string>
     <string name="ThreadRecord_gif">GIF</string>
@@ -2015,6 +2021,11 @@
     <string name="prompt_mms_activity__signal_requires_mms_settings_to_deliver_media_and_group_messages">Shadow requires MMS settings to deliver media and group messages through your wireless carrier. Your device does not make this information available, which is occasionally true for locked devices and other restrictive configurations.</string>
     <string name="prompt_mms_activity__to_send_media_and_group_messages_tap_ok">To send media and group messages, tap \'OK\' and complete the requested settings. The MMS settings for your carrier can generally be located by searching for \'your carrier APN\'. You will only need to do this once.</string>
 
+    <!-- BadDecryptLearnMoreDialog -->
+    <string name="BadDecryptLearnMoreDialog_delivery_issue">Delivery Issue</string>
+    <string name="BadDecryptLearnMoreDialog_couldnt_be_delivered_individual">A message, sticker, reaction, or read receipt couldn\'t be delivered to you from %s. They may have tried sending it to you directly, or in a group.</string>
+    <string name="BadDecryptLearnMoreDialog_couldnt_be_delivered_group">A message, sticker, reaction, or read receipt couldn\'t be delivered to you from %s.</string>
+
     <!-- profile_create_activity -->
     <string name="CreateProfileActivity_first_name_required">First name (required)</string>
     <string name="CreateProfileActivity_last_name_optional">Last name (optional)</string>
@@ -2321,8 +2332,8 @@
     <string name="preferences_data_and_storage__calls">Calls</string>
     <string name="preferences_data_and_storage__use_less_data_for_calls">Use less data for calls</string>
     <string name="preferences_data_and_storage__never">Never</string>
-    <string name="preferences_data_and_storage__wifi_and_cellular">WiFi and Cellular</string>
-    <string name="preferences_data_and_storage__cellular_only">Cellular only</string>
+    <string name="preferences_data_and_storage__wifi_and_mobile_data">WiFi and mobile data</string>
+    <string name="preferences_data_and_storage__mobile_data_only">Mobile data only</string>
     <string name="preference_data_and_storage__using_less_data_may_improve_calls_on_bad_networks">Using less data may improve calls on bad networks</string>
     <string name="preferences_notifications__messages">Messages</string>
     <string name="preferences_notifications__events">Events</string>
@@ -2397,6 +2408,13 @@
     <string name="preferences__internal_delete_all_dynamic_shortcuts" translatable="false">Delete all dynamic shortcuts</string>
     <string name="preferences__internal_click_to_delete_all_dynamic_shortcuts" translatable="false">Click to delete all dynamic shortcuts</string>
     <string name="preferences__internal_disable_profile_sharing" translatable="false">Disable Profile Sharing</string>
+    <string name="preferences__internal_sender_key" translatable="false">Sender Key</string>
+    <string name="preferences__internal_clear_all_state" translatable="false">Clear all state</string>
+    <string name="preferences__internal_click_to_delete_all_sender_key_state" translatable="false">Click to delete all sender key state</string>
+    <string name="preferences__internal_clear_shared_state" translatable="false">Clear shared state</string>
+    <string name="preferences__internal_click_to_delete_all_sharing_state" translatable="false">Click to delete all sharing state</string>
+    <string name="preferences__internal_remove_two_person_minimum" translatable="false">Remove 2 person minimum</string>
+    <string name="preferences__internal_remove_the_requirement_that_you_need" translatable="false">Remove the requirement that you  need at least 2 recipients to use sender key.</string>
 
     <!-- Payments -->
     <string name="PaymentsActivityFragment__all_activity">All activity</string>
@@ -3047,7 +3065,7 @@
     <!-- ShareActivity -->
     <string name="ShareActivity__share">Share</string>
     <string name="ShareActivity__send">Send</string>
-    <string name="ShareActivity__s_comma">%1$s,</string>
+    <string name="ShareActivity__comma_s">, %1$s</string>
     <string name="ShareActivity__sharing_to_multiple_chats_is">Sharing to multiple chats is only supported for Shadow messages</string>
 
     <!-- MultiShareDialogs -->

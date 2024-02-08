@@ -27,6 +27,7 @@ import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.LiveRecipientCache;
 import su.sres.securesms.revealable.ViewOnceMessageManager;
 import su.sres.securesms.service.ExpiringMessageManager;
+import su.sres.securesms.service.PendingRetryReceiptManager;
 import su.sres.securesms.service.TrimThreadsByDateManager;
 import su.sres.securesms.service.webrtc.SignalCallManager;
 import su.sres.securesms.shakereport.ShakeToReport;
@@ -45,477 +46,516 @@ import su.sres.signalservice.api.groupsv2.GroupsV2Operations;
  * {@link #networkIndependentProviderInit(Application, NetworkIndependentProvider)} and
  * {@link #networkDependentProviderInit(Provider)} before using any of the methods, preferably early on in
  * {@link Application#onCreate()}.
- *
+ * <p>
  * All future application-scoped singletons should be written as normal objects, then placed here
  * to manage their singleton-ness.
  */
 public class ApplicationDependencies {
 
-    private static final Object LOCK                    = new Object();
-    private static final Object NI_LOCK                    = new Object();
-    private static final Object FRAME_RATE_TRACKER_LOCK = new Object();
-    private static final Object JOB_MANAGER_LOCK        = new Object();
+  private static final Object LOCK                    = new Object();
+  private static final Object NI_LOCK                 = new Object();
+  private static final Object FRAME_RATE_TRACKER_LOCK = new Object();
+  private static final Object JOB_MANAGER_LOCK        = new Object();
 
-    private static Application application;
-    private static Provider    provider;
-    private static NetworkIndependentProvider networkIndependentProvider;
+  private static Application                application;
+  private static Provider                   provider;
+  private static NetworkIndependentProvider networkIndependentProvider;
 
-    private static MessageNotifier          messageNotifier;
-    private static AppForegroundObserver appForegroundObserver;
+  private static MessageNotifier       messageNotifier;
+  private static AppForegroundObserver appForegroundObserver;
 
-    private static volatile SignalServiceAccountManager  accountManager;
-    private static volatile SignalServiceMessageSender   messageSender;
-    private static volatile SignalServiceMessageReceiver messageReceiver;
-    private static volatile IncomingMessageObserver      incomingMessageObserver;
-    private static volatile IncomingMessageProcessor     incomingMessageProcessor;
-    private static volatile BackgroundMessageRetriever   backgroundMessageRetriever;
-    private static volatile LiveRecipientCache           recipientCache;
-    private static volatile JobManager                   jobManager;
-    private static volatile FrameRateTracker             frameRateTracker;
-    private static volatile MegaphoneRepository          megaphoneRepository;
-    private static volatile GroupsV2Authorization        groupsV2Authorization;
-    private static volatile GroupsV2StateProcessor       groupsV2StateProcessor;
-    private static volatile GroupsV2Operations           groupsV2Operations;
-    private static volatile EarlyMessageCache            earlyMessageCache;
-    private static volatile TypingStatusRepository       typingStatusRepository;
-    private static volatile TypingStatusSender           typingStatusSender;
-    private static volatile DatabaseObserver databaseObserver;
-    private static volatile TrimThreadsByDateManager     trimThreadsByDateManager;
-    private static volatile ViewOnceMessageManager viewOnceMessageManager;
-    private static volatile ExpiringMessageManager expiringMessageManager;
-    private static volatile Payments payments;
-    private static volatile ShakeToReport                shakeToReport;
-    private static volatile SignalCallManager            signalCallManager;
-    private static volatile OkHttpClient okHttpClient;
-    private static volatile KeyValueStore keyValueStore;
+  private static volatile SignalServiceAccountManager  accountManager;
+  private static volatile SignalServiceMessageSender   messageSender;
+  private static volatile SignalServiceMessageReceiver messageReceiver;
+  private static volatile IncomingMessageObserver      incomingMessageObserver;
+  private static volatile IncomingMessageProcessor     incomingMessageProcessor;
+  private static volatile BackgroundMessageRetriever   backgroundMessageRetriever;
+  private static volatile LiveRecipientCache           recipientCache;
+  private static volatile JobManager                   jobManager;
+  private static volatile FrameRateTracker             frameRateTracker;
+  private static volatile MegaphoneRepository          megaphoneRepository;
+  private static volatile GroupsV2Authorization        groupsV2Authorization;
+  private static volatile GroupsV2StateProcessor       groupsV2StateProcessor;
+  private static volatile GroupsV2Operations           groupsV2Operations;
+  private static volatile EarlyMessageCache            earlyMessageCache;
+  private static volatile TypingStatusRepository       typingStatusRepository;
+  private static volatile TypingStatusSender           typingStatusSender;
+  private static volatile DatabaseObserver             databaseObserver;
+  private static volatile TrimThreadsByDateManager     trimThreadsByDateManager;
+  private static volatile ViewOnceMessageManager       viewOnceMessageManager;
+  private static volatile ExpiringMessageManager       expiringMessageManager;
+  private static volatile Payments                     payments;
+  private static volatile ShakeToReport                shakeToReport;
+  private static volatile SignalCallManager            signalCallManager;
+  private static volatile OkHttpClient                 okHttpClient;
+  private static volatile PendingRetryReceiptManager   pendingRetryReceiptManager;
+  private static volatile KeyValueStore                keyValueStore;
 
-    public static void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
-        synchronized (NI_LOCK) {
-            if (ApplicationDependencies.application != null || ApplicationDependencies.networkIndependentProvider != null) {
-                throw new IllegalStateException("Already initialized!");
-            }
-        }
-
-        ApplicationDependencies.application                = application;
-        ApplicationDependencies.networkIndependentProvider = networkIndependentProvider;
-        ApplicationDependencies.appForegroundObserver = networkIndependentProvider.provideAppForegroundObserver();
-
-        ApplicationDependencies.appForegroundObserver.begin();
-
+  public static void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
+    synchronized (NI_LOCK) {
+      if (ApplicationDependencies.application != null || ApplicationDependencies.networkIndependentProvider != null) {
+        throw new IllegalStateException("Already initialized!");
+      }
     }
 
-    @MainThread
-    public static void networkDependentProviderInit(@NonNull Provider provider) {
+    ApplicationDependencies.application                = application;
+    ApplicationDependencies.networkIndependentProvider = networkIndependentProvider;
+    ApplicationDependencies.appForegroundObserver      = networkIndependentProvider.provideAppForegroundObserver();
 
-        synchronized (LOCK) {
-            if (ApplicationDependencies.provider != null) {
-                throw new IllegalStateException("Already initialized!");
-            }
-        }
+    ApplicationDependencies.appForegroundObserver.begin();
 
-        ApplicationDependencies.provider        = provider;
-        ApplicationDependencies.messageNotifier = provider.provideMessageNotifier();
+  }
 
+  @MainThread
+  public static void networkDependentProviderInit(@NonNull Provider provider) {
+
+    synchronized (LOCK) {
+      if (ApplicationDependencies.provider != null) {
+        throw new IllegalStateException("Already initialized!");
+      }
     }
 
+    ApplicationDependencies.provider        = provider;
+    ApplicationDependencies.messageNotifier = provider.provideMessageNotifier();
 
-    public static @NonNull Application getApplication() {
-        return application;
+  }
+
+
+  public static @NonNull Application getApplication() {
+    return application;
+  }
+
+  public static @NonNull PipeConnectivityListener getPipeListener() {
+    return provider.providePipeListener();
+  }
+
+  public static @NonNull SignalServiceAccountManager getSignalServiceAccountManager() {
+    SignalServiceAccountManager local = accountManager;
+
+    if (local != null) {
+      return local;
     }
 
-    public static @NonNull PipeConnectivityListener getPipeListener() {
-        return provider.providePipeListener();
+    synchronized (LOCK) {
+      if (accountManager == null) {
+        accountManager = provider.provideSignalServiceAccountManager();
+      }
+      return accountManager;
     }
+  }
 
-    public static @NonNull SignalServiceAccountManager getSignalServiceAccountManager() {
-        SignalServiceAccountManager local = accountManager;
-
-        if (local != null) {
-            return local;
-        }
-
-        synchronized (LOCK) {
-            if (accountManager == null) {
-                accountManager = provider.provideSignalServiceAccountManager();
-            }
-            return accountManager;
-        }
-    }
-
-    public static @NonNull GroupsV2Authorization getGroupsV2Authorization() {
+  public static @NonNull GroupsV2Authorization getGroupsV2Authorization() {
+    if (groupsV2Authorization == null) {
+      synchronized (LOCK) {
         if (groupsV2Authorization == null) {
-            synchronized (LOCK) {
-                if (groupsV2Authorization == null) {
-                    GroupsV2Authorization.ValueCache authCache = new GroupsV2AuthorizationMemoryValueCache(SignalStore.groupsV2AuthorizationCache());
-                    groupsV2Authorization = new GroupsV2Authorization(getSignalServiceAccountManager().getGroupsV2Api(), authCache);
-                }
-            }
+          GroupsV2Authorization.ValueCache authCache = new GroupsV2AuthorizationMemoryValueCache(SignalStore.groupsV2AuthorizationCache());
+          groupsV2Authorization = new GroupsV2Authorization(getSignalServiceAccountManager().getGroupsV2Api(), authCache);
         }
-        return groupsV2Authorization;
+      }
     }
+    return groupsV2Authorization;
+  }
 
-    public static @NonNull GroupsV2Operations getGroupsV2Operations() {
+  public static @NonNull GroupsV2Operations getGroupsV2Operations() {
+    if (groupsV2Operations == null) {
+      synchronized (LOCK) {
         if (groupsV2Operations == null) {
-            synchronized (LOCK) {
-                if (groupsV2Operations == null) {
-                    groupsV2Operations = provider.provideGroupsV2Operations();
-                }
-            }
+          groupsV2Operations = provider.provideGroupsV2Operations();
         }
-        return groupsV2Operations;
+      }
     }
+    return groupsV2Operations;
+  }
 
-    public static @NonNull GroupsV2StateProcessor getGroupsV2StateProcessor() {
+  public static @NonNull GroupsV2StateProcessor getGroupsV2StateProcessor() {
+    if (groupsV2StateProcessor == null) {
+      synchronized (LOCK) {
         if (groupsV2StateProcessor == null) {
-            synchronized (LOCK) {
-                if (groupsV2StateProcessor == null) {
-                    groupsV2StateProcessor = new GroupsV2StateProcessor(application);
-                }
-            }
+          groupsV2StateProcessor = new GroupsV2StateProcessor(application);
         }
-        return groupsV2StateProcessor;
+      }
+    }
+    return groupsV2StateProcessor;
+  }
+
+  public static @NonNull SignalServiceMessageSender getSignalServiceMessageSender() {
+
+    SignalServiceMessageSender local = messageSender;
+
+    if (local != null) {
+      return local;
     }
 
-    public static @NonNull SignalServiceMessageSender getSignalServiceMessageSender() {
-
-        SignalServiceMessageSender local = messageSender;
-
-        if (local != null) {
-            return local;
-        }
-
-        synchronized (LOCK) {
-            if (messageSender == null) {
-                messageSender = provider.provideSignalServiceMessageSender();
-            } else {
-                messageSender.update(
-                        IncomingMessageObserver.getPipe(),
-                        IncomingMessageObserver.getUnidentifiedPipe(),
-                        TextSecurePreferences.isMultiDevice(application),
-                        FeatureFlags.attachmentsV3());
-            }
-            return messageSender;
-        }
+    synchronized (LOCK) {
+      if (messageSender == null) {
+        messageSender = provider.provideSignalServiceMessageSender();
+      } else {
+        messageSender.update(
+            IncomingMessageObserver.getPipe(),
+            IncomingMessageObserver.getUnidentifiedPipe(),
+            TextSecurePreferences.isMultiDevice(application),
+            FeatureFlags.attachmentsV3());
+      }
+      return messageSender;
     }
+  }
 
-    public static @NonNull SignalServiceMessageReceiver getSignalServiceMessageReceiver() {
+  public static @NonNull SignalServiceMessageReceiver getSignalServiceMessageReceiver() {
 
-        synchronized (LOCK) {
-            if (messageReceiver == null) {
-                messageReceiver = provider.provideSignalServiceMessageReceiver();
-            }
-            return messageReceiver;
-        }
+    synchronized (LOCK) {
+      if (messageReceiver == null) {
+        messageReceiver = provider.provideSignalServiceMessageReceiver();
+      }
+      return messageReceiver;
     }
+  }
 
-    public static void resetSignalServiceMessageReceiver() {
-        synchronized (LOCK) {
-            messageReceiver = null;
-        }
+  public static void resetSignalServiceMessageReceiver() {
+    synchronized (LOCK) {
+      messageReceiver = null;
     }
+  }
 
-    public static void closeConnections() {
-        synchronized (LOCK) {
+  public static void closeConnections() {
+    synchronized (LOCK) {
 
-            if (incomingMessageObserver != null) {
-                incomingMessageObserver.terminateAsync();
-            }
+      if (incomingMessageObserver != null) {
+        incomingMessageObserver.terminateAsync();
+      }
 
-            if (messageSender != null) {
-                messageSender.cancelInFlightRequests();
-            }
+      if (messageSender != null) {
+        messageSender.cancelInFlightRequests();
+      }
 
-            incomingMessageObserver = null;
-            messageReceiver         = null;
-            accountManager          = null;
-            messageSender           = null;
-        }
+      incomingMessageObserver = null;
+      messageReceiver         = null;
+      accountManager          = null;
+      messageSender           = null;
     }
+  }
 
-    public static void resetNetworkConnectionsAfterProxyChange() {
-        synchronized (LOCK) {
-            getPipeListener().reset();
-            closeConnections();
-        }
+  public static void resetNetworkConnectionsAfterProxyChange() {
+    synchronized (LOCK) {
+      getPipeListener().reset();
+      closeConnections();
     }
+  }
 
-    public static @NonNull SignalServiceNetworkAccess getSignalServiceNetworkAccess() {
-        return provider.provideSignalServiceNetworkAccess();
-    }
+  public static @NonNull SignalServiceNetworkAccess getSignalServiceNetworkAccess() {
+    return provider.provideSignalServiceNetworkAccess();
+  }
 
-    public static @NonNull IncomingMessageProcessor getIncomingMessageProcessor() {
+  public static @NonNull IncomingMessageProcessor getIncomingMessageProcessor() {
+    if (incomingMessageProcessor == null) {
+      synchronized (LOCK) {
         if (incomingMessageProcessor == null) {
-            synchronized (LOCK) {
-                if (incomingMessageProcessor == null) {
-                    incomingMessageProcessor = provider.provideIncomingMessageProcessor();
-                }
-            }
+          incomingMessageProcessor = provider.provideIncomingMessageProcessor();
         }
-        return incomingMessageProcessor;
+      }
     }
+    return incomingMessageProcessor;
+  }
 
-    public static @NonNull BackgroundMessageRetriever getBackgroundMessageRetriever() {
+  public static @NonNull BackgroundMessageRetriever getBackgroundMessageRetriever() {
+    if (backgroundMessageRetriever == null) {
+      synchronized (LOCK) {
         if (backgroundMessageRetriever == null) {
-            synchronized (LOCK) {
-                if (backgroundMessageRetriever == null) {
-                    backgroundMessageRetriever = provider.provideBackgroundMessageRetriever();
-                }
-            }
+          backgroundMessageRetriever = provider.provideBackgroundMessageRetriever();
         }
-        return backgroundMessageRetriever;
+      }
     }
+    return backgroundMessageRetriever;
+  }
 
-    public static @NonNull LiveRecipientCache getRecipientCache() {
+  public static @NonNull LiveRecipientCache getRecipientCache() {
+    if (recipientCache == null) {
+      synchronized (LOCK) {
         if (recipientCache == null) {
-            synchronized (LOCK) {
-                if (recipientCache == null) {
-                    recipientCache = provider.provideRecipientCache();
-                }
-            }
+          recipientCache = provider.provideRecipientCache();
         }
-        return recipientCache;
+      }
     }
+    return recipientCache;
+  }
 
-    public static @NonNull JobManager getJobManager() {
+  public static @NonNull JobManager getJobManager() {
+    if (jobManager == null) {
+      synchronized (JOB_MANAGER_LOCK) {
         if (jobManager == null) {
-            synchronized (JOB_MANAGER_LOCK) {
-                if (jobManager == null) {
-                    jobManager = provider.provideJobManager();
-                }
-            }
+          jobManager = provider.provideJobManager();
         }
-        return jobManager;
+      }
     }
+    return jobManager;
+  }
 
-    public static @NonNull FrameRateTracker getFrameRateTracker() {
+  public static @NonNull FrameRateTracker getFrameRateTracker() {
+    if (frameRateTracker == null) {
+      synchronized (FRAME_RATE_TRACKER_LOCK) {
         if (frameRateTracker == null) {
-            synchronized (FRAME_RATE_TRACKER_LOCK) {
-                if (frameRateTracker == null) {
-                    frameRateTracker = provider.provideFrameRateTracker();
-                }
-            }
+          frameRateTracker = provider.provideFrameRateTracker();
         }
-        return frameRateTracker;
+      }
     }
+    return frameRateTracker;
+  }
 
-    public static @NonNull KeyValueStore getKeyValueStore() {
+  public static @NonNull KeyValueStore getKeyValueStore() {
 
+    if (keyValueStore == null) {
+
+      synchronized (NI_LOCK) {
         if (keyValueStore == null) {
-
-            synchronized (NI_LOCK) {
-                if (keyValueStore == null) {
-                    keyValueStore = networkIndependentProvider.provideKeyValueStore();
-                }
-            }
+          keyValueStore = networkIndependentProvider.provideKeyValueStore();
         }
-
-        return keyValueStore;
+      }
     }
 
-    public static @NonNull MegaphoneRepository getMegaphoneRepository() {
+    return keyValueStore;
+  }
+
+  public static @NonNull MegaphoneRepository getMegaphoneRepository() {
+    if (megaphoneRepository == null) {
+      synchronized (LOCK) {
         if (megaphoneRepository == null) {
-            synchronized (LOCK) {
-                if (megaphoneRepository == null) {
-                    megaphoneRepository = provider.provideMegaphoneRepository();
-                }
-            }
+          megaphoneRepository = provider.provideMegaphoneRepository();
         }
-        return megaphoneRepository;
+      }
     }
+    return megaphoneRepository;
+  }
 
-    public static @NonNull EarlyMessageCache getEarlyMessageCache() {
+  public static @NonNull EarlyMessageCache getEarlyMessageCache() {
+    if (earlyMessageCache == null) {
+      synchronized (LOCK) {
         if (earlyMessageCache == null) {
-            synchronized (LOCK) {
-                if (earlyMessageCache == null) {
-                    earlyMessageCache = provider.provideEarlyMessageCache();
-                }
-            }
+          earlyMessageCache = provider.provideEarlyMessageCache();
         }
-        return earlyMessageCache;
+      }
+    }
+    return earlyMessageCache;
+  }
+
+  public static @NonNull MessageNotifier getMessageNotifier() {
+    return messageNotifier;
+  }
+
+  public static @NonNull IncomingMessageObserver getIncomingMessageObserver() {
+    IncomingMessageObserver local = incomingMessageObserver;
+
+    if (local != null) {
+      return local;
     }
 
-    public static @NonNull MessageNotifier getMessageNotifier() {
-        return messageNotifier;
+    synchronized (LOCK) {
+      if (incomingMessageObserver == null) {
+        incomingMessageObserver = provider.provideIncomingMessageObserver();
+      }
+      return incomingMessageObserver;
     }
+  }
 
-    public static @NonNull IncomingMessageObserver getIncomingMessageObserver() {
-        IncomingMessageObserver local = incomingMessageObserver;
-
-        if (local != null) {
-            return local;
-        }
-
-        synchronized (LOCK) {
-            if (incomingMessageObserver == null) {
-                incomingMessageObserver = provider.provideIncomingMessageObserver();
-            }
-            return incomingMessageObserver;
-        }
-    }
-
-    public static @NonNull TrimThreadsByDateManager getTrimThreadsByDateManager() {
+  public static @NonNull TrimThreadsByDateManager getTrimThreadsByDateManager() {
+    if (trimThreadsByDateManager == null) {
+      synchronized (LOCK) {
         if (trimThreadsByDateManager == null) {
-            synchronized (LOCK) {
-                if (trimThreadsByDateManager == null) {
-                    trimThreadsByDateManager = provider.provideTrimThreadsByDateManager();
-                }
-            }
+          trimThreadsByDateManager = provider.provideTrimThreadsByDateManager();
         }
-
-        return trimThreadsByDateManager;
+      }
     }
 
-    public static @NonNull ViewOnceMessageManager getViewOnceMessageManager() {
+    return trimThreadsByDateManager;
+  }
+
+  public static @NonNull ViewOnceMessageManager getViewOnceMessageManager() {
+    if (viewOnceMessageManager == null) {
+      synchronized (LOCK) {
         if (viewOnceMessageManager == null) {
-            synchronized (LOCK) {
-                if (viewOnceMessageManager == null) {
-                    viewOnceMessageManager = provider.provideViewOnceMessageManager();
-                }
-            }
+          viewOnceMessageManager = provider.provideViewOnceMessageManager();
         }
-
-        return viewOnceMessageManager;
+      }
     }
 
-    public static @NonNull ExpiringMessageManager getExpiringMessageManager() {
+    return viewOnceMessageManager;
+  }
+
+  public static @NonNull PendingRetryReceiptManager getPendingRetryReceiptManager() {
+    if (pendingRetryReceiptManager == null) {
+      synchronized (LOCK) {
+        if (pendingRetryReceiptManager == null) {
+          pendingRetryReceiptManager = provider.providePendingRetryReceiptManager();
+        }
+      }
+    }
+
+    return pendingRetryReceiptManager;
+  }
+
+  public static @NonNull ExpiringMessageManager getExpiringMessageManager() {
+    if (expiringMessageManager == null) {
+      synchronized (LOCK) {
         if (expiringMessageManager == null) {
-            synchronized (LOCK) {
-                if (expiringMessageManager == null) {
-                    expiringMessageManager = provider.provideExpiringMessageManager();
-                }
-            }
+          expiringMessageManager = provider.provideExpiringMessageManager();
         }
-
-        return expiringMessageManager;
+      }
     }
 
-    public static TypingStatusRepository getTypingStatusRepository() {
+    return expiringMessageManager;
+  }
 
+  public static TypingStatusRepository getTypingStatusRepository() {
+
+    if (typingStatusRepository == null) {
+      synchronized (LOCK) {
         if (typingStatusRepository == null) {
-            synchronized (LOCK) {
-                if (typingStatusRepository == null) {
-                    typingStatusRepository = provider.provideTypingStatusRepository();
-                }
-            }
+          typingStatusRepository = provider.provideTypingStatusRepository();
         }
-
-        return typingStatusRepository;
+      }
     }
 
-    public static TypingStatusSender getTypingStatusSender() {
+    return typingStatusRepository;
+  }
 
+  public static TypingStatusSender getTypingStatusSender() {
+
+    if (typingStatusSender == null) {
+      synchronized (LOCK) {
         if (typingStatusSender == null) {
-            synchronized (LOCK) {
-                if (typingStatusSender == null) {
-                    typingStatusSender = provider.provideTypingStatusSender();
-                }
-            }
+          typingStatusSender = provider.provideTypingStatusSender();
         }
-
-        return typingStatusSender;
+      }
     }
 
-    public static @NonNull DatabaseObserver getDatabaseObserver() {
+    return typingStatusSender;
+  }
+
+  public static @NonNull DatabaseObserver getDatabaseObserver() {
+    if (databaseObserver == null) {
+      synchronized (LOCK) {
         if (databaseObserver == null) {
-            synchronized (LOCK) {
-                if (databaseObserver == null) {
-                    databaseObserver = provider.provideDatabaseObserver();
-                }
-            }
+          databaseObserver = provider.provideDatabaseObserver();
         }
-
-        return databaseObserver;
+      }
     }
 
-    public static @NonNull Payments getPayments() {
+    return databaseObserver;
+  }
+
+  public static @NonNull Payments getPayments() {
+    if (payments == null) {
+      synchronized (LOCK) {
         if (payments == null) {
-            synchronized (LOCK) {
-                if (payments == null) {
-                    payments = provider.providePayments(getSignalServiceAccountManager());
-                }
-            }
+          payments = provider.providePayments(getSignalServiceAccountManager());
         }
-
-        return payments;
+      }
     }
 
-    public static @NonNull ShakeToReport getShakeToReport() {
+    return payments;
+  }
+
+  public static @NonNull ShakeToReport getShakeToReport() {
+    if (shakeToReport == null) {
+      synchronized (NI_LOCK) {
         if (shakeToReport == null) {
-            synchronized (NI_LOCK) {
-                if (shakeToReport == null) {
-                    shakeToReport = networkIndependentProvider.provideShakeToReport();
-                }
-            }
+          shakeToReport = networkIndependentProvider.provideShakeToReport();
         }
-
-        return shakeToReport;
+      }
     }
 
-    public static @NonNull SignalCallManager getSignalCallManager() {
+    return shakeToReport;
+  }
+
+  public static @NonNull SignalCallManager getSignalCallManager() {
+    if (signalCallManager == null) {
+      synchronized (LOCK) {
         if (signalCallManager == null) {
-            synchronized (LOCK) {
-                if (signalCallManager == null) {
-                    signalCallManager = provider.provideSignalCallManager();
-                }
-            }
+          signalCallManager = provider.provideSignalCallManager();
         }
-
-        return signalCallManager;
+      }
     }
 
-    public static @NonNull OkHttpClient getOkHttpClient() {
+    return signalCallManager;
+  }
+
+  public static @NonNull OkHttpClient getOkHttpClient() {
+    if (okHttpClient == null) {
+      synchronized (LOCK) {
         if (okHttpClient == null) {
-            synchronized (LOCK) {
-                if (okHttpClient == null) {
-                    okHttpClient = new OkHttpClient.Builder()
-                            .addInterceptor(new StandardUserAgentInterceptor())
-                            .dns(SignalServiceNetworkAccess.DNS)
-                            .build();
-                }
-            }
+          okHttpClient = new OkHttpClient.Builder()
+              .addInterceptor(new StandardUserAgentInterceptor())
+              .dns(SignalServiceNetworkAccess.DNS)
+              .build();
         }
-
-        return okHttpClient;
+      }
     }
 
-    public static @NonNull AppForegroundObserver getAppForegroundObserver() {
-        return appForegroundObserver;
-    }
+    return okHttpClient;
+  }
 
-    public interface Provider {
-        @NonNull
-        PipeConnectivityListener providePipeListener();
-        @NonNull
-        GroupsV2Operations provideGroupsV2Operations();
-        @NonNull SignalServiceAccountManager provideSignalServiceAccountManager();
-        @NonNull SignalServiceMessageSender provideSignalServiceMessageSender();
-        @NonNull SignalServiceMessageReceiver provideSignalServiceMessageReceiver();
-        @NonNull SignalServiceNetworkAccess provideSignalServiceNetworkAccess();
-        @NonNull IncomingMessageProcessor provideIncomingMessageProcessor();
-        @NonNull BackgroundMessageRetriever provideBackgroundMessageRetriever();
-        @NonNull LiveRecipientCache provideRecipientCache();
-        @NonNull JobManager provideJobManager();
-        @NonNull FrameRateTracker provideFrameRateTracker();
-        @NonNull MegaphoneRepository provideMegaphoneRepository();
-        @NonNull EarlyMessageCache provideEarlyMessageCache();
-        @NonNull MessageNotifier provideMessageNotifier();
-        @NonNull IncomingMessageObserver provideIncomingMessageObserver();
-        @NonNull TrimThreadsByDateManager provideTrimThreadsByDateManager();
-        @NonNull ViewOnceMessageManager provideViewOnceMessageManager();
-        @NonNull ExpiringMessageManager provideExpiringMessageManager();
-        @NonNull TypingStatusRepository provideTypingStatusRepository();
-        @NonNull TypingStatusSender provideTypingStatusSender();
-        @NonNull DatabaseObserver provideDatabaseObserver();
-        @NonNull Payments providePayments(@NonNull SignalServiceAccountManager signalServiceAccountManager);
-        @NonNull
-        SignalCallManager provideSignalCallManager();
-    }
+  public static @NonNull AppForegroundObserver getAppForegroundObserver() {
+    return appForegroundObserver;
+  }
 
-    public interface NetworkIndependentProvider {
-        @NonNull KeyValueStore provideKeyValueStore();
-        @NonNull
-        ShakeToReport provideShakeToReport();
-        @NonNull AppForegroundObserver provideAppForegroundObserver();
+  public interface Provider {
+    @NonNull
+    PipeConnectivityListener providePipeListener();
 
-    }
+    @NonNull
+    GroupsV2Operations provideGroupsV2Operations();
+
+    @NonNull SignalServiceAccountManager provideSignalServiceAccountManager();
+
+    @NonNull SignalServiceMessageSender provideSignalServiceMessageSender();
+
+    @NonNull SignalServiceMessageReceiver provideSignalServiceMessageReceiver();
+
+    @NonNull SignalServiceNetworkAccess provideSignalServiceNetworkAccess();
+
+    @NonNull IncomingMessageProcessor provideIncomingMessageProcessor();
+
+    @NonNull BackgroundMessageRetriever provideBackgroundMessageRetriever();
+
+    @NonNull LiveRecipientCache provideRecipientCache();
+
+    @NonNull JobManager provideJobManager();
+
+    @NonNull FrameRateTracker provideFrameRateTracker();
+
+    @NonNull MegaphoneRepository provideMegaphoneRepository();
+
+    @NonNull EarlyMessageCache provideEarlyMessageCache();
+
+    @NonNull MessageNotifier provideMessageNotifier();
+
+    @NonNull IncomingMessageObserver provideIncomingMessageObserver();
+
+    @NonNull TrimThreadsByDateManager provideTrimThreadsByDateManager();
+
+    @NonNull ViewOnceMessageManager provideViewOnceMessageManager();
+
+    @NonNull ExpiringMessageManager provideExpiringMessageManager();
+
+    @NonNull TypingStatusRepository provideTypingStatusRepository();
+
+    @NonNull TypingStatusSender provideTypingStatusSender();
+
+    @NonNull DatabaseObserver provideDatabaseObserver();
+
+    @NonNull Payments providePayments(@NonNull SignalServiceAccountManager signalServiceAccountManager);
+
+    @NonNull
+    SignalCallManager provideSignalCallManager();
+
+    @NonNull PendingRetryReceiptManager providePendingRetryReceiptManager();
+  }
+
+  public interface NetworkIndependentProvider {
+    @NonNull KeyValueStore provideKeyValueStore();
+
+    @NonNull
+    ShakeToReport provideShakeToReport();
+
+    @NonNull AppForegroundObserver provideAppForegroundObserver();
+
+  }
 }

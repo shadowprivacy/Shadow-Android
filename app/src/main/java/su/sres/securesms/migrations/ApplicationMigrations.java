@@ -38,7 +38,7 @@ public class ApplicationMigrations {
 
   private static final MutableLiveData<Boolean> UI_BLOCKING_MIGRATION_RUNNING = new MutableLiveData<>();
 
-  public static final int CURRENT_VERSION = 30;
+  public static final int CURRENT_VERSION = 31;
 
   private static final class Version {
     static final int VERSIONED_PROFILE      = 15;
@@ -56,6 +56,7 @@ public class ApplicationMigrations {
     static final int SFU_CERT               = 27;
     static final int PROFILE_SHARING_UPDATE = 29;
     static final int APPLY_UNIVERSAL_EXPIRE = 30;
+    static final int SENDER_KEY             = 31;
   }
 
   /**
@@ -226,6 +227,10 @@ public class ApplicationMigrations {
 
     if (lastSeenVersion < Version.APPLY_UNIVERSAL_EXPIRE) {
       jobs.put(Version.APPLY_UNIVERSAL_EXPIRE, new ApplyUnknownFieldsToSelfMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.SENDER_KEY) {
+      jobs.put(Version.SENDER_KEY, new AttributesMigrationJob());
     }
 
     return jobs;

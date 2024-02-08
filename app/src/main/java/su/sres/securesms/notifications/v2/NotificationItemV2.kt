@@ -19,18 +19,17 @@ import su.sres.securesms.database.model.ReactionRecord
 import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.mms.Slide
 import su.sres.securesms.mms.SlideDeck
-import su.sres.securesms.notifications.AbstractNotificationBuilder
 import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.recipients.RecipientUtil
 import su.sres.securesms.service.KeyCachingService
 import su.sres.securesms.util.MediaUtil
 import su.sres.securesms.util.MessageRecordUtil
 import su.sres.securesms.util.SpanUtil
-import su.sres.securesms.util.TextSecurePreferences
 import su.sres.securesms.util.Util
 
 private val TAG: String = Log.tag(NotificationItemV2::class.java)
 private const val EMOJI_REPLACEMENT_STRING = "__EMOJI__"
+private const val MAX_DISPLAY_LENGTH = 500
 
 /**
  * Base for messaged-based notifications. Represents a single notification.
@@ -145,10 +144,10 @@ sealed class NotificationItemV2(val threadRecipient: Recipient, protected val re
 
   private fun CharSequence?.trimToDisplayLength(): CharSequence {
     val text: CharSequence = this ?: ""
-    return if (text.length <= AbstractNotificationBuilder.MAX_DISPLAY_LENGTH) {
+    return if (text.length <= MAX_DISPLAY_LENGTH) {
       text
     } else {
-      text.subSequence(0, AbstractNotificationBuilder.MAX_DISPLAY_LENGTH)
+      text.subSequence(0, MAX_DISPLAY_LENGTH)
     }
   }
 

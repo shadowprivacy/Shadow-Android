@@ -7,11 +7,10 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
 
 import su.sres.core.util.ThreadUtil;
-import su.sres.securesms.conversationlist.model.MessageResult;
 import su.sres.securesms.database.CursorList;
+import su.sres.securesms.search.MessageResult;
 import su.sres.securesms.search.SearchRepository;
 import su.sres.securesms.util.Debouncer;
-import su.sres.securesms.util.Util;
 
 import java.util.List;
 

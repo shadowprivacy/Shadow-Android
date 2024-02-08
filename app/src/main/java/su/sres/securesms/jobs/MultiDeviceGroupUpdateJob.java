@@ -175,8 +175,8 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
       attachmentStream = SignalServiceAttachment.emptyStream("application/octet-stream");
     }
 
-    messageSender.sendMessage(SignalServiceSyncMessage.forGroups(attachmentStream),
-                              UnidentifiedAccessUtil.getAccessForSync(context));
+    messageSender.sendSyncMessage(SignalServiceSyncMessage.forGroups(attachmentStream),
+                                  UnidentifiedAccessUtil.getAccessForSync(context));
   }
 
 

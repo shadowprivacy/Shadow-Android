@@ -86,8 +86,11 @@ import su.sres.signalservice.internal.configuration.SignalServiceConfiguration;
 import su.sres.signalservice.internal.configuration.SignalUrl;
 import su.sres.signalservice.internal.push.exceptions.ForbiddenException;
 import su.sres.signalservice.internal.push.exceptions.GroupExistsException;
+import su.sres.signalservice.internal.push.exceptions.GroupMismatchedDevicesException;
 import su.sres.signalservice.internal.push.exceptions.GroupNotFoundException;
 import su.sres.signalservice.internal.push.exceptions.GroupPatchNotAcceptedException;
+import su.sres.signalservice.internal.push.exceptions.GroupStaleDevicesException;
+import su.sres.signalservice.internal.push.exceptions.InvalidUnidentifiedAccessHeaderException;
 import su.sres.signalservice.internal.push.exceptions.MismatchedDevicesException;
 import su.sres.signalservice.internal.push.exceptions.NotInGroupException;
 import su.sres.signalservice.internal.push.exceptions.PaymentsRegionException;
@@ -194,6 +197,7 @@ public class PushServiceSocket {
     private static final String DIRECTORY_PLAIN_PATH = "/v1/dirplain/download/%s";
     private static final String DIRECTORY_PLAIN_FORCEFULL_PATH = "/v1/dirplain/download/forcefull";
     private static final String MESSAGE_PATH = "/v1/messages/%s";
+    private static final String GROUP_MESSAGE_PATH        = "/v1/messages/multi_recipient?ts=%s&online=%s";
     private static final String SENDER_ACK_MESSAGE_PATH = "/v1/messages/%s/%d";
     private static final String UUID_ACK_MESSAGE_PATH = "/v1/messages/uuid/%s";
     private static final String ATTACHMENT_V2_PATH = "/v2/attachments/form/upload";
@@ -407,6 +411,64 @@ public class PushServiceSocket {
     public byte[] getUuidOnlySenderCertificate() throws IOException {
         String responseText = makeServiceRequest(SENDER_CERTIFICATE_NO_E164_PATH, "GET", null);
         return JsonUtil.fromJson(responseText, SenderCertificate.class).getCertificate();
+    }
+
+    public SendGroupMessageResponse sendGroupMessage(byte[] body, byte[] joinedUnidentifiedAccess, long timestamp, boolean online)
+        throws IOException
+    {
+        ServiceConnectionHolder connectionHolder = (ServiceConnectionHolder) getRandom(serviceClients, random);
+
+        String path = String.format(Locale.US, GROUP_MESSAGE_PATH, timestamp, online);
+
+        Request.Builder requestBuilder = new Request.Builder();
+        requestBuilder.url(String.format("%s%s", connectionHolder.getUrl(), path));
+        requestBuilder.put(RequestBody.create(MediaType.get("application/vnd.signal-messenger.mrm"), body));
+        requestBuilder.addHeader("Unidentified-Access-Key", Base64.encodeBytes(joinedUnidentifiedAccess));
+
+        if (signalAgent != null) {
+            requestBuilder.addHeader("X-Signal-Agent", signalAgent);
+        }
+
+        if (connectionHolder.getHostHeader().isPresent()) {
+            requestBuilder.addHeader("Host", connectionHolder.getHostHeader().get());
+        }
+
+        Call call = connectionHolder.getUnidentifiedClient().newCall(requestBuilder.build());
+
+        synchronized (connections) {
+            connections.add(call);
+        }
+
+        Response response;
+
+        try {
+            response = call.execute();
+        } catch (IOException e) {
+            throw new PushNetworkException(e);
+        } finally {
+            synchronized (connections) {
+                connections.remove(call);
+            }
+        }
+
+        switch (response.code()) {
+            case 200:
+                return readBodyJson(response.body(), SendGroupMessageResponse.class);
+            case 401:
+                throw new InvalidUnidentifiedAccessHeaderException();
+            case 404:
+                throw new NotFoundException("At least one unregistered user in message send.");
+            case 409:
+                GroupMismatchedDevices[] mismatchedDevices = readBodyJson(response.body(), GroupMismatchedDevices[].class);
+                throw new GroupMismatchedDevicesException(mismatchedDevices);
+            case 410:
+                GroupStaleDevices[] staleDevices = readBodyJson(response.body(), GroupStaleDevices[].class);
+                throw new GroupStaleDevicesException(staleDevices);
+            case 508:
+                throw new ServerRejectedException();
+            default:
+                throw new NonSuccessfulResponseCodeException(response.code());
+        }
     }
 
     public SendMessageResponse sendMessage(OutgoingPushMessageList bundle, Optional<UnidentifiedAccess> unidentifiedAccess)

@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.R;
+import su.sres.securesms.crypto.SenderKeyUtil;
 import su.sres.securesms.events.ServerCertErrorEvent;
 import su.sres.securesms.jobs.CertificateRefreshJob;
 import su.sres.securesms.jobs.DirectorySyncJob;
@@ -173,6 +174,7 @@ public final class CodeVerificationRequest {
 
         TextSecurePreferences.setLocalRegistrationId(context, registrationId);
         SessionUtil.archiveAllSessions(context);
+        SenderKeyUtil.clearAllState(context);
 
         SignalServiceAccountManager accountManager = AccountManagerFactory.createUnauthenticated(context, credentials.getE164number(), credentials.getPassword());
 

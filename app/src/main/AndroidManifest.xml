@@ -171,6 +171,7 @@
         <activity
             android:name=".DeviceProvisioningActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize">
+            <!-- TODO: replace these with our own schemes -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -178,6 +179,14 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="tsdevice" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="sgnl"
+                    android:host="linkdevice"/>
             </intent-filter>
         </activity>
 
@@ -795,25 +804,11 @@
             </intent-filter>
         </receiver>
 
-        <receiver
-            android:name=".notifications.AndroidAutoHeardReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="su.sres.securesms.notifications.ANDROID_AUTO_HEARD" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
-            android:name=".notifications.AndroidAutoReplyReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="su.sres.securesms.notifications.ANDROID_AUTO_REPLY" />
-            </intent-filter>
-        </receiver>
-
         <receiver android:name=".service.ExpirationListener" />
 
         <receiver android:name=".revealable.ViewOnceMessageManager$ViewOnceAlarm" />
+
+        <receiver android:name=".service.PendingRetryReceiptManager$PendingRetryReceiptAlarm" />
 
         <receiver android:name=".service.TrimThreadsByDateManager$TrimThreadsByDateAlarm" />
 

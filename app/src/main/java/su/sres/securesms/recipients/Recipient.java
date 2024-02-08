@@ -53,10 +53,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static su.sres.securesms.database.RecipientDatabase.InsightsBannerTier;
 
@@ -67,6 +70,8 @@ public class Recipient {
   public static final Recipient UNKNOWN = new Recipient(RecipientId.UNKNOWN, new RecipientDetails(), true);
 
   public static final FallbackPhotoProvider DEFAULT_FALLBACK_PHOTO_PROVIDER = new FallbackPhotoProvider();
+
+  private static final int MAX_MEMBER_NAMES = 10;
 
   private final RecipientId            id;
   private final boolean                resolving;
@@ -103,6 +108,7 @@ public class Recipient {
   private final boolean                forceSmsSelection;
   private final Capability             groupsV2Capability;
   private final Capability             groupsV1MigrationCapability;
+  private final Capability             senderKeyCapability;
   private final InsightsBannerTier     insightsBannerTier;
   private final byte[]                 storageId;
   private final MentionSetting         mentionSetting;
@@ -353,6 +359,7 @@ public class Recipient {
     this.forceSmsSelection           = false;
     this.groupsV2Capability          = Capability.UNKNOWN;
     this.groupsV1MigrationCapability = Capability.UNKNOWN;
+    this.senderKeyCapability         = Capability.UNKNOWN;
     this.storageId                   = null;
     this.mentionSetting              = MentionSetting.ALWAYS_NOTIFY;
     this.wallpaper                   = null;
@@ -403,6 +410,7 @@ public class Recipient {
     this.forceSmsSelection           = details.forceSmsSelection;
     this.groupsV2Capability          = details.groupsV2Capability;
     this.groupsV1MigrationCapability = details.groupsV1MigrationCapability;
+    this.senderKeyCapability         = details.senderKeyCapability;
     this.storageId                   = details.storageId;
     this.mentionSetting              = details.mentionSetting;
     this.wallpaper                   = details.wallpaper;
@@ -429,16 +437,38 @@ public class Recipient {
   }
 
   public @Nullable String getGroupName(@NonNull Context context) {
-    if (this.groupName == null && groupId != null && groupId.isMms()) {
-      List<String> names = new LinkedList<>();
+    if (groupId != null && Util.isEmpty(this.groupName)) {
+      List<Recipient> others = participants.stream()
+                                           .filter(r -> !r.isSelf())
+                                           .limit(MAX_MEMBER_NAMES)
+                                           .collect(Collectors.toList());
 
-      for (Recipient recipient : participants) {
-        names.add(recipient.getDisplayName(context));
+      Map<String, Integer> shortNameCounts = new HashMap<>();
+
+      for (Recipient participant : others) {
+        String shortName = participant.getShortDisplayName(context);
+        int    count     = Objects.requireNonNull(shortNameCounts.getOrDefault(shortName, 0));
+
+        shortNameCounts.put(shortName, count + 1);
       }
 
+      List<String> names = new LinkedList<>();
+
+      if (participants.stream().anyMatch(Recipient::isSelf)) {
+        names.add(context.getString(R.string.Recipient_you));
+      }
+
+      for (Recipient participant : others) {
+        String shortName = participant.getShortDisplayName(context);
+        int    count     = Objects.requireNonNull(shortNameCounts.getOrDefault(shortName, 0));
+
+        if (count <= 1) {
+          names.add(shortName);
+        } else {
+          names.add(participant.getDisplayName(context));
+        }
+      }
       return Util.join(names, ", ");
-    } else if (groupName == null && groupId != null && groupId.isPush()) {
-      return context.getString(R.string.RecipientProvider_unnamed_group);
     } else {
       return this.groupName;
     }
@@ -864,6 +894,17 @@ public class Recipient {
 
   public @NonNull Capability getGroupsV1MigrationCapability() {
     return groupsV1MigrationCapability;
+  }
+
+  public @NonNull Capability getSenderKeyCapability() {
+    return senderKeyCapability;
+  }
+
+  /**
+   * True if this recipient supports the message retry system, or false if we should use the legacy session reset system.
+   */
+  public boolean supportsMessageRetries() {
+    return getSenderKeyCapability() == Capability.SUPPORTED;
   }
 
   public @Nullable byte[] getProfileKey() {

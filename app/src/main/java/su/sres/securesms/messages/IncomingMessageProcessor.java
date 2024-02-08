@@ -12,7 +12,6 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.MmsSmsDatabase;
-import su.sres.securesms.database.PushDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.BadGroupIdException;
 import su.sres.securesms.groups.GroupChangeBusyException;
@@ -25,7 +24,6 @@ import su.sres.securesms.jobs.PushProcessMessageJob;
 import su.sres.securesms.messages.MessageDecryptionUtil.DecryptionResult;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.Stopwatch;
@@ -92,7 +90,7 @@ public class IncomingMessageProcessor {
             if (envelope.isReceipt()) {
                 processReceipt(envelope);
                 return null;
-            } else if (envelope.isPreKeySignalMessage() || envelope.isSignalMessage() || envelope.isUnidentifiedSender()) {
+            } else if (envelope.isPreKeySignalMessage() || envelope.isSignalMessage() || envelope.isUnidentifiedSender() || envelope.isPlaintextContent()) {
                 return processMessage(envelope);
             } else {
                 Log.w(TAG, "Received envelope of unknown type: " + envelope.getType());

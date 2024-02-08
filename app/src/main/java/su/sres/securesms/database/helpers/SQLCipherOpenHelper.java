@@ -17,8 +17,12 @@ import su.sres.securesms.database.ChatColorsDatabase;
 import su.sres.securesms.database.EmojiSearchDatabase;
 import su.sres.securesms.database.MentionDatabase;
 import su.sres.securesms.database.PaymentDatabase;
+import su.sres.securesms.database.PendingRetryReceiptDatabase;
+import su.sres.securesms.database.SenderKeyDatabase;
+import su.sres.securesms.database.SenderKeySharedDatabase;
 import su.sres.securesms.database.SignalDatabase;
 import su.sres.securesms.database.SqlCipherDatabaseHook;
+import su.sres.securesms.database.SqlCipherErrorHandler;
 import su.sres.securesms.database.model.databaseprotos.ReactionList;
 import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;
@@ -50,6 +54,7 @@ import su.sres.securesms.util.Hex;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.Triple;
 import su.sres.securesms.util.Util;
+import su.sres.signalservice.api.push.DistributionId;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -87,15 +92,16 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
   private static final int CLEAR_MMS_STORAGE_IDS                                                        = 83;
   private static final int SERVER_GUID                                                                  = 84;
   private static final int CHAT_COLORS_AND_AVATAR_COLORS_AND_EMOJI_SEARCH                               = 85;
+  private static final int SENDER_KEY                       = 86;
 
-  private static final int    DATABASE_VERSION = 85;
+  private static final int    DATABASE_VERSION = 86;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
   private final DatabaseSecret databaseSecret;
 
   public SQLCipherOpenHelper(@NonNull Context context, @NonNull DatabaseSecret databaseSecret) {
-    super(context, DATABASE_NAME, null, DATABASE_VERSION, new SqlCipherDatabaseHook());
+    super(context, DATABASE_NAME, null, DATABASE_VERSION, new SqlCipherDatabaseHook(), new SqlCipherErrorHandler(DATABASE_NAME));
 
     this.context        = context.getApplicationContext();
     this.databaseSecret = databaseSecret;
@@ -116,6 +122,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     db.execSQL(OneTimePreKeyDatabase.CREATE_TABLE);
     db.execSQL(SignedPreKeyDatabase.CREATE_TABLE);
     db.execSQL(SessionDatabase.CREATE_TABLE);
+    db.execSQL(SenderKeyDatabase.CREATE_TABLE);
+    db.execSQL(SenderKeySharedDatabase.CREATE_TABLE);
+    db.execSQL(PendingRetryReceiptDatabase.CREATE_TABLE);
     db.execSQL(StickerDatabase.CREATE_TABLE);
     db.execSQL(UnknownStorageIdDatabase.CREATE_TABLE);
     db.execSQL(MentionDatabase.CREATE_TABLE);
@@ -671,6 +680,44 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
         ///
 
         db.execSQL("CREATE VIRTUAL TABLE emoji_search USING fts5(label, emoji UNINDEXED)");
+      }
+
+      if (oldVersion < SENDER_KEY && !SqlUtil.tableExists(db, "sender_keys")) {
+        db.execSQL("CREATE TABLE sender_keys (_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                   "recipient_id INTEGER NOT NULL, " +
+                   "device INTEGER NOT NULL, " +
+                   "distribution_id TEXT NOT NULL, " +
+                   "record BLOB NOT NULL, " +
+                   "created_at INTEGER NOT NULL, " +
+                   "UNIQUE(recipient_id, device, distribution_id) ON CONFLICT REPLACE)");
+
+        db.execSQL("CREATE TABLE sender_key_shared (_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                   "distribution_id TEXT NOT NULL, " +
+                   "address TEXT NOT NULL, " +
+                   "device INTEGER NOT NULL, " +
+                   "UNIQUE(distribution_id, address, device) ON CONFLICT REPLACE)");
+
+        db.execSQL("CREATE TABLE pending_retry_receipts (_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                   "author TEXT NOT NULL, " +
+                   "device INTEGER NOT NULL, " +
+                   "sent_timestamp INTEGER NOT NULL, " +
+                   "received_timestamp TEXT NOT NULL, " +
+                   "thread_id INTEGER NOT NULL, " +
+                   "UNIQUE(author, sent_timestamp) ON CONFLICT REPLACE);");
+
+        db.execSQL("ALTER TABLE groups ADD COLUMN distribution_id TEXT DEFAULT NULL");
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS group_distribution_id_index ON groups (distribution_id)");
+
+        try (Cursor cursor = db.query("groups", new String[] { "group_id" }, "LENGTH(group_id) = 85", null, null, null, null)) {
+          while (cursor.moveToNext()) {
+            String        groupId = cursor.getString(cursor.getColumnIndexOrThrow("group_id"));
+            ContentValues values  = new ContentValues();
+
+            values.put("distribution_id", DistributionId.create().toString());
+
+            db.update("groups", values, "group_id = ?", new String[] { groupId });
+          }
+        }
       }
 
       db.setTransactionSuccessful();

@@ -11,5 +11,6 @@ data class InternalSettingsState(
   val disableAutoMigrationInitiation: Boolean,
   val disableAutoMigrationNotification: Boolean,
   val useBuiltInEmojiSet: Boolean,
-  val emojiVersion: EmojiFiles.Version?
+  val emojiVersion: EmojiFiles.Version?,
+  val removeSenderKeyMinimium: Boolean,
 )

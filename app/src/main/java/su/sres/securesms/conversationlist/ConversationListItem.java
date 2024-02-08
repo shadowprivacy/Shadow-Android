@@ -59,8 +59,8 @@ import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientForeverObserver;
-import su.sres.securesms.conversationlist.model.MessageResult;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.securesms.search.MessageResult;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.Debouncer;
 import su.sres.securesms.util.ExpirationUtil;
@@ -237,7 +237,7 @@ public final class ConversationListItem extends ConstraintLayout
                    @NonNull Locale locale,
                    @Nullable String highlightSubstring)
   {
-    observeRecipient(messageResult.conversationRecipient.live());
+    observeRecipient(messageResult.getConversationRecipient().live());
     observeDisplayBody(null);
     setSubjectViewText(null);
 
@@ -245,8 +245,8 @@ public final class ConversationListItem extends ConstraintLayout
     this.glideRequests   = glideRequests;
 
     fromView.setText(recipient.get(), true);
-    setSubjectViewText(SearchUtil.getHighlightedSpan(locale, () -> new StyleSpan(Typeface.BOLD), messageResult.bodySnippet, highlightSubstring));
-    dateView.setText(DateUtils.getBriefRelativeTimeSpanString(getContext(), locale, messageResult.receivedTimestampMs));
+    setSubjectViewText(SearchUtil.getHighlightedSpan(locale, () -> new StyleSpan(Typeface.BOLD), messageResult.getBodySnippet(), highlightSubstring));
+    dateView.setText(DateUtils.getBriefRelativeTimeSpanString(getContext(), locale, messageResult.getReceivedTimestampMs()));
     archivedView.setVisibility(GONE);
     unreadIndicator.setVisibility(GONE);
     deliveryStatusIndicator.setNone();
@@ -353,10 +353,13 @@ public final class ConversationListItem extends ConstraintLayout
   }
 
   private void setStatusIcons(ThreadRecord thread) {
-    if (!thread.isOutgoing() ||
-        thread.isOutgoingAudioCall() ||
-        thread.isOutgoingVideoCall() ||
-        thread.isVerificationStatusChange())
+    if (MmsSmsColumns.Types.isBadDecryptType(thread.getType())) {
+      deliveryStatusIndicator.setNone();
+      alertView.setFailed();
+    } else if (!thread.isOutgoing()         ||
+               thread.isOutgoingAudioCall() ||
+               thread.isOutgoingVideoCall() ||
+               thread.isVerificationStatusChange())
     {
       deliveryStatusIndicator.setNone();
       alertView.setNone();
@@ -432,7 +435,7 @@ public final class ConversationListItem extends ConstraintLayout
       return emphasisAdded(context, context.getString(R.string.ThreadRecord_left_the_group), defaultTint);
     } else if (SmsDatabase.Types.isKeyExchangeType(thread.getType())) {
       return emphasisAdded(context, context.getString(R.string.ConversationListItem_key_exchange_message), defaultTint);
-    } else if (SmsDatabase.Types.isFailedDecryptType(thread.getType())) {
+    } else if (SmsDatabase.Types.isChatSessionRefresh(thread.getType())) {
       UpdateDescription description = UpdateDescription.staticDescription(context.getString(R.string.ThreadRecord_chat_session_refreshed), R.drawable.ic_refresh_16);
       return emphasisAdded(context, description, defaultTint);
     } else if (SmsDatabase.Types.isNoRemoteSessionType(thread.getType())) {
@@ -479,6 +482,8 @@ public final class ConversationListItem extends ConstraintLayout
       return emphasisAdded(context, context.getString(R.string.ThreadRecord_message_could_not_be_processed), defaultTint);
     } else if (SmsDatabase.Types.isProfileChange(thread.getType())) {
       return emphasisAdded(context, "", defaultTint);
+    } else if (MmsSmsColumns.Types.isBadDecryptType(thread.getType())) {
+      return emphasisAdded(context, context.getString(R.string.ThreadRecord_delivery_issue), defaultTint);
     } else {
       ThreadDatabase.Extra extra = thread.getExtra();
       if (extra != null && extra.isViewOnce()) {

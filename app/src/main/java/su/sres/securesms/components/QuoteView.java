@@ -26,7 +26,6 @@ import su.sres.securesms.R;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.components.mention.MentionAnnotation;
 import su.sres.securesms.conversation.colors.ChatColors;
-import su.sres.securesms.conversation.colors.Colorizer;
 import su.sres.securesms.database.model.Mention;
 import su.sres.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
 import su.sres.securesms.mms.GlideRequests;
@@ -287,6 +286,10 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
   private void setQuoteMissingFooter(boolean missing) {
     footerView.setVisibility(missing ? VISIBLE : GONE);
     footerView.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.quote_view_background));
+  }
+
+  public void setTextSize(int unit, float size) {
+    bodyView.setTextSize(unit, size);
   }
 
   public long getQuoteId() {

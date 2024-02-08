@@ -16,6 +16,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.messages.GroupSendUtil;
 import su.sres.securesms.net.NotPushRegisteredException;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -26,6 +27,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.securesms.util.GroupUtil;
 import su.sres.signalservice.api.SignalServiceMessageSender;
+import su.sres.signalservice.api.crypto.ContentHint;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SendMessageResult;
@@ -174,9 +176,6 @@ public class RemoteDeleteSendJob extends BaseJob {
   private @NonNull List<Recipient> deliver(@NonNull Recipient conversationRecipient, @NonNull List<Recipient> destinations, long targetSentTimestamp)
       throws IOException, UntrustedIdentityException
   {
-    SignalServiceMessageSender             messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-    List<SignalServiceAddress>             addresses          = RecipientUtil.toSignalServiceAddressesFromResolved(context, destinations);
-    List<Optional<UnidentifiedAccessPair>> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, destinations);
     SignalServiceDataMessage.Builder dataMessage = SignalServiceDataMessage.newBuilder()
                                                                            .withTimestamp(System.currentTimeMillis())
                                                                            .withRemoteDelete(new SignalServiceDataMessage.RemoteDelete(targetSentTimestamp));
@@ -185,7 +184,17 @@ public class RemoteDeleteSendJob extends BaseJob {
       GroupUtil.setDataMessageGroupContext(context, dataMessage, conversationRecipient.requireGroupId().requirePush());
     }
 
-    List<SendMessageResult> results = messageSender.sendMessage(addresses, unidentifiedAccess, false, dataMessage.build());
+    List<SendMessageResult> results;
+
+    if (conversationRecipient.isPushV2Group()) {
+      results = GroupSendUtil.sendDataMessage(context, conversationRecipient.requireGroupId().requireV2(), destinations, false, ContentHint.DEFAULT, dataMessage.build());
+    } else {
+      SignalServiceMessageSender             messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
+      List<SignalServiceAddress>             addresses          = RecipientUtil.toSignalServiceAddressesFromResolved(context, destinations);
+      List<Optional<UnidentifiedAccessPair>> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, destinations);
+
+      results = messageSender.sendDataMessage(addresses, unidentifiedAccess, false, ContentHint.DEFAULT, dataMessage.build());
+    }
 
     return GroupSendJobHelper.getCompletedSends(context, results);
   }

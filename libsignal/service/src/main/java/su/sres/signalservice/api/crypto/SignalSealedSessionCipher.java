@@ -14,8 +14,14 @@ import org.signal.libsignal.metadata.SealedSessionCipher;
 import org.signal.libsignal.metadata.SelfSendException;
 import org.signal.libsignal.metadata.certificate.CertificateValidator;
 import org.signal.libsignal.metadata.certificate.SenderCertificate;
+import org.signal.libsignal.metadata.protocol.UnidentifiedSenderMessageContent;
 import org.whispersystems.libsignal.InvalidKeyException;
+import org.whispersystems.libsignal.NoSessionException;
 import org.whispersystems.libsignal.SignalProtocolAddress;
+import org.whispersystems.libsignal.UntrustedIdentityException;
+
+import java.util.List;
+
 import su.sres.signalservice.api.SignalSessionLock;
 
 /**
@@ -23,35 +29,45 @@ import su.sres.signalservice.api.SignalSessionLock;
  */
 public class SignalSealedSessionCipher {
 
-    private final SignalSessionLock   lock;
-    private final SealedSessionCipher cipher;
+  private final SignalSessionLock   lock;
+  private final SealedSessionCipher cipher;
 
-    public SignalSealedSessionCipher(SignalSessionLock lock, SealedSessionCipher cipher) {
-        this.lock   = lock;
-        this.cipher = cipher;
-    }
+  public SignalSealedSessionCipher(SignalSessionLock lock, SealedSessionCipher cipher) {
+    this.lock   = lock;
+    this.cipher = cipher;
+  }
 
-    public byte[] encrypt(SignalProtocolAddress destinationAddress, SenderCertificate senderCertificate, byte[] paddedPlaintext) throws InvalidKeyException, org.whispersystems.libsignal.UntrustedIdentityException {
-        try (SignalSessionLock.Lock unused = lock.acquire()) {
-            return cipher.encrypt(destinationAddress, senderCertificate, paddedPlaintext);
-        }
+  public byte[] encrypt(SignalProtocolAddress destinationAddress, UnidentifiedSenderMessageContent content)
+      throws InvalidKeyException, UntrustedIdentityException
+  {
+    try (SignalSessionLock.Lock unused = lock.acquire()) {
+      return cipher.encrypt(destinationAddress, content);
     }
+  }
 
-    public SealedSessionCipher.DecryptionResult decrypt(CertificateValidator validator, byte[] ciphertext, long timestamp) throws InvalidMetadataMessageException, InvalidMetadataVersionException, ProtocolInvalidMessageException, ProtocolInvalidKeyException, ProtocolNoSessionException, ProtocolLegacyMessageException, ProtocolInvalidVersionException, ProtocolDuplicateMessageException, ProtocolInvalidKeyIdException, ProtocolUntrustedIdentityException, SelfSendException {
-        try (SignalSessionLock.Lock unused = lock.acquire()) {
-            return cipher.decrypt(validator, ciphertext, timestamp);
-        }
+  public byte[] multiRecipientEncrypt(List<SignalProtocolAddress> recipients, UnidentifiedSenderMessageContent content)
+      throws InvalidKeyException, UntrustedIdentityException, NoSessionException
+  {
+    try (SignalSessionLock.Lock unused = lock.acquire()) {
+      return cipher.multiRecipientEncrypt(recipients, content);
     }
+  }
 
-    public int getSessionVersion(SignalProtocolAddress remoteAddress) {
-        try (SignalSessionLock.Lock unused = lock.acquire()) {
-            return cipher.getSessionVersion(remoteAddress);
-        }
+  public SealedSessionCipher.DecryptionResult decrypt(CertificateValidator validator, byte[] ciphertext, long timestamp) throws InvalidMetadataMessageException, InvalidMetadataVersionException, ProtocolInvalidMessageException, ProtocolInvalidKeyException, ProtocolNoSessionException, ProtocolLegacyMessageException, ProtocolInvalidVersionException, ProtocolDuplicateMessageException, ProtocolInvalidKeyIdException, ProtocolUntrustedIdentityException, SelfSendException {
+    try (SignalSessionLock.Lock unused = lock.acquire()) {
+      return cipher.decrypt(validator, ciphertext, timestamp);
     }
+  }
 
-    public int getRemoteRegistrationId(SignalProtocolAddress remoteAddress) {
-        try (SignalSessionLock.Lock unused = lock.acquire()) {
-            return cipher.getRemoteRegistrationId(remoteAddress);
-        }
+  public int getSessionVersion(SignalProtocolAddress remoteAddress) {
+    try (SignalSessionLock.Lock unused = lock.acquire()) {
+      return cipher.getSessionVersion(remoteAddress);
     }
+  }
+
+  public int getRemoteRegistrationId(SignalProtocolAddress remoteAddress) {
+    try (SignalSessionLock.Lock unused = lock.acquire()) {
+      return cipher.getRemoteRegistrationId(remoteAddress);
+    }
+  }
 }

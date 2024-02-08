@@ -17,71 +17,71 @@ import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.sharing.MultiShareArgs;
 import su.sres.securesms.sharing.MultiShareSender;
 import su.sres.securesms.util.DefaultValueLiveData;
-import su.sres.securesms.util.MappingModel;
+import su.sres.securesms.util.MappingModelList;
 import su.sres.securesms.util.Util;
 
 import java.util.List;
 
 class ShareInterstitialViewModel extends ViewModel {
 
-    private final MultiShareArgs                           args;
-    private final MutableLiveData<List<MappingModel<?>>> recipients;
-    private final MutableLiveData<String>                draftText;
+  private final MultiShareArgs                    args;
+  private final MutableLiveData<MappingModelList> recipients;
+  private final MutableLiveData<String>           draftText;
 
-    private LinkPreview linkPreview;
+  private LinkPreview linkPreview;
 
-    ShareInterstitialViewModel(@NonNull MultiShareArgs args, @NonNull ShareInterstitialRepository repository) {
-        this.args        = args;
-        this.recipients  = new MutableLiveData<>();
-        this.draftText   = new DefaultValueLiveData<>(Util.firstNonNull(args.getDraftText(), ""));
+  ShareInterstitialViewModel(@NonNull MultiShareArgs args, @NonNull ShareInterstitialRepository repository) {
+    this.args       = args;
+    this.recipients = new MutableLiveData<>();
+    this.draftText  = new DefaultValueLiveData<>(Util.firstNonNull(args.getDraftText(), ""));
 
-        repository.loadRecipients(args.getShareContactAndThreads(),
-                list -> recipients.postValue(Stream.of(list)
-                        .<MappingModel<?>>mapIndexed((i, r) -> new ShareInterstitialMappingModel(r, i == list.size() - 1))
-                        .toList()));
+    repository.loadRecipients(args.getShareContactAndThreads(),
+                              list -> recipients.postValue(Stream.of(list)
+                                                                 .mapIndexed((i, r) -> new ShareInterstitialMappingModel(r, i == 0))
+                                                                 .collect(MappingModelList.toMappingModelList())));
 
+  }
+
+  LiveData<MappingModelList> getRecipients() {
+    return recipients;
+  }
+
+  LiveData<Boolean> hasDraftText() {
+    return Transformations.map(draftText, text -> !TextUtils.isEmpty(text));
+  }
+
+  void onDraftTextChanged(@NonNull String change) {
+    draftText.setValue(change);
+  }
+
+  void onLinkPreviewChanged(@Nullable LinkPreview linkPreview) {
+    this.linkPreview = linkPreview;
+  }
+
+  void send(@NonNull Consumer<MultiShareSender.MultiShareSendResultCollection> resultsConsumer) {
+    LinkPreview linkPreview = this.linkPreview;
+    String      draftText   = this.draftText.getValue();
+
+    MultiShareArgs.Builder builder = args.buildUpon()
+                                         .withDraftText(draftText)
+                                         .withLinkPreview(linkPreview);
+
+    MultiShareSender.send(builder.build(), resultsConsumer);
+  }
+
+  static class Factory implements ViewModelProvider.Factory {
+
+    private final MultiShareArgs              args;
+    private final ShareInterstitialRepository repository;
+
+    Factory(@NonNull MultiShareArgs args, @NonNull ShareInterstitialRepository repository) {
+      this.args       = args;
+      this.repository = repository;
     }
 
-    LiveData<List<MappingModel<?>>> getRecipients() {
-        return recipients;
+    @Override
+    public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
+      return modelClass.cast(new ShareInterstitialViewModel(args, repository));
     }
-
-    LiveData<Boolean> hasDraftText() {
-        return Transformations.map(draftText, text -> !TextUtils.isEmpty(text));
-    }
-
-    void onDraftTextChanged(@NonNull String change) {
-        draftText.setValue(change);
-    }
-
-    void onLinkPreviewChanged(@Nullable LinkPreview linkPreview) {
-        this.linkPreview = linkPreview;
-    }
-
-    void send(@NonNull Consumer<MultiShareSender.MultiShareSendResultCollection> resultsConsumer) {
-        LinkPreview linkPreview = this.linkPreview;
-        String      draftText   = this.draftText.getValue();
-
-        MultiShareArgs.Builder builder = args.buildUpon()
-                .withDraftText(draftText)
-                .withLinkPreview(linkPreview);
-
-        MultiShareSender.send(builder.build(), resultsConsumer);
-    }
-
-    static class Factory implements ViewModelProvider.Factory {
-
-        private final MultiShareArgs args;
-        private final ShareInterstitialRepository repository;
-
-        Factory(@NonNull MultiShareArgs args, @NonNull ShareInterstitialRepository repository) {
-            this.args       = args;
-            this.repository = repository;
-        }
-
-        @Override
-        public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-            return modelClass.cast(new ShareInterstitialViewModel(args, repository));
-        }
-    }
+  }
 }

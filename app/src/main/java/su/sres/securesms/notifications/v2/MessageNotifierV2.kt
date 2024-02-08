@@ -18,7 +18,6 @@ import su.sres.securesms.database.MessageDatabase
 import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.messages.IncomingMessageObserver
-import su.sres.securesms.notifications.DefaultMessageNotifier
 import su.sres.securesms.notifications.MessageNotifier
 import su.sres.securesms.notifications.MessageNotifier.ReminderReceiver
 import su.sres.securesms.notifications.NotificationCancellationHelper
@@ -27,9 +26,7 @@ import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference
 import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.service.KeyCachingService
 import su.sres.securesms.util.BubbleUtil.BubbleState
-import su.sres.securesms.util.FeatureFlags
 import su.sres.securesms.util.ServiceUtil
-import su.sres.securesms.util.TextSecurePreferences
 import su.sres.securesms.webrtc.CallNotificationBuilder
 import su.sres.signalservice.internal.util.Util
 import java.util.concurrent.ConcurrentHashMap
@@ -91,7 +88,7 @@ class MessageNotifierV2(context: Application) : MessageNotifier {
   }
 
   override fun updateNotification(context: Context, threadId: Long) {
-    if (System.currentTimeMillis() - lastDesktopActivityTimestamp < DefaultMessageNotifier.DESKTOP_ACTIVITY_PERIOD) {
+    if (System.currentTimeMillis() - lastDesktopActivityTimestamp < DESKTOP_ACTIVITY_PERIOD) {
       Log.i(TAG, "Scheduling delayed notification...")
       executor.enqueue(context, threadId)
     } else {
@@ -266,7 +263,13 @@ class MessageNotifierV2(context: Application) : MessageNotifier {
 
   companion object {
     val TAG: String = Log.tag(MessageNotifierV2::class.java)
+
     private val REMINDER_TIMEOUT: Long = TimeUnit.MINUTES.toMillis(2)
+    val MIN_AUDIBLE_PERIOD_MILLIS = TimeUnit.SECONDS.toMillis(2)
+    val DESKTOP_ACTIVITY_PERIOD = TimeUnit.MINUTES.toMillis(1)
+
+    const val EXTRA_REMOTE_REPLY = "extra_remote_reply"
+    const val NOTIFICATION_GROUP = "messages"
 
     private fun updateBadge(context: Context, count: Int) {
       try {

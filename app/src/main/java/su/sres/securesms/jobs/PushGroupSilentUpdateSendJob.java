@@ -10,7 +10,10 @@ import com.annimon.stream.Stream;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.messages.GroupSendUtil;
 import su.sres.securesms.net.NotPushRegisteredException;
+import su.sres.securesms.util.GroupUtil;
+import su.sres.signalservice.api.crypto.ContentHint;
 import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
@@ -133,8 +136,9 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
             throw new NotPushRegisteredException();
         }
 
-        List<Recipient> destinations = Stream.of(recipients).map(Recipient::resolved).toList();
-        List<Recipient> completions  = deliver(destinations);
+        GroupId.V2      groupId        = GroupId.v2(GroupUtil.requireMasterKey(groupContextV2.getMasterKey().toByteArray()));
+        List<Recipient> destinations   = Stream.of(recipients).map(Recipient::resolved).toList();
+        List<Recipient> completions    = deliver(destinations, groupId);
 
         for (Recipient completion : completions) {
             recipients.remove(completion.getId());
@@ -161,20 +165,16 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
         Log.w(TAG, "Failed to send remote delete to all recipients! (" + (initialRecipientCount - recipients.size() + "/" + initialRecipientCount + ")") );
     }
 
-    private @NonNull List<Recipient> deliver(@NonNull List<Recipient> destinations)
+    private @NonNull List<Recipient> deliver(@NonNull List<Recipient> destinations, @NonNull GroupId.V2 groupId)
             throws IOException, UntrustedIdentityException
     {
-        SignalServiceMessageSender             messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-        List<SignalServiceAddress>             addresses          = RecipientUtil.toSignalServiceAddressesFromResolved(context, destinations);
-        List<Optional<UnidentifiedAccessPair>> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, destinations);
-
         SignalServiceGroupV2     group            = SignalServiceGroupV2.fromProtobuf(groupContextV2);
         SignalServiceDataMessage groupDataMessage = SignalServiceDataMessage.newBuilder()
                 .withTimestamp(timestamp)
                 .asGroupMessage(group)
                 .build();
 
-        List<SendMessageResult> results = messageSender.sendMessage(addresses, unidentifiedAccess, false, groupDataMessage);
+        List<SendMessageResult> results = GroupSendUtil.sendDataMessage(context, groupId, destinations, false, ContentHint.IMPLICIT, groupDataMessage);
 
         return GroupSendJobHelper.getCompletedSends(context, results);
     }

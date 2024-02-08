@@ -38,6 +38,7 @@ import su.sres.securesms.util.MessageUtil;
 import su.sres.securesms.util.SingleLiveEvent;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.util.livedata.LiveDataUtil;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
@@ -72,6 +73,7 @@ class MediaSendViewModel extends ViewModel {
     private final SingleLiveEvent<Error> error;
     private final SingleLiveEvent<Event> event;
     private final MutableLiveData<SentMediaQuality>  sentMediaQuality;
+    private final LiveData<Boolean>                  showMediaQualityToggle;
     private final Map<Uri, Object> savedDrawState;
 
     private TransportOption transport;
@@ -98,27 +100,28 @@ class MediaSendViewModel extends ViewModel {
     private MediaSendViewModel(@NonNull Application application,
                                @NonNull MediaRepository repository,
                                @NonNull MediaUploadRepository uploadRepository) {
-        this.application = application;
-        this.repository = repository;
-        this.uploadRepository = uploadRepository;
-        this.selectedMedia = new MutableLiveData<>();
-        this.bucketMedia = new MutableLiveData<>();
-        this.mostRecentMedia = new MutableLiveData<>();
-        this.position = new MutableLiveData<>();
-        this.bucketId = new MutableLiveData<>();
-        this.folders = new MutableLiveData<>();
-        this.hudState = new MutableLiveData<>();
-        this.error = new SingleLiveEvent<>();
-        this.event = new SingleLiveEvent<>();
-        this.sentMediaQuality  = new MutableLiveData<>(SentMediaQuality.STANDARD);
-        this.savedDrawState = new HashMap<>();
-        this.lastCameraCapture = Optional.absent();
-        this.body = "";
-        this.buttonState = ButtonState.GONE;
-        this.railState = RailState.GONE;
-        this.viewOnceState = ViewOnceState.GONE;
-        this.page = Page.UNKNOWN;
-        this.preUploadEnabled = true;
+        this.application            = application;
+        this.repository             = repository;
+        this.uploadRepository       = uploadRepository;
+        this.selectedMedia          = new MutableLiveData<>();
+        this.bucketMedia            = new MutableLiveData<>();
+        this.mostRecentMedia        = new MutableLiveData<>();
+        this.position               = new MutableLiveData<>();
+        this.bucketId               = new MutableLiveData<>();
+        this.folders                = new MutableLiveData<>();
+        this.hudState               = new MutableLiveData<>();
+        this.error                  = new SingleLiveEvent<>();
+        this.event                  = new SingleLiveEvent<>();
+        this.sentMediaQuality       = new MutableLiveData<>(SentMediaQuality.STANDARD);
+        this.savedDrawState         = new HashMap<>();
+        this.lastCameraCapture      = Optional.absent();
+        this.body                   = "";
+        this.buttonState            = ButtonState.GONE;
+        this.railState              = RailState.GONE;
+        this.viewOnceState          = ViewOnceState.GONE;
+        this.page                   = Page.UNKNOWN;
+        this.preUploadEnabled       = true;
+        this.showMediaQualityToggle = LiveDataUtil.mapAsync(this.selectedMedia, s -> s.stream().anyMatch(m -> MediaUtil.isImageAndNotGif(m.getMimeType())));
 
         position.setValue(-1);
     }
@@ -141,10 +144,6 @@ class MediaSendViewModel extends ViewModel {
     void onSelectedMediaChanged(@NonNull Context context, @NonNull List<Media> newMedia) {
         List<Media> originalMedia = getSelectedMediaOrDefault();
 
-        if (!newMedia.isEmpty()) {
-            selectedMedia.setValue(newMedia);
-        }
-
         repository.getPopulatedMedia(context, newMedia, populatedMedia -> {
             ThreadUtil.runOnMain(() -> {
 
@@ -152,9 +151,17 @@ class MediaSendViewModel extends ViewModel {
 
                 if (filteredMedia.size() != newMedia.size()) {
                     if (filteredMedia.isEmpty() && newMedia.size() == 1 && page == Page.UNKNOWN) {
-                        error.setValue(Error.ONLY_ITEM_TOO_LARGE);
+                        if (MediaUtil.isImageOrVideoType(newMedia.get(0).getMimeType())) {
+                            error.setValue(Error.ONLY_ITEM_TOO_LARGE);
+                        } else {
+                            error.setValue(Error.ONLY_ITEM_IS_INVALID_TYPE);
+                        }
                     } else {
-                        error.setValue(Error.ITEM_TOO_LARGE);
+                        if (newMedia.stream().allMatch(m -> MediaUtil.isImageOrVideoType(m.getMimeType()))) {
+                            error.setValue(Error.ITEM_TOO_LARGE);
+                        } else {
+                            error.setValue(Error.ITEM_TOO_LARGE_OR_INVALID_TYPE);
+                        }
                     }
                 }
 
@@ -196,7 +203,6 @@ class MediaSendViewModel extends ViewModel {
     }
 
     void onSingleMediaSelected(@NonNull Context context, @NonNull Media media) {
-        selectedMedia.setValue(Collections.singletonList(media));
 
         repository.getPopulatedMedia(context, Collections.singletonList(media), populatedMedia -> {
             ThreadUtil.runOnMain(() -> {
@@ -590,6 +596,10 @@ class MediaSendViewModel extends ViewModel {
         return sentMediaQuality;
     }
 
+    @NonNull LiveData<Boolean> getShowMediaQualityToggle() {
+        return showMediaQualityToggle;
+    }
+
     @NonNull
     MediaConstraints getMediaConstraints() {
         return mediaConstraints;
@@ -707,7 +717,7 @@ class MediaSendViewModel extends ViewModel {
     }
 
     enum Error {
-        ITEM_TOO_LARGE, TOO_MANY_ITEMS, NO_ITEMS, ONLY_ITEM_TOO_LARGE
+        ITEM_TOO_LARGE, TOO_MANY_ITEMS, NO_ITEMS, ONLY_ITEM_TOO_LARGE, ONLY_ITEM_IS_INVALID_TYPE, ITEM_TOO_LARGE_OR_INVALID_TYPE
     }
 
     enum Event {

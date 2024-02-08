@@ -1,8 +1,6 @@
 package su.sres.securesms.util;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
@@ -45,6 +43,8 @@ public class AttachmentUtil {
             attachment.isSticker())
     {
       return true;
+    } else if (attachment.isVideoGif()) {
+      return NotInCallConstraint.isNotInConnectedCall() && allowedTypes.contains("image");
     } else if (isNonDocumentType(contentType)) {
       return NotInCallConstraint.isNotInConnectedCall() && allowedTypes.contains(MediaUtil.getDiscreteMimeType(contentType));
     } else {

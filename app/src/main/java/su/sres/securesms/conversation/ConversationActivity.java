@@ -99,7 +99,6 @@ import su.sres.securesms.GroupMembersDialog;
 import su.sres.securesms.components.MaskView;
 import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.components.mention.MentionAnnotation;
-import su.sres.securesms.components.reminder.GroupsV1MigrationInitiationReminder;
 import su.sres.securesms.components.reminder.GroupsV1MigrationSuggestionsReminder;
 import su.sres.securesms.components.reminder.PendingGroupJoinRequestsReminder;
 import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
@@ -238,7 +237,7 @@ import su.sres.securesms.recipients.RecipientFormattingException;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.recipients.RecipientExporter;
-import su.sres.securesms.conversationlist.model.MessageResult;
+import su.sres.securesms.search.MessageResult;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.sms.OutgoingEncryptedMessage;
@@ -398,6 +397,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
   private ConversationGroupViewModel   groupViewModel;
   private MentionsPickerViewModel      mentionsViewModel;
   private GroupCallViewModel           groupCallViewModel;
+  private VoiceRecorderWakeLock        voiceRecorderWakeLock;
 
   private          LiveRecipient recipient;
   private          long          threadId;
@@ -428,6 +428,8 @@ public class ConversationActivity extends PassphraseRequiredActivity
       finish();
       return;
     }
+
+    voiceRecorderWakeLock = new VoiceRecorderWakeLock(this);
 
     new FullscreenHelper(this).showSystemUI();
 
@@ -1468,6 +1470,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
   @Override
   public void onSendAnywayAfterSafetyNumberChange(@NonNull List<RecipientId> changedRecipients) {
+    Log.d(TAG, "onSendAnywayAfterSafetyNumberChange");
     initializeIdentityRecords().addListener(new AssertedSuccessListener<Boolean>() {
       @Override
       public void onSuccess(Boolean result) {
@@ -1478,6 +1481,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
   @Override
   public void onMessageResentAfterSafetyNumberChange() {
+    Log.d(TAG, "onMessageResentAfterSafetyNumberChange");
     initializeIdentityRecords().addListener(new AssertedSuccessListener<Boolean>() {
       @Override
       public void onSuccess(Boolean result) {
@@ -1638,8 +1642,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
   private void initializeGroupV1MigrationsBanners() {
     groupViewModel.getGroupV1MigrationSuggestions()
                   .observe(this, s -> updateReminders());
-    groupViewModel.getShowGroupsV1MigrationBanner()
-                  .observe(this, b -> updateReminders());
   }
 
   private ListenableFuture<Boolean> initializeDraftFromDatabase() {
@@ -1799,7 +1801,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
     Optional<Reminder> inviteReminder              = inviteReminderModel.getReminder();
     Integer            actionableRequestingMembers = groupViewModel.getActionableRequestingMembers().getValue();
     List<RecipientId>  gv1MigrationSuggestions     = groupViewModel.getGroupV1MigrationSuggestions().getValue();
-    Boolean            gv1MigrationBanner          = groupViewModel.getShowGroupsV1MigrationBanner().getValue();
 
     if (UnauthorizedReminder.isEligible(this)) {
       reminderView.get().showReminder(new UnauthorizedReminder(this));
@@ -1825,15 +1826,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
       reminderView.get().setOnActionClickListener(id -> {
         if (id == R.id.reminder_action_review_join_requests) {
           startActivity(ManagePendingAndRequestingMembersActivity.newIntent(this, getRecipient().getGroupId().get().requireV2()));
-        }
-      });
-    } else if (gv1MigrationBanner == Boolean.TRUE && recipient.get().isPushV1Group()) {
-      reminderView.get().showReminder(new GroupsV1MigrationInitiationReminder(this));
-      reminderView.get().setOnActionClickListener(actionId -> {
-        if (actionId == R.id.reminder_action_gv1_initiation_update_group) {
-          GroupsV1MigrationInitiationBottomSheetDialogFragment.showForInitiation(getSupportFragmentManager(), recipient.getId());
-        } else if (actionId == R.id.reminder_action_gv1_initiation_not_now) {
-          groupViewModel.onMigrationInitiationReminderBannerDismissed(recipient.getId());
         }
       });
     } else if (gv1MigrationSuggestions != null && gv1MigrationSuggestions.size() > 0 && recipient.get().isPushV2Group()) {
@@ -1963,6 +1955,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     cancelJoinRequest      = findViewById(R.id.conversation_cancel_request);
     joinGroupCallButton    = findViewById(R.id.conversation_group_call_join);
 
+    container.setIsBubble(isInBubble());
     container.addOnKeyboardShownListener(this);
     inputPanel.setListener(this);
     inputPanel.setMediaListener(this);
@@ -2114,7 +2107,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
       if (!result.getResults().isEmpty()) {
         MessageResult messageResult = result.getResults().get(result.getPosition());
-        fragment.jumpToMessage(messageResult.messageRecipient.getId(), messageResult.receivedTimestampMs, searchViewModel::onMissingResult);
+        fragment.jumpToMessage(messageResult.getMessageRecipient().getId(), messageResult.getReceivedTimestampMs(), searchViewModel::onMissingResult);
       }
 
       searchNav.setData(result.getPosition(), result.getResults().size());
@@ -2994,12 +2987,14 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
   @Override
   public void onRecorderLocked() {
+    voiceRecorderWakeLock.acquire();
     updateToggleButtonState();
     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
   }
 
   @Override
   public void onRecorderFinished() {
+    voiceRecorderWakeLock.release();
     updateToggleButtonState();
     Vibrator vibrator = ServiceUtil.getVibrator(this);
     vibrator.vibrate(20);
@@ -3056,6 +3051,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
   @Override
   public void onRecorderCanceled() {
+    voiceRecorderWakeLock.release();
     updateToggleButtonState();
     Vibrator vibrator = ServiceUtil.getVibrator(this);
     vibrator.vibrate(50);

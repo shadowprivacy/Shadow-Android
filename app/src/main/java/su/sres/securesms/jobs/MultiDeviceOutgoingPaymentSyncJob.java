@@ -16,7 +16,9 @@ import su.sres.securesms.net.NotPushRegisteredException;
 import su.sres.securesms.payments.proto.PaymentMetaData;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.TextSecurePreferences;
+
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.messages.multidevice.OutgoingPaymentMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
@@ -40,10 +42,10 @@ public final class MultiDeviceOutgoingPaymentSyncJob extends BaseJob {
 
   public MultiDeviceOutgoingPaymentSyncJob(@NonNull UUID sentPaymentId) {
     this(new Parameters.Builder()
-                       .setQueue("MultiDeviceOutgoingPaymentSyncJob")
-                       .addConstraint(NetworkConstraint.KEY)
-                       .setLifespan(TimeUnit.DAYS.toMillis(1))
-                       .build(),
+             .setQueue("MultiDeviceOutgoingPaymentSyncJob")
+             .addConstraint(NetworkConstraint.KEY)
+             .setLifespan(TimeUnit.DAYS.toMillis(1))
+             .build(),
          sentPaymentId);
   }
 
@@ -57,8 +59,8 @@ public final class MultiDeviceOutgoingPaymentSyncJob extends BaseJob {
   @Override
   public @NonNull Data serialize() {
     return new Data.Builder()
-                   .putString(KEY_UUID, uuid.toString())
-                   .build();
+        .putString(KEY_UUID, uuid.toString())
+        .build();
   }
 
   @Override
@@ -114,8 +116,8 @@ public final class MultiDeviceOutgoingPaymentSyncJob extends BaseJob {
 
 
     ApplicationDependencies.getSignalServiceMessageSender()
-                           .sendMessage(SignalServiceSyncMessage.forOutgoingPayment(outgoingPaymentMessage),
-                                        UnidentifiedAccessUtil.getAccessForSync(context));
+                           .sendSyncMessage(SignalServiceSyncMessage.forOutgoingPayment(outgoingPaymentMessage),
+                                            UnidentifiedAccessUtil.getAccessForSync(context));
   }
 
   @Override

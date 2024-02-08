@@ -26,24 +26,13 @@ import android.os.Parcelable;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.Contacts;
-import android.provider.ContactsContract.PhoneLookup;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 
-import com.annimon.stream.Stream;
-
-import su.sres.securesms.R;
-import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.GroupDatabase;
-import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.phonenumbers.PhoneNumberFormatter;
-import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.SqlUtil;
-import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -170,41 +159,6 @@ public class ContactAccessor {
     }
 
     return contactData;
-  }
-
-  public List<String> getNumbersForThreadSearchFilter(Context context, String constraint) {
-    LinkedList<String> numberList = new LinkedList<>();
-    try (Cursor cursor = DatabaseFactory.getRecipientDatabase(context).queryAllContacts(constraint)) {
-
-      while (cursor != null && cursor.moveToNext()) {
-        String phone = cursor.getString(cursor.getColumnIndexOrThrow(RecipientDatabase.PHONE));
-        String email = cursor.getString(cursor.getColumnIndexOrThrow(RecipientDatabase.EMAIL));
-
-        numberList.add(Util.getFirstNonEmpty(phone, email));
-      }
-    }
-
-    GroupDatabase.Reader reader = null;
-    GroupRecord record;
-
-    try {
-      reader = DatabaseFactory.getGroupDatabase(context).getGroupsFilteredByTitle(constraint, true, false);
-
-      while ((record = reader.getNext()) != null) {
-        numberList.add(record.getId().toString());
-      }
-    } finally {
-      if (reader != null)
-        reader.close();
-    }
-
-    if (context.getString(R.string.note_to_self).toLowerCase().contains(constraint.toLowerCase()) &&
-            !numberList.contains(TextSecurePreferences.getLocalNumber(context)))
-    {
-      numberList.add(TextSecurePreferences.getLocalNumber(context));
-    }
-
-    return numberList;
   }
 
   public CharSequence phoneTypeToString(Context mContext, int type, CharSequence label) {

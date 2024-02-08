@@ -45,6 +45,7 @@ import su.sres.securesms.database.model.Mention;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
+import su.sres.securesms.database.model.SmsMessageRecord;
 import su.sres.securesms.database.model.StickerRecord;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -69,12 +70,14 @@ import su.sres.securesms.jobs.MultiDeviceStickerPackSyncJob;
 import su.sres.securesms.jobs.PaymentLedgerUpdateJob;
 import su.sres.securesms.jobs.PaymentTransactionCheckJob;
 import su.sres.securesms.jobs.ProfileKeySendJob;
+import su.sres.securesms.jobs.PushGroupSendJob;
 import su.sres.securesms.jobs.PushProcessMessageJob;
 import su.sres.securesms.jobs.RefreshAttributesJob;
 import su.sres.securesms.jobs.RefreshOwnProfileJob;
 import su.sres.securesms.jobs.RequestGroupInfoJob;
 import su.sres.securesms.jobs.RetrieveProfileJob;
 import su.sres.securesms.jobs.SendDeliveryReceiptJob;
+import su.sres.securesms.jobs.SenderKeyDistributionSendJob;
 import su.sres.securesms.jobs.StickerPackDownloadJob;
 import su.sres.securesms.jobs.TrimThreadJob;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -104,6 +107,7 @@ import su.sres.securesms.sms.OutgoingEncryptedMessage;
 import su.sres.securesms.sms.OutgoingEndSessionMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
 import su.sres.securesms.stickers.StickerLocator;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.GroupUtil;
 import su.sres.securesms.util.Hex;
 import su.sres.securesms.util.IdentityUtil;
@@ -112,10 +116,14 @@ import su.sres.securesms.util.RemoteDeleteUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 
+import org.whispersystems.libsignal.SignalProtocolAddress;
+import org.whispersystems.libsignal.protocol.DecryptionErrorMessage;
+import org.whispersystems.libsignal.protocol.SenderKeyDistributionMessage;
 import org.whispersystems.libsignal.state.SessionStore;
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
 import su.sres.signalservice.api.messages.SignalServiceContent;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
@@ -145,6 +153,7 @@ import su.sres.signalservice.api.messages.multidevice.ViewOnceOpenMessage;
 import su.sres.signalservice.api.messages.multidevice.ViewedMessage;
 import su.sres.signalservice.api.messages.shared.SharedContact;
 import su.sres.signalservice.api.payments.Money;
+import su.sres.signalservice.api.push.DistributionId;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.io.IOException;
@@ -221,6 +230,10 @@ public final class MessageContentProcessor {
       }
 
       log(String.valueOf(content.getTimestamp()), "Beginning message processing.");
+
+      if (content.getSenderKeyDistributionMessage().isPresent()) {
+        handleSenderKeyDistributionMessage(content.getSender(), content.getSenderDevice(), content.getSenderKeyDistributionMessage().get());
+      }
 
       if (content.getDataMessage().isPresent()) {
         SignalServiceDataMessage message = content.getDataMessage().get();
@@ -333,6 +346,8 @@ public final class MessageContentProcessor {
         else if (message.isViewedReceipt()) handleViewedReceipt(content, message);
       } else if (content.getTypingMessage().isPresent()) {
         handleTypingMessage(content, content.getTypingMessage().get());
+      } else if (content.getDecryptionErrorMessage().isPresent()) {
+        handleRetryReceipt(content, content.getDecryptionErrorMessage().get());
       } else {
         warn(String.valueOf(content.getTimestamp()), "Got unrecognized message!");
       }
@@ -1561,6 +1576,12 @@ public final class MessageContentProcessor {
     }
   }
 
+  private void handleSenderKeyDistributionMessage(@NonNull SignalServiceAddress address, int deviceId, @NonNull SenderKeyDistributionMessage message) {
+    log("Processing SenderKeyDistributionMessage.");
+    SignalServiceMessageSender sender = ApplicationDependencies.getSignalServiceMessageSender();
+    sender.processSenderKeyDistributionMessage(new SignalProtocolAddress(address.getIdentifier(), deviceId), message);
+  }
+
   private void handleNeedsDeliveryReceipt(@NonNull SignalServiceContent content,
                                           @NonNull SignalServiceDataMessage message)
   {
@@ -1666,6 +1687,81 @@ public final class MessageContentProcessor {
     } else {
       Log.d(TAG, "Typing stopped on thread " + threadId);
       ApplicationDependencies.getTypingStatusRepository().onTypingStopped(context, threadId, author, content.getSenderDevice(), false);
+    }
+  }
+
+  private void handleRetryReceipt(@NonNull SignalServiceContent content, @NonNull DecryptionErrorMessage decryptionErrorMessage) {
+    if (!FeatureFlags.senderKey()) {
+      Log.w(TAG, "Sender key not enabled, skipping retry receipt.");
+      return;
+    }
+
+    Recipient requester     = Recipient.externalHighTrustPush(context, content.getSender());
+    long      sentTimestamp = decryptionErrorMessage.getTimestamp();
+
+    if (!requester.hasUuid()) {
+      warn(String.valueOf(content.getTimestamp()), "[RetryReceipt] Requester " + requester.getId() + " somehow has no UUID! timestamp: " + sentTimestamp);
+      return;
+    }
+
+    MessageRecord messageRecord = DatabaseFactory.getMmsSmsDatabase(context).getMessageFor(sentTimestamp, Recipient.self().getId());
+
+    if (messageRecord == null) {
+      warn(String.valueOf(content.getTimestamp()), "[RetryReceipt] Unable to find message for " + requester.getId() + " with timestamp " + sentTimestamp);
+      // TODO Send distribution message?
+      return;
+    }
+
+    Recipient threadRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(messageRecord.getThreadId());
+
+    if (threadRecipient == null) {
+      warn(String.valueOf(content.getTimestamp()), "[RetryReceipt] Unable to find a recipient for thread " + messageRecord.getThreadId());
+      return;
+    }
+
+    if (messageRecord.isMms()) {
+      log(String.valueOf(content.getTimestamp()), "[RetryReceipt] MMS " + messageRecord.getId());
+      MmsMessageRecord mms = (MmsMessageRecord) messageRecord;
+
+      if (threadRecipient.isPushV2Group()) {
+        DistributionId        distributionId   = DatabaseFactory.getGroupDatabase(context).getOrCreateDistributionId(threadRecipient.requireGroupId().requireV2());
+        SignalProtocolAddress requesterAddress = new SignalProtocolAddress(requester.requireUuid().toString(), decryptionErrorMessage.getDeviceId());
+
+        DatabaseFactory.getSenderKeySharedDatabase(context).delete(distributionId, Collections.singleton(requesterAddress));
+
+        GroupReceiptDatabase  receiptDatabase          = DatabaseFactory.getGroupReceiptDatabase(context);
+        GroupReceiptInfo      receiptInfo              = receiptDatabase.getGroupReceiptInfo(mms.getId(), requester.getId());
+        boolean               needsDistributionMessage = true;
+
+        if (receiptInfo == null) {
+          warn(String.valueOf(content.getTimestamp()), "[RetryReceipt] Requester was never sent message " + mms.getId() + "! Cannot resend it.");
+        } else if (receiptInfo.getStatus() >= GroupReceiptDatabase.STATUS_DELIVERED) {
+          log(String.valueOf(content.getTimestamp()), "[RetryReceipt] The message was successfully delivered to the requester. Not resending.");
+        } else {
+          long messageAge = System.currentTimeMillis() - mms.getDateSent();
+
+          if (messageAge < FeatureFlags.retryRespondMaxAge()) {
+            log(String.valueOf(content.getTimestamp()), "[RetryReceipt] The message was successfully sent to the requester, but not delivered. Resending.");
+
+            DatabaseFactory.getGroupReceiptDatabase(context).update(requester.getId(), mms.getId(), GroupReceiptDatabase.STATUS_UNDELIVERED, System.currentTimeMillis());
+            ApplicationDependencies.getJobManager().startChain(new SenderKeyDistributionSendJob(requester.getId(), threadRecipient.requireGroupId().requireV2()))
+                                   .then(new PushGroupSendJob(mms.getId(), threadRecipient.getId(), requester.getId(), false))
+                                   .enqueue();
+
+            needsDistributionMessage = false;
+          } else {
+            warn(String.valueOf(content.getTimestamp()), "[RetryReceipt] The message was successfully sent to the requester, but not delivered. But it's " + messageAge + " ms old, so we're not resending.");
+          }
+        }
+
+        if (needsDistributionMessage && threadRecipient.getParticipants().contains(requester)) {
+          warn(String.valueOf(content.getTimestamp()), "[RetryReceipt] Requester is, however, in the group now. Sending distribution message.");
+          ApplicationDependencies.getJobManager().add(new SenderKeyDistributionSendJob(requester.getId(), threadRecipient.requireGroupId().requireV2()));
+        }
+      }
+    } else {
+      log(String.valueOf(content.getTimestamp()), "[RetryReceipt] SMS " + messageRecord.getId());
+      SmsMessageRecord sms = (SmsMessageRecord) messageRecord;
     }
   }
 

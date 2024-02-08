@@ -35,6 +35,7 @@ import su.sres.signalservice.internal.push.AttachmentV2UploadAttributes;
 import su.sres.signalservice.internal.push.AttachmentV3UploadAttributes;
 import su.sres.signalservice.internal.push.OutgoingPushMessageList;
 import su.sres.signalservice.internal.push.ProofRequiredResponse;
+import su.sres.signalservice.internal.push.SendGroupMessageResponse;
 import su.sres.signalservice.internal.push.SendMessageResponse;
 import su.sres.signalservice.internal.util.JsonUtil;
 import su.sres.signalservice.internal.util.Util;
@@ -49,6 +50,7 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -177,6 +179,33 @@ public class SignalServiceMessagePipe {
         websocket.sendResponse(response);
       }
     }
+  }
+
+  public Future<SendGroupMessageResponse> sendToGroup(byte[] body, byte[] joinedUnidentifiedAccess, long timestamp, boolean online) throws IOException {
+    List<String> headers = new LinkedList<String>() {{
+      add("content-type:application/vnd.signal-messenger.mrm");
+      add("Unidentified-Access-Key:" + Base64.encodeBytes(joinedUnidentifiedAccess));
+    }};
+
+    String path = String.format(Locale.US, "/v1/messages/multi_recipient?ts=%s&online=%s", timestamp, online);
+
+    WebSocketRequestMessage requestMessage = WebSocketRequestMessage.newBuilder()
+                                                                    .setId(new SecureRandom().nextLong())
+                                                                    .setVerb("PUT")
+                                                                    .setPath(path)
+                                                                    .addAllHeaders(headers)
+                                                                    .setBody(ByteString.copyFrom(body))
+                                                                    .build();
+
+    ListenableFuture<WebsocketResponse> response = websocket.sendRequest(requestMessage);
+
+    return FutureTransformers.map(response, value -> {
+      if (value.getStatus() == 200) {
+        return JsonUtil.fromJson(value.getBody(), SendGroupMessageResponse.class);
+      } else {
+        throw new NonSuccessfulResponseCodeException(value.getStatus());
+      }
+    });
   }
 
   public Future<SendMessageResponse> send(OutgoingPushMessageList list, Optional<UnidentifiedAccess> unidentifiedAccess) throws IOException {

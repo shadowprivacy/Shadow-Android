@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.annimon.stream.Stream;
 import com.dd.CircularProgressButton;
 
+import java.util.Objects;
+
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.LinkPreviewView;
@@ -23,6 +25,7 @@ import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.sharing.MultiShareArgs;
 import su.sres.securesms.sharing.MultiShareDialogs;
+import su.sres.securesms.sharing.ShareFlowConstants;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.ViewUtil;
@@ -34,142 +37,145 @@ import su.sres.securesms.util.text.AfterTextChanged;
  */
 public class ShareInterstitialActivity extends PassphraseRequiredActivity {
 
-    private static final String ARGS = "args";
+  private static final String ARGS = "args";
 
-    private ShareInterstitialViewModel viewModel;
-    private LinkPreviewViewModel       linkPreviewViewModel;
-    private CircularProgressButton     confirm;
-    private RecyclerView               contactsRecycler;
-    private Toolbar                    toolbar;
-    private LinkPreviewView            preview;
+  private ShareInterstitialViewModel viewModel;
+  private LinkPreviewViewModel       linkPreviewViewModel;
+  private CircularProgressButton     confirm;
+  private RecyclerView               contactsRecycler;
+  private Toolbar                    toolbar;
+  private LinkPreviewView            preview;
 
-    private final DynamicTheme                      dynamicTheme = new DynamicNoActionBarTheme();
-    private final ShareInterstitialSelectionAdapter adapter      = new ShareInterstitialSelectionAdapter();
+  private final DynamicTheme                      dynamicTheme = new DynamicNoActionBarTheme();
+  private final ShareInterstitialSelectionAdapter adapter      = new ShareInterstitialSelectionAdapter();
 
-    public static Intent createIntent(@NonNull Context context, @NonNull MultiShareArgs multiShareArgs) {
-        Intent intent = new Intent(context, ShareInterstitialActivity.class);
+  public static Intent createIntent(@NonNull Context context, @NonNull MultiShareArgs multiShareArgs) {
+    Intent intent = new Intent(context, ShareInterstitialActivity.class);
 
-        intent.putExtra(ARGS, multiShareArgs);
+    intent.putExtra(ARGS, multiShareArgs);
 
-        return intent;
+    return intent;
+  }
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState, boolean ready) {
+    dynamicTheme.onCreate(this);
+    setContentView(R.layout.share_interstitial_activity);
+
+    MultiShareArgs args = getIntent().getParcelableExtra(ARGS);
+
+    initializeViewModels(args);
+    initializeViews(args);
+    initializeObservers();
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    dynamicTheme.onResume(this);
+  }
+
+  private void initializeViewModels(@NonNull MultiShareArgs args) {
+    ShareInterstitialRepository        repository = new ShareInterstitialRepository();
+    ShareInterstitialViewModel.Factory factory    = new ShareInterstitialViewModel.Factory(args, repository);
+
+    viewModel = ViewModelProviders.of(this, factory).get(ShareInterstitialViewModel.class);
+
+    LinkPreviewRepository        linkPreviewRepository       = new LinkPreviewRepository();
+    LinkPreviewViewModel.Factory linkPreviewViewModelFactory = new LinkPreviewViewModel.Factory(linkPreviewRepository);
+
+    linkPreviewViewModel = ViewModelProviders.of(this, linkPreviewViewModelFactory).get(LinkPreviewViewModel.class);
+
+    boolean hasSms = Stream.of(args.getShareContactAndThreads())
+                           .anyMatch(c -> {
+                             Recipient recipient = Recipient.resolved(c.getRecipientId());
+                             return !recipient.isRegistered() || recipient.isForceSmsSelection();
+                           });
+
+    if (hasSms) {
+      linkPreviewViewModel.onTransportChanged(hasSms);
     }
+  }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState, boolean ready) {
-        dynamicTheme.onCreate(this);
-        setContentView(R.layout.share_interstitial_activity);
+  private void initializeViews(@NonNull MultiShareArgs args) {
+    confirm = findViewById(R.id.share_confirm);
+    toolbar = findViewById(R.id.toolbar);
+    preview = findViewById(R.id.link_preview);
 
-        MultiShareArgs args = getIntent().getParcelableExtra(ARGS);
+    confirm.setOnClickListener(unused -> onConfirm());
 
-        initializeViewModels(args);
-        initializeViews(args);
-        initializeObservers();
-    }
+    SelectionAwareEmojiEditText text = findViewById(R.id.text);
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        dynamicTheme.onResume(this);
-    }
+    toolbar.setNavigationOnClickListener(unused -> finish());
 
-    private void initializeViewModels(@NonNull MultiShareArgs args) {
-        ShareInterstitialRepository        repository = new ShareInterstitialRepository();
-        ShareInterstitialViewModel.Factory factory    = new ShareInterstitialViewModel.Factory(args, repository);
+    text.addTextChangedListener(new AfterTextChanged(editable -> {
+      linkPreviewViewModel.onTextChanged(this, editable.toString(), text.getSelectionStart(), text.getSelectionEnd());
+      viewModel.onDraftTextChanged(editable.toString());
+    }));
 
-        viewModel = ViewModelProviders.of(this, factory).get(ShareInterstitialViewModel.class);
+    //noinspection CodeBlock2Expr
+    text.setOnSelectionChangedListener(((selStart, selEnd) -> {
+      linkPreviewViewModel.onTextChanged(this, text.getText().toString(), text.getSelectionStart(), text.getSelectionEnd());
+    }));
 
-        LinkPreviewRepository        linkPreviewRepository       = new LinkPreviewRepository();
-        LinkPreviewViewModel.Factory linkPreviewViewModelFactory = new LinkPreviewViewModel.Factory(linkPreviewRepository);
+    preview.setCloseClickedListener(linkPreviewViewModel::onUserCancel);
 
-        linkPreviewViewModel = ViewModelProviders.of(this, linkPreviewViewModelFactory).get(LinkPreviewViewModel.class);
+    int defaultRadius = getResources().getDimensionPixelSize(R.dimen.thumbnail_default_radius);
+    preview.setCorners(defaultRadius, defaultRadius);
 
-        boolean hasSms = Stream.of(args.getShareContactAndThreads())
-                .anyMatch(c -> {
-                    Recipient recipient = Recipient.resolved(c.getRecipientId());
-                    return !recipient.isRegistered() || recipient.isForceSmsSelection();
-                });
+    text.setText(args.getDraftText());
+    ViewUtil.focusAndMoveCursorToEndAndOpenKeyboard(text);
 
-        if (hasSms) {
-            linkPreviewViewModel.onTransportChanged(hasSms);
-        }
-    }
+    contactsRecycler = findViewById(R.id.selected_list);
+    contactsRecycler.setAdapter(adapter);
 
-    private void initializeViews(@NonNull MultiShareArgs args) {
-        confirm = findViewById(R.id.share_confirm);
-        toolbar = findViewById(R.id.toolbar);
-        preview = findViewById(R.id.link_preview);
+    RecyclerView.ItemAnimator itemAnimator = Objects.requireNonNull(contactsRecycler.getItemAnimator());
+    ShareFlowConstants.applySelectedContactsRecyclerAnimationSpeeds(itemAnimator);
 
-        confirm.setOnClickListener(unused -> onConfirm());
+    confirm.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+      int pad = Math.abs(v.getWidth() + ViewUtil.dpToPx(16));
+      ViewUtil.setPaddingEnd(contactsRecycler, pad);
+    });
+  }
 
-        SelectionAwareEmojiEditText text = findViewById(R.id.text);
+  private void initializeObservers() {
+    viewModel.getRecipients().observe(this, models -> adapter.submitList(models,
+                                                                         () -> contactsRecycler.scrollToPosition(models.size() - 1)));
+    viewModel.hasDraftText().observe(this, this::handleHasDraftText);
 
-        toolbar.setNavigationOnClickListener(unused -> finish());
+    linkPreviewViewModel.getLinkPreviewState().observe(this, linkPreviewState -> {
+      preview.setVisibility(View.VISIBLE);
+      if (linkPreviewState.getError() != null) {
+        preview.setNoPreview(linkPreviewState.getError());
+        viewModel.onLinkPreviewChanged(null);
+      } else if (linkPreviewState.isLoading()) {
+        preview.setLoading();
+        viewModel.onLinkPreviewChanged(null);
+      } else if (linkPreviewState.getLinkPreview().isPresent()) {
+        preview.setLinkPreview(GlideApp.with(this), linkPreviewState.getLinkPreview().get(), true);
+        viewModel.onLinkPreviewChanged(linkPreviewState.getLinkPreview().get());
+      } else if (!linkPreviewState.hasLinks()) {
+        preview.setVisibility(View.GONE);
+        viewModel.onLinkPreviewChanged(null);
+      }
+    });
+  }
 
-        text.addTextChangedListener(new AfterTextChanged(editable -> {
-            linkPreviewViewModel.onTextChanged(this, editable.toString(), text.getSelectionStart(), text.getSelectionEnd());
-            viewModel.onDraftTextChanged(editable.toString());
-        }));
+  private void handleHasDraftText(boolean hasDraftText) {
+    confirm.setEnabled(hasDraftText);
+    confirm.setAlpha(hasDraftText ? 1f : 0.5f);
+  }
 
-        //noinspection CodeBlock2Expr
-        text.setOnSelectionChangedListener(((selStart, selEnd) -> {
-            linkPreviewViewModel.onTextChanged(this, text.getText().toString(), text.getSelectionStart(), text.getSelectionEnd());
-        }));
+  private void onConfirm() {
+    confirm.setClickable(false);
+    confirm.setIndeterminateProgressMode(true);
+    confirm.setProgress(50);
 
-        preview.setCloseClickedListener(linkPreviewViewModel::onUserCancel);
-
-        int defaultRadius = getResources().getDimensionPixelSize(R.dimen.thumbnail_default_radius);
-        preview.setCorners(defaultRadius, defaultRadius);
-
-        text.setText(args.getDraftText());
-        ViewUtil.focusAndMoveCursorToEndAndOpenKeyboard(text);
-
-        contactsRecycler = findViewById(R.id.selected_list);
-        contactsRecycler.setAdapter(adapter);
-
-        confirm.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
-            int pad = Math.abs(v.getWidth() + ViewUtil.dpToPx(16));
-            ViewUtil.setPaddingEnd(contactsRecycler, pad);
-        });
-    }
-
-    private void initializeObservers() {
-        viewModel.getRecipients().observe(this, models -> adapter.submitList(models,
-                () -> contactsRecycler.scrollToPosition(models.size() - 1)));
-        viewModel.hasDraftText().observe(this, this::handleHasDraftText);
-
-        linkPreviewViewModel.getLinkPreviewState().observe(this, linkPreviewState -> {
-            preview.setVisibility(View.VISIBLE);
-            if (linkPreviewState.getError() != null) {
-                preview.setNoPreview(linkPreviewState.getError());
-                viewModel.onLinkPreviewChanged(null);
-            } else if (linkPreviewState.isLoading()) {
-                preview.setLoading();
-                viewModel.onLinkPreviewChanged(null);
-            } else if (linkPreviewState.getLinkPreview().isPresent()) {
-                preview.setLinkPreview(GlideApp.with(this), linkPreviewState.getLinkPreview().get(), true);
-                viewModel.onLinkPreviewChanged(linkPreviewState.getLinkPreview().get());
-            } else if (!linkPreviewState.hasLinks()) {
-                preview.setVisibility(View.GONE);
-                viewModel.onLinkPreviewChanged(null);
-            }
-        });
-    }
-
-    private void handleHasDraftText(boolean hasDraftText) {
-        confirm.setEnabled(hasDraftText);
-        confirm.setAlpha(hasDraftText ? 1f : 0.5f);
-    }
-
-    private void onConfirm() {
-        confirm.setClickable(false);
-        confirm.setIndeterminateProgressMode(true);
-        confirm.setProgress(50);
-
-        viewModel.send(results -> {
-            MultiShareDialogs.displayResultDialog(this, results, () -> {
-                setResult(RESULT_OK);
-                finish();
-            });
-        });
-    }
+    viewModel.send(results -> {
+      MultiShareDialogs.displayResultDialog(this, results, () -> {
+        setResult(RESULT_OK);
+        finish();
+      });
+    });
+  }
 }

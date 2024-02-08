@@ -6,18 +6,21 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.crypto.DatabaseSessionLock;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.SessionDatabase;
+import su.sres.securesms.database.SessionDatabase.RecipientDevice;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.signalservice.api.SignalServiceSessionStore;
 import su.sres.signalservice.api.SignalSessionLock;
 
+import org.whispersystems.libsignal.NoSessionException;
 import org.whispersystems.libsignal.SignalProtocolAddress;
 import org.whispersystems.libsignal.protocol.CiphertextMessage;
 import org.whispersystems.libsignal.state.SessionRecord;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TextSecureSessionStore implements SignalServiceSessionStore {
 
@@ -41,6 +44,25 @@ public class TextSecureSessionStore implements SignalServiceSessionStore {
       }
 
       return sessionRecord;
+    }
+  }
+
+  @Override
+  public List<SessionRecord> loadExistingSessions(List<SignalProtocolAddress> addresses) throws NoSessionException {
+    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+      List<RecipientDevice> ids = addresses.stream()
+                                           .map(address -> new RecipientDevice(RecipientId.fromExternalPush(address.getName()), address.getDeviceId()))
+                                           .collect(Collectors.toList());
+
+      List<SessionRecord> sessionRecords = DatabaseFactory.getSessionDatabase(context).load(ids);
+
+      if (sessionRecords.size() != addresses.size()) {
+        String message = "Mismatch! Asked for " + addresses.size() + " sessions, but only found " + sessionRecords.size() + "!";
+        Log.w(TAG, message);
+        throw new NoSessionException(message);
+      }
+
+      return sessionRecords;
     }
   }
 

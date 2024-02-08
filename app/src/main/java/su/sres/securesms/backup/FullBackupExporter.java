@@ -9,7 +9,6 @@ import androidx.documentfile.provider.DocumentFile;
 
 import android.text.TextUtils;
 
-import com.annimon.stream.function.Consumer;
 import com.annimon.stream.function.Predicate;
 import com.google.protobuf.ByteString;
 
@@ -24,12 +23,14 @@ import su.sres.securesms.crypto.ModernDecryptingPartInputStream;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.EmojiSearchDatabase;
 import su.sres.securesms.database.GroupReceiptDatabase;
-import su.sres.securesms.database.JobDatabase;
 import su.sres.securesms.database.KeyValueDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.MmsSmsColumns;
 import su.sres.securesms.database.OneTimePreKeyDatabase;
+import su.sres.securesms.database.PendingRetryReceiptDatabase;
 import su.sres.securesms.database.SearchDatabase;
+import su.sres.securesms.database.SenderKeyDatabase;
+import su.sres.securesms.database.SenderKeySharedDatabase;
 import su.sres.securesms.database.SessionDatabase;
 import su.sres.securesms.database.SignedPreKeyDatabase;
 import su.sres.securesms.database.SmsDatabase;
@@ -78,7 +79,10 @@ public class FullBackupExporter extends FullBackupBase {
       SessionDatabase.TABLE_NAME,
       SearchDatabase.SMS_FTS_TABLE_NAME,
       SearchDatabase.MMS_FTS_TABLE_NAME,
-      EmojiSearchDatabase.TABLE_NAME
+      EmojiSearchDatabase.TABLE_NAME,
+      SenderKeyDatabase.TABLE_NAME,
+      SenderKeySharedDatabase.TABLE_NAME,
+      PendingRetryReceiptDatabase.TABLE_NAME
   );
 
   public static void export(@NonNull Context context,

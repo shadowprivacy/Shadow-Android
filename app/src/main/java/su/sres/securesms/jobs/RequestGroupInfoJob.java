@@ -14,6 +14,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.signalservice.api.SignalServiceMessageSender;
+import su.sres.signalservice.api.crypto.ContentHint;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.messages.SignalServiceGroup;
@@ -85,9 +86,10 @@ public class RequestGroupInfoJob extends BaseJob  {
     SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
     Recipient                  recipient     = Recipient.resolved(source);
 
-    messageSender.sendMessage(RecipientUtil.toSignalServiceAddress(context, recipient),
-            UnidentifiedAccessUtil.getAccessFor(context, recipient),
-            message);
+    messageSender.sendDataMessage(RecipientUtil.toSignalServiceAddress(context, recipient),
+                                  UnidentifiedAccessUtil.getAccessFor(context, recipient),
+                                  ContentHint.IMPLICIT,
+                                  message);
   }
 
   @Override

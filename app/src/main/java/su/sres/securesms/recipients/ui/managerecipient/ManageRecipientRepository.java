@@ -13,6 +13,7 @@ import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.core.util.concurrent.SignalExecutors;
@@ -89,5 +90,14 @@ final class ManageRecipientRepository {
 
     void getActiveGroupCount(@NonNull Consumer<Integer> onComplete) {
         SignalExecutors.BOUNDED.execute(() -> onComplete.accept(DatabaseFactory.getGroupDatabase(context).getActiveGroupCount()));
+    }
+
+    @WorkerThread
+    boolean hasCustomNotifications(Recipient recipient) {
+        if (recipient.getNotificationChannel() != null || !NotificationChannels.supported()) {
+            return true;
+        }
+
+        return NotificationChannels.updateWithShortcutBasedChannel(context, recipient);
     }
 }

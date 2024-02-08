@@ -25,9 +25,11 @@ import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.provider.Telephony;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
+
 import android.telephony.TelephonyManager;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -46,6 +48,7 @@ import com.google.i18n.phonenumbers.Phonenumber;
 
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.components.ComposeText;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.ByteArrayOutputStream;
@@ -77,11 +80,11 @@ public class Util {
     return join(Arrays.asList(list), delimiter);
   }
 
-  public static String join(Collection<String> list, String delimiter) {
+  public static <T> String join(Collection<T> list, String delimiter) {
     StringBuilder result = new StringBuilder();
-    int i = 0;
+    int           i      = 0;
 
-    for (String item : list) {
+    for (T item : list) {
       result.append(item);
 
       if (++i < list.size())
@@ -226,11 +229,11 @@ public class Util {
   @SuppressLint("MissingPermission")
   public static Optional<Phonenumber.PhoneNumber> getDeviceNumber(Context context) {
     try {
-      final String           localNumber = ((TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE)).getLine1Number();
+      final String           localNumber = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getLine1Number();
       final Optional<String> countryIso  = getSimCountryIso(context);
 
       if (TextUtils.isEmpty(localNumber)) return Optional.absent();
-      if (!countryIso.isPresent())        return Optional.absent();
+      if (!countryIso.isPresent()) return Optional.absent();
 
       return Optional.fromNullable(PhoneNumberUtil.getInstance().parse(localNumber, countryIso.get()));
     } catch (NumberParseException e) {
@@ -240,7 +243,7 @@ public class Util {
   }
 
   public static Optional<String> getSimCountryIso(Context context) {
-    String simCountryIso = ((TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE)).getSimCountryIso();
+    String simCountryIso = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getSimCountryIso();
     return Optional.fromNullable(simCountryIso != null ? simCountryIso.toUpperCase() : null);
   }
 
@@ -249,7 +252,7 @@ public class Util {
   }
 
   @SafeVarargs
-  public static @NonNull <T> T firstNonNull(T ... ts) {
+  public static @NonNull <T> T firstNonNull(T... ts) {
     for (T t : ts) {
       if (t != null) {
         return t;
@@ -262,7 +265,7 @@ public class Util {
   public static <T> List<List<T>> partition(List<T> list, int partitionSize) {
     List<List<T>> results = new LinkedList<>();
 
-    for (int index=0;index<list.size();index+=partitionSize) {
+    for (int index = 0; index < list.size(); index += partitionSize) {
       int subListSize = Math.min(partitionSize, list.size() - index);
 
       results.add(list.subList(index, index + subListSize));
@@ -318,7 +321,7 @@ public class Util {
   }
 
   @SuppressLint("NewApi")
-  public static boolean isDefaultSmsProvider(Context context){
+  public static boolean isDefaultSmsProvider(Context context) {
     return context.getPackageName().equals(Telephony.Sms.getDefaultSmsPackage(context));
   }
 
@@ -364,7 +367,7 @@ public class Util {
 
   /**
    * @return The amount of time (in ms) until this build of Signal will be considered 'expired'.
-   *         Takes into account both the build age as well as any remote deprecation values.
+   * Takes into account both the build age as well as any remote deprecation values.
    */
   public static long getTimeUntilBuildExpiry() {
     if (SignalStore.misc().isClientDeprecated()) {
@@ -401,7 +404,7 @@ public class Util {
 
   public static @Nullable Uri uri(@Nullable String uri) {
     if (uri == null) return null;
-    else             return Uri.parse(uri);
+    else return Uri.parse(uri);
   }
 
   public static boolean isLowMemory(Context context) {
@@ -424,7 +427,7 @@ public class Util {
 
   public static @Nullable String readTextFromClipboard(@NonNull Context context) {
     {
-      ClipboardManager clipboardManager = (ClipboardManager)context.getSystemService(Context.CLIPBOARD_SERVICE);
+      ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
 
       if (clipboardManager.hasPrimaryClip() && clipboardManager.getPrimaryClip().getItemCount() > 0) {
         return clipboardManager.getPrimaryClip().getItemAt(0).getText().toString();
@@ -436,16 +439,16 @@ public class Util {
 
   public static void writeTextToClipboard(@NonNull Context context, @NonNull String text) {
     {
-      ClipboardManager clipboardManager = (ClipboardManager)context.getSystemService(Context.CLIPBOARD_SERVICE);
+      ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
       clipboardManager.setPrimaryClip(ClipData.newPlainText("Safety numbers", text));
     }
   }
 
   public static int toIntExact(long value) {
-    if ((int)value != value) {
+    if ((int) value != value) {
       throw new ArithmeticException("integer overflow");
     }
-    return (int)value;
+    return (int) value;
   }
 
   public static boolean isStringEquals(String first, String second) {
@@ -466,7 +469,7 @@ public class Util {
   }
 
   @SafeVarargs
-  public static <T> List<T> concatenatedList(Collection <T>... items) {
+  public static <T> List<T> concatenatedList(Collection<T>... items) {
     final List<T> concat = new ArrayList<>(Stream.of(items).reduce(0, (sum, list) -> sum + list.size()));
 
     for (Collection<T> list : items) {
