@@ -2,15 +2,12 @@ package su.sres.securesms.reactions.any;
 
 import android.content.Context;
 
-import androidx.annotation.AttrRes;
 import androidx.annotation.NonNull;
-import androidx.annotation.StringRes;
 
 import com.annimon.stream.Stream;
 
 import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.R;
-import su.sres.securesms.components.emoji.EmojiUtil;
 import su.sres.securesms.components.emoji.RecentEmojiPageModel;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
@@ -45,7 +42,7 @@ final class ReactWithAnyEmojiRepository {
 
     emojiPages.addAll(Stream.of(EmojiSource.getLatest().getDisplayPages())
                             .filterNot(p -> p.getIconAttr() == EmojiCategory.EMOTICONS.getIcon())
-                            .map(page -> new ReactWithAnyEmojiPage(Collections.singletonList(new ReactWithAnyEmojiPageBlock(getCategoryLabel(page.getIconAttr()), page))))
+                            .map(page -> new ReactWithAnyEmojiPage(Collections.singletonList(new ReactWithAnyEmojiPageBlock(EmojiCategory.getCategoryLabel(page.getIconAttr()), page))))
                             .toList());
   }
 
@@ -88,31 +85,5 @@ final class ReactWithAnyEmojiRepository {
         Log.w(TAG, "Message not found! Ignoring.");
       }
     });
-  }
-
-  private @StringRes
-  int getCategoryLabel(@AttrRes int iconAttr) {
-    switch (iconAttr) {
-      case R.attr.emoji_category_people:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__smileys_and_people;
-      case R.attr.emoji_category_nature:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__nature;
-      case R.attr.emoji_category_foods:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__food;
-      case R.attr.emoji_category_activity:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__activities;
-      case R.attr.emoji_category_places:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__places;
-      case R.attr.emoji_category_objects:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__objects;
-      case R.attr.emoji_category_symbols:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__symbols;
-      case R.attr.emoji_category_flags:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__flags;
-      case R.attr.emoji_category_emoticons:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__emoticons;
-      default:
-        throw new AssertionError();
-    }
   }
 }

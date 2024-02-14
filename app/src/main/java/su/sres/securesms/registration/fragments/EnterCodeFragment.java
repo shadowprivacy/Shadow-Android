@@ -17,6 +17,8 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.IOException;
+
 import su.sres.securesms.R;
 
 import su.sres.securesms.components.registration.VerificationCodeView;
@@ -28,8 +30,10 @@ import su.sres.securesms.registration.service.CodeVerificationRequest;
 import su.sres.securesms.registration.service.RegistrationService;
 import su.sres.securesms.registration.viewmodel.RegistrationViewModel;
 import su.sres.securesms.util.CommunicationActions;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.SupportEmailUtil;
 import su.sres.securesms.util.concurrent.AssertedSuccessListener;
+import su.sres.securesms.util.concurrent.SimpleTask;
 
 
 public final class EnterCodeFragment extends BaseRegistrationFragment
@@ -81,11 +85,23 @@ public final class EnterCodeFragment extends BaseRegistrationFragment
 
                         @Override
                         public void onSuccessfulRegistration() {
-                            keyboard.displaySuccess().addListener(new AssertedSuccessListener<Boolean>() {
-                                @Override
-                                public void onSuccess(Boolean result) {
-                                    handleSuccessfulRegistration();
+                            SimpleTask.run(() -> {
+                                long startTime = System.currentTimeMillis();
+                                try {
+                                    FeatureFlags.refreshSync();
+                                    Log.i(TAG, "Took " + (System.currentTimeMillis() - startTime) + " ms to get feature flags.");
+                                } catch (IOException e) {
+                                    Log.w(TAG, "Failed to refresh flags after " + (System.currentTimeMillis() - startTime) + " ms.", e);
                                 }
+
+                                return null;
+                            }, none -> {
+                                keyboard.displaySuccess().addListener(new AssertedSuccessListener<Boolean>() {
+                                    @Override
+                                    public void onSuccess(Boolean result) {
+                                        handleSuccessfulRegistration();
+                                    }
+                                });
                             });
                         }
 

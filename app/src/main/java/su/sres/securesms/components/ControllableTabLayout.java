@@ -1,9 +1,14 @@
 package su.sres.securesms.components;
 
 import android.content.Context;
+
 import com.google.android.material.tabs.TabLayout;
+
 import android.util.AttributeSet;
 import android.view.View;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.List;
 
@@ -12,30 +17,56 @@ import java.util.List;
  */
 public class ControllableTabLayout extends TabLayout {
 
-    private List<View> touchables;
+  private List<View> touchables;
 
-    public ControllableTabLayout(Context context) {
-        super(context);
+  private NewTabListener newTabListener;
+
+  public ControllableTabLayout(Context context) {
+    super(context);
+  }
+
+  public ControllableTabLayout(Context context, AttributeSet attrs) {
+    super(context, attrs);
+  }
+
+  public ControllableTabLayout(Context context, AttributeSet attrs, int defStyleAttr) {
+    super(context, attrs, defStyleAttr);
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    if (isEnabled() && !enabled) {
+      touchables = getTouchables();
     }
 
-    public ControllableTabLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
+    for (View touchable : touchables) {
+      touchable.setClickable(enabled);
     }
 
-    public ControllableTabLayout(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
+    super.setEnabled(enabled);
+  }
+
+  public void setNewTabListener(@Nullable NewTabListener newTabListener) {
+    this.newTabListener = newTabListener;
+  }
+
+  @Override
+  public @NonNull Tab newTab() {
+    Tab tab = super.newTab();
+
+    if (newTabListener != null) {
+      newTabListener.onNewTab(tab);
     }
 
-    @Override
-    public void setEnabled(boolean enabled) {
-        if (isEnabled() && !enabled) {
-            touchables = getTouchables();
-        }
+    return tab;
+  }
 
-        for (View touchable : touchables) {
-            touchable.setClickable(enabled);
-        }
-
-        super.setEnabled(enabled);
-    }
+  /**
+   * Allows implementor to modify tabs when they are created, before they are added to the tab layout.
+   * This is useful for loading custom views, to ensure that time is not spent inflating these views
+   * as the user is switching between pages.
+   */
+  public interface NewTabListener {
+    void onNewTab(@NonNull Tab tab);
+  }
 }

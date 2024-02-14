@@ -1,0 +1,45 @@
+package su.sres.securesms.components.settings.conversation.preferences
+
+import android.view.View
+import androidx.core.view.ViewCompat
+import su.sres.securesms.R
+import su.sres.securesms.components.AvatarImageView
+import su.sres.securesms.components.settings.PreferenceModel
+import su.sres.securesms.recipients.Recipient
+import su.sres.securesms.util.MappingAdapter
+import su.sres.securesms.util.MappingViewHolder
+
+/**
+ * Renders a large avatar (80dp) for a given Recipient.
+ */
+object AvatarPreference {
+
+  fun register(adapter: MappingAdapter) {
+    adapter.registerFactory(Model::class.java, MappingAdapter.LayoutFactory(::ViewHolder, R.layout.conversation_settings_avatar_preference_item))
+  }
+
+  class Model(
+    val recipient: Recipient,
+    val onAvatarClick: (View) -> Unit
+  ) : PreferenceModel<Model>() {
+    override fun areItemsTheSame(newItem: Model): Boolean {
+      return recipient == newItem.recipient
+    }
+
+    override fun areContentsTheSame(newItem: Model): Boolean {
+      return super.areContentsTheSame(newItem) && recipient.hasSameContent(newItem.recipient)
+    }
+  }
+
+  private class ViewHolder(itemView: View) : MappingViewHolder<Model>(itemView) {
+    private val avatar: AvatarImageView = itemView.findViewById<AvatarImageView>(R.id.bio_preference_avatar).apply {
+      ViewCompat.setTransitionName(this, "avatar")
+    }
+
+    override fun bind(model: Model) {
+      avatar.setAvatar(model.recipient)
+      avatar.disableQuickContact()
+      avatar.setOnClickListener { model.onAvatarClick(avatar) }
+    }
+  }
+}

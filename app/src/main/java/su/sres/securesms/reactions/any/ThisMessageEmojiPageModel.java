@@ -10,6 +10,7 @@ import com.annimon.stream.Stream;
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.Emoji;
 import su.sres.securesms.components.emoji.EmojiPageModel;
+import su.sres.securesms.components.emoji.RecentEmojiPageModel;
 
 import java.util.List;
 
@@ -18,34 +19,39 @@ import java.util.List;
  */
 class ThisMessageEmojiPageModel implements EmojiPageModel {
 
-    private final List<String> emoji;
+  private final List<String> emoji;
 
-    ThisMessageEmojiPageModel(@NonNull List<String> emoji) {
-        this.emoji = emoji;
-    }
+  ThisMessageEmojiPageModel(@NonNull List<String> emoji) {
+    this.emoji = emoji;
+  }
 
-    @Override
-    public int getIconAttr() {
-        return R.attr.emoji_category_recent;
-    }
+  @Override
+  public String getKey() {
+    return RecentEmojiPageModel.KEY;
+  }
 
-    @Override
-    public @NonNull List<String> getEmoji() {
-        return emoji;
-    }
+  @Override
+  public int getIconAttr() {
+    return R.attr.emoji_category_recent;
+  }
 
-    @Override
-    public @NonNull List<Emoji> getDisplayEmoji() {
-        return Stream.of(getEmoji()).map(Emoji::new).toList();
-    }
+  @Override
+  public @NonNull List<String> getEmoji() {
+    return emoji;
+  }
 
-    @Override
-    public @Nullable Uri getSpriteUri() {
-        return null;
-    }
+  @Override
+  public @NonNull List<Emoji> getDisplayEmoji() {
+    return Stream.of(getEmoji()).map(Emoji::new).toList();
+  }
 
-    @Override
-    public boolean isDynamic() {
-        return true;
-    }
+  @Override
+  public @Nullable Uri getSpriteUri() {
+    return null;
+  }
+
+  @Override
+  public boolean isDynamic() {
+    return true;
+  }
 }

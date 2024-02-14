@@ -7,7 +7,6 @@ import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
@@ -29,6 +28,7 @@ import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.ContentHint;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
+import su.sres.signalservice.api.messages.SendMessageResult;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import su.sres.signalservice.api.push.SignalServiceAddress;
@@ -176,10 +176,13 @@ public class PushTextSendJob extends PushSendJob  {
         Optional<UnidentifiedAccessPair> syncAccess  = UnidentifiedAccessUtil.getAccessForSync(context);
         SignalServiceSyncMessage         syncMessage = buildSelfSendSyncMessage(context, textSecureMessage, syncAccess);
 
-        messageSender.sendSyncMessage(syncMessage, syncAccess);
+        SendMessageResult result = messageSender.sendSyncMessage(syncMessage, syncAccess);
+        DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(messageRecipient.getId(), message.getDateSent(), result, ContentHint.RESENDABLE, messageId, false);
         return syncAccess.isPresent();
       } else {
-        return messageSender.sendDataMessage(address, unidentifiedAccess, ContentHint.RESENDABLE, textSecureMessage).getSuccess().isUnidentified();
+        SendMessageResult result = messageSender.sendDataMessage(address, unidentifiedAccess, ContentHint.RESENDABLE, textSecureMessage);
+        DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(messageRecipient.getId(), message.getDateSent(), result, ContentHint.RESENDABLE, messageId, false);
+        return result.getSuccess().isUnidentified();
       }
     } catch (UnregisteredUserException e) {
       warn(TAG, "Failure", e);

@@ -337,7 +337,7 @@ public final class PushGroupSendJob extends PushSendJob {
                                                                               .asGroupMessage(group)
                                                                               .build();
 
-          return GroupSendUtil.sendDataMessage(context, groupRecipient.requireGroupId().requireV2(), destinations, isRecipientUpdate, ContentHint.IMPLICIT, groupDataMessage);
+          return GroupSendUtil.sendResendableDataMessage(context, groupRecipient.requireGroupId().requireV2(), destinations, isRecipientUpdate, ContentHint.IMPLICIT, messageId, true, groupDataMessage);
         } else {
           MessageGroupContext.GroupV1Properties properties = groupMessage.requireGroupV1Properties();
 
@@ -378,9 +378,11 @@ public final class PushGroupSendJob extends PushSendJob {
 
         Log.i(TAG, JobLogger.format(this, "Beginning message send."));
         if (groupRecipient.isPushV2Group()) {
-          return GroupSendUtil.sendDataMessage(context, groupRecipient.requireGroupId().requireV2(), destinations, isRecipientUpdate, ContentHint.RESENDABLE, groupMessage);
+          return GroupSendUtil.sendResendableDataMessage(context, groupRecipient.requireGroupId().requireV2(), destinations, isRecipientUpdate, ContentHint.RESENDABLE, messageId, true, groupMessage);
         } else {
-          return messageSender.sendDataMessage(addresses, unidentifiedAccess, isRecipientUpdate, ContentHint.RESENDABLE, groupMessage);
+          List<SendMessageResult> results = messageSender.sendDataMessage(addresses, unidentifiedAccess, isRecipientUpdate, ContentHint.RESENDABLE, groupMessage);
+          DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(groupMessage.getTimestamp(), destinations, results, ContentHint.RESENDABLE, messageId, true);
+          return results;
         }
       }
     } catch (ServerRejectedException e) {

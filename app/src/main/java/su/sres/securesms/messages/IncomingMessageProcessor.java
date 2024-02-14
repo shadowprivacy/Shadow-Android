@@ -6,8 +6,8 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.crypto.DatabaseSessionLock;
 import su.sres.securesms.crypto.IdentityKeyUtil;
+import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.MessageDatabase.SyncMessageId;
@@ -123,12 +123,7 @@ public class IncomingMessageProcessor {
 
             stopwatch.split("queue-check");
 
-            long ownerThreadId = DatabaseSessionLock.INSTANCE.getLikeyOwnerThreadId();
-            if (ownerThreadId != DatabaseSessionLock.NO_OWNER && ownerThreadId != Thread.currentThread().getId()) {
-                Log.i(TAG, "It is likely that some other thread has this lock. Owner: " + ownerThreadId + ", Us: " + Thread.currentThread().getId());
-            }
-
-            try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+            try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
                 Log.i(TAG, "Acquired lock while processing message " + envelope.getTimestamp() + ".");
 
                 DecryptionResult result = MessageDecryptionUtil.decrypt(context, envelope);
@@ -167,8 +162,10 @@ public class IncomingMessageProcessor {
 
         private void processReceipt(@NonNull SignalServiceEnvelope envelope) {
             Log.i(TAG, "Received server receipt for " + envelope.getTimestamp());
-            mmsSmsDatabase.incrementDeliveryReceiptCount(new SyncMessageId(Recipient.externalHighTrustPush(context, envelope.getSourceAddress()).getId(), envelope.getTimestamp()),
-                    System.currentTimeMillis());
+            Recipient sender = Recipient.externalHighTrustPush(context, envelope.getSourceAddress());
+
+            mmsSmsDatabase.incrementDeliveryReceiptCount(new SyncMessageId(sender.getId(), envelope.getTimestamp()), System.currentTimeMillis());
+            DatabaseFactory.getMessageLogDatabase(context).deleteEntryForRecipient(envelope.getTimestamp(), sender.getId(), envelope.getSourceDevice());
         }
 
         private boolean needsToEnqueueDecryption() {

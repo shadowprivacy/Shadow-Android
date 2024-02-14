@@ -34,6 +34,7 @@ import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.ContentHint;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
+import su.sres.signalservice.api.messages.SendMessageResult;
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage.Preview;
@@ -223,10 +224,13 @@ public class PushMediaSendJob extends PushSendJob  {
         Optional<UnidentifiedAccessPair> syncAccess  = UnidentifiedAccessUtil.getAccessForSync(context);
         SignalServiceSyncMessage         syncMessage = buildSelfSendSyncMessage(context, mediaMessage, syncAccess);
 
-        messageSender.sendSyncMessage(syncMessage, syncAccess);
+        SendMessageResult result = messageSender.sendSyncMessage(syncMessage, syncAccess);
+        DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(messageRecipient.getId(), message.getSentTimeMillis(), result, ContentHint.RESENDABLE, messageId, true);
         return syncAccess.isPresent();
       } else {
-        return messageSender.sendDataMessage(address, UnidentifiedAccessUtil.getAccessFor(context, messageRecipient), ContentHint.RESENDABLE, mediaMessage).getSuccess().isUnidentified();
+        SendMessageResult result = messageSender.sendDataMessage(address, UnidentifiedAccessUtil.getAccessFor(context, messageRecipient), ContentHint.RESENDABLE, mediaMessage);
+        DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(messageRecipient.getId(), message.getSentTimeMillis(), result, ContentHint.RESENDABLE, messageId, true);
+        return result.getSuccess().isUnidentified();
       }
     } catch (UnregisteredUserException e) {
       warn(TAG, String.valueOf(message.getSentTimeMillis()), e);

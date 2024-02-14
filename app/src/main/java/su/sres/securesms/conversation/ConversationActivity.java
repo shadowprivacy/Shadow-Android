@@ -20,6 +20,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 
 import androidx.annotation.WorkerThread;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.lifecycle.ViewModelProviders;
@@ -62,7 +63,6 @@ import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 
-import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -101,11 +101,12 @@ import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.components.mention.MentionAnnotation;
 import su.sres.securesms.components.reminder.GroupsV1MigrationSuggestionsReminder;
 import su.sres.securesms.components.reminder.PendingGroupJoinRequestsReminder;
+import su.sres.securesms.components.settings.conversation.ConversationSettingsActivity;
 import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
 import su.sres.securesms.conversation.ui.error.SafetyNumberChangeDialog;
 import su.sres.securesms.conversation.ui.groupcall.GroupCallViewModel;
 import su.sres.securesms.conversation.ui.mentions.MentionsPickerViewModel;
-import su.sres.securesms.crypto.DatabaseSessionLock;
+import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.MentionUtil;
 import su.sres.securesms.database.MentionUtil.UpdatedBodyAndMentions;
@@ -116,7 +117,6 @@ import su.sres.securesms.groups.ui.GroupChangeFailureReason;
 import su.sres.securesms.groups.ui.GroupErrors;
 import su.sres.securesms.groups.ui.LeaveGroupDialog;
 import su.sres.securesms.groups.ui.invitesandrequests.ManagePendingAndRequestingMembersActivity;
-import su.sres.securesms.groups.ui.managegroup.ManageGroupActivity;
 import su.sres.securesms.groups.ui.migration.GroupsV1MigrationInitiationBottomSheetDialogFragment;
 import su.sres.securesms.groups.ui.migration.GroupsV1MigrationSuggestionsDialog;
 import su.sres.securesms.jobs.GroupV1MigrationJob;
@@ -145,7 +145,6 @@ import su.sres.securesms.ratelimit.RecaptchaProofBottomSheetFragment;
 import su.sres.securesms.reactions.ReactionsBottomSheetDialogFragment;
 import su.sres.securesms.reactions.any.ReactWithAnyEmojiBottomSheetDialogFragment;
 import su.sres.securesms.recipients.ui.disappearingmessages.RecipientDisappearingMessagesActivity;
-import su.sres.securesms.recipients.ui.managerecipient.ManageRecipientActivity;
 import su.sres.securesms.registration.RegistrationNavigationActivity;
 import su.sres.securesms.ShortcutLauncherActivity;
 import su.sres.securesms.TransportOption;
@@ -335,6 +334,9 @@ public class ConversationActivity extends PassphraseRequiredActivity
   private static final String TAG = Log.tag(ConversationActivity.class);
 
   private static final String STATE_REACT_WITH_ANY_PAGE = "STATE_REACT_WITH_ANY_PAGE";
+  private static final String STATE_IS_SEARCH_REQUESTED = "STATE_IS_SEARCH_REQUESTED";
+
+  private static final int REQUEST_CODE_SETTINGS = 1000;
 
   private static final int PICK_GALLERY        = 1;
   private static final int PICK_DOCUMENT       = 2;
@@ -406,6 +408,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
   private          boolean       isSecureText;
   private          boolean       isDefaultSms               = true;
   private          boolean       isSecurityInitialized      = false;
+  private boolean       isSearchRequested             = false;
   private volatile boolean       screenInitialized          = false;
 
   private       IdentityRecordList identityRecords = new IdentityRecordList(Collections.emptyList());
@@ -434,6 +437,8 @@ public class ConversationActivity extends PassphraseRequiredActivity
     new FullscreenHelper(this).showSystemUI();
 
     ConversationIntents.Args args = ConversationIntents.Args.from(getIntent());
+
+    isSearchRequested = args.isWithSearchOpen();
 
     reportShortcutLaunch(args.getRecipientId());
     setContentView(R.layout.conversation_activity);
@@ -528,7 +533,10 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     setIntent(intent);
-    viewModel.setArgs(ConversationIntents.Args.from(intent));
+    ConversationIntents.Args args = ConversationIntents.Args.from(intent);
+    isSearchRequested = args.isWithSearchOpen();
+
+    viewModel.setArgs(args);
 
     reportShortcutLaunch(viewModel.getArgs().getRecipientId());
     initializeResources(viewModel.getArgs());
@@ -544,6 +552,12 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     searchNav.setVisibility(View.GONE);
+
+    if (args.isWithSearchOpen()) {
+      if (searchViewItem != null && searchViewItem.expandActionView()) {
+        searchViewModel.onSearchOpened();
+      }
+    }
   }
 
   @Override
@@ -672,7 +686,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         titleView.setTitle(glideRequests, recipientSnapshot);
         NotificationChannels.updateContactChannelName(this, recipientSnapshot);
         setBlockedUserState(recipientSnapshot, isSecureText, isDefaultSms);
-        supportInvalidateOptionsMenu();
+        invalidateOptionsMenu();
         break;
       case TAKE_PHOTO:
         handleImageFromDeviceCameraApp();
@@ -766,6 +780,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     super.onSaveInstanceState(outState);
 
     outState.putInt(STATE_REACT_WITH_ANY_PAGE, reactWithAnyEmojiStartPage);
+    outState.putBoolean(STATE_IS_SEARCH_REQUESTED, isSearchRequested);
   }
 
   @Override
@@ -773,6 +788,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     super.onRestoreInstanceState(savedInstanceState);
 
     reactWithAnyEmojiStartPage = savedInstanceState.getInt(STATE_REACT_WITH_ANY_PAGE, -1);
+    isSearchRequested = savedInstanceState.getBoolean(STATE_IS_SEARCH_REQUESTED, false);
   }
 
   private void setVisibleThread(long threadId) {
@@ -984,6 +1000,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
       @Override
       public boolean onMenuItemActionCollapse(MenuItem item) {
         searchView.setOnQueryTextListener(null);
+        isSearchRequested = false;
         searchViewModel.onSearchClosed();
         searchNav.setVisibility(View.GONE);
         inputPanel.setVisibility(View.VISIBLE);
@@ -994,8 +1011,21 @@ public class ConversationActivity extends PassphraseRequiredActivity
       }
     });
 
+    if (isSearchRequested) {
+      if (searchViewItem.expandActionView()) {
+        searchViewModel.onSearchOpened();
+      }
+    }
+
     super.onCreateOptionsMenu(menu);
     return true;
+  }
+
+  @Override
+  public void invalidateOptionsMenu() {
+    if (!isSearchRequested) {
+      super.invalidateOptionsMenu();
+    }
   }
 
   @Override
@@ -1192,9 +1222,10 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
     if (isInMessageRequest()) return;
 
-    Intent intent = ManageRecipientActivity.newIntentFromConversation(this, recipient.getId());
+    Intent intent = ConversationSettingsActivity.forRecipient(this, recipient.getId());
+    Bundle bundle = ConversationSettingsActivity.createTransitionBundle(this, titleView.findViewById(R.id.contact_photo_image), toolbar);
 
-    startActivitySceneTransition(intent, titleView.findViewById(R.id.contact_photo_image), "avatar");
+    ActivityCompat.startActivity(this, intent, bundle);
   }
 
   private void handleUnmuteNotifications() {
@@ -1350,9 +1381,10 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
   private void handleManageGroup(Context context) {
     if (TextSecurePreferences.isPushRegistered(context)) {
-      startActivityForResult(ManageGroupActivity.newIntent(ConversationActivity.this, recipient.get().requireGroupId()),
-                             GROUP_EDIT,
-                             ManageGroupActivity.createTransitionBundle(this, titleView.findViewById(R.id.contact_photo_image)));
+      Intent intent = ConversationSettingsActivity.forGroup(this, recipient.get().requireGroupId());
+      Bundle bundle = ConversationSettingsActivity.createTransitionBundle(this, titleView.findViewById(R.id.contact_photo_image), toolbar);
+
+      ActivityCompat.startActivity(this, intent, bundle);
     }
   }
 
@@ -1515,7 +1547,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
       }
 
     calculateCharactersRemaining();
-    supportInvalidateOptionsMenu();
+    invalidateOptionsMenu();
     setBlockedUserState(recipient.get(), isSecureText, isDefaultSms);
   }
 
@@ -2055,14 +2087,8 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
   }
 
-  private boolean isInBubble() {
-    if (Build.VERSION.SDK_INT >= ConversationUtil.CONVERSATION_SUPPORT_VERSION) {
-      Display display = getDisplay();
-
-      return display != null && display.getDisplayId() != Display.DEFAULT_DISPLAY;
-    } else {
-      return false;
-    }
+  protected boolean isInBubble() {
+    return false;
   }
 
   private void initializeResources(@NonNull ConversationIntents.Args args) {
@@ -2296,7 +2322,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
                                                                               messageRecord.isMms(),
                                                                               oldRecord));
     } else {
-      reactionDelegate.hideAllButMask();
+      reactionDelegate.hideForReactWithAny();
 
       ReactWithAnyEmojiBottomSheetDialogFragment.createForMessageRecord(messageRecord, reactWithAnyEmojiStartPage)
                                                 .show(getSupportFragmentManager(), "BOTTOM");
@@ -2306,11 +2332,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
   @Override
   public void onReactWithAnyEmojiDialogDismissed() {
     reactionDelegate.hideMask();
-  }
-
-  @Override
-  public void onReactWithAnyEmojiPageChanged(int page) {
-    reactWithAnyEmojiStartPage = page;
   }
 
   @Override
@@ -3720,7 +3741,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
       new AsyncTask<Void, Void, Void>() {
         @Override
         protected Void doInBackground(Void... params) {
-          try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+          try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
             for (IdentityRecord identityRecord : unverifiedIdentities) {
               identityDatabase.setVerified(identityRecord.getRecipientId(),
                                            identityRecord.getIdentityKey(),

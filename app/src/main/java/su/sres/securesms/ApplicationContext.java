@@ -62,6 +62,7 @@ import su.sres.securesms.messageprocessingalarm.MessageProcessReceiver;
 import su.sres.securesms.ratelimit.RateLimitUtil;
 import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.AppStartup;
+import su.sres.securesms.util.ByteUnit;
 import su.sres.securesms.util.SignalUncaughtExceptionHandler;
 import su.sres.securesms.migrations.ApplicationMigrations;
 import su.sres.securesms.notifications.NotificationChannels;
@@ -267,7 +268,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
   }
 
   private void initializeLogging() {
-    persistentLogger = new PersistentLogger(this, LogSecretProvider.getOrCreateAttachmentSecret(this), BuildConfig.VERSION_NAME);
+    persistentLogger = new PersistentLogger(this, LogSecretProvider.getOrCreateAttachmentSecret(this), BuildConfig.VERSION_NAME, FeatureFlags.internalUser() ? 15 : 7, ByteUnit.KILOBYTES.toBytes(300));
     su.sres.core.util.logging.Log.initialize(FeatureFlags::internalUser, new AndroidLogger(), persistentLogger);
 
     SignalProtocolLoggerProvider.setProvider(new CustomSignalProtocolLogger());
@@ -476,6 +477,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
               .addPostRender(this::initializeExpiringMessageManager)
               .addPostRender(() -> DownloadLatestEmojiDataJob.scheduleIfNecessary(this))
               .addPostRender(EmojiSearchIndexDownloadJob::scheduleIfNecessary)
+              .addPostRender(() -> DatabaseFactory.getMessageLogDatabase(this).trimOldMessages(System.currentTimeMillis(), FeatureFlags.retryRespondMaxAge()))
               .execute();
 
     initializedOnCreate = true;

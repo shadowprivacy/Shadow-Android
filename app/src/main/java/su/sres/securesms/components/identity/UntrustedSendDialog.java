@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
 import su.sres.securesms.R;
-import su.sres.securesms.crypto.DatabaseSessionLock;
+import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
@@ -41,7 +41,7 @@ public class UntrustedSendDialog extends AlertDialog.Builder implements DialogIn
     final IdentityDatabase identityDatabase = DatabaseFactory.getIdentityDatabase(getContext());
 
     SimpleTask.run(() -> {
-      try(SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+      try(SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
         for (IdentityRecord identityRecord : untrustedRecords) {
           identityDatabase.setApproval(identityRecord.getRecipientId(), true);
         }

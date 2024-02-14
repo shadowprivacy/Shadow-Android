@@ -1,13 +1,14 @@
 package su.sres.securesms.conversation;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.widget.TextViewCompat;
 
 import android.content.res.ColorStateList;
+import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
@@ -24,11 +25,9 @@ import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.ExpirationUtil;
-import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 
-import java.util.UUID;
+import java.util.Objects;
 
 public class ConversationTitleView extends RelativeLayout {
 
@@ -81,23 +80,24 @@ public class ConversationTitleView extends RelativeLayout {
   public void setTitle(@NonNull GlideRequests glideRequests, @Nullable Recipient recipient) {
     this.subtitleContainer.setVisibility(View.VISIBLE);
 
-    if      (recipient == null) setComposeTitle();
-    else                        setRecipientTitle(recipient);
+    if (recipient == null) setComposeTitle();
+    else setRecipientTitle(recipient);
 
-    int startDrawable = 0;
-    int endDrawable   = 0;
+    Drawable startDrawable = null;
+    Drawable endDrawable   = null;
 
     if (recipient != null && recipient.isBlocked()) {
-      startDrawable = R.drawable.ic_block_white_18dp;
+      startDrawable = ContextCompat.getDrawable(getContext(), R.drawable.ic_block_white_18dp);
     } else if (recipient != null && recipient.isMuted()) {
-      startDrawable = R.drawable.ic_volume_off_white_18dp;
+      startDrawable = Objects.requireNonNull(ContextCompat.getDrawable(getContext(), R.drawable.ic_bell_disabled_16));
+      startDrawable.setBounds(0, 0, ViewUtil.dpToPx(18), ViewUtil.dpToPx(18));
     }
 
     if (recipient != null && recipient.isSystemContact() && !recipient.isSelf()) {
-      endDrawable = R.drawable.ic_profile_circle_outline_16;
+      endDrawable = ContextCompat.getDrawable(getContext(), R.drawable.ic_profile_circle_outline_16);
     }
 
-    title.setCompoundDrawablesRelativeWithIntrinsicBounds(startDrawable, 0, endDrawable, 0);
+    title.setCompoundDrawablesRelativeWithIntrinsicBounds(startDrawable, null, endDrawable, null);
 
     TextViewCompat.setCompoundDrawableTintList(title, ColorStateList.valueOf(ContextCompat.getColor(getContext(), R.color.signal_inverse_transparent_80)));
 
@@ -121,9 +121,9 @@ public class ConversationTitleView extends RelativeLayout {
   }
 
   private void setRecipientTitle(@NonNull Recipient recipient) {
-    if      (recipient.isGroup()) setGroupRecipientTitle(recipient);
-    else if (recipient.isSelf())  setSelfTitle();
-    else                          setIndividualRecipientTitle(recipient);
+    if (recipient.isGroup()) setGroupRecipientTitle(recipient);
+    else if (recipient.isSelf()) setSelfTitle();
+    else setIndividualRecipientTitle(recipient);
   }
 
   private void setGroupRecipientTitle(@NonNull Recipient recipient) {
@@ -131,9 +131,9 @@ public class ConversationTitleView extends RelativeLayout {
     this.title.setText(recipient.getDisplayName(getContext()));
 
     this.subtitle.setText(Stream.of(recipient.getParticipants())
-            .sorted((a, b) -> Boolean.compare(a.isSelf(), b.isSelf()))
-            .map(r -> r.isSelf() ? getResources().getString(R.string.ConversationTitleView_you)
-                    : r.getDisplayName(getContext()))
+                                .sorted((a, b) -> Boolean.compare(a.isSelf(), b.isSelf()))
+                                .map(r -> r.isSelf() ? getResources().getString(R.string.ConversationTitleView_you)
+                                                     : r.getDisplayName(getContext()))
                                 .collect(Collectors.joining(", ")));
 
     updateSubtitleVisibility();

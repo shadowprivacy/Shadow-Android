@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
-import su.sres.securesms.crypto.DatabaseSessionLock;
+import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.database.DatabaseObserver;
 import su.sres.securesms.database.JobDatabase;
 import su.sres.securesms.jobmanager.impl.FactoryJobPredicate;
@@ -111,7 +111,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     return new SignalServiceMessageSender(provideSignalServiceNetworkAccess().getConfiguration(),
                                           new DynamicCredentialsProvider(context),
                                           new SignalProtocolStoreImpl(context),
-                                          DatabaseSessionLock.INSTANCE,
+                                          ReentrantSessionLock.INSTANCE,
                                           BuildConfig.SIGNAL_AGENT,
                                           TextSecurePreferences.isMultiDevice(context),
                                           FeatureFlags.attachmentsV3(),

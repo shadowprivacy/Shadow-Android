@@ -8,7 +8,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.transition.Transition
 import androidx.transition.TransitionValues
 
-private const val ALPHA = "signal.alpha_transition.alpha"
+private const val ALPHA = "shadow.alpha_transition.alpha"
 
 /**
  * Alpha transition that can be used with [ConstraintLayout]

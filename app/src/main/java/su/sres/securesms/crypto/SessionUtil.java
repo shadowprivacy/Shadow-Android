@@ -7,6 +7,8 @@ import su.sres.securesms.crypto.storage.TextSecureSessionStore;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import org.whispersystems.libsignal.SignalProtocolAddress;
+import org.whispersystems.libsignal.ecc.ECPublicKey;
+import org.whispersystems.libsignal.state.SessionRecord;
 import org.whispersystems.libsignal.state.SessionStore;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
@@ -32,4 +34,11 @@ public class SessionUtil {
     new TextSecureSessionStore(context).archiveSession(recipientId, deviceId);
   }
 
+  public static boolean ratchetKeyMatches(@NonNull Context context, @NonNull Recipient recipient, int deviceId, @NonNull ECPublicKey ratchetKey) {
+    TextSecureSessionStore sessionStore = new TextSecureSessionStore(context);
+    SignalProtocolAddress address = new SignalProtocolAddress(recipient.resolve().requireServiceId(), deviceId);
+    SessionRecord         session = sessionStore.loadSession(address);
+
+    return session.currentRatchetKeyMatches(ratchetKey);
+  }
 }

@@ -492,24 +492,19 @@ public final class ConversationListItem extends ConstraintLayout
         return emphasisAdded(context, context.getString(thread.isOutgoing() ? R.string.ThreadRecord_you_deleted_this_message : R.string.ThreadRecord_this_message_was_deleted), defaultTint);
       } else {
         String body = removeNewlines(thread.getBody());
-        if (thread.getRecipient().isGroup()) {
-          RecipientId groupMessageSender = thread.getGroupMessageSender();
-          if (!groupMessageSender.isUnknown()) {
-            return describeGroupMessage(context, body, groupMessageSender, thread.isRead());
+        LiveData<SpannableString> finalBody = recipientToStringAsync(thread.getRecipient().getId(), threadRecipient -> {
+          if (threadRecipient.isGroup()) {
+            RecipientId groupMessageSender = thread.getGroupMessageSender();
+            if (!groupMessageSender.isUnknown()) {
+              return createGroupMessageUpdateString(context, body, Recipient.resolved(groupMessageSender), thread.isRead());
+            }
           }
-        }
-        return LiveDataUtil.just(new SpannableString(body));
+          return new SpannableString(body);
+        });
+
+        return whileLoadingShow(body, finalBody);
       }
     }
-  }
-
-  private static LiveData<SpannableString> describeGroupMessage(@NonNull Context context,
-                                                                @NonNull String body,
-                                                                @NonNull RecipientId groupMessageSender,
-                                                                boolean read)
-  {
-    return whileLoadingShow(body, recipientToStringAsync(groupMessageSender,
-                                                         r -> createGroupMessageUpdateString(context, body, r, read)));
   }
 
   private static SpannableString createGroupMessageUpdateString(@NonNull Context context,

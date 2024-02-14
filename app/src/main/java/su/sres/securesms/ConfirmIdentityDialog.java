@@ -11,13 +11,10 @@ import android.text.method.LinkMovementMethod;
 import android.widget.TextView;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.crypto.DatabaseSessionLock;
+import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
-import su.sres.securesms.database.MmsDatabase;
-import su.sres.securesms.database.PushDatabase;
-import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -97,7 +94,7 @@ public class ConfirmIdentityDialog extends AlertDialog {
       {
         @Override
         protected Void doInBackground(Void... params) {
-          try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+          try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
             SignalProtocolAddress      mismatchAddress  = new SignalProtocolAddress(Recipient.resolved(recipientId).requireServiceId(), 1);
             TextSecureIdentityKeyStore identityKeyStore = new TextSecureIdentityKeyStore(getContext());
 

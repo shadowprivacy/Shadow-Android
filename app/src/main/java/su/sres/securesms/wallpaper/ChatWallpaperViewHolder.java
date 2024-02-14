@@ -18,49 +18,47 @@ import su.sres.securesms.util.MappingViewHolder;
 
 class ChatWallpaperViewHolder extends MappingViewHolder<ChatWallpaperSelectionMappingModel> {
 
-    private final AspectRatioFrameLayout frame;
-    private final ImageView              preview;
-    private final View                   dimmer;
-    private final EventListener          eventListener;
+  private final AspectRatioFrameLayout frame;
+  private final ImageView              preview;
+  private final EventListener          eventListener;
 
-    public ChatWallpaperViewHolder(@NonNull View itemView, @Nullable EventListener eventListener, @Nullable DisplayMetrics windowDisplayMetrics) {
-        super(itemView);
-        this.frame         = itemView.findViewById(R.id.chat_wallpaper_preview_frame);
-        this.preview       = itemView.findViewById(R.id.chat_wallpaper_preview);
-        this.dimmer        = itemView.findViewById(R.id.chat_wallpaper_dim);
-        this.eventListener = eventListener;
+  public ChatWallpaperViewHolder(@NonNull View itemView, @Nullable EventListener eventListener, @Nullable DisplayMetrics windowDisplayMetrics) {
+    super(itemView);
+    this.frame         = itemView.findViewById(R.id.chat_wallpaper_preview_frame);
+    this.preview       = itemView.findViewById(R.id.chat_wallpaper_preview);
+    this.eventListener = eventListener;
 
-        if (windowDisplayMetrics != null) {
-            DisplayMetricsUtil.forceAspectRatioToScreenByAdjustingHeight(windowDisplayMetrics, itemView);
-        } else if (frame != null) {
-            frame.setAspectRatio(1.0f);
+    if (windowDisplayMetrics != null) {
+      DisplayMetricsUtil.forceAspectRatioToScreenByAdjustingHeight(windowDisplayMetrics, itemView);
+    } else if (frame != null) {
+      frame.setAspectRatio(1.0f);
+    }
+  }
+
+  @Override
+  public void bind(@NonNull ChatWallpaperSelectionMappingModel model) {
+    model.loadInto(preview);
+
+    preview.setColorFilter(ChatWallpaperDimLevelUtil.getDimColorFilterForNightMode(context, model.getWallpaper()));
+
+    if (eventListener != null) {
+      preview.setOnClickListener(unused -> {
+        if (getAdapterPosition() != RecyclerView.NO_POSITION) {
+          eventListener.onModelClick(model);
         }
+      });
+    }
+  }
+
+  public static @NonNull MappingAdapter.Factory<ChatWallpaperSelectionMappingModel> createFactory(@LayoutRes int layout, @Nullable EventListener listener, @Nullable DisplayMetrics windowDisplayMetrics) {
+    return new MappingAdapter.LayoutFactory<>(view -> new ChatWallpaperViewHolder(view, listener, windowDisplayMetrics), layout);
+  }
+
+  public interface EventListener {
+    default void onModelClick(@NonNull ChatWallpaperSelectionMappingModel model) {
+      onClick(model.getWallpaper());
     }
 
-    @Override
-    public void bind(@NonNull ChatWallpaperSelectionMappingModel model) {
-        model.loadInto(preview);
-
-        ChatWallpaperDimLevelUtil.applyDimLevelForNightMode(dimmer, model.getWallpaper());
-
-        if (eventListener != null) {
-            preview.setOnClickListener(unused -> {
-                if (getAdapterPosition() != RecyclerView.NO_POSITION) {
-                    eventListener.onModelClick(model);
-                }
-            });
-        }
-    }
-
-    public static @NonNull MappingAdapter.Factory<ChatWallpaperSelectionMappingModel> createFactory(@LayoutRes int layout, @Nullable EventListener listener, @Nullable DisplayMetrics windowDisplayMetrics) {
-        return new MappingAdapter.LayoutFactory<>(view -> new ChatWallpaperViewHolder(view, listener, windowDisplayMetrics), layout);
-    }
-
-    public interface EventListener {
-        default void onModelClick(@NonNull ChatWallpaperSelectionMappingModel model) {
-            onClick(model.getWallpaper());
-        }
-
-        void onClick(@NonNull ChatWallpaper chatWallpaper);
-    }
+    void onClick(@NonNull ChatWallpaper chatWallpaper);
+  }
 }

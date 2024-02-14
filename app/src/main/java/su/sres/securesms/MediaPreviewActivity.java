@@ -73,6 +73,7 @@ import su.sres.securesms.sharing.ShareActivity;
 import su.sres.securesms.util.AttachmentUtil;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.FullscreenHelper;
+import su.sres.securesms.util.LifecycleCursorWrapper;
 import su.sres.securesms.util.SaveAttachmentTask;
 import su.sres.securesms.util.SaveAttachmentTask.Attachment;
 import su.sres.securesms.util.StorageUtil;

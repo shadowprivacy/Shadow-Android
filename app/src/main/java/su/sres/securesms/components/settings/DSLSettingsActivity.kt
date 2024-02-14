@@ -8,10 +8,11 @@ import androidx.navigation.fragment.NavHostFragment
 import su.sres.securesms.PassphraseRequiredActivity
 import su.sres.securesms.R
 import su.sres.securesms.util.DynamicNoActionBarTheme
+import su.sres.securesms.util.DynamicTheme
 
 open class DSLSettingsActivity : PassphraseRequiredActivity() {
 
-  private val dynamicTheme = DynamicNoActionBarTheme()
+  protected open val dynamicTheme: DynamicTheme = DynamicNoActionBarTheme()
 
   protected lateinit var navController: NavController
     private set

@@ -15,8 +15,11 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 
 import su.sres.securesms.crypto.SenderKeyUtil;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupAccessControl;
 import su.sres.securesms.groups.GroupMigrationMembershipChange;
+import su.sres.securesms.groups.v2.processing.GroupsV2StateProcessor;
+import su.sres.securesms.jobs.RequestGroupV2InfoJob;
 import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.SqlUtil;
@@ -248,7 +251,7 @@ public final class GroupDatabase extends Database {
     return noMetadata && noMembers;
   }
 
-  public Reader getGroupsFilteredByTitle(String constraint, boolean includeInactive, boolean excludeV1) {
+  public Reader getGroupsFilteredByTitle(String constraint, boolean includeInactive, boolean excludeV1, boolean excludeMms) {
     String   query;
     String[] queryArgs;
 
@@ -262,6 +265,10 @@ public final class GroupDatabase extends Database {
 
     if (excludeV1) {
       query += " AND " + EXPECTED_V2_ID + " IS NULL";
+    }
+
+    if (excludeMms) {
+      query += " AND " + MMS + " = 0";
     }
 
     Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, query, queryArgs, null, null, TITLE + " COLLATE NOCASE ASC");
@@ -444,6 +451,47 @@ public final class GroupDatabase extends Database {
     create(groupId, groupState.getTitle(), Collections.emptyList(), null, null, groupMasterKey, groupState);
 
     return groupId;
+  }
+
+  /**
+   * There was a point in time where we weren't properly responding to group creates on linked devices. This would result in us having a Recipient entry for the
+   * group, but we'd either be missing the group entry, or that entry would be missing a master key. This method fixes this scenario.
+   */
+  public void fixMissingMasterKey(@NonNull GroupMasterKey groupMasterKey) {
+    GroupId.V2 groupId = GroupId.v2(groupMasterKey);
+
+    if (getGroupV1ByExpectedV2(groupId).isPresent()) {
+      throw new MissedGroupMigrationInsertException(groupId);
+    }
+
+    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+
+    db.beginTransaction();
+    try {
+      String        query  = GROUP_ID + " = ?";
+      String[]      args   = SqlUtil.buildArgs(groupId);
+      ContentValues values = new ContentValues();
+
+      values.put(V2_MASTER_KEY, groupMasterKey.serialize());
+
+      int updated = db.update(TABLE_NAME, values, query, args);
+
+      if (updated < 1) {
+        Log.w(TAG, "No group entry. Creating restore placeholder for " + groupId);
+        create(groupMasterKey, DecryptedGroup.newBuilder()
+                                             .setRevision(GroupsV2StateProcessor.RESTORE_PLACEHOLDER_REVISION)
+                                             .build());
+      } else {
+        Log.w(TAG, "Had a group entry, but it was missing a master key. Updated.");
+      }
+
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+    }
+
+    Log.w(TAG, "Scheduling request for latest group info for " + groupId);
+    ApplicationDependencies.getJobManager().add(new RequestGroupV2InfoJob(groupId));
   }
 
   /**

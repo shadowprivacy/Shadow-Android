@@ -23,6 +23,9 @@ import android.text.SpannableString;
 
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
+import su.sres.securesms.attachments.Attachment;
+import su.sres.securesms.attachments.AttachmentId;
+import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.SmsDatabase.Status;
@@ -32,7 +35,14 @@ import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.mms.SlideDeck;
 import su.sres.securesms.recipients.Recipient;
 
+import org.whispersystems.libsignal.util.guava.Optional;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Represents the message record model for MMS messages that contain
@@ -82,10 +92,6 @@ public class MediaMmsMessageRecord extends MmsMessageRecord {
     this.mentionsSelf = mentionsSelf;
   }
 
-  public int getPartCount() {
-    return partCount;
-  }
-
   @Override
   public boolean hasSelfMention() {
     return mentionsSelf;
@@ -109,5 +115,74 @@ public class MediaMmsMessageRecord extends MmsMessageRecord {
     }
 
     return super.getDisplayBody(context);
+  }
+
+  public int getPartCount() {
+    return partCount;
+  }
+
+  public @NonNull MediaMmsMessageRecord withAttachments(@NonNull Context context, @NonNull List<DatabaseAttachment> attachments) {
+    Map<AttachmentId, DatabaseAttachment> attachmentIdMap = new HashMap<>();
+    for (DatabaseAttachment attachment : attachments) {
+      attachmentIdMap.put(attachment.getAttachmentId(), attachment);
+    }
+
+    List<Contact>     contacts           = updateContacts(getSharedContacts(), attachmentIdMap);
+    Set<Attachment>   contactAttachments = contacts.stream().map(Contact::getAvatarAttachment).filter(Objects::nonNull).collect(Collectors.toSet());
+    List<LinkPreview> linkPreviews       = updateLinkPreviews(getLinkPreviews(), attachmentIdMap);
+    Set<Attachment>   linkPreviewAttachments = linkPreviews.stream().map(LinkPreview::getThumbnail).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
+    Quote             quote                  = updateQuote(context, getQuote(), attachments);
+
+    List<DatabaseAttachment> slideAttachments = attachments.stream().filter(a -> !contactAttachments.contains(a)).filter(a -> !linkPreviewAttachments.contains(a)).collect(Collectors.toList());
+    SlideDeck                slideDeck        = MmsDatabase.Reader.buildSlideDeck(context, slideAttachments);
+
+    return new MediaMmsMessageRecord(getId(), getRecipient(), getIndividualRecipient(), getRecipientDeviceId(), getDateSent(), getDateReceived(), getServerTimestamp(), getDeliveryReceiptCount(), getThreadId(), getBody(), slideDeck,
+                                     getPartCount(), getType(), getIdentityKeyMismatches(), getNetworkFailures(), getSubscriptionId(), getExpiresIn(), getExpireStarted(), isViewOnce(),
+                                     getReadReceiptCount(), quote, contacts, linkPreviews, isUnidentified(), getReactions(), isRemoteDelete(), mentionsSelf,
+                                     getNotifiedTimestamp(), getViewedReceiptCount());
+  }
+
+  private static @NonNull List<Contact> updateContacts(@NonNull List<Contact> contacts, @NonNull Map<AttachmentId, DatabaseAttachment> attachmentIdMap) {
+    return contacts.stream()
+                   .map(contact -> {
+                     if (contact.getAvatar() != null) {
+                       DatabaseAttachment attachment    = attachmentIdMap.get(contact.getAvatar().getAttachmentId());
+                       Contact.Avatar     updatedAvatar = new Contact.Avatar(contact.getAvatar().getAttachmentId(),
+                                                                             attachment,
+                                                                             contact.getAvatar().isProfile());
+
+                       return new Contact(contact, updatedAvatar);
+                     } else {
+                       return contact;
+                     }
+                   })
+                   .collect(Collectors.toList());
+  }
+
+  private static @NonNull List<LinkPreview> updateLinkPreviews(@NonNull List<LinkPreview> linkPreviews, @NonNull Map<AttachmentId, DatabaseAttachment> attachmentIdMap) {
+    return linkPreviews.stream()
+                       .map(preview -> {
+                         if (preview.getAttachmentId() != null) {
+                           DatabaseAttachment attachment = attachmentIdMap.get(preview.getAttachmentId());
+                           if (attachment != null) {
+                             return new LinkPreview(preview.getUrl(), preview.getTitle(), preview.getDescription(), preview.getDate(), attachment);
+                           } else {
+                             return preview;
+                           }
+                         } else {
+                           return preview;
+                         }
+                       })
+                       .collect(Collectors.toList());
+  }
+
+  private static @Nullable Quote updateQuote(@NonNull Context context, @Nullable Quote quote, @NonNull List<DatabaseAttachment> attachments) {
+    if (quote == null) {
+      return null;
+    }
+
+    List<DatabaseAttachment> quoteAttachments = attachments.stream().filter(Attachment::isQuote).collect(Collectors.toList());
+
+    return quote.withAttachment(new SlideDeck(context, quoteAttachments));
   }
 }

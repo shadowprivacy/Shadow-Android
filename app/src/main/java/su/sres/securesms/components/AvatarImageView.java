@@ -6,12 +6,15 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 
 import androidx.annotation.DrawableRes;
+import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.Px;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.fragment.app.FragmentActivity;
 
@@ -20,21 +23,23 @@ import com.bumptech.glide.load.Transformation;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
+import su.sres.securesms.components.settings.conversation.ConversationSettingsActivity;
 import su.sres.securesms.contacts.avatars.ContactPhoto;
 import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
 import su.sres.securesms.conversation.colors.AvatarColor;
 import su.sres.securesms.conversation.colors.ChatColors;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.groups.ui.managegroup.ManageGroupActivity;
 import su.sres.securesms.mms.GlideApp;
+import su.sres.securesms.mms.GlideRequest;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment;
-import su.sres.securesms.recipients.ui.managerecipient.ManageRecipientActivity;
 import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.BlurTransformation;
 import su.sres.securesms.util.ThemeUtil;
@@ -74,6 +79,7 @@ public final class AvatarImageView extends AppCompatImageView {
   private Recipient.FallbackPhotoProvider fallbackPhotoProvider;
   private boolean                         blurred;
   private ChatColors                      chatColors;
+  private FixedSizeTarget                 fixedSizeTarget;
 
   private @Nullable RecipientContactPhoto recipientContactPhoto;
   private @NonNull  Drawable              unknownRecipientDrawable;
@@ -103,6 +109,11 @@ public final class AvatarImageView extends AppCompatImageView {
     unknownRecipientDrawable = new ResourceContactPhoto(R.drawable.ic_profile_outline_40, R.drawable.ic_profile_outline_20).asDrawable(context, AvatarColor.UNKNOWN.colorInt(), inverted);
     blurred                  = false;
     chatColors               = null;
+  }
+
+  @Override
+  public void setClipBounds(Rect clipBounds) {
+    super.setClipBounds(clipBounds);
   }
 
   @Override
@@ -148,6 +159,10 @@ public final class AvatarImageView extends AppCompatImageView {
     }
   }
 
+  public AvatarOptions.Builder buildOptions() {
+    return new AvatarOptions.Builder(this);
+  }
+
   /**
    * Shows self as the note to self icon.
    */
@@ -167,11 +182,22 @@ public final class AvatarImageView extends AppCompatImageView {
   }
 
   public void setAvatar(@NonNull GlideRequests requestManager, @Nullable Recipient recipient, boolean quickContactEnabled, boolean useSelfProfileAvatar) {
+    setAvatar(requestManager, recipient, new AvatarOptions.Builder(this)
+        .withUseSelfProfileAvatar(useSelfProfileAvatar)
+        .withQuickContactEnabled(quickContactEnabled)
+        .build());
+  }
+
+  private void setAvatar(@Nullable Recipient recipient, @NonNull AvatarOptions avatarOptions) {
+    setAvatar(GlideApp.with(this), recipient, avatarOptions);
+  }
+
+  private void setAvatar(@NonNull GlideRequests requestManager, @Nullable Recipient recipient, @NonNull AvatarOptions avatarOptions) {
     if (recipient != null) {
-      RecipientContactPhoto photo = (recipient.isSelf() && useSelfProfileAvatar) ? new RecipientContactPhoto(recipient,
-                                                                                                             new ProfileContactPhoto(Recipient.self(),
-                                                                                                                                     Recipient.self().getProfileAvatar()))
-                                                                                 : new RecipientContactPhoto(recipient);
+      RecipientContactPhoto photo = (recipient.isSelf() && avatarOptions.useSelfProfileAvatar) ? new RecipientContactPhoto(recipient,
+                                                                                                                           new ProfileContactPhoto(Recipient.self(),
+                                                                                                                                                   Recipient.self().getProfileAvatar()))
+                                                                                               : new RecipientContactPhoto(recipient);
 
       boolean    shouldBlur = recipient.shouldBlurAvatar();
       ChatColors chatColors = recipient.getChatColors();
@@ -184,6 +210,10 @@ public final class AvatarImageView extends AppCompatImageView {
         Drawable fallbackContactPhotoDrawable = size == SIZE_SMALL ? photo.recipient.getSmallFallbackContactPhotoDrawable(getContext(), inverted, fallbackPhotoProvider)
                                                                    : photo.recipient.getFallbackContactPhotoDrawable(getContext(), inverted, fallbackPhotoProvider);
 
+        if (fixedSizeTarget != null) {
+          requestManager.clear(fixedSizeTarget);
+        }
+
         if (photo.contactPhoto != null) {
 
           List<Transformation<Bitmap>> transforms = new ArrayList<>();
@@ -193,19 +223,26 @@ public final class AvatarImageView extends AppCompatImageView {
           transforms.add(new CircleCrop());
           blurred = shouldBlur;
 
-          requestManager.load(photo.contactPhoto)
-                        .fallback(fallbackContactPhotoDrawable)
-                        .error(fallbackContactPhotoDrawable)
-                        .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .downsample(DownsampleStrategy.CENTER_INSIDE)
-                        .transform(new MultiTransformation<>(transforms))
-                        .into(this);
+          GlideRequest<Drawable> request = requestManager.load(photo.contactPhoto)
+                                                         .fallback(fallbackContactPhotoDrawable)
+                                                         .error(fallbackContactPhotoDrawable)
+                                                         .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                                         .downsample(DownsampleStrategy.CENTER_INSIDE)
+                                                         .transform(new MultiTransformation<>(transforms));
+
+          if (avatarOptions.fixedSize > 0) {
+            fixedSizeTarget = new FixedSizeTarget(avatarOptions.fixedSize);
+            request.into(fixedSizeTarget);
+          } else {
+            request.into(this);
+          }
+
         } else {
           setImageDrawable(fallbackContactPhotoDrawable);
         }
       }
 
-      setAvatarClickHandler(recipient, quickContactEnabled);
+      setAvatarClickHandler(recipient, avatarOptions.quickContactEnabled);
     } else {
       recipientContactPhoto = null;
       requestManager.clear(this);
@@ -227,15 +264,15 @@ public final class AvatarImageView extends AppCompatImageView {
       super.setOnClickListener(v -> {
         Context context = getContext();
         if (recipient.isPushGroup()) {
-          context.startActivity(ManageGroupActivity.newIntent(context, recipient.requireGroupId().requirePush()),
-                                ManageGroupActivity.createTransitionBundle(context, this));
+          context.startActivity(ConversationSettingsActivity.forGroup(context, recipient.requireGroupId().requirePush()),
+                                ConversationSettingsActivity.createTransitionBundle(context, this));
         } else {
           if (context instanceof FragmentActivity) {
             RecipientBottomSheetDialogFragment.create(recipient.getId(), null)
                                               .show(((FragmentActivity) context).getSupportFragmentManager(), "BOTTOM");
           } else {
-            context.startActivity(ManageRecipientActivity.newIntent(context, recipient.getId()),
-                                  ManageRecipientActivity.createTransitionBundle(context, this));
+            context.startActivity(ConversationSettingsActivity.forRecipient(context, recipient.getId()),
+                                  ConversationSettingsActivity.createTransitionBundle(context, this));
           }
         }
       });
@@ -293,6 +330,67 @@ public final class AvatarImageView extends AppCompatImageView {
              other.recipient.getChatColors().equals(recipient.getChatColors()) &&
              other.ready == ready &&
              Objects.equals(other.contactPhoto, contactPhoto);
+    }
+  }
+
+  private final class FixedSizeTarget extends SimpleTarget<Drawable> {
+
+    FixedSizeTarget(int size) {
+      super(size, size);
+    }
+
+    @Override
+    public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+      setImageDrawable(resource);
+    }
+  }
+
+  public static final class AvatarOptions {
+
+    private final boolean quickContactEnabled;
+    private final boolean useSelfProfileAvatar;
+    private final int     fixedSize;
+
+    private AvatarOptions(@NonNull Builder builder) {
+      this.quickContactEnabled  = builder.quickContactEnabled;
+      this.useSelfProfileAvatar = builder.useSelfProfileAvatar;
+      this.fixedSize            = builder.fixedSize;
+    }
+
+    public static final class Builder {
+
+      private final AvatarImageView avatarImageView;
+
+      private boolean quickContactEnabled  = false;
+      private boolean useSelfProfileAvatar = false;
+      private int     fixedSize            = -1;
+
+      private Builder(@NonNull AvatarImageView avatarImageView) {
+        this.avatarImageView = avatarImageView;
+      }
+
+      public @NonNull Builder withQuickContactEnabled(boolean quickContactEnabled) {
+        this.quickContactEnabled = quickContactEnabled;
+        return this;
+      }
+
+      public @NonNull Builder withUseSelfProfileAvatar(boolean useSelfProfileAvatar) {
+        this.useSelfProfileAvatar = useSelfProfileAvatar;
+        return this;
+      }
+
+      public @NonNull Builder withFixedSize(@Px @IntRange(from = 1) int fixedSize) {
+        this.fixedSize = fixedSize;
+        return this;
+      }
+
+      public AvatarOptions build() {
+        return new AvatarOptions(this);
+      }
+
+      public void load(@Nullable Recipient recipient) {
+        avatarImageView.setAvatar(recipient, build());
+      }
     }
   }
 }

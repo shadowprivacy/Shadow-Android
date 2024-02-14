@@ -4,7 +4,6 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.crypto.DatabaseSessionLock;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.signalservice.api.SignalServiceSenderKeyStore;
 import su.sres.signalservice.api.push.DistributionId;
@@ -25,6 +24,8 @@ import javax.annotation.Nullable;
  */
 public final class SignalSenderKeyStore implements SignalServiceSenderKeyStore {
 
+  private static final Object LOCK = new Object();
+
   private final Context context;
 
   public SignalSenderKeyStore(@NonNull Context context) {
@@ -33,7 +34,7 @@ public final class SignalSenderKeyStore implements SignalServiceSenderKeyStore {
 
   @Override
   public void storeSenderKey(@NonNull SignalProtocolAddress sender, @NonNull UUID distributionId, @NonNull SenderKeyRecord record) {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    synchronized (LOCK) {
       RecipientId recipientId = RecipientId.fromExternalPush(sender.getName());
       DatabaseFactory.getSenderKeyDatabase(context).store(recipientId, sender.getDeviceId(), DistributionId.from(distributionId), record);
     }
@@ -41,7 +42,7 @@ public final class SignalSenderKeyStore implements SignalServiceSenderKeyStore {
 
   @Override
   public @Nullable SenderKeyRecord loadSenderKey(@NonNull SignalProtocolAddress sender, @NonNull UUID distributionId) {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    synchronized (LOCK) {
       RecipientId recipientId = RecipientId.fromExternalPush(sender.getName());
       return DatabaseFactory.getSenderKeyDatabase(context).load(recipientId, sender.getDeviceId(), DistributionId.from(distributionId));
     }
@@ -49,21 +50,21 @@ public final class SignalSenderKeyStore implements SignalServiceSenderKeyStore {
 
   @Override
   public Set<SignalProtocolAddress> getSenderKeySharedWith(DistributionId distributionId) {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    synchronized (LOCK) {
       return DatabaseFactory.getSenderKeySharedDatabase(context).getSharedWith(distributionId);
     }
   }
 
   @Override
   public void markSenderKeySharedWith(DistributionId distributionId, Collection<SignalProtocolAddress> addresses) {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    synchronized (LOCK) {
       DatabaseFactory.getSenderKeySharedDatabase(context).markAsShared(distributionId, addresses);
     }
   }
 
   @Override
   public void clearSenderKeySharedWith(DistributionId distributionId, Collection<SignalProtocolAddress> addresses) {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    synchronized (LOCK) {
       DatabaseFactory.getSenderKeySharedDatabase(context).delete(distributionId, addresses);
     }
   }
@@ -72,7 +73,7 @@ public final class SignalSenderKeyStore implements SignalServiceSenderKeyStore {
    * Removes all sender key session state for all devices for the provided recipient-distributionId pair.
    */
   public void deleteAllFor(@NonNull RecipientId recipientId, @NonNull DistributionId distributionId) {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    synchronized (LOCK) {
       DatabaseFactory.getSenderKeyDatabase(context).deleteAllFor(recipientId, distributionId);
     }
   }
@@ -81,7 +82,7 @@ public final class SignalSenderKeyStore implements SignalServiceSenderKeyStore {
    * Deletes all sender key session state.
    */
   public void deleteAll() {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    synchronized (LOCK) {
       DatabaseFactory.getSenderKeyDatabase(context).deleteAll();
     }
   }

@@ -11,6 +11,8 @@ apply plugin: 'witness'
 apply plugin: 'org.jlleitschuh.gradle.ktlint'
 apply from: 'translations.gradle'
 apply from: 'witness-verifications.gradle'
+apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'app.cash.exhaustive'
 
 repositories {
     maven {
@@ -70,6 +72,7 @@ android {
     useLibrary 'org.apache.http.legacy'
 
     kotlinOptions {
+        jvmTarget = "1.8"
         freeCompilerArgs = ["-Xallow-result-return-type"]
     }
 
@@ -111,6 +114,10 @@ android {
         buildConfigField "int[]", "MOBILE_COIN_REGIONS", "new int[]{44}"
         buildConfigField "String", "GIPHY_API_KEY", "\"3o6ZsYH6U6Eri53TXy\""
         buildConfigField "String", "RECAPTCHA_PROOF_URL", "\"https://signalcaptchas.org/challenge/generate.html\""
+
+        buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"unset\""
+        buildConfigField "String", "BUILD_ENVIRONMENT_TYPE", "\"unset\""
+        buildConfigField "String", "BUILD_VARIANT_TYPE", "\"unset\""
 
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
@@ -177,6 +184,8 @@ android {
                     'proguard/proguard.cfg'
             testProguardFiles 'proguard/proguard-automation.pro',
                     'proguard/proguard.cfg'
+
+            buildConfigField "String", "BUILD_VARIANT_TYPE", "\"Debug\""
         }
 
         flipper {
@@ -184,23 +193,27 @@ android {
             isDefault false
             minifyEnabled false
             matchingFallbacks = ['debug']
+            buildConfigField "String", "BUILD_VARIANT_TYPE", "\"Flipper\""
         }
 
         release {
             minifyEnabled true
             proguardFiles = buildTypes.debug.proguardFiles
+            buildConfigField "String", "BUILD_VARIANT_TYPE", "\"Release\""
         }
         perf {
             initWith debug
             isDefault false
             debuggable false
             matchingFallbacks = ['debug']
+            buildConfigField "String", "BUILD_VARIANT_TYPE", "\"Perf\""
         }
         mock {
             initWith debug
             isDefault false
             minifyEnabled false
             matchingFallbacks = ['debug']
+            buildConfigField "String", "BUILD_VARIANT_TYPE", "\"Mock\""
         }
     }
 
@@ -210,6 +223,7 @@ android {
             ext.websiteUpdateUrl = "null"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "false"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
+            buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"play\""
         }
 
         website {
@@ -218,6 +232,7 @@ android {
             ext.websiteUpdateUrl = "https://shadowupdate.sres.su:19080/android"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "\"$ext.websiteUpdateUrl\""
+            buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"website\""
         }
 
         internal {
@@ -225,6 +240,7 @@ android {
             ext.websiteUpdateUrl = "null"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "false"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
+            buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"internal\""
         }
 
         study {
@@ -234,6 +250,7 @@ android {
             ext.websiteUpdateUrl = "null"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "false"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
+            buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"study\""
         }
 
         prod {
@@ -241,6 +258,7 @@ android {
             isDefault true
 
             buildConfigField "String", "MOBILE_COIN_ENVIRONMENT", "\"mainnet\""
+            buildConfigField "String", "BUILD_ENVIRONMENT_TYPE", "\"Prod\""
         }
 
         staging {
@@ -249,6 +267,8 @@ android {
 
             buildConfigField "String", "MOBILE_COIN_ENVIRONMENT", "\"testnet\""
             buildConfigField "String", "RECAPTCHA_PROOF_URL", "\"https://signalcaptchas.org/staging/challenge/generate.html\""
+
+            buildConfigField "String", "BUILD_ENVIRONMENT_TYPE", "\"Staging\""
         }
     }
 
@@ -326,7 +346,7 @@ dependencies {
     implementation "androidx.concurrent:concurrent-futures:1.0.0"
     implementation "androidx.biometric:biometric:1.1.0"
 
-    implementation('com.google.firebase:firebase-messaging:20.2.0') {
+    implementation ('com.google.firebase:firebase-messaging:20.2.0') {
         exclude group: 'com.google.firebase', module: 'firebase-core'
         exclude group: 'com.google.firebase', module: 'firebase-analytics'
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'

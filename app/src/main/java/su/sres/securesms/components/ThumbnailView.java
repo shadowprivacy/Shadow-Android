@@ -3,6 +3,8 @@ package su.sres.securesms.components;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
@@ -101,9 +103,18 @@ public class ThumbnailView extends FrameLayout {
       bounds[MAX_HEIGHT] = typedArray.getDimensionPixelSize(R.styleable.ThumbnailView_maxHeight, 0);
       radius             = typedArray.getDimensionPixelSize(R.styleable.ThumbnailView_thumbnail_radius, getResources().getDimensionPixelSize(R.dimen.thumbnail_default_radius));
       fit                = typedArray.getInt(R.styleable.ThumbnailView_thumbnail_fit, 0) == 1 ? new FitCenter() : new CenterCrop();
+
+      int transparentOverlayColor = typedArray.getColor(R.styleable.ThumbnailView_transparent_overlay_color, -1);
+      if (transparentOverlayColor > 0) {
+        image.setColorFilter(new PorterDuffColorFilter(transparentOverlayColor, PorterDuff.Mode.SRC_ATOP));
+      } else {
+        image.setColorFilter(null);
+      }
+
       typedArray.recycle();
     } else {
       radius = getResources().getDimensionPixelSize(R.dimen.message_corner_collapse_radius);
+      image.setColorFilter(null);
     }
 
   }

@@ -29,7 +29,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -45,7 +44,7 @@ import android.text.method.LinkMovementMethod;
 
 import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.concurrent.SignalExecutors;
-import su.sres.securesms.crypto.DatabaseSessionLock;
+import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
@@ -66,7 +65,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.components.camera.CameraView;
 import su.sres.securesms.crypto.IdentityKeyParcelable;
 import su.sres.securesms.crypto.IdentityKeyUtil;
@@ -91,7 +89,6 @@ import org.whispersystems.libsignal.fingerprint.Fingerprint;
 import org.whispersystems.libsignal.fingerprint.FingerprintVersionMismatchException;
 import org.whispersystems.libsignal.fingerprint.NumericFingerprintGenerator;
 
-import su.sres.securesms.util.WindowUtil;
 import su.sres.signalservice.api.SignalSessionLock;
 import su.sres.signalservice.api.util.UuidUtil;
 
@@ -612,7 +609,7 @@ public class VerifyIdentityActivity extends PassphraseRequiredActivity implement
       final RecipientId recipientId = recipient.getId();
 
       SignalExecutors.BOUNDED.execute(() -> {
-        try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+        try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
           if (isChecked) {
             Log.i(TAG, "Saving identity: " + recipientId);
             DatabaseFactory.getIdentityDatabase(getActivity())

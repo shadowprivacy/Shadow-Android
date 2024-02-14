@@ -6,7 +6,6 @@ import androidx.annotation.NonNull;
 
 import su.sres.core.util.logging.Log;
 
-import su.sres.securesms.crypto.DatabaseSessionLock;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.SessionUtil;
 import su.sres.securesms.database.DatabaseFactory;
@@ -51,7 +50,7 @@ public class TextSecureIdentityKeyStore implements IdentityKeyStore {
   }
 
   public @NonNull SaveResult saveIdentity(SignalProtocolAddress address, IdentityKey identityKey, boolean nonBlockingApproval) {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    synchronized (LOCK) {
       IdentityDatabase         identityDatabase = DatabaseFactory.getIdentityDatabase(context);
       RecipientId              recipientId      = RecipientId.fromExternalPush(address.getName());
       Optional<IdentityRecord> identityRecord   = identityDatabase.getIdentity(recipientId);
@@ -98,7 +97,7 @@ public class TextSecureIdentityKeyStore implements IdentityKeyStore {
 
   @Override
   public boolean isTrustedIdentity(SignalProtocolAddress address, IdentityKey identityKey, Direction direction) {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    synchronized (LOCK) {
       if (DatabaseFactory.getRecipientDatabase(context).containsPhoneOrUuid(address.getName())) {
         IdentityDatabase identityDatabase = DatabaseFactory.getIdentityDatabase(context);
         RecipientId      ourRecipientId   = Recipient.self().getId();

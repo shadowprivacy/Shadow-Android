@@ -20,7 +20,7 @@ import org.signal.libsignal.metadata.ProtocolNoSessionException;
 import org.signal.libsignal.metadata.ProtocolUntrustedIdentityException;
 import org.signal.libsignal.metadata.SelfSendException;
 
-import su.sres.securesms.crypto.DatabaseSessionLock;
+import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.crypto.storage.SignalProtocolStoreImpl;
 import su.sres.securesms.database.DatabaseFactory;
@@ -72,7 +72,7 @@ public final class MessageDecryptionUtil {
   public static @NonNull DecryptionResult decrypt(@NonNull Context context, @NonNull SignalServiceEnvelope envelope) {
     SignalProtocolStore  axolotlStore = new SignalProtocolStoreImpl(context);
     SignalServiceAddress localAddress = new SignalServiceAddress(Optional.of(TextSecurePreferences.getLocalUuid(context)), Optional.of(TextSecurePreferences.getLocalNumber(context)));
-    SignalServiceCipher  cipher       = new SignalServiceCipher(localAddress, axolotlStore, DatabaseSessionLock.INSTANCE, UnidentifiedAccessUtil.getCertificateValidator());
+    SignalServiceCipher  cipher       = new SignalServiceCipher(localAddress, axolotlStore, ReentrantSessionLock.INSTANCE, UnidentifiedAccessUtil.getCertificateValidator());
     List<Job>            jobs         = new LinkedList<>();
 
     if (envelope.isPreKeySignalMessage()) {

@@ -7,6 +7,7 @@ import androidx.appcompat.widget.AppCompatImageView
 import su.sres.securesms.R
 import su.sres.securesms.util.MappingModel
 import su.sres.securesms.util.MappingViewHolder
+import java.util.function.Consumer
 
 interface KeyboardPageCategoryIconMappingModel<T : KeyboardPageCategoryIconMappingModel<T>> : MappingModel<T> {
   val key: String
@@ -15,14 +16,14 @@ interface KeyboardPageCategoryIconMappingModel<T : KeyboardPageCategoryIconMappi
   fun getIcon(context: Context): Drawable
 }
 
-class KeyboardPageCategoryIconViewHolder<T : KeyboardPageCategoryIconMappingModel<T>>(itemView: View, private val onPageSelected: (String) -> Unit) : MappingViewHolder<T>(itemView) {
+class KeyboardPageCategoryIconViewHolder<T : KeyboardPageCategoryIconMappingModel<T>>(itemView: View, private val onPageSelected: Consumer<String>) : MappingViewHolder<T>(itemView) {
 
   private val iconView: AppCompatImageView = itemView.findViewById(R.id.category_icon)
   private val iconSelected: View = itemView.findViewById(R.id.category_icon_selected)
 
   override fun bind(model: T) {
     itemView.setOnClickListener {
-      onPageSelected(model.key)
+      onPageSelected.accept(model.key)
     }
 
     iconView.setImageDrawable(model.getIcon(context))

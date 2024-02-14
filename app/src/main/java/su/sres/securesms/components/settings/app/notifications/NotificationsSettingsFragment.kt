@@ -277,7 +277,7 @@ class NotificationsSettingsFragment : DSLSettingsFragment(R.string.preferences__
     val radioListPreference: RadioListPreference
   ) : PreferenceModel<LedColorPreference>(
     title = radioListPreference.title,
-    iconId = radioListPreference.iconId,
+    icon = radioListPreference.icon,
     summary = radioListPreference.summary
   ) {
     override fun areContentsTheSame(newItem: LedColorPreference): Boolean {

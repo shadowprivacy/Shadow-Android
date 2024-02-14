@@ -8,15 +8,18 @@ import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 
 import su.sres.paging.PagedDataSource;
+import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.conversation.ConversationData.MessageRequestData;
 import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.model.InMemoryMessageRecord;
+import su.sres.securesms.database.model.MediaMmsMessageRecord;
 import su.sres.securesms.database.model.Mention;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.Stopwatch;
+import su.sres.securesms.util.Util;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,96 +27,138 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Core data source for loading an individual conversation.
  */
 class ConversationDataSource implements PagedDataSource<ConversationMessage> {
 
-    private static final String TAG = Log.tag(ConversationDataSource.class);
+  private static final String TAG = Log.tag(ConversationDataSource.class);
 
-    private final Context             context;
-    private final long                threadId;
-    private final MessageRequestData messageRequestData;
-    private final boolean            showUniversalExpireTimerUpdate;
+  private final Context            context;
+  private final long               threadId;
+  private final MessageRequestData messageRequestData;
+  private final boolean            showUniversalExpireTimerUpdate;
 
-    ConversationDataSource(@NonNull Context context, long threadId, @NonNull MessageRequestData messageRequestData, boolean showUniversalExpireTimerUpdate) {
-        this.context                        = context;
-        this.threadId                       = threadId;
-        this.messageRequestData             = messageRequestData;
-        this.showUniversalExpireTimerUpdate = showUniversalExpireTimerUpdate;
+  ConversationDataSource(@NonNull Context context, long threadId, @NonNull MessageRequestData messageRequestData, boolean showUniversalExpireTimerUpdate) {
+    this.context                        = context;
+    this.threadId                       = threadId;
+    this.messageRequestData             = messageRequestData;
+    this.showUniversalExpireTimerUpdate = showUniversalExpireTimerUpdate;
+  }
+
+  @Override
+  public int size() {
+    long startTime = System.currentTimeMillis();
+    int size = DatabaseFactory.getMmsSmsDatabase(context).getConversationCount(threadId) +
+               (messageRequestData.includeWarningUpdateMessage() ? 1 : 0) +
+               (showUniversalExpireTimerUpdate ? 1 : 0);
+
+    Log.d(TAG, "size() for thread " + threadId + ": " + (System.currentTimeMillis() - startTime) + " ms");
+
+    return size;
+  }
+
+  @Override
+  public @NonNull List<ConversationMessage> load(int start, int length, @NonNull CancellationSignal cancellationSignal) {
+    Stopwatch           stopwatch        = new Stopwatch("load(" + start + ", " + length + "), thread " + threadId);
+    MmsSmsDatabase      db               = DatabaseFactory.getMmsSmsDatabase(context);
+    List<MessageRecord> records          = new ArrayList<>(length);
+    MentionHelper       mentionHelper    = new MentionHelper();
+    AttachmentHelper    attachmentHelper = new AttachmentHelper();
+
+    try (MmsSmsDatabase.Reader reader = MmsSmsDatabase.readerFor(db.getConversation(threadId, start, length))) {
+      MessageRecord record;
+      while ((record = reader.getNext()) != null && !cancellationSignal.isCanceled()) {
+        records.add(record);
+        mentionHelper.add(record);
+        attachmentHelper.add(record);
+      }
     }
 
-    @Override
-    public int size() {
-        long startTime = System.currentTimeMillis();
-        int  size      = DatabaseFactory.getMmsSmsDatabase(context).getConversationCount(threadId) +
-                         (messageRequestData.includeWarningUpdateMessage() ? 1 : 0) +
-                         (showUniversalExpireTimerUpdate ? 1 : 0);
-
-        Log.d(TAG, "size() for thread " + threadId + ": " + (System.currentTimeMillis() - startTime) + " ms");
-
-        return size;
+    if (messageRequestData.includeWarningUpdateMessage() && (start + length >= size())) {
+      records.add(new InMemoryMessageRecord.NoGroupsInCommon(threadId, messageRequestData.isGroup()));
     }
 
-    @Override
-    public @NonNull List<ConversationMessage> load(int start, int length, @NonNull CancellationSignal cancellationSignal) {
-        Stopwatch stopwatch     = new Stopwatch("load(" + start + ", " + length + "), thread " + threadId);
+    stopwatch.split("messages");
 
-        MmsSmsDatabase      db            = DatabaseFactory.getMmsSmsDatabase(context);
-        List<MessageRecord> records       = new ArrayList<>(length);
-        MentionHelper       mentionHelper = new MentionHelper();
+    mentionHelper.fetchMentions(context);
 
-        try (MmsSmsDatabase.Reader reader = MmsSmsDatabase.readerFor(db.getConversation(threadId, start, length))) {
-            MessageRecord record;
-            while ((record = reader.getNext()) != null && !cancellationSignal.isCanceled()) {
-                records.add(record);
-                mentionHelper.add(record);
-            }
-        }
-
-        if (messageRequestData.includeWarningUpdateMessage() && (start + length >= size())) {
-            records.add(new InMemoryMessageRecord.NoGroupsInCommon(threadId, messageRequestData.isGroup()));
-        }
-
-        stopwatch.split("messages");
-
-        mentionHelper.fetchMentions(context);
-
-        if (showUniversalExpireTimerUpdate) {
-            records.add(new InMemoryMessageRecord.UniversalExpireTimerUpdate(threadId));
-        }
-
-        stopwatch.split("mentions");
-
-        List<ConversationMessage> messages = Stream.of(records)
-                .map(m -> ConversationMessageFactory.createWithUnresolvedData(context, m, mentionHelper.getMentions(m.getId())))
-                .toList();
-
-        stopwatch.split("conversion");
-        stopwatch.stop(TAG);
-
-        return messages;
+    if (showUniversalExpireTimerUpdate) {
+      records.add(new InMemoryMessageRecord.UniversalExpireTimerUpdate(threadId));
     }
 
-    private static class MentionHelper {
+    stopwatch.split("mentions");
 
-        private Collection<Long> messageIds          = new LinkedList<>();
-        private Map<Long, List<Mention>> messageIdToMentions = new HashMap<>();
+    attachmentHelper.fetchAttachments(context);
 
-        void add(MessageRecord record) {
-            if (record.isMms()) {
-                messageIds.add(record.getId());
-            }
-        }
+    stopwatch.split("attachments");
 
-        void fetchMentions(Context context) {
-            messageIdToMentions = DatabaseFactory.getMentionDatabase(context).getMentionsForMessages(messageIds);
-        }
+    records = attachmentHelper.buildUpdatedModels(context, records);
 
-        @Nullable
-        List<Mention> getMentions(long id) {
-            return messageIdToMentions.get(id);
-        }
+    stopwatch.split("attachment-models");
+
+    List<ConversationMessage> messages = Stream.of(records)
+                                               .map(m -> ConversationMessageFactory.createWithUnresolvedData(context, m, mentionHelper.getMentions(m.getId())))
+                                               .toList();
+
+    stopwatch.split("conversion");
+    stopwatch.stop(TAG);
+
+    return messages;
+  }
+
+  private static class MentionHelper {
+
+    private Collection<Long>         messageIds          = new LinkedList<>();
+    private Map<Long, List<Mention>> messageIdToMentions = new HashMap<>();
+
+    void add(MessageRecord record) {
+      if (record.isMms()) {
+        messageIds.add(record.getId());
+      }
     }
+
+    void fetchMentions(Context context) {
+      messageIdToMentions = DatabaseFactory.getMentionDatabase(context).getMentionsForMessages(messageIds);
+    }
+
+    @Nullable
+    List<Mention> getMentions(long id) {
+      return messageIdToMentions.get(id);
+    }
+  }
+
+  private static class AttachmentHelper {
+
+    private Collection<Long>                    messageIds             = new LinkedList<>();
+    private Map<Long, List<DatabaseAttachment>> messageIdToAttachments = new HashMap<>();
+
+    void add(MessageRecord record) {
+      if (record.isMms()) {
+        messageIds.add(record.getId());
+      }
+    }
+
+    void fetchAttachments(Context context) {
+      messageIdToAttachments = DatabaseFactory.getAttachmentDatabase(context).getAttachmentsForMessages(messageIds);
+    }
+
+    @NonNull List<MessageRecord> buildUpdatedModels(@NonNull Context context, @NonNull List<MessageRecord> records) {
+      return records.stream()
+                    .map(record -> {
+                      if (record instanceof MediaMmsMessageRecord) {
+                        List<DatabaseAttachment> attachments = messageIdToAttachments.get(record.getId());
+
+                        if (Util.hasItems(attachments)) {
+                          return ((MediaMmsMessageRecord) record).withAttachments(context, attachments);
+                        }
+                      }
+
+                      return record;
+                    })
+                    .collect(Collectors.toList());
+    }
+  }
 }

@@ -8,7 +8,7 @@ import androidx.annotation.StringRes;
 
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.R;
-import su.sres.securesms.crypto.DatabaseSessionLock;
+import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
 import su.sres.securesms.crypto.storage.TextSecureSessionStore;
 import su.sres.securesms.database.DatabaseFactory;
@@ -145,7 +145,7 @@ public final class IdentityUtil {
   }
 
   public static void saveIdentity(Context context, String user, IdentityKey identityKey) {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    try(SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
       IdentityKeyStore      identityKeyStore = new TextSecureIdentityKeyStore(context);
       SessionStore          sessionStore     = new TextSecureSessionStore(context);
       SignalProtocolAddress address          = new SignalProtocolAddress(user, 1);
@@ -162,7 +162,7 @@ public final class IdentityUtil {
   }
 
   public static void processVerifiedMessage(Context context, VerifiedMessage verifiedMessage) {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    try(SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
       IdentityDatabase         identityDatabase = DatabaseFactory.getIdentityDatabase(context);
       Recipient                recipient        = Recipient.externalPush(context, verifiedMessage.getDestination());
       Optional<IdentityRecord> identityRecord   = identityDatabase.getIdentity(recipient.getId());

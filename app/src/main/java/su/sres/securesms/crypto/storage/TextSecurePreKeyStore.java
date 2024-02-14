@@ -4,9 +4,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.crypto.DatabaseSessionLock;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.signalservice.api.SignalSessionLock;
 
 import org.whispersystems.libsignal.InvalidKeyIdException;
 import org.whispersystems.libsignal.state.PreKeyRecord;
@@ -21,6 +19,8 @@ public class TextSecurePreKeyStore implements PreKeyStore, SignedPreKeyStore {
   @SuppressWarnings("unused")
   private static final String TAG = Log.tag(TextSecurePreKeyStore.class);
 
+  private static final Object LOCK = new Object();
+
   @NonNull
   private final Context context;
 
@@ -30,7 +30,7 @@ public class TextSecurePreKeyStore implements PreKeyStore, SignedPreKeyStore {
 
   @Override
   public PreKeyRecord loadPreKey(int preKeyId) throws InvalidKeyIdException {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    synchronized (LOCK) {
       PreKeyRecord preKeyRecord = DatabaseFactory.getPreKeyDatabase(context).getPreKey(preKeyId);
 
       if (preKeyRecord == null) throw new InvalidKeyIdException("No such key: " + preKeyId);
@@ -40,7 +40,7 @@ public class TextSecurePreKeyStore implements PreKeyStore, SignedPreKeyStore {
 
   @Override
   public SignedPreKeyRecord loadSignedPreKey(int signedPreKeyId) throws InvalidKeyIdException {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    synchronized (LOCK) {
       SignedPreKeyRecord signedPreKeyRecord = DatabaseFactory.getSignedPreKeyDatabase(context).getSignedPreKey(signedPreKeyId);
 
       if (signedPreKeyRecord == null) throw new InvalidKeyIdException("No such signed prekey: " + signedPreKeyId);
@@ -50,21 +50,21 @@ public class TextSecurePreKeyStore implements PreKeyStore, SignedPreKeyStore {
 
   @Override
   public List<SignedPreKeyRecord> loadSignedPreKeys() {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    synchronized (LOCK) {
       return DatabaseFactory.getSignedPreKeyDatabase(context).getAllSignedPreKeys();
     }
   }
 
   @Override
   public void storePreKey(int preKeyId, PreKeyRecord record) {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    synchronized (LOCK) {
       DatabaseFactory.getPreKeyDatabase(context).insertPreKey(preKeyId, record);
     }
   }
 
   @Override
   public void storeSignedPreKey(int signedPreKeyId, SignedPreKeyRecord record) {
-    try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+    synchronized (LOCK) {
       DatabaseFactory.getSignedPreKeyDatabase(context).insertSignedPreKey(signedPreKeyId, record);
     }
   }

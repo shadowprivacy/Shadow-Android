@@ -10,7 +10,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.crypto.DatabaseSessionLock;
+import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.crypto.SessionUtil;
 import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
 import su.sres.securesms.database.DatabaseFactory;
@@ -97,7 +97,7 @@ final class SafetyNumberChangeRepository {
     private TrustAndVerifyResult trustOrVerifyChangedRecipientsInternal(@NonNull List<ChangedRecipient> changedRecipients) {
         IdentityDatabase identityDatabase = DatabaseFactory.getIdentityDatabase(context);
 
-        try(SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+        try(SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
             for (ChangedRecipient changedRecipient : changedRecipients) {
                 IdentityRecord identityRecord = changedRecipient.getIdentityRecord();
 
@@ -123,7 +123,7 @@ final class SafetyNumberChangeRepository {
             Log.d(TAG, "No changed recipients to process, will still process message record");
         }
 
-        try(SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+        try(SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
             for (ChangedRecipient changedRecipient : changedRecipients) {
                 SignalProtocolAddress      mismatchAddress  = new SignalProtocolAddress(changedRecipient.getRecipient().requireServiceId(), 1);
                 TextSecureIdentityKeyStore identityKeyStore = new TextSecureIdentityKeyStore(context);

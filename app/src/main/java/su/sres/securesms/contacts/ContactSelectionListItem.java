@@ -14,7 +14,6 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.components.FromTextView;
-import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
@@ -39,6 +38,10 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
   private String        number;
   private String        chipName;
   private int           contactType;
+  private String        contactName;
+  private String        contactNumber;
+  private String        contactLabel;
+  private String        contactAbout;
   private LiveRecipient recipient;
   private GlideRequests glideRequests;
 
@@ -75,6 +78,10 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
     this.glideRequests = glideRequests;
     this.number        = number;
     this.contactType   = type;
+    this.contactName   = name;
+    this.contactNumber = number;
+    this.contactLabel  = label;
+    this.contactAbout  = about;
 
     if (type == ContactRepository.NEW_PHONE_TYPE || type == ContactRepository.NEW_USERNAME_TYPE) {
       this.recipient = null;
@@ -90,9 +97,13 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
 
     this.nameView.setTextColor(color);
     this.numberView.setTextColor(color);
-    this.contactPhotoImage.setAvatar(glideRequests, recipientSnapshot, false);
-
-    setText(recipientSnapshot, type, name, number, label, about);
+    if (recipientSnapshot == null || recipientSnapshot.isResolving()) {
+      this.contactPhotoImage.setAvatar(glideRequests, null, false);
+      setText(null, type, name, number, label, about);
+    } else {
+      this.contactPhotoImage.setAvatar(glideRequests, recipientSnapshot, false);
+      setText(recipientSnapshot, type, name, number, label, about);
+    }
 
     this.checkBox.setVisibility(checkboxVisible ? View.VISIBLE : View.GONE);
   }
@@ -179,10 +190,11 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
 
   @Override
   public void onRecipientChanged(@NonNull Recipient recipient) {
-    contactPhotoImage.setAvatar(glideRequests, recipient, false);
-    nameView.setText(recipient);
-    if (recipient.isGroup()) {
-      numberView.setText(getGroupMemberCount(recipient));
+    if (this.recipient != null && this.recipient.getId().equals(recipient.getId())) {
+      contactPhotoImage.setAvatar(glideRequests, recipient, false);
+      setText(recipient, contactType, contactName, contactNumber, contactLabel, contactAbout);
+    } else {
+      Log.w(TAG, "Bad change! Local recipient doesn't match. Ignoring. Local: " + (this.recipient == null ? "null" : this.recipient.getId()) + ", Changed: " + recipient.getId());
     }
   }
 }

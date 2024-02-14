@@ -2,7 +2,6 @@ package su.sres.securesms.animation.transitions;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
-import android.annotation.TargetApi;
 import android.graphics.drawable.Drawable;
 import android.transition.Transition;
 import android.transition.TransitionValues;
@@ -13,7 +12,6 @@ import android.widget.ImageView;
 
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 
-@TargetApi(21)
 abstract class CircleSquareImageViewTransition extends Transition {
 
     private static final String CIRCLE_RATIO = "CIRCLE_RATIO";
