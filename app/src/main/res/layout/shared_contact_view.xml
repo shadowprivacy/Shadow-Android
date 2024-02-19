@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<merge
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
     <LinearLayout
@@ -13,14 +13,14 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/message_bubble_horizontal_padding"
             android:layout_marginEnd="@dimen/message_bubble_horizontal_padding"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <ImageView
                 android:id="@+id/contact_avatar"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:layout_marginEnd="8dp"/>
+                android:layout_marginEnd="8dp" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -30,25 +30,25 @@
 
                 <su.sres.securesms.components.emoji.EmojiTextView
                     android:id="@+id/contact_name"
+                    style="@style/Signal.Text.Body"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="4dp"
-                    style="@style/Signal.Text.Body"
-                    android:maxLines="1"
                     android:ellipsize="end"
                     android:fontFamily="sans-serif-medium"
+                    android:maxLines="1"
                     android:textSize="16sp"
-                    tools:text="Peter Parker"/>
+                    tools:text="Peter Parker" />
 
                 <TextView
                     android:id="@+id/contact_number"
+                    style="@style/Signal.Text.Caption"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    style="@style/Signal.Text.Caption"
-                    android:maxLines="1"
                     android:ellipsize="end"
+                    android:maxLines="1"
                     android:textColor="@color/grey_600"
-                    tools:text="(610) 555-5555"/>
+                    tools:text="(610) 555-5555" />
 
             </LinearLayout>
 
@@ -58,29 +58,29 @@
             android:id="@+id/contact_footer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/message_bubble_horizontal_padding"
-            android:layout_marginEnd="@dimen/message_bubble_horizontal_padding"
-            android:layout_marginTop="4dp"
             android:layout_gravity="end"
-            android:gravity="end"
+            android:layout_marginStart="@dimen/message_bubble_horizontal_padding"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="@dimen/message_bubble_horizontal_padding"
             android:elevation="9dp"
-            android:orientation="horizontal" />
+            android:orientation="horizontal"
+            app:footer_mode="outgoing" />
 
         <TextView
             android:id="@+id/contact_action_button"
+            style="@style/Signal.Text.Preview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/message_bubble_bottom_padding"
-            android:gravity="center"
-            android:padding="10dp"
-            style="@style/Signal.Text.Preview"
-            android:maxLines="1"
+            android:background="@color/shared_contact_item_button_color"
             android:ellipsize="end"
             android:fontFamily="sans-serif-medium"
-            android:textColor="@color/core_ultramarine"
-            android:background="@color/shared_contact_item_button_color"
             android:foreground="?attr/selectableItemBackground"
-            tools:text="Add to Contacts"/>
+            android:gravity="center"
+            android:maxLines="1"
+            android:padding="10dp"
+            android:textColor="@color/core_ultramarine"
+            tools:text="Add to Contacts" />
 
     </LinearLayout>
 

@@ -11,8 +11,6 @@ import android.widget.ImageView;
 import android.widget.PopupWindow;
 
 import su.sres.securesms.R;
-import su.sres.securesms.components.emoji.EmojiKeyboardProvider.EmojiEventListener;
-import su.sres.securesms.util.ThemeUtil;
 
 import java.util.List;
 

@@ -7,13 +7,13 @@ import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
+import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
-import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.core.util.logging.Log;
@@ -24,16 +24,11 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.transport.RetryLaterException;
 
-import org.whispersystems.libsignal.util.guava.Optional;
-
 import su.sres.securesms.util.GroupUtil;
-import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.ContentHint;
-import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SendMessageResult;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
-import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.IOException;
@@ -172,6 +167,11 @@ public class ReactionSendJob extends BaseJob {
       throw new AssertionError("We have a message, but couldn't find the thread!");
     }
 
+    if (conversationRecipient.isPushV1Group() || conversationRecipient.isMmsGroup()) {
+      Log.w(TAG, "Cannot send reactions to legacy groups.");
+      return;
+    }
+
     List<Recipient> destinations = Stream.of(recipients).map(Recipient::resolved).toList();
     List<Recipient> completions  = deliver(conversationRecipient, destinations, targetAuthor, targetSentTimestamp);
 
@@ -230,21 +230,15 @@ public class ReactionSendJob extends BaseJob {
 
     SignalServiceDataMessage dataMessage = dataMessageBuilder.build();
 
-    List<SendMessageResult> results;
+    List<SendMessageResult>  results     = GroupSendUtil.sendResendableDataMessage(context,
+                                                                                   conversationRecipient.getGroupId().transform(GroupId::requireV2).orNull(),
+                                                                                   destinations,
+                                                                                   false,
+                                                                                   ContentHint.RESENDABLE,
+                                                                                   new MessageId(messageId, isMms),
+                                                                                   dataMessage);
 
-    if (conversationRecipient.isPushV2Group()) {
-      results = GroupSendUtil.sendResendableDataMessage(context, conversationRecipient.requireGroupId().requireV2(), destinations, false, ContentHint.RESENDABLE, messageId, isMms, dataMessageBuilder.build());
-    } else {
-      SignalServiceMessageSender             messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-      List<SignalServiceAddress>             addresses          = RecipientUtil.toSignalServiceAddressesFromResolved(context, destinations);
-      List<Optional<UnidentifiedAccessPair>> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, destinations);
-
-      results = messageSender.sendDataMessage(addresses, unidentifiedAccess, false, ContentHint.RESENDABLE, dataMessage);
-
-      DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(dataMessage.getTimestamp(), destinations, results, ContentHint.RESENDABLE, messageId, isMms);
-    }
-
-    return GroupSendJobHelper.getCompletedSends(context, results);
+    return GroupSendJobHelper.getCompletedSends(destinations, results);
   }
 
   private static SignalServiceDataMessage.Reaction buildReaction(@NonNull Context context,

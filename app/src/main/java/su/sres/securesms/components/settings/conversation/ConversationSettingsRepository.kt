@@ -5,6 +5,7 @@ import android.database.Cursor
 import androidx.annotation.WorkerThread
 import androidx.lifecycle.LiveData
 import org.whispersystems.libsignal.util.guava.Optional
+import org.whispersystems.libsignal.util.guava.Preconditions
 import su.sres.core.util.concurrent.SignalExecutors
 import su.sres.core.util.logging.Log
 import su.sres.storageservice.protos.groups.local.DecryptedGroup
@@ -185,9 +186,18 @@ class ConversationSettingsRepository(
     }
   }
 
-  fun disableProfileSharing(recipientId: RecipientId) {
+  fun disableProfileSharingForInternalUser(recipientId: RecipientId) {
+    Preconditions.checkArgument(FeatureFlags.internalUser(), "Internal users only!")
     SignalExecutors.BOUNDED.execute {
       DatabaseFactory.getRecipientDatabase(context).setProfileSharing(recipientId, false)
+    }
+  }
+
+  fun deleteSessionForInternalUser(recipientId: RecipientId) {
+    Preconditions.checkArgument(FeatureFlags.internalUser(), "Internal users only!")
+
+    SignalExecutors.BOUNDED.execute {
+      DatabaseFactory.getSessionDatabase(context).deleteAllFor(recipientId)
     }
   }
 

@@ -1,9 +1,13 @@
 package su.sres.securesms.messages;
 
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import su.sres.core.util.logging.Log;
 
@@ -20,6 +24,7 @@ import org.signal.libsignal.metadata.ProtocolNoSessionException;
 import org.signal.libsignal.metadata.ProtocolUntrustedIdentityException;
 import org.signal.libsignal.metadata.SelfSendException;
 
+import su.sres.securesms.R;
 import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.crypto.storage.SignalProtocolStoreImpl;
@@ -31,8 +36,11 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobs.AutomaticSessionResetJob;
 import su.sres.securesms.jobs.RefreshPreKeysJob;
 import su.sres.securesms.jobs.SendRetryReceiptJob;
+import su.sres.securesms.logsubmit.SubmitDebugLogActivity;
 import su.sres.securesms.messages.MessageContentProcessor.ExceptionMetadata;
 import su.sres.securesms.messages.MessageContentProcessor.MessageState;
+import su.sres.securesms.notifications.NotificationChannels;
+import su.sres.securesms.notifications.NotificationIds;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.GroupUtil;
@@ -92,6 +100,7 @@ public final class MessageDecryptionUtil {
 
         if (sender.supportsMessageRetries() && Recipient.self().supportsMessageRetries() && FeatureFlags.senderKey()) {
           jobs.add(handleRetry(context, sender, envelope, e));
+          postInternalErrorNotification(context);
         } else {
           jobs.add(new AutomaticSessionResetJob(sender.getId(), e.getSenderDevice(), envelope.getTimestamp()));
         }
@@ -170,7 +179,7 @@ public final class MessageDecryptionUtil {
         break;
       case RESENDABLE:
         Log.w(TAG, "[" + envelope.getTimestamp() + "] Inserting into pending retries store because it's " + contentHint);
-        DatabaseFactory.getPendingRetryReceiptDatabase(context).insert(sender.getId(), senderDevice, envelope.getTimestamp(), receivedTimestamp, threadId);
+        ApplicationDependencies.getPendingRetryReceiptCache().insert(sender.getId(), senderDevice, envelope.getTimestamp(), receivedTimestamp, threadId);
         ApplicationDependencies.getPendingRetryReceiptManager().scheduleIfNecessary();
         break;
       case IMPLICIT:
@@ -199,6 +208,18 @@ public final class MessageDecryptionUtil {
     if (sender == null) throw new NoSenderException();
 
     return new ExceptionMetadata(sender, e.getSenderDevice());
+  }
+
+  private static void postInternalErrorNotification(@NonNull Context context) {
+    if (!FeatureFlags.internalUser()) return;
+
+    NotificationManagerCompat.from(context).notify(NotificationIds.INTERNAL_ERROR,
+                                                   new NotificationCompat.Builder(context, NotificationChannels.FAILURES)
+                                                       .setSmallIcon(R.drawable.ic_notification)
+                                                       .setContentTitle(context.getString(R.string.MessageDecryptionUtil_failed_to_decrypt_message))
+                                                       .setContentText(context.getString(R.string.MessageDecryptionUtil_tap_to_send_a_debug_log))
+                                                       .setContentIntent(PendingIntent.getActivity(context, 0, new Intent(context, SubmitDebugLogActivity.class), 0))
+                                                       .build());
   }
 
   private static class NoSenderException extends Exception {

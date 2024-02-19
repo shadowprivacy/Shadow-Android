@@ -25,7 +25,6 @@ import su.sres.securesms.util.Util;
 import su.sres.securesms.util.VersionTracker;
 
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.Locale;
 
 public class LogSectionSystemInfo implements LogSection {
@@ -114,16 +113,7 @@ public class LogSectionSystemInfo implements LogSection {
     }
 
     private static @NonNull Iterable<String> getSupportedAbis() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            return Arrays.asList(Build.SUPPORTED_ABIS);
-        } else {
-            LinkedList<String> abis = new LinkedList<>();
-            abis.add(Build.CPU_ABI);
-            if (Build.CPU_ABI2 != null && !"unknown".equals(Build.CPU_ABI2)) {
-                abis.add(Build.CPU_ABI2);
-            }
-            return abis;
-        }
+        return Arrays.asList(Build.SUPPORTED_ABIS);
     }
 
     private static @NonNull String getScreenResolution(@NonNull Context context) {

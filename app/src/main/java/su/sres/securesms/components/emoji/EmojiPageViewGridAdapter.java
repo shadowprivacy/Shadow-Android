@@ -11,7 +11,6 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import su.sres.securesms.R;
-import su.sres.securesms.components.emoji.EmojiKeyboardProvider.EmojiEventListener;
 import su.sres.securesms.util.MappingAdapter;
 import su.sres.securesms.util.MappingModel;
 import su.sres.securesms.util.MappingViewHolder;
@@ -23,15 +22,16 @@ public class EmojiPageViewGridAdapter extends MappingAdapter implements PopupWin
                                   @NonNull EmojiEventListener emojiEventListener,
                                   @NonNull VariationSelectorListener variationSelectorListener,
                                   boolean allowVariations,
-                                  @LayoutRes int displayItemLayoutResId)
+                                  @LayoutRes int displayEmojiLayoutResId,
+                                  @LayoutRes int displayEmoticonLayoutResId)
   {
     this.variationSelectorListener = variationSelectorListener;
 
     popup.setOnDismissListener(this);
 
     registerFactory(EmojiHeader.class, new LayoutFactory<>(EmojiHeaderViewHolder::new, R.layout.emoji_grid_header));
-    registerFactory(EmojiModel.class, new LayoutFactory<>(v -> new EmojiViewHolder(v, emojiEventListener, variationSelectorListener, popup, allowVariations), displayItemLayoutResId));
-    registerFactory(EmojiTextModel.class, new LayoutFactory<>(v -> new EmojiTextViewHolder(v, emojiEventListener), R.layout.emoji_text_display_item));
+    registerFactory(EmojiModel.class, new LayoutFactory<>(v -> new EmojiViewHolder(v, emojiEventListener, variationSelectorListener, popup, allowVariations), displayEmojiLayoutResId));
+    registerFactory(EmojiTextModel.class, new LayoutFactory<>(v -> new EmojiTextViewHolder(v, emojiEventListener), displayEmoticonLayoutResId));
     registerFactory(EmojiNoResultsModel.class, new LayoutFactory<>(MappingViewHolder.SimpleViewHolder::new, R.layout.emoji_grid_no_results));
   }
 
@@ -119,7 +119,6 @@ public class EmojiPageViewGridAdapter extends MappingAdapter implements PopupWin
     private final boolean                     allowVariations;
 
     private final ImageView imageView;
-    private final ImageView hintCorner;
 
     public EmojiViewHolder(@NonNull View itemView,
                            @NonNull EmojiEventListener emojiEventListener,
@@ -134,7 +133,6 @@ public class EmojiPageViewGridAdapter extends MappingAdapter implements PopupWin
       this.emojiEventListener        = emojiEventListener;
       this.allowVariations           = allowVariations;
       this.imageView                 = itemView.findViewById(R.id.emoji_image);
-      this.hintCorner                = itemView.findViewById(R.id.emoji_variation_hint);
     }
 
     @Override
@@ -151,9 +149,6 @@ public class EmojiPageViewGridAdapter extends MappingAdapter implements PopupWin
       });
 
       if (allowVariations && model.emoji.hasMultipleVariations()) {
-        if (hintCorner != null) {
-          hintCorner.setVisibility(View.VISIBLE);
-        }
         itemView.setOnLongClickListener(v -> {
           popup.dismiss();
           popup.setVariations(model.emoji.getVariations());
@@ -162,9 +157,6 @@ public class EmojiPageViewGridAdapter extends MappingAdapter implements PopupWin
           return true;
         });
       } else {
-        if (hintCorner != null) {
-          hintCorner.setVisibility(View.GONE);
-        }
         itemView.setOnLongClickListener(null);
       }
     }

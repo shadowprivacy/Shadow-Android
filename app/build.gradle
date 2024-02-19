@@ -243,6 +243,15 @@ android {
             buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"internal\""
         }
 
+        nightly {
+            dimension 'distribution'
+            versionNameSuffix "-nightly-${getDateSuffix()}"
+            ext.websiteUpdateUrl = "null"
+            buildConfigField "boolean", "PLAY_STORE_DISABLED", "false"
+            buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
+            buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"internal\""
+        }
+
         study {
             dimension 'distribution'
 
@@ -274,13 +283,17 @@ android {
 
     android.applicationVariants.all { variant ->
         variant.outputs.each { output ->
-            output.outputFileName = output.outputFileName.replace(".apk", "-${variant.versionName}.apk")
-            def abiName = output.getFilter("ABI") ?: 'universal'
-            def postFix = abiPostFix.get(abiName, 0)
+            if (output.baseName.contains('nightly')) {
+                output.versionCodeOverride = canonicalVersionCode * postFixSize + 5
+            } else {
+                output.outputFileName = output.outputFileName.replace(".apk", "-${variant.versionName}.apk")
+                def abiName = output.getFilter("ABI") ?: 'universal'
+                def postFix = abiPostFix.get(abiName, 0)
 
-            if (postFix >= postFixSize) throw new AssertionError("postFix is too large")
+                if (postFix >= postFixSize) throw new AssertionError("postFix is too large")
 
-            output.versionCodeOverride = canonicalVersionCode * postFixSize + postFix
+                output.versionCodeOverride = canonicalVersionCode * postFixSize + postFix
+            }
         }
     }
 
@@ -292,6 +305,12 @@ android {
         if (distribution == 'study' && buildType != 'perf' && buildType != 'mock') {
             variant.setIgnore(true)
         } else if (distribution != 'study' && buildType == 'mock') {
+            variant.setIgnore(true)
+        } else if (distribution == 'internal' && buildType != 'flipper' && buildType != 'perf' && buildType != 'release') {
+            variant.setIgnore(true)
+        } else if (distribution == 'nightly' && environment != 'prod') {
+            variant.setIgnore(true)
+        } else if (distribution == 'nightly' && buildType != 'flipper' && buildType != 'perf' && buildType != 'release') {
             variant.setIgnore(true)
         }
     }
@@ -346,7 +365,7 @@ dependencies {
     implementation "androidx.concurrent:concurrent-futures:1.0.0"
     implementation "androidx.biometric:biometric:1.1.0"
 
-    implementation ('com.google.firebase:firebase-messaging:20.2.0') {
+    implementation('com.google.firebase:firebase-messaging:20.2.0') {
         exclude group: 'com.google.firebase', module: 'firebase-core'
         exclude group: 'com.google.firebase', module: 'firebase-analytics'
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
@@ -367,7 +386,7 @@ dependencies {
     implementation project(':video')
     implementation project(':device-transfer')
     implementation 'org.signal:zkgroup-android:0.7.0'
-    implementation 'org.signal:ringrtc-android:2.10.1.1'
+    implementation 'org.signal:ringrtc-android:2.10.6'
     implementation 'org.whispersystems:signal-client-android:0.8.0'
     implementation 'com.google.protobuf:protobuf-javalite:3.10.0'
     implementation('com.mobilecoin:android-sdk:5.0.1') {
@@ -445,6 +464,8 @@ dependencies {
     }
     testImplementation 'org.robolectric:shadows-multidex:4.4'
     testImplementation 'org.hamcrest:hamcrest:2.2'
+
+    testImplementation(testFixtures(project(":libsignal-service")))
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
@@ -567,4 +588,10 @@ def loadKeystoreProperties(filename) {
     } else {
         return null;
     }
+}
+
+def getDateSuffix() {
+    def date = new Date()
+    def formattedDate = date.format('yyyy-MM-dd-HH:mm')
+    return formattedDate
 }

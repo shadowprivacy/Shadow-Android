@@ -5,13 +5,16 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+
 import androidx.annotation.DimenRes;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.text.format.DateUtils;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
@@ -29,10 +32,13 @@ import android.widget.Toast;
 import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.R;
 import su.sres.securesms.animation.AnimationCompleteListener;
-import su.sres.securesms.components.emoji.EmojiKeyboardProvider;
+import su.sres.securesms.components.emoji.EmojiEventListener;
 import su.sres.securesms.components.emoji.EmojiToggle;
 import su.sres.securesms.components.emoji.MediaKeyboard;
+import su.sres.securesms.components.voice.VoiceNotePlaybackState;
 import su.sres.securesms.conversation.ConversationStickerSuggestionAdapter;
+import su.sres.securesms.conversation.VoiceNoteDraftView;
+import su.sres.securesms.database.DraftDatabase;
 import su.sres.securesms.database.model.StickerRecord;
 import su.sres.securesms.keyboard.KeyboardPage;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -48,8 +54,10 @@ import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.AssertedSuccessListener;
 import su.sres.securesms.util.concurrent.ListenableFuture;
 import su.sres.securesms.util.concurrent.SettableFuture;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -57,8 +65,8 @@ import java.util.concurrent.TimeUnit;
 public class InputPanel extends LinearLayout
     implements MicrophoneRecorderView.Listener,
                KeyboardAwareLinearLayout.OnKeyboardShownListener,
-        EmojiKeyboardProvider.EmojiEventListener,
-        ConversationStickerSuggestionAdapter.EventListener
+               EmojiEventListener,
+               ConversationStickerSuggestionAdapter.EventListener
 {
 
   private static final String TAG = Log.tag(InputPanel.class);
@@ -81,7 +89,8 @@ public class InputPanel extends LinearLayout
   private MicrophoneRecorderView microphoneRecorderView;
   private SlideToCancel          slideToCancel;
   private RecordTime             recordTime;
-  private ValueAnimator quoteAnimator;
+  private ValueAnimator      quoteAnimator;
+  private VoiceNoteDraftView voiceNoteDraftView;
 
   private @Nullable Listener listener;
   private           boolean  emojiVisible;
@@ -117,13 +126,14 @@ public class InputPanel extends LinearLayout
     this.buttonToggle           = findViewById(R.id.button_toggle);
     this.recordingContainer     = findViewById(R.id.recording_container);
     this.recordLockCancel       = findViewById(R.id.record_cancel);
+    this.voiceNoteDraftView     = findViewById(R.id.voice_note_draft_view);
     this.slideToCancel          = new SlideToCancel(findViewById(R.id.slide_to_cancel));
     this.microphoneRecorderView = findViewById(R.id.recorder_view);
     this.microphoneRecorderView.setListener(this);
-    this.recordTime             = new RecordTime(findViewById(R.id.record_time),
-            findViewById(R.id.microphone),
-            TimeUnit.HOURS.toSeconds(1),
-            () -> microphoneRecorderView.cancelAction());
+    this.recordTime = new RecordTime(findViewById(R.id.record_time),
+                                     findViewById(R.id.microphone),
+                                     TimeUnit.HOURS.toSeconds(1),
+                                     () -> microphoneRecorderView.cancelAction());
 
     this.recordLockCancel.setOnClickListener(v -> microphoneRecorderView.cancelAction());
 
@@ -153,6 +163,7 @@ public class InputPanel extends LinearLayout
     this.listener = listener;
 
     mediaKeyboard.setOnClickListener(v -> listener.onEmojiToggle());
+    voiceNoteDraftView.setListener(listener);
   }
 
   public void setMediaListener(@NonNull MediaListener listener) {
@@ -167,7 +178,7 @@ public class InputPanel extends LinearLayout
   {
     this.quoteView.setQuote(glideRequests, id, author, body, false, attachments, null);
     int originalHeight = this.quoteView.getVisibility() == VISIBLE ? this.quoteView.getMeasuredHeight()
-            : 0;
+                                                                   : 0;
 
     this.quoteView.setVisibility(VISIBLE);
     this.quoteView.measure(0, 0);
@@ -212,7 +223,7 @@ public class InputPanel extends LinearLayout
                                                     @Nullable AnimationCompleteListener onAnimationComplete)
   {
     ValueAnimator animator = ValueAnimator.ofInt(originalHeight, finalHeight)
-            .setDuration(QUOTE_REVEAL_DURATION_MILLIS);
+                                          .setDuration(QUOTE_REVEAL_DURATION_MILLIS);
 
     animator.addUpdateListener(animation -> {
       ViewGroup.LayoutParams params = view.getLayoutParams();
@@ -225,6 +236,10 @@ public class InputPanel extends LinearLayout
     }
 
     return animator;
+  }
+
+  public boolean hasSaveableContent() {
+    return getQuote().isPresent() || voiceNoteDraftView.getDraft() != null;
   }
 
   public Optional<QuoteModel> getQuote() {
@@ -254,7 +269,7 @@ public class InputPanel extends LinearLayout
     }
 
     int cornerRadius = quoteView.getVisibility() == VISIBLE ? readDimen(R.dimen.message_corner_collapse_radius)
-            : readDimen(R.dimen.message_corner_radius);
+                                                            : readDimen(R.dimen.message_corner_radius);
 
     this.linkPreview.setCorners(cornerRadius, cornerRadius);
   }
@@ -314,7 +329,10 @@ public class InputPanel extends LinearLayout
     recordTime.display();
     slideToCancel.display();
 
-    if (emojiVisible) ViewUtil.fadeOut(mediaKeyboard, FADE_TIME, View.INVISIBLE);
+    if (emojiVisible) {
+      ViewUtil.fadeOut(mediaKeyboard, FADE_TIME, View.INVISIBLE);
+    }
+
     ViewUtil.fadeOut(composeText, FADE_TIME, View.INVISIBLE);
     ViewUtil.fadeOut(quickCameraToggle, FADE_TIME, View.INVISIBLE);
     ViewUtil.fadeOut(quickAudioToggle, FADE_TIME, View.INVISIBLE);
@@ -340,10 +358,10 @@ public class InputPanel extends LinearLayout
   public void onRecordMoved(float offsetX, float absoluteX) {
     slideToCancel.moveTo(offsetX);
 
-    float position  = absoluteX / recordingContainer.getWidth();
+    float position = absoluteX / recordingContainer.getWidth();
 
     if (ViewUtil.isLtr(this) && position <= 0.5 ||
-            ViewUtil.isRtl(this) && position >= 0.6)
+        ViewUtil.isRtl(this) && position >= 0.6)
     {
       this.microphoneRecorderView.cancelAction();
     }
@@ -367,6 +385,10 @@ public class InputPanel extends LinearLayout
     this.microphoneRecorderView.cancelAction();
   }
 
+  public @NonNull Observer<VoiceNotePlaybackState> getPlaybackStateObserver() {
+    return voiceNoteDraftView.getPlaybackStateObserver();
+  }
+
   public void setEnabled(boolean enabled) {
     composeText.setEnabled(enabled);
     mediaKeyboard.setEnabled(enabled);
@@ -383,11 +405,7 @@ public class InputPanel extends LinearLayout
     future.addListener(new AssertedSuccessListener<Void>() {
       @Override
       public void onSuccess(Void result) {
-        if (emojiVisible) ViewUtil.fadeIn(mediaKeyboard, FADE_TIME);
-        ViewUtil.fadeIn(composeText, FADE_TIME);
-        ViewUtil.fadeIn(quickCameraToggle, FADE_TIME);
-        ViewUtil.fadeIn(quickAudioToggle, FADE_TIME);
-        buttonToggle.animate().alpha(1).setDuration(FADE_TIME).start();
+        fadeInNormalComposeViews();
       }
     });
 
@@ -436,14 +454,72 @@ public class InputPanel extends LinearLayout
                 .show(TooltipPopup.POSITION_ABOVE);
   }
 
-  public interface Listener {
+  public void setVoiceNoteDraft(@Nullable DraftDatabase.Draft voiceNoteDraft) {
+    if (voiceNoteDraft != null) {
+      voiceNoteDraftView.setDraft(voiceNoteDraft);
+      voiceNoteDraftView.setVisibility(VISIBLE);
+
+      hideNormalComposeViews();
+    } else {
+      voiceNoteDraftView.clearDraft();
+      ViewUtil.fadeOut(voiceNoteDraftView, FADE_TIME);
+      fadeInNormalComposeViews();
+    }
+  }
+
+  public @Nullable DraftDatabase.Draft getVoiceNoteDraft() {
+    return voiceNoteDraftView.getDraft();
+  }
+
+  private void hideNormalComposeViews() {
+    if (emojiVisible) {
+      Animation animation = mediaKeyboard.getAnimation();
+      if (animation != null) {
+        animation.cancel();
+      }
+
+      mediaKeyboard.setVisibility(View.INVISIBLE);
+    }
+
+    for (Animation animation : Arrays.asList(composeText.getAnimation(), quickCameraToggle.getAnimation(), quickAudioToggle.getAnimation())) {
+      if (animation != null) {
+        animation.cancel();
+      }
+    }
+
+    buttonToggle.animate().cancel();
+
+    composeText.setVisibility(View.INVISIBLE);
+    quickCameraToggle.setVisibility(View.INVISIBLE);
+    quickAudioToggle.setVisibility(View.INVISIBLE);
+  }
+
+  private void fadeInNormalComposeViews() {
+    if (emojiVisible) {
+      ViewUtil.fadeIn(mediaKeyboard, FADE_TIME);
+    }
+
+    ViewUtil.fadeIn(composeText, FADE_TIME);
+    ViewUtil.fadeIn(quickCameraToggle, FADE_TIME);
+    ViewUtil.fadeIn(quickAudioToggle, FADE_TIME);
+    buttonToggle.animate().alpha(1).setDuration(FADE_TIME).start();
+  }
+
+  public interface Listener extends VoiceNoteDraftView.Listener {
     void onRecorderStarted();
+
     void onRecorderLocked();
+
     void onRecorderFinished();
+
     void onRecorderCanceled();
+
     void onRecorderPermissionRequired();
+
     void onEmojiToggle();
+
     void onLinkPreviewCanceled();
+
     void onStickerSuggestionSelected(@NonNull StickerRecord sticker);
   }
 
@@ -534,7 +610,7 @@ public class InputPanel extends LinearLayout
     public void run() {
       long localStartTime = startTime;
       if (localStartTime > 0) {
-        long elapsedTime = System.currentTimeMillis() - localStartTime;
+        long elapsedTime    = System.currentTimeMillis() - localStartTime;
         long elapsedSeconds = TimeUnit.MILLISECONDS.toSeconds(elapsedTime);
         if (elapsedSeconds >= limitSeconds) {
           onLimitHit.run();

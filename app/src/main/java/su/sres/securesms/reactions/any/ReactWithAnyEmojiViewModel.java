@@ -10,7 +10,6 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import su.sres.securesms.components.emoji.EmojiKeyboardProvider;
 import su.sres.securesms.components.emoji.EmojiPageModel;
 import su.sres.securesms.components.emoji.EmojiPageViewGridAdapter;
 import su.sres.securesms.components.emoji.RecentEmojiPageModel;
@@ -21,6 +20,7 @@ import su.sres.securesms.keyboard.emoji.search.EmojiSearchRepository;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.reactions.ReactionsLoader;
 import su.sres.securesms.util.MappingModelList;
+import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 
 import java.util.List;
@@ -133,7 +133,7 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
   }
 
   private static @NonNull String getStartingKey() {
-    if (RecentEmojiPageModel.hasRecents(ApplicationDependencies.getApplication(), EmojiKeyboardProvider.RECENT_STORAGE_KEY)) {
+    if (RecentEmojiPageModel.hasRecents(ApplicationDependencies.getApplication(), TextSecurePreferences.RECENT_STORAGE_KEY)) {
       return RecentEmojiPageModel.KEY;
     } else {
       return EmojiCategory.PEOPLE.getKey();

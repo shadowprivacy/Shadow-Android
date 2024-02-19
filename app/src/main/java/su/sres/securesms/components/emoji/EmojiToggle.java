@@ -5,15 +5,12 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatImageButton;
-import androidx.core.content.ContextCompat;
 
 import android.util.AttributeSet;
 
 import su.sres.securesms.R;
 import su.sres.securesms.keyboard.KeyboardPage;
-import su.sres.securesms.stickers.StickerKeyboardProvider;
 import su.sres.securesms.util.ContextUtil;
-import su.sres.securesms.util.ResUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 
 public class EmojiToggle extends AppCompatImageButton implements MediaKeyboard.MediaKeyboardListener {

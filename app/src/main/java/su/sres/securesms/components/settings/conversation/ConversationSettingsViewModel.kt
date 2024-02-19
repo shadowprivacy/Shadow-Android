@@ -116,6 +116,8 @@ sealed class ConversationSettingsViewModel(
 
   open fun disableProfileSharing(): Unit = error("This ViewModel does not support this interaction")
 
+  open fun deleteSession(): Unit = error("This ViewModel does not support this interaction")
+
   open fun initiateGroupUpgrade(): Unit = error("This ViewModel does not support this interaction")
 
   private class RecipientSettingsViewModel(
@@ -164,12 +166,12 @@ sealed class ConversationSettingsViewModel(
         repository.getGroupsInCommon(recipientId) { groupsInCommon ->
           store.update { state ->
             val recipientSettings = state.requireRecipientSettingsState()
-            val expanded = recipientSettings.groupsInCommonExpanded
+            val canShowMore = !recipientSettings.groupsInCommonExpanded && groupsInCommon.size > 6
             state.copy(
               specificSettingsState = recipientSettings.copy(
                 allGroupsInCommon = groupsInCommon,
-                groupsInCommon = if (expanded) groupsInCommon else groupsInCommon.take(5),
-                canShowMoreGroupsInCommon = !expanded && groupsInCommon.size > 5
+                groupsInCommon = if (!canShowMore) groupsInCommon else groupsInCommon.take(5),
+                canShowMoreGroupsInCommon = canShowMore
               )
             )
           }
@@ -236,7 +238,11 @@ sealed class ConversationSettingsViewModel(
     }
 
     override fun disableProfileSharing() {
-      repository.disableProfileSharing(recipientId)
+      repository.disableProfileSharingForInternalUser(recipientId)
+    }
+
+    override fun deleteSession() {
+      repository.deleteSessionForInternalUser(recipientId)
     }
   }
 
@@ -304,12 +310,13 @@ sealed class ConversationSettingsViewModel(
 
       store.update(liveGroup.fullMembers) { fullMembers, state ->
         val groupState = state.requireGroupSettingsState()
+        val canShowMore = !groupState.groupMembersExpanded && fullMembers.size > 6
 
         state.copy(
           specificSettingsState = groupState.copy(
             allMembers = fullMembers,
-            members = if (groupState.groupMembersExpanded) fullMembers else fullMembers.take(5),
-            canShowMoreGroupMembers = !groupState.groupMembersExpanded && fullMembers.size > 5
+            members = if (!canShowMore) fullMembers else fullMembers.take(5),
+            canShowMoreGroupMembers = canShowMore
           )
         )
       }
@@ -406,6 +413,7 @@ sealed class ConversationSettingsViewModel(
               internalEvents.postValue(ConversationSettingsEvent.ShowMembersAdded(it.numberOfMembersAdded))
             }
           }
+
           is GroupAddMembersResult.Failure -> internalEvents.postValue(ConversationSettingsEvent.ShowAddMembersToGroupError(it.reason))
         }
       }

@@ -1,6 +1,7 @@
 package su.sres.securesms.jobs;
 
 import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
@@ -13,6 +14,7 @@ import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
+import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -29,7 +31,9 @@ import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.transport.UndeliverableMessageException;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
+
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.ContentHint;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
@@ -50,7 +54,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-public class PushMediaSendJob extends PushSendJob  {
+public class PushMediaSendJob extends PushSendJob {
 
   public static final String KEY = "PushMediaSendJob";
 
@@ -76,9 +80,9 @@ public class PushMediaSendJob extends PushSendJob  {
         throw new AssertionError();
       }
 
-      MessageDatabase database            = DatabaseFactory.getMmsDatabase(context);
+      MessageDatabase      database            = DatabaseFactory.getMmsDatabase(context);
       OutgoingMediaMessage message             = database.getOutgoingMessage(messageId);
-      Set<String> attachmentUploadIds = enqueueCompressingAndUploadAttachmentsChains(jobManager, message);
+      Set<String>          attachmentUploadIds = enqueueCompressingAndUploadAttachmentsChains(jobManager, message);
 
       jobManager.add(new PushMediaSendJob(messageId, recipient), attachmentUploadIds, recipient.getId().toQueueKey());
 
@@ -106,7 +110,7 @@ public class PushMediaSendJob extends PushSendJob  {
 
   @Override
   public void onPushSend()
-          throws IOException, MmsException, NoSuchMessageException, UndeliverableMessageException, RetryLaterException
+      throws IOException, MmsException, NoSuchMessageException, UndeliverableMessageException, RetryLaterException
   {
     ExpiringMessageManager expirationManager = ApplicationDependencies.getExpiringMessageManager();
     MessageDatabase        database          = DatabaseFactory.getMmsDatabase(context);
@@ -119,7 +123,7 @@ public class PushMediaSendJob extends PushSendJob  {
     }
 
     try {
-      log(TAG, String.valueOf(message.getSentTimeMillis()), "Sending message: " + messageId + ", Recipient: " + message.getRecipient().getId() + ", Thread: " + threadId);
+      log(TAG, String.valueOf(message.getSentTimeMillis()), "Sending message: " + messageId + ", Recipient: " + message.getRecipient().getId() + ", Thread: " + threadId + ", Attachments: " + buildAttachmentString(message.getAttachments()));
 
       RecipientUtil.shareProfileIfFirstSecureMessage(context, message.getRecipient());
 
@@ -187,7 +191,7 @@ public class PushMediaSendJob extends PushSendJob  {
   }
 
   private boolean deliver(OutgoingMediaMessage message)
-          throws IOException, InsecureFallbackApprovalException, UntrustedIdentityException, UndeliverableMessageException
+      throws IOException, InsecureFallbackApprovalException, UntrustedIdentityException, UndeliverableMessageException
   {
     if (message.getRecipient() == null) {
       throw new UndeliverableMessageException("No destination address.");
@@ -206,30 +210,30 @@ public class PushMediaSendJob extends PushSendJob  {
       Optional<SignalServiceDataMessage.Sticker> sticker            = getStickerFor(message);
       List<SharedContact>                        sharedContacts     = getSharedContactsFor(message);
       List<Preview>                              previews           = getPreviewsFor(message);
-      SignalServiceDataMessage                   mediaMessage       = SignalServiceDataMessage.newBuilder()
-              .withBody(message.getBody())
-              .withAttachments(serviceAttachments)
-              .withTimestamp(message.getSentTimeMillis())
-              .withExpiration((int)(message.getExpiresIn() / 1000))
-              .withViewOnce(message.isViewOnce())
-              .withProfileKey(profileKey.orNull())
-              .withQuote(quote.orNull())
-              .withSticker(sticker.orNull())
-              .withSharedContacts(sharedContacts)
-              .withPreviews(previews)
-              .asExpirationUpdate(message.isExpirationUpdate())
-              .build();
+      SignalServiceDataMessage mediaMessage = SignalServiceDataMessage.newBuilder()
+                                                                      .withBody(message.getBody())
+                                                                      .withAttachments(serviceAttachments)
+                                                                      .withTimestamp(message.getSentTimeMillis())
+                                                                      .withExpiration((int) (message.getExpiresIn() / 1000))
+                                                                      .withViewOnce(message.isViewOnce())
+                                                                      .withProfileKey(profileKey.orNull())
+                                                                      .withQuote(quote.orNull())
+                                                                      .withSticker(sticker.orNull())
+                                                                      .withSharedContacts(sharedContacts)
+                                                                      .withPreviews(previews)
+                                                                      .asExpirationUpdate(message.isExpirationUpdate())
+                                                                      .build();
 
       if (Util.equals(TextSecurePreferences.getLocalUuid(context), address.getUuid().orNull())) {
         Optional<UnidentifiedAccessPair> syncAccess  = UnidentifiedAccessUtil.getAccessForSync(context);
         SignalServiceSyncMessage         syncMessage = buildSelfSendSyncMessage(context, mediaMessage, syncAccess);
 
         SendMessageResult result = messageSender.sendSyncMessage(syncMessage, syncAccess);
-        DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(messageRecipient.getId(), message.getSentTimeMillis(), result, ContentHint.RESENDABLE, messageId, true);
+        DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(messageRecipient.getId(), message.getSentTimeMillis(), result, ContentHint.RESENDABLE, new MessageId(messageId, true));
         return syncAccess.isPresent();
       } else {
         SendMessageResult result = messageSender.sendDataMessage(address, UnidentifiedAccessUtil.getAccessFor(context, messageRecipient), ContentHint.RESENDABLE, mediaMessage);
-        DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(messageRecipient.getId(), message.getSentTimeMillis(), result, ContentHint.RESENDABLE, messageId, true);
+        DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(messageRecipient.getId(), message.getSentTimeMillis(), result, ContentHint.RESENDABLE, new MessageId(messageId, true));
         return result.getSuccess().isUnidentified();
       }
     } catch (UnregisteredUserException e) {

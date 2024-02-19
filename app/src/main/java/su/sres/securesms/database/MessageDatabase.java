@@ -19,6 +19,7 @@ import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.documents.IdentityKeyMismatchList;
 import su.sres.securesms.database.documents.NetworkFailure;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
+import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.SmsMessageRecord;
 import su.sres.securesms.database.model.databaseprotos.ReactionList;
@@ -65,129 +66,212 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   protected abstract String getTableName();
+
   protected abstract String getTypeField();
+
   protected abstract String getDateSentColumnName();
+
   protected abstract String getDateReceivedColumnName();
 
   public abstract @Nullable
   RecipientId getOldestGroupUpdateSender(long threadId, long minimumDateReceived);
+
   public abstract long getLatestGroupQuitTimestamp(long threadId, long quitTimeBarrier);
+
   public abstract boolean isGroupQuitMessage(long messageId);
+
   public abstract @Nullable Pair<RecipientId, Long> getOldestUnreadMentionDetails(long threadId);
+
   public abstract int getUnreadMentionCount(long threadId);
+
   public abstract long getThreadIdForMessage(long id);
+
   public abstract int getMessageCountForThread(long threadId);
+
   public abstract int getMessageCountForThread(long threadId, long beforeTime);
+
   abstract int getMessageCountForThreadSummary(long threadId);
+
   public abstract boolean hasMeaningfulMessage(long threadId);
+
   public abstract Optional<MmsNotificationInfo> getNotification(long messageId);
 
   public abstract Cursor getExpirationStartedMessages();
+
   public abstract SmsMessageRecord getSmsMessage(long messageId) throws NoSuchMessageException;
+
   public abstract Reader getMessages(Collection<Long> messageIds);
+
   public abstract Cursor getMessageCursor(long messageId);
+
   public abstract OutgoingMediaMessage getOutgoingMessage(long messageId) throws MmsException, NoSuchMessageException;
+
   public abstract MessageRecord getMessageRecord(long messageId) throws NoSuchMessageException;
+
   public abstract @Nullable MessageRecord getMessageRecordOrNull(long messageId);
+
   public abstract Cursor getVerboseMessageCursor(long messageId);
+
   public abstract boolean hasReceivedAnyCallsSince(long threadId, long timestamp);
+
   public abstract @Nullable
   ViewOnceExpirationInfo getNearestExpiringViewOnceMessage();
+
   public abstract boolean isSent(long messageId);
+
   public abstract List<MessageRecord> getProfileChangeDetailsRecords(long threadId, long afterTimestamp);
+
   public abstract Set<Long> getAllRateLimitedMessageIds();
 
   public abstract void markExpireStarted(long messageId);
+
   public abstract void markExpireStarted(long messageId, long startTime);
+
   public abstract void markExpireStarted(Collection<Long> messageId, long startTime);
 
   public abstract void markAsEndSession(long id);
+
   public abstract void markAsPreKeyBundle(long id);
+
   public abstract void markAsInvalidVersionKeyExchange(long id);
+
   public abstract void markAsSecure(long id);
+
   public abstract void markAsInsecure(long id);
+
   public abstract void markAsPush(long id);
+
   public abstract void markAsForcedSms(long id);
+
   public abstract void markAsRateLimited(long id);
+
   public abstract void clearRateLimitStatus(Collection<Long> ids);
+
   public abstract void markAsDecryptFailed(long id);
+
   public abstract void markAsDecryptDuplicate(long id);
+
   public abstract void markAsNoSession(long id);
+
   public abstract void markAsUnsupportedProtocolVersion(long id);
+
   public abstract void markAsInvalidMessage(long id);
+
   public abstract void markAsLegacyVersion(long id);
+
   public abstract void markAsOutbox(long id);
+
   public abstract void markAsPendingInsecureSmsFallback(long id);
 
   public abstract void markAsSent(long messageId, boolean secure);
+
   public abstract void markAsSentFailed(long id);
 
   public abstract void markUnidentified(long messageId, boolean unidentified);
 
   public abstract void markAsSending(long messageId);
+
   public abstract void markAsRemoteDelete(long messageId);
 
   public abstract void markAsMissedCall(long id, boolean isVideoOffer);
+
   public abstract void markAsNotified(long id);
+
   public abstract void markSmsStatus(long id, int status);
+
   public abstract void markDownloadState(long messageId, long state);
+
   public abstract void markIncomingNotificationReceived(long threadId);
 
   public abstract Set<ThreadUpdate> incrementReceiptCount(SyncMessageId messageId, long timestamp, @NonNull ReceiptType receiptType);
+
   public abstract List<Pair<Long, Long>> setTimestampRead(SyncMessageId messageId, long proposedExpireStarted, @NonNull Map<Long, Long> threadToLatestRead);
+
   public abstract List<MarkedMessageInfo> setEntireThreadRead(long threadId);
+
   public abstract List<MarkedMessageInfo> setMessagesReadSince(long threadId, long timestamp);
+
   public abstract List<MarkedMessageInfo> setAllMessagesRead();
-  public abstract Pair<Long, Long> updateBundleMessageBody(long messageId, String body);
+
+  public abstract InsertResult updateBundleMessageBody(long messageId, String body);
+
   public abstract @NonNull List<MarkedMessageInfo> getViewedIncomingMessages(long threadId);
+
   public abstract @Nullable MarkedMessageInfo setIncomingMessageViewed(long messageId);
+
   public abstract @NonNull List<MarkedMessageInfo> setIncomingMessagesViewed(@NonNull List<Long> messageIds);
 
   public abstract void addFailures(long messageId, List<NetworkFailure> failure);
+
   public abstract void removeFailure(long messageId, NetworkFailure failure);
 
 
   public abstract @NonNull Pair<Long, Long> insertReceivedCall(@NonNull RecipientId address, boolean isVideoOffer);
+
   public abstract @NonNull Pair<Long, Long> insertOutgoingCall(@NonNull RecipientId address, boolean isVideoOffer);
+
   public abstract @NonNull Pair<Long, Long> insertMissedCall(@NonNull RecipientId address, long timestamp, boolean isVideoOffer);
+
   public abstract void insertOrUpdateGroupCall(@NonNull RecipientId groupRecipientId,
                                                @NonNull RecipientId sender,
                                                long timestamp,
                                                @Nullable String peekGroupCallEraId,
                                                @NonNull Collection<UUID> peekJoinedUuids,
                                                boolean isCallFull);
+
   public abstract void insertOrUpdateGroupCall(@NonNull RecipientId groupRecipientId,
                                                @NonNull RecipientId sender,
                                                long timestamp,
                                                @Nullable String messageGroupCallEraId);
+
   public abstract boolean updatePreviousGroupCall(long threadId, @Nullable String peekGroupCallEraId, @NonNull Collection<UUID> peekJoinedUuids, boolean isCallFull);
 
   public abstract Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type);
+
   public abstract Optional<InsertResult> insertMessageInbox(IncomingTextMessage message);
+
   public abstract Optional<InsertResult> insertMessageInbox(IncomingMediaMessage retrieved, String contentLocation, long threadId) throws MmsException;
+
   public abstract Pair<Long, Long> insertMessageInbox(@NonNull NotificationInd notification, int subscriptionId);
+
   public abstract Optional<InsertResult> insertSecureDecryptedMessageInbox(IncomingMediaMessage retrieved, long threadId) throws MmsException;
+
   public abstract @NonNull InsertResult insertChatSessionRefreshedMessage(@NonNull RecipientId recipientId, long senderDeviceId, long sentTimestamp);
+
   public abstract void insertBadDecryptMessage(@NonNull RecipientId recipientId, int senderDevice, long sentTimestamp, long receivedTimestamp, long threadId);
+
   public abstract long insertMessageOutbox(long threadId, OutgoingTextMessage message, boolean forceSms, long date, InsertListener insertListener);
+
   public abstract long insertMessageOutbox(@NonNull OutgoingMediaMessage message, long threadId, boolean forceSms, @Nullable SmsDatabase.InsertListener insertListener) throws MmsException;
+
   public abstract long insertMessageOutbox(@NonNull OutgoingMediaMessage message, long threadId, boolean forceSms, int defaultReceiptStatus, @Nullable SmsDatabase.InsertListener insertListener) throws MmsException;
+
   public abstract void insertProfileNameChangeMessages(@NonNull Recipient recipient, @NonNull String newProfileName, @NonNull String previousProfileName);
+
   public abstract void insertGroupV1MigrationEvents(@NonNull RecipientId recipientId, long threadId, @NonNull GroupMigrationMembershipChange membershipChange);
 
   public abstract boolean deleteMessage(long messageId);
+
   abstract void deleteThread(long threadId);
+
   abstract void deleteMessagesInThreadBeforeDate(long threadId, long date);
+
   abstract void deleteThreads(@NonNull Set<Long> threadIds);
+
   abstract void deleteAllThreads();
+
   abstract void deleteAbandonedMessages();
 
   public abstract List<MessageRecord> getMessagesInThreadAfterInclusive(long threadId, long timestamp, long limit);
 
   public abstract SQLiteDatabase beginTransaction();
+
   public abstract void endTransaction(SQLiteDatabase database);
+
   public abstract void setTransactionSuccessful();
+
   public abstract void endTransaction();
+
   public abstract SQLiteStatement createInsertStatement(SQLiteDatabase database);
 
   public abstract void ensureMigration();
@@ -203,9 +287,9 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
 
   final int getInsecureMessagesSentForThread(long threadId) {
     SQLiteDatabase db         = databaseHelper.getReadableDatabase();
-    String[]       projection = new String[]{"COUNT(*)"};
+    String[]       projection = new String[] { "COUNT(*)" };
     String         query      = THREAD_ID + " = ? AND " + getOutgoingInsecureMessageClause() + " AND " + getDateSentColumnName() + " > ?";
-    String[]       args       = new String[]{String.valueOf(threadId), String.valueOf(System.currentTimeMillis() - InsightsConstants.PERIOD_IN_MILLIS)};
+    String[]       args       = new String[] { String.valueOf(threadId), String.valueOf(System.currentTimeMillis() - InsightsConstants.PERIOD_IN_MILLIS) };
 
     try (Cursor cursor = db.query(getTableName(), projection, query, args, null, null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
@@ -225,10 +309,10 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   final int getSecureMessageCount(long threadId) {
-    SQLiteDatabase db           = databaseHelper.getReadableDatabase();
-    String[]       projection   = new String[] {"COUNT(*)"};
-    String         query        = getSecureMessageClause() + "AND " + MmsSmsColumns.THREAD_ID + " = ?";
-    String[]       args         = new String[]{String.valueOf(threadId)};
+    SQLiteDatabase db         = databaseHelper.getReadableDatabase();
+    String[]       projection = new String[] { "COUNT(*)" };
+    String         query      = getSecureMessageClause() + "AND " + MmsSmsColumns.THREAD_ID + " = ?";
+    String[]       args       = new String[] { String.valueOf(threadId) };
 
     try (Cursor cursor = db.query(getTableName(), projection, query, args, null, null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
@@ -240,10 +324,10 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   final int getOutgoingSecureMessageCount(long threadId) {
-    SQLiteDatabase db           = databaseHelper.getReadableDatabase();
-    String[]       projection   = new String[] {"COUNT(*)"};
-    String         query        = getOutgoingSecureMessageClause() + "AND " + MmsSmsColumns.THREAD_ID + " = ? AND" + "(" + getTypeField() + " & " + Types.GROUP_QUIT_BIT + " = 0)";
-    String[]       args         = new String[]{String.valueOf(threadId)};
+    SQLiteDatabase db         = databaseHelper.getReadableDatabase();
+    String[]       projection = new String[] { "COUNT(*)" };
+    String         query      = getOutgoingSecureMessageClause() + "AND " + MmsSmsColumns.THREAD_ID + " = ? AND" + "(" + getTypeField() + " & " + Types.GROUP_QUIT_BIT + " = 0)";
+    String[]       args       = new String[] { String.valueOf(threadId) };
 
     try (Cursor cursor = db.query(getTableName(), projection, query, args, null, null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
@@ -256,10 +340,10 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
 
   private int getMessageCountForRecipientsAndType(String typeClause) {
 
-    SQLiteDatabase db           = databaseHelper.getReadableDatabase();
-    String[]       projection   = new String[] {"COUNT(*)"};
-    String         query        = typeClause + " AND " + getDateSentColumnName() + " > ?";
-    String[]       args         = new String[]{String.valueOf(System.currentTimeMillis() - InsightsConstants.PERIOD_IN_MILLIS)};
+    SQLiteDatabase db         = databaseHelper.getReadableDatabase();
+    String[]       projection = new String[] { "COUNT(*)" };
+    String         query      = typeClause + " AND " + getDateSentColumnName() + " > ?";
+    String[]       args       = new String[] { String.valueOf(System.currentTimeMillis() - InsightsConstants.PERIOD_IN_MILLIS) };
 
     try (Cursor cursor = db.query(getTableName(), projection, query, args, null, null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
@@ -290,10 +374,10 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
     SQLiteDatabase db          = databaseHelper.getWritableDatabase();
     ContentValues  values      = new ContentValues();
     String         whereClause = THREAD_ID + " = ? AND " + REACTIONS_UNREAD + " = ?";
-    String[]       whereArgs   = new String[]{String.valueOf(threadId), "1"};
+    String[]       whereArgs   = new String[] { String.valueOf(threadId), "1" };
 
     if (sinceTimestamp > -1) {
-      whereClause +=  " AND " + getDateReceivedColumnName() + " <= " + sinceTimestamp;
+      whereClause += " AND " + getDateReceivedColumnName() + " <= " + sinceTimestamp;
     }
 
     values.put(REACTIONS_UNREAD, 0);
@@ -320,17 +404,17 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
     db.beginTransaction();
 
     try {
-      ReactionList          reactions   = getReactions(db, messageId).or(ReactionList.getDefaultInstance());
+      ReactionList reactions = getReactions(db, messageId).or(ReactionList.getDefaultInstance());
       ReactionList.Reaction newReaction = ReactionList.Reaction.newBuilder()
-              .setEmoji(reaction.getEmoji())
-              .setAuthor(reaction.getAuthor().toLong())
-              .setSentTime(reaction.getDateSent())
-              .setReceivedTime(reaction.getDateReceived())
-              .build();
+                                                               .setEmoji(reaction.getEmoji())
+                                                               .setAuthor(reaction.getAuthor().toLong())
+                                                               .setSentTime(reaction.getDateSent())
+                                                               .setReceivedTime(reaction.getDateReceived())
+                                                               .build();
 
       ReactionList updatedList = pruneByAuthor(reactions, reaction.getAuthor()).toBuilder()
-              .addReactions(newReaction)
-              .build();
+                                                                               .addReactions(newReaction)
+                                                                               .build();
 
       setReactions(db, messageId, updatedList);
 
@@ -372,7 +456,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
 
     for (ReactionList.Reaction reaction : reactions.getReactionsList()) {
       if (reactionRecord.getAuthor().toLong() == reaction.getAuthor() &&
-              reactionRecord.getEmoji().equals(reaction.getEmoji()))
+          reactionRecord.getEmoji().equals(reaction.getEmoji()))
       {
         return true;
       }
@@ -398,7 +482,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   public void addMismatchedIdentity(long messageId, @NonNull RecipientId recipientId, IdentityKey identityKey) {
     try {
       addToDocument(messageId, MISMATCHED_IDENTITIES,
-              new IdentityKeyMismatch(recipientId, identityKey),
+                    new IdentityKeyMismatch(recipientId, identityKey),
                     IdentityKeyMismatchList.class);
     } catch (IOException e) {
       Log.w(TAG, e);
@@ -408,7 +492,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   public void removeMismatchedIdentity(long messageId, @NonNull RecipientId recipientId, IdentityKey identityKey) {
     try {
       removeFromDocument(messageId, MISMATCHED_IDENTITIES,
-              new IdentityKeyMismatch(recipientId, identityKey),
+                         new IdentityKeyMismatch(recipientId, identityKey),
                          IdentityKeyMismatchList.class);
     } catch (IOException e) {
       Log.w(TAG, e);
@@ -423,8 +507,8 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
     List<ReportSpamData> data = new ArrayList<>();
     try (Cursor cursor = db.query(getTableName(), new String[] { RECIPIENT_ID, SERVER_GUID, getDateReceivedColumnName() }, query, args, null, null, getDateReceivedColumnName() + " DESC", "3")) {
       while (cursor.moveToNext()) {
-        RecipientId id         = RecipientId.from(CursorUtil.requireLong(cursor, RECIPIENT_ID));
-        String      serverGuid = CursorUtil.requireString(cursor, SERVER_GUID);
+        RecipientId id           = RecipientId.from(CursorUtil.requireLong(cursor, RECIPIENT_ID));
+        String      serverGuid   = CursorUtil.requireString(cursor, SERVER_GUID);
         long        dateReceived = CursorUtil.requireLong(cursor, getDateReceivedColumnName());
         if (!Util.isEmpty(serverGuid)) {
           data.add(new ReportSpamData(id, serverGuid, dateReceived));
@@ -440,13 +524,13 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
     if (raw != null) {
       try {
         return Stream.of(ReactionList.parseFrom(raw).getReactionsList())
-                .map(r -> {
-                  return new ReactionRecord(r.getEmoji(),
-                          RecipientId.from(r.getAuthor()),
-                          r.getSentTime(),
-                          r.getReceivedTime());
-                })
-                .toList();
+                     .map(r -> {
+                       return new ReactionRecord(r.getEmoji(),
+                                                 RecipientId.from(r.getAuthor()),
+                                                 r.getSentTime(),
+                                                 r.getReceivedTime());
+                     })
+                     .toList();
       } catch (InvalidProtocolBufferException e) {
         Log.w(TAG, "[parseReactions] Failed to parse reaction list!", e);
         return Collections.emptyList();
@@ -507,12 +591,12 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
     ContentValues contentValues = new ContentValues();
 
     if (document == null || document.size() == 0) {
-      contentValues.put(column, (String)null);
+      contentValues.put(column, (String) null);
     } else {
       contentValues.put(column, JsonUtils.toJson(document));
     }
 
-    database.update(getTableName(), contentValues, ID_WHERE, new String[] {String.valueOf(messageId)});
+    database.update(getTableName(), contentValues, ID_WHERE, new String[] { String.valueOf(messageId) });
   }
 
   private <D extends Document> D getDocument(SQLiteDatabase database, long messageId,
@@ -521,8 +605,8 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
     Cursor cursor = null;
 
     try {
-      cursor = database.query(getTableName(), new String[] {column},
-                              ID_WHERE, new String[] {String.valueOf(messageId)},
+      cursor = database.query(getTableName(), new String[] { column },
+                              ID_WHERE, new String[] { String.valueOf(messageId) },
                               null, null, null);
 
       if (cursor != null && cursor.moveToNext()) {
@@ -553,19 +637,19 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
 
   private static @NonNull ReactionList pruneByAuthor(@NonNull ReactionList reactionList, @NonNull RecipientId recipientId) {
     List<ReactionList.Reaction> pruned = Stream.of(reactionList.getReactionsList())
-            .filterNot(r -> r.getAuthor() == recipientId.toLong())
-            .toList();
+                                               .filterNot(r -> r.getAuthor() == recipientId.toLong())
+                                               .toList();
 
     return reactionList.toBuilder()
-            .clearReactions()
-            .addAllReactions(pruned)
-            .build();
+                       .clearReactions()
+                       .addAllReactions(pruned)
+                       .build();
   }
 
   private @NonNull Optional<ReactionList> getReactions(SQLiteDatabase db, long messageId) {
-    String[] projection = new String[]{ REACTIONS };
+    String[] projection = new String[] { REACTIONS };
     String   query      = ID + " = ?";
-    String[] args       = new String[]{String.valueOf(messageId)};
+    String[] args       = new String[] { String.valueOf(messageId) };
 
     try (Cursor cursor = db.query(getTableName(), projection, query, args, null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
@@ -601,9 +685,9 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   private long getThreadId(@NonNull SQLiteDatabase db, long messageId) {
-    String[] projection = new String[]{ THREAD_ID };
+    String[] projection = new String[] { THREAD_ID };
     String   query      = ID + " = ?";
-    String[] args       = new String[]{ String.valueOf(messageId) };
+    String[] args       = new String[] { String.valueOf(messageId) };
 
     try (Cursor cursor = db.query(getTableName(), projection, query, args, null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
@@ -690,11 +774,13 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
 
     private final long           threadId;
     private final SyncMessageId  syncMessageId;
+    private final MessageId      messageId;
     private final ExpirationInfo expirationInfo;
 
-    public MarkedMessageInfo(long threadId, SyncMessageId syncMessageId, ExpirationInfo expirationInfo) {
+    public MarkedMessageInfo(long threadId, @NonNull SyncMessageId syncMessageId, @NonNull MessageId messageId, @Nullable ExpirationInfo expirationInfo) {
       this.threadId       = threadId;
       this.syncMessageId  = syncMessageId;
+      this.messageId      = messageId;
       this.expirationInfo = expirationInfo;
     }
 
@@ -702,11 +788,15 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
       return threadId;
     }
 
-    public SyncMessageId getSyncMessageId() {
+    public @NonNull SyncMessageId getSyncMessageId() {
       return syncMessageId;
     }
 
-    public ExpirationInfo getExpirationInfo() {
+    public @NonNull MessageId getMessageId() {
+      return messageId;
+    }
+
+    public @Nullable ExpirationInfo getExpirationInfo() {
       return expirationInfo;
     }
   }
@@ -717,7 +807,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
 
     public InsertResult(long messageId, long threadId) {
       this.messageId = messageId;
-      this.threadId = threadId;
+      this.threadId  = threadId;
     }
 
     public long getMessageId() {
@@ -782,7 +872,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
       if (o == null || getClass() != o.getClass()) return false;
       ThreadUpdate that = (ThreadUpdate) o;
       return threadId == that.threadId &&
-              verbose  == that.verbose;
+             verbose == that.verbose;
     }
 
     @Override
@@ -797,7 +887,9 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
 
   public interface Reader extends Closeable {
     MessageRecord getNext();
+
     MessageRecord getCurrent();
+
     void close();
   }
 

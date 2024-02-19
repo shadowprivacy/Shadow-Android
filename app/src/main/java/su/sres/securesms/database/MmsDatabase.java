@@ -48,6 +48,7 @@ import su.sres.securesms.database.documents.NetworkFailureList;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.MediaMmsMessageRecord;
 import su.sres.securesms.database.model.Mention;
+import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.NotificationMmsMessageRecord;
 import su.sres.securesms.database.model.Quote;
@@ -383,7 +384,7 @@ public class MmsDatabase extends MessageDatabase {
   }
 
   @Override
-  public Pair<Long, Long> updateBundleMessageBody(long messageId, String body) {
+  public InsertResult updateBundleMessageBody(long messageId, String body) {
     throw new UnsupportedOperationException();
   }
 
@@ -402,11 +403,12 @@ public class MmsDatabase extends MessageDatabase {
 
       List<MarkedMessageInfo> results = new ArrayList<>(cursor.getCount());
       while (cursor.moveToNext()) {
+        long          messageId     = CursorUtil.requireLong(cursor, ID);
         RecipientId   recipientId   = RecipientId.from(CursorUtil.requireLong(cursor, RECIPIENT_ID));
         long          dateSent      = CursorUtil.requireLong(cursor, DATE_SENT);
         SyncMessageId syncMessageId = new SyncMessageId(recipientId, dateSent);
 
-        results.add(new MarkedMessageInfo(threadId, syncMessageId, null));
+        results.add(new MarkedMessageInfo(threadId, syncMessageId, new MessageId(messageId, true), null));
       }
 
       return results;
@@ -441,12 +443,13 @@ public class MmsDatabase extends MessageDatabase {
 
         long type = CursorUtil.requireLong(cursor, MESSAGE_BOX);
         if (Types.isSecureType(type) && Types.isInboxType(type)) {
+          long          messageId     = CursorUtil.requireLong(cursor, ID);
           long          threadId      = CursorUtil.requireLong(cursor, THREAD_ID);
           RecipientId   recipientId   = RecipientId.from(CursorUtil.requireLong(cursor, RECIPIENT_ID));
           long          dateSent      = CursorUtil.requireLong(cursor, DATE_SENT);
           SyncMessageId syncMessageId = new SyncMessageId(recipientId, dateSent);
 
-          results.add(new MarkedMessageInfo(threadId, syncMessageId, null));
+          results.add(new MarkedMessageInfo(threadId, syncMessageId, new MessageId(messageId, true), null));
 
           ContentValues contentValues = new ContentValues();
           contentValues.put(VIEWED_RECEIPT_COUNT, 1);
@@ -788,7 +791,7 @@ public class MmsDatabase extends MessageDatabase {
 
   @Override
   public @Nullable MessageRecord getMessageRecordOrNull(long messageId) {
-    try (Cursor cursor = rawQuery(RAW_ID_WHERE, new String[] {messageId + ""})) {
+    try (Cursor cursor = rawQuery(RAW_ID_WHERE, new String[] { messageId + "" })) {
       return new Reader(cursor).getNext();
     }
   }
@@ -1026,7 +1029,7 @@ public class MmsDatabase extends MessageDatabase {
           SyncMessageId  syncMessageId  = new SyncMessageId(recipientId, dateSent);
           ExpirationInfo expirationInfo = new ExpirationInfo(messageId, expiresIn, expireStarted, true);
 
-          result.add(new MarkedMessageInfo(threadId, syncMessageId, expirationInfo));
+          result.add(new MarkedMessageInfo(threadId, syncMessageId, new MessageId(messageId, true), expirationInfo));
         }
       }
 
@@ -1368,7 +1371,7 @@ public class MmsDatabase extends MessageDatabase {
     contentValues.put(THREAD_ID, threadId);
     contentValues.put(CONTENT_LOCATION, contentLocation);
     contentValues.put(STATUS, Status.DOWNLOAD_INITIALIZED);
-    contentValues.put(DATE_RECEIVED, retrieved.isPushMessage() ? System.currentTimeMillis() : generatePduCompatTimestamp());
+    contentValues.put(DATE_RECEIVED, retrieved.isPushMessage() ? retrieved.getReceivedTimeMillis() : generatePduCompatTimestamp(retrieved.getReceivedTimeMillis()));
     contentValues.put(PART_COUNT, retrieved.getAttachments().size());
     contentValues.put(SUBSCRIPTION_ID, retrieved.getSubscriptionId());
     contentValues.put(EXPIRES_IN, retrieved.getExpiresIn());
@@ -1478,7 +1481,7 @@ public class MmsDatabase extends MessageDatabase {
     contentValues.put(MESSAGE_BOX, Types.BASE_INBOX_TYPE);
     contentValues.put(THREAD_ID, threadId);
     contentValues.put(STATUS, Status.DOWNLOAD_INITIALIZED);
-    contentValues.put(DATE_RECEIVED, generatePduCompatTimestamp());
+    contentValues.put(DATE_RECEIVED, generatePduCompatTimestamp(System.currentTimeMillis()));
     contentValues.put(READ, Util.isDefaultSmsProvider(context) ? 0 : 1);
     contentValues.put(SUBSCRIPTION_ID, subscriptionId);
 
@@ -1826,8 +1829,8 @@ public class MmsDatabase extends MessageDatabase {
   void deleteThreads(@NonNull Set<Long> threadIds) {
     Log.d(TAG, "deleteThreads(count: " + threadIds.size() + ")");
 
-    SQLiteDatabase db     = databaseHelper.getWritableDatabase();
-    String         where  = "";
+    SQLiteDatabase db    = databaseHelper.getWritableDatabase();
+    String         where = "";
 
     for (long threadId : threadIds) {
       where += THREAD_ID + " = '" + threadId + "' OR ";
@@ -1835,7 +1838,7 @@ public class MmsDatabase extends MessageDatabase {
 
     where = where.substring(0, where.length() - 4);
 
-    try (Cursor cursor = db.query(TABLE_NAME, new String[] {ID}, where, null, null, null, null)) {
+    try (Cursor cursor = db.query(TABLE_NAME, new String[] { ID }, where, null, null, null, null)) {
 
       while (cursor != null && cursor.moveToNext()) {
         deleteMessage(cursor.getLong(0));
@@ -2220,8 +2223,7 @@ public class MmsDatabase extends MessageDatabase {
     }
   }
 
-  private long generatePduCompatTimestamp() {
-    final long time = System.currentTimeMillis();
+  private long generatePduCompatTimestamp(long time) {
     return time - (time % 1000);
   }
 }

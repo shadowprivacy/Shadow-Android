@@ -3,8 +3,8 @@ package su.sres.devicetransfer;
 import androidx.annotation.NonNull;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
+
 import su.sres.devicetransfer.DeviceTransferAuthentication.Client;
 import su.sres.devicetransfer.DeviceTransferAuthentication.DeviceTransferAuthenticationException;
 import su.sres.devicetransfer.DeviceTransferAuthentication.Server;
@@ -13,76 +13,79 @@ import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static su.sres.signalservice.test.LibSignalLibraryUtil.assumeLibSignalSupportedOnOS;
 
 public class DeviceTransferAuthenticationTest {
 
-    private static byte[] certificate;
-    private static byte[] badCertificate;
+  private byte[] certificate;
+  private byte[] badCertificate;
 
-    @BeforeClass
-    public static void setup() throws KeyGenerationFailedException {
-        certificate    = SelfSignedIdentity.create().getX509Encoded();
-        badCertificate = SelfSignedIdentity.create().getX509Encoded();
-    }
+  @Before
+  public void ensureNativeSupported() throws KeyGenerationFailedException {
+    assumeLibSignalSupportedOnOS();
 
-    @Test
-    public void testCompute_withNoChanges() throws DeviceTransferAuthenticationException {
-        Client client = new Client(certificate);
-        Server server = new Server(certificate, client.getCommitment());
+    certificate    = SelfSignedIdentity.create().getX509Encoded();
+    badCertificate = SelfSignedIdentity.create().getX509Encoded();
+  }
 
-        byte[] clientRandom = client.setServerRandomAndGetClientRandom(server.getRandom());
+  @Test
+  public void testCompute_withNoChanges() throws DeviceTransferAuthenticationException {
+    Client client = new Client(certificate);
+    Server server = new Server(certificate, client.getCommitment());
 
-        server.setClientRandom(clientRandom);
-        assertEquals(client.computeShortAuthenticationCode(), server.computeShortAuthenticationCode());
-    }
+    byte[] clientRandom = client.setServerRandomAndGetClientRandom(server.getRandom());
 
-    @Test(expected = DeviceTransferAuthenticationException.class)
-    public void testServerCompute_withChangedClientCertificate() throws DeviceTransferAuthenticationException {
-        Client client = new Client(badCertificate);
-        Server server = new Server(certificate, client.getCommitment());
+    server.setClientRandom(clientRandom);
+    assertEquals(client.computeShortAuthenticationCode(), server.computeShortAuthenticationCode());
+  }
 
-        byte[] clientRandom = client.setServerRandomAndGetClientRandom(server.getRandom());
+  @Test(expected = DeviceTransferAuthenticationException.class)
+  public void testServerCompute_withChangedClientCertificate() throws DeviceTransferAuthenticationException {
+    Client client = new Client(badCertificate);
+    Server server = new Server(certificate, client.getCommitment());
 
-        server.setClientRandom(clientRandom);
-        server.computeShortAuthenticationCode();
-    }
+    byte[] clientRandom = client.setServerRandomAndGetClientRandom(server.getRandom());
 
-    @Test(expected = DeviceTransferAuthenticationException.class)
-    public void testServerCompute_withChangedClientCommitment() throws DeviceTransferAuthenticationException {
-        Client client = new Client(certificate);
-        Server server = new Server(certificate, randomBytes());
+    server.setClientRandom(clientRandom);
+    server.computeShortAuthenticationCode();
+  }
 
-        byte[] clientRandom = client.setServerRandomAndGetClientRandom(server.getRandom());
+  @Test(expected = DeviceTransferAuthenticationException.class)
+  public void testServerCompute_withChangedClientCommitment() throws DeviceTransferAuthenticationException {
+    Client client = new Client(certificate);
+    Server server = new Server(certificate, randomBytes());
 
-        server.setClientRandom(clientRandom);
-        server.computeShortAuthenticationCode();
-    }
+    byte[] clientRandom = client.setServerRandomAndGetClientRandom(server.getRandom());
 
-    @Test(expected = DeviceTransferAuthenticationException.class)
-    public void testServerCompute_withChangedClientRandom() throws DeviceTransferAuthenticationException {
-        Client client = new Client(certificate);
-        Server server = new Server(certificate, client.getCommitment());
+    server.setClientRandom(clientRandom);
+    server.computeShortAuthenticationCode();
+  }
 
-        client.setServerRandomAndGetClientRandom(server.getRandom());
+  @Test(expected = DeviceTransferAuthenticationException.class)
+  public void testServerCompute_withChangedClientRandom() throws DeviceTransferAuthenticationException {
+    Client client = new Client(certificate);
+    Server server = new Server(certificate, client.getCommitment());
 
-        server.setClientRandom(randomBytes());
-        server.computeShortAuthenticationCode();
-    }
+    client.setServerRandomAndGetClientRandom(server.getRandom());
 
-    @Test
-    public void testClientCompute_withChangedServerSecret() throws DeviceTransferAuthenticationException {
-        Client client = new Client(certificate);
-        Server server = new Server(certificate, client.getCommitment());
+    server.setClientRandom(randomBytes());
+    server.computeShortAuthenticationCode();
+  }
 
-        byte[] clientRandom = client.setServerRandomAndGetClientRandom(randomBytes());
+  @Test
+  public void testClientCompute_withChangedServerSecret() throws DeviceTransferAuthenticationException {
+    Client client = new Client(certificate);
+    Server server = new Server(certificate, client.getCommitment());
 
-        server.setClientRandom(clientRandom);
-        assertNotEquals(client.computeShortAuthenticationCode(), server.computeShortAuthenticationCode());
-    }
+    byte[] clientRandom = client.setServerRandomAndGetClientRandom(randomBytes());
 
-    private @NonNull byte[] randomBytes() {
-        byte[] bytes = new byte[32];
-        new Random().nextBytes(bytes);
-        return bytes;
-    }
+    server.setClientRandom(clientRandom);
+    assertNotEquals(client.computeShortAuthenticationCode(), server.computeShortAuthenticationCode());
+  }
+
+  private @NonNull byte[] randomBytes() {
+    byte[] bytes = new byte[32];
+    new Random().nextBytes(bytes);
+    return bytes;
+  }
 }

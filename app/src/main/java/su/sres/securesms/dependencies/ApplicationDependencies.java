@@ -9,6 +9,7 @@ import okhttp3.OkHttpClient;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.database.DatabaseObserver;
+import su.sres.securesms.database.PendingRetryReceiptCache;
 import su.sres.securesms.messages.BackgroundMessageRetriever;
 import su.sres.securesms.messages.IncomingMessageObserver;
 import su.sres.securesms.messages.IncomingMessageProcessor;
@@ -89,6 +90,7 @@ public class ApplicationDependencies {
   private static volatile SignalCallManager            signalCallManager;
   private static volatile OkHttpClient                 okHttpClient;
   private static volatile PendingRetryReceiptManager   pendingRetryReceiptManager;
+  private static volatile PendingRetryReceiptCache     pendingRetryReceiptCache;
   private static volatile KeyValueStore                keyValueStore;
 
   public static void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
@@ -496,6 +498,18 @@ public class ApplicationDependencies {
     return appForegroundObserver;
   }
 
+  public static @NonNull PendingRetryReceiptCache getPendingRetryReceiptCache() {
+    if (pendingRetryReceiptCache == null) {
+      synchronized (LOCK) {
+        if (pendingRetryReceiptCache == null) {
+          pendingRetryReceiptCache = provider.providePendingRetryReceiptCache();
+        }
+      }
+    }
+
+    return pendingRetryReceiptCache;
+  }
+
   public interface Provider {
     @NonNull
     PipeConnectivityListener providePipeListener();
@@ -547,6 +561,8 @@ public class ApplicationDependencies {
     SignalCallManager provideSignalCallManager();
 
     @NonNull PendingRetryReceiptManager providePendingRetryReceiptManager();
+
+    @NonNull PendingRetryReceiptCache providePendingRetryReceiptCache();
   }
 
   public interface NetworkIndependentProvider {

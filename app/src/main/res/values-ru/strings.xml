@@ -55,6 +55,7 @@
     <string name="DraftDatabase_Draft_video_snippet">(видео)</string>
     <string name="DraftDatabase_Draft_location_snippet">(место)</string>
     <string name="DraftDatabase_Draft_quote_snippet">(ответ)</string>
+    <string name="DraftDatabase_Draft_voice_note">(Голосовое сообщение)</string>
 
     <!--AttachmentKeyboard-->
     <string name="AttachmentKeyboard_gallery">Галерея</string>
@@ -986,6 +987,7 @@
     <string name="MediaOverviewActivity_audio">Аудио</string>
     <string name="MediaOverviewActivity_video">Видео</string>
     <string name="MediaOverviewActivity_image">Изображение</string>
+    <string name="MediaOverviewActivity_voice_message">Голосовое сообщение</string>
     <string name="MediaOverviewActivity_sent_by_s_to_s">%1$s отправил(-а) %2$s</string>
     <string name="MediaOverviewActivity_sent_by_you_to_s">Вы отправили %1$s</string>
 
@@ -1043,6 +1045,10 @@
     <!--MediaRepository-->
     <string name="MediaRepository_all_media">Все медиа</string>
     <string name="MediaRepository__camera">Камера</string>
+
+    <!--MessageDecryptionUtil-->
+    <string name="MessageDecryptionUtil_failed_to_decrypt_message">Не удалось расшифровать сообщение</string>
+    <string name="MessageDecryptionUtil_tap_to_send_a_debug_log">Нажмите, чтобы отправить журнал отладки</string>
 
     <!--MessageRecord-->
     <string name="MessageRecord_unknown">Неизвестный</string>
@@ -3158,6 +3164,8 @@
         <item quantity="many">Этот пользовательский цвет используется в %1$d чатах. Вы хотите удалить его для всех чатов?</item>
         <item quantity="other">Этот пользовательский цвет используется в %1$d чатах. Вы хотите удалить его для всех чатов?</item>
     </plurals>
+    <string name="ChatColorSelectionFragment__delete_chat_color">Удалить цвет чата?</string>
+
     <!--CustomChatColorCreatorFragment-->
     <string name="CustomChatColorCreatorFragment__solid">Сплошной</string>
     <string name="CustomChatColorCreatorFragment__gradient">Градиент</string>
@@ -3256,6 +3264,13 @@
 
     <!--StickerKeyboard-->
     <string name="StickerKeyboard__recently_used">Недавно использованные</string>
+
+    <!--PlaybackSpeedToggleTextView-->
+    <string name="PlaybackSpeedToggleTextView__p5x">0.5x</string>
+    <string name="PlaybackSpeedToggleTextView__1x">1x</string>
+    <string name="PlaybackSpeedToggleTextView__2x">2x</string>
+    <!--VoiceNotePlayerView-->
+    <string name="VoiceNotePlayerView__s_dot_s">%1$s · %2$s</string>
 
     <!--EOF-->
 </resources>

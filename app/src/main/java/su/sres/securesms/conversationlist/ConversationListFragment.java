@@ -27,6 +27,7 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -90,6 +91,8 @@ import su.sres.securesms.components.reminder.ReminderView;
 import su.sres.securesms.components.reminder.ServiceOutageReminder;
 import su.sres.securesms.components.reminder.UnauthorizedReminder;
 import su.sres.securesms.components.settings.app.AppSettingsActivity;
+import su.sres.securesms.components.voice.VoiceNoteMediaControllerOwner;
+import su.sres.securesms.components.voice.VoiceNotePlayerView;
 import su.sres.securesms.conversation.ConversationFragment;
 import su.sres.securesms.conversationlist.model.Conversation;
 import su.sres.securesms.conversationlist.model.UnreadPayments;
@@ -117,6 +120,7 @@ import su.sres.securesms.payments.preferences.details.PaymentDetailsParcelable;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.ratelimit.RecaptchaProofBottomSheetFragment;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.search.MessageResult;
 import su.sres.securesms.search.SearchResult;
 import su.sres.securesms.service.KeyCachingService;
@@ -185,11 +189,24 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   private SnapToTopDataObserver          snapToTopDataObserver;
   private Drawable                       archiveDrawable;
   private AppForegroundObserver.Listener appForegroundObserver;
+  private VoiceNoteMediaControllerOwner  mediaControllerOwner;
+  private Stub<VoiceNotePlayerView>      voiceNotePlayerViewStub;
 
   private Stopwatch startupStopwatch;
 
   public static ConversationListFragment newInstance() {
     return new ConversationListFragment();
+  }
+
+  @Override
+  public void onAttach(@NonNull Context context) {
+    super.onAttach(context);
+
+    if (context instanceof VoiceNoteMediaControllerOwner) {
+      mediaControllerOwner = (VoiceNoteMediaControllerOwner) context;
+    } else {
+      throw new ClassCastException("Expected context to be a Listener");
+    }
   }
 
   @Override
@@ -220,6 +237,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     searchToolbar           = new Stub<>(view.findViewById(R.id.search_toolbar));
     megaphoneContainer      = new Stub<>(view.findViewById(R.id.megaphone_container));
     paymentNotificationView = new Stub<>(view.findViewById(R.id.payments_notification));
+    voiceNotePlayerViewStub = new Stub<>(view.findViewById(R.id.voice_note_player));
 
     Toolbar toolbar = getToolbar(view);
     toolbar.setVisibility(View.VISIBLE);
@@ -253,6 +271,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     initializeListAdapters();
     initializeTypingObserver();
     initializeSearchListener();
+    initializeVoiceNotePlayer();
 
     RatingManager.showRatingDialogIfNecessary(requireContext());
 
@@ -496,6 +515,21 @@ public class ConversationListFragment extends MainFragment implements ActionMode
           setAdapter(defaultAdapter);
         }
       });
+    });
+  }
+
+  private void initializeVoiceNotePlayer() {
+    mediaControllerOwner.getVoiceNoteMediaController().getVoiceNotePlayerViewState().observe(getViewLifecycleOwner(), state -> {
+      if (state.isPresent()) {
+        if (!voiceNotePlayerViewStub.resolved()) {
+          voiceNotePlayerViewStub.get().setListener(new VoiceNotePlayerViewListener());
+        }
+
+        voiceNotePlayerViewStub.get().setState(state.get());
+        voiceNotePlayerViewStub.get().show();
+      } else if (voiceNotePlayerViewStub.resolved()) {
+        voiceNotePlayerViewStub.get().hide();
+      }
     });
   }
 
@@ -1283,6 +1317,36 @@ public class ConversationListFragment extends MainFragment implements ActionMode
           ViewUtil.fadeOut(toolbarShadow, 250);
         }
       }
+    }
+  }
+
+  private final class VoiceNotePlayerViewListener implements VoiceNotePlayerView.Listener {
+
+    @Override
+    public void onCloseRequested(@NonNull Uri uri) {
+      if (voiceNotePlayerViewStub.resolved()) {
+        mediaControllerOwner.getVoiceNoteMediaController().stopPlaybackAndReset(uri);
+      }
+    }
+
+    @Override
+    public void onSpeedChangeRequested(@NonNull Uri uri, float speed) {
+      mediaControllerOwner.getVoiceNoteMediaController().setPlaybackSpeed(uri, speed);
+    }
+
+    @Override
+    public void onPlay(@NonNull Uri uri, long messageId, double position) {
+      mediaControllerOwner.getVoiceNoteMediaController().startSinglePlayback(uri, messageId, position);
+    }
+
+    @Override
+    public void onPause(@NonNull Uri uri) {
+      mediaControllerOwner.getVoiceNoteMediaController().pausePlayback(uri);
+    }
+
+    @Override
+    public void onNavigateToMessage(long threadId, @NonNull RecipientId threadRecipientId, @NonNull RecipientId senderId, long messageSentAt, long messagePositionInThread) {
+      MainNavigator.get(requireActivity()).goToConversation(threadRecipientId, threadId, ThreadDatabase.DistributionTypes.DEFAULT, (int) messagePositionInThread);
     }
   }
 }

@@ -13,11 +13,10 @@ import androidx.annotation.WorkerThread;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
-import su.sres.securesms.database.PendingRetryReceiptDatabase;
+import su.sres.securesms.database.PendingRetryReceiptCache;
 import su.sres.securesms.database.model.PendingRetryReceiptModel;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.FeatureFlags;
-
 
 /**
  * Manages the time-based creation of error messages for retries that are pending for messages we couldn't decrypt.
@@ -26,13 +25,13 @@ public final class PendingRetryReceiptManager extends TimedEventManager<PendingR
 
   private static final String TAG = Log.tag(PendingRetryReceiptManager.class);
 
-  private final PendingRetryReceiptDatabase pendingDatabase;
-  private final MessageDatabase             messageDatabase;
+  private final PendingRetryReceiptCache pendingCache;
+  private final MessageDatabase          messageDatabase;
 
   public PendingRetryReceiptManager(@NonNull Application application) {
     super(application, "PendingRetryReceiptManager");
 
-    this.pendingDatabase = DatabaseFactory.getPendingRetryReceiptDatabase(application);
+    this.pendingCache    = ApplicationDependencies.getPendingRetryReceiptCache();
     this.messageDatabase = DatabaseFactory.getSmsDatabase(application);
 
     scheduleIfNecessary();
@@ -41,7 +40,7 @@ public final class PendingRetryReceiptManager extends TimedEventManager<PendingR
   @WorkerThread
   @Override
   protected @Nullable PendingRetryReceiptModel getNextClosestEvent() {
-    PendingRetryReceiptModel model = pendingDatabase.getOldest();
+    PendingRetryReceiptModel model = pendingCache.getOldest();
 
     if (model != null) {
       Log.i(TAG, "Next closest expiration is in " + getDelayForEvent(model) + " ms for timestamp " + model.getSentTimestamp() + ".");
@@ -57,7 +56,7 @@ public final class PendingRetryReceiptManager extends TimedEventManager<PendingR
   protected void executeEvent(@NonNull PendingRetryReceiptModel event) {
     Log.w(TAG, "It's been " + (System.currentTimeMillis() - event.getReceivedTimestamp()) + " ms since this retry receipt was received. Showing an error.");
     messageDatabase.insertBadDecryptMessage(event.getAuthor(), event.getAuthorDevice(), event.getSentTimestamp(), event.getReceivedTimestamp(), event.getThreadId());
-    pendingDatabase.delete(event.getId());
+    pendingCache.delete(event);
   }
 
   @WorkerThread

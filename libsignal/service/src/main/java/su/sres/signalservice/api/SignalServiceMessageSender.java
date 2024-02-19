@@ -108,6 +108,7 @@ import su.sres.signalservice.internal.push.exceptions.MismatchedDevicesException
 import su.sres.signalservice.internal.push.exceptions.StaleDevicesException;
 import su.sres.signalservice.internal.push.http.AttachmentCipherOutputStreamFactory;
 import su.sres.signalservice.internal.push.http.CancelationSignal;
+import su.sres.signalservice.internal.push.http.PartialSendCompleteListener;
 import su.sres.signalservice.internal.push.http.ResumableUploadSpec;
 import su.sres.signalservice.internal.util.StaticCredentialsProvider;
 import su.sres.signalservice.internal.util.Util;
@@ -279,7 +280,7 @@ public class SignalServiceMessageSender {
     Content         content         = createTypingContent(message);
     EnvelopeContent envelopeContent = EnvelopeContent.encrypted(content, ContentHint.IMPLICIT, Optional.absent());
 
-    sendMessage(recipients, getTargetUnidentifiedAccess(unidentifiedAccess), message.getTimestamp(), envelopeContent, true, cancelationSignal);
+    sendMessage(recipients, getTargetUnidentifiedAccess(unidentifiedAccess), message.getTimestamp(), envelopeContent, true, null, cancelationSignal);
   }
 
   /**
@@ -395,7 +396,7 @@ public class SignalServiceMessageSender {
     EnvelopeContent envelopeContent   = EnvelopeContent.encrypted(content, ContentHint.IMPLICIT, Optional.of(groupId));
     long            timestamp         = System.currentTimeMillis();
 
-    return sendMessage(recipients, getTargetUnidentifiedAccess(unidentifiedAccess), timestamp, envelopeContent, false, null);
+    return sendMessage(recipients, getTargetUnidentifiedAccess(unidentifiedAccess), timestamp, envelopeContent, false, null, null);
   }
 
   /**
@@ -450,21 +451,22 @@ public class SignalServiceMessageSender {
   /**
    * Sends a message to a group using client-side fanout.
    *
-   * @param recipients The group members.
-   * @param message    The group message.
-   * @throws IOException
+   * @param partialListener A listener that will be called when an individual send is completed. Will be invoked on an arbitrary background thread, *not*
+   *                        the calling thread.
    */
   public List<SendMessageResult> sendDataMessage(List<SignalServiceAddress> recipients,
                                                  List<Optional<UnidentifiedAccessPair>> unidentifiedAccess,
                                                  boolean isRecipientUpdate,
                                                  ContentHint contentHint,
-                                                 SignalServiceDataMessage message)
+                                                 SignalServiceDataMessage message,
+                                                 PartialSendCompleteListener partialListener,
+                                                 CancelationSignal cancelationSignal)
       throws IOException, UntrustedIdentityException
   {
     Content                 content            = createMessageContent(message);
     EnvelopeContent         envelopeContent    = EnvelopeContent.encrypted(content, contentHint, message.getGroupId());
     long                    timestamp          = message.getTimestamp();
-    List<SendMessageResult> results            = sendMessage(recipients, getTargetUnidentifiedAccess(unidentifiedAccess), timestamp, envelopeContent, false, null);
+    List<SendMessageResult> results            = sendMessage(recipients, getTargetUnidentifiedAccess(unidentifiedAccess), timestamp, envelopeContent, false, partialListener, cancelationSignal);
     boolean                 needsSyncInResults = false;
 
     for (SendMessageResult result : results) {
@@ -1591,6 +1593,7 @@ public class SignalServiceMessageSender {
                                               long timestamp,
                                               EnvelopeContent content,
                                               boolean online,
+                                              PartialSendCompleteListener partialListener,
                                               CancelationSignal cancelationSignal)
       throws IOException
   {
@@ -1604,7 +1607,13 @@ public class SignalServiceMessageSender {
     while (recipientIterator.hasNext()) {
       SignalServiceAddress         recipient = recipientIterator.next();
       Optional<UnidentifiedAccess> access    = unidentifiedAccessIterator.next();
-      futureResults.add(executor.submit(() -> sendMessage(recipient, access, timestamp, content, online, cancelationSignal)));
+      futureResults.add(executor.submit(() -> {
+        SendMessageResult result = sendMessage(recipient, access, timestamp, content, online, cancelationSignal);
+        if (partialListener != null) {
+          partialListener.onPartialSendComplete(result);
+        }
+        return result;
+      }));
     }
 
     List<SendMessageResult> results = new ArrayList<>(futureResults.size());
@@ -1813,7 +1822,7 @@ public class SignalServiceMessageSender {
                                                       .collect(Collectors.toList());
 
         Set<String>                successUuids     = successes.stream().map(a -> a.getUuid().get().toString()).collect(Collectors.toSet());
-        Set<SignalProtocolAddress> successAddresses = destinations.stream().filter(a -> successUuids.contains(a.getName())).collect(Collectors.toSet()); ;
+        Set<SignalProtocolAddress> successAddresses = destinations.stream().filter(a -> successUuids.contains(a.getName())).collect(Collectors.toSet());
 
         store.markSenderKeySharedWith(distributionId, successAddresses);
 

@@ -11,6 +11,7 @@ import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.database.DatabaseObserver;
 import su.sres.securesms.database.JobDatabase;
+import su.sres.securesms.database.PendingRetryReceiptCache;
 import su.sres.securesms.jobmanager.impl.FactoryJobPredicate;
 import su.sres.securesms.jobs.GroupCallUpdateSendJob;
 import su.sres.securesms.jobs.MarkerJob;
@@ -247,6 +248,11 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
   @Override
   public @NonNull PendingRetryReceiptManager providePendingRetryReceiptManager() {
     return new PendingRetryReceiptManager(context);
+  }
+
+  @Override
+  public @NonNull PendingRetryReceiptCache providePendingRetryReceiptCache() {
+    return new PendingRetryReceiptCache(context);
   }
 
   private static class DynamicCredentialsProvider implements CredentialsProvider {

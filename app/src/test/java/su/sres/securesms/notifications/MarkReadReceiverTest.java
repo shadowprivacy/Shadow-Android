@@ -12,7 +12,9 @@ import org.junit.runner.RunWith;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+
 import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -20,6 +22,7 @@ import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.MultiDeviceReadUpdateJob;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.Util;
+
 import org.whispersystems.libsignal.util.Pair;
 
 import java.util.HashSet;
@@ -39,62 +42,63 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @PrepareForTest(ApplicationDependencies.class)
 public class MarkReadReceiverTest {
 
-    private final Context    mockContext    = mock(Context.class);
-    private final JobManager mockJobManager = mock(JobManager.class);
-    private final List<Job>  jobs           = new LinkedList<>();
+  private final Context    mockContext    = mock(Context.class);
+  private final JobManager mockJobManager = mock(JobManager.class);
+  private final List<Job>  jobs           = new LinkedList<>();
 
-    @Before
-    public void setUp() {
-        mockStatic(ApplicationDependencies.class);
-        when(ApplicationDependencies.getJobManager()).thenReturn(mockJobManager);
-        doAnswer((Answer<Void>) invocation -> {
-            jobs.add((Job) invocation.getArguments()[0]);
-            return null;
-        }).when(mockJobManager).add(any());
-    }
+  @Before
+  public void setUp() {
+    mockStatic(ApplicationDependencies.class);
+    when(ApplicationDependencies.getJobManager()).thenReturn(mockJobManager);
+    doAnswer((Answer<Void>) invocation -> {
+      jobs.add((Job) invocation.getArguments()[0]);
+      return null;
+    }).when(mockJobManager).add(any());
+  }
 
-    @Test
-    public void givenMultipleThreadsWithMultipleMessagesEach_whenIProcess_thenIProperlyGroupByThreadAndRecipient() {
-        // GIVEN
-        List<RecipientId> recipients = Stream.range(1L, 4L).map(RecipientId::from).toList();
-        List<Long>        threads    = Stream.range(4L, 7L).toList();
-        int               expected   = recipients.size() * threads.size() + 1;
+  @Test
+  public void givenMultipleThreadsWithMultipleMessagesEach_whenIProcess_thenIProperlyGroupByThreadAndRecipient() {
+    // GIVEN
+    List<RecipientId> recipients = Stream.range(1L, 4L).map(RecipientId::from).toList();
+    List<Long>        threads    = Stream.range(4L, 7L).toList();
+    int               expected   = recipients.size() * threads.size() + 1;
 
-        List<MessageDatabase.MarkedMessageInfo> infoList = Stream.of(threads)
-                .flatMap(threadId -> Stream.of(recipients)
-                        .map(recipientId -> createMarkedMessageInfo(threadId, recipientId)))
-                .toList();
+    List<MessageDatabase.MarkedMessageInfo> infoList = Stream.of(threads)
+                                                             .flatMap(threadId -> Stream.of(recipients)
+                                                                                        .map(recipientId -> createMarkedMessageInfo(threadId, recipientId)))
+                                                             .toList();
 
-        List<MessageDatabase.MarkedMessageInfo> duplicatedList = Util.concatenatedList(infoList, infoList);
+    List<MessageDatabase.MarkedMessageInfo> duplicatedList = Util.concatenatedList(infoList, infoList);
 
-        // WHEN
-        MarkReadReceiver.process(mockContext, duplicatedList);
+    // WHEN
+    MarkReadReceiver.process(mockContext, duplicatedList);
 
-        // THEN
-        assertEquals("Should have 10 total jobs, including MultiDeviceReadUpdateJob", expected, jobs.size());
+    // THEN
+    assertEquals("Should have 10 total jobs, including MultiDeviceReadUpdateJob", expected, jobs.size());
 
-        Set<Pair<Long, String>> threadRecipientPairs = new HashSet<>();
-        Stream.of(jobs).forEach(job -> {
-            if (job instanceof MultiDeviceReadUpdateJob) {
-                return;
-            }
+    Set<Pair<Long, String>> threadRecipientPairs = new HashSet<>();
+    Stream.of(jobs).forEach(job -> {
+      if (job instanceof MultiDeviceReadUpdateJob) {
+        return;
+      }
 
-            Data data = job.serialize();
+      Data data = job.serialize();
 
-            long   threadId    = data.getLong("thread");
-            String recipientId = data.getString("recipient");
-            long[] messageIds  = data.getLongArray("message_ids");
+      long   threadId    = data.getLong("thread");
+      String recipientId = data.getString("recipient");
+      long[] messageIds  = data.getLongArray("message_ids");
 
-            assertEquals("Each job should contain two messages.", 2, messageIds.length);
-            assertTrue("Each thread recipient pair should only exist once.", threadRecipientPairs.add(new Pair<>(threadId, recipientId)));
-        });
+      assertEquals("Each job should contain two messages.", 2, messageIds.length);
+      assertTrue("Each thread recipient pair should only exist once.", threadRecipientPairs.add(new Pair<>(threadId, recipientId)));
+    });
 
-        assertEquals("Should have 9 total combinations.", 9, threadRecipientPairs.size());
-    }
+    assertEquals("Should have 9 total combinations.", 9, threadRecipientPairs.size());
+  }
 
-    private MessageDatabase.MarkedMessageInfo createMarkedMessageInfo(long threadId, @NonNull RecipientId recipientId) {
-        return new MessageDatabase.MarkedMessageInfo(threadId,
-                new MessageDatabase.SyncMessageId(recipientId, 0),
-                new MessageDatabase.ExpirationInfo(0, 0, 0, false));
-    }
+  private MessageDatabase.MarkedMessageInfo createMarkedMessageInfo(long threadId, @NonNull RecipientId recipientId) {
+    return new MessageDatabase.MarkedMessageInfo(threadId,
+                                                 new MessageDatabase.SyncMessageId(recipientId, 0),
+                                                 new MessageId(1, true),
+                                                 new MessageDatabase.ExpirationInfo(0, 0, 0, false));
+  }
 }

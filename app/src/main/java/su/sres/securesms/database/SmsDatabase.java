@@ -37,6 +37,7 @@ import su.sres.securesms.database.documents.IdentityKeyMismatchList;
 import su.sres.securesms.database.documents.NetworkFailure;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.GroupCallUpdateDetailsUtil;
+import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.database.model.SmsMessageRecord;
@@ -644,7 +645,7 @@ public class SmsDatabase extends MessageDatabase {
           SyncMessageId  syncMessageId  = new SyncMessageId(recipientId, dateSent);
           ExpirationInfo expirationInfo = new ExpirationInfo(messageId, expiresIn, expireStarted, false);
 
-          results.add(new MarkedMessageInfo(threadId, syncMessageId, expirationInfo));
+          results.add(new MarkedMessageInfo(threadId, syncMessageId, new MessageId(messageId, false), expirationInfo));
         }
       }
 
@@ -664,7 +665,7 @@ public class SmsDatabase extends MessageDatabase {
   }
 
   @Override
-  public Pair<Long, Long> updateBundleMessageBody(long messageId, String body) {
+  public InsertResult updateBundleMessageBody(long messageId, String body) {
     long type = Types.BASE_INBOX_TYPE | Types.SECURE_MESSAGE_BIT | Types.PUSH_MESSAGE_BIT;
     return updateMessageBodyAndType(messageId, body, Types.TOTAL_MASK, type);
   }
@@ -684,7 +685,7 @@ public class SmsDatabase extends MessageDatabase {
     return Collections.emptyList();
   }
 
-  private Pair<Long, Long> updateMessageBodyAndType(long messageId, String body, long maskOff, long maskOn) {
+  private InsertResult updateMessageBodyAndType(long messageId, String body, long maskOff, long maskOn) {
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     db.execSQL("UPDATE " + TABLE_NAME + " SET " + BODY + " = ?, " +
                TYPE + " = (" + TYPE + " & " + (Types.TOTAL_MASK - maskOff) + " | " + maskOn + ") " +
@@ -697,7 +698,7 @@ public class SmsDatabase extends MessageDatabase {
     notifyConversationListeners(threadId);
     notifyConversationListListeners();
 
-    return new Pair<>(messageId, threadId);
+    return new InsertResult(messageId, threadId);
   }
 
   @Override
@@ -1109,7 +1110,7 @@ public class SmsDatabase extends MessageDatabase {
     ContentValues values = new ContentValues();
     values.put(RECIPIENT_ID, message.getSender().serialize());
     values.put(ADDRESS_DEVICE_ID, message.getSenderDeviceId());
-    values.put(DATE_RECEIVED, System.currentTimeMillis());
+    values.put(DATE_RECEIVED, message.getReceivedTimestampMillis());
     values.put(DATE_SENT, message.getSentTimestampMillis());
     values.put(DATE_SERVER, message.getServerTimestampMillis());
     values.put(PROTOCOL, message.getProtocol());

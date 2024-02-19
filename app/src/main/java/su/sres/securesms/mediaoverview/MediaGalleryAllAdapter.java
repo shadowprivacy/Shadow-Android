@@ -26,6 +26,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -423,16 +424,21 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
       line1.setText(describe(fromToPair.first(), fromToPair.second()));
     }
 
-    private String describe(@NonNull Recipient from, @NonNull Recipient thread) {
+    protected @Nullable String getMediaTitle() {
+      return fileName.orNull();
+    }
+
+    private @NonNull String describe(@NonNull Recipient from, @NonNull Recipient thread) {
       if (from == Recipient.UNKNOWN && thread == Recipient.UNKNOWN) {
         return fileName.or(fileTypeDescription);
       }
 
       String sentFromToString = getSentFromToString(from, thread);
+      String mediaTitle       = getMediaTitle();
 
-      if (fileName.isPresent()) {
+      if (mediaTitle != null) {
         return context.getString(R.string.MediaOverviewActivity_detail_line_2_part,
-                                 fileName.get(),
+                                 mediaTitle,
                                  sentFromToString);
       } else {
         return sentFromToString;
@@ -480,6 +486,7 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
   private class AudioDetailViewHolder extends DetailViewHolder {
 
     private final AudioView audioView;
+    private       boolean   isVoiceNote;
 
     AudioDetailViewHolder(@NonNull View itemView) {
       super(itemView);
@@ -488,11 +495,14 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
 
     @Override
     public void bind(@NonNull Context context, @NonNull MediaDatabase.MediaRecord mediaRecord, @NonNull Slide slide) {
-      super.bind(context, mediaRecord, slide);
 
       if (!slide.hasAudio()) {
         throw new AssertionError();
       }
+
+      isVoiceNote = slide.asAttachment().isVoiceNote();
+
+      super.bind(context, mediaRecord, slide);
 
       long mmsId = Objects.requireNonNull(mediaRecord.getAttachment()).getMmsId();
 
@@ -502,6 +512,11 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
 
       audioView.setOnClickListener(view -> itemClickListener.onMediaClicked(mediaRecord));
       itemView.setOnClickListener(view -> itemClickListener.onMediaClicked(mediaRecord));
+    }
+
+    @Override
+    protected @NonNull String getMediaTitle() {
+      return context.getString(R.string.ThreadRecord_voice_message);
     }
 
     @Override
@@ -576,6 +591,10 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
     @Override
     public void onStopAndReset(@NonNull Uri audioUri) {
       audioItemListener.onStopAndReset(audioUri);
+    }
+
+    @Override
+    public void onSpeedChanged(float speed, boolean isPlaying) {
     }
 
     @Override

@@ -4,10 +4,9 @@ import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
-import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
@@ -21,11 +20,8 @@ import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.signalservice.api.CancelationException;
-import su.sres.signalservice.api.SignalServiceMessageSender;
-import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
 import su.sres.signalservice.api.messages.SignalServiceTypingMessage;
 import su.sres.signalservice.api.messages.SignalServiceTypingMessage.Action;
-import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.util.Collections;
 import java.util.List;
@@ -107,6 +103,16 @@ public class TypingSendJob extends BaseJob {
       return;
     }
 
+    if (recipient.isPushV1Group() || recipient.isMmsGroup()) {
+      Log.w(TAG, "Not sending typing indicators to unsupported groups.");
+      return;
+    }
+
+    if (!recipient.isRegistered() || recipient.isForceSmsSelection()) {
+      Log.w(TAG, "Not sending typing indicators to non-Signal recipients.");
+      return;
+    }
+
     List<Recipient>  recipients = Collections.singletonList(recipient);
     Optional<byte[]> groupId    = Optional.absent();
 
@@ -123,25 +129,11 @@ public class TypingSendJob extends BaseJob {
     SignalServiceTypingMessage typingMessage = new SignalServiceTypingMessage(typing ? Action.STARTED : Action.STOPPED, System.currentTimeMillis(), groupId);
 
     try {
-      if (recipient.isPushV2Group()) {
-        GroupSendUtil.sendTypingMessage(context, recipient.requireGroupId().requireV2(), recipients, typingMessage, this::isCanceled);
-      } else {
-        SignalServiceMessageSender             messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-        List<SignalServiceAddress>             addresses          = RecipientUtil.toSignalServiceAddressesFromResolved(context, recipients);
-        List<Optional<UnidentifiedAccessPair>> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, recipients);
-
-        if (addresses.isEmpty()) {
-          Log.w(TAG, "No one to send typing indicators to");
-          return;
-        }
-
-        if (isCanceled()) {
-          Log.w(TAG, "Canceled before send!");
-          return;
-        }
-
-        messageSender.sendTyping(addresses, unidentifiedAccess, typingMessage, this::isCanceled);
-      }
+      GroupSendUtil.sendTypingMessage(context,
+                                      recipient.getGroupId().transform(GroupId::requireV2).orNull(),
+                                      recipients,
+                                      typingMessage,
+                                      this::isCanceled);
     } catch (CancelationException e) {
       Log.w(TAG, "Canceled during send!");
     }

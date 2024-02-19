@@ -12,7 +12,10 @@ class StickerSearchViewModel(private val searchRepository: StickerSearchReposito
 
   private val searchQuery: MutableLiveData<String> = MutableLiveData("")
 
-  val searchResults: LiveData<List<StickerRecord>> = LiveDataUtil.mapAsync(searchQuery) { q -> searchRepository.search(q) }
+  val searchResults: LiveData<List<KeyboardStickerListAdapter.Sticker>> = LiveDataUtil.mapAsync(searchQuery) { q ->
+    searchRepository.search(q)
+      .map { KeyboardStickerListAdapter.Sticker(it.packId, it) }
+  }
 
   fun query(query: String) {
     searchQuery.postValue(query)

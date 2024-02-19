@@ -1,27 +1,24 @@
 package su.sres.securesms.audio;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.net.Uri;
-import android.os.Build;
 import android.os.ParcelFileDescriptor;
+
 import androidx.annotation.NonNull;
 
 import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.logging.Log;
 
+import su.sres.securesms.components.voice.VoiceNoteDraft;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.util.MediaUtil;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.ListenableFuture;
 import su.sres.securesms.util.concurrent.SettableFuture;
 import su.sres.core.util.concurrent.SignalExecutors;
-import org.whispersystems.libsignal.util.Pair;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class AudioRecorder {
 
   private static final String TAG = Log.tag(AudioRecorder.class);
@@ -50,9 +47,9 @@ public class AudioRecorder {
         ParcelFileDescriptor fds[] = ParcelFileDescriptor.createPipe();
 
         captureUri = BlobProvider.getInstance()
-                .forData(new ParcelFileDescriptor.AutoCloseInputStream(fds[0]), 0)
-                .withMimeType(MediaUtil.AUDIO_AAC)
-                .createForSingleSessionOnDiskAsync(context, () -> Log.i(TAG, "Write successful."), e -> Log.w(TAG, "Error during recording", e));
+                                 .forData(new ParcelFileDescriptor.AutoCloseInputStream(fds[0]), 0)
+                                 .withMimeType(MediaUtil.AUDIO_AAC)
+                                 .createForDraftAttachmentAsync(context, () -> Log.i(TAG, "Write successful."), e -> Log.w(TAG, "Error during recording", e));
         audioCodec = new AudioCodec();
 
         audioCodec.start(new ParcelFileDescriptor.AutoCloseOutputStream(fds[1]));
@@ -62,10 +59,10 @@ public class AudioRecorder {
     });
   }
 
-  public @NonNull ListenableFuture<Pair<Uri, Long>> stopRecording() {
+  public @NonNull ListenableFuture<VoiceNoteDraft> stopRecording() {
     Log.i(TAG, "stopRecording()");
 
-    final SettableFuture<Pair<Uri, Long>> future = new SettableFuture<>();
+    final SettableFuture<VoiceNoteDraft> future = new SettableFuture<>();
 
     executor.execute(() -> {
       if (audioCodec == null) {
@@ -77,7 +74,7 @@ public class AudioRecorder {
 
       try {
         long size = MediaUtil.getMediaSize(context, captureUri);
-        sendToFuture(future, new Pair<>(captureUri, size));
+        sendToFuture(future, new VoiceNoteDraft(captureUri, size));
       } catch (IOException ioe) {
         Log.w(TAG, ioe);
         sendToFuture(future, ioe);

@@ -47,7 +47,7 @@ import su.sres.securesms.components.InputAwareLayout;
 import su.sres.securesms.components.SendButton;
 import su.sres.securesms.components.TooltipPopup;
 import su.sres.securesms.components.emoji.EmojiEditText;
-import su.sres.securesms.components.emoji.EmojiKeyboardProvider;
+import su.sres.securesms.components.emoji.EmojiEventListener;
 import su.sres.securesms.components.emoji.EmojiToggle;
 import su.sres.securesms.components.emoji.MediaKeyboard;
 import su.sres.securesms.components.mention.MentionAnnotation;
@@ -116,7 +116,7 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
                                                                              MediaRailAdapter.RailItemListener,
                                                                              InputAwareLayout.OnKeyboardShownListener,
                                                                              InputAwareLayout.OnKeyboardHiddenListener,
-                                                                             EmojiKeyboardProvider.EmojiEventListener,
+                                                                             EmojiEventListener,
                                                                              EmojiKeyboardPageFragment.Callback,
                                                                              EmojiSearchFragment.Callback
 {

@@ -39,239 +39,254 @@ import java.util.concurrent.Executors;
  */
 final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackPreparer {
 
-    private static final String   TAG      = Log.tag(VoiceNotePlaybackPreparer.class);
-    private static final Executor EXECUTOR = Executors.newSingleThreadExecutor();
-    private static final long     LIMIT    = 5;
+  private static final String   TAG      = Log.tag(VoiceNotePlaybackPreparer.class);
+  private static final Executor EXECUTOR = Executors.newSingleThreadExecutor();
+  private static final long     LIMIT    = 5;
 
-    public static final Uri NEXT_URI = Uri.parse("file:///android_asset/sounds/state-change_confirm-down.ogg");
-    public static final Uri END_URI  = Uri.parse("file:///android_asset/sounds/state-change_confirm-up.ogg");
+  public static final Uri NEXT_URI = Uri.parse("file:///android_asset/sounds/state-change_confirm-down.ogg");
+  public static final Uri END_URI  = Uri.parse("file:///android_asset/sounds/state-change_confirm-up.ogg");
 
-    private final Context                     context;
-    private final SimpleExoPlayer             player;
-    private final VoiceNoteQueueDataAdapter   queueDataAdapter;
-    private final AttachmentMediaSourceFactory mediaSourceFactory;
-    private final ConcatenatingMediaSource    dataSource;
+  private final Context                      context;
+  private final SimpleExoPlayer              player;
+  private final VoiceNoteQueueDataAdapter    queueDataAdapter;
+  private final AttachmentMediaSourceFactory mediaSourceFactory;
+  private final ConcatenatingMediaSource     dataSource;
+  private final VoiceNotePlaybackParameters  voiceNotePlaybackParameters;
 
-    private boolean canLoadMore;
-    private Uri     latestUri = Uri.EMPTY;
+  private boolean canLoadMore;
+  private Uri     latestUri = Uri.EMPTY;
 
-    VoiceNotePlaybackPreparer(@NonNull Context context,
-                              @NonNull SimpleExoPlayer player,
-                              @NonNull VoiceNoteQueueDataAdapter queueDataAdapter,
-                              @NonNull AttachmentMediaSourceFactory mediaSourceFactory)
-    {
-        this.context            = context;
-        this.player             = player;
-        this.queueDataAdapter   = queueDataAdapter;
-        this.mediaSourceFactory = mediaSourceFactory;
-        this.dataSource         = new ConcatenatingMediaSource();
-    }
+  VoiceNotePlaybackPreparer(@NonNull Context context,
+                            @NonNull SimpleExoPlayer player,
+                            @NonNull VoiceNoteQueueDataAdapter queueDataAdapter,
+                            @NonNull AttachmentMediaSourceFactory mediaSourceFactory,
+                            @NonNull VoiceNotePlaybackParameters voiceNotePlaybackParameters)
+  {
+    this.context                     = context;
+    this.player                      = player;
+    this.queueDataAdapter            = queueDataAdapter;
+    this.mediaSourceFactory          = mediaSourceFactory;
+    this.dataSource                  = new ConcatenatingMediaSource();
+    this.voiceNotePlaybackParameters = voiceNotePlaybackParameters;
+  }
 
-    @Override
-    public long getSupportedPrepareActions() {
-        return PlaybackStateCompat.ACTION_PLAY_FROM_URI;
-    }
+  @Override
+  public long getSupportedPrepareActions() {
+    return PlaybackStateCompat.ACTION_PLAY_FROM_URI;
+  }
 
-    @Override
-    public void onPrepare() {
-        throw new UnsupportedOperationException("VoiceNotePlaybackPreparer does not support onPrepare");
-    }
+  @Override
+  public void onPrepare() {
+    throw new UnsupportedOperationException("VoiceNotePlaybackPreparer does not support onPrepare");
+  }
 
-    @Override
-    public void onPrepareFromMediaId(String mediaId, Bundle extras) {
-        throw new UnsupportedOperationException("VoiceNotePlaybackPreparer does not support onPrepareFromMediaId");
-    }
+  @Override
+  public void onPrepareFromMediaId(String mediaId, Bundle extras) {
+    throw new UnsupportedOperationException("VoiceNotePlaybackPreparer does not support onPrepareFromMediaId");
+  }
 
-    @Override
-    public void onPrepareFromSearch(String query, Bundle extras) {
-        throw new UnsupportedOperationException("VoiceNotePlaybackPreparer does not support onPrepareFromSearch");
-    }
+  @Override
+  public void onPrepareFromSearch(String query, Bundle extras) {
+    throw new UnsupportedOperationException("VoiceNotePlaybackPreparer does not support onPrepareFromSearch");
+  }
 
-    @Override
-    public void onPrepareFromUri(final Uri uri, Bundle extras) {
-        Log.d(TAG, "onPrepareFromUri: " + uri);
+  @Override
+  public void onPrepareFromUri(final Uri uri, Bundle extras) {
+    Log.d(TAG, "onPrepareFromUri: " + uri);
 
-        long    messageId      = extras.getLong(VoiceNoteMediaController.EXTRA_MESSAGE_ID);
-        double  progress       = extras.getDouble(VoiceNoteMediaController.EXTRA_PROGRESS, 0);
-        boolean singlePlayback = extras.getBoolean(VoiceNoteMediaController.EXTRA_PLAY_SINGLE, false);
+    long    messageId      = extras.getLong(VoiceNoteMediaController.EXTRA_MESSAGE_ID);
+    long    threadId       = extras.getLong(VoiceNoteMediaController.EXTRA_THREAD_ID);
+    double  progress       = extras.getDouble(VoiceNoteMediaController.EXTRA_PROGRESS, 0);
+    boolean singlePlayback = extras.getBoolean(VoiceNoteMediaController.EXTRA_PLAY_SINGLE, false);
 
-        canLoadMore = false;
-        latestUri   = uri;
+    canLoadMore = false;
+    latestUri   = uri;
 
-        SimpleTask.run(EXECUTOR,
-                () -> {
-                    if (singlePlayback) {
-                        return loadMediaDescriptionForSinglePlayback(messageId);
-                    } else {
-                        return loadMediaDescriptionsForConsecutivePlayback(messageId);
-                    }
-                },
-                descriptions -> {
-                    queueDataAdapter.clear();
-                    dataSource.clear();
+    SimpleTask.run(EXECUTOR,
+                   () -> {
+                     if (singlePlayback) {
+                       if (messageId != -1) {
+                         return loadMediaDescriptionForSinglePlayback(messageId);
+                       } else {
+                         return loadMediaDescriptionForDraftPlayback(threadId, uri);
+                       }
+                     } else {
+                       return loadMediaDescriptionsForConsecutivePlayback(messageId);
+                     }
+                   },
+                   descriptions -> {
+                     queueDataAdapter.clear();
+                     dataSource.clear();
 
-                    if (Util.hasItems(descriptions) && Objects.equals(latestUri, uri)) {
-                        applyDescriptionsToQueue(descriptions);
+                     if (Util.hasItems(descriptions) && Objects.equals(latestUri, uri)) {
+                       applyDescriptionsToQueue(descriptions);
 
-                        int window = Math.max(0, queueDataAdapter.indexOf(uri));
+                       int window = Math.max(0, queueDataAdapter.indexOf(uri));
 
-                        player.addListener(new Player.EventListener() {
-                            @Override
-                            public void onTimelineChanged(Timeline timeline, @Nullable Object manifest, int reason) {
-                                if (timeline.getWindowCount() >= window) {
-                                    player.seekTo(window, (long) (player.getDuration() * progress));
-                                    player.removeListener(this);
-                                }
-                            }
-                        });
+                       player.addListener(new Player.EventListener() {
+                         @Override
+                         public void onTimelineChanged(Timeline timeline, @Nullable Object manifest, int reason) {
+                           if (timeline.getWindowCount() >= window) {
+                             player.setPlayWhenReady(false);
+                             player.setPlaybackParameters(voiceNotePlaybackParameters.getParameters());
+                             player.seekTo(window, (long) (player.getDuration() * progress));
+                             player.setPlayWhenReady(true);
+                             player.removeListener(this);
+                           }
+                         }
+                       });
 
-                        player.prepare(dataSource);
-                        canLoadMore = !singlePlayback;
-                    }
-                });
-    }
+                       player.prepare(dataSource);
+                       canLoadMore = !singlePlayback;
+                     }
+                   });
+  }
 
-    @Override
-    public String[] getCommands() {
-        return new String[0];
-    }
+  @Override
+  public String[] getCommands() {
+    return new String[0];
+  }
 
-    @Override
-    public void onCommand(Player player, String command, Bundle extras, ResultReceiver cb) {
-    }
+  @Override
+  public void onCommand(Player player, String command, Bundle extras, ResultReceiver cb) {
+  }
 
-    @MainThread
-    private void applyDescriptionsToQueue(@NonNull List<MediaDescriptionCompat> descriptions) {
-        for (MediaDescriptionCompat description : descriptions) {
-            int holderIndex = queueDataAdapter.indexOf(description.getMediaUri());
-            MediaDescriptionCompat next = createNextClone(description);
-            int currentIndex = player.getCurrentWindowIndex();
+  @MainThread
+  private void applyDescriptionsToQueue(@NonNull List<MediaDescriptionCompat> descriptions) {
+    for (MediaDescriptionCompat description : descriptions) {
+      int                    holderIndex  = queueDataAdapter.indexOf(description.getMediaUri());
+      MediaDescriptionCompat next         = createNextClone(description);
+      int                    currentIndex = player.getCurrentWindowIndex();
 
-            if (holderIndex != -1) {
-                queueDataAdapter.remove(holderIndex);
+      if (holderIndex != -1) {
+        queueDataAdapter.remove(holderIndex);
 
-                if (!queueDataAdapter.isEmpty()) {
-                    queueDataAdapter.remove(holderIndex);
-                }
-
-                queueDataAdapter.add(holderIndex, createNextClone(description));
-                queueDataAdapter.add(holderIndex, description);
-
-                if (currentIndex != holderIndex) {
-                    dataSource.removeMediaSource(holderIndex);
-                    dataSource.addMediaSource(holderIndex, mediaSourceFactory.createMediaSource(description));
-                }
-
-                if (currentIndex != holderIndex + 1) {
-                    if (dataSource.getSize() > 1) {
-                        dataSource.removeMediaSource(holderIndex + 1);
-                    }
-
-                    dataSource.addMediaSource(holderIndex + 1, mediaSourceFactory.createMediaSource(next));
-                }
-            } else {
-                int insertLocation = queueDataAdapter.indexAfter(description);
-
-                queueDataAdapter.add(insertLocation, next);
-                queueDataAdapter.add(insertLocation, description);
-
-                dataSource.addMediaSource(insertLocation, mediaSourceFactory.createMediaSource(next));
-                dataSource.addMediaSource(insertLocation, mediaSourceFactory.createMediaSource(description));
-            }
+        if (!queueDataAdapter.isEmpty()) {
+          queueDataAdapter.remove(holderIndex);
         }
 
-            int                    lastIndex = queueDataAdapter.size() - 1;
-            MediaDescriptionCompat last      = queueDataAdapter.getMediaDescription(lastIndex);
+        queueDataAdapter.add(holderIndex, createNextClone(description));
+        queueDataAdapter.add(holderIndex, description);
 
-            if (Objects.equals(last.getMediaUri(), NEXT_URI)) {
-                queueDataAdapter.remove(lastIndex);
-                dataSource.removeMediaSource(lastIndex);
-
-                if (queueDataAdapter.size() > 1) {
-                    MediaDescriptionCompat end = createEndClone(last);
-
-                    queueDataAdapter.add(lastIndex, end);
-                    dataSource.addMediaSource(lastIndex, mediaSourceFactory.createMediaSource(end));
-            }
-        }
-        if (queueDataAdapter.size() != dataSource.getSize()) {
-            throw new IllegalStateException("QueueDataAdapter and DataSource size inconsistency.");
-        }
-    }
-
-    private @NonNull MediaDescriptionCompat createEndClone(@NonNull MediaDescriptionCompat source) {
-        return buildUpon(source).setMediaId("end").setMediaUri(END_URI).build();
-    }
-
-    private @NonNull MediaDescriptionCompat createNextClone(@NonNull MediaDescriptionCompat source) {
-        return buildUpon(source).setMediaId("next").setMediaUri(NEXT_URI).build();
-    }
-
-    private @NonNull MediaDescriptionCompat.Builder buildUpon(@NonNull MediaDescriptionCompat source) {
-        return new MediaDescriptionCompat.Builder()
-                .setSubtitle(source.getSubtitle())
-                .setDescription(source.getDescription())
-                .setTitle(source.getTitle())
-                .setIconUri(source.getIconUri())
-                .setIconBitmap(source.getIconBitmap())
-                .setMediaId(source.getMediaId())
-                .setExtras(source.getExtras());
-    }
-
-    public void loadMoreVoiceNotes() {
-        if (!canLoadMore) {
-            return;
+        if (currentIndex != holderIndex) {
+          dataSource.removeMediaSource(holderIndex);
+          dataSource.addMediaSource(holderIndex, mediaSourceFactory.createMediaSource(description));
         }
 
-        MediaDescriptionCompat mediaDescriptionCompat = queueDataAdapter.getMediaDescription(player.getCurrentWindowIndex());
-        if (Objects.equals(mediaDescriptionCompat, VoiceNoteQueueDataAdapter.EMPTY)) {
-            return;
+        if (currentIndex != holderIndex + 1) {
+          if (dataSource.getSize() > 1) {
+            dataSource.removeMediaSource(holderIndex + 1);
+          }
+
+          dataSource.addMediaSource(holderIndex + 1, mediaSourceFactory.createMediaSource(next));
         }
+      } else {
+        int insertLocation = queueDataAdapter.indexAfter(description);
 
-        long messageId = mediaDescriptionCompat.getExtras().getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_MESSAGE_ID);
+        queueDataAdapter.add(insertLocation, next);
+        queueDataAdapter.add(insertLocation, description);
 
-        SimpleTask.run(EXECUTOR,
-                () -> loadMediaDescriptionsForConsecutivePlayback(messageId),
-                descriptions -> {
-                    if (Util.hasItems(descriptions) && canLoadMore) {
-                        applyDescriptionsToQueue(descriptions);
-                    }
-                });
+        dataSource.addMediaSource(insertLocation, mediaSourceFactory.createMediaSource(next));
+        dataSource.addMediaSource(insertLocation, mediaSourceFactory.createMediaSource(description));
+      }
     }
 
-    private @NonNull List<MediaDescriptionCompat> loadMediaDescriptionForSinglePlayback(long messageId) {
-        try {
-            MessageRecord messageRecord = DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId);
+    int                    lastIndex = queueDataAdapter.size() - 1;
+    MediaDescriptionCompat last      = queueDataAdapter.getMediaDescription(lastIndex);
 
-            if (!MessageRecordUtil.hasAudio(messageRecord)) {
-                Log.w(TAG, "Message does not contain audio.");
-                return Collections.emptyList();
-            }
+    if (Objects.equals(last.getMediaUri(), NEXT_URI)) {
+      queueDataAdapter.remove(lastIndex);
+      dataSource.removeMediaSource(lastIndex);
 
-            return Collections.singletonList(VoiceNoteMediaDescriptionCompatFactory.buildMediaDescription(context ,messageRecord));
-        } catch (NoSuchMessageException e) {
-            Log.w(TAG, "Could not find message.", e);
-            return Collections.emptyList();
-        }
+      if (queueDataAdapter.size() > 1) {
+        MediaDescriptionCompat end = createEndClone(last);
+
+        queueDataAdapter.add(lastIndex, end);
+        dataSource.addMediaSource(lastIndex, mediaSourceFactory.createMediaSource(end));
+      }
+    }
+    if (queueDataAdapter.size() != dataSource.getSize()) {
+      throw new IllegalStateException("QueueDataAdapter and DataSource size inconsistency.");
+    }
+  }
+
+  private @NonNull MediaDescriptionCompat createEndClone(@NonNull MediaDescriptionCompat source) {
+    return buildUpon(source).setMediaId("end").setMediaUri(END_URI).build();
+  }
+
+  private @NonNull MediaDescriptionCompat createNextClone(@NonNull MediaDescriptionCompat source) {
+    return buildUpon(source).setMediaId("next").setMediaUri(NEXT_URI).build();
+  }
+
+  private @NonNull MediaDescriptionCompat.Builder buildUpon(@NonNull MediaDescriptionCompat source) {
+    return new MediaDescriptionCompat.Builder()
+        .setSubtitle(source.getSubtitle())
+        .setDescription(source.getDescription())
+        .setTitle(source.getTitle())
+        .setIconUri(source.getIconUri())
+        .setIconBitmap(source.getIconBitmap())
+        .setMediaId(source.getMediaId())
+        .setExtras(source.getExtras());
+  }
+
+  public void loadMoreVoiceNotes() {
+    if (!canLoadMore) {
+      return;
     }
 
-    @WorkerThread
-    private @NonNull List<MediaDescriptionCompat> loadMediaDescriptionsForConsecutivePlayback(long messageId) {
-        try {
-            List<MessageRecord> recordsAfter  = DatabaseFactory.getMmsSmsDatabase(context).getMessagesAfterVoiceNoteInclusive(messageId, LIMIT);
-
-            return Stream.of(buildFilteredMessageRecordList(recordsAfter))
-                    .map(record -> VoiceNoteMediaDescriptionCompatFactory.buildMediaDescription(context, record))
-                    .toList();
-        } catch (NoSuchMessageException e) {
-            Log.w(TAG, "Could not find message.", e);
-            return Collections.emptyList();
-        }
+    MediaDescriptionCompat mediaDescriptionCompat = queueDataAdapter.getMediaDescription(player.getCurrentWindowIndex());
+    if (Objects.equals(mediaDescriptionCompat, VoiceNoteQueueDataAdapter.EMPTY)) {
+      return;
     }
 
-    private static @NonNull List<MessageRecord> buildFilteredMessageRecordList(@NonNull List<MessageRecord> recordsAfter) {
-        return Stream.of(recordsAfter)
-                .takeWhile(MessageRecordUtil::hasAudio)
-                .toList();
+    long messageId = mediaDescriptionCompat.getExtras().getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_MESSAGE_ID);
+
+    SimpleTask.run(EXECUTOR,
+                   () -> loadMediaDescriptionsForConsecutivePlayback(messageId),
+                   descriptions -> {
+                     if (Util.hasItems(descriptions) && canLoadMore) {
+                       applyDescriptionsToQueue(descriptions);
+                     }
+                   });
+  }
+
+  private @NonNull List<MediaDescriptionCompat> loadMediaDescriptionForSinglePlayback(long messageId) {
+    try {
+      MessageRecord messageRecord = DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId);
+
+      if (!MessageRecordUtil.hasAudio(messageRecord)) {
+        Log.w(TAG, "Message does not contain audio.");
+        return Collections.emptyList();
+      }
+
+      return Collections.singletonList(VoiceNoteMediaDescriptionCompatFactory.buildMediaDescription(context, messageRecord));
+    } catch (NoSuchMessageException e) {
+      Log.w(TAG, "Could not find message.", e);
+      return Collections.emptyList();
     }
+  }
+
+  private @NonNull List<MediaDescriptionCompat> loadMediaDescriptionForDraftPlayback(long threadId, @NonNull Uri draftUri) {
+    return Collections.singletonList(VoiceNoteMediaDescriptionCompatFactory.buildMediaDescription(context, threadId, draftUri));
+  }
+
+  @WorkerThread
+  private @NonNull List<MediaDescriptionCompat> loadMediaDescriptionsForConsecutivePlayback(long messageId) {
+    try {
+      List<MessageRecord> recordsAfter = DatabaseFactory.getMmsSmsDatabase(context).getMessagesAfterVoiceNoteInclusive(messageId, LIMIT);
+
+      return Stream.of(buildFilteredMessageRecordList(recordsAfter))
+                   .map(record -> VoiceNoteMediaDescriptionCompatFactory.buildMediaDescription(context, record))
+                   .toList();
+    } catch (NoSuchMessageException e) {
+      Log.w(TAG, "Could not find message.", e);
+      return Collections.emptyList();
+    }
+  }
+
+  private static @NonNull List<MessageRecord> buildFilteredMessageRecordList(@NonNull List<MessageRecord> recordsAfter) {
+    return Stream.of(recordsAfter)
+                 .takeWhile(MessageRecordUtil::hasAudio)
+                 .toList();
+  }
 }

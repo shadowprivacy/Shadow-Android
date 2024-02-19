@@ -14,7 +14,6 @@ import su.sres.securesms.LoggingFragment
 import su.sres.securesms.R
 import su.sres.securesms.keyboard.emoji.KeyboardPageSearchView
 import su.sres.securesms.mms.GlideApp
-import su.sres.securesms.stickers.StickerKeyboardProvider.StickerEventListener
 
 import su.sres.securesms.stickers.StickerRolloverTouchListener.RolloverStickerRetriever
 import su.sres.securesms.util.DeviceProperties
@@ -37,12 +36,12 @@ class StickerKeyboardPageFragment :
   View.OnLayoutChangeListener {
 
   private lateinit var stickerList: RecyclerView
-  private lateinit var keyboardStickerListAdapter: KeyboardStickerListAdapter
+  private lateinit var stickerListAdapter: KeyboardStickerListAdapter
   private lateinit var layoutManager: GridLayoutManager
   private lateinit var listTouchListener: StickerRolloverTouchListener
   private lateinit var stickerPacksRecycler: RecyclerView
   private lateinit var appBarLayout: AppBarLayout
-  private lateinit var stickerPacksAdapter: StickerPackListAdapter
+  private lateinit var stickerPacksAdapter: KeyboardStickerPackListAdapter
 
   private lateinit var viewModel: StickerKeyboardPageViewModel
 
@@ -53,11 +52,11 @@ class StickerKeyboardPageFragment :
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
     val glideRequests = GlideApp.with(this)
-    keyboardStickerListAdapter = KeyboardStickerListAdapter(glideRequests, this, DeviceProperties.shouldAllowApngStickerAnimation(requireContext()))
+    stickerListAdapter = KeyboardStickerListAdapter(glideRequests, this, DeviceProperties.shouldAllowApngStickerAnimation(requireContext()))
     layoutManager = GridLayoutManager(requireContext(), 2).apply {
       spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
         override fun getSpanSize(position: Int): Int {
-          val model: Optional<MappingModel<*>> = keyboardStickerListAdapter.getModel(position)
+          val model: Optional<MappingModel<*>> = stickerListAdapter.getModel(position)
           if (model.isPresent && model.get() is KeyboardStickerListAdapter.StickerHeader) {
             return spanCount
           }
@@ -69,13 +68,13 @@ class StickerKeyboardPageFragment :
 
     stickerList = view.findViewById(R.id.sticker_keyboard_list)
     stickerList.layoutManager = layoutManager
-    stickerList.adapter = keyboardStickerListAdapter
+    stickerList.adapter = stickerListAdapter
     stickerList.addOnItemTouchListener(listTouchListener)
     stickerList.addOnScrollListener(packIdSelectionOnScroll)
 
     stickerPacksRecycler = view.findViewById(R.id.sticker_packs_recycler)
 
-    stickerPacksAdapter = StickerPackListAdapter(glideRequests, DeviceProperties.shouldAllowApngStickerAnimation(requireContext()), this::onTabSelected)
+    stickerPacksAdapter = KeyboardStickerPackListAdapter(glideRequests, DeviceProperties.shouldAllowApngStickerAnimation(requireContext()), this::onTabSelected)
     stickerPacksRecycler.adapter = stickerPacksAdapter
 
     appBarLayout = view.findViewById(R.id.sticker_keyboard_search_appbar)
@@ -106,21 +105,21 @@ class StickerKeyboardPageFragment :
     viewModel = ViewModelProviders.of(requireActivity(), StickerKeyboardPageViewModel.Factory(requireContext()))
       .get(StickerKeyboardPageViewModel::class.java)
 
-    viewModel.stickers.observe(viewLifecycleOwner, keyboardStickerListAdapter::submitList)
+    viewModel.stickers.observe(viewLifecycleOwner, stickerListAdapter::submitList)
     viewModel.packs.observe(viewLifecycleOwner, stickerPacksAdapter::submitList)
     viewModel.getSelectedPack().observe(viewLifecycleOwner, this::updateCategoryTab)
 
     viewModel.refreshStickers()
   }
 
-  private fun onTabSelected(stickerPack: StickerPackListAdapter.StickerPack) {
+  private fun onTabSelected(stickerPack: KeyboardStickerPackListAdapter.StickerPack) {
     scrollTo(stickerPack.packRecord.packId)
     viewModel.selectPack(stickerPack.packRecord.packId)
   }
 
   private fun updateCategoryTab(packId: String) {
     stickerPacksRecycler.post {
-      val index: Int = stickerPacksAdapter.indexOfFirst(StickerPackListAdapter.StickerPack::class.java) { it.packRecord.packId == packId }
+      val index: Int = stickerPacksAdapter.indexOfFirst(KeyboardStickerPackListAdapter.StickerPack::class.java) { it.packRecord.packId == packId }
 
       if (index != -1) {
         stickerPacksRecycler.smoothScrollToPosition(index)
@@ -129,7 +128,7 @@ class StickerKeyboardPageFragment :
   }
 
   private fun scrollTo(packId: String) {
-    val index = keyboardStickerListAdapter.indexOfFirst(KeyboardStickerListAdapter.StickerHeader::class.java) { it.packId == packId }
+    val index = stickerListAdapter.indexOfFirst(KeyboardStickerListAdapter.StickerHeader::class.java) { it.packId == packId }
     if (index != -1) {
       appBarLayout.setExpanded(false, true)
       packIdSelectionOnScroll.startAutoScrolling()
@@ -163,7 +162,7 @@ class StickerKeyboardPageFragment :
 
   override fun getStickerDataFromView(view: View): Pair<Any, String>? {
     val position: Int = stickerList.getChildAdapterPosition(view)
-    val model: Optional<MappingModel<*>> = keyboardStickerListAdapter.getModel(position)
+    val model: Optional<MappingModel<*>> = stickerListAdapter.getModel(position)
     if (model.isPresent && model.get() is KeyboardStickerListAdapter.Sticker) {
       val sticker = model.get() as KeyboardStickerListAdapter.Sticker
       return Pair(sticker.uri, sticker.stickerRecord.emoji)
@@ -216,7 +215,7 @@ class StickerKeyboardPageFragment :
 
       val layoutManager = recyclerView.layoutManager as LinearLayoutManager
       val index = layoutManager.findFirstCompletelyVisibleItemPosition()
-      val item: Optional<MappingModel<*>> = keyboardStickerListAdapter.getModel(index)
+      val item: Optional<MappingModel<*>> = stickerListAdapter.getModel(index)
       if (item.isPresent && item.get() is KeyboardStickerListAdapter.HasPackId) {
         viewModel.selectPack((item.get() as KeyboardStickerListAdapter.HasPackId).packId)
       }

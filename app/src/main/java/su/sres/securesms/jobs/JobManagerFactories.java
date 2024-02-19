@@ -82,7 +82,6 @@ public final class JobManagerFactories {
             put(GroupCallPeekJob.KEY,                      new GroupCallPeekJob.Factory());
             put(GroupCallPeekWorkerJob.KEY,                new GroupCallPeekWorkerJob.Factory());
             put(GroupV2UpdateSelfProfileKeyJob.KEY,        new GroupV2UpdateSelfProfileKeyJob.Factory());
-            put(LeaveGroupJob.KEY,                         new LeaveGroupJob.Factory());
             put(LicenseManagementJob.KEY,                  new LicenseManagementJob.Factory());
             put(LocalBackupJob.KEY,                        new LocalBackupJob.Factory());
             put(LocalBackupJobApi29.KEY,                   new LocalBackupJobApi29.Factory());
@@ -192,7 +191,7 @@ public final class JobManagerFactories {
             put("RefreshUnidentifiedDeliveryAbilityJob",   new FailingJob.Factory());
             put("StorageSyncJob",                          new StorageSyncJob.Factory());
             put("WakeGroupV2Job",                          new FailingJob.Factory());
-
+            put("LeaveGroupJob",                           new FailingJob.Factory());
         }};
     }
 

@@ -209,6 +209,15 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
           viewModel.setRemoveSenderKeyMinimum(!state.removeSenderKeyMinimium)
         }
       )
+
+      switchPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_delay_resends),
+        summary = DSLSettingsText.from(R.string.preferences__internal_delay_resending_messages_in_response_to_retry_receipts),
+        isChecked = state.delayResends,
+        onClick = {
+          viewModel.setDelayResends(!state.delayResends)
+        }
+      )
     }
   }
 

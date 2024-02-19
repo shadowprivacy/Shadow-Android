@@ -17,24 +17,24 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:src="@tools:sample/avatars"/>
+        tools:src="@tools:sample/avatars" />
 
     <androidx.appcompat.widget.AppCompatCheckBox
         android:id="@+id/recipient_selected"
-        android:background="@drawable/contact_selection_checkbox"
-        android:button="@null"
         android:layout_width="22dp"
         android:layout_height="22dp"
-        android:focusable="false"
+        android:background="@drawable/contact_selection_checkbox"
+        android:button="@null"
         android:clickable="false"
+        android:focusable="false"
         app:layout_constraintBottom_toBottomOf="@+id/recipient_avatar"
         app:layout_constraintEnd_toEndOf="@+id/recipient_avatar"
-        tools:checked="true"/>
+        tools:checked="true" />
 
     <su.sres.securesms.components.emoji.EmojiTextView
         android:id="@+id/recipient_name"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:gravity="start|center_vertical"
@@ -51,7 +51,7 @@
     <su.sres.securesms.components.emoji.EmojiTextView
         android:id="@+id/recipient_about"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:ellipsize="end"
@@ -71,19 +71,19 @@
     <TextView
         android:id="@+id/admin"
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
         android:gravity="start|center_vertical"
         android:text="@string/GroupRecipientListItem_admin"
-        android:textColor="@color/signal_text_secondary"
         android:textAppearance="@style/TextAppearance.Signal.Body2"
+        android:textColor="@color/signal_text_secondary"
         android:visibility="gone"
-        app:layout_goneMarginEnd="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/popupMenuProgressContainer"
         app:layout_constraintHorizontal_bias="0"
         app:layout_constraintStart_toEndOf="@+id/recipient_name"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_goneMarginEnd="0dp"
         tools:visibility="visible" />
 
     <FrameLayout

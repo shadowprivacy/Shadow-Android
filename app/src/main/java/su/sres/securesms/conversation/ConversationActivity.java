@@ -23,6 +23,8 @@ import androidx.annotation.WorkerThread;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.content.ActivityNotFoundException;
@@ -98,11 +100,18 @@ import su.sres.securesms.MainActivity;
 import su.sres.securesms.GroupMembersDialog;
 import su.sres.securesms.components.MaskView;
 import su.sres.securesms.components.TypingStatusSender;
+import su.sres.securesms.components.emoji.EmojiEventListener;
 import su.sres.securesms.components.mention.MentionAnnotation;
 import su.sres.securesms.components.reminder.GroupsV1MigrationSuggestionsReminder;
 import su.sres.securesms.components.reminder.PendingGroupJoinRequestsReminder;
 import su.sres.securesms.components.settings.conversation.ConversationSettingsActivity;
+import su.sres.securesms.components.voice.VoiceNoteDraft;
+import su.sres.securesms.components.voice.VoiceNoteMediaController;
+import su.sres.securesms.components.voice.VoiceNotePlaybackState;
+import su.sres.securesms.components.voice.VoiceNotePlayerView;
 import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
+import su.sres.securesms.conversation.drafts.DraftRepository;
+import su.sres.securesms.conversation.drafts.DraftViewModel;
 import su.sres.securesms.conversation.ui.error.SafetyNumberChangeDialog;
 import su.sres.securesms.conversation.ui.groupcall.GroupCallViewModel;
 import su.sres.securesms.conversation.ui.mentions.MentionsPickerViewModel;
@@ -161,7 +170,6 @@ import su.sres.securesms.components.InputPanel;
 import su.sres.securesms.components.KeyboardAwareLinearLayout.OnKeyboardShownListener;
 import su.sres.securesms.components.SendButton;
 import su.sres.securesms.components.TooltipPopup;
-import su.sres.securesms.components.emoji.EmojiKeyboardProvider;
 import su.sres.securesms.components.emoji.EmojiStrings;
 import su.sres.securesms.components.emoji.MediaKeyboard;
 import su.sres.securesms.components.identity.UnverifiedBannerView;
@@ -242,7 +250,7 @@ import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.sms.OutgoingEncryptedMessage;
 import su.sres.securesms.sms.OutgoingEndSessionMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
-import su.sres.securesms.stickers.StickerKeyboardProvider;
+import su.sres.securesms.stickers.StickerEventListener;
 import su.sres.securesms.stickers.StickerLocator;
 import su.sres.securesms.stickers.StickerManagementActivity;
 import su.sres.securesms.stickers.StickerPackInstallEvent;
@@ -316,14 +324,14 @@ public class ConversationActivity extends PassphraseRequiredActivity
                InputPanel.MediaListener,
                ComposeText.CursorPositionChangedListener,
                ConversationSearchBottomBar.EventListener,
-               StickerKeyboardProvider.StickerEventListener,
+               StickerEventListener,
                AttachmentKeyboard.Callback,
                ConversationReactionOverlay.OnReactionSelectedListener,
                ReactWithAnyEmojiBottomSheetDialogFragment.Callback,
                SafetyNumberChangeDialog.Callback,
                ReactionsBottomSheetDialogFragment.Callback,
                MediaKeyboard.MediaKeyboardListener,
-               EmojiKeyboardProvider.EmojiEventListener,
+               EmojiEventListener,
                GifKeyboardPageFragment.Host,
                EmojiKeyboardPageFragment.Callback,
                EmojiSearchFragment.Callback
@@ -371,6 +379,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
   private   MenuItem                     searchViewItem;
   private   MessageRequestsBottomView    messageRequestBottomView;
   private   ConversationReactionDelegate reactionDelegate;
+  private   Stub<VoiceNotePlayerView>    voiceNotePlayerViewStub;
 
   private   AttachmentManager        attachmentManager;
   private   AudioRecorder            audioRecorder;
@@ -400,6 +409,8 @@ public class ConversationActivity extends PassphraseRequiredActivity
   private MentionsPickerViewModel      mentionsViewModel;
   private GroupCallViewModel           groupCallViewModel;
   private VoiceRecorderWakeLock        voiceRecorderWakeLock;
+  private DraftViewModel               draftViewModel;
+  private VoiceNoteMediaController     voiceNoteMediaController;
 
   private          LiveRecipient recipient;
   private          long          threadId;
@@ -408,7 +419,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
   private          boolean       isSecureText;
   private          boolean       isDefaultSms               = true;
   private          boolean       isSecurityInitialized      = false;
-  private boolean       isSearchRequested             = false;
+  private          boolean       isSearchRequested          = false;
   private volatile boolean       screenInitialized          = false;
 
   private       IdentityRecordList identityRecords = new IdentityRecordList(Collections.emptyList());
@@ -432,7 +443,8 @@ public class ConversationActivity extends PassphraseRequiredActivity
       return;
     }
 
-    voiceRecorderWakeLock = new VoiceRecorderWakeLock(this);
+    voiceNoteMediaController = new VoiceNoteMediaController(this);
+    voiceRecorderWakeLock    = new VoiceRecorderWakeLock(this);
 
     new FullscreenHelper(this).showSystemUI();
 
@@ -459,6 +471,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     initializeGroupViewModel();
     initializeMentionsViewModel();
     initializeGroupCallViewModel();
+    initializeDraftViewModel();
     initializeEnabledCheck();
     initializePendingRequestsBanner();
     initializeGroupV1MigrationsBanners();
@@ -517,7 +530,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     reactWithAnyEmojiStartPage = -1;
-    if (!Util.isEmpty(composeText) || attachmentManager.isAttachmentPresent() || inputPanel.getQuote().isPresent()) {
+    if (!Util.isEmpty(composeText) || attachmentManager.isAttachmentPresent() || inputPanel.hasSaveableContent()) {
       saveDraft();
       attachmentManager.clear(glideRequests, false);
       inputPanel.clearQuote();
@@ -620,6 +633,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
   @Override
   protected void onStop() {
     super.onStop();
+    saveDraft();
     EventBus.getDefault().unregister(this);
   }
 
@@ -640,7 +654,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
   @Override
   protected void onDestroy() {
-    saveDraft();
     if (securityUpdateReceiver != null) unregisterReceiver(securityUpdateReceiver);
     super.onDestroy();
   }
@@ -788,7 +801,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     super.onRestoreInstanceState(savedInstanceState);
 
     reactWithAnyEmojiStartPage = savedInstanceState.getInt(STATE_REACT_WITH_ANY_PAGE, -1);
-    isSearchRequested = savedInstanceState.getBoolean(STATE_IS_SEARCH_REQUESTED, false);
+    isSearchRequested          = savedInstanceState.getBoolean(STATE_IS_SEARCH_REQUESTED, false);
   }
 
   private void setVisibleThread(long threadId) {
@@ -1749,6 +1762,9 @@ public class ConversationActivity extends PassphraseRequiredActivity
                 new QuoteRestorationTask(draft.getValue(), quoteResult).execute();
                 quoteResult.addListener(listener);
                 break;
+              case Draft.VOICE_NOTE:
+                draftViewModel.setVoiceNoteDraft(recipient.getId(), draft);
+                break;
             }
           } catch (IOException e) {
             Log.w(TAG, e);
@@ -1975,6 +1991,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     mentionsSuggestions      = ViewUtil.findStubById(this, R.id.conversation_mention_suggestions_stub);
     wallpaper                = findViewById(R.id.conversation_wallpaper);
     wallpaperDim             = findViewById(R.id.conversation_wallpaper_dim);
+    voiceNotePlayerViewStub  = ViewUtil.findStubById(this, R.id.voice_note_player_stub);
 
     ImageButton quickCameraToggle      = findViewById(R.id.quick_camera_toggle);
     ImageButton inlineAttachmentButton = findViewById(R.id.inline_attachment_button);
@@ -2040,6 +2057,19 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
     reactionDelegate.setOnReactionSelectedListener(this);
     joinGroupCallButton.setOnClickListener(v -> handleVideo(getRecipient()));
+    voiceNoteMediaController.getVoiceNotePlayerViewState().observe(this, state -> {
+      if (state.isPresent()) {
+        if (!voiceNotePlayerViewStub.resolved()) {
+          voiceNotePlayerViewStub.get().setListener(new VoiceNotePlayerViewListener());
+        }
+        voiceNotePlayerViewStub.get().show();
+        voiceNotePlayerViewStub.get().setState(state.get());
+      } else if (voiceNotePlayerViewStub.resolved()) {
+        voiceNotePlayerViewStub.get().hide();
+      }
+    });
+
+    voiceNoteMediaController.getVoiceNotePlaybackState().observe(ConversationActivity.this, inputPanel.getPlaybackStateObserver());
   }
 
   private void updateWallpaper(@Nullable ChatWallpaper chatWallpaper) {
@@ -2247,8 +2277,22 @@ public class ConversationActivity extends PassphraseRequiredActivity
     groupCallViewModel.groupCallHasCapacity().observe(this, hasCapacity -> joinGroupCallButton.setText(hasCapacity ? R.string.ConversationActivity_join : R.string.ConversationActivity_full));
   }
 
+  public void initializeDraftViewModel() {
+    draftViewModel = ViewModelProviders.of(this, new DraftViewModel.Factory(new DraftRepository(getApplicationContext()))).get(DraftViewModel.class);
+
+    recipient.observe(this, r -> {
+      draftViewModel.onRecipientChanged(r);
+    });
+
+    draftViewModel.getState().observe(this,
+                                      state -> {
+                                        inputPanel.setVoiceNoteDraft(state.getVoiceNoteDraft());
+                                        updateToggleButtonState();
+                                      });
+  }
+
   private void showGroupCallingTooltip() {
-    if (Build.VERSION.SDK_INT == 19 || !SignalStore.tooltips().shouldShowGroupCallingTooltip() || callingTooltipShown) {
+    if (!SignalStore.tooltips().shouldShowGroupCallingTooltip() || callingTooltipShown) {
       return;
     }
 
@@ -2385,6 +2429,10 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
     if (groupCallViewModel != null) {
       groupCallViewModel.onRecipientChange(recipient);
+    }
+
+    if (draftViewModel != null) {
+      draftViewModel.onRecipientChanged(recipient);
     }
 
     if (this.threadId == -1) {
@@ -2536,6 +2584,11 @@ public class ConversationActivity extends PassphraseRequiredActivity
       drafts.add(new Draft(Draft.QUOTE, new QuoteId(quote.get().getId(), quote.get().getAuthor()).serialize()));
     }
 
+    DraftDatabase.Draft voiceNoteDraft = draftViewModel.getVoiceNoteDraft();
+    if (voiceNoteDraft != null) {
+      drafts.add(voiceNoteDraft);
+    }
+
     return drafts;
   }
 
@@ -2547,13 +2600,25 @@ public class ConversationActivity extends PassphraseRequiredActivity
       return future;
     }
 
-    final Drafts drafts               = getDraftsForCurrentState();
-    final long   thisThreadId         = this.threadId;
-    final int    thisDistributionType = this.distributionType;
+    final Drafts                           drafts               = getDraftsForCurrentState();
+    final long                             thisThreadId         = this.threadId;
+    final RecipientId                      recipientId          = this.recipient.getId();
+    final int                              thisDistributionType = this.distributionType;
+    final ListenableFuture<VoiceNoteDraft> voiceNoteDraftFuture = draftViewModel.consumeVoiceNoteDraftFuture();
 
     new AsyncTask<Long, Void, Long>() {
       @Override
       protected Long doInBackground(Long... params) {
+        if (voiceNoteDraftFuture != null) {
+          try {
+            Draft voiceNoteDraft = voiceNoteDraftFuture.get().asDraft();
+            draftViewModel.setVoiceNoteDraft(recipientId, voiceNoteDraft);
+            drafts.add(voiceNoteDraft);
+          } catch (ExecutionException | InterruptedException e) {
+            Log.w(TAG, "Could not extract voice note draft data.", e);
+          }
+        }
+
         ThreadDatabase threadDatabase = DatabaseFactory.getThreadDatabase(ConversationActivity.this);
         DraftDatabase  draftDatabase  = DatabaseFactory.getDraftDatabase(ConversationActivity.this);
         long           threadId       = params[0];
@@ -2562,12 +2627,16 @@ public class ConversationActivity extends PassphraseRequiredActivity
           if (threadId == -1)
             threadId = threadDatabase.getThreadIdFor(getRecipient(), thisDistributionType);
 
-          draftDatabase.insertDrafts(threadId, drafts);
+          draftDatabase.replaceDrafts(threadId, drafts);
           threadDatabase.updateSnippet(threadId, drafts.getSnippet(ConversationActivity.this),
                                        drafts.getUriSnippet(),
                                        System.currentTimeMillis(), Types.BASE_DRAFT_TYPE, true);
         } else if (threadId > 0) {
           threadDatabase.update(threadId, false);
+        }
+
+        if (drafts.isEmpty()) {
+          draftDatabase.clearDrafts(threadId);
         }
 
         return threadId;
@@ -2733,6 +2802,15 @@ public class ConversationActivity extends PassphraseRequiredActivity
   private void sendMessage() {
     if (inputPanel.isRecordingInLockedMode()) {
       inputPanel.releaseRecordingLock();
+      return;
+    }
+
+    Draft voiceNote = draftViewModel.getVoiceNoteDraft();
+    if (voiceNote != null) {
+      AudioSlide audioSlide = AudioSlide.createFromVoiceNoteDraft(this, voiceNote);
+
+      sendVoiceNote(Objects.requireNonNull(audioSlide.getUri()), audioSlide.getFileSize());
+      draftViewModel.clearVoiceNoteDraft();
       return;
     }
 
@@ -2936,6 +3014,13 @@ public class ConversationActivity extends PassphraseRequiredActivity
       return;
     }
 
+    if (draftViewModel.hasVoiceNoteDraft()) {
+      buttonToggle.display(sendButton);
+      quickAttachmentToggle.hide();
+      inlineAttachmentToggle.hide();
+      return;
+    }
+
     if (composeText.getText().length() == 0 && !attachmentManager.isAttachmentPresent()) {
       buttonToggle.display(attachButton);
       quickAttachmentToggle.show();
@@ -3023,44 +3108,11 @@ public class ConversationActivity extends PassphraseRequiredActivity
     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
-    ListenableFuture<Pair<Uri, Long>> future = audioRecorder.stopRecording();
-    future.addListener(new ListenableFuture.Listener<Pair<Uri, Long>>() {
+    ListenableFuture<VoiceNoteDraft> future = audioRecorder.stopRecording();
+    future.addListener(new ListenableFuture.Listener<VoiceNoteDraft>() {
       @Override
-      public void onSuccess(final @NonNull Pair<Uri, Long> result) {
-        boolean    forceSms       = false;
-        boolean    initiating     = threadId == -1;
-        int        subscriptionId = sendButton.getSelectedTransport().getSimSubscriptionId().or(-1);
-        long       expiresIn      = recipient.get().getExpireMessages() * 1000L;
-        AudioSlide audioSlide     = new AudioSlide(ConversationActivity.this, result.first(), result.second(), MediaUtil.AUDIO_AAC, true);
-        SlideDeck  slideDeck      = new SlideDeck();
-        slideDeck.addSlide(audioSlide);
-
-        ListenableFuture<Void> sendResult = sendMediaMessage(recipient.getId(),
-                                                             forceSms,
-                                                             "",
-                                                             slideDeck,
-                                                             inputPanel.getQuote().orNull(),
-                                                             Collections.emptyList(),
-                                                             Collections.emptyList(),
-                                                             composeText.getMentions(),
-                                                             expiresIn,
-                                                             false,
-                                                             subscriptionId,
-                                                             initiating,
-                                                             true);
-
-        sendResult.addListener(new AssertedSuccessListener<Void>() {
-          @Override
-          public void onSuccess(Void nothing) {
-            new AsyncTask<Void, Void, Void>() {
-              @Override
-              protected Void doInBackground(Void... params) {
-                BlobProvider.getInstance().delete(ConversationActivity.this, result.first());
-                return null;
-              }
-            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-          }
-        });
+      public void onSuccess(final @NonNull VoiceNoteDraft result) {
+        sendVoiceNote(result.getUri(), result.getSize());
       }
 
       @Override
@@ -3080,23 +3132,12 @@ public class ConversationActivity extends PassphraseRequiredActivity
     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
-    ListenableFuture<Pair<Uri, Long>> future = audioRecorder.stopRecording();
-    future.addListener(new ListenableFuture.Listener<Pair<Uri, Long>>() {
-      @Override
-      public void onSuccess(final Pair<Uri, Long> result) {
-        new AsyncTask<Void, Void, Void>() {
-          @Override
-          protected Void doInBackground(Void... params) {
-            BlobProvider.getInstance().delete(ConversationActivity.this, result.first());
-            return null;
-          }
-        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-      }
-
-      @Override
-      public void onFailure(ExecutionException e) {
-      }
-    });
+    ListenableFuture<VoiceNoteDraft> future = audioRecorder.stopRecording();
+    if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)) {
+      future.addListener(new DeleteCanceledVoiceNoteListener());
+    } else {
+      draftViewModel.setVoiceNoteDraftFuture(future);
+    }
   }
 
   @Override
@@ -3162,6 +3203,37 @@ public class ConversationActivity extends PassphraseRequiredActivity
                                         DatabaseFactory.getStickerDatabase(getApplicationContext())
                                                        .updateStickerLastUsedTime(stickerRecord.getRowId(), System.currentTimeMillis())
     );
+  }
+
+  private void sendVoiceNote(@NonNull Uri uri, long size) {
+    boolean    forceSms       = false;
+    boolean    initiating     = threadId == -1;
+    int        subscriptionId = sendButton.getSelectedTransport().getSimSubscriptionId().or(-1);
+    long       expiresIn      = recipient.get().getExpireMessages() * 1000L;
+    AudioSlide audioSlide     = new AudioSlide(ConversationActivity.this, uri, size, MediaUtil.AUDIO_AAC, true);
+    SlideDeck  slideDeck      = new SlideDeck();
+    slideDeck.addSlide(audioSlide);
+
+    ListenableFuture<Void> sendResult = sendMediaMessage(recipient.getId(),
+                                                         forceSms,
+                                                         "",
+                                                         slideDeck,
+                                                         inputPanel.getQuote().orNull(),
+                                                         Collections.emptyList(),
+                                                         Collections.emptyList(),
+                                                         composeText.getMentions(),
+                                                         expiresIn,
+                                                         false,
+                                                         subscriptionId,
+                                                         initiating,
+                                                         true);
+
+    sendResult.addListener(new AssertedSuccessListener<Void>() {
+      @Override
+      public void onSuccess(Void nothing) {
+        draftViewModel.deleteBlob(uri);
+      }
+    });
   }
 
   private void sendSticker(@NonNull StickerLocator stickerLocator, @NonNull String contentType, @NonNull Uri uri, long size, boolean clearCompose) {
@@ -3252,7 +3324,43 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
   }
 
+  @Override
+  public void onVoiceNoteDraftPlay(@NonNull Uri audioUri, double progress) {
+    voiceNoteMediaController.startSinglePlaybackForDraft(audioUri, threadId, progress);
+  }
+
+  @Override
+  public void onVoiceNoteDraftPause(@NonNull Uri audioUri) {
+    voiceNoteMediaController.pausePlayback(audioUri);
+  }
+
+  @Override
+  public void onVoiceNoteDraftSeekTo(@NonNull Uri audioUri, double progress) {
+    voiceNoteMediaController.seekToPosition(audioUri, progress);
+  }
+
+  @Override
+  public void onVoiceNoteDraftDelete(@NonNull Uri audioUri) {
+    voiceNoteMediaController.stopPlaybackAndReset(audioUri);
+    draftViewModel.deleteVoiceNoteDraft();
+  }
+
+  @Override
+  public @NonNull VoiceNoteMediaController getVoiceNoteMediaController() {
+    return voiceNoteMediaController;
+  }
+
   // Listeners
+
+  private final class DeleteCanceledVoiceNoteListener implements ListenableFuture.Listener<VoiceNoteDraft> {
+    @Override
+    public void onSuccess(final VoiceNoteDraft result) {
+      draftViewModel.deleteBlob(result.getUri());
+    }
+
+    @Override
+    public void onFailure(ExecutionException e) {}
+  }
 
   private class QuickCameraToggleListener implements OnClickListener {
     @Override
@@ -3517,6 +3625,36 @@ public class ConversationActivity extends PassphraseRequiredActivity
   @Override
   public void handleReactionDetails(@NonNull MaskView.MaskTarget maskTarget) {
     reactionDelegate.showMask(maskTarget, titleView.getMeasuredHeight(), inputAreaHeight());
+  }
+
+  @Override
+  public void onVoiceNotePause(@NonNull Uri uri) {
+    voiceNoteMediaController.pausePlayback(uri);
+  }
+
+  @Override
+  public void onVoiceNotePlay(@NonNull Uri uri, long messageId, double progress) {
+    voiceNoteMediaController.startConsecutivePlayback(uri, messageId, progress);
+  }
+
+  @Override
+  public void onVoiceNoteSeekTo(@NonNull Uri uri, double progress) {
+    voiceNoteMediaController.seekToPosition(uri, progress);
+  }
+
+  @Override
+  public void onVoiceNotePlaybackSpeedChanged(@NonNull Uri uri, float speed) {
+    voiceNoteMediaController.setPlaybackSpeed(uri, speed);
+  }
+
+  @Override
+  public void onRegisterVoiceNoteCallbacks(@NonNull Observer<VoiceNotePlaybackState> onPlaybackStartObserver) {
+    voiceNoteMediaController.getVoiceNotePlaybackState().observe(this, onPlaybackStartObserver);
+  }
+
+  @Override
+  public void onUnregisterVoiceNoteCallbacks(@NonNull Observer<VoiceNotePlaybackState> onPlaybackStartObserver) {
+    voiceNoteMediaController.getVoiceNotePlaybackState().removeObserver(onPlaybackStartObserver);
   }
 
   @Override
@@ -3820,6 +3958,39 @@ public class ConversationActivity extends PassphraseRequiredActivity
       } else {
         Log.e(TAG, "Failed to restore a quote from a draft. No matching message record.");
         future.set(false);
+      }
+    }
+  }
+
+  private final class VoiceNotePlayerViewListener implements VoiceNotePlayerView.Listener {
+    @Override
+    public void onCloseRequested(@NonNull Uri uri) {
+      voiceNoteMediaController.stopPlaybackAndReset(uri);
+    }
+
+    @Override
+    public void onSpeedChangeRequested(@NonNull Uri uri, float speed) {
+      voiceNoteMediaController.setPlaybackSpeed(uri, speed);
+    }
+
+    @Override
+    public void onPlay(@NonNull Uri uri, long messageId, double position) {
+      voiceNoteMediaController.startSinglePlayback(uri, messageId, position);
+    }
+
+    @Override
+    public void onPause(@NonNull Uri uri) {
+      voiceNoteMediaController.pausePlayback(uri);
+    }
+
+    @Override
+    public void onNavigateToMessage(long threadId, @NonNull RecipientId threadRecipientId, @NonNull RecipientId senderId, long messageTimestamp, long messagePositionInThread) {
+      if (threadId != ConversationActivity.this.threadId) {
+        startActivity(ConversationIntents.createBuilder(ConversationActivity.this, threadRecipientId, threadId)
+                                         .withStartingPosition((int) messagePositionInThread)
+                                         .build());
+      } else {
+        fragment.jumpToMessage(senderId, messageTimestamp, () -> {});
       }
     }
   }

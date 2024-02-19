@@ -6,26 +6,37 @@ import androidx.annotation.Nullable;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
+import su.sres.core.util.ThreadUtil;
+import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
+import su.sres.securesms.crypto.storage.SignalSenderKeyStore;
+import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
+
+import org.whispersystems.libsignal.SignalProtocolAddress;
 import org.whispersystems.libsignal.protocol.SenderKeyDistributionMessage;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.ContentHint;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
+import su.sres.signalservice.api.messages.SendMessageResult;
 import su.sres.signalservice.api.push.DistributionId;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.internal.push.SignalServiceProtos.Content;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Resends a previously-sent message in response to receiving a retry receipt.
@@ -35,6 +46,8 @@ import java.util.concurrent.TimeUnit;
 public class ResendMessageJob extends BaseJob {
 
   public static final String KEY = "ResendMessageJob";
+
+  private static final String TAG = Log.tag(ResendMessageJob.class);
 
   private final RecipientId    recipientId;
   private final long           sentTimestamp;
@@ -50,7 +63,6 @@ public class ResendMessageJob extends BaseJob {
   private static final String KEY_GROUP_ID        = "group_id";
   private static final String KEY_DISTRIBUTION_ID = "distribution_id";
 
-  // TODO [greyson] Maybe just pass in the MessageLogEntry?
   public ResendMessageJob(@NonNull RecipientId recipientId,
                           long sentTimestamp,
                           @NonNull Content content,
@@ -108,6 +120,11 @@ public class ResendMessageJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
+    if (SignalStore.internalValues().delayResends()) {
+      Log.w(TAG, "Delaying resend by 10 sec because of an internal preference.");
+      ThreadUtil.sleep(10000);
+    }
+
     SignalServiceMessageSender       messageSender = ApplicationDependencies.getSignalServiceMessageSender();
     Recipient                        recipient     = Recipient.resolved(recipientId);
     SignalServiceAddress             address       = RecipientUtil.toSignalServiceAddress(context, recipient);
@@ -115,13 +132,33 @@ public class ResendMessageJob extends BaseJob {
     Content                          contentToSend = content;
 
     if (distributionId != null) {
+      Optional<GroupDatabase.GroupRecord> groupRecord = DatabaseFactory.getGroupDatabase(context).getGroupByDistributionId(distributionId);
+
+      if (!groupRecord.isPresent()) {
+        Log.w(TAG, "Could not find a matching group for the distributionId! Skipping message send.");
+        return;
+      } else if (!groupRecord.get().getMembers().contains(recipientId)) {
+        Log.w(TAG, "The target user is no longer in the group! Skipping message send.");
+        return;
+      }
+
       SenderKeyDistributionMessage senderKeyDistributionMessage = messageSender.getOrCreateNewGroupSession(distributionId);
       ByteString                   distributionBytes            = ByteString.copyFrom(senderKeyDistributionMessage.serialize());
 
       contentToSend = contentToSend.toBuilder().setSenderKeyDistributionMessage(distributionBytes).build();
     }
 
-    messageSender.resendContent(address, access, sentTimestamp, contentToSend, contentHint, Optional.fromNullable(groupId).transform(GroupId::getDecodedId));
+    SendMessageResult result = messageSender.resendContent(address, access, sentTimestamp, contentToSend, contentHint, Optional.fromNullable(groupId).transform(GroupId::getDecodedId));
+
+    if (result.isSuccess() && distributionId != null) {
+      List<SignalProtocolAddress> addresses = result.getSuccess()
+                                                    .getDevices()
+                                                    .stream()
+                                                    .map(device -> new SignalProtocolAddress(recipient.requireServiceId(), device))
+                                                    .collect(Collectors.toList());
+
+      new SignalSenderKeyStore(context).markSenderKeySharedWith(distributionId, addresses);
+    }
   }
 
   @Override

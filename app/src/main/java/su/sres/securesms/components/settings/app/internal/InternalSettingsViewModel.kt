@@ -65,6 +65,11 @@ class InternalSettingsViewModel(private val repository: InternalSettingsReposito
     refresh()
   }
 
+  fun setDelayResends(enabled: Boolean) {
+    preferenceDataStore.putBoolean(InternalValues.DELAY_RESENDS, enabled)
+    refresh()
+  }
+
   private fun refresh() {
     store.update { getState().copy(emojiVersion = it.emojiVersion) }
   }
@@ -79,7 +84,8 @@ class InternalSettingsViewModel(private val repository: InternalSettingsReposito
     disableAutoMigrationNotification = SignalStore.internalValues().disableGv1AutoMigrateNotification(),
     useBuiltInEmojiSet = SignalStore.internalValues().forceBuiltInEmoji(),
     emojiVersion = null,
-    removeSenderKeyMinimium = SignalStore.internalValues().removeSenderKeyMinimum()
+    removeSenderKeyMinimium = SignalStore.internalValues().removeSenderKeyMinimum(),
+    delayResends = SignalStore.internalValues().delayResends()
   )
 
   class Factory(private val repository: InternalSettingsRepository) : ViewModelProvider.Factory {

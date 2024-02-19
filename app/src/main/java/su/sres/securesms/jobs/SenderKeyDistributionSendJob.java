@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
+import su.sres.securesms.crypto.storage.SignalSenderKeyStore;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -14,16 +15,20 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
+
+import org.whispersystems.libsignal.SignalProtocolAddress;
 import org.whispersystems.libsignal.protocol.SenderKeyDistributionMessage;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UnidentifiedAccessPair;
+import su.sres.signalservice.api.messages.SendMessageResult;
 import su.sres.signalservice.api.push.DistributionId;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Sends a {@link SenderKeyDistributionMessage} to a target recipient.
@@ -48,6 +53,7 @@ public final class SenderKeyDistributionSendJob extends BaseJob {
         .addConstraint(NetworkConstraint.KEY)
         .setLifespan(TimeUnit.DAYS.toMillis(1))
         .setMaxAttempts(Parameters.UNLIMITED)
+        .setMaxInstancesForQueue(1)
         .build());
   }
 
@@ -92,7 +98,17 @@ public final class SenderKeyDistributionSendJob extends BaseJob {
     SenderKeyDistributionMessage           message        = messageSender.getOrCreateNewGroupSession(distributionId);
     List<Optional<UnidentifiedAccessPair>> access         = UnidentifiedAccessUtil.getAccessFor(context, Collections.singletonList(recipient));
 
-    messageSender.sendSenderKeyDistributionMessage(address, access, message, groupId.getDecodedId());
+    SendMessageResult result = messageSender.sendSenderKeyDistributionMessage(address, access, message, groupId.getDecodedId()).get(0);
+
+    if (result.isSuccess()) {
+      List<SignalProtocolAddress> addresses = result.getSuccess()
+                                                    .getDevices()
+                                                    .stream()
+                                                    .map(device -> new SignalProtocolAddress(recipient.requireServiceId(), device))
+                                                    .collect(Collectors.toList());
+
+      new SignalSenderKeyStore(context).markSenderKeySharedWith(distributionId, addresses);
+    }
   }
 
   @Override

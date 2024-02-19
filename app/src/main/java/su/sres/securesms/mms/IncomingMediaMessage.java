@@ -29,6 +29,7 @@ public class IncomingMediaMessage {
   private final boolean     push;
   private final long        sentTimeMillis;
   private final long        serverTimeMillis;
+  private final long        receivedTimeMillis;
   private final int         subscriptionId;
   private final long        expiresIn;
   private final boolean     expirationUpdate;
@@ -47,6 +48,7 @@ public class IncomingMediaMessage {
                               String body,
                               long sentTimeMillis,
                               long serverTimeMillis,
+                              long receivedTimeMillis,
                               List<Attachment> attachments,
                               int subscriptionId,
                               long expiresIn,
@@ -55,19 +57,20 @@ public class IncomingMediaMessage {
                               boolean unidentified,
                               Optional<List<Contact>> sharedContacts)
   {
-    this.from             = from;
-    this.groupId          = groupId.orNull();
-    this.sentTimeMillis   = sentTimeMillis;
-    this.serverTimeMillis = serverTimeMillis;
-    this.body             = body;
-    this.push             = false;
-    this.subscriptionId   = subscriptionId;
-    this.expiresIn        = expiresIn;
-    this.expirationUpdate = expirationUpdate;
-    this.viewOnce         = viewOnce;
-    this.quote            = null;
-    this.unidentified     = unidentified;
-    this.serverGuid       = null;
+    this.from               = from;
+    this.groupId            = groupId.orNull();
+    this.sentTimeMillis     = sentTimeMillis;
+    this.serverTimeMillis   = serverTimeMillis;
+    this.receivedTimeMillis = receivedTimeMillis;
+    this.body               = body;
+    this.push               = false;
+    this.subscriptionId     = subscriptionId;
+    this.expiresIn          = expiresIn;
+    this.expirationUpdate   = expirationUpdate;
+    this.viewOnce           = viewOnce;
+    this.quote              = null;
+    this.unidentified       = unidentified;
+    this.serverGuid         = null;
 
     this.attachments.addAll(attachments);
     this.sharedContacts.addAll(sharedContacts.or(Collections.emptyList()));
@@ -76,6 +79,7 @@ public class IncomingMediaMessage {
   public IncomingMediaMessage(@NonNull RecipientId from,
                               long sentTimeMillis,
                               long serverTimeMillis,
+                              long receivedTimeMillis,
                               int subscriptionId,
                               long expiresIn,
                               boolean expirationUpdate,
@@ -91,17 +95,18 @@ public class IncomingMediaMessage {
                               Optional<Attachment> sticker,
                               @Nullable String serverGuid)
   {
-    this.push             = true;
-    this.from             = from;
-    this.sentTimeMillis   = sentTimeMillis;
-    this.serverTimeMillis = serverTimeMillis;
-    this.body             = body.orNull();
-    this.subscriptionId   = subscriptionId;
-    this.expiresIn        = expiresIn;
-    this.expirationUpdate = expirationUpdate;
-    this.viewOnce         = viewOnce;
-    this.quote            = quote.orNull();
-    this.unidentified     = unidentified;
+    this.push               = true;
+    this.from               = from;
+    this.sentTimeMillis     = sentTimeMillis;
+    this.serverTimeMillis   = serverTimeMillis;
+    this.receivedTimeMillis = receivedTimeMillis;
+    this.body               = body.orNull();
+    this.subscriptionId     = subscriptionId;
+    this.expiresIn          = expiresIn;
+    this.expirationUpdate   = expirationUpdate;
+    this.viewOnce           = viewOnce;
+    this.quote              = quote.orNull();
+    this.unidentified       = unidentified;
 
     if (group.isPresent()) this.groupId = GroupUtil.idFromGroupContextOrThrow(group.get());
     else this.groupId = null;
@@ -152,6 +157,10 @@ public class IncomingMediaMessage {
 
   public long getServerTimeMillis() {
     return serverTimeMillis;
+  }
+
+  public long getReceivedTimeMillis() {
+    return receivedTimeMillis;
   }
 
   public long getExpiresIn() {

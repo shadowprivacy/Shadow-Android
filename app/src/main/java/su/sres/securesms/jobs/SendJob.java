@@ -7,6 +7,7 @@ import com.annimon.stream.Stream;
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.TextSecureExpiredException;
 import su.sres.securesms.attachments.Attachment;
+import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
@@ -14,9 +15,11 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.OutgoingMediaMessage;
+import su.sres.securesms.util.Util;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class SendJob extends BaseJob {
 
@@ -57,5 +60,19 @@ public abstract class SendJob extends BaseJob {
     for (Attachment attachment : attachments) {
       database.markAttachmentUploaded(messageId, attachment);
     }
+  }
+
+  protected String buildAttachmentString(@NonNull List<Attachment> attachments) {
+    List<String> strings = attachments.stream().map(attachment -> {
+      if (attachment instanceof DatabaseAttachment) {
+        return ((DatabaseAttachment) attachment).getAttachmentId().toString();
+      } else if (attachment.getUri() != null) {
+        return attachment.getUri().toString();
+      } else {
+        return attachment.toString();
+      }
+    }).collect(Collectors.toList());
+
+    return Util.join(strings, ", ");
   }
 }

@@ -8,11 +8,9 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.viewpager.widget.PagerAdapter;
 
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
@@ -23,11 +21,7 @@ import su.sres.securesms.keyboard.KeyboardPage;
 import su.sres.securesms.keyboard.KeyboardPagerFragment;
 import su.sres.securesms.keyboard.emoji.search.EmojiSearchFragment;
 
-public class MediaKeyboard extends FrameLayout implements InputView,
-                                                          MediaKeyboardProvider.Presenter,
-                                                          MediaKeyboardProvider.Controller,
-                                                          MediaKeyboardBottomTabAdapter.EventListener
-{
+public class MediaKeyboard extends FrameLayout implements InputView {
 
   private static final String TAG          = Log.tag(MediaKeyboard.class);
   private static final String EMOJI_SEARCH = "emoji_search_fragment";
@@ -86,60 +80,6 @@ public class MediaKeyboard extends FrameLayout implements InputView,
     if (keyboardListener != null) keyboardListener.onHidden();
     Log.i(TAG, "hide()");
     keyboardPagerFragment.hide();
-  }
-
-  @Override
-  public void present(@NonNull MediaKeyboardProvider provider,
-                      @NonNull PagerAdapter pagerAdapter,
-                      @NonNull MediaKeyboardProvider.TabIconProvider tabIconProvider,
-                      @Nullable MediaKeyboardProvider.BackspaceObserver backspaceObserver,
-                      @Nullable MediaKeyboardProvider.AddObserver addObserver,
-                      @Nullable MediaKeyboardProvider.SearchObserver searchObserver,
-                      int startingIndex)
-  {
-    //    if (categoryPager == null) return;
-//    if (!provider.equals(providers[providerIndex])) return;
-//    if (keyboardListener != null) keyboardListener.onKeyboardChanged(provider);
-//
-//    boolean isSolo = providers.length == 1;
-//
-//    presentProviderStrip(isSolo);
-//    presentCategoryPager(pagerAdapter, tabIconProvider, startingIndex);
-//    presentProviderTabs(providers, providerIndex);
-//    presentSearchButton(searchObserver);
-//    presentBackspaceButton(backspaceObserver, isSolo);
-//    presentAddButton(addObserver);
-  }
-
-  @Override
-  public int getCurrentPosition() {
-    //    return categoryPager != null ? categoryPager.getCurrentItem() : 0;
-    return 0;
-  }
-
-  @Override
-  public void requestDismissal() {
-    hide(true);
-  }
-
-  @Override
-  public boolean isVisible() {
-    return getVisibility() == View.VISIBLE;
-  }
-
-  @Override
-  public void onTabSelected(int index) {
-    //    if (categoryPager != null) {
-//      categoryPager.setCurrentItem(index);
-//      categoryTabs.smoothScrollToPosition(index);
-//    }
-  }
-
-  @Override
-  public void setViewPagerEnabled(boolean enabled) {
-    //    if (categoryPager != null) {
-//      categoryPager.setEnabled(enabled);
-//    }
   }
 
   public void onCloseEmojiSearch() {

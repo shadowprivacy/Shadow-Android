@@ -22,63 +22,68 @@ import java.util.Map;
 
 public class BlobDataSource implements DataSource {
 
-    private final @NonNull  Context          context;
-    private final @Nullable TransferListener listener;
+  private final @NonNull  Context          context;
+  private final @Nullable TransferListener listener;
 
-    private Uri         uri;
-    private InputStream inputStream;
+  private Uri         uri;
+  private InputStream inputStream;
 
-    BlobDataSource(@NonNull Context context, @Nullable TransferListener listener) {
-        this.context  = context.getApplicationContext();
-        this.listener = listener;
+  BlobDataSource(@NonNull Context context, @Nullable TransferListener listener) {
+    this.context  = context.getApplicationContext();
+    this.listener = listener;
+  }
+
+  @Override
+  public void addTransferListener(TransferListener transferListener) {
+  }
+
+  @Override
+  public long open(DataSpec dataSpec) throws IOException {
+    this.uri         = dataSpec.uri;
+    this.inputStream = BlobProvider.getInstance().getStream(context, uri, dataSpec.position);
+
+    if (listener != null) {
+      listener.onTransferStart(this, dataSpec, false);
     }
 
-    @Override
-    public void addTransferListener(TransferListener transferListener) {
+    long size = unwrapLong(BlobProvider.getFileSize(uri));
+
+    if (size == 0) {
+      size = BlobProvider.getInstance().calculateFileSize(context, uri);
     }
 
-    @Override
-    public long open(DataSpec dataSpec) throws IOException {
-        this.uri         = dataSpec.uri;
-        this.inputStream = BlobProvider.getInstance().getStream(context, uri, dataSpec.position);
+    if (size - dataSpec.position <= 0) throw new EOFException("No more data");
 
-        if (listener != null) {
-            listener.onTransferStart(this, dataSpec, false);
-        }
+    return size - dataSpec.position;
+  }
 
-        long size = unwrapLong(BlobProvider.getFileSize(uri));
-        if (size - dataSpec.position <= 0) throw new EOFException("No more data");
+  private long unwrapLong(@Nullable Long boxed) {
+    return boxed == null ? 0L : boxed;
+  }
 
-        return size - dataSpec.position;
+  @Override
+  public int read(byte[] buffer, int offset, int readLength) throws IOException {
+    int read = inputStream.read(buffer, offset, readLength);
+
+    if (read > 0 && listener != null) {
+      listener.onBytesTransferred(this, null, false, read);
     }
 
-    private long unwrapLong(@Nullable Long boxed) {
-        return boxed == null ? 0L : boxed;
-    }
+    return read;
+  }
 
-    @Override
-    public int read(byte[] buffer, int offset, int readLength) throws IOException {
-        int read = inputStream.read(buffer, offset, readLength);
+  @Override
+  public Uri getUri() {
+    return uri;
+  }
 
-        if (read > 0 && listener != null) {
-            listener.onBytesTransferred(this, null, false, read);
-        }
+  @Override
+  public Map<String, List<String>> getResponseHeaders() {
+    return Collections.emptyMap();
+  }
 
-        return read;
-    }
-
-    @Override
-    public Uri getUri() {
-        return uri;
-    }
-
-    @Override
-    public Map<String, List<String>> getResponseHeaders() {
-        return Collections.emptyMap();
-    }
-
-    @Override
-    public void close() throws IOException {
-        inputStream.close();
-    }
+  @Override
+  public void close() throws IOException {
+    inputStream.close();
+  }
 }

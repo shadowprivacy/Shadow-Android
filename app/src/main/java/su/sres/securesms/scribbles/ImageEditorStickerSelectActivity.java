@@ -17,12 +17,12 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.model.StickerRecord;
 import su.sres.securesms.keyboard.KeyboardPage;
 import su.sres.securesms.keyboard.KeyboardPagerViewModel;
-import su.sres.securesms.stickers.StickerKeyboardProvider;
+import su.sres.securesms.stickers.StickerEventListener;
 import su.sres.securesms.stickers.StickerManagementActivity;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.ViewUtil;
 
-public final class ImageEditorStickerSelectActivity extends AppCompatActivity implements StickerKeyboardProvider.StickerEventListener, MediaKeyboard.MediaKeyboardListener {
+public final class ImageEditorStickerSelectActivity extends AppCompatActivity implements StickerEventListener, MediaKeyboard.MediaKeyboardListener {
 
   @Override
   protected void attachBaseContext(@NonNull Context newBase) {

@@ -1,6 +1,7 @@
 package su.sres.securesms.longmessage;
 
 import androidx.core.content.ContextCompat;
+import androidx.core.text.util.LinkifyCompat;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.content.Context;
@@ -171,7 +172,7 @@ public class LongMessageActivity extends PassphraseRequiredActivity {
 
   private SpannableString linkifyMessageBody(SpannableString messageBody) {
     int     linkPattern = Linkify.WEB_URLS | Linkify.EMAIL_ADDRESSES | Linkify.PHONE_NUMBERS;
-    boolean hasLinks    = Linkify.addLinks(messageBody, linkPattern);
+    boolean hasLinks    = LinkifyCompat.addLinks(messageBody, linkPattern);
 
     if (hasLinks) {
       Stream.of(messageBody.getSpans(0, messageBody.length(), URLSpan.class))

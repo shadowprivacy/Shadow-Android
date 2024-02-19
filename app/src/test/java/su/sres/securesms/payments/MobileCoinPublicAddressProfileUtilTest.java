@@ -12,8 +12,7 @@ import su.sres.signalservice.internal.push.SignalServiceProtos;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static su.sres.securesms.testutil.LibSignalLibraryUtil.assumeLibSignalSupportedOnOS;
+import static su.sres.signalservice.test.LibSignalLibraryUtil.assumeLibSignalSupportedOnOS;
 
 public final class MobileCoinPublicAddressProfileUtilTest {
 
