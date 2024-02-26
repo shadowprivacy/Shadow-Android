@@ -70,27 +70,6 @@ public class SignalServiceMessageReceiver {
     /**
      * Construct a SignalServiceMessageReceiver.
      *
-     * @param urls         The URL of the Signal Service.
-     * @param uuid         The Signal Service UUID.
-     * @param e164         The Signal Service phone number.
-     * @param password     The Signal Service user password.
-     * @param signalingKey The 52 byte signaling key assigned to this user at registration.
-     */
-    public SignalServiceMessageReceiver(SignalServiceConfiguration urls,
-                                        UUID uuid,
-                                        String userLogin,
-                                        String password,
-                                        String signalAgent,
-                                        ConnectivityListener listener,
-                                        SleepTimer timer,
-                                        ClientZkProfileOperations clientZkProfileOperations,
-                                        boolean automaticNetworkRetry) {
-        this(urls, new StaticCredentialsProvider(uuid, userLogin, password), signalAgent, listener, timer, clientZkProfileOperations, automaticNetworkRetry);
-    }
-
-    /**
-     * Construct a SignalServiceMessageReceiver.
-     *
      * @param urls        The URL of the Signal Service.
      * @param credentials The Signal Service user's credentials.
      */
@@ -223,37 +202,6 @@ public class SignalServiceMessageReceiver {
         }
 
         return new SignalServiceStickerManifest(pack.getTitle(), pack.getAuthor(), cover, stickers);
-    }
-
-    /**
-     * Creates a pipe for receiving SignalService messages.
-     * <p>
-     * Callers must call {@link SignalServiceMessagePipe#shutdown()} when finished with the pipe.
-     *
-     * @return A SignalServiceMessagePipe for receiving Signal Service messages.
-     */
-    public SignalServiceMessagePipe createMessagePipe() {
-        WebSocketConnection webSocket = new WebSocketConnection(urls.getSignalServiceUrls()[0].getUrl(),
-                urls.getSignalServiceUrls()[0].getTrustStore(),
-                Optional.of(credentialsProvider), signalAgent, connectivityListener,
-                sleepTimer,
-                urls.getNetworkInterceptors(),
-                urls.getDns(),
-                urls.getShadowProxy());
-
-        return new SignalServiceMessagePipe(webSocket, Optional.of(credentialsProvider), clientZkProfileOperations);
-    }
-
-    public SignalServiceMessagePipe createUnidentifiedMessagePipe() {
-        WebSocketConnection webSocket = new WebSocketConnection(urls.getSignalServiceUrls()[0].getUrl(),
-                urls.getSignalServiceUrls()[0].getTrustStore(),
-                Optional.<CredentialsProvider>absent(), signalAgent, connectivityListener,
-                sleepTimer,
-                urls.getNetworkInterceptors(),
-                urls.getDns(),
-                urls.getShadowProxy());
-
-        return new SignalServiceMessagePipe(webSocket, Optional.of(credentialsProvider), clientZkProfileOperations);
     }
 
     public List<SignalServiceEnvelope> retrieveMessages() throws IOException {

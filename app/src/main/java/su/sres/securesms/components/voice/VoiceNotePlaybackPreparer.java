@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.widget.Toast;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
@@ -19,6 +20,8 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector;
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource;
 
+import su.sres.core.util.ThreadUtil;
+import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.model.MessageRecord;
@@ -33,6 +36,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * ExoPlayer Preparer for Voice Notes. This only supports ACTION_PLAY_FROM_URI
@@ -138,6 +142,10 @@ final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackP
 
                        player.prepare(dataSource);
                        canLoadMore = !singlePlayback;
+                     } else if (Objects.equals(latestUri, uri)) {
+                       Log.w(TAG, "Requested playback but no voice notes could be found.");
+                       ThreadUtil.postToMain(() -> Toast.makeText(context, R.string.VoiceNotePlaybackPreparer__failed_to_play_voice_message, Toast.LENGTH_SHORT)
+                                                        .show());
                      }
                    });
   }
@@ -259,7 +267,12 @@ final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackP
         return Collections.emptyList();
       }
 
-      return Collections.singletonList(VoiceNoteMediaDescriptionCompatFactory.buildMediaDescription(context, messageRecord));
+      MediaDescriptionCompat mediaDescriptionCompat = VoiceNoteMediaDescriptionCompatFactory.buildMediaDescription(context, messageRecord);
+      if (mediaDescriptionCompat == null) {
+        return Collections.emptyList();
+      } else {
+        return Collections.singletonList(mediaDescriptionCompat);
+      }
     } catch (NoSuchMessageException e) {
       Log.w(TAG, "Could not find message.", e);
       return Collections.emptyList();
@@ -275,9 +288,10 @@ final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackP
     try {
       List<MessageRecord> recordsAfter = DatabaseFactory.getMmsSmsDatabase(context).getMessagesAfterVoiceNoteInclusive(messageId, LIMIT);
 
-      return Stream.of(buildFilteredMessageRecordList(recordsAfter))
-                   .map(record -> VoiceNoteMediaDescriptionCompatFactory.buildMediaDescription(context, record))
-                   .toList();
+      return buildFilteredMessageRecordList(recordsAfter).stream()
+                                                         .map(record -> VoiceNoteMediaDescriptionCompatFactory.buildMediaDescription(context, record))
+                                                         .filter(Objects::nonNull)
+                                                         .collect(Collectors.toList());
     } catch (NoSuchMessageException e) {
       Log.w(TAG, "Could not find message.", e);
       return Collections.emptyList();

@@ -2011,12 +2011,12 @@ public class PushServiceSocket {
     }
   }
 
-  private static class RegistrationLockFailure {
+  public static class RegistrationLockFailure {
     @JsonProperty
-    private int length;
+    public int length;
 
     @JsonProperty
-    private long timeRemaining;
+    public long timeRemaining;
   }
 
   private static class ConnectionHolder {

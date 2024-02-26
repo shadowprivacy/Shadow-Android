@@ -32,6 +32,7 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
@@ -44,10 +45,9 @@ import su.sres.securesms.util.views.SimpleProgressDialog;
  * Activity container for starting a new conversation.
  *
  * @author Moxie Marlinspike
- *
  */
 public class NewConversationActivity extends ContactSelectionActivity
-        implements ContactSelectionListFragment.ListCallback
+    implements ContactSelectionListFragment.ListCallback
 {
 
   @SuppressWarnings("unused")
@@ -58,6 +58,7 @@ public class NewConversationActivity extends ContactSelectionActivity
     super.onCreate(bundle, ready);
     assert getSupportActionBar() != null;
     getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    getSupportActionBar().setTitle(R.string.NewConversationActivity__new_message);
   }
 
   @Override
@@ -97,14 +98,18 @@ public class NewConversationActivity extends ContactSelectionActivity
     return true;
   }
 
+  @Override
+  public void onSelectionChanged() {
+  }
+
   private void launch(Recipient recipient) {
 
-    long   existingThread = DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient.getId());
-    Intent intent         = ConversationIntents.createBuilder(this, recipient.getId(), existingThread)
-            .withDraftText(getIntent().getStringExtra(Intent.EXTRA_TEXT))
-            .withDataUri(getIntent().getData())
-            .withDataType(getIntent().getType())
-            .build();
+    long existingThread = DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient.getId());
+    Intent intent = ConversationIntents.createBuilder(this, recipient.getId(), existingThread)
+                                       .withDraftText(getIntent().getStringExtra(Intent.EXTRA_TEXT))
+                                       .withDataUri(getIntent().getData())
+                                       .withDataType(getIntent().getType())
+                                       .build();
 
     startActivity(intent);
     finish();
@@ -115,9 +120,12 @@ public class NewConversationActivity extends ContactSelectionActivity
     super.onOptionsItemSelected(item);
 
     switch (item.getItemId()) {
-      case android.R.id.home:   super.onBackPressed();   return true;
-      case R.id.menu_refresh:   handleManualRefresh();   return true;
-      case R.id.menu_new_group: handleCreateGroup(this); return true;
+      case android.R.id.home:
+        super.onBackPressed(); return true;
+      case R.id.menu_refresh:
+        handleManualRefresh(); return true;
+      case R.id.menu_new_group:
+        handleCreateGroup(this); return true;
 //      case R.id.menu_invite:    handleInvite();          return true;
     }
 
@@ -130,7 +138,7 @@ public class NewConversationActivity extends ContactSelectionActivity
   }
 
   private void handleCreateGroup(Context context) {
-    if(TextSecurePreferences.isPushRegistered(context)) {
+    if (TextSecurePreferences.isPushRegistered(context)) {
       startActivity(CreateGroupActivity.newIntent(this));
     }
   }

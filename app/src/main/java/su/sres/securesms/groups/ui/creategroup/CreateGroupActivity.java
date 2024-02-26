@@ -95,7 +95,7 @@ public class CreateGroupActivity extends ContactSelectionActivity {
     @Override
     public boolean onBeforeContactSelected(Optional<RecipientId> recipientId, String number) {
         if (contactsFragment.hasQueryFilter()) {
-            getToolbar().clear();
+            getContactFilterView().clear();
         }
 
         enableNext();
@@ -106,7 +106,17 @@ public class CreateGroupActivity extends ContactSelectionActivity {
     @Override
     public void onContactDeselected(Optional<RecipientId> recipientId, String number) {
         if (contactsFragment.hasQueryFilter()) {
-            getToolbar().clear();
+            getContactFilterView().clear();
+        }
+    }
+
+    @Override
+    public void onSelectionChanged() {
+        int selectedContactsCount = contactsFragment.getTotalMemberCount();
+        if (selectedContactsCount == 0) {
+            getToolbar().setTitle(getString(R.string.CreateGroupActivity__select_members));
+        } else {
+            getToolbar().setTitle(getResources().getQuantityString(R.plurals.CreateGroupActivity__d_members, selectedContactsCount, selectedContactsCount));
         }
     }
 

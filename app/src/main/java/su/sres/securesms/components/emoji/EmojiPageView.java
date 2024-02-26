@@ -23,16 +23,13 @@ import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiPageViewGridAdapter.EmojiHeader;
 import su.sres.securesms.components.emoji.EmojiPageViewGridAdapter.EmojiNoResultsModel;
 import su.sres.securesms.components.emoji.EmojiPageViewGridAdapter.VariationSelectorListener;
-import su.sres.securesms.emoji.EmojiCategory;
 import su.sres.securesms.util.ContextUtil;
 import su.sres.securesms.util.DrawableUtil;
 import su.sres.securesms.util.MappingModel;
-import su.sres.securesms.util.MappingModelList;
 import su.sres.securesms.util.ViewUtil;
 
 public class EmojiPageView extends RecyclerView implements VariationSelectorListener {
 
-  private EmojiPageModel                   model;
   private AdapterFactory                   adapterFactory;
   private LinearLayoutManager              layoutManager;
   private RecyclerView.OnItemTouchListener scrollDisabler;
@@ -127,45 +124,15 @@ public class EmojiPageView extends RecyclerView implements VariationSelectorList
   }
 
   public void onSelected() {
-    if (getAdapter() != null && (model == null || model.isDynamic())) {
+    if (getAdapter() != null) {
       getAdapter().notifyDataSetChanged();
     }
   }
 
-  public void setList(@NonNull List<MappingModel<?>> list) {
-    this.model = null;
+  public void setList(@NonNull List<MappingModel<?>> list, @Nullable Runnable commitCallback) {
     EmojiPageViewGridAdapter adapter = adapterFactory.create();
     setAdapter(adapter);
-    adapter.submitList(list);
-  }
-
-  public void setModel(@Nullable EmojiPageModel model) {
-    this.model = model;
-    EmojiPageViewGridAdapter adapter = adapterFactory.create();
-    setAdapter(adapter);
-    adapter.submitList(getMappingModelList());
-  }
-
-  public void bindSearchableAdapter(@Nullable EmojiPageModel model) {
-    this.model = model;
-
-    EmojiPageViewGridAdapter adapter = adapterFactory.create();
-    setAdapter(adapter);
-    adapter.submitList(getMappingModelList());
-  }
-
-  private @NonNull MappingModelList getMappingModelList() {
-
-    if (model != null) {
-      boolean emoticonPage = EmojiCategory.EMOTICONS.getKey().equals(model.getKey());
-      return model.getDisplayEmoji()
-                  .stream()
-                  .map(e -> emoticonPage ? new EmojiPageViewGridAdapter.EmojiTextModel(model.getKey(), e)
-                                         : new EmojiPageViewGridAdapter.EmojiModel(model.getKey(), e))
-                  .collect(MappingModelList.collect());
-    }
-
-    return new MappingModelList();
+    adapter.submitList(list, commitCallback);
   }
 
   @Override

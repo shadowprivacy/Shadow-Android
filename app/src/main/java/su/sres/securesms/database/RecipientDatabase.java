@@ -8,6 +8,7 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import com.annimon.stream.Stream;
 import com.google.protobuf.ByteString;
@@ -102,57 +103,57 @@ public class RecipientDatabase extends Database {
 
   private static final String TAG = Log.tag(RecipientDatabase.class);
 
-  static final         String TABLE_NAME                = "recipient";
-  public static final  String ID                        = "_id";
-  private static final String UUID                      = "uuid";
-  private static final String USERNAME                  = "username";
-  public static final  String PHONE                     = "phone";
-  public static final  String EMAIL                     = "email";
-  static final         String GROUP_ID                  = "group_id";
-  static final         String GROUP_TYPE                = "group_type";
-  private static final String BLOCKED                   = "blocked";
-  private static final String MESSAGE_RINGTONE          = "message_ringtone";
-  private static final String MESSAGE_VIBRATE           = "message_vibrate";
-  private static final String CALL_RINGTONE             = "call_ringtone";
-  private static final String CALL_VIBRATE              = "call_vibrate";
-  private static final String NOTIFICATION_CHANNEL      = "notification_channel";
-  private static final String MUTE_UNTIL                = "mute_until";
-  private static final String AVATAR_COLOR              = "color";
-  private static final String SEEN_INVITE_REMINDER      = "seen_invite_reminder";
-  private static final String DEFAULT_SUBSCRIPTION_ID   = "default_subscription_id";
-  private static final String MESSAGE_EXPIRATION_TIME   = "message_expiration_time";
-  public static final  String REGISTERED                = "registered";
-  public static final  String SYSTEM_JOINED_NAME        = "system_display_name";
-  public static final  String SYSTEM_FAMILY_NAME        = "system_family_name";
-  public static final  String SYSTEM_GIVEN_NAME         = "system_given_name";
-  private static final String SYSTEM_PHOTO_URI          = "system_photo_uri";
-  public static final  String SYSTEM_PHONE_TYPE         = "system_phone_type";
-  public static final  String SYSTEM_PHONE_LABEL        = "system_phone_label";
-  private static final String SYSTEM_CONTACT_URI        = "system_contact_uri";
-  private static final String SYSTEM_INFO_PENDING       = "system_info_pending";
-  private static final String PROFILE_KEY               = "profile_key";
-  private static final String PROFILE_KEY_CREDENTIAL    = "profile_key_credential";
-  private static final String SIGNAL_PROFILE_AVATAR     = "signal_profile_avatar";
-  private static final String PROFILE_SHARING           = "profile_sharing";
-  private static final String LAST_PROFILE_FETCH        = "last_profile_fetch";
-  private static final String UNIDENTIFIED_ACCESS_MODE  = "unidentified_access_mode";
-  static final         String FORCE_SMS_SELECTION       = "force_sms_selection";
-  private static final String CAPABILITIES              = "capabilities";
-  private static final String STORAGE_SERVICE_ID        = "storage_service_key";
-  private static final String PROFILE_GIVEN_NAME        = "signal_profile_name";
-  private static final String PROFILE_FAMILY_NAME       = "profile_family_name";
-  private static final String PROFILE_JOINED_NAME       = "profile_joined_name";
-  private static final String MENTION_SETTING           = "mention_setting";
-  private static final String STORAGE_PROTO             = "storage_proto";
-  private static final String LAST_SESSION_RESET        = "last_session_reset";
-  private static final String WALLPAPER                 = "wallpaper";
-  private static final String WALLPAPER_URI             = "wallpaper_file";
-  public static final  String ABOUT                     = "about";
-  public static final  String ABOUT_EMOJI               = "about_emoji";
-  private static final String EXTRAS                    = "extras";
-  private static final String GROUPS_IN_COMMON          = "groups_in_common";
-  private static final String CHAT_COLORS               = "chat_colors";
-  private static final String CUSTOM_CHAT_COLORS_ID     = "custom_chat_colors_id";
+  static final         String TABLE_NAME               = "recipient";
+  public static final  String ID                       = "_id";
+  private static final String UUID                     = "uuid";
+  private static final String USERNAME                 = "username";
+  public static final  String PHONE                    = "phone";
+  public static final  String EMAIL                    = "email";
+  static final         String GROUP_ID                 = "group_id";
+  static final         String GROUP_TYPE               = "group_type";
+  private static final String BLOCKED                  = "blocked";
+  private static final String MESSAGE_RINGTONE         = "message_ringtone";
+  private static final String MESSAGE_VIBRATE          = "message_vibrate";
+  private static final String CALL_RINGTONE            = "call_ringtone";
+  private static final String CALL_VIBRATE             = "call_vibrate";
+  private static final String NOTIFICATION_CHANNEL     = "notification_channel";
+  private static final String MUTE_UNTIL               = "mute_until";
+  private static final String AVATAR_COLOR             = "color";
+  private static final String SEEN_INVITE_REMINDER     = "seen_invite_reminder";
+  private static final String DEFAULT_SUBSCRIPTION_ID  = "default_subscription_id";
+  private static final String MESSAGE_EXPIRATION_TIME  = "message_expiration_time";
+  public static final  String REGISTERED               = "registered";
+  public static final  String SYSTEM_JOINED_NAME       = "system_display_name";
+  public static final  String SYSTEM_FAMILY_NAME       = "system_family_name";
+  public static final  String SYSTEM_GIVEN_NAME        = "system_given_name";
+  private static final String SYSTEM_PHOTO_URI         = "system_photo_uri";
+  public static final  String SYSTEM_PHONE_TYPE        = "system_phone_type";
+  public static final  String SYSTEM_PHONE_LABEL       = "system_phone_label";
+  private static final String SYSTEM_CONTACT_URI       = "system_contact_uri";
+  private static final String SYSTEM_INFO_PENDING      = "system_info_pending";
+  private static final String PROFILE_KEY              = "profile_key";
+  private static final String PROFILE_KEY_CREDENTIAL   = "profile_key_credential";
+  private static final String SIGNAL_PROFILE_AVATAR    = "signal_profile_avatar";
+  private static final String PROFILE_SHARING          = "profile_sharing";
+  private static final String LAST_PROFILE_FETCH       = "last_profile_fetch";
+  private static final String UNIDENTIFIED_ACCESS_MODE = "unidentified_access_mode";
+  static final         String FORCE_SMS_SELECTION      = "force_sms_selection";
+  private static final String CAPABILITIES             = "capabilities";
+  private static final String STORAGE_SERVICE_ID       = "storage_service_key";
+  private static final String PROFILE_GIVEN_NAME       = "signal_profile_name";
+  private static final String PROFILE_FAMILY_NAME      = "profile_family_name";
+  private static final String PROFILE_JOINED_NAME      = "profile_joined_name";
+  private static final String MENTION_SETTING          = "mention_setting";
+  private static final String STORAGE_PROTO            = "storage_proto";
+  private static final String LAST_SESSION_RESET       = "last_session_reset";
+  private static final String WALLPAPER                = "wallpaper";
+  private static final String WALLPAPER_URI            = "wallpaper_file";
+  public static final  String ABOUT                    = "about";
+  public static final  String ABOUT_EMOJI              = "about_emoji";
+  private static final String EXTRAS                   = "extras";
+  private static final String GROUPS_IN_COMMON         = "groups_in_common";
+  private static final String CHAT_COLORS              = "chat_colors";
+  private static final String CUSTOM_CHAT_COLORS_ID    = "custom_chat_colors_id";
 
   public static final  String SEARCH_PROFILE_NAME = "search_signal_profile";
   private static final String SORT_NAME           = "sort_name";
@@ -189,7 +190,7 @@ public class RecipientDatabase extends Database {
   };
 
   private static final String[] ID_PROJECTION              = new String[] { ID };
-  private static final String[] SEARCH_PROJECTION          = new String[] { ID, SYSTEM_JOINED_NAME, PHONE, EMAIL, SYSTEM_PHONE_LABEL, SYSTEM_PHONE_TYPE, REGISTERED, ABOUT, ABOUT_EMOJI, EXTRAS, GROUPS_IN_COMMON, "COALESCE(" + nullIfEmpty(PROFILE_JOINED_NAME) + ", " + nullIfEmpty(PROFILE_GIVEN_NAME) + ") AS " + SEARCH_PROFILE_NAME, "COALESCE(" + nullIfEmpty(SYSTEM_JOINED_NAME) + ", " + nullIfEmpty(SYSTEM_GIVEN_NAME) + ", " + nullIfEmpty(PROFILE_JOINED_NAME) + ", " + nullIfEmpty(PROFILE_GIVEN_NAME) + ", " + nullIfEmpty(USERNAME) + ") AS " + SORT_NAME };
+  private static final String[] SEARCH_PROJECTION          = new String[] { ID, SYSTEM_JOINED_NAME, PHONE, EMAIL, SYSTEM_PHONE_LABEL, SYSTEM_PHONE_TYPE, REGISTERED, ABOUT, ABOUT_EMOJI, EXTRAS, GROUPS_IN_COMMON, "COALESCE(" + nullIfEmpty(PROFILE_JOINED_NAME) + ", " + nullIfEmpty(PROFILE_GIVEN_NAME) + ") AS " + SEARCH_PROFILE_NAME, "LOWER(COALESCE(" + nullIfEmpty(SYSTEM_JOINED_NAME) + ", " + nullIfEmpty(SYSTEM_GIVEN_NAME) + ", " + nullIfEmpty(PROFILE_JOINED_NAME) + ", " + nullIfEmpty(PROFILE_GIVEN_NAME) + ", " + nullIfEmpty(USERNAME) + ")) AS " + SORT_NAME };
   public static final  String[] SEARCH_PROJECTION_NAMES    = new String[] { ID, SYSTEM_JOINED_NAME, PHONE, EMAIL, SYSTEM_PHONE_LABEL, SYSTEM_PHONE_TYPE, REGISTERED, ABOUT, ABOUT_EMOJI, EXTRAS, GROUPS_IN_COMMON, SEARCH_PROFILE_NAME, SORT_NAME };
   private static final String[] TYPED_RECIPIENT_PROJECTION = Stream.of(RECIPIENT_PROJECTION)
                                                                    .map(columnName -> TABLE_NAME + "." + columnName)
@@ -334,7 +335,7 @@ public class RecipientDatabase extends Database {
       CALL_VIBRATE + " INTEGER DEFAULT " + VibrateState.DEFAULT.getId() + ", " +
       NOTIFICATION_CHANNEL + " TEXT DEFAULT NULL, " +
       MUTE_UNTIL + " INTEGER DEFAULT 0, " +
-      AVATAR_COLOR              + " TEXT DEFAULT NULL, " +
+      AVATAR_COLOR + " TEXT DEFAULT NULL, " +
       SEEN_INVITE_REMINDER + " INTEGER DEFAULT " + InsightsBannerTier.NO_TIER.getId() + ", " +
       DEFAULT_SUBSCRIPTION_ID + " INTEGER DEFAULT -1, " +
       MESSAGE_EXPIRATION_TIME + " INTEGER DEFAULT 0, " +
@@ -1633,7 +1634,7 @@ public class RecipientDatabase extends Database {
 
     value = Bitmask.update(value, Capabilities.GROUPS_V2, Capabilities.BIT_LENGTH, Recipient.Capability.fromBoolean(capabilities.isGv2()).serialize());
     value = Bitmask.update(value, Capabilities.GROUPS_V1_MIGRATION, Capabilities.BIT_LENGTH, Recipient.Capability.fromBoolean(capabilities.isGv1Migration()).serialize());
-    value = Bitmask.update(value, Capabilities.SENDER_KEY,          Capabilities.BIT_LENGTH, Recipient.Capability.fromBoolean(capabilities.isSenderKey()).serialize());
+    value = Bitmask.update(value, Capabilities.SENDER_KEY, Capabilities.BIT_LENGTH, Recipient.Capability.fromBoolean(capabilities.isSenderKey()).serialize());
 
     ContentValues values = new ContentValues(1);
     values.put(CAPABILITIES, value);
@@ -2294,22 +2295,14 @@ public class RecipientDatabase extends Database {
   }
 
   public @Nullable Cursor getShadowContacts(boolean includeSelf) {
-// we include the phone not null clause to include all registered directory entries; with plain directory there are essentially no non-Shadow contacts, all contacts are system-internal
-    String selection = BLOCKED + " = ? AND " +
-                       REGISTERED + " = ? AND " +
-                       GROUP_ID + " IS NULL AND " +
-                       "(" + SYSTEM_JOINED_NAME + " NOT NULL OR " + PROFILE_SHARING + " = ?) AND " +
-                       "(" + SORT_NAME + " NOT NULL OR " + USERNAME + " NOT NULL OR " + PHONE + " NOT NULL)";
+    ContactSearchSelection searchSelection = new ContactSearchSelection.Builder().withRegistered(true)
+                                                                                 .withGroups(false)
+                                                                                 .excludeId(includeSelf ? null : Recipient.self().getId())
+                                                                                 .build();
 
-    String[] args;
-
-    if (includeSelf) {
-      args = new String[] { "0", String.valueOf(RegisteredState.REGISTERED.getId()), "1" };
-    } else {
-      selection += " AND " + ID + " != ?";
-      args = new String[] { "0", String.valueOf(RegisteredState.REGISTERED.getId()), "1", Recipient.self().getId().serialize() };
-    }
-    String orderBy = SORT_NAME + ", " + SYSTEM_JOINED_NAME + ", " + SEARCH_PROFILE_NAME + ", " + USERNAME + ", " + PHONE;
+    String   selection = searchSelection.getWhere();
+    String[] args      = searchSelection.getArgs();
+    String   orderBy   = SORT_NAME + ", " + SYSTEM_JOINED_NAME + ", " + SEARCH_PROFILE_NAME + ", " + USERNAME + ", " + PHONE;
 
     return databaseHelper.getReadableDatabase().query(TABLE_NAME, SEARCH_PROJECTION, selection, args, null, null, orderBy);
   }
@@ -2317,23 +2310,14 @@ public class RecipientDatabase extends Database {
   public @Nullable Cursor querySignalContacts(@NonNull String query, boolean includeSelf) {
     query = buildCaseInsensitiveGlobPattern(query);
 
-    String selection = BLOCKED + " = ? AND " +
-                       REGISTERED + " = ? AND " +
-                       GROUP_ID + " IS NULL AND " +
-                       "(" + SYSTEM_JOINED_NAME + " NOT NULL OR " + PROFILE_SHARING + " = ?) AND " +
-                       "(" +
-                       PHONE + " GLOB ? OR " +
-                       SORT_NAME + " GLOB ? OR " +
-                       USERNAME + " GLOB ?" +
-                       ")";
-    String[] args;
+    ContactSearchSelection searchSelection = new ContactSearchSelection.Builder().withRegistered(true)
+                                                                                 .withGroups(false)
+                                                                                 .excludeId(includeSelf ? null : Recipient.self().getId())
+                                                                                 .withSearchQuery(query)
+                                                                                 .build();
 
-    if (includeSelf) {
-      args = new String[] { "0", String.valueOf(RegisteredState.REGISTERED.getId()), "1", query, query, query };
-    } else {
-      selection += " AND " + ID + " != ?";
-      args = new String[] { "0", String.valueOf(RegisteredState.REGISTERED.getId()), "1", query, query, query, String.valueOf(Recipient.self().getId().toLong()) };
-    }
+    String   selection = searchSelection.getWhere();
+    String[] args      = searchSelection.getArgs();
 
     String orderBy = SORT_NAME + ", " + SYSTEM_JOINED_NAME + ", " + SEARCH_PROFILE_NAME + ", " + PHONE;
 
@@ -2341,13 +2325,13 @@ public class RecipientDatabase extends Database {
   }
 
   public @Nullable Cursor getNonSignalContacts() {
-    String selection = BLOCKED + " = ? AND " +
-                       REGISTERED + " != ? AND " +
-                       GROUP_ID + " IS NULL AND " +
-                       SYSTEM_CONTACT_URI + " NOT NULL AND " +
-                       "(" + PHONE + " NOT NULL OR " + EMAIL + " NOT NULL)";
-    String[] args    = new String[] { "0", String.valueOf(RegisteredState.REGISTERED.getId()) };
-    String   orderBy = SYSTEM_JOINED_NAME + ", " + PHONE;
+    ContactSearchSelection searchSelection = new ContactSearchSelection.Builder().withNonRegistered(true)
+                                                                                 .withGroups(false)
+                                                                                 .build();
+
+    String   selection = searchSelection.getWhere();
+    String[] args      = searchSelection.getArgs();
+    String   orderBy   = SYSTEM_JOINED_NAME + ", " + PHONE;
 
     return databaseHelper.getReadableDatabase().query(TABLE_NAME, SEARCH_PROJECTION, selection, args, null, null, orderBy);
   }
@@ -2355,18 +2339,44 @@ public class RecipientDatabase extends Database {
   public @Nullable Cursor queryNonSignalContacts(@NonNull String query) {
     query = buildCaseInsensitiveGlobPattern(query);
 
-    String selection = BLOCKED + " = ? AND " +
-                       REGISTERED + " != ? AND " +
-                       GROUP_ID + " IS NULL AND " +
-                       SYSTEM_CONTACT_URI + " NOT NULL AND " +
-                       "(" + PHONE + " NOT NULL OR " + EMAIL + " NOT NULL) AND " +
-                       "(" +
-                       PHONE + " GLOB ? OR " +
-                       EMAIL + " GLOB ? OR " +
-                       SYSTEM_JOINED_NAME + " GLOB ?" +
-                       ")";
-    String[] args    = new String[] { "0", String.valueOf(RegisteredState.REGISTERED.getId()), query, query, query };
-    String   orderBy = SYSTEM_JOINED_NAME + ", " + PHONE;
+    ContactSearchSelection searchSelection = new ContactSearchSelection.Builder().withNonRegistered(true)
+                                                                                 .withGroups(false)
+                                                                                 .withSearchQuery(query)
+                                                                                 .build();
+
+    String   selection = searchSelection.getWhere();
+    String[] args      = searchSelection.getArgs();
+    String   orderBy   = SYSTEM_JOINED_NAME + ", " + PHONE;
+
+    return databaseHelper.getReadableDatabase().query(TABLE_NAME, SEARCH_PROJECTION, selection, args, null, null, orderBy);
+  }
+
+  public @Nullable Cursor getNonGroupContacts(boolean includeSelf) {
+    ContactSearchSelection searchSelection = new ContactSearchSelection.Builder().withRegistered(true)
+                                                                                 .withNonRegistered(true)
+                                                                                 .withGroups(false)
+                                                                                 .excludeId(includeSelf ? null : Recipient.self().getId())
+                                                                                 .build();
+
+    String orderBy = orderByPreferringAlphaOverNumeric(SORT_NAME) + ", " + PHONE;
+
+    return databaseHelper.getReadableDatabase().query(TABLE_NAME, SEARCH_PROJECTION, searchSelection.where, searchSelection.args, null, null, orderBy);
+  }
+
+  public @Nullable Cursor queryNonGroupContacts(@NonNull String query, boolean includeSelf) {
+    query = buildCaseInsensitiveGlobPattern(query);
+
+    ContactSearchSelection searchSelection = new ContactSearchSelection.Builder().withRegistered(true)
+                                                                                 .withNonRegistered(true)
+                                                                                 .withGroups(false)
+                                                                                 .excludeId(includeSelf ? null : Recipient.self().getId())
+                                                                                 .withSearchQuery(query)
+                                                                                 .build();
+
+    String   selection = searchSelection.getWhere();
+    String[] args      = searchSelection.getArgs();
+
+    String   orderBy   = orderByPreferringAlphaOverNumeric(SORT_NAME) + ", " + PHONE;
 
     return databaseHelper.getReadableDatabase().query(TABLE_NAME, SEARCH_PROJECTION, selection, args, null, null, orderBy);
   }
@@ -2381,7 +2391,7 @@ public class RecipientDatabase extends Database {
                        PHONE + " GLOB ? OR " +
                        EMAIL + " GLOB ?" +
                        ")";
-    String[] args = new String[] { "0", query, query, query, query };
+    String[] args = SqlUtil.buildArgs("0", query, query, query, query);
 
     return databaseHelper.getReadableDatabase().query(TABLE_NAME, SEARCH_PROJECTION, selection, args, null, null, null);
   }
@@ -2920,18 +2930,24 @@ public class RecipientDatabase extends Database {
     // SMS Messages
     ContentValues smsValues = new ContentValues();
     smsValues.put(SmsDatabase.RECIPIENT_ID, byUuid.serialize());
-    if (threadMerge.neededMerge) {
-      smsValues.put(SmsDatabase.THREAD_ID, threadMerge.threadId);
-    }
     db.update(SmsDatabase.TABLE_NAME, smsValues, SmsDatabase.RECIPIENT_ID + " = ?", SqlUtil.buildArgs(byE164));
+
+    if (threadMerge.neededMerge) {
+      ContentValues values = new ContentValues();
+      values.put(SmsDatabase.THREAD_ID, threadMerge.threadId);
+      db.update(SmsDatabase.TABLE_NAME, values, SmsDatabase.THREAD_ID + " = ?", SqlUtil.buildArgs(threadMerge.previousThreadId));
+    }
 
     // MMS Messages
     ContentValues mmsValues = new ContentValues();
     mmsValues.put(MmsDatabase.RECIPIENT_ID, byUuid.serialize());
-    if (threadMerge.neededMerge) {
-      mmsValues.put(MmsDatabase.THREAD_ID, threadMerge.threadId);
-    }
     db.update(MmsDatabase.TABLE_NAME, mmsValues, MmsDatabase.RECIPIENT_ID + " = ?", SqlUtil.buildArgs(byE164));
+
+    if (threadMerge.neededMerge) {
+      ContentValues values = new ContentValues();
+      values.put(MmsDatabase.THREAD_ID, threadMerge.threadId);
+      db.update(MmsDatabase.TABLE_NAME, values, MmsDatabase.THREAD_ID + " = ?", SqlUtil.buildArgs(threadMerge.previousThreadId));
+    }
 
     // Sessions
     boolean hasE164Session = DatabaseFactory.getSessionDatabase(context).getAllFor(byE164).size() > 0;
@@ -3064,6 +3080,16 @@ public class RecipientDatabase extends Database {
     return "NULLIF(" + column + ", '')";
   }
 
+  /**
+   * By default, SQLite will prefer numbers over letters when sorting. e.g. (b, a, 1) is sorted as (1, a, b).
+   * This order by will using a GLOB pattern to instead sort it as (a, b, 1).
+   *
+   * @param column The name of the column to sort by
+   */
+  private static @NonNull String orderByPreferringAlphaOverNumeric(@NonNull String column) {
+    return "CASE WHEN " + column + " GLOB '[0-9]*' THEN 1 ELSE 0 END, " + column;
+  }
+
   private static @NonNull String removeWhitespace(@NonNull String column) {
     return "REPLACE(" + column + ", ' ', '')";
   }
@@ -3109,12 +3135,12 @@ public class RecipientDatabase extends Database {
     private final Recipient.Capability   groupsV2Capability;
     private final Recipient.Capability   groupsV1MigrationCapability;
     private final InsightsBannerTier     insightsBannerTier;
-    private final Recipient.Capability            senderKeyCapability;
+    private final Recipient.Capability   senderKeyCapability;
     private final byte[]                 storageId;
     private final MentionSetting         mentionSetting;
     private final ChatWallpaper          wallpaper;
     private final ChatColors             chatColors;
-    private final AvatarColor                     avatarColor;
+    private final AvatarColor            avatarColor;
     private final String                 about;
     private final String                 aboutEmoji;
     private final SyncExtras             syncExtras;
@@ -3535,6 +3561,150 @@ public class RecipientDatabase extends Database {
     private GetOrInsertResult(@NonNull RecipientId recipientId, boolean neededInsert) {
       this.recipientId  = recipientId;
       this.neededInsert = neededInsert;
+    }
+  }
+
+  @VisibleForTesting
+  static final class ContactSearchSelection {
+
+    static final String FILTER_GROUPS  = " AND " + GROUP_ID + " IS NULL";
+    static final String FILTER_ID      = " AND " + ID + " != ?";
+    static final String FILTER_BLOCKED = " AND " + BLOCKED + " = ?";
+
+    static final String NON_SIGNAL_CONTACT = REGISTERED + " != ? AND " +
+                                             SYSTEM_CONTACT_URI + " NOT NULL AND " +
+                                             "(" + PHONE + " NOT NULL OR " + EMAIL + " NOT NULL)";
+
+    static final String QUERY_NON_SIGNAL_CONTACT = NON_SIGNAL_CONTACT +
+                                                   " AND (" +
+                                                   PHONE + " GLOB ? OR " +
+                                                   EMAIL + " GLOB ? OR " +
+                                                   SYSTEM_JOINED_NAME + " GLOB ?" +
+                                                   ")";
+
+    // we include the phone not null clause to include all registered directory entries; with plain directory there are essentially no non-Shadow contacts, all contacts are system-internal
+    static final String SIGNAL_CONTACT = REGISTERED + " = ? AND " +
+                                         "(" + SYSTEM_JOINED_NAME + " NOT NULL OR " + PROFILE_SHARING + " = ?) AND " +
+                                         "(" + SORT_NAME + " NOT NULL OR " + USERNAME + " NOT NULL OR " + PHONE + " NOT NULL)";
+
+
+    static final String QUERY_SIGNAL_CONTACT = SIGNAL_CONTACT + " AND (" +
+                                               PHONE + " GLOB ? OR " +
+                                               SORT_NAME + " GLOB ? OR " +
+                                               USERNAME + " GLOB ?" +
+                                               ")";
+
+    private final String   where;
+    private final String[] args;
+
+    private ContactSearchSelection(@NonNull String where, @NonNull String[] args) {
+      this.where = where;
+      this.args  = args;
+    }
+
+    String getWhere() {
+      return where;
+    }
+
+    String[] getArgs() {
+      return args;
+    }
+
+    @VisibleForTesting
+    static final class Builder {
+
+      private boolean     includeRegistered;
+      private boolean     includeNonRegistered;
+      private RecipientId excludeId;
+      private boolean     excludeGroups;
+      private String      searchQuery;
+
+      @NonNull Builder withRegistered(boolean includeRegistered) {
+        this.includeRegistered = includeRegistered;
+        return this;
+      }
+
+      @NonNull Builder withNonRegistered(boolean includeNonRegistered) {
+        this.includeNonRegistered = includeNonRegistered;
+        return this;
+      }
+
+      @NonNull Builder excludeId(@Nullable RecipientId recipientId) {
+        this.excludeId = recipientId;
+        return this;
+      }
+
+      @NonNull Builder withGroups(boolean includeGroups) {
+        this.excludeGroups = !includeGroups;
+        return this;
+      }
+
+      @NonNull Builder withSearchQuery(@NonNull String searchQuery) {
+        this.searchQuery = searchQuery;
+        return this;
+      }
+
+      @NonNull ContactSearchSelection build() {
+        if (!includeRegistered && !includeNonRegistered) {
+          throw new IllegalStateException("Must include either registered or non-registered recipients in search");
+        }
+
+        StringBuilder stringBuilder = new StringBuilder("(");
+        List<Object>  args          = new LinkedList<>();
+
+        if (includeRegistered) {
+          stringBuilder.append("(");
+
+          args.add(RegisteredState.REGISTERED.id);
+          args.add(1);
+
+          if (Util.isEmpty(searchQuery)) {
+            stringBuilder.append(SIGNAL_CONTACT);
+          } else {
+            stringBuilder.append(QUERY_SIGNAL_CONTACT);
+            args.add(searchQuery);
+            args.add(searchQuery);
+            args.add(searchQuery);
+          }
+
+          stringBuilder.append(")");
+        }
+
+        if (includeRegistered && includeNonRegistered) {
+          stringBuilder.append(" OR ");
+        }
+
+        if (includeNonRegistered) {
+          stringBuilder.append("(");
+          args.add(RegisteredState.REGISTERED.id);
+
+          if (Util.isEmpty(searchQuery)) {
+            stringBuilder.append(NON_SIGNAL_CONTACT);
+          } else {
+            stringBuilder.append(QUERY_NON_SIGNAL_CONTACT);
+            args.add(searchQuery);
+            args.add(searchQuery);
+            args.add(searchQuery);
+          }
+
+          stringBuilder.append(")");
+        }
+
+        stringBuilder.append(")");
+        stringBuilder.append(FILTER_BLOCKED);
+        args.add(0);
+
+        if (excludeGroups) {
+          stringBuilder.append(FILTER_GROUPS);
+        }
+
+        if (excludeId != null) {
+          stringBuilder.append(FILTER_ID);
+          args.add(excludeId.serialize());
+        }
+
+        return new ContactSearchSelection(stringBuilder.toString(), args.stream().map(Object::toString).toArray(String[]::new));
+      }
     }
   }
 }

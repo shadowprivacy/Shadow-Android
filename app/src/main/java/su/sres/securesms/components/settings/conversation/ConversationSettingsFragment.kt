@@ -31,6 +31,8 @@ import su.sres.securesms.PushContactSelectionActivity
 import su.sres.securesms.R
 import su.sres.securesms.VerifyIdentityActivity
 import su.sres.securesms.components.AvatarImageView
+import su.sres.securesms.components.recyclerview.OnScrollAnimationHelper
+import su.sres.securesms.components.recyclerview.ToolbarShadowAnimationHelper
 import su.sres.securesms.components.settings.DSLConfiguration
 import su.sres.securesms.components.settings.DSLSettingsAdapter
 import su.sres.securesms.components.settings.DSLSettingsFragment

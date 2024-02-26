@@ -43,7 +43,6 @@ import android.text.util.Linkify;
 import android.util.AttributeSet;
 
 import su.sres.securesms.BindableConversationItem;
-import su.sres.securesms.ConfirmIdentityDialog;
 import su.sres.securesms.MediaPreviewActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.LinkPreviewView;
@@ -100,7 +99,6 @@ import su.sres.securesms.components.SharedContactView;
 import su.sres.securesms.components.BorderlessImageView;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.model.MediaMmsMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
@@ -1445,16 +1443,6 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
   /// Event handlers
 
-  private void handleApproveIdentity() {
-    List<IdentityKeyMismatch> mismatches = messageRecord.getIdentityKeyMismatches();
-
-    if (mismatches.size() != 1) {
-      throw new AssertionError("Identity mismatch count: " + mismatches.size());
-    }
-
-    new ConfirmIdentityDialog(context, messageRecord, mismatches.get(0)).show();
-  }
-
   private Spannable getLongMessageSpan(@NonNull MessageRecord messageRecord) {
     String   message;
     Runnable action;
@@ -1805,7 +1793,9 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
           eventListener.onMessageWithRecaptchaNeededClicked(messageRecord);
         }
       } else if (!messageRecord.isOutgoing() && messageRecord.isIdentityMismatchFailure()) {
-        handleApproveIdentity();
+        if (eventListener != null) {
+          eventListener.onIncomingIdentityMismatchClicked(messageRecord.getIndividualRecipient().getId());
+        }
       } else if (messageRecord.isPendingInsecureSmsFallback()) {
     //    handleMessageApproval();
       }

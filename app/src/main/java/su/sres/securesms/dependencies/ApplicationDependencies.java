@@ -40,6 +40,7 @@ import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.SignalServiceMessageSender;
+import su.sres.signalservice.api.SignalWebSocket;
 import su.sres.signalservice.api.groupsv2.GroupsV2Operations;
 
 /**
@@ -62,7 +63,6 @@ public class ApplicationDependencies {
   private static Provider                   provider;
   private static NetworkIndependentProvider networkIndependentProvider;
 
-  private static MessageNotifier       messageNotifier;
   private static AppForegroundObserver appForegroundObserver;
 
   private static volatile SignalServiceAccountManager  accountManager;
@@ -91,6 +91,8 @@ public class ApplicationDependencies {
   private static volatile OkHttpClient                 okHttpClient;
   private static volatile PendingRetryReceiptManager   pendingRetryReceiptManager;
   private static volatile PendingRetryReceiptCache     pendingRetryReceiptCache;
+  private static volatile SignalWebSocket              signalWebSocket;
+  private static volatile MessageNotifier              messageNotifier;
   private static volatile KeyValueStore                keyValueStore;
 
   public static void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
@@ -117,9 +119,7 @@ public class ApplicationDependencies {
       }
     }
 
-    ApplicationDependencies.provider        = provider;
-    ApplicationDependencies.messageNotifier = provider.provideMessageNotifier();
-
+    ApplicationDependencies.provider = provider;
   }
 
 
@@ -190,11 +190,9 @@ public class ApplicationDependencies {
 
     synchronized (LOCK) {
       if (messageSender == null) {
-        messageSender = provider.provideSignalServiceMessageSender();
+        messageSender = provider.provideSignalServiceMessageSender(getSignalWebSocket());
       } else {
         messageSender.update(
-            IncomingMessageObserver.getPipe(),
-            IncomingMessageObserver.getUnidentifiedPipe(),
             TextSecurePreferences.isMultiDevice(application),
             FeatureFlags.attachmentsV3());
       }
@@ -339,6 +337,13 @@ public class ApplicationDependencies {
   }
 
   public static @NonNull MessageNotifier getMessageNotifier() {
+    if (messageNotifier == null) {
+      synchronized (LOCK) {
+        if (messageNotifier == null) {
+          messageNotifier = provider.provideMessageNotifier();
+        }
+      }
+    }
     return messageNotifier;
   }
 
@@ -510,6 +515,17 @@ public class ApplicationDependencies {
     return pendingRetryReceiptCache;
   }
 
+  public static @NonNull SignalWebSocket getSignalWebSocket() {
+    if (signalWebSocket == null) {
+      synchronized (LOCK) {
+        if (signalWebSocket == null) {
+          signalWebSocket = provider.provideSignalWebSocket();
+        }
+      }
+    }
+    return signalWebSocket;
+  }
+
   public interface Provider {
     @NonNull
     PipeConnectivityListener providePipeListener();
@@ -519,7 +535,7 @@ public class ApplicationDependencies {
 
     @NonNull SignalServiceAccountManager provideSignalServiceAccountManager();
 
-    @NonNull SignalServiceMessageSender provideSignalServiceMessageSender();
+    @NonNull SignalServiceMessageSender provideSignalServiceMessageSender(@NonNull SignalWebSocket signalWebSocket);
 
     @NonNull SignalServiceMessageReceiver provideSignalServiceMessageReceiver();
 
@@ -563,6 +579,8 @@ public class ApplicationDependencies {
     @NonNull PendingRetryReceiptManager providePendingRetryReceiptManager();
 
     @NonNull PendingRetryReceiptCache providePendingRetryReceiptCache();
+
+    @NonNull SignalWebSocket provideSignalWebSocket();
   }
 
   public interface NetworkIndependentProvider {

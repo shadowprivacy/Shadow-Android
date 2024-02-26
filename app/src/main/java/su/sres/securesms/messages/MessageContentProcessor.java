@@ -243,11 +243,6 @@ public final class MessageContentProcessor {
 
       log(String.valueOf(content.getTimestamp()), "Beginning message processing.");
 
-      if (content.getSenderKeyDistributionMessage().isPresent()) {
-        GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
-        handleSenderKeyDistributionMessage(content.getSender(), content.getSenderDevice(), content.getSenderKeyDistributionMessage().get());
-      }
-
       if (content.getDataMessage().isPresent()) {
         GroupDatabase            groupDatabase = DatabaseFactory.getGroupDatabase(context);
         SignalServiceDataMessage message       = content.getDataMessage().get();
@@ -1669,12 +1664,6 @@ public final class MessageContentProcessor {
     } else {
       warn(String.valueOf(content.getTimestamp()), "Ignored invalid profile key seen in message");
     }
-  }
-
-  private void handleSenderKeyDistributionMessage(@NonNull SignalServiceAddress address, int deviceId, @NonNull SenderKeyDistributionMessage message) {
-    log("Processing SenderKeyDistributionMessage.");
-    SignalServiceMessageSender sender = ApplicationDependencies.getSignalServiceMessageSender();
-    sender.processSenderKeyDistributionMessage(new SignalProtocolAddress(address.getIdentifier(), deviceId), message);
   }
 
   private void handleNeedsDeliveryReceipt(@NonNull SignalServiceContent content,

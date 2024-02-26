@@ -2,6 +2,7 @@ package su.sres.securesms.recipients;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.database.Cursor;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
@@ -14,7 +15,10 @@ import su.sres.securesms.database.RecipientDatabase.MissingRecipientException;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.LRUCache;
+import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.FilteredExecutor;
@@ -32,14 +36,15 @@ public final class LiveRecipientCache {
 
   private static final String TAG = Log.tag(LiveRecipientCache.class);
 
-  private static final int CACHE_MAX      = 1000;
-  private static final int CACHE_WARM_MAX = 500;
+  private static final int CACHE_MAX              = 1000;
+  private static final int THREAD_CACHE_WARM_MAX  = 500;
+  private static final int CONTACT_CACHE_WARM_MAX = 50;
 
   private final Context                         context;
   private final RecipientDatabase               recipientDatabase;
   private final Map<RecipientId, LiveRecipient> recipients;
   private final LiveRecipient                   unknown;
-  private final Executor                        executor;
+  private final Executor                        resolveExecutor;
   private final SQLiteDatabase                  db;
 
   private final AtomicReference<RecipientId> localRecipientId;
@@ -54,7 +59,7 @@ public final class LiveRecipientCache {
     this.localRecipientId  = new AtomicReference<>(null);
     this.unknown           = new LiveRecipient(context, Recipient.UNKNOWN);
     this.db                = DatabaseFactory.getInstance(context).getRawDatabase();
-    this.executor          = new FilteredExecutor(SignalExecutors.BOUNDED, () -> !db.isDbLockedByCurrentThread());
+    this.resolveExecutor   = new FilteredExecutor(SignalExecutors.BOUNDED, () -> !db.isDbLockedByCurrentThread());
   }
 
   @AnyThread
@@ -80,7 +85,7 @@ public final class LiveRecipientCache {
       final LiveRecipient toResolve = live;
 
       MissingRecipientException prettyStackTraceError = new MissingRecipientException(toResolve.getId());
-      executor.execute(() -> {
+      resolveExecutor.execute(() -> {
         try {
           toResolve.resolve();
         } catch (MissingRecipientException e) {
@@ -123,7 +128,7 @@ public final class LiveRecipientCache {
         LiveRecipient toResolve = live;
 
         MissingRecipientException prettyStackTraceError = new MissingRecipientException(toResolve.getId());
-        executor.execute(() -> {
+        resolveExecutor.execute(() -> {
           try {
             toResolve.resolve();
           } catch (MissingRecipientException e) {
@@ -174,22 +179,43 @@ public final class LiveRecipientCache {
       return;
     }
 
-    executor.execute(() -> {
+    Stopwatch stopwatch = new Stopwatch("recipient-warm-up");
+
+    SignalExecutors.BOUNDED.execute(() -> {
       ThreadDatabase  threadDatabase = DatabaseFactory.getThreadDatabase(context);
       List<Recipient> recipients     = new ArrayList<>();
 
-      try (ThreadDatabase.Reader reader = threadDatabase.readerFor(threadDatabase.getRecentConversationList(CACHE_WARM_MAX, false, false))) {
+      try (ThreadDatabase.Reader reader = threadDatabase.readerFor(threadDatabase.getRecentConversationList(THREAD_CACHE_WARM_MAX, false, false))) {
         int          i      = 0;
         ThreadRecord record = null;
 
-        while ((record = reader.getNext()) != null && i < CACHE_WARM_MAX) {
+        while ((record = reader.getNext()) != null && i < THREAD_CACHE_WARM_MAX) {
           recipients.add(record.getRecipient());
           i++;
         }
       }
 
-      Log.d(TAG, "Warming up " + recipients.size() + " recipients.");
+      Log.d(TAG, "Warming up " + recipients.size() + " thread recipients.");
       addToCache(recipients);
+
+      stopwatch.split("thread");
+
+      if (SignalStore.registrationValues().isRegistrationComplete()) {
+        try (Cursor cursor = DatabaseFactory.getRecipientDatabase(context).getNonGroupContacts(false)) {
+          int count = 0;
+          while (cursor != null && cursor.moveToNext() && count < CONTACT_CACHE_WARM_MAX) {
+            RecipientId id = RecipientId.from(CursorUtil.requireLong(cursor, RecipientDatabase.ID));
+            Recipient.resolved(id);
+            count++;
+          }
+
+          Log.d(TAG, "Warmed up " + count + " contact recipient.");
+
+          stopwatch.split("contact");
+        }
+      }
+
+      stopwatch.stop(TAG);
     });
   }
 

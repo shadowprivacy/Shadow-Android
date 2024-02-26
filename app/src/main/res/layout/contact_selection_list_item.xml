@@ -4,22 +4,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/contact_selection_item_height"
+    android:layout_height="wrap_content"
     android:background="@drawable/conversation_item_background"
     android:focusable="true"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingStart="@dimen/selection_item_header_width"
-    android:paddingEnd="24dp">
+    android:minHeight="@dimen/contact_selection_item_height"
+    android:paddingStart="@dimen/dsl_settings_gutter"
+    android:paddingEnd="@dimen/dsl_settings_gutter">
 
     <FrameLayout
-        android:layout_width="52dp"
-        android:layout_height="52dp">
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginTop="2dp">
 
         <su.sres.securesms.components.AvatarImageView
             android:id="@+id/contact_photo_image"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_gravity="center_vertical"
             android:contentDescription="@string/SingleContactSelectionActivity_contact_photo"
             android:cropToPadding="true"
@@ -34,6 +36,7 @@
             android:layout_gravity="bottom|end"
             android:background="@drawable/contact_selection_checkbox"
             android:button="@null"
+            android:alpha="0"
             android:clickable="false"
             android:focusable="false" />
 
@@ -42,8 +45,8 @@
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="16dp"
         android:layout_weight="1"
         android:orientation="vertical">
 
@@ -54,7 +57,8 @@
             android:checkMark="?android:attr/listChoiceIndicatorMultiple"
             android:ellipsize="marquee"
             android:singleLine="true"
-            android:textAppearance="@style/TextAppearance.Signal.Body1.Bold"
+            android:textAppearance="@style/TextAppearance.Signal.Body1"
+            android:textColor="@color/signal_text_primary"
             tools:text="@sample/contacts.json/data/name" />
 
         <LinearLayout
@@ -68,12 +72,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ellipsize="marquee"
-                android:fontFamily="sans-serif-light"
                 android:singleLine="true"
                 android:textAppearance="@style/TextAppearance.Signal.Body2"
                 android:textColor="@color/signal_text_secondary"
                 android:textDirection="ltr"
-                android:textSize="14sp"
                 app:emoji_forceCustom="true"
                 tools:text="@sample/contacts.json/data/number" />
 
@@ -82,17 +84,26 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
-                android:fontFamily="sans-serif-light"
-                android:paddingStart="10dip"
+                android:paddingStart="4dp"
                 android:singleLine="true"
                 android:textAppearance="@style/TextAppearance.Signal.Body2"
                 android:textColor="@color/signal_text_secondary"
                 tools:ignore="RtlSymmetry"
-                tools:text="@sample/contacts.json/data/label" />
+                tools:text="· Mobile" />
 
         </LinearLayout>
 
 
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/sms_tag"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="@string/ContactSelectionListItem__sms"
+        android:textAppearance="@style/TextAppearance.Signal.Body2"
+        android:textColor="@color/signal_text_secondary"
+        android:visibility="gone" />
 
 </su.sres.securesms.contacts.ContactSelectionListItem>

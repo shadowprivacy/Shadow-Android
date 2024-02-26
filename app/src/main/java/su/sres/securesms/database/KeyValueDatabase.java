@@ -10,6 +10,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteDatabaseHook;
 import net.sqlcipher.database.SQLiteOpenHelper;
 
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.DatabaseSecret;
 import su.sres.securesms.crypto.DatabaseSecretProvider;
@@ -87,10 +88,12 @@ public class KeyValueDatabase extends SQLiteOpenHelper implements SignalDatabase
   public void onOpen(SQLiteDatabase db) {
     Log.i(TAG, "onOpen()");
 
-    if (DatabaseFactory.getInstance(application).hasTable("key_value")) {
-      Log.i(TAG, "Dropping original key_value table from the main database.");
-      DatabaseFactory.getInstance(application).getRawDatabase().rawExecSQL("DROP TABLE key_value");
-    }
+    SignalExecutors.BOUNDED.execute(() -> {
+      if (DatabaseFactory.getInstance(application).hasTable("key_value")) {
+        Log.i(TAG, "Dropping original key_value table from the main database.");
+        DatabaseFactory.getInstance(application).getRawDatabase().rawExecSQL("DROP TABLE key_value");
+      }
+    });
   }
 
   public @NonNull KeyValueDataSet getDataSet() {

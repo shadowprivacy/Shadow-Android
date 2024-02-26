@@ -245,7 +245,7 @@ android {
 
         nightly {
             dimension 'distribution'
-            versionNameSuffix "-nightly-${getDateSuffix()}"
+            versionNameSuffix "-nightly-untagged-${getDateSuffix()}"
             ext.websiteUpdateUrl = "null"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "false"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
@@ -285,6 +285,10 @@ android {
         variant.outputs.each { output ->
             if (output.baseName.contains('nightly')) {
                 output.versionCodeOverride = canonicalVersionCode * postFixSize + 5
+                def tag = getCurrentGitTag()
+                if (tag != null && tag.length() > 0) {
+                    output.versionNameOverride = tag
+                }
             } else {
                 output.outputFileName = output.outputFileName.replace(".apk", "-${variant.versionName}.apk")
                 def abiName = output.getFilter("ABI") ?: 'universal'
@@ -335,6 +339,7 @@ android {
 }
 
 dependencies {
+    implementation 'androidx.core:core-ktx:1.5.0'
     implementation 'androidx.fragment:fragment-ktx:1.2.5'
     lintChecks project(':lintchecks')
 
@@ -364,6 +369,7 @@ dependencies {
     implementation "androidx.camera:camera-view:1.0.0-alpha18"
     implementation "androidx.concurrent:concurrent-futures:1.0.0"
     implementation "androidx.biometric:biometric:1.1.0"
+    implementation "androidx.sharetarget:sharetarget:1.1.0"
 
     implementation('com.google.firebase:firebase-messaging:20.2.0') {
         exclude group: 'com.google.firebase', module: 'firebase-core'
@@ -387,7 +393,7 @@ dependencies {
     implementation project(':device-transfer')
     implementation 'org.signal:zkgroup-android:0.7.0'
     implementation 'org.signal:ringrtc-android:2.10.6'
-    implementation 'org.whispersystems:signal-client-android:0.8.0'
+    implementation 'org.whispersystems:signal-client-android:0.8.3'
     implementation 'com.google.protobuf:protobuf-javalite:3.10.0'
     implementation('com.mobilecoin:android-sdk:5.0.1') {
         exclude group: 'com.google.protobuf'
@@ -472,6 +478,9 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.0"
+
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
+    implementation 'io.reactivex.rxjava3:rxkotlin:3.0.1'
 }
 
 dependencyVerification {
@@ -567,6 +576,26 @@ def getGitHash() {
         standardOutput = stdout
     }
     return stdout.toString().trim()
+}
+
+def getCurrentGitTag() {
+    if (!(new File('.git').exists())) {
+        return ''
+    }
+
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'tag', '--points-at', 'HEAD'
+        standardOutput = stdout
+    }
+
+    def output = stdout.toString().trim()
+
+    if (output != null && output.size() > 0) {
+        return output.split('\n')[0];
+    } else {
+        return null
+    }
 }
 
 tasks.withType(Test) {

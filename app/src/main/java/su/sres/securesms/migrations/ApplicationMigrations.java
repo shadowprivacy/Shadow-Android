@@ -38,8 +38,6 @@ public class ApplicationMigrations {
 
   private static final MutableLiveData<Boolean> UI_BLOCKING_MIGRATION_RUNNING = new MutableLiveData<>();
 
-  public static final int CURRENT_VERSION = 31;
-
   private static final class Version {
     static final int VERSIONED_PROFILE      = 15;
     static final int NEW_ACTIVATION_MODEL   = 16;
@@ -57,7 +55,11 @@ public class ApplicationMigrations {
     static final int PROFILE_SHARING_UPDATE = 29;
     static final int APPLY_UNIVERSAL_EXPIRE = 30;
     static final int SENDER_KEY             = 31;
+    static final int DB_AUTOINCREMENT       = 32;
+    static final int ATTACHMENT_CLEANUP     = 33;
   }
+
+  public static final int CURRENT_VERSION = 33;
 
   /**
    * This *must* be called after the {@link JobManager} has been instantiated, but *before* the call
@@ -231,6 +233,14 @@ public class ApplicationMigrations {
 
     if (lastSeenVersion < Version.SENDER_KEY) {
       jobs.put(Version.SENDER_KEY, new AttributesMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.DB_AUTOINCREMENT) {
+      jobs.put(Version.DB_AUTOINCREMENT, new DatabaseMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.ATTACHMENT_CLEANUP) {
+      jobs.put(Version.ATTACHMENT_CLEANUP, new AttachmentCleanupMigrationJob());
     }
 
     return jobs;

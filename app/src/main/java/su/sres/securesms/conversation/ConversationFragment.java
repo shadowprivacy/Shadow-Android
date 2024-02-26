@@ -51,6 +51,7 @@ import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFac
 import su.sres.securesms.conversation.colors.Colorizer;
 import su.sres.securesms.conversation.colors.ColorizerView;
 import su.sres.securesms.conversation.ui.error.EnableCallNotificationSettingsDialog;
+import su.sres.securesms.conversation.ui.error.SafetyNumberChangeDialog;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.SmsDatabase;
@@ -1602,6 +1603,11 @@ public class ConversationFragment extends LoggingFragment {
     @Override
     public void onMessageWithRecaptchaNeededClicked(@NonNull MessageRecord messageRecord) {
       RecaptchaProofBottomSheetFragment.show(getChildFragmentManager());
+    }
+
+    @Override
+    public void onIncomingIdentityMismatchClicked(@NonNull RecipientId recipientId) {
+      SafetyNumberChangeDialog.show(getParentFragmentManager(), recipientId);
     }
 
     @Override

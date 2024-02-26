@@ -16,23 +16,19 @@
  */
 package su.sres.securesms.contacts;
 
-import android.Manifest;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.MatrixCursor;
+
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.R;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
-import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.permissions.Permissions;
-import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.phonenumbers.NumberUtil;
-import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.UsernameUtil;
 
@@ -57,7 +53,7 @@ public class ContactsCursorLoader extends AbstractContactsCursorLoader {
     public static final int FLAG_BLOCK           = 1 << 5;
     public static final int FLAG_HIDE_GROUPS_V1  = 1 << 5;
     public static final int FLAG_HIDE_NEW        = 1 << 6;
-    public static final int FLAG_ALL             = FLAG_PUSH |  FLAG_SMS | FLAG_ACTIVE_GROUPS | FLAG_INACTIVE_GROUPS | FLAG_SELF;
+    public static final int FLAG_ALL             = FLAG_PUSH | FLAG_SMS | FLAG_ACTIVE_GROUPS | FLAG_INACTIVE_GROUPS | FLAG_SELF;
   }
 
   private static final int RECENT_CONVERSATION_MAX = 25;
@@ -124,7 +120,9 @@ public class ContactsCursorLoader extends AbstractContactsCursorLoader {
     List<Cursor> contacts = getContactsCursors();
 
     if (!isCursorListEmpty(contacts)) {
-      cursorList.add(ContactsCursorRows.forContactsHeader(getContext()));
+      if (!getFilter().isEmpty() || recents) {
+        cursorList.add(ContactsCursorRows.forContactsHeader(getContext()));
+      }
       cursorList.addAll(contacts);
     }
   }
@@ -184,7 +182,7 @@ public class ContactsCursorLoader extends AbstractContactsCursorLoader {
     MatrixCursor recentConversations = ContactsCursorRows.createMatrixCursor(RECENT_CONVERSATION_MAX);
     try (Cursor rawConversations = threadDatabase.getRecentConversationList(RECENT_CONVERSATION_MAX, flagSet(mode, DisplayMode.FLAG_INACTIVE_GROUPS), groupsOnly, hideGroupsV1(mode), !smsEnabled(mode))) {
       ThreadDatabase.Reader reader = threadDatabase.readerFor(rawConversations);
-      ThreadRecord threadRecord;
+      ThreadRecord          threadRecord;
       while ((threadRecord = reader.getNext()) != null) {
         recentConversations.addRow(ContactsCursorRows.forRecipient(getContext(), threadRecord.getRecipient()));
       }
@@ -195,18 +193,12 @@ public class ContactsCursorLoader extends AbstractContactsCursorLoader {
   private List<Cursor> getContactsCursors() {
     List<Cursor> cursorList = new ArrayList<>(2);
 
-    if (!Permissions.hasAny(getContext(), Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)) {
-      return cursorList;
-    }
-
-    if (pushEnabled(mode)) {
-      cursorList.add(contactRepository.querySignalContacts(getFilter(), selfEnabled(mode)));
-    }
-
     if (pushEnabled(mode) && smsEnabled(mode)) {
-      cursorList.add(contactRepository.queryNonSignalContacts(getFilter()));
+      cursorList.add(contactRepository.queryNonGroupContacts(getFilter(), selfEnabled(mode)));
+    } else if (pushEnabled(mode)) {
+      cursorList.add(contactRepository.querySignalContacts(getFilter(), selfEnabled(mode)));
     } else if (smsEnabled(mode)) {
-      cursorList.add(filterNonPushContacts(contactRepository.queryNonSignalContacts(getFilter())));
+      cursorList.add(contactRepository.queryNonSignalContacts(getFilter()));
     }
     return cursorList;
   }
@@ -237,25 +229,6 @@ public class ContactsCursorLoader extends AbstractContactsCursorLoader {
       return getContext().getString(R.string.contact_selection_list__unknown_contact);
     } else {
       return getContext().getString(R.string.contact_selection_list__unknown_contact_add_to_group);
-    }
-  }
-
-  private @NonNull Cursor filterNonPushContacts(@NonNull Cursor cursor) {
-    try {
-      final long         startMillis = System.currentTimeMillis();
-      final MatrixCursor matrix      = ContactsCursorRows.createMatrixCursor();
-      while (cursor.moveToNext()) {
-        final RecipientId id        = RecipientId.from(cursor.getLong(cursor.getColumnIndexOrThrow(ContactRepository.ID_COLUMN)));
-        final Recipient   recipient = Recipient.resolved(id);
-
-        if (recipient.resolve().getRegistered() != RecipientDatabase.RegisteredState.REGISTERED) {
-          matrix.addRow(ContactsCursorRows.forNonPushContact(cursor));
-        }
-      }
-      Log.i(TAG, "filterNonPushContacts() -> " + (System.currentTimeMillis() - startMillis) + "ms");
-      return matrix;
-    } finally {
-      cursor.close();
     }
   }
 

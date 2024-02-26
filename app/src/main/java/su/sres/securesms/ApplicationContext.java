@@ -26,6 +26,8 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.multidex.MultiDexApplication;
 
+import net.sqlcipher.database.SQLiteDatabase;
+
 import org.conscrypt.Conscrypt;
 
 import org.signal.aesgcmprovider.AesGcmProvider;
@@ -34,6 +36,7 @@ import org.signal.ringrtc.CallManager;
 import su.sres.core.util.tracing.Tracer;
 import su.sres.glide.SignalGlideCodecs;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.SqlCipherLibraryLoader;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.dependencies.ApplicationDependencyProvider;
@@ -90,6 +93,9 @@ import org.whispersystems.libsignal.logging.SignalProtocolLoggerProvider;
 import java.security.Security;
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.rxjava3.plugins.RxJavaPlugins;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+
 /**
  * Will be called once when the TextSecure process is created.
  * <p>
@@ -134,7 +140,11 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
                 Log.i(TAG, "onCreate()");
               })
               .addForemost("crash-handling", this::initializeCrashHandling)
-              .addForemost("eat-db", () -> DatabaseFactory.getInstance(this))
+              .addForemost("sqlcipher-init", () -> SqlCipherLibraryLoader.load(this))
+              .addForemost("rx-init", () -> {
+                RxJavaPlugins.setInitIoSchedulerHandler(schedulerSupplier -> Schedulers.from(SignalExecutors.BOUNDED_IO, true, false));
+                RxJavaPlugins.setInitComputationSchedulerHandler(schedulerSupplier -> Schedulers.from(SignalExecutors.BOUNDED, true, false));
+              })
               .addForemost("app-network-independent-dependencies", this::initializeNetworkIndependentProvider)
               .addForemost("app-network-dependent-dependencies", this::initializeNetworkDependentProvider)
               .addForemost("notification-channels", () -> NotificationChannels.create(this))

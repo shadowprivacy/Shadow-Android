@@ -15,15 +15,15 @@ import android.util.AttributeSet;
 import android.view.TouchDelegate;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import su.sres.securesms.R;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.ViewUtil;
-import su.sres.securesms.util.views.DarkOverflowToolbar;
 
-public final class ContactFilterToolbar extends DarkOverflowToolbar {
+public final class ContactFilterView extends FrameLayout {
   private   OnFilterChangedListener listener;
 
   private final EditText        searchText;
@@ -31,17 +31,17 @@ public final class ContactFilterToolbar extends DarkOverflowToolbar {
   private final ImageView       clearToggle;
   private final LinearLayout    toggleContainer;
 
-  public ContactFilterToolbar(Context context) {
+  public ContactFilterView(Context context) {
     this(context, null);
   }
 
-  public ContactFilterToolbar(Context context, AttributeSet attrs) {
+  public ContactFilterView(Context context, AttributeSet attrs) {
     this(context, attrs, R.attr.toolbarStyle);
   }
 
-  public ContactFilterToolbar(Context context, AttributeSet attrs, int defStyleAttr) {
+  public ContactFilterView(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
-    inflate(context, R.layout.contact_filter_toolbar, this);
+    inflate(context, R.layout.contact_filter_view, this);
 
     this.searchText      = findViewById(R.id.search_view);
     this.toggle          = findViewById(R.id.button_toggle);
@@ -79,8 +79,6 @@ public final class ContactFilterToolbar extends DarkOverflowToolbar {
       }
     });
 
-    setLogo(null);
-    setContentInsetStartWithNavigation(0);
     applyAttributes(searchText, context, attrs, defStyleAttr);
     searchText.requestFocus();
   }

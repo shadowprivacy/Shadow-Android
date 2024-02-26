@@ -22,8 +22,8 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
-import su.sres.securesms.components.ContactFilterToolbar;
-import su.sres.securesms.components.ContactFilterToolbar.OnFilterChangedListener;
+import su.sres.securesms.components.ContactFilterView;
+import su.sres.securesms.components.ContactFilterView.OnFilterChangedListener;
 import su.sres.securesms.contacts.ContactsCursorLoader.DisplayMode;
 import su.sres.securesms.contacts.SelectedContact;
 import su.sres.securesms.database.DatabaseFactory;
@@ -96,15 +96,16 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
     slideInAnimation  = loadAnimation(R.anim.slide_from_bottom);
     slideOutAnimation = loadAnimation(R.anim.slide_to_bottom);
 
-    View                 shareButton     = findViewById(R.id.share_button);
-    Button               smsButton       = findViewById(R.id.sms_button);
-    Button               smsCancelButton = findViewById(R.id.cancel_sms_button);
-    ContactFilterToolbar contactFilter   = findViewById(R.id.contact_filter);
+    View              shareButton     = findViewById(R.id.share_button);
+    Button            smsButton       = findViewById(R.id.sms_button);
+    Button            smsCancelButton = findViewById(R.id.cancel_sms_button);
+    Toolbar           smsToolbar      = findViewById(R.id.sms_send_frame_toolbar);
+    ContactFilterView contactFilter   = findViewById(R.id.contact_filter_edit_text);
 
-    inviteText        = findViewById(R.id.invite_text);
-    smsSendFrame      = findViewById(R.id.sms_send_frame);
-    smsSendButton     = findViewById(R.id.send_sms_button);
-    contactsFragment  = (ContactSelectionListFragment)getSupportFragmentManager().findFragmentById(R.id.contact_selection_list_fragment);
+    inviteText       = findViewById(R.id.invite_text);
+    smsSendFrame     = findViewById(R.id.sms_send_frame);
+    smsSendButton    = findViewById(R.id.send_sms_button);
+    contactsFragment = (ContactSelectionListFragment) getSupportFragmentManager().findFragmentById(R.id.contact_selection_list_fragment);
 
     inviteText.setText(getString(R.string.InviteActivity_lets_switch_to_signal, getString(R.string.install_url)));
     inviteText.addTextChangedListener(new AfterTextChanged(editable -> {
@@ -120,7 +121,7 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
     smsCancelButton.setOnClickListener(new SmsCancelClickListener());
     smsSendButton.setOnClickListener(new SmsSendClickListener());
     contactFilter.setOnFilterChangedListener(new ContactFilterChangedListener());
-    contactFilter.setNavigationIcon(R.drawable.ic_search_conversation_24);
+    smsToolbar.setNavigationIcon(R.drawable.ic_search_conversation_24);
 
     if (Util.isDefaultSmsProvider(this)) {
       shareButton.setOnClickListener(new ShareClickListener());
@@ -149,17 +150,21 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
     updateSmsButtonText(contactsFragment.getSelectedContacts().size());
   }
 
+  @Override
+  public void onSelectionChanged() {
+  }
+
   private void sendSmsInvites() {
     new SendSmsInvitesAsyncTask(this, inviteText.getText().toString())
         .executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
                            contactsFragment.getSelectedContacts()
-                                   .toArray(new SelectedContact[0]));
+                                           .toArray(new SelectedContact[0]));
   }
 
   private void updateSmsButtonText(int count) {
     smsSendButton.setText(getResources().getQuantityString(R.plurals.InviteActivity_send_sms_to_friends,
-            count,
-            count));
+                                                           count,
+                                                           count));
     smsSendButton.setEnabled(count > 0);
   }
 
@@ -256,7 +261,7 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
   }
 
   @SuppressLint("StaticFieldLeak")
-  private class SendSmsInvitesAsyncTask extends ProgressDialogAsyncTask<SelectedContact,Void,Void> {
+  private class SendSmsInvitesAsyncTask extends ProgressDialogAsyncTask<SelectedContact, Void, Void> {
     private final String message;
 
     SendSmsInvitesAsyncTask(Context context, String message) {

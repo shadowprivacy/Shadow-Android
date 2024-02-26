@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014-2016 Open Whisper Systems
- *
+ * <p>
  * Licensed according to the LICENSE file in this repository.
  */
 
@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.logging.Log;
+
+import su.sres.signalservice.api.push.exceptions.MalformedResponseException;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.util.Base64;
 
@@ -49,7 +51,17 @@ public class JsonUtil {
   {
     return objectMapper.readValue(json, clazz);
   }
-  
+
+  public static <T> T fromJsonResponse(String body, Class<T> clazz)
+      throws MalformedResponseException
+  {
+    try {
+      return JsonUtil.fromJson(body, clazz);
+    } catch (IOException e) {
+      throw new MalformedResponseException("Unable to parse entity", e);
+    }
+  }
+
   public static class IdentityKeySerializer extends JsonSerializer<IdentityKey> {
     @Override
     public void serialize(IdentityKey value, JsonGenerator gen, SerializerProvider serializers)
@@ -73,7 +85,7 @@ public class JsonUtil {
   public static class UuidSerializer extends JsonSerializer<UUID> {
     @Override
     public void serialize(UUID value, JsonGenerator gen, SerializerProvider serializers)
-            throws IOException
+        throws IOException
     {
       gen.writeString(value.toString());
     }

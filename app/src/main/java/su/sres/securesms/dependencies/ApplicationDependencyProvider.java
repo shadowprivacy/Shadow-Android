@@ -59,11 +59,14 @@ import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.SignalServiceMessageSender;
+import su.sres.signalservice.api.SignalWebSocket;
 import su.sres.signalservice.api.groupsv2.ClientZkOperations;
 import su.sres.signalservice.api.groupsv2.GroupsV2Operations;
 import su.sres.signalservice.api.util.CredentialsProvider;
 import su.sres.signalservice.api.util.SleepTimer;
 import su.sres.signalservice.api.util.UptimeSleepTimer;
+import su.sres.signalservice.api.websocket.WebSocketFactory;
+import su.sres.signalservice.internal.websocket.WebSocketConnection;
 
 import java.util.UUID;
 
@@ -108,7 +111,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
   }
 
   @Override
-  public @NonNull SignalServiceMessageSender provideSignalServiceMessageSender() {
+  public @NonNull SignalServiceMessageSender provideSignalServiceMessageSender(@NonNull SignalWebSocket signalWebSocket) {
     return new SignalServiceMessageSender(provideSignalServiceNetworkAccess().getConfiguration(),
                                           new DynamicCredentialsProvider(context),
                                           new SignalProtocolStoreImpl(context),
@@ -116,11 +119,10 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
                                           BuildConfig.SIGNAL_AGENT,
                                           TextSecurePreferences.isMultiDevice(context),
                                           FeatureFlags.attachmentsV3(),
-                                          Optional.fromNullable(IncomingMessageObserver.getPipe()),
-                                          Optional.fromNullable(IncomingMessageObserver.getUnidentifiedPipe()),
+                                          signalWebSocket,
                                           Optional.of(new SecurityEventListener(context)),
                                           provideClientZkOperations().getProfileOperations(),
-                                          SignalExecutors.newCachedBoundedExecutor("signal-messages", 1, 16),
+                                          SignalExecutors.newCachedBoundedExecutor("shadow-messages", 1, 16),
                                           ByteUnit.KILOBYTES.toBytes(512),
                                           FeatureFlags.okHttpAutomaticRetry());
   }
@@ -253,6 +255,41 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
   @Override
   public @NonNull PendingRetryReceiptCache providePendingRetryReceiptCache() {
     return new PendingRetryReceiptCache(context);
+  }
+
+  @Override
+  public @NonNull SignalWebSocket provideSignalWebSocket() {
+    return new SignalWebSocket(provideWebSocketFactory());
+  }
+
+  private @NonNull WebSocketFactory provideWebSocketFactory() {
+    return new WebSocketFactory() {
+      @Override
+      public WebSocketConnection createWebSocket() {
+        SleepTimer sleepTimer = TextSecurePreferences.isFcmDisabled(context) ? new AlarmSleepTimer(context)
+                                                                             : new UptimeSleepTimer();
+
+        return new WebSocketConnection("normal",
+                                       provideSignalServiceNetworkAccess().getConfiguration(),
+                                       Optional.of(new DynamicCredentialsProvider(context)),
+                                       BuildConfig.SIGNAL_AGENT,
+                                       pipeListener,
+                                       sleepTimer);
+      }
+
+      @Override
+      public WebSocketConnection createUnidentifiedWebSocket() {
+        SleepTimer sleepTimer = TextSecurePreferences.isFcmDisabled(context) ? new AlarmSleepTimer(context)
+                                                                             : new UptimeSleepTimer();
+
+        return new WebSocketConnection("unidentified",
+                                       provideSignalServiceNetworkAccess().getConfiguration(),
+                                       Optional.absent(),
+                                       BuildConfig.SIGNAL_AGENT,
+                                       pipeListener,
+                                       sleepTimer);
+      }
+    };
   }
 
   private static class DynamicCredentialsProvider implements CredentialsProvider {

@@ -2,8 +2,10 @@ package su.sres.securesms.contacts;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.CheckBox;
@@ -34,6 +36,7 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
   private FromTextView    nameView;
   private TextView        labelView;
   private CheckBox        checkBox;
+  private View            smsTag;
 
   private String        number;
   private String        chipName;
@@ -61,6 +64,7 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
     this.labelView         = findViewById(R.id.label);
     this.nameView          = findViewById(R.id.name);
     this.checkBox          = findViewById(R.id.check_box);
+    this.smsTag            = findViewById(R.id.sms_tag);
 
     ViewUtil.setTextViewGravityStart(this.nameView, getContext());
   }
@@ -72,7 +76,6 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
                   String number,
                   String label,
                   String about,
-                  int color,
                   boolean checkboxVisible)
   {
     this.glideRequests = glideRequests;
@@ -89,14 +92,23 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
     } else if (recipientId != null) {
       this.recipient = Recipient.live(recipientId);
       this.recipient.observeForever(this);
-
-      name = this.recipient.get().getDisplayName(getContext());
     }
 
     Recipient recipientSnapshot = recipient != null ? recipient.get() : null;
 
-    this.nameView.setTextColor(color);
-    this.numberView.setTextColor(color);
+    if (recipientSnapshot != null && !recipientSnapshot.isResolving()) {
+      contactName = recipientSnapshot.getDisplayName(getContext());
+      name        = contactName;
+    } else if (recipient != null) {
+      name = "";
+    }
+
+    if (recipientSnapshot == null || recipientSnapshot.isResolving() || recipientSnapshot.isRegistered()) {
+      smsTag.setVisibility(GONE);
+    } else {
+      smsTag.setVisibility(VISIBLE);
+    }
+
     if (recipientSnapshot == null || recipientSnapshot.isResolving()) {
       this.contactPhotoImage.setAvatar(glideRequests, null, false);
       setText(null, type, name, number, label, about);
@@ -108,8 +120,20 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
     this.checkBox.setVisibility(checkboxVisible ? View.VISIBLE : View.GONE);
   }
 
-  public void setChecked(boolean selected) {
-    this.checkBox.setChecked(selected);
+  public void setChecked(boolean selected, boolean animate) {
+    boolean wasSelected = checkBox.isChecked();
+
+    if (wasSelected != selected) {
+      checkBox.setChecked(selected);
+
+      float alpha = selected ? 1f : 0f;
+      if (animate) {
+        checkBox.animate().setDuration(250L).alpha(alpha);
+      } else {
+        checkBox.animate().cancel();
+        checkBox.setAlpha(alpha);
+      }
+    }
   }
 
   @Override
@@ -147,7 +171,7 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
     } else {
       this.numberView.setText(!Util.isEmpty(about) ? about : "");
       this.nameView.setEnabled(true);
-      this.labelView.setText(label != null && !label.equals("null") ? label : "");
+      this.labelView.setText(label != null && !label.equals("null") ? getResources().getString(R.string.ContactSelectionListItem__dot_s, label) : "");
       this.labelView.setVisibility(View.VISIBLE);
     }
 
@@ -191,8 +215,13 @@ public class ContactSelectionListItem extends LinearLayout implements RecipientF
   @Override
   public void onRecipientChanged(@NonNull Recipient recipient) {
     if (this.recipient != null && this.recipient.getId().equals(recipient.getId())) {
+      contactName   = recipient.getDisplayName(getContext());
+      contactAbout  = recipient.getCombinedAboutAndEmoji();
+      contactNumber = recipient.getE164().or("");
+
       contactPhotoImage.setAvatar(glideRequests, recipient, false);
       setText(recipient, contactType, contactName, contactNumber, contactLabel, contactAbout);
+      smsTag.setVisibility(recipient.isRegistered() ? GONE : VISIBLE);
     } else {
       Log.w(TAG, "Bad change! Local recipient doesn't match. Ignoring. Local: " + (this.recipient == null ? "null" : this.recipient.getId()) + ", Changed: " + recipient.getId());
     }

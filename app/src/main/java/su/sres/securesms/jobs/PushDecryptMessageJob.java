@@ -7,6 +7,9 @@ import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import org.whispersystems.libsignal.SignalProtocolAddress;
+import org.whispersystems.libsignal.protocol.SenderKeyDistributionMessage;
+
 import su.sres.securesms.MainActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.crypto.IdentityKeyUtil;
@@ -21,7 +24,9 @@ import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.notifications.NotificationIds;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.messages.SignalServiceEnvelope;
+import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -93,6 +98,10 @@ public final class PushDecryptMessageJob extends BaseJob {
     DecryptionResult result = MessageDecryptionUtil.decrypt(context, envelope);
 
     if (result.getContent() != null) {
+      if (result.getContent().getSenderKeyDistributionMessage().isPresent()) {
+        handleSenderKeyDistributionMessage(result.getContent().getSender(), result.getContent().getSenderDevice(), result.getContent().getSenderKeyDistributionMessage().get());
+      }
+
       jobs.add(new PushProcessMessageJob(result.getContent(), smsMessageId, envelope.getTimestamp()));
     } else if (result.getException() != null && result.getState() != MessageState.NOOP) {
       jobs.add(new PushProcessMessageJob(result.getState(), result.getException(), smsMessageId, envelope.getTimestamp()));
@@ -112,6 +121,12 @@ public final class PushDecryptMessageJob extends BaseJob {
 
   @Override
   public void onFailure() {
+  }
+
+  private void handleSenderKeyDistributionMessage(@NonNull SignalServiceAddress address, int deviceId, @NonNull SenderKeyDistributionMessage message) {
+    Log.i(TAG, "Processing SenderKeyDistributionMessage.");
+    SignalServiceMessageSender sender = ApplicationDependencies.getSignalServiceMessageSender();
+    sender.processSenderKeyDistributionMessage(new SignalProtocolAddress(address.getIdentifier(), deviceId), message);
   }
 
   private boolean needsMigration() {

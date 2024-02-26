@@ -26,13 +26,11 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.util.Consumer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
-import androidx.transition.TransitionManager;
 
 import android.view.MenuItem;
 import android.view.View;
@@ -63,6 +61,7 @@ import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.views.SimpleProgressDialog;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.ArrayList;
@@ -74,27 +73,27 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Entry point for sharing content into the app.
- *
+ * <p>
  * Handles contact selection when necessary, but also serves as an entry point for when the contact
  * is known (such as choosing someone in a direct share).
  */
 public class ShareActivity extends PassphraseRequiredActivity
-        implements ContactSelectionListFragment.OnContactSelectedListener,
-        ContactSelectionListFragment.OnSelectionLimitReachedListener
+    implements ContactSelectionListFragment.OnContactSelectedListener,
+               ContactSelectionListFragment.OnSelectionLimitReachedListener
 {
   private static final String TAG = Log.tag(ShareActivity.class);
 
   private static final short RESULT_TEXT_CONFIRMATION  = 1;
   private static final short RESULT_MEDIA_CONFIRMATION = 2;
 
-  public static final String EXTRA_THREAD_ID          = "thread_id";
-  public static final String EXTRA_RECIPIENT_ID       = "recipient_id";
-  public static final String EXTRA_DISTRIBUTION_TYPE  = "distribution_type";
+  public static final String EXTRA_THREAD_ID         = "thread_id";
+  public static final String EXTRA_RECIPIENT_ID      = "recipient_id";
+  public static final String EXTRA_DISTRIBUTION_TYPE = "distribution_type";
 
   private final DynamicTheme    dynamicTheme    = new DynamicNoActionBarTheme();
   private final DynamicLanguage dynamicLanguage = new DynamicLanguage();
 
-  private ConstraintLayout shareContainer;
+  private ConstraintLayout             shareContainer;
   private ContactSelectionListFragment contactsFragment;
   private SearchToolbar                searchToolbar;
   private ImageView                    searchAction;
@@ -159,7 +158,7 @@ public class ShareActivity extends PassphraseRequiredActivity
   @Override
   public void onBackPressed() {
     if (searchToolbar.isVisible()) searchToolbar.collapse();
-    else                           super.onBackPressed();
+    else super.onBackPressed();
   }
 
   @Override
@@ -195,6 +194,10 @@ public class ShareActivity extends PassphraseRequiredActivity
     viewModel.onContactDeselected(new ShareContact(recipientId, number));
   }
 
+  @Override
+  public void onSelectionChanged() {
+  }
+
   private void animateInSelection() {
     contactsRecyclerDivider.animate()
                            .alpha(1f)
@@ -217,7 +220,7 @@ public class ShareActivity extends PassphraseRequiredActivity
     if (!getIntent().hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
       int mode = DisplayMode.FLAG_PUSH | DisplayMode.FLAG_ACTIVE_GROUPS | DisplayMode.FLAG_SELF | DisplayMode.FLAG_HIDE_NEW;
 
-      if (Util.isDefaultSmsProvider(this))  {
+      if (Util.isDefaultSmsProvider(this)) {
         mode |= DisplayMode.FLAG_SMS;
       }
 
@@ -263,15 +266,15 @@ public class ShareActivity extends PassphraseRequiredActivity
     ShareFlowConstants.applySelectedContactsRecyclerAnimationSpeeds(itemAnimator);
 
     getSupportFragmentManager().beginTransaction()
-            .replace(R.id.contact_selection_list_fragment, contactsFragment)
-            .commit();
+                               .replace(R.id.contact_selection_list_fragment, contactsFragment)
+                               .commit();
 
     shareConfirm.setOnClickListener(unused -> {
       Set<ShareContact> shareContacts = viewModel.getShareContacts();
 
-      if (shareContacts.isEmpty())        throw new AssertionError();
+      if (shareContacts.isEmpty()) throw new AssertionError();
       else if (shareContacts.size() == 1) onConfirmSingleDestination(shareContacts.iterator().next());
-      else                                onConfirmMultipleDestinations(shareContacts);
+      else onConfirmMultipleDestinations(shareContacts);
     });
 
     viewModel.getSelectedContactModels().observe(this, models -> {
@@ -292,7 +295,7 @@ public class ShareActivity extends PassphraseRequiredActivity
       switch (smsShareRestriction) {
         case NO_RESTRICTIONS:
           disallowMultiShare = false;
-          displayMode        = getIntent().getIntExtra(ContactSelectionListFragment.DISPLAY_MODE, -1);
+          displayMode = getIntent().getIntExtra(ContactSelectionListFragment.DISPLAY_MODE, -1);
 
           if (displayMode == -1) {
             Log.w(TAG, "DisplayMode not set yet.");
@@ -306,7 +309,7 @@ public class ShareActivity extends PassphraseRequiredActivity
           break;
         case DISALLOW_SMS_CONTACTS:
           disallowMultiShare = false;
-          displayMode        = getIntent().getIntExtra(ContactSelectionListFragment.DISPLAY_MODE, -1);
+          displayMode = getIntent().getIntExtra(ContactSelectionListFragment.DISPLAY_MODE, -1);
 
           if (displayMode == -1) {
             Log.w(TAG, "DisplayMode not set yet.");
@@ -335,7 +338,7 @@ public class ShareActivity extends PassphraseRequiredActivity
   private void initializeSearch() {
     //noinspection IntegerDivisionInFloatingPointContext
     searchAction.setOnClickListener(v -> searchToolbar.display(searchAction.getX() + (searchAction.getWidth() / 2),
-            searchAction.getY() + (searchAction.getHeight() / 2)));
+                                                               searchAction.getY() + (searchAction.getHeight() / 2)));
 
     searchToolbar.setListener(new SearchToolbar.SearchListener() {
       @Override
@@ -395,32 +398,32 @@ public class ShareActivity extends PassphraseRequiredActivity
   private void onConfirmSingleDestination(@NonNull ShareContact shareContact) {
     shareConfirm.setClickable(false);
     SimpleTask.run(this.getLifecycle(),
-            () -> resolveShareContact(shareContact),
-            result -> onSingleDestinationChosen(result.getThreadId(), result.getRecipientId()));
+                   () -> resolveShareContact(shareContact),
+                   result -> onSingleDestinationChosen(result.getThreadId(), result.getRecipientId()));
   }
 
   private void onConfirmMultipleDestinations(@NonNull Set<ShareContact> shareContacts) {
     shareConfirm.setClickable(false);
     SimpleTask.run(this.getLifecycle(),
-            () -> resolvedShareContacts(shareContacts),
-            this::onMultipleDestinationsChosen);
+                   () -> resolvedShareContacts(shareContacts),
+                   this::onMultipleDestinationsChosen);
   }
 
   private Set<ShareContactAndThread> resolvedShareContacts(@NonNull Set<ShareContact> sharedContacts) {
     Set<Recipient> recipients = Stream.of(sharedContacts)
-            .map(contact -> contact.getRecipientId()
-                    .transform(Recipient::resolved)
-                    .or(() -> Recipient.external(this, contact.getNumber())))
-            .collect(Collectors.toSet());
+                                      .map(contact -> contact.getRecipientId()
+                                                             .transform(Recipient::resolved)
+                                                             .or(() -> Recipient.external(this, contact.getNumber())))
+                                      .collect(Collectors.toSet());
 
     Map<RecipientId, Long> existingThreads = DatabaseFactory.getThreadDatabase(this)
-            .getThreadIdsIfExistsFor(Stream.of(recipients)
-                    .map(Recipient::getId)
-                    .toArray(RecipientId[]::new));
+                                                            .getThreadIdsIfExistsFor(Stream.of(recipients)
+                                                                                           .map(Recipient::getId)
+                                                                                           .toArray(RecipientId[]::new));
 
     return Stream.of(recipients)
-            .map(recipient -> new ShareContactAndThread(recipient.getId(), Util.getOrDefault(existingThreads, recipient.getId(), -1L), recipient.isForceSmsSelection() || !recipient.isRegistered()))
-            .collect(Collectors.toSet());
+                 .map(recipient -> new ShareContactAndThread(recipient.getId(), Util.getOrDefault(existingThreads, recipient.getId(), -1L), recipient.isForceSmsSelection() || !recipient.isRegistered()))
+                 .collect(Collectors.toSet());
   }
 
   @WorkerThread
@@ -498,15 +501,15 @@ public class ShareActivity extends PassphraseRequiredActivity
 
   private void openConversation(long threadId, @NonNull RecipientId recipientId, @Nullable ShareData shareData) {
     ConversationIntents.Builder builder = ConversationIntents.createBuilder(this, recipientId, threadId)
-            .withMedia(args.getExtraMedia())
-            .withDraftText(args.getExtraText() != null ? args.getExtraText().toString() : null)
-            .withStickerLocator(args.getExtraSticker())
-            .asBorderless(args.isBorderless());
+                                                             .withMedia(args.getExtraMedia())
+                                                             .withDraftText(args.getExtraText() != null ? args.getExtraText().toString() : null)
+                                                             .withStickerLocator(args.getExtraSticker())
+                                                             .asBorderless(args.isBorderless());
 
     if (shareData != null && shareData.isForIntent()) {
       Log.i(TAG, "Shared data is a single file.");
       builder.withDataUri(shareData.getUri())
-              .withDataType(shareData.getMimeType());
+             .withDataType(shareData.getMimeType());
     } else if (shareData != null && shareData.isForMedia()) {
       Log.i(TAG, "Shared data is set of media.");
       builder.withMedia(shareData.getMedia());
@@ -525,15 +528,15 @@ public class ShareActivity extends PassphraseRequiredActivity
 
   private void openInterstitial(@NonNull Set<ShareContactAndThread> shareContactAndThreads, @Nullable ShareData shareData) {
     MultiShareArgs.Builder builder = new MultiShareArgs.Builder(shareContactAndThreads)
-            .withMedia(args.getExtraMedia())
-            .withDraftText(args.getExtraText() != null ? args.getExtraText().toString() : null)
-            .withStickerLocator(args.getExtraSticker())
-            .asBorderless(args.isBorderless());
+        .withMedia(args.getExtraMedia())
+        .withDraftText(args.getExtraText() != null ? args.getExtraText().toString() : null)
+        .withStickerLocator(args.getExtraSticker())
+        .asBorderless(args.isBorderless());
 
     if (shareData != null && shareData.isForIntent()) {
       Log.i(TAG, "Shared data is a single file.");
       builder.withDataUri(shareData.getUri())
-              .withDataType(shareData.getMimeType());
+             .withDataType(shareData.getMimeType());
     } else if (shareData != null && shareData.isForMedia()) {
       Log.i(TAG, "Shared data is set of media.");
       builder.withMedia(shareData.getMedia());
@@ -545,7 +548,7 @@ public class ShareActivity extends PassphraseRequiredActivity
       Log.i(TAG, "Shared data was not external.");
     }
 
-    MultiShareArgs multiShareArgs = builder.build();
+    MultiShareArgs          multiShareArgs          = builder.build();
     InterstitialContentType interstitialContentType = multiShareArgs.getInterstitialContentType();
     switch (interstitialContentType) {
       case TEXT:
@@ -555,25 +558,25 @@ public class ShareActivity extends PassphraseRequiredActivity
         List<Media> media = new ArrayList<>(multiShareArgs.getMedia());
         if (media.isEmpty()) {
           media.add(new Media(multiShareArgs.getDataUri(),
-                  multiShareArgs.getDataType(),
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  false,
-                  false,
-                  Optional.absent(),
-                  Optional.absent(),
-                  Optional.absent()));
+                              multiShareArgs.getDataType(),
+                              0,
+                              0,
+                              0,
+                              0,
+                              0,
+                              false,
+                              false,
+                              Optional.absent(),
+                              Optional.absent(),
+                              Optional.absent()));
         }
 
         startActivityForResult(MediaSendActivity.buildShareIntent(this,
-                        media,
-                        Stream.of(multiShareArgs.getShareContactAndThreads()).map(ShareContactAndThread::getRecipientId).toList(),
-                        multiShareArgs.getDraftText(),
-                        MultiShareSender.getWorstTransportOption(this, multiShareArgs.getShareContactAndThreads())),
-                RESULT_MEDIA_CONFIRMATION);
+                                                                  media,
+                                                                  Stream.of(multiShareArgs.getShareContactAndThreads()).map(ShareContactAndThread::getRecipientId).toList(),
+                                                                  multiShareArgs.getDraftText(),
+                                                                  MultiShareSender.getWorstTransportOption(this, multiShareArgs.getShareContactAndThreads())),
+                               RESULT_MEDIA_CONFIRMATION);
         break;
       default:
         //noinspection CodeBlock2Expr

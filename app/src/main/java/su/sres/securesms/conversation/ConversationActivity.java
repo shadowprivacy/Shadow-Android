@@ -33,7 +33,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
-import android.content.pm.ShortcutManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -811,14 +810,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
   }
 
   private void reportShortcutLaunch(@NonNull RecipientId recipientId) {
-    if (Build.VERSION.SDK_INT < ConversationUtil.CONVERSATION_SUPPORT_VERSION) {
-      return;
-    }
-
-    ShortcutManager shortcutManager = ServiceUtil.getShortcutManager(this);
-    if (shortcutManager != null) {
-      shortcutManager.reportShortcutUsed(ConversationUtil.getShortcutId(recipientId));
-    }
+    ShortcutManagerCompat.reportShortcutUsed(this, ConversationUtil.getShortcutId(recipientId));
   }
 
   private void handleImageFromDeviceCameraApp() {
@@ -971,6 +963,10 @@ public class ConversationActivity extends PassphraseRequiredActivity
         item.setVisible(canShowAsBubble && !isInBubble());
       }
     });
+
+    if (threadId == -1L) {
+      hideMenuItem(menu, R.id.menu_view_media);
+    }
 
     searchViewItem = menu.findItem(R.id.menu_search);
 
@@ -1165,14 +1161,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
       case GALLERY:
         AttachmentManager.selectGallery(this, MEDIA_SENDER, recipient.get(), composeText.getTextTrimmed(), sendButton.getSelectedTransport());
         break;
-      /* case GIF:
-        new MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.ConversationActivity_gifs_have_moved)
-            .setMessage(R.string.ConversationActivity_look_for_gifs_next_to_emoji_and_stickers)
-            .setPositiveButton(android.R.string.ok, null)
-            .setOnDismissListener(unused -> inputPanel.showGifMovedTooltip())
-            .show();
-        break; */
       case FILE:
         AttachmentManager.selectDocument(this, PICK_DOCUMENT);
         break;

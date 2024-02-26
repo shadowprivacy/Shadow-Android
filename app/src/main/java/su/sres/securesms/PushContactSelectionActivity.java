@@ -18,6 +18,7 @@ package su.sres.securesms;
 
 import android.content.Intent;
 import android.os.Bundle;
+
 import com.annimon.stream.Stream;
 
 import su.sres.core.util.logging.Log;
@@ -31,7 +32,6 @@ import java.util.List;
  * Activity container for selecting a list of contacts.
  *
  * @author Moxie Marlinspike
- *
  */
 public class PushContactSelectionActivity extends ContactSelectionActivity {
 
@@ -63,5 +63,9 @@ public class PushContactSelectionActivity extends ContactSelectionActivity {
 
     setResult(RESULT_OK, resultIntent);
     finish();
+  }
+
+  @Override
+  public void onSelectionChanged() {
   }
 }

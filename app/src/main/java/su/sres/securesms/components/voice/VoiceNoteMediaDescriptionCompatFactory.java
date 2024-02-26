@@ -18,6 +18,7 @@ import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.mms.AudioSlide;
 import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.DateUtils;
@@ -70,8 +71,8 @@ class VoiceNoteMediaDescriptionCompatFactory {
    * @return A MediaDescriptionCompat with all the details the service expects.
    */
   @WorkerThread
-  static MediaDescriptionCompat buildMediaDescription(@NonNull Context context,
-                                                      @NonNull MessageRecord messageRecord)
+  @Nullable static MediaDescriptionCompat buildMediaDescription(@NonNull Context context,
+                                                                @NonNull MessageRecord messageRecord)
   {
 
     int startingPosition = DatabaseFactory.getMmsSmsDatabase(context)
@@ -80,9 +81,20 @@ class VoiceNoteMediaDescriptionCompatFactory {
 
     Recipient threadRecipient = Objects.requireNonNull(DatabaseFactory.getThreadDatabase(context)
                                                                       .getRecipientForThreadId(messageRecord.getThreadId()));
-    Recipient sender          = messageRecord.isOutgoing() ? Recipient.self() : messageRecord.getIndividualRecipient();
-    Recipient avatarRecipient = threadRecipient.isGroup() ? threadRecipient : sender;
-    Uri       uri             = Objects.requireNonNull(((MmsMessageRecord) messageRecord).getSlideDeck().getAudioSlide().getUri());
+    Recipient  sender          = messageRecord.isOutgoing() ? Recipient.self() : messageRecord.getIndividualRecipient();
+    Recipient  avatarRecipient = threadRecipient.isGroup() ? threadRecipient : sender;
+    AudioSlide audioSlide      = ((MmsMessageRecord) messageRecord).getSlideDeck().getAudioSlide();
+
+    if (audioSlide == null) {
+      Log.w(TAG, "Message does not have an audio slide. Can't play this voice note.");
+      return null;
+    }
+
+    Uri uri = audioSlide.getUri();
+    if (uri == null) {
+      Log.w(TAG, "Audio slide does not have a URI. Can't play this voice note.");
+      return null;
+    }
 
     return buildMediaDescription(context,
                                  threadRecipient,
