@@ -3,96 +3,76 @@ package su.sres.securesms.help;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
-import su.sres.securesms.logsubmit.LogLine;
 import su.sres.securesms.logsubmit.SubmitDebugLogRepository;
-import su.sres.securesms.util.livedata.LiveDataPair;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 
-import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
-
-import java.util.List;
 
 public class HelpViewModel extends ViewModel {
 
-    private static final int MINIMUM_PROBLEM_CHARS = 10;
+  private static final int MINIMUM_PROBLEM_CHARS = 10;
 
-    private MutableLiveData<Boolean> problemMeetsLengthRequirements = new MutableLiveData<>();
-    private MutableLiveData<Boolean> hasLines                       = new MutableLiveData<>(false);
-    private MutableLiveData<Integer> categoryIndex                  = new MutableLiveData<>(0);
-    private LiveData<Boolean>        isFormValid                    = Transformations.map(new LiveDataPair<>(problemMeetsLengthRequirements, hasLines), this::transformValidationData);
+  private final MutableLiveData<Boolean> problemMeetsLengthRequirements;
+  private final MutableLiveData<Integer> categoryIndex;
+  private final LiveData<Boolean>        isFormValid;
 
-    private final SubmitDebugLogRepository submitDebugLogRepository;
+  private final SubmitDebugLogRepository submitDebugLogRepository;
 
-    private List<LogLine> logLines;
+  public HelpViewModel() {
+    submitDebugLogRepository       = new SubmitDebugLogRepository();
+    problemMeetsLengthRequirements = new MutableLiveData<>();
+    categoryIndex                  = new MutableLiveData<>(0);
 
-    public HelpViewModel() {
-        submitDebugLogRepository = new SubmitDebugLogRepository();
+    isFormValid = LiveDataUtil.combineLatest(problemMeetsLengthRequirements, categoryIndex, (meetsLengthRequirements, index) -> {
+      return meetsLengthRequirements == Boolean.TRUE && index > 0;
+    });
+  }
 
-        submitDebugLogRepository.getLogLines(lines -> {
-            logLines = lines;
-            hasLines.postValue(true);
-        });
+  LiveData<Boolean> isFormValid() {
+    return isFormValid;
+  }
 
-        LiveData<Boolean> firstValid = LiveDataUtil.combineLatest(problemMeetsLengthRequirements, hasLines, (validLength, validLines) -> {
-            return validLength == Boolean.TRUE && validLines == Boolean.TRUE;
-        });
+  void onProblemChanged(@NonNull String problem) {
+    problemMeetsLengthRequirements.setValue(problem.length() >= MINIMUM_PROBLEM_CHARS);
+  }
 
-        isFormValid = LiveDataUtil.combineLatest(firstValid, categoryIndex, (valid, index) -> {
-            return  valid == Boolean.TRUE && index > 0;
-        });
+  void onCategorySelected(int index) {
+    this.categoryIndex.setValue(index);
+  }
+
+  int getCategoryIndex() {
+    return Optional.fromNullable(this.categoryIndex.getValue()).or(0);
+  }
+
+  LiveData<SubmitResult> onSubmitClicked(boolean includeDebugLogs) {
+    MutableLiveData<SubmitResult> resultLiveData = new MutableLiveData<>();
+
+    if (includeDebugLogs) {
+      submitDebugLogRepository.buildAndSubmitLog(result -> resultLiveData.postValue(new SubmitResult(result, result.isPresent())));
+    } else {
+      resultLiveData.postValue(new SubmitResult(Optional.absent(), false));
     }
 
-    LiveData<Boolean> isFormValid() {
-        return isFormValid;
+    return resultLiveData;
+  }
+
+  static class SubmitResult {
+    private final Optional<String> debugLogUrl;
+    private final boolean          isError;
+
+    private SubmitResult(@NonNull Optional<String> debugLogUrl, boolean isError) {
+      this.debugLogUrl = debugLogUrl;
+      this.isError     = isError;
     }
 
-    void onProblemChanged(@NonNull String problem) {
-        problemMeetsLengthRequirements.setValue(problem.length() >= MINIMUM_PROBLEM_CHARS);
+    @NonNull Optional<String> getDebugLogUrl() {
+      return debugLogUrl;
     }
 
-    void onCategorySelected(int index) {
-        this.categoryIndex.setValue(index);
+    boolean isError() {
+      return isError;
     }
-
-    int getCategoryIndex() {
-        return Optional.fromNullable(this.categoryIndex.getValue()).or(0);
-    }
-
-    LiveData<SubmitResult> onSubmitClicked(boolean includeDebugLogs) {
-        MutableLiveData<SubmitResult> resultLiveData = new MutableLiveData<>();
-
-        if (includeDebugLogs) {
-            submitDebugLogRepository.submitLog(logLines, result -> resultLiveData.postValue(new SubmitResult(result, result.isPresent())));
-        } else {
-            resultLiveData.postValue(new SubmitResult(Optional.absent(), false));
-        }
-
-        return resultLiveData;
-    }
-
-    private boolean transformValidationData(Pair<Boolean, Boolean> validationData) {
-        return validationData.first() == Boolean.TRUE && validationData.second() == Boolean.TRUE;
-    }
-
-    static class SubmitResult {
-        private final Optional<String> debugLogUrl;
-        private final boolean          isError;
-
-        private SubmitResult(@NonNull Optional<String> debugLogUrl, boolean isError) {
-            this.debugLogUrl = debugLogUrl;
-            this.isError     = isError;
-        }
-
-        @NonNull Optional<String> getDebugLogUrl() {
-            return debugLogUrl;
-        }
-
-        boolean isError() {
-            return isError;
-        }
-    }
+  }
 }

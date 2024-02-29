@@ -38,6 +38,7 @@ import com.google.android.material.tabs.TabLayout;
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.AnimatingToggle;
+import su.sres.securesms.components.BoldSelectionTabItem;
 import su.sres.securesms.components.ControllableTabLayout;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MediaDatabase;
@@ -51,7 +52,6 @@ import org.whispersystems.libsignal.util.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Activity for displaying media attachments in-app
@@ -99,8 +99,7 @@ public final class MediaOverviewActivity extends PassphraseRequiredActivity {
 
     boolean allThreads = threadId == MediaDatabase.ALL_THREADS;
 
-    tabLayout.setNewTabListener(new NewTabListener());
-    tabLayout.addOnTabSelectedListener(new OnTabSelectedListener());
+    BoldSelectionTabItem.registerListeners(tabLayout);
     fillTabLayoutIfFits(tabLayout);
 
     tabLayout.setupWithViewPager(viewPager);
@@ -290,36 +289,6 @@ public final class MediaOverviewActivity extends PassphraseRequiredActivity {
     @Override
     public CharSequence getPageTitle(int position) {
       return pages.get(position).second();
-    }
-  }
-
-  private static final class NewTabListener implements ControllableTabLayout.NewTabListener {
-    @Override
-    public void onNewTab(@NonNull TabLayout.Tab tab) {
-      View customView = tab.getCustomView();
-      if (customView == null) {
-        tab.setCustomView(R.layout.media_overview_tab_item);
-      }
-    }
-  }
-
-  private static final class OnTabSelectedListener implements TabLayout.OnTabSelectedListener {
-
-    @Override
-    public void onTabSelected(@NonNull TabLayout.Tab tab) {
-      MediaOverviewTabItem view = (MediaOverviewTabItem) Objects.requireNonNull(tab.getCustomView());
-      view.select();
-    }
-
-    @Override
-    public void onTabUnselected(@NonNull TabLayout.Tab tab) {
-      MediaOverviewTabItem view = (MediaOverviewTabItem) Objects.requireNonNull(tab.getCustomView());
-      view.unselect();
-    }
-
-    @Override
-    public void onTabReselected(@NonNull TabLayout.Tab tab) {
-      // Intentionally Blank.
     }
   }
 }

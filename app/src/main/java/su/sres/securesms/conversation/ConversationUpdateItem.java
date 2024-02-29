@@ -1,6 +1,7 @@
 package su.sres.securesms.conversation;
 
 import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -57,7 +58,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public final class ConversationUpdateItem extends FrameLayout
-        implements BindableConversationItem
+    implements BindableConversationItem
 {
   private static final String TAG = Log.tag(ConversationUpdateItem.class);
 
@@ -176,18 +177,20 @@ public final class ConversationUpdateItem extends FrameLayout
     present(conversationMessage, nextMessageRecord, conversationRecipient, isMessageRequestAccepted);
 
     presentBackground(shouldCollapse(messageRecord, previousMessageRecord),
-            shouldCollapse(messageRecord, nextMessageRecord),
-            hasWallpaper);
+                      shouldCollapse(messageRecord, nextMessageRecord),
+                      hasWallpaper);
   }
 
   private static boolean shouldCollapse(@NonNull MessageRecord current, @NonNull Optional<MessageRecord> candidate) {
-    return candidate.isPresent()      &&
-            candidate.get().isUpdate() &&
-            DateUtils.isSameDay(current.getTimestamp(), candidate.get().getTimestamp()) &&
-            isSameType(current, candidate.get());
+    return candidate.isPresent() &&
+           candidate.get().isUpdate() &&
+           DateUtils.isSameDay(current.getTimestamp(), candidate.get().getTimestamp()) &&
+           isSameType(current, candidate.get());
   }
 
-  /** After a short delay, if the main data hasn't shown yet, then a loading message is displayed. */
+  /**
+   * After a short delay, if the main data hasn't shown yet, then a loading message is displayed.
+   */
   private @NonNull LiveData<SpannableString> loading(@NonNull LiveData<SpannableString> string) {
     return LiveDataUtil.until(string, LiveDataUtil.delay(250, new SpannableString(getContext().getString(R.string.ConversationUpdateItem_loading))));
   }
@@ -211,7 +214,7 @@ public final class ConversationUpdateItem extends FrameLayout
   }
 
   @Override
-  public @NonNull Projection getProjection(@NonNull ViewGroup recyclerView) {
+  public @NonNull Projection getGiphyMp4PlayableProjection(@NonNull ViewGroup recyclerView) {
     throw new UnsupportedOperationException("ConversationUpdateItems cannot be projected into.");
   }
 
@@ -231,7 +234,7 @@ public final class ConversationUpdateItem extends FrameLayout
 
     private LiveRecipient recipient;
 
-    RecipientObserverManager(@NonNull Observer<Recipient> observer){
+    RecipientObserverManager(@NonNull Observer<Recipient> observer) {
       this.recipientObserver = observer;
     }
 
@@ -277,12 +280,13 @@ public final class ConversationUpdateItem extends FrameLayout
   }
 
   private void present(ConversationMessage conversationMessage, @NonNull Optional<MessageRecord> nextMessageRecord, @NonNull Recipient conversationRecipient,
-                       boolean isMessageRequestAccepted) {
+                       boolean isMessageRequestAccepted)
+  {
     if (batchSelected.contains(conversationMessage)) setSelected(true);
-    else                                             setSelected(false);
+    else setSelected(false);
 
     if (conversationMessage.getMessageRecord().isGroupV1MigrationEvent() &&
-            (!nextMessageRecord.isPresent() || !nextMessageRecord.get().isGroupV1MigrationEvent()))
+        (!nextMessageRecord.isPresent() || !nextMessageRecord.get().isGroupV1MigrationEvent()))
     {
       actionButton.setText(R.string.ConversationUpdateItem_learn_more);
       actionButton.setVisibility(VISIBLE);
@@ -312,7 +316,7 @@ public final class ConversationUpdateItem extends FrameLayout
     } else if (conversationMessage.getMessageRecord().isGroupCall()) {
 
       UpdateDescription updateDescription = MessageRecord.getGroupCallUpdateDescription(getContext(), conversationMessage.getMessageRecord().getBody(), true);
-      Collection<UUID> uuids             = updateDescription.getMentioned();
+      Collection<UUID>  uuids             = updateDescription.getMentioned();
 
       int text = 0;
       if (Util.hasItems(uuids)) {
@@ -452,10 +456,10 @@ public final class ConversationUpdateItem extends FrameLayout
   }
 
   private static boolean isSameType(@NonNull MessageRecord current, @NonNull MessageRecord candidate) {
-    return (current.isGroupUpdate()           && candidate.isGroupUpdate())   ||
-            (current.isProfileChange()         && candidate.isProfileChange()) ||
-            (current.isGroupCall()             && candidate.isGroupCall())     ||
-            (current.isExpirationTimerUpdate() && candidate.isExpirationTimerUpdate());
+    return (current.isGroupUpdate() && candidate.isGroupUpdate()) ||
+           (current.isProfileChange() && candidate.isProfileChange()) ||
+           (current.isGroupCall() && candidate.isGroupCall()) ||
+           (current.isExpirationTimerUpdate() && candidate.isExpirationTimerUpdate());
   }
 
   @Override
@@ -491,7 +495,7 @@ public final class ConversationUpdateItem extends FrameLayout
 
     @Override
     public void onClick(View v) {
-      if ((!messageRecord.isIdentityUpdate()  &&
+      if ((!messageRecord.isIdentityUpdate() &&
            !messageRecord.isIdentityDefault() &&
            !messageRecord.isIdentityVerified()) ||
           !batchSelected.isEmpty())

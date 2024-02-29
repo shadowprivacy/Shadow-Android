@@ -7,8 +7,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.navigation.NavGraph;
-import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,65 +24,67 @@ import su.sres.securesms.util.DynamicTheme;
 
 public class AddGroupDetailsActivity extends PassphraseRequiredActivity implements AddGroupDetailsFragment.Callback {
 
-    private static final String EXTRA_RECIPIENTS = "recipient_ids";
+  private static final String EXTRA_RECIPIENTS = "recipient_ids";
 
-    private final DynamicTheme theme = new DynamicNoActionBarTheme();
+  private final DynamicTheme theme = new DynamicNoActionBarTheme();
 
-    public static Intent newIntent(@NonNull Context context, @NonNull Collection<RecipientId> recipients) {
-        Intent intent = new Intent(context, AddGroupDetailsActivity.class);
+  public static Intent newIntent(@NonNull Context context, @NonNull Collection<RecipientId> recipients) {
+    Intent intent = new Intent(context, AddGroupDetailsActivity.class);
 
-        intent.putParcelableArrayListExtra(EXTRA_RECIPIENTS, new ArrayList<>(recipients));
+    intent.putParcelableArrayListExtra(EXTRA_RECIPIENTS, new ArrayList<>(recipients));
 
-        return intent;
+    return intent;
+  }
+
+  @Override
+  protected void onCreate(@Nullable Bundle bundle, boolean ready) {
+    theme.onCreate(this);
+
+    setContentView(R.layout.add_group_details_activity);
+
+    if (bundle == null) {
+      ArrayList<RecipientId>      recipientIds = getIntent().getParcelableArrayListExtra(EXTRA_RECIPIENTS);
+      AddGroupDetailsFragmentArgs arguments    = new AddGroupDetailsFragmentArgs.Builder(recipientIds.toArray(new RecipientId[0])).build();
+      NavHostFragment             fragment     = NavHostFragment.create(R.navigation.create_group, arguments.toBundle());
+
+      getSupportFragmentManager().beginTransaction()
+                                 .replace(R.id.nav_host_fragment, fragment)
+                                 .commit();
     }
+  }
 
-    @Override
-    protected void onCreate(@Nullable Bundle bundle, boolean ready) {
-        theme.onCreate(this);
+  @Override
+  protected void onResume() {
+    super.onResume();
+    theme.onResume(this);
+  }
 
-        setContentView(R.layout.add_group_details_activity);
-
-        if (bundle == null) {
-            ArrayList<RecipientId>      recipientIds = getIntent().getParcelableArrayListExtra(EXTRA_RECIPIENTS);
-            AddGroupDetailsFragmentArgs arguments    = new AddGroupDetailsFragmentArgs.Builder(recipientIds.toArray(new RecipientId[0])).build();
-            NavGraph                    graph        = Navigation.findNavController(this, R.id.nav_host_fragment).getGraph();
-
-            Navigation.findNavController(this, R.id.nav_host_fragment).setGraph(graph, arguments.toBundle());
-        }
+  @Override
+  public void onGroupCreated(@NonNull RecipientId recipientId,
+                             long threadId,
+                             @NonNull List<Recipient> invitedMembers)
+  {
+    Dialog dialog = GroupInviteSentDialog.showInvitesSent(this, invitedMembers);
+    if (dialog != null) {
+      dialog.setOnDismissListener((d) -> goToConversation(recipientId, threadId));
+    } else {
+      goToConversation(recipientId, threadId);
     }
+  }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        theme.onResume(this);
-    }
+  void goToConversation(@NonNull RecipientId recipientId, long threadId) {
+    Intent intent = ConversationIntents.createBuilder(this, recipientId, threadId)
+                                       .firstTimeInSelfCreatedGroup()
+                                       .build();
 
-    @Override
-    public void onGroupCreated(@NonNull RecipientId recipientId,
-                               long threadId,
-                               @NonNull List<Recipient> invitedMembers)
-    {
-        Dialog dialog = GroupInviteSentDialog.showInvitesSent(this, invitedMembers);
-        if (dialog != null) {
-            dialog.setOnDismissListener((d) -> goToConversation(recipientId, threadId));
-        } else {
-            goToConversation(recipientId, threadId);
-        }
-    }
+    startActivity(intent);
+    setResult(RESULT_OK);
+    finish();
+  }
 
-    void goToConversation(@NonNull RecipientId recipientId, long threadId) {
-        Intent intent = ConversationIntents.createBuilder(this, recipientId, threadId)
-                .firstTimeInSelfCreatedGroup()
-                .build();
-
-        startActivity(intent);
-        setResult(RESULT_OK);
-        finish();
-    }
-
-    @Override
-    public void onNavigationButtonPressed() {
-        setResult(RESULT_CANCELED);
-        finish();
-    }
+  @Override
+  public void onNavigationButtonPressed() {
+    setResult(RESULT_CANCELED);
+    finish();
+  }
 }

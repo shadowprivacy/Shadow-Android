@@ -7,15 +7,22 @@ import androidx.annotation.NonNull;
 import java.util.List;
 
 interface LogSection {
-    /**
-     * The title to show at the top of the log section.
-     */
-    @NonNull String getTitle();
+  /**
+   * The title to show at the top of the log section.
+   */
+  @NonNull String getTitle();
 
-    /**
-     * The full content of your log section. We use a {@link CharSequence} instead of a
-     * {@link List<LogLine> } for performance reasons. Scrubbing large swaths of text is faster than
-     * one line at a time.
-     */
-    @NonNull CharSequence getContent(@NonNull Context context);
+  /**
+   * The full content of your log section. We use a {@link CharSequence} instead of a
+   * {@link List<LogLine> } for performance reasons. Scrubbing large swaths of text is faster than
+   * one line at a time.
+   */
+  @NonNull CharSequence getContent(@NonNull Context context);
+
+  /**
+   * Whether or not this section has content.
+   */
+  default boolean hasContent() {
+    return true;
+  }
 }

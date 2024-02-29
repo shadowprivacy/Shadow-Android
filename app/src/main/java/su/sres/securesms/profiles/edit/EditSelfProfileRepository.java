@@ -8,12 +8,14 @@ import androidx.annotation.Nullable;
 import androidx.core.util.Consumer;
 
 import su.sres.core.util.StreamUtil;
+import su.sres.securesms.conversation.colors.AvatarColor;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceProfileContentUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceProfileKeyUpdateJob;
 import su.sres.securesms.jobs.ProfileUploadJob;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.profiles.ProfileMediaConstraints;
 import su.sres.securesms.profiles.ProfileName;
@@ -41,6 +43,11 @@ public class EditSelfProfileRepository implements EditProfileRepository {
   EditSelfProfileRepository(@NonNull Context context, boolean excludeSystem) {
     this.context       = context.getApplicationContext();
     this.excludeSystem = excludeSystem;
+  }
+
+  @Override
+  public void getCurrentAvatarColor(@NonNull Consumer<AvatarColor> avatarColorConsumer) {
+    SimpleTask.run(() -> Recipient.self().getAvatarColor(), avatarColorConsumer::accept);
   }
 
   @Override
@@ -140,6 +147,10 @@ public class EditSelfProfileRepository implements EditProfileRepository {
                              .enqueue();
 
       RegistrationUtil.maybeMarkRegistrationComplete(context);
+
+      if (avatar != null) {
+        SignalStore.misc().markHasEverHadAnAvatar();
+      }
 
       return UploadResult.SUCCESS;
     }, uploadResultConsumer::accept);

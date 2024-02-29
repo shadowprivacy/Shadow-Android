@@ -4,12 +4,14 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.net.Uri;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.BuildConfig;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.AttachmentId;
+import su.sres.securesms.avatar.AvatarPickerStorage;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.emoji.EmojiFiles;
 import su.sres.securesms.providers.BlobProvider;
@@ -22,22 +24,25 @@ import java.io.InputStream;
 
 public class PartAuthority {
 
-  private static final String AUTHORITY             = BuildConfig.APPLICATION_ID;
-  private static final String PART_URI_STRING       = "content://" + AUTHORITY + "/part";
-  private static final String STICKER_URI_STRING    = "content://" + AUTHORITY + "/sticker";
-  private static final String WALLPAPER_URI_STRING  = "content://" + AUTHORITY + "/wallpaper";
-  private static final String EMOJI_URI_STRING      = "content://" + AUTHORITY + "/emoji";
-  private static final Uri    PART_CONTENT_URI      = Uri.parse(PART_URI_STRING);
-  private static final Uri    STICKER_CONTENT_URI   = Uri.parse(STICKER_URI_STRING);
-  private static final Uri    WALLPAPER_CONTENT_URI = Uri.parse(WALLPAPER_URI_STRING);
-  private static final Uri    EMOJI_CONTENT_URI     = Uri.parse(EMOJI_URI_STRING);
+  private static final String AUTHORITY                 = BuildConfig.APPLICATION_ID;
+  private static final String PART_URI_STRING           = "content://" + AUTHORITY + "/part";
+  private static final String STICKER_URI_STRING        = "content://" + AUTHORITY + "/sticker";
+  private static final String WALLPAPER_URI_STRING      = "content://" + AUTHORITY + "/wallpaper";
+  private static final String EMOJI_URI_STRING          = "content://" + AUTHORITY + "/emoji";
+  private static final String AVATAR_PICKER_URI_STRING  = "content://" + AUTHORITY + "/avatar_picker";
+  private static final Uri    PART_CONTENT_URI          = Uri.parse(PART_URI_STRING);
+  private static final Uri    STICKER_CONTENT_URI       = Uri.parse(STICKER_URI_STRING);
+  private static final Uri    WALLPAPER_CONTENT_URI     = Uri.parse(WALLPAPER_URI_STRING);
+  private static final Uri    EMOJI_CONTENT_URI         = Uri.parse(EMOJI_URI_STRING);
+  private static final Uri    AVATAR_PICKER_CONTENT_URI = Uri.parse(AVATAR_PICKER_URI_STRING);
 
-  private static final int PART_ROW       = 1;
-  private static final int PERSISTENT_ROW = 2;
-  private static final int BLOB_ROW       = 3;
-  private static final int STICKER_ROW    = 4;
-  private static final int WALLPAPER_ROW  = 5;
-  private static final int EMOJI_ROW      = 6;
+  private static final int PART_ROW          = 1;
+  private static final int PERSISTENT_ROW    = 2;
+  private static final int BLOB_ROW          = 3;
+  private static final int STICKER_ROW       = 4;
+  private static final int WALLPAPER_ROW     = 5;
+  private static final int EMOJI_ROW         = 6;
+  private static final int AVATAR_PICKER_ROW = 7;
 
   private static final UriMatcher uriMatcher;
 
@@ -47,13 +52,14 @@ public class PartAuthority {
     uriMatcher.addURI(AUTHORITY, "sticker/#", STICKER_ROW);
     uriMatcher.addURI(AUTHORITY, "wallpaper/*", WALLPAPER_ROW);
     uriMatcher.addURI(AUTHORITY, "emoji/*", EMOJI_ROW);
+    uriMatcher.addURI(AUTHORITY, "avatar_picker/*", AVATAR_PICKER_ROW);
     uriMatcher.addURI(DeprecatedPersistentBlobProvider.AUTHORITY, DeprecatedPersistentBlobProvider.EXPECTED_PATH_OLD, PERSISTENT_ROW);
     uriMatcher.addURI(DeprecatedPersistentBlobProvider.AUTHORITY, DeprecatedPersistentBlobProvider.EXPECTED_PATH_NEW, PERSISTENT_ROW);
     uriMatcher.addURI(BlobProvider.AUTHORITY, BlobProvider.PATH, BLOB_ROW);
   }
 
   public static InputStream getAttachmentThumbnailStream(@NonNull Context context, @NonNull Uri uri)
-          throws IOException
+      throws IOException
   {
     return getAttachmentStream(context, uri);
   }
@@ -64,13 +70,22 @@ public class PartAuthority {
     int match = uriMatcher.match(uri);
     try {
       switch (match) {
-      case PART_ROW:       return DatabaseFactory.getAttachmentDatabase(context).getAttachmentStream(new PartUriParser(uri).getPartId(), 0);
-        case STICKER_ROW:    return DatabaseFactory.getStickerDatabase(context).getStickerStream(ContentUris.parseId(uri));
-        case PERSISTENT_ROW: return DeprecatedPersistentBlobProvider.getInstance(context).getStream(context, ContentUris.parseId(uri));
-        case BLOB_ROW:       return BlobProvider.getInstance().getStream(context, uri);
-        case WALLPAPER_ROW:  return WallpaperStorage.read(context, getWallpaperFilename(uri));
-        case EMOJI_ROW:      return EmojiFiles.openForReading(context, getEmojiFilename(uri));
-      default:             return context.getContentResolver().openInputStream(uri);
+        case PART_ROW:
+          return DatabaseFactory.getAttachmentDatabase(context).getAttachmentStream(new PartUriParser(uri).getPartId(), 0);
+        case STICKER_ROW:
+          return DatabaseFactory.getStickerDatabase(context).getStickerStream(ContentUris.parseId(uri));
+        case PERSISTENT_ROW:
+          return DeprecatedPersistentBlobProvider.getInstance(context).getStream(context, ContentUris.parseId(uri));
+        case BLOB_ROW:
+          return BlobProvider.getInstance().getStream(context, uri);
+        case WALLPAPER_ROW:
+          return WallpaperStorage.read(context, getWallpaperFilename(uri));
+        case EMOJI_ROW:
+          return EmojiFiles.openForReading(context, getEmojiFilename(uri));
+        case AVATAR_PICKER_ROW:
+          return AvatarPickerStorage.read(context, getAvatarPickerFilename(uri));
+        default:
+          return context.getContentResolver().openInputStream(uri);
       }
     } catch (SecurityException se) {
       throw new IOException(se);
@@ -81,17 +96,17 @@ public class PartAuthority {
     int match = uriMatcher.match(uri);
 
     switch (match) {
-    case PART_ROW:
-      Attachment attachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new PartUriParser(uri).getPartId());
+      case PART_ROW:
+        Attachment attachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new PartUriParser(uri).getPartId());
 
-      if (attachment != null) return attachment.getFileName();
-      else                    return null;
-    case PERSISTENT_ROW:
-      return DeprecatedPersistentBlobProvider.getFileName(context, uri);
+        if (attachment != null) return attachment.getFileName();
+        else return null;
+      case PERSISTENT_ROW:
+        return DeprecatedPersistentBlobProvider.getFileName(context, uri);
       case BLOB_ROW:
         return BlobProvider.getFileName(uri);
-    default:
-      return null;
+      default:
+        return null;
     }
   }
 
@@ -103,7 +118,7 @@ public class PartAuthority {
         Attachment attachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new PartUriParser(uri).getPartId());
 
         if (attachment != null) return attachment.getSize();
-        else                    return null;
+        else return null;
       case PERSISTENT_ROW:
         return DeprecatedPersistentBlobProvider.getFileSize(context, uri);
       case BLOB_ROW:
@@ -121,7 +136,7 @@ public class PartAuthority {
         Attachment attachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new PartUriParser(uri).getPartId());
 
         if (attachment != null) return attachment.getContentType();
-        else                    return null;
+        else return null;
       case PERSISTENT_ROW:
         return DeprecatedPersistentBlobProvider.getMimeType(context, uri);
       case BLOB_ROW:
@@ -139,7 +154,7 @@ public class PartAuthority {
         Attachment attachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new PartUriParser(uri).getPartId());
 
         if (attachment != null) return attachment.isVideoGif();
-        else                    return false;
+        else return false;
       default:
         return false;
     }
@@ -167,6 +182,10 @@ public class PartAuthority {
     return Uri.withAppendedPath(WALLPAPER_CONTENT_URI, filename);
   }
 
+  public static Uri getAvatarPickerUri(String filename) {
+    return Uri.withAppendedPath(AVATAR_PICKER_CONTENT_URI, filename);
+  }
+
   public static Uri getEmojiUri(String sprite) {
     return Uri.withAppendedPath(EMOJI_CONTENT_URI, sprite);
   }
@@ -179,13 +198,17 @@ public class PartAuthority {
     return uri.getPathSegments().get(1);
   }
 
+  public static String getAvatarPickerFilename(Uri uri) {
+    return uri.getPathSegments().get(1);
+  }
+
   public static boolean isLocalUri(final @NonNull Uri uri) {
     int match = uriMatcher.match(uri);
     switch (match) {
-    case PART_ROW:
-    case PERSISTENT_ROW:
+      case PART_ROW:
+      case PERSISTENT_ROW:
       case BLOB_ROW:
-      return true;
+        return true;
     }
     return false;
   }

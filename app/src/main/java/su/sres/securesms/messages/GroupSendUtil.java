@@ -37,6 +37,7 @@ import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.messages.SignalServiceTypingMessage;
 import su.sres.signalservice.api.push.DistributionId;
 import su.sres.signalservice.api.push.SignalServiceAddress;
+import su.sres.signalservice.internal.push.exceptions.InvalidUnidentifiedAccessHeaderException;
 import su.sres.signalservice.internal.push.http.CancelationSignal;
 import su.sres.signalservice.internal.push.http.PartialSendCompleteListener;
 
@@ -205,6 +206,9 @@ public final class GroupSendUtil {
         if (sendOperation.shouldIncludeInMessageLog()) {
           DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(sendOperation.getSentTimestamp(), senderKeyTargets, results, sendOperation.getContentHint(), sendOperation.getRelatedMessageId());
         }
+      } catch (InvalidUnidentifiedAccessHeaderException e) {
+        Log.w(TAG, "Someone had a bad UD header. Falling back to legacy sends.", e);
+        legacyTargets.addAll(senderKeyTargets);
       } catch (NoSessionException e) {
         Log.w(TAG, "No session. Falling back to legacy sends.", e);
         legacyTargets.addAll(senderKeyTargets);

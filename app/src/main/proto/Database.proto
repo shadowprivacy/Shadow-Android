@@ -84,17 +84,17 @@ message GroupCallUpdateDetails {
   string startedCallUuid = 2;
   int64  startedCallTimestamp = 3;
   repeated string inCallUuids = 4;
-  bool   isCallFull           = 5;
+  bool   isCallFull = 5;
 }
 
 message ProfileKeyCredentialColumnData {
-  bytes profileKey           = 1;
+  bytes profileKey = 1;
   bytes profileKeyCredential = 2;
 }
 
 message DeviceLastResetTime {
   message Pair {
-    int32 deviceId      = 1;
+    int32 deviceId = 1;
     int64 lastResetTime = 2;
   }
 
@@ -106,8 +106,8 @@ message Wallpaper {
     int32 color = 1;
   }
   message LinearGradient {
-    float rotation  = 1;
-    repeated int32 colors    = 2;
+    float rotation = 1;
+    repeated int32 colors = 2;
     repeated float positions = 3;
   }
   message File {
@@ -115,9 +115,9 @@ message Wallpaper {
   }
 
   oneof wallpaper {
-    SingleColor    singleColor    = 1;
+    SingleColor    singleColor = 1;
     LinearGradient linearGradient = 2;
-    File           file           = 3;
+    File           file = 3;
   }
 
   float dimLevelInDarkTheme = 4;
@@ -129,8 +129,8 @@ message ChatColor {
   }
 
   message LinearGradient {
-    float rotation  = 1;
-    repeated int32 colors    = 2;
+    float rotation = 1;
+    repeated int32 colors = 2;
     repeated float positions = 3;
   }
 
@@ -139,11 +139,35 @@ message ChatColor {
   }
 
   oneof chatColor {
-    SingleColor    singleColor    = 1;
+    SingleColor    singleColor = 1;
     LinearGradient linearGradient = 2;
   }
 }
 
 message RecipientExtras {
   bool manuallyShownAvatar = 1;
+}
+
+message CustomAvatar {
+
+  message Text {
+    string text = 1;
+    string colors = 2;
+  }
+
+  message Vector {
+    string key = 1;
+    string colors = 2;
+  }
+
+  message Photo {
+    string uri = 1;
+    int64  size = 2;
+  }
+
+  oneof avatar {
+    Text   text = 1;
+    Vector vector = 2;
+    Photo  photo = 3;
+  }
 }

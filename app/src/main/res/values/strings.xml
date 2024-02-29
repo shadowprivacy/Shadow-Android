@@ -402,6 +402,7 @@
     <string name="ChooseBackupFragment__icon_content_description">Restore from backup icon</string>
     <string name="ChooseBackupFragment__choose_backup">Choose backup</string>
     <string name="ChooseBackupFragment__learn_more">Learn more</string>
+    <string name="ChooseBackupFragment__no_file_browser_available">No file browser available</string>
 
     <!-- RestoreBackupFragment -->
     <string name="RestoreBackupFragment__restore_complete">Restore complete</string>
@@ -968,6 +969,7 @@
     <string name="Megaphones_get_started">Get started</string>
     <string name="Megaphones_new_group">New group</string>
     <string name="Megaphones_appearance">Appearance</string>
+    <string name="Megaphones_add_photo">Add photo</string>
 
     <!-- NotificationBarManager -->
     <string name="NotificationBarManager_signal_call_in_progress">Shadow call in progress</string>
@@ -1531,7 +1533,7 @@
     <string name="SubmitDebugLogActivity_success">Success!</string>
     <string name="SubmitDebugLogActivity_copy_this_url_and_add_it_to_your_issue">Copy this URL and add it to your issue report or support email:\n\n<b>%1$s</b></string>
     <string name="SubmitDebugLogActivity_share">Share</string>
-    <string name="SubmitDebugLogActivity_this_log_will_be_posted_publicly_online">This log will be uploaded to the server for technical support to view, you may examine and edit it before submitting.</string>
+    <string name="SubmitDebugLogActivity_this_log_will_be_posted_publicly_online_for_contributors">This log will be uploaded to the server for technical support to view, you may examine it before submitting.</string>
 
 
     <!-- SupportEmailUtil -->
@@ -1970,9 +1972,6 @@
 
     <!-- giphy_fragment -->
     <string name="giphy_fragment__nothing_found">Nothing found</string>
-
-    <!-- log_submit_activity -->
-    <string name="log_submit_activity__this_log_will_be_posted_online">This log will be uploaded to the server for technical support to view, you may examine and edit it before submitting.</string>
 
     <!-- database_migration_activity -->
     <string name="database_migration_activity__would_you_like_to_import_your_existing_text_messages">Would you like to import your existing text messages into Shadow\'s encrypted database?</string>
@@ -3349,6 +3348,12 @@
     <string name="ChatColorsMegaphone__appearance">Appearance</string>
     <string name="ChatColorsMegaphone__not_now">Not now</string>
 
+    <!-- AddAProfilePhotoMegaphone -->
+    <string name="AddAProfilePhotoMegaphone__add_a_profile_photo">Add a profile photo</string>
+    <string name="AddAProfilePhotoMegaphone__choose_a_look_and_color">Choose a look and color or customize your initials.</string>
+    <string name="AddAProfilePhotoMegaphone__not_now">Not now</string>
+    <string name="AddAProfilePhotoMegaphone__add_photo">Add photo</string>
+
     <!-- KeyboardPagerFragment -->
     <string name="KeyboardPagerFragment_emoji">Emoji</string>
     <string name="KeyboardPagerFragment_open_emoji_search">Open emoji search</string>
@@ -3437,6 +3442,28 @@
 
     <!-- VoiceNotePlayerView -->
     <string name="VoiceNotePlayerView__s_dot_s">%1$s · %2$s</string>
+
+    <!-- AvatarPickerFragment -->
+    <string name="AvatarPickerFragment__avatar_preview">Avatar preview</string>
+    <string name="AvatarPickerFragment__camera">Camera</string>
+    <string name="AvatarPickerFragment__take_a_picture">Take a picture</string>
+    <string name="AvatarPickerFragment__choose_a_photo">Choose a photo</string>
+    <string name="AvatarPickerFragment__photo">Photo</string>
+    <string name="AvatarPickerFragment__text">Text</string>
+    <string name="AvatarPickerFragment__save">Save</string>
+    <string name="AvatarPickerFragment__select_an_avatar">Select an avatar</string>
+    <string name="AvatarPickerFragment__clear_avatar">Clear avatar</string>
+    <string name="AvatarPickerFragment__edit">Edit</string>
+    <string name="AvatarPickerRepository__failed_to_save_avatar">Failed to save avatar</string>
+
+    <!-- TextAvatarCreationFragment -->
+    <string name="TextAvatarCreationFragment__preview">Preview</string>
+    <string name="TextAvatarCreationFragment__done">Done</string>
+    <string name="TextAvatarCreationFragment__text">Text</string>
+    <string name="TextAvatarCreationFragment__color">Color</string>
+
+    <!-- VectorAvatarCreationFragment -->
+    <string name="VectorAvatarCreationFragment__select_a_color">Select a color</string>
 
     <!-- ContactSelectionListItem -->
     <string name="ContactSelectionListItem__sms">SMS</string>

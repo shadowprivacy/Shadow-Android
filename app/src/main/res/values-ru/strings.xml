@@ -997,6 +997,7 @@
     <string name="Megaphones_get_started">С чего начать</string>
     <string name="Megaphones_new_group">Новая группа</string>
     <string name="Megaphones_appearance">Внешний вид</string>
+    <string name="Megaphones_add_photo">Добавить фото</string>
 
     <!--NotificationBarManager-->
     <string name="NotificationBarManager_signal_call_in_progress">Идёт звонок через Shadow</string>
@@ -1557,7 +1558,7 @@
     <string name="SubmitDebugLogActivity_success">Успех!</string>
     <string name="SubmitDebugLogActivity_copy_this_url_and_add_it_to_your_issue">Скопируйте этот URL-адрес и добавьте его в отчет о проблеме или в письмо в службу поддержки:\n\n<b>%1$s</b></string>
     <string name="SubmitDebugLogActivity_share">Поделиться</string>
-    <string name="SubmitDebugLogActivity_this_log_will_be_posted_publicly_online">Этот отчёт будет загружен на сервер, чтобы специалисты техподдержки могли его просмотреть. Вы можете изучить и отредактировать его перед отправкой.</string>
+    <string name="SubmitDebugLogActivity_this_log_will_be_posted_publicly_online_for_contributors">Этот отчёт будет загружен на сервер, чтобы специалисты техподдержки могли его просмотреть. Вы можете изучить его перед отправкой.</string>
 
     <!--SupportEmailUtil-->
     <string name="SupportEmailUtil_filter">Фильтр:</string>
@@ -1970,8 +1971,7 @@
 
     <!--giphy_fragment-->
     <string name="giphy_fragment__nothing_found">Ничего не найдено</string>
-    <!--log_submit_activity-->
-    <string name="log_submit_activity__this_log_will_be_posted_online">Этот отчёт будет загружен на сервер, чтобы специалисты техподдержки могли его просмотреть. Вы можете изучить и отредактировать его перед отправкой.</string>
+
     <!--database_migration_activity-->
     <string name="database_migration_activity__would_you_like_to_import_your_existing_text_messages">Хотите ли вы импортировать имеющиеся текстовые сообщения в зашифрованную базу данных Shadow?</string>
     <string name="database_migration_activity__the_default_system_database_will_not_be_modified">Cистемная база данных никак изменена не будет.</string>
@@ -3204,6 +3204,11 @@
     <string name="ChatColorsMegaphone__we_switched_up_chat_colors">Мы поменяли цвета чатов, чтобы предоставить вам больше опций и сделать чаты более удобными для чтения.</string>
     <string name="ChatColorsMegaphone__appearance">Внешний вид</string>
     <string name="ChatColorsMegaphone__not_now">Не сейчас</string>
+    <!--AddAProfilePhotoMegaphone-->
+    <string name="AddAProfilePhotoMegaphone__add_a_profile_photo">Добавьте фото профиля</string>
+    <string name="AddAProfilePhotoMegaphone__choose_a_look_and_color">Выберите вид и цвет или настройте свои инициалы.</string>
+    <string name="AddAProfilePhotoMegaphone__not_now">Не сейчас</string>
+    <string name="AddAProfilePhotoMegaphone__add_photo">Добавить фото</string>
     <!--KeyboardPagerFragment-->
     <string name="KeyboardPagerFragment_emoji">Эмодзи</string>
     <string name="KeyboardPagerFragment_open_emoji_search">Открыть поиск эмодзи</string>
@@ -3285,6 +3290,26 @@
     <string name="ContactFilterView__search_name_or_number">Поиск по имени или номеру</string>
     <!--VoiceNotePlayerView-->
     <string name="VoiceNotePlayerView__s_dot_s">%1$s · %2$s</string>
+
+    <!--AvatarPickerFragment-->
+    <string name="AvatarPickerFragment__avatar_preview">Предпросмотр аватары</string>
+    <string name="AvatarPickerFragment__camera">Камера</string>
+    <string name="AvatarPickerFragment__take_a_picture">Сделать снимок</string>
+    <string name="AvatarPickerFragment__choose_a_photo">Выбрать фото</string>
+    <string name="AvatarPickerFragment__photo">Фото</string>
+    <string name="AvatarPickerFragment__text">Текст</string>
+    <string name="AvatarPickerFragment__save">Сохранить</string>
+    <string name="AvatarPickerFragment__select_an_avatar">Выберите аватару</string>
+    <string name="AvatarPickerFragment__clear_avatar">Удалить аватару</string>
+    <string name="AvatarPickerFragment__edit">Изменить</string>
+    <string name="AvatarPickerRepository__failed_to_save_avatar">Не удалось сохранить аватару</string>
+    <!--TextAvatarCreationFragment-->
+    <string name="TextAvatarCreationFragment__preview">Предпросмотр</string>
+    <string name="TextAvatarCreationFragment__done">Готово</string>
+    <string name="TextAvatarCreationFragment__text">Текст</string>
+    <string name="TextAvatarCreationFragment__color">Цвет</string>
+    <!--VectorAvatarCreationFragment-->
+    <string name="VectorAvatarCreationFragment__select_a_color">Выберите цвет</string>
 
     <!--ContactSelectionListItem-->
     <string name="ContactSelectionListItem__sms">SMS</string>

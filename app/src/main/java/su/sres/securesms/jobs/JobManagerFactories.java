@@ -34,6 +34,7 @@ import su.sres.securesms.migrations.AttributesMigrationJob;
 import su.sres.securesms.migrations.AvatarIdRemovalMigrationJob;
 import su.sres.securesms.migrations.BackupNotificationMigrationJob;
 import su.sres.securesms.migrations.BlobStorageLocationMigrationJob;
+import su.sres.securesms.migrations.DeleteDeprecatedLogsMigrationJob;
 import su.sres.securesms.migrations.DirectoryRefreshMigrationJob;
 import su.sres.securesms.migrations.LicenseMigrationJob;
 import su.sres.securesms.migrations.PassingMigrationJob;
@@ -169,6 +170,7 @@ public final class JobManagerFactories {
             put(BlobStorageLocationMigrationJob.KEY,       new BlobStorageLocationMigrationJob.Factory());
             put(CachedAttachmentsMigrationJob.KEY,         new CachedAttachmentsMigrationJob.Factory());
             put(DatabaseMigrationJob.KEY,                  new DatabaseMigrationJob.Factory());
+            put(DeleteDeprecatedLogsMigrationJob.KEY,      new DeleteDeprecatedLogsMigrationJob.Factory());
             put(DirectoryRefreshMigrationJob.KEY,          new DirectoryRefreshMigrationJob.Factory());
             put(LicenseMigrationJob.KEY,                   new LicenseMigrationJob.Factory());
             put(MigrationCompleteJob.KEY,                  new MigrationCompleteJob.Factory());

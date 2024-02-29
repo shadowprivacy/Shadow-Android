@@ -21,10 +21,8 @@ public class CustomSignalProtocolLogger implements SignalProtocolLogger {
         Log.w(tag, message);
         break;
       case ERROR:
-        Log.e(tag, message);
-        break;
       case ASSERT:
-        Log.wtf(tag, message);
+        Log.e(tag, message);
         break;
     }
   }

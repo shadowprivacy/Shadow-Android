@@ -26,8 +26,6 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.multidex.MultiDexApplication;
 
-import net.sqlcipher.database.SQLiteDatabase;
-
 import org.conscrypt.Conscrypt;
 
 import org.signal.aesgcmprovider.AesGcmProvider;
@@ -35,7 +33,9 @@ import org.signal.ringrtc.CallManager;
 
 import su.sres.core.util.tracing.Tracer;
 import su.sres.glide.SignalGlideCodecs;
+import su.sres.securesms.avatar.AvatarPickerStorage;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.LogDatabase;
 import su.sres.securesms.database.SqlCipherLibraryLoader;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -59,13 +59,11 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.AndroidLogger;
 import su.sres.securesms.logging.CustomSignalProtocolLogger;
 import su.sres.core.util.logging.Log;
-import su.sres.core.util.logging.PersistentLogger;
-import su.sres.securesms.logging.LogSecretProvider;
+import su.sres.securesms.logging.PersistentLogger;
 import su.sres.securesms.messageprocessingalarm.MessageProcessReceiver;
 import su.sres.securesms.ratelimit.RateLimitUtil;
 import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.AppStartup;
-import su.sres.securesms.util.ByteUnit;
 import su.sres.securesms.util.SignalUncaughtExceptionHandler;
 import su.sres.securesms.migrations.ApplicationMigrations;
 import su.sres.securesms.notifications.NotificationChannels;
@@ -135,12 +133,12 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     super.onCreate();
 
     AppStartup.getInstance().addForemost("security-provider", this::initializeSecurityProvider)
+              .addForemost("sqlcipher-init", () -> SqlCipherLibraryLoader.load(this))
               .addForemost("logging", () -> {
                 initializeLogging();
                 Log.i(TAG, "onCreate()");
               })
               .addForemost("crash-handling", this::initializeCrashHandling)
-              .addForemost("sqlcipher-init", () -> SqlCipherLibraryLoader.load(this))
               .addForemost("rx-init", () -> {
                 RxJavaPlugins.setInitIoSchedulerHandler(schedulerSupplier -> Schedulers.from(SignalExecutors.BOUNDED_IO, true, false));
                 RxJavaPlugins.setInitComputationSchedulerHandler(schedulerSupplier -> Schedulers.from(SignalExecutors.BOUNDED, true, false));
@@ -278,10 +276,12 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
   }
 
   private void initializeLogging() {
-    persistentLogger = new PersistentLogger(this, LogSecretProvider.getOrCreateAttachmentSecret(this), BuildConfig.VERSION_NAME, FeatureFlags.internalUser() ? 15 : 7, ByteUnit.KILOBYTES.toBytes(300));
+    persistentLogger = new PersistentLogger(this);
     su.sres.core.util.logging.Log.initialize(FeatureFlags::internalUser, new AndroidLogger(), persistentLogger);
 
     SignalProtocolLoggerProvider.setProvider(new CustomSignalProtocolLogger());
+
+    SignalExecutors.UNBOUNDED.execute(() -> LogDatabase.getInstance(this).trimToSize());
   }
 
   private void initializeCrashHandling() {
@@ -404,6 +404,11 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
   }
 
   @WorkerThread
+  private void cleanAvatarStorage() {
+    AvatarPickerStorage.cleanOrphans(this);
+  }
+
+  @WorkerThread
   private void initializeCleanup() {
     int deleted = DatabaseFactory.getAttachmentDatabase(this).deleteAbandonedPreuploadedAttachments();
     Log.i(TAG, "Deleted " + deleted + " abandoned attachments.");
@@ -470,6 +475,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
               .addBlocking("vector-compat", () -> {AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);})
               .addBlocking("blob-provider", this::initializeBlobProvider)
               .addBlocking("feature-flags", FeatureFlags::init)
+              .addNonBlocking(this::cleanAvatarStorage)
               .addNonBlocking(this::initializeRevealableMessageManager)
               .addNonBlocking(this::initializePendingRetryReceiptManager)
               .addNonBlocking(this::initializeGcmCheck)

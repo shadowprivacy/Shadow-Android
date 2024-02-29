@@ -56,7 +56,7 @@ public final class ConversationItemMaskTarget extends MaskView.MaskTarget {
     ).toList();
 
     if (videoContainer != null) {
-      projections.add(conversationItem.getProjection((RecyclerView) conversationItem.getParent()));
+      projections.add(conversationItem.getGiphyMp4PlayableProjection((RecyclerView) conversationItem.getParent()));
     }
 
     for (Projection projection : projections) {

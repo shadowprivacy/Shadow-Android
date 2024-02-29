@@ -36,6 +36,7 @@ import su.sres.securesms.database.SignedPreKeyDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.database.model.AvatarPickerDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.keyvalue.KeyValueDataSet;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -82,7 +83,8 @@ public class FullBackupExporter extends FullBackupBase {
       EmojiSearchDatabase.TABLE_NAME,
       SenderKeyDatabase.TABLE_NAME,
       SenderKeySharedDatabase.TABLE_NAME,
-      PendingRetryReceiptDatabase.TABLE_NAME
+      PendingRetryReceiptDatabase.TABLE_NAME,
+      AvatarPickerDatabase.TABLE_NAME
   );
 
   public static void export(@NonNull Context context,

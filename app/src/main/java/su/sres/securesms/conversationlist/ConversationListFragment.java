@@ -65,6 +65,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -189,8 +190,9 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   private SnapToTopDataObserver          snapToTopDataObserver;
   private Drawable                       archiveDrawable;
   private AppForegroundObserver.Listener appForegroundObserver;
-  private VoiceNoteMediaControllerOwner  mediaControllerOwner;
-  private Stub<VoiceNotePlayerView>      voiceNotePlayerViewStub;
+  private VoiceNoteMediaControllerOwner mediaControllerOwner;
+  private Stub<FrameLayout>             voiceNotePlayerViewStub;
+  private VoiceNotePlayerView           voiceNotePlayerView;
 
   private Stopwatch startupStopwatch;
 
@@ -521,16 +523,21 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   private void initializeVoiceNotePlayer() {
     mediaControllerOwner.getVoiceNoteMediaController().getVoiceNotePlayerViewState().observe(getViewLifecycleOwner(), state -> {
       if (state.isPresent()) {
-        if (!voiceNotePlayerViewStub.resolved()) {
-          voiceNotePlayerViewStub.get().setListener(new VoiceNotePlayerViewListener());
-        }
-
-        voiceNotePlayerViewStub.get().setState(state.get());
-        voiceNotePlayerViewStub.get().show();
+        requireVoiceNotePlayerView().setState(state.get());
+        requireVoiceNotePlayerView().show();
       } else if (voiceNotePlayerViewStub.resolved()) {
-        voiceNotePlayerViewStub.get().hide();
+        requireVoiceNotePlayerView().hide();
       }
     });
+  }
+
+  private @NonNull VoiceNotePlayerView requireVoiceNotePlayerView() {
+    if (voiceNotePlayerView == null) {
+      voiceNotePlayerView = voiceNotePlayerViewStub.get().findViewById(R.id.voice_note_player_view);
+      voiceNotePlayerView.setListener(new VoiceNotePlayerViewListener());
+    }
+
+    return voiceNotePlayerView;
   }
 
   private void initializeListAdapters() {

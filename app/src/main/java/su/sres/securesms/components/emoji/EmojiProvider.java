@@ -8,8 +8,10 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.widget.TextView;
@@ -27,15 +29,15 @@ import su.sres.securesms.util.FutureTaskListener;
 
 class EmojiProvider {
 
-  private static final    String TAG   = Log.tag(EmojiProvider.class);
-  private static final    Paint  PAINT = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.ANTI_ALIAS_FLAG);
+  private static final String TAG   = Log.tag(EmojiProvider.class);
+  private static final Paint  PAINT = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.ANTI_ALIAS_FLAG);
 
   static @Nullable EmojiParser.CandidateList getCandidates(@Nullable CharSequence text) {
     if (text == null) return null;
     return new EmojiParser(EmojiSource.getLatest().getEmojiTree()).findCandidates(text);
   }
 
-  static  @Nullable Spannable emojify(@Nullable CharSequence text, @NonNull TextView tv) {
+  static @Nullable Spannable emojify(@Nullable CharSequence text, @NonNull TextView tv) {
     if (tv.isInEditMode()) {
       return null;
     } else {
@@ -48,7 +50,7 @@ class EmojiProvider {
                                      @NonNull TextView tv)
   {
     if (matches == null || text == null || tv.isInEditMode()) return null;
-    SpannableStringBuilder      builder = new SpannableStringBuilder(text);
+    SpannableStringBuilder builder = new SpannableStringBuilder(text);
 
     for (EmojiParser.Candidate candidate : matches) {
       Drawable drawable = getEmojiDrawable(tv.getContext(), candidate.getDrawInfo());
@@ -68,7 +70,7 @@ class EmojiProvider {
   }
 
   private static @Nullable Drawable getEmojiDrawable(@NonNull Context context, @Nullable EmojiDrawInfo drawInfo) {
-    if (drawInfo == null)  {
+    if (drawInfo == null) {
       return null;
     }
 
@@ -76,18 +78,18 @@ class EmojiProvider {
     final EmojiSource   source               = EmojiSource.getLatest();
     final EmojiDrawable drawable             = new EmojiDrawable(source, drawInfo, lowMemoryDecodeScale);
     EmojiPageCache.INSTANCE
-            .load(context, drawInfo.getPage(), lowMemoryDecodeScale)
-            .addListener(new FutureTaskListener<Bitmap>() {
-              @Override
-              public void onSuccess(Bitmap result) {
-                ThreadUtil.runOnMain(() -> drawable.setBitmap(result));
-              }
+        .load(context, drawInfo.getPage(), lowMemoryDecodeScale)
+        .addListener(new FutureTaskListener<Bitmap>() {
+          @Override
+          public void onSuccess(Bitmap result) {
+            ThreadUtil.runOnMain(() -> drawable.setBitmap(result));
+          }
 
-              @Override
-              public void onFailure(ExecutionException exception) {
-                Log.d(TAG, "Failed to load emoji bitmap resource", exception);
-              }
-            });
+          @Override
+          public void onFailure(ExecutionException exception) {
+            Log.d(TAG, "Failed to load emoji bitmap resource", exception);
+          }
+        });
 
     return drawable;
   }
@@ -120,10 +122,10 @@ class EmojiProvider {
       final int xStart      = (index % emojiPerRow) * glyphWidth;
       final int yStart      = (index / emojiPerRow) * glyphHeight;
 
-      this.emojiBounds = new Rect(xStart,
-              yStart,
-              xStart + glyphWidth,
-              yStart + glyphHeight);
+      this.emojiBounds = new Rect(xStart + 1,
+                                  yStart + 1,
+                                  xStart + glyphWidth - 1,
+                                  yStart + glyphHeight - 1);
     }
 
     @Override
@@ -133,9 +135,9 @@ class EmojiProvider {
       }
 
       canvas.drawBitmap(bmp,
-              emojiBounds,
+                        emojiBounds,
                         getBounds(),
-              PAINT);
+                        PAINT);
     }
 
     public void setBitmap(Bitmap bitmap) {
@@ -152,10 +154,10 @@ class EmojiProvider {
     }
 
     @Override
-    public void setAlpha(int alpha) { }
+    public void setAlpha(int alpha) {}
 
     @Override
-    public void setColorFilter(ColorFilter cf) { }
+    public void setColorFilter(ColorFilter cf) {}
   }
 
 }

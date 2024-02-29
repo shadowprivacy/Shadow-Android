@@ -57,9 +57,10 @@ public class ApplicationMigrations {
     static final int SENDER_KEY             = 31;
     static final int DB_AUTOINCREMENT       = 32;
     static final int ATTACHMENT_CLEANUP     = 33;
+    static final int LOG_CLEANUP            = 34;
   }
 
-  public static final int CURRENT_VERSION = 33;
+  public static final int CURRENT_VERSION = 34;
 
   /**
    * This *must* be called after the {@link JobManager} has been instantiated, but *before* the call
@@ -241,6 +242,10 @@ public class ApplicationMigrations {
 
     if (lastSeenVersion < Version.ATTACHMENT_CLEANUP) {
       jobs.put(Version.ATTACHMENT_CLEANUP, new AttachmentCleanupMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.LOG_CLEANUP) {
+      jobs.put(Version.LOG_CLEANUP, new DeleteDeprecatedLogsMigrationJob());
     }
 
     return jobs;

@@ -15,6 +15,7 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.groups.ui.GroupMemberEntry;
 import su.sres.securesms.keyvalue.SignalStore;
+import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.DefaultValueLiveData;
@@ -40,6 +41,8 @@ public final class AddGroupDetailsViewModel extends ViewModel {
   private final LiveData<Boolean>                                  canSubmitForm;
   private final AddGroupDetailsRepository                          repository;
   private final LiveData<List<Recipient>>                          nonGv2CapableMembers;
+
+  private Media avatarMedia;
 
   private AddGroupDetailsViewModel(@NonNull Collection<RecipientId> recipientIds,
                                    @NonNull AddGroupDetailsRepository repository)
@@ -148,6 +151,14 @@ public final class AddGroupDetailsViewModel extends ViewModel {
 
   public void setDisappearingMessageTimer(int timer) {
     disappearingMessagesTimer.setValue(timer);
+  }
+
+  public void setAvatarMedia(@Nullable Media media) {
+    this.avatarMedia = media;
+  }
+
+  public @Nullable Media getAvatarMedia() {
+    return avatarMedia;
   }
 
   static final class Factory implements ViewModelProvider.Factory {

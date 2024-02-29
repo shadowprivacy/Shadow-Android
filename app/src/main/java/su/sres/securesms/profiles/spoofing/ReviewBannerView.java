@@ -16,6 +16,7 @@ import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.FallbackPhoto20dp;
 import su.sres.securesms.contacts.avatars.GeneratedContactPhoto;
+import su.sres.securesms.conversation.colors.AvatarColor;
 import su.sres.securesms.recipients.Recipient;
 
 /**
@@ -116,7 +117,7 @@ public class ReviewBannerView extends LinearLayout {
     }
 
     @Override
-    protected Drawable newFallbackDrawable(@NonNull Context context, int color, boolean inverted) {
+    protected Drawable newFallbackDrawable(@NonNull Context context, @NonNull AvatarColor color, boolean inverted) {
       return new FallbackPhoto20dp(getFallbackResId()).asDrawable(context, color, inverted);
     }
   }

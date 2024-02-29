@@ -10,6 +10,8 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.graphics.drawable.DrawableCompat;
 
 import su.sres.securesms.R;
+import su.sres.securesms.avatar.Avatars;
+import su.sres.securesms.conversation.colors.AvatarColor;
 import su.sres.securesms.util.ViewUtil;
 
 import java.util.Objects;
@@ -19,43 +21,43 @@ import java.util.Objects;
  */
 public final class FallbackPhoto20dp implements FallbackContactPhoto {
 
-    @DrawableRes private final int drawable20dp;
+  @DrawableRes private final int drawable20dp;
 
-    public FallbackPhoto20dp(@DrawableRes int drawable20dp) {
-        this.drawable20dp = drawable20dp;
-    }
+  public FallbackPhoto20dp(@DrawableRes int drawable20dp) {
+    this.drawable20dp = drawable20dp;
+  }
 
-    @Override
-    public Drawable asDrawable(Context context, int color) {
-        return buildDrawable(context, color);
-    }
+  @Override
+  public Drawable asDrawable(@NonNull Context context, @NonNull AvatarColor color) {
+    return buildDrawable(context, color);
+  }
 
-    @Override
-    public Drawable asDrawable(Context context, int color, boolean inverted) {
-        return buildDrawable(context, color);
-    }
+  @Override
+  public Drawable asDrawable(@NonNull Context context, @NonNull AvatarColor color, boolean inverted) {
+    return buildDrawable(context, color);
+  }
 
-    @Override
-    public Drawable asSmallDrawable(Context context, int color, boolean inverted) {
-        return buildDrawable(context, color);
-    }
+  @Override
+  public Drawable asSmallDrawable(@NonNull Context context, @NonNull AvatarColor color, boolean inverted) {
+    return buildDrawable(context, color);
+  }
 
-    @Override
-    public Drawable asCallCard(Context context) {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public Drawable asCallCard(@NonNull Context context) {
+    throw new UnsupportedOperationException();
+  }
 
-    private @NonNull Drawable buildDrawable(@NonNull Context context, int color) {
-        Drawable      background      = DrawableCompat.wrap(Objects.requireNonNull(AppCompatResources.getDrawable(context, R.drawable.circle_tintable))).mutate();
-        Drawable      foreground      = AppCompatResources.getDrawable(context, drawable20dp);
-        Drawable      gradient        = AppCompatResources.getDrawable(context, R.drawable.avatar_gradient);
-        LayerDrawable drawable        = new LayerDrawable(new Drawable[]{background, foreground, gradient});
-        int           foregroundInset = ViewUtil.dpToPx(2);
+  private @NonNull Drawable buildDrawable(@NonNull Context context, @NonNull AvatarColor color) {
+    Drawable      background      = DrawableCompat.wrap(Objects.requireNonNull(AppCompatResources.getDrawable(context, R.drawable.circle_tintable))).mutate();
+    Drawable      foreground      = Objects.requireNonNull(AppCompatResources.getDrawable(context, drawable20dp));
+    LayerDrawable drawable        = new LayerDrawable(new Drawable[] { background, foreground });
+    int           foregroundInset = ViewUtil.dpToPx(2);
 
-        DrawableCompat.setTint(background, color);
+    DrawableCompat.setTint(background, color.colorInt());
+    DrawableCompat.setTint(foreground, Avatars.getForegroundColor(color).getColorInt());
 
-        drawable.setLayerInset(1, foregroundInset, foregroundInset, foregroundInset, foregroundInset);
+    drawable.setLayerInset(1, foregroundInset, foregroundInset, foregroundInset, foregroundInset);
 
-        return drawable;
-    }
+    return drawable;
+  }
 }

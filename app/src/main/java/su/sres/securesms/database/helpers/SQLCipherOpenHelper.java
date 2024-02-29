@@ -24,6 +24,7 @@ import su.sres.securesms.database.SenderKeySharedDatabase;
 import su.sres.securesms.database.SignalDatabase;
 import su.sres.securesms.database.SqlCipherDatabaseHook;
 import su.sres.securesms.database.SqlCipherErrorHandler;
+import su.sres.securesms.database.model.AvatarPickerDatabase;
 import su.sres.securesms.database.model.databaseprotos.ReactionList;
 import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;
@@ -99,8 +100,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
   private static final int MESSAGE_LOG_2                                                                = 88;
   private static final int ABANDONED_MESSAGE_CLEANUP                                                    = 89;
   private static final int THREAD_AUTOINCREMENT_AND_MMS_AUTOINCREMENT_AND_ABANDONED_ATTACHMENT_CLEANUP  = 90;
+  private static final int AVATAR_PICKER                                                                = 91;
 
-  private static final int    DATABASE_VERSION = 90;
+  private static final int    DATABASE_VERSION = 91;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -137,6 +139,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     db.execSQL(PaymentDatabase.CREATE_TABLE);
     db.execSQL(ChatColorsDatabase.CREATE_TABLE);
     db.execSQL(EmojiSearchDatabase.CREATE_TABLE);
+    db.execSQL(AvatarPickerDatabase.CREATE_TABLE);
 
     executeStatements(db, SearchDatabase.CREATE_TABLE);
     executeStatements(db, MessageSendLogDatabase.CREATE_TABLE);
@@ -798,9 +801,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
       }
 
       if (oldVersion < ABANDONED_MESSAGE_CLEANUP) {
-        long start = System.currentTimeMillis();
-        int smsDeleteCount = db.delete("sms", "thread_id NOT IN (SELECT _id FROM thread)", null);
-        int mmsDeleteCount = db.delete("mms", "thread_id NOT IN (SELECT _id FROM thread)", null);
+        long start          = System.currentTimeMillis();
+        int  smsDeleteCount = db.delete("sms", "thread_id NOT IN (SELECT _id FROM thread)", null);
+        int  mmsDeleteCount = db.delete("mms", "thread_id NOT IN (SELECT _id FROM thread)", null);
         Log.i(TAG, "Deleted " + smsDeleteCount + " sms and " + mmsDeleteCount + " mms in " + (System.currentTimeMillis() - start) + " ms");
       }
 
@@ -809,7 +812,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
 
         db.execSQL("CREATE TABLE thread_tmp (_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                    "date INTEGER DEFAULT 0, " +
-                   "thread_recipient_id INTEGER, "  +
+                   "thread_recipient_id INTEGER, " +
                    "message_count INTEGER DEFAULT 0, " +
                    "snippet TEXT, " +
                    "snippet_charset INTEGER DEFAULT 0, " +
@@ -817,7 +820,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
                    "snippet_uri TEXT DEFAULT NULL, " +
                    "snippet_content_type INTEGER DEFAULT NULL, " +
                    "snippet_extras TEXT DEFAULT NULL, " +
-                   "read INTEGER DEFAULT 1, "  +
+                   "read INTEGER DEFAULT 1, " +
                    "type INTEGER DEFAULT 0, " +
                    "error INTEGER DEFAULT 0, " +
                    "archived INTEGER DEFAULT 0, " +
@@ -1089,6 +1092,24 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
         ///
 
         db.delete("part", "mid != -8675309 AND mid NOT IN (SELECT _id FROM mms)", null);
+      }
+
+      if (oldVersion < AVATAR_PICKER) {
+        db.execSQL("CREATE TABLE avatar_picker (_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                   "last_used INTEGER DEFAULT 0, " +
+                   "group_id TEXT DEFAULT NULL, " +
+                   "avatar BLOB NOT NULL)");
+
+        try (Cursor cursor = db.query("recipient", new String[] { "_id" }, "color IS NULL", null, null, null, null)) {
+          while (cursor.moveToNext()) {
+            long id = cursor.getInt(cursor.getColumnIndexOrThrow("_id"));
+
+            ContentValues values = new ContentValues(1);
+            values.put("color", AvatarColor.random().serialize());
+
+            db.update("recipient", values, "_id = ?", new String[] { String.valueOf(id) });
+          }
+        }
       }
 
       db.setTransactionSuccessful();

@@ -5,17 +5,18 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
+
 import android.text.TextUtils;
 import android.transition.TransitionInflater;
 
 import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.logging.Log;
+
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -31,13 +32,14 @@ import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
+
 import org.whispersystems.libsignal.IdentityKeyPair;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.ecc.Curve;
 import org.whispersystems.libsignal.ecc.ECPublicKey;
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.NotFoundException;
 import su.sres.signalservice.internal.push.DeviceLimitExceededException;
@@ -112,7 +114,7 @@ public class DeviceActivity extends PassphraseRequiredActivity
                .withPermanentDenialDialog(getString(R.string.DeviceActivity_signal_needs_the_camera_permission_in_order_to_scan_a_qr_code))
                .onAllGranted(() -> {
                  getSupportFragmentManager().beginTransaction()
-                         .replace(R.id.fragment_container, deviceAddFragment)
+                                            .replace(R.id.fragment_container, deviceAddFragment)
                                             .addToBackStack(null)
                                             .commitAllowingStateLoss();
                })
@@ -123,7 +125,7 @@ public class DeviceActivity extends PassphraseRequiredActivity
   @Override
   public void onQrDataFound(final String data) {
     ThreadUtil.runOnMain(() -> {
-      ((Vibrator)getSystemService(Context.VIBRATOR_SERVICE)).vibrate(50);
+      ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(50);
       Uri uri = Uri.parse(data);
       deviceLinkFragment.setLinkClickedListener(uri, DeviceActivity.this);
 
@@ -136,12 +138,13 @@ public class DeviceActivity extends PassphraseRequiredActivity
       getSupportFragmentManager().beginTransaction()
                                  .addToBackStack(null)
                                  .addSharedElement(deviceAddFragment.getDevicesImage(), "devices")
-              .replace(R.id.fragment_container, deviceLinkFragment)
+                                 .replace(R.id.fragment_container, deviceLinkFragment)
                                  .commit();
 
     });
   }
 
+  @SuppressLint("MissingSuperCall")
   @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
@@ -154,12 +157,12 @@ public class DeviceActivity extends PassphraseRequiredActivity
                                                      R.string.DeviceProvisioningActivity_content_progress_title,
                                                      R.string.DeviceProvisioningActivity_content_progress_content)
     {
-      private static final int SUCCESS        = 0;
-      private static final int NO_DEVICE      = 1;
-      private static final int NETWORK_ERROR  = 2;
-      private static final int KEY_ERROR      = 3;
+      private static final int SUCCESS = 0;
+      private static final int NO_DEVICE = 1;
+      private static final int NETWORK_ERROR = 2;
+      private static final int KEY_ERROR = 3;
       private static final int LIMIT_EXCEEDED = 4;
-      private static final int BAD_CODE       = 5;
+      private static final int BAD_CODE = 5;
 
       @Override
       protected Integer doInBackground(Void... params) {
@@ -177,9 +180,9 @@ public class DeviceActivity extends PassphraseRequiredActivity
             return BAD_CODE;
           }
 
-          ECPublicKey      publicKey         = Curve.decodePoint(Base64.decode(publicKeyEncoded), 0);
-          IdentityKeyPair  identityKeyPair   = IdentityKeyUtil.getIdentityKeyPair(context);
-          Optional<byte[]> profileKey        = Optional.of(ProfileKeyUtil.getProfileKey(getContext()));
+          ECPublicKey      publicKey       = Curve.decodePoint(Base64.decode(publicKeyEncoded), 0);
+          IdentityKeyPair  identityKeyPair = IdentityKeyUtil.getIdentityKeyPair(context);
+          Optional<byte[]> profileKey      = Optional.of(ProfileKeyUtil.getProfileKey(getContext()));
 
           TextSecurePreferences.setMultiDevice(DeviceActivity.this, true);
           TextSecurePreferences.setIsUnidentifiedDeliveryEnabled(context, false);

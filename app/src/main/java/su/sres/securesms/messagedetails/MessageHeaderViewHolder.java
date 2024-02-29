@@ -240,8 +240,8 @@ final class MessageHeaderViewHolder extends RecyclerView.ViewHolder implements G
   }
 
   @Override
-  public @NonNull Projection getProjection(@NonNull ViewGroup recyclerview) {
-    return conversationItem.getProjection(recyclerview);
+  public @NonNull Projection getGiphyMp4PlayableProjection(@NonNull ViewGroup recyclerview) {
+    return conversationItem.getGiphyMp4PlayableProjection(recyclerview);
   }
 
   @Override public boolean canPlayContent() {
@@ -258,7 +258,7 @@ final class MessageHeaderViewHolder extends RecyclerView.ViewHolder implements G
     Set<Projection> projections = new HashSet<>();
 
     if (canPlayContent()) {
-      projections.add(conversationItem.getProjection((ViewGroup) itemView));
+      projections.add(conversationItem.getGiphyMp4PlayableProjection((ViewGroup) itemView));
     }
 
     projections.addAll(Stream.of(conversationItem.getColorizerProjections())

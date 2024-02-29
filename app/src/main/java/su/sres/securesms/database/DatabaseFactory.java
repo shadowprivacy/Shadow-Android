@@ -28,6 +28,7 @@ import su.sres.securesms.crypto.AttachmentSecretProvider;
 import su.sres.securesms.crypto.DatabaseSecret;
 import su.sres.securesms.crypto.DatabaseSecretProvider;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
+import su.sres.securesms.database.model.AvatarPickerDatabase;
 import su.sres.securesms.util.SqlUtil;
 
 public class DatabaseFactory {
@@ -64,6 +65,7 @@ public class DatabaseFactory {
   private final ChatColorsDatabase          chatColorsDatabase;
   private final EmojiSearchDatabase         emojiSearchDatabase;
   private final MessageSendLogDatabase      messageSendLogDatabase;
+  private final AvatarPickerDatabase        avatarPickerDatabase;
 
   public static DatabaseFactory getInstance(Context context) {
     if (instance == null) {
@@ -190,6 +192,10 @@ public class DatabaseFactory {
     return getInstance(context).messageSendLogDatabase;
   }
 
+  public static AvatarPickerDatabase getAvatarPickerDatabase(Context context) {
+    return getInstance(context).avatarPickerDatabase;
+  }
+
   public static SQLiteDatabase getBackupDatabase(Context context) {
     return getInstance(context).databaseHelper.getReadableDatabase().getSqlCipherDatabase();
   }
@@ -248,8 +254,9 @@ public class DatabaseFactory {
     this.mentionDatabase             = new MentionDatabase(context, databaseHelper);
     this.paymentDatabase             = new PaymentDatabase(context, databaseHelper);
     this.chatColorsDatabase          = new ChatColorsDatabase(context, databaseHelper);
-    this.emojiSearchDatabase    = new EmojiSearchDatabase(context, databaseHelper);
-    this.messageSendLogDatabase = new MessageSendLogDatabase(context, databaseHelper);
+    this.emojiSearchDatabase         = new EmojiSearchDatabase(context, databaseHelper);
+    this.messageSendLogDatabase      = new MessageSendLogDatabase(context, databaseHelper);
+    this.avatarPickerDatabase        = new AvatarPickerDatabase(context, databaseHelper);
   }
 
   public void triggerDatabaseAccess() {

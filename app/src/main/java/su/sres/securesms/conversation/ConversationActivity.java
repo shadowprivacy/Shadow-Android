@@ -77,6 +77,7 @@ import android.view.View.OnKeyListener;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -378,7 +379,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
   private   MenuItem                     searchViewItem;
   private   MessageRequestsBottomView    messageRequestBottomView;
   private   ConversationReactionDelegate reactionDelegate;
-  private   Stub<VoiceNotePlayerView>    voiceNotePlayerViewStub;
+  private   Stub<FrameLayout>            voiceNotePlayerViewStub;
 
   private   AttachmentManager        attachmentManager;
   private   AudioRecorder            audioRecorder;
@@ -410,6 +411,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
   private VoiceRecorderWakeLock        voiceRecorderWakeLock;
   private DraftViewModel               draftViewModel;
   private VoiceNoteMediaController     voiceNoteMediaController;
+  private VoiceNotePlayerView          voiceNotePlayerView;
 
   private          LiveRecipient recipient;
   private          long          threadId;
@@ -1143,6 +1145,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     updateReminders();
   }
 
+  @SuppressLint("MissingSuperCall")
   @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
@@ -1311,7 +1314,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     GlideApp.with(this)
             .asBitmap()
             .load(recipient.getContactPhoto())
-            .error(recipient.getFallbackContactPhoto().asDrawable(this, recipient.getAvatarColor().colorInt(), false))
+            .error(recipient.getFallbackContactPhoto().asDrawable(this, recipient.getAvatarColor(), false))
             .into(new CustomTarget<Bitmap>() {
               @Override
               public void onLoadFailed(@Nullable Drawable errorDrawable) {
@@ -2047,17 +2050,23 @@ public class ConversationActivity extends PassphraseRequiredActivity
     joinGroupCallButton.setOnClickListener(v -> handleVideo(getRecipient()));
     voiceNoteMediaController.getVoiceNotePlayerViewState().observe(this, state -> {
       if (state.isPresent()) {
-        if (!voiceNotePlayerViewStub.resolved()) {
-          voiceNotePlayerViewStub.get().setListener(new VoiceNotePlayerViewListener());
-        }
-        voiceNotePlayerViewStub.get().show();
-        voiceNotePlayerViewStub.get().setState(state.get());
+        requireVoiceNotePlayerView().show();
+        requireVoiceNotePlayerView().setState(state.get());
       } else if (voiceNotePlayerViewStub.resolved()) {
-        voiceNotePlayerViewStub.get().hide();
+        requireVoiceNotePlayerView().hide();
       }
     });
 
     voiceNoteMediaController.getVoiceNotePlaybackState().observe(ConversationActivity.this, inputPanel.getPlaybackStateObserver());
+  }
+
+  private @NonNull VoiceNotePlayerView requireVoiceNotePlayerView() {
+    if (voiceNotePlayerView == null) {
+      voiceNotePlayerView = voiceNotePlayerViewStub.get().findViewById(R.id.voice_note_player_view);
+      voiceNotePlayerView.setListener(new VoiceNotePlayerViewListener());
+    }
+
+    return voiceNotePlayerView;
   }
 
   private void updateWallpaper(@Nullable ChatWallpaper chatWallpaper) {

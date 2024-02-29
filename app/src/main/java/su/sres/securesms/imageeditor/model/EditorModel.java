@@ -56,7 +56,7 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
 
   private final UndoRedoStacks undoRedoStacks;
   private final UndoRedoStacks cropUndoRedoStacks;
-  private final InBoundsMemory inBoundsMemory     = new InBoundsMemory();
+  private final InBoundsMemory inBoundsMemory = new InBoundsMemory();
 
   private EditorElementHierarchy editorElementHierarchy;
 
@@ -67,15 +67,16 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
 
   private enum EditingPurpose {
     IMAGE,
-    AVATAR_CIRCLE,
+    AVATAR_CAPTURE,
+    AVATAR_EDIT,
     WALLPAPER
   }
 
   private EditorModel(@NonNull Parcel in) {
-    ClassLoader classLoader     = getClass().getClassLoader();
-    this.editingPurpose         = EditingPurpose.values()[in.readInt()];
-    this.fixedRatio             = in.readFloat();
-    this.size                   = new Point(in.readInt(), in.readInt());
+    ClassLoader classLoader = getClass().getClassLoader();
+    this.editingPurpose = EditingPurpose.values()[in.readInt()];
+    this.fixedRatio     = in.readFloat();
+    this.size           = new Point(in.readInt(), in.readInt());
     //noinspection ConstantConditions
     this.editorElementHierarchy = EditorElementHierarchy.create(in.readParcelable(classLoader));
     this.undoRedoStacks         = in.readParcelable(classLoader);
@@ -95,8 +96,14 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
     return new EditorModel(EditingPurpose.IMAGE, 0, EditorElementHierarchy.create());
   }
 
-  public static EditorModel createForCircleEditing() {
-    EditorModel editorModel = new EditorModel(EditingPurpose.AVATAR_CIRCLE, 1, EditorElementHierarchy.createForCircleEditing());
+  public static EditorModel createForAvatarCapture() {
+    EditorModel editorModel = new EditorModel(EditingPurpose.AVATAR_CAPTURE, 1, EditorElementHierarchy.createForCircleEditing());
+    editorModel.setCropAspectLock(true);
+    return editorModel;
+  }
+
+  public static EditorModel createForAvatarEdit() {
+    EditorModel editorModel = new EditorModel(EditingPurpose.AVATAR_EDIT, 1, EditorElementHierarchy.createForCircleEditing());
     editorModel.setCropAspectLock(true);
     return editorModel;
   }
@@ -286,12 +293,12 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
   }
 
   public void setCropAspectLock(boolean locked) {
-    EditorFlags flags = editorElementHierarchy.getCropEditorElement().getFlags();
-    int currentState  = flags.setAspectLocked(locked).getCurrentState();
+    EditorFlags flags        = editorElementHierarchy.getCropEditorElement().getFlags();
+    int         currentState = flags.setAspectLocked(locked).getCurrentState();
 
     flags.reset();
     flags.setAspectLocked(locked)
-            .persist();
+         .persist();
     flags.restoreState(currentState);
   }
 
@@ -352,11 +359,11 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
    */
   private boolean tryToScaleToFit(@NonNull EditorElement element, float scaleAtMost) {
     return Bisect.bisectToTest(element,
-            1,
-            scaleAtMost,
-            this::cropIsWithinMainImageBounds,
-            (matrix, scale) -> matrix.preScale(scale, scale),
-            invalidate);
+                               1,
+                               scaleAtMost,
+                               this::cropIsWithinMainImageBounds,
+                               (matrix, scale) -> matrix.preScale(scale, scale),
+                               invalidate);
   }
 
   /**
@@ -370,10 +377,10 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
    */
   private Matrix tryToTranslateToFit(@NonNull EditorElement element, float translateXAtMost, float translateYAtMost) {
     return Bisect.bisectToTest(element,
-            0,
-            1,
-            this::cropIsWithinMainImageBounds,
-            (matrix, factor) -> matrix.postTranslate(factor * translateXAtMost, factor * translateYAtMost));
+                               0,
+                               1,
+                               this::cropIsWithinMainImageBounds,
+                               (matrix, factor) -> matrix.postTranslate(factor * translateXAtMost, factor * translateYAtMost));
   }
 
   /**
@@ -388,7 +395,7 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
     final Matrix  original      = new Matrix(elementMatrix);
     final float[] current       = new float[9];
     final float[] lastGood      = new float[9];
-    Matrix matrix;
+    Matrix        matrix;
 
     elementMatrix.getValues(current);
     lastKnownGoodPosition.getValues(lastGood);
@@ -472,8 +479,8 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
     }
 
     return compareRatios(outputSize, thinnestRatio) >= 0 &&
-            outputPixelCount >= minimumPixelCount &&
-            cropIsWithinMainImageBounds();
+           outputPixelCount >= minimumPixelCount &&
+           cropIsWithinMainImageBounds();
   }
 
   /**
@@ -504,7 +511,7 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
   public void moving(@NonNull EditorElement editorElement) {
     if (!isCropping()) return;
 
-    EditorElement mainImage = editorElementHierarchy.getMainImage();
+    EditorElement mainImage         = editorElementHierarchy.getMainImage();
     EditorElement cropEditorElement = editorElementHierarchy.getCropEditorElement();
 
     if (editorElement == mainImage || editorElement == cropEditorElement) {
@@ -579,11 +586,11 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
 
     Bitmap bitmap = Bitmap.createBitmap(outputSize.x, outputSize.y, Bitmap.Config.ARGB_8888);
     try {
-      Canvas canvas = new Canvas(bitmap);
+      Canvas          canvas          = new Canvas(bitmap);
       RendererContext rendererContext = new RendererContext(context, canvas, RendererContext.Ready.NULL, RendererContext.Invalidate.NULL);
 
       RectF bitmapArea = new RectF();
-      bitmapArea.right = bitmap.getWidth();
+      bitmapArea.right  = bitmap.getWidth();
       bitmapArea.bottom = bitmap.getHeight();
 
       Matrix viewMatrix = new Matrix();
@@ -642,7 +649,7 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
       if (imageCropMatrix.isIdentity()) {
         imageCropMatrix.set(cropMatrix);
 
-        if (editingPurpose == EditingPurpose.AVATAR_CIRCLE || editingPurpose == EditingPurpose.WALLPAPER) {
+        if (editingPurpose == EditingPurpose.AVATAR_CAPTURE || editingPurpose == EditingPurpose.WALLPAPER || editingPurpose == EditingPurpose.AVATAR_EDIT) {
           Matrix userCropMatrix = editorElementHierarchy.getCropEditorElement().getLocalMatrix();
           if (size.x > size.y) {
             userCropMatrix.setScale(fixedRatio * size.y / (float) size.x, 1f);
@@ -658,7 +665,7 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
         }
 
         switch (editingPurpose) {
-          case AVATAR_CIRCLE: {
+          case AVATAR_CAPTURE: {
             startCrop();
             break;
           }
@@ -667,6 +674,8 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
             startCrop();
             break;
           }
+          default:
+            break;
         }
       }
     }
@@ -677,7 +686,7 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
     Matrix userCropMatrix = editorElementHierarchy.getCropEditorElement().getLocalMatrix();
     float  w              = size.x;
     float  h              = size.y;
-    float imageRatio = w / h;
+    float  imageRatio     = w / h;
     if (imageRatio > r) {
       userCropMatrix.setScale(r / imageRatio, 1f);
     } else {

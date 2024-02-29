@@ -1,9 +1,11 @@
 package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
+
 import android.text.TextUtils;
 
 import org.signal.zkgroup.profiles.ProfileKey;
+
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
@@ -13,6 +15,7 @@ import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.core.util.logging.Log;
 
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -26,7 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
-public class RetrieveProfileAvatarJob extends BaseJob  {
+public class RetrieveProfileAvatarJob extends BaseJob {
 
   public static final String KEY = "RetrieveProfileAvatarJob";
 
@@ -42,12 +45,12 @@ public class RetrieveProfileAvatarJob extends BaseJob  {
 
   public RetrieveProfileAvatarJob(Recipient recipient, String profileAvatar) {
     this(new Job.Parameters.Builder()
-                    .setQueue("RetrieveProfileAvatarJob::" + recipient.getId().toQueueKey())
-                    .addConstraint(NetworkConstraint.KEY)
-                    .setLifespan(TimeUnit.HOURS.toMillis(1))
-                    .build(),
-            recipient,
-            profileAvatar);
+             .setQueue("RetrieveProfileAvatarJob::" + recipient.getId().toQueueKey())
+             .addConstraint(NetworkConstraint.KEY)
+             .setLifespan(TimeUnit.HOURS.toMillis(1))
+             .build(),
+         recipient,
+         profileAvatar);
   }
 
   private RetrieveProfileAvatarJob(@NonNull Job.Parameters parameters, @NonNull Recipient recipient, String profileAvatar) {
@@ -60,8 +63,8 @@ public class RetrieveProfileAvatarJob extends BaseJob  {
   @Override
   public @NonNull Data serialize() {
     return new Data.Builder().putString(KEY_PROFILE_AVATAR, profileAvatar)
-            .putString(KEY_RECIPIENT, recipient.getId().serialize())
-            .build();
+                             .putString(KEY_RECIPIENT, recipient.getId().serialize())
+                             .build();
   }
 
   @Override
@@ -99,6 +102,10 @@ public class RetrieveProfileAvatarJob extends BaseJob  {
 
       try {
         AvatarHelper.setAvatar(context, recipient.getId(), avatarStream);
+
+        if (recipient.isSelf()) {
+          SignalStore.misc().markHasEverHadAnAvatar();
+        }
       } catch (AssertionError e) {
         throw new IOException("Failed to copy stream. Likely a Conscrypt issue.", e);
       }
@@ -131,8 +138,8 @@ public class RetrieveProfileAvatarJob extends BaseJob  {
     @Override
     public @NonNull RetrieveProfileAvatarJob create(@NonNull Parameters parameters, @NonNull Data data) {
       return new RetrieveProfileAvatarJob(parameters,
-              Recipient.resolved(RecipientId.from(data.getString(KEY_RECIPIENT))),
-              data.getString(KEY_PROFILE_AVATAR));
+                                          Recipient.resolved(RecipientId.from(data.getString(KEY_RECIPIENT))),
+                                          data.getString(KEY_PROFILE_AVATAR));
     }
   }
 }

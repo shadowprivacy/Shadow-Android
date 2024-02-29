@@ -15,7 +15,11 @@ import androidx.appcompat.content.res.AppCompatResources;
 import com.amulyakhare.textdrawable.TextDrawable;
 import com.makeramen.roundedimageview.RoundedDrawable;
 
+import org.jetbrains.annotations.NotNull;
+
 import su.sres.securesms.R;
+import su.sres.securesms.avatar.Avatars;
+import su.sres.securesms.conversation.colors.AvatarColor;
 import su.sres.securesms.util.ContextUtil;
 
 public class ResourceContactPhoto implements FallbackContactPhoto {
@@ -45,39 +49,34 @@ public class ResourceContactPhoto implements FallbackContactPhoto {
   }
 
   @Override
-  public @NonNull Drawable asDrawable(@NonNull Context context, int color) {
+  public @NonNull Drawable asDrawable(@NonNull Context context, @NonNull AvatarColor color) {
     return asDrawable(context, color, false);
   }
 
   @Override
-  public @NonNull Drawable asDrawable(@NonNull Context context, int color, boolean inverted) {
+  public @NonNull Drawable asDrawable(@NonNull Context context, @NonNull AvatarColor color, boolean inverted) {
     return buildDrawable(context, resourceId, color, inverted);
   }
 
   @Override
-  public @NonNull Drawable asSmallDrawable(@NonNull Context context, int color, boolean inverted) {
+  public @NonNull Drawable asSmallDrawable(@NonNull Context context, @NonNull AvatarColor color, boolean inverted) {
     return buildDrawable(context, smallResourceId, color, inverted);
   }
 
-  private @NonNull Drawable buildDrawable(@NonNull Context context, int resourceId, int color, boolean inverted) {
-    Drawable        background = TextDrawable.builder().buildRound(" ", inverted ? Color.WHITE : color);
-    RoundedDrawable foreground = (RoundedDrawable) RoundedDrawable.fromDrawable(AppCompatResources.getDrawable(context, resourceId));
+  private @NonNull Drawable buildDrawable(@NonNull Context context, int resourceId, @NonNull AvatarColor color, boolean inverted) {
+    Avatars.ForegroundColor foregroundColor = Avatars.getForegroundColor(color);
+    Drawable                background      = TextDrawable.builder().buildRound(" ", inverted ? foregroundColor.getColorInt() : color.colorInt());
+    RoundedDrawable         foreground      = (RoundedDrawable) RoundedDrawable.fromDrawable(AppCompatResources.getDrawable(context, resourceId));
 
     //noinspection ConstantConditions
     foreground.setScaleType(scaleType);
+    foreground.setColorFilter(inverted ? color.colorInt() : foregroundColor.getColorInt(), PorterDuff.Mode.SRC_ATOP);
 
-    if (inverted) {
-      foreground.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-    }
-
-    Drawable gradient = ContextUtil.requireDrawable(context, R.drawable.avatar_gradient);
-
-    return new ExpandingLayerDrawable(new Drawable[] { background, foreground, gradient });
+    return new ExpandingLayerDrawable(new Drawable[] { background, foreground });
   }
 
   @Override
-  public @Nullable
-  Drawable asCallCard(@NonNull Context context) {
+  public @Nullable Drawable asCallCard(@NotNull @NonNull Context context) {
     return AppCompatResources.getDrawable(context, callCardResourceId);
   }
 

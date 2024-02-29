@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
@@ -103,6 +104,12 @@ public class MappingAdapter extends ListAdapter<MappingModel<?>, MappingViewHold
   }
 
   @Override
+  public void onBindViewHolder(@NonNull MappingViewHolder<?> holder, int position, @NonNull List<Object> payloads) {
+    holder.setPayload(payloads);
+    onBindViewHolder(holder, position);
+  }
+
+  @Override
   public void onBindViewHolder(@NonNull MappingViewHolder holder, int position) {
     //noinspection unchecked
     holder.bind(getItem(position));
@@ -141,6 +148,16 @@ public class MappingAdapter extends ListAdapter<MappingModel<?>, MappingViewHold
         return oldItem.areContentsTheSame(newItem);
       }
       return false;
+    }
+
+    @Override
+    public @Nullable Object getChangePayload(@NonNull MappingModel oldItem, @NonNull MappingModel newItem) {
+      if (oldItem.getClass() == newItem.getClass()) {
+        //noinspection unchecked
+        return oldItem.getChangePayload(newItem);
+      }
+
+      return null;
     }
   }
 

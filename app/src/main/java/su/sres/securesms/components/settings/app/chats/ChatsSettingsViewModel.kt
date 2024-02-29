@@ -3,8 +3,10 @@ package su.sres.securesms.components.settings.app.chats
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.storage.StorageSyncHelper
+import su.sres.securesms.util.BackupUtil
 import su.sres.securesms.util.ConversationUtil
 import su.sres.securesms.util.ThrottledDebouncer
 import su.sres.securesms.util.livedata.Store
@@ -18,7 +20,7 @@ class ChatsSettingsViewModel(private val repository: ChatsSettingsRepository) : 
       generateLinkPreviews = SignalStore.settings().isLinkPreviewsEnabled,
       useSystemEmoji = SignalStore.settings().isPreferSystemEmoji,
       enterKeySends = SignalStore.settings().isEnterKeySends,
-      chatBackupsEnabled = SignalStore.settings().isBackupEnabled
+      chatBackupsEnabled = SignalStore.settings().isBackupEnabled && BackupUtil.canUserAccessBackupDirectory(ApplicationDependencies.getApplication())
     )
   )
 

@@ -26,6 +26,7 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.content.ClipboardManager;
 import android.text.SpannableStringBuilder;
@@ -264,6 +265,10 @@ public class ConversationFragment extends LoggingFragment {
     list.setHasFixedSize(false);
     list.setLayoutManager(layoutManager);
     list.setItemAnimator(null);
+
+    if (Build.VERSION.SDK_INT >= 31) {
+      list.setOverScrollMode(View.OVER_SCROLL_NEVER);
+    }
 
     snapToTopDataObserver = new ConversationSnapToTopDataObserver(list, new ConversationScrollRequestValidator());
     conversationBanner    = (ConversationBannerView) inflater.inflate(R.layout.conversation_item_banner, container, false);

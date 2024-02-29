@@ -95,6 +95,7 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
     if (instance == null) {
       synchronized (JobDatabase.class) {
         if (instance == null) {
+          SqlCipherLibraryLoader.load(context);
           instance = new JobDatabase(context, DatabaseSecretProvider.getOrCreateDatabaseSecret(context));
         }
       }
