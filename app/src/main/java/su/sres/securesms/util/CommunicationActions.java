@@ -46,9 +46,9 @@ public class CommunicationActions {
 
     if (TelephonyUtil.isAnyPstnLineBusy(activity)) {
       Toast.makeText(activity,
-              R.string.CommunicationActions_a_cellular_call_is_already_in_progress,
-              Toast.LENGTH_SHORT)
-              .show();
+                     R.string.CommunicationActions_a_cellular_call_is_already_in_progress,
+                     Toast.LENGTH_SHORT)
+           .show();
       return;
     }
 
@@ -74,9 +74,9 @@ public class CommunicationActions {
   public static void startVideoCall(@NonNull FragmentActivity activity, @NonNull Recipient recipient) {
     if (TelephonyUtil.isAnyPstnLineBusy(activity)) {
       Toast.makeText(activity,
-                      R.string.CommunicationActions_a_cellular_call_is_already_in_progress,
-                      Toast.LENGTH_SHORT)
-              .show();
+                     R.string.CommunicationActions_a_cellular_call_is_already_in_progress,
+                     Toast.LENGTH_SHORT)
+           .show();
       return;
     }
 
@@ -92,20 +92,20 @@ public class CommunicationActions {
     startConversation(context, recipient, text, null);
   }
 
-  public static void startConversation(@NonNull  Context          context,
-                                       @NonNull  Recipient        recipient,
-                                       @Nullable String           text,
+  public static void startConversation(@NonNull Context context,
+                                       @NonNull Recipient recipient,
+                                       @Nullable String text,
                                        @Nullable TaskStackBuilder backStack)
   {
     new AsyncTask<Void, Void, Long>() {
       @Override
       protected Long doInBackground(Void... voids) {
-        return DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient);
+        return DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient.getId());
       }
 
       @Override
-      protected void onPostExecute(Long threadId) {
-        ConversationIntents.Builder builder = ConversationIntents.createBuilder(context, recipient.getId(), threadId);
+      protected void onPostExecute(@Nullable Long threadId) {
+        ConversationIntents.Builder builder = ConversationIntents.createBuilder(context, recipient.getId(), threadId != null ? threadId : -1);
 
         if (!TextUtils.isEmpty(text)) {
           builder.withDraftText(text);
@@ -143,7 +143,7 @@ public class CommunicationActions {
   public static void openEmail(@NonNull Context context, @NonNull String address, @Nullable String subject, @Nullable String body) {
     Intent intent = new Intent(Intent.ACTION_SENDTO);
     intent.setData(Uri.parse("mailto:"));
-    intent.putExtra(Intent.EXTRA_EMAIL, new String[]{ address });
+    intent.putExtra(Intent.EXTRA_EMAIL, new String[] { address });
     intent.putExtra(Intent.EXTRA_SUBJECT, Util.emptyIfNull(subject));
     intent.putExtra(Intent.EXTRA_TEXT, Util.emptyIfNull(body));
 
@@ -182,26 +182,26 @@ public class CommunicationActions {
     GroupId.V2 groupId = GroupId.v2(groupInviteLinkUrl.getGroupMasterKey());
 
     SimpleTask.run(SignalExecutors.BOUNDED, () -> {
-              GroupDatabase.GroupRecord group = DatabaseFactory.getGroupDatabase(activity)
-                      .getGroup(groupId)
-                      .orNull();
+                     GroupDatabase.GroupRecord group = DatabaseFactory.getGroupDatabase(activity)
+                                                                      .getGroup(groupId)
+                                                                      .orNull();
 
-              return group != null && group.isActive() ? Recipient.resolved(group.getRecipientId())
-                      : null;
-            },
-            recipient -> {
-              if (recipient != null) {
-                CommunicationActions.startConversation(activity, recipient, null);
-                Toast.makeText(activity, R.string.GroupJoinBottomSheetDialogFragment_you_are_already_a_member, Toast.LENGTH_SHORT).show();
-              } else {
-                GroupJoinBottomSheetDialogFragment.show(activity.getSupportFragmentManager(), groupInviteLinkUrl);
-              }
-            });
+                     return group != null && group.isActive() ? Recipient.resolved(group.getRecipientId())
+                                                              : null;
+                   },
+                   recipient -> {
+                     if (recipient != null) {
+                       CommunicationActions.startConversation(activity, recipient, null);
+                       Toast.makeText(activity, R.string.GroupJoinBottomSheetDialogFragment_you_are_already_a_member, Toast.LENGTH_SHORT).show();
+                     } else {
+                       GroupJoinBottomSheetDialogFragment.show(activity.getSupportFragmentManager(), groupInviteLinkUrl);
+                     }
+                   });
   }
 
   private static void startCallInternal(@NonNull FragmentActivity activity, @NonNull Recipient recipient, boolean isVideo) {
     if (isVideo) startVideoCallInternal(activity, recipient);
-    else         startAudioCallInternal(activity, recipient);
+    else startAudioCallInternal(activity, recipient);
   }
 
   /**
@@ -221,44 +221,44 @@ public class CommunicationActions {
 
   private static void startAudioCallInternal(@NonNull FragmentActivity activity, @NonNull Recipient recipient) {
     Permissions.with(activity)
-            .request(Manifest.permission.RECORD_AUDIO)
-            .ifNecessary()
-            .withRationaleDialog(activity.getString(R.string.ConversationActivity__to_call_s_signal_needs_access_to_your_microphone, recipient.getDisplayName(activity)),
-                    R.drawable.ic_mic_solid_24)
-            .withPermanentDenialDialog(activity.getString(R.string.ConversationActivity__to_call_s_signal_needs_access_to_your_microphone, recipient.getDisplayName(activity)))
-            .onAllGranted(() -> {
-              ApplicationDependencies.getSignalCallManager().startOutgoingAudioCall(recipient);
+               .request(Manifest.permission.RECORD_AUDIO)
+               .ifNecessary()
+               .withRationaleDialog(activity.getString(R.string.ConversationActivity__to_call_s_signal_needs_access_to_your_microphone, recipient.getDisplayName(activity)),
+                                    R.drawable.ic_mic_solid_24)
+               .withPermanentDenialDialog(activity.getString(R.string.ConversationActivity__to_call_s_signal_needs_access_to_your_microphone, recipient.getDisplayName(activity)))
+               .onAllGranted(() -> {
+                 ApplicationDependencies.getSignalCallManager().startOutgoingAudioCall(recipient);
 
-              MessageSender.onMessageSent();
+                 MessageSender.onMessageSent();
 
-              Intent activityIntent = new Intent(activity, WebRtcCallActivity.class);
+                 Intent activityIntent = new Intent(activity, WebRtcCallActivity.class);
 
-              activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                 activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-              activity.startActivity(activityIntent);
-            })
-            .execute();
+                 activity.startActivity(activityIntent);
+               })
+               .execute();
   }
 
   private static void startVideoCallInternal(@NonNull FragmentActivity activity, @NonNull Recipient recipient) {
     Permissions.with(activity)
-            .request(Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA)
-            .ifNecessary()
-            .withRationaleDialog(activity.getString(R.string.ConversationActivity_signal_needs_the_microphone_and_camera_permissions_in_order_to_call_s, recipient.getDisplayName(activity)),
-                    R.drawable.ic_mic_solid_24,
-                    R.drawable.ic_video_solid_24_tinted)
-            .withPermanentDenialDialog(activity.getString(R.string.ConversationActivity_signal_needs_the_microphone_and_camera_permissions_in_order_to_call_s, recipient.getDisplayName(activity)))
-            .onAllGranted(() -> {
-              ApplicationDependencies.getSignalCallManager().startPreJoinCall(recipient);
+               .request(Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA)
+               .ifNecessary()
+               .withRationaleDialog(activity.getString(R.string.ConversationActivity_signal_needs_the_microphone_and_camera_permissions_in_order_to_call_s, recipient.getDisplayName(activity)),
+                                    R.drawable.ic_mic_solid_24,
+                                    R.drawable.ic_video_solid_24_tinted)
+               .withPermanentDenialDialog(activity.getString(R.string.ConversationActivity_signal_needs_the_microphone_and_camera_permissions_in_order_to_call_s, recipient.getDisplayName(activity)))
+               .onAllGranted(() -> {
+                 ApplicationDependencies.getSignalCallManager().startPreJoinCall(recipient);
 
-              Intent activityIntent = new Intent(activity, WebRtcCallActivity.class);
+                 Intent activityIntent = new Intent(activity, WebRtcCallActivity.class);
 
-              activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                      .putExtra(WebRtcCallActivity.EXTRA_ENABLE_VIDEO_IF_AVAILABLE, true);
+                 activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                               .putExtra(WebRtcCallActivity.EXTRA_ENABLE_VIDEO_IF_AVAILABLE, true);
 
-              activity.startActivity(activityIntent);
-            })
-            .execute();
+                 activity.startActivity(activityIntent);
+               })
+               .execute();
 
   }
 

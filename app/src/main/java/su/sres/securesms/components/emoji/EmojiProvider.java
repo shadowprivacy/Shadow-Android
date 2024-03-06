@@ -53,7 +53,7 @@ class EmojiProvider {
     SpannableStringBuilder builder = new SpannableStringBuilder(text);
 
     for (EmojiParser.Candidate candidate : matches) {
-      Drawable drawable = getEmojiDrawable(tv.getContext(), candidate.getDrawInfo());
+      Drawable drawable = getEmojiDrawable(tv.getContext(), candidate.getDrawInfo(), tv::requestLayout);
 
       if (drawable != null) {
         builder.setSpan(new EmojiSpan(drawable, tv), candidate.getStartIndex(), candidate.getEndIndex(),
@@ -66,10 +66,17 @@ class EmojiProvider {
 
   static @Nullable Drawable getEmojiDrawable(@NonNull Context context, @Nullable CharSequence emoji) {
     EmojiDrawInfo drawInfo = EmojiSource.getLatest().getEmojiTree().getEmoji(emoji, 0, emoji.length());
-    return getEmojiDrawable(context, drawInfo);
+    return getEmojiDrawable(context, drawInfo, null);
   }
 
-  private static @Nullable Drawable getEmojiDrawable(@NonNull Context context, @Nullable EmojiDrawInfo drawInfo) {
+  /**
+   * Gets an EmojiDrawable from the Page Cache
+   *
+   * @param context         Context object used in reading and writing from disk
+   * @param drawInfo        Information about the emoji being displayed
+   * @param onEmojiLoaded   Runnable which will trigger when an emoji is loaded from disk
+   */
+  private static @Nullable Drawable getEmojiDrawable(@NonNull Context context, @Nullable EmojiDrawInfo drawInfo, @Nullable Runnable onEmojiLoaded) {
     if (drawInfo == null) {
       return null;
     }
@@ -77,19 +84,31 @@ class EmojiProvider {
     final int           lowMemoryDecodeScale = DeviceProperties.isLowMemoryDevice(context) ? 2 : 1;
     final EmojiSource   source               = EmojiSource.getLatest();
     final EmojiDrawable drawable             = new EmojiDrawable(source, drawInfo, lowMemoryDecodeScale);
-    EmojiPageCache.INSTANCE
-        .load(context, drawInfo.getPage(), lowMemoryDecodeScale)
-        .addListener(new FutureTaskListener<Bitmap>() {
-          @Override
-          public void onSuccess(Bitmap result) {
-            ThreadUtil.runOnMain(() -> drawable.setBitmap(result));
-          }
 
-          @Override
-          public void onFailure(ExecutionException exception) {
-            Log.d(TAG, "Failed to load emoji bitmap resource", exception);
-          }
-        });
+    EmojiPageCache.LoadResult loadResult = EmojiPageCache.INSTANCE.load(context, drawInfo.getPage(), lowMemoryDecodeScale);
+
+    if (loadResult instanceof EmojiPageCache.LoadResult.Immediate) {
+      ThreadUtil.runOnMain(() -> drawable.setBitmap(((EmojiPageCache.LoadResult.Immediate) loadResult).getBitmap()));
+    } else if (loadResult instanceof EmojiPageCache.LoadResult.Async) {
+      ((EmojiPageCache.LoadResult.Async) loadResult).getTask().addListener(new FutureTaskListener<Bitmap>() {
+        @Override
+        public void onSuccess(Bitmap result) {
+          ThreadUtil.runOnMain(() -> {
+            drawable.setBitmap(result);
+            if (onEmojiLoaded != null) {
+              onEmojiLoaded.run();
+            }
+          });
+        }
+
+        @Override
+        public void onFailure(ExecutionException exception) {
+          Log.d(TAG, "Failed to load emoji bitmap resource", exception);
+        }
+      });
+    } else {
+      throw new IllegalStateException("Unexpected subclass " + loadResult.getClass());
+    }
 
     return drawable;
   }

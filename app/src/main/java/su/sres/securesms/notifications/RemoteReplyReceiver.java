@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+
 import androidx.core.app.RemoteInput;
 
 import su.sres.core.util.concurrent.SignalExecutors;
@@ -41,6 +42,7 @@ import su.sres.securesms.sms.OutgoingTextMessage;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Get the response text from the Wearable Device and sends an message as a reply
@@ -74,24 +76,24 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
 
         Recipient recipient      = Recipient.resolved(recipientId);
         int       subscriptionId = recipient.getDefaultSubscriptionId().or(-1);
-        long      expiresIn      = recipient.getExpireMessages() * 1000L;
+        long      expiresIn      = TimeUnit.SECONDS.toMillis(recipient.getExpiresInSeconds());
 
         switch (replyMethod) {
           case GroupMessage: {
             OutgoingMediaMessage reply = new OutgoingMediaMessage(recipient,
-                    responseText.toString(),
-                    new LinkedList<>(),
-                    System.currentTimeMillis(),
-                    subscriptionId,
-                    expiresIn,
-                    false,
-                    0,
-                    null,
-                    Collections.emptyList(),
-                    Collections.emptyList(),
-                    Collections.emptyList(),
-                    Collections.emptyList(),
-                    Collections.emptyList());
+                                                                  responseText.toString(),
+                                                                  new LinkedList<>(),
+                                                                  System.currentTimeMillis(),
+                                                                  subscriptionId,
+                                                                  expiresIn,
+                                                                  false,
+                                                                  0,
+                                                                  null,
+                                                                  Collections.emptyList(),
+                                                                  Collections.emptyList(),
+                                                                  Collections.emptyList(),
+                                                                  Collections.emptyList(),
+                                                                  Collections.emptyList());
             threadId = MessageSender.send(context, reply, -1, false, null);
             break;
           }

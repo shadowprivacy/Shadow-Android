@@ -40,6 +40,8 @@ import android.widget.Toast;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import su.sres.securesms.ContactSelectionListFragment;
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
@@ -57,6 +59,7 @@ import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
 import su.sres.securesms.util.FeatureFlags;
+import su.sres.securesms.util.LifecycleDisposable;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.SimpleTask;
@@ -106,6 +109,8 @@ public class ShareActivity extends PassphraseRequiredActivity
   private ShareIntents.Args args;
   private ShareViewModel    viewModel;
 
+  private final LifecycleDisposable disposables = new LifecycleDisposable();
+
   @Override
   protected void onPreCreate() {
     dynamicTheme.onCreate(this);
@@ -116,6 +121,8 @@ public class ShareActivity extends PassphraseRequiredActivity
   protected void onCreate(Bundle icicle, boolean ready) {
 
     setContentView(R.layout.share_activity);
+
+    disposables.bindTo(getLifecycle());
 
     initializeArgs();
     initializeViewModel();
@@ -180,12 +187,28 @@ public class ShareActivity extends PassphraseRequiredActivity
   }
 
   @Override
-  public boolean onBeforeContactSelected(Optional<RecipientId> recipientId, String number) {
+  public void onBeforeContactSelected(Optional<RecipientId> recipientId, String number, java.util.function.Consumer<Boolean> callback) {
     if (disallowMultiShare) {
       Toast.makeText(this, R.string.ShareActivity__sharing_to_multiple_chats_is, Toast.LENGTH_LONG).show();
-      return false;
+      callback.accept(false);
     } else {
-      return viewModel.onContactSelected(new ShareContact(recipientId, number));
+      disposables.add(viewModel.onContactSelected(new ShareContact(recipientId, number))
+                               .subscribeOn(Schedulers.io())
+                               .observeOn(AndroidSchedulers.mainThread())
+                               .subscribe(result -> {
+                                 switch (result) {
+                                   case TRUE:
+                                     callback.accept(true);
+                                     break;
+                                   case FALSE:
+                                     callback.accept(false);
+                                     break;
+                                   case FALSE_AND_SHOW_PERMISSION_TOAST:
+                                     Toast.makeText(this, R.string.ShareActivity_you_do_not_have_permission_to_send_to_this_group, Toast.LENGTH_SHORT).show();
+                                     callback.accept(false);
+                                     break;
+                                 }
+                               }));
     }
   }
 

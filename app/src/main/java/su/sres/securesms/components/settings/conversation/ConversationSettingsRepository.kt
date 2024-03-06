@@ -15,17 +15,20 @@ import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.database.GroupDatabase
 import su.sres.securesms.database.IdentityDatabase
 import su.sres.securesms.database.MediaDatabase
+import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.groups.GroupId
 import su.sres.securesms.groups.GroupManager
 import su.sres.securesms.groups.GroupProtoUtil
 import su.sres.securesms.groups.LiveGroup
 import su.sres.securesms.groups.ui.GroupChangeFailureReason
+import su.sres.securesms.jobs.RetrieveProfileJob
 import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.recipients.RecipientId
 import su.sres.securesms.recipients.RecipientUtil
 import su.sres.securesms.util.FeatureFlags
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 private val TAG = Log.tag(ConversationSettingsRepository::class.java)
 
@@ -130,9 +133,9 @@ class ConversationSettingsRepository(
           members.addAll(groupRecord.members)
           members.addAll(pendingMembers)
 
-          GroupCapacityResult(Recipient.self().id, members, FeatureFlags.groupLimits())
+          GroupCapacityResult(Recipient.self().id, members, FeatureFlags.groupLimits(), groupRecord.isAnnouncementGroup)
         } else {
-          GroupCapacityResult(Recipient.self().id, groupRecord.members, FeatureFlags.groupLimits())
+          GroupCapacityResult(Recipient.self().id, groupRecord.members, FeatureFlags.groupLimits(), false)
         }
       )
     }
@@ -140,6 +143,25 @@ class ConversationSettingsRepository(
 
   fun addMembers(groupId: GroupId, selected: List<RecipientId>, consumer: (GroupAddMembersResult) -> Unit) {
     SignalExecutors.BOUNDED.execute {
+      val record: GroupDatabase.GroupRecord = DatabaseFactory.getGroupDatabase(context).getGroup(groupId).get()
+
+      if (record.isAnnouncementGroup) {
+        val needsResolve = selected
+          .map { Recipient.resolved(it) }
+          .filter { it.announcementGroupCapability != Recipient.Capability.SUPPORTED && !it.isSelf }
+          .map { it.id }
+          .toSet()
+
+        ApplicationDependencies.getJobManager().runSynchronously(RetrieveProfileJob(needsResolve), TimeUnit.SECONDS.toMillis(10))
+
+        val updatedWithCapabilities = needsResolve.map { Recipient.resolved(it) }
+
+        if (updatedWithCapabilities.any { it.announcementGroupCapability != Recipient.Capability.SUPPORTED }) {
+          consumer(GroupAddMembersResult.Failure(GroupChangeFailureReason.NOT_ANNOUNCEMENT_CAPABLE))
+          return@execute
+        }
+      }
+
       consumer(
         try {
           val groupActionResult = GroupManager.addMembers(context, groupId.requirePush(), selected)

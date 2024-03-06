@@ -26,6 +26,8 @@ import su.sres.securesms.util.concurrent.SimpleTask;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import java.util.function.Consumer;
+
 
 public class PaymentRecipientSelectionFragment extends LoggingFragment implements ContactSelectionListFragment.OnContactSelectedListener, ContactSelectionListFragment.ScrollCallback {
 
@@ -68,14 +70,14 @@ public class PaymentRecipientSelectionFragment extends LoggingFragment implement
   }
 
   @Override
-  public boolean onBeforeContactSelected(@NonNull Optional<RecipientId> recipientId, @Nullable String number) {
+  public void onBeforeContactSelected(@NonNull Optional<RecipientId> recipientId, @Nullable String number, Consumer<Boolean> callback) {
     if (recipientId.isPresent()) {
       SimpleTask.run(getViewLifecycleOwner().getLifecycle(),
                      () -> Recipient.resolved(recipientId.get()),
                      this::createPaymentOrShowWarningDialog);
-      return false;
     }
-    return false;
+
+    callback.accept(false);
   }
 
   @Override

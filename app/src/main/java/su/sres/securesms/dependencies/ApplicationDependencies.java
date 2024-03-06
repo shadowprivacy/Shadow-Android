@@ -20,7 +20,6 @@ import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.keyvalue.KeyValueStore;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.megaphone.MegaphoneRepository;
-import su.sres.securesms.net.PipeConnectivityListener;
 import su.sres.securesms.net.StandardUserAgentInterceptor;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.payments.Payments;
@@ -127,10 +126,6 @@ public class ApplicationDependencies {
     return application;
   }
 
-  public static @NonNull PipeConnectivityListener getPipeListener() {
-    return provider.providePipeListener();
-  }
-
   public static @NonNull SignalServiceAccountManager getSignalServiceAccountManager() {
     SignalServiceAccountManager local = accountManager;
 
@@ -192,9 +187,7 @@ public class ApplicationDependencies {
       if (messageSender == null) {
         messageSender = provider.provideSignalServiceMessageSender(getSignalWebSocket());
       } else {
-        messageSender.update(
-            TextSecurePreferences.isMultiDevice(application),
-            FeatureFlags.attachmentsV3());
+        messageSender.update(FeatureFlags.attachmentsV3());
       }
       return messageSender;
     }
@@ -236,7 +229,6 @@ public class ApplicationDependencies {
 
   public static void resetNetworkConnectionsAfterProxyChange() {
     synchronized (LOCK) {
-      getPipeListener().reset();
       closeConnections();
     }
   }
@@ -527,9 +519,6 @@ public class ApplicationDependencies {
   }
 
   public interface Provider {
-    @NonNull
-    PipeConnectivityListener providePipeListener();
-
     @NonNull
     GroupsV2Operations provideGroupsV2Operations();
 

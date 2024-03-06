@@ -169,9 +169,9 @@ public final class MessageDecryptionUtil {
 
     if (groupId.isPresent()) {
       Recipient groupRecipient = Recipient.externalPossiblyMigratedGroup(context, groupId.get());
-      threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(groupRecipient);
+      threadId = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(groupRecipient);
     } else {
-      threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(sender);
+      threadId = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(sender);
     }
 
     switch (contentHint) {
@@ -226,11 +226,16 @@ public final class MessageDecryptionUtil {
 
   private static int envelopeTypeToCiphertextMessageType(int envelopeType) {
     switch (envelopeType) {
-      case SignalServiceProtos.Envelope.Type.CIPHERTEXT_VALUE: return CiphertextMessage.WHISPER_TYPE;
-      case SignalServiceProtos.Envelope.Type.PREKEY_BUNDLE_VALUE: return CiphertextMessage.PREKEY_TYPE;
-      case SignalServiceProtos.Envelope.Type.UNIDENTIFIED_SENDER_VALUE: return CiphertextMessage.SENDERKEY_TYPE;
-      case SignalServiceProtos.Envelope.Type.PLAINTEXT_CONTENT_VALUE: return CiphertextMessage.PLAINTEXT_CONTENT_TYPE;
-      default: return CiphertextMessage.WHISPER_TYPE;
+      case SignalServiceProtos.Envelope.Type.CIPHERTEXT_VALUE:
+        return CiphertextMessage.WHISPER_TYPE;
+      case SignalServiceProtos.Envelope.Type.PREKEY_BUNDLE_VALUE:
+        return CiphertextMessage.PREKEY_TYPE;
+      case SignalServiceProtos.Envelope.Type.UNIDENTIFIED_SENDER_VALUE:
+        return CiphertextMessage.SENDERKEY_TYPE;
+      case SignalServiceProtos.Envelope.Type.PLAINTEXT_CONTENT_VALUE:
+        return CiphertextMessage.PLAINTEXT_CONTENT_TYPE;
+      default:
+        return CiphertextMessage.WHISPER_TYPE;
     }
   }
 

@@ -15,6 +15,7 @@ import su.sres.securesms.util.Rfc5724Uri;
 
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.util.concurrent.TimeUnit;
 
 public class QuickResponseService extends IntentService {
 
@@ -38,17 +39,17 @@ public class QuickResponseService extends IntentService {
     }
 
     try {
-      Rfc5724Uri uri        = new Rfc5724Uri(intent.getDataString());
-      String     content    = intent.getStringExtra(Intent.EXTRA_TEXT);
-      String     number     = uri.getPath();
+      Rfc5724Uri uri     = new Rfc5724Uri(intent.getDataString());
+      String     content = intent.getStringExtra(Intent.EXTRA_TEXT);
+      String     number  = uri.getPath();
 
-      if (number.contains("%")){
+      if (number.contains("%")) {
         number = URLDecoder.decode(number);
       }
 
       Recipient recipient      = Recipient.external(this, number);
       int       subscriptionId = recipient.getDefaultSubscriptionId().or(-1);
-      long      expiresIn      = recipient.getExpireMessages() * 1000L;
+      long      expiresIn      = TimeUnit.SECONDS.toMillis(recipient.getExpiresInSeconds());
 
       if (!TextUtils.isEmpty(content)) {
         MessageSender.send(this, new OutgoingTextMessage(recipient, content, expiresIn, subscriptionId), -1, false, null);

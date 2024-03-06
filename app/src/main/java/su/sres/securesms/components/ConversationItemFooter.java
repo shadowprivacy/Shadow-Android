@@ -19,7 +19,6 @@ import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.airbnb.lottie.LottieAnimationView;
@@ -148,7 +147,7 @@ public class ConversationItemFooter extends ConstraintLayout {
   }
 
   public void setAudioDuration(long totalDurationMillis, long currentPostionMillis) {
-    long remainingSecs = TimeUnit.MILLISECONDS.toSeconds(totalDurationMillis - currentPostionMillis);
+    long remainingSecs = Math.max(0, TimeUnit.MILLISECONDS.toSeconds(totalDurationMillis - currentPostionMillis));
     audioDuration.setText(getResources().getString(R.string.AudioView_duration, remainingSecs / 60, remainingSecs % 60));
   }
 
@@ -310,7 +309,7 @@ public class ConversationItemFooter extends ConstraintLayout {
     } else if (messageRecord.isRateLimited()) {
       dateView.setText(R.string.ConversationItem_send_paused);
     } else {
-      dateView.setText(DateUtils.getExtendedRelativeTimeSpanString(getContext(), locale, messageRecord.getTimestamp()));
+      dateView.setText(DateUtils.getSimpleRelativeTimeSpanString(getContext(), locale, messageRecord.getTimestamp()));
     }
   }
 

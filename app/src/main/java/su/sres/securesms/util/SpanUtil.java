@@ -99,6 +99,13 @@ public final class SpanUtil {
     return imageSpan;
   }
 
+  public static CharSequence buildImageSpanBottomAligned(@NonNull Drawable drawable) {
+    SpannableString imageSpan = new SpannableString(" ");
+    imageSpan.setSpan(new ImageSpan(drawable, DynamicDrawableSpan.ALIGN_BOTTOM), 0, imageSpan.length(), 0);
+
+    return imageSpan;
+  }
+
   public static CharSequence learnMore(@NonNull Context context,
                                        @ColorInt int color,
                                        @NonNull View.OnClickListener onLearnMoreClicked)
@@ -115,6 +122,44 @@ public final class SpanUtil {
             substring,
             clickListener,
             ContextCompat.getColor(context, R.color.signal_accent_primary));
+  }
+
+  /**
+   * Takes two resources:
+   * - one resource that has a single string placeholder
+   * - and another resource for a string you want to put in that placeholder with a click listener.
+   *
+   * Example:
+   *
+   * <string name="main_string">This is a %1$s string.</string>
+   * <string name="clickable_string">clickable</string>
+   *
+   * -> This is a clickable string.
+   * (where "clickable" is blue and will trigger the provided click listener when clicked)
+   */
+  public static Spannable clickSubstring(@NonNull Context context, @StringRes int mainString, @StringRes int clickableString, @NonNull View.OnClickListener clickListener) {
+    String main      = context.getString(mainString, SPAN_PLACE_HOLDER);
+    String clickable = context.getString(clickableString);
+
+    int start = main.indexOf(SPAN_PLACE_HOLDER);
+    int end   = start + SPAN_PLACE_HOLDER.length();
+
+    Spannable spannable = new SpannableString(main.substring(0, start) + clickable + main.substring(end));
+
+    spannable.setSpan(new ClickableSpan() {
+      @Override
+      public void onClick(@NonNull View widget) {
+        clickListener.onClick(widget);
+      }
+
+      @Override
+      public void updateDrawState(@NonNull TextPaint ds) {
+        super.updateDrawState(ds);
+        ds.setUnderlineText(false);
+      }
+    }, start, start + clickable.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
+    return spannable;
   }
 
   public static CharSequence clickSubstring(@NonNull CharSequence fullString,

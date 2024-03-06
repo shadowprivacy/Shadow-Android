@@ -45,6 +45,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.messages.SignalServiceAttachmentPointer;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.api.groupsv2.DecryptedGroupUtil;
+import su.sres.storageservice.protos.groups.local.EnabledState;
 
 import java.io.Closeable;
 import java.security.SecureRandom;
@@ -60,6 +61,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public final class GroupDatabase extends Database {
 
@@ -1044,15 +1046,32 @@ public final class GroupDatabase extends Database {
     }
 
     public @NonNull String getDescription() {
-      if (v2GroupProperties == null) {
-        return "";
-      } else {
+      if (v2GroupProperties != null) {
         return v2GroupProperties.getDecryptedGroup().getDescription();
+      } else {
+        return "";
+      }
+    }
+
+    public boolean isAnnouncementGroup() {
+      if (v2GroupProperties != null) {
+        return v2GroupProperties.getDecryptedGroup().getIsAnnouncementGroup() == EnabledState.ENABLED;
+      } else {
+        return false;
       }
     }
 
     public @NonNull List<RecipientId> getMembers() {
       return members;
+    }
+
+    @WorkerThread
+    public @NonNull List<Recipient> getAdmins() {
+      if (v2GroupProperties != null) {
+        return v2GroupProperties.getAdmins(members.stream().map(Recipient::resolved).collect(Collectors.toList()));
+      } else {
+        return Collections.emptyList();
+      }
     }
 
     /**
@@ -1218,6 +1237,10 @@ public final class GroupDatabase extends Database {
       return DecryptedGroupUtil.findMemberByUuid(getDecryptedGroup().getMembersList(), uuid.get())
                                .transform(t -> t.getRole() == Member.Role.ADMINISTRATOR)
                                .or(false);
+    }
+
+    public @NonNull List<Recipient> getAdmins(@NonNull List<Recipient> members) {
+      return members.stream().filter(this::isAdmin).collect(Collectors.toList());
     }
 
     public MemberLevel memberLevel(@NonNull Recipient recipient) {

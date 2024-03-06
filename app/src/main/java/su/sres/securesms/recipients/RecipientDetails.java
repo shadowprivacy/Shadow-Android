@@ -66,6 +66,7 @@ public class RecipientDetails {
   final Recipient.Capability       groupsV2Capability;
   final Recipient.Capability       groupsV1MigrationCapability;
   final Recipient.Capability       senderKeyCapability;
+  final Recipient.Capability       announcementGroupCapability;
   final InsightsBannerTier         insightsBannerTier;
   final byte[]                     storageId;
   final MentionSetting             mentionSetting;
@@ -121,6 +122,7 @@ public class RecipientDetails {
     this.groupsV2Capability          = settings.getGroupsV2Capability();
     this.groupsV1MigrationCapability = settings.getGroupsV1MigrationCapability();
     this.senderKeyCapability         = settings.getSenderKeyCapability();
+    this.announcementGroupCapability = settings.getAnnouncementGroupCapability();
     this.insightsBannerTier          = settings.getInsightsBannerTier();
     this.storageId                   = settings.getStorageId();
     this.mentionSetting              = settings.getMentionSetting();
@@ -176,6 +178,7 @@ public class RecipientDetails {
     this.groupsV2Capability          = Recipient.Capability.UNKNOWN;
     this.groupsV1MigrationCapability = Recipient.Capability.UNKNOWN;
     this.senderKeyCapability         = Recipient.Capability.UNKNOWN;
+    this.announcementGroupCapability = Recipient.Capability.UNKNOWN;
     this.storageId                   = null;
     this.mentionSetting              = MentionSetting.ALWAYS_NOTIFY;
     this.wallpaper                   = null;

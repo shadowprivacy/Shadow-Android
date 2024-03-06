@@ -36,11 +36,14 @@
     <dimen name="message_bubble_corner_radius">2dp</dimen>
     <dimen name="message_bubble_shadow_distance">1.5dp</dimen>
     <dimen name="message_bubble_horizontal_padding">12dp</dimen>
-    <dimen name="message_bubble_top_padding">6dp</dimen>
+    <dimen name="message_bubble_top_padding">7dp</dimen>
+    <dimen name="message_bubble_top_image_margin">4dp</dimen>
+    <dimen name="message_bubble_text_only_top_margin">4dp</dimen>
     <dimen name="message_bubble_top_padding_audio">12dp</dimen>
     <dimen name="message_bubble_collapsed_footer_padding">6dp</dimen>
     <dimen name="message_bubble_edge_margin">32dp</dimen>
-    <dimen name="message_bubble_bottom_padding">8dp</dimen>
+    <dimen name="message_bubble_bottom_padding">7dp</dimen>
+    <dimen name="message_bubble_revealable_padding">12dp</dimen>
     <dimen name="media_bubble_remove_button_size">24dp</dimen>
     <dimen name="media_bubble_edit_button_size">24dp</dimen>
     <dimen name="media_bubble_default_dimens">210dp</dimen>
@@ -169,8 +172,9 @@
     <dimen name="review_card_icon_arc_radius">14.5dp</dimen>
 
     <dimen name="conversation_update_vertical_margin">4dp</dimen>
-    <dimen name="conversation_update_vertical_padding">5dp</dimen>
-    <dimen name="conversation_update_vertical_padding_collapsed">2dp</dimen>
+    <dimen name="conversation_update_vertical_padding">8dp</dimen>
+    <dimen name="conversation_update_vertical_padding_collapsed">4dp</dimen>
+    <dimen name="conversation_update_horizontal_padding">8dp</dimen>
 
     <dimen name="transfer_top_padding">64dp</dimen>
     <dimen name="transfer_split_top_padding">32dp</dimen>

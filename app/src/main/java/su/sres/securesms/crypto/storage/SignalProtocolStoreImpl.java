@@ -20,12 +20,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import su.sres.signalservice.api.SignalServiceProtocolStore;
+import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.signalservice.api.SignalServiceDataStore;
 import su.sres.signalservice.api.SignalServiceSessionStore;
 import su.sres.signalservice.api.push.DistributionId;
 
-public class SignalProtocolStoreImpl implements SignalServiceProtocolStore {
+public class SignalProtocolStoreImpl implements SignalServiceDataStore {
 
+  private final Context                   context;
   private final PreKeyStore               preKeyStore;
   private final SignedPreKeyStore         signedPreKeyStore;
   private final IdentityKeyStore          identityKeyStore;
@@ -33,6 +35,7 @@ public class SignalProtocolStoreImpl implements SignalServiceProtocolStore {
   private final SignalSenderKeyStore      senderKeyStore;
 
   public SignalProtocolStoreImpl(Context context) {
+    this.context           = context;
     this.preKeyStore       = new TextSecurePreKeyStore(context);
     this.signedPreKeyStore = new TextSecurePreKeyStore(context);
     this.identityKeyStore  = new TextSecureIdentityKeyStore(context);
@@ -171,7 +174,12 @@ public class SignalProtocolStoreImpl implements SignalServiceProtocolStore {
   }
 
   @Override
-  public void clearSenderKeySharedWith(DistributionId distributionId, Collection<SignalProtocolAddress> addresses) {
-    senderKeyStore.clearSenderKeySharedWith(distributionId, addresses);
+  public void clearSenderKeySharedWith(Collection<SignalProtocolAddress> addresses) {
+    senderKeyStore.clearSenderKeySharedWith(addresses);
+  }
+
+  @Override
+  public boolean isMultiDevice() {
+    return TextSecurePreferences.isMultiDevice(context);
   }
 }

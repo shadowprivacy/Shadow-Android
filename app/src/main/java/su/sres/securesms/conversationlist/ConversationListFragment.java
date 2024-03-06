@@ -113,7 +113,6 @@ import su.sres.securesms.megaphone.MegaphoneActionController;
 import su.sres.securesms.megaphone.MegaphoneViewBuilder;
 import su.sres.securesms.megaphone.Megaphones;
 import su.sres.securesms.mms.GlideApp;
-import su.sres.securesms.net.PipeConnectivityListener;
 import su.sres.securesms.notifications.MarkReadReceiver;
 import su.sres.securesms.payments.preferences.PaymentsActivity;
 import su.sres.securesms.payments.preferences.details.PaymentDetailsFragmentArgs;
@@ -143,6 +142,7 @@ import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.task.SnackbarAsyncTask;
 import su.sres.securesms.util.views.Stub;
+import su.sres.signalservice.api.websocket.WebSocketConnectionState;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -961,19 +961,21 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }
   }
 
-  private void updateProxyStatus(@NonNull PipeConnectivityListener.State state) {
+  private void updateProxyStatus(@NonNull WebSocketConnectionState state) {
     if (SignalStore.proxy().isProxyEnabled()) {
       proxyStatus.setVisibility(View.VISIBLE);
 
       switch (state) {
         case CONNECTING:
+        case DISCONNECTING:
         case DISCONNECTED:
           proxyStatus.setImageResource(R.drawable.ic_proxy_connecting_24);
           break;
         case CONNECTED:
           proxyStatus.setImageResource(R.drawable.ic_proxy_connected_24);
           break;
-        case FAILURE:
+        case AUTHENTICATION_FAILED:
+        case FAILED:
           proxyStatus.setImageResource(R.drawable.ic_proxy_failed_24);
           break;
       }

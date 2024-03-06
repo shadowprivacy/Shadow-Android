@@ -33,7 +33,7 @@ import su.sres.securesms.jobs.FastJobStorage;
 import su.sres.securesms.jobs.JobManagerFactories;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.megaphone.MegaphoneRepository;
-import su.sres.securesms.net.PipeConnectivityListener;
+import su.sres.securesms.net.SignalWebSocketHealthMonitor;
 import su.sres.securesms.notifications.MessageNotifier;
 import su.sres.securesms.notifications.OptimizedMessageNotifier;
 import su.sres.securesms.payments.MobileCoinConfig;
@@ -75,24 +75,15 @@ import java.util.UUID;
  */
 public class ApplicationDependencyProvider implements ApplicationDependencies.Provider {
 
-  private static final String TAG = Log.tag(ApplicationDependencyProvider.class);
-
-  private final Application              context;
-  private final PipeConnectivityListener pipeListener;
+  private final Application context;
 
   public ApplicationDependencyProvider(@NonNull Application context) {
-    this.context      = context;
-    this.pipeListener = new PipeConnectivityListener(context);
+    this.context = context;
   }
 
   private @NonNull
   ClientZkOperations provideClientZkOperations() {
     return ClientZkOperations.create(provideSignalServiceNetworkAccess().getConfiguration());
-  }
-
-  @Override
-  public @NonNull PipeConnectivityListener providePipeListener() {
-    return pipeListener;
   }
 
   @Override
@@ -117,7 +108,6 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
                                           new SignalProtocolStoreImpl(context),
                                           ReentrantSessionLock.INSTANCE,
                                           BuildConfig.SIGNAL_AGENT,
-                                          TextSecurePreferences.isMultiDevice(context),
                                           FeatureFlags.attachmentsV3(),
                                           signalWebSocket,
                                           Optional.of(new SecurityEventListener(context)),
@@ -129,13 +119,9 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
 
   @Override
   public @NonNull SignalServiceMessageReceiver provideSignalServiceMessageReceiver() {
-    SleepTimer sleepTimer = TextSecurePreferences.isFcmDisabled(context) ? new AlarmSleepTimer(context)
-                                                                         : new UptimeSleepTimer();
     return new SignalServiceMessageReceiver(provideSignalServiceNetworkAccess().getConfiguration(),
                                             new DynamicCredentialsProvider(context),
                                             BuildConfig.SIGNAL_AGENT,
-                                            pipeListener,
-                                            sleepTimer,
                                             provideClientZkOperations().getProfileOperations(),
                                             FeatureFlags.okHttpAutomaticRetry());
   }
@@ -259,35 +245,33 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
 
   @Override
   public @NonNull SignalWebSocket provideSignalWebSocket() {
-    return new SignalWebSocket(provideWebSocketFactory());
+    SleepTimer                   sleepTimer      = TextSecurePreferences.isFcmDisabled(context) ? new AlarmSleepTimer(context) : new UptimeSleepTimer();
+    SignalWebSocketHealthMonitor healthMonitor   = new SignalWebSocketHealthMonitor(context, sleepTimer);
+    SignalWebSocket              signalWebSocket = new SignalWebSocket(provideWebSocketFactory(healthMonitor));
+
+    healthMonitor.monitor(signalWebSocket);
+
+    return signalWebSocket;
   }
 
-  private @NonNull WebSocketFactory provideWebSocketFactory() {
+  private @NonNull WebSocketFactory provideWebSocketFactory(@NonNull SignalWebSocketHealthMonitor healthMonitor) {
     return new WebSocketFactory() {
       @Override
       public WebSocketConnection createWebSocket() {
-        SleepTimer sleepTimer = TextSecurePreferences.isFcmDisabled(context) ? new AlarmSleepTimer(context)
-                                                                             : new UptimeSleepTimer();
-
         return new WebSocketConnection("normal",
                                        provideSignalServiceNetworkAccess().getConfiguration(),
                                        Optional.of(new DynamicCredentialsProvider(context)),
                                        BuildConfig.SIGNAL_AGENT,
-                                       pipeListener,
-                                       sleepTimer);
+                                       healthMonitor);
       }
 
       @Override
       public WebSocketConnection createUnidentifiedWebSocket() {
-        SleepTimer sleepTimer = TextSecurePreferences.isFcmDisabled(context) ? new AlarmSleepTimer(context)
-                                                                             : new UptimeSleepTimer();
-
         return new WebSocketConnection("unidentified",
                                        provideSignalServiceNetworkAccess().getConfiguration(),
                                        Optional.absent(),
                                        BuildConfig.SIGNAL_AGENT,
-                                       pipeListener,
-                                       sleepTimer);
+                                       healthMonitor);
       }
     };
   }

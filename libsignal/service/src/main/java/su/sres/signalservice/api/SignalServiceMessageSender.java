@@ -6,7 +6,6 @@
 package su.sres.signalservice.api;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.signal.libsignal.metadata.certificate.SenderCertificate;
 import org.signal.zkgroup.profiles.ClientZkProfileOperations;
@@ -20,7 +19,6 @@ import org.whispersystems.libsignal.protocol.DecryptionErrorMessage;
 import org.whispersystems.libsignal.protocol.PlaintextContent;
 import org.whispersystems.libsignal.protocol.SenderKeyDistributionMessage;
 import org.whispersystems.libsignal.state.PreKeyBundle;
-import org.whispersystems.libsignal.state.SignalProtocolStore;
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
@@ -113,7 +111,6 @@ import su.sres.signalservice.internal.push.http.AttachmentCipherOutputStreamFact
 import su.sres.signalservice.internal.push.http.CancelationSignal;
 import su.sres.signalservice.internal.push.http.PartialSendCompleteListener;
 import su.sres.signalservice.internal.push.http.ResumableUploadSpec;
-import su.sres.signalservice.internal.util.StaticCredentialsProvider;
 import su.sres.signalservice.internal.util.Util;
 
 import su.sres.util.Base64;
@@ -136,10 +133,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -153,26 +147,24 @@ public class SignalServiceMessageSender {
 
   private static final int RETRY_COUNT = 4;
 
-  private final PushServiceSocket          socket;
-  private final SignalServiceProtocolStore store;
-  private final SignalSessionLock          sessionLock;
-  private final SignalServiceAddress       localAddress;
-  private final Optional<EventListener>    eventListener;
-  private final AtomicBoolean attachmentsV3;
+  private final PushServiceSocket       socket;
+  private final SignalServiceDataStore  store;
+  private final SignalSessionLock       sessionLock;
+  private final SignalServiceAddress    localAddress;
+  private final Optional<EventListener> eventListener;
+  private final AtomicBoolean           attachmentsV3;
 
   private final AttachmentService attachmentService;
   private final MessagingService  messagingService;
-  private final AtomicBoolean     isMultiDevice;
 
   private final ExecutorService executor;
   private final long            maxEnvelopeSize;
 
   public SignalServiceMessageSender(SignalServiceConfiguration urls,
                                     CredentialsProvider credentialsProvider,
-                                    SignalServiceProtocolStore store,
+                                    SignalServiceDataStore store,
                                     SignalSessionLock sessionLock,
                                     String signalAgent,
-                                    boolean isMultiDevice,
                                     boolean attachmentsV3,
                                     SignalWebSocket signalWebSocket,
                                     Optional<EventListener> eventListener,
@@ -182,17 +174,16 @@ public class SignalServiceMessageSender {
                                     boolean automaticNetworkRetry)
   {
 
-    this.socket           = new PushServiceSocket(urls, credentialsProvider, signalAgent, clientZkProfileOperations, automaticNetworkRetry);
-    this.store            = store;
-    this.sessionLock      = sessionLock;
-    this.localAddress     = new SignalServiceAddress(credentialsProvider.getUuid(), credentialsProvider.getUserLogin());
+    this.socket            = new PushServiceSocket(urls, credentialsProvider, signalAgent, clientZkProfileOperations, automaticNetworkRetry);
+    this.store             = store;
+    this.sessionLock       = sessionLock;
+    this.localAddress      = new SignalServiceAddress(credentialsProvider.getUuid(), credentialsProvider.getUserLogin());
     this.attachmentService = new AttachmentService(signalWebSocket);
     this.messagingService  = new MessagingService(signalWebSocket);
-    this.isMultiDevice    = new AtomicBoolean(isMultiDevice);
-    this.attachmentsV3    = new AtomicBoolean(attachmentsV3);
-    this.eventListener    = eventListener;
-    this.executor         = executor != null ? executor : Executors.newSingleThreadExecutor();
-    this.maxEnvelopeSize  = maxEnvelopeSize;
+    this.attachmentsV3     = new AtomicBoolean(attachmentsV3);
+    this.eventListener     = eventListener;
+    this.executor          = executor != null ? executor : Executors.newSingleThreadExecutor();
+    this.maxEnvelopeSize   = maxEnvelopeSize;
   }
 
   /**
@@ -416,7 +407,7 @@ public class SignalServiceMessageSender {
     Optional<byte[]>        groupId = message.getGroupId();
     List<SendMessageResult> results = sendGroupMessage(distributionId, recipients, unidentifiedAccess, message.getTimestamp(), content, contentHint, groupId.orNull(), false);
 
-    if (isMultiDevice.get()) {
+    if (store.isMultiDevice()) {
       Content         syncMessage        = createMultiDeviceSentTranscriptContent(content, Optional.absent(), message.getTimestamp(), results, isRecipientUpdate);
       EnvelopeContent syncMessageContent = EnvelopeContent.encrypted(syncMessage, ContentHint.IMPLICIT, Optional.absent());
 
@@ -457,7 +448,7 @@ public class SignalServiceMessageSender {
 
     }
 
-    if (needsSyncInResults || isMultiDevice.get()) {
+    if (needsSyncInResults || store.isMultiDevice()) {
       Optional<SignalServiceAddress> recipient = Optional.absent();
       if (!message.getGroupContext().isPresent() && recipients.size() == 1) {
         recipient = Optional.of(recipients.get(0));
@@ -526,8 +517,7 @@ public class SignalServiceMessageSender {
     socket.cancelInFlightRequests();
   }
 
-  public void update(boolean isMultiDevice, boolean attachmentsV3) {
-    this.isMultiDevice.set(isMultiDevice);
+  public void update(boolean attachmentsV3) {
     this.attachmentsV3.set(attachmentsV3);
   }
 
@@ -555,7 +545,7 @@ public class SignalServiceMessageSender {
   private SignalServiceAttachmentPointer uploadAttachmentV2(SignalServiceAttachmentStream attachment, byte[] attachmentKey, PushAttachmentData attachmentData)
       throws NonSuccessfulResponseCodeException, PushNetworkException, MalformedResponseException
   {
-    AttachmentV2UploadAttributes       v2UploadAttributes = null;
+    AttachmentV2UploadAttributes v2UploadAttributes = null;
     Log.d(TAG, "Using pipe to retrieve attachment upload attributes...");
     try {
       v2UploadAttributes = new AttachmentService.AttachmentAttributesResponseProcessor<>(attachmentService.getAttachmentV2UploadAttributes().blockingGet()).getResultOrThrow();
@@ -590,7 +580,7 @@ public class SignalServiceMessageSender {
   }
 
   public ResumableUploadSpec getResumableUploadSpec() throws IOException {
-    AttachmentV3UploadAttributes       v3UploadAttributes = null;
+    AttachmentV3UploadAttributes v3UploadAttributes = null;
     Log.d(TAG, "Using pipe to retrieve attachment upload attributes...");
     try {
       v3UploadAttributes = new AttachmentService.AttachmentAttributesResponseProcessor<>(attachmentService.getAttachmentV3UploadAttributes().blockingGet()).getResultOrThrow();
@@ -1671,7 +1661,7 @@ public class SignalServiceMessageSender {
         if (!unidentifiedAccess.isPresent()) {
           try {
             SendMessageResponse response = new MessagingService.SendResponseProcessor<>(messagingService.send(messages, Optional.absent()).blockingGet()).getResultOrThrow();
-            return SendMessageResult.success(recipient, messages.getDevices(), false, response.getNeedsSync() || isMultiDevice.get(), System.currentTimeMillis() - startTime, content.getContent());
+            return SendMessageResult.success(recipient, messages.getDevices(), false, response.getNeedsSync() || store.isMultiDevice(), System.currentTimeMillis() - startTime, content.getContent());
           } catch (WebSocketUnavailableException e) {
             Log.i(TAG, "[sendMessage] Pipe unavailable, falling back... (" + e.getClass().getSimpleName() + ": " + e.getMessage() + ")");
           } catch (IOException e) {
@@ -1681,7 +1671,7 @@ public class SignalServiceMessageSender {
         } else if (unidentifiedAccess.isPresent()) {
           try {
             SendMessageResponse response = new MessagingService.SendResponseProcessor<>(messagingService.send(messages, unidentifiedAccess).blockingGet()).getResultOrThrow();
-            return SendMessageResult.success(recipient, messages.getDevices(), true, response.getNeedsSync() || isMultiDevice.get(), System.currentTimeMillis() - startTime, content.getContent());
+            return SendMessageResult.success(recipient, messages.getDevices(), true, response.getNeedsSync() || store.isMultiDevice(), System.currentTimeMillis() - startTime, content.getContent());
           } catch (WebSocketUnavailableException e) {
             Log.i(TAG, "[sendMessage] Unidentified pipe unavailable, falling back... (" + e.getClass().getSimpleName() + ": " + e.getMessage() + ")");
           } catch (IOException e) {
@@ -1696,7 +1686,7 @@ public class SignalServiceMessageSender {
 
         SendMessageResponse response = socket.sendMessage(messages, unidentifiedAccess);
 
-        return SendMessageResult.success(recipient, messages.getDevices(), unidentifiedAccess.isPresent(), response.getNeedsSync() || isMultiDevice.get(), System.currentTimeMillis() - startTime, content.getContent());
+        return SendMessageResult.success(recipient, messages.getDevices(), unidentifiedAccess.isPresent(), response.getNeedsSync() || store.isMultiDevice(), System.currentTimeMillis() - startTime, content.getContent());
 
       } catch (InvalidKeyException ike) {
         Log.w(TAG, ike);
@@ -1755,32 +1745,16 @@ public class SignalServiceMessageSender {
       accessByUuid.put(addressIterator.next().getUuid().get(), accessIterator.next());
     }
 
-    Map<SignalServiceAddress, List<Integer>> recipientDevices = recipients.stream().collect(Collectors.toMap(a -> a, a -> new LinkedList<>()));
-
     for (int i = 0; i < RETRY_COUNT; i++) {
-      List<SignalProtocolAddress> destinations = new LinkedList<>();
-
-      for (SignalServiceAddress recipient : recipients) {
-        List<Integer> devices = recipientDevices.get(recipient);
-
-        destinations.add(new SignalProtocolAddress(recipient.getUuid().get().toString(), SignalServiceAddress.DEFAULT_DEVICE_ID));
-        devices.add(SignalServiceAddress.DEFAULT_DEVICE_ID);
-
-        for (int deviceId : store.getSubDeviceSessions(recipient.getIdentifier())) {
-          if (store.containsSession(new SignalProtocolAddress(recipient.getIdentifier(), deviceId))) {
-            destinations.add(new SignalProtocolAddress(recipient.getUuid().get().toString(), deviceId));
-            devices.add(deviceId);
-          }
-        }
-      }
+      GroupTargetInfo targetInfo = buildGroupTargetInfo(recipients);
 
       Set<SignalProtocolAddress> sharedWith = store.getSenderKeySharedWith(distributionId);
-      List<SignalServiceAddress> needsSenderKey = destinations.stream()
-                                                              .filter(a -> !sharedWith.contains(a))
-                                                              .map(a -> UuidUtil.parseOrThrow(a.getName()))
-                                                              .distinct()
-                                                              .map(uuid -> new SignalServiceAddress(uuid, null))
-                                                              .collect(Collectors.toList());
+      List<SignalServiceAddress> needsSenderKey = targetInfo.destinations.stream()
+                                                                         .filter(a -> !sharedWith.contains(a))
+                                                                         .map(a -> UuidUtil.parseOrThrow(a.getName()))
+                                                                         .distinct()
+                                                                         .map(uuid -> new SignalServiceAddress(uuid, null))
+                                                                         .collect(Collectors.toList());
 
       if (needsSenderKey.size() > 0) {
         Log.i(TAG, "[sendGroupMessage] Need to send the distribution message to " + needsSenderKey.size() + " addresses.");
@@ -1800,7 +1774,7 @@ public class SignalServiceMessageSender {
                                                       .collect(Collectors.toList());
 
         Set<String>                successUuids     = successes.stream().map(a -> a.getUuid().get().toString()).collect(Collectors.toSet());
-        Set<SignalProtocolAddress> successAddresses = destinations.stream().filter(a -> successUuids.contains(a.getName())).collect(Collectors.toSet());
+        Set<SignalProtocolAddress> successAddresses = targetInfo.destinations.stream().filter(a -> successUuids.contains(a.getName())).collect(Collectors.toSet());
 
         store.markSenderKeySharedWith(distributionId, successAddresses);
 
@@ -1828,6 +1802,8 @@ public class SignalServiceMessageSender {
           modifiedResults.addAll(fakeNetworkFailures);
 
           return modifiedResults;
+        } else {
+          targetInfo = buildGroupTargetInfo(recipients);
         }
       }
 
@@ -1836,7 +1812,7 @@ public class SignalServiceMessageSender {
 
       byte[] ciphertext;
       try {
-        ciphertext = cipher.encryptForGroup(distributionId, destinations, senderCertificate, content.toByteArray(), contentHint, groupId);
+        ciphertext = cipher.encryptForGroup(distributionId, targetInfo.destinations, senderCertificate, content.toByteArray(), contentHint, groupId);
       } catch (org.whispersystems.libsignal.UntrustedIdentityException e) {
         throw new UntrustedIdentityException("Untrusted during group encrypt", e.getName(), e.getUntrustedIdentity());
       }
@@ -1848,7 +1824,7 @@ public class SignalServiceMessageSender {
 
       try {
         SendGroupMessageResponse response = new MessagingService.SendResponseProcessor<>(messagingService.sendToGroup(ciphertext, joinedUnidentifiedAccess, timestamp, online).blockingGet()).getResultOrThrow();
-        return transformGroupResponseToMessageResults(recipientDevices, response, content);
+        return transformGroupResponseToMessageResults(targetInfo.devices, response, content);
       } catch (WebSocketUnavailableException e) {
         Log.i(TAG, "[sendGroupMessage] Pipe unavailable, falling back... (" + e.getClass().getSimpleName() + ": " + e.getMessage() + ")");
       } catch (IOException e) {
@@ -1857,26 +1833,18 @@ public class SignalServiceMessageSender {
 
       try {
         SendGroupMessageResponse response = socket.sendGroupMessage(ciphertext, joinedUnidentifiedAccess, timestamp, online);
-        return transformGroupResponseToMessageResults(recipientDevices, response, content);
+        return transformGroupResponseToMessageResults(targetInfo.devices, response, content);
       } catch (GroupMismatchedDevicesException e) {
         Log.w(TAG, "[sendGroupMessage] Handling mismatched devices.", e);
         for (GroupMismatchedDevices mismatched : e.getMismatchedDevices()) {
           SignalServiceAddress address = new SignalServiceAddress(UuidUtil.parse(mismatched.getUuid()), Optional.absent());
           handleMismatchedDevices(socket, address, mismatched.getDevices());
-          List<SignalProtocolAddress> clearAddresses = mismatched.getDevices().getExtraDevices().stream()
-                                                                 .map(device -> new SignalProtocolAddress(address.getIdentifier(), device))
-                                                                 .collect(Collectors.toList());
-          store.clearSenderKeySharedWith(distributionId, clearAddresses);
         }
       } catch (GroupStaleDevicesException e) {
         Log.w(TAG, "[sendGroupMessage] Handling stale devices.", e);
         for (GroupStaleDevices stale : e.getStaleDevices()) {
           SignalServiceAddress address = new SignalServiceAddress(UuidUtil.parse(stale.getUuid()), Optional.absent());
           handleStaleDevices(address, stale.getDevices());
-          List<SignalProtocolAddress> clearAddresses = stale.getDevices().getStaleDevices().stream()
-                                                            .map(device -> new SignalProtocolAddress(address.getIdentifier(), device))
-                                                            .collect(Collectors.toList());
-          store.clearSenderKeySharedWith(distributionId, clearAddresses);
         }
       }
 
@@ -1884,6 +1852,38 @@ public class SignalServiceMessageSender {
     }
 
     throw new IOException("Failed to resolve conflicts after " + RETRY_COUNT + " attempts!");
+  }
+
+  private GroupTargetInfo buildGroupTargetInfo(List<SignalServiceAddress> recipients) {
+    List<SignalProtocolAddress>              destinations     = new LinkedList<>();
+    Map<SignalServiceAddress, List<Integer>> recipientDevices = recipients.stream().collect(Collectors.toMap(a -> a, a -> new LinkedList<>()));
+
+    for (SignalServiceAddress recipient : recipients) {
+      List<Integer> devices = recipientDevices.get(recipient);
+
+      destinations.add(new SignalProtocolAddress(recipient.getUuid().get().toString(), SignalServiceAddress.DEFAULT_DEVICE_ID));
+      devices.add(SignalServiceAddress.DEFAULT_DEVICE_ID);
+
+      for (int deviceId : store.getSubDeviceSessions(recipient.getIdentifier())) {
+        if (store.containsSession(new SignalProtocolAddress(recipient.getIdentifier(), deviceId))) {
+          destinations.add(new SignalProtocolAddress(recipient.getUuid().get().toString(), deviceId));
+          devices.add(deviceId);
+        }
+      }
+    }
+
+    return new GroupTargetInfo(destinations, recipientDevices);
+  }
+
+
+  private static final class GroupTargetInfo {
+    private final List<SignalProtocolAddress>              destinations;
+    private final Map<SignalServiceAddress, List<Integer>> devices;
+
+    private GroupTargetInfo(List<SignalProtocolAddress> destinations, Map<SignalServiceAddress, List<Integer>> devices) {
+      this.destinations = destinations;
+      this.devices      = devices;
+    }
   }
 
   private List<SendMessageResult> transformGroupResponseToMessageResults(Map<SignalServiceAddress, List<Integer>> recipients, SendGroupMessageResponse response, Content content) {
@@ -1897,7 +1897,7 @@ public class SignalServiceMessageSender {
     List<SendMessageResult> success = recipients.keySet()
                                                 .stream()
                                                 .filter(r -> !unregistered.contains(r.getUuid().get()))
-                                                .map(a -> SendMessageResult.success(a, recipients.get(a), true, isMultiDevice.get(), -1, Optional.of(content)))
+                                                .map(a -> SendMessageResult.success(a, recipients.get(a), true, store.isMultiDevice(), -1, Optional.of(content)))
                                                 .collect(Collectors.toList());
 
     List<SendMessageResult> results = new ArrayList<>(success.size() + failures.size());
@@ -2061,14 +2061,7 @@ public class SignalServiceMessageSender {
       throws IOException, UntrustedIdentityException
   {
     try {
-      for (int extraDeviceId : mismatchedDevices.getExtraDevices()) {
-        if (recipient.getUuid().isPresent()) {
-          store.archiveSession(new SignalProtocolAddress(recipient.getUuid().get().toString(), extraDeviceId));
-        }
-        if (recipient.getNumber().isPresent()) {
-          store.archiveSession(new SignalProtocolAddress(recipient.getNumber().get(), extraDeviceId));
-        }
-      }
+      archiveSessions(recipient, mismatchedDevices.getExtraDevices());
 
       for (int missingDeviceId : mismatchedDevices.getMissingDevices()) {
         PreKeyBundle preKey = socket.getPreKey(recipient, missingDeviceId);
@@ -2086,14 +2079,32 @@ public class SignalServiceMessageSender {
   }
 
   private void handleStaleDevices(SignalServiceAddress recipient, StaleDevices staleDevices) {
-    for (int staleDeviceId : staleDevices.getStaleDevices()) {
+    archiveSessions(recipient, staleDevices.getStaleDevices());
+  }
+
+  private void archiveSessions(SignalServiceAddress recipient, List<Integer> devices) {
+    List<SignalProtocolAddress> addressesToClear = convertToProtocolAddresses(recipient, devices);
+
+    for (SignalProtocolAddress address : addressesToClear) {
+      store.archiveSession(address);
+    }
+
+    store.clearSenderKeySharedWith(addressesToClear);
+  }
+
+  private List<SignalProtocolAddress> convertToProtocolAddresses(SignalServiceAddress recipient, List<Integer> devices) {
+    List<SignalProtocolAddress> addresses = new ArrayList<>(devices.size());
+
+    for (int staleDeviceId : devices) {
       if (recipient.getUuid().isPresent()) {
-        store.archiveSession(new SignalProtocolAddress(recipient.getUuid().get().toString(), staleDeviceId));
+        addresses.add(new SignalProtocolAddress(recipient.getUuid().get().toString(), staleDeviceId));
       }
       if (recipient.getNumber().isPresent()) {
-        store.archiveSession(new SignalProtocolAddress(recipient.getNumber().get(), staleDeviceId));
+        addresses.add(new SignalProtocolAddress(recipient.getNumber().get(), staleDeviceId));
       }
     }
+
+    return addresses;
   }
 
   private Optional<UnidentifiedAccess> getTargetUnidentifiedAccess(Optional<UnidentifiedAccessPair> unidentifiedAccess) {

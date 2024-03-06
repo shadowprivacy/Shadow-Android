@@ -21,12 +21,13 @@ import com.dd.CircularProgressButton;
 import su.sres.securesms.R;
 import su.sres.securesms.contactshare.SimpleTextWatcher;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.net.PipeConnectivityListener;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.securesms.util.ShadowProxyUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
+import su.sres.signalservice.api.websocket.WebSocketConnectionState;
 import su.sres.signalservice.internal.configuration.ShadowProxy;
 
 public class EditProxyFragment extends Fragment {
@@ -113,10 +114,11 @@ public class EditProxyFragment extends Fragment {
         }
     }
 
-    private void presentProxyState(@NonNull PipeConnectivityListener.State proxyState) {
+    private void presentProxyState(@NonNull WebSocketConnectionState proxyState) {
         if (SignalStore.proxy().getProxy() != null) {
             switch (proxyState) {
                 case DISCONNECTED:
+                case DISCONNECTING:
                 case CONNECTING:
                     proxyStatus.setText(R.string.preferences_connecting_to_proxy);
                     proxyStatus.setTextColor(getResources().getColor(R.color.signal_text_secondary));
@@ -125,7 +127,8 @@ public class EditProxyFragment extends Fragment {
                     proxyStatus.setText(R.string.preferences_connected_to_proxy);
                     proxyStatus.setTextColor(getResources().getColor(R.color.signal_accent_green));
                     break;
-                case FAILURE:
+                case AUTHENTICATION_FAILED:
+                case FAILED:
                     proxyStatus.setText(R.string.preferences_connection_failed);
                     proxyStatus.setTextColor(getResources().getColor(R.color.signal_alert_primary));
                     break;

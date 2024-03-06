@@ -13,6 +13,9 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.annimon.stream.Stream;
 
+import io.reactivex.rxjava3.core.Single;
+import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.providers.BlobProvider;
@@ -62,14 +65,28 @@ public class ShareViewModel extends ViewModel {
     return selectedContacts.getValue().size() > 1;
   }
 
-  boolean onContactSelected(@NonNull ShareContact selectedContact) {
-    Set<ShareContact> contacts = new LinkedHashSet<>(selectedContacts.getValue());
-    if (contacts.add(selectedContact)) {
-      selectedContacts.setValue(contacts);
-      return true;
-    } else {
-      return false;
-    }
+  @NonNull Single<ContactSelectResult> onContactSelected(@NonNull ShareContact selectedContact) {
+    return Single.fromCallable(() -> {
+      if (selectedContact.getRecipientId().isPresent()) {
+        Recipient recipient = Recipient.resolved(selectedContact.getRecipientId().get());
+
+        if (recipient.isPushV2Group()) {
+          Optional<GroupDatabase.GroupRecord> record = DatabaseFactory.getGroupDatabase(context).getGroup(recipient.requireGroupId());
+
+          if (record.isPresent() && record.get().isAnnouncementGroup() && !record.get().isAdmin(Recipient.self())) {
+            return ContactSelectResult.FALSE_AND_SHOW_PERMISSION_TOAST;
+          }
+        }
+      }
+
+      Set<ShareContact> contacts = new LinkedHashSet<>(selectedContacts.getValue());
+      if (contacts.add(selectedContact)) {
+        selectedContacts.postValue(contacts);
+        return ContactSelectResult.TRUE;
+      } else {
+        return ContactSelectResult.FALSE;
+      }
+    });
   }
 
   void onContactDeselected(@NonNull ShareContact selectedContact) {
@@ -142,17 +159,21 @@ public class ShareViewModel extends ViewModel {
     }
   }
 
-  public static class Factory extends ViewModelProvider.NewInstanceFactory {
-    @Override
-    public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-      //noinspection ConstantConditions
-      return modelClass.cast(new ShareViewModel());
-    }
+  enum ContactSelectResult {
+    TRUE, FALSE, FALSE_AND_SHOW_PERMISSION_TOAST
   }
 
   enum SmsShareRestriction {
     NO_RESTRICTIONS,
     DISALLOW_SMS_CONTACTS,
     DISALLOW_MULTI_SHARE
+  }
+
+  public static class Factory extends ViewModelProvider.NewInstanceFactory {
+    @Override
+    public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
+      //noinspection ConstantConditions
+      return modelClass.cast(new ShareViewModel());
+    }
   }
 }

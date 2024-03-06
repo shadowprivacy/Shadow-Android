@@ -1,41 +1,43 @@
 package su.sres.signalservice.api.groupsv2;
 
 public interface ChangeSetModifier {
-    void removeAddMembers(int i);
+  void removeAddMembers(int i);
 
-    void moveAddToPromote(int i);
+  void moveAddToPromote(int i);
 
-    void removeDeleteMembers(int i);
+  void removeDeleteMembers(int i);
 
-    void removeModifyMemberRoles(int i);
+  void removeModifyMemberRoles(int i);
 
-    void removeModifyMemberProfileKeys(int i);
+  void removeModifyMemberProfileKeys(int i);
 
-    void removeAddPendingMembers(int i);
+  void removeAddPendingMembers(int i);
 
-    void removeDeletePendingMembers(int i);
+  void removeDeletePendingMembers(int i);
 
-    void removePromotePendingMembers(int i);
+  void removePromotePendingMembers(int i);
 
-    void clearModifyTitle();
+  void clearModifyTitle();
 
-    void clearModifyAvatar();
+  void clearModifyAvatar();
 
-    void clearModifyDisappearingMessagesTimer();
+  void clearModifyDisappearingMessagesTimer();
 
-    void clearModifyAttributesAccess();
+  void clearModifyAttributesAccess();
 
-    void clearModifyMemberAccess();
+  void clearModifyMemberAccess();
 
-    void clearModifyAddFromInviteLinkAccess();
+  void clearModifyAddFromInviteLinkAccess();
 
-    void removeAddRequestingMembers(int i);
+  void removeAddRequestingMembers(int i);
 
-    void moveAddRequestingMembersToPromote(int i);
+  void moveAddRequestingMembersToPromote(int i);
 
-    void removeDeleteRequestingMembers(int i);
+  void removeDeleteRequestingMembers(int i);
 
-    void removePromoteRequestingMembers(int i);
+  void removePromoteRequestingMembers(int i);
 
-    void clearModifyDescription();
+  void clearModifyDescription();
+
+  void clearModifyAnnouncementsOnly();
 }

@@ -18,8 +18,10 @@ package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
 
+import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.ThreadDatabase;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.keyvalue.KeepMessagesDuration;
@@ -35,6 +37,10 @@ public class TrimThreadJob extends BaseJob {
   private static final String KEY_THREAD_ID = "thread_id";
 
   private long threadId;
+
+  public static void enqueueAsync(long threadId) {
+    SignalExecutors.BOUNDED.execute(() -> ApplicationDependencies.getJobManager().add(new TrimThreadJob(threadId)));
+  }
 
   public TrimThreadJob(long threadId) {
     this(new Job.Parameters.Builder().setQueue("TrimThreadJob").build(), threadId);

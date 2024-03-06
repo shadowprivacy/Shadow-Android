@@ -36,6 +36,7 @@ import su.sres.securesms.recipients.RecipientId;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.concurrent.SimpleTask;
@@ -62,7 +63,7 @@ public class NewConversationActivity extends ContactSelectionActivity
   }
 
   @Override
-  public boolean onBeforeContactSelected(Optional<RecipientId> recipientId, String number) {
+  public void onBeforeContactSelected(Optional<RecipientId> recipientId, String number, Consumer<Boolean> callback) {
     if (recipientId.isPresent()) {
       launch(Recipient.resolved(recipientId.get()));
     } else {
@@ -95,7 +96,7 @@ public class NewConversationActivity extends ContactSelectionActivity
         launch(Recipient.external(this, number));
       }
     }
-    return true;
+    callback.accept(true);
   }
 
   @Override

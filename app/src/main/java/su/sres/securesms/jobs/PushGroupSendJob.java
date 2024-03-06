@@ -54,7 +54,6 @@ import su.sres.signalservice.api.messages.SignalServiceDataMessage.Preview;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage.Quote;
 import su.sres.signalservice.api.messages.SignalServiceGroupV2;
 import su.sres.signalservice.api.messages.shared.SharedContact;
-import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.ProofRequiredException;
 import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import su.sres.signalservice.internal.push.SignalServiceProtos;
@@ -62,10 +61,7 @@ import su.sres.signalservice.internal.push.SignalServiceProtos;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public final class PushGroupSendJob extends PushSendJob {
@@ -309,7 +305,7 @@ public final class PushGroupSendJob extends PushSendJob {
           SignalServiceGroupV2 group = builder.build();
           SignalServiceDataMessage groupDataMessage = SignalServiceDataMessage.newBuilder()
                                                                               .withTimestamp(message.getSentTimeMillis())
-                                                                              .withExpiration(groupRecipient.getExpireMessages())
+                                                                              .withExpiration(groupRecipient.getExpiresInSeconds())
                                                                               .asGroupMessage(group)
                                                                               .build();
 

@@ -39,28 +39,30 @@ public class ApplicationMigrations {
   private static final MutableLiveData<Boolean> UI_BLOCKING_MIGRATION_RUNNING = new MutableLiveData<>();
 
   private static final class Version {
-    static final int VERSIONED_PROFILE      = 15;
-    static final int NEW_ACTIVATION_MODEL   = 16;
-    static final int TRIM_SETTINGS          = 17;
-    static final int GV2                    = 18;
-    static final int THUMBNAIL_CLEANUP      = 19;
-    static final int GV2_2                  = 20;
-    static final int DIR                    = 21;
-    static final int BACKUP_NOTIFICATION    = 22;
-    static final int GV1_MIGRATION          = 23;
-    static final int BLOB_LOCATION          = 24;
-    static final int SYSTEM_NAME_SPLIT      = 25;
-    static final int DAY_BY_DAY_STICKERS    = 26;
-    static final int SFU_CERT               = 27;
-    static final int PROFILE_SHARING_UPDATE = 29;
-    static final int APPLY_UNIVERSAL_EXPIRE = 30;
-    static final int SENDER_KEY             = 31;
-    static final int DB_AUTOINCREMENT       = 32;
-    static final int ATTACHMENT_CLEANUP     = 33;
-    static final int LOG_CLEANUP            = 34;
+    static final int VERSIONED_PROFILE             = 15;
+    static final int NEW_ACTIVATION_MODEL          = 16;
+    static final int TRIM_SETTINGS                 = 17;
+    static final int GV2                           = 18;
+    static final int THUMBNAIL_CLEANUP             = 19;
+    static final int GV2_2                         = 20;
+    static final int DIR                           = 21;
+    static final int BACKUP_NOTIFICATION           = 22;
+    static final int GV1_MIGRATION                 = 23;
+    static final int BLOB_LOCATION                 = 24;
+    static final int SYSTEM_NAME_SPLIT             = 25;
+    static final int DAY_BY_DAY_STICKERS           = 26;
+    static final int SFU_CERT                      = 27;
+    static final int PROFILE_SHARING_UPDATE        = 29;
+    static final int APPLY_UNIVERSAL_EXPIRE        = 30;
+    static final int SENDER_KEY                    = 31;
+    static final int DB_AUTOINCREMENT              = 32;
+    static final int ATTACHMENT_CLEANUP            = 33;
+    static final int LOG_CLEANUP                   = 34;
+    static final int ATTACHMENT_CLEANUP_2          = 35;
+    static final int ANNOUNCEMENT_GROUP_CAPABILITY = 36;
   }
 
-  public static final int CURRENT_VERSION = 34;
+  public static final int CURRENT_VERSION = 36;
 
   /**
    * This *must* be called after the {@link JobManager} has been instantiated, but *before* the call
@@ -246,6 +248,14 @@ public class ApplicationMigrations {
 
     if (lastSeenVersion < Version.LOG_CLEANUP) {
       jobs.put(Version.LOG_CLEANUP, new DeleteDeprecatedLogsMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.ATTACHMENT_CLEANUP_2) {
+      jobs.put(Version.ATTACHMENT_CLEANUP_2, new AttachmentCleanupMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.ANNOUNCEMENT_GROUP_CAPABILITY) {
+      jobs.put(Version.ANNOUNCEMENT_GROUP_CAPABILITY, new AttributesMigrationJob());
     }
 
     return jobs;

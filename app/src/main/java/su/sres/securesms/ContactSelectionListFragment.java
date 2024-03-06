@@ -54,6 +54,7 @@ import androidx.transition.TransitionManager;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.pnikosis.materialishprogress.ProgressWheel;
 
 import su.sres.securesms.components.RecyclerViewFastScroller;
@@ -90,6 +91,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Fragment for selecting a one or more contacts from a list.
@@ -134,8 +136,8 @@ public final class ContactSelectionListFragment extends LoggingFragment
   private HorizontalScrollView                        chipGroupScrollContainer;
   private OnSelectionLimitReachedListener             onSelectionLimitReachedListener;
   private AbstractContactsCursorLoaderFactoryProvider cursorFactoryProvider;
-  private View                         shadowView;
-  private ToolbarShadowAnimationHelper toolbarShadowAnimationHelper;
+  private View                                        shadowView;
+  private ToolbarShadowAnimationHelper                toolbarShadowAnimationHelper;
 
   @Nullable
   private FixedViewsAdapter headerAdapter;
@@ -574,16 +576,18 @@ public final class ContactSelectionListFragment extends LoggingFragment
               SelectedContact selected  = SelectedContact.forUsername(recipient.getId(), contact.getNumber());
 
               if (onContactSelectedListener != null) {
-                if (onContactSelectedListener.onBeforeContactSelected(Optional.of(recipient.getId()), null)) {
-                  markContactSelected(selected);
-                  cursorRecyclerViewAdapter.notifyItemRangeChanged(0, cursorRecyclerViewAdapter.getItemCount(), ContactSelectionListAdapter.PAYLOAD_SELECTION_CHANGE);
-                }
+                onContactSelectedListener.onBeforeContactSelected(Optional.of(recipient.getId()), null, allowed -> {
+                  if (allowed) {
+                    markContactSelected(selected);
+                    cursorRecyclerViewAdapter.notifyItemRangeChanged(0, cursorRecyclerViewAdapter.getItemCount(), ContactSelectionListAdapter.PAYLOAD_SELECTION_CHANGE);
+                  }
+                });
               } else {
                 markContactSelected(selected);
                 cursorRecyclerViewAdapter.notifyItemRangeChanged(0, cursorRecyclerViewAdapter.getItemCount(), ContactSelectionListAdapter.PAYLOAD_SELECTION_CHANGE);
               }
             } else {
-              new AlertDialog.Builder(requireContext())
+              new MaterialAlertDialogBuilder(requireContext())
                   .setTitle(R.string.ContactSelectionListFragment_username_not_found)
                   .setMessage(getString(R.string.ContactSelectionListFragment_s_is_not_a_signal_user, contact.getNumber()))
                   .setPositiveButton(android.R.string.ok, (dialog, which) -> dialog.dismiss())
@@ -592,10 +596,12 @@ public final class ContactSelectionListFragment extends LoggingFragment
           });
         } else {
           if (onContactSelectedListener != null) {
-            if (onContactSelectedListener.onBeforeContactSelected(contact.getRecipientId(), contact.getNumber())) {
-              markContactSelected(selectedContact);
-              cursorRecyclerViewAdapter.notifyItemRangeChanged(0, cursorRecyclerViewAdapter.getItemCount(), ContactSelectionListAdapter.PAYLOAD_SELECTION_CHANGE);
-            }
+            onContactSelectedListener.onBeforeContactSelected(contact.getRecipientId(), contact.getNumber(), allowed -> {
+              if (allowed) {
+                markContactSelected(selectedContact);
+                cursorRecyclerViewAdapter.notifyItemRangeChanged(0, cursorRecyclerViewAdapter.getItemCount(), ContactSelectionListAdapter.PAYLOAD_SELECTION_CHANGE);
+              }
+            });
           } else {
             markContactSelected(selectedContact);
             cursorRecyclerViewAdapter.notifyItemRangeChanged(0, cursorRecyclerViewAdapter.getItemCount(), ContactSelectionListAdapter.PAYLOAD_SELECTION_CHANGE);
@@ -752,11 +758,12 @@ public final class ContactSelectionListFragment extends LoggingFragment
 
   public interface OnContactSelectedListener {
     /**
-     * @return True if the contact is allowed to be selected, otherwise false.
+     * Provides an opportunity to disallow selecting an item. Call the callback with false to disallow, or true to allow it.
      */
-    boolean onBeforeContactSelected(Optional<RecipientId> recipientId, String number);
+    void onBeforeContactSelected(Optional<RecipientId> recipientId, String number, Consumer<Boolean> callback);
 
     void onContactDeselected(Optional<RecipientId> recipientId, String number);
+
     void onSelectionChanged();
   }
 

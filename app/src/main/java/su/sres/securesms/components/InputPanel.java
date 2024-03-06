@@ -95,6 +95,10 @@ public class InputPanel extends LinearLayout
   private @Nullable Listener listener;
   private           boolean  emojiVisible;
 
+  private boolean hideForGroupState;
+  private boolean hideForBlockedState;
+  private boolean hideForSearch;
+
   private ConversationStickerSuggestionAdapter stickerSuggestionAdapter;
 
   public InputPanel(Context context) {
@@ -318,6 +322,21 @@ public class InputPanel extends LinearLayout
     }
   }
 
+  public void setHideForGroupState(boolean hideForGroupState) {
+    this.hideForGroupState = hideForGroupState;
+    updateVisibility();
+  }
+
+  public void setHideForBlockedState(boolean hideForBlockedState) {
+    this.hideForBlockedState = hideForBlockedState;
+    updateVisibility();
+  }
+
+  public void setHideForSearch(boolean hideForSearch) {
+    this.hideForSearch = hideForSearch;
+    updateVisibility();
+  }
+
   @Override
   public void onRecordPermissionRequired() {
     if (listener != null) listener.onRecorderPermissionRequired();
@@ -495,6 +514,14 @@ public class InputPanel extends LinearLayout
     ViewUtil.fadeIn(quickCameraToggle, FADE_TIME);
     ViewUtil.fadeIn(quickAudioToggle, FADE_TIME);
     buttonToggle.animate().alpha(1).setDuration(FADE_TIME).start();
+  }
+
+  private void updateVisibility() {
+    if (hideForGroupState || hideForBlockedState || hideForSearch) {
+      setVisibility(GONE);
+    } else {
+      setVisibility(VISIBLE);
+    }
   }
 
   public interface Listener extends VoiceNoteDraftView.Listener {

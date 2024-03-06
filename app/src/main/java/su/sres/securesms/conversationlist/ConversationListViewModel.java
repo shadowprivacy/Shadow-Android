@@ -1,6 +1,7 @@
 package su.sres.securesms.conversationlist;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.LiveDataReactiveStreams;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
@@ -15,6 +16,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.List;
 
+import io.reactivex.rxjava3.core.BackpressureStrategy;
 import su.sres.paging.PagedData;
 import su.sres.paging.PagingConfig;
 import su.sres.paging.PagingController;
@@ -28,7 +30,6 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.megaphone.Megaphone;
 import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.megaphone.Megaphones;
-import su.sres.securesms.net.PipeConnectivityListener;
 import su.sres.securesms.payments.UnreadPaymentsRepository;
 import su.sres.securesms.search.SearchRepository;
 import su.sres.securesms.search.SearchResult;
@@ -36,6 +37,7 @@ import su.sres.securesms.util.Debouncer;
 import su.sres.securesms.util.ThrottledDebouncer;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 import su.sres.securesms.util.paging.Invalidator;
+import su.sres.signalservice.api.websocket.WebSocketConnectionState;
 
 class ConversationListViewModel extends ViewModel {
 
@@ -121,8 +123,8 @@ class ConversationListViewModel extends ViewModel {
     return pagedData.getController();
   }
 
-  @NonNull LiveData<PipeConnectivityListener.State> getPipeState() {
-    return ApplicationDependencies.getPipeListener().getState();
+  @NonNull LiveData<WebSocketConnectionState> getPipeState() {
+    return LiveDataReactiveStreams.fromPublisher(ApplicationDependencies.getSignalWebSocket().getWebSocketState().toFlowable(BackpressureStrategy.LATEST));
   }
 
   @NonNull LiveData<Optional<UnreadPayments>> getUnreadPaymentsLiveData() {

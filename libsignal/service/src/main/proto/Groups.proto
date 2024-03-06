@@ -71,6 +71,7 @@ message Group {
   repeated RequestingMember requestingMembers = 9;
   bytes            inviteLinkPassword = 10;
   bytes            description = 11;
+  bool             announcementsOnly = 12;
 }
 
 message GroupChange {
@@ -152,6 +153,10 @@ message GroupChange {
       bytes inviteLinkPassword = 1;
     }
 
+    message ModifyAnnouncementsOnlyAction {
+      bool announcementsOnly = 1;
+    }
+
     bytes                                      sourceUuid = 1;
     uint32                                     revision = 2;
     repeated AddMemberAction                            addMembers = 3;
@@ -172,6 +177,7 @@ message GroupChange {
     repeated PromoteRequestingMemberAction              promoteRequestingMembers = 18;
     ModifyInviteLinkPasswordAction             modifyInviteLinkPassword = 19;
     ModifyDescriptionAction                    modifyDescription = 20;
+    ModifyAnnouncementsOnlyAction              modifyAnnouncementsOnly = 21;
   }
 
   bytes  actions = 1;

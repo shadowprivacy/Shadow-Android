@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * MultiShareSender encapsulates send logic (stolen from {@link su.sres.securesms.conversation.ConversationActivity}
@@ -66,7 +67,7 @@ public final class MultiShareSender {
       TransportOption transport      = TransportOptions.getPushTransportOption(context);
       boolean         forceSms       = recipient.isForceSmsSelection();
       int             subscriptionId = transport.getSimSubscriptionId().or(-1);
-      long            expiresIn      = recipient.getExpireMessages() * 1000L;
+      long            expiresIn      = TimeUnit.SECONDS.toMillis(recipient.getExpiresInSeconds());
       boolean needsSplit = message != null &&
                            message.length() > transport.calculateCharacters(message).maxPrimaryMessageSize;
       boolean isMediaMessage = !multiShareArgs.getMedia().isEmpty() ||

@@ -1,13 +1,11 @@
 package su.sres.securesms.audio;
 
-import android.annotation.TargetApi;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
-import android.os.Build;
 
 import su.sres.core.util.StreamUtil;
 import su.sres.core.util.logging.Log;
@@ -18,21 +16,21 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class AudioCodec {
 
   private static final String TAG = Log.tag(AudioCodec.class);
 
-  private static final int    SAMPLE_RATE       = 44100;
-  private static final int    SAMPLE_RATE_INDEX = 4;
-  private static final int    CHANNELS          = 1;
-  private static final int    BIT_RATE          = 32000;
+  private static final int SAMPLE_RATE       = 44100;
+  private static final int SAMPLE_RATE_INDEX = 4;
+  private static final int CHANNELS          = 1;
+  private static final int BIT_RATE          = 32000;
 
   private final int         bufferSize;
   private final MediaCodec  mediaCodec;
   private final AudioRecord audioRecord;
 
   private boolean running  = true;
+  private boolean failed   = false;
   private boolean finished = false;
 
   public AudioCodec() throws IOException {
@@ -77,10 +75,24 @@ public class AudioCodec {
         } catch (IOException e) {
           Log.w(TAG, e);
         } finally {
-          mediaCodec.stop();
-          audioRecord.stop();
+          try {
+            mediaCodec.stop();
+          } catch (IllegalStateException ise) {
+            Log.w(TAG, "mediaCodec stop failed.", ise);
+          }
 
-          mediaCodec.release();
+          try {
+            audioRecord.stop();
+          } catch (IllegalStateException ise) {
+            Log.w(TAG, "audioRecord stop failed.", ise);
+          }
+
+          try {
+            mediaCodec.release();
+          } catch (IllegalStateException ise) {
+            Log.w(TAG, "mediaCodec release failed. Probably already released.", ise);
+          }
+
           audioRecord.release();
 
           StreamUtil.close(outputStream);
@@ -143,7 +155,7 @@ public class AudioCodec {
         encoderOutputBuffer.clear();
 
         mediaCodec.releaseOutputBuffer(codecOutputBufferIndex, false);
-      }  else if (codecOutputBufferIndex== MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+      } else if (codecOutputBufferIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
         codecOutputBuffers = mediaCodec.getOutputBuffers();
       }
 
@@ -156,15 +168,15 @@ public class AudioCodec {
     int    frameLength = length + 7;
     byte[] adtsHeader  = new byte[7];
 
-    adtsHeader[0]  = (byte) 0xFF; // Sync Word
-    adtsHeader[1]  = (byte) 0xF1; // MPEG-4, Layer (0), No CRC
-    adtsHeader[2]  = (byte) ((MediaCodecInfo.CodecProfileLevel.AACObjectLC - 1) << 6);
+    adtsHeader[0] = (byte) 0xFF; // Sync Word
+    adtsHeader[1] = (byte) 0xF1; // MPEG-4, Layer (0), No CRC
+    adtsHeader[2] = (byte) ((MediaCodecInfo.CodecProfileLevel.AACObjectLC - 1) << 6);
     adtsHeader[2] |= (((byte) SAMPLE_RATE_INDEX) << 2);
     adtsHeader[2] |= (((byte) CHANNELS) >> 2);
-    adtsHeader[3]  = (byte) (((CHANNELS & 3) << 6) | ((frameLength >> 11) & 0x03));
-    adtsHeader[4]  = (byte) ((frameLength >> 3) & 0xFF);
-    adtsHeader[5]  = (byte) (((frameLength & 0x07) << 5) | 0x1f);
-    adtsHeader[6]  = (byte) 0xFC;
+    adtsHeader[3] = (byte) (((CHANNELS & 3) << 6) | ((frameLength >> 11) & 0x03));
+    adtsHeader[4] = (byte) ((frameLength >> 3) & 0xFF);
+    adtsHeader[5] = (byte) (((frameLength & 0x07) << 5) | 0x1f);
+    adtsHeader[6] = (byte) 0xFC;
 
     return adtsHeader;
   }

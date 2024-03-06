@@ -16,29 +16,29 @@ import su.sres.securesms.recipients.RecipientId;
  */
 public final class RecipientMediaLoader extends MediaLoader {
 
-    @Nullable private final RecipientId           recipientId;
-    @NonNull  private final MediaType             mediaType;
-    @NonNull  private final MediaDatabase.Sorting sorting;
+  @Nullable private final RecipientId           recipientId;
+  @NonNull private final  MediaType             mediaType;
+  @NonNull private final  MediaDatabase.Sorting sorting;
 
-    public RecipientMediaLoader(@NonNull Context context,
-                                @Nullable RecipientId recipientId,
-                                @NonNull MediaType mediaType,
-                                @NonNull MediaDatabase.Sorting sorting)
-    {
-        super(context);
-        this.recipientId = recipientId;
-        this.mediaType   = mediaType;
-        this.sorting     = sorting;
-    }
+  public RecipientMediaLoader(@NonNull Context context,
+                              @Nullable RecipientId recipientId,
+                              @NonNull MediaType mediaType,
+                              @NonNull MediaDatabase.Sorting sorting)
+  {
+    super(context);
+    this.recipientId = recipientId;
+    this.mediaType   = mediaType;
+    this.sorting     = sorting;
+  }
 
-    @Override
-    public Cursor getCursor() {
-        if (recipientId == null || recipientId.isUnknown()) return null;
+  @Override
+  public Cursor getCursor() {
+    if (recipientId == null || recipientId.isUnknown()) return null;
 
-        long threadId = DatabaseFactory.getThreadDatabase(getContext())
-                .getThreadIdFor(Recipient.resolved(recipientId));
+    long threadId = DatabaseFactory.getThreadDatabase(getContext())
+                                   .getOrCreateThreadIdFor(Recipient.resolved(recipientId));
 
-        return ThreadMediaLoader.createThreadMediaCursor(context, threadId, mediaType, sorting);
-    }
+    return ThreadMediaLoader.createThreadMediaCursor(context, threadId, mediaType, sorting);
+  }
 
 }

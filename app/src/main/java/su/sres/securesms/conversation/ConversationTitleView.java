@@ -67,7 +67,7 @@ public class ConversationTitleView extends RelativeLayout {
   }
 
   public void showExpiring(@NonNull LiveRecipient recipient) {
-    expirationBadgeTime.setText(ExpirationUtil.getExpirationAbbreviatedDisplayValue(getContext(), recipient.get().getExpireMessages()));
+    expirationBadgeTime.setText(ExpirationUtil.getExpirationAbbreviatedDisplayValue(getContext(), recipient.get().getExpiresInSeconds()));
     expirationBadgeContainer.setVisibility(View.VISIBLE);
     updateSubtitleVisibility();
   }

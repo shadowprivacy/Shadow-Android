@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014-2016 Open Whisper Systems
- *
+ * <p>
  * Licensed according to the LICENSE file in this repository.
  */
 
@@ -14,10 +14,10 @@ import su.sres.signalservice.api.profiles.SignalServiceProfile;
 public class AccountAttributes {
 
   @JsonProperty
-  private String  signalingKey;
+  private String signalingKey;
 
   @JsonProperty
-  private int     registrationId;
+  private int registrationId;
 
   @JsonProperty
   private boolean voice;
@@ -122,15 +122,19 @@ public class AccountAttributes {
     @JsonProperty
     private boolean senderKey;
 
+    @JsonProperty
+    private boolean announcementGroup;
+
     @JsonCreator
     public Capabilities() {}
 
-    public Capabilities(boolean uuid, boolean gv2, boolean storage, boolean gv1Migration, boolean senderKey) {
-      this.uuid         = uuid;
-      this.gv2          = gv2;
-      this.storage      = storage;
-      this.gv1Migration = gv1Migration;
-      this.senderKey    = senderKey;
+    public Capabilities(boolean uuid, boolean gv2, boolean storage, boolean gv1Migration, boolean senderKey, boolean announcementGroup) {
+      this.uuid              = uuid;
+      this.gv2               = gv2;
+      this.storage           = storage;
+      this.gv1Migration      = gv1Migration;
+      this.senderKey         = senderKey;
+      this.announcementGroup = announcementGroup;
     }
 
     public boolean isUuid() {
@@ -151,6 +155,10 @@ public class AccountAttributes {
 
     public boolean isSenderKey() {
       return senderKey;
+    }
+
+    public boolean isAnnouncementGroup() {
+      return announcementGroup;
     }
   }
 }

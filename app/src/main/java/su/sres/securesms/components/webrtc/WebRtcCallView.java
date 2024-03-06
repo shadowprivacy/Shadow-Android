@@ -51,6 +51,7 @@ import su.sres.securesms.util.ViewUtil;
 import org.webrtc.RendererCommon;
 
 import su.sres.securesms.util.views.Stub;
+import su.sres.securesms.webrtc.CallParticipantsViewState;
 import su.sres.signalservice.api.messages.calls.HangupMessage;
 
 import java.util.ArrayList;
@@ -58,9 +59,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static su.sres.securesms.components.sensors.Orientation.PORTRAIT_BOTTOM_EDGE;
-
-public class WebRtcCallView extends FrameLayout {
+public class WebRtcCallView extends ConstraintLayout {
 
   private static final long TRANSITION_DURATION_MILLIS          = 250;
   private static final int  SMALL_ONGOING_CALL_BUTTON_MARGIN_DP = 8;
@@ -103,6 +102,10 @@ public class WebRtcCallView extends FrameLayout {
   private View                          errorButton;
   private int                           pagerBottomMarginDp;
   private boolean                       controlsVisible = true;
+  private Guideline                     topFoldGuideline;
+  private Guideline                     callScreenTopFoldGuideline;
+  private View                          foldParticipantCountWrapper;
+  private TextView                      foldParticipantCount;
 
   private WebRtcCallParticipantsPagerAdapter    pagerAdapter;
   private WebRtcCallParticipantsRecyclerAdapter recyclerAdapter;
@@ -161,6 +164,10 @@ public class WebRtcCallView extends FrameLayout {
     errorButton                   = findViewById(R.id.call_screen_error_cancel);
     groupCallSpeakerHint          = new Stub<>(findViewById(R.id.call_screen_group_call_speaker_hint));
     groupCallFullStub             = new Stub<>(findViewById(R.id.group_call_call_full_view));
+    topFoldGuideline              = findViewById(R.id.fold_top_guideline);
+    callScreenTopFoldGuideline    = findViewById(R.id.fold_top_call_screen_guideline);
+    foldParticipantCountWrapper   = findViewById(R.id.fold_show_participants_menu_counter_wrapper);
+    foldParticipantCount          = findViewById(R.id.fold_show_participants_menu_counter);
 
     View topGradient     = findViewById(R.id.call_screen_header_gradient);
     View decline         = findViewById(R.id.call_screen_decline_call);
@@ -279,10 +286,18 @@ public class WebRtcCallView extends FrameLayout {
   @Override
   public void onWindowSystemUiVisibilityChanged(int visible) {
     if ((visible & SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0) {
-      pictureInPictureGestureHelper.setVerticalBoundaries(toolbar.getBottom(), videoToggle.getTop());
+      if (controls.adjustForFold()) {
+        pictureInPictureGestureHelper.clearVerticalBoundaries();
+        pictureInPictureGestureHelper.setTopVerticalBoundary(toolbar.getBottom());
+      } else {
+        pictureInPictureGestureHelper.setTopVerticalBoundary(toolbar.getBottom());
+        pictureInPictureGestureHelper.setBottomVerticalBoundary(videoToggle.getTop());
+      }
     } else {
       pictureInPictureGestureHelper.clearVerticalBoundaries();
     }
+
+    pictureInPictureGestureHelper.adjustPip();
   }
 
   @Override
@@ -305,15 +320,18 @@ public class WebRtcCallView extends FrameLayout {
     micToggle.setChecked(isMicEnabled, false);
   }
 
-  public void updateCallParticipants(@NonNull CallParticipantsState state, boolean isPortrait) {
-    List<WebRtcCallParticipantsPage> pages = new ArrayList<>(2);
+  public void updateCallParticipants(@NonNull CallParticipantsViewState callParticipantsViewState) {
+    CallParticipantsState            state              = callParticipantsViewState.getCallParticipantsState();
+    boolean                          isPortrait         = callParticipantsViewState.isPortrait();
+    boolean                          isLandscapeEnabled = callParticipantsViewState.isLandscapeEnabled();
+    List<WebRtcCallParticipantsPage> pages              = new ArrayList<>(2);
 
     if (!state.getGridParticipants().isEmpty()) {
-      pages.add(WebRtcCallParticipantsPage.forMultipleParticipants(state.getGridParticipants(), state.getFocusedParticipant(), state.isInPipMode(), isPortrait));
+      pages.add(WebRtcCallParticipantsPage.forMultipleParticipants(state.getGridParticipants(), state.getFocusedParticipant(), state.isInPipMode(), isPortrait, isLandscapeEnabled));
     }
 
     if (state.getFocusedParticipant() != CallParticipant.EMPTY && state.getAllRemoteParticipants().size() > 1) {
-      pages.add(WebRtcCallParticipantsPage.forSingleParticipant(state.getFocusedParticipant(), state.isInPipMode(), isPortrait));
+      pages.add(WebRtcCallParticipantsPage.forSingleParticipant(state.getFocusedParticipant(), state.isInPipMode(), isPortrait, isLandscapeEnabled));
     }
 
     if ((state.getGroupCallState().isNotIdle() && state.getRemoteDevicesCount().orElse(0) > 0) || state.getGroupCallState().isConnected()) {
@@ -323,16 +341,22 @@ public class WebRtcCallView extends FrameLayout {
     }
 
     if (state.getGroupCallState().isNotIdle() && participantCount != null) {
-      participantCount.setText(state.getParticipantCount()
-                                    .mapToObj(String::valueOf).orElse("\u2014"));
-      participantCount.setEnabled(state.getParticipantCount().isPresent());
+      String  text    = state.getParticipantCount()
+                             .mapToObj(String::valueOf).orElse("\u2014");
+      boolean enabled = state.getParticipantCount().isPresent();
+
+      participantCount.setText(text);
+      participantCount.setEnabled(enabled);
+
+      foldParticipantCount.setText(text);
+      foldParticipantCount.setEnabled(enabled);
     }
 
     pagerAdapter.submitList(pages);
     recyclerAdapter.submitList(state.getListParticipants());
     updateLocalCallParticipant(state.getLocalRenderState(), state.getLocalParticipant(), state.getFocusedParticipant());
 
-    if (state.isLargeVideoGroup() && !state.isInPipMode()) {
+    if (state.isLargeVideoGroup() && !state.isInPipMode() && !state.isFolded()) {
       layoutParticipantsForLargeCount();
     } else {
       layoutParticipantsForSmallCount();
@@ -420,7 +444,9 @@ public class WebRtcCallView extends FrameLayout {
         toolbar.inflateMenu(R.menu.group_call);
 
         View showParticipants = toolbar.getMenu().findItem(R.id.menu_group_call_participants_list).getActionView();
+        showParticipants.setAlpha(0);
         showParticipants.setOnClickListener(unused -> showParticipantsList());
+        foldParticipantCountWrapper.setOnClickListener(unused -> showParticipantsList());
 
         participantCount = showParticipants.findViewById(R.id.show_participants_menu_counter);
       }
@@ -476,6 +502,20 @@ public class WebRtcCallView extends FrameLayout {
     Set<View> lastVisibleSet = new HashSet<>(visibleViewSet);
 
     visibleViewSet.clear();
+
+    if (webRtcControls.adjustForFold()) {
+      topFoldGuideline.setGuidelineEnd(webRtcControls.getFold());
+      callScreenTopFoldGuideline.setGuidelineEnd(webRtcControls.getFold());
+
+      if (webRtcControls.displayGroupMembersButton()) {
+        visibleViewSet.add(foldParticipantCountWrapper);
+      }
+    } else {
+      topFoldGuideline.setGuidelineEnd(0);
+      callScreenTopFoldGuideline.setGuidelineEnd(0);
+    }
+
+    setShowParticipantsState(webRtcControls.adjustForFold());
 
     if (webRtcControls.displayStartCallControls()) {
       visibleViewSet.add(footerGradient);
@@ -574,10 +614,15 @@ public class WebRtcCallView extends FrameLayout {
 
     controls = webRtcControls;
 
+    if (!controls.isFadeOutEnabled()) {
+      controlsVisible = true;
+    }
+
     if (!visibleViewSet.equals(lastVisibleSet) || !controls.isFadeOutEnabled()) {
       fadeInNewUiState(lastVisibleSet, webRtcControls.displaySmallOngoingCallButtons());
-      post(() -> pictureInPictureGestureHelper.setVerticalBoundaries(toolbar.getBottom(), videoToggle.getTop()));
     }
+
+    onWindowSystemUiVisibilityChanged(getWindowSystemUiVisibility());
   }
 
   public @NonNull View getVideoTooltipTarget() {
@@ -591,6 +636,18 @@ public class WebRtcCallView extends FrameLayout {
   public void hideSpeakerViewHint() {
     if (groupCallSpeakerHint.resolved()) {
       groupCallSpeakerHint.get().setVisibility(View.GONE);
+    }
+  }
+
+  private void setShowParticipantsState(boolean isFolded) {
+    MenuItem item = toolbar.getMenu().findItem(R.id.menu_group_call_participants_list);
+
+    if (item != null) {
+      View showParticipants = item.getActionView();
+      showParticipants.animate().alpha(isFolded ? 0f : 1f);
+      showParticipants.setClickable(!isFolded);
+      foldParticipantCountWrapper.animate().alpha(isFolded ? 1f : 0f);
+      foldParticipantCount.setClickable(isFolded);
     }
   }
 
@@ -757,6 +814,8 @@ public class WebRtcCallView extends FrameLayout {
       constraintSet.setVisibility(view.getId(), visibility);
     }
 
+    adjustParticipantsRecycler(constraintSet);
+
     constraintSet.applyTo(parent);
 
     layoutParticipants();
@@ -786,7 +845,19 @@ public class WebRtcCallView extends FrameLayout {
       }
     }
 
+    adjustParticipantsRecycler(constraintSet);
+
     constraintSet.applyTo(parent);
+  }
+
+  private void adjustParticipantsRecycler(@NonNull ConstraintSet constraintSet) {
+    if (controlsVisible) {
+      constraintSet.connect(R.id.call_screen_participants_recycler, ConstraintSet.BOTTOM, R.id.call_screen_video_toggle, ConstraintSet.TOP);
+    } else {
+      constraintSet.connect(R.id.call_screen_participants_recycler, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+    }
+
+    constraintSet.setHorizontalBias(R.id.call_screen_participants_recycler, controls.adjustForFold() ? 0.5f : 1f);
   }
 
   private void scheduleFadeOut() {

@@ -20,7 +20,7 @@ import su.sres.signalservice.api.account.AccountAttributes;
 
 import java.io.IOException;
 
-public class RefreshAttributesJob extends BaseJob  {
+public class RefreshAttributesJob extends BaseJob {
 
   public static final String KEY = "RefreshAttributesJob";
 
@@ -42,11 +42,11 @@ public class RefreshAttributesJob extends BaseJob  {
    */
   public RefreshAttributesJob(boolean forced) {
     this(new Job.Parameters.Builder()
-            .addConstraint(NetworkConstraint.KEY)
-            .setQueue("RefreshAttributesJob")
-            .setMaxInstancesForFactory(2)
-                    .build(),
-            forced);
+             .addConstraint(NetworkConstraint.KEY)
+             .setQueue("RefreshAttributesJob")
+             .setMaxInstancesForFactory(2)
+             .build(),
+         forced);
   }
 
   private RefreshAttributesJob(@NonNull Job.Parameters parameters, boolean forced) {
@@ -79,7 +79,7 @@ public class RefreshAttributesJob extends BaseJob  {
     int     registrationId              = TextSecurePreferences.getLocalRegistrationId(context);
     boolean fetchesMessages             = TextSecurePreferences.isFcmDisabled(context);
     String  pin                         = TextSecurePreferences.getRegistrationLockPin(context);
-    byte[]    unidentifiedAccessKey       = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
+    byte[]  unidentifiedAccessKey       = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
     boolean universalUnidentifiedAccess = TextSecurePreferences.isUniversalUnidentifiedAccess(context);
 
     boolean userLoginDiscoverable = SignalStore.userLoginPrivacy().getUserLoginListingMode().isDiscoverable();
@@ -88,17 +88,19 @@ public class RefreshAttributesJob extends BaseJob  {
     AccountAttributes.Capabilities capabilities = AppCapabilities.getCapabilities(true);
 
     Log.i(TAG, "User login discoverable : " + userLoginDiscoverable +
-            "\n  Capabilities:" +
-            "\n    Storage? " + capabilities.isStorage() +
-            "\n    GV2? " + capabilities.isGv2() +
-            "\n    GV1 Migration? " + capabilities.isGv1Migration() +
-            "\n    UUID? " + capabilities.isUuid());
+               "\n  Capabilities:" +
+               "\n    Storage? " + capabilities.isStorage() +
+               "\n    GV2? " + capabilities.isGv2() +
+               "\n    GV1 Migration? " + capabilities.isGv1Migration() +
+               "\n    Sender Key? " + capabilities.isSenderKey() +
+               "\n    Announcement Groups? " + capabilities.isAnnouncementGroup() +
+               "\n    UUID? " + capabilities.isUuid());
 
     SignalServiceAccountManager signalAccountManager = ApplicationDependencies.getSignalServiceAccountManager();
     signalAccountManager.setAccountAttributes(null, registrationId, fetchesMessages, pin,
-            unidentifiedAccessKey, universalUnidentifiedAccess,
-            capabilities,
-            userLoginDiscoverable);
+                                              unidentifiedAccessKey, universalUnidentifiedAccess,
+                                              capabilities,
+                                              userLoginDiscoverable);
 
     ApplicationDependencies.getJobManager().add(new RefreshOwnProfileJob());
 
