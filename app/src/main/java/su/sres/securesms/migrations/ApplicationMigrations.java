@@ -60,6 +60,7 @@ public class ApplicationMigrations {
     static final int LOG_CLEANUP                   = 34;
     static final int ATTACHMENT_CLEANUP_2          = 35;
     static final int ANNOUNCEMENT_GROUP_CAPABILITY = 36;
+    // static final int STICKER_MY_DAILY_LIFE         = 37;
   }
 
   public static final int CURRENT_VERSION = 36;
@@ -257,6 +258,10 @@ public class ApplicationMigrations {
     if (lastSeenVersion < Version.ANNOUNCEMENT_GROUP_CAPABILITY) {
       jobs.put(Version.ANNOUNCEMENT_GROUP_CAPABILITY, new AttributesMigrationJob());
     }
+
+    // if (lastSeenVersion < Version.STICKER_MY_DAILY_LIFE) {
+    //  jobs.put(Version.STICKER_MY_DAILY_LIFE, new StickerMyDailyLifeMigrationJob());
+    // }
 
     return jobs;
   }

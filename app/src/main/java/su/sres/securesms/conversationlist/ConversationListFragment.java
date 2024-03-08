@@ -130,6 +130,7 @@ import su.sres.securesms.util.AppStartup;
 import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.PlayStoreUtil;
 import su.sres.securesms.util.ServiceUtil;
+import su.sres.securesms.util.ShadowLocalMetrics;
 import su.sres.securesms.util.ShadowProxyUtil;
 import su.sres.securesms.util.SnapToTopDataObserver;
 import su.sres.securesms.util.StickyHeaderDecoration;
@@ -550,6 +551,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       @Override
       public void onItemRangeInserted(int positionStart, int itemCount) {
         startupStopwatch.split("data-set");
+        ShadowLocalMetrics.ColdStart.onConversationListDataLoaded();
         defaultAdapter.unregisterAdapterDataObserver(this);
         list.post(() -> {
           AppStartup.getInstance().onCriticalRenderEventEnd();
@@ -845,7 +847,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     alert.setCancelable(true);
 
     alert.setPositiveButton(R.string.delete, (dialog, which) -> {
-      final Set<Long> selectedConversations = defaultAdapter.getBatchSelectionIds();
+      final Set<Long> selectedConversations = new HashSet<>(defaultAdapter.getBatchSelectionIds());
 
       if (!selectedConversations.isEmpty()) {
         new AsyncTask<Void, Void, Void>() {

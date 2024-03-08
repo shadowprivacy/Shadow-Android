@@ -64,6 +64,7 @@ import su.sres.securesms.messageprocessingalarm.MessageProcessReceiver;
 import su.sres.securesms.ratelimit.RateLimitUtil;
 import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.AppStartup;
+import su.sres.securesms.util.ShadowLocalMetrics;
 import su.sres.securesms.util.SignalUncaughtExceptionHandler;
 import su.sres.securesms.migrations.ApplicationMigrations;
 import su.sres.securesms.notifications.NotificationChannels;
@@ -123,6 +124,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
   public void onCreate() {
     Tracer.getInstance().start("Application#onCreate()");
     AppStartup.getInstance().onApplicationCreate();
+    ShadowLocalMetrics.ColdStart.start();
 
     long startTime = System.currentTimeMillis();
 
@@ -178,6 +180,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     }
 
     Log.d(TAG, "onCreate() took " + (System.currentTimeMillis() - startTime) + " ms");
+    ShadowLocalMetrics.ColdStart.onApplicationCreateFinished();
     Tracer.getInstance().end("Application#onCreate()");
   }
 

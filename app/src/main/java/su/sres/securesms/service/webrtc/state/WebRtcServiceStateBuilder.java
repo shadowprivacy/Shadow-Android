@@ -7,6 +7,7 @@ import com.annimon.stream.OptionalLong;
 
 import su.sres.securesms.components.sensors.Orientation;
 import su.sres.securesms.components.webrtc.BroadcastVideoSink;
+import su.sres.securesms.components.webrtc.EglBaseWrapper;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.CallParticipantId;
 import su.sres.securesms.events.WebRtcViewModel;
@@ -18,7 +19,6 @@ import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.WebRtcActionProcessor;
 
 import org.signal.ringrtc.GroupCall;
-import org.webrtc.EglBase;
 
 import java.util.Collection;
 
@@ -178,7 +178,7 @@ public class WebRtcServiceStateBuilder {
       return WebRtcServiceStateBuilder.this.build();
     }
 
-    public @NonNull VideoStateBuilder eglBase(@Nullable EglBase eglBase) {
+    public @NonNull VideoStateBuilder eglBase(@Nullable EglBaseWrapper eglBase) {
       toBuild.eglBase = eglBase;
       return this;
     }

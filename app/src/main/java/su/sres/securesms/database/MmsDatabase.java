@@ -77,6 +77,7 @@ import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
 import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.JsonUtils;
+import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -261,11 +262,6 @@ public class MmsDatabase extends MessageDatabase {
   @Override
   public @Nullable RecipientId getOldestGroupUpdateSender(long threadId, long minimumDateReceived) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  int getMessageCountForThreadSummary(long threadId) {
-    return getMessageCountForThread(threadId);
   }
 
   @Override
@@ -600,11 +596,7 @@ public class MmsDatabase extends MessageDatabase {
   public int getMessageCountForThread(long threadId, long beforeTime) {
     SQLiteDatabase db = databaseHelper.getReadableDatabase();
 
-    String[] cols  = new String[] { "COUNT(*)" };
-    String   query = THREAD_ID + " = ? AND " + DATE_RECEIVED + " < ?";
-    String[] args  = new String[] { String.valueOf(threadId), String.valueOf(beforeTime) };
-
-    try (Cursor cursor = db.query(TABLE_NAME, cols, query, args, null, null, null)) {
+    try (Cursor cursor = db.query(TABLE_NAME, new String[] { "1" }, THREAD_ID_WHERE, SqlUtil.buildArgs(threadId), null, null, null, "1")) {
       if (cursor != null && cursor.moveToFirst()) {
         return cursor.getInt(0);
       }
@@ -1129,6 +1121,7 @@ public class MmsDatabase extends MessageDatabase {
 
     try (Cursor cursor = database.query(ThreadDatabase.TABLE_NAME, new String[] { ThreadDatabase.ID }, ThreadDatabase.EXPIRES_IN + " > 0", null, null, null, null)) {
       while (cursor != null && cursor.moveToNext()) {
+        DatabaseFactory.getThreadDatabase(context).setLastScrolled(cursor.getLong(0), 0);
         DatabaseFactory.getThreadDatabase(context).update(cursor.getLong(0), false);
       }
     }
@@ -1543,6 +1536,10 @@ public class MmsDatabase extends MessageDatabase {
     contentValues.put(RECIPIENT_ID, message.getRecipient().getId().serialize());
     contentValues.put(DELIVERY_RECEIPT_COUNT, Stream.of(earlyDeliveryReceipts.values()).mapToLong(Long::longValue).sum());
 
+    if (message.getRecipient().isSelf() && hasAudioAttachment(message.getAttachments())) {
+      contentValues.put(VIEWED_RECEIPT_COUNT, 1L);
+    }
+
     List<Attachment> quoteAttachments = new LinkedList<>();
 
     if (message.getOutgoingQuote() != null) {
@@ -1595,6 +1592,16 @@ public class MmsDatabase extends MessageDatabase {
     TrimThreadJob.enqueueAsync(threadId);
 
     return messageId;
+  }
+
+  private boolean hasAudioAttachment(@NonNull List<Attachment> attachments) {
+    for (Attachment attachment : attachments) {
+      if (MediaUtil.isAudio(attachment)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private long insertMediaMessage(long threadId,
@@ -1670,6 +1677,7 @@ public class MmsDatabase extends MessageDatabase {
       }
 
       notifyConversationListeners(contentValues.getAsLong(THREAD_ID));
+      DatabaseFactory.getThreadDatabase(context).setLastScrolled(contentValues.getAsLong(THREAD_ID), 0);
       DatabaseFactory.getThreadDatabase(context).update(contentValues.getAsLong(THREAD_ID), true);
     }
   }
@@ -1690,6 +1698,8 @@ public class MmsDatabase extends MessageDatabase {
 
     SQLiteDatabase database = databaseHelper.getWritableDatabase();
     database.delete(TABLE_NAME, ID_WHERE, new String[] { messageId + "" });
+
+    DatabaseFactory.getThreadDatabase(context).setLastScrolled(threadId, 0);
     boolean threadDeleted = DatabaseFactory.getThreadDatabase(context).update(threadId, false);
     notifyConversationListeners(threadId);
     notifyStickerListeners();
@@ -1827,11 +1837,11 @@ public class MmsDatabase extends MessageDatabase {
   }
 
   @Override
-  void deleteMessagesInThreadBeforeDate(long threadId, long date) {
+  boolean deleteMessagesInThreadBeforeDate(long threadId, long date) {
     SQLiteDatabase db    = databaseHelper.getWritableDatabase();
     String         where = THREAD_ID + " = ? AND " + DATE_RECEIVED + " < " + date;
 
-    db.delete(TABLE_NAME, where, SqlUtil.buildArgs(threadId));
+    return db.delete(TABLE_NAME, where, SqlUtil.buildArgs(threadId)) > 0;
   }
 
   @Override

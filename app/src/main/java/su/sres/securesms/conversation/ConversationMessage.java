@@ -24,122 +24,129 @@ import java.util.List;
  * for various presentations.
  */
 public class ConversationMessage {
-    @NonNull  private final MessageRecord   messageRecord;
-    @NonNull  private final List<Mention>   mentions;
-    @Nullable private final SpannableString body;
+  @NonNull private final  MessageRecord   messageRecord;
+  @NonNull private final  List<Mention>   mentions;
+  @Nullable private final SpannableString body;
 
-    private ConversationMessage(@NonNull MessageRecord messageRecord) {
-        this(messageRecord, null, null);
+  private ConversationMessage(@NonNull MessageRecord messageRecord) {
+    this(messageRecord, null, null);
+  }
+
+  private ConversationMessage(@NonNull MessageRecord messageRecord,
+                              @Nullable CharSequence body,
+                              @Nullable List<Mention> mentions)
+  {
+    this.messageRecord = messageRecord;
+    this.body          = body != null ? SpannableString.valueOf(body) : null;
+    this.mentions      = mentions != null ? mentions : Collections.emptyList();
+
+    if (!this.mentions.isEmpty() && this.body != null) {
+      MentionAnnotation.setMentionAnnotations(this.body, this.mentions);
     }
+  }
 
-    private ConversationMessage(@NonNull MessageRecord messageRecord,
-                                @Nullable CharSequence body,
-                                @Nullable List<Mention> mentions)
-    {
-        this.messageRecord = messageRecord;
-        this.body          = body != null ? SpannableString.valueOf(body) : null;
-        this.mentions      = mentions != null ? mentions : Collections.emptyList();
+  public @NonNull MessageRecord getMessageRecord() {
+    return messageRecord;
+  }
 
-        if (!this.mentions.isEmpty() && this.body != null) {
-            MentionAnnotation.setMentionAnnotations(this.body, this.mentions);
-        }
-    }
+  public @NonNull List<Mention> getMentions() {
+    return mentions;
+  }
 
-    public @NonNull MessageRecord getMessageRecord() {
-        return messageRecord;
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final ConversationMessage that = (ConversationMessage) o;
+    return messageRecord.equals(that.messageRecord);
+  }
 
-    public @NonNull List<Mention> getMentions() {
-        return mentions;
-    }
+  @Override
+  public int hashCode() {
+    return messageRecord.hashCode();
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        final ConversationMessage that = (ConversationMessage) o;
-        return messageRecord.equals(that.messageRecord);
-    }
+  public long getUniqueId(@NonNull MessageDigest digest) {
+    String unique = (messageRecord.isMms() ? "MMS::" : "SMS::") + messageRecord.getId();
+    byte[] bytes  = digest.digest(unique.getBytes());
 
-    @Override
-    public int hashCode() {
-        return messageRecord.hashCode();
-    }
+    return Conversions.byteArrayToLong(bytes);
+  }
 
-    public long getUniqueId(@NonNull MessageDigest digest) {
-        String unique = (messageRecord.isMms() ? "MMS::" : "SMS::") + messageRecord.getId();
-        byte[] bytes  = digest.digest(unique.getBytes());
+  public @NonNull SpannableString getDisplayBody(Context context) {
+    return (body != null) ? body : messageRecord.getDisplayBody(context);
+  }
 
-        return Conversions.byteArrayToLong(bytes);
-    }
+  /**
+   * Factory providing multiple ways of creating {@link ConversationMessage}s.
+   */
+  public static class ConversationMessageFactory {
 
-    public @NonNull SpannableString getDisplayBody(Context context) {
-        if (mentions.isEmpty() || body == null) {
-            return messageRecord.getDisplayBody(context);
-        }
-        return body;
+    /**
+     * Creates a {@link ConversationMessage} wrapping the provided MessageRecord. No database or
+     * heavy work performed as the message is assumed to not have any mentions.
+     */
+    @AnyThread
+    public static @NonNull ConversationMessage createWithResolvedData(@NonNull MessageRecord messageRecord) {
+      return new ConversationMessage(messageRecord);
     }
 
     /**
-     * Factory providing multiple ways of creating {@link ConversationMessage}s.
+     * Creates a {@link ConversationMessage} wrapping the provided MessageRecord, potentially annotated body, and
+     * list of actual mentions. No database or heavy work performed as the body and mentions are assumed to be
+     * fully updated with display names.
+     *
+     * @param body     Contains appropriate {@link MentionAnnotation}s and is updated with actual profile names.
+     * @param mentions List of actual mentions (i.e., not placeholder) matching annotation ranges in body.
      */
-    public static class ConversationMessageFactory {
-
-        /**
-         * Creates a {@link ConversationMessage} wrapping the provided MessageRecord. No database or
-         * heavy work performed as the message is assumed to not have any mentions.
-         */
-        @AnyThread
-        public static @NonNull ConversationMessage createWithResolvedData(@NonNull MessageRecord messageRecord) {
-            return new ConversationMessage(messageRecord);
-        }
-
-        /**
-         * Creates a {@link ConversationMessage} wrapping the provided MessageRecord, potentially annotated body, and
-         * list of actual mentions. No database or heavy work performed as the body and mentions are assumed to be
-         * fully updated with display names.
-         *
-         * @param body     Contains appropriate {@link MentionAnnotation}s and is updated with actual profile names.
-         * @param mentions List of actual mentions (i.e., not placeholder) matching annotation ranges in body.
-         */
-        @AnyThread
-        public static @NonNull ConversationMessage createWithResolvedData(@NonNull MessageRecord messageRecord, @Nullable CharSequence body, @Nullable List<Mention> mentions) {
-            if (messageRecord.isMms() && mentions != null && !mentions.isEmpty()) {
-                return new ConversationMessage(messageRecord, body, mentions);
-            }
-            return createWithResolvedData(messageRecord);
-        }
-
-        /**
-         * Creates a {@link ConversationMessage} wrapping the provided MessageRecord and will update and modify the provided
-         * mentions from placeholder to actual. This method may perform database operations to resolve mentions to display names.
-         *
-         * @param mentions List of placeholder mentions to be used to update the body in the provided MessageRecord.
-         */
-        @WorkerThread
-        public static @NonNull ConversationMessage createWithUnresolvedData(@NonNull Context context, @NonNull MessageRecord messageRecord, @Nullable List<Mention> mentions) {
-            if (messageRecord.isMms() && mentions != null && !mentions.isEmpty()) {
-                MentionUtil.UpdatedBodyAndMentions updated = MentionUtil.updateBodyAndMentionsWithDisplayNames(context, messageRecord, mentions);
-                return new ConversationMessage(messageRecord, updated.getBody(), updated.getMentions());
-            }
-            return createWithResolvedData(messageRecord);
-        }
-
-        /**
-         * Creates a {@link ConversationMessage} wrapping the provided MessageRecord, and will query for potential mentions. If mentions
-         * are found, the body of the provided message will be updated and modified to match actual mentions. This will perform
-         * database operations to query for mentions and then to resolve mentions to display names.
-         */
-        @WorkerThread
-        public static @NonNull ConversationMessage createWithUnresolvedData(@NonNull Context context, @NonNull MessageRecord messageRecord) {
-            if (messageRecord.isMms()) {
-                List<Mention> mentions = DatabaseFactory.getMentionDatabase(context).getMentionsForMessage(messageRecord.getId());
-                if (!mentions.isEmpty()) {
-                    MentionUtil.UpdatedBodyAndMentions updated = MentionUtil.updateBodyAndMentionsWithDisplayNames(context, messageRecord, mentions);
-                    return new ConversationMessage(messageRecord, updated.getBody(), updated.getMentions());
-                }
-            }
-            return createWithResolvedData(messageRecord);
-        }
+    @AnyThread
+    public static @NonNull ConversationMessage createWithResolvedData(@NonNull MessageRecord messageRecord, @Nullable CharSequence body, @Nullable List<Mention> mentions) {
+      if (messageRecord.isMms() && mentions != null && !mentions.isEmpty()) {
+        return new ConversationMessage(messageRecord, body, mentions);
+      }
+      return new ConversationMessage(messageRecord, body, null);
     }
+
+    /**
+     * Creates a {@link ConversationMessage} wrapping the provided MessageRecord and will update and modify the provided
+     * mentions from placeholder to actual. This method may perform database operations to resolve mentions to display names.
+     *
+     * @param mentions List of placeholder mentions to be used to update the body in the provided MessageRecord.
+     */
+    @WorkerThread
+    public static @NonNull ConversationMessage createWithUnresolvedData(@NonNull Context context, @NonNull MessageRecord messageRecord, @Nullable List<Mention> mentions) {
+      if (messageRecord.isMms() && mentions != null && !mentions.isEmpty()) {
+        MentionUtil.UpdatedBodyAndMentions updated = MentionUtil.updateBodyAndMentionsWithDisplayNames(context, messageRecord, mentions);
+        return new ConversationMessage(messageRecord, updated.getBody(), updated.getMentions());
+      }
+      return createWithResolvedData(messageRecord);
+    }
+
+    /**
+     * Creates a {@link ConversationMessage} wrapping the provided MessageRecord, and will query for potential mentions. If mentions
+     * are found, the body of the provided message will be updated and modified to match actual mentions. This will perform
+     * database operations to query for mentions and then to resolve mentions to display names.
+     */
+    @WorkerThread
+    public static @NonNull ConversationMessage createWithUnresolvedData(@NonNull Context context, @NonNull MessageRecord messageRecord) {
+      return createWithUnresolvedData(context, messageRecord, messageRecord.getDisplayBody(context));
+    }
+
+    /**
+     * Creates a {@link ConversationMessage} wrapping the provided MessageRecord and body, and will query for potential mentions. If mentions
+     * are found, the body of the provided message will be updated and modified to match actual mentions. This will perform
+     * database operations to query for mentions and then to resolve mentions to display names.
+     */
+    @WorkerThread
+    public static @NonNull ConversationMessage createWithUnresolvedData(@NonNull Context context, @NonNull MessageRecord messageRecord, @NonNull CharSequence body) {
+      if (messageRecord.isMms()) {
+        List<Mention> mentions = DatabaseFactory.getMentionDatabase(context).getMentionsForMessage(messageRecord.getId());
+        if (!mentions.isEmpty()) {
+          MentionUtil.UpdatedBodyAndMentions updated = MentionUtil.updateBodyAndMentionsWithDisplayNames(context, body, mentions);
+          return new ConversationMessage(messageRecord, updated.getBody(), updated.getMentions());
+        }
+      }
+      return createWithResolvedData(messageRecord, body, null);
+    }
+  }
 }

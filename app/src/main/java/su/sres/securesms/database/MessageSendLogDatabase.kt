@@ -151,7 +151,7 @@ class MessageSendLogDatabase constructor(context: Context?, databaseHelper: SQLC
 
   /** @return The ID of the inserted entry, or -1 if none was inserted. Can be used with [addRecipientToExistingEntryIfPossible] */
   fun insertIfPossible(recipientId: RecipientId, sentTimestamp: Long, sendMessageResult: SendMessageResult, contentHint: ContentHint, messageId: MessageId): Long {
-    if (!FeatureFlags.senderKey()) return -1
+    if (!FeatureFlags.retryReceipts()) return -1
 
     if (sendMessageResult.isSuccess && sendMessageResult.success.content.isPresent) {
       val recipientDevice = listOf(RecipientDevice(recipientId, sendMessageResult.success.devices))
@@ -163,7 +163,7 @@ class MessageSendLogDatabase constructor(context: Context?, databaseHelper: SQLC
 
   /** @return The ID of the inserted entry, or -1 if none was inserted. Can be used with [addRecipientToExistingEntryIfPossible] */
   fun insertIfPossible(recipientId: RecipientId, sentTimestamp: Long, sendMessageResult: SendMessageResult, contentHint: ContentHint, messageIds: List<MessageId>): Long {
-    if (!FeatureFlags.senderKey()) return -1
+    if (!FeatureFlags.retryReceipts()) return -1
 
     if (sendMessageResult.isSuccess && sendMessageResult.success.content.isPresent) {
       val recipientDevice = listOf(RecipientDevice(recipientId, sendMessageResult.success.devices))
@@ -175,7 +175,7 @@ class MessageSendLogDatabase constructor(context: Context?, databaseHelper: SQLC
 
   /** @return The ID of the inserted entry, or -1 if none was inserted. Can be used with [addRecipientToExistingEntryIfPossible] */
   fun insertIfPossible(sentTimestamp: Long, possibleRecipients: List<Recipient>, results: List<SendMessageResult>, contentHint: ContentHint, messageId: MessageId): Long {
-    if (!FeatureFlags.senderKey()) return -1
+    if (!FeatureFlags.retryReceipts()) return -1
 
     val accessList = RecipientAccessList(possibleRecipients)
 
@@ -197,7 +197,7 @@ class MessageSendLogDatabase constructor(context: Context?, databaseHelper: SQLC
   }
 
   fun addRecipientToExistingEntryIfPossible(payloadId: Long, recipientId: RecipientId, sendMessageResult: SendMessageResult) {
-    if (!FeatureFlags.senderKey()) return
+    if (!FeatureFlags.retryReceipts()) return
 
     if (sendMessageResult.isSuccess && sendMessageResult.success.content.isPresent) {
       val db = databaseHelper.writableDatabase
@@ -264,7 +264,7 @@ class MessageSendLogDatabase constructor(context: Context?, databaseHelper: SQLC
   }
 
   fun getLogEntry(recipientId: RecipientId, device: Int, dateSent: Long): MessageLogEntry? {
-    if (!FeatureFlags.senderKey()) return null
+    if (!FeatureFlags.retryReceipts()) return null
 
     trimOldMessages(System.currentTimeMillis(), FeatureFlags.retryRespondMaxAge())
 
@@ -304,7 +304,7 @@ class MessageSendLogDatabase constructor(context: Context?, databaseHelper: SQLC
   }
 
   fun deleteAllRelatedToMessage(messageId: Long, mms: Boolean) {
-    if (!FeatureFlags.senderKey()) return
+    if (!FeatureFlags.retryReceipts()) return
 
     val db = databaseHelper.writableDatabase
     val query = "${PayloadTable.ID} IN (SELECT ${MessageTable.PAYLOAD_ID} FROM ${MessageTable.TABLE_NAME} WHERE ${MessageTable.MESSAGE_ID} = ? AND ${MessageTable.IS_MMS} = ?)"
@@ -314,13 +314,13 @@ class MessageSendLogDatabase constructor(context: Context?, databaseHelper: SQLC
   }
 
   fun deleteEntryForRecipient(dateSent: Long, recipientId: RecipientId, device: Int) {
-    if (!FeatureFlags.senderKey()) return
+    if (!FeatureFlags.retryReceipts()) return
 
     deleteEntriesForRecipient(listOf(dateSent), recipientId, device)
   }
 
   fun deleteEntriesForRecipient(dateSent: List<Long>, recipientId: RecipientId, device: Int) {
-    if (!FeatureFlags.senderKey()) return
+    if (!FeatureFlags.retryReceipts()) return
 
     val db = databaseHelper.writableDatabase
 
@@ -348,13 +348,13 @@ class MessageSendLogDatabase constructor(context: Context?, databaseHelper: SQLC
   }
 
   fun deleteAll() {
-    if (!FeatureFlags.senderKey()) return
+    if (!FeatureFlags.retryReceipts()) return
 
     databaseHelper.writableDatabase.delete(PayloadTable.TABLE_NAME, null, null)
   }
 
   fun trimOldMessages(currentTime: Long, maxAge: Long) {
-    if (!FeatureFlags.senderKey()) return
+    if (!FeatureFlags.retryReceipts()) return
 
     val db = databaseHelper.writableDatabase
     val query = "${PayloadTable.DATE_SENT} < ?"

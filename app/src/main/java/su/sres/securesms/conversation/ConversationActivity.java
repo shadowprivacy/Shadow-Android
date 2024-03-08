@@ -2820,7 +2820,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
     attachmentManager.cleanup();
 
     updateLinkPreviewState();
-    linkPreviewViewModel.onSend();
   }
 
   private void sendMessage() {
@@ -2896,7 +2895,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     attachmentManager.clear(glideRequests, false);
     silentlySetComposeText("");
 
-    long id = fragment.stageOutgoingMessage(message);
+    long id = fragment.stageOutgoingMessage(secureMessage);
 
     SimpleTask.run(() -> {
       long resultId = MessageSender.sendPushWithPreUploadedMedia(this, secureMessage, result.getPreUploadResults(), thread, () -> fragment.releaseOutgoingMessage(id));
@@ -2912,13 +2911,14 @@ public class ConversationActivity extends PassphraseRequiredActivity
       throws InvalidMessageException
   {
     Log.i(TAG, "Sending media message...");
+    List<LinkPreview> linkPreviews = linkPreviewViewModel.onSend();
     sendMediaMessage(recipient.getId(),
                      forceSms,
                      getMessage(),
                      attachmentManager.buildSlideDeck(),
                      inputPanel.getQuote().orNull(),
                      Collections.emptyList(),
-                     linkPreviewViewModel.getActiveLinkPreviews(),
+                     linkPreviews,
                      composeText.getMentions(),
                      expiresIn,
                      viewOnce,

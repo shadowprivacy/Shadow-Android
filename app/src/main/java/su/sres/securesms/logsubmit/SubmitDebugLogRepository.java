@@ -81,11 +81,12 @@ public class SubmitDebugLogRepository {
     add(new LogSectionSystemInfo());
     add(new LogSectionJobs());
     add(new LogSectionConstraints());
+    add(new LogSectionCapabilities());
+    add(new LogSectionLocalMetrics());
+    add(new LogSectionFeatureFlags());
     if (Build.VERSION.SDK_INT >= 28) {
       add(new LogSectionPower());
     }
-    add(new LogSectionCapabilities());
-    add(new LogSectionFeatureFlags());
     add(new LogSectionNotifications());
     add(new LogSectionKeyPreferences());
     add(new LogSectionPermissions());
@@ -110,7 +111,10 @@ public class SubmitDebugLogRepository {
   }
 
   public void buildAndSubmitLog(@NonNull Callback<Optional<String>> callback) {
-    SignalExecutors.UNBOUNDED.execute(() -> callback.onResult(submitLogInternal(System.currentTimeMillis(), getPrefixLogLinesInternal(), Tracer.getInstance().serialize())));
+    SignalExecutors.UNBOUNDED.execute(() -> {
+      LogDatabase.getInstance(context).trimToSize();
+      callback.onResult(submitLogInternal(System.currentTimeMillis(), getPrefixLogLinesInternal(), Tracer.getInstance().serialize()));
+    });
   }
 
   /**

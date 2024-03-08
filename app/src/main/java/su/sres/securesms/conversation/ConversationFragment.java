@@ -150,6 +150,7 @@ import su.sres.securesms.util.HtmlUtil;
 import su.sres.securesms.util.RemoteDeleteUtil;
 import su.sres.securesms.util.SaveAttachmentTask;
 import su.sres.securesms.util.SetUtil;
+import su.sres.securesms.util.ShadowLocalMetrics;
 import su.sres.securesms.util.ShadowProxyUtil;
 import su.sres.securesms.util.SnapToTopDataObserver;
 import su.sres.securesms.util.StickyHeaderDecoration;
@@ -243,6 +244,7 @@ public class ConversationFragment extends LoggingFragment {
     super.onCreate(icicle);
     this.locale      = (Locale) getArguments().getSerializable(PassphraseRequiredActivity.LOCALE_EXTRA);
     startupStopwatch = new Stopwatch("conversation-open");
+    ShadowLocalMetrics.ConversationOpen.start();
   }
 
   @Override
@@ -510,7 +512,7 @@ public class ConversationFragment extends LoggingFragment {
 
   private void onViewHolderPositionTranslated(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
     if (viewHolder instanceof GiphyMp4Playable) {
-      giphyMp4ProjectionRecycler.updateDisplay(recyclerView, (GiphyMp4Playable) viewHolder);
+      giphyMp4ProjectionRecycler.updateVideoDisplayPositionAndSize(recyclerView, (GiphyMp4Playable) viewHolder);
     }
 
     if (colorizer != null) {
@@ -682,10 +684,12 @@ public class ConversationFragment extends LoggingFragment {
         @Override
         public void onItemRangeInserted(int positionStart, int itemCount) {
           startupStopwatch.split("data-set");
+          ShadowLocalMetrics.ConversationOpen.onDataLoaded();
           adapter.unregisterAdapterDataObserver(this);
           list.post(() -> {
             startupStopwatch.split("first-render");
             startupStopwatch.stop(TAG);
+            ShadowLocalMetrics.ConversationOpen.onRenderFinished();
           });
         }
       });

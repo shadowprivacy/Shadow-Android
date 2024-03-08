@@ -33,9 +33,11 @@ import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.permissions.Permissions;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.Projection;
+import su.sres.securesms.util.ShadowLocalMetrics;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.dualsim.SubscriptionInfoCompat;
 import su.sres.securesms.util.dualsim.SubscriptionManagerCompat;
@@ -43,6 +45,7 @@ import su.sres.securesms.util.dualsim.SubscriptionManagerCompat;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class ConversationItemFooter extends ConstraintLayout {
@@ -63,6 +66,8 @@ public class ConversationItemFooter extends ConstraintLayout {
 
   private final Rect speedToggleHitRect = new Rect();
   private final int  touchTargetSize    = ViewUtil.dpToPx(48);
+
+  private long previousMessageId;
 
   public ConversationItemFooter(Context context) {
     super(context);
@@ -369,6 +374,17 @@ public class ConversationItemFooter extends ConstraintLayout {
   }
 
   private void presentDeliveryStatus(@NonNull MessageRecord messageRecord) {
+    long newMessageId = buildMessageId(messageRecord);
+
+    if (previousMessageId == newMessageId && deliveryStatusView.isPending() && !messageRecord.isPending()) {
+      if (messageRecord.getRecipient().isGroup()) {
+        ShadowLocalMetrics.GroupMessageSend.onUiUpdated(messageRecord.getId());
+      } else {
+        ShadowLocalMetrics.IndividualMessageSend.onUiUpdated(messageRecord.getId());
+      }
+    }
+
+    previousMessageId = newMessageId;
     if (messageRecord.isFailed() || messageRecord.isPendingInsecureSmsFallback()) {
       deliveryStatusView.setNone();
       return;
@@ -402,7 +418,7 @@ public class ConversationItemFooter extends ConstraintLayout {
       if (mmsMessageRecord.getSlideDeck().getAudioSlide() != null) {
         showAudioDurationViews();
 
-        if (messageRecord.getViewedReceiptCount() > 0) {
+        if (messageRecord.getViewedReceiptCount() > 0 || (messageRecord.isOutgoing() && Objects.equals(messageRecord.getRecipient(), Recipient.self()))) {
           revealDot.setProgress(1f);
         } else {
           revealDot.setProgress(0f);
@@ -426,6 +442,10 @@ public class ConversationItemFooter extends ConstraintLayout {
     audioDuration.setVisibility(View.GONE);
     revealDot.setVisibility(View.GONE);
     playbackSpeedToggleTextView.setVisibility(View.GONE);
+  }
+
+  private long buildMessageId(@NonNull MessageRecord record) {
+    return record.isMms() ? -record.getId() : record.getId();
   }
 
   public interface OnTouchDelegateChangedListener {

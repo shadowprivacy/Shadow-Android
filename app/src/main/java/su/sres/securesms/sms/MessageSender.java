@@ -70,6 +70,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.util.ParcelUtil;
+import su.sres.securesms.util.ShadowLocalMetrics;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import org.greenrobot.eventbus.EventBus;
@@ -114,6 +115,8 @@ public class MessageSender {
                                                   System.currentTimeMillis(),
                                                   insertListener);
 
+    ShadowLocalMetrics.IndividualMessageSend.start(messageId);
+
     sendTextMessage(context, recipient, forceSms, keyExchange, messageId);
     onMessageSent();
 
@@ -134,6 +137,10 @@ public class MessageSender {
       long      allocatedThreadId = threadDatabase.getOrCreateValidThreadId(message.getRecipient(), threadId, message.getDistributionType());
       Recipient recipient         = message.getRecipient();
       long      messageId         = database.insertMessageOutbox(applyUniversalExpireTimerIfNecessary(context, recipient, message, allocatedThreadId), allocatedThreadId, forceSms, insertListener);
+
+      if (message.getRecipient().isGroup() && message.getAttachments().isEmpty() && message.getLinkPreviews().isEmpty() && message.getSharedContacts().isEmpty()) {
+        ShadowLocalMetrics.GroupMessageSend.start(messageId);
+      }
 
       sendMediaMessage(context, recipient, forceSms, messageId, Collections.emptyList());
       onMessageSent();

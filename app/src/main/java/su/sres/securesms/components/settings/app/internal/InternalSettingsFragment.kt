@@ -15,6 +15,7 @@ import su.sres.securesms.components.settings.DSLSettingsFragment
 import su.sres.securesms.components.settings.DSLSettingsText
 import su.sres.securesms.components.settings.configure
 import su.sres.securesms.database.DatabaseFactory
+import su.sres.securesms.database.LocalMetricsDatabase
 import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.jobs.RefreshAttributesJob
 import su.sres.securesms.jobs.RefreshOwnProfileJob
@@ -218,6 +219,18 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
           viewModel.setDelayResends(!state.delayResends)
         }
       )
+
+      dividerPref()
+
+      sectionHeaderPref(R.string.preferences__internal_local_metrics)
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_clear_local_metrics),
+        summary = DSLSettingsText.from(R.string.preferences__internal_click_to_clear_all_local_metrics_state),
+        onClick = {
+          clearAllLocalMetricsState()
+        }
+      )
     }
   }
 
@@ -294,5 +307,10 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
   private fun clearAllSenderKeySharedState() {
     DatabaseFactory.getSenderKeySharedDatabase(requireContext()).deleteAll()
     Toast.makeText(context, "Deleted all sender key shared state.", Toast.LENGTH_SHORT).show()
+  }
+
+  private fun clearAllLocalMetricsState() {
+    LocalMetricsDatabase.getInstance(ApplicationDependencies.getApplication()).clear()
+    Toast.makeText(context, "Cleared all local metrics state.", Toast.LENGTH_SHORT).show()
   }
 }

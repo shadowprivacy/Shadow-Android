@@ -36,6 +36,7 @@ import su.sres.securesms.notifications.v2.MessageNotifierV2;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.CursorUtil;
+import su.sres.securesms.util.SqlUtil;
 
 import org.whispersystems.libsignal.util.Pair;
 
@@ -104,6 +105,14 @@ public class MmsSmsDatabase extends Database {
                                                MmsDatabase.MENTIONS_SELF,
                                                MmsSmsColumns.NOTIFIED_TIMESTAMP,
                                                MmsSmsColumns.VIEWED_RECEIPT_COUNT };
+
+  private static final String SNIPPET_QUERY = "SELECT " + MmsSmsColumns.ID + ", 0 AS " + TRANSPORT + ", " + SmsDatabase.TYPE +        " AS " + MmsSmsColumns.NORMALIZED_TYPE + ", " + SmsDatabase.DATE_RECEIVED + " AS " + MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " FROM " + SmsDatabase.TABLE_NAME + " " +
+                                              "WHERE " + MmsSmsColumns.THREAD_ID + " = ? AND " + SmsDatabase.TYPE + " NOT IN (" + SmsDatabase.Types.PROFILE_CHANGE_TYPE + ", " + SmsDatabase.Types.GV1_MIGRATION_TYPE + ") " +
+                                              "UNION ALL " +
+                                              "SELECT " + MmsSmsColumns.ID + ", 1 AS " + TRANSPORT + ", " + MmsDatabase.MESSAGE_BOX + " AS " + MmsSmsColumns.NORMALIZED_TYPE + ", " + MmsDatabase.DATE_RECEIVED + " AS " + MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " FROM " + MmsDatabase.TABLE_NAME + " " +
+                                              "WHERE " + MmsSmsColumns.THREAD_ID + " = ? " +
+                                              "ORDER BY " + MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " DESC " +
+                                              "LIMIT 1";
 
   public MmsSmsDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
     super(context, databaseHelper);
@@ -208,11 +217,33 @@ public class MmsSmsDatabase extends Database {
     return cursor;
   }
 
-  public Cursor getConversationSnippet(long threadId) {
-    String order     = MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " DESC";
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND (" + SmsDatabase.TYPE + " IS NULL OR " + SmsDatabase.TYPE + " NOT IN (" + SmsDatabase.Types.PROFILE_CHANGE_TYPE + ", " + SmsDatabase.Types.GV1_MIGRATION_TYPE + "))";
+  public @NonNull MessageRecord getConversationSnippet(long threadId) throws NoSuchMessageException {
+    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    try (Cursor cursor = db.rawQuery(SNIPPET_QUERY, SqlUtil.buildArgs(threadId, threadId))) {
+      if (cursor.moveToFirst()) {
+        boolean isMms = CursorUtil.requireBoolean(cursor, TRANSPORT);
+        long    id    = CursorUtil.requireLong(cursor, MmsSmsColumns.ID);
 
-    return queryTables(PROJECTION, selection, order, "1");
+        if (isMms) {
+          return DatabaseFactory.getMmsDatabase(context).getMessageRecord(id);
+        } else {
+          return DatabaseFactory.getSmsDatabase(context).getMessageRecord(id);
+        }
+      } else {
+        throw new NoSuchMessageException("no message");
+      }
+    }
+  }
+
+  public long getConversationSnippetType(long threadId) throws NoSuchMessageException {
+    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    try (Cursor cursor = db.rawQuery(SNIPPET_QUERY, SqlUtil.buildArgs(threadId, threadId))) {
+      if (cursor.moveToFirst()) {
+        return CursorUtil.requireLong(cursor, MmsSmsColumns.NORMALIZED_TYPE);
+      } else {
+        throw new NoSuchMessageException("no message");
+      }
+    }
   }
 
   public Cursor getUnread() {
@@ -297,13 +328,6 @@ public class MmsSmsDatabase extends Database {
   public int getConversationCount(long threadId, long beforeTime) {
     return DatabaseFactory.getSmsDatabase(context).getMessageCountForThread(threadId, beforeTime) +
            DatabaseFactory.getMmsDatabase(context).getMessageCountForThread(threadId, beforeTime);
-  }
-
-  public int getConversationCountForThreadSummary(long threadId) {
-    int count = DatabaseFactory.getSmsDatabase(context).getMessageCountForThreadSummary(threadId);
-    count += DatabaseFactory.getMmsDatabase(context).getMessageCountForThreadSummary(threadId);
-
-    return count;
   }
 
   public int getInsecureSentCount(long threadId) {
@@ -563,11 +587,12 @@ public class MmsSmsDatabase extends Database {
     DatabaseFactory.getMmsDatabase(context).setNotifiedTimestamp(timestamp, mmsIds);
   }
 
-  public void deleteMessagesInThreadBeforeDate(long threadId, long trimBeforeDate) {
+  public boolean deleteMessagesInThreadBeforeDate(long threadId, long trimBeforeDate) {
     Log.d(TAG, "deleteMessagesInThreadBeforeData(" + threadId + ", " + trimBeforeDate + ")");
 
-    DatabaseFactory.getSmsDatabase(context).deleteMessagesInThreadBeforeDate(threadId, trimBeforeDate);
-    DatabaseFactory.getMmsDatabase(context).deleteMessagesInThreadBeforeDate(threadId, trimBeforeDate);
+    boolean deletedSms = DatabaseFactory.getSmsDatabase(context).deleteMessagesInThreadBeforeDate(threadId, trimBeforeDate);
+    boolean deletedMms = DatabaseFactory.getMmsDatabase(context).deleteMessagesInThreadBeforeDate(threadId, trimBeforeDate);
+    return deletedSms || deletedMms;
   }
 
   public void deleteAbandonedMessages() {

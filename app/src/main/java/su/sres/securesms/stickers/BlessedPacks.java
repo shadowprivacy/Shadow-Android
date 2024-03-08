@@ -20,6 +20,7 @@ public final class BlessedPacks {
     public static final Pack SWOON_HANDS = new Pack("e61fa0867031597467ccc036cc65d403", "13ae7b1a7407318280e9b38c1261ded38e0e7138b9f964a6ccbb73e40f737a9b");
     public static final Pack SWOON_FACES = new Pack("cca32f5b905208b7d0f1e17f23fdc185", "8bf8e95f7a45bdeafe0c8f5b002ef01ab95b8f1b5baac4019ccd6b6be0b1837a");
     public static final Pack DAY_BY_DAY  = new Pack("cfc50156556893ef9838069d3890fe49", "5f5beab7d382443cb00a1e48eb95297b6b8cadfd0631e5d0d9dc949e6999ff4b");
+    public static final Pack MY_DAILY_LIFE = new Pack("ccc89a05dc077856b57351e90697976c", "45730e60f09d5566115223744537a6b7d9ea99ceeacb77a1fbd6801b9607fbcf");
 
     private static final Set<String> BLESSED_PACK_IDS = new HashSet<String>() {{
         add(ZOZO.getPackId());
@@ -27,6 +28,7 @@ public final class BlessedPacks {
         add(SWOON_HANDS.getPackId());
         add(SWOON_FACES.getPackId());
         add(DAY_BY_DAY.getPackId());
+        // add(MY_DAILY_LIFE.getPackId());
     }};
 
     public static boolean contains(@NonNull String packId) {

@@ -3,6 +3,7 @@ package su.sres.securesms.longmessage;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
@@ -18,6 +19,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.mms.TextSlide;
 import su.sres.core.util.concurrent.SignalExecutors;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
@@ -25,79 +27,79 @@ import java.io.InputStream;
 
 class LongMessageRepository {
 
-    private final static String TAG = Log.tag(LongMessageRepository.class);
+  private final static String TAG = Log.tag(LongMessageRepository.class);
 
-    private final MessageDatabase mmsDatabase;
-    private final MessageDatabase smsDatabase;
+  private final MessageDatabase mmsDatabase;
+  private final MessageDatabase smsDatabase;
 
-    LongMessageRepository(@NonNull Context context) {
-        this.mmsDatabase = DatabaseFactory.getMmsDatabase(context);
-        this.smsDatabase = DatabaseFactory.getSmsDatabase(context);
+  LongMessageRepository(@NonNull Context context) {
+    this.mmsDatabase = DatabaseFactory.getMmsDatabase(context);
+    this.smsDatabase = DatabaseFactory.getSmsDatabase(context);
+  }
+
+  void getMessage(@NonNull Context context, long messageId, boolean isMms, @NonNull Callback<Optional<LongMessage>> callback) {
+    SignalExecutors.BOUNDED.execute(() -> {
+      if (isMms) {
+        callback.onComplete(getMmsLongMessage(context, mmsDatabase, messageId));
+      } else {
+        callback.onComplete(getSmsLongMessage(context, smsDatabase, messageId));
+      }
+    });
+  }
+
+  @WorkerThread
+  private Optional<LongMessage> getMmsLongMessage(@NonNull Context context, @NonNull MessageDatabase mmsDatabase, long messageId) {
+    Optional<MmsMessageRecord> record = getMmsMessage(mmsDatabase, messageId);
+
+    if (record.isPresent()) {
+      TextSlide textSlide = record.get().getSlideDeck().getTextSlide();
+
+      if (textSlide != null && textSlide.getUri() != null) {
+        return Optional.of(new LongMessage(ConversationMessageFactory.createWithUnresolvedData(context, record.get(), readFullBody(context, textSlide.getUri()))));
+      } else {
+        return Optional.of(new LongMessage(ConversationMessageFactory.createWithUnresolvedData(context, record.get())));
+      }
+    } else {
+      return Optional.absent();
     }
+  }
 
-    void getMessage(@NonNull Context context, long messageId, boolean isMms, @NonNull Callback<Optional<LongMessage>> callback) {
-        SignalExecutors.BOUNDED.execute(() -> {
-            if (isMms) {
-                callback.onComplete(getMmsLongMessage(context, mmsDatabase, messageId));
-            } else {
-                callback.onComplete(getSmsLongMessage(context, smsDatabase, messageId));
-            }
-        });
+  @WorkerThread
+  private Optional<LongMessage> getSmsLongMessage(@NonNull Context context, @NonNull MessageDatabase smsDatabase, long messageId) {
+    Optional<MessageRecord> record = getSmsMessage(smsDatabase, messageId);
+
+    if (record.isPresent()) {
+      return Optional.of(new LongMessage(ConversationMessageFactory.createWithUnresolvedData(context, record.get())));
+    } else {
+      return Optional.absent();
     }
+  }
 
-    @WorkerThread
-    private Optional<LongMessage> getMmsLongMessage(@NonNull Context context, @NonNull MessageDatabase mmsDatabase, long messageId) {
-        Optional<MmsMessageRecord> record = getMmsMessage(mmsDatabase, messageId);
 
-        if (record.isPresent()) {
-            TextSlide textSlide = record.get().getSlideDeck().getTextSlide();
-
-            if (textSlide != null && textSlide.getUri() != null) {
-                return Optional.of(new LongMessage(ConversationMessageFactory.createWithUnresolvedData(context, record.get()), readFullBody(context, textSlide.getUri())));
-            } else {
-                return Optional.of(new LongMessage(ConversationMessageFactory.createWithUnresolvedData(context, record.get()), ""));
-            }
-        } else {
-            return Optional.absent();
-        }
+  @WorkerThread
+  private Optional<MmsMessageRecord> getMmsMessage(@NonNull MessageDatabase mmsDatabase, long messageId) {
+    try (Cursor cursor = mmsDatabase.getMessageCursor(messageId)) {
+      return Optional.fromNullable((MmsMessageRecord) MmsDatabase.readerFor(cursor).getNext());
     }
+  }
 
-    @WorkerThread
-    private Optional<LongMessage> getSmsLongMessage(@NonNull Context context, @NonNull MessageDatabase smsDatabase, long messageId) {
-        Optional<MessageRecord> record = getSmsMessage(smsDatabase, messageId);
-
-        if (record.isPresent()) {
-            return Optional.of(new LongMessage(ConversationMessageFactory.createWithUnresolvedData(context, record.get()), ""));
-        } else {
-            return Optional.absent();
-        }
+  @WorkerThread
+  private Optional<MessageRecord> getSmsMessage(@NonNull MessageDatabase smsDatabase, long messageId) {
+    try (Cursor cursor = smsDatabase.getMessageCursor(messageId)) {
+      return Optional.fromNullable(SmsDatabase.readerFor(cursor).getNext());
     }
+  }
 
-
-    @WorkerThread
-    private Optional<MmsMessageRecord> getMmsMessage(@NonNull MessageDatabase mmsDatabase, long messageId) {
-        try (Cursor cursor = mmsDatabase.getMessageCursor(messageId)) {
-            return Optional.fromNullable((MmsMessageRecord) MmsDatabase.readerFor(cursor).getNext());
-        }
+  private @NonNull String readFullBody(@NonNull Context context, @NonNull Uri uri) {
+    try (InputStream stream = PartAuthority.getAttachmentStream(context, uri)) {
+      return StreamUtil.readFullyAsString(stream);
+    } catch (IOException e) {
+      Log.w(TAG, "Failed to read full text body.", e);
+      return "";
     }
+  }
 
-    @WorkerThread
-    private Optional<MessageRecord> getSmsMessage(@NonNull MessageDatabase smsDatabase, long messageId) {
-        try (Cursor cursor = smsDatabase.getMessageCursor(messageId)) {
-            return Optional.fromNullable(SmsDatabase.readerFor(cursor).getNext());
-        }
-    }
-
-    private String readFullBody(@NonNull Context context, @NonNull Uri uri) {
-        try (InputStream stream = PartAuthority.getAttachmentStream(context, uri)) {
-            return StreamUtil.readFullyAsString(stream);
-        } catch (IOException e) {
-            Log.w(TAG, "Failed to read full text body.", e);
-            return "";
-        }
-    }
-
-    interface Callback<T> {
-        void onComplete(T result);
-    }
+  interface Callback<T> {
+    void onComplete(T result);
+  }
 }

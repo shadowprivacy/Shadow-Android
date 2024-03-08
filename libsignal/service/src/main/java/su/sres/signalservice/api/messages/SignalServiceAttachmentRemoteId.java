@@ -3,6 +3,8 @@ package su.sres.signalservice.api.messages;
 import org.signal.libsignal.metadata.ProtocolInvalidMessageException;
 import org.whispersystems.libsignal.InvalidMessageException;
 import org.whispersystems.libsignal.util.guava.Optional;
+
+import su.sres.signalservice.api.InvalidMessageStructureException;
 import su.sres.signalservice.internal.push.SignalServiceProtos.AttachmentPointer;
 
 /**
@@ -13,57 +15,57 @@ import su.sres.signalservice.internal.push.SignalServiceProtos.AttachmentPointer
  * flexibility in the amount of entropy present.
  */
 public final class SignalServiceAttachmentRemoteId {
-    private final Optional<Long> v2;
-    private final Optional<String> v3;
+  private final Optional<Long>   v2;
+  private final Optional<String> v3;
 
-    public SignalServiceAttachmentRemoteId(long v2) {
-        this.v2 = Optional.of(v2);
-        this.v3 = Optional.absent();
-    }
+  public SignalServiceAttachmentRemoteId(long v2) {
+    this.v2 = Optional.of(v2);
+    this.v3 = Optional.absent();
+  }
 
-    public SignalServiceAttachmentRemoteId(String v3) {
-        this.v2 = Optional.absent();
-        this.v3 = Optional.of(v3);
-    }
+  public SignalServiceAttachmentRemoteId(String v3) {
+    this.v2 = Optional.absent();
+    this.v3 = Optional.of(v3);
+  }
 
-    public Optional<Long> getV2() {
-        return v2;
-    }
+  public Optional<Long> getV2() {
+    return v2;
+  }
 
-    public Optional<String> getV3() {
-        return v3;
-    }
+  public Optional<String> getV3() {
+    return v3;
+  }
 
-    @Override
-    public String toString() {
-        if (v2.isPresent()) {
-            return v2.get().toString();
-        } else {
-            return v3.get();
-        }
+  @Override
+  public String toString() {
+    if (v2.isPresent()) {
+      return v2.get().toString();
+    } else {
+      return v3.get();
     }
+  }
 
-    public static SignalServiceAttachmentRemoteId from(AttachmentPointer attachmentPointer) throws ProtocolInvalidMessageException {
-        switch (attachmentPointer.getAttachmentIdentifierCase()) {
-            case CDNID:
-                return new SignalServiceAttachmentRemoteId(attachmentPointer.getCdnId());
-            case CDNKEY:
-                return new SignalServiceAttachmentRemoteId(attachmentPointer.getCdnKey());
-            case ATTACHMENTIDENTIFIER_NOT_SET:
-                throw new ProtocolInvalidMessageException(new InvalidMessageException("AttachmentPointer CDN location not set"), null, 0);
-        }
-        return null;
+  public static SignalServiceAttachmentRemoteId from(AttachmentPointer attachmentPointer) throws InvalidMessageStructureException {
+    switch (attachmentPointer.getAttachmentIdentifierCase()) {
+      case CDNID:
+        return new SignalServiceAttachmentRemoteId(attachmentPointer.getCdnId());
+      case CDNKEY:
+        return new SignalServiceAttachmentRemoteId(attachmentPointer.getCdnKey());
+      case ATTACHMENTIDENTIFIER_NOT_SET:
+        throw new InvalidMessageStructureException("AttachmentPointer CDN location not set");
     }
+    return null;
+  }
 
-    /**
-     * Guesses that strings which contain values parseable to {@code long} should use an id-based
-     * CDN path. Otherwise, use key-based CDN path.
-     */
-    public static SignalServiceAttachmentRemoteId from(String string) {
-        try {
-            return new SignalServiceAttachmentRemoteId(Long.parseLong(string));
-        } catch (NumberFormatException e) {
-            return new SignalServiceAttachmentRemoteId(string);
-        }
+  /**
+   * Guesses that strings which contain values parseable to {@code long} should use an id-based
+   * CDN path. Otherwise, use key-based CDN path.
+   */
+  public static SignalServiceAttachmentRemoteId from(String string) {
+    try {
+      return new SignalServiceAttachmentRemoteId(Long.parseLong(string));
+    } catch (NumberFormatException e) {
+      return new SignalServiceAttachmentRemoteId(string);
     }
+  }
 }

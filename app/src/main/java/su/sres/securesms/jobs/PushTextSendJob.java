@@ -22,6 +22,7 @@ import su.sres.securesms.service.ExpiringMessageManager;
 import su.sres.securesms.transport.InsecureFallbackApprovalException;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.transport.UndeliverableMessageException;
+import su.sres.securesms.util.ShadowLocalMetrics;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 
@@ -77,6 +78,7 @@ public class PushTextSendJob extends PushSendJob {
 
   @Override
   public void onPushSend() throws IOException, NoSuchMessageException, UndeliverableMessageException, RetryLaterException {
+    ShadowLocalMetrics.IndividualMessageSend.onJobStarted(messageId);
     ExpiringMessageManager expirationManager = ApplicationDependencies.getExpiringMessageManager();
     MessageDatabase        database          = DatabaseFactory.getSmsDatabase(context);
     SmsMessageRecord       record            = database.getSmsMessage(messageId);
@@ -139,6 +141,8 @@ public class PushTextSendJob extends PushSendJob {
       // captcha off
       // handleProofRequiredException(e, record.getRecipient(), record.getThreadId(), messageId, false);
     }
+
+    ShadowLocalMetrics.IndividualMessageSend.onJobFinished(messageId);
   }
 
   @Override
@@ -179,11 +183,17 @@ public class PushTextSendJob extends PushSendJob {
         Optional<UnidentifiedAccessPair> syncAccess  = UnidentifiedAccessUtil.getAccessForSync(context);
         SignalServiceSyncMessage         syncMessage = buildSelfSendSyncMessage(context, textSecureMessage, syncAccess);
 
+        ShadowLocalMetrics.IndividualMessageSend.onNetworkStarted(messageId);
         SendMessageResult result = messageSender.sendSyncMessage(syncMessage, syncAccess);
+        ShadowLocalMetrics.IndividualMessageSend.onNetworkFinished(messageId);
+
         DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(messageRecipient.getId(), message.getDateSent(), result, ContentHint.RESENDABLE, new MessageId(messageId, false));
         return syncAccess.isPresent();
       } else {
+        ShadowLocalMetrics.IndividualMessageSend.onNetworkStarted(messageId);
         SendMessageResult result = messageSender.sendDataMessage(address, unidentifiedAccess, ContentHint.RESENDABLE, textSecureMessage);
+        ShadowLocalMetrics.IndividualMessageSend.onNetworkFinished(messageId);
+
         DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(messageRecipient.getId(), message.getDateSent(), result, ContentHint.RESENDABLE, new MessageId(messageId, false));
         return result.getSuccess().isUnidentified();
       }

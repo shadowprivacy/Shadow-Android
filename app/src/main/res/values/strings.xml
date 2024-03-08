@@ -2421,6 +2421,9 @@
     <string name="preferences__internal_remove_the_requirement_that_you_need" translatable="false">Remove the requirement that you  need at least 2 recipients to use sender key.</string>
     <string name="preferences__internal_delay_resends" translatable="false">Delay resends</string>
     <string name="preferences__internal_delay_resending_messages_in_response_to_retry_receipts" translatable="false">Delay resending messages in response to retry receipts by 10 seconds.</string>
+    <string name="preferences__internal_local_metrics" translatable="false">Local Metrics</string>
+    <string name="preferences__internal_clear_local_metrics" translatable="false">Clear local metrics</string>
+    <string name="preferences__internal_click_to_clear_all_local_metrics_state" translatable="false">Click to clear all local metrics state.</string>
 
     <!-- Payments -->
     <string name="PaymentsActivityFragment__all_activity">All activity</string>
@@ -3460,6 +3463,11 @@
 
     <!-- VoiceNotePlayerView -->
     <string name="VoiceNotePlayerView__s_dot_s">%1$s · %2$s</string>
+    <string name="VoiceNotePlayerView__stop_voice_message">Stop voice message</string>
+    <string name="VoiceNotePlayerView__change_voice_message_speed">Change voice message speed</string>
+    <string name="VoiceNotePlayerView__pause_voice_message">Pause voice message</string>
+    <string name="VoiceNotePlayerView__play_voice_message">Play voice message</string>
+    <string name="VoiceNotePlayerView__navigate_to_voice_message">Navigate to voice message</string>
 
     <!-- AvatarPickerFragment -->
     <string name="AvatarPickerFragment__avatar_preview">Avatar preview</string>

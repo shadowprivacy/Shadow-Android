@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.components.webrtc.BroadcastVideoSink;
+import su.sres.securesms.components.webrtc.EglBaseWrapper;
 import su.sres.securesms.ringrtc.Camera;
 import su.sres.securesms.ringrtc.CameraEventListener;
 import su.sres.securesms.ringrtc.CameraState;
@@ -23,111 +24,108 @@ import org.webrtc.VideoSink;
  */
 public final class WebRtcVideoUtil {
 
-    private WebRtcVideoUtil() {}
+  private WebRtcVideoUtil() {}
 
-    public static @NonNull WebRtcServiceState initializeVideo(@NonNull Context context,
-                                                              @NonNull CameraEventListener cameraEventListener,
-                                                              @NonNull WebRtcServiceState currentState)
-    {
-        final WebRtcServiceStateBuilder builder = currentState.builder();
+  public static @NonNull WebRtcServiceState initializeVideo(@NonNull Context context,
+                                                            @NonNull CameraEventListener cameraEventListener,
+                                                            @NonNull WebRtcServiceState currentState)
+  {
+    final WebRtcServiceStateBuilder builder = currentState.builder();
 
-        ThreadUtil.runOnMainSync(() -> {
-            EglBase            eglBase   = EglBase.create();
-            BroadcastVideoSink localSink = new BroadcastVideoSink(eglBase,
-                                                                  true,
-                                                                  false,
-                                                                  currentState.getLocalDeviceState().getOrientation().getDegrees());
-            Camera             camera    = new Camera(context, cameraEventListener, eglBase, CameraState.Direction.FRONT);
+    ThreadUtil.runOnMainSync(() -> {
+      EglBaseWrapper eglBase = new EglBaseWrapper(EglBase.create());
+      BroadcastVideoSink localSink = new BroadcastVideoSink(eglBase,
+                                                            true,
+                                                            false,
+                                                            currentState.getLocalDeviceState().getOrientation().getDegrees());
+      Camera camera = new Camera(context, cameraEventListener, eglBase, CameraState.Direction.FRONT);
 
-            camera.setOrientation(currentState.getLocalDeviceState().getOrientation().getDegrees());
+      camera.setOrientation(currentState.getLocalDeviceState().getOrientation().getDegrees());
 
-            builder.changeVideoState()
-                    .eglBase(eglBase)
-                    .localSink(localSink)
-                    .camera(camera)
-                    .commit()
-                    .changeLocalDeviceState()
-                    .cameraState(camera.getCameraState())
-                    .commit();
-        });
+      builder.changeVideoState()
+             .eglBase(eglBase)
+             .localSink(localSink)
+             .camera(camera)
+             .commit()
+             .changeLocalDeviceState()
+             .cameraState(camera.getCameraState())
+             .commit();
+    });
 
-        return builder.build();
+    return builder.build();
+  }
+
+  public static @NonNull WebRtcServiceState reinitializeCamera(@NonNull Context context,
+                                                               @NonNull CameraEventListener cameraEventListener,
+                                                               @NonNull WebRtcServiceState currentState)
+  {
+    final WebRtcServiceStateBuilder builder = currentState.builder();
+
+    ThreadUtil.runOnMainSync(() -> {
+      Camera camera = currentState.getVideoState().requireCamera();
+      camera.setEnabled(false);
+      camera.dispose();
+
+      camera = new Camera(context,
+                          cameraEventListener,
+                          currentState.getVideoState().getLockableEglBase(),
+                          currentState.getLocalDeviceState().getCameraState().getActiveDirection());
+
+      camera.setOrientation(currentState.getLocalDeviceState().getOrientation().getDegrees());
+
+      builder.changeVideoState()
+             .camera(camera)
+             .commit()
+             .changeLocalDeviceState()
+             .cameraState(camera.getCameraState())
+             .commit();
+    });
+
+    return builder.build();
+  }
+
+  public static @NonNull WebRtcServiceState deinitializeVideo(@NonNull WebRtcServiceState currentState) {
+    Camera camera = currentState.getVideoState().getCamera();
+    if (camera != null) {
+      camera.dispose();
     }
 
-    public static @NonNull WebRtcServiceState reinitializeCamera(@NonNull Context context,
-                                                                 @NonNull CameraEventListener cameraEventListener,
-                                                                 @NonNull WebRtcServiceState currentState)
-    {
-        final WebRtcServiceStateBuilder builder = currentState.builder();
+    currentState.getVideoState().getLockableEglBase().releaseEglBase();
 
-        ThreadUtil.runOnMainSync(() -> {
-            Camera camera = currentState.getVideoState().requireCamera();
-            camera.setEnabled(false);
-            camera.dispose();
+    return currentState.builder()
+                       .changeVideoState()
+                       .eglBase(null)
+                       .camera(null)
+                       .localSink(null)
+                       .commit()
+                       .changeLocalDeviceState()
+                       .cameraState(CameraState.UNKNOWN)
+                       .build();
+  }
 
-            camera = new Camera(context,
-                    cameraEventListener,
-                    currentState.getVideoState().requireEglBase(),
-                    currentState.getLocalDeviceState().getCameraState().getActiveDirection());
+  public static @NonNull WebRtcServiceState initializeVanityCamera(@NonNull WebRtcServiceState currentState) {
+    Camera    camera = currentState.getVideoState().requireCamera();
+    VideoSink sink   = currentState.getVideoState().requireLocalSink();
 
-            camera.setOrientation(currentState.getLocalDeviceState().getOrientation().getDegrees());
-
-            builder.changeVideoState()
-                    .camera(camera)
-                    .commit()
-                    .changeLocalDeviceState()
-                    .cameraState(camera.getCameraState())
-                    .commit();
-        });
-
-        return builder.build();
-    }
-
-    public static @NonNull WebRtcServiceState deinitializeVideo(@NonNull WebRtcServiceState currentState) {
-        Camera camera = currentState.getVideoState().getCamera();
-        if (camera != null) {
-            camera.dispose();
+    if (camera.hasCapturer()) {
+      camera.initCapturer(new CapturerObserver() {
+        @Override
+        public void onFrameCaptured(VideoFrame videoFrame) {
+          sink.onFrame(videoFrame);
         }
 
-        EglBase eglBase = currentState.getVideoState().getEglBase();
-        if (eglBase != null) {
-            eglBase.release();
-        }
+        @Override
+        public void onCapturerStarted(boolean success) {}
 
-        return currentState.builder()
-                .changeVideoState()
-                .eglBase(null)
-                .camera(null)
-                .localSink(null)
-                .commit()
-                .changeLocalDeviceState()
-                .cameraState(CameraState.UNKNOWN)
-                .build();
+        @Override
+        public void onCapturerStopped() {}
+      });
+      camera.setEnabled(true);
     }
 
-    public static @NonNull WebRtcServiceState initializeVanityCamera(@NonNull WebRtcServiceState currentState) {
-        Camera    camera = currentState.getVideoState().requireCamera();
-        VideoSink sink   = currentState.getVideoState().requireLocalSink();
-
-        if (camera.hasCapturer()) {
-            camera.initCapturer(new CapturerObserver() {
-                @Override
-                public void onFrameCaptured(VideoFrame videoFrame) {
-                    sink.onFrame(videoFrame);
-                }
-
-                @Override
-                public void onCapturerStarted(boolean success) {}
-
-                @Override
-                public void onCapturerStopped() {}
-            });
-            camera.setEnabled(true);
-        }
-
-        return currentState.builder()
-                .changeLocalDeviceState()
-                .cameraState(camera.getCameraState())
-                .build();
-    }
+    return currentState.builder()
+                       .changeLocalDeviceState()
+                       .cameraState(camera.getCameraState())
+                       .build();
+  }
 }

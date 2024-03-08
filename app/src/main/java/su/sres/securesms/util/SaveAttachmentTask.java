@@ -7,6 +7,7 @@ import android.content.DialogInterface.OnClickListener;
 import android.database.Cursor;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -23,6 +24,7 @@ import su.sres.securesms.R;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.util.task.ProgressDialogAsyncTask;
+
 import org.whispersystems.libsignal.util.Pair;
 
 import java.io.File;
@@ -32,17 +34,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTask.Attachment, Void, Pair<Integer, String>> {
   private static final String TAG = Log.tag(SaveAttachmentTask.class);
 
-          static final int SUCCESS              = 0;
+  static final         int SUCCESS              = 0;
   private static final int FAILURE              = 1;
   private static final int WRITE_ACCESS_FAILURE = 2;
 
-  private final WeakReference<Context>      contextReference;
+  private final WeakReference<Context> contextReference;
 
   private final int attachmentCount;
 
@@ -54,8 +57,8 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
     super(context,
           context.getResources().getQuantityString(R.plurals.ConversationFragment_saving_n_attachments, count, count),
           context.getResources().getQuantityString(R.plurals.ConversationFragment_saving_n_attachments_to_sd_card, count, count));
-    this.contextReference      = new WeakReference<>(context);
-    this.attachmentCount       = count;
+    this.contextReference = new WeakReference<>(context);
+    this.attachmentCount  = count;
   }
 
   @Override
@@ -65,8 +68,8 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
     }
 
     try {
-      Context      context      = contextReference.get();
-      String       directory    = null;
+      Context context   = contextReference.get();
+      String  directory = null;
 
       if (!StorageUtil.canWriteToMediaStore()) {
         return new Pair<>(WRITE_ACCESS_FAILURE, null);
@@ -84,7 +87,7 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
       }
 
       if (attachments.length > 1) return new Pair<>(SUCCESS, null);
-      else                        return new Pair<>(SUCCESS, directory);
+      else return new Pair<>(SUCCESS, directory);
     } catch (IOException ioe) {
       Log.w(TAG, ioe);
       return new Pair<>(FAILURE, null);
@@ -93,8 +96,8 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
 
   private @Nullable String saveAttachment(Context context, Attachment attachment) throws IOException
   {
-    String      contentType = Objects.requireNonNull(MediaUtil.getCorrectedMimeType(attachment.contentType));
-    String         fileName = attachment.fileName;
+    String contentType = Objects.requireNonNull(MediaUtil.getCorrectedMimeType(attachment.contentType));
+    String fileName    = attachment.fileName;
 
     if (fileName == null) fileName = generateOutputFileName(contentType, attachment.date);
     fileName = sanitizeOutputFileName(fileName);
@@ -117,7 +120,7 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
       if (Objects.equals(outputUri.getScheme(), ContentResolver.SCHEME_FILE)) {
         try (OutputStream outputStream = new FileOutputStream(mediaUri.getPath())) {
           StreamUtil.copy(inputStream, outputStream);
-          MediaScannerConnection.scanFile(context, new String[]{mediaUri.getPath()}, new String[]{contentType}, null);
+          MediaScannerConnection.scanFile(context, new String[] { mediaUri.getPath() }, new String[] { contentType }, null);
         }
       } else {
         try (OutputStream outputStream = context.getContentResolver().openOutputStream(mediaUri, "w")) {
@@ -153,17 +156,53 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
     }
   }
 
-  public String getExternalPathToFileForType(String contentType) {
-    File storage;
+  private @Nullable File ensureExternalPath(@Nullable File path) {
+    if (path != null && path.exists()) {
+      return path;
+    }
+
+    if (path == null) {
+      File documents = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+      if (documents.exists() || documents.mkdirs()) {
+        return documents;
+      } else {
+        return null;
+      }
+    }
+
+    if (path.mkdirs()) {
+      return path;
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Returns a path to a shared media (or documents) directory for the type of the file.
+   * <p>
+   * Note that this method attempts to create a directory if the path returned from
+   * Environment object does not exist yet. The attempt may fail in which case it attempts
+   * to return the default "Document" path. It finally returns null if it also fails.
+   * Otherwise it returns the absolute path to the directory.
+   *
+   * @param contentType a MIME type of a file
+   * @return an absolute path to a directory or null
+   */
+  private @Nullable String getExternalPathForType(String contentType) {
+    File storage = null;
     if (contentType.startsWith("video/")) {
       storage = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
     } else if (contentType.startsWith("audio/")) {
       storage = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
     } else if (contentType.startsWith("image/")) {
       storage = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-    } else {
-      storage = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
     }
+
+    storage = ensureExternalPath(storage);
+    if (storage == null) {
+      return null;
+    }
+
     return storage.getAbsolutePath();
   }
 
@@ -183,7 +222,7 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
   }
 
   private @Nullable Uri createOutputUri(@NonNull Uri outputUri, @NonNull String contentType, @NonNull String fileName)
-          throws IOException
+      throws IOException
   {
     String[] fileParts = getFileNameParts(fileName);
     String   base      = fileParts[0];
@@ -218,13 +257,18 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
 
       return Uri.fromFile(outputFile);
     } else {
+      String dir = getExternalPathForType(contentType);
+      if (dir == null) {
+        throw new IOException(String.format(Locale.US, "Path for type: %s was not available", contentType));
+      }
+
       String outputFileName = fileName;
-      String dataPath       = String.format("%s/%s", getExternalPathToFileForType(contentType), outputFileName);
+      String dataPath       = String.format("%s/%s", dir, outputFileName);
       int    i              = 0;
       while (pathTaken(outputUri, dataPath)) {
         Log.d(TAG, "The content exists. Rename and check again.");
         outputFileName = base + "-" + (++i) + "." + extension;
-        dataPath       = String.format("%s/%s", getExternalPathToFileForType(contentType), outputFileName);
+        dataPath       = String.format("%s/%s", dir, outputFileName);
       }
       contentValues.put(MediaStore.MediaColumns.DATA, dataPath);
     }
@@ -234,10 +278,10 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
 
   private boolean pathTaken(@NonNull Uri outputUri, @NonNull String dataPath) throws IOException {
     try (Cursor cursor = getContext().getContentResolver().query(outputUri,
-            new String[] { MediaStore.MediaColumns.DATA },
-            MediaStore.MediaColumns.DATA + " = ?",
-            new String[] { dataPath },
-            null))
+                                                                 new String[] { MediaStore.MediaColumns.DATA },
+                                                                 MediaStore.MediaColumns.DATA + " = ?",
+                                                                 new String[] { dataPath },
+                                                                 null))
     {
       if (cursor == null) {
         throw new IOException("Something is wrong with the filename to save");
@@ -253,7 +297,7 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
     result[0] = tokens[0];
 
     if (tokens.length > 1) result[1] = tokens[1];
-    else                   result[1] = "";
+    else result[1] = "";
 
     return result;
   }
@@ -272,8 +316,8 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
                        Toast.LENGTH_LONG).show();
         break;
       case SUCCESS:
-        String message = !TextUtils.isEmpty(result.second())  ? context.getResources().getString(R.string.SaveAttachmentTask_saved_to, result.second())
-                : context.getResources().getString(R.string.SaveAttachmentTask_saved);
+        String message = !TextUtils.isEmpty(result.second()) ? context.getResources().getString(R.string.SaveAttachmentTask_saved_to, result.second())
+                                                             : context.getResources().getString(R.string.SaveAttachmentTask_saved);
         Toast.makeText(context, message, Toast.LENGTH_LONG).show();
         break;
     }

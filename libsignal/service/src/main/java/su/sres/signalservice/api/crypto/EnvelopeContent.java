@@ -9,6 +9,7 @@ import org.whispersystems.libsignal.protocol.CiphertextMessage;
 import org.whispersystems.libsignal.protocol.DecryptionErrorMessage;
 import org.whispersystems.libsignal.protocol.PlaintextContent;
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.internal.push.OutgoingPushMessage;
 import su.sres.signalservice.internal.push.PushTransportDetails;
 import su.sres.signalservice.internal.push.SignalServiceProtos.Content;
@@ -78,12 +79,12 @@ public interface EnvelopeContent {
                                                    SenderCertificate senderCertificate)
         throws UntrustedIdentityException, InvalidKeyException
     {
-      PushTransportDetails             transportDetails = new PushTransportDetails();
-      CiphertextMessage                message          = sessionCipher.encrypt(transportDetails.getPaddedMessageBody(content.toByteArray()));
-      UnidentifiedSenderMessageContent messageContent   = new UnidentifiedSenderMessageContent(message,
-                                                                                               senderCertificate,
-                                                                                               contentHint.getType(),
-                                                                                               groupId);
+      PushTransportDetails transportDetails = new PushTransportDetails();
+      CiphertextMessage    message          = sessionCipher.encrypt(transportDetails.getPaddedMessageBody(content.toByteArray()));
+      UnidentifiedSenderMessageContent messageContent = new UnidentifiedSenderMessageContent(message,
+                                                                                             senderCertificate,
+                                                                                             contentHint.getType(),
+                                                                                             groupId);
 
       byte[] ciphertext           = sealedSessionCipher.encrypt(destination, messageContent);
       String body                 = Base64.encodeBytes(ciphertext);
@@ -102,9 +103,12 @@ public interface EnvelopeContent {
       int type;
 
       switch (message.getType()) {
-        case CiphertextMessage.PREKEY_TYPE:  type = Type.PREKEY_BUNDLE_VALUE; break;
-        case CiphertextMessage.WHISPER_TYPE: type = Type.CIPHERTEXT_VALUE;    break;
-        default: throw new AssertionError("Bad type: " + message.getType());
+        case CiphertextMessage.PREKEY_TYPE:
+          type = Type.PREKEY_BUNDLE_VALUE; break;
+        case CiphertextMessage.WHISPER_TYPE:
+          type = Type.CIPHERTEXT_VALUE; break;
+        default:
+          throw new AssertionError("Bad type: " + message.getType());
       }
 
       return new OutgoingPushMessage(type, destination.getDeviceId(), remoteRegistrationId, body);
@@ -152,7 +156,7 @@ public interface EnvelopeContent {
 
     @Override
     public OutgoingPushMessage processUnsealedSender(SignalSessionCipher sessionCipher, SignalProtocolAddress destination) {
-      String body                 = Base64.encodeBytes(plaintextContent.getBody());
+      String body                 = Base64.encodeBytes(plaintextContent.serialize());
       int    remoteRegistrationId = sessionCipher.getRemoteRegistrationId();
 
       return new OutgoingPushMessage(Type.PLAINTEXT_CONTENT_VALUE, destination.getDeviceId(), remoteRegistrationId, body);

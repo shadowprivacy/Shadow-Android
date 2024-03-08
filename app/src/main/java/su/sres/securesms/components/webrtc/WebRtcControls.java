@@ -157,7 +157,7 @@ public final class WebRtcControls {
   }
 
   boolean isFadeOutEnabled() {
-    return isAtLeastOutgoing() && isRemoteVideoEnabled && foldableState.isFlat();
+    return isAtLeastOutgoing() && isRemoteVideoEnabled;
   }
 
   boolean displaySmallOngoingCallButtons() {

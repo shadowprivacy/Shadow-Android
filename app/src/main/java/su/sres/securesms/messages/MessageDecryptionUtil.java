@@ -51,6 +51,7 @@ import org.whispersystems.libsignal.protocol.DecryptionErrorMessage;
 import org.whispersystems.libsignal.state.SignalProtocolStore;
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import su.sres.signalservice.api.InvalidMessageStructureException;
 import su.sres.signalservice.api.crypto.ContentHint;
 import su.sres.signalservice.api.crypto.SignalServiceCipher;
 import su.sres.signalservice.api.messages.SignalServiceContent;
@@ -100,7 +101,7 @@ public final class MessageDecryptionUtil {
         Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
         Recipient sender = Recipient.external(context, e.getSender());
 
-        if (sender.supportsMessageRetries() && Recipient.self().supportsMessageRetries() && FeatureFlags.senderKey()) {
+        if (sender.supportsMessageRetries() && Recipient.self().supportsMessageRetries() && FeatureFlags.retryReceipts()) {
           jobs.add(handleRetry(context, sender, envelope, e));
           postInternalErrorNotification(context);
         } else {
@@ -113,7 +114,7 @@ public final class MessageDecryptionUtil {
       } catch (ProtocolDuplicateMessageException e) {
         Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
         return DecryptionResult.forError(MessageState.DUPLICATE_MESSAGE, toExceptionMetadata(e), jobs);
-      } catch (InvalidMetadataVersionException | InvalidMetadataMessageException e) {
+      } catch (InvalidMetadataVersionException | InvalidMetadataMessageException | InvalidMessageStructureException e) {
         Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
         return DecryptionResult.forNoop(jobs);
       } catch (SelfSendException e) {

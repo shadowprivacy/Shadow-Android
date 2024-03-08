@@ -57,6 +57,7 @@ import java.util.List;
 public class VoiceNotePlaybackService extends MediaBrowserServiceCompat {
 
   public static final String ACTION_NEXT_PLAYBACK_SPEED = "su.sres.securesms.components.voice.VoiceNotePlaybackService.action.next_playback_speed";
+  public static final String ACTION_SET_AUDIO_STREAM    = "su.sres.securesms.components.voice.VoiceNotePlaybackService.action.set_audio_stream";
 
   private static final String TAG                 = Log.tag(VoiceNotePlaybackService.class);
   private static final String EMPTY_ROOT_ID       = "empty-root-id";
@@ -77,7 +78,6 @@ public class VoiceNotePlaybackService extends MediaBrowserServiceCompat {
   private VoiceNoteNotificationManager voiceNoteNotificationManager;
   private VoiceNoteQueueDataAdapter    queueDataAdapter;
   private VoiceNotePlaybackPreparer    voiceNotePlaybackPreparer;
-  private VoiceNoteProximityManager    voiceNoteProximityManager;
   private boolean                      isForegroundService;
   private VoiceNotePlaybackParameters  voiceNotePlaybackParameters;
 
@@ -110,7 +110,6 @@ public class VoiceNotePlaybackService extends MediaBrowserServiceCompat {
     AttachmentMediaSourceFactory mediaSourceFactory = new AttachmentMediaSourceFactory(this);
 
     voiceNotePlaybackPreparer = new VoiceNotePlaybackPreparer(this, player, queueDataAdapter, mediaSourceFactory, voiceNotePlaybackParameters);
-    voiceNoteProximityManager = new VoiceNoteProximityManager(this, player, queueDataAdapter);
 
     mediaSession.setPlaybackState(stateBuilder.build());
 
@@ -171,15 +170,12 @@ public class VoiceNotePlaybackService extends MediaBrowserServiceCompat {
           if (!playWhenReady) {
             stopForeground(false);
             becomingNoisyReceiver.unregister();
-            voiceNoteProximityManager.onPlayerEnded();
           } else {
             sendViewedReceiptForCurrentWindowIndex();
             becomingNoisyReceiver.register();
-            voiceNoteProximityManager.onPlayerReady();
           }
           break;
         default:
-          voiceNoteProximityManager.onPlayerEnded();
           becomingNoisyReceiver.unregister();
           voiceNoteNotificationManager.hideNotification();
       }
@@ -219,7 +215,6 @@ public class VoiceNotePlaybackService extends MediaBrowserServiceCompat {
     @Override
     public void onPlayerError(ExoPlaybackException error) {
       Log.w(TAG, "ExoPlayer error occurred:", error);
-      voiceNoteProximityManager.onPlayerError();
     }
   }
 

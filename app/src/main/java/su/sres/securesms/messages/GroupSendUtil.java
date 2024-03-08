@@ -10,6 +10,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.SenderKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.GroupDatabase.GroupRecord;
 import su.sres.securesms.database.MessageSendLogDatabase;
 import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -138,18 +139,21 @@ public final class GroupSendUtil {
                                                      @Nullable CancelationSignal cancelationSignal)
       throws IOException, UntrustedIdentityException
   {
-    RecipientData recipients = new RecipientData(context, allTargets);
+    RecipientData         recipients  = new RecipientData(context, allTargets);
+    Optional<GroupRecord> groupRecord = groupId != null ? DatabaseFactory.getGroupDatabase(context).getGroup(groupId) : Optional.absent();
 
     List<Recipient> senderKeyTargets = new LinkedList<>();
     List<Recipient> legacyTargets    = new LinkedList<>();
 
     for (Recipient recipient : allTargets) {
-      Optional<UnidentifiedAccessPair> access = recipients.getAccessPair(recipient.getId());
+      Optional<UnidentifiedAccessPair> access          = recipients.getAccessPair(recipient.getId());
+      boolean                          validMembership = groupRecord.isPresent() && groupRecord.get().getMembers().contains(recipient.getId());
 
       if (recipient.getSenderKeyCapability() == Recipient.Capability.SUPPORTED &&
           recipient.hasUuid() &&
           access.isPresent() &&
-          access.get().getTargetUnidentifiedAccess().isPresent())
+          access.get().getTargetUnidentifiedAccess().isPresent()               &&
+          validMembership)
       {
         senderKeyTargets.add(recipient);
       } else {

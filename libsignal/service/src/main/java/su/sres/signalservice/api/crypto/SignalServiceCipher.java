@@ -43,6 +43,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.List;
 
+import su.sres.signalservice.api.InvalidMessageStructureException;
 import su.sres.signalservice.api.SignalSessionLock;
 import su.sres.signalservice.api.messages.SignalServiceContent;
 import su.sres.signalservice.api.messages.SignalServiceEnvelope;
@@ -134,7 +135,7 @@ public class SignalServiceCipher {
              ProtocolUntrustedIdentityException, ProtocolNoSessionException,
              ProtocolInvalidVersionException, ProtocolInvalidMessageException,
              ProtocolInvalidKeyException, ProtocolDuplicateMessageException,
-             SelfSendException, UnsupportedDataMessageException
+             SelfSendException, UnsupportedDataMessageException, InvalidMessageStructureException
 
   {
     try {
@@ -175,7 +176,7 @@ public class SignalServiceCipher {
              ProtocolLegacyMessageException, ProtocolInvalidKeyException,
              ProtocolInvalidVersionException, ProtocolInvalidMessageException,
              ProtocolInvalidKeyIdException, ProtocolNoSessionException,
-             SelfSendException
+             SelfSendException, InvalidMessageStructureException
   {
     try {
 
@@ -183,7 +184,7 @@ public class SignalServiceCipher {
       SignalServiceMetadata metadata;
 
       if (!envelope.hasSource() && !envelope.isUnidentifiedSender()) {
-        throw new ProtocolInvalidMessageException(new InvalidMessageException("Non-UD envelope is missing a source!"), null, 0);
+        throw new InvalidMessageStructureException("Non-UD envelope is missing a source!");
       }
 
       if (envelope.isPreKeySignalMessage()) {
@@ -201,9 +202,9 @@ public class SignalServiceCipher {
       } else if (envelope.isUnidentifiedSender()) {
         SignalSealedSessionCipher sealedSessionCipher = new SignalSealedSessionCipher(sessionLock, new SealedSessionCipher(signalProtocolStore, localAddress.getUuid().orNull(), localAddress.getNumber()
                                                                                                                                                                                              .orNull(), SignalServiceAddress.DEFAULT_DEVICE_ID));
-        DecryptionResult          result              = sealedSessionCipher.decrypt(certificateValidator, ciphertext, envelope.getServerReceivedTimestamp());
-        SignalServiceAddress      resultAddress       = new SignalServiceAddress(UuidUtil.parse(result.getSenderUuid()), result.getSenderE164());
-        Optional<byte[]>          groupId             = result.getGroupId();
+        DecryptionResult     result        = sealedSessionCipher.decrypt(certificateValidator, ciphertext, envelope.getServerReceivedTimestamp());
+        SignalServiceAddress resultAddress = new SignalServiceAddress(UuidUtil.parse(result.getSenderUuid()), result.getSenderE164());
+        Optional<byte[]>     groupId       = result.getGroupId();
 
         paddedMessage = result.getPaddedMessage();
         metadata      = new SignalServiceMetadata(resultAddress, result.getDeviceId(), envelope.getTimestamp(), envelope.getServerReceivedTimestamp(), envelope.getServerDeliveredTimestamp(), true, envelope.getServerGuid(), groupId);

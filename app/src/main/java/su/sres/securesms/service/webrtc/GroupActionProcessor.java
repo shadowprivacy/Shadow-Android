@@ -8,6 +8,7 @@ import com.annimon.stream.Stream;
 
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.GroupCall;
+
 import su.sres.securesms.components.webrtc.BroadcastVideoSink;
 import su.sres.securesms.components.webrtc.GroupCallSafetyNumberChangeNotificationUtil;
 import su.sres.securesms.events.CallParticipant;
@@ -22,6 +23,7 @@ import su.sres.securesms.service.webrtc.state.VideoState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceStateBuilder;
 import su.sres.securesms.webrtc.locks.LockManager;
+
 import org.webrtc.VideoTrack;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -40,308 +42,308 @@ import java.util.Set;
  * and call specific setup information that is the same for any group call state.
  */
 public class GroupActionProcessor extends DeviceAwareActionProcessor {
-    public GroupActionProcessor(@NonNull WebRtcInteractor webRtcInteractor, @NonNull String tag) {
-        super(webRtcInteractor, tag);
+  public GroupActionProcessor(@NonNull WebRtcInteractor webRtcInteractor, @NonNull String tag) {
+    super(webRtcInteractor, tag);
+  }
+
+  protected @NonNull WebRtcServiceState handleReceivedOffer(@NonNull WebRtcServiceState currentState,
+                                                            @NonNull WebRtcData.CallMetadata callMetadata,
+                                                            @NonNull WebRtcData.OfferMetadata offerMetadata,
+                                                            @NonNull WebRtcData.ReceivedOfferMetadata receivedOfferMetadata)
+  {
+    Log.i(tag, "handleReceivedOffer(): id: " + callMetadata.getCallId().format(callMetadata.getRemoteDevice()));
+
+    Log.i(tag, "In a group call, send busy back to 1:1 call offer.");
+    currentState.getActionProcessor().handleSendBusy(currentState, callMetadata, true);
+    webRtcInteractor.insertMissedCall(callMetadata.getRemotePeer(), receivedOfferMetadata.getServerReceivedTimestamp(), offerMetadata.getOfferType() == OfferMessage.Type.VIDEO_CALL);
+
+    return currentState;
+  }
+
+  @Override
+  protected @NonNull WebRtcServiceState handleGroupRemoteDeviceStateChanged(@NonNull WebRtcServiceState currentState) {
+    Log.i(tag, "handleGroupRemoteDeviceStateChanged():");
+
+    GroupCall                               groupCall    = currentState.getCallInfoState().requireGroupCall();
+    Map<CallParticipantId, CallParticipant> participants = currentState.getCallInfoState().getRemoteCallParticipantsMap();
+
+    LongSparseArray<GroupCall.RemoteDeviceState> remoteDevices = groupCall.getRemoteDeviceStates();
+
+    if (remoteDevices == null) {
+      Log.w(tag, "Unable to update remote devices with null list.");
+      return currentState;
     }
 
-    protected @NonNull WebRtcServiceState handleReceivedOffer(@NonNull WebRtcServiceState currentState,
-                                                              @NonNull WebRtcData.CallMetadata callMetadata,
-                                                              @NonNull WebRtcData.OfferMetadata offerMetadata,
-                                                              @NonNull WebRtcData.ReceivedOfferMetadata receivedOfferMetadata)
-    {
-        Log.i(tag, "handleReceivedOffer(): id: " + callMetadata.getCallId().format(callMetadata.getRemoteDevice()));
+    WebRtcServiceStateBuilder.CallInfoStateBuilder builder = currentState.builder()
+                                                                         .changeCallInfoState()
+                                                                         .clearParticipantMap();
 
-        Log.i(tag, "In a group call, send busy back to 1:1 call offer.");
-        currentState.getActionProcessor().handleSendBusy(currentState, callMetadata, true);
-        webRtcInteractor.insertMissedCall(callMetadata.getRemotePeer(), receivedOfferMetadata.getServerReceivedTimestamp(), offerMetadata.getOfferType() == OfferMessage.Type.VIDEO_CALL);
+    List<GroupCall.RemoteDeviceState> remoteDeviceStates = new ArrayList<>(remoteDevices.size());
+    for (int i = 0; i < remoteDevices.size(); i++) {
+      remoteDeviceStates.add(remoteDevices.get(remoteDevices.keyAt(i)));
+    }
+    Collections.sort(remoteDeviceStates, (a, b) -> Long.compare(a.getAddedTime(), b.getAddedTime()));
 
-        return currentState;
+    Set<Recipient> seen = new HashSet<>();
+    seen.add(Recipient.self());
+
+    for (GroupCall.RemoteDeviceState device : remoteDeviceStates) {
+      Recipient         recipient         = Recipient.externalPush(context, device.getUserId(), null, false);
+      CallParticipantId callParticipantId = new CallParticipantId(device.getDemuxId(), recipient.getId());
+      CallParticipant   callParticipant   = participants.get(callParticipantId);
+
+      BroadcastVideoSink videoSink;
+      VideoTrack         videoTrack = device.getVideoTrack();
+      if (videoTrack != null) {
+        videoSink = (callParticipant != null && callParticipant.getVideoSink().getLockableEglBase().getEglBase() != null) ? callParticipant.getVideoSink()
+                                                                                                                          : new BroadcastVideoSink(currentState.getVideoState().getLockableEglBase(),
+                                                                                                                                                   true,
+                                                                                                                                                   true,
+                                                                                                                                                   currentState.getLocalDeviceState().getOrientation().getDegrees());
+        videoTrack.addSink(videoSink);
+      } else {
+        videoSink = new BroadcastVideoSink();
+      }
+
+      builder.putParticipant(callParticipantId,
+                             CallParticipant.createRemote(callParticipantId,
+                                                          recipient,
+                                                          null,
+                                                          videoSink,
+                                                          Boolean.FALSE.equals(device.getAudioMuted()),
+                                                          Boolean.FALSE.equals(device.getVideoMuted()),
+                                                          device.getSpeakerTime(),
+                                                          device.getMediaKeysReceived(),
+                                                          device.getAddedTime(),
+                                                          Boolean.TRUE.equals(device.getPresenting()),
+                                                          seen.contains(recipient) ? CallParticipant.DeviceOrdinal.SECONDARY
+                                                                                   : CallParticipant.DeviceOrdinal.PRIMARY));
+
+      seen.add(recipient);
     }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleGroupRemoteDeviceStateChanged(@NonNull WebRtcServiceState currentState) {
-        Log.i(tag, "handleGroupRemoteDeviceStateChanged():");
+    builder.remoteDevicesCount(remoteDevices.size());
 
-        GroupCall                               groupCall    = currentState.getCallInfoState().requireGroupCall();
-        Map<CallParticipantId, CallParticipant> participants = currentState.getCallInfoState().getRemoteCallParticipantsMap();
+    return builder.build();
+  }
 
-        LongSparseArray<GroupCall.RemoteDeviceState> remoteDevices = groupCall.getRemoteDeviceStates();
+  @Override
+  protected @NonNull WebRtcServiceState handleGroupRequestMembershipProof(@NonNull WebRtcServiceState currentState, int groupCallHash, @NonNull byte[] groupMembershipToken) {
+    Log.i(tag, "handleGroupRequestMembershipProof():");
 
-        if (remoteDevices == null) {
-            Log.w(tag, "Unable to update remote devices with null list.");
-            return currentState;
-        }
+    GroupCall groupCall = currentState.getCallInfoState().getGroupCall();
 
-        WebRtcServiceStateBuilder.CallInfoStateBuilder builder = currentState.builder()
-                .changeCallInfoState()
-                .clearParticipantMap();
-
-        List<GroupCall.RemoteDeviceState> remoteDeviceStates = new ArrayList<>(remoteDevices.size());
-        for (int i = 0; i < remoteDevices.size(); i++) {
-            remoteDeviceStates.add(remoteDevices.get(remoteDevices.keyAt(i)));
-        }
-        Collections.sort(remoteDeviceStates, (a, b) -> Long.compare(a.getAddedTime(), b.getAddedTime()));
-
-        Set<Recipient> seen = new HashSet<>();
-        seen.add(Recipient.self());
-
-        for (GroupCall.RemoteDeviceState device : remoteDeviceStates) {
-            Recipient                   recipient         = Recipient.externalPush(context, device.getUserId(), null, false);
-            CallParticipantId           callParticipantId = new CallParticipantId(device.getDemuxId(), recipient.getId());
-            CallParticipant             callParticipant   = participants.get(callParticipantId);
-
-            BroadcastVideoSink videoSink;
-            VideoTrack         videoTrack = device.getVideoTrack();
-            if (videoTrack != null) {
-                videoSink = (callParticipant != null && callParticipant.getVideoSink().getEglBase() != null) ? callParticipant.getVideoSink()
-                                                                                                             : new BroadcastVideoSink(currentState.getVideoState().requireEglBase(),
-                                                                                                                                      true,
-                                                                                                                                      true,
-                                                                                                                                      currentState.getLocalDeviceState().getOrientation().getDegrees());
-                videoTrack.addSink(videoSink);
-            } else {
-                videoSink = new BroadcastVideoSink();
-            }
-
-            builder.putParticipant(callParticipantId,
-                    CallParticipant.createRemote(callParticipantId,
-                            recipient,
-                            null,
-                            videoSink,
-                            Boolean.FALSE.equals(device.getAudioMuted()),
-                            Boolean.FALSE.equals(device.getVideoMuted()),
-                            device.getSpeakerTime(),
-                            device.getMediaKeysReceived(),
-                            device.getAddedTime(),
-                                                 Boolean.TRUE.equals(device.getPresenting()),
-                                                 seen.contains(recipient) ? CallParticipant.DeviceOrdinal.SECONDARY
-                                    : CallParticipant.DeviceOrdinal.PRIMARY));
-
-            seen.add(recipient);
-        }
-
-        builder.remoteDevicesCount(remoteDevices.size());
-
-        return builder.build();
+    if (groupCall == null || groupCall.hashCode() != groupCallHash) {
+      return currentState;
     }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleGroupRequestMembershipProof(@NonNull WebRtcServiceState currentState, int groupCallHash, @NonNull byte[] groupMembershipToken) {
-        Log.i(tag, "handleGroupRequestMembershipProof():");
-
-        GroupCall groupCall = currentState.getCallInfoState().getGroupCall();
-
-        if (groupCall == null || groupCall.hashCode() != groupCallHash) {
-            return currentState;
-        }
-
-        try {
-            groupCall.setMembershipProof(groupMembershipToken);
-        } catch (CallException e) {
-            return groupCallFailure(currentState, "Unable to set group membership proof", e);
-        }
-
-        return currentState;
+    try {
+      groupCall.setMembershipProof(groupMembershipToken);
+    } catch (CallException e) {
+      return groupCallFailure(currentState, "Unable to set group membership proof", e);
     }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleGroupRequestUpdateMembers(@NonNull WebRtcServiceState currentState) {
-        Log.i(tag, "handleGroupRequestUpdateMembers():");
+    return currentState;
+  }
 
-        Recipient group     = currentState.getCallInfoState().getCallRecipient();
-        GroupCall groupCall = currentState.getCallInfoState().requireGroupCall();
+  @Override
+  protected @NonNull WebRtcServiceState handleGroupRequestUpdateMembers(@NonNull WebRtcServiceState currentState) {
+    Log.i(tag, "handleGroupRequestUpdateMembers():");
 
-        List<GroupCall.GroupMemberInfo> members = Stream.of(GroupManager.getUuidCipherTexts(context, group.requireGroupId().requireV2()))
-                .map(entry -> new GroupCall.GroupMemberInfo(entry.getKey(), entry.getValue().serialize()))
-                .toList();
+    Recipient group     = currentState.getCallInfoState().getCallRecipient();
+    GroupCall groupCall = currentState.getCallInfoState().requireGroupCall();
 
-        try {
-            groupCall.setGroupMembers(new ArrayList<>(members));
-        } catch (CallException e) {
-            return groupCallFailure(currentState, "Unable set group members", e);
-        }
+    List<GroupCall.GroupMemberInfo> members = Stream.of(GroupManager.getUuidCipherTexts(context, group.requireGroupId().requireV2()))
+                                                    .map(entry -> new GroupCall.GroupMemberInfo(entry.getKey(), entry.getValue().serialize()))
+                                                    .toList();
 
-        return currentState;
+    try {
+      groupCall.setGroupMembers(new ArrayList<>(members));
+    } catch (CallException e) {
+      return groupCallFailure(currentState, "Unable set group members", e);
     }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleUpdateRenderedResolutions(@NonNull WebRtcServiceState currentState) {
-        Map<CallParticipantId, CallParticipant> participants = currentState.getCallInfoState().getRemoteCallParticipantsMap();
+    return currentState;
+  }
 
-        ArrayList<GroupCall.VideoRequest> resolutionRequests = new ArrayList<>(participants.size());
-        for (Map.Entry<CallParticipantId, CallParticipant> entry : participants.entrySet()) {
-            BroadcastVideoSink               videoSink = entry.getValue().getVideoSink();
-            BroadcastVideoSink.RequestedSize maxSize   = videoSink.getMaxRequestingSize();
+  @Override
+  protected @NonNull WebRtcServiceState handleUpdateRenderedResolutions(@NonNull WebRtcServiceState currentState) {
+    Map<CallParticipantId, CallParticipant> participants = currentState.getCallInfoState().getRemoteCallParticipantsMap();
 
-            resolutionRequests.add(new GroupCall.VideoRequest(entry.getKey().getDemuxId(), maxSize.getWidth(), maxSize.getHeight(), null));
-            videoSink.newSizeRequested();
-        }
+    ArrayList<GroupCall.VideoRequest> resolutionRequests = new ArrayList<>(participants.size());
+    for (Map.Entry<CallParticipantId, CallParticipant> entry : participants.entrySet()) {
+      BroadcastVideoSink               videoSink = entry.getValue().getVideoSink();
+      BroadcastVideoSink.RequestedSize maxSize   = videoSink.getMaxRequestingSize();
 
-        try {
-            currentState.getCallInfoState().requireGroupCall().requestVideo(resolutionRequests);
-        } catch (CallException e) {
-            return groupCallFailure(currentState, "Unable to set rendered resolutions", e);
-        }
-
-        return currentState;
+      resolutionRequests.add(new GroupCall.VideoRequest(entry.getKey().getDemuxId(), maxSize.getWidth(), maxSize.getHeight(), null));
+      videoSink.newSizeRequested();
     }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleReceivedOpaqueMessage(@NonNull WebRtcServiceState currentState, @NonNull WebRtcData.OpaqueMessageMetadata opaqueMessageMetadata) {
-        Log.i(tag, "handleReceivedOpaqueMessage():");
-
-        try {
-            webRtcInteractor.getCallManager().receivedCallMessage(opaqueMessageMetadata.getUuid(),
-                    opaqueMessageMetadata.getRemoteDeviceId(),
-                    1,
-                    opaqueMessageMetadata.getOpaque(),
-                    opaqueMessageMetadata.getMessageAgeSeconds());
-        } catch (CallException e) {
-            return groupCallFailure(currentState, "Unable to receive opaque message", e);
-        }
-
-        return currentState;
+    try {
+      currentState.getCallInfoState().requireGroupCall().requestVideo(resolutionRequests);
+    } catch (CallException e) {
+      return groupCallFailure(currentState, "Unable to set rendered resolutions", e);
     }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleGroupMessageSentError(@NonNull WebRtcServiceState currentState,
-                                                                      @NonNull RemotePeer remotePeer,
-                                                                      @NonNull WebRtcViewModel.State errorCallState,
-                                                                      @NonNull Optional<IdentityKey> identityKey)
-    {
-        Log.w(tag, "handleGroupMessageSentError(): error: " + errorCallState);
+    return currentState;
+  }
 
-        if (errorCallState == WebRtcViewModel.State.UNTRUSTED_IDENTITY) {
-            return currentState.builder()
-                    .changeCallInfoState()
-                    .addIdentityChangedRecipient(remotePeer.getId())
-                    .build();
-        }
+  @Override
+  protected @NonNull WebRtcServiceState handleReceivedOpaqueMessage(@NonNull WebRtcServiceState currentState, @NonNull WebRtcData.OpaqueMessageMetadata opaqueMessageMetadata) {
+    Log.i(tag, "handleReceivedOpaqueMessage():");
 
-        return currentState;
+    try {
+      webRtcInteractor.getCallManager().receivedCallMessage(opaqueMessageMetadata.getUuid(),
+                                                            opaqueMessageMetadata.getRemoteDeviceId(),
+                                                            1,
+                                                            opaqueMessageMetadata.getOpaque(),
+                                                            opaqueMessageMetadata.getMessageAgeSeconds());
+    } catch (CallException e) {
+      return groupCallFailure(currentState, "Unable to receive opaque message", e);
     }
 
-    protected @NonNull WebRtcServiceState handleGroupApproveSafetyNumberChange(@NonNull WebRtcServiceState currentState,
-                                                                               @NonNull List<RecipientId> recipientIds)
-    {
-        Log.i(tag, "handleGroupApproveSafetyNumberChange():");
+    return currentState;
+  }
 
-        GroupCall groupCall = currentState.getCallInfoState().getGroupCall();
+  @Override
+  protected @NonNull WebRtcServiceState handleGroupMessageSentError(@NonNull WebRtcServiceState currentState,
+                                                                    @NonNull RemotePeer remotePeer,
+                                                                    @NonNull WebRtcViewModel.State errorCallState,
+                                                                    @NonNull Optional<IdentityKey> identityKey)
+  {
+    Log.w(tag, "handleGroupMessageSentError(): error: " + errorCallState);
 
-        if (groupCall != null) {
-            currentState = currentState.builder()
-                    .changeCallInfoState()
-                    .removeIdentityChangedRecipients(recipientIds)
-                    .build();
-
-            try {
-                groupCall.resendMediaKeys();
-            } catch (CallException e) {
-                return groupCallFailure(currentState, "Unable to resend media keys", e);
-            }
-        }
-
-        return currentState;
+    if (errorCallState == WebRtcViewModel.State.UNTRUSTED_IDENTITY) {
+      return currentState.builder()
+                         .changeCallInfoState()
+                         .addIdentityChangedRecipient(remotePeer.getId())
+                         .build();
     }
 
-    @Override
-    protected @NonNull WebRtcServiceState handleGroupCallEnded(@NonNull WebRtcServiceState currentState, int groupCallHash, @NonNull GroupCall.GroupCallEndReason groupCallEndReason) {
-        Log.i(tag, "handleGroupCallEnded(): reason: " + groupCallEndReason);
+    return currentState;
+  }
 
-        GroupCall groupCall = currentState.getCallInfoState().getGroupCall();
+  protected @NonNull WebRtcServiceState handleGroupApproveSafetyNumberChange(@NonNull WebRtcServiceState currentState,
+                                                                             @NonNull List<RecipientId> recipientIds)
+  {
+    Log.i(tag, "handleGroupApproveSafetyNumberChange():");
 
-        if (groupCall == null || groupCall.hashCode() != groupCallHash) {
-            return currentState;
-        }
+    GroupCall groupCall = currentState.getCallInfoState().getGroupCall();
 
-        try {
-            groupCall.disconnect();
-        } catch (CallException e) {
-            return groupCallFailure(currentState, "Unable to disconnect from group call", e);
-        }
+    if (groupCall != null) {
+      currentState = currentState.builder()
+                                 .changeCallInfoState()
+                                 .removeIdentityChangedRecipients(recipientIds)
+                                 .build();
 
-        if (groupCallEndReason != GroupCall.GroupCallEndReason.DEVICE_EXPLICITLY_DISCONNECTED) {
-            Log.i(tag, "Group call ended unexpectedly, reinitializing and dropping back to lobby");
-            Recipient  currentRecipient = currentState.getCallInfoState().getCallRecipient();
-            VideoState videoState       = currentState.getVideoState();
-
-            currentState = terminateGroupCall(currentState, false).builder()
-                    .actionProcessor(new GroupNetworkUnavailableActionProcessor(webRtcInteractor))
-                    .changeVideoState()
-                    .eglBase(videoState.getEglBase())
-                    .camera(videoState.getCamera())
-                    .localSink(videoState.getLocalSink())
-                    .commit()
-                    .changeCallInfoState()
-                    .callState(WebRtcViewModel.State.CALL_PRE_JOIN)
-                    .callRecipient(currentRecipient)
-                    .build();
-
-            currentState = WebRtcVideoUtil.initializeVanityCamera(WebRtcVideoUtil.reinitializeCamera(context, webRtcInteractor.getCameraEventListener(), currentState));
-
-            return currentState.getActionProcessor().handlePreJoinCall(currentState, new RemotePeer(currentRecipient.getId()));
-        }
-
-        currentState = currentState.builder()
-                .changeCallInfoState()
-                .callState(WebRtcViewModel.State.CALL_DISCONNECTED)
-                .groupCallState(WebRtcViewModel.GroupCallState.DISCONNECTED)
-                .build();
-
-        webRtcInteractor.postStateUpdate(currentState);
-
-        return terminateGroupCall(currentState);
+      try {
+        groupCall.resendMediaKeys();
+      } catch (CallException e) {
+        return groupCallFailure(currentState, "Unable to resend media keys", e);
+      }
     }
 
-    public @NonNull WebRtcServiceState groupCallFailure(@NonNull WebRtcServiceState currentState, @NonNull String message, @NonNull Throwable error) {
-        Log.w(tag, "groupCallFailure(): " + message, error);
+    return currentState;
+  }
 
-        GroupCall groupCall = currentState.getCallInfoState().getGroupCall();
-        Recipient recipient = currentState.getCallInfoState().getCallRecipient();
+  @Override
+  protected @NonNull WebRtcServiceState handleGroupCallEnded(@NonNull WebRtcServiceState currentState, int groupCallHash, @NonNull GroupCall.GroupCallEndReason groupCallEndReason) {
+    Log.i(tag, "handleGroupCallEnded(): reason: " + groupCallEndReason);
 
-        if (recipient != null && currentState.getCallInfoState().getGroupCallState().isConnected()) {
-            webRtcInteractor.sendGroupCallMessage(recipient, WebRtcUtil.getGroupCallEraId(groupCall));
-        }
+    GroupCall groupCall = currentState.getCallInfoState().getGroupCall();
 
-        currentState = currentState.builder()
-                .changeCallInfoState()
-                .callState(WebRtcViewModel.State.CALL_DISCONNECTED)
-                .groupCallState(WebRtcViewModel.GroupCallState.DISCONNECTED)
-                .build();
-
-        webRtcInteractor.postStateUpdate(currentState);
-
-        try {
-            if (groupCall != null) {
-                groupCall.disconnect();
-            }
-            webRtcInteractor.getCallManager().reset();
-        } catch (CallException e) {
-            Log.w(tag, "Unable to reset call manager: ", e);
-        }
-
-        return terminateGroupCall(currentState);
+    if (groupCall == null || groupCall.hashCode() != groupCallHash) {
+      return currentState;
     }
 
-    public synchronized @NonNull WebRtcServiceState terminateGroupCall(@NonNull WebRtcServiceState currentState) {
-        return terminateGroupCall(currentState, true);
+    try {
+      groupCall.disconnect();
+    } catch (CallException e) {
+      return groupCallFailure(currentState, "Unable to disconnect from group call", e);
     }
 
-    public synchronized @NonNull WebRtcServiceState terminateGroupCall(@NonNull WebRtcServiceState currentState, boolean terminateVideo) {
-        webRtcInteractor.updatePhoneState(LockManager.PhoneState.PROCESSING);
-        boolean playDisconnectSound = currentState.getCallInfoState().getCallState() == WebRtcViewModel.State.CALL_DISCONNECTED;
-        webRtcInteractor.stopAudio(playDisconnectSound);
-        webRtcInteractor.setWantsBluetoothConnection(false);
-        webRtcInteractor.stopForegroundService();
+    if (groupCallEndReason != GroupCall.GroupCallEndReason.DEVICE_EXPLICITLY_DISCONNECTED) {
+      Log.i(tag, "Group call ended unexpectedly, reinitializing and dropping back to lobby");
+      Recipient  currentRecipient = currentState.getCallInfoState().getCallRecipient();
+      VideoState videoState       = currentState.getVideoState();
 
-        webRtcInteractor.updatePhoneState(LockManager.PhoneState.IDLE);
+      currentState = terminateGroupCall(currentState, false).builder()
+                                                            .actionProcessor(new GroupNetworkUnavailableActionProcessor(webRtcInteractor))
+                                                            .changeVideoState()
+                                                            .eglBase(videoState.getLockableEglBase())
+                                                            .camera(videoState.getCamera())
+                                                            .localSink(videoState.getLocalSink())
+                                                            .commit()
+                                                            .changeCallInfoState()
+                                                            .callState(WebRtcViewModel.State.CALL_PRE_JOIN)
+                                                            .callRecipient(currentRecipient)
+                                                            .build();
 
-        if (terminateVideo) {
-            WebRtcVideoUtil.deinitializeVideo(currentState);
-        }
+      currentState = WebRtcVideoUtil.initializeVanityCamera(WebRtcVideoUtil.reinitializeCamera(context, webRtcInteractor.getCameraEventListener(), currentState));
 
-        GroupCallSafetyNumberChangeNotificationUtil.cancelNotification(context, currentState.getCallInfoState().getCallRecipient());
-
-        return new WebRtcServiceState(new IdleActionProcessor(webRtcInteractor));
+      return currentState.getActionProcessor().handlePreJoinCall(currentState, new RemotePeer(currentRecipient.getId()));
     }
+
+    currentState = currentState.builder()
+                               .changeCallInfoState()
+                               .callState(WebRtcViewModel.State.CALL_DISCONNECTED)
+                               .groupCallState(WebRtcViewModel.GroupCallState.DISCONNECTED)
+                               .build();
+
+    webRtcInteractor.postStateUpdate(currentState);
+
+    return terminateGroupCall(currentState);
+  }
+
+  public @NonNull WebRtcServiceState groupCallFailure(@NonNull WebRtcServiceState currentState, @NonNull String message, @NonNull Throwable error) {
+    Log.w(tag, "groupCallFailure(): " + message, error);
+
+    GroupCall groupCall = currentState.getCallInfoState().getGroupCall();
+    Recipient recipient = currentState.getCallInfoState().getCallRecipient();
+
+    if (recipient != null && currentState.getCallInfoState().getGroupCallState().isConnected()) {
+      webRtcInteractor.sendGroupCallMessage(recipient, WebRtcUtil.getGroupCallEraId(groupCall));
+    }
+
+    currentState = currentState.builder()
+                               .changeCallInfoState()
+                               .callState(WebRtcViewModel.State.CALL_DISCONNECTED)
+                               .groupCallState(WebRtcViewModel.GroupCallState.DISCONNECTED)
+                               .build();
+
+    webRtcInteractor.postStateUpdate(currentState);
+
+    try {
+      if (groupCall != null) {
+        groupCall.disconnect();
+      }
+      webRtcInteractor.getCallManager().reset();
+    } catch (CallException e) {
+      Log.w(tag, "Unable to reset call manager: ", e);
+    }
+
+    return terminateGroupCall(currentState);
+  }
+
+  public synchronized @NonNull WebRtcServiceState terminateGroupCall(@NonNull WebRtcServiceState currentState) {
+    return terminateGroupCall(currentState, true);
+  }
+
+  public synchronized @NonNull WebRtcServiceState terminateGroupCall(@NonNull WebRtcServiceState currentState, boolean terminateVideo) {
+    webRtcInteractor.updatePhoneState(LockManager.PhoneState.PROCESSING);
+    boolean playDisconnectSound = currentState.getCallInfoState().getCallState() == WebRtcViewModel.State.CALL_DISCONNECTED;
+    webRtcInteractor.stopAudio(playDisconnectSound);
+    webRtcInteractor.setWantsBluetoothConnection(false);
+    webRtcInteractor.stopForegroundService();
+
+    webRtcInteractor.updatePhoneState(LockManager.PhoneState.IDLE);
+
+    if (terminateVideo) {
+      WebRtcVideoUtil.deinitializeVideo(currentState);
+    }
+
+    GroupCallSafetyNumberChangeNotificationUtil.cancelNotification(context, currentState.getCallInfoState().getCallRecipient());
+
+    return new WebRtcServiceState(new IdleActionProcessor(webRtcInteractor));
+  }
 }
