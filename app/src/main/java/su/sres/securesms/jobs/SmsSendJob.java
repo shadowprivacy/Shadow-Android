@@ -5,7 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+
 import androidx.annotation.NonNull;
+
 import android.telephony.PhoneNumberUtils;
 import android.telephony.SmsManager;
 
@@ -18,7 +20,6 @@ import su.sres.securesms.jobmanager.impl.NetworkOrCellServiceConstraint;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
-import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.model.SmsMessageRecord;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.service.SmsDeliveryListener;
@@ -32,13 +33,13 @@ public class SmsSendJob extends SendJob {
 
   public static final String KEY = "SmsSendJob";
 
-  private static final String TAG              = Log.tag(SmsSendJob.class);
-  private static final int    MAX_ATTEMPTS     = 15;
-  private static final String KEY_MESSAGE_ID   = "message_id";
-  private static final String KEY_RUN_ATTEMPT  = "run_attempt";
+  private static final String TAG             = Log.tag(SmsSendJob.class);
+  private static final int    MAX_ATTEMPTS    = 15;
+  private static final String KEY_MESSAGE_ID  = "message_id";
+  private static final String KEY_RUN_ATTEMPT = "run_attempt";
 
-  private long messageId;
-  private int  runAttempt;
+  private final long messageId;
+  private final int  runAttempt;
 
   public SmsSendJob(long messageId, @NonNull Recipient destination) {
     this(messageId, destination, 0);
@@ -58,8 +59,8 @@ public class SmsSendJob extends SendJob {
   @Override
   public @NonNull Data serialize() {
     return new Data.Builder().putLong(KEY_MESSAGE_ID, messageId)
-            .putInt(KEY_RUN_ATTEMPT, runAttempt)
-            .build();
+                             .putInt(KEY_RUN_ATTEMPT, runAttempt)
+                             .build();
   }
 
   @Override
@@ -81,7 +82,7 @@ public class SmsSendJob extends SendJob {
     }
 
 
-    MessageDatabase database = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase  database = DatabaseFactory.getSmsDatabase(context);
     SmsMessageRecord record   = database.getSmsMessage(messageId);
 
     if (!record.isPending() && !record.isFailed()) {
@@ -143,8 +144,8 @@ public class SmsSendJob extends SendJob {
       throw new UndeliverableMessageException("Not a valid SMS destination! " + recipient);
     }
 
-    ArrayList<String> messages                = SmsManager.getDefault().divideMessage(message.getBody());
-    ArrayList<PendingIntent> sentIntents      = constructSentIntents(message.getId(), message.getType(), messages, false);
+    ArrayList<String>        messages         = SmsManager.getDefault().divideMessage(message.getBody());
+    ArrayList<PendingIntent> sentIntents      = constructSentIntents(message.getId(), message.getType(), messages);
     ArrayList<PendingIntent> deliveredIntents = constructDeliveredIntents(message.getId(), message.getType(), messages);
 
     // NOTE 11/04/14 -- There's apparently a bug where for some unknown recipients
@@ -159,7 +160,7 @@ public class SmsSendJob extends SendJob {
       log(TAG, String.valueOf(message.getDateSent()), "Message Parts: " + messages.size());
 
       try {
-        for (int i=0;i<messages.size();i++) {
+        for (int i = 0; i < messages.size(); i++) {
           getSmsManagerFor(message.getSubscriptionId()).sendTextMessage(recipient, null, messages.get(i),
                                                                         sentIntents.get(i),
                                                                         deliveredIntents == null ? null : deliveredIntents.get(i));
@@ -174,14 +175,14 @@ public class SmsSendJob extends SendJob {
     }
   }
 
-  private ArrayList<PendingIntent> constructSentIntents(long messageId, long type,
-                                                        ArrayList<String> messages, boolean secure)
+  private ArrayList<PendingIntent> constructSentIntents(long messageId, long type, ArrayList<String> messages)
   {
     ArrayList<PendingIntent> sentIntents = new ArrayList<>(messages.size());
+    boolean                  isMultipart = messages.size() > 1;
 
     for (String ignored : messages) {
       sentIntents.add(PendingIntent.getBroadcast(context, 0,
-                                                 constructSentIntent(context, messageId, type, secure, false),
+                                                 constructSentIntent(context, messageId, type, isMultipart),
                                                  0));
     }
 
@@ -194,19 +195,18 @@ public class SmsSendJob extends SendJob {
     }
 
     ArrayList<PendingIntent> deliveredIntents = new ArrayList<>(messages.size());
+    boolean                  isMultipart      = messages.size() > 1;
 
     for (String ignored : messages) {
       deliveredIntents.add(PendingIntent.getBroadcast(context, 0,
-                                                      constructDeliveredIntent(context, messageId, type),
+                                                      constructDeliveredIntent(context, messageId, type, isMultipart),
                                                       0));
     }
 
     return deliveredIntents;
   }
 
-  private Intent constructSentIntent(Context context, long messageId, long type,
-                                       boolean upgraded, boolean push)
-  {
+  private Intent constructSentIntent(Context context, long messageId, long type, boolean isMultipart) {
     Intent pending = new Intent(SmsDeliveryListener.SENT_SMS_ACTION,
                                 Uri.parse("custom://" + messageId + System.currentTimeMillis()),
                                 context, SmsDeliveryListener.class);
@@ -214,18 +214,18 @@ public class SmsSendJob extends SendJob {
     pending.putExtra("type", type);
     pending.putExtra("message_id", messageId);
     pending.putExtra("run_attempt", Math.max(runAttempt, getRunAttempt()));
-    pending.putExtra("upgraded", upgraded);
-    pending.putExtra("push", push);
+    pending.putExtra("is_multipart", isMultipart);
 
     return pending;
   }
 
-  private Intent constructDeliveredIntent(Context context, long messageId, long type) {
+  private Intent constructDeliveredIntent(Context context, long messageId, long type, boolean isMultipart) {
     Intent pending = new Intent(SmsDeliveryListener.DELIVERED_SMS_ACTION,
                                 Uri.parse("custom://" + messageId + System.currentTimeMillis()),
                                 context, SmsDeliveryListener.class);
     pending.putExtra("type", type);
     pending.putExtra("message_id", messageId);
+    pending.putExtra("is_multipart", isMultipart);
 
     return pending;
   }
@@ -240,13 +240,14 @@ public class SmsSendJob extends SendJob {
 
   private static Job.Parameters constructParameters(@NonNull Recipient destination) {
     return new Job.Parameters.Builder()
-            .setMaxAttempts(MAX_ATTEMPTS)
-            .setQueue(destination.getId().toQueueKey())
-            .addConstraint(NetworkOrCellServiceConstraint.KEY)
-            .build();
+        .setMaxAttempts(MAX_ATTEMPTS)
+        .setQueue(destination.getId().toQueueKey())
+        .addConstraint(NetworkOrCellServiceConstraint.KEY)
+        .build();
   }
 
-  private static class TooManyRetriesException extends Exception { }
+  private static class TooManyRetriesException extends Exception {
+  }
 
   public static class Factory implements Job.Factory<SmsSendJob> {
     @Override

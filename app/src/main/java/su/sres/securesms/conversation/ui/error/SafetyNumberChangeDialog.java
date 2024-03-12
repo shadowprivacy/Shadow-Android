@@ -206,13 +206,18 @@ public final class SafetyNumberChangeDialog extends DialogFragment implements Sa
   private void handleSendAnyway(DialogInterface dialogInterface, int which) {
     Log.d(TAG, "handleSendAnyway");
 
-    boolean skipCallbacks = requireArguments().getBoolean(SKIP_CALLBACKS_EXTRA, false);
-    Activity activity = getActivity();
+    boolean  skipCallbacks = requireArguments().getBoolean(SKIP_CALLBACKS_EXTRA, false);
+    Activity activity      = getActivity();
     Callback callback;
     if (activity instanceof Callback && !skipCallbacks) {
       callback = (Callback) activity;
     } else {
-      callback = null;
+      Fragment parent = getParentFragment();
+      if (parent instanceof Callback && !skipCallbacks) {
+        callback = (Callback) parent;
+      } else {
+        callback = null;
+      }
     }
 
     LiveData<TrustAndVerifyResult> trustOrVerifyResultLiveData = viewModel.trustOrVerifyChangedRecipients();
@@ -242,6 +247,8 @@ public final class SafetyNumberChangeDialog extends DialogFragment implements Sa
   private void handleCancel(@NonNull DialogInterface dialogInterface, int which) {
     if (getActivity() instanceof Callback) {
       ((Callback) getActivity()).onCanceled();
+    } else if (getParentFragment() instanceof Callback) {
+      ((Callback) getParentFragment()).onCanceled();
     }
   }
 

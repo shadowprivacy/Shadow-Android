@@ -72,6 +72,7 @@ import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.util.EllapsedTimeFormatter;
 import su.sres.securesms.util.FullscreenHelper;
 import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.util.ThrottledDebouncer;
 import su.sres.securesms.util.Util;
 
 import org.whispersystems.libsignal.IdentityKey;
@@ -82,6 +83,7 @@ import su.sres.signalservice.api.messages.calls.HangupMessage;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static su.sres.securesms.components.sensors.Orientation.PORTRAIT_BOTTOM_EDGE;
 
@@ -108,6 +110,7 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
   private boolean                       enableVideoIfAvailable;
   private androidx.window.WindowManager windowManager;
   private WindowLayoutInfoConsumer      windowLayoutInfoConsumer;
+  private ThrottledDebouncer            requestNewSizesThrottle;
 
   @Override
   protected void attachBaseContext(@NonNull Context newBase) {
@@ -146,6 +149,8 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
     windowLayoutInfoConsumer = new WindowLayoutInfoConsumer();
 
     windowManager.registerLayoutChangeCallback(SignalExecutors.BOUNDED, windowLayoutInfoConsumer);
+
+    requestNewSizesThrottle = new ThrottledDebouncer(TimeUnit.SECONDS.toMillis(1));
   }
 
   @Override
@@ -190,6 +195,7 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
 
     if (!isInPipMode() || isFinishing()) {
       EventBus.getDefault().unregister(this);
+      requestNewSizesThrottle.clear();
     }
     if (!viewModel.isCallStarting()) {
       CallParticipantsState state = viewModel.getCallParticipantsState().getValue();
@@ -298,7 +304,7 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
       CallParticipantsState state = viewModel.getCallParticipantsState().getValue();
       if (state != null) {
         if (state.needsNewRequestSizes()) {
-          ApplicationDependencies.getSignalCallManager().updateRenderedResolutions();
+          requestNewSizesThrottle.publish(() -> ApplicationDependencies.getSignalCallManager().updateRenderedResolutions());
         }
       }
     });

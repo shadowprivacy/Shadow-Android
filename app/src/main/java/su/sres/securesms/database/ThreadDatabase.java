@@ -344,12 +344,15 @@ public class ThreadDatabase extends Database {
     if (trimBeforeDate != NO_TRIM_BEFORE_DATE_SET) {
       Log.i(TAG, "Trimming thread: " + threadId + " before: " + trimBeforeDate);
 
-      boolean deletedMessages = DatabaseFactory.getMmsSmsDatabase(context).deleteMessagesInThreadBeforeDate(threadId, trimBeforeDate);
+      int deletes = DatabaseFactory.getMmsSmsDatabase(context).deleteMessagesInThreadBeforeDate(threadId, trimBeforeDate);
 
-      if (deletedMessages) {
+      if (deletes > 0) {
+        Log.i(TAG, "Trimming deleted " + deletes + " messages thread: " + threadId);
         setLastScrolled(threadId, 0);
         update(threadId, false);
         notifyConversationListeners(threadId);
+      } else {
+        Log.i(TAG, "Trimming deleted no messages thread: " + threadId);
       }
     }
   }
@@ -1288,11 +1291,16 @@ public class ThreadDatabase extends Database {
   }
 
   public void updateSnippetTypeSilently(long threadId) {
+    if (threadId == -1) {
+      return;
+    }
+
     long type;
     try {
       type = DatabaseFactory.getMmsSmsDatabase(context).getConversationSnippetType(threadId);
     } catch (NoSuchMessageException e) {
-      throw new AssertionError(e);
+      Log.w(TAG, "Unable to find snippet message for thread: " + threadId, e);
+      return;
     }
 
     ContentValues contentValues = new ContentValues(1);

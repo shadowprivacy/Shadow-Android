@@ -13,6 +13,8 @@ import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.conversation.ConversationMessage;
 import su.sres.securesms.conversation.colors.Colorizable;
 import su.sres.securesms.conversation.colors.Colorizer;
+import su.sres.securesms.conversation.multiselect.MultiselectPart;
+import su.sres.securesms.conversation.multiselect.Multiselectable;
 import su.sres.securesms.database.model.InMemoryMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
@@ -32,14 +34,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, Colorizable {
+public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, Colorizable, Multiselectable {
   void bind(@NonNull LifecycleOwner lifecycleOwner,
             @NonNull ConversationMessage messageRecord,
             @NonNull Optional<MessageRecord> previousMessageRecord,
             @NonNull Optional<MessageRecord> nextMessageRecord,
             @NonNull GlideRequests glideRequests,
             @NonNull Locale locale,
-            @NonNull Set<ConversationMessage> batchSelected,
+            @NonNull Set<MultiselectPart> batchSelected,
             @NonNull Recipient recipients,
             @Nullable String searchQuery,
             boolean pulseMention,

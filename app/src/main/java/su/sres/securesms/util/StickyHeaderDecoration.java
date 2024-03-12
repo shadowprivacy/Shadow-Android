@@ -3,6 +3,7 @@ package su.sres.securesms.util;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.view.LayoutInflater;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -10,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView.ViewHolder;
 
 import su.sres.securesms.R;
 import su.sres.core.util.logging.Log;
+
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -68,7 +70,7 @@ public class StickyHeaderDecoration extends RecyclerView.ItemDecoration {
     }
 
     boolean isReverse = isReverseLayout(parent);
-    int     itemCount = ((RecyclerView.Adapter)adapter).getItemCount();
+    int     itemCount = ((RecyclerView.Adapter) adapter).getItemCount();
 
     if ((isReverse && adapterPos == itemCount - 1 && adapter.getHeaderId(adapterPos) != -1) ||
         (!isReverse && adapterPos == 0))
@@ -103,13 +105,13 @@ public class StickyHeaderDecoration extends RecyclerView.ItemDecoration {
 
     final View header = headerHolder.itemView;
 
-    int widthSpec   = View.MeasureSpec.makeMeasureSpec(parent.getWidth(), View.MeasureSpec.EXACTLY);
-    int heightSpec  = View.MeasureSpec.makeMeasureSpec(parent.getHeight(), View.MeasureSpec.UNSPECIFIED);
+    int widthSpec  = View.MeasureSpec.makeMeasureSpec(parent.getWidth(), View.MeasureSpec.EXACTLY);
+    int heightSpec = View.MeasureSpec.makeMeasureSpec(parent.getHeight(), View.MeasureSpec.UNSPECIFIED);
 
-    int childWidth  = ViewGroup.getChildMeasureSpec(widthSpec,
-            parent.getPaddingLeft() + parent.getPaddingRight(), header.getLayoutParams().width);
+    int childWidth = ViewGroup.getChildMeasureSpec(widthSpec,
+                                                   parent.getPaddingLeft() + parent.getPaddingRight(), header.getLayoutParams().width);
     int childHeight = ViewGroup.getChildMeasureSpec(heightSpec,
-            parent.getPaddingTop() + parent.getPaddingBottom(), header.getLayoutParams().height);
+                                                    parent.getPaddingTop() + parent.getPaddingBottom(), header.getLayoutParams().height);
 
     header.measure(childWidth, childHeight);
     header.layout(0, 0, header.getMeasuredWidth(), header.getMeasuredHeight());
@@ -138,8 +140,8 @@ public class StickyHeaderDecoration extends RecyclerView.ItemDecoration {
       if (adapterPos != RecyclerView.NO_POSITION && ((layoutPos == start && sticky) || hasHeader(parent, adapter, adapterPos))) {
         View header = getHeader(parent, adapter, adapterPos).itemView;
         c.save();
-        final int left = child.getLeft();
-        final int top = getHeaderTop(parent, child, header, adapterPos, layoutPos);
+        final int left = parent.getLeft();
+        final int top  = getHeaderTop(parent, child, header, adapterPos, layoutPos);
         c.translate(left, top);
         header.draw(c);
         c.restore();
@@ -148,12 +150,12 @@ public class StickyHeaderDecoration extends RecyclerView.ItemDecoration {
   }
 
   protected int getHeaderTop(RecyclerView parent, View child, View header, int adapterPos,
-                           int layoutPos)
+                             int layoutPos)
   {
     int headerHeight = getHeaderHeightForLayout(header);
-    int top = getChildY(child) - headerHeight;
+    int top          = getChildY(child) - headerHeight;
     if (sticky && layoutPos == 0) {
-      final int count = parent.getChildCount();
+      final int  count     = parent.getChildCount();
       final long currentId = adapter.getHeaderId(adapterPos);
       // find next view with header and compute the offscreen push if needed
       for (int i = 1; i < count; i++) {
@@ -161,8 +163,8 @@ public class StickyHeaderDecoration extends RecyclerView.ItemDecoration {
         if (adapterPosHere != RecyclerView.NO_POSITION) {
           long nextId = adapter.getHeaderId(adapterPosHere);
           if (nextId != currentId) {
-            final View next = parent.getChildAt(translatedChildPosition(parent, i));
-            final int offset = getChildY(next) - (headerHeight + getHeader(parent, adapter, adapterPosHere).itemView.getHeight());
+            final View next   = parent.getChildAt(translatedChildPosition(parent, i));
+            final int  offset = getChildY(next) - (headerHeight + getHeader(parent, adapter, adapterPosHere).itemView.getHeight());
             if (offset < 0) {
               return offset;
             } else {
@@ -192,7 +194,7 @@ public class StickyHeaderDecoration extends RecyclerView.ItemDecoration {
 
   private static boolean isReverseLayout(final RecyclerView parent) {
     return (parent.getLayoutManager() instanceof LinearLayoutManager) &&
-        ((LinearLayoutManager)parent.getLayoutManager()).getReverseLayout();
+           ((LinearLayoutManager) parent.getLayoutManager()).getReverseLayout();
   }
 
   /**

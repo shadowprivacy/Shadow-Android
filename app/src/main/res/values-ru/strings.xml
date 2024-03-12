@@ -1419,13 +1419,13 @@
     <string name="WebRtcCallActivity__calling">Подключаемся…</string>
 
     <!--WebRtcCallView-->
-    <string name="WebRtcCallView__signal_voice_call">Голосовой звонок Shadow…</string>
-    <string name="WebRtcCallView__signal_video_call">Видеозвонок Shadow…</string>
+    <string name="WebRtcCallView__signal_call">Звонок Shadow</string>
+    <string name="WebRtcCallView__signal_video_call">Видеозвонок Shadow</string>
     <string name="WebRtcCallView__start_call">Начать звонок</string>
     <string name="WebRtcCallView__join_call">Присоединиться к звонку</string>
     <string name="WebRtcCallView__call_is_full">Звонок заполнен</string>
     <string name="WebRtcCallView__the_maximum_number_of_d_participants_has_been_Reached_for_this_call">Для этого звонка было достигнуто максимальное количество участников — %1$d. Попробуйте ещё раз позже.</string>
-    <string name="WebRtcCallView__s_group_call">Групповой звонок «%1$s»</string>
+
     <string name="WebRtcCallView__view_participants_list">Просмотреть участников</string>
     <string name="WebRtcCallView__your_video_is_off">Ваше видео отключено</string>
     <string name="WebRtcCallView__reconnecting">Переподключаемся…</string>
@@ -1441,6 +1441,11 @@
         <item quantity="many">%1$s, %2$s и ещё %3$d человек в этом звонке</item>
         <item quantity="other">%1$s, %2$s и ещё %3$d человек в этом звонке</item>
     </plurals>
+    <string name="WebRtcCallView__flip">Перекл. камеру</string>
+    <string name="WebRtcCallView__speaker">Громкая связь</string>
+    <string name="WebRtcCallView__camera">Камера</string>
+    <string name="WebRtcCallView__mute">Откл. микрофон</string>
+    <string name="WebRtcCallView__end_call">Завершить звонок</string>
     <!--CallParticipantsListDialog-->
     <plurals name="CallParticipantsListDialog_in_this_call_d_people">
         <item quantity="one">В этом звонке · %1$d человек</item>
@@ -3341,6 +3346,35 @@
 
     <!--DSLSettingsToolbar-->
     <string name="DSLSettingsToolbar__navigate_up">Перейти назад</string>
+    <string name="MultiselectForwardFragment__forward_to">Переслать</string>
+    <string name="MultiselectForwardFragment__add_a_message">Добавьте сообщение</string>
+    <string name="MultiselectForwardFragment__faster_forwards">Более быстрая пересылка</string>
+    <string name="MultiselectForwardFragment__forwarded_messages_are_now">Пересылаемые сообщения теперь отправляются сразу.</string>
+    <plurals name="MultiselectForwardFragment_send_d_messages">
+        <item quantity="one">Отправить %1$d сообщение</item>
+        <item quantity="few">Отправить %1$d сообщения</item>
+        <item quantity="many">Отправить %1$d сообщений</item>
+        <item quantity="other">Отправить %1$d сообщений</item>
+    </plurals>
+    <plurals name="MultiselectForwardFragment_messages_sent">
+        <item quantity="one">Сообщение отправлено</item>
+        <item quantity="few">Сообщения отправлены</item>
+        <item quantity="many">Сообщения отправлены</item>
+        <item quantity="other">Сообщения отправлены</item>
+    </plurals>
+    <plurals name="MultiselectForwardFragment_messages_failed_to_send">
+        <item quantity="one">Не удалось отправить сообщение</item>
+        <item quantity="few">Не удалось отправить сообщения</item>
+        <item quantity="many">Не удалось отправить сообщения</item>
+        <item quantity="other">Не удалось отправить сообщения</item>
+    </plurals>
+    <plurals name="MultiselectForwardFragment__couldnt_forward_messages">
+        <item quantity="one">Не удалось переслать сообщение, потому что оно больше не доступно.</item>
+        <item quantity="few">Не удалось переслать сообщения, потому что они больше не доступны.</item>
+        <item quantity="many">Не удалось переслать сообщения, потому что они больше не доступны.</item>
+        <item quantity="other">Не удалось переслать сообщения, потому что они больше не доступны.</item>
+    </plurals>
+    <string name="MultiselectForwardFragment__limit_reached">Достигнут предел</string>
 
     <!--EOF-->
 </resources>

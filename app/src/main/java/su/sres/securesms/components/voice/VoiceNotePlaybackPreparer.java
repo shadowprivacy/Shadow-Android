@@ -26,7 +26,6 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.util.MessageRecordUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.video.exo.AttachmentMediaSourceFactory;

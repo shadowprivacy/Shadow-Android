@@ -1,16 +1,16 @@
 /**
  * Copyright (C) 2015 Open Whisper Systems
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -20,6 +20,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+
 import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
@@ -92,7 +93,7 @@ public final class ViewUtil {
 
   @SuppressWarnings("unchecked")
   public static <T extends View> T inflateStub(@NonNull View parent, @IdRes int stubId) {
-    return (T)((ViewStub)parent.findViewById(stubId)).inflate();
+    return (T) ((ViewStub) parent.findViewById(stubId)).inflate();
   }
 
   public static <T extends View> Stub<T> findStubById(@NonNull Activity parent, @IdRes int resId) {
@@ -155,11 +156,11 @@ public final class ViewUtil {
   }
 
   @SuppressWarnings("unchecked")
-  public static <T extends View> T inflate(@NonNull   LayoutInflater inflater,
-                                           @NonNull   ViewGroup      parent,
-                                           @LayoutRes int            layoutResId)
+  public static <T extends View> T inflate(@NonNull LayoutInflater inflater,
+                                           @NonNull ViewGroup parent,
+                                           @LayoutRes int layoutResId)
   {
-    return (T)(inflater.inflate(layoutResId, parent, false));
+    return (T) (inflater.inflate(layoutResId, parent, false));
   }
 
   @SuppressLint("RtlHardcoded")
@@ -198,7 +199,7 @@ public final class ViewUtil {
   }
 
   public static int dpToPx(Context context, int dp) {
-    return (int)((dp * context.getResources().getDisplayMetrics().density) + 0.5);
+    return (int) ((dp * context.getResources().getDisplayMetrics().density) + 0.5);
   }
 
   public static int dpToPx(int dp) {
@@ -225,6 +226,12 @@ public final class ViewUtil {
     }
   }
 
+  public static void setVisibilityIfNonNull(@Nullable View view, int visibility) {
+    if (view != null) {
+      view.setVisibility(visibility);
+    }
+  }
+
   public static int getLeftMargin(@NonNull View view) {
     if (isLtr(view)) {
       return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).leftMargin;
@@ -237,6 +244,10 @@ public final class ViewUtil {
       return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).rightMargin;
     }
     return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).leftMargin;
+  }
+
+  public static int getTopMargin(@NonNull View view) {
+    return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).topMargin;
   }
 
   public static void setLeftMargin(@NonNull View view, int margin) {
@@ -306,11 +317,11 @@ public final class ViewUtil {
     int viewY = location[1];
 
     return x > viewX && x < viewX + view.getWidth() &&
-            y > viewY && y < viewY + view.getHeight();
+           y > viewY && y < viewY + view.getHeight();
   }
 
   public static int getStatusBarHeight(@NonNull View view) {
-    int result = 0;
+    int result     = 0;
     int resourceId = view.getResources().getIdentifier("status_bar_height", "dimen", "android");
     if (resourceId > 0) {
       result = view.getResources().getDimensionPixelSize(resourceId);

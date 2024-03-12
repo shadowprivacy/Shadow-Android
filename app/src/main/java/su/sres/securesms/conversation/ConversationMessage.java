@@ -9,6 +9,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import su.sres.securesms.components.mention.MentionAnnotation;
+import su.sres.securesms.conversation.multiselect.Multiselect;
+import su.sres.securesms.conversation.multiselect.MultiselectCollection;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MentionUtil;
 import su.sres.securesms.database.model.Mention;
@@ -24,9 +26,10 @@ import java.util.List;
  * for various presentations.
  */
 public class ConversationMessage {
-  @NonNull private final  MessageRecord   messageRecord;
-  @NonNull private final  List<Mention>   mentions;
-  @Nullable private final SpannableString body;
+  @NonNull private final  MessageRecord         messageRecord;
+  @NonNull private final  List<Mention>         mentions;
+  @Nullable private final SpannableString       body;
+  @NonNull private final  MultiselectCollection multiselectCollection;
 
   private ConversationMessage(@NonNull MessageRecord messageRecord) {
     this(messageRecord, null, null);
@@ -43,6 +46,8 @@ public class ConversationMessage {
     if (!this.mentions.isEmpty() && this.body != null) {
       MentionAnnotation.setMentionAnnotations(this.body, this.mentions);
     }
+
+    multiselectCollection = Multiselect.getParts(this);
   }
 
   public @NonNull MessageRecord getMessageRecord() {
@@ -51,6 +56,10 @@ public class ConversationMessage {
 
   public @NonNull List<Mention> getMentions() {
     return mentions;
+  }
+
+  public @NonNull MultiselectCollection getMultiselectCollection() {
+    return multiselectCollection;
   }
 
   @Override

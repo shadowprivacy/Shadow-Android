@@ -5,6 +5,7 @@ import android.content.res.TypedArray;
 import android.graphics.Rect;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.core.widget.TextViewCompat;
 
@@ -24,7 +25,7 @@ import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.ViewUtil;
 
 public final class ContactFilterView extends FrameLayout {
-  private   OnFilterChangedListener listener;
+  private OnFilterChangedListener listener;
 
   private final EditText        searchText;
   private final AnimatingToggle toggle;
@@ -80,7 +81,6 @@ public final class ContactFilterView extends FrameLayout {
     });
 
     applyAttributes(searchText, context, attrs, defStyleAttr);
-    searchText.requestFocus();
   }
 
   private void applyAttributes(@NonNull EditText searchText,
@@ -89,13 +89,22 @@ public final class ContactFilterView extends FrameLayout {
                                int defStyle)
   {
     final TypedArray attributes = context.obtainStyledAttributes(attrs,
-            R.styleable.ContactFilterToolbar,
-            defStyle,
-            0);
+                                                                 R.styleable.ContactFilterToolbar,
+                                                                 defStyle,
+                                                                 0);
 
     int styleResource = attributes.getResourceId(R.styleable.ContactFilterToolbar_searchTextStyle, -1);
     if (styleResource != -1) {
       TextViewCompat.setTextAppearance(searchText, styleResource);
+    }
+
+    if (attributes.getBoolean(R.styleable.ContactFilterToolbar_cfv_autoFocus, true)) {
+      searchText.requestFocus();
+    }
+
+    int backgroundRes = attributes.getResourceId(R.styleable.ContactFilterToolbar_cfv_background, -1);
+    if (backgroundRes != -1) {
+      findViewById(R.id.background_holder).setBackgroundResource(backgroundRes);
     }
 
     attributes.recycle();
@@ -112,6 +121,10 @@ public final class ContactFilterView extends FrameLayout {
 
   public void setOnFilterChangedListener(OnFilterChangedListener listener) {
     this.listener = listener;
+  }
+
+  public void setOnSearchInputFocusChangedListener(@Nullable OnFocusChangeListener listener) {
+    searchText.setOnFocusChangeListener(listener);
   }
 
   public void setHint(@StringRes int hint) {

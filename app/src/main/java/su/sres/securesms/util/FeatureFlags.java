@@ -81,6 +81,7 @@ public final class FeatureFlags {
   private static final String SENDER_KEY                        = "android.senderKey.4";
   private static final String RETRY_RECEIPTS                    = "android.retryReceipts";
   private static final String ANNOUNCEMENT_GROUPS               = "android.announcementGroups";
+  private static final String FORWARD_MULTIPLE_MESSAGES         = "android.forward.multiple.messages";
 
   /**
    * We will only store remote values for flags in this set. If you want a flag to be controllable
@@ -115,7 +116,8 @@ public final class FeatureFlags {
       RETRY_RESPOND_MAX_AGE,
       SENDER_KEY,
       RETRY_RECEIPTS,
-      ANNOUNCEMENT_GROUPS
+      ANNOUNCEMENT_GROUPS,
+      FORWARD_MULTIPLE_MESSAGES
   );
 
   @VisibleForTesting
@@ -389,7 +391,7 @@ public final class FeatureFlags {
    * How old a message is allowed to be while still resending in response to a retry receipt .
    */
   public static long retryRespondMaxAge() {
-    return getLong(RETRY_RESPOND_MAX_AGE, TimeUnit.DAYS.toMillis(1));
+    return getLong(RETRY_RESPOND_MAX_AGE, TimeUnit.DAYS.toMillis(14));
   }
 
   /**
@@ -402,6 +404,11 @@ public final class FeatureFlags {
   /** Whether or not showing the announcement group setting in the UI is enabled . */
   public static boolean announcementGroups() {
     return getBoolean(ANNOUNCEMENT_GROUPS, false);
+  }
+
+  /** Whether the user is able to forward multiple messages at once */
+  public static boolean forwardMultipleMessages() {
+    return getBoolean(FORWARD_MULTIPLE_MESSAGES, false);
   }
 
   /**

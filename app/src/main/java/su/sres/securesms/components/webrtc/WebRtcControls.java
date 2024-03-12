@@ -113,7 +113,7 @@ public final class WebRtcControls {
   }
 
   boolean displayGroupMembersButton() {
-    return groupCallState.isAtLeast(GroupCallState.CONNECTING);
+    return (groupCallState.isAtLeast(GroupCallState.CONNECTING) && hasAtLeastOneRemote) || groupCallState.isAtLeast(GroupCallState.FULL);
   }
 
   boolean displayEndCall() {
@@ -174,6 +174,14 @@ public final class WebRtcControls {
 
   @NonNull WebRtcAudioOutput getAudioOutput() {
     return audioOutput;
+  }
+
+  boolean showSmallHeader() {
+    return isAtLeastOutgoing();
+  }
+
+  boolean showFullScreenShade() {
+    return isPreJoin() || isIncoming();
   }
 
   private boolean isError() {

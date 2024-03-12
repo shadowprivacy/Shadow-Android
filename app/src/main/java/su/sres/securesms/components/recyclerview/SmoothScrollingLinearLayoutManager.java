@@ -1,6 +1,7 @@
 package su.sres.securesms.components.recyclerview;
 
 import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSmoothScroller;
@@ -10,24 +11,29 @@ import android.util.DisplayMetrics;
 
 public class SmoothScrollingLinearLayoutManager extends LinearLayoutManager {
 
-    public SmoothScrollingLinearLayoutManager(Context context, boolean reverseLayout) {
-        super(context, RecyclerView.VERTICAL, reverseLayout);
-    }
+  public SmoothScrollingLinearLayoutManager(Context context, boolean reverseLayout) {
+    super(context, RecyclerView.VERTICAL, reverseLayout);
+  }
 
-    public void smoothScrollToPosition(@NonNull Context context, int position, float millisecondsPerInch) {
-        final LinearSmoothScroller scroller = new LinearSmoothScroller(context) {
-            @Override
-            protected int getVerticalSnapPreference() {
-                return LinearSmoothScroller.SNAP_TO_END;
-            }
+  @Override
+  public boolean supportsPredictiveItemAnimations() {
+    return false;
+  }
 
-            @Override
-            protected float calculateSpeedPerPixel(DisplayMetrics displayMetrics) {
-                return millisecondsPerInch / displayMetrics.densityDpi;
-            }
-        };
+  public void smoothScrollToPosition(@NonNull Context context, int position, float millisecondsPerInch) {
+    final LinearSmoothScroller scroller = new LinearSmoothScroller(context) {
+      @Override
+      protected int getVerticalSnapPreference() {
+        return LinearSmoothScroller.SNAP_TO_END;
+      }
 
-        scroller.setTargetPosition(position);
-        startSmoothScroll(scroller);
-    }
+      @Override
+      protected float calculateSpeedPerPixel(DisplayMetrics displayMetrics) {
+        return millisecondsPerInch / displayMetrics.densityDpi;
+      }
+    };
+
+    scroller.setTargetPosition(position);
+    startSmoothScroll(scroller);
+  }
 }

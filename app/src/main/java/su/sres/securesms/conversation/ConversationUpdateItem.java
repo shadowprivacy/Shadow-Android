@@ -19,11 +19,13 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.common.collect.Sets;
 
 import su.sres.securesms.BindableConversationItem;
 import su.sres.securesms.R;
 import su.sres.securesms.VerifyIdentityActivity;
 import su.sres.securesms.conversation.colors.Colorizer;
+import su.sres.securesms.conversation.multiselect.MultiselectPart;
 import su.sres.securesms.conversation.ui.error.EnableCallNotificationSettingsDialog;
 import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
 import su.sres.securesms.database.model.GroupCallUpdateDetailsUtil;
@@ -62,7 +64,7 @@ public final class ConversationUpdateItem extends FrameLayout
 {
   private static final String TAG = Log.tag(ConversationUpdateItem.class);
 
-  private Set<ConversationMessage> batchSelected;
+  private Set<MultiselectPart> batchSelected;
 
   private TextView                  body;
   private MaterialButton            actionButton;
@@ -74,6 +76,7 @@ public final class ConversationUpdateItem extends FrameLayout
   private boolean                   isMessageRequestAccepted;
   private LiveData<SpannableString> displayBody;
   private EventListener             eventListener;
+  private boolean                   hasWallpaper;
 
   private final UpdateObserver updateObserver = new UpdateObserver();
 
@@ -107,7 +110,7 @@ public final class ConversationUpdateItem extends FrameLayout
                    @NonNull Optional<MessageRecord> nextMessageRecord,
                    @NonNull GlideRequests glideRequests,
                    @NonNull Locale locale,
-                   @NonNull Set<ConversationMessage> batchSelected,
+                   @NonNull Set<MultiselectPart> batchSelected,
                    @NonNull Recipient conversationRecipient,
                    @Nullable String searchQuery,
                    boolean pulseMention,
@@ -141,6 +144,7 @@ public final class ConversationUpdateItem extends FrameLayout
                     boolean isMessageRequestAccepted)
   {
 
+    this.hasWallpaper             = hasWallpaper;
     this.conversationMessage      = conversationMessage;
     this.messageRecord            = conversationMessage.getMessageRecord();
     this.nextMessageRecord        = nextMessageRecord;
@@ -228,6 +232,11 @@ public final class ConversationUpdateItem extends FrameLayout
     return Collections.emptyList();
   }
 
+  @Override
+  public @Nullable View getHorizontalTranslationTarget() {
+    return background;
+  }
+
   static final class RecipientObserverManager {
 
     private final Observer<Recipient> recipientObserver;
@@ -256,6 +265,26 @@ public final class ConversationUpdateItem extends FrameLayout
     }
   }
 
+  @Override
+  public @NonNull MultiselectPart getMultiselectPartForLatestTouch() {
+    return conversationMessage.getMultiselectCollection().asSingle().getSinglePart();
+  }
+
+  @Override
+  public int getTopBoundaryOfMultiselectPart(@NonNull MultiselectPart multiselectPart) {
+    return getTop();
+  }
+
+  @Override
+  public int getBottomBoundaryOfMultiselectPart(@NonNull MultiselectPart multiselectPart) {
+    return getBottom();
+  }
+
+  @Override
+  public boolean hasNonSelectableMedia() {
+    return false;
+  }
+
   private void observeDisplayBody(@NonNull LifecycleOwner lifecycleOwner, @Nullable LiveData<SpannableString> displayBody) {
     if (this.displayBody != displayBody) {
       if (this.displayBody != null) {
@@ -282,8 +311,9 @@ public final class ConversationUpdateItem extends FrameLayout
   private void present(ConversationMessage conversationMessage, @NonNull Optional<MessageRecord> nextMessageRecord, @NonNull Recipient conversationRecipient,
                        boolean isMessageRequestAccepted)
   {
-    if (batchSelected.contains(conversationMessage)) setSelected(true);
-    else setSelected(false);
+    Set<MultiselectPart> multiselectParts = conversationMessage.getMultiselectCollection().toSet();
+
+    setSelected(!Sets.intersection(multiselectParts, batchSelected).isEmpty());
 
     if (conversationMessage.getMessageRecord().isGroupV1MigrationEvent() &&
         (!nextMessageRecord.isPresent() || !nextMessageRecord.get().isGroupV1MigrationEvent()))

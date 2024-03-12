@@ -26,6 +26,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.util.Consumer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
@@ -50,11 +52,13 @@ import su.sres.securesms.contacts.ContactsCursorLoader.DisplayMode;
 import su.sres.securesms.conversation.ConversationIntents;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mediasend.MediaSendActivity;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sharing.interstitial.ShareInterstitialActivity;
+import su.sres.securesms.util.ConversationUtil;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
@@ -131,8 +135,6 @@ public class ShareActivity extends PassphraseRequiredActivity
     initializeToolbar();
     initializeResources();
     initializeSearch();
-
-    handleDestination();
   }
 
   @Override
@@ -141,6 +143,7 @@ public class ShareActivity extends PassphraseRequiredActivity
     super.onResume();
     dynamicTheme.onResume(this);
     dynamicLanguage.onResume(this);
+    handleDirectShare();
   }
 
   @Override
@@ -260,6 +263,86 @@ public class ShareActivity extends PassphraseRequiredActivity
     getIntent().putExtra(ContactSelectionListFragment.CAN_SELECT_SELF, true);
     getIntent().putExtra(ContactSelectionListFragment.RV_CLIP, false);
     getIntent().putExtra(ContactSelectionListFragment.RV_PADDING_BOTTOM, ViewUtil.dpToPx(48));
+  }
+
+  private void handleDirectShare() {
+    boolean isDirectShare      = getIntent().hasExtra(ShortcutManagerCompat.EXTRA_SHORTCUT_ID);
+    boolean intentHasRecipient = getIntent().hasExtra(EXTRA_RECIPIENT_ID);
+
+    if (intentHasRecipient) {
+      handleDestination();
+    } else if (isDirectShare) {
+      String extraShortcutId = getIntent().getStringExtra(ShortcutManagerCompat.EXTRA_SHORTCUT_ID);
+      SimpleTask.run(getLifecycle(),
+                     () -> getDirectShareExtras(extraShortcutId),
+                     extras -> {
+                       if (extras != null) {
+                         addShortcutExtrasToIntent(extras);
+                         handleDestination();
+                       }
+                     }
+      );
+    }
+  }
+
+  /**
+   * @param extraShortcutId EXTRA_SHORTCUT_ID String as included in direct share intent
+   * @return shortcutExtras or null
+   */
+  @WorkerThread
+  private @Nullable Bundle getDirectShareExtras(@NonNull String extraShortcutId) {
+    Bundle shortcutExtras = getShortcutExtrasFor(extraShortcutId);
+    if (shortcutExtras == null) {
+      shortcutExtras = createExtrasFromExtraShortcutId(extraShortcutId);
+    }
+    return shortcutExtras;
+  }
+
+  /**
+   * Search for dynamic shortcut originally declared in {@link ConversationUtil} and return extras
+   *
+   * @param extraShortcutId EXTRA_SHORTCUT_ID String as included in direct share intent
+   * @return shortcutExtras or null
+   */
+  @WorkerThread
+  private @Nullable Bundle getShortcutExtrasFor(@NonNull String extraShortcutId) {
+    List<ShortcutInfoCompat> shortcuts = ShortcutManagerCompat.getDynamicShortcuts(this);
+    for (ShortcutInfoCompat shortcutInfo : shortcuts) {
+      if (extraShortcutId.equals(shortcutInfo.getId())) {
+        return shortcutInfo.getIntent().getExtras();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * @param extraShortcutId EXTRA_SHORTCUT_ID string as included in direct share intent
+   */
+  @WorkerThread
+  private @Nullable Bundle createExtrasFromExtraShortcutId(@NonNull String extraShortcutId) {
+    Bundle      extras           = new Bundle();
+    RecipientId recipientId      = ConversationUtil.getRecipientId(extraShortcutId);
+    Long        threadId         = null;
+    int         distributionType = ThreadDatabase.DistributionTypes.DEFAULT;
+
+    if (recipientId != null) {
+      threadId = DatabaseFactory.getThreadDatabase(this).getThreadIdFor(recipientId);
+      extras.putString(EXTRA_RECIPIENT_ID, recipientId.serialize());
+      extras.putLong(EXTRA_THREAD_ID, threadId != null ? threadId : -1);
+      extras.putInt(EXTRA_DISTRIBUTION_TYPE, distributionType);
+      return extras;
+    }
+    return null;
+  }
+
+  /**
+   * @param shortcutExtras as found by {@link ShareActivity#getShortcutExtrasFor)} or
+   *                       {@link ShareActivity#createExtrasFromExtraShortcutId)}
+   */
+  private void addShortcutExtrasToIntent(@NonNull Bundle shortcutExtras) {
+    getIntent().putExtra(EXTRA_RECIPIENT_ID, shortcutExtras.getString(EXTRA_RECIPIENT_ID, null));
+    getIntent().putExtra(EXTRA_THREAD_ID, shortcutExtras.getLong(EXTRA_THREAD_ID, -1));
+    getIntent().putExtra(EXTRA_DISTRIBUTION_TYPE, shortcutExtras.getInt(EXTRA_DISTRIBUTION_TYPE, -1));
   }
 
   private void initializeToolbar() {
@@ -402,13 +485,9 @@ public class ShareActivity extends PassphraseRequiredActivity
     Intent      intent           = getIntent();
     long        threadId         = intent.getLongExtra(EXTRA_THREAD_ID, -1);
     int         distributionType = intent.getIntExtra(EXTRA_DISTRIBUTION_TYPE, -1);
-    RecipientId recipientId      = null;
+    RecipientId recipientId      = RecipientId.from(intent.getStringExtra(EXTRA_RECIPIENT_ID));
 
-    if (intent.hasExtra(EXTRA_RECIPIENT_ID)) {
-      recipientId = RecipientId.from(intent.getStringExtra(EXTRA_RECIPIENT_ID));
-    }
-
-    boolean hasPreexistingDestination = threadId != -1 && recipientId != null && distributionType != -1;
+    boolean hasPreexistingDestination = threadId != -1 && distributionType != -1;
 
     if (hasPreexistingDestination) {
       if (contactsFragment.getView() != null) {

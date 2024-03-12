@@ -1,5 +1,7 @@
 package su.sres.securesms.sms;
 
+import androidx.annotation.NonNull;
+
 import su.sres.securesms.database.model.SmsMessageRecord;
 import su.sres.securesms.recipients.Recipient;
 
@@ -28,8 +30,8 @@ public class OutgoingTextMessage {
     this.message        = body;
   }
 
-  public OutgoingTextMessage(OutgoingTextMessage base, long expiresIn) {
-    this(base.getRecipient(), base.getMessageBody(), expiresIn, base.getSubscriptionId());
+  public @NonNull OutgoingTextMessage withExpiry(long expiresIn) {
+    return new OutgoingTextMessage(recipient, message, expiresIn, subscriptionId);
   }
 
   public long getExpiresIn() {

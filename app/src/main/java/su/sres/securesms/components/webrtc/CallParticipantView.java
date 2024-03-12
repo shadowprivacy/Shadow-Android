@@ -195,6 +195,14 @@ public class CallParticipantView extends ConstraintLayout {
     pipAvatar.setVisibility(shouldRenderInPip ? View.VISIBLE : View.GONE);
   }
 
+  void hideAvatar() {
+    avatar.setAlpha(0f);
+  }
+
+  void showAvatar() {
+    avatar.setAlpha(1f);
+  }
+
   void useLargeAvatar() {
     changeAvatarParams(LARGE_AVATAR);
   }

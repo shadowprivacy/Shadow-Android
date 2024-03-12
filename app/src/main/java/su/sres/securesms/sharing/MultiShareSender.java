@@ -15,14 +15,19 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.TransportOption;
 import su.sres.securesms.TransportOptions;
 import su.sres.securesms.database.ThreadDatabase;
+import su.sres.securesms.database.model.Mention;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mms.OutgoingMediaMessage;
+import su.sres.securesms.mms.OutgoingSecureMediaMessage;
+import su.sres.securesms.mms.Slide;
 import su.sres.securesms.mms.SlideDeck;
 import su.sres.securesms.mms.SlideFactory;
 import su.sres.securesms.mms.StickerSlide;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sms.MessageSender;
+import su.sres.securesms.sms.OutgoingEncryptedMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
 import su.sres.securesms.util.MessageUtil;
 import su.sres.securesms.util.concurrent.SimpleTask;
@@ -32,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * MultiShareSender encapsulates send logic (stolen from {@link su.sres.securesms.conversation.ConversationActivity}
@@ -49,21 +55,33 @@ public final class MultiShareSender {
 
   @MainThread
   public static void send(@NonNull MultiShareArgs multiShareArgs, @NonNull Consumer<MultiShareSendResultCollection> results) {
-    SimpleTask.run(() -> sendInternal(multiShareArgs), results::accept);
+    SimpleTask.run(() -> sendSync(multiShareArgs), results::accept);
   }
 
   @WorkerThread
-  private static MultiShareSendResultCollection sendInternal(@NonNull MultiShareArgs multiShareArgs) {
-    Context   context      = ApplicationDependencies.getApplication();
-    boolean   isMmsEnabled = true;
-    String    message      = multiShareArgs.getDraftText();
-    SlideDeck slideDeck    = buildSlideDeck(context, multiShareArgs);
+  public static MultiShareSendResultCollection sendSync(@NonNull MultiShareArgs multiShareArgs) {
+    List<MultiShareSendResult> results      = new ArrayList<>(multiShareArgs.getShareContactAndThreads().size());
+    Context                    context      = ApplicationDependencies.getApplication();
+    // boolean                    isMmsEnabled = Util.isMmsCapable(context);
+    boolean                    isMmsEnabled = false;
+    String                     message      = multiShareArgs.getDraftText();
+    SlideDeck                  slideDeck;
 
-    List<MultiShareSendResult> results = new ArrayList<>(multiShareArgs.getShareContactAndThreads().size());
+    try {
+      slideDeck = buildSlideDeck(context, multiShareArgs);
+    } catch (SlideNotFoundException e) {
+      Log.w(TAG, "Could not create slide for media message");
+      for (ShareContactAndThread shareContactAndThread : multiShareArgs.getShareContactAndThreads()) {
+        results.add(new MultiShareSendResult(shareContactAndThread, MultiShareSendResult.Type.GENERIC_ERROR));
+      }
+
+      return new MultiShareSendResultCollection(results);
+    }
 
     for (ShareContactAndThread shareContactAndThread : multiShareArgs.getShareContactAndThreads()) {
       Recipient recipient = Recipient.resolved(shareContactAndThread.getRecipientId());
 
+      List<Mention>   mentions       = getValidMentionsForRecipient(recipient, multiShareArgs.getMentions());
       TransportOption transport      = TransportOptions.getPushTransportOption(context);
       boolean         forceSms       = recipient.isForceSmsSelection();
       int             subscriptionId = transport.getSimSubscriptionId().or(-1);
@@ -76,12 +94,13 @@ public final class MultiShareSender {
                                multiShareArgs.getLinkPreview() != null ||
                                recipient.isGroup() ||
                                recipient.getEmail().isPresent() ||
+                               !mentions.isEmpty() ||
                                needsSplit;
 
       if ((recipient.isMmsGroup() || recipient.getEmail().isPresent()) && !isMmsEnabled) {
         results.add(new MultiShareSendResult(shareContactAndThread, MultiShareSendResult.Type.MMS_NOT_ENABLED));
       } else if (isMediaMessage) {
-        sendMediaMessage(context, multiShareArgs, recipient, slideDeck, transport, shareContactAndThread.getThreadId(), forceSms, expiresIn, multiShareArgs.isViewOnce(), subscriptionId);
+        sendMediaMessage(context, multiShareArgs, recipient, slideDeck, transport, shareContactAndThread.getThreadId(), forceSms, expiresIn, multiShareArgs.isViewOnce(), subscriptionId, mentions);
         results.add(new MultiShareSendResult(shareContactAndThread, MultiShareSendResult.Type.SUCCESS));
       } else {
         sendTextMessage(context, multiShareArgs, recipient, shareContactAndThread.getThreadId(), forceSms, expiresIn, subscriptionId);
@@ -110,7 +129,8 @@ public final class MultiShareSender {
                                        boolean forceSms,
                                        long expiresIn,
                                        boolean isViewOnce,
-                                       int subscriptionId)
+                                       int subscriptionId,
+                                       @NonNull List<Mention> validatedMentions)
   {
     String body = multiShareArgs.getDraftText();
     if (transportOption.isType(TransportOption.Type.TEXTSECURE) && !forceSms && body != null) {
@@ -134,9 +154,13 @@ public final class MultiShareSender {
                                                                          Collections.emptyList(),
                                                                          multiShareArgs.getLinkPreview() != null ? Collections.singletonList(multiShareArgs.getLinkPreview())
                                                                                                                  : Collections.emptyList(),
-                                                                         Collections.emptyList());
+                                                                         validatedMentions);
 
-    MessageSender.send(context, outgoingMediaMessage, threadId, forceSms, null);
+    if (recipient.isRegistered() && !forceSms) {
+      MessageSender.send(context, new OutgoingSecureMediaMessage(outgoingMediaMessage), threadId, false, null);
+    } else {
+      MessageSender.send(context, outgoingMediaMessage, threadId, forceSms, null);
+    }
   }
 
   private static void sendTextMessage(@NonNull Context context,
@@ -147,24 +171,54 @@ public final class MultiShareSender {
                                       long expiresIn,
                                       int subscriptionId)
   {
-    OutgoingTextMessage outgoingTextMessage = new OutgoingTextMessage(recipient, multiShareArgs.getDraftText(), expiresIn, subscriptionId);
+    final OutgoingTextMessage outgoingTextMessage;
+    if (recipient.isRegistered() && !forceSms) {
+      outgoingTextMessage = new OutgoingEncryptedMessage(recipient, multiShareArgs.getDraftText(), expiresIn);
+    } else {
+      outgoingTextMessage = new OutgoingTextMessage(recipient, multiShareArgs.getDraftText(), expiresIn, subscriptionId);
+    }
 
     MessageSender.send(context, outgoingTextMessage, threadId, forceSms, null);
   }
 
-  private static @NonNull SlideDeck buildSlideDeck(@NonNull Context context, @NonNull MultiShareArgs multiShareArgs) {
+  private static @NonNull SlideDeck buildSlideDeck(@NonNull Context context, @NonNull MultiShareArgs multiShareArgs) throws SlideNotFoundException {
     SlideDeck slideDeck = new SlideDeck();
     if (multiShareArgs.getStickerLocator() != null) {
       slideDeck.addSlide(new StickerSlide(context, multiShareArgs.getDataUri(), 0, multiShareArgs.getStickerLocator(), multiShareArgs.getDataType()));
     } else if (!multiShareArgs.getMedia().isEmpty()) {
       for (Media media : multiShareArgs.getMedia()) {
-        slideDeck.addSlide(SlideFactory.getSlide(context, media.getMimeType(), media.getUri(), media.getWidth(), media.getHeight()));
+        Slide slide = SlideFactory.getSlide(context, media.getMimeType(), media.getUri(), media.getWidth(), media.getHeight());
+        if (slide != null) {
+          slideDeck.addSlide(slide);
+        } else {
+          throw new SlideNotFoundException();
+        }
       }
     } else if (multiShareArgs.getDataUri() != null) {
-      slideDeck.addSlide(SlideFactory.getSlide(context, multiShareArgs.getDataType(), multiShareArgs.getDataUri(), 0, 0));
+      Slide slide = SlideFactory.getSlide(context, multiShareArgs.getDataType(), multiShareArgs.getDataUri(), 0, 0);
+      if (slide != null) {
+        slideDeck.addSlide(slide);
+      } else {
+        throw new SlideNotFoundException();
+      }
     }
 
     return slideDeck;
+  }
+
+  private static @NonNull List<Mention> getValidMentionsForRecipient(@NonNull Recipient recipient, @NonNull List<Mention> mentions) {
+    if (mentions.isEmpty() || !recipient.isPushV2Group() || !recipient.isActiveGroup()) {
+      return Collections.emptyList();
+    } else {
+      Set<RecipientId> validRecipientIds = recipient.getParticipants()
+                                                    .stream()
+                                                    .map(Recipient::getId)
+                                                    .collect(Collectors.toSet());
+
+      return mentions.stream()
+                     .filter(mention -> validRecipientIds.contains(mention.getRecipientId()))
+                     .collect(Collectors.toList());
+    }
   }
 
   public static final class MultiShareSendResultCollection {
@@ -176,6 +230,10 @@ public final class MultiShareSender {
 
     public boolean containsFailures() {
       return Stream.of(results).anyMatch(result -> result.type != MultiShareSendResult.Type.SUCCESS);
+    }
+
+    public boolean containsOnlyFailures() {
+      return Stream.of(results).allMatch(result -> result.type != MultiShareSendResult.Type.SUCCESS);
     }
   }
 
@@ -197,8 +255,12 @@ public final class MultiShareSender {
     }
 
     private enum Type {
+      GENERIC_ERROR,
       MMS_NOT_ENABLED,
       SUCCESS
     }
+  }
+
+  private static final class SlideNotFoundException extends Exception {
   }
 }

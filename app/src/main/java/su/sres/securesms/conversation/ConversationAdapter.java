@@ -35,6 +35,7 @@ import su.sres.securesms.BindableConversationItem;
 import su.sres.securesms.R;
 import su.sres.core.util.logging.Log;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,6 +47,7 @@ import com.google.android.exoplayer2.source.MediaSource;
 
 import su.sres.securesms.conversation.colors.Colorizable;
 import su.sres.securesms.conversation.colors.Colorizer;
+import su.sres.securesms.conversation.multiselect.MultiselectPart;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.giph.mp4.GiphyMp4Playable;
 import su.sres.securesms.giph.mp4.GiphyMp4PlaybackPolicyEnforcer;
@@ -54,10 +56,10 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.CachedInflater;
 import su.sres.securesms.util.DateUtils;
+import su.sres.securesms.util.MessageRecordUtil;
 import su.sres.securesms.util.Projection;
 import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.ThemeUtil;
-import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.video.exo.AttachmentMediaSourceFactory;
 
@@ -67,7 +69,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -108,12 +109,13 @@ public class ConversationAdapter
   private static final long FOOTER_ID = Long.MIN_VALUE + 1;
 
   private final ItemClickListener clickListener;
+  private final Context           context;
   private final LifecycleOwner    lifecycleOwner;
   private final GlideRequests     glideRequests;
   private final Locale            locale;
   private final Recipient         recipient;
 
-  private final Set<ConversationMessage>     selected;
+  private final Set<MultiselectPart>         selected;
   private final List<ConversationMessage>    fastRecords;
   private final Set<Long>                    releasedFastRecords;
   private final Calendar                     calendar;
@@ -130,7 +132,8 @@ public class ConversationAdapter
   private ConversationMessage inlineContent;
   private Colorizer           colorizer;
 
-  ConversationAdapter(@NonNull LifecycleOwner lifecycleOwner,
+  ConversationAdapter(@NonNull Context context,
+                      @NonNull LifecycleOwner lifecycleOwner,
                       @NonNull GlideRequests glideRequests,
                       @NonNull Locale locale,
                       @Nullable ItemClickListener clickListener,
@@ -151,6 +154,7 @@ public class ConversationAdapter
     });
 
     this.lifecycleOwner = lifecycleOwner;
+    this.context        = context;
 
     this.glideRequests                = glideRequests;
     this.locale                       = locale;
@@ -186,9 +190,9 @@ public class ConversationAdapter
     } else if (messageRecord.isUpdate()) {
       return MESSAGE_TYPE_UPDATE;
     } else if (messageRecord.isOutgoing()) {
-      return messageRecord.isMms() ? MESSAGE_TYPE_OUTGOING_MULTIMEDIA : MESSAGE_TYPE_OUTGOING_TEXT;
+      return MessageRecordUtil.isTextOnly(messageRecord, context) ? MESSAGE_TYPE_OUTGOING_TEXT : MESSAGE_TYPE_OUTGOING_MULTIMEDIA;
     } else {
-      return messageRecord.isMms() ? MESSAGE_TYPE_INCOMING_MULTIMEDIA : MESSAGE_TYPE_INCOMING_TEXT;
+      return MessageRecordUtil.isTextOnly(messageRecord, context) ? MESSAGE_TYPE_INCOMING_TEXT : MESSAGE_TYPE_INCOMING_MULTIMEDIA;
     }
   }
 
@@ -210,6 +214,7 @@ public class ConversationAdapter
     return message.getUniqueId(digest);
   }
 
+  @SuppressLint("ClickableViewAccessibility")
   @Override
   public @NonNull RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
     switch (viewType) {
@@ -222,15 +227,15 @@ public class ConversationAdapter
         View itemView = CachedInflater.from(parent.getContext()).inflate(getLayoutForViewType(viewType), parent, false);
         BindableConversationItem bindable = (BindableConversationItem) itemView;
 
-        itemView.setOnClickListener(view -> {
+        itemView.setOnClickListener((v) -> {
           if (clickListener != null) {
-            clickListener.onItemClick(bindable.getConversationMessage());
+            clickListener.onItemClick(bindable.getMultiselectPartForLatestTouch());
           }
         });
 
-        itemView.setOnLongClickListener(view -> {
+        itemView.setOnLongClickListener((v) -> {
           if (clickListener != null) {
-            clickListener.onItemLongClick(itemView, bindable.getConversationMessage());
+            clickListener.onItemLongClick(itemView, bindable.getMultiselectPartForLatestTouch());
           }
           return true;
         });
@@ -339,8 +344,8 @@ public class ConversationAdapter
 
     if (conversationMessage == null) return -1;
 
-    calendar.setTime(new Date(conversationMessage.getMessageRecord().getDateSent()));
-    return Util.hashCode(calendar.get(Calendar.YEAR), calendar.get(Calendar.DAY_OF_YEAR));
+    calendar.setTimeInMillis(conversationMessage.getMessageRecord().getDateReceived());
+    return calendar.get(Calendar.YEAR) * 1000L + calendar.get(Calendar.DAY_OF_YEAR);
   }
 
   @Override
@@ -556,8 +561,12 @@ public class ConversationAdapter
   /**
    * Returns set of records that are selected in multi-select mode.
    */
-  Set<ConversationMessage> getSelectedItems() {
+  public Set<MultiselectPart> getSelectedItems() {
     return new HashSet<>(selected);
+  }
+
+  public void removeFromSelection(@NonNull Set<MultiselectPart> parts) {
+    selected.removeAll(parts);
   }
 
   /**
@@ -570,11 +579,11 @@ public class ConversationAdapter
   /**
    * Toggles the selected state of a record in multi-select mode.
    */
-  void toggleSelection(ConversationMessage conversationMessage) {
-    if (selected.contains(conversationMessage)) {
-      selected.remove(conversationMessage);
+  void toggleSelection(MultiselectPart multiselectPart) {
+    if (selected.contains(multiselectPart)) {
+      selected.remove(multiselectPart);
     } else {
-      selected.add(conversationMessage);
+      selected.add(multiselectPart);
     }
   }
 
@@ -583,9 +592,9 @@ public class ConversationAdapter
    */
   @MainThread
   static void initializePool(@NonNull RecyclerView.RecycledViewPool pool) {
-    pool.setMaxRecycledViews(MESSAGE_TYPE_INCOMING_TEXT, 15);
+    pool.setMaxRecycledViews(MESSAGE_TYPE_INCOMING_TEXT, 25);
     pool.setMaxRecycledViews(MESSAGE_TYPE_INCOMING_MULTIMEDIA, 15);
-    pool.setMaxRecycledViews(MESSAGE_TYPE_OUTGOING_TEXT, 15);
+    pool.setMaxRecycledViews(MESSAGE_TYPE_OUTGOING_TEXT, 25);
     pool.setMaxRecycledViews(MESSAGE_TYPE_OUTGOING_MULTIMEDIA, 15);
     pool.setMaxRecycledViews(MESSAGE_TYPE_PLACEHOLDER, 15);
     pool.setMaxRecycledViews(MESSAGE_TYPE_HEADER, 1);
@@ -789,10 +798,9 @@ public class ConversationAdapter
   }
 
   interface ItemClickListener extends BindableConversationItem.EventListener {
-    void onItemClick(ConversationMessage item);
+    void onItemClick(MultiselectPart item);
 
-    void onItemLongClick(View itemView, ConversationMessage item);
+    void onItemLongClick(View itemView, MultiselectPart item);
   }
-
 }
 

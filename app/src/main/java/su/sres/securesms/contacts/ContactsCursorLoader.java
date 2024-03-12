@@ -45,15 +45,16 @@ public class ContactsCursorLoader extends AbstractContactsCursorLoader {
   private static final String TAG = Log.tag(ContactsCursorLoader.class);
 
   public static final class DisplayMode {
-    public static final int FLAG_PUSH            = 1;
-    public static final int FLAG_SMS             = 1 << 1;
-    public static final int FLAG_ACTIVE_GROUPS   = 1 << 2;
-    public static final int FLAG_INACTIVE_GROUPS = 1 << 3;
-    public static final int FLAG_SELF            = 1 << 4;
-    public static final int FLAG_BLOCK           = 1 << 5;
-    public static final int FLAG_HIDE_GROUPS_V1  = 1 << 5;
-    public static final int FLAG_HIDE_NEW        = 1 << 6;
-    public static final int FLAG_ALL             = FLAG_PUSH | FLAG_SMS | FLAG_ACTIVE_GROUPS | FLAG_INACTIVE_GROUPS | FLAG_SELF;
+    public static final int FLAG_PUSH               = 1;
+    public static final int FLAG_SMS                = 1 << 1;
+    public static final int FLAG_ACTIVE_GROUPS      = 1 << 2;
+    public static final int FLAG_INACTIVE_GROUPS    = 1 << 3;
+    public static final int FLAG_SELF               = 1 << 4;
+    public static final int FLAG_BLOCK              = 1 << 5;
+    public static final int FLAG_HIDE_GROUPS_V1     = 1 << 5;
+    public static final int FLAG_HIDE_NEW           = 1 << 6;
+    public static final int FLAG_HIDE_RECENT_HEADER = 1 << 7;
+    public static final int FLAG_ALL                = FLAG_PUSH | FLAG_SMS | FLAG_ACTIVE_GROUPS | FLAG_INACTIVE_GROUPS | FLAG_SELF;
   }
 
   private static final int RECENT_CONVERSATION_MAX = 25;
@@ -111,7 +112,10 @@ public class ContactsCursorLoader extends AbstractContactsCursorLoader {
     Cursor recentConversations = getRecentConversationsCursor();
 
     if (recentConversations.getCount() > 0) {
-      cursorList.add(ContactsCursorRows.forRecentsHeader(getContext()));
+      if (!hideRecentsHeader(mode)) {
+        cursorList.add(ContactsCursorRows.forRecentsHeader(getContext()));
+      }
+
       cursorList.add(recentConversations);
     }
   }
@@ -135,7 +139,10 @@ public class ContactsCursorLoader extends AbstractContactsCursorLoader {
     Cursor groups = getRecentConversationsCursor(true);
 
     if (groups.getCount() > 0) {
-      cursorList.add(ContactsCursorRows.forRecentsHeader(getContext()));
+      if (!hideRecentsHeader(mode)) {
+        cursorList.add(ContactsCursorRows.forRecentsHeader(getContext()));
+      }
+
       cursorList.add(groups);
     }
   }
@@ -274,6 +281,10 @@ public class ContactsCursorLoader extends AbstractContactsCursorLoader {
 
   private static boolean hideNewNumberOrUsername(int mode) {
     return flagSet(mode, DisplayMode.FLAG_HIDE_NEW);
+  }
+
+  private static boolean hideRecentsHeader(int mode) {
+    return flagSet(mode, DisplayMode.FLAG_HIDE_RECENT_HEADER);
   }
 
   private static boolean flagSet(int mode, int flag) {

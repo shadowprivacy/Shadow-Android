@@ -18,7 +18,6 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.GifSlide;
 import su.sres.securesms.mms.Slide;
 import su.sres.securesms.mms.StickerSlide;
-import su.sres.securesms.util.MessageRecordUtil;
 import su.sres.securesms.util.Util;
 
 public final class ThreadBodyUtil {
