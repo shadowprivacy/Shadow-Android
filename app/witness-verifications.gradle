@@ -492,11 +492,11 @@ dependencyVerification {
         ['mobi.upod:time-duration-picker:1.1.3',
          'db469ce0f48dd96b892eac424ed76870e54bf00fe0a28cdcddfbe5f2a226a0e1'],
 
-        ['net.zetetic:android-database-sqlcipher:4.4.3',
-         '64cf472e3f6c3300fd7307aebb74dfff4eeb3805f138045c83362c7687e4af61'],
-
         ['org.apache.commons:commons-csv:1.8',
          'a8bd56652ed4668d9d5a33994ae52f59b9e39c8eb0ebcb6684e68aeee7579a61'],
+
+        ['net.zetetic:android-database-sqlcipher:4.4.3',
+         '64cf472e3f6c3300fd7307aebb74dfff4eeb3805f138045c83362c7687e4af61'],
 
         ['org.apache.httpcomponents:httpclient-android:4.3.5',
          '6f56466a9bd0d42934b90bfbfe9977a8b654c058bf44a12bdc2877c4e1f033f1'],
@@ -558,8 +558,8 @@ dependencyVerification {
         ['org.signal:argon2:13.1',
          '0f686ccff0d4842bfcc74d92e8dc780a5f159b9376e37a1189fabbcdac458bef'],
 
-        ['org.signal:ringrtc-android:2.10.8',
-         '4c5b2a80fc905b58c96aa9e1637f47eb68cedf8a5147d25eebe43768487b784e'],
+        ['org.signal:ringrtc-android:2.11.1',
+         '74be8f643a85df0a845ea9e9ccd235ece3865a4e380bec4b8ba0a732eaafefc5'],
 
         ['org.signal:zkgroup-android:0.7.0',
          '52b172565bd01526e93ebf1796b834bdc449d4fe3422c1b827e49cb8d4f13fbd'],
@@ -573,11 +573,11 @@ dependencyVerification {
         ['org.threeten:threetenbp:1.3.6',
          'f4c23ffaaed717c3b99c003e0ee02d6d66377fd47d866fec7d971bd8644fc1a7'],
 
-        ['org.whispersystems:signal-client-android:0.8.3',
-         '3d6c93aa497c4abb90d32629ae23b0832c670333dd3862bdde6d1cf6e4a2e1db'],
+        ['org.whispersystems:signal-client-android:0.9.0',
+         'e58359105094103ba1b5960563d0980ce31319e0946558d722636e76ef6eb90c'],
 
-        ['org.whispersystems:signal-client-java:0.8.3',
-         'e3a1269c512e39d130550bb3f5b1fccbe1cde65a572c16c9021e303cf7be5372'],
+        ['org.whispersystems:signal-client-java:0.9.0',
+         '9b40d108f783acaef0692be162f461c15fe49507204d5334770f38f90eff5b09'],
 
         ['pl.tajchert:waitingdots:0.1.0',
          '2835d49e0787dbcb606c5a60021ced66578503b1e9fddcd7a5ef0cd5f095ba2c'],

@@ -272,6 +272,12 @@ public final class PushGroupSendJob extends PushSendJob {
   }
 
   @Override
+  public void onRetry() {
+    ShadowLocalMetrics.GroupMessageSend.cancel(messageId);
+    super.onRetry();
+  }
+
+  @Override
   public void onFailure() {
     DatabaseFactory.getMmsDatabase(context).markAsSentFailed(messageId);
   }
@@ -321,6 +327,12 @@ public final class PushGroupSendJob extends PushSendJob {
           throw new UndeliverableMessageException("Messages can no longer be sent to V1 groups!");
         }
       } else {
+        Optional<GroupDatabase.GroupRecord> groupRecord = DatabaseFactory.getGroupDatabase(context).getGroup(groupRecipient.requireGroupId());
+
+        if (groupRecord.isPresent() && groupRecord.get().isAnnouncementGroup() && !groupRecord.get().isAdmin(Recipient.self())) {
+          throw new UndeliverableMessageException("Non-admins cannot send messages in announcement groups!");
+        }
+
         SignalServiceDataMessage.Builder builder = SignalServiceDataMessage.newBuilder()
                                                                            .withTimestamp(message.getSentTimeMillis());
 

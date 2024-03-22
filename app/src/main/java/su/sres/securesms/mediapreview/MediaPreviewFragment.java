@@ -20,83 +20,86 @@ import su.sres.securesms.util.concurrent.SimpleTask;
 
 public abstract class MediaPreviewFragment extends Fragment {
 
-    static final String DATA_URI          = "DATA_URI";
-    static final String DATA_SIZE         = "DATA_SIZE";
-    static final String DATA_CONTENT_TYPE = "DATA_CONTENT_TYPE";
-    static final String AUTO_PLAY         = "AUTO_PLAY";
-    static final String VIDEO_GIF         = "VIDEO_GIF";
+  static final String DATA_URI          = "DATA_URI";
+  static final String DATA_SIZE         = "DATA_SIZE";
+  static final String DATA_CONTENT_TYPE = "DATA_CONTENT_TYPE";
+  static final String AUTO_PLAY         = "AUTO_PLAY";
+  static final String VIDEO_GIF         = "VIDEO_GIF";
 
-    private AttachmentId attachmentId;
-    protected Events       events;
+  private   AttachmentId attachmentId;
+  protected Events       events;
 
-    public static MediaPreviewFragment newInstance(@NonNull Attachment attachment, boolean autoPlay) {
-        return newInstance(attachment.getUri(), attachment.getContentType(), attachment.getSize(), autoPlay, attachment.isVideoGif());
+  public static MediaPreviewFragment newInstance(@NonNull Attachment attachment, boolean autoPlay) {
+    return newInstance(attachment.getUri(), attachment.getContentType(), attachment.getSize(), autoPlay, attachment.isVideoGif());
+  }
+
+  public static MediaPreviewFragment newInstance(@NonNull Uri dataUri, @NonNull String contentType, long size, boolean autoPlay, boolean isVideoGif) {
+    Bundle args = new Bundle();
+
+    args.putParcelable(MediaPreviewFragment.DATA_URI, dataUri);
+    args.putString(MediaPreviewFragment.DATA_CONTENT_TYPE, contentType);
+    args.putLong(MediaPreviewFragment.DATA_SIZE, size);
+    args.putBoolean(MediaPreviewFragment.AUTO_PLAY, autoPlay);
+    args.putBoolean(MediaPreviewFragment.VIDEO_GIF, isVideoGif);
+
+    MediaPreviewFragment fragment = createCorrectFragmentType(contentType);
+
+    fragment.setArguments(args);
+
+    return fragment;
+  }
+
+  private static MediaPreviewFragment createCorrectFragmentType(@NonNull String contentType) {
+    if (MediaUtil.isVideo(contentType)) {
+      return new VideoMediaPreviewFragment();
+    } else if (MediaUtil.isImageType(contentType)) {
+      return new ImageMediaPreviewFragment();
+    } else {
+      throw new AssertionError("Unexpected media type: " + contentType);
+    }
+  }
+
+  @Override
+  public void onAttach(@NonNull Context context) {
+    super.onAttach(context);
+    if (!(context instanceof Events)) {
+      throw new AssertionError("Activity must support " + Events.class);
     }
 
-    public static MediaPreviewFragment newInstance(@NonNull Uri dataUri, @NonNull String contentType, long size, boolean autoPlay, boolean isVideoGif) {
-        Bundle args = new Bundle();
+    events = (Events) context;
+  }
 
-        args.putParcelable(MediaPreviewFragment.DATA_URI, dataUri);
-        args.putString(MediaPreviewFragment.DATA_CONTENT_TYPE, contentType);
-        args.putLong(MediaPreviewFragment.DATA_SIZE, size);
-        args.putBoolean(MediaPreviewFragment.AUTO_PLAY, autoPlay);
-        args.putBoolean(MediaPreviewFragment.VIDEO_GIF, isVideoGif);
+  @Override
+  public void onResume() {
+    super.onResume();
+    checkMediaStillAvailable();
+  }
 
-        MediaPreviewFragment fragment = createCorrectFragmentType(contentType);
+  public void cleanUp() {
+  }
 
-        fragment.setArguments(args);
+  public void pause() {
+  }
 
-        return fragment;
+  public @Nullable View getPlaybackControls() {
+    return null;
+  }
+
+  public void checkMediaStillAvailable() {
+    if (attachmentId == null) {
+      attachmentId = new PartUriParser(Objects.requireNonNull(requireArguments().getParcelable(DATA_URI))).getPartId();
     }
 
-    private static MediaPreviewFragment createCorrectFragmentType(@NonNull String contentType) {
-        if (MediaUtil.isVideo(contentType)) {
-            return new VideoMediaPreviewFragment();
-        } else if (MediaUtil.isImageType(contentType)) {
-            return new ImageMediaPreviewFragment();
-        } else {
-            throw new AssertionError("Unexpected media type: " + contentType);
-        }
-    }
+    final Context context = requireContext().getApplicationContext();
 
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-        if (!(context instanceof Events)) {
-            throw new AssertionError("Activity must support " + Events.class);
-        }
+    SimpleTask.run(getViewLifecycleOwner().getLifecycle(),
+                   () -> DatabaseFactory.getAttachmentDatabase(context).hasAttachment(attachmentId),
+                   hasAttachment -> {if (!hasAttachment) events.mediaNotAvailable();});
+  }
 
-        events = (Events) context;
-    }
+  public interface Events {
+    boolean singleTapOnMedia();
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        checkMediaStillAvailable();
-    }
-
-    public void cleanUp() {
-    }
-
-    public void pause() {
-    }
-
-    public @Nullable View getPlaybackControls() {
-        return null;
-    }
-
-    public void checkMediaStillAvailable() {
-        if (attachmentId == null) {
-            attachmentId = new PartUriParser(Objects.requireNonNull(requireArguments().getParcelable(DATA_URI))).getPartId();
-        }
-
-        SimpleTask.run(getViewLifecycleOwner().getLifecycle(),
-                () -> DatabaseFactory.getAttachmentDatabase(requireContext()).hasAttachment(attachmentId),
-                hasAttachment -> { if (!hasAttachment) events.mediaNotAvailable(); });
-    }
-
-    public interface Events {
-        boolean singleTapOnMedia();
-        void mediaNotAvailable();
-    }
+    void mediaNotAvailable();
+  }
 }

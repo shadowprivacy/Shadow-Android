@@ -29,6 +29,7 @@ import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.core.util.concurrent.SignalExecutors;
+import su.sres.signalservice.internal.push.exceptions.GroupPatchNotAcceptedException;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -176,7 +177,15 @@ final class MessageRequestRepository {
       if (resolved.isGroup() && resolved.requireGroupId().isPush()) {
         try {
           GroupManager.leaveGroupFromBlockOrMessageRequest(context, resolved.requireGroupId().requirePush());
-        } catch (GroupChangeException | IOException e) {
+        } catch (GroupChangeException | GroupPatchNotAcceptedException e) {
+          if (DatabaseFactory.getGroupDatabase(context).isCurrentMember(resolved.requireGroupId().requirePush(), Recipient.self().getId())) {
+            Log.w(TAG, "Failed to leave group, and we're still a member.", e);
+            error.onError(GroupChangeFailureReason.fromException(e));
+            return;
+          } else {
+            Log.w(TAG, "Failed to leave group, but we're not a member, so ignoring.");
+          }
+        } catch (IOException e) {
           Log.w(TAG, e);
           error.onError(GroupChangeFailureReason.fromException(e));
           return;

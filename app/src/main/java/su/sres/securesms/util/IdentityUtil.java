@@ -9,8 +9,6 @@ import androidx.annotation.StringRes;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.R;
 import su.sres.securesms.crypto.ReentrantSessionLock;
-import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
-import su.sres.securesms.crypto.storage.TextSecureSessionStore;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.IdentityDatabase;
@@ -19,6 +17,7 @@ import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MessageDatabase.InsertResult;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.jobs.ThreadUpdateJob;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sms.IncomingIdentityDefaultMessage;
@@ -33,7 +32,6 @@ import su.sres.securesms.util.concurrent.SettableFuture;
 
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.SignalProtocolAddress;
-import org.whispersystems.libsignal.state.IdentityKeyStore;
 import org.whispersystems.libsignal.state.SessionRecord;
 import org.whispersystems.libsignal.state.SessionStore;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -92,6 +90,7 @@ public final class IdentityUtil {
             else outgoing = new OutgoingIdentityDefaultMessage(recipient);
 
             DatabaseFactory.getSmsDatabase(context).insertMessageOutbox(threadId, outgoing, false, time, null);
+            ThreadUpdateJob.enqueue(threadId);
           }
         }
       }
@@ -114,6 +113,7 @@ public final class IdentityUtil {
 
       Log.i(TAG, "Inserting verified outbox...");
       DatabaseFactory.getSmsDatabase(context).insertMessageOutbox(threadId, outgoing, false, time, null);
+      ThreadUpdateJob.enqueue(threadId);
     }
   }
 
@@ -144,13 +144,12 @@ public final class IdentityUtil {
     }
   }
 
-  public static void saveIdentity(Context context, String user, IdentityKey identityKey) {
+  public static void saveIdentity(String user, IdentityKey identityKey) {
     try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
-      IdentityKeyStore      identityKeyStore = new TextSecureIdentityKeyStore(context);
-      SessionStore          sessionStore     = new TextSecureSessionStore(context);
-      SignalProtocolAddress address          = new SignalProtocolAddress(user, 1);
+      SessionStore          sessionStore = ApplicationDependencies.getSessionStore();
+      SignalProtocolAddress address      = new SignalProtocolAddress(user, 1);
 
-      if (identityKeyStore.saveIdentity(address, identityKey)) {
+      if (ApplicationDependencies.getIdentityStore().saveIdentity(address, identityKey)) {
         if (sessionStore.containsSession(address)) {
           SessionRecord sessionRecord = sessionStore.loadSession(address);
           sessionRecord.archiveCurrentState();
@@ -186,7 +185,7 @@ public final class IdentityUtil {
            (identityRecord.isPresent() && !identityRecord.get().getIdentityKey().equals(verifiedMessage.getIdentityKey())) ||
            (identityRecord.isPresent() && identityRecord.get().getVerifiedStatus() != IdentityDatabase.VerifiedStatus.VERIFIED)))
       {
-        saveIdentity(context, verifiedMessage.getDestination().getIdentifier(), verifiedMessage.getIdentityKey());
+        saveIdentity(verifiedMessage.getDestination().getIdentifier(), verifiedMessage.getIdentityKey());
         identityDatabase.setVerified(recipient.getId(), verifiedMessage.getIdentityKey(), IdentityDatabase.VerifiedStatus.VERIFIED);
         markIdentityVerified(context, recipient, true, true);
       }

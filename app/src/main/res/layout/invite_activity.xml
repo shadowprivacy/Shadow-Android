@@ -22,8 +22,9 @@
         android:layout_height="0dp"
         android:clickable="false"
         android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar">
+        tools:visibility="gone">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -33,17 +34,6 @@
             android:paddingStart="28dp"
             android:paddingTop="14dp"
             android:paddingEnd="28dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:layout_marginBottom="30dp"
-                android:gravity="center_horizontal"
-                android:paddingStart="10dp"
-                android:text="@string/InviteActivity_friends_dont_let_friends_text_unencrypted"
-                android:textAppearance="@style/TextAppearance.Signal.Title2.Bold"
-                android:textColor="@color/signal_text_primary" />
 
             <EditText
                 android:id="@+id/invite_text"
@@ -62,26 +52,46 @@
                 android:textColor="@color/signal_text_primary"
                 tools:text="Let's switch to Shadow: https://sgnl.link/asdfdfsa" />
 
-            <Button
-                android:id="@+id/sms_button"
+            <LinearLayout android:id="@+id/sms_button"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
+                android:layout_height="48dp"
                 android:layout_marginTop="16dp"
-                android:background="@drawable/cta_button_background"
-                android:text="@string/InviteActivity_share_with_contacts"
-                android:textColor="@color/signal_text_toolbar_title" />
+                android:background="?attr/selectableItemBackground">
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/share_button"
-                style="@style/Button.Borderless"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
+                <ImageView android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center_vertical"
+                    app:srcCompat="@drawable/ic_invite_inverse_28" />
+
+                <TextView style="@style/Signal.Text.Body"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="26dp"
+                    android:text="@string/InviteActivity_share_with_contacts" />
+
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/share_button"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
                 android:layout_marginTop="16dp"
-                android:drawablePadding="4dp"
-                android:text="@string/InviteActivity_choose_how_to_share"
-                app:drawableStartCompat="@drawable/ic_share_24" />
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center_vertical"
+                    app:srcCompat="@drawable/ic_share_24_tinted" />
+
+                <TextView android:id="@+id/share_text"
+                    style="@style/Signal.Text.Body"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="26dp"
+                    android:text="@string/InviteActivity_share_via" />
+
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>
@@ -94,19 +104,8 @@
         android:orientation="vertical"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar">
-
-        <su.sres.securesms.util.views.DarkOverflowToolbar
-            android:id="@+id/sms_send_frame_toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:theme="?attr/settingsToolbarStyle"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:navigationIcon="@drawable/ic_arrow_left_24"
-            app:title="@string/InviteActivity_invite_to_signal"
-            app:titleTextAppearance="@style/Signal.Text.Title" />
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        tools:visibility="visible">
 
         <su.sres.securesms.components.ContactFilterView
             android:id="@+id/contact_filter_edit_text"
@@ -129,24 +128,25 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="end"
+            android:gravity="center_horizontal"
             android:orientation="horizontal"
             android:padding="10dp">
 
             <Button
                 android:id="@+id/cancel_sms_button"
-                style="@style/Button.Borderless"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                style="@style/Signal.Widget.Button.Large.Primary.Inverse"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
                 android:text="@string/InviteActivity_cancel" />
 
             <Button
                 android:id="@+id/send_sms_button"
-                style="@style/Button.Borderless"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:enabled="false"
-                tools:text="Send to 0 friends" />
+                style="@style/Signal.Widget.Button.Large.Primary.Inverse"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                tools:text="Send SMS (0)"/>
 
         </LinearLayout>
     </LinearLayout>

@@ -34,6 +34,7 @@ import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class ReactionSendJob extends BaseJob {
 
@@ -172,12 +173,13 @@ public class ReactionSendJob extends BaseJob {
       return;
     }
 
-    List<Recipient> destinations = Stream.of(recipients).map(Recipient::resolved).toList();
-    List<Recipient> completions  = deliver(conversationRecipient, destinations, targetAuthor, targetSentTimestamp);
+    List<Recipient>   resolved     = Stream.of(recipients).map(Recipient::resolved).toList();
+    List<RecipientId> unregistered = resolved.stream().filter(Recipient::isUnregistered).map(Recipient::getId).collect(Collectors.toList());
+    List<Recipient>   destinations = resolved.stream().filter(Recipient::isMaybeRegistered).collect(Collectors.toList());
+    List<Recipient>   completions  = deliver(conversationRecipient, destinations, targetAuthor, targetSentTimestamp);
 
-    for (Recipient completion : completions) {
-      recipients.remove(completion.getId());
-    }
+    recipients.removeAll(unregistered);
+    recipients.removeAll(completions.stream().map(Recipient::getId).collect(Collectors.toList()));
 
     Log.i(TAG, "Completed now: " + completions.size() + ", Remaining: " + recipients.size());
 

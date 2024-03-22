@@ -41,10 +41,10 @@ public class WebRtcViewModel {
     CALL_ONGOING_ELSEWHERE;
 
     public boolean isErrorState() {
-      return this == NETWORK_FAILURE       ||
-              this == RECIPIENT_UNAVAILABLE ||
-              this == NO_SUCH_USER          ||
-              this == UNTRUSTED_IDENTITY;
+      return this == NETWORK_FAILURE ||
+             this == RECIPIENT_UNAVAILABLE ||
+             this == NO_SUCH_USER ||
+             this == UNTRUSTED_IDENTITY;
     }
 
     public boolean isPreJoinOrNetworkUnavailable() {
@@ -58,12 +58,17 @@ public class WebRtcViewModel {
 
   public enum GroupCallState {
     IDLE,
+    RINGING,
     DISCONNECTED,
     CONNECTING,
     RECONNECTING,
     CONNECTED,
     CONNECTED_AND_JOINING,
     CONNECTED_AND_JOINED;
+
+    public boolean isIdle() {
+      return this == IDLE;
+    }
 
     public boolean isNotIdle() {
       return this != IDLE;
@@ -90,6 +95,10 @@ public class WebRtcViewModel {
 
       return false;
     }
+
+    public boolean isRinging() {
+      return this == RINGING;
+    }
   }
 
   private final @NonNull State          state;
@@ -99,14 +108,16 @@ public class WebRtcViewModel {
   private final boolean isBluetoothAvailable;
   private final boolean isRemoteVideoOffer;
 
-  private final long    callConnectedTime;
+  private final long callConnectedTime;
 
   private final CallParticipant       localParticipant;
   private final List<CallParticipant> remoteParticipants;
-  private final Set<RecipientId> identityChangedRecipients;
+  private final Set<RecipientId>      identityChangedRecipients;
 
   private final OptionalLong remoteDevicesCount;
-  private final Long                  participantLimit;
+  private final Long         participantLimit;
+  private final boolean      ringGroup;
+  private final Recipient    ringerRecipient;
 
   public WebRtcViewModel(@NonNull WebRtcServiceState state) {
     this.state                     = state.getCallInfoState().getCallState();
@@ -119,10 +130,12 @@ public class WebRtcViewModel {
     this.callConnectedTime         = state.getCallInfoState().getCallConnectedTime();
     this.remoteDevicesCount        = state.getCallInfoState().getRemoteDevicesCount();
     this.participantLimit          = state.getCallInfoState().getParticipantLimit();
+    this.ringGroup                 = state.getCallSetupState().shouldRingGroup();
+    this.ringerRecipient           = state.getCallSetupState().getRingerRecipient();
     this.localParticipant          = CallParticipant.createLocal(state.getLocalDeviceState().getCameraState(),
-            state.getVideoState().getLocalSink() != null ? state.getVideoState().getLocalSink()
-                                                         : new BroadcastVideoSink(),
-            state.getLocalDeviceState().isMicrophoneEnabled());
+                                                                 state.getVideoState().getLocalSink() != null ? state.getVideoState().getLocalSink()
+                                                                                                              : new BroadcastVideoSink(),
+                                                                 state.getLocalDeviceState().isMicrophoneEnabled());
   }
 
   public @NonNull State getState() {
@@ -169,23 +182,35 @@ public class WebRtcViewModel {
     return remoteDevicesCount;
   }
 
+  public boolean areRemoteDevicesInCall() {
+    return remoteDevicesCount.isPresent() && remoteDevicesCount.getAsLong() > 0;
+  }
+
   public @Nullable Long getParticipantLimit() {
     return participantLimit;
+  }
+
+  public boolean shouldRingGroup() {
+    return ringGroup;
+  }
+
+  public @NonNull Recipient getRingerRecipient() {
+    return ringerRecipient;
   }
 
   @Override
   public @NonNull String toString() {
     return "WebRtcViewModel{" +
-            "state=" + state +
-            ", recipient=" + recipient.getId() +
-            ", isBluetoothAvailable=" + isBluetoothAvailable +
-            ", isRemoteVideoOffer=" + isRemoteVideoOffer +
-            ", callConnectedTime=" + callConnectedTime +
-            ", localParticipant=" + localParticipant +
-            ", remoteParticipants=" + remoteParticipants +
-            ", identityChangedRecipients=" + identityChangedRecipients +
-            ", remoteDevicesCount=" + remoteDevicesCount +
-            ", participantLimit=" + participantLimit +
-            '}';
+           "state=" + state +
+           ", recipient=" + recipient.getId() +
+           ", isBluetoothAvailable=" + isBluetoothAvailable +
+           ", isRemoteVideoOffer=" + isRemoteVideoOffer +
+           ", callConnectedTime=" + callConnectedTime +
+           ", localParticipant=" + localParticipant +
+           ", remoteParticipants=" + remoteParticipants +
+           ", identityChangedRecipients=" + identityChangedRecipients +
+           ", remoteDevicesCount=" + remoteDevicesCount +
+           ", participantLimit=" + participantLimit +
+           '}';
   }
 }

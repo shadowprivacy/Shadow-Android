@@ -32,6 +32,7 @@ import android.os.Bundle;
 import android.util.Rational;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -70,6 +71,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.service.webrtc.SignalCallManager;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.util.EllapsedTimeFormatter;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FullscreenHelper;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThrottledDebouncer;
@@ -297,7 +299,8 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
                 .observe(this, p -> callScreen.updateCallParticipants(p));
     viewModel.getCallParticipantListUpdate().observe(this, participantUpdateWindow::addCallParticipantListUpdate);
     viewModel.getSafetyNumberChangeEvent().observe(this, this::handleSafetyNumberChangeEvent);
-    viewModel.getGroupMembers().observe(this, unused -> updateGroupMembersForGroupCall());
+    viewModel.getGroupMembersChanged().observe(this, unused -> updateGroupMembersForGroupCall());
+    viewModel.getGroupMemberCount().observe(this, this::handleGroupMemberCountChange);
     viewModel.shouldShowSpeakerHint().observe(this, this::updateSpeakerHint);
 
     callScreen.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
@@ -549,6 +552,12 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
     ApplicationDependencies.getSignalCallManager().requestUpdateGroupMembers();
   }
 
+  public void handleGroupMemberCountChange(int count) {
+    boolean canRing = count <= FeatureFlags.maxGroupCallRingSize() && FeatureFlags.groupCallRinging();
+    callScreen.enableRingGroup(canRing);
+    ApplicationDependencies.getSignalCallManager().setRingGroup(canRing);
+  }
+
   private void updateSpeakerHint(boolean showSpeakerHint) {
     if (showSpeakerHint) {
       callScreen.showSpeakerViewHint();
@@ -653,6 +662,11 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
   private void handleCallPreJoin(@NonNull WebRtcViewModel event) {
     if (event.getGroupState().isNotIdle()) {
       callScreen.setStatusFromGroupCallState(event.getGroupState());
+      callScreen.setRingGroup(event.shouldRingGroup());
+
+      if (event.shouldRingGroup() && event.areRemoteDevicesInCall()) {
+        ApplicationDependencies.getSignalCallManager().setRingGroup(false);
+      }
     }
   }
 
@@ -766,6 +780,16 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
     @Override
     public void onLocalPictureInPictureClicked() {
       viewModel.onLocalPictureInPictureClicked();
+    }
+
+    @Override
+    public void onRingGroupChanged(boolean ringGroup, boolean ringingAllowed) {
+      if (ringingAllowed) {
+        ApplicationDependencies.getSignalCallManager().setRingGroup(ringGroup);
+      } else {
+        ApplicationDependencies.getSignalCallManager().setRingGroup(false);
+        Toast.makeText(WebRtcCallActivity.this, R.string.WebRtcCallActivity__group_is_too_large_to_ring_the_participants, Toast.LENGTH_SHORT).show();
+      }
     }
   }
 

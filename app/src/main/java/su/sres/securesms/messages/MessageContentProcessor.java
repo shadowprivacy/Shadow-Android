@@ -27,7 +27,6 @@ import su.sres.securesms.contactshare.ContactModelMapper;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.SecurityEvent;
 import su.sres.securesms.crypto.SessionUtil;
-import su.sres.securesms.crypto.storage.TextSecureSessionStore;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
@@ -84,6 +83,7 @@ import su.sres.securesms.jobs.RetrieveProfileJob;
 import su.sres.securesms.jobs.SendDeliveryReceiptJob;
 import su.sres.securesms.jobs.SenderKeyDistributionSendJob;
 import su.sres.securesms.jobs.StickerPackDownloadJob;
+import su.sres.securesms.jobs.ThreadUpdateJob;
 import su.sres.securesms.jobs.TrimThreadJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.linkpreview.LinkPreview;
@@ -123,7 +123,6 @@ import su.sres.securesms.util.Util;
 
 import org.whispersystems.libsignal.SignalProtocolAddress;
 import org.whispersystems.libsignal.protocol.DecryptionErrorMessage;
-import org.whispersystems.libsignal.state.SessionStore;
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -698,8 +697,7 @@ public final class MessageContentProcessor {
     }
 
     if (insertResult.isPresent()) {
-      SessionStore sessionStore = new TextSecureSessionStore(context);
-      sessionStore.deleteAllSessions(content.getSender().getIdentifier());
+      ApplicationDependencies.getSessionStore().deleteAllSessions(content.getSender().getIdentifier());
 
       SecurityEvent.broadcastSecurityUpdateEvent(context);
       ApplicationDependencies.getMessageNotifier().updateNotification(context, insertResult.get().getThreadId());
@@ -721,15 +719,17 @@ public final class MessageContentProcessor {
     long threadId = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(recipient);
 
     if (!recipient.isGroup()) {
-      SessionStore sessionStore = new TextSecureSessionStore(context);
-      sessionStore.deleteAllSessions(recipient.requireServiceId());
+      ApplicationDependencies.getSessionStore().deleteAllSessions(recipient.requireServiceId());
 
       SecurityEvent.broadcastSecurityUpdateEvent(context);
 
-      long messageId = database.insertMessageOutbox(threadId, outgoingEndSessionMessage,
-                                                    false, message.getTimestamp(),
+      long messageId = database.insertMessageOutbox(threadId,
+                                                    outgoingEndSessionMessage,
+                                                    false,
+                                                    message.getTimestamp(),
                                                     null);
       database.markAsSent(messageId, true);
+      ThreadUpdateJob.enqueue(threadId);
     }
 
     return threadId;
@@ -1377,10 +1377,14 @@ public final class MessageContentProcessor {
 
     long threadId = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(recipients);
 
+    long                     messageId;
+    List<DatabaseAttachment> attachments;
+    List<DatabaseAttachment> stickerAttachments;
+
     database.beginTransaction();
 
     try {
-      long messageId = database.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptDatabase.STATUS_UNKNOWN, null);
+      messageId = database.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptDatabase.STATUS_UNKNOWN, null);
 
       if (recipients.isGroup()) {
         updateGroupReceiptStatus(message, messageId, recipients.requireGroupId());
@@ -1390,15 +1394,10 @@ public final class MessageContentProcessor {
 
       database.markAsSent(messageId, true);
 
-      List<DatabaseAttachment> allAttachments     = DatabaseFactory.getAttachmentDatabase(context).getAttachmentsForMessage(messageId);
-      List<DatabaseAttachment> stickerAttachments = Stream.of(allAttachments).filter(Attachment::isSticker).toList();
-      List<DatabaseAttachment> attachments        = Stream.of(allAttachments).filterNot(Attachment::isSticker).toList();
+      List<DatabaseAttachment> allAttachments = DatabaseFactory.getAttachmentDatabase(context).getAttachmentsForMessage(messageId);
 
-      forceStickerDownloadIfNecessary(messageId, stickerAttachments);
-
-      for (DatabaseAttachment attachment : attachments) {
-        ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(messageId, attachment.getAttachmentId(), false));
-      }
+      stickerAttachments = Stream.of(allAttachments).filter(Attachment::isSticker).toList();
+      attachments        = Stream.of(allAttachments).filterNot(Attachment::isSticker).toList();
 
       if (message.getMessage().getExpiresInSeconds() > 0) {
         database.markExpireStarted(messageId, message.getExpirationStartTimestamp());
@@ -1419,6 +1418,13 @@ public final class MessageContentProcessor {
     } finally {
       database.endTransaction();
     }
+
+    for (DatabaseAttachment attachment : attachments) {
+      ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(messageId, attachment.getAttachmentId(), false));
+    }
+
+    forceStickerDownloadIfNecessary(messageId, stickerAttachments);
+
     return threadId;
   }
 
@@ -1560,6 +1566,7 @@ public final class MessageContentProcessor {
       messageId = DatabaseFactory.getSmsDatabase(context).insertMessageOutbox(threadId, outgoingTextMessage, false, message.getTimestamp(), null);
       database  = DatabaseFactory.getSmsDatabase(context);
       database.markUnidentified(messageId, isUnidentified(message, recipient));
+      ThreadUpdateJob.enqueue(threadId);
     }
 
     database.markAsSent(messageId, true);
@@ -1804,7 +1811,7 @@ public final class MessageContentProcessor {
 
     long sentTimestamp = decryptionErrorMessage.getTimestamp();
 
-    warn(content.getTimestamp(), "[RetryReceipt] Received a retry receipt from " + senderRecipient.getId() + ", device " + decryptionErrorMessage.getDeviceId() + " for message with timestamp " + sentTimestamp + ".");
+    warn(content.getTimestamp(), "[RetryReceipt] Received a retry receipt from " + senderRecipient.getId() + ", device " + content.getSenderDevice() + " for message with timestamp " + sentTimestamp + ".");
 
     if (!senderRecipient.hasUuid()) {
       warn(content.getTimestamp(), "[RetryReceipt] Requester " + senderRecipient.getId() + " somehow has no UUID! timestamp: " + sentTimestamp);
@@ -1885,10 +1892,10 @@ public final class MessageContentProcessor {
 
     if (decryptionErrorMessage.getDeviceId() == SignalServiceAddress.DEFAULT_DEVICE_ID &&
         decryptionErrorMessage.getRatchetKey().isPresent() &&
-        SessionUtil.ratchetKeyMatches(context, requester, content.getSenderDevice(), decryptionErrorMessage.getRatchetKey().get()))
+        SessionUtil.ratchetKeyMatches(requester, content.getSenderDevice(), decryptionErrorMessage.getRatchetKey().get()))
     {
       warn(content.getTimestamp(), "[RetryReceipt-I] Ratchet key matches. Archiving the session.");
-      SessionUtil.archiveSession(context, requester.getId(), content.getSenderDevice());
+      SessionUtil.archiveSession(requester.getId(), content.getSenderDevice());
       archivedSession = true;
     }
 

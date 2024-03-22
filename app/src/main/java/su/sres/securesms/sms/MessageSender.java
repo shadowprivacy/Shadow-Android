@@ -41,6 +41,7 @@ import su.sres.securesms.jobs.AttachmentUploadJob;
 import su.sres.securesms.jobs.ProfileKeySendJob;
 import su.sres.securesms.jobs.RemoteDeleteSendJob;
 import su.sres.securesms.jobs.ResumableUploadSpecJob;
+import su.sres.securesms.jobs.ThreadUpdateJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.core.util.logging.Log;
@@ -101,6 +102,7 @@ public class MessageSender {
                           final OutgoingTextMessage message,
                           final long threadId,
                           final boolean forceSms,
+                          @Nullable final String metricId,
                           final SmsDatabase.InsertListener insertListener)
   {
     Log.i(TAG, "Sending text message to " + message.getRecipient().getId() + ", thread: " + threadId);
@@ -115,10 +117,11 @@ public class MessageSender {
                                                   System.currentTimeMillis(),
                                                   insertListener);
 
-    ShadowLocalMetrics.IndividualMessageSend.start(messageId);
+    ShadowLocalMetrics.IndividualMessageSend.onInsertedIntoDatabase(messageId, metricId);
 
     sendTextMessage(context, recipient, forceSms, keyExchange, messageId);
     onMessageSent();
+    ThreadUpdateJob.enqueue(threadId);
 
     return allocatedThreadId;
   }
@@ -127,6 +130,7 @@ public class MessageSender {
                           final OutgoingMediaMessage message,
                           final long threadId,
                           final boolean forceSms,
+                          @Nullable final String metricId,
                           final SmsDatabase.InsertListener insertListener)
   {
     Log.i(TAG, "Sending media message to " + message.getRecipient().getId() + ", thread: " + threadId);
@@ -139,7 +143,9 @@ public class MessageSender {
       long      messageId         = database.insertMessageOutbox(applyUniversalExpireTimerIfNecessary(context, recipient, message, allocatedThreadId), allocatedThreadId, forceSms, insertListener);
 
       if (message.getRecipient().isGroup() && message.getAttachments().isEmpty() && message.getLinkPreviews().isEmpty() && message.getSharedContacts().isEmpty()) {
-        ShadowLocalMetrics.GroupMessageSend.start(messageId);
+        ShadowLocalMetrics.GroupMessageSend.onInsertedIntoDatabase(messageId, metricId);
+      } else {
+        ShadowLocalMetrics.GroupMessageSend.cancel(metricId);
       }
 
       sendMediaMessage(context, recipient, forceSms, messageId, Collections.emptyList());

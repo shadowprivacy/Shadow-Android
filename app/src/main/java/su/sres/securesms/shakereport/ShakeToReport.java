@@ -8,14 +8,16 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import su.sres.core.util.ShakeDetector;
 import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.logsubmit.SubmitDebugLogRepository;
 import su.sres.securesms.sharing.ShareIntents;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.views.SimpleProgressDialog;
 
@@ -41,25 +43,27 @@ public final class ShakeToReport implements ShakeDetector.Listener {
   }
 
   public void enable() {
-    if (!FeatureFlags.internalUser()) return;
+    if (!SignalStore.internalValues().shakeToReport()) return;
 
     detector.start(ServiceUtil.getSensorManager(application));
   }
 
   public void disable() {
-    if (!FeatureFlags.internalUser()) return;
+    if (!SignalStore.internalValues().shakeToReport()) return;
 
     detector.stop();
   }
 
   public void registerActivity(@NonNull Activity activity) {
-    if (!FeatureFlags.internalUser()) return;
+    if (!SignalStore.internalValues().shakeToReport()) return;
 
     this.weakActivity = new WeakReference<>(activity);
   }
 
   @Override
   public void onShakeDetected() {
+    if (!SignalStore.internalValues().shakeToReport()) return;
+
     Activity activity = weakActivity.get();
     if (activity == null) {
       Log.w(TAG, "No registered activity!");
@@ -68,7 +72,7 @@ public final class ShakeToReport implements ShakeDetector.Listener {
 
     disable();
 
-    new AlertDialog.Builder(activity)
+    new MaterialAlertDialogBuilder(activity)
         .setTitle(R.string.ShakeToReport_shake_detected)
         .setMessage(R.string.ShakeToReport_submit_debug_log)
         .setNegativeButton(android.R.string.cancel, (d, i) -> {
@@ -105,7 +109,7 @@ public final class ShakeToReport implements ShakeDetector.Listener {
   }
 
   private void showPostSubmitDialog(@NonNull Activity activity, @NonNull String url) {
-    AlertDialog dialog = new AlertDialog.Builder(activity)
+    AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
         .setTitle(R.string.ShakeToReport_success)
         .setMessage(url)
         .setNegativeButton(android.R.string.cancel, (d, i) -> {

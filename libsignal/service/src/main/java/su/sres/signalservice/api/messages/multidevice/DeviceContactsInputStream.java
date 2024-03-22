@@ -41,7 +41,7 @@ public class DeviceContactsInputStream extends ChunkedInputStream {
       throw new IOException("Missing contact address!");
     }
 
-    SignalServiceAddress                    address       = new SignalServiceAddress(UuidUtil.parseOrNull(details.getUuid()), details.getNumber());
+    SignalServiceAddress                    address       = new SignalServiceAddress(UuidUtil.parseOrThrow(details.getUuid()), details.getNumber());
     Optional<String>                        name          = Optional.fromNullable(details.getName());
     Optional<SignalServiceAttachmentStream> avatar        = Optional.absent();
     Optional<String>                        color         = details.hasColor() ? Optional.of(details.getColor()) : Optional.<String>absent();
@@ -67,7 +67,7 @@ public class DeviceContactsInputStream extends ChunkedInputStream {
         }
 
         IdentityKey          identityKey = new IdentityKey(details.getVerified().getIdentityKey().toByteArray(), 0);
-        SignalServiceAddress destination = new SignalServiceAddress(UuidUtil.parseOrNull(details.getVerified().getDestinationUuid()),
+        SignalServiceAddress destination = new SignalServiceAddress(UuidUtil.parseOrThrow(details.getVerified().getDestinationUuid()),
                 details.getVerified().getDestinationE164());
 
         VerifiedMessage.VerifiedState state;

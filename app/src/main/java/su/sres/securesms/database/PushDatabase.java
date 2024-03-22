@@ -72,7 +72,7 @@ public class PushDatabase extends Database {
       values.put(SERVER_DELIVERED_TIMESTAMP, envelope.getServerDeliveredTimestamp());
       values.put(SERVER_GUID, envelope.getServerGuid());
 
-      return databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, values);
+      return databaseHelper.getSignalWritableDatabase().insert(TABLE_NAME, null, values);
     }
   }
 
@@ -80,7 +80,7 @@ public class PushDatabase extends Database {
     Cursor cursor = null;
 
     try {
-      cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, ID_WHERE,
+      cursor = databaseHelper.getSignalReadableDatabase().query(TABLE_NAME, null, ID_WHERE,
                                                           new String[] { String.valueOf(id) },
                                                           null, null, null);
 
@@ -112,11 +112,11 @@ public class PushDatabase extends Database {
   }
 
   public Cursor getPending() {
-    return databaseHelper.getReadableDatabase().query(TABLE_NAME, null, null, null, null, null, null);
+    return databaseHelper.getSignalReadableDatabase().query(TABLE_NAME, null, null, null, null, null, null);
   }
 
   public void delete(long id) {
-    databaseHelper.getWritableDatabase().delete(TABLE_NAME, ID_WHERE, new String[] { id + "" });
+    databaseHelper.getSignalWritableDatabase().delete(TABLE_NAME, ID_WHERE, new String[] { id + "" });
   }
 
   public Reader readerFor(Cursor cursor) {
@@ -124,7 +124,7 @@ public class PushDatabase extends Database {
   }
 
   private Optional<Long> find(SignalServiceEnvelope envelope) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = databaseHelper.getSignalReadableDatabase();
     String query = TYPE + " = ? AND " +
                    DEVICE_ID + " = ? AND " +
                    LEGACY_MSG + " = ? AND " +

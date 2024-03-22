@@ -2,12 +2,15 @@ package su.sres.securesms.conversation.multiselect.forward
 
 import android.content.Context
 import androidx.core.util.Consumer
+import io.reactivex.rxjava3.core.Single
+import org.whispersystems.libsignal.util.guava.Optional
 import su.sres.core.util.concurrent.SignalExecutors
 import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.database.IdentityDatabase
 import su.sres.securesms.database.ThreadDatabase
 import su.sres.securesms.database.identity.IdentityRecordList
 import su.sres.securesms.recipients.Recipient
+import su.sres.securesms.recipients.RecipientId
 import su.sres.securesms.sharing.MultiShareArgs
 import su.sres.securesms.sharing.MultiShareSender
 import su.sres.securesms.sharing.ShareContact
@@ -30,6 +33,22 @@ class MultiselectForwardRepository(context: Context) {
       val identityRecordList: IdentityRecordList = identityDatabase.getIdentities(recipients)
 
       consumer.accept(identityRecordList.untrustedRecords)
+    }
+  }
+
+  fun canSelectRecipient(recipientId: Optional<RecipientId>): Single<Boolean> {
+    if (!recipientId.isPresent) {
+      return Single.just(true)
+    }
+
+    return Single.fromCallable {
+      val recipient = Recipient.resolved(recipientId.get())
+      if (recipient.isPushV2Group) {
+        val record = DatabaseFactory.getGroupDatabase(context).getGroup(recipient.requireGroupId())
+        !(record.isPresent && record.get().isAnnouncementGroup && !record.get().isAdmin(Recipient.self()))
+      } else {
+        true
+      }
     }
   }
 

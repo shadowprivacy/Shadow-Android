@@ -49,7 +49,7 @@ public class SenderKeyDatabase extends Database {
   }
 
   public void store(@NonNull RecipientId recipientId, int deviceId, @NonNull DistributionId distributionId, @NonNull SenderKeyRecord record) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
 
     ContentValues values = new ContentValues();
     values.put(RECIPIENT_ID, recipientId.serialize());
@@ -62,7 +62,7 @@ public class SenderKeyDatabase extends Database {
   }
 
   public @Nullable SenderKeyRecord load(@NonNull RecipientId recipientId, int deviceId, @NonNull DistributionId distributionId) {
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = databaseHelper.getSignalReadableDatabase();
 
     String   query = RECIPIENT_ID + " = ? AND " + DEVICE + " = ? AND " + DISTRIBUTION_ID + " = ?";
     String[] args  = SqlUtil.buildArgs(recipientId, deviceId, distributionId);
@@ -84,7 +84,7 @@ public class SenderKeyDatabase extends Database {
    * Gets when the sender key session was created, or -1 if it doesn't exist.
    */
   public long getCreatedTime(@NonNull RecipientId recipientId, int deviceId, @NonNull DistributionId distributionId) {
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = databaseHelper.getSignalReadableDatabase();
 
     String   query = RECIPIENT_ID + " = ? AND " + DEVICE + " = ? AND " + DISTRIBUTION_ID + " = ?";
     String[] args  = SqlUtil.buildArgs(recipientId, deviceId, distributionId);
@@ -102,7 +102,7 @@ public class SenderKeyDatabase extends Database {
    * Removes all sender key session state for all devices for the provided recipient-distributionId pair.
    */
   public void deleteAllFor(@NonNull RecipientId recipientId, @NonNull DistributionId distributionId) {
-    SQLiteDatabase db    = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db    = databaseHelper.getSignalWritableDatabase();
     String         query = RECIPIENT_ID + " = ? AND " + DISTRIBUTION_ID + " = ?";
     String[]       args  = SqlUtil.buildArgs(recipientId, distributionId);
 
@@ -113,7 +113,7 @@ public class SenderKeyDatabase extends Database {
    * Deletes all database state.
    */
   public void deleteAll() {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
     db.delete(TABLE_NAME, null, null);
   }
 }

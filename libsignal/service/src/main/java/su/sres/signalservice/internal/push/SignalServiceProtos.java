@@ -5583,6 +5583,17 @@ public final class SignalServiceProtos {
        * @return The data.
        */
       com.google.protobuf.ByteString getData();
+
+      /**
+       * <code>optional .signalservice.CallMessage.Opaque.Urgency urgency = 2;</code>
+       * @return Whether the urgency field is set.
+       */
+      boolean hasUrgency();
+      /**
+       * <code>optional .signalservice.CallMessage.Opaque.Urgency urgency = 2;</code>
+       * @return The urgency.
+       */
+      su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.Urgency getUrgency();
     }
     /**
      * Protobuf type {@code signalservice.CallMessage.Opaque}
@@ -5595,6 +5606,90 @@ public final class SignalServiceProtos {
       private Opaque() {
         data_ = com.google.protobuf.ByteString.EMPTY;
       }
+      /**
+       * Protobuf enum {@code signalservice.CallMessage.Opaque.Urgency}
+       */
+      public enum Urgency
+          implements com.google.protobuf.Internal.EnumLite {
+        /**
+         * <code>DROPPABLE = 0;</code>
+         */
+        DROPPABLE(0),
+        /**
+         * <code>HANDLE_IMMEDIATELY = 1;</code>
+         */
+        HANDLE_IMMEDIATELY(1),
+        ;
+
+        /**
+         * <code>DROPPABLE = 0;</code>
+         */
+        public static final int DROPPABLE_VALUE = 0;
+        /**
+         * <code>HANDLE_IMMEDIATELY = 1;</code>
+         */
+        public static final int HANDLE_IMMEDIATELY_VALUE = 1;
+
+
+        @java.lang.Override
+        public final int getNumber() {
+          return value;
+        }
+
+        /**
+         * @param value The number of the enum to look for.
+         * @return The enum associated with the given number.
+         * @deprecated Use {@link #forNumber(int)} instead.
+         */
+        @java.lang.Deprecated
+        public static Urgency valueOf(int value) {
+          return forNumber(value);
+        }
+
+        public static Urgency forNumber(int value) {
+          switch (value) {
+            case 0: return DROPPABLE;
+            case 1: return HANDLE_IMMEDIATELY;
+            default: return null;
+          }
+        }
+
+        public static com.google.protobuf.Internal.EnumLiteMap<Urgency>
+            internalGetValueMap() {
+          return internalValueMap;
+        }
+        private static final com.google.protobuf.Internal.EnumLiteMap<
+            Urgency> internalValueMap =
+              new com.google.protobuf.Internal.EnumLiteMap<Urgency>() {
+                @java.lang.Override
+                public Urgency findValueByNumber(int number) {
+                  return Urgency.forNumber(number);
+                }
+              };
+
+        public static com.google.protobuf.Internal.EnumVerifier 
+            internalGetVerifier() {
+          return UrgencyVerifier.INSTANCE;
+        }
+
+        private static final class UrgencyVerifier implements 
+             com.google.protobuf.Internal.EnumVerifier { 
+                static final com.google.protobuf.Internal.EnumVerifier           INSTANCE = new UrgencyVerifier();
+                @java.lang.Override
+                public boolean isInRange(int number) {
+                  return Urgency.forNumber(number) != null;
+                }
+              };
+
+        private final int value;
+
+        private Urgency(int value) {
+          this.value = value;
+        }
+
+        // @@protoc_insertion_point(enum_scope:signalservice.CallMessage.Opaque.Urgency)
+      }
+
       private int bitField0_;
       public static final int DATA_FIELD_NUMBER = 1;
       private com.google.protobuf.ByteString data_;
@@ -5631,6 +5726,44 @@ public final class SignalServiceProtos {
       private void clearData() {
         bitField0_ = (bitField0_ & ~0x00000001);
         data_ = getDefaultInstance().getData();
+      }
+
+      public static final int URGENCY_FIELD_NUMBER = 2;
+      private int urgency_;
+      /**
+       * <code>optional .signalservice.CallMessage.Opaque.Urgency urgency = 2;</code>
+       * @return Whether the urgency field is set.
+       */
+      @java.lang.Override
+      public boolean hasUrgency() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <code>optional .signalservice.CallMessage.Opaque.Urgency urgency = 2;</code>
+       * @return The urgency.
+       */
+      @java.lang.Override
+      public su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.Urgency getUrgency() {
+        su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.Urgency result = su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.Urgency.forNumber(urgency_);
+        return result == null ? su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.Urgency.DROPPABLE : result;
+      }
+      /**
+       * <code>optional .signalservice.CallMessage.Opaque.Urgency urgency = 2;</code>
+       * @param value The urgency to set.
+       */
+      private void setUrgency(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.Urgency value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000002;
+        urgency_ = value.getNumber();
+      }
+      /**
+       * <code>optional .signalservice.CallMessage.Opaque.Urgency urgency = 2;</code>
+       */
+      private void clearUrgency() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        urgency_ = 0;
       }
 
       public static su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque parseFrom(
@@ -5764,6 +5897,42 @@ public final class SignalServiceProtos {
           return this;
         }
 
+        /**
+         * <code>optional .signalservice.CallMessage.Opaque.Urgency urgency = 2;</code>
+         * @return Whether the urgency field is set.
+         */
+        @java.lang.Override
+        public boolean hasUrgency() {
+          return instance.hasUrgency();
+        }
+        /**
+         * <code>optional .signalservice.CallMessage.Opaque.Urgency urgency = 2;</code>
+         * @return The urgency.
+         */
+        @java.lang.Override
+        public su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.Urgency getUrgency() {
+          return instance.getUrgency();
+        }
+        /**
+         * <code>optional .signalservice.CallMessage.Opaque.Urgency urgency = 2;</code>
+         * @param value The enum numeric value on the wire for urgency to set.
+         * @return This builder for chaining.
+         */
+        public Builder setUrgency(su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.Urgency value) {
+          copyOnWrite();
+          instance.setUrgency(value);
+          return this;
+        }
+        /**
+         * <code>optional .signalservice.CallMessage.Opaque.Urgency urgency = 2;</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearUrgency() {
+          copyOnWrite();
+          instance.clearUrgency();
+          return this;
+        }
+
         // @@protoc_insertion_point(builder_scope:signalservice.CallMessage.Opaque)
       }
       @java.lang.Override
@@ -5782,9 +5951,12 @@ public final class SignalServiceProtos {
               java.lang.Object[] objects = new java.lang.Object[] {
                 "bitField0_",
                 "data_",
+                "urgency_",
+                su.sres.signalservice.internal.push.SignalServiceProtos.CallMessage.Opaque.Urgency.internalGetVerifier(),
               };
               java.lang.String info =
-                  "\u0001\u0001\u0000\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0001\n\u0000";
+                  "\u0001\u0002\u0000\u0001\u0001\u0002\u0002\u0000\u0000\u0000\u0001\n\u0000\u0002" +
+                  "\f\u0001";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through

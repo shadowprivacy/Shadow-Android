@@ -8,6 +8,7 @@ import androidx.annotation.Px;
 import androidx.annotation.StringRes;
 
 import su.sres.securesms.R;
+import su.sres.securesms.util.FeatureFlags;
 
 public final class WebRtcControls {
 
@@ -182,6 +183,10 @@ public final class WebRtcControls {
 
   boolean showFullScreenShade() {
     return isPreJoin() || isIncoming();
+  }
+
+  boolean displayRingToggle() {
+    return FeatureFlags.groupCallRinging() && isPreJoin() && isGroupCall() && !hasAtLeastOneRemote;
   }
 
   private boolean isError() {

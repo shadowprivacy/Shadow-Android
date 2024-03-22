@@ -37,11 +37,11 @@ public class MultiDeviceBlockedUpdateJob extends BaseJob {
 
   public MultiDeviceBlockedUpdateJob() {
     this(new Job.Parameters.Builder()
-            .addConstraint(NetworkConstraint.KEY)
-            .setQueue("MultiDeviceBlockedUpdateJob")
-            .setLifespan(TimeUnit.DAYS.toMillis(1))
-            .setMaxAttempts(Parameters.UNLIMITED)
-            .build());
+             .addConstraint(NetworkConstraint.KEY)
+             .setQueue("MultiDeviceBlockedUpdateJob")
+             .setLifespan(TimeUnit.DAYS.toMillis(1))
+             .setMaxAttempts(Parameters.UNLIMITED)
+             .build());
   }
 
   private MultiDeviceBlockedUpdateJob(@NonNull Job.Parameters parameters) {
@@ -83,7 +83,7 @@ public class MultiDeviceBlockedUpdateJob extends BaseJob {
       while ((recipient = reader.getNext()) != null) {
         if (recipient.isPushGroup()) {
           blockedGroups.add(recipient.requireGroupId().getDecodedId());
-        } else if (recipient.hasServiceIdentifier()) {
+        } else if (recipient.isMaybeRegistered() && (recipient.hasUuid() || recipient.hasE164())) {
           blockedIndividuals.add(RecipientUtil.toSignalServiceAddress(context, recipient));
         }
       }

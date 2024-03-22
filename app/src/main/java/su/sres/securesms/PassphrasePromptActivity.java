@@ -17,7 +17,6 @@
 package su.sres.securesms;
 
 import android.animation.Animator;
-import android.annotation.SuppressLint;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
@@ -35,6 +34,8 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.TypefaceSpan;
+
+import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.logging.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -42,7 +43,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.TranslateAnimation;
@@ -100,13 +100,16 @@ public class PassphrasePromptActivity extends PassphraseActivity {
   private boolean hadFailure;
   private boolean alreadyShown;
 
+  private final Runnable resumeScreenLockRunnable = () -> {
+    resumeScreenLock(!alreadyShown);
+    alreadyShown = true;
+  };
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     Log.i(TAG, "onCreate()");
     dynamicTheme.onCreate(this);
     dynamicLanguage.onCreate(this);
-    getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-    getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.prompt_passphrase_activity);
@@ -131,11 +134,20 @@ public class PassphrasePromptActivity extends PassphraseActivity {
     setLockTypeVisibility();
 
     if (TextSecurePreferences.isScreenLockEnabled(this) && !authenticated && !hadFailure) {
-      resumeScreenLock(!alreadyShown);
-      alreadyShown = true;
+      ThreadUtil.postToMain(resumeScreenLockRunnable);
     }
 
     hadFailure = false;
+
+    fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp);
+    fingerprintPrompt.getBackground().setColorFilter(getResources().getColor(R.color.signal_accent_primary), PorterDuff.Mode.SRC_IN);
+  }
+
+  @Override
+  public void onPause() {
+    super.onPause();
+    ThreadUtil.cancelRunnableOnMain(resumeScreenLockRunnable);
+    biometricPrompt.cancelAuthentication();
   }
 
   @Override
@@ -388,8 +400,6 @@ public class PassphrasePromptActivity extends PassphraseActivity {
         public void onAnimationEnd(Animator animation) {
           handleAuthenticated();
 
-          fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp);
-          fingerprintPrompt.getBackground().setColorFilter(getResources().getColor(R.color.core_ultramarine), PorterDuff.Mode.SRC_IN);
         }
       }).start();
     }
@@ -411,7 +421,7 @@ public class PassphrasePromptActivity extends PassphraseActivity {
         @Override
         public void onAnimationEnd(Animation animation) {
           fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp);
-          fingerprintPrompt.getBackground().setColorFilter(getResources().getColor(R.color.core_ultramarine), PorterDuff.Mode.SRC_IN);
+          fingerprintPrompt.getBackground().setColorFilter(getResources().getColor(R.color.signal_accent_primary), PorterDuff.Mode.SRC_IN);
         }
 
         @Override

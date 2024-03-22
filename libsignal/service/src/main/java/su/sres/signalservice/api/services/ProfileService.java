@@ -10,6 +10,7 @@ import org.signal.zkgroup.profiles.ProfileKeyVersion;
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Function;
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.SignalWebSocket;
 import su.sres.signalservice.api.crypto.UnidentifiedAccess;
@@ -57,7 +58,7 @@ public final class ProfileService {
                                                                   Optional<UnidentifiedAccess> unidentifiedAccess,
                                                                   SignalServiceProfile.RequestType requestType)
   {
-    Optional<UUID>                     uuid           = address.getUuid();
+    UUID                               uuid           = address.getUuid();
     SecureRandom                       random         = new SecureRandom();
     ProfileKeyCredentialRequestContext requestContext = null;
 
@@ -65,20 +66,19 @@ public final class ProfileService {
                                                                                                      .setId(random.nextLong())
                                                                                                      .setVerb("GET");
 
-    if (uuid.isPresent() && profileKey.isPresent()) {
-      UUID              target               = uuid.get();
-      ProfileKeyVersion profileKeyIdentifier = profileKey.get().getProfileKeyVersion(target);
+    if (profileKey.isPresent()) {
+      ProfileKeyVersion profileKeyIdentifier = profileKey.get().getProfileKeyVersion(uuid);
       String            version              = profileKeyIdentifier.serialize();
 
       if (requestType == SignalServiceProfile.RequestType.PROFILE_AND_CREDENTIAL) {
-        requestContext = clientZkProfileOperations.createProfileKeyCredentialRequestContext(random, target, profileKey.get());
+        requestContext = clientZkProfileOperations.createProfileKeyCredentialRequestContext(random, uuid, profileKey.get());
 
         ProfileKeyCredentialRequest request           = requestContext.getRequest();
         String                      credentialRequest = Hex.toStringCondensed(request.serialize());
 
-        builder.setPath(String.format("/v1/profile/%s/%s/%s", target, version, credentialRequest));
+        builder.setPath(String.format("/v1/profile/%s/%s/%s", uuid, version, credentialRequest));
       } else {
-        builder.setPath(String.format("/v1/profile/%s/%s", target, version));
+        builder.setPath(String.format("/v1/profile/%s/%s", uuid, version));
       }
     } else {
       builder.setPath(String.format("/v1/profile/%s", address.getIdentifier()));

@@ -13,6 +13,7 @@ import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
+import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -132,8 +133,14 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
     WriteDetails writeDetails = createTempFile();
 
     try {
-      DeviceContactsOutputStream                out             = new DeviceContactsOutputStream(writeDetails.outputStream);
-      Recipient                                 recipient       = Recipient.resolved(recipientId);
+      DeviceContactsOutputStream out       = new DeviceContactsOutputStream(writeDetails.outputStream);
+      Recipient                  recipient = Recipient.resolved(recipientId);
+
+      if (recipient.getRegistered() == RecipientDatabase.RegisteredState.NOT_REGISTERED) {
+        Log.w(TAG, recipientId + " not registered!");
+        return;
+      }
+
       Optional<IdentityDatabase.IdentityRecord> identityRecord  = DatabaseFactory.getIdentityDatabase(context).getIdentity(recipient.getId());
       Optional<VerifiedMessage>                 verifiedMessage = getVerifiedMessage(recipient, identityRecord);
       Map<RecipientId, Integer>                 inboxPositions  = DatabaseFactory.getThreadDatabase(context).getInboxPositions();
@@ -304,10 +311,12 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
     return Optional.absent();
   }
 
-  private Optional<VerifiedMessage> getVerifiedMessage(Recipient recipient, Optional<IdentityDatabase.IdentityRecord> identity) throws InvalidNumberException {
+  private Optional<VerifiedMessage> getVerifiedMessage(Recipient recipient, Optional<IdentityDatabase.IdentityRecord> identity)
+      throws InvalidNumberException, IOException
+  {
     if (!identity.isPresent()) return Optional.absent();
 
-    SignalServiceAddress destination = RecipientUtil.toSignalServiceAddressBestEffort(context, recipient);
+    SignalServiceAddress destination = RecipientUtil.toSignalServiceAddress(context, recipient);
     IdentityKey          identityKey = identity.get().getIdentityKey();
 
     VerifiedMessage.VerifiedState state;

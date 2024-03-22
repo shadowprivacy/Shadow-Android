@@ -94,7 +94,7 @@ public class MediaDatabase extends Database {
   }
 
   public @NonNull Cursor getGalleryMediaForThread(long threadId, @NonNull Sorting sorting, boolean listenToAllThreads) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = databaseHelper.getSignalReadableDatabase();
     String         query    = sorting.applyToQuery(applyEqualityOperator(threadId, GALLERY_MEDIA_QUERY));
     String[]       args     = { threadId + "" };
     Cursor         cursor   = database.rawQuery(query, args);
@@ -108,7 +108,7 @@ public class MediaDatabase extends Database {
 
   public @NonNull
   Cursor getDocumentMediaForThread(long threadId, @NonNull Sorting sorting) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = databaseHelper.getSignalReadableDatabase();
     String         query    = sorting.applyToQuery(applyEqualityOperator(threadId, DOCUMENT_MEDIA_QUERY));
     String[]       args     = { threadId + "" };
     Cursor         cursor   = database.rawQuery(query, args);
@@ -118,7 +118,7 @@ public class MediaDatabase extends Database {
 
   public @NonNull
   Cursor getAudioMediaForThread(long threadId, @NonNull Sorting sorting) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = databaseHelper.getSignalReadableDatabase();
     String         query    = sorting.applyToQuery(applyEqualityOperator(threadId, AUDIO_MEDIA_QUERY));
     String[]       args     = { threadId + "" };
     Cursor         cursor   = database.rawQuery(query, args);
@@ -128,7 +128,7 @@ public class MediaDatabase extends Database {
 
   public @NonNull
   Cursor getAllMediaForThread(long threadId, @NonNull Sorting sorting) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = databaseHelper.getSignalReadableDatabase();
     String         query    = sorting.applyToQuery(applyEqualityOperator(threadId, ALL_MEDIA_QUERY));
     String[]       args     = { threadId + "" };
     Cursor         cursor   = database.rawQuery(query, args);
@@ -150,7 +150,7 @@ public class MediaDatabase extends Database {
 
   public StorageBreakdown getStorageBreakdown() {
     StorageBreakdown storageBreakdown = new StorageBreakdown();
-    SQLiteDatabase   database         = databaseHelper.getReadableDatabase();
+    SQLiteDatabase   database         = databaseHelper.getSignalReadableDatabase();
 
     try (Cursor cursor = database.rawQuery(UNIQUE_MEDIA_QUERY, new String[0])) {
       int sizeColumn        = cursor.getColumnIndexOrThrow(AttachmentDatabase.SIZE);

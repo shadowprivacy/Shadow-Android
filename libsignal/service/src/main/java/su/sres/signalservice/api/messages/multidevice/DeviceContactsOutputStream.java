@@ -37,9 +37,7 @@ public class DeviceContactsOutputStream extends ChunkedOutputStream {
   private void writeContactDetails(DeviceContact contact) throws IOException {
     SignalServiceProtos.ContactDetails.Builder contactDetails = SignalServiceProtos.ContactDetails.newBuilder();
 
-    if (contact.getAddress().getUuid().isPresent()) {
-      contactDetails.setUuid(contact.getAddress().getUuid().get().toString());
-    }
+    contactDetails.setUuid(contact.getAddress().getUuid().toString());
 
     if (contact.getAddress().getNumber().isPresent()) {
       contactDetails.setNumber(contact.getAddress().getNumber().get());
@@ -52,7 +50,7 @@ public class DeviceContactsOutputStream extends ChunkedOutputStream {
     if (contact.getAvatar().isPresent()) {
       SignalServiceProtos.ContactDetails.Avatar.Builder avatarBuilder = SignalServiceProtos.ContactDetails.Avatar.newBuilder();
       avatarBuilder.setContentType(contact.getAvatar().get().getContentType());
-      avatarBuilder.setLength((int)contact.getAvatar().get().getLength());
+      avatarBuilder.setLength((int) contact.getAvatar().get().getLength());
       contactDetails.setAvatar(avatarBuilder);
     }
 
@@ -64,18 +62,18 @@ public class DeviceContactsOutputStream extends ChunkedOutputStream {
       SignalServiceProtos.Verified.State state;
 
       switch (contact.getVerified().get().getVerified()) {
-        case VERIFIED:   state = SignalServiceProtos.Verified.State.VERIFIED;   break;
-        case UNVERIFIED: state = SignalServiceProtos.Verified.State.UNVERIFIED; break;
-        default:         state = SignalServiceProtos.Verified.State.DEFAULT;    break;
+        case VERIFIED:
+          state = SignalServiceProtos.Verified.State.VERIFIED; break;
+        case UNVERIFIED:
+          state = SignalServiceProtos.Verified.State.UNVERIFIED; break;
+        default:
+          state = SignalServiceProtos.Verified.State.DEFAULT; break;
       }
 
       SignalServiceProtos.Verified.Builder verifiedBuilder = SignalServiceProtos.Verified.newBuilder()
-              .setIdentityKey(ByteString.copyFrom(contact.getVerified().get().getIdentityKey().serialize()))
-              .setState(state);
-
-      if (contact.getVerified().get().getDestination().getUuid().isPresent()) {
-        verifiedBuilder.setDestinationUuid(contact.getVerified().get().getDestination().getUuid().get().toString());
-      }
+                                                                                         .setIdentityKey(ByteString.copyFrom(contact.getVerified().get().getIdentityKey().serialize()))
+                                                                                         .setDestinationUuid(contact.getVerified().get().getDestination().getUuid().toString())
+                                                                                         .setState(state);
 
       if (contact.getVerified().get().getDestination().getNumber().isPresent()) {
         verifiedBuilder.setDestinationE164(contact.getVerified().get().getDestination().getNumber().get());

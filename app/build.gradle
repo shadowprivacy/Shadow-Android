@@ -29,12 +29,31 @@ repositories {
         }
     }
 
+    maven {
+        url "https://raw.github.com/signalapp/maven/master/sqlcipher/release/"
+        content {
+            includeGroupByRegex "org\\.signal.*"
+        }
+    }
+
     google()
     mavenCentral()
-    jcenter()
     mavenLocal()
     maven {
         url "https://dl.cloudsmith.io/qxAgwaeEE1vN8aLU/mobilecoin/mobilecoin/maven/"
+    }
+    jcenter {
+        content {
+            includeVersion "com.google.android.exoplayer", "exoplayer-core", "2.9.1"
+            includeVersion "com.google.android.exoplayer", "exoplayer-ui", "2.9.1"
+            includeVersion "com.google.android.exoplayer", "extension-mediasession", "2.9.1"
+            includeVersion "mobi.upod", "time-duration-picker", "1.1.3"
+            includeVersion "cn.carbswang.android", "NumberPickerView", "1.0.9"
+            includeVersion "com.takisoft.fix", "colorpicker", "0.9.1"
+            includeVersion "com.codewaves.stickyheadergrid", "stickyheadergrid", "0.9.7"
+            includeVersion "com.amulyakhare", "com.amulyakhare.textdrawable", "1.0.1"
+            includeVersion "com.google.android", "flexbox", "0.3.0"
+        }
     }
 }
 
@@ -64,6 +83,31 @@ def abiPostFix = ['universal'  : 0,
                   'x86_64'     : 4]
 
 def keystores = ['debug': loadKeystoreProperties('keystore.debug.properties')]
+
+def selectableVariants = [
+        'internalProdFlipper',
+        'internalProdPerf',
+        'internalProdRelease',
+        'internalStagingFlipper',
+        'internalStagingPerf',
+        'internalStagingRelease',
+        'nightlyProdFlipper',
+        'nightlyProdPerf',
+        'nightlyProdRelease',
+        'nightlyStagingPerf',
+        'playProdDebug',
+        'playProdFlipper',
+        'playProdPerf',
+        'playProdRelease',
+        'playStagingDebug',
+        'playStagingFlipper',
+        'playStagingPerf',
+        'playStagingRelease',
+        'studyProdMock',
+        'studyProdPerf',
+        'websiteProdFlipper',
+        'websiteProdRelease',
+]
 
 android {
     buildToolsVersion BUILD_TOOL_VERSION
@@ -305,16 +349,9 @@ android {
         def distribution = variant.getFlavors().get(0).name
         def environment = variant.getFlavors().get(1).name
         def buildType = variant.buildType.name
+        def fullName     = distribution + environment.capitalize() + buildType.capitalize()
 
-        if (distribution == 'study' && buildType != 'perf' && buildType != 'mock') {
-            variant.setIgnore(true)
-        } else if (distribution != 'study' && buildType == 'mock') {
-            variant.setIgnore(true)
-        } else if (distribution == 'internal' && buildType != 'flipper' && buildType != 'perf' && buildType != 'release') {
-            variant.setIgnore(true)
-        } else if (distribution == 'nightly' && environment != 'prod') {
-            variant.setIgnore(true)
-        } else if (distribution == 'nightly' && buildType != 'flipper' && buildType != 'perf' && buildType != 'release') {
+        if (!selectableVariants.contains(fullName)) {
             variant.setIgnore(true)
         }
     }
@@ -395,8 +432,8 @@ dependencies {
     implementation project(':video')
     implementation project(':device-transfer')
     implementation 'org.signal:zkgroup-android:0.7.0'
-    implementation 'org.signal:ringrtc-android:2.10.8'
-    implementation 'org.whispersystems:signal-client-android:0.8.3'
+    implementation 'org.signal:ringrtc-android:2.11.1'
+    implementation "org.whispersystems:signal-client-android:${LIBSIGNAL_CLIENT_VERSION}"
     implementation 'com.google.protobuf:protobuf-javalite:3.10.0'
     implementation('com.mobilecoin:android-sdk:5.0.1') {
         exclude group: 'com.google.protobuf'

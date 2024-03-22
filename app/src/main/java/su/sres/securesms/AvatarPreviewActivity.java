@@ -26,6 +26,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 
+import su.sres.securesms.components.emoji.EmojiTextView;
 import su.sres.securesms.contacts.avatars.ContactPhoto;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
@@ -71,14 +72,14 @@ public final class AvatarPreviewActivity extends PassphraseRequiredActivity {
             getWindow().setSharedElementReturnTransition(inflater.inflateTransition(R.transition.full_screen_avatar_image_return_transition_set));
         }
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-
-
-        ImageView avatar = findViewById(R.id.avatar);
+        Toolbar       toolbar = findViewById(R.id.toolbar);
+        EmojiTextView title   = findViewById(R.id.title);
+        ImageView     avatar  = findViewById(R.id.avatar);
 
         setSupportActionBar(toolbar);
 
         requireSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        requireSupportActionBar().setDisplayShowTitleEnabled(false);
 
         Context     context     = getApplicationContext();
         RecipientId recipientId = RecipientId.from(getIntent().getStringExtra(RECIPIENT_ID_EXTRA));
@@ -114,9 +115,7 @@ public final class AvatarPreviewActivity extends PassphraseRequiredActivity {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                             avatar.setImageDrawable(RoundedBitmapDrawableFactory.create(resources, resource));
-                            if (Build.VERSION.SDK_INT >= 21) {
-                                startPostponedEnterTransition();
-                            }
+                          startPostponedEnterTransition();
                         }
 
                         @Override
@@ -124,7 +123,7 @@ public final class AvatarPreviewActivity extends PassphraseRequiredActivity {
                         }
                     });
 
-            toolbar.setTitle(recipient.getDisplayName(context));
+            title.setText(recipient.getDisplayName(context));
         });
 
         FullscreenHelper fullscreenHelper = new FullscreenHelper(this);

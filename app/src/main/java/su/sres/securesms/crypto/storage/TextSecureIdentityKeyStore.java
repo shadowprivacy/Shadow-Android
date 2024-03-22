@@ -16,7 +16,6 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.signalservice.api.SignalSessionLock;
 
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.IdentityKeyPair;
@@ -52,8 +51,8 @@ public class TextSecureIdentityKeyStore implements IdentityKeyStore {
   public @NonNull SaveResult saveIdentity(SignalProtocolAddress address, IdentityKey identityKey, boolean nonBlockingApproval) {
     synchronized (LOCK) {
       IdentityDatabase         identityDatabase = DatabaseFactory.getIdentityDatabase(context);
-      RecipientId              recipientId      = RecipientId.fromExternalPush(address.getName());
-      Optional<IdentityRecord> identityRecord   = identityDatabase.getIdentity(recipientId);
+      RecipientId              recipientId    = RecipientId.fromExternalPush(address.getName());
+      Optional<IdentityRecord> identityRecord = identityDatabase.getIdentity(recipientId);
 
       if (!identityRecord.isPresent()) {
         Log.i(TAG, "Saving new identity...");
@@ -75,7 +74,7 @@ public class TextSecureIdentityKeyStore implements IdentityKeyStore {
 
         identityDatabase.saveIdentity(recipientId, identityKey, verifiedStatus, false, System.currentTimeMillis(), nonBlockingApproval);
         IdentityUtil.markIdentityUpdate(context, recipientId);
-        SessionUtil.archiveSiblingSessions(context, address);
+        SessionUtil.archiveSiblingSessions(address);
         DatabaseFactory.getSenderKeySharedDatabase(context).deleteAllFor(recipientId);
         return SaveResult.UPDATE;
       }
@@ -103,9 +102,9 @@ public class TextSecureIdentityKeyStore implements IdentityKeyStore {
         RecipientId      ourRecipientId   = Recipient.self().getId();
         RecipientId      theirRecipientId = RecipientId.fromExternalPush(address.getName());
 
-      if (ourRecipientId.equals(theirRecipientId)) {
-        return identityKey.equals(IdentityKeyUtil.getIdentityKey(context));
-      }
+        if (ourRecipientId.equals(theirRecipientId)) {
+          return identityKey.equals(IdentityKeyUtil.getIdentityKey(context));
+        }
 
         switch (direction) {
           case SENDING:   return isTrustedForSending(identityKey, identityDatabase.getIdentity(theirRecipientId));

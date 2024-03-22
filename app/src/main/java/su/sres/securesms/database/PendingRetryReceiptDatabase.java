@@ -51,7 +51,7 @@ public final class PendingRetryReceiptDatabase extends Database {
     values.put(RECEIVED_TIMESTAMP, receivedTimestamp);
     values.put(THREAD_ID, threadId);
 
-    long id = databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+    long id = databaseHelper.getSignalWritableDatabase().insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
 
     return new PendingRetryReceiptModel(id, author, authorDevice, sentTimestamp, receivedTimestamp, threadId);
   }
@@ -59,7 +59,7 @@ public final class PendingRetryReceiptDatabase extends Database {
   @NonNull List<PendingRetryReceiptModel> getAll() {
     List<PendingRetryReceiptModel> models = new LinkedList<>();
 
-    try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, null, null, null, null, null)) {
+    try (Cursor cursor = databaseHelper.getSignalReadableDatabase().query(TABLE_NAME, null, null, null, null, null, null)) {
       while (cursor.moveToNext()) {
         models.add(fromCursor(cursor));
       }
@@ -69,7 +69,7 @@ public final class PendingRetryReceiptDatabase extends Database {
   }
 
   void delete(@NonNull PendingRetryReceiptModel model) {
-    databaseHelper.getWritableDatabase().delete(TABLE_NAME, ID_WHERE, SqlUtil.buildArgs(model.getId()));
+    databaseHelper.getSignalWritableDatabase().delete(TABLE_NAME, ID_WHERE, SqlUtil.buildArgs(model.getId()));
   }
 
 

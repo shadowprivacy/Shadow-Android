@@ -176,7 +176,7 @@ public class SignalServiceAccountManager {
      * during SMS/call requests to bypass the CAPTCHA.
      *
      * @param gcmRegistrationId The GCM (FCM) id to use.
-     * @param userLoginnumber   The number to associate it with.
+     * @param userLogin   The number to associate it with.
      * @throws IOException
      */
     public void requestRegistrationPushChallenge(String gcmRegistrationId, String userLogin) throws IOException {

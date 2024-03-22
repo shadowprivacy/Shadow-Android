@@ -16,8 +16,10 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.TextSecurePreferences;
+
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
+
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
@@ -29,7 +31,7 @@ import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
+public class MultiDeviceVerifiedUpdateJob extends BaseJob {
 
   public static final String KEY = "MultiDeviceVerifiedUpdateJob";
 
@@ -47,15 +49,15 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
 
   public MultiDeviceVerifiedUpdateJob(@NonNull RecipientId destination, IdentityKey identityKey, VerifiedStatus verifiedStatus) {
     this(new Job.Parameters.Builder()
-                    .addConstraint(NetworkConstraint.KEY)
-                    .setQueue("__MULTI_DEVICE_VERIFIED_UPDATE__")
-                    .setLifespan(TimeUnit.DAYS.toMillis(1))
-                    .setMaxAttempts(Parameters.UNLIMITED)
-                    .build(),
-            destination,
-            identityKey.serialize(),
-            verifiedStatus,
-            System.currentTimeMillis());
+             .addConstraint(NetworkConstraint.KEY)
+             .setQueue("__MULTI_DEVICE_VERIFIED_UPDATE__")
+             .setLifespan(TimeUnit.DAYS.toMillis(1))
+             .setMaxAttempts(Parameters.UNLIMITED)
+             .build(),
+         destination,
+         identityKey.serialize(),
+         verifiedStatus,
+         System.currentTimeMillis());
   }
 
   private MultiDeviceVerifiedUpdateJob(@NonNull Job.Parameters parameters,
@@ -75,10 +77,10 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
   @Override
   public @NonNull Data serialize() {
     return new Data.Builder().putString(KEY_DESTINATION, destination.serialize())
-            .putString(KEY_IDENTITY_KEY, Base64.encodeBytes(identityKey))
-            .putInt(KEY_VERIFIED_STATUS, verifiedStatus.toInt())
-            .putLong(KEY_TIMESTAMP, timestamp)
-            .build();
+                             .putString(KEY_IDENTITY_KEY, Base64.encodeBytes(identityKey))
+                             .putInt(KEY_VERIFIED_STATUS, verifiedStatus.toInt())
+                             .putLong(KEY_TIMESTAMP, timestamp)
+                             .build();
   }
 
   @Override
@@ -103,11 +105,17 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
         return;
       }
 
-      SignalServiceMessageSender    messageSender        = ApplicationDependencies.getSignalServiceMessageSender();
-      Recipient                     recipient            = Recipient.resolved(destination);
-      VerifiedMessage.VerifiedState verifiedState        = getVerifiedState(verifiedStatus);
-      SignalServiceAddress          verifiedAddress      = RecipientUtil.toSignalServiceAddress(context, recipient);
-      VerifiedMessage               verifiedMessage      = new VerifiedMessage(verifiedAddress, new IdentityKey(identityKey, 0), verifiedState, timestamp);
+      SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
+      Recipient                  recipient     = Recipient.resolved(destination);
+
+      if (recipient.isUnregistered()) {
+        Log.w(TAG, recipient.getId() + " not registered!");
+        return;
+      }
+
+      VerifiedMessage.VerifiedState verifiedState   = getVerifiedState(verifiedStatus);
+      SignalServiceAddress          verifiedAddress = RecipientUtil.toSignalServiceAddress(context, recipient);
+      VerifiedMessage               verifiedMessage = new VerifiedMessage(verifiedAddress, new IdentityKey(identityKey, 0), verifiedState, timestamp);
 
       messageSender.sendSyncMessage(SignalServiceSyncMessage.forVerified(verifiedMessage),
                                     UnidentifiedAccessUtil.getAccessFor(context, recipient));
@@ -120,10 +128,14 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob  {
     VerifiedMessage.VerifiedState verifiedState;
 
     switch (status) {
-      case DEFAULT:    verifiedState = VerifiedMessage.VerifiedState.DEFAULT;    break;
-      case VERIFIED:   verifiedState = VerifiedMessage.VerifiedState.VERIFIED;   break;
-      case UNVERIFIED: verifiedState = VerifiedMessage.VerifiedState.UNVERIFIED; break;
-      default: throw new AssertionError("Unknown status: " + verifiedStatus);
+      case DEFAULT:
+        verifiedState = VerifiedMessage.VerifiedState.DEFAULT; break;
+      case VERIFIED:
+        verifiedState = VerifiedMessage.VerifiedState.VERIFIED; break;
+      case UNVERIFIED:
+        verifiedState = VerifiedMessage.VerifiedState.UNVERIFIED; break;
+      default:
+        throw new AssertionError("Unknown status: " + verifiedStatus);
     }
 
     return verifiedState;

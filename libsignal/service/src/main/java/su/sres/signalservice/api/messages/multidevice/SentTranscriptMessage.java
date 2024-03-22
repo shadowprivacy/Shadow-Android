@@ -1,12 +1,13 @@
 /**
  * Copyright (C) 2014-2016 Open Whisper Systems
- *
+ * <p>
  * Licensed according to the LICENSE file in this repository.
  */
 
 package su.sres.signalservice.api.messages.multidevice;
 
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
@@ -43,9 +44,8 @@ public class SentTranscriptMessage {
     this.isRecipientUpdate        = isRecipientUpdate;
 
     for (Map.Entry<SignalServiceAddress, Boolean> entry : unidentifiedStatus.entrySet()) {
-      if (entry.getKey().getUuid().isPresent()) {
-        unidentifiedStatusByUuid.put(entry.getKey().getUuid().get().toString(), entry.getValue());
-      }
+      unidentifiedStatusByUuid.put(entry.getKey().getUuid().toString(), entry.getValue());
+
       if (entry.getKey().getNumber().isPresent()) {
         unidentifiedStatusByE164.put(entry.getKey().getNumber().get(), entry.getValue());
       }

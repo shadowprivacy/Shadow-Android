@@ -33,6 +33,7 @@ import java.util.List;
 import su.sres.securesms.mms.OutgoingExpirationUpdateMessage;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.signalservice.api.push.SignalServiceAddress;
+import su.sres.signalservice.api.push.exceptions.NotFoundException;
 
 public class RecipientUtil {
 
@@ -41,24 +42,7 @@ public class RecipientUtil {
   /**
    * This method will do it's best to craft a fully-populated {@link SignalServiceAddress} based on
    * the provided recipient. This includes performing a possible network request if no UUID is
-   * available. If the request to get a UUID fails, the exception is swallowed and an E164-only
-   * recipient is returned.
-   */
-  @WorkerThread
-  public static @NonNull
-  SignalServiceAddress toSignalServiceAddressBestEffort(@NonNull Context context, @NonNull Recipient recipient) {
-    try {
-      return toSignalServiceAddress(context, recipient);
-    } catch (IOException e) {
-      Log.w(TAG, "Failed to populate address!", e);
-      return new SignalServiceAddress(recipient.getUuid().orNull(), recipient.getE164().orNull());
-    }
-  }
-
-  /**
-   * This method will do it's best to craft a fully-populated {@link SignalServiceAddress} based on
-   * the provided recipient. This includes performing a possible network request if no UUID is
-   * available. If the request to get a UUID fails, an IOException is thrown.
+   * available. If the request to get a UUID fails or the user is not registered, an IOException is thrown.
    */
   @WorkerThread
   public static @NonNull
@@ -81,7 +65,11 @@ public class RecipientUtil {
 
     }
 
-    return new SignalServiceAddress(Optional.fromNullable(recipient.getUuid().orNull()), Optional.fromNullable(recipient.resolve().getE164().orNull()));
+    if (recipient.hasUuid()) {
+      return new SignalServiceAddress(recipient.requireUuid(), Optional.fromNullable(recipient.resolve().getE164().orNull()));
+    } else {
+      throw new NotFoundException(recipient.getId() + " is not registered!");
+    }
   }
 
   public static @NonNull
@@ -99,10 +87,13 @@ public class RecipientUtil {
 
     return Stream.of(recipients)
                  .map(Recipient::resolve)
-                 .map(r -> new SignalServiceAddress(r.getUuid().orNull(), r.getE164().orNull()))
+                 .map(r -> new SignalServiceAddress(r.requireUuid(), r.getE164().orNull()))
                  .toList();
   }
 
+  /**
+   * Ensures that UUIDs are available. If a UUID cannot be retrieved or a user is found to be unregistered, an exception is thrown.
+   */
   public static boolean ensureUuidsAreAvailable(@NonNull Context context, @NonNull Collection<Recipient> recipients)
       throws IOException
   {
@@ -114,6 +105,11 @@ public class RecipientUtil {
 
     if (recipientsWithoutUuids.size() > 0) {
       DirectoryHelper.refreshDirectory(context);
+
+      if (recipients.stream().map(Recipient::resolve).anyMatch(Recipient::isUnregistered)) {
+        throw new NotFoundException("1 or more recipients are not registered!");
+      }
+
       return true;
     } else {
       return false;
@@ -257,6 +253,9 @@ public class RecipientUtil {
 
   @WorkerThread
   public static void shareProfileIfFirstSecureMessage(@NonNull Context context, @NonNull Recipient recipient) {
+    if (recipient.isProfileSharing()) {
+      return;
+    }
 
     long threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdIfExistsFor(recipient.getId());
 
@@ -312,7 +311,7 @@ public class RecipientUtil {
     if (threadId == -1 || !DatabaseFactory.getMmsSmsDatabase(context).hasMeaningfulMessage(threadId)) {
       DatabaseFactory.getRecipientDatabase(context).setExpireMessages(recipient.getId(), defaultTimer);
       OutgoingExpirationUpdateMessage outgoingMessage = new OutgoingExpirationUpdateMessage(recipient, System.currentTimeMillis(), defaultTimer * 1000L);
-      MessageSender.send(context, outgoingMessage, DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(recipient), false, null);
+      MessageSender.send(context, outgoingMessage, DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(recipient), false, null, null);
       return true;
     }
     return false;

@@ -17,8 +17,11 @@ import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
+
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.SignalServiceMessageSender;
+import su.sres.signalservice.api.SignalServiceMessageSender.IndividualSendEvents;
 import su.sres.signalservice.api.crypto.ContentHint;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SignalServiceAttachment;
@@ -34,7 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class PushGroupUpdateJob extends BaseJob  {
+public class PushGroupUpdateJob extends BaseJob {
 
   public static final String KEY = "PushGroupUpdateJob";
 
@@ -48,12 +51,12 @@ public class PushGroupUpdateJob extends BaseJob  {
 
   public PushGroupUpdateJob(@NonNull RecipientId source, @NonNull GroupId groupId) {
     this(new Job.Parameters.Builder()
-                    .addConstraint(NetworkConstraint.KEY)
-                    .setLifespan(TimeUnit.DAYS.toMillis(1))
-                    .setMaxAttempts(Parameters.UNLIMITED)
-                    .build(),
-            source,
-            groupId);
+             .addConstraint(NetworkConstraint.KEY)
+             .setLifespan(TimeUnit.DAYS.toMillis(1))
+             .setMaxAttempts(Parameters.UNLIMITED)
+             .build(),
+         source,
+         groupId);
   }
 
   private PushGroupUpdateJob(@NonNull Job.Parameters parameters, RecipientId source, @NonNull GroupId groupId) {
@@ -66,8 +69,8 @@ public class PushGroupUpdateJob extends BaseJob  {
   @Override
   public @NonNull Data serialize() {
     return new Data.Builder().putString(KEY_SOURCE, source.serialize())
-            .putString(KEY_GROUP_ID, groupId.toString())
-            .build();
+                             .putString(KEY_GROUP_ID, groupId.toString())
+                             .build();
   }
 
   @Override
@@ -79,6 +82,13 @@ public class PushGroupUpdateJob extends BaseJob  {
   public void onRun() throws IOException, UntrustedIdentityException {
     if (!Recipient.self().isRegistered()) {
       throw new NotPushRegisteredException();
+    }
+
+    Recipient sourceRecipient = Recipient.resolved(source);
+
+    if (sourceRecipient.isUnregistered()) {
+      Log.w(TAG, sourceRecipient.getId() + " not registered!");
+      return;
     }
 
     GroupDatabase           groupDatabase = DatabaseFactory.getGroupDatabase(context);
@@ -93,8 +103,8 @@ public class PushGroupUpdateJob extends BaseJob  {
     if (AvatarHelper.hasAvatar(context, record.get().getRecipientId())) {
       avatar = SignalServiceAttachmentStream.newStreamBuilder()
                                             .withContentType("image/jpeg")
-              .withStream(AvatarHelper.getAvatar(context, record.get().getRecipientId()))
-              .withLength(AvatarHelper.getAvatarLength(context, record.get().getRecipientId()))
+                                            .withStream(AvatarHelper.getAvatar(context, record.get().getRecipientId()))
+                                            .withLength(AvatarHelper.getAvatarLength(context, record.get().getRecipientId()))
                                             .build();
     }
 
@@ -102,12 +112,14 @@ public class PushGroupUpdateJob extends BaseJob  {
 
     for (RecipientId member : record.get().getMembers()) {
       Recipient recipient = Recipient.resolved(member);
-      members.add(RecipientUtil.toSignalServiceAddress(context, recipient));
+      if (recipient.isMaybeRegistered()) {
+        members.add(RecipientUtil.toSignalServiceAddress(context, recipient));
+      }
     }
 
     SignalServiceGroup groupContext = SignalServiceGroup.newBuilder(Type.UPDATE)
                                                         .withAvatar(avatar)
-            .withId(groupId.getDecodedId())
+                                                        .withId(groupId.getDecodedId())
                                                         .withMembers(members)
                                                         .withName(record.get().getTitle())
                                                         .build();
@@ -122,12 +134,11 @@ public class PushGroupUpdateJob extends BaseJob  {
                                                                .build();
 
     SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
-    Recipient                  recipient     = Recipient.resolved(source);
-
-    messageSender.sendDataMessage(RecipientUtil.toSignalServiceAddress(context, recipient),
-                                  UnidentifiedAccessUtil.getAccessFor(context, recipient),
+    messageSender.sendDataMessage(RecipientUtil.toSignalServiceAddress(context, sourceRecipient),
+                                  UnidentifiedAccessUtil.getAccessFor(context, sourceRecipient),
                                   ContentHint.DEFAULT,
-                                  message);
+                                  message,
+                                  IndividualSendEvents.EMPTY);
   }
 
   @Override
@@ -144,8 +155,8 @@ public class PushGroupUpdateJob extends BaseJob  {
     @Override
     public @NonNull PushGroupUpdateJob create(@NonNull Parameters parameters, @NonNull su.sres.securesms.jobmanager.Data data) {
       return new PushGroupUpdateJob(parameters,
-              RecipientId.from(data.getString(KEY_SOURCE)),
-              GroupId.parseOrThrow(data.getString(KEY_GROUP_ID)));
+                                    RecipientId.from(data.getString(KEY_SOURCE)),
+                                    GroupId.parseOrThrow(data.getString(KEY_GROUP_ID)));
     }
   }
 }

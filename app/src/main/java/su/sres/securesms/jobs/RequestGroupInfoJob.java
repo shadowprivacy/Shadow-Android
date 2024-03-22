@@ -14,6 +14,7 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.signalservice.api.SignalServiceMessageSender;
+import su.sres.signalservice.api.SignalServiceMessageSender.IndividualSendEvents;
 import su.sres.signalservice.api.crypto.ContentHint;
 import su.sres.signalservice.api.crypto.UntrustedIdentityException;
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
@@ -25,7 +26,7 @@ import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-public class RequestGroupInfoJob extends BaseJob  {
+public class RequestGroupInfoJob extends BaseJob {
 
   public static final String KEY = "RequestGroupInfoJob";
 
@@ -40,12 +41,12 @@ public class RequestGroupInfoJob extends BaseJob  {
 
   public RequestGroupInfoJob(@NonNull RecipientId source, @NonNull GroupId groupId) {
     this(new Job.Parameters.Builder()
-                    .addConstraint(NetworkConstraint.KEY)
-                    .setLifespan(TimeUnit.DAYS.toMillis(1))
-                    .setMaxAttempts(Parameters.UNLIMITED)
-                    .build(),
-            source,
-            groupId);
+             .addConstraint(NetworkConstraint.KEY)
+             .setLifespan(TimeUnit.DAYS.toMillis(1))
+             .setMaxAttempts(Parameters.UNLIMITED)
+             .build(),
+         source,
+         groupId);
 
   }
 
@@ -59,8 +60,8 @@ public class RequestGroupInfoJob extends BaseJob  {
   @Override
   public @NonNull Data serialize() {
     return new Data.Builder().putString(KEY_SOURCE, source.serialize())
-            .putString(KEY_GROUP_ID, groupId.toString())
-            .build();
+                             .putString(KEY_GROUP_ID, groupId.toString())
+                             .build();
   }
 
   @Override
@@ -74,9 +75,9 @@ public class RequestGroupInfoJob extends BaseJob  {
       throw new NotPushRegisteredException();
     }
 
-    SignalServiceGroup       group   = SignalServiceGroup.newBuilder(Type.REQUEST_INFO)
-            .withId(groupId.getDecodedId())
-                                                         .build();
+    SignalServiceGroup group = SignalServiceGroup.newBuilder(Type.REQUEST_INFO)
+                                                 .withId(groupId.getDecodedId())
+                                                 .build();
 
     SignalServiceDataMessage message = SignalServiceDataMessage.newBuilder()
                                                                .asGroupMessage(group)
@@ -86,10 +87,16 @@ public class RequestGroupInfoJob extends BaseJob  {
     SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
     Recipient                  recipient     = Recipient.resolved(source);
 
+    if (recipient.isUnregistered()) {
+      Log.w(TAG, recipient.getId() + " is unregistered!");
+      return;
+    }
+
     messageSender.sendDataMessage(RecipientUtil.toSignalServiceAddress(context, recipient),
                                   UnidentifiedAccessUtil.getAccessFor(context, recipient),
                                   ContentHint.IMPLICIT,
-                                  message);
+                                  message,
+                                  IndividualSendEvents.EMPTY);
   }
 
   @Override
@@ -108,8 +115,8 @@ public class RequestGroupInfoJob extends BaseJob  {
     @Override
     public @NonNull RequestGroupInfoJob create(@NonNull Parameters parameters, @NonNull Data data) {
       return new RequestGroupInfoJob(parameters,
-              RecipientId.from(data.getString(KEY_SOURCE)),
-              GroupId.parseOrThrow(data.getString(KEY_GROUP_ID)));
+                                     RecipientId.from(data.getString(KEY_SOURCE)),
+                                     GroupId.parseOrThrow(data.getString(KEY_GROUP_ID)));
     }
   }
 }

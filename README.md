@@ -1,6 +1,7 @@
 # Shadow-Android
 
 This is part of the Shadow secure messenger project - an Android client being a modified version of Signal-Android https://github.com/signalapp/Signal-Android and aimed at corporate/team environments.
+Currently available at [shadowprivacy.com](https://shadowprivacy.com/download/).
 
 ## Contributing Translations
 
@@ -31,10 +32,10 @@ The form and manner of this distribution makes it eligible for export under the 
 
 Signal Messenger:
 
-Copyright 2013-2020 Signal
+Copyright 2013-2021 Signal
 
 Shadow Messenger:
 
-Copyright 2019-2020 Anton Alipov, sole trader
+Copyright 2019-2024 Anton Alipov, sole trader
 
 Licensed under the GPLv3: http://www.gnu.org/licenses/gpl-3.0.html

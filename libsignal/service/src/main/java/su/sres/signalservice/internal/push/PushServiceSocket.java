@@ -22,6 +22,7 @@ import su.sres.signalservice.api.messages.calls.CallingResponse;
 import su.sres.signalservice.api.payments.CurrencyConversions;
 import su.sres.signalservice.api.push.exceptions.DeprecatedVersionException;
 import su.sres.signalservice.api.push.exceptions.MalformedResponseException;
+import su.sres.signalservice.api.push.exceptions.NonSuccessfulResumableUploadResponseCodeException;
 import su.sres.signalservice.api.push.exceptions.ProofRequiredException;
 import su.sres.signalservice.api.push.exceptions.RangeException;
 import su.sres.signalservice.api.push.exceptions.RetryAfterException;
@@ -564,10 +565,6 @@ public class PushServiceSocket {
 
       String path = String.format(PREKEY_DEVICE_PATH, destination.getIdentifier(), deviceId);
 
-      if (destination.getRelay().isPresent()) {
-        path = path + "?relay=" + destination.getRelay().get();
-      }
-
       String             responseText = makeServiceRequest(path, "GET", null, NO_HEADERS, unidentifiedAccess);
       PreKeyResponse     response     = JsonUtil.fromJson(responseText, PreKeyResponse.class);
       List<PreKeyBundle> bundles      = new LinkedList<>();
@@ -605,10 +602,6 @@ public class PushServiceSocket {
     try {
       String path = String.format(PREKEY_DEVICE_PATH, destination.getIdentifier(),
                                   String.valueOf(deviceId));
-
-      if (destination.getRelay().isPresent()) {
-        path = path + "?relay=" + destination.getRelay().get();
-      }
 
       String         responseText = makeServiceRequest(path, "GET", null);
       PreKeyResponse response     = JsonUtil.fromJson(responseText, PreKeyResponse.class);
@@ -1392,7 +1385,7 @@ public class PushServiceSocket {
       } else if (response.code() == 404) {
         throw new ResumeLocationInvalidException();
       } else {
-        throw new NonSuccessfulResponseCodeException(response.code(), "Response: " + response);
+        throw new NonSuccessfulResumableUploadResponseCodeException(response.code(), "Response: " + response);
       }
     } finally {
       synchronized (connections) {

@@ -154,6 +154,11 @@ public class SendReadReceiptJob extends BaseJob  {
       return;
     }
 
+    if (recipient.isUnregistered()) {
+      Log.w(TAG, recipient.getId() + " not registered!");
+      return;
+    }
+
     SignalServiceMessageSender  messageSender  = ApplicationDependencies.getSignalServiceMessageSender();
     SignalServiceAddress        remoteAddress  = RecipientUtil.toSignalServiceAddress(context, recipient);
     SignalServiceReceiptMessage receiptMessage = new SignalServiceReceiptMessage(SignalServiceReceiptMessage.Type.READ, messageSentTimestamps, timestamp);

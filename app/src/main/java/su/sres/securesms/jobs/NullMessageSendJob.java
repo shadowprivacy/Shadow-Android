@@ -67,6 +67,10 @@ public class NullMessageSendJob extends BaseJob {
       return;
     }
 
+    if (recipient.isUnregistered()) {
+      Log.w(TAG, recipient.getId() + " not registered!");
+    }
+
     SignalServiceMessageSender       messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
     SignalServiceAddress             address            = RecipientUtil.toSignalServiceAddress(context, recipient);
     Optional<UnidentifiedAccessPair> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, recipient);

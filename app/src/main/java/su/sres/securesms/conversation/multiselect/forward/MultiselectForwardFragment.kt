@@ -18,6 +18,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.schedulers.Schedulers
 import su.sres.core.util.logging.Log
 import su.sres.securesms.ContactSelectionListFragment
 import su.sres.securesms.R
@@ -35,7 +37,9 @@ import su.sres.securesms.util.visible
 import org.whispersystems.libsignal.util.guava.Optional
 import su.sres.securesms.conversation.ui.error.SafetyNumberChangeDialog
 import su.sres.securesms.database.IdentityDatabase
+import su.sres.securesms.keyboard.findListener
 import su.sres.securesms.keyvalue.SignalStore
+import su.sres.securesms.util.LifecycleDisposable
 import su.sres.securesms.util.views.SimpleProgressDialog
 import java.util.function.Consumer
 
@@ -52,6 +56,7 @@ class MultiselectForwardFragment :
   override val peekHeightPercentage: Float = 0.67f
 
   private val viewModel: MultiselectForwardViewModel by viewModels(factoryProducer = this::createViewModelFactory)
+  private val disposables = LifecycleDisposable()
 
   private lateinit var selectionFragment: ContactSelectionListFragment
   private lateinit var contactFilterView: ContactFilterView
@@ -92,6 +97,7 @@ class MultiselectForwardFragment :
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     callback = requireNotNull(findListener())
+    disposables.bindTo(viewLifecycleOwner.lifecycle)
 
     selectionFragment = childFragmentManager.findFragmentById(R.id.contact_selection_list_fragment) as ContactSelectionListFragment
 
@@ -116,11 +122,8 @@ class MultiselectForwardFragment :
     val shareSelectionRecycler: RecyclerView = bottomBar.findViewById(R.id.selected_list)
     val shareSelectionAdapter = ShareSelectionAdapter()
     val sendButton: View = bottomBar.findViewById(R.id.share_confirm)
-    val addMessageWrapper: View = bottomBar.findViewById(R.id.add_message_wrapper)
 
     addMessage = bottomBar.findViewById(R.id.add_message)
-
-    addMessageWrapper.visible = FeatureFlags.forwardMultipleMessages()
 
     sendButton.setOnClickListener {
       sendButton.isEnabled = false
@@ -250,9 +253,18 @@ class MultiselectForwardFragment :
 
   override fun onBeforeContactSelected(recipientId: Optional<RecipientId>, number: String?, callback: Consumer<Boolean>) {
     if (recipientId.isPresent) {
-      viewModel.addSelectedContact(recipientId, null)
-      callback.accept(true)
-      contactFilterView.clear()
+      disposables.add(
+        viewModel.addSelectedContact(recipientId, null)
+          .subscribeOn(Schedulers.io())
+          .observeOn(AndroidSchedulers.mainThread())
+          .subscribe { success ->
+            if (!success) {
+              Toast.makeText(requireContext(), R.string.ShareActivity_you_do_not_have_permission_to_send_to_this_group, Toast.LENGTH_SHORT).show()
+            }
+            callback.accept(success)
+            contactFilterView.clear()
+          }
+      )
     } else {
       Log.w(TAG, "Rejecting non-present recipient. Can't forward to an unknown contact.")
       callback.accept(false)

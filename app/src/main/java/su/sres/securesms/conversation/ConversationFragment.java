@@ -209,6 +209,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
   private MessageRequestViewModel     messageRequestViewModel;
   private MessageCountsViewModel      messageCountsViewModel;
   private ConversationViewModel       conversationViewModel;
+  private ConversationGroupViewModel  groupViewModel;
   private SnapToTopDataObserver       snapToTopDataObserver;
   private MarkReadHelper              markReadHelper;
   private Animation                   scrollButtonInAnimation;
@@ -309,13 +310,15 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
                                MenuState.canReplyToMessage(recipient.get(),
                                                            MenuState.isActionMessage(conversationMessage.getMessageRecord()),
                                                            conversationMessage.getMessageRecord(),
-                                                           messageRequestViewModel.shouldShowMessageRequest()),
+                                                           messageRequestViewModel.shouldShowMessageRequest(),
+                                                           groupViewModel.isNonAdminInAnnouncementGroup()),
         this::handleReplyMessage,
         this::onViewHolderPositionTranslated
     ).attachToRecyclerView(list);
 
     setupListLayoutListeners();
 
+    this.groupViewModel         = ViewModelProviders.of(requireActivity(), new ConversationGroupViewModel.Factory()).get(ConversationGroupViewModel.class);
     this.messageCountsViewModel = ViewModelProviders.of(requireActivity()).get(MessageCountsViewModel.class);
     this.conversationViewModel  = ViewModelProviders.of(requireActivity(), new ConversationViewModel.Factory()).get(ConversationViewModel.class);
     conversationViewModel.getMessages().observe(getViewLifecycleOwner(), messages -> {
@@ -792,7 +795,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
     });
   }
 
-  private void setCorrectMenuVisibility(@NonNull Menu menu) {
+  private void setCorrectActionModeMenuVisibility(@NonNull Menu menu) {
     Set<MultiselectPart> selectedParts = getListAdapter().getSelectedItems();
 
     if (actionMode != null && selectedParts.size() == 0) {
@@ -800,7 +803,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
       return;
     }
 
-    MenuState menuState = MenuState.getMenuState(recipient.get(), selectedParts, messageRequestViewModel.shouldShowMessageRequest());
+    MenuState menuState = MenuState.getMenuState(recipient.get(), selectedParts, messageRequestViewModel.shouldShowMessageRequest(), groupViewModel.isNonAdminInAnnouncementGroup());
 
     menu.findItem(R.id.menu_context_forward).setVisible(menuState.shouldShowForwardAction());
     menu.findItem(R.id.menu_context_reply).setVisible(menuState.shouldShowReplyAction());
@@ -809,6 +812,8 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
     menu.findItem(R.id.menu_context_resend).setVisible(menuState.shouldShowResendAction());
     menu.findItem(R.id.menu_context_copy).setVisible(menuState.shouldShowCopyAction());
     menu.findItem(R.id.menu_context_delete_message).setVisible(menuState.shouldShowDeleteAction());
+
+    AdaptiveActionsToolbar.adjustMenuActions(menu, 10, requireActivity().getWindow().getDecorView().getMeasuredWidth());
   }
 
   private @Nullable ConversationAdapter getListAdapter() {
@@ -1404,7 +1409,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
         if (getListAdapter().getSelectedItems().size() == 0) {
           actionMode.finish();
         } else {
-          setCorrectMenuVisibility(actionMode.getMenu());
+          setCorrectActionModeMenuVisibility(actionMode.getMenu());
           actionMode.setTitle(calculateSelectedItemCount());
         }
       }
@@ -1907,8 +1912,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
         WindowUtil.setLightStatusBar(getActivity().getWindow());
       }
 
-      setCorrectMenuVisibility(menu);
-      AdaptiveActionsToolbar.adjustMenuActions(menu, 10, requireActivity().getWindow().getDecorView().getMeasuredWidth());
+      setCorrectActionModeMenuVisibility(menu);
       listener.onMessageActionToolbarOpened();
       return true;
     }

@@ -29,10 +29,6 @@ object Multiselect {
   fun getParts(conversationMessage: ConversationMessage): MultiselectCollection {
     val messageRecord = conversationMessage.messageRecord
 
-    if (!FeatureFlags.forwardMultipleMessages()) {
-      return MultiselectCollection.Single(MultiselectPart.Message(conversationMessage))
-    }
-
     if (messageRecord.isUpdate) {
       return MultiselectCollection.Single(MultiselectPart.Update(conversationMessage))
     }

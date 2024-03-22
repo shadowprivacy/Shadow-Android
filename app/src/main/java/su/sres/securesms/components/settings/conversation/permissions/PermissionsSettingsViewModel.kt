@@ -7,7 +7,6 @@ import su.sres.securesms.groups.GroupAccessControl
 import su.sres.securesms.groups.GroupId
 import su.sres.securesms.groups.LiveGroup
 import su.sres.securesms.recipients.Recipient
-import su.sres.securesms.util.FeatureFlags
 import su.sres.securesms.util.SingleLiveEvent
 import su.sres.securesms.util.livedata.Store
 
@@ -45,7 +44,7 @@ class PermissionsSettingsViewModel(
 
     store.update(liveGroup.groupRecipient) { groupRecipient, state ->
       val allHaveCapability = groupRecipient.participants.map { it.announcementGroupCapability }.all { it == Recipient.Capability.SUPPORTED }
-      state.copy(announcementGroupPermissionEnabled = (FeatureFlags.announcementGroups() && allHaveCapability) || state.announcementGroup)
+      state.copy(announcementGroupPermissionEnabled = allHaveCapability || state.announcementGroup)
     }
   }
 

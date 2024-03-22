@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
@@ -22,7 +23,6 @@ import su.sres.securesms.service.webrtc.WebRtcCallService;
  * Manages the state of the WebRtc items in the Android notification bar.
  *
  * @author Moxie Marlinspike
- *
  */
 
 public class CallNotificationBuilder {
@@ -42,18 +42,18 @@ public class CallNotificationBuilder {
     PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, contentIntent, 0);
 
     NotificationCompat.Builder builder = new NotificationCompat.Builder(context, getNotificationChannel(context, type))
-            .setSmallIcon(R.drawable.ic_call_secure_white_24dp)
-            .setContentIntent(pendingIntent)
-            .setOngoing(true)
-            .setContentTitle(recipient.getDisplayName(context));
+        .setSmallIcon(R.drawable.ic_call_secure_white_24dp)
+        .setContentIntent(pendingIntent)
+        .setOngoing(true)
+        .setContentTitle(recipient.getDisplayName(context));
 
     if (type == TYPE_INCOMING_CONNECTING) {
       builder.setContentText(context.getString(R.string.CallNotificationBuilder_connecting));
       builder.setPriority(NotificationCompat.PRIORITY_MIN);
     } else if (type == TYPE_INCOMING_RINGING) {
-      builder.setContentText(context.getString(R.string.NotificationBarManager__incoming_signal_call));
-      builder.addAction(getServiceNotificationAction(context, WebRtcCallService.denyCallIntent(context), R.drawable.ic_close_grey600_32dp, R.string.NotificationBarManager__deny_call));
-      builder.addAction(getActivityNotificationAction(context, WebRtcCallActivity.ANSWER_ACTION, R.drawable.ic_phone_grey600_32dp, R.string.NotificationBarManager__answer_call));
+      builder.setContentText(context.getString(recipient.isGroup() ? R.string.NotificationBarManager__incoming_signal_group_call : R.string.NotificationBarManager__incoming_signal_call));
+      builder.addAction(getServiceNotificationAction(context, WebRtcCallService.denyCallIntent(context), R.drawable.ic_close_grey600_32dp, R.string.NotificationBarManager__decline_call));
+      builder.addAction(getActivityNotificationAction(context, WebRtcCallActivity.ANSWER_ACTION, R.drawable.ic_phone_grey600_32dp, recipient.isGroup() ? R.string.NotificationBarManager__join_call : R.string.NotificationBarManager__answer_call));
 
       if (callActivityRestricted()) {
         builder.setFullScreenIntent(pendingIntent, true);
@@ -86,11 +86,11 @@ public class CallNotificationBuilder {
     PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, contentIntent, 0);
 
     return new NotificationCompat.Builder(context, NotificationChannels.OTHER).setSmallIcon(R.drawable.ic_call_secure_white_24dp)
-            .setContentIntent(pendingIntent)
-            .setOngoing(true)
-            .setContentTitle(context.getString(R.string.NotificationBarManager__stopping_signal_call_service))
-            .setPriority(NotificationCompat.PRIORITY_MIN)
-            .build();
+                                                                              .setContentIntent(pendingIntent)
+                                                                              .setOngoing(true)
+                                                                              .setContentTitle(context.getString(R.string.NotificationBarManager__stopping_signal_call_service))
+                                                                              .setPriority(NotificationCompat.PRIORITY_MIN)
+                                                                              .build();
   }
 
   public static int getStoppingNotificationId() {
@@ -113,7 +113,7 @@ public class CallNotificationBuilder {
   private static NotificationCompat.Action getServiceNotificationAction(Context context, Intent intent, int iconResId, int titleResId) {
 
     PendingIntent pendingIntent = Build.VERSION.SDK_INT >= 26 ? PendingIntent.getForegroundService(context, 0, intent, 0)
-            : PendingIntent.getService(context, 0, intent, 0);
+                                                              : PendingIntent.getService(context, 0, intent, 0);
 
     return new NotificationCompat.Action(iconResId, context.getString(titleResId), pendingIntent);
   }

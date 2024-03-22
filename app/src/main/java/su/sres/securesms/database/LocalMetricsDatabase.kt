@@ -42,7 +42,7 @@ class LocalMetricsDatabase private constructor(
     private val MAX_AGE = TimeUnit.DAYS.toMillis(7)
 
     private const val DATABASE_VERSION = 1
-    private const val DATABASE_NAME = "signal-local-metrics.db"
+    private const val DATABASE_NAME = "shadow-local-metrics.db"
 
     private const val TABLE_NAME = "events"
     private const val ID = "_id"
@@ -107,7 +107,12 @@ class LocalMetricsDatabase private constructor(
     db.execSQL(EventTotals.CREATE_VIEW)
   }
 
-  override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
+  override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+  }
+
+  override fun onOpen(db: SQLiteDatabase) {
+    db.enableWriteAheadLogging()
+    db.setForeignKeyConstraintsEnabled(true)
   }
 
   override fun getSqlCipherDatabase(): SQLiteDatabase {

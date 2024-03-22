@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.storage.SignalSenderKeyStore;
 import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.signalservice.api.SignalSessionLock;
 import su.sres.signalservice.api.push.DistributionId;
@@ -19,7 +20,7 @@ public final class SenderKeyUtil {
    */
   public static void rotateOurKey(@NonNull Context context, @NonNull DistributionId distributionId) {
     try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
-      new SignalSenderKeyStore(context).deleteAllFor(Recipient.self().getId(), distributionId);
+      ApplicationDependencies.getSenderKeyStore().deleteAllFor(Recipient.self().getId(), distributionId);
       DatabaseFactory.getSenderKeySharedDatabase(context).deleteAllFor(distributionId);
     }
   }
@@ -36,7 +37,7 @@ public final class SenderKeyUtil {
    */
   public static void clearAllState(@NonNull Context context) {
     try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
-      new SignalSenderKeyStore(context).deleteAll();
+      ApplicationDependencies.getSenderKeyStore().deleteAll();
       DatabaseFactory.getSenderKeySharedDatabase(context).deleteAll();
     }
   }

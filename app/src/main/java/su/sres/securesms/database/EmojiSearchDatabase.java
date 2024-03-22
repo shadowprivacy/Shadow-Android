@@ -7,8 +7,6 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
-import com.annimon.stream.Stream;
-
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.EmojiSearchData;
 import su.sres.securesms.util.CursorUtil;
@@ -39,7 +37,7 @@ public class EmojiSearchDatabase extends Database {
    * @return A list of emoji that are related to the search term, ordered by relevance.
    */
   public @NonNull List<String> query(@NonNull String query, int limit) {
-    SQLiteDatabase db          = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db          = databaseHelper.getSignalReadableDatabase();
     String         matchString = FtsUtil.createPrefixMatchString(query);
     List<String>   results     = new LinkedList<>();
 
@@ -64,7 +62,7 @@ public class EmojiSearchDatabase extends Database {
    * Deletes the content of the current search index and replaces it with the new one.
    */
   public void setSearchIndex(@NonNull List<EmojiSearchData> searchIndex) {
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = databaseHelper.getSignalReadableDatabase();
 
     db.beginTransaction();
     try {

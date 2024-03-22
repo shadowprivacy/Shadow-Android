@@ -8,6 +8,10 @@ import androidx.annotation.NonNull;
 import okhttp3.OkHttpClient;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
+import su.sres.securesms.crypto.storage.SignalSenderKeyStore;
+import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
+import su.sres.securesms.crypto.storage.TextSecurePreKeyStore;
+import su.sres.securesms.crypto.storage.TextSecureSessionStore;
 import su.sres.securesms.database.DatabaseObserver;
 import su.sres.securesms.database.PendingRetryReceiptCache;
 import su.sres.securesms.messages.BackgroundMessageRetriever;
@@ -35,7 +39,6 @@ import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.EarlyMessageCache;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.SignalServiceMessageSender;
@@ -91,8 +94,12 @@ public class ApplicationDependencies {
   private static volatile PendingRetryReceiptManager   pendingRetryReceiptManager;
   private static volatile PendingRetryReceiptCache     pendingRetryReceiptCache;
   private static volatile SignalWebSocket              signalWebSocket;
-  private static volatile MessageNotifier              messageNotifier;
-  private static volatile KeyValueStore                keyValueStore;
+  private static volatile MessageNotifier            messageNotifier;
+  private static volatile TextSecureIdentityKeyStore identityStore;
+  private static volatile TextSecureSessionStore sessionStore;
+  private static volatile TextSecurePreKeyStore  preKeyStore;
+  private static volatile SignalSenderKeyStore   senderKeyStore;
+  private static volatile KeyValueStore         keyValueStore;
 
   public static void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
     synchronized (NI_LOCK) {
@@ -304,6 +311,50 @@ public class ApplicationDependencies {
     }
 
     return keyValueStore;
+  }
+
+  public static @NonNull TextSecureIdentityKeyStore getIdentityStore() {
+    if (identityStore == null) {
+      synchronized (NI_LOCK) {
+        if (identityStore == null) {
+          identityStore = networkIndependentProvider.provideIdentityStore();
+        }
+      }
+    }
+    return identityStore;
+  }
+
+  public static @NonNull TextSecureSessionStore getSessionStore() {
+    if (sessionStore == null) {
+      synchronized (NI_LOCK) {
+        if (sessionStore == null) {
+          sessionStore = networkIndependentProvider.provideSessionStore();
+        }
+      }
+    }
+    return sessionStore;
+  }
+
+  public static @NonNull TextSecurePreKeyStore getPreKeyStore() {
+    if (preKeyStore == null) {
+      synchronized (NI_LOCK) {
+        if (preKeyStore == null) {
+          preKeyStore = networkIndependentProvider.providePreKeyStore();
+        }
+      }
+    }
+    return preKeyStore;
+  }
+
+  public static @NonNull SignalSenderKeyStore getSenderKeyStore() {
+    if (senderKeyStore == null) {
+      synchronized (NI_LOCK) {
+        if (senderKeyStore == null) {
+          senderKeyStore = networkIndependentProvider.provideSenderKeyStore();
+        }
+      }
+    }
+    return senderKeyStore;
   }
 
   public static @NonNull MegaphoneRepository getMegaphoneRepository() {
@@ -574,6 +625,10 @@ public class ApplicationDependencies {
 
   public interface NetworkIndependentProvider {
     @NonNull KeyValueStore provideKeyValueStore();
+    @NonNull TextSecureIdentityKeyStore provideIdentityStore();
+    @NonNull TextSecureSessionStore provideSessionStore();
+    @NonNull TextSecurePreKeyStore providePreKeyStore();
+    @NonNull SignalSenderKeyStore provideSenderKeyStore();
 
     @NonNull
     ShakeToReport provideShakeToReport();

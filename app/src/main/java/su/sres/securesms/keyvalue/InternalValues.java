@@ -19,6 +19,7 @@ public final class InternalValues extends SignalStoreValues {
   public static final String FORCE_BUILT_IN_EMOJI                 = "internal.force_built_in_emoji";
   public static final String REMOVE_SENDER_KEY_MINIMUM            = "internal.remove_sender_key_minimum";
   public static final String DELAY_RESENDS                        = "internal.delay_resends";
+  public static final String SHAKE_TO_REPORT                      = "internal.shake_to_report";
 
   InternalValues(KeyValueStore store) {
     super(store);
@@ -111,5 +112,12 @@ public final class InternalValues extends SignalStoreValues {
    */
   public synchronized boolean disableGv1AutoMigrateNotification() {
     return FeatureFlags.internalUser() && getBoolean(GV2_DISABLE_AUTOMIGRATE_NOTIFICATION, false);
+  }
+
+  /**
+   * Whether or not "shake to report" is enabled.
+   */
+  public synchronized boolean shakeToReport() {
+    return FeatureFlags.internalUser() && getBoolean(SHAKE_TO_REPORT, true);
   }
 }

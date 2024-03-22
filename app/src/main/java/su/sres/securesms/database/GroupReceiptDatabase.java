@@ -46,7 +46,7 @@ public class GroupReceiptDatabase extends Database {
   }
 
   public void insert(Collection<RecipientId> recipientIds, long mmsId, int status, long timestamp) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
 
     db.beginTransaction();
     try {
@@ -66,7 +66,7 @@ public class GroupReceiptDatabase extends Database {
   }
 
   public void update(@NonNull RecipientId recipientId, long mmsId, int status, long timestamp) {
-    SQLiteDatabase db     = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db     = databaseHelper.getSignalWritableDatabase();
     ContentValues  values = new ContentValues(2);
     values.put(STATUS, status);
     values.put(TIMESTAMP, timestamp);
@@ -76,7 +76,7 @@ public class GroupReceiptDatabase extends Database {
   }
 
   public void setUnidentified(Collection<Pair<RecipientId, Boolean>> results, long mmsId) {
-    SQLiteDatabase db  = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db  = databaseHelper.getSignalWritableDatabase();
 
     db.beginTransaction();
     try {
@@ -97,7 +97,7 @@ public class GroupReceiptDatabase extends Database {
   }
 
   public @NonNull List<GroupReceiptInfo> getGroupReceiptInfo(long mmsId) {
-    SQLiteDatabase         db      = databaseHelper.getReadableDatabase();
+    SQLiteDatabase         db      = databaseHelper.getSignalReadableDatabase();
     List<GroupReceiptInfo> results = new LinkedList<>();
 
     try (Cursor cursor = db.query(TABLE_NAME, null, MMS_ID + " = ?", new String[] {String.valueOf(mmsId)}, null, null, null)) {
@@ -113,7 +113,7 @@ public class GroupReceiptDatabase extends Database {
   }
 
   public @Nullable GroupReceiptInfo getGroupReceiptInfo(long mmsId, @NonNull RecipientId recipientId) {
-    SQLiteDatabase db    = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db    = databaseHelper.getSignalReadableDatabase();
     String         query = MMS_ID + " = ? AND " + RECIPIENT_ID + " = ?";
     String[]       args  = SqlUtil.buildArgs(mmsId, recipientId);
 
@@ -130,17 +130,17 @@ public class GroupReceiptDatabase extends Database {
   }
 
   void deleteRowsForMessage(long mmsId) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
     db.delete(TABLE_NAME, MMS_ID + " = ?", new String[] {String.valueOf(mmsId)});
   }
 
   void deleteAbandonedRows() {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
     db.delete(TABLE_NAME, MMS_ID + " NOT IN (SELECT " + MmsDatabase.ID + " FROM " + MmsDatabase.TABLE_NAME + ")", null);
   }
 
   void deleteAllRows() {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
     db.delete(TABLE_NAME, null, null);
   }
 

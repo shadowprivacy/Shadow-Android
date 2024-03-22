@@ -49,7 +49,7 @@ public class SignedPreKeyDatabase extends Database {
   }
 
   public @Nullable SignedPreKeyRecord getSignedPreKey(int keyId) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = databaseHelper.getSignalReadableDatabase();
 
     try (Cursor cursor = database.query(TABLE_NAME, null, KEY_ID + " = ?",
                                         new String[] {String.valueOf(keyId)},
@@ -73,7 +73,7 @@ public class SignedPreKeyDatabase extends Database {
   }
 
   public @NonNull List<SignedPreKeyRecord> getAllSignedPreKeys() {
-    SQLiteDatabase           database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase           database = databaseHelper.getSignalReadableDatabase();
     List<SignedPreKeyRecord> results  = new LinkedList<>();
 
     try (Cursor cursor = database.query(TABLE_NAME, null, null, null, null, null, null)) {
@@ -96,7 +96,7 @@ public class SignedPreKeyDatabase extends Database {
   }
 
   public void insertSignedPreKey(int keyId, SignedPreKeyRecord record) {
-    SQLiteDatabase database = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database = databaseHelper.getSignalWritableDatabase();
 
     ContentValues contentValues = new ContentValues();
     contentValues.put(KEY_ID, keyId);
@@ -110,7 +110,7 @@ public class SignedPreKeyDatabase extends Database {
 
 
   public void removeSignedPreKey(int keyId) {
-    SQLiteDatabase database = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database = databaseHelper.getSignalWritableDatabase();
     database.delete(TABLE_NAME, KEY_ID + " = ? AND " + SIGNATURE + " IS NOT NULL", new String[] {String.valueOf(keyId)});
   }
 

@@ -132,8 +132,6 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
 
   public abstract void markAsEndSession(long id);
 
-  public abstract void markAsPreKeyBundle(long id);
-
   public abstract void markAsInvalidVersionKeyExchange(long id);
 
   public abstract void markAsSecure(long id);
@@ -150,8 +148,6 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
 
   public abstract void markAsDecryptFailed(long id);
 
-  public abstract void markAsDecryptDuplicate(long id);
-
   public abstract void markAsNoSession(long id);
 
   public abstract void markAsUnsupportedProtocolVersion(long id);
@@ -166,9 +162,9 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
 
   public abstract void markAsSent(long messageId, boolean secure);
 
-  public abstract void markAsSentFailed(long id);
-
   public abstract void markUnidentified(long messageId, boolean unidentified);
+
+  public abstract void markAsSentFailed(long id);
 
   public abstract void markAsSending(long messageId);
 
@@ -287,7 +283,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   final int getInsecureMessagesSentForThread(long threadId) {
-    SQLiteDatabase db         = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db         = databaseHelper.getSignalReadableDatabase();
     String[]       projection = new String[] { "COUNT(*)" };
     String         query      = THREAD_ID + " = ? AND " + getOutgoingInsecureMessageClause() + " AND " + getDateSentColumnName() + " > ?";
     String[]       args       = new String[] { String.valueOf(threadId), String.valueOf(System.currentTimeMillis() - InsightsConstants.PERIOD_IN_MILLIS) };
@@ -310,7 +306,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   final int getSecureMessageCount(long threadId) {
-    SQLiteDatabase db         = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db         = databaseHelper.getSignalReadableDatabase();
     String[]       projection = new String[] { "COUNT(*)" };
     String         query      = getSecureMessageClause() + "AND " + MmsSmsColumns.THREAD_ID + " = ?";
     String[]       args       = new String[] { String.valueOf(threadId) };
@@ -325,7 +321,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   final int getOutgoingSecureMessageCount(long threadId) {
-    SQLiteDatabase db         = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db         = databaseHelper.getSignalReadableDatabase();
     String[]       projection = new String[] { "COUNT(*)" };
     String         query      = getOutgoingSecureMessageClause() + "AND " + MmsSmsColumns.THREAD_ID + " = ? AND" + "(" + getTypeField() + " & " + Types.GROUP_QUIT_BIT + " = 0)";
     String[]       args       = new String[] { String.valueOf(threadId) };
@@ -341,7 +337,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
 
   private int getMessageCountForRecipientsAndType(String typeClause) {
 
-    SQLiteDatabase db         = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db         = databaseHelper.getSignalReadableDatabase();
     String[]       projection = new String[] { "COUNT(*)" };
     String         query      = typeClause + " AND " + getDateSentColumnName() + " > ?";
     String[]       args       = new String[] { String.valueOf(System.currentTimeMillis() - InsightsConstants.PERIOD_IN_MILLIS) };
@@ -372,7 +368,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   public void setReactionsSeen(long threadId, long sinceTimestamp) {
-    SQLiteDatabase db          = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db          = databaseHelper.getSignalWritableDatabase();
     ContentValues  values      = new ContentValues();
     String         whereClause = THREAD_ID + " = ? AND " + REACTIONS_UNREAD + " = ?";
     String[]       whereArgs   = new String[] { String.valueOf(threadId), "1" };
@@ -388,7 +384,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   public void setAllReactionsSeen() {
-    SQLiteDatabase db     = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db     = databaseHelper.getSignalWritableDatabase();
     ContentValues  values = new ContentValues();
     String         query  = REACTIONS_UNREAD + " != ?";
     String[]       args   = new String[] { "0" };
@@ -400,7 +396,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   public void addReaction(long messageId, @NonNull ReactionRecord reaction) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
 
     db.beginTransaction();
 
@@ -430,7 +426,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   public void deleteReaction(long messageId, @NonNull RecipientId author) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
 
     db.beginTransaction();
 
@@ -451,7 +447,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   public boolean hasReaction(long messageId, @NonNull ReactionRecord reactionRecord) {
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = databaseHelper.getSignalReadableDatabase();
 
     ReactionList reactions = getReactions(db, messageId).or(ReactionList.getDefaultInstance());
 
@@ -471,7 +467,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
       return;
     }
 
-    SQLiteDatabase db     = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db     = databaseHelper.getSignalWritableDatabase();
     SqlUtil.Query  where  = SqlUtil.buildCollectionQuery(ID, ids);
     ContentValues  values = new ContentValues();
 
@@ -501,7 +497,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   public @NonNull List<ReportSpamData> getReportSpamMessageServerGuids(long threadId, long timestamp) {
-    SQLiteDatabase db    = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db    = databaseHelper.getSignalReadableDatabase();
     String         query = THREAD_ID + " = ? AND " + getDateReceivedColumnName() + " <= ?";
     String[]       args  = SqlUtil.buildArgs(threadId, timestamp);
 
@@ -542,7 +538,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   protected <D extends Document<I>, I> void removeFromDocument(long messageId, String column, I object, Class<D> clazz) throws IOException {
-    SQLiteDatabase database = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database = databaseHelper.getSignalWritableDatabase();
     database.beginTransaction();
 
     try {
@@ -574,7 +570,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   }
 
   protected <T extends Document<I>, I> void addToDocument(long messageId, String column, List<I> objects, Class<T> clazz) throws IOException {
-    SQLiteDatabase database = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database = databaseHelper.getSignalWritableDatabase();
     database.beginTransaction();
 
     try {

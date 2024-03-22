@@ -15,6 +15,7 @@ import su.sres.securesms.conversation.colors.ChatColors;
 import su.sres.securesms.conversation.colors.ChatColorsMapper;
 import su.sres.securesms.database.ChatColorsDatabase;
 import su.sres.securesms.database.EmojiSearchDatabase;
+import su.sres.securesms.database.GroupCallRingDatabase;
 import su.sres.securesms.database.MentionDatabase;
 import su.sres.securesms.database.MessageSendLogDatabase;
 import su.sres.securesms.database.PaymentDatabase;
@@ -25,6 +26,7 @@ import su.sres.securesms.database.SignalDatabase;
 import su.sres.securesms.database.SqlCipherDatabaseHook;
 import su.sres.securesms.database.SqlCipherErrorHandler;
 import su.sres.securesms.database.model.AvatarPickerDatabase;
+
 import su.sres.securesms.database.model.databaseprotos.ReactionList;
 import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;
@@ -73,37 +75,38 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
   @SuppressWarnings("unused")
   private static final String TAG = Log.tag(SQLCipherOpenHelper.class);
 
-  private static final int SERVER_DELIVERED_TIMESTAMP                                                   = 64;
-  private static final int QUOTE_CLEANUP                                                                = 65;
-  private static final int BORDERLESS                                                                   = 66;
-  private static final int MENTIONS                                                                     = 67;
-  private static final int PINNED_CONVERSATIONS_MENTION_GLOBAL_SETTING_MIGRATION_UNKNOWN_STORAGE_FIELDS = 68;
-  private static final int STICKER_CONTENT_TYPE_EMOJI_IN_NOTIFICATIONS                                  = 69;
-  private static final int THUMBNAIL_CLEANUP_AND_STICKER_CONTENT_TYPE_CLEANUP_AND_MENTION_CLEANUP       = 70;
-  private static final int REACTION_CLEANUP                                                             = 71;
-  private static final int CAPABILITIES_REFACTOR_AND_GV1_MIGRATION                                      = 72;
-  private static final int NOTIFIED_TIMESTAMP_AND_GV1_MIGRATION_LAST_SEEN                               = 73;
-  private static final int VIEWED_RECEIPTS_CLEAN_UP_GV1_IDS                                             = 74;
-  private static final int GV1_MIGRATION_REFACTOR                                                       = 75;
-  private static final int CLEAR_PROFILE_KEY_CREDENTIALS                                                = 76;
-  private static final int LAST_RESET_SESSION_TIME_AND_WALLPAPER_AND_ABOUT                              = 77;
-  private static final int SPLIT_SYSTEM_NAMES                                                           = 78;
-  private static final int PAYMENTS_AND_CLEAN_STORAGE_IDS                                               = 79;
-  private static final int MP4_GIF_SUPPORT_AND_BLUR_AVATARS_AND_CLEAN_STORAGE_IDS_WITHOUT_INFO          = 80;
-  private static final int CLEAN_REACTION_NOTIFICATIONS                                                 = 81;
-  private static final int STORAGE_SERVICE_REFACTOR                                                     = 82;
-  private static final int CLEAR_MMS_STORAGE_IDS                                                        = 83;
-  private static final int SERVER_GUID                                                                  = 84;
-  private static final int CHAT_COLORS_AND_AVATAR_COLORS_AND_EMOJI_SEARCH                               = 85;
-  private static final int SENDER_KEY                                                                   = 86;
-  private static final int MESSAGE_DUPE_INDEX_AND_MESSAGE_LOG                                           = 87;
-  private static final int MESSAGE_LOG_2                                                                = 88;
-  private static final int ABANDONED_MESSAGE_CLEANUP                                                    = 89;
-  private static final int THREAD_AUTOINCREMENT_AND_MMS_AUTOINCREMENT_AND_ABANDONED_ATTACHMENT_CLEANUP  = 90;
-  private static final int AVATAR_PICKER                                                                = 91;
-  private static final int THREAD_CLEANUP                                                               = 92;
+  private static final int SERVER_DELIVERED_TIMESTAMP                                                             = 64;
+  private static final int QUOTE_CLEANUP                                                                          = 65;
+  private static final int BORDERLESS                                                                             = 66;
+  private static final int MENTIONS                                                                               = 67;
+  private static final int PINNED_CONVERSATIONS_MENTION_GLOBAL_SETTING_MIGRATION_UNKNOWN_STORAGE_FIELDS           = 68;
+  private static final int STICKER_CONTENT_TYPE_EMOJI_IN_NOTIFICATIONS                                            = 69;
+  private static final int THUMBNAIL_CLEANUP_AND_STICKER_CONTENT_TYPE_CLEANUP_AND_MENTION_CLEANUP                 = 70;
+  private static final int REACTION_CLEANUP                                                                       = 71;
+  private static final int CAPABILITIES_REFACTOR_AND_GV1_MIGRATION                                                = 72;
+  private static final int NOTIFIED_TIMESTAMP_AND_GV1_MIGRATION_LAST_SEEN                                         = 73;
+  private static final int VIEWED_RECEIPTS_CLEAN_UP_GV1_IDS                                                       = 74;
+  private static final int GV1_MIGRATION_REFACTOR                                                                 = 75;
+  private static final int CLEAR_PROFILE_KEY_CREDENTIALS                                                          = 76;
+  private static final int LAST_RESET_SESSION_TIME_AND_WALLPAPER_AND_ABOUT                                        = 77;
+  private static final int SPLIT_SYSTEM_NAMES                                                                     = 78;
+  private static final int PAYMENTS_AND_CLEAN_STORAGE_IDS                                                         = 79;
+  private static final int MP4_GIF_SUPPORT_AND_BLUR_AVATARS_AND_CLEAN_STORAGE_IDS_WITHOUT_INFO                    = 80;
+  private static final int CLEAN_REACTION_NOTIFICATIONS                                                           = 81;
+  private static final int STORAGE_SERVICE_REFACTOR                                                               = 82;
+  private static final int CLEAR_MMS_STORAGE_IDS                                                                  = 83;
+  private static final int SERVER_GUID                                                                            = 84;
+  private static final int CHAT_COLORS_AND_AVATAR_COLORS_AND_EMOJI_SEARCH                                         = 85;
+  private static final int SENDER_KEY                                                                             = 86;
+  private static final int MESSAGE_DUPE_INDEX_AND_MESSAGE_LOG                                                     = 87;
+  private static final int MESSAGE_LOG_2                                                                          = 88;
+  private static final int ABANDONED_MESSAGE_CLEANUP                                                              = 89;
+  private static final int THREAD_AUTOINCREMENT_AND_MMS_AUTOINCREMENT_AND_ABANDONED_ATTACHMENT_CLEANUP            = 90;
+  private static final int AVATAR_PICKER                                                                          = 91;
+  private static final int THREAD_CLEANUP                                                                         = 92;
+  private static final int SESSION_AND_IDENTITY_MIGRATION_AND_GROUP_CALL_RING_TABLE_AND_CLEANUP_SESSION_MIGRATION = 93;
 
-  private static final int    DATABASE_VERSION = 92;
+  private static final int    DATABASE_VERSION = 93;
   private static final String DATABASE_NAME    = "shadow.db";
 
   private final Context        context;
@@ -114,6 +117,12 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
 
     this.context        = context.getApplicationContext();
     this.databaseSecret = databaseSecret;
+  }
+
+  @Override
+  public void onOpen(SQLiteDatabase db) {
+    db.enableWriteAheadLogging();
+    db.setForeignKeyConstraintsEnabled(true);
   }
 
   @Override
@@ -141,6 +150,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     db.execSQL(ChatColorsDatabase.CREATE_TABLE);
     db.execSQL(EmojiSearchDatabase.CREATE_TABLE);
     db.execSQL(AvatarPickerDatabase.CREATE_TABLE);
+    db.execSQL(GroupCallRingDatabase.CREATE_TABLE);
 
     executeStatements(db, SearchDatabase.CREATE_TABLE);
     executeStatements(db, MessageSendLogDatabase.CREATE_TABLE);
@@ -158,6 +168,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     executeStatements(db, MentionDatabase.CREATE_INDEXES);
     executeStatements(db, PaymentDatabase.CREATE_INDEXES);
     executeStatements(db, MessageSendLogDatabase.CREATE_INDEXES);
+    executeStatements(db, GroupCallRingDatabase.CREATE_INDEXES);
 
     executeStatements(db, MessageSendLogDatabase.CREATE_TRIGGERS);
   }
@@ -518,12 +529,12 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
 
         String selectIdsToUpdateProfileSharing = "SELECT r._id FROM recipient AS r INNER JOIN thread AS t ON r._id = t.recipient_ids WHERE profile_sharing = 0 AND (" + secureOutgoingSms + " OR " + secureOutgoingMms + ")";
 
-        db.rawExecSQL("UPDATE recipient SET profile_sharing = 1 WHERE _id IN (" + selectIdsToUpdateProfileSharing + ")");
+        db.execSQL("UPDATE recipient SET profile_sharing = 1 WHERE _id IN (" + selectIdsToUpdateProfileSharing + ")");
 
         String selectIdsWithGroupsInCommon = "SELECT r._id FROM recipient AS r WHERE EXISTS("
                                              + "SELECT 1 FROM groups AS g INNER JOIN recipient AS gr ON (g.recipient_id = gr._id AND gr.profile_sharing = 1) WHERE g.active = 1 AND (g.members LIKE r._id || ',%' OR g.members LIKE '%,' || r._id || ',%' OR g.members LIKE '%,' || r._id)"
                                              + ")";
-        db.rawExecSQL("UPDATE recipient SET groups_in_common = 1 WHERE _id IN (" + selectIdsWithGroupsInCommon + ")");
+        db.execSQL("UPDATE recipient SET groups_in_common = 1 WHERE _id IN (" + selectIdsWithGroupsInCommon + ")");
 
         ///
 
@@ -1118,6 +1129,71 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
         db.delete("part", "mid != -8675309 AND mid NOT IN (SELECT _id FROM mms)", null);
       }
 
+      if (oldVersion < SESSION_AND_IDENTITY_MIGRATION_AND_GROUP_CALL_RING_TABLE_AND_CLEANUP_SESSION_MIGRATION) {
+        long startSessionMigration = System.currentTimeMillis();
+
+        db.execSQL("CREATE TABLE sessions_tmp (_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                   "address TEXT NOT NULL, " +
+                   "device INTEGER NOT NULL, " +
+                   "record BLOB NOT NULL, " +
+                   "UNIQUE(address, device))");
+
+        db.execSQL("INSERT INTO sessions_tmp (address, device, record) " +
+                   "SELECT COALESCE(recipient.uuid, recipient.phone) AS new_address, " +
+                   "sessions.device, " +
+                   "sessions.record " +
+                   "FROM sessions INNER JOIN recipient ON sessions.address = recipient._id " +
+                   "WHERE new_address NOT NULL");
+
+        db.execSQL("DROP TABLE sessions");
+        db.execSQL("ALTER TABLE sessions_tmp RENAME TO sessions");
+
+        Log.d(TAG, "Session migration took " + (System.currentTimeMillis() - startSessionMigration) + " ms");
+
+        ///
+
+        long startIdentityMigration = System.currentTimeMillis();
+
+        db.execSQL("CREATE TABLE identities_tmp (_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                   "address TEXT UNIQUE NOT NULL, " +
+                   "identity_key TEXT, " +
+                   "first_use INTEGER DEFAULT 0, " +
+                   "timestamp INTEGER DEFAULT 0, " +
+                   "verified INTEGER DEFAULT 0, " +
+                   "nonblocking_approval INTEGER DEFAULT 0)");
+
+        db.execSQL("INSERT INTO identities_tmp (address, identity_key, first_use, timestamp, verified, nonblocking_approval) " +
+                   "SELECT COALESCE(recipient.uuid, recipient.phone) AS new_address, " +
+                   "identities.key, " +
+                   "identities.first_use, " +
+                   "identities.timestamp, " +
+                   "identities.verified, " +
+                   "identities.nonblocking_approval " +
+                   "FROM identities INNER JOIN recipient ON identities.address = recipient._id " +
+                   "WHERE new_address NOT NULL");
+
+        db.execSQL("DROP TABLE identities");
+        db.execSQL("ALTER TABLE identities_tmp RENAME TO identities");
+
+        Log.d(TAG, "Identity migration took " + (System.currentTimeMillis() - startIdentityMigration) + " ms");
+
+        ///
+
+        db.execSQL("CREATE TABLE group_call_ring (_id INTEGER PRIMARY KEY, ring_id INTEGER UNIQUE, date_received INTEGER, ring_state INTEGER)");
+        db.execSQL("CREATE INDEX date_received_index on group_call_ring (date_received)");
+
+        ///
+
+        int sessionCount = db.delete("sessions", "address LIKE '+%'", null);
+        Log.i(TAG, "Cleaned up " + sessionCount + " sessions.");
+
+        ContentValues storageValues = new ContentValues();
+        storageValues.putNull("storage_service_key");
+
+        int storageCount = db.update("recipient", storageValues, "storage_service_key NOT NULL AND group_id IS NULL AND uuid IS NULL", null);
+        Log.i(TAG, "Cleaned up " + storageCount + " storageIds.");
+      }
+
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -1126,17 +1202,33 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     Log.i(TAG, "Upgrade complete. Took " + (System.currentTimeMillis() - startTime) + " ms.");
   }
 
-  public su.sres.securesms.database.SQLiteDatabase getReadableDatabase() {
-    return new su.sres.securesms.database.SQLiteDatabase(getReadableDatabase(databaseSecret.asString()));
+  public net.sqlcipher.database.SQLiteDatabase getReadableDatabase() {
+    throw new UnsupportedOperationException("Call getSignalReadableDatabase() instead!");
   }
 
-  public su.sres.securesms.database.SQLiteDatabase getWritableDatabase() {
-    return new su.sres.securesms.database.SQLiteDatabase(getWritableDatabase(databaseSecret.asString()));
+  public net.sqlcipher.database.SQLiteDatabase getWritableDatabase() {
+    throw new UnsupportedOperationException("Call getSignalReadableDatabase() instead!");
+  }
+
+  public net.sqlcipher.database.SQLiteDatabase getRawReadableDatabase() {
+    return super.getReadableDatabase(databaseSecret.asString());
+  }
+
+  public net.sqlcipher.database.SQLiteDatabase getRawWritableDatabase() {
+    return super.getWritableDatabase(databaseSecret.asString());
+  }
+
+  public su.sres.securesms.database.SQLiteDatabase getSignalReadableDatabase() {
+    return new su.sres.securesms.database.SQLiteDatabase(super.getReadableDatabase(databaseSecret.asString()));
+  }
+
+  public su.sres.securesms.database.SQLiteDatabase getSignalWritableDatabase() {
+    return new su.sres.securesms.database.SQLiteDatabase(super.getWritableDatabase(databaseSecret.asString()));
   }
 
   @Override
-  public @NonNull SQLiteDatabase getSqlCipherDatabase() {
-    return getWritableDatabase().getSqlCipherDatabase();
+  public @NonNull net.sqlcipher.database.SQLiteDatabase getSqlCipherDatabase() {
+    return super.getWritableDatabase(databaseSecret.asString());
   }
 
   public void markCurrent(SQLiteDatabase db) {

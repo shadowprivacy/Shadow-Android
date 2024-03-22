@@ -7,7 +7,6 @@ import su.sres.securesms.database.model.MediaMmsMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.FeatureFlags;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -64,7 +63,8 @@ final class MenuState {
 
   static MenuState getMenuState(@NonNull Recipient conversationRecipient,
                                 @NonNull Set<MultiselectPart> selectedParts,
-                                boolean shouldShowMessageRequest)
+                                boolean shouldShowMessageRequest,
+                                boolean isNonAdminInAnnouncementGroup)
   {
 
     Builder builder         = new Builder();
@@ -115,7 +115,7 @@ final class MenuState {
                                       !viewOnce &&
                                       !remoteDelete &&
                                       !hasPendingMedia &&
-                                      ((FeatureFlags.forwardMultipleMessages() && selectedParts.size() <= MAX_FORWARDABLE_COUNT) || selectedParts.size() == 1);
+                                      selectedParts.size() <= MAX_FORWARDABLE_COUNT;
 
     int uniqueRecords = selectedParts.stream()
                                      .map(MultiselectPart::getMessageRecord)
@@ -142,7 +142,7 @@ final class MenuState {
                                              ((MediaMmsMessageRecord) messageRecord).getSlideDeck().getStickerSlide() == null)
              .shouldShowForwardAction(shouldShowForwardAction)
              .shouldShowDetailsAction(!actionMessage)
-             .shouldShowReplyAction(canReplyToMessage(conversationRecipient, actionMessage, messageRecord, shouldShowMessageRequest));
+             .shouldShowReplyAction(canReplyToMessage(conversationRecipient, actionMessage, messageRecord, shouldShowMessageRequest, isNonAdminInAnnouncementGroup));
     }
 
     return builder.shouldShowCopyAction(!actionMessage && !remoteDelete && hasText)
@@ -157,8 +157,14 @@ final class MenuState {
                            .allMatch(collection -> multiselectParts.containsAll(collection.toSet()));
   }
 
-  static boolean canReplyToMessage(@NonNull Recipient conversationRecipient, boolean actionMessage, @NonNull MessageRecord messageRecord, boolean isDisplayingMessageRequest) {
+  static boolean canReplyToMessage(@NonNull Recipient conversationRecipient,
+                                   boolean actionMessage,
+                                   @NonNull MessageRecord messageRecord,
+                                   boolean isDisplayingMessageRequest,
+                                   boolean isNonAdminInAnnouncementGroup)
+  {
     return !actionMessage &&
+           !isNonAdminInAnnouncementGroup &&
            !messageRecord.isRemoteDelete() &&
            !messageRecord.isPending() &&
            !messageRecord.isFailed() &&
