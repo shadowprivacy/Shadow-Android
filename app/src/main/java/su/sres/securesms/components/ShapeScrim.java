@@ -23,9 +23,12 @@ public class ShapeScrim extends View {
   private final Paint     eraser;
   private final ShapeType shape;
   private final float     radius;
+  private final int       canvasColor;
 
   private Bitmap scrim;
   private Canvas scrimCanvas;
+  private int    scrimWidth;
+  private int    scrimHeight;
 
   public ShapeScrim(Context context) {
     this(context, null);
@@ -42,9 +45,9 @@ public class ShapeScrim extends View {
       TypedArray typedArray = context.getTheme().obtainStyledAttributes(attrs, R.styleable.ShapeScrim, 0, 0);
       String     shapeName  = typedArray.getString(R.styleable.ShapeScrim_shape);
 
-      if      ("square".equalsIgnoreCase(shapeName)) this.shape = ShapeType.SQUARE;
+      if ("square".equalsIgnoreCase(shapeName)) this.shape = ShapeType.SQUARE;
       else if ("circle".equalsIgnoreCase(shapeName)) this.shape = ShapeType.CIRCLE;
-      else                                           this.shape = ShapeType.SQUARE;
+      else this.shape = ShapeType.SQUARE;
 
       this.radius = typedArray.getFloat(R.styleable.ShapeScrim_radius, 0.4f);
 
@@ -57,25 +60,42 @@ public class ShapeScrim extends View {
     this.eraser = new Paint();
     this.eraser.setColor(0xFFFFFFFF);
     this.eraser.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+
+    this.canvasColor = Color.parseColor("#55BDBDBD");
+  }
+
+  @Override
+  protected void onLayout(boolean changed, int l, int t, int r, int b) {
+    super.onLayout(changed, l, t, r, b);
+    int   shortDimension = Math.min(getWidth(), getHeight());
+    float drawRadius     = shortDimension * radius;
+
+    float left   = (getMeasuredWidth() / 2) - drawRadius;
+    float top    = (getMeasuredHeight() / 2) - drawRadius;
+    float right  = left + (drawRadius * 2);
+    float bottom = top + (drawRadius * 2);
+
+    scrimWidth  = (int) (right - left);
+    scrimHeight = (int) (bottom - top);
   }
 
   @Override
   public void onDraw(Canvas canvas) {
     super.onDraw(canvas);
 
-    int   shortDimension = getWidth() < getHeight() ? getWidth() : getHeight();
+    int   shortDimension = Math.min(getWidth(), getHeight());
     float drawRadius     = shortDimension * radius;
 
     if (scrimCanvas == null) {
-      scrim = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+      scrim       = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
       scrimCanvas = new Canvas(scrim);
     }
 
     scrim.eraseColor(Color.TRANSPARENT);
-    scrimCanvas.drawColor(Color.parseColor("#55BDBDBD"));
+    scrimCanvas.drawColor(canvasColor);
 
     if (shape == ShapeType.CIRCLE) drawCircle(scrimCanvas, drawRadius, eraser);
-    else                           drawSquare(scrimCanvas, drawRadius, eraser);
+    else drawSquare(scrimCanvas, drawRadius, eraser);
 
     canvas.drawBitmap(scrim, 0, 0, null);
   }
@@ -95,7 +115,7 @@ public class ShapeScrim extends View {
   }
 
   private void drawSquare(Canvas canvas, float radius, Paint eraser) {
-    float left   = (getWidth() / 2 ) - radius;
+    float left   = (getWidth() / 2) - radius;
     float top    = (getHeight() / 2) - radius;
     float right  = left + (radius * 2);
     float bottom = top + (radius * 2);
@@ -103,5 +123,13 @@ public class ShapeScrim extends View {
     RectF square = new RectF(left, top, right, bottom);
 
     canvas.drawRoundRect(square, 25, 25, eraser);
+  }
+
+  public int getScrimWidth() {
+    return scrimWidth;
+  }
+
+  public int getScrimHeight() {
+    return scrimHeight;
   }
 }

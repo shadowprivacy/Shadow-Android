@@ -1,6 +1,7 @@
 package su.sres.securesms.conversation.multiselect.forward
 
 import android.content.Context
+import androidx.annotation.StringRes
 import androidx.annotation.WorkerThread
 import su.sres.core.util.StreamUtil
 import su.sres.core.util.ThreadUtil
@@ -12,13 +13,22 @@ import su.sres.securesms.mediasend.Media
 import su.sres.securesms.mms.PartAuthority
 import su.sres.securesms.sharing.MultiShareArgs
 import org.whispersystems.libsignal.util.guava.Optional
+import su.sres.securesms.R
 import su.sres.securesms.conversation.multiselect.Multiselect
 import su.sres.securesms.conversation.multiselect.MultiselectPart
 import java.util.function.Consumer
 
+/**
+ * Arguments for the MultiselectForwardFragment.
+ *
+ * @param canSendToNonPush Whether non-push recipients will be displayed
+ * @param multiShareArgs   The items to forward. If this is an empty list, the fragment owner will be sent back a selected list of contacts.
+ * @param title            The title to display at the top of the sheet
+ */
 class MultiselectForwardFragmentArgs(
   val canSendToNonPush: Boolean,
-  val multiShareArgs: List<MultiShareArgs>
+  val multiShareArgs: List<MultiShareArgs> = listOf(),
+  @StringRes val title: Int = R.string.MultiselectForwardFragment__forward_to
 ) {
 
   companion object {

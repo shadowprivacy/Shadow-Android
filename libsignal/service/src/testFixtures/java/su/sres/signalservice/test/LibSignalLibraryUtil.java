@@ -1,10 +1,8 @@
 package su.sres.signalservice.test;
 
+import org.junit.Assert;
+import org.junit.Assume;
 import org.signal.zkgroup.internal.Native;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeNoException;
 
 public final class LibSignalLibraryUtil {
 

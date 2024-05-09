@@ -97,8 +97,9 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
     List<PinnedConversation>           pinnedConversations    = remote.getPinnedConversations();
     AccountRecord.UserLoginSharingMode userLoginSharingMode   = remote.getUserLoginSharingMode();
     int                                universalExpireTimer   = remote.getUniversalExpireTimer();
-    boolean                            matchesRemote          = doParamsMatch(remote, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations, payments, universalExpireTimer);
-    boolean                            matchesLocal           = doParamsMatch(local, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations, payments, universalExpireTimer);
+    String                             userLogin              = local.getUserLogin();
+    boolean                            matchesRemote          = doParamsMatch(remote, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations, payments, universalExpireTimer, userLogin);
+    boolean                            matchesLocal           = doParamsMatch(local, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations, payments, universalExpireTimer, userLogin);
 
     if (matchesRemote) {
       return remote;
@@ -123,6 +124,7 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
           .setPinnedConversations(pinnedConversations)
           .setPayments(payments.isEnabled(), payments.getEntropy().orNull())
           .setUniversalExpireTimer(universalExpireTimer)
+          .setUserLogin(userLogin)
           .build();
     }
   }
@@ -158,13 +160,15 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
                                        boolean unlistedPhoneNumber,
                                        @NonNull List<PinnedConversation> pinnedConversations,
                                        SignalAccountRecord.Payments payments,
-                                       int universalExpireTimer)
+                                       int universalExpireTimer,
+                                       String userLogin)
   {
     return Arrays.equals(contact.serializeUnknownFields(), unknownFields) &&
            Objects.equals(contact.getGivenName().or(""), givenName) &&
            Objects.equals(contact.getFamilyName().or(""), familyName) &&
            Objects.equals(contact.getAvatarUrlPath().or(""), avatarUrlPath) &&
            Objects.equals(contact.getPayments(), payments) &&
+           Objects.equals(contact.getUserLogin(), userLogin) &&
            Arrays.equals(contact.getProfileKey().orNull(), profileKey) &&
            contact.isNoteToSelfArchived() == noteToSelfArchived &&
            contact.isNoteToSelfForcedUnread() == noteToSelfForcedUnread &&

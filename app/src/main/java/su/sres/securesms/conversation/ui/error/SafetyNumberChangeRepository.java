@@ -15,7 +15,7 @@ import su.sres.securesms.crypto.SessionUtil;
 import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
-import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
+import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
@@ -69,7 +69,7 @@ final class SafetyNumberChangeRepository {
 
     List<Recipient> recipients = Stream.of(recipientIds).map(Recipient::resolved).toList();
 
-    List<ChangedRecipient> changedRecipients = Stream.of(DatabaseFactory.getIdentityDatabase(context).getIdentities(recipients).getIdentityRecords())
+    List<ChangedRecipient> changedRecipients = Stream.of(ApplicationDependencies.getIdentityStore().getIdentityRecords(recipients).getIdentityRecords())
                                                      .map(record -> new ChangedRecipient(Recipient.resolved(record.getRecipientId()), record))
                                                      .toList();
 
@@ -97,7 +97,7 @@ final class SafetyNumberChangeRepository {
 
   @WorkerThread
   private TrustAndVerifyResult trustOrVerifyChangedRecipientsInternal(@NonNull List<ChangedRecipient> changedRecipients) {
-    IdentityDatabase identityDatabase = DatabaseFactory.getIdentityDatabase(context);
+    TextSecureIdentityKeyStore identityStore = ApplicationDependencies.getIdentityStore();
 
     try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
       for (ChangedRecipient changedRecipient : changedRecipients) {
@@ -105,12 +105,12 @@ final class SafetyNumberChangeRepository {
 
         if (changedRecipient.isUnverified()) {
           Log.d(TAG, "Setting " + identityRecord.getRecipientId() + " as verified");
-          identityDatabase.setVerified(identityRecord.getRecipientId(),
-                                       identityRecord.getIdentityKey(),
-                                       IdentityDatabase.VerifiedStatus.DEFAULT);
+          ApplicationDependencies.getIdentityStore().setVerified(identityRecord.getRecipientId(),
+                                                                 identityRecord.getIdentityKey(),
+                                                                 IdentityDatabase.VerifiedStatus.DEFAULT);
         } else {
           Log.d(TAG, "Setting " + identityRecord.getRecipientId() + " as approved");
-          identityDatabase.setApproval(identityRecord.getRecipientId(), true);
+          identityStore.setApproval(identityRecord.getRecipientId(), true);
         }
       }
     }

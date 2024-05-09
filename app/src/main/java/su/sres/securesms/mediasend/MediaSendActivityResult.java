@@ -1,5 +1,6 @@
 package su.sres.securesms.mediasend;
 
+import android.content.Intent;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -11,6 +12,7 @@ import su.sres.securesms.database.model.Mention;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sms.MessageSender.PreUploadResult;
 import su.sres.securesms.util.ParcelUtil;
+
 import org.whispersystems.libsignal.util.guava.Preconditions;
 
 import java.util.Collection;
@@ -21,120 +23,131 @@ import java.util.List;
  * A class that lets us nicely format data that we'll send back to {@link ConversationActivity}.
  */
 public class MediaSendActivityResult implements Parcelable {
-    private final RecipientId recipientId;
-    private final Collection<PreUploadResult> uploadResults;
-    private final Collection<Media>           nonUploadedMedia;
-    private final String                      body;
-    private final TransportOption             transport;
-    private final boolean                     viewOnce;
-    private final Collection<Mention>         mentions;
+  public static final String EXTRA_RESULT = "result";
 
-    static @NonNull MediaSendActivityResult forPreUpload(@NonNull RecipientId recipientId,
-                                                         @NonNull Collection<PreUploadResult> uploadResults,
-                                                         @NonNull String body,
-                                                         @NonNull TransportOption transport,
-                                                         boolean viewOnce,
-                                                         @NonNull List<Mention> mentions)
-    {
-        Preconditions.checkArgument(uploadResults.size() > 0, "Must supply uploadResults!");
-        return new MediaSendActivityResult(recipientId, uploadResults, Collections.emptyList(), body, transport, viewOnce, mentions);
+  private final RecipientId                 recipientId;
+  private final Collection<PreUploadResult> uploadResults;
+  private final Collection<Media>           nonUploadedMedia;
+  private final String                      body;
+  private final TransportOption             transport;
+  private final boolean                     viewOnce;
+  private final Collection<Mention>         mentions;
+
+  public static @NonNull MediaSendActivityResult fromData(@NonNull Intent data) {
+    MediaSendActivityResult result = data.getParcelableExtra(MediaSendActivityResult.EXTRA_RESULT);
+    if (result == null) {
+      throw new IllegalArgumentException();
     }
 
-    static @NonNull MediaSendActivityResult forTraditionalSend(@NonNull RecipientId recipientId,
-                                                               @NonNull List<Media> nonUploadedMedia,
-                                                               @NonNull String body,
-                                                               @NonNull TransportOption transport,
-                                                               boolean viewOnce,
-                                                               @NonNull List<Mention> mentions)
-    {
-        Preconditions.checkArgument(nonUploadedMedia.size() > 0, "Must supply media!");
-        return new MediaSendActivityResult(recipientId, Collections.emptyList(), nonUploadedMedia, body, transport, viewOnce, mentions);
+    return result;
+  }
+
+  public static @NonNull MediaSendActivityResult forPreUpload(@NonNull RecipientId recipientId,
+                                                              @NonNull Collection<PreUploadResult> uploadResults,
+                                                              @NonNull String body,
+                                                              @NonNull TransportOption transport,
+                                                              boolean viewOnce,
+                                                              @NonNull List<Mention> mentions)
+  {
+    Preconditions.checkArgument(uploadResults.size() > 0, "Must supply uploadResults!");
+    return new MediaSendActivityResult(recipientId, uploadResults, Collections.emptyList(), body, transport, viewOnce, mentions);
+  }
+
+  public static @NonNull MediaSendActivityResult forTraditionalSend(@NonNull RecipientId recipientId,
+                                                                    @NonNull List<Media> nonUploadedMedia,
+                                                                    @NonNull String body,
+                                                                    @NonNull TransportOption transport,
+                                                                    boolean viewOnce,
+                                                                    @NonNull List<Mention> mentions)
+  {
+    Preconditions.checkArgument(nonUploadedMedia.size() > 0, "Must supply media!");
+    return new MediaSendActivityResult(recipientId, Collections.emptyList(), nonUploadedMedia, body, transport, viewOnce, mentions);
+  }
+
+  private MediaSendActivityResult(@NonNull RecipientId recipientId,
+                                  @NonNull Collection<PreUploadResult> uploadResults,
+                                  @NonNull List<Media> nonUploadedMedia,
+                                  @NonNull String body,
+                                  @NonNull TransportOption transport,
+                                  boolean viewOnce,
+                                  @NonNull List<Mention> mentions)
+  {
+    this.recipientId      = recipientId;
+    this.uploadResults    = uploadResults;
+    this.nonUploadedMedia = nonUploadedMedia;
+    this.body             = body;
+    this.transport        = transport;
+    this.viewOnce         = viewOnce;
+    this.mentions         = mentions;
+  }
+
+  private MediaSendActivityResult(Parcel in) {
+    this.recipientId      = in.readParcelable(RecipientId.class.getClassLoader());
+    this.uploadResults    = ParcelUtil.readParcelableCollection(in, PreUploadResult.class);
+    this.nonUploadedMedia = ParcelUtil.readParcelableCollection(in, Media.class);
+    this.body             = in.readString();
+    this.transport        = in.readParcelable(TransportOption.class.getClassLoader());
+    this.viewOnce         = ParcelUtil.readBoolean(in);
+    this.mentions         = ParcelUtil.readParcelableCollection(in, Mention.class);
+  }
+
+  public @NonNull RecipientId getRecipientId() {
+    return recipientId;
+  }
+
+  public boolean isPushPreUpload() {
+    return uploadResults.size() > 0;
+  }
+
+  public @NonNull Collection<PreUploadResult> getPreUploadResults() {
+    return uploadResults;
+  }
+
+  public @NonNull Collection<Media> getNonUploadedMedia() {
+    return nonUploadedMedia;
+  }
+
+  public @NonNull String getBody() {
+    return body;
+  }
+
+  public @NonNull TransportOption getTransport() {
+    return transport;
+  }
+
+  public boolean isViewOnce() {
+    return viewOnce;
+  }
+
+  public @NonNull Collection<Mention> getMentions() {
+    return mentions;
+  }
+
+  public static final Creator<MediaSendActivityResult> CREATOR = new Creator<MediaSendActivityResult>() {
+    @Override
+    public MediaSendActivityResult createFromParcel(Parcel in) {
+      return new MediaSendActivityResult(in);
     }
-
-    private MediaSendActivityResult(@NonNull RecipientId recipientId,
-                                    @NonNull Collection<PreUploadResult> uploadResults,
-                                    @NonNull List<Media> nonUploadedMedia,
-                                    @NonNull String body,
-                                    @NonNull TransportOption transport,
-                                    boolean viewOnce,
-                                    @NonNull List<Mention> mentions)
-    {
-        this.recipientId      = recipientId;
-        this.uploadResults    = uploadResults;
-        this.nonUploadedMedia = nonUploadedMedia;
-        this.body             = body;
-        this.transport        = transport;
-        this.viewOnce         = viewOnce;
-        this.mentions         = mentions;
-    }
-
-    private MediaSendActivityResult(Parcel in) {
-        this.recipientId      = in.readParcelable(RecipientId.class.getClassLoader());
-        this.uploadResults    = ParcelUtil.readParcelableCollection(in, PreUploadResult.class);
-        this.nonUploadedMedia = ParcelUtil.readParcelableCollection(in, Media.class);
-        this.body             = in.readString();
-        this.transport        = in.readParcelable(TransportOption.class.getClassLoader());
-        this.viewOnce         = ParcelUtil.readBoolean(in);
-        this.mentions         = ParcelUtil.readParcelableCollection(in, Mention.class);
-    }
-
-    public @NonNull RecipientId getRecipientId() {
-        return recipientId;
-    }
-
-    public boolean isPushPreUpload() {
-        return uploadResults.size() > 0;
-    }
-
-    public @NonNull Collection<PreUploadResult> getPreUploadResults() {
-        return uploadResults;
-    }
-
-    public @NonNull Collection<Media> getNonUploadedMedia() {
-        return nonUploadedMedia;
-    }
-
-    public @NonNull String getBody() {
-        return body;
-    }
-
-    public @NonNull TransportOption getTransport() {
-        return transport;
-    }
-
-    public boolean isViewOnce() {
-        return viewOnce;
-    }
-
-    public @NonNull Collection<Mention> getMentions() {
-        return mentions;
-    }
-
-    public static final Creator<MediaSendActivityResult> CREATOR = new Creator<MediaSendActivityResult>() {
-        @Override
-        public MediaSendActivityResult createFromParcel(Parcel in) {
-            return new MediaSendActivityResult(in);
-        }
-
-        @Override
-        public MediaSendActivityResult[] newArray(int size) {
-            return new MediaSendActivityResult[size];
-        }
-    };
 
     @Override
-    public int describeContents() {
-        return 0;
+    public MediaSendActivityResult[] newArray(int size) {
+      return new MediaSendActivityResult[size];
     }
+  };
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeParcelable(recipientId, 0);
-        ParcelUtil.writeParcelableCollection(dest, uploadResults);
-        ParcelUtil.writeParcelableCollection(dest, nonUploadedMedia);
-        dest.writeString(body);
-        dest.writeParcelable(transport, 0);
-        ParcelUtil.writeBoolean(dest, viewOnce);
-        ParcelUtil.writeParcelableCollection(dest, mentions);
-    }
+  @Override
+  public int describeContents() {
+    return 0;
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    dest.writeParcelable(recipientId, 0);
+    ParcelUtil.writeParcelableCollection(dest, uploadResults);
+    ParcelUtil.writeParcelableCollection(dest, nonUploadedMedia);
+    dest.writeString(body);
+    dest.writeParcelable(transport, 0);
+    ParcelUtil.writeBoolean(dest, viewOnce);
+    ParcelUtil.writeParcelableCollection(dest, mentions);
+  }
 }

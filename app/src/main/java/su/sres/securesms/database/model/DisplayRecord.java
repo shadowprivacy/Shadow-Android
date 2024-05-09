@@ -177,6 +177,10 @@ public abstract class DisplayRecord {
     return SmsDatabase.Types.isProfileChange(type);
   }
 
+  public boolean isChangeLogin() {
+    return SmsDatabase.Types.isChangeLogin(type);
+  }
+
   public int getDeliveryStatus() {
     return deliveryStatus;
   }

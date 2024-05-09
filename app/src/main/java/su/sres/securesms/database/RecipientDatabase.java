@@ -14,7 +14,7 @@ import com.annimon.stream.Stream;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
-import net.sqlcipher.database.SQLiteConstraintException;
+import net.zetetic.database.sqlcipher.SQLiteConstraintException;
 
 import org.jetbrains.annotations.NotNull;
 import org.signal.zkgroup.InvalidInputException;
@@ -27,13 +27,16 @@ import su.sres.securesms.conversation.colors.AvatarColor;
 import su.sres.securesms.conversation.colors.ChatColors;
 import su.sres.securesms.conversation.colors.ChatColorsMapper;
 import su.sres.securesms.crypto.ProfileKeyUtil;
+import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.database.model.databaseprotos.ChatColor;
 import su.sres.securesms.database.model.databaseprotos.DeviceLastResetTime;
 import su.sres.securesms.database.model.databaseprotos.RecipientExtras;
 import su.sres.securesms.database.model.databaseprotos.Wallpaper;
+import su.sres.securesms.groups.BadGroupIdException;
 import su.sres.securesms.groups.v2.ProfileKeySet;
 import su.sres.securesms.groups.v2.processing.GroupsV2StateProcessor;
+import su.sres.securesms.jobs.RecipientChangedLoginJob;
 import su.sres.securesms.jobs.RefreshAttributesJob;
 import su.sres.securesms.jobs.RequestGroupV2InfoJob;
 import su.sres.securesms.jobs.RetrieveProfileJob;
@@ -41,7 +44,7 @@ import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.storage.StorageRecordUpdate;
 import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.storage.StorageSyncModels;
-import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
+import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.databaseprotos.ProfileKeyCredentialColumnData;
@@ -168,6 +171,7 @@ public class RecipientDatabase extends Database {
     static final int GROUPS_V1_MIGRATION = 1;
     static final int SENDER_KEY          = 2;
     static final int ANNOUNCEMENT_GROUPS = 3;
+    static final int CHANGE_LOGIN        = 4;
   }
 
   private static final String[] RECIPIENT_PROJECTION = new String[] {
@@ -419,12 +423,17 @@ public class RecipientDatabase extends Database {
   }
 
   public @NonNull RecipientId getAndPossiblyMerge(@Nullable UUID uuid, @Nullable String userLogin, boolean highTrust) {
+    return getAndPossiblyMerge(uuid, userLogin, highTrust, false);
+  }
+
+  public @NonNull RecipientId getAndPossiblyMerge(@Nullable UUID uuid, @Nullable String userLogin, boolean highTrust, boolean changeSelf) {
     if (uuid == null && userLogin == null) {
       throw new IllegalArgumentException("Must provide a UUID or user login!");
     }
 
     RecipientId                    recipientNeedingRefresh = null;
     Pair<RecipientId, RecipientId> remapped                = null;
+    RecipientId                    recipientChangedLogin   = null;
     boolean                        transactionSuccessful   = false;
 
     SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
@@ -487,6 +496,10 @@ public class RecipientDatabase extends Database {
         if (recipientNeedingRefresh != null || remapped != null) {
           // StorageSyncHelper.scheduleSyncForDataChange();
           RecipientId.clearCache();
+        }
+
+        if (recipientChangedLogin != null) {
+          ApplicationDependencies.getJobManager().add(new RecipientChangedLoginJob(recipientChangedLogin));
         }
       }
     }
@@ -740,7 +753,7 @@ public class RecipientDatabase extends Database {
       try {
         IdentityKey identityKey = new IdentityKey(insert.getIdentityKey().get(), 0);
 
-        DatabaseFactory.getIdentityDatabase(context).updateIdentityAfterSync(insert.getAddress().getIdentifier(), identityKey, StorageSyncModels.remoteToLocalIdentityStatus(insert.getIdentityState()));
+        DatabaseFactory.getIdentityDatabase(context).updateIdentityAfterSync(insert.getAddress().getIdentifier(), recipientId, identityKey, StorageSyncModels.remoteToLocalIdentityStatus(insert.getIdentityState()));
       } catch (InvalidKeyException e) {
         Log.w(TAG, "Failed to process identity key during insert! Skipping.", e);
       }
@@ -750,9 +763,9 @@ public class RecipientDatabase extends Database {
   }
 
   public void applyStorageSyncContactUpdate(@NonNull StorageRecordUpdate<SignalContactRecord> update) {
-    SQLiteDatabase   db               = databaseHelper.getSignalWritableDatabase();
-    IdentityDatabase identityDatabase = DatabaseFactory.getIdentityDatabase(context);
-    ContentValues    values           = getValuesForStorageContact(update.getNew(), false);
+    SQLiteDatabase             db            = databaseHelper.getSignalWritableDatabase();
+    TextSecureIdentityKeyStore identityStore = ApplicationDependencies.getIdentityStore();
+    ContentValues              values        = getValuesForStorageContact(update.getNew(), false);
 
     try {
       int updateCount = db.update(TABLE_NAME, values, STORAGE_SERVICE_ID + " = ?", new String[] { Base64.encodeBytes(update.getOld().getId().getRaw()) });
@@ -780,14 +793,14 @@ public class RecipientDatabase extends Database {
     }
 
     try {
-      Optional<IdentityRecord> oldIdentityRecord = identityDatabase.getIdentity(recipientId);
+      Optional<IdentityRecord> oldIdentityRecord = identityStore.getIdentityRecord(recipientId);
 
       if (update.getNew().getIdentityKey().isPresent() && update.getNew().getAddress().hasValidUuid()) {
         IdentityKey identityKey = new IdentityKey(update.getNew().getIdentityKey().get(), 0);
-        DatabaseFactory.getIdentityDatabase(context).updateIdentityAfterSync(update.getNew().getAddress().getIdentifier(), identityKey, StorageSyncModels.remoteToLocalIdentityStatus(update.getNew().getIdentityState()));
+        DatabaseFactory.getIdentityDatabase(context).updateIdentityAfterSync(update.getNew().getAddress().getIdentifier(), recipientId, identityKey, StorageSyncModels.remoteToLocalIdentityStatus(update.getNew().getIdentityState()));
       }
 
-      Optional<IdentityRecord> newIdentityRecord = identityDatabase.getIdentity(recipientId);
+      Optional<IdentityRecord> newIdentityRecord = identityStore.getIdentityRecord(recipientId);
 
       if ((newIdentityRecord.isPresent() && newIdentityRecord.get().getVerifiedStatus() == VerifiedStatus.VERIFIED) &&
           (!oldIdentityRecord.isPresent() || oldIdentityRecord.get().getVerifiedStatus() != VerifiedStatus.VERIFIED))
@@ -1557,6 +1570,7 @@ public class RecipientDatabase extends Database {
     value = Bitmask.update(value, Capabilities.GROUPS_V1_MIGRATION, Capabilities.BIT_LENGTH, Recipient.Capability.fromBoolean(capabilities.isGv1Migration()).serialize());
     value = Bitmask.update(value, Capabilities.SENDER_KEY, Capabilities.BIT_LENGTH, Recipient.Capability.fromBoolean(capabilities.isSenderKey()).serialize());
     value = Bitmask.update(value, Capabilities.ANNOUNCEMENT_GROUPS, Capabilities.BIT_LENGTH, Recipient.Capability.fromBoolean(capabilities.isAnnouncementGroup()).serialize());
+    value = Bitmask.update(value, Capabilities.CHANGE_LOGIN, Capabilities.BIT_LENGTH, Recipient.Capability.fromBoolean(capabilities.isChangeLogin()).serialize());
 
     ContentValues values = new ContentValues(1);
     values.put(CAPABILITIES, value);
@@ -1972,6 +1986,25 @@ public class RecipientDatabase extends Database {
       Recipient.live(id).refresh();
 
 //      StorageSyncHelper.scheduleSyncForDataChange();
+    }
+  }
+
+  public void updateSelfLogin(@NonNull String login) {
+    SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
+    db.beginTransaction();
+
+    try {
+      RecipientId id    = Recipient.self().getId();
+      RecipientId newId = getAndPossiblyMerge(Recipient.self().requireUuid(), login, true, true);
+
+      if (id.equals(newId)) {
+        Log.i(TAG, "[updateSelfLogin] Login updated for self");
+      } else {
+        throw new AssertionError("[updateSelfLogin] Self recipient id changed when updating login. old: " + id + " new: " + newId);
+      }
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
     }
   }
 
@@ -2512,7 +2545,15 @@ public class RecipientDatabase extends Database {
         db.update(TABLE_NAME, setBlocked, UUID + " = ?", new String[] { uuid });
       }
 
-      List<GroupId.V1> groupIdStrings = Stream.of(groupIds).map(GroupId::v1orThrow).toList();
+      List<GroupId.V1> groupIdStrings = new ArrayList<>(groupIds.size());
+
+      for (byte[] raw : groupIds) {
+        try {
+          groupIdStrings.add(GroupId.v1(raw));
+        } catch (BadGroupIdException e) {
+          Log.w(TAG, "[applyBlockedUpdate] Bad GV1 ID!");
+        }
+      }
 
       for (GroupId.V1 groupId : groupIdStrings) {
         db.update(TABLE_NAME, setBlocked, GROUP_ID + " = ?", new String[] { groupId.toString() });
@@ -2813,7 +2854,7 @@ public class RecipientDatabase extends Database {
     db.update(TABLE_NAME, uuidValues, ID_WHERE, SqlUtil.buildArgs(byUuid));
 
     // Identities
-    db.delete(IdentityDatabase.TABLE_NAME, IdentityDatabase.ADDRESS + " = ?", SqlUtil.buildArgs(byE164));
+    ApplicationDependencies.getIdentityStore().delete(e164Settings.e164);
 
     // Group Receipts
     ContentValues groupReceiptValues = new ContentValues();
@@ -3052,6 +3093,7 @@ public class RecipientDatabase extends Database {
     private final InsightsBannerTier     insightsBannerTier;
     private final Recipient.Capability   senderKeyCapability;
     private final Recipient.Capability   announcementGroupCapability;
+    private final Recipient.Capability   changeLoginCapability;
     private final byte[]                 storageId;
     private final MentionSetting         mentionSetting;
     private final ChatWallpaper          wallpaper;
@@ -3143,6 +3185,7 @@ public class RecipientDatabase extends Database {
       this.groupsV1MigrationCapability = Recipient.Capability.deserialize((int) Bitmask.read(capabilities, Capabilities.GROUPS_V1_MIGRATION, Capabilities.BIT_LENGTH));
       this.senderKeyCapability         = Recipient.Capability.deserialize((int) Bitmask.read(capabilities, Capabilities.SENDER_KEY, Capabilities.BIT_LENGTH));
       this.announcementGroupCapability = Recipient.Capability.deserialize((int) Bitmask.read(capabilities, Capabilities.ANNOUNCEMENT_GROUPS, Capabilities.BIT_LENGTH));
+      this.changeLoginCapability       = Recipient.Capability.deserialize((int) Bitmask.read(capabilities, Capabilities.CHANGE_LOGIN, Capabilities.BIT_LENGTH));
       this.insightsBannerTier          = insightsBannerTier;
       this.storageId                   = storageId;
       this.mentionSetting              = mentionSetting;
@@ -3306,6 +3349,10 @@ public class RecipientDatabase extends Database {
 
     public @NonNull Recipient.Capability getAnnouncementGroupCapability() {
       return announcementGroupCapability;
+    }
+
+    public @NonNull Recipient.Capability getChangeLoginCapability() {
+      return changeLoginCapability;
     }
 
     public @Nullable byte[] getStorageId() {

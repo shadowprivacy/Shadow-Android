@@ -3,13 +3,17 @@ package su.sres.securesms.components.identity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
 import su.sres.securesms.R;
+import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
-import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
+import su.sres.securesms.database.model.IdentityRecord;
+import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.signalservice.api.SignalSessionLock;
 
 import java.util.List;
@@ -37,27 +41,16 @@ public class UnverifiedSendDialog extends AlertDialog.Builder implements DialogI
 
   @Override
   public void onClick(DialogInterface dialog, int which) {
-    final IdentityDatabase identityDatabase = DatabaseFactory.getIdentityDatabase(getContext());
-
-    new AsyncTask<Void, Void, Void>() {
-      @Override
-      protected Void doInBackground(Void... params) {
-        try(SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
-          for (IdentityRecord identityRecord : untrustedRecords) {
-            identityDatabase.setVerified(identityRecord.getRecipientId(),
-                                         identityRecord.getIdentityKey(),
-                                         IdentityDatabase.VerifiedStatus.DEFAULT);
-          }
+    SimpleTask.run(() -> {
+      try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
+        for (IdentityRecord identityRecord : untrustedRecords) {
+          ApplicationDependencies.getIdentityStore().setVerified(identityRecord.getRecipientId(),
+                                                                 identityRecord.getIdentityKey(),
+                                                                 IdentityDatabase.VerifiedStatus.DEFAULT);
         }
-
-        return null;
       }
-
-      @Override
-      protected void onPostExecute(Void result) {
-        resendListener.onResendMessage();
-      }
-    }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+      return null;
+    }, nothing -> resendListener.onResendMessage());
   }
 
   public interface ResendListener {

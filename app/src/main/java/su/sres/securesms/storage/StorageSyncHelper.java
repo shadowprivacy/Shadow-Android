@@ -128,6 +128,7 @@ public final class StorageSyncHelper {
                 .setPinnedConversations(StorageSyncModels.localToRemotePinnedConversations(pinned))
                 .setPayments(SignalStore.paymentsValues().mobileCoinPaymentsEnabled(), Optional.fromNullable(SignalStore.paymentsValues().getPaymentsEntropy()).transform(Entropy::getBytes).orNull())
                 .setUniversalExpireTimer(SignalStore.settings().getUniversalExpireTimer())
+                .setUserLogin(TextSecurePreferences.getLocalNumber(context))
                 .build();
 
         return SignalStorageRecord.forAccount(account);

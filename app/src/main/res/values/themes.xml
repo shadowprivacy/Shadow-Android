@@ -413,6 +413,14 @@
         <item name="backgroundTint">@color/core_grey_75</item>
     </style>
 
+    <style name="ShapeAppearanceOverlay.Signal.MediaSelection" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopRight">10dp</item>
+        <item name="cornerSizeTopLeft">10dp</item>
+        <item name="cornerSizeBottomLeft">10dp</item>
+        <item name="cornerSizeBottomRight">10dp</item>
+    </style>
+
     <style name="ShapeAppearanceOverlay.Signal.WallpaperPreview" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSizeTopRight">12dp</item>

@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.os.RemoteException;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
@@ -76,7 +75,7 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
         LiveRecipient                           threadRecipient = Recipient.live(message.getThreadRecipientId());
         LiveData<String> name = LiveDataUtil.combineLatest(sender.getLiveDataResolved(),
                                                            threadRecipient.getLiveDataResolved(),
-                                                           (s, t) -> VoiceNoteMediaDescriptionCompatFactory.getTitle(activity, s, t, null));
+                                                           (s, t) -> VoiceNoteMediaItemFactory.getTitle(activity, s, t, null));
 
         return Transformations.map(name, displayName -> Optional.of(
             new VoiceNotePlayerView.State(
@@ -259,9 +258,8 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
   private final class ConnectionCallback extends MediaBrowserCompat.ConnectionCallback {
     @Override
     public void onConnected() {
-      try {
-        MediaSessionCompat.Token token           = mediaBrowser.getSessionToken();
-        MediaControllerCompat    mediaController = new MediaControllerCompat(activity, token);
+      MediaSessionCompat.Token token           = mediaBrowser.getSessionToken();
+      MediaControllerCompat    mediaController = new MediaControllerCompat(activity, token);
 
         MediaControllerCompat.setMediaController(activity, mediaController);
 
@@ -282,9 +280,6 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
         mediaController.registerCallback(mediaControllerCompatCallback);
 
         mediaControllerCompatCallback.onPlaybackStateChanged(mediaController.getPlaybackState());
-      } catch (RemoteException e) {
-        Log.w(TAG, "onConnected: Failed to set media controller", e);
-      }
     }
 
     @Override
@@ -319,7 +314,7 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
                                                                            @Nullable VoiceNotePlaybackState previousState)
   {
     Uri     mediaUri  = Objects.requireNonNull(mediaMetadataCompat.getDescription().getMediaUri());
-    boolean autoReset = Objects.equals(mediaUri, VoiceNotePlaybackPreparer.NEXT_URI) || Objects.equals(mediaUri, VoiceNotePlaybackPreparer.END_URI);
+    boolean autoReset = Objects.equals(mediaUri, VoiceNoteMediaItemFactory.NEXT_URI) || Objects.equals(mediaUri, VoiceNoteMediaItemFactory.END_URI);
     long    position  = mediaController.getPlaybackState().getPosition();
     long    duration  = mediaMetadataCompat.getLong(MediaMetadataCompat.METADATA_KEY_DURATION);
     Bundle  extras    = mediaController.getExtras();
@@ -381,17 +376,17 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
     long        timestamp         = -1L;
 
     if (mediaExtras != null) {
-      messageId       = mediaExtras.getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_MESSAGE_ID, -1L);
-      messagePosition = mediaExtras.getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_MESSAGE_POSITION, -1L);
-      threadId        = mediaExtras.getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_THREAD_ID, -1L);
-      timestamp       = mediaExtras.getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_MESSAGE_TIMESTAMP, -1L);
+      messageId       = mediaExtras.getLong(VoiceNoteMediaItemFactory.EXTRA_MESSAGE_ID, -1L);
+      messagePosition = mediaExtras.getLong(VoiceNoteMediaItemFactory.EXTRA_MESSAGE_POSITION, -1L);
+      threadId        = mediaExtras.getLong(VoiceNoteMediaItemFactory.EXTRA_THREAD_ID, -1L);
+      timestamp       = mediaExtras.getLong(VoiceNoteMediaItemFactory.EXTRA_MESSAGE_TIMESTAMP, -1L);
 
-      String serializedSenderId = mediaExtras.getString(VoiceNoteMediaDescriptionCompatFactory.EXTRA_INDIVIDUAL_RECIPIENT_ID);
+      String serializedSenderId = mediaExtras.getString(VoiceNoteMediaItemFactory.EXTRA_INDIVIDUAL_RECIPIENT_ID);
       if (serializedSenderId != null) {
         senderId = RecipientId.from(serializedSenderId);
       }
 
-      String serializedThreadRecipientId = mediaExtras.getString(VoiceNoteMediaDescriptionCompatFactory.EXTRA_THREAD_RECIPIENT_ID);
+      String serializedThreadRecipientId = mediaExtras.getString(VoiceNoteMediaItemFactory.EXTRA_THREAD_RECIPIENT_ID);
       if (serializedThreadRecipientId != null) {
         threadRecipientId = RecipientId.from(serializedThreadRecipientId);
       }

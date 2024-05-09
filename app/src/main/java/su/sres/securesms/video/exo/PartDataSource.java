@@ -36,7 +36,7 @@ public class PartDataSource implements DataSource {
   }
 
   @Override
-  public void addTransferListener(TransferListener transferListener) {
+  public void addTransferListener(@NonNull TransferListener transferListener) {
   }
 
   @Override
@@ -61,7 +61,7 @@ public class PartDataSource implements DataSource {
   }
 
   @Override
-  public int read(byte[] buffer, int offset, int readLength) throws IOException {
+  public int read(@NonNull byte[] buffer, int offset, int readLength) throws IOException {
     int read = inputSteam.read(buffer, offset, readLength);
 
     if (read > 0 && listener != null) {
@@ -77,7 +77,7 @@ public class PartDataSource implements DataSource {
   }
 
   @Override
-  public Map<String, List<String>> getResponseHeaders() {
+  public @NonNull Map<String, List<String>> getResponseHeaders() {
     return Collections.emptyMap();
   }
 

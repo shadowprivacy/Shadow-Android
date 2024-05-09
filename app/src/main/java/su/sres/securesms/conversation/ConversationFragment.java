@@ -136,6 +136,7 @@ import su.sres.securesms.ratelimit.RecaptchaProofBottomSheetFragment;
 import su.sres.securesms.reactions.ReactionsBottomSheetDialogFragment;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.recipients.RecipientExporter;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment;
 import su.sres.securesms.revealable.ViewOnceMessageActivity;
@@ -262,7 +263,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
     ConversationIntents.Args args = ConversationIntents.Args.from(requireActivity().getIntent());
     colorizerView.setBackground(args.getChatColors().getChatBubbleMask());
 
-    final LinearLayoutManager     layoutManager           = new SmoothScrollingLinearLayoutManager(getActivity(), true);
+    final LinearLayoutManager layoutManager = new SmoothScrollingLinearLayoutManager(getActivity(), true);
     final MultiselectItemAnimator multiselectItemAnimator = new MultiselectItemAnimator(() -> {
       ConversationAdapter adapter = getListAdapter();
       if (adapter == null) {
@@ -694,7 +695,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
       }
 
       Log.d(TAG, "Initializing adapter for " + recipient.getId());
-      ConversationAdapter adapter = new ConversationAdapter(requireContext(), this, GlideApp.with(this), locale, selectionClickListener, this.recipient.get(), new AttachmentMediaSourceFactory(requireContext()), colorizer);
+      ConversationAdapter adapter = new ConversationAdapter(requireContext(), this, GlideApp.with(this), locale, selectionClickListener, this.recipient.get(), colorizer);
       adapter.setPagingController(conversationViewModel.getPagingController());
       list.setAdapter(adapter);
       setInlineDateDecoration(adapter);
@@ -1056,7 +1057,6 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
     if (getListAdapter() != null) {
       clearHeaderIfNotTyping(getListAdapter());
       setLastSeen(0);
-      getListAdapter().addFastRecord(ConversationMessageFactory.createWithResolvedData(messageRecord, messageRecord.getDisplayBody(requireContext()), message.getMentions()));
       list.post(() -> list.scrollToPosition(0));
     }
 
@@ -1069,17 +1069,10 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
     if (getListAdapter() != null) {
       clearHeaderIfNotTyping(getListAdapter());
       setLastSeen(0);
-      getListAdapter().addFastRecord(ConversationMessageFactory.createWithResolvedData(messageRecord));
       list.post(() -> list.scrollToPosition(0));
     }
 
     return messageRecord.getId();
-  }
-
-  public void releaseOutgoingMessage(long id) {
-    if (getListAdapter() != null) {
-      getListAdapter().releaseFastRecord(id);
-    }
   }
 
   private void presentConversationMetadata(@NonNull ConversationData conversation) {
@@ -1679,7 +1672,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
           .setView(R.layout.safety_number_changed_learn_more_dialog)
           .setPositiveButton(R.string.ConversationFragment_verify, (d, w) -> {
             SimpleTask.run(getLifecycle(), () -> {
-              return DatabaseFactory.getIdentityDatabase(requireContext()).getIdentity(recipient.getId());
+              return ApplicationDependencies.getIdentityStore().getIdentityRecord(recipient.getId());
             }, identityRecord -> {
               if (identityRecord.isPresent()) {
                 startActivity(VerifyIdentityActivity.newIntent(requireContext(), identityRecord.get()));
@@ -1745,6 +1738,11 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
       if (groupId != null) {
         GroupDescriptionDialog.show(getChildFragmentManager(), groupId, description, isMessageRequestAccepted);
       }
+    }
+
+    @Override
+    public void onChangeLoginUpdateContact(@NonNull Recipient recipient) {
+      startActivity(RecipientExporter.export(recipient).asAddContactIntent());
     }
   }
 

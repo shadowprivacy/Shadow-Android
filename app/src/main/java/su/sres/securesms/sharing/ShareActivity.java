@@ -54,7 +54,7 @@ import su.sres.securesms.database.DatabaseFactory;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.mediasend.Media;
-import su.sres.securesms.mediasend.MediaSendActivity;
+import su.sres.securesms.mediasend.v2.MediaSelectionActivity;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sharing.interstitial.ShareInterstitialActivity;
@@ -673,12 +673,12 @@ public class ShareActivity extends PassphraseRequiredActivity
                               Optional.absent()));
         }
 
-        startActivityForResult(MediaSendActivity.buildShareIntent(this,
-                                                                  media,
-                                                                  Stream.of(multiShareArgs.getShareContactAndThreads()).map(ShareContactAndThread::getRecipientId).toList(),
-                                                                  multiShareArgs.getDraftText(),
-                                                                  MultiShareSender.getWorstTransportOption(this, multiShareArgs.getShareContactAndThreads())),
-                               RESULT_MEDIA_CONFIRMATION);
+        Intent intent = MediaSelectionActivity.share(this,
+                                                     MultiShareSender.getWorstTransportOption(this, multiShareArgs.getShareContactAndThreads()),
+                                                     media,
+                                                     Stream.of(multiShareArgs.getShareContactAndThreads()).map(ShareContactAndThread::getRecipientId).toList(),
+                                                     multiShareArgs.getDraftText());
+        startActivityForResult(intent, RESULT_MEDIA_CONFIRMATION);
         break;
       default:
         //noinspection CodeBlock2Expr

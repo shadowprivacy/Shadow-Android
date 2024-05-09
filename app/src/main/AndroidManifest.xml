@@ -340,7 +340,8 @@
         <activity android:name=".messagedetails.MessageDetailsActivity"
             android:windowSoftInputMode="stateHidden"
             android:launchMode="singleTask"
-            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
+            android:theme="@style/Signal.DayNight.NoActionBar" />
 
         <activity android:name=".groups.ui.invitesandrequests.ManagePendingAndRequestingMembersActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
@@ -395,12 +396,11 @@
             android:windowSoftInputMode="stateHidden"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
-        <activity
-            android:name=".mediasend.MediaSendActivity"
+        <activity android:name=".mediasend.v2.MediaSelectionActivity"
             android:theme="@style/TextSecure.FullScreenMedia"
-            android:windowSoftInputMode="stateHidden"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustNothing"
             android:launchMode="singleTop"
-            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
         <activity
             android:name=".PassphraseChangeActivity"
@@ -409,6 +409,7 @@
 
         <activity
             android:name=".VerifyIdentityActivity"
+            android:theme="@style/Signal.DayNight.NoActionBar"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
         <activity android:name=".components.settings.app.AppSettingsActivity"
@@ -420,6 +421,10 @@
                 <category android:name="android.intent.category.NOTIFICATION_PREFERENCES" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".components.settings.app.changeuserlogin.ChangeLoginLockActivity"
+            android:theme="@style/Signal.DayNight.NoActionBar"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
         <activity android:name=".components.settings.conversation.ConversationSettingsActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"

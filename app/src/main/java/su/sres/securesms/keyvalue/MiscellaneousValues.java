@@ -19,6 +19,7 @@ public final class MiscellaneousValues extends SignalStoreValues {
   private static final String MESSAGE_REQUEST_ENABLE_TIME     = "message_request_enable_time";
   private static final String OLD_DEVICE_TRANSFER_LOCKED      = "misc.old_device.transfer.locked";
   private static final String HAS_EVER_HAD_AN_AVATAR          = "misc.has.ever.had.an.avatar";
+  private static final String CHANGE_LOGIN_LOCK              = "misc.change_login.lock";
 
   MiscellaneousValues(@NonNull KeyValueStore store) {
     super(store);
@@ -133,5 +134,17 @@ public final class MiscellaneousValues extends SignalStoreValues {
 
   public void markHasEverHadAnAvatar() {
     putBoolean(HAS_EVER_HAD_AN_AVATAR, true);
+  }
+
+  public boolean isChangeLoginLocked() {
+    return getBoolean(CHANGE_LOGIN_LOCK, false);
+  }
+
+  public void lockChangeLogin() {
+    putBoolean(CHANGE_LOGIN_LOCK, true);
+  }
+
+  public void unlockChangeLogin() {
+    putBoolean(CHANGE_LOGIN_LOCK, false);
   }
 }

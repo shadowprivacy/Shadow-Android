@@ -3,7 +3,7 @@ package su.sres.securesms.components.settings.conversation
 import android.database.Cursor
 import su.sres.securesms.components.settings.conversation.preferences.ButtonStripPreference
 import su.sres.securesms.components.settings.conversation.preferences.LegacyGroupPreference
-import su.sres.securesms.database.IdentityDatabase
+import su.sres.securesms.database.model.IdentityRecord
 import su.sres.securesms.groups.GroupId
 import su.sres.securesms.groups.ui.GroupMemberEntry
 import su.sres.securesms.recipients.Recipient
@@ -43,7 +43,7 @@ sealed class SpecificSettingsState {
   abstract val isLoaded: Boolean
 
   data class RecipientSettingsState(
-    val identityRecord: IdentityDatabase.IdentityRecord? = null,
+    val identityRecord: IdentityRecord? = null,
     val allGroupsInCommon: List<Recipient> = listOf(),
     val groupsInCommon: List<Recipient> = listOf(),
     val selfHasGroups: Boolean = false,

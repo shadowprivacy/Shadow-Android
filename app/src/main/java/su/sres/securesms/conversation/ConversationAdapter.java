@@ -43,7 +43,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.MediaItem;
 
 import su.sres.securesms.conversation.colors.Colorizable;
 import su.sres.securesms.conversation.colors.Colorizer;
@@ -61,7 +61,6 @@ import su.sres.securesms.util.Projection;
 import su.sres.securesms.util.StickyHeaderDecoration;
 import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.ViewUtil;
-import su.sres.securesms.video.exo.AttachmentMediaSourceFactory;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -120,7 +119,6 @@ public class ConversationAdapter
   private final Set<Long>                    releasedFastRecords;
   private final Calendar                     calendar;
   private final MessageDigest                digest;
-  private final AttachmentMediaSourceFactory attachmentMediaSourceFactory;
 
   private String              searchQuery;
   private ConversationMessage recordToPulse;
@@ -138,7 +136,6 @@ public class ConversationAdapter
                       @NonNull Locale locale,
                       @Nullable ItemClickListener clickListener,
                       @NonNull Recipient recipient,
-                      @NonNull AttachmentMediaSourceFactory attachmentMediaSourceFactory,
                       @NonNull Colorizer colorizer)
   {
     super(new DiffUtil.ItemCallback<ConversationMessage>() {
@@ -167,7 +164,6 @@ public class ConversationAdapter
     this.digest                       = getMessageDigestOrThrow();
     this.hasWallpaper                 = recipient.hasWallpaper();
     this.isMessageRequestAccepted     = true;
-    this.attachmentMediaSourceFactory = attachmentMediaSourceFactory;
     this.colorizer                    = colorizer;
 
     setHasStableIds(true);
@@ -300,7 +296,6 @@ public class ConversationAdapter
                                                   conversationMessage == recordToPulse,
                                                   hasWallpaper,
                                                   isMessageRequestAccepted,
-                                                  attachmentMediaSourceFactory,
                                                   conversationMessage == inlineContent,
                                                   colorizer);
 
@@ -706,8 +701,8 @@ public class ConversationAdapter
     }
 
     @Override
-    public @Nullable MediaSource getMediaSource() {
-      return getBindable().getMediaSource();
+    public @Nullable MediaItem getMediaItem() {
+      return getBindable().getMediaItem();
     }
 
     @Override
@@ -715,8 +710,8 @@ public class ConversationAdapter
       return getBindable().getPlaybackPolicyEnforcer();
     }
 
-    @NonNull
-    public @Override Projection getGiphyMp4PlayableProjection(@NonNull ViewGroup recyclerView) {
+    @Override
+    public @NonNull Projection getGiphyMp4PlayableProjection(@NonNull ViewGroup recyclerView) {
       return getBindable().getGiphyMp4PlayableProjection(recyclerView);
     }
 

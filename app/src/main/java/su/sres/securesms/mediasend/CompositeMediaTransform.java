@@ -11,18 +11,18 @@ import androidx.annotation.NonNull;
  */
 public final class CompositeMediaTransform implements MediaTransform {
 
-    private final MediaTransform[] transforms;
+  private final MediaTransform[] transforms;
 
-    CompositeMediaTransform(MediaTransform ...transforms) {
-        this.transforms = transforms;
-    }
+  public CompositeMediaTransform(MediaTransform... transforms) {
+    this.transforms = transforms;
+  }
 
-    @Override
-    public @NonNull Media transform(@NonNull Context context, @NonNull Media media) {
-        Media updatedMedia = media;
-        for (MediaTransform transform : transforms) {
-            updatedMedia = transform.transform(context, updatedMedia);
-        }
-        return updatedMedia;
+  @Override
+  public @NonNull Media transform(@NonNull Context context, @NonNull Media media) {
+    Media updatedMedia = media;
+    for (MediaTransform transform : transforms) {
+      updatedMedia = transform.transform(context, updatedMedia);
     }
+    return updatedMedia;
+  }
 }

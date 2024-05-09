@@ -128,6 +128,9 @@ public class SignalServiceProfile {
     @JsonProperty
     private boolean announcementGroup;
 
+    @JsonProperty
+    private boolean changeLogin;
+
     @JsonCreator
     public Capabilities() {}
 
@@ -149,6 +152,10 @@ public class SignalServiceProfile {
 
     public boolean isAnnouncementGroup() {
       return announcementGroup;
+    }
+
+    public boolean isChangeLogin() {
+      return changeLogin;
     }
   }
 

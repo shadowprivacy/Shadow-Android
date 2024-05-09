@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/app_settings_change_login"
+    app:startDestination="@id/changeUserLoginFragment">
+
+    <fragment
+        android:id="@+id/changeUserLoginFragment"
+        android:name="su.sres.securesms.components.settings.app.changeuserlogin.ChangeUserLoginFragment"
+        tools:layout="@layout/fragment_change_user_login">
+
+        <action
+            android:id="@+id/action_changeUserLoginFragment_to_enterUserLoginChangeFragment"
+            app:destination="@id/enterUserLoginChangeFragment"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/enterUserLoginChangeFragment"
+        android:name="su.sres.securesms.components.settings.app.changeuserlogin.ChangeUserLoginEnterUserLoginFragment"
+        tools:layout="@layout/fragment_change_login_enter_user_login">
+
+        <action
+            android:id="@+id/action_enterUserLoginChangeFragment_to_changeUserLoginConfirmFragment"
+            app:destination="@id/changeUserLoginConfirmFragment"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit" />       
+    </fragment>
+
+    <fragment
+        android:id="@+id/changeUserLoginConfirmFragment"
+        android:name="su.sres.securesms.components.settings.app.changeuserlogin.ChangeUserLoginConfirmFragment"
+        tools:layout="@layout/fragment_change_login_confirm">
+
+        <action
+            android:id="@+id/action_changeUserLoginConfirmFragment_to_changeUserLoginVerifyFragment"
+            app:destination="@id/changeUserLoginVerifyFragment"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit"
+            app:popUpTo="@+id/enterUserLoginChangeFragment" />
+    </fragment>    
+
+    <fragment
+        android:id="@+id/changeUserLoginVerifyFragment"
+        android:name="su.sres.securesms.components.settings.app.changeuserlogin.ChangeUserLoginVerifyFragment"
+        tools:layout="@layout/fragment_change_user_login_verify">
+
+        <!-- <action
+            android:id="@+id/action_changeUserLoginVerifyFragment_to_captchaFragment"
+            app:destination="@id/captchaFragment"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit" /> -->
+
+        <action
+            android:id="@+id/action_changeUserLoginVerifyFragment_to_changeUserLoginEnterCodeFragment"
+            app:destination="@id/changeUserLoginEnterCodeFragment"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit"
+            app:popUpTo="@+id/enterUserLoginChangeFragment" />
+    </fragment>
+
+    <!-- <fragment
+        android:id="@+id/captchaFragment"
+        android:name="su.sres.securesms.registration.fragments.CaptchaFragment"
+        tools:layout="@layout/fragment_registration_captcha" /> -->
+
+    <fragment
+        android:id="@+id/changeUserLoginEnterCodeFragment"
+        android:name="su.sres.securesms.components.settings.app.changeuserlogin.ChangeUserLoginEnterCodeFragment"
+        tools:layout="@layout/fragment_change_login_enter_code">
+
+        <!-- <action
+            android:id="@+id/action_changeUserLoginEnterCodeFragment_to_captchaFragment"
+            app:destination="@id/captchaFragment"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit" />
+
+        <action
+            android:id="@+id/action_changeUserLoginEnterCodeFragment_to_changeUserLoginRegistrationLock"
+            app:destination="@id/changeUserLoginRegistrationLock"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit"
+            app:popUpTo="@id/enterUserLoginChangeFragment" />
+
+        <action
+            android:id="@+id/action_changeUserLoginEnterCodeFragment_to_changeUserLoginAccountLocked"
+            app:destination="@id/changeUserLoginAccountLocked"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit"
+            app:popUpTo="@id/enterUserLoginChangeFragment" /> -->
+
+    </fragment>
+
+    <!-- <fragment
+        android:id="@+id/changeUserLoginRegistrationLock"
+        android:name="su.sres.securesms.components.settings.app.changeuserlogin.ChangeUserLoginRegistrationLockFragment"
+        tools:layout="@layout/fragment_change_login_registration_lock">
+
+        <argument
+            android:name="timeRemaining"
+            app:argType="long" />
+
+        <action
+            android:id="@+id/action_changeUserLoginRegistrationLock_to_changeUserLoginAccountLocked"
+            app:destination="@id/changeUserLoginAccountLocked"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit"
+            app:popUpTo="@id/enterUserLoginChangeFragment" />
+
+        <action
+            android:id="@+id/action_changeUserLoginRegistrationLock_to_changeUserLoginPinDiffers"
+            app:destination="@id/changeUserLoginPinDiffers"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit"
+            app:popUpTo="@id/enterUserLoginChangeFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/changeUserLoginAccountLocked"
+        android:name="su.sres.securesms.components.settings.app.changeuserlogin.ChangeUserLoginAccountLockedFragment"
+        tools:layout="@layout/fragment_change_login_account_locked" />
+
+    <fragment
+        android:id="@+id/changeUserLoginPinDiffers"
+        android:name="su.sres.securesms.components.settings.app.changeuserlogin.ChangeUserLoginPinDiffersFragment"
+        tools:layout="@layout/fragment_change_login_pin_differs" /> -->
+
+    <action
+        android:id="@+id/action_pop_app_settings_change_login"
+        app:enterAnim="@anim/fragment_open_enter"
+        app:exitAnim="@anim/fragment_open_exit"
+        app:popEnterAnim="@anim/fragment_close_enter"
+        app:popExitAnim="@anim/fragment_close_exit"
+        app:popUpTo="@id/changeUserLoginFragment"
+        app:popUpToInclusive="true" />
+
+</navigation> 

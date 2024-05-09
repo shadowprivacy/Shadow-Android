@@ -17,7 +17,9 @@
 package su.sres.securesms.database.model;
 
 import android.content.Context;
+
 import androidx.annotation.NonNull;
+
 import android.text.SpannableString;
 
 import su.sres.securesms.R;
@@ -34,7 +36,6 @@ import java.util.LinkedList;
  * notifications (ie: they're pointers to undownloaded media).
  *
  * @author Moxie Marlinspike
- *
  */
 
 public class NotificationMmsMessageRecord extends MmsMessageRecord {
@@ -51,13 +52,13 @@ public class NotificationMmsMessageRecord extends MmsMessageRecord {
                                       long threadId, byte[] contentLocation, long messageSize,
                                       long expiry, int status, byte[] transactionId, long mailbox,
                                       int subscriptionId, SlideDeck slideDeck, int readReceiptCount,
-                                      int viewedReceiptCount)
+                                      int viewedReceiptCount, long receiptTimestamp)
   {
     super(id, "", conversationRecipient, individualRecipient, recipientDeviceId,
-            dateSent, dateReceived, -1, threadId, Status.STATUS_NONE, deliveryReceiptCount, mailbox,
-            new LinkedList<>(), new LinkedList<>(), subscriptionId,
-            0, 0, false, slideDeck, readReceiptCount, null, Collections.emptyList(), Collections.emptyList(), false,
-            Collections.emptyList(), false, 0, viewedReceiptCount);
+          dateSent, dateReceived, -1, threadId, Status.STATUS_NONE, deliveryReceiptCount, mailbox,
+          new LinkedList<>(), new LinkedList<>(), subscriptionId,
+          0, 0, false, slideDeck, readReceiptCount, null, Collections.emptyList(), Collections.emptyList(), false,
+          Collections.emptyList(), false, 0, viewedReceiptCount, receiptTimestamp);
 
     this.contentLocation = contentLocation;
     this.messageSize     = messageSize;

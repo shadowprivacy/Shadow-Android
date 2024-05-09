@@ -12,6 +12,7 @@ import android.graphics.drawable.Drawable;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
+import android.text.style.CharacterStyle;
 import android.text.style.StyleSpan;
 import android.util.AttributeSet;
 
@@ -20,12 +21,17 @@ import java.util.Objects;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.EmojiTextView;
+import su.sres.securesms.components.emoji.SimpleEmojiTextView;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.util.SpanUtil;
 import su.sres.securesms.util.ViewUtil;
 
-public class FromTextView extends EmojiTextView {
+public class FromTextView extends SimpleEmojiTextView {
 
   private static final String TAG = Log.tag(FromTextView.class);
+
+  private final static Typeface  BOLD_TYPEFACE  = Typeface.create("sans-serif-medium", Typeface.NORMAL);
+  private final static Typeface  LIGHT_TYPEFACE = Typeface.create("sans-serif", Typeface.NORMAL);
 
   public FromTextView(Context context) {
     super(context);
@@ -46,20 +52,9 @@ public class FromTextView extends EmojiTextView {
   public void setText(Recipient recipient, boolean read, @Nullable String suffix) {
     String fromString = recipient.getDisplayName(getContext());
 
-    int typeface;
-
-    if (!read) {
-      typeface = Typeface.BOLD;
-    } else {
-      typeface = Typeface.NORMAL;
-    }
-
-    SpannableStringBuilder builder = new SpannableStringBuilder();
-
-    SpannableString fromSpan = new SpannableString(fromString);
-    fromSpan.setSpan(new StyleSpan(typeface), 0, builder.length(),
-                     Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-
+    SpannableStringBuilder builder  = new SpannableStringBuilder();
+    SpannableString        fromSpan = new SpannableString(fromString);
+    fromSpan.setSpan(getFontSpan(!read), 0, fromSpan.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
 
     if (recipient.isSelf()) {
       builder.append(getContext().getString(R.string.note_to_self));
@@ -85,5 +80,9 @@ public class FromTextView extends EmojiTextView {
     mutedDrawable.setColorFilter(new PorterDuffColorFilter(ContextCompat.getColor(getContext(), R.color.signal_icon_tint_secondary), PorterDuff.Mode.SRC_IN));
 
     return mutedDrawable;
+  }
+
+  private CharacterStyle getFontSpan(boolean isBold) {
+    return isBold ? SpanUtil.getBoldSpan() : SpanUtil.getNormalSpan();
   }
 }

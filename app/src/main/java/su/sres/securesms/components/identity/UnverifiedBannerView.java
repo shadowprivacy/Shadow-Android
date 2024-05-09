@@ -15,7 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import su.sres.securesms.R;
-import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
+import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.util.ViewUtil;
 
 import java.util.List;

@@ -111,7 +111,7 @@
 
         <argument
             android:name="recipient_id"
-            app:argType="org.thoughtcrime.securesms.recipients.RecipientId" />
+            app:argType="su.sres.securesms.recipients.RecipientId" />
 
     </fragment>
 

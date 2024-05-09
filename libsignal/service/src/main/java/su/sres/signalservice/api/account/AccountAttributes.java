@@ -125,16 +125,20 @@ public class AccountAttributes {
     @JsonProperty
     private boolean announcementGroup;
 
+    @JsonProperty
+    private boolean changeLogin;
+
     @JsonCreator
     public Capabilities() {}
 
-    public Capabilities(boolean uuid, boolean gv2, boolean storage, boolean gv1Migration, boolean senderKey, boolean announcementGroup) {
+    public Capabilities(boolean uuid, boolean gv2, boolean storage, boolean gv1Migration, boolean senderKey, boolean announcementGroup, boolean changeLogin) {
       this.uuid              = uuid;
       this.gv2               = gv2;
       this.storage           = storage;
       this.gv1Migration      = gv1Migration;
       this.senderKey         = senderKey;
       this.announcementGroup = announcementGroup;
+      this.changeLogin      = changeLogin;
     }
 
     public boolean isUuid() {
@@ -159,6 +163,10 @@ public class AccountAttributes {
 
     public boolean isAnnouncementGroup() {
       return announcementGroup;
+    }
+
+    public boolean isChangeLogin() {
+      return changeLogin;
     }
   }
 }

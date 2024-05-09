@@ -9,10 +9,11 @@ import androidx.annotation.StringRes;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.R;
 import su.sres.securesms.crypto.ReentrantSessionLock;
+import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.IdentityDatabase;
-import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
+import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MessageDatabase.InsertResult;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -53,8 +54,7 @@ public final class IdentityUtil {
     final RecipientId                              recipientId = recipient.getId();
 
     SimpleTask.run(SignalExecutors.BOUNDED,
-                   () -> DatabaseFactory.getIdentityDatabase(context)
-                                        .getIdentity(recipientId),
+                   () -> ApplicationDependencies.getIdentityStore().getIdentityRecord(recipientId),
                    future::set);
 
     return future;
@@ -162,9 +162,9 @@ public final class IdentityUtil {
 
   public static void processVerifiedMessage(Context context, VerifiedMessage verifiedMessage) {
     try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
-      IdentityDatabase         identityDatabase = DatabaseFactory.getIdentityDatabase(context);
-      Recipient                recipient        = Recipient.externalPush(context, verifiedMessage.getDestination());
-      Optional<IdentityRecord> identityRecord   = identityDatabase.getIdentity(recipient.getId());
+      TextSecureIdentityKeyStore identityStore  = ApplicationDependencies.getIdentityStore();
+      Recipient                  recipient      = Recipient.externalPush(context, verifiedMessage.getDestination());
+      Optional<IdentityRecord>   identityRecord = identityStore.getIdentityRecord(recipient.getId());
 
       if (!identityRecord.isPresent() && verifiedMessage.getVerified() == VerifiedMessage.VerifiedState.DEFAULT) {
         Log.w(TAG, "No existing record for default status");
@@ -176,7 +176,7 @@ public final class IdentityUtil {
           identityRecord.get().getIdentityKey().equals(verifiedMessage.getIdentityKey()) &&
           identityRecord.get().getVerifiedStatus() != IdentityDatabase.VerifiedStatus.DEFAULT)
       {
-        identityDatabase.setVerified(recipient.getId(), identityRecord.get().getIdentityKey(), IdentityDatabase.VerifiedStatus.DEFAULT);
+        identityStore.setVerified(recipient.getId(), identityRecord.get().getIdentityKey(), IdentityDatabase.VerifiedStatus.DEFAULT);
         markIdentityVerified(context, recipient, false, true);
       }
 
@@ -186,7 +186,7 @@ public final class IdentityUtil {
            (identityRecord.isPresent() && identityRecord.get().getVerifiedStatus() != IdentityDatabase.VerifiedStatus.VERIFIED)))
       {
         saveIdentity(verifiedMessage.getDestination().getIdentifier(), verifiedMessage.getIdentityKey());
-        identityDatabase.setVerified(recipient.getId(), verifiedMessage.getIdentityKey(), IdentityDatabase.VerifiedStatus.VERIFIED);
+        identityStore.setVerified(recipient.getId(), verifiedMessage.getIdentityKey(), IdentityDatabase.VerifiedStatus.VERIFIED);
         markIdentityVerified(context, recipient, true, true);
       }
     }

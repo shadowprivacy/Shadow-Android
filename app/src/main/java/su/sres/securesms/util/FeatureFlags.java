@@ -82,6 +82,7 @@ public final class FeatureFlags {
   private static final String RETRY_RECEIPTS                    = "android.retryReceipts";
   private static final String MAX_GROUP_CALL_RING_SIZE          = "global.calling.maxGroupCallRingSize";
   private static final String GROUP_CALL_RINGING                = "android.calling.groupCallRinging";
+  private static final String CHANGE_USER_LOGIN_ENABLED         = "android.changeNumber";
 
   /**
    * We will only store remote values for flags in this set. If you want a flag to be controllable
@@ -122,7 +123,8 @@ public final class FeatureFlags {
 
   @VisibleForTesting
   static final Set<String> NOT_REMOTE_CAPABLE = SetUtil.newHashSet(
-      USER_LOGIN_PRIVACY_VERSION
+      USER_LOGIN_PRIVACY_VERSION,
+      CHANGE_USER_LOGIN_ENABLED
   );
 
   /**
@@ -377,9 +379,11 @@ public final class FeatureFlags {
     return getString(MEDIA_QUALITY_LEVELS, "");
   }
 
-  /** Whether or not sending or responding to retry receipts is enabled. */
+  /**
+   * Whether or not sending or responding to retry receipts is enabled.
+   */
   public static boolean retryReceipts() {
-    return getBoolean(RETRY_RECEIPTS, false);
+    return getBoolean(RETRY_RECEIPTS, true);
   }
 
   /**
@@ -403,14 +407,25 @@ public final class FeatureFlags {
     return getBoolean(SENDER_KEY, true);
   }
 
-  /** Max group size that can be use group call ringing. */
+  /**
+   * Max group size that can be use group call ringing.
+   */
   public static long maxGroupCallRingSize() {
     return getLong(MAX_GROUP_CALL_RING_SIZE, 16);
   }
 
-  /** Whether or not to show the group call ring toggle in the UI. */
+  /**
+   * Whether or not to show the group call ring toggle in the UI.
+   */
   public static boolean groupCallRinging() {
     return getBoolean(GROUP_CALL_RINGING, false);
+  }
+
+  /**
+   * Whether or not to show change user login in the UI.
+   */
+  public static boolean changeUserLogin() {
+    return getBoolean(CHANGE_USER_LOGIN_ENABLED, false);
   }
 
   /**

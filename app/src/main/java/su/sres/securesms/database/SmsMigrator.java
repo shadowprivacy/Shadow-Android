@@ -25,7 +25,7 @@ import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 
 
-import net.sqlcipher.database.SQLiteStatement;
+import net.zetetic.database.sqlcipher.SQLiteStatement;
 
 import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;

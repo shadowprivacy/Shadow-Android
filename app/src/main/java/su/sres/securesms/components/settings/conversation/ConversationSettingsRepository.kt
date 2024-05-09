@@ -10,11 +10,10 @@ import su.sres.core.util.concurrent.SignalExecutors
 import su.sres.core.util.logging.Log
 import su.sres.storageservice.protos.groups.local.DecryptedGroup
 import su.sres.storageservice.protos.groups.local.DecryptedPendingMember
-import su.sres.securesms.contacts.sync.DirectoryHelper
 import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.database.GroupDatabase
-import su.sres.securesms.database.IdentityDatabase
 import su.sres.securesms.database.MediaDatabase
+import su.sres.securesms.database.model.IdentityRecord
 import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.groups.GroupId
 import su.sres.securesms.groups.GroupManager
@@ -27,7 +26,6 @@ import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.recipients.RecipientId
 import su.sres.securesms.recipients.RecipientUtil
 import su.sres.securesms.util.FeatureFlags
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 private val TAG = Log.tag(ConversationSettingsRepository::class.java)
@@ -64,13 +62,9 @@ class ConversationSettingsRepository(
     SignalExecutors.BOUNDED.execute { consumer(DatabaseFactory.getGroupDatabase(context).activeGroupCount > 0) }
   }
 
-  fun getIdentity(recipientId: RecipientId, consumer: (IdentityDatabase.IdentityRecord?) -> Unit) {
+  fun getIdentity(recipientId: RecipientId, consumer: (IdentityRecord?) -> Unit) {
     SignalExecutors.BOUNDED.execute {
-      consumer(
-        DatabaseFactory.getIdentityDatabase(context)
-          .getIdentity(recipientId)
-          .orNull()
-      )
+      consumer(ApplicationDependencies.getIdentityStore().getIdentityRecord(recipientId).orNull())
     }
   }
 

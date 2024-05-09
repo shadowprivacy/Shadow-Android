@@ -13,7 +13,7 @@ import su.sres.core.util.logging.Log;
 import android.net.Uri;
 import android.util.Pair;
 
-import net.sqlcipher.database.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.backup.BackupProtos.Attachment;

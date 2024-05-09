@@ -1,32 +1,17 @@
 package su.sres.securesms.components.settings.app.account
 
-//import android.content.Context
 import android.content.Intent
-//import android.graphics.Color
-//import android.graphics.Typeface
-//import android.text.InputType
-//import android.util.DisplayMetrics
-//import android.view.ViewGroup
-//import android.widget.EditText
-//import android.widget.TextView
-//import androidx.appcompat.app.AlertDialog
-//import androidx.core.app.DialogCompat
 import androidx.core.content.ContextCompat
-//import androidx.core.view.ViewCompat
 import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.Navigation
-//import com.google.android.material.dialog.MaterialAlertDialogBuilder
-//import com.google.android.material.snackbar.Snackbar
 import su.sres.securesms.R
 import su.sres.securesms.components.settings.DSLConfiguration
 import su.sres.securesms.components.settings.DSLSettingsAdapter
 import su.sres.securesms.components.settings.DSLSettingsFragment
 import su.sres.securesms.components.settings.DSLSettingsText
 import su.sres.securesms.components.settings.configure
-//import su.sres.securesms.contactshare.SimpleTextWatcher
-//import su.sres.securesms.keyvalue.SignalStore
-//import su.sres.securesms.util.ServiceUtil
-//import su.sres.securesms.util.ThemeUtil
+import su.sres.securesms.recipients.Recipient
+import su.sres.securesms.util.FeatureFlags
 
 class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFragment__account) {
 
@@ -94,11 +79,20 @@ class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFrag
         }
       )
 
-      dividerPref()
+      dividerPref() */
 
       sectionHeaderPref(R.string.AccountSettingsFragment__account)
 
-      clickPref(
+      if (FeatureFlags.changeUserLogin() && Recipient.self().changeLoginCapability == Recipient.Capability.SUPPORTED) {
+        clickPref(
+          title = DSLSettingsText.from(R.string.AccountSettingsFragment__change_phone_number),
+          onClick = {
+            Navigation.findNavController(requireView()).navigate(R.id.action_accountSettingsFragment_to_changeUserLoginFragment)
+          }
+        )
+      }
+
+      /* clickPref(
         title = DSLSettingsText.from(R.string.preferences_chats__transfer_account),
         summary = DSLSettingsText.from(R.string.preferences_chats__transfer_account_to_a_new_android_device),
         onClick = {

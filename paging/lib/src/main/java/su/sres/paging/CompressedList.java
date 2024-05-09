@@ -12,32 +12,37 @@ import java.util.List;
  */
 public class CompressedList<E> extends AbstractList<E> {
 
-    private final List<E> wrapped;
+  private final List<E> wrapped;
 
-    public CompressedList(@NonNull List<E> source) {
-        this.wrapped = new ArrayList<>(source);
+  public CompressedList(@NonNull List<E> source) {
+    this.wrapped = new ArrayList<>(source);
+  }
+
+  public CompressedList(int totalSize) {
+    this.wrapped = new ArrayList<>(totalSize);
+
+    for (int i = 0; i < totalSize; i++) {
+      wrapped.add(null);
     }
+  }
 
-    public CompressedList(int totalSize) {
-        this.wrapped = new ArrayList<>(totalSize);
+  @Override
+  public int size() {
+    return wrapped.size();
+  }
 
-        for (int i = 0; i < totalSize; i++) {
-            wrapped.add(null);
-        }
-    }
+  @Override
+  public E get(int index) {
+    return wrapped.get(index);
+  }
 
-    @Override
-    public int size() {
-        return wrapped.size();
-    }
+  @Override
+  public E set(int globalIndex, E element) {
+    return wrapped.set(globalIndex, element);
+  }
 
-    @Override
-    public E get(int index) {
-        return wrapped.get(index);
-    }
-
-    @Override
-    public E set(int globalIndex, E element) {
-        return wrapped.set(globalIndex, element);
-    }
+  @Override
+  public void add(int index, E element) {
+    wrapped.add(index, element);
+  }
 }

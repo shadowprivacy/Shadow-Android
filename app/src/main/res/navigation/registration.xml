@@ -101,11 +101,6 @@
         android:label="fragment_enter_code"
         tools:layout="@layout/fragment_registration_enter_code">
 
-        <action
-            android:id="@+id/action_wrongNumber"
-            app:popUpTo="@id/enterCodeFragment"
-            app:popUpToInclusive="true" />
-
         <!--        <action
                     android:id="@+id/action_requestCaptcha"
                     app:destination="@id/captchaFragment"
@@ -126,14 +121,7 @@
         android:id="@+id/captchaFragment"
         android:name="su.sres.securesms.registration.fragments.CaptchaFragment"
         android:label="fragment_captcha"
-        tools:layout="@layout/fragment_registration_captcha">
-
-        <action
-            android:id="@+id/action_captchaComplete"
-            app:popUpTo="@id/captchaFragment"
-            app:popUpToInclusive="true" />
-
-    </fragment>
+        tools:layout="@layout/fragment_registration_captcha"/>
 
     <fragment
         android:id="@+id/restoreBackupFragment"

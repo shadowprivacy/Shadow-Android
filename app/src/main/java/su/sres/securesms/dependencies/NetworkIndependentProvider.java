@@ -11,6 +11,8 @@ import su.sres.securesms.crypto.storage.TextSecureSessionStore;
 import su.sres.securesms.keyvalue.KeyValueStore;
 import su.sres.securesms.shakereport.ShakeToReport;
 import su.sres.securesms.util.AppForegroundObserver;
+import su.sres.securesms.util.ByteUnit;
+import su.sres.securesms.video.exo.GiphyMp4Cache;
 
 // Here goes all the stuff that must be initialized prior to the service URL having been set
 public class NetworkIndependentProvider implements ApplicationDependencies.NetworkIndependentProvider {
@@ -44,6 +46,11 @@ public class NetworkIndependentProvider implements ApplicationDependencies.Netwo
   @Override
   public @NonNull SignalSenderKeyStore provideSenderKeyStore() {
     return new SignalSenderKeyStore(context);
+  }
+
+  @Override
+  public @NonNull GiphyMp4Cache provideGiphyMp4Cache() {
+    return new GiphyMp4Cache(ByteUnit.MEGABYTES.toBytes(16));
   }
 
   @Override

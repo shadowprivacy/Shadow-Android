@@ -12,7 +12,7 @@ import android.text.TextUtils;
 import com.annimon.stream.function.Predicate;
 import com.google.protobuf.ByteString;
 
-import net.sqlcipher.database.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.greenrobot.eventbus.EventBus;
 import su.sres.securesms.attachments.AttachmentId;

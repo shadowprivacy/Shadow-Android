@@ -27,6 +27,7 @@ import su.sres.securesms.conversation.colors.ChatColors;
 import su.sres.securesms.conversation.colors.ChatColorsPalette;
 import su.sres.securesms.conversation.colors.NameColor;
 import su.sres.securesms.database.DatabaseObserver;
+import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.groups.GroupId;
@@ -64,9 +65,11 @@ public class ConversationViewModel extends ViewModel {
   private final LiveData<ConversationData>          conversationMetadata;
   private final MutableLiveData<Boolean>            showScrollButtons;
   private final MutableLiveData<Boolean>            hasUnreadMentions;
-  private final LiveData<Boolean>                   canShowAsBubble;
-  private final ProxyPagingController               pagingController;
-  private final DatabaseObserver.Observer           messageObserver;
+  private final LiveData<Boolean>                canShowAsBubble;
+  private final ProxyPagingController<MessageId> pagingController;
+  private final DatabaseObserver.Observer        conversationObserver;
+  private final DatabaseObserver.MessageObserver    messageUpdateObserver;
+  private final DatabaseObserver.MessageObserver    messageInsertObserver;
   private final MutableLiveData<RecipientId>        recipientId;
   private final LiveData<ChatWallpaper>             wallpaper;
   private final SingleLiveEvent<Event>              events;
@@ -90,8 +93,10 @@ public class ConversationViewModel extends ViewModel {
     this.hasUnreadMentions      = new MutableLiveData<>(false);
     this.recipientId            = new MutableLiveData<>();
     this.events                 = new SingleLiveEvent<>();
-    this.pagingController       = new ProxyPagingController();
-    this.messageObserver        = pagingController::onDataInvalidated;
+    this.pagingController       = new ProxyPagingController<>();
+    this.conversationObserver   = pagingController::onDataInvalidated;
+    this.messageUpdateObserver  = pagingController::onDataItemChanged;
+    this.messageInsertObserver  = messageId -> pagingController.onDataItemInserted(messageId, 0);
     this.toolbarBottom          = new MutableLiveData<>();
     this.inlinePlayerHeight     = new MutableLiveData<>();
     this.scrollDateTopMargin    = Transformations.distinctUntilChanged(LiveDataUtil.combineLatest(toolbarBottom, inlinePlayerHeight, Integer::sum));
@@ -107,7 +112,9 @@ public class ConversationViewModel extends ViewModel {
       return conversationData;
     });
 
-    LiveData<Pair<Long, PagedData<ConversationMessage>>> pagedDataForThreadId = Transformations.map(metadata, data -> {
+    ApplicationDependencies.getDatabaseObserver().registerMessageUpdateObserver(messageUpdateObserver);
+
+    LiveData<Pair<Long, PagedData<MessageId, ConversationMessage>>> pagedDataForThreadId = Transformations.map(metadata, data -> {
 
       int                                 startPosition;
       ConversationData.MessageRequestData messageRequestData = data.getMessageRequestData();
@@ -122,8 +129,10 @@ public class ConversationViewModel extends ViewModel {
         startPosition = data.getThreadSize();
       }
 
-      ApplicationDependencies.getDatabaseObserver().unregisterObserver(messageObserver);
-      ApplicationDependencies.getDatabaseObserver().registerConversationObserver(data.getThreadId(), messageObserver);
+      ApplicationDependencies.getDatabaseObserver().unregisterObserver(conversationObserver);
+      ApplicationDependencies.getDatabaseObserver().unregisterObserver(messageInsertObserver);
+      ApplicationDependencies.getDatabaseObserver().registerConversationObserver(data.getThreadId(), conversationObserver);
+      ApplicationDependencies.getDatabaseObserver().registerMessageInsertObserver(data.getThreadId(), messageInsertObserver);
 
       ConversationDataSource dataSource = new ConversationDataSource(context, data.getThreadId(), messageRequestData, data.showUniversalExpireTimerMessage());
       PagingConfig config = new PagingConfig.Builder().setPageSize(25)
@@ -295,7 +304,9 @@ public class ConversationViewModel extends ViewModel {
   @Override
   protected void onCleared() {
     super.onCleared();
-    ApplicationDependencies.getDatabaseObserver().unregisterObserver(messageObserver);
+    ApplicationDependencies.getDatabaseObserver().unregisterObserver(conversationObserver);
+    ApplicationDependencies.getDatabaseObserver().unregisterObserver(messageUpdateObserver);
+    ApplicationDependencies.getDatabaseObserver().unregisterObserver(messageInsertObserver);
     EventBus.getDefault().unregister(this);
   }
 

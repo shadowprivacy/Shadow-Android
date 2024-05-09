@@ -24,7 +24,7 @@ import java.util.Objects;
 import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.components.sensors.DeviceOrientationMonitor;
 import su.sres.securesms.components.sensors.Orientation;
-import su.sres.securesms.database.IdentityDatabase;
+import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.CallParticipantId;
@@ -50,9 +50,9 @@ public class WebRtcCallViewModel extends ViewModel {
   private final LiveData<WebRtcControls>                      realWebRtcControls        = LiveDataUtil.combineLatest(isInPipMode, controlsWithFoldableState, this::getRealWebRtcControls);
   private final SingleLiveEvent<Event>                        events                    = new SingleLiveEvent<>();
   private final MutableLiveData<Long>                         elapsed                   = new MutableLiveData<>(-1L);
-  private final MutableLiveData<LiveRecipient>              liveRecipient             = new MutableLiveData<>(Recipient.UNKNOWN.live());
-  private final DefaultValueLiveData<CallParticipantsState> participantsState         = new DefaultValueLiveData<>(CallParticipantsState.STARTING_STATE);
-  private final SingleLiveEvent<CallParticipantListUpdate>  callParticipantListUpdate = new SingleLiveEvent<>();
+  private final MutableLiveData<LiveRecipient>                liveRecipient             = new MutableLiveData<>(Recipient.UNKNOWN.live());
+  private final DefaultValueLiveData<CallParticipantsState>   participantsState         = new DefaultValueLiveData<>(CallParticipantsState.STARTING_STATE);
+  private final SingleLiveEvent<CallParticipantListUpdate>    callParticipantListUpdate = new SingleLiveEvent<>();
   private final MutableLiveData<Collection<RecipientId>>      identityChangedRecipients = new MutableLiveData<>(Collections.emptyList());
   private final LiveData<SafetyNumberChangeEvent>             safetyNumberChangeEvent   = LiveDataUtil.combineLatest(isInPipMode, identityChangedRecipients, SafetyNumberChangeEvent::new);
   private final LiveData<Recipient>                           groupRecipient            = LiveDataUtil.filter(Transformations.switchMap(liveRecipient, LiveRecipient::getLiveData), Recipient::isActiveGroup);
@@ -62,8 +62,8 @@ public class WebRtcCallViewModel extends ViewModel {
   private final LiveData<Boolean>                             shouldShowSpeakerHint     = Transformations.map(participantsState, this::shouldShowSpeakerHint);
   private final LiveData<Orientation>                         orientation;
   private final MutableLiveData<Boolean>                      isLandscapeEnabled        = new MutableLiveData<>();
-  private final LiveData<Integer>                           controlsRotation;
-  private final Observer<List<GroupMemberEntry.FullMember>> groupMemberStateUpdater = m -> participantsState.setValue(CallParticipantsState.update(participantsState.getValue(), m));
+  private final LiveData<Integer>                             controlsRotation;
+  private final Observer<List<GroupMemberEntry.FullMember>>   groupMemberStateUpdater   = m -> participantsState.setValue(CallParticipantsState.update(participantsState.getValue(), m));
 
   private final Handler  elapsedTimeHandler      = new Handler(Looper.getMainLooper());
   private final Runnable elapsedTimeRunnable     = this::handleTick;
@@ -442,7 +442,7 @@ public class WebRtcCallViewModel extends ViewModel {
     if (recipient.isGroup()) {
       repository.getIdentityRecords(recipient, identityRecords -> {
         if (identityRecords.isUntrusted(false) || identityRecords.isUnverified(false)) {
-          List<IdentityDatabase.IdentityRecord> records = identityRecords.getUnverifiedRecords();
+          List<IdentityRecord> records = identityRecords.getUnverifiedRecords();
           records.addAll(identityRecords.getUntrustedRecords());
           events.postValue(new Event.ShowGroupCallSafetyNumberChange(records));
         } else {
@@ -477,13 +477,13 @@ public class WebRtcCallViewModel extends ViewModel {
     }
 
     public static class ShowGroupCallSafetyNumberChange extends Event {
-      private final List<IdentityDatabase.IdentityRecord> identityRecords;
+      private final List<IdentityRecord> identityRecords;
 
-      public ShowGroupCallSafetyNumberChange(@NonNull List<IdentityDatabase.IdentityRecord> identityRecords) {
+      public ShowGroupCallSafetyNumberChange(@NonNull List<IdentityRecord> identityRecords) {
         this.identityRecords = identityRecords;
       }
 
-      public @NonNull List<IdentityDatabase.IdentityRecord> getIdentityRecords() {
+      public @NonNull List<IdentityRecord> getIdentityRecords() {
         return identityRecords;
       }
     }

@@ -9,6 +9,8 @@ import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.database.IdentityDatabase
 import su.sres.securesms.database.ThreadDatabase
 import su.sres.securesms.database.identity.IdentityRecordList
+import su.sres.securesms.database.model.IdentityRecord
+import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.recipients.RecipientId
 import su.sres.securesms.sharing.MultiShareArgs
@@ -26,11 +28,10 @@ class MultiselectForwardRepository(context: Context) {
     val onAllMessagesFailed: () -> Unit
   )
 
-  fun checkForBadIdentityRecords(shareContacts: List<ShareContact>, consumer: Consumer<List<IdentityDatabase.IdentityRecord>>) {
+  fun checkForBadIdentityRecords(shareContacts: List<ShareContact>, consumer: Consumer<List<IdentityRecord>>) {
     SignalExecutors.BOUNDED.execute {
-      val identityDatabase: IdentityDatabase = DatabaseFactory.getIdentityDatabase(context)
       val recipients: List<Recipient> = shareContacts.map { Recipient.resolved(it.recipientId.get()) }
-      val identityRecordList: IdentityRecordList = identityDatabase.getIdentities(recipients)
+      val identityRecordList: IdentityRecordList = ApplicationDependencies.getIdentityStore().getIdentityRecords(recipients)
 
       consumer.accept(identityRecordList.untrustedRecords)
     }

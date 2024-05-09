@@ -1,24 +1,26 @@
 /**
  * Copyright (C) 2012 Moxie Marlinspike
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package su.sres.securesms.database.model;
 
 import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import android.text.SpannableString;
 
 import su.sres.core.util.logging.Log;
@@ -49,7 +51,6 @@ import java.util.stream.Collectors;
  * media (ie: they've been downloaded).
  *
  * @author Moxie Marlinspike
- *
  */
 
 public class MediaMmsMessageRecord extends MmsMessageRecord {
@@ -80,13 +81,14 @@ public class MediaMmsMessageRecord extends MmsMessageRecord {
                                boolean remoteDelete,
                                boolean mentionsSelf,
                                long notifiedTimestamp,
-                               int viewedReceiptCount)
+                               int viewedReceiptCount,
+                               long receiptTimestamp)
 
   {
     super(id, body, conversationRecipient, individualRecipient, recipientDeviceId, dateSent,
-            dateReceived, dateServer, threadId, Status.STATUS_NONE, deliveryReceiptCount, mailbox, mismatches, failures,
-            subscriptionId, expiresIn, expireStarted, viewOnce, slideDeck,
-            readReceiptCount, quote, contacts, linkPreviews, unidentified, reactions, remoteDelete, notifiedTimestamp, viewedReceiptCount);
+          dateReceived, dateServer, threadId, Status.STATUS_NONE, deliveryReceiptCount, mailbox, mismatches, failures,
+          subscriptionId, expiresIn, expireStarted, viewOnce, slideDeck,
+          readReceiptCount, quote, contacts, linkPreviews, unidentified, reactions, remoteDelete, notifiedTimestamp, viewedReceiptCount, receiptTimestamp);
 
     this.partCount    = partCount;
     this.mentionsSelf = mentionsSelf;
@@ -127,9 +129,9 @@ public class MediaMmsMessageRecord extends MmsMessageRecord {
       attachmentIdMap.put(attachment.getAttachmentId(), attachment);
     }
 
-    List<Contact>     contacts           = updateContacts(getSharedContacts(), attachmentIdMap);
-    Set<Attachment>   contactAttachments = contacts.stream().map(Contact::getAvatarAttachment).filter(Objects::nonNull).collect(Collectors.toSet());
-    List<LinkPreview> linkPreviews       = updateLinkPreviews(getLinkPreviews(), attachmentIdMap);
+    List<Contact>     contacts               = updateContacts(getSharedContacts(), attachmentIdMap);
+    Set<Attachment>   contactAttachments     = contacts.stream().map(Contact::getAvatarAttachment).filter(Objects::nonNull).collect(Collectors.toSet());
+    List<LinkPreview> linkPreviews           = updateLinkPreviews(getLinkPreviews(), attachmentIdMap);
     Set<Attachment>   linkPreviewAttachments = linkPreviews.stream().map(LinkPreview::getThumbnail).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
     Quote             quote                  = updateQuote(context, getQuote(), attachments);
 
@@ -139,17 +141,17 @@ public class MediaMmsMessageRecord extends MmsMessageRecord {
     return new MediaMmsMessageRecord(getId(), getRecipient(), getIndividualRecipient(), getRecipientDeviceId(), getDateSent(), getDateReceived(), getServerTimestamp(), getDeliveryReceiptCount(), getThreadId(), getBody(), slideDeck,
                                      getPartCount(), getType(), getIdentityKeyMismatches(), getNetworkFailures(), getSubscriptionId(), getExpiresIn(), getExpireStarted(), isViewOnce(),
                                      getReadReceiptCount(), quote, contacts, linkPreviews, isUnidentified(), getReactions(), isRemoteDelete(), mentionsSelf,
-                                     getNotifiedTimestamp(), getViewedReceiptCount());
+                                     getNotifiedTimestamp(), getViewedReceiptCount(), getReceiptTimestamp());
   }
 
   private static @NonNull List<Contact> updateContacts(@NonNull List<Contact> contacts, @NonNull Map<AttachmentId, DatabaseAttachment> attachmentIdMap) {
     return contacts.stream()
                    .map(contact -> {
                      if (contact.getAvatar() != null) {
-                       DatabaseAttachment attachment    = attachmentIdMap.get(contact.getAvatar().getAttachmentId());
-                       Contact.Avatar     updatedAvatar = new Contact.Avatar(contact.getAvatar().getAttachmentId(),
-                                                                             attachment,
-                                                                             contact.getAvatar().isProfile());
+                       DatabaseAttachment attachment = attachmentIdMap.get(contact.getAvatar().getAttachmentId());
+                       Contact.Avatar updatedAvatar = new Contact.Avatar(contact.getAvatar().getAttachmentId(),
+                                                                         attachment,
+                                                                         contact.getAvatar().isProfile());
 
                        return new Contact(contact, updatedAvatar);
                      } else {

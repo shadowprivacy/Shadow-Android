@@ -17,6 +17,7 @@ import okhttp3.Dns;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import su.sres.signalservice.api.account.AccountAttributes;
+import su.sres.signalservice.api.account.ChangeUserLoginRequest;
 import su.sres.signalservice.api.groupsv2.GroupsV2AuthorizationString;
 import su.sres.signalservice.api.messages.calls.CallingResponse;
 import su.sres.signalservice.api.payments.CurrencyConversions;
@@ -183,6 +184,7 @@ public class PushServiceSocket {
   private static final String CERTIFICATE_VERSION_PATH  = "/v1/accounts/certver";
   private static final String SYSTEM_CERTS_PATH         = "/v1/accounts/cert";
   private static final String DELETE_ACCOUNT_PATH       = "/v1/accounts/me";
+  private static final String CHANGE_USER_LOGIN_PATH    = "/v1/accounts/number";
 
   private static final String PREKEY_METADATA_PATH = "/v2/keys/";
   private static final String PREKEY_PATH          = "/v2/keys/%s";
@@ -333,6 +335,10 @@ public class PushServiceSocket {
     }
   }
 
+  public WhoAmIResponse getWhoAmI() throws IOException {
+    return JsonUtil.fromJson(makeServiceRequest(WHO_AM_I, "GET", null), WhoAmIResponse.class);
+  }
+
   public VerifyAccountResponse verifyAccountCode(String verificationCode, String signalingKey, int registrationId, boolean fetchesMessages, String pin,
                                                  byte[] unidentifiedAccessKey, boolean unrestrictedUnidentifiedAccess,
                                                  AccountAttributes.Capabilities capabilities,
@@ -352,6 +358,16 @@ public class PushServiceSocket {
                                              });
 
     return JsonUtil.fromJson(responseBody, VerifyAccountResponse.class);
+  }
+
+  public VerifyAccountResponse changeUserLogin(String code, String newLogin)
+      throws IOException
+  {
+    ChangeUserLoginRequest changeUserLoginRequest = new ChangeUserLoginRequest(newLogin, code);
+    String                 requestBody            = JsonUtil.toJson(changeUserLoginRequest);
+    String                 responseBody           = makeServiceRequest(CHANGE_USER_LOGIN_PATH, "PUT", requestBody);
+
+    return new VerifyAccountResponse();
   }
 
   public void setAccountAttributes(String signalingKey, int registrationId, boolean fetchesMessages, String pin,

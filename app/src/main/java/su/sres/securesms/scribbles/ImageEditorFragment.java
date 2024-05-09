@@ -2,6 +2,7 @@ package su.sres.securesms.scribbles;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.Paint;
@@ -9,11 +10,13 @@ import android.graphics.Point;
 import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
@@ -21,30 +24,35 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import su.sres.securesms.R;
+import su.sres.securesms.animation.ResizeAnimation;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.imageeditor.Bounds;
 import su.sres.securesms.imageeditor.ColorableRenderer;
 import su.sres.securesms.imageeditor.ImageEditorView;
 import su.sres.securesms.imageeditor.Renderer;
+import su.sres.securesms.imageeditor.SelectableRenderer;
 import su.sres.securesms.imageeditor.model.EditorElement;
 import su.sres.securesms.imageeditor.model.EditorModel;
+import su.sres.securesms.imageeditor.renderers.BezierDrawingRenderer;
 import su.sres.securesms.imageeditor.renderers.FaceBlurRenderer;
 import su.sres.securesms.imageeditor.renderers.MultiLineTextRenderer;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.mediasend.MediaSendPageFragment;
+import su.sres.securesms.mediasend.v2.MediaAnimations;
 import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.mms.PushMediaConstraints;
 import su.sres.securesms.mms.SentMediaQuality;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.providers.BlobProvider;
-import su.sres.securesms.scribbles.widget.VerticalSlideColorPicker;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.ParcelUtil;
 import su.sres.securesms.util.SaveAttachmentTask;
 import su.sres.securesms.util.StorageUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.core.util.concurrent.SignalExecutors;
+import su.sres.securesms.util.ThrottledDebouncer;
+import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.views.SimpleProgressDialog;
 
@@ -57,17 +65,27 @@ import java.util.Objects;
 
 import static android.app.Activity.RESULT_OK;
 
-public final class ImageEditorFragment extends Fragment implements ImageEditorHud.EventListener,
-                                                                   VerticalSlideColorPicker.OnColorChangeListener,
-                                                                   MediaSendPageFragment
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
+public final class ImageEditorFragment extends Fragment implements ImageEditorHudV2.EventListener,
+                                                                   MediaSendPageFragment,
+                                                                   TextEntryDialogFragment.Controller
 {
 
   private static final String TAG = Log.tag(ImageEditorFragment.class);
+
+  private static final float PORTRAIT_ASPECT_RATIO = 9 / 16f;
 
   private static final String KEY_IMAGE_URI = "image_uri";
   private static final String KEY_MODE      = "mode";
 
   private static final int SELECT_STICKER_REQUEST_CODE = 124;
+
+  private static final int HUD_PROTECTION = ViewUtil.dpToPx(72);
 
   private EditorModel restoredModel;
 
@@ -77,10 +95,12 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
   private           int           imageMaxHeight;
   private           int           imageMaxWidth;
 
+  private final ThrottledDebouncer deleteFadeDebouncer = new ThrottledDebouncer(500);
+
   public static class Data {
     private final Bundle bundle;
 
-    Data(Bundle bundle) {
+    public Data(Bundle bundle) {
       this.bundle = bundle;
     }
 
@@ -101,12 +121,18 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
       }
       return ParcelUtil.deserialize(bytes, EditorModel.CREATOR);
     }
+
+    public @NonNull Bundle getBundle() {
+      return bundle;
+    }
   }
 
-  private Uri             imageUri;
-  private Controller      controller;
-  private ImageEditorHud  imageEditorHud;
-  private ImageEditorView imageEditorView;
+  private Uri              imageUri;
+  private Controller       controller;
+  private ImageEditorHudV2 imageEditorHud;
+  private ImageEditorView  imageEditorView;
+  private boolean          hasMadeAnEditThisSession;
+  private boolean          wasInTrashHitZone;
 
   public static ImageEditorFragment newInstanceForAvatarCapture(@NonNull Uri imageUri) {
     ImageEditorFragment fragment = newInstance(imageUri);
@@ -131,6 +157,21 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     return fragment;
   }
 
+  public void setMode(ImageEditorHudV2.Mode mode) {
+    ImageEditorHudV2.Mode currentMode = imageEditorHud.getMode();
+    if (currentMode == mode) {
+      return;
+    }
+
+    imageEditorHud.setMode(mode);
+  }
+
+  @Override
+  public void onConfigurationChanged(@NonNull Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    updateViewPortScaling(imageEditorHud.getMode(), imageEditorHud.getMode(), newConfig.orientation, true);
+  }
+
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -141,7 +182,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     } else if (getActivity() instanceof Controller) {
       controller = (Controller) getActivity();
     } else {
-      throw new IllegalStateException("Parent activity must implement Controller interface.");
+      throw new IllegalStateException("Parent must implement Controller interface.");
     }
 
     Bundle arguments = getArguments();
@@ -174,10 +215,17 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     imageEditorHud  = view.findViewById(R.id.scribble_hud);
     imageEditorView = view.findViewById(R.id.image_editor_view);
 
+    int width  = getResources().getDisplayMetrics().widthPixels;
+    int height = (int) ((16 / 9f) * width);
+    imageEditorView.setMinimumHeight(height);
+    imageEditorView.requestLayout();
+    imageEditorHud.setBottomOfImageEditorView(getResources().getDisplayMetrics().heightPixels - height);
+
     imageEditorHud.setEventListener(this);
 
+    imageEditorView.setDragListener(dragListener);
     imageEditorView.setTapListener(selectionListener);
-    imageEditorView.setDrawingChangedListener(this::refreshUniqueColors);
+    imageEditorView.setDrawingChangedListener(stillTouching -> onDrawingChanged(stillTouching, true));
     imageEditorView.setUndoRedoStackListener(this::onUndoRedoAvailabilityChanged);
 
     EditorModel editorModel = null;
@@ -200,9 +248,11 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
           break;
       }
 
-      EditorElement image = new EditorElement(new UriGlideRenderer(imageUri, true, imageMaxWidth, imageMaxHeight));
+      EditorElement image = new EditorElement(new UriGlideRenderer(imageUri, true, imageMaxWidth, imageMaxHeight, UriGlideRenderer.STRONG_BLUR, mainImageRequestListener));
       image.getFlags().setSelectable(false).persist();
       editorModel.addElement(image);
+    } else {
+      controller.onMainImageLoaded();
     }
 
     if (mode == Mode.AVATAR_CAPTURE || mode == Mode.AVATAR_EDIT) {
@@ -210,7 +260,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     }
 
     if (mode == Mode.AVATAR_CAPTURE) {
-      imageEditorHud.enterMode(ImageEditorHud.Mode.CROP);
+      imageEditorHud.enterMode(ImageEditorHudV2.Mode.CROP);
     }
 
     imageEditorView.setModel(editorModel);
@@ -220,7 +270,9 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
       SignalStore.tooltips().markBlurHudIconTooltipSeen();
     }
 
-    refreshUniqueColors();
+    onDrawingChanged(false, false);
+
+    requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), onBackPressedCallback);
   }
 
   @Override
@@ -257,7 +309,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
       if (model != null) {
         if (imageEditorView != null) {
           imageEditorView.setModel(model);
-          refreshUniqueColors();
+          onDrawingChanged(false, false);
         } else {
           this.restoredModel = model;
         }
@@ -276,25 +328,57 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
       Renderer renderer = currentSelection.getRenderer();
       if (renderer instanceof ColorableRenderer) {
         ((ColorableRenderer) renderer).setColor(selectedColor);
-        refreshUniqueColors();
+        onDrawingChanged(false, true);
       }
     }
   }
 
   private void startTextEntityEditing(@NonNull EditorElement textElement, boolean selectAll) {
-    imageEditorView.startTextEditing(textElement, TextSecurePreferences.isIncognitoKeyboardEnabled(requireContext()), selectAll);
+    imageEditorView.startTextEditing(textElement);
+
+    TextEntryDialogFragment.Companion.show(
+        getChildFragmentManager(),
+        textElement,
+        TextSecurePreferences.isIncognitoKeyboardEnabled(requireContext()),
+        selectAll,
+        imageEditorHud.getColorIndex()
+    );
+  }
+
+  @Override
+  public void zoomToFitText(@NonNull EditorElement editorElement, @NonNull MultiLineTextRenderer textRenderer) {
+    imageEditorView.zoomToFitText(editorElement, textRenderer);
+  }
+
+  @Override
+  public void onTextStyleToggle() {
+    if (currentSelection != null && currentSelection.getRenderer() instanceof MultiLineTextRenderer) {
+      ((MultiLineTextRenderer) currentSelection.getRenderer()).nextMode();
+    }
+  }
+
+  @Override
+  public void onTextEntryDialogDismissed(boolean hasText) {
+    imageEditorView.doneTextEditing();
+
+    if (hasText) {
+      imageEditorHud.setMode(ImageEditorHudV2.Mode.MOVE_TEXT);
+    } else {
+      onUndo();
+      imageEditorHud.setMode(ImageEditorHudV2.Mode.DRAW);
+    }
   }
 
   protected void addText() {
     String                initialText = "";
     int                   color       = imageEditorHud.getActiveColor();
-    MultiLineTextRenderer renderer    = new MultiLineTextRenderer(initialText, color);
+    MultiLineTextRenderer renderer    = new MultiLineTextRenderer(initialText, color, MultiLineTextRenderer.Mode.REGULAR);
     EditorElement         element     = new EditorElement(renderer, EditorModel.Z_TEXT);
 
     imageEditorView.getModel().addElementCentered(element, 1);
     imageEditorView.invalidate();
 
-    currentSelection = element;
+    setCurrentSelection(element);
 
     startTextEntityEditing(element, true);
   }
@@ -307,21 +391,36 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
       if (uri != null) {
         UriGlideRenderer renderer = new UriGlideRenderer(uri, true, imageMaxWidth, imageMaxHeight);
         EditorElement    element  = new EditorElement(renderer, EditorModel.Z_STICKERS);
-        imageEditorView.getModel().addElementCentered(element, 0.2f);
-        currentSelection = element;
-        imageEditorHud.setMode(ImageEditorHud.Mode.MOVE_DELETE);
+        imageEditorView.getModel().addElementCentered(element, 0.4f);
+        setCurrentSelection(element);
+        hasMadeAnEditThisSession = true;
+        imageEditorHud.setMode(ImageEditorHudV2.Mode.MOVE_STICKER);
       }
     } else {
-      imageEditorHud.setMode(ImageEditorHud.Mode.NONE);
+      imageEditorHud.setMode(ImageEditorHudV2.Mode.DRAW);
     }
   }
 
   @Override
-  public void onModeStarted(@NonNull ImageEditorHud.Mode mode) {
+  public void onModeStarted(@NonNull ImageEditorHudV2.Mode mode, @NonNull ImageEditorHudV2.Mode previousMode) {
+    onBackPressedCallback.setEnabled(shouldHandleOnBackPressed(mode));
+
     imageEditorView.setMode(ImageEditorView.Mode.MoveAndResize);
     imageEditorView.doneTextEditing();
 
-    controller.onTouchEventsNeeded(mode != ImageEditorHud.Mode.NONE);
+    controller.onTouchEventsNeeded(mode != ImageEditorHudV2.Mode.NONE);
+
+    updateViewPortScaling(mode, previousMode, getResources().getConfiguration().orientation, false);
+
+    if (mode != ImageEditorHudV2.Mode.CROP) {
+      imageEditorView.getModel().doneCrop();
+    }
+
+    imageEditorView.getModel()
+                   .getTrash()
+                   .getFlags()
+                   .setVisible(mode == ImageEditorHudV2.Mode.DELETE)
+                   .persist();
 
     switch (mode) {
       case CROP: {
@@ -329,18 +428,15 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
         break;
       }
 
-      case DRAW: {
-        imageEditorView.startDrawing(0.01f, Paint.Cap.ROUND, false);
-        break;
-      }
+      case DRAW:
 
       case HIGHLIGHT: {
-        imageEditorView.startDrawing(0.03f, Paint.Cap.SQUARE, false);
+        onBrushWidthChange();
         break;
       }
 
       case BLUR: {
-        imageEditorView.startDrawing(0.052f, Paint.Cap.ROUND, true);
+        onBrushWidthChange();
         imageEditorHud.setBlurFacesToggleEnabled(imageEditorView.getModel().hasFaceRenderer());
         break;
       }
@@ -356,13 +452,34 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
         break;
       }
 
-      case MOVE_DELETE:
+      case MOVE_STICKER:
+        break;
+
+      case MOVE_TEXT:
         break;
 
       case NONE: {
-        imageEditorView.getModel().doneCrop();
-        currentSelection = null;
+        setCurrentSelection(null);
+        hasMadeAnEditThisSession = false;
         break;
+      }
+    }
+  }
+
+  private void updateViewPortScaling(
+      @NonNull ImageEditorHudV2.Mode mode,
+      @NonNull ImageEditorHudV2.Mode previousMode,
+      int orientation,
+      boolean force)
+  {
+    boolean shouldScaleViewPortForCurrentMode  = shouldScaleViewPort(mode);
+    boolean shouldScaleViewPortForPreviousMode = shouldScaleViewPort(previousMode);
+
+    if (shouldScaleViewPortForCurrentMode != shouldScaleViewPortForPreviousMode || force) {
+      if (shouldScaleViewPortForCurrentMode) {
+        scaleViewPortForDrawing(orientation);
+      } else {
+        restoreViewPortScaling(orientation);
       }
     }
   }
@@ -371,6 +488,19 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
   public void onColorChange(int color) {
     imageEditorView.setDrawingBrushColor(color);
     changeEntityColor(color);
+  }
+
+  @Override
+  public void onTextColorChange(int colorIndex) {
+    imageEditorHud.setColorIndex(colorIndex);
+    onColorChange(imageEditorHud.getActiveColor());
+  }
+
+  @Override
+  public void onBrushWidthChange() {
+    ImageEditorHudV2.Mode mode = imageEditorHud.getMode();
+
+    imageEditorView.startDrawing(imageEditorHud.getActiveBrushWidth(), mode == ImageEditorHudV2.Mode.HIGHLIGHT ? Paint.Cap.SQUARE : Paint.Cap.ROUND, mode == ImageEditorHudV2.Mode.BLUR);
   }
 
   @Override
@@ -430,16 +560,38 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
   }
 
   @Override
+  public void onClearAll() {
+    imageEditorView.getModel().clearUndoStack();
+  }
+
+  @Override
+  public void onCancel() {
+    if (hasMadeAnEditThisSession) {
+      new MaterialAlertDialogBuilder(requireContext())
+          .setTitle(R.string.MediaReviewImagePageFragment__discard_changes)
+          .setMessage(R.string.MediaReviewImagePageFragment__youll_lose_any_changes)
+          .setPositiveButton(R.string.MediaReviewImagePageFragment__discard, (d, w) -> {
+            d.dismiss();
+            imageEditorHud.setMode(ImageEditorHudV2.Mode.NONE);
+            controller.onCancelEditing();
+          })
+          .setNegativeButton(android.R.string.cancel, (d, w) -> d.dismiss())
+          .show();
+    } else {
+      imageEditorHud.setMode(ImageEditorHudV2.Mode.NONE);
+      controller.onCancelEditing();
+    }
+  }
+
+  @Override
   public void onUndo() {
     imageEditorView.getModel().undo();
-    refreshUniqueColors();
     imageEditorHud.setBlurFacesToggleEnabled(imageEditorView.getModel().hasFaceRenderer());
   }
 
   @Override
   public void onDelete() {
     imageEditorView.deleteElement(currentSelection);
-    refreshUniqueColors();
   }
 
   @Override
@@ -471,8 +623,8 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
   }
 
   @Override
-  public void onCropAspectLock(boolean locked) {
-    imageEditorView.getModel().setCropAspectLock(locked);
+  public void onCropAspectLock() {
+    imageEditorView.getModel().setCropAspectLock(!imageEditorView.getModel().isCropAspectLocked());
   }
 
   @Override
@@ -488,6 +640,78 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
   @Override
   public void onDone() {
     controller.onDoneEditing();
+  }
+
+  private ResizeAnimation resizeAnimation;
+
+  private void scaleViewPortForDrawing(int orientation) {
+    if (resizeAnimation != null) {
+      resizeAnimation.cancel();
+    }
+
+    float aspectRatio  = getAspectRatioForOrientation(orientation);
+    int   targetWidth  = getWidthForOrientation(orientation) - ViewUtil.dpToPx(32);
+    int   targetHeight = (int) ((1 / aspectRatio) * targetWidth);
+    int   maxHeight    = getHeightForOrientation(orientation) - HUD_PROTECTION;
+
+    if (targetHeight > maxHeight) {
+      targetHeight = maxHeight;
+      targetWidth  = Math.round(targetHeight * aspectRatio);
+    }
+
+    resizeAnimation = new ResizeAnimation(imageEditorView, targetWidth, targetHeight);
+    resizeAnimation.setDuration(250);
+    resizeAnimation.setInterpolator(MediaAnimations.getInterpolator());
+    imageEditorView.startAnimation(resizeAnimation);
+  }
+
+  private void restoreViewPortScaling(int orientation) {
+    if (resizeAnimation != null) {
+      resizeAnimation.cancel();
+    }
+
+    int   maxHeight    = getHeightForOrientation(orientation);
+    float aspectRatio  = getAspectRatioForOrientation(orientation);
+    int   targetWidth  = getWidthForOrientation(orientation);
+    int   targetHeight = (int) ((1 / aspectRatio) * targetWidth);
+
+    if (targetHeight > maxHeight) {
+      targetHeight = maxHeight;
+      targetWidth  = Math.round(targetHeight * aspectRatio);
+    }
+
+    resizeAnimation = new ResizeAnimation(imageEditorView, targetWidth, targetHeight);
+    resizeAnimation.setDuration(250);
+    resizeAnimation.setInterpolator(MediaAnimations.getInterpolator());
+    imageEditorView.startAnimation(resizeAnimation);
+  }
+
+  private int getHeightForOrientation(int orientation) {
+    if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+      return Math.max(getResources().getDisplayMetrics().heightPixels, getResources().getDisplayMetrics().widthPixels);
+    } else {
+      return Math.min(getResources().getDisplayMetrics().heightPixels, getResources().getDisplayMetrics().widthPixels);
+    }
+  }
+
+  private int getWidthForOrientation(int orientation) {
+    if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+      return Math.min(getResources().getDisplayMetrics().heightPixels, getResources().getDisplayMetrics().widthPixels);
+    } else {
+      return Math.max(getResources().getDisplayMetrics().heightPixels, getResources().getDisplayMetrics().widthPixels);
+    }
+  }
+
+  private float getAspectRatioForOrientation(int orientation) {
+    if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+      return PORTRAIT_ASPECT_RATIO;
+    } else {
+      return 1f / PORTRAIT_ASPECT_RATIO;
+    }
+  }
+
+  private static boolean shouldScaleViewPort(@NonNull ImageEditorHudV2.Mode mode) {
+    return mode != ImageEditorHudV2.Mode.NONE && mode != ImageEditorHudV2.Mode.CROP;
   }
 
   private void performSaveToDisk() {
@@ -512,8 +736,10 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
                        .createForSingleUseInMemory();
   }
 
-  private void refreshUniqueColors() {
-    imageEditorHud.setColorPalette(imageEditorView.getModel().getUniqueColorsIgnoringAlpha());
+  private void onDrawingChanged(boolean stillTouching, boolean isUserEdit) {
+    if (isUserEdit) {
+      hasMadeAnEditThisSession = true;
+    }
   }
 
   private void onUndoRedoAvailabilityChanged(boolean undoAvailable, boolean redoAvailable) {
@@ -554,34 +780,156 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     cachedFaceDetection = new Pair<>(getUri(), result);
   }
 
+  private boolean shouldHandleOnBackPressed(ImageEditorHudV2.Mode mode) {
+    return mode == ImageEditorHudV2.Mode.CROP ||
+           mode == ImageEditorHudV2.Mode.DRAW ||
+           mode == ImageEditorHudV2.Mode.HIGHLIGHT ||
+           mode == ImageEditorHudV2.Mode.BLUR ||
+           mode == ImageEditorHudV2.Mode.TEXT ||
+           mode == ImageEditorHudV2.Mode.MOVE_STICKER ||
+           mode == ImageEditorHudV2.Mode.MOVE_TEXT ||
+           mode == ImageEditorHudV2.Mode.INSERT_STICKER;
+  }
+
+  private void onPopEditorMode() {
+    setCurrentSelection(null);
+
+    switch (imageEditorHud.getMode()) {
+      case NONE:
+        return;
+      case CROP:
+        onCancel();
+        break;
+      case DRAW:
+      case HIGHLIGHT:
+      case BLUR:
+        if (Mode.getByCode(requireArguments().getString(KEY_MODE)) == Mode.NORMAL) {
+          onCancel();
+        } else {
+          controller.onTouchEventsNeeded(true);
+          imageEditorHud.setMode(ImageEditorHudV2.Mode.CROP);
+        }
+        break;
+      case INSERT_STICKER:
+      case MOVE_STICKER:
+      case MOVE_TEXT:
+      case DELETE:
+      case TEXT:
+        controller.onTouchEventsNeeded(true);
+        imageEditorHud.setMode(ImageEditorHudV2.Mode.DRAW);
+        break;
+    }
+  }
+
+  private final RequestListener<Bitmap> mainImageRequestListener = new RequestListener<Bitmap>() {
+    @Override public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
+      controller.onMainImageFailedToLoad();
+      return false;
+    }
+
+    @Override public boolean onResourceReady(Bitmap resource, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
+      controller.onMainImageLoaded();
+      return false;
+    }
+  };
+
+  private final ImageEditorView.DragListener dragListener = new ImageEditorView.DragListener() {
+    @Override
+    public void onDragStarted(@Nullable EditorElement editorElement) {
+      if (imageEditorHud.getMode() == ImageEditorHudV2.Mode.CROP) {
+        return;
+      }
+
+      if (editorElement == null || editorElement.getRenderer() instanceof BezierDrawingRenderer) {
+        setCurrentSelection(null);
+      } else {
+        setCurrentSelection(editorElement);
+      }
+
+      if (imageEditorView.getMode() == ImageEditorView.Mode.MoveAndResize) {
+        imageEditorHud.setMode(ImageEditorHudV2.Mode.DELETE);
+      } else {
+        imageEditorHud.animate().alpha(0f);
+      }
+    }
+
+    @Override
+    public void onDragMoved(@Nullable EditorElement editorElement, boolean isInTrashHitZone) {
+      if (imageEditorHud.getMode() == ImageEditorHudV2.Mode.CROP || editorElement == null) {
+        return;
+      }
+
+      if (isInTrashHitZone) {
+        deleteFadeDebouncer.publish(() -> {
+          if (!wasInTrashHitZone) {
+            wasInTrashHitZone = true;
+            if (imageEditorHud.isHapticFeedbackEnabled()) {
+              imageEditorHud.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            }
+          }
+
+          editorElement.animatePartialFadeOut(imageEditorView::invalidate);
+        });
+      } else {
+        deleteFadeDebouncer.publish(() -> {
+          wasInTrashHitZone = false;
+          editorElement.animatePartialFadeIn(imageEditorView::invalidate);
+        });
+      }
+    }
+
+    @Override
+    public void onDragEnded(@Nullable EditorElement editorElement, boolean isInTrashHitZone) {
+      wasInTrashHitZone = false;
+      imageEditorHud.animate().alpha(1f);
+      if (imageEditorHud.getMode() == ImageEditorHudV2.Mode.CROP) {
+        return;
+      }
+
+      if (isInTrashHitZone) {
+        deleteFadeDebouncer.clear();
+        onDelete();
+        setCurrentSelection(null);
+        onPopEditorMode();
+      } else if (editorElement != null && editorElement.getRenderer() instanceof MultiLineTextRenderer) {
+        editorElement.animatePartialFadeIn(imageEditorView::invalidate);
+
+        if (imageEditorHud.getMode() != ImageEditorHudV2.Mode.TEXT) {
+          imageEditorHud.setMode(ImageEditorHudV2.Mode.MOVE_TEXT);
+        }
+      } else if (editorElement != null && editorElement.getRenderer() instanceof UriGlideRenderer) {
+        editorElement.animatePartialFadeIn(imageEditorView::invalidate);
+        imageEditorHud.setMode(ImageEditorHudV2.Mode.MOVE_STICKER);
+      }
+    }
+  };
+
   private final ImageEditorView.TapListener selectionListener = new ImageEditorView.TapListener() {
 
     @Override
     public void onEntityDown(@Nullable EditorElement editorElement) {
       if (editorElement != null) {
         controller.onTouchEventsNeeded(true);
-      } else {
-        currentSelection = null;
-        controller.onTouchEventsNeeded(false);
-        imageEditorHud.setMode(ImageEditorHud.Mode.NONE);
       }
     }
 
     @Override
     public void onEntitySingleTap(@Nullable EditorElement editorElement) {
-      currentSelection = editorElement;
+      setCurrentSelection(editorElement);
       if (currentSelection != null) {
         if (editorElement.getRenderer() instanceof MultiLineTextRenderer) {
           setTextElement(editorElement, (ColorableRenderer) editorElement.getRenderer(), imageEditorView.isTextEditing());
         } else {
-          imageEditorHud.setMode(ImageEditorHud.Mode.MOVE_DELETE);
+          imageEditorHud.setMode(ImageEditorHudV2.Mode.MOVE_STICKER);
         }
+      } else {
+        onPopEditorMode();
       }
     }
 
     @Override
     public void onEntityDoubleTap(@NonNull EditorElement editorElement) {
-      currentSelection = editorElement;
+      setCurrentSelection(editorElement);
       if (editorElement.getRenderer() instanceof MultiLineTextRenderer) {
         setTextElement(editorElement, (ColorableRenderer) editorElement.getRenderer(), true);
       }
@@ -592,11 +940,34 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
                                 boolean startEditing)
     {
       int color = colorableRenderer.getColor();
-      imageEditorHud.enterMode(ImageEditorHud.Mode.TEXT);
+      imageEditorHud.enterMode(ImageEditorHudV2.Mode.TEXT);
       imageEditorHud.setActiveColor(color);
       if (startEditing) {
         startTextEntityEditing(editorElement, false);
       }
+    }
+  };
+
+  private void setCurrentSelection(@Nullable EditorElement currentSelection) {
+    setSelectionState(this.currentSelection, false);
+
+    this.currentSelection = currentSelection;
+
+    setSelectionState(this.currentSelection, true);
+
+    imageEditorView.invalidate();
+  }
+
+  private void setSelectionState(@Nullable EditorElement editorElement, boolean selected) {
+    if (editorElement != null && editorElement.getRenderer() instanceof SelectableRenderer) {
+      ((SelectableRenderer) editorElement.getRenderer()).onSelected(selected);
+    }
+  }
+
+  private final OnBackPressedCallback onBackPressedCallback = new OnBackPressedCallback(false) {
+    @Override
+    public void handleOnBackPressed() {
+      onPopEditorMode();
     }
   };
 
@@ -606,6 +977,12 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     void onRequestFullScreen(boolean fullScreen, boolean hideKeyboard);
 
     void onDoneEditing();
+
+    void onCancelEditing();
+
+    void onMainImageLoaded();
+
+    void onMainImageFailedToLoad();
   }
 
   private static class FaceDetectionResult {

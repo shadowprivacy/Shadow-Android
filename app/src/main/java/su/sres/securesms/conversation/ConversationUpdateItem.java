@@ -27,7 +27,7 @@ import su.sres.securesms.VerifyIdentityActivity;
 import su.sres.securesms.conversation.colors.Colorizer;
 import su.sres.securesms.conversation.multiselect.MultiselectPart;
 import su.sres.securesms.conversation.ui.error.EnableCallNotificationSettingsDialog;
-import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
+import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.database.model.GroupCallUpdateDetailsUtil;
 import su.sres.securesms.database.model.InMemoryMessageRecord;
 import su.sres.securesms.database.model.LiveUpdateMessage;
@@ -46,7 +46,6 @@ import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.ListenableFuture;
 import su.sres.securesms.util.livedata.LiveDataUtil;
-import su.sres.securesms.video.exo.AttachmentMediaSourceFactory;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -116,7 +115,6 @@ public final class ConversationUpdateItem extends FrameLayout
                    boolean pulseMention,
                    boolean hasWallpaper,
                    boolean isMessageRequestAccepted,
-                   @NonNull AttachmentMediaSourceFactory attachmentMediaSourceFactory,
                    boolean allowedToPlayInline,
                    @NonNull Colorizer colorizer)
   {
@@ -131,7 +129,7 @@ public final class ConversationUpdateItem extends FrameLayout
   }
 
   @Override
-  public ConversationMessage getConversationMessage() {
+  public @NonNull ConversationMessage getConversationMessage() {
     return conversationMessage;
   }
 
@@ -173,7 +171,7 @@ public final class ConversationUpdateItem extends FrameLayout
     }
 
     UpdateDescription         updateDescription = Objects.requireNonNull(messageRecord.getUpdateDisplayBody(getContext()));
-    LiveData<SpannableString> liveUpdateMessage = LiveUpdateMessage.fromMessageDescription(getContext(), updateDescription, textColor);
+    LiveData<SpannableString> liveUpdateMessage = LiveUpdateMessage.fromMessageDescription(getContext(), updateDescription, textColor, true);
     LiveData<SpannableString> spannableMessage  = loading(liveUpdateMessage);
 
     observeDisplayBody(lifecycleOwner, spannableMessage);
@@ -414,7 +412,17 @@ public final class ConversationUpdateItem extends FrameLayout
           eventListener.onBadDecryptLearnMoreClicked(conversationMessage.getMessageRecord().getRecipient().getId());
         }
       });
-    } else {
+    }
+    /* else if (conversationMessage.getMessageRecord().isChangeLogin() && conversationMessage.getMessageRecord().getIndividualRecipient().isSystemContact()) {
+      actionButton.setText(R.string.ConversationUpdateItem_update_contact);
+      actionButton.setVisibility(VISIBLE);
+      actionButton.setOnClickListener(v -> {
+        if (batchSelected.isEmpty() && eventListener != null) {
+          eventListener.onChangeLoginUpdateContact(conversationMessage.getMessageRecord().getIndividualRecipient());
+        }
+      });
+    } */
+    else {
       actionButton.setVisibility(GONE);
       actionButton.setOnClickListener(null);
     }
@@ -486,10 +494,11 @@ public final class ConversationUpdateItem extends FrameLayout
   }
 
   private static boolean isSameType(@NonNull MessageRecord current, @NonNull MessageRecord candidate) {
-    return (current.isGroupUpdate() && candidate.isGroupUpdate()) ||
-           (current.isProfileChange() && candidate.isProfileChange()) ||
-           (current.isGroupCall() && candidate.isGroupCall()) ||
-           (current.isExpirationTimerUpdate() && candidate.isExpirationTimerUpdate());
+    return (current.isGroupUpdate()           && candidate.isGroupUpdate())           ||
+           (current.isProfileChange()         && candidate.isProfileChange())         ||
+           (current.isGroupCall()             && candidate.isGroupCall())             ||
+           (current.isExpirationTimerUpdate() && candidate.isExpirationTimerUpdate()) ||
+           (current.isChangeLogin()          && candidate.isChangeLogin());
   }
 
   @Override

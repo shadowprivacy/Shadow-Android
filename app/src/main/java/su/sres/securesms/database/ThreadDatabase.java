@@ -1117,12 +1117,21 @@ public class ThreadDatabase extends Database {
     return getThreadIdIfExistsFor(recipientId) > -1;
   }
 
+  public void updateLastSeenAndMarkSentAndLastScrolledSilenty(long threadId) {
+    ContentValues contentValues = new ContentValues(3);
+    contentValues.put(LAST_SEEN, System.currentTimeMillis());
+    contentValues.put(HAS_SENT, 1);
+    contentValues.put(LAST_SCROLLED, 0);
+
+    databaseHelper.getSignalWritableDatabase().update(TABLE_NAME, contentValues, ID_WHERE, SqlUtil.buildArgs(threadId));
+  }
+
   public void setHasSentSilently(long threadId, boolean hasSent) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(HAS_SENT, hasSent ? 1 : 0);
 
     databaseHelper.getSignalWritableDatabase().update(TABLE_NAME, contentValues, ID_WHERE,
-                                                new String[] { String.valueOf(threadId) });
+                                                      new String[] { String.valueOf(threadId) });
   }
 
   void updateReadState(long threadId) {
@@ -1456,7 +1465,8 @@ public class ThreadDatabase extends Database {
 
   private boolean isSilentType(long type) {
     return MmsSmsColumns.Types.isProfileChange(type) ||
-           MmsSmsColumns.Types.isGroupV1MigrationEvent(type);
+           MmsSmsColumns.Types.isGroupV1MigrationEvent(type) ||
+           MmsSmsColumns.Types.isChangeLogin(type);
   }
 
   public Reader readerFor(Cursor cursor) {

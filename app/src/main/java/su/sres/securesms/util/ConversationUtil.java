@@ -40,7 +40,7 @@ public final class ConversationUtil {
 
   private static final String TAG = Log.tag(ConversationUtil.class);
 
-  private static final String CATEGORY_SHARE_TARGET = "org.thoughtcrime.securesms.sharing.CATEGORY_SHARE_TARGET";
+  private static final String CATEGORY_SHARE_TARGET = "su.sres.securesms.sharing.CATEGORY_SHARE_TARGET";
 
   private ConversationUtil() {}
 

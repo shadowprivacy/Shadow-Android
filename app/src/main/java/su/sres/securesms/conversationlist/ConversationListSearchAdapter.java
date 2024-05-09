@@ -3,6 +3,7 @@ package su.sres.securesms.conversationlist;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,8 +20,8 @@ import su.sres.securesms.util.StickyHeaderDecoration;
 import java.util.Collections;
 import java.util.Locale;
 
-class ConversationListSearchAdapter extends    RecyclerView.Adapter<ConversationListSearchAdapter.SearchResultViewHolder>
-        implements StickyHeaderDecoration.StickyHeaderAdapter<ConversationListSearchAdapter.HeaderViewHolder>
+class ConversationListSearchAdapter extends RecyclerView.Adapter<ConversationListSearchAdapter.SearchResultViewHolder>
+    implements StickyHeaderDecoration.StickyHeaderAdapter<ConversationListSearchAdapter.HeaderViewHolder>
 {
   private static final int TYPE_CONVERSATIONS = 1;
   private static final int TYPE_CONTACTS      = 2;
@@ -35,7 +36,7 @@ class ConversationListSearchAdapter extends    RecyclerView.Adapter<Conversation
 
   ConversationListSearchAdapter(@NonNull GlideRequests glideRequests,
                                 @NonNull EventListener eventListener,
-                                @NonNull Locale        locale)
+                                @NonNull Locale locale)
   {
     this.glideRequests = glideRequests;
     this.eventListener = eventListener;
@@ -95,7 +96,7 @@ class ConversationListSearchAdapter extends    RecyclerView.Adapter<Conversation
   @Override
   public HeaderViewHolder onCreateHeaderViewHolder(ViewGroup parent, int position, int type) {
     return new HeaderViewHolder(LayoutInflater.from(parent.getContext())
-            .inflate(R.layout.search_result_list_divider, parent, false));
+                                              .inflate(R.layout.dsl_section_header, parent, false));
   }
 
   @Override
@@ -142,7 +143,9 @@ class ConversationListSearchAdapter extends    RecyclerView.Adapter<Conversation
 
   public interface EventListener {
     void onConversationClicked(@NonNull ThreadRecord threadRecord);
+
     void onContactClicked(@NonNull Recipient contact);
+
     void onMessageClicked(@NonNull MessageResult message);
   }
 
@@ -155,31 +158,31 @@ class ConversationListSearchAdapter extends    RecyclerView.Adapter<Conversation
       root = (ConversationListItem) itemView;
     }
 
-    void bind(@NonNull  ThreadRecord  conversationResult,
-              @NonNull  GlideRequests glideRequests,
-              @NonNull  EventListener eventListener,
-              @NonNull  Locale        locale,
-              @Nullable String        query)
+    void bind(@NonNull ThreadRecord conversationResult,
+              @NonNull GlideRequests glideRequests,
+              @NonNull EventListener eventListener,
+              @NonNull Locale locale,
+              @Nullable String query)
     {
       root.bind(conversationResult, glideRequests, locale, Collections.emptySet(), Collections.emptySet(), false, query);
       root.setOnClickListener(view -> eventListener.onConversationClicked(conversationResult));
     }
 
-    void bind(@NonNull  Recipient     contactResult,
-              @NonNull  GlideRequests glideRequests,
-              @NonNull  EventListener eventListener,
-              @NonNull  Locale        locale,
-              @Nullable String        query)
+    void bind(@NonNull Recipient contactResult,
+              @NonNull GlideRequests glideRequests,
+              @NonNull EventListener eventListener,
+              @NonNull Locale locale,
+              @Nullable String query)
     {
       root.bind(contactResult, glideRequests, locale, query);
       root.setOnClickListener(view -> eventListener.onContactClicked(contactResult));
     }
 
-    void bind(@NonNull  MessageResult messageResult,
-              @NonNull  GlideRequests glideRequests,
-              @NonNull  EventListener eventListener,
-              @NonNull  Locale        locale,
-              @Nullable String        query)
+    void bind(@NonNull MessageResult messageResult,
+              @NonNull GlideRequests glideRequests,
+              @NonNull EventListener eventListener,
+              @NonNull Locale locale,
+              @Nullable String query)
     {
       root.bind(messageResult, glideRequests, locale, query);
       root.setOnClickListener(view -> eventListener.onMessageClicked(messageResult));
@@ -197,7 +200,7 @@ class ConversationListSearchAdapter extends    RecyclerView.Adapter<Conversation
 
     public HeaderViewHolder(View itemView) {
       super(itemView);
-      titleView = itemView.findViewById(R.id.label);
+      titleView = itemView.findViewById(R.id.section_header);
     }
 
     public void bind(int headerType) {

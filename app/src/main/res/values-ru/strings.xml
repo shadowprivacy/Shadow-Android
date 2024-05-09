@@ -1256,6 +1256,7 @@
     <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified">Вы отметили код безопасности с %s как неподтвержденный</string>
     <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified_from_another_device">Вы отметили код безопасности с %s как неподтвержденный с другого устройства</string>
     <string name="MessageRecord_a_message_from_s_couldnt_be_delivered">Не удалось доставить сообщение от %s</string>
+    <string name="MessageRecord_s_changed_their_number_to_a_new_number">%1$s изменил(-а) свой логин.</string>
 
     <!--Group Calling update messages-->
     <string name="MessageRecord_s_started_a_group_call_s">%1$s начал(-а) групповой звонок · %2$s</string>
@@ -1915,6 +1916,7 @@
     <string name="ConversationUpdateItem_call_is_full">Звонок заполнен</string>
     <string name="ConversationUpdateItem_invite_friends">Пригласить друзей</string>
     <string name="ConversationUpdateItem_enable_call_notifications">Включить уведомления о звонках</string>
+    <string name="ConversationUpdateItem_update_contact">Обновить контакт</string>
     <string name="ConversationUpdateItem_no_groups_in_common_review_requests_carefully">Нет общих групп. Внимательно проверяйте запросы.</string>
     <string name="ConversationUpdateItem_no_contacts_in_this_group_review_requests_carefully">В этой группе нет ваших контактов. Внимательно проверяйте запросы.</string>
     <string name="ConversationUpdateItem_view">Просмотреть</string>
@@ -2109,21 +2111,27 @@
     <!--unknown_sender_view-->
 
     <!--verify_display_fragment-->
-    <string name="verify_display_fragment__if_you_wish_to_verify_the_security_of_your_end_to_end_encryption_with_s"><![CDATA[Если вы хотите убедиться в надёжности шифрования переписки и звонков с %s, сравните этот код с таким же кодом на устройстве вашего собеседника. Также вы можете отсканировать код на устройстве собеседника или попросить его отсканировать ваш код.]]></string>
+    <string name="verify_display_fragment__to_verify_the_security_of_your_end_to_end_encryption_with_s"><![CDATA[Чтобы убедиться в безопасности сквозного шифрования с %s, сравните числа выше с устройством вашего собеседника. Вы также можете отсканировать код на его устройстве.]]></string>
     <string name="verify_display_fragment__tap_to_scan">Сканировать</string>
+    <string name="verify_display_fragment__successful_match">Успешное совпадение</string>
+    <string name="verify_display_fragment__failed_to_verify_safety_number">Не удалось подтвердить код безопасности</string>
     <string name="verify_display_fragment__loading">Загружаем…</string>
-    <string name="verify_display_fragment__verified">Подтверждён</string>
+    <string name="verify_display_fragment__mark_as_verified">Отметить как подтверждённый</string>
+    <string name="verify_display_fragment__clear_verification">Сбросить подтверждение</string>
+
     <!--verify_identity-->
     <string name="verify_identity__share_safety_number">Поделиться кодом безопасности</string>
+    <!--verity_scan_fragment-->
+    <string name="verify_scan_fragment__scan_the_qr_code_on_your_contact">Просканируйте QR-код на устройстве собеседника.</string>
     <!--webrtc_answer_decline_button-->
     <string name="webrtc_answer_decline_button__swipe_up_to_answer">Проведите пальцем вверх, чтобы ответить</string>
     <string name="webrtc_answer_decline_button__swipe_down_to_reject">Проведите пальцем вниз, чтобы отклонить</string>
     <!--message_details_header-->
     <string name="message_details_header__issues_need_your_attention">Есть проблемы, требующие вашего внимания.</string>
-    <string name="message_details_header__sent">Отправлено</string>
-    <string name="message_details_header__received">Получено</string>
-    <string name="message_details_header__disappears">Исчезнет</string>
-    <string name="message_details_header__via">Через</string>
+    <string name="message_details_header__sent">Отправлено:</string>
+    <string name="message_details_header__received">Получено:</string>
+    <string name="message_details_header__disappears">Исчезнет:</string>
+    <string name="message_details_header__via">Через:</string>
 
     <!--message_details_recipient_header-->
     <string name="message_details_recipient_header__pending_send">В ожидании</string>
@@ -2723,6 +2731,7 @@
     <string name="RegistrationActivity_call_me_instead_available_in">Позвоните мне вместо SMS \n (доступно через %1$02d:%2$02d)</string>
     <string name="RegistrationActivity_contact_signal_support">Связаться с поддержкой</string>
     <string name="RegistrationActivity_code_support_subject">Регистрация в Shadow - код подтверждения для Android</string>
+    <string name="RegistrationActivity_incorrect_code">Неверный код</string>
     <string name="BackupUtil_never">Никогда</string>
     <string name="BackupUtil_unknown">Неизвестно</string>
     <string name="preferences_app_protection__see_my_phone_number">Видеть мое имя пользователя</string>
@@ -2737,6 +2746,7 @@
     <string name="AppProtectionPreferenceFragment_none">Нет</string>
     <string name="RegistrationActivity_too_many_attempts">Слишком много попыток</string>
     <string name="RegistrationActivity_you_have_made_too_many_incorrect_registration_lock_pin_attempts_please_try_again_in_a_day">Вы неправильно ввели PIN-код слишком много раз. Пожалуйста, повторите попытку завтра.</string>
+    <string name="RegistrationActivity_you_have_made_too_many_attempts_please_try_again_later">Слишком много попыток. Попробуйте позже.</string>
     <string name="RegistrationActivity_error_connecting_to_service">Ошибка подключения к сервису</string>
     <string name="preferences_chats__backups">Резервные копии</string>
     <string name="prompt_passphrase_activity__signal_is_locked">Shadow заблокирован</string>
@@ -2927,8 +2937,9 @@
     <!--VoiceNotePlaybackPreparer-->
     <string name="VoiceNotePlaybackPreparer__failed_to_play_voice_message">Не удалось воспроизвести голосовое сообщение</string>
     <!--VoiceNoteMediaDescriptionCompatFactory-->
-    <string name="VoiceNoteMediaDescriptionCompatFactory__voice_message">Голосовое сообщение · %1$s</string>
-    <string name="VoiceNoteMediaDescriptionCompatFactory__s_to_s">%1$s в %2$s</string>
+    <string name="VoiceNoteMediaItemFactory__voice_message">Голосовое сообщение · %1$s</string>
+    <string name="VoiceNoteMediaItemFactory__s_to_s">%1$s в %2$s</string>
+
     <!--StorageUtil-->
     <string name="StorageUtil__s_s">%1$s/%2$s</string>
     <string name="BlockedUsersActivity__s_has_been_blocked">«%1$s» заблокирован(-а).</string>
@@ -3156,12 +3167,45 @@
     <!--AccountSettingsFragment-->
     <string name="AccountSettingsFragment__account">Учётная запись</string>
     <string name="AccountSettingsFragment__youll_be_asked_less_frequently">Напоминания будут появляться реже со временем</string>
-    <string name="AccountSettingsFragment__require_your_signal_pin">Требовать вводить ваш PIN-код Shadow при повторной регистрации вашего номера телефона в Shadow</string>
+    <string name="AccountSettingsFragment__require_your_signal_pin">Требовать вводить ваш PIN-код Shadow при повторной регистрации вашего логина в Shadow</string>
+    <string name="AccountSettingsFragment__change_phone_number">Изменить номер телефона</string>
+    <!--ChangeNumberFragment-->
+    <string name="ChangeNumberFragment__use_this_to_change_your_current_phone_number_to_a_new_phone_number">Используйте эту функцию, чтобы изменить свой текущий логин на новый. Это изменение нельзя отменить.</string>
+    <string name="ChangeNumberFragment__continue">Продолжить</string>
+    <string name="ChangeNumber__your_phone_number_has_been_changed">Ваш логин был изменён.</string>
+    <!--ChangeNumberEnterPhoneNumberFragment-->
+    <string name="ChangeNumberEnterPhoneNumberFragment__change_number">Изменить логин</string>
+    <string name="ChangeNumberEnterPhoneNumberFragment__your_old_number">Ваш старый логин</string>
+    <string name="ChangeNumberEnterPhoneNumberFragment__old_phone_number">Старый логин</string>
+    <string name="ChangeNumberEnterPhoneNumberFragment__your_new_number">Ваш новый логин</string>
+    <string name="ChangeNumberEnterPhoneNumberFragment__new_phone_number">Новый логин</string>
+    <string name="ChangeNumberEnterPhoneNumberFragment__the_phone_number_you_entered_doesnt_match_your_accounts">Логин, который вы ввели, не совпадает с логином вашей учётной записи.</string>
+    <string name="ChangeNumberEnterPhoneNumberFragment__you_must_specify_your_old_phone_number">Вы должны указать свой старый логин</string>
+    <string name="ChangeNumberEnterPhoneNumberFragment__you_must_specify_your_new_phone_number">Вы должны указать свой новый логин</string>
+    <!--ChangeNumberVerifyFragment-->
+    <string name="ChangeNumberVerifyFragment__change_number">Изменить логин</string>
+    <string name="ChangeNumberVerifyFragment__verifying_s">Проверка %1$s</string>
+    <string name="ChangeNumberVerifyFragment__captcha_required">Требуется CAPTCHA</string>
+    <!--ChangeNumberConfirmFragment-->
+    <string name="ChangeNumberConfirmFragment__change_number">Изменить логин</string>
+    <string name="ChangeNumberConfirmFragment__you_are_about_to_change_your_phone_number_from_s_to_s">Вы собираетесь изменить свой логин с %1$s на %2$s.\n\nПеред тем как продолжить, пожалуйста, проверьте, что логин ниже правильный.</string>
+    <string name="ChangeNumberConfirmFragment__edit_number">Редактировать логин</string>
+    <!--ChangeNumberRegistrationLockFragment-->
+    <!--ChangeNumberPinDiffersFragment-->
+    <!--ChangeNumberLockActivity-->
+    <string name="ChangeNumberLockActivity__it_looks_like_you_tried_to_change_your_number_but_we_were_unable_to_determine_if_it_was_successful_rechecking_now">Похоже, что вы пытались изменить свой логин, но нам не удалось проверить, было ли успешным это изменение.\n\nПроверяем заново сейчас…</string>
+    <string name="ChangeNumberLockActivity__change_status_confirmed">Статус изменения подтверждён</string>
+    <string name="ChangeNumberLockActivity__your_number_has_been_confirmed_as_s">Ваш логин был подтверждён: %1$s. Если это не ваш новый логин, пожалуйста, заново пройдите процесс изменения логина.</string>
+    <string name="ChangeNumberLockActivity__change_status_unconfirmed">Статус изменения не подтверждён</string>
+    <string name="ChangeNumberLockActivity__we_could_not_determine_the_status_of_your_change_number_request">Нам не удалось проверить статус вашего запроса на изменение логина.\n\n(Ошибка: %1$s)</string>
+    <string name="ChangeNumberLockActivity__retry">Повторить попытку</string>
+    <string name="ChangeNumberLockActivity__leave">Покинуть</string>
+    <string name="ChangeNumberLockActivity__submit_debug_log">Отправить журнал отладки</string>
+
     <!--ChatsSettingsFragment-->
     <string name="ChatsSettingsFragment__keyboard">Клавиатура</string>
     <string name="ChatsSettingsFragment__enter_key_sends">Отправка клавишей «Ввод»</string>
     <!--SmsSettingsFragment-->
-    <string name="SmsSettingsFragment__use_as_default_sms_app">Использовать для всех SMS</string>
     <!--NotificationsSettingsFragment-->
     <string name="NotificationsSettingsFragment__messages">Сообщения</string>
     <string name="NotificationsSettingsFragment__calls">Звонки</string>
@@ -3408,6 +3452,31 @@
         <item quantity="other">Не удалось переслать сообщения, потому что они больше не доступны.</item>
     </plurals>
     <string name="MultiselectForwardFragment__limit_reached">Достигнут предел</string>
+
+    <!--Media V2-->
+    <string name="MediaReviewFragment__add_a_message">Добавьте сообщение</string>
+    <string name="MediaReviewFragment__add_a_reply">Добавьте ответ</string>
+    <string name="MediaReviewFragment__send_to">Отправить</string>
+    <string name="ImageEditorHud__cancel">Отменить</string>
+    <string name="ImageEditorHud__draw">Нарисовать</string>
+    <string name="ImageEditorHud__write_text">Написать текст</string>
+    <string name="ImageEditorHud__add_a_sticker">Добавить стикер</string>
+    <string name="ImageEditorHud__blur">Размыть</string>
+    <string name="ImageEditorHud__done_editing">Готово</string>
+    <string name="ImageEditorHud__clear_all">Очистить всё</string>
+    <string name="ImageEditorHud__undo">Отменить</string>
+    <string name="ImageEditorHud__toggle_between_marker_and_highlighter">Переключиться между маркером и выделителем</string>
+    <string name="MediaCountIndicatorButton__send">Отправить</string>
+    <string name="MediaReviewSelectedItem__tap_to_remove">Нажмите, чтобы убрать</string>
+    <string name="MediaReviewSelectedItem__tap_to_select">Нажмите, чтобы выбрать</string>
+    <string name="MediaReviewImagePageFragment__discard">Сбросить</string>
+    <string name="MediaReviewImagePageFragment__discard_changes">Сбросить изменения?</string>
+    <string name="MediaReviewFragment__view_once_message">Одноразовое сообщение</string>
+    <string name="MediaReviewImagePageFragment__youll_lose_any_changes">Вы потеряете все изменения, которые вы сделали в этой фотографии.</string>
+
+    <string name="ImageEditorHud__delete">Удалить</string>
+    <string name="CameraFragment__failed_to_open_camera">Не удалось открыть камеру</string>
+    <string name="ImageEditorHud__toggle_between_text_styles">Переключиться между стилями текста</string>
 
     <!--EOF-->
 </resources>

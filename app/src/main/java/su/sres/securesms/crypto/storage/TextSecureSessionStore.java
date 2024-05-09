@@ -18,6 +18,7 @@ import org.whispersystems.libsignal.protocol.CiphertextMessage;
 import org.whispersystems.libsignal.state.SessionRecord;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -56,6 +57,10 @@ public class TextSecureSessionStore implements SignalServiceSessionStore {
         String message = "Mismatch! Asked for " + addresses.size() + " sessions, but only found " + sessionRecords.size() + "!";
         Log.w(TAG, message);
         throw new NoSessionException(message);
+      }
+
+      if (sessionRecords.stream().anyMatch(Objects::isNull)) {
+        throw new NoSessionException("Failed to find at least one session.");
       }
 
       return sessionRecords;

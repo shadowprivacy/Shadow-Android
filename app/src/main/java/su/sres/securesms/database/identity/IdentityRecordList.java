@@ -2,7 +2,7 @@ package su.sres.securesms.database.identity;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
+import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
 import su.sres.securesms.recipients.Recipient;
 

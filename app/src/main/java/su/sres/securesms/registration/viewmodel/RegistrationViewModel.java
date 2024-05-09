@@ -3,140 +3,107 @@ package su.sres.securesms.registration.viewmodel;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.AbstractSavedStateViewModelFactory;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
+import androidx.savedstate.SavedStateRegistryOwner;
 
+import io.reactivex.rxjava3.core.Single;
+import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.registration.RegistrationData;
+import su.sres.securesms.registration.RegistrationRepository;
+import su.sres.securesms.registration.VerifyAccountRepository;
+import su.sres.securesms.registration.VerifyAccountResponseProcessor;
+import su.sres.securesms.registration.VerifyAccountResponseWithoutKbs;
 import su.sres.securesms.util.Util;
-// import su.sres.securesms.util.livedata.LiveDataPair;
+import su.sres.signalservice.internal.ServiceResponse;
+import su.sres.signalservice.internal.push.VerifyAccountResponse;
 
-public final class RegistrationViewModel extends ViewModel {
 
-    private final String                           secret;
-    private final MutableLiveData<String>          userLogin;
-    private final MutableLiveData<String>          textCodeEntered;
-// captcha off
-    //    private final MutableLiveData<String>          captchaToken;
-    private final MutableLiveData<String>          fcmToken;
-    private final MutableLiveData<Boolean>         restoreFlowShown;
-    private final MutableLiveData<Integer>         successfulCodeRequestAttempts;
-    private final MutableLiveData<LocalCodeRequestRateLimiter> requestLimiter;
+public final class RegistrationViewModel extends BaseRegistrationViewModel {
 
-    public RegistrationViewModel(@NonNull SavedStateHandle savedStateHandle) {
-        secret = loadValue(savedStateHandle, "REGISTRATION_SECRET", Util.getSecret(18));
+  private static final String STATE_FCM_TOKEN          = "FCM_TOKEN";
+  private static final String STATE_RESTORE_FLOW_SHOWN = "RESTORE_FLOW_SHOWN";
+  private static final String STATE_IS_REREGISTER      = "IS_REREGISTER";
 
-        userLogin                     = savedStateHandle.getLiveData("USER_LOGIN", "");
-        textCodeEntered               = savedStateHandle.getLiveData("TEXT_CODE_ENTERED", "");
-// captcha off
-        //        captchaToken                  = savedStateHandle.getLiveData("CAPTCHA");
-        fcmToken                      = savedStateHandle.getLiveData("FCM_TOKEN");
-        restoreFlowShown              = savedStateHandle.getLiveData("RESTORE_FLOW_SHOWN", false);
-        successfulCodeRequestAttempts = savedStateHandle.getLiveData("SUCCESSFUL_CODE_REQUEST_ATTEMPTS", 0);
-        requestLimiter                = savedStateHandle.getLiveData("REQUEST_RATE_LIMITER", new LocalCodeRequestRateLimiter(60_000));
+  private final RegistrationRepository registrationRepository;
+
+  public RegistrationViewModel(@NonNull SavedStateHandle savedStateHandle,
+                               boolean isReregister,
+                               @NonNull VerifyAccountRepository verifyAccountRepository,
+                               @NonNull RegistrationRepository registrationRepository)
+  {
+    super(savedStateHandle, verifyAccountRepository, Util.getSecret(18));
+
+    this.registrationRepository = registrationRepository;
+
+    setInitialDefaultValue(STATE_RESTORE_FLOW_SHOWN, false);
+
+    this.savedState.set(STATE_IS_REREGISTER, isReregister);
+  }
+
+  public boolean isReregister() {
+    //noinspection ConstantConditions
+    return savedState.get(STATE_IS_REREGISTER);
+  }
+
+  public @Nullable String getFcmToken() {
+    return savedState.get(STATE_FCM_TOKEN);
+  }
+
+  @MainThread
+  public void setFcmToken(@Nullable String fcmToken) {
+    savedState.set(STATE_FCM_TOKEN, fcmToken);
+  }
+
+  public void setWelcomeSkippedOnRestore() {
+    savedState.set(STATE_RESTORE_FLOW_SHOWN, true);
+  }
+
+  public boolean hasRestoreFlowBeenShown() {
+    //noinspection ConstantConditions
+    return savedState.get(STATE_RESTORE_FLOW_SHOWN);
+  }
+
+  public void setIsReregister(boolean isReregister) {
+    savedState.set(STATE_IS_REREGISTER, isReregister);
+  }
+
+  @Override
+  protected Single<ServiceResponse<VerifyAccountResponse>> verifyAccountWithoutRegistrationLock() {
+    return verifyAccountRepository.verifyAccount(getRegistrationData());
+  }
+
+  @Override
+  protected Single<VerifyAccountResponseProcessor> onVerifySuccess(@NonNull VerifyAccountResponseProcessor processor) {
+    return registrationRepository.registerAccountWithoutRegistrationLock(getRegistrationData(), processor.getResult())
+                                 .map(VerifyAccountResponseWithoutKbs::new);
+  }
+
+  private RegistrationData getRegistrationData() {
+    return new RegistrationData(getTextCodeEntered(),
+                                getUserLogin(),
+                                getRegistrationSecret(),
+                                registrationRepository.getRegistrationId(),
+                                registrationRepository.getProfileKey(getUserLogin()),
+                                getFcmToken());
+  }
+
+  public static final class Factory extends AbstractSavedStateViewModelFactory {
+    private final boolean isReregister;
+
+    public Factory(@NonNull SavedStateRegistryOwner owner, boolean isReregister) {
+      super(owner, null);
+      this.isReregister = isReregister;
     }
 
-    private static <T> T loadValue(@NonNull SavedStateHandle savedStateHandle, @NonNull String key, @NonNull T initialValue) {
-        if (!savedStateHandle.contains(key)) {
-            savedStateHandle.set(key, initialValue);
-        }
-        return savedStateHandle.get(key);
+    @Override
+    protected @NonNull <T extends ViewModel> T create(@NonNull String key, @NonNull Class<T> modelClass, @NonNull SavedStateHandle handle) {
+      //noinspection ConstantConditions
+      return modelClass.cast(new RegistrationViewModel(handle,
+                                                       isReregister,
+                                                       new VerifyAccountRepository(ApplicationDependencies.getApplication()),
+                                                       new RegistrationRepository(ApplicationDependencies.getApplication())));
     }
-
-    public @NonNull String getUserLogin() {
-        //noinspection ConstantConditions Live data was given an initial value
-        return userLogin.getValue();
-    }
-
-    public @NonNull LiveData<String> getLiveUserLogin() {
-        return userLogin;
-    }
-
-    public @NonNull String getTextCodeEntered() {
-        //noinspection ConstantConditions Live data was given an initial value
-        return textCodeEntered.getValue();
-    }
-
-    // captcha off
-/*     public String getCaptchaToken() {
-        return captchaToken.getValue();
-    }
-
-    public boolean hasCaptchaToken() {
-        return getCaptchaToken() != null;
-    }  */
-
-    public String getRegistrationSecret() {
-        return secret;
-    }
-
-    // captcha off
-/*    public void onCaptchaResponse(String captchaToken) {
-        this.captchaToken.setValue(captchaToken);
-    }
-
-    public void clearCaptchaResponse() {
-        captchaToken.setValue(null);
-    }  */
-
-/*    public void onCountrySelected(@Nullable String selectedCountryName, int countryCode) {
-        setViewState(getNumber().toBuilder()
-                .selectedCountryDisplayName(selectedCountryName)
-                .countryCode(countryCode).build());
-    } */
-
-
-    public void setViewState(String userLoginViewState) {
-        if (!userLoginViewState.equals(getUserLogin())) {
-            userLogin.setValue(userLoginViewState);
-        }
-    }
-
-    @MainThread
-    public void onVerificationCodeEntered(String code) {
-        textCodeEntered.setValue(code);
-    }
-
-/*    public void onNumberDetected(int countryCode, long nationalNumber) {
-        setViewState(getNumber().toBuilder()
-                .countryCode(countryCode)
-                .nationalNumber(nationalNumber)
-                .build());
-    } */
-
-    public String getFcmToken() {
-        return fcmToken.getValue();
-    }
-
-    @MainThread
-    public void setFcmToken(@Nullable String fcmToken) {
-        this.fcmToken.setValue(fcmToken);
-    }
-
-    public void setWelcomeSkippedOnRestore() {
-        restoreFlowShown.setValue(true);
-    }
-
-    public boolean hasRestoreFlowBeenShown() {
-        //noinspection ConstantConditions Live data was given an initial value
-        return restoreFlowShown.getValue();
-    }
-
-    public void markASuccessfulAttempt() {
-        //noinspection ConstantConditions Live data was given an initial value
-        successfulCodeRequestAttempts.setValue(successfulCodeRequestAttempts.getValue() + 1);
-    }
-
-    public LiveData<Integer> getSuccessfulCodeRequestAttempts() {
-        return successfulCodeRequestAttempts;
-    }
-
-    public @NonNull LocalCodeRequestRateLimiter getRequestLimiter() {
-        //noinspection ConstantConditions Live data was given an initial value
-        return requestLimiter.getValue();
-    }
-
-    public void updateLimiter() {
-        requestLimiter.setValue(requestLimiter.getValue());
-    }
+  }
 }

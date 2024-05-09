@@ -25,6 +25,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 
 import su.sres.securesms.attachments.Attachment;
+import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mms.AudioSlide;
 import su.sres.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
 import su.sres.securesms.mms.DocumentSlide;
@@ -282,6 +283,10 @@ public class MediaUtil {
 
   public static boolean isTextType(String contentType) {
     return (null != contentType) && contentType.startsWith("text/");
+  }
+
+  public static boolean isNonGifVideo(Media media) {
+    return isVideo(media.getMimeType()) && !media.isVideoGif();
   }
 
   public static boolean isImageType(String contentType) {

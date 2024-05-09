@@ -13,7 +13,8 @@ import java.util.Objects;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
-import su.sres.securesms.database.IdentityDatabase;
+import su.sres.securesms.database.model.IdentityRecord;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupChangeException;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
@@ -27,93 +28,91 @@ import su.sres.securesms.util.concurrent.SimpleTask;
 
 final class RecipientDialogRepository {
 
-    private static final String TAG = Log.tag(RecipientDialogRepository.class);
+  private static final String TAG = Log.tag(RecipientDialogRepository.class);
 
-    @NonNull  private final Context     context;
-    @NonNull  private final RecipientId recipientId;
-    @Nullable private final GroupId     groupId;
+  @NonNull private final  Context     context;
+  @NonNull private final  RecipientId recipientId;
+  @Nullable private final GroupId     groupId;
 
-    RecipientDialogRepository(@NonNull Context context,
-                              @NonNull RecipientId recipientId,
-                              @Nullable GroupId groupId)
-    {
-        this.context     = context;
-        this.recipientId = recipientId;
-        this.groupId     = groupId;
-    }
+  RecipientDialogRepository(@NonNull Context context,
+                            @NonNull RecipientId recipientId,
+                            @Nullable GroupId groupId)
+  {
+    this.context     = context;
+    this.recipientId = recipientId;
+    this.groupId     = groupId;
+  }
 
-    @NonNull RecipientId getRecipientId() {
-        return recipientId;
-    }
+  @NonNull RecipientId getRecipientId() {
+    return recipientId;
+  }
 
-    @Nullable GroupId getGroupId() {
-        return groupId;
-    }
+  @Nullable GroupId getGroupId() {
+    return groupId;
+  }
 
-    void getIdentity(@NonNull Consumer<IdentityDatabase.IdentityRecord> callback) {
-        SignalExecutors.BOUNDED.execute(
-                () -> callback.accept(DatabaseFactory.getIdentityDatabase(context)
-                        .getIdentity(recipientId)
-                        .orNull()));
-    }
+  void getIdentity(@NonNull Consumer<IdentityRecord> callback) {
+    SignalExecutors.BOUNDED.execute(
+        () -> callback.accept(ApplicationDependencies.getIdentityStore().getIdentityRecord(recipientId).orNull()));
+  }
 
-    void getRecipient(@NonNull RecipientCallback recipientCallback) {
-        SimpleTask.run(SignalExecutors.BOUNDED,
-                () -> Recipient.resolved(recipientId),
-                recipientCallback::onRecipient);
-    }
+  void getRecipient(@NonNull RecipientCallback recipientCallback) {
+    SimpleTask.run(SignalExecutors.BOUNDED,
+                   () -> Recipient.resolved(recipientId),
+                   recipientCallback::onRecipient);
+  }
 
-    void removeMember(@NonNull Consumer<Boolean> onComplete, @NonNull GroupChangeErrorCallback error) {
-        SimpleTask.run(SignalExecutors.UNBOUNDED,
-                () -> {
-                    try {
-                        GroupManager.ejectFromGroup(context, Objects.requireNonNull(groupId).requireV2(), Recipient.resolved(recipientId));
-                        return true;
-                    } catch (GroupChangeException | IOException e) {
-                        Log.w(TAG, e);
-                        error.onError(GroupChangeFailureReason.fromException(e));
-                    }
-                    return false;
-                },
-                onComplete::accept);
-    }
+  void removeMember(@NonNull Consumer<Boolean> onComplete, @NonNull GroupChangeErrorCallback error) {
+    SimpleTask.run(SignalExecutors.UNBOUNDED,
+                   () -> {
+                     try {
+                       GroupManager.ejectFromGroup(context, Objects.requireNonNull(groupId).requireV2(), Recipient.resolved(recipientId));
+                       return true;
+                     } catch (GroupChangeException | IOException e) {
+                       Log.w(TAG, e);
+                       error.onError(GroupChangeFailureReason.fromException(e));
+                     }
+                     return false;
+                   },
+                   onComplete::accept);
+  }
 
-    void setMemberAdmin(boolean admin, @NonNull Consumer<Boolean> onComplete, @NonNull GroupChangeErrorCallback error) {
-        SimpleTask.run(SignalExecutors.UNBOUNDED,
-                () -> {
-                    try {
-                        GroupManager.setMemberAdmin(context, Objects.requireNonNull(groupId).requireV2(), recipientId, admin);
-                        return true;
-                    } catch (GroupChangeException | IOException e) {
-                        Log.w(TAG, e);
-                        error.onError(GroupChangeFailureReason.fromException(e));
-                    }
-                    return false;
-                },
-                onComplete::accept);
-    }
+  void setMemberAdmin(boolean admin, @NonNull Consumer<Boolean> onComplete, @NonNull GroupChangeErrorCallback error) {
+    SimpleTask.run(SignalExecutors.UNBOUNDED,
+                   () -> {
+                     try {
+                       GroupManager.setMemberAdmin(context, Objects.requireNonNull(groupId).requireV2(), recipientId, admin);
+                       return true;
+                     } catch (GroupChangeException | IOException e) {
+                       Log.w(TAG, e);
+                       error.onError(GroupChangeFailureReason.fromException(e));
+                     }
+                     return false;
+                   },
+                   onComplete::accept);
+  }
 
-    void getGroupMembership(@NonNull Consumer<List<RecipientId>> onComplete) {
-        SimpleTask.run(SignalExecutors.UNBOUNDED,
-                () -> {
-                    GroupDatabase                   groupDatabase   = DatabaseFactory.getGroupDatabase(context);
-                    List<GroupDatabase.GroupRecord> groupRecords    = groupDatabase.getPushGroupsContainingMember(recipientId);
-                    ArrayList<RecipientId>          groupRecipients = new ArrayList<>(groupRecords.size());
+  void getGroupMembership(@NonNull Consumer<List<RecipientId>> onComplete) {
+    SimpleTask.run(SignalExecutors.UNBOUNDED,
+                   () -> {
+                     GroupDatabase                   groupDatabase   = DatabaseFactory.getGroupDatabase(context);
+                     List<GroupDatabase.GroupRecord> groupRecords    = groupDatabase.getPushGroupsContainingMember(recipientId);
+                     ArrayList<RecipientId>          groupRecipients = new ArrayList<>(groupRecords.size());
 
-                    for (GroupDatabase.GroupRecord groupRecord : groupRecords) {
-                        groupRecipients.add(groupRecord.getRecipientId());
-                    }
+                     for (GroupDatabase.GroupRecord groupRecord : groupRecords) {
+                       groupRecipients.add(groupRecord.getRecipientId());
+                     }
 
-                    return groupRecipients;
-                },
-                onComplete::accept);
-    }
+                     return groupRecipients;
+                   },
+                   onComplete::accept);
+  }
 
-    public void getActiveGroupCount(@NonNull Consumer<Integer> onComplete) {
-        SignalExecutors.BOUNDED.execute(() -> onComplete.accept(DatabaseFactory.getGroupDatabase(context).getActiveGroupCount()));
-    }
+  public void getActiveGroupCount(@NonNull Consumer<Integer> onComplete) {
+    SignalExecutors.BOUNDED.execute(() -> onComplete.accept(DatabaseFactory.getGroupDatabase(context).getActiveGroupCount()));
+  }
 
-    interface RecipientCallback {
-        void onRecipient(@NonNull Recipient recipient);
-    }
+  interface RecipientCallback {
+    void onRecipient(@NonNull Recipient recipient);
+  }
 }

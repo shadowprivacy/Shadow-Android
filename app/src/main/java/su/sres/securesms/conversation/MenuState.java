@@ -186,7 +186,8 @@ final class MenuState {
            messageRecord.isProfileChange() ||
            messageRecord.isGroupV1MigrationEvent() ||
            messageRecord.isChatSessionRefresh() ||
-           messageRecord.isInMemoryMessageRecord();
+           messageRecord.isInMemoryMessageRecord() ||
+           messageRecord.isChangeLogin();
   }
 
   private final static class Builder {

@@ -6,9 +6,8 @@ import android.database.Cursor;
 
 import androidx.annotation.NonNull;
 
-import net.sqlcipher.database.SQLiteDatabase;
-import net.sqlcipher.database.SQLiteDatabaseHook;
-import net.sqlcipher.database.SQLiteOpenHelper;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
 
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.core.util.logging.Log;
@@ -46,8 +45,7 @@ public class KeyValueDatabase extends SQLiteOpenHelper implements SignalDatabase
 
   private static volatile KeyValueDatabase instance;
 
-  private final Application    application;
-  private final DatabaseSecret databaseSecret;
+  private final Application application;
 
   public static @NonNull KeyValueDatabase getInstance(@NonNull Application context) {
     if (instance == null) {
@@ -62,10 +60,9 @@ public class KeyValueDatabase extends SQLiteOpenHelper implements SignalDatabase
   }
 
   private KeyValueDatabase(@NonNull Application application, @NonNull DatabaseSecret databaseSecret) {
-    super(application, DATABASE_NAME, null, DATABASE_VERSION, new SqlCipherDatabaseHook(), new SqlCipherErrorHandler(DATABASE_NAME));
+    super(application, DATABASE_NAME, databaseSecret.asString(), null, DATABASE_VERSION, 0,new SqlCipherErrorHandler(DATABASE_NAME), new SqlCipherDatabaseHook());
 
-    this.application    = application;
-    this.databaseSecret = databaseSecret;
+    this.application = application;
   }
 
   @Override
@@ -220,14 +217,6 @@ public class KeyValueDatabase extends SQLiteOpenHelper implements SignalDatabase
         newDb.insert(TABLE_NAME, null, values);
       }
     }
-  }
-
-  private SQLiteDatabase getReadableDatabase() {
-    return super.getReadableDatabase(databaseSecret.asString());
-  }
-
-  private SQLiteDatabase getWritableDatabase() {
-    return super.getWritableDatabase(databaseSecret.asString());
   }
 
   private enum Type {

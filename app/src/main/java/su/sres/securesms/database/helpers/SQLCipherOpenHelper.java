@@ -31,8 +31,8 @@ import su.sres.securesms.database.model.databaseprotos.ReactionList;
 import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;
 
-import net.sqlcipher.database.SQLiteDatabase;
-import net.sqlcipher.database.SQLiteOpenHelper;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
 
 import su.sres.securesms.crypto.DatabaseSecret;
 import su.sres.securesms.database.AttachmentDatabase;
@@ -105,18 +105,17 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
   private static final int AVATAR_PICKER                                                                          = 91;
   private static final int THREAD_CLEANUP                                                                         = 92;
   private static final int SESSION_AND_IDENTITY_MIGRATION_AND_GROUP_CALL_RING_TABLE_AND_CLEANUP_SESSION_MIGRATION = 93;
+  private static final int RECEIPT_TIMESTAMP                                                                      = 94;
 
-  private static final int    DATABASE_VERSION = 93;
+  private static final int    DATABASE_VERSION = 94;
   private static final String DATABASE_NAME    = "shadow.db";
 
-  private final Context        context;
-  private final DatabaseSecret databaseSecret;
+  private final Context context;
 
   public SQLCipherOpenHelper(@NonNull Context context, @NonNull DatabaseSecret databaseSecret) {
-    super(context, DATABASE_NAME, null, DATABASE_VERSION, new SqlCipherDatabaseHook(), new SqlCipherErrorHandler(DATABASE_NAME));
+    super(context, DATABASE_NAME, databaseSecret.asString(), null, DATABASE_VERSION, 0, new SqlCipherErrorHandler(DATABASE_NAME), new SqlCipherDatabaseHook());
 
-    this.context        = context.getApplicationContext();
-    this.databaseSecret = databaseSecret;
+    this.context = context.getApplicationContext();
   }
 
   @Override
@@ -1194,6 +1193,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
         Log.i(TAG, "Cleaned up " + storageCount + " storageIds.");
       }
 
+      if (oldVersion < RECEIPT_TIMESTAMP) {
+        db.execSQL("ALTER TABLE sms ADD COLUMN receipt_timestamp INTEGER DEFAULT -1");
+        db.execSQL("ALTER TABLE mms ADD COLUMN receipt_timestamp INTEGER DEFAULT -1");
+      }
+
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -1202,33 +1206,35 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     Log.i(TAG, "Upgrade complete. Took " + (System.currentTimeMillis() - startTime) + " ms.");
   }
 
-  public net.sqlcipher.database.SQLiteDatabase getReadableDatabase() {
+  @Override
+  public net.zetetic.database.sqlcipher.SQLiteDatabase getReadableDatabase() {
     throw new UnsupportedOperationException("Call getSignalReadableDatabase() instead!");
-  }
-
-  public net.sqlcipher.database.SQLiteDatabase getWritableDatabase() {
-    throw new UnsupportedOperationException("Call getSignalReadableDatabase() instead!");
-  }
-
-  public net.sqlcipher.database.SQLiteDatabase getRawReadableDatabase() {
-    return super.getReadableDatabase(databaseSecret.asString());
-  }
-
-  public net.sqlcipher.database.SQLiteDatabase getRawWritableDatabase() {
-    return super.getWritableDatabase(databaseSecret.asString());
-  }
-
-  public su.sres.securesms.database.SQLiteDatabase getSignalReadableDatabase() {
-    return new su.sres.securesms.database.SQLiteDatabase(super.getReadableDatabase(databaseSecret.asString()));
-  }
-
-  public su.sres.securesms.database.SQLiteDatabase getSignalWritableDatabase() {
-    return new su.sres.securesms.database.SQLiteDatabase(super.getWritableDatabase(databaseSecret.asString()));
   }
 
   @Override
-  public @NonNull net.sqlcipher.database.SQLiteDatabase getSqlCipherDatabase() {
-    return super.getWritableDatabase(databaseSecret.asString());
+  public net.zetetic.database.sqlcipher.SQLiteDatabase getWritableDatabase() {
+    throw new UnsupportedOperationException("Call getSignalReadableDatabase() instead!");
+  }
+
+  public net.zetetic.database.sqlcipher.SQLiteDatabase getRawReadableDatabase() {
+    return super.getReadableDatabase();
+  }
+
+  public net.zetetic.database.sqlcipher.SQLiteDatabase getRawWritableDatabase() {
+    return super.getWritableDatabase();
+  }
+
+  public su.sres.securesms.database.SQLiteDatabase getSignalReadableDatabase() {
+    return new su.sres.securesms.database.SQLiteDatabase(super.getReadableDatabase());
+  }
+
+  public su.sres.securesms.database.SQLiteDatabase getSignalWritableDatabase() {
+    return new su.sres.securesms.database.SQLiteDatabase(super.getWritableDatabase());
+  }
+
+  @Override
+  public @NonNull net.zetetic.database.sqlcipher.SQLiteDatabase getSqlCipherDatabase() {
+    return super.getWritableDatabase();
   }
 
   public void markCurrent(SQLiteDatabase db) {

@@ -1,5 +1,9 @@
 package su.sres.securesms.registration.fragments;
 
+import static su.sres.securesms.registration.fragments.RegistrationViewDelegate.setDebugLogSubmitMultiTapView;
+import static su.sres.securesms.util.CircularProgressButtonUtil.cancelSpinning;
+import static su.sres.securesms.util.CircularProgressButtonUtil.setSpinning;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -27,16 +31,18 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.navigation.Navigation;
 
 import com.dd.CircularProgressButton;
 
-import net.sqlcipher.database.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import su.sres.securesms.AppInitialization;
+import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.backup.BackupPassphrase;
 import su.sres.securesms.backup.FullBackupBase;
@@ -47,6 +53,7 @@ import su.sres.securesms.database.NoExternalStorageException;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.notifications.NotificationChannels;
+import su.sres.securesms.registration.viewmodel.RegistrationViewModel;
 import su.sres.securesms.service.LocalBackupListener;
 import su.sres.securesms.util.BackupUtil;
 import su.sres.securesms.util.DateUtils;
@@ -56,7 +63,7 @@ import su.sres.securesms.util.concurrent.SimpleTask;
 import java.io.IOException;
 import java.util.Locale;
 
-public final class RestoreBackupFragment extends BaseRegistrationFragment {
+public final class RestoreBackupFragment extends LoggingFragment {
 
     private static final String TAG                            = Log.tag(RestoreBackupFragment.class);
     private static final short  OPEN_DOCUMENT_TREE_RESULT_CODE = 13782;
@@ -93,7 +100,8 @@ public final class RestoreBackupFragment extends BaseRegistrationFragment {
                     .navigate(RestoreBackupFragmentDirections.actionSkip());
         });
 
-        if (isReregister()) {
+        RegistrationViewModel viewModel = ViewModelProviders.of(requireActivity()).get(RegistrationViewModel.class);
+        if (viewModel.isReregister()) {
             Log.i(TAG, "Skipping backup restore during re-register.");
             Navigation.findNavController(view)
                     .navigate(RestoreBackupFragmentDirections.actionSkipNoReturn());

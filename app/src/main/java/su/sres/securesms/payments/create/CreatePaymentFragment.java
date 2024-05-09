@@ -2,9 +2,7 @@ package su.sres.securesms.payments.create;
 
 import android.app.AlertDialog;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
-import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
@@ -34,6 +32,7 @@ import su.sres.securesms.util.ViewUtil;
 import su.sres.signalservice.api.payments.FormatterOptions;
 import su.sres.signalservice.api.payments.Money;
 
+import java.text.DecimalFormatSymbols;
 import java.util.Currency;
 import java.util.HashMap;
 import java.util.Map;
@@ -94,6 +93,9 @@ public class CreatePaymentFragment extends LoggingFragment {
     note             = view.findViewById(R.id.create_payment_fragment_note);
     addNote          = view.findViewById(R.id.create_payment_fragment_add_note);
     toggle           = view.findViewById(R.id.create_payment_fragment_toggle);
+
+    TextView decimal = view.findViewById(R.id.create_payment_fragment_keyboard_decimal);
+    decimal.setText(String.valueOf(DecimalFormatSymbols.getInstance().getDecimalSeparator()));
 
     View infoTapTarget = view.findViewById(R.id.create_payment_fragment_info_tap_region);
 

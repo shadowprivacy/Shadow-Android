@@ -13,6 +13,7 @@ import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.SqlUtil;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -48,20 +49,19 @@ public class GroupReceiptDatabase extends Database {
   public void insert(Collection<RecipientId> recipientIds, long mmsId, int status, long timestamp) {
     SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
 
-    db.beginTransaction();
-    try {
-      for (RecipientId recipientId : recipientIds) {
-        ContentValues values = new ContentValues(4);
-        values.put(MMS_ID, mmsId);
-        values.put(RECIPIENT_ID, recipientId.serialize());
-        values.put(STATUS, status);
-        values.put(TIMESTAMP, timestamp);
+    List<ContentValues> contentValues = new ArrayList<>(recipientIds.size());
+    for (RecipientId recipientId : recipientIds) {
+      ContentValues values = new ContentValues(4);
+      values.put(MMS_ID, mmsId);
+      values.put(RECIPIENT_ID, recipientId.serialize());
+      values.put(STATUS, status);
+      values.put(TIMESTAMP, timestamp);
+      contentValues.add(values);
+    }
 
-        db.insert(TABLE_NAME, null, values);
-      }
-      db.setTransactionSuccessful();
-    } finally {
-      db.endTransaction();
+    List<SqlUtil.Query> statements = SqlUtil.buildBulkInsert(TABLE_NAME, new String[] { MMS_ID, RECIPIENT_ID, STATUS, TIMESTAMP }, contentValues);
+    for (SqlUtil.Query statement : statements) {
+      db.execSQL(statement.getWhere(), statement.getWhereArgs());
     }
   }
 

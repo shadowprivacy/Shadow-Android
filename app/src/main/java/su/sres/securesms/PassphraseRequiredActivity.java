@@ -14,6 +14,7 @@ import org.greenrobot.eventbus.EventBus;
 
 import su.sres.core.util.tracing.Tracer;
 import su.sres.devicetransfer.TransferStatus;
+import su.sres.securesms.components.settings.app.changeuserlogin.ChangeLoginLockActivity;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.devicetransfer.olddevice.OldDeviceTransferActivity;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -22,7 +23,6 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.MasterSecretUtil;
 import su.sres.securesms.migrations.ApplicationMigrationActivity;
 import su.sres.securesms.migrations.ApplicationMigrations;
-import su.sres.securesms.profiles.edit.EditProfileActivity;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.registration.RegistrationNavigationActivity;
@@ -46,6 +46,7 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
   private static final int STATE_CREATE_PROFILE_NAME = 5;
   private static final int STATE_TRANSFER_ONGOING    = 6;
   private static final int STATE_TRANSFER_LOCKED     = 9;
+  private static final int STATE_CHANGE_LOGIN_LOCK  = 10;
 
   private SignalServiceNetworkAccess networkAccess;
   private BroadcastReceiver          clearKeyReceiver;
@@ -143,6 +144,7 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
       case STATE_CREATE_PROFILE_NAME: return getCreateProfileNameIntent();
       case STATE_TRANSFER_ONGOING:    return getOldDeviceTransferIntent();
       case STATE_TRANSFER_LOCKED:     return getOldDeviceTransferLockedIntent();
+      case STATE_CHANGE_LOGIN_LOCK:  return getChangeLoginLockIntent();
       default:                        return null;
     }
   }
@@ -162,6 +164,8 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
       return STATE_TRANSFER_ONGOING;
     } else if (SignalStore.misc().isOldDeviceTransferLocked()) {
       return STATE_TRANSFER_LOCKED;
+    } else if (SignalStore.misc().isChangeLoginLocked() && getClass() != ChangeLoginLockActivity.class) {
+      return STATE_CHANGE_LOGIN_LOCK;
     } else {
       return STATE_NORMAL;
     }
@@ -207,6 +211,10 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
       return null;
     }
     return MainActivity.clearTop(this);
+  }
+
+  private Intent getChangeLoginLockIntent() {
+    return ChangeLoginLockActivity.createIntent(this);
   }
 
   private Intent getRoutedIntent(Class<?> destination, @Nullable Intent nextIntent) {

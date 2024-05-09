@@ -2,6 +2,8 @@ package su.sres.securesms.video.exo;
 
 import android.net.Uri;
 
+import androidx.annotation.NonNull;
+
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.DefaultDataSource;
@@ -33,20 +35,20 @@ public class AttachmentDataSource implements DataSource {
   }
 
   @Override
-  public void addTransferListener(TransferListener transferListener) {
+  public void addTransferListener(@NonNull TransferListener transferListener) {
   }
 
   @Override
   public long open(DataSpec dataSpec) throws IOException {
-    if      (BlobProvider.isAuthority(dataSpec.uri)) dataSource = blobDataSource;
+    if (BlobProvider.isAuthority(dataSpec.uri)) dataSource = blobDataSource;
     else if (PartAuthority.isLocalUri(dataSpec.uri)) dataSource = partDataSource;
-    else                                             dataSource = defaultDataSource;
+    else dataSource = defaultDataSource;
 
     return dataSource.open(dataSpec);
   }
 
   @Override
-  public int read(byte[] buffer, int offset, int readLength) throws IOException {
+  public int read(@NonNull byte[] buffer, int offset, int readLength) throws IOException {
     return dataSource.read(buffer, offset, readLength);
   }
 
@@ -56,7 +58,7 @@ public class AttachmentDataSource implements DataSource {
   }
 
   @Override
-  public Map<String, List<String>> getResponseHeaders() {
+  public @NonNull Map<String, List<String>> getResponseHeaders() {
     return Collections.emptyMap();
   }
 

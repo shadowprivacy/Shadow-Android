@@ -26,7 +26,6 @@ import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.stickers.StickerLocator;
-import su.sres.securesms.video.exo.AttachmentMediaSourceFactory;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -47,11 +46,10 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, 
             boolean pulseMention,
             boolean hasWallpaper,
             boolean isMessageRequestAccepted,
-            @NonNull AttachmentMediaSourceFactory attachmentMediaSourceFactory,
             boolean canPlayInline,
             @NonNull Colorizer colorizer);
 
-  ConversationMessage getConversationMessage();
+  @NonNull ConversationMessage getConversationMessage();
 
   void setEventListener(@Nullable EventListener listener);
 
@@ -90,6 +88,7 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, 
     void onPlayInlineContent(ConversationMessage conversationMessage);
     void onInMemoryMessageClicked(@NonNull InMemoryMessageRecord messageRecord);
     void onViewGroupDescriptionChange(@Nullable GroupId groupId, @NonNull String description, boolean isMessageRequestAccepted);
+    void onChangeLoginUpdateContact(@NonNull Recipient recipient);
 
     /** @return true if handled, false if you want to let the normal url handling continue */
     boolean onUrlClicked(@NonNull String url);

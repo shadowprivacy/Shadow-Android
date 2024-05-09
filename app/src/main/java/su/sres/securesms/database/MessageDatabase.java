@@ -12,7 +12,7 @@ import com.annimon.stream.Stream;
 import com.google.android.mms.pdu_alt.NotificationInd;
 import com.google.protobuf.InvalidProtocolBufferException;
 
-import net.sqlcipher.database.SQLiteStatement;
+import net.zetetic.database.sqlcipher.SQLiteStatement;
 
 import su.sres.securesms.database.documents.Document;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
@@ -246,6 +246,8 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   public abstract void insertProfileNameChangeMessages(@NonNull Recipient recipient, @NonNull String newProfileName, @NonNull String previousProfileName);
 
   public abstract void insertGroupV1MigrationEvents(@NonNull RecipientId recipientId, long threadId, @NonNull GroupMigrationMembershipChange membershipChange);
+
+  public abstract void insertLoginChangeMessages(@NonNull Recipient recipient);
 
   public abstract boolean deleteMessage(long messageId);
 

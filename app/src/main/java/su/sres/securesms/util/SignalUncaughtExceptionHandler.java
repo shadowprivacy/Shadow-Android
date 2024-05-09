@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.rxjava3.exceptions.OnErrorNotImplementedException;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -20,6 +21,10 @@ public class SignalUncaughtExceptionHandler implements Thread.UncaughtExceptionH
 
   @Override
   public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
+    if (e instanceof OnErrorNotImplementedException) {
+      e = e.getCause();
+    }
+
     Log.e(TAG, "", e, true);
     SignalStore.blockUntilAllWritesFinished();
     Log.blockUntilAllWritesFinished();

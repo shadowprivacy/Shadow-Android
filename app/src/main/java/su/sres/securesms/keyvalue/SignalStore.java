@@ -37,6 +37,7 @@ public final class SignalStore {
   private final ProxyValues                proxyValues;
   private final RateLimitValues            rateLimitValues;
   private final ChatColorsValues           chatColorsValues;
+  private final ImageEditorValues        imageEditorValues;
 
   private SignalStore() {
     this.store                  = ApplicationDependencies.getKeyValueStore();
@@ -59,6 +60,7 @@ public final class SignalStore {
     this.proxyValues            = new ProxyValues(store);
     this.rateLimitValues        = new RateLimitValues(store);
     this.chatColorsValues       = new ChatColorsValues(store);
+    this.imageEditorValues        = new ImageEditorValues(store);
   }
 
   public static void onFirstEverAppLaunch() {
@@ -81,6 +83,7 @@ public final class SignalStore {
     proxy().onFirstEverAppLaunch();
     rateLimit().onFirstEverAppLaunch();
     chatColorsValues().onFirstEverAppLaunch();
+    imageEditorValues().onFirstEverAppLaunch();
   }
 
   public static List<String> getKeysToIncludeInBackup() {
@@ -104,6 +107,7 @@ public final class SignalStore {
     keys.addAll(rateLimit().getKeysToIncludeInBackup());
     keys.addAll(chatColorsValues().getKeysToIncludeInBackup());
     keys.addAll(serviceConfigurationValues().getKeysToIncludeInBackup());
+    keys.addAll(imageEditorValues().getKeysToIncludeInBackup());
     return keys;
   }
 
@@ -202,6 +206,10 @@ public final class SignalStore {
 
   public static @NonNull ChatColorsValues chatColorsValues() {
     return INSTANCE.chatColorsValues;
+  }
+
+  public static @NonNull ImageEditorValues imageEditorValues() {
+    return INSTANCE.imageEditorValues;
   }
 
   public static @NonNull

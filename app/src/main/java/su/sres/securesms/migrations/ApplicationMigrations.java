@@ -3,6 +3,7 @@ package su.sres.securesms.migrations;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -38,7 +39,8 @@ public class ApplicationMigrations {
 
   private static final MutableLiveData<Boolean> UI_BLOCKING_MIGRATION_RUNNING = new MutableLiveData<>();
 
-  private static final class Version {
+  @VisibleForTesting
+  static final class Version {
     static final int VERSIONED_PROFILE             = 15;
     static final int NEW_ACTIVATION_MODEL          = 16;
     static final int TRIM_SETTINGS                 = 17;
@@ -61,11 +63,14 @@ public class ApplicationMigrations {
     static final int ATTACHMENT_CLEANUP_2          = 35;
     static final int ANNOUNCEMENT_GROUP_CAPABILITY = 36;
     static final int SENDER_KEY_3                  = 37;
-    // static final int STICKER_MY_DAILY_LIFE         = 38;
+    static final int CHANGE_USER_LOGIN_SYNC        = 38;
+    static final int CHANGE_LOGIN_CAPABILITY       = 39;
+    // static final int STICKER_MY_DAILY_LIFE         = 40;
+
 
   }
 
-  public static final int CURRENT_VERSION = 37;
+  public static final int CURRENT_VERSION = 39;
 
   /**
    * This *must* be called after the {@link JobManager} has been instantiated, but *before* the call
@@ -263,6 +268,14 @@ public class ApplicationMigrations {
 
     if (lastSeenVersion < Version.SENDER_KEY_3) {
       jobs.put(Version.SENDER_KEY_3, new AttributesMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.CHANGE_USER_LOGIN_SYNC) {
+      jobs.put(Version.CHANGE_USER_LOGIN_SYNC, new AccountRecordMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.CHANGE_LOGIN_CAPABILITY) {
+      jobs.put(Version.CHANGE_LOGIN_CAPABILITY, new AttributesMigrationJob());
     }
 
     // if (lastSeenVersion < Version.STICKER_MY_DAILY_LIFE) {

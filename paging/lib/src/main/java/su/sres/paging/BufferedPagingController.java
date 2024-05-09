@@ -11,54 +11,72 @@ import java.util.concurrent.Executors;
  * We have a bit of a threading problem -- we want our controller to have a fixed size so that it
  * can keep track of which ranges of requests are in flight, but it needs to make a blocking call
  * to find out the size of the dataset first!
- *
+ * <p>
  * So what this controller does is use a serial executor so that it can buffer calls to a secondary
  * controller. The first task on the executor creates the first controller, so all future calls to
  * {@link #onDataNeededAroundIndex(int)} are guaranteed to have an active controller.
- *
+ * <p>
  * It's also worth noting that this controller has lifecycle that matches the {@link PagedData} that
  * contains it. When invalidations come in, this class will just swap out the active controller with
  * a new one.
  */
-class BufferedPagingController<E> implements PagingController {
+class BufferedPagingController<Key, Data> implements PagingController<Key> {
 
-    private final PagedDataSource<E>       dataSource;
-    private final PagingConfig             config;
-    private final MutableLiveData<List<E>> liveData;
-    private final Executor                 serializationExecutor;
+  private final PagedDataSource<Key, Data>  dataSource;
+  private final PagingConfig                config;
+  private final MutableLiveData<List<Data>> liveData;
+  private final Executor                    serializationExecutor;
 
-    private PagingController activeController;
-    private int              lastRequestedIndex;
+  private PagingController<Key> activeController;
+  private int                   lastRequestedIndex;
 
-    BufferedPagingController(PagedDataSource<E> dataSource, PagingConfig config, @NonNull MutableLiveData<List<E>> liveData) {
-        this.dataSource            = dataSource;
-        this.config                = config;
-        this.liveData              = liveData;
-        this.serializationExecutor = Executors.newSingleThreadExecutor();
+  BufferedPagingController(PagedDataSource<Key, Data> dataSource, PagingConfig config, @NonNull MutableLiveData<List<Data>> liveData) {
+    this.dataSource            = dataSource;
+    this.config                = config;
+    this.liveData              = liveData;
+    this.serializationExecutor = Executors.newSingleThreadExecutor();
 
-        this.activeController   = null;
-        this.lastRequestedIndex = config.startIndex();
+    this.activeController   = null;
+    this.lastRequestedIndex = config.startIndex();
 
-        onDataInvalidated();
-    }
+    onDataInvalidated();
+  }
 
-    @Override
-    public void onDataNeededAroundIndex(int aroundIndex) {
-        serializationExecutor.execute(() -> {
-            lastRequestedIndex = aroundIndex;
-            activeController.onDataNeededAroundIndex(aroundIndex);
-        });
-    }
+  @Override
+  public void onDataNeededAroundIndex(int aroundIndex) {
+    serializationExecutor.execute(() -> {
+      lastRequestedIndex = aroundIndex;
+      activeController.onDataNeededAroundIndex(aroundIndex);
+    });
+  }
 
-    @Override
-    public void onDataInvalidated() {
-        serializationExecutor.execute(() -> {
-            if (activeController != null) {
-                activeController.onDataInvalidated();
-            }
+  @Override
+  public void onDataInvalidated() {
+    serializationExecutor.execute(() -> {
+      if (activeController != null) {
+        activeController.onDataInvalidated();
+      }
 
-            activeController = new FixedSizePagingController<>(dataSource, config, liveData, dataSource.size());
-            activeController.onDataNeededAroundIndex(lastRequestedIndex);
-        });
-    }
+      activeController = new FixedSizePagingController<>(dataSource, config, liveData, dataSource.size());
+      activeController.onDataNeededAroundIndex(lastRequestedIndex);
+    });
+  }
+
+  @Override
+  public void onDataItemChanged(Key key) {
+    serializationExecutor.execute(() -> {
+      if (activeController != null) {
+        activeController.onDataItemChanged(key);
+      }
+    });
+  }
+
+  @Override
+  public void onDataItemInserted(Key key, int position) {
+    serializationExecutor.execute(() -> {
+      if (activeController != null) {
+        activeController.onDataItemInserted(key, position);
+      }
+    });
+  }
 }

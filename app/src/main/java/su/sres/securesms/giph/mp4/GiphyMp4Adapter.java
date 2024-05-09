@@ -21,58 +21,56 @@ import java.util.Objects;
  */
 final class GiphyMp4Adapter extends ListAdapter<GiphyImage, GiphyMp4ViewHolder> {
 
-    private final Callback                   listener;
-    private final GiphyMp4MediaSourceFactory mediaSourceFactory;
+  private final Callback listener;
 
-    private PagingController pagingController;
+  private PagingController pagingController;
 
-    public GiphyMp4Adapter(@NonNull GiphyMp4MediaSourceFactory mediaSourceFactory, @Nullable Callback listener) {
-        super(new GiphyImageDiffUtilCallback());
+  public GiphyMp4Adapter(@Nullable Callback listener) {
+    super(new GiphyImageDiffUtilCallback());
 
-        this.listener           = listener;
-        this.mediaSourceFactory = mediaSourceFactory;
+    this.listener = listener;
+  }
+
+  @Override
+  public @NonNull GiphyMp4ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    View itemView = LayoutInflater.from(parent.getContext())
+                                  .inflate(R.layout.giphy_mp4, parent, false);
+
+    return new GiphyMp4ViewHolder(itemView, listener);
+  }
+
+  @Override
+  public void onBindViewHolder(@NonNull GiphyMp4ViewHolder holder, int position) {
+    holder.onBind(getItem(position));
+  }
+
+  @Override
+  protected GiphyImage getItem(int position) {
+    if (pagingController != null) {
+      pagingController.onDataNeededAroundIndex(position);
+    }
+
+    return super.getItem(position);
+  }
+
+  void setPagingController(@Nullable PagingController pagingController) {
+    this.pagingController = pagingController;
+  }
+
+  interface Callback {
+    void onClick(@NonNull GiphyImage giphyImage);
+  }
+
+  private static final class GiphyImageDiffUtilCallback extends DiffUtil.ItemCallback<GiphyImage> {
+
+    @Override
+    public boolean areItemsTheSame(@NonNull GiphyImage oldItem, @NonNull GiphyImage newItem) {
+      return Objects.equals(oldItem.getMp4Url(), newItem.getMp4Url());
     }
 
     @Override
-    public @NonNull GiphyMp4ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.giphy_mp4, parent, false);
-
-        return new GiphyMp4ViewHolder(itemView, listener, mediaSourceFactory);
+    public boolean areContentsTheSame(@NonNull GiphyImage oldItem, @NonNull GiphyImage newItem) {
+      return areItemsTheSame(oldItem, newItem);
     }
-
-    @Override
-    public void onBindViewHolder(@NonNull GiphyMp4ViewHolder holder, int position) {
-        holder.onBind(getItem(position));
-    }
-
-    @Override
-    protected GiphyImage getItem(int position) {
-        if (pagingController != null) {
-            pagingController.onDataNeededAroundIndex(position);
-        }
-
-        return super.getItem(position);
-    }
-
-    void setPagingController(@Nullable PagingController pagingController) {
-        this.pagingController = pagingController;
-    }
-
-    interface Callback {
-        void onClick(@NonNull GiphyImage giphyImage);
-    }
-
-    private static final class GiphyImageDiffUtilCallback extends DiffUtil.ItemCallback<GiphyImage> {
-
-        @Override
-        public boolean areItemsTheSame(@NonNull GiphyImage oldItem, @NonNull GiphyImage newItem) {
-            return Objects.equals(oldItem.getMp4Url(), newItem.getMp4Url());
-        }
-
-        @Override
-        public boolean areContentsTheSame(@NonNull GiphyImage oldItem, @NonNull GiphyImage newItem) {
-            return areItemsTheSame(oldItem, newItem);
-        }
-    }
+  }
 }

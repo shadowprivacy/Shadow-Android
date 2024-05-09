@@ -107,7 +107,7 @@ import su.sres.securesms.insights.InsightsLauncher;
 import su.sres.securesms.jobs.ServiceOutageDetectionJob;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.mediasend.MediaSendActivity;
+import su.sres.securesms.mediasend.v2.MediaSelectionActivity;
 import su.sres.securesms.megaphone.Megaphone;
 import su.sres.securesms.megaphone.MegaphoneActionController;
 import su.sres.securesms.megaphone.MegaphoneViewBuilder;
@@ -265,7 +265,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
                  .ifNecessary()
                  .withRationaleDialog(getString(R.string.ConversationActivity_to_capture_photos_and_video_allow_signal_access_to_the_camera), R.drawable.ic_camera_24)
                  .withPermanentDenialDialog(getString(R.string.ConversationActivity_signal_needs_the_camera_permission_to_take_photos_or_video))
-                 .onAllGranted(() -> startActivity(MediaSendActivity.buildCameraFirstIntent(requireActivity())))
+                 .onAllGranted(() -> startActivity(MediaSelectionActivity.camera(requireContext())))
                  .onAnyDenied(() -> Toast.makeText(requireContext(), R.string.ConversationActivity_signal_needs_camera_permissions_to_take_photos_or_video, Toast.LENGTH_LONG).show())
                  .execute();
     });

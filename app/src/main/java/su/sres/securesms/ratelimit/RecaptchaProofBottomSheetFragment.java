@@ -47,6 +47,8 @@ public final class RecaptchaProofBottomSheetFragment extends BottomSheetDialogFr
 
     @Override
     public void show(@NonNull FragmentManager manager, @Nullable String tag) {
+        Log.i(TAG, "Showing reCAPTCHA proof bottom sheet.");
+
         if (manager.findFragmentByTag(tag) == null) {
             BottomSheetUtil.show(manager, tag, this);
         } else {

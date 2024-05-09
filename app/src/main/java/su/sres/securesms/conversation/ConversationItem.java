@@ -82,7 +82,7 @@ import androidx.core.text.util.LinkifyCompat;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.annimon.stream.Stream;
-import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.common.collect.Sets;
 
 import su.sres.securesms.attachments.DatabaseAttachment;
@@ -127,15 +127,14 @@ import su.sres.securesms.util.MessageRecordUtil;
 import su.sres.securesms.util.Projection;
 import su.sres.securesms.util.SearchUtil;
 import su.sres.securesms.util.StringUtil;
+import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.UrlClickHandler;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.VibrateUtil;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.views.NullableStub;
 import su.sres.securesms.util.views.Stub;
-import su.sres.securesms.video.exo.AttachmentMediaSourceFactory;
 
-import org.jetbrains.annotations.NotNull;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.ArrayList;
@@ -146,8 +145,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-
-import static su.sres.securesms.util.ThemeUtil.isDarkTheme;
 
 /**
  * A view that displays an individual conversation item within a conversation
@@ -220,8 +217,8 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
   private final Context context;
 
-  private MediaSource        mediaSource;
-  private boolean            canPlayContent;
+  private MediaItem mediaItem;
+  private boolean   canPlayContent;
   private Projection.Corners bodyBubbleCorners;
   private Colorizer          colorizer;
   private boolean            hasWallpaper;
@@ -288,7 +285,6 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
                    boolean pulse,
                    boolean hasWallpaper,
                    boolean isMessageRequestAccepted,
-                   @NonNull AttachmentMediaSourceFactory attachmentMediaSourceFactory,
                    boolean allowedToPlayInline,
                    @NonNull Colorizer colorizer)
   {
@@ -309,7 +305,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     this.groupThread           = conversationRecipient.isGroup();
     this.recipient             = messageRecord.getIndividualRecipient().live();
     this.canPlayContent        = false;
-    this.mediaSource           = null;
+    this.mediaItem              = null;
     this.colorizer             = colorizer;
 
     this.recipient.observeForever(this);
@@ -317,7 +313,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
     setGutterSizes(messageRecord, groupThread);
     setMessageShape(messageRecord, previousMessageRecord, nextMessageRecord, groupThread);
-    setMediaAttributes(messageRecord, previousMessageRecord, nextMessageRecord, groupThread, hasWallpaper, isMessageRequestAccepted, attachmentMediaSourceFactory, allowedToPlayInline);
+    setMediaAttributes(messageRecord, previousMessageRecord, nextMessageRecord, groupThread, hasWallpaper, isMessageRequestAccepted, allowedToPlayInline);
     setBodyText(messageRecord, searchQuery, isMessageRequestAccepted);
     setBubbleState(messageRecord, messageRecord.getRecipient(), hasWallpaper, colorizer);
     setInteractionState(conversationMessage, pulse);
@@ -615,7 +611,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   }
 
   @Override
-  public ConversationMessage getConversationMessage() {
+  public @NonNull ConversationMessage getConversationMessage() {
     return conversationMessage;
   }
 
@@ -842,8 +838,8 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       if (messageRequestAccepted) {
         linkifyMessageBody(styledText, batchSelected.isEmpty());
       }
-      styledText = SearchUtil.getHighlightedSpan(locale, () -> new BackgroundColorSpan(Color.YELLOW), styledText, searchQuery);
-      styledText = SearchUtil.getHighlightedSpan(locale, () -> new ForegroundColorSpan(Color.BLACK), styledText, searchQuery);
+      styledText = SearchUtil.getHighlightedSpan(locale, () -> new BackgroundColorSpan(Color.YELLOW), styledText, searchQuery, SearchUtil.STRICT);
+      styledText = SearchUtil.getHighlightedSpan(locale, () -> new ForegroundColorSpan(Color.BLACK), styledText, searchQuery, SearchUtil.STRICT);
 
       if (hasExtraText(messageRecord)) {
         bodyText.setOverflowText(getLongMessageSpan(messageRecord));
@@ -854,7 +850,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       if (messageRecord.isOutgoing()) {
         bodyText.setMentionBackgroundTint(ContextCompat.getColor(context, R.color.transparent_black_25));
       } else {
-        bodyText.setMentionBackgroundTint(ContextCompat.getColor(context, isDarkTheme(context) ? R.color.core_grey_60 : R.color.core_grey_20));
+        bodyText.setMentionBackgroundTint(ContextCompat.getColor(context, ThemeUtil.isDarkTheme(context) ? R.color.core_grey_60 : R.color.core_grey_20));
       }
 
       bodyText.setText(StringUtil.trim(styledText));
@@ -868,7 +864,6 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
                                   boolean isGroupThread,
                                   boolean hasWallpaper,
                                   boolean messageRequestAccepted,
-                                  @Nullable AttachmentMediaSourceFactory attachmentMediaSourceFactory,
                                   boolean allowedToPlayInline)
   {
     boolean showControls = !messageRecord.isFailed();
@@ -1074,8 +1069,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       ViewUtil.updateLayoutParamsIfNonNull(groupSenderHolder, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
       footer.setVisibility(VISIBLE);
 
-      if (attachmentMediaSourceFactory != null &&
-          thumbnailSlides.size() == 1 &&
+      if (thumbnailSlides.size() == 1          &&
           thumbnailSlides.get(0).isVideoGif() &&
           thumbnailSlides.get(0) instanceof VideoSlide)
       {
@@ -1083,9 +1077,9 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
         Uri uri = thumbnailSlides.get(0).getUri();
         if (uri != null) {
-          mediaSource = attachmentMediaSourceFactory.createMediaSource(uri);
+          mediaItem = MediaItem.fromUri(uri);
         } else {
-          mediaSource = null;
+          mediaItem = null;
         }
       }
     } else {
@@ -1673,8 +1667,8 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   }
 
   @Override
-  public @Nullable MediaSource getMediaSource() {
-    return mediaSource;
+  public @Nullable MediaItem getMediaItem() {
+    return mediaItem;
   }
 
   @Override
@@ -1880,7 +1874,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     public void onClick(final View v, final Slide slide) {
       if (shouldInterceptClicks(messageRecord) || !batchSelected.isEmpty()) {
         performClick();
-      } else if (!canPlayContent && mediaSource != null && eventListener != null) {
+      } else if (!canPlayContent && mediaItem != null && eventListener != null) {
         eventListener.onPlayInlineContent(conversationMessage);
       } else if (MediaPreviewActivity.isContentTypeSupported(slide.getContentType()) && slide.getUri() != null) {
         Intent intent = new Intent(context, MediaPreviewActivity.class);
@@ -1958,7 +1952,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
   private final class TouchDelegateChangedListener implements ConversationItemFooter.OnTouchDelegateChangedListener {
     @Override
-    public void onTouchDelegateChanged(@NonNull @NotNull Rect delegateRect, @NonNull @NotNull View delegateView) {
+    public void onTouchDelegateChanged(@NonNull Rect delegateRect, @NonNull View delegateView) {
       offsetDescendantRectToMyCoords(footer, delegateRect);
       setTouchDelegate(new TouchDelegate(delegateRect, delegateView));
     }

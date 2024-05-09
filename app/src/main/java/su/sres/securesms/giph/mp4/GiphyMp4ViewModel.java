@@ -28,76 +28,76 @@ import java.util.Objects;
  */
 public final class GiphyMp4ViewModel extends ViewModel {
 
-    private final GiphyMp4Repository                     repository;
-    private final MutableLiveData<PagedData<GiphyImage>> pagedData;
-    private final LiveData<List<GiphyImage>>             images;
-    private final LiveData<PagingController>             pagingController;
-    private final SingleLiveEvent<GiphyMp4SaveResult>    saveResultEvents;
-    private final boolean                                isForMms;
+  private final GiphyMp4Repository                             repository;
+  private final MutableLiveData<PagedData<String, GiphyImage>> pagedData;
+  private final LiveData<List<GiphyImage>>                     images;
+  private final LiveData<PagingController<String>>             pagingController;
+  private final SingleLiveEvent<GiphyMp4SaveResult>            saveResultEvents;
+  private final boolean                                        isForMms;
 
-    private String query;
+  private String query;
 
-    private GiphyMp4ViewModel(boolean isForMms) {
-        this.isForMms         = isForMms;
-        this.repository       = new GiphyMp4Repository();
-        this.pagedData        = new DefaultValueLiveData<>(getGiphyImagePagedData(null));
-        this.saveResultEvents = new SingleLiveEvent<>();
-        this.pagingController = Transformations.map(pagedData, PagedData::getController);
-        this.images           = Transformations.switchMap(pagedData, pagedData -> Transformations.map(pagedData.getData(),
-                data -> Stream.of(data)
-                        .filter(g -> g != null)
-                        .filterNot(g -> TextUtils.isEmpty(isForMms ? g.getGifMmsUrl() : g.getGifUrl()))
-                        .filterNot(g -> TextUtils.isEmpty(g.getMp4PreviewUrl()))
-                        .filterNot(g -> TextUtils.isEmpty(g.getStillUrl()))
-                        .toList()));
+  private GiphyMp4ViewModel(boolean isForMms) {
+    this.isForMms         = isForMms;
+    this.repository       = new GiphyMp4Repository();
+    this.pagedData        = new DefaultValueLiveData<>(getGiphyImagePagedData(null));
+    this.saveResultEvents = new SingleLiveEvent<>();
+    this.pagingController = Transformations.map(pagedData, PagedData::getController);
+    this.images           = Transformations.switchMap(pagedData, pagedData -> Transformations.map(pagedData.getData(),
+                                                                                                  data -> Stream.of(data)
+                                                                                                                .filter(g -> g != null)
+                                                                                                                .filterNot(g -> TextUtils.isEmpty(isForMms ? g.getGifMmsUrl() : g.getGifUrl()))
+                                                                                                                .filterNot(g -> TextUtils.isEmpty(g.getMp4PreviewUrl()))
+                                                                                                                .filterNot(g -> TextUtils.isEmpty(g.getStillUrl()))
+                                                                                                                .toList()));
+  }
+
+  LiveData<PagedData<String, GiphyImage>> getPagedData() {
+    return pagedData;
+  }
+
+  public void updateSearchQuery(@Nullable String query) {
+    if (!Objects.equals(query, this.query)) {
+      this.query = query;
+
+      pagedData.setValue(getGiphyImagePagedData(query));
+    }
+  }
+
+  public void saveToBlob(@NonNull GiphyImage giphyImage) {
+    saveResultEvents.postValue(new GiphyMp4SaveResult.InProgress());
+    repository.saveToBlob(giphyImage, isForMms, saveResultEvents::postValue);
+  }
+
+  public @NonNull LiveData<GiphyMp4SaveResult> getSaveResultEvents() {
+    return saveResultEvents;
+  }
+
+  public @NonNull LiveData<List<GiphyImage>> getImages() {
+    return images;
+  }
+
+  public @NonNull LiveData<PagingController<String>> getPagingController() {
+    return pagingController;
+  }
+
+  private PagedData<String, GiphyImage> getGiphyImagePagedData(@Nullable String query) {
+    return PagedData.create(new GiphyMp4PagedDataSource(query),
+                            new PagingConfig.Builder().setPageSize(20)
+                                                      .setBufferPages(1)
+                                                      .build());
+  }
+
+  public static class Factory implements ViewModelProvider.Factory {
+    private final boolean isForMms;
+
+    public Factory(boolean isForMms) {
+      this.isForMms = isForMms;
     }
 
-    LiveData<PagedData<GiphyImage>> getPagedData() {
-        return pagedData;
+    @Override
+    public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
+      return Objects.requireNonNull(modelClass.cast(new GiphyMp4ViewModel(isForMms)));
     }
-
-    public void updateSearchQuery(@Nullable String query) {
-        if (!Objects.equals(query, this.query)) {
-            this.query = query;
-
-            pagedData.setValue(getGiphyImagePagedData(query));
-        }
-    }
-
-    public void saveToBlob(@NonNull GiphyImage giphyImage) {
-        saveResultEvents.postValue(new GiphyMp4SaveResult.InProgress());
-        repository.saveToBlob(giphyImage, isForMms, saveResultEvents::postValue);
-    }
-
-    public @NonNull LiveData<GiphyMp4SaveResult> getSaveResultEvents() {
-        return saveResultEvents;
-    }
-
-    public @NonNull LiveData<List<GiphyImage>> getImages() {
-        return images;
-    }
-
-    public @NonNull LiveData<PagingController> getPagingController() {
-        return pagingController;
-    }
-
-    private PagedData<GiphyImage> getGiphyImagePagedData(@Nullable String query) {
-        return PagedData.create(new GiphyMp4PagedDataSource(query),
-                new PagingConfig.Builder().setPageSize(20)
-                        .setBufferPages(1)
-                        .build());
-    }
-
-    public static class Factory implements ViewModelProvider.Factory {
-        private final boolean isForMms;
-
-        public Factory(boolean isForMms) {
-            this.isForMms = isForMms;
-        }
-
-        @Override
-        public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-            return Objects.requireNonNull(modelClass.cast(new GiphyMp4ViewModel(isForMms)));
-        }
-    }
+  }
 }

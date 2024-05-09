@@ -1,6 +1,7 @@
 package su.sres.signalservice.internal;
 
 import org.whispersystems.libsignal.util.guava.Preconditions;
+
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 
 import java.io.IOException;
@@ -63,6 +64,10 @@ public abstract class ServiceResponseProcessor<T> {
 
   protected boolean authorizationFailed() {
     return response.getStatus() == 401 || response.getStatus() == 403;
+  }
+
+  protected boolean captchaRequired() {
+    return response.getStatus() == 402;
   }
 
   protected boolean notFound() {

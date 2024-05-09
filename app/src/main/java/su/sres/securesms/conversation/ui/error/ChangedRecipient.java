@@ -3,7 +3,7 @@ package su.sres.securesms.conversation.ui.error;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.IdentityDatabase;
-import su.sres.securesms.database.IdentityDatabase.IdentityRecord;
+import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.recipients.Recipient;
 
 /**

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<su.sres.securesms.components.FromTextView xmlns:android="http://schemas.android.com/apk/res/android"
+<su.sres.securesms.components.emoji.EmojiTextView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/recipient_view_name"
     style="@style/Signal.Text.Preview"

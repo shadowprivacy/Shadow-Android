@@ -8,12 +8,12 @@ import java.lang.IllegalStateException
  */
 object AvatarBundler {
 
-  private const val TEXT = "org.thoughtcrime.securesms.avatar.TEXT"
-  private const val COLOR = "org.thoughtcrime.securesms.avatar.COLOR"
-  private const val URI = "org.thoughtcrime.securesms.avatar.URI"
-  private const val KEY = "org.thoughtcrime.securesms.avatar.KEY"
-  private const val DATABASE_ID = "org.thoughtcrime.securesms.avatar.DATABASE_ID"
-  private const val SIZE = "org.thoughtcrime.securesms.avatar.SIZE"
+  private const val TEXT = "su.sres.securesms.avatar.TEXT"
+  private const val COLOR = "su.sres.securesms.avatar.COLOR"
+  private const val URI = "su.sres.securesms.avatar.URI"
+  private const val KEY = "su.sres.securesms.avatar.KEY"
+  private const val DATABASE_ID = "su.sres.securesms.avatar.DATABASE_ID"
+  private const val SIZE = "su.sres.securesms.avatar.SIZE"
 
   fun bundleText(text: Avatar.Text): Bundle = Bundle().apply {
     putString(TEXT, text.text)

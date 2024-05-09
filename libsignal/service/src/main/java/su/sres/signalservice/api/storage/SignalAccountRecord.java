@@ -131,6 +131,10 @@ public final class SignalAccountRecord implements SignalRecord {
         diff.add("UniversalExpireTimer");
       }
 
+      if (!Objects.equals(this.getUserLogin(), that.getUserLogin())) {
+        diff.add("E164");
+      }
+
       if (!Objects.equals(this.hasUnknownFields(), that.hasUnknownFields())) {
         diff.add("UnknownFields");
       }
@@ -207,6 +211,10 @@ public final class SignalAccountRecord implements SignalRecord {
 
   public int getUniversalExpireTimer() {
     return proto.getUniversalExpireTimer();
+  }
+
+  public String getUserLogin() {
+    return proto.getE164();
   }
 
   AccountRecord toProto() {
@@ -459,6 +467,11 @@ public final class SignalAccountRecord implements SignalRecord {
 
     public Builder setUniversalExpireTimer(int timer) {
       builder.setUniversalExpireTimer(timer);
+      return this;
+    }
+
+    public Builder setUserLogin(String userLogin) {
+      builder.setE164(userLogin);
       return this;
     }
 

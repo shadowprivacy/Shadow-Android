@@ -39,6 +39,7 @@ import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.EarlyMessageCache;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
+import su.sres.securesms.video.exo.GiphyMp4Cache;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.SignalServiceMessageSender;
@@ -94,12 +95,13 @@ public class ApplicationDependencies {
   private static volatile PendingRetryReceiptManager   pendingRetryReceiptManager;
   private static volatile PendingRetryReceiptCache     pendingRetryReceiptCache;
   private static volatile SignalWebSocket              signalWebSocket;
-  private static volatile MessageNotifier            messageNotifier;
-  private static volatile TextSecureIdentityKeyStore identityStore;
-  private static volatile TextSecureSessionStore sessionStore;
-  private static volatile TextSecurePreKeyStore  preKeyStore;
-  private static volatile SignalSenderKeyStore   senderKeyStore;
-  private static volatile KeyValueStore         keyValueStore;
+  private static volatile MessageNotifier              messageNotifier;
+  private static volatile TextSecureIdentityKeyStore   identityStore;
+  private static volatile TextSecureSessionStore       sessionStore;
+  private static volatile TextSecurePreKeyStore        preKeyStore;
+  private static volatile SignalSenderKeyStore         senderKeyStore;
+  private static volatile GiphyMp4Cache                giphyMp4Cache;
+  private static volatile KeyValueStore                keyValueStore;
 
   public static void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
     synchronized (NI_LOCK) {
@@ -355,6 +357,17 @@ public class ApplicationDependencies {
       }
     }
     return senderKeyStore;
+  }
+
+  public static @NonNull GiphyMp4Cache getGiphyMp4Cache() {
+    if (giphyMp4Cache == null) {
+      synchronized (NI_LOCK) {
+        if (giphyMp4Cache == null) {
+          giphyMp4Cache = networkIndependentProvider.provideGiphyMp4Cache();
+        }
+      }
+    }
+    return giphyMp4Cache;
   }
 
   public static @NonNull MegaphoneRepository getMegaphoneRepository() {
@@ -625,10 +638,16 @@ public class ApplicationDependencies {
 
   public interface NetworkIndependentProvider {
     @NonNull KeyValueStore provideKeyValueStore();
+
     @NonNull TextSecureIdentityKeyStore provideIdentityStore();
+
     @NonNull TextSecureSessionStore provideSessionStore();
+
     @NonNull TextSecurePreKeyStore providePreKeyStore();
+
     @NonNull SignalSenderKeyStore provideSenderKeyStore();
+
+    @NonNull GiphyMp4Cache provideGiphyMp4Cache();
 
     @NonNull
     ShakeToReport provideShakeToReport();

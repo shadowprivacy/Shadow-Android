@@ -52,7 +52,7 @@ import su.sres.securesms.components.location.SignalPlace;
 import su.sres.securesms.giph.ui.GiphyActivity;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.maps.PlacePickerActivity;
-import su.sres.securesms.mediasend.MediaSendActivity;
+import su.sres.securesms.mediasend.v2.MediaSelectionActivity;
 import su.sres.securesms.payments.create.CreatePaymentFragmentArgs;
 import su.sres.securesms.payments.preferences.PaymentsActivity;
 import su.sres.securesms.payments.preferences.model.PayeeParcelable;
@@ -72,6 +72,7 @@ import su.sres.securesms.util.views.Stub;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -372,12 +373,12 @@ public class AttachmentManager {
     selectMediaType(activity, "*/*", null, requestCode);
   }
 
-  public static void selectGallery(Activity activity, int requestCode, @NonNull Recipient recipient, @NonNull CharSequence body, @NonNull TransportOption transport) {
+  public static void selectGallery(Activity activity, int requestCode, @NonNull Recipient recipient, @NonNull CharSequence body, @NonNull TransportOption transport, boolean hasQuote) {
     Permissions.with(activity)
                .request(Manifest.permission.READ_EXTERNAL_STORAGE)
                .ifNecessary()
                .withPermanentDenialDialog(activity.getString(R.string.AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio))
-               .onAllGranted(() -> activity.startActivityForResult(MediaSendActivity.buildGalleryIntent(activity, recipient, body, transport), requestCode))
+               .onAllGranted(() -> activity.startActivityForResult(MediaSelectionActivity.gallery(activity, transport, Collections.emptyList(), recipient.getId(), body, hasQuote), requestCode))
                .execute();
   }
 

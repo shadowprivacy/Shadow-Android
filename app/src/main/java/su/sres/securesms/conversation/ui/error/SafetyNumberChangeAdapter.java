@@ -15,71 +15,71 @@ import androidx.recyclerview.widget.RecyclerView;
 import su.sres.securesms.R;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.components.FromTextView;
-import su.sres.securesms.database.IdentityDatabase;
+import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.adapter.AlwaysChangedDiffUtil;
 
 final class SafetyNumberChangeAdapter extends ListAdapter<ChangedRecipient, SafetyNumberChangeAdapter.ViewHolder> {
 
-    private final Callbacks callbacks;
+  private final Callbacks callbacks;
 
-    SafetyNumberChangeAdapter(@NonNull Callbacks callbacks) {
-        super(new AlwaysChangedDiffUtil<>());
-        this.callbacks = callbacks;
+  SafetyNumberChangeAdapter(@NonNull Callbacks callbacks) {
+    super(new AlwaysChangedDiffUtil<>());
+    this.callbacks = callbacks;
+  }
+
+  @Override
+  public @NonNull ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.safety_number_change_recipient, parent, false));
+  }
+
+  @Override
+  public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    final ChangedRecipient changedRecipient = getItem(position);
+    holder.bind(changedRecipient);
+  }
+
+  class ViewHolder extends RecyclerView.ViewHolder {
+
+    final AvatarImageView avatar;
+    final FromTextView    name;
+    final TextView        subtitle;
+    final View            viewButton;
+
+    public ViewHolder(@NonNull View itemView) {
+      super(itemView);
+
+      avatar     = itemView.findViewById(R.id.safety_number_change_recipient_avatar);
+      name       = itemView.findViewById(R.id.safety_number_change_recipient_name);
+      subtitle   = itemView.findViewById(R.id.safety_number_change_recipient_subtitle);
+      viewButton = itemView.findViewById(R.id.safety_number_change_recipient_view);
     }
 
-    @Override
-    public @NonNull ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.safety_number_change_recipient, parent, false));
-    }
+    void bind(@NonNull ChangedRecipient changedRecipient) {
+      avatar.setRecipient(changedRecipient.getRecipient());
+      name.setText(changedRecipient.getRecipient());
 
-    @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        final ChangedRecipient changedRecipient = getItem(position);
-        holder.bind(changedRecipient);
-    }
+      if (changedRecipient.isUnverified() || changedRecipient.isVerified()) {
+        subtitle.setText(R.string.safety_number_change_dialog__previous_verified);
 
-    class ViewHolder extends RecyclerView.ViewHolder {
-
-        final AvatarImageView avatar;
-        final FromTextView    name;
-        final TextView        subtitle;
-        final View            viewButton;
-
-        public ViewHolder(@NonNull View itemView) {
-            super(itemView);
-
-            avatar     = itemView.findViewById(R.id.safety_number_change_recipient_avatar);
-            name       = itemView.findViewById(R.id.safety_number_change_recipient_name);
-            subtitle   = itemView.findViewById(R.id.safety_number_change_recipient_subtitle);
-            viewButton = itemView.findViewById(R.id.safety_number_change_recipient_view);
+        Drawable check = ContextCompat.getDrawable(itemView.getContext(), R.drawable.check);
+        if (check != null) {
+          check.setBounds(0, 0, ViewUtil.dpToPx(12), ViewUtil.dpToPx(12));
+          subtitle.setCompoundDrawables(check, null, null, null);
         }
+      } else if (changedRecipient.getRecipient().hasAUserSetDisplayName(itemView.getContext())) {
+        subtitle.setText(changedRecipient.getRecipient().getE164().or(""));
+        subtitle.setCompoundDrawables(null, null, null, null);
+      } else {
+        subtitle.setText("");
+      }
+      subtitle.setVisibility(TextUtils.isEmpty(subtitle.getText()) ? View.GONE : View.VISIBLE);
 
-        void bind(@NonNull ChangedRecipient changedRecipient) {
-            avatar.setRecipient(changedRecipient.getRecipient());
-            name.setText(changedRecipient.getRecipient());
-
-            if (changedRecipient.isUnverified() || changedRecipient.isVerified()) {
-                subtitle.setText(R.string.safety_number_change_dialog__previous_verified);
-
-                Drawable check = ContextCompat.getDrawable(itemView.getContext(), R.drawable.check);
-                if (check != null) {
-                    check.setBounds(0, 0, ViewUtil.dpToPx(12), ViewUtil.dpToPx(12));
-                    subtitle.setCompoundDrawables(check, null, null, null);
-                }
-            } else if (changedRecipient.getRecipient().hasAUserSetDisplayName(itemView.getContext())) {
-                subtitle.setText(changedRecipient.getRecipient().getE164().or(""));
-                subtitle.setCompoundDrawables(null, null, null, null);
-            } else {
-                subtitle.setText("");
-            }
-            subtitle.setVisibility(TextUtils.isEmpty(subtitle.getText()) ?  View.GONE : View.VISIBLE);
-
-            viewButton.setOnClickListener(view -> callbacks.onViewIdentityRecord(changedRecipient.getIdentityRecord()));
-        }
+      viewButton.setOnClickListener(view -> callbacks.onViewIdentityRecord(changedRecipient.getIdentityRecord()));
     }
+  }
 
-    interface Callbacks {
-        void onViewIdentityRecord(@NonNull IdentityDatabase.IdentityRecord identityRecord);
-    }
+  interface Callbacks {
+    void onViewIdentityRecord(@NonNull IdentityRecord identityRecord);
+  }
 }

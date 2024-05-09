@@ -147,6 +147,6 @@ class TextAvatarCreationFragment : Fragment(R.layout.text_avatar_creation_fragme
   }
 
   companion object {
-    const val REQUEST_KEY_TEXT = "org.thoughtcrime.securesms.avatar.text.TEXT"
+    const val REQUEST_KEY_TEXT = "su.sres.securesms.avatar.text.TEXT"
   }
 }

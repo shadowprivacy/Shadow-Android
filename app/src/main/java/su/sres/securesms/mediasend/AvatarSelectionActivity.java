@@ -13,14 +13,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.LiveData;
 
 import su.sres.securesms.R;
-import su.sres.securesms.TransportOptions;
 import su.sres.securesms.imageeditor.model.EditorModel;
+import su.sres.securesms.mediasend.v2.gallery.MediaGalleryFragment;
+import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.scribbles.ImageEditorFragment;
+import su.sres.securesms.util.DefaultValueLiveData;
 import su.sres.securesms.util.MediaUtil;
 
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -28,7 +30,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import java.io.FileDescriptor;
 import java.util.Collections;
 
-public class AvatarSelectionActivity extends AppCompatActivity implements CameraFragment.Controller, ImageEditorFragment.Controller, MediaPickerFolderFragment.Controller, MediaPickerItemFragment.Controller {
+public class AvatarSelectionActivity extends AppCompatActivity implements CameraFragment.Controller, ImageEditorFragment.Controller, MediaGalleryFragment.Callbacks {
 
   private static final Point AVATAR_DIMENSIONS = new Point(AvatarHelper.AVATAR_DIMENSIONS, AvatarHelper.AVATAR_DIMENSIONS);
 
@@ -63,13 +65,10 @@ public class AvatarSelectionActivity extends AppCompatActivity implements Camera
     super.onCreate(savedInstanceState);
     setContentView(R.layout.avatar_selection_activity);
 
-    MediaSendViewModel viewModel = ViewModelProviders.of(this, new MediaSendViewModel.Factory(getApplication(), new MediaRepository())).get(MediaSendViewModel.class);
-    viewModel.setTransport(TransportOptions.getPushTransportOption(this));
-
     if (isGalleryFirst()) {
       onGalleryClicked();
     } else {
-      onCameraSelected();
+      onNavigateToCamera();
     }
   }
 
@@ -116,7 +115,7 @@ public class AvatarSelectionActivity extends AppCompatActivity implements Camera
       return;
     }
 
-    MediaPickerFolderFragment fragment = MediaPickerFolderFragment.newInstance(this, null);
+    MediaGalleryFragment fragment = new MediaGalleryFragment();
     FragmentTransaction transaction = getSupportFragmentManager().beginTransaction()
                                                                  .replace(R.id.fragment_container, fragment);
 
@@ -138,19 +137,21 @@ public class AvatarSelectionActivity extends AppCompatActivity implements Camera
   }
 
   @Override
+  public @NonNull LiveData<Optional<Media>> getMostRecentMediaItem() {
+    return new DefaultValueLiveData<>(Optional.absent());
+  }
+
+  @Override
+  public @NonNull MediaConstraints getMediaConstraints() {
+    return MediaConstraints.getPushMediaConstraints();
+  }
+
+  @Override
   public void onTouchEventsNeeded(boolean needed) {
   }
 
   @Override
   public void onRequestFullScreen(boolean fullScreen, boolean hideKeyboard) {
-  }
-
-  @Override
-  public void onFolderSelected(@NonNull MediaFolder folder) {
-    getSupportFragmentManager().beginTransaction()
-                               .replace(R.id.fragment_container, MediaPickerItemFragment.newInstance(folder.getBucketId(), folder.getTitle(), 1, false))
-                               .addToBackStack(null)
-                               .commit();
   }
 
   @Override
@@ -164,25 +165,21 @@ public class AvatarSelectionActivity extends AppCompatActivity implements Camera
   }
 
   @Override
-  public void onCameraSelected() {
-    if (isCameraFirst() && popToRoot()) {
-      return;
-    }
-
-    Fragment fragment = CameraFragment.newInstanceForAvatarCapture();
-    FragmentTransaction transaction = getSupportFragmentManager().beginTransaction()
-                                                                 .replace(R.id.fragment_container, fragment, IMAGE_CAPTURE);
-
-    if (isGalleryFirst()) {
-      transaction.addToBackStack(null);
-    }
-
-    transaction.commit();
+  public void onDoneEditing() {
+    handleSave();
   }
 
   @Override
-  public void onDoneEditing() {
-    handleSave();
+  public void onCancelEditing() {
+    finish();
+  }
+
+  @Override
+  public void onMainImageLoaded() {
+  }
+
+  @Override
+  public void onMainImageFailedToLoad() {
   }
 
   public boolean popToRoot() {
@@ -230,5 +227,47 @@ public class AvatarSelectionActivity extends AppCompatActivity implements Camera
                                      setResult(RESULT_OK, result);
                                      finish();
                                    });
+  }
+
+  @Override
+  public boolean isMultiselectEnabled() {
+    return false;
+  }
+
+  @Override
+  public void onMediaUnselected(@NonNull Media media) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void onSelectedMediaClicked(@NonNull Media media) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void onNavigateToCamera() {
+    if (isCameraFirst() && popToRoot()) {
+      return;
+    }
+
+    Fragment fragment = CameraFragment.newInstanceForAvatarCapture();
+    FragmentTransaction transaction = getSupportFragmentManager().beginTransaction()
+                                                                 .replace(R.id.fragment_container, fragment, IMAGE_CAPTURE);
+
+    if (isGalleryFirst()) {
+      transaction.addToBackStack(null);
+    }
+
+    transaction.commit();
+  }
+
+  @Override
+  public void onSubmit() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void onToolbarNavigationClicked() {
+    finish();
   }
 }
