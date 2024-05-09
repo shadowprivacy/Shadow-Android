@@ -11,7 +11,7 @@ RUN apt-get update -y && apt-get install -y $(cat docker/dependencies.txt)
 RUN chmod +x docker/print-versions.sh
 RUN docker/print-versions.sh docker/dependencies.txt
 
-ENV ANDROID_COMMAND_LINE_TOOLS_FILENAME commandlinetools-linux-6858069_latest.zip
+ENV ANDROID_COMMAND_LINE_TOOLS_FILENAME commandlinetools-linux-7583922_latest.zip
 ENV ANDROID_API_LEVELS                  android-30
 ENV ANDROID_BUILD_TOOLS_VERSION         30.0.2
 ENV ANDROID_NDK_VERSION                 21.4.7075529
@@ -26,7 +26,9 @@ RUN rm ${ANDROID_COMMAND_LINE_TOOLS_FILENAME}
 
 RUN yes | sdkmanager --update --sdk_root="${ANDROID_HOME}"
 RUN yes | sdkmanager --sdk_root="${ANDROID_HOME}" "platforms;${ANDROID_API_LEVELS}" "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" "extras;google;m2repository" "extras;android;m2repository" "extras;google;google_play_services" "ndk;${ANDROID_NDK_VERSION}"
+RUN update-java-alternatives -s java-1.8.0-openjdk-amd64
 RUN yes | ${ANDROID_HOME}/tools/bin/sdkmanager --licenses --sdk_root="${ANDROID_HOME}"
+RUN update-java-alternatives -s java-1.11.0-openjdk-amd64
 
 RUN rm -rf ${ANDROID_HOME}/tools
 

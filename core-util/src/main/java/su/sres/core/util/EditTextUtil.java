@@ -1,5 +1,6 @@
 package su.sres.core.util;
 
+import android.annotation.SuppressLint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -44,6 +45,10 @@ public final class EditTextUtil {
     }
   }
 
+  /**
+   * Note: This is only ever called in API 28 and less.
+   */
+  @SuppressLint("SoonBlockedPrivateApi")
   private static void setCursorColorViaReflection(EditText editText, int color) {
     try {
       Field fCursorDrawableRes = TextView.class.getDeclaredField("mCursorDrawableRes");

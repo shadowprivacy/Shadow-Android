@@ -1,7 +1,7 @@
 apply plugin: 'java-library'
 apply plugin: 'java-test-fixtures'
 apply plugin: 'com.google.protobuf'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'signing'
 apply plugin: 'witness'
 apply plugin: 'idea'
@@ -11,6 +11,16 @@ sourceCompatibility = 1.8
 archivesBaseName    = "signal-service-java"
 version             = lib_signal_service_version_number
 group               = lib_signal_service_group_info
+
+java {
+    targetCompatibility = 1.8
+    withJavadocJar()
+    withSourcesJar()
+}
+
+compileJava {
+    options.release = 8
+}
 
 repositories {
     mavenCentral()
@@ -88,9 +98,7 @@ task installArchives(type: Upload) {
     description "Installs the artifacts to the local Maven repository."
     configuration = configurations['archives']
     repositories {
-        mavenDeployer {
-            repository url: "file://${System.properties['user.home']}/.m2/repository"
-        }
+        mavenLocal()
     }
 }
 
