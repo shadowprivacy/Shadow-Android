@@ -15,7 +15,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.imageeditor.model.EditorModel;
+import su.sres.imageeditor.core.model.EditorModel;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.AsynchronousCallback;

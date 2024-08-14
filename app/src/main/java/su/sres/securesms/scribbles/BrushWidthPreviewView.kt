@@ -11,7 +11,7 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.annotation.ColorInt
 import androidx.core.animation.doOnEnd
-import su.sres.securesms.imageeditor.Bounds
+import su.sres.imageeditor.core.Bounds
 import su.sres.securesms.mediasend.v2.MediaAnimations
 import su.sres.securesms.util.ViewUtil
 import su.sres.securesms.util.visible

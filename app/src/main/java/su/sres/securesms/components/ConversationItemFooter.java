@@ -18,6 +18,7 @@ import androidx.constraintlayout.widget.ConstraintSet;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -209,9 +210,9 @@ public class ConversationItemFooter extends ConstraintLayout {
     setBackground(null);
   }
 
-  public @Nullable Projection getProjection() {
+  public @Nullable Projection getProjection(@NonNull ViewGroup coordinateRoot) {
     if (getVisibility() == VISIBLE) {
-      return Projection.relativeToViewRoot(this, new Projection.Corners(ViewUtil.dpToPx(11)));
+      return Projection.relativeToParent(coordinateRoot, this, new Projection.Corners(ViewUtil.dpToPx(11)));
     } else {
       return null;
     }

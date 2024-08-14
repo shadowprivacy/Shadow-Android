@@ -4,7 +4,6 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
 import su.sres.securesms.conversation.colors.ChatColors
 import su.sres.securesms.recipients.RecipientId
 import su.sres.securesms.util.SingleLiveEvent
@@ -60,7 +59,7 @@ class ChatColorSelectionViewModel(private val repository: ChatColorSelectionRepo
       val repository = ChatColorSelectionRepository.create(activity, recipientId)
       val viewModelFactory = Factory(repository)
 
-      return ViewModelProviders.of(activity, viewModelFactory).get(ChatColorSelectionViewModel::class.java)
+      return ViewModelProvider(activity, viewModelFactory).get(ChatColorSelectionViewModel::class.java)
     }
   }
 

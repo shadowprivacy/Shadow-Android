@@ -44,6 +44,7 @@ import su.sres.securesms.util.AvatarUtil;
 import su.sres.securesms.util.BlurTransformation;
 import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.util.ViewUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -207,8 +208,8 @@ public final class AvatarImageView extends AppCompatImageView {
         this.chatColors       = chatColors;
         recipientContactPhoto = photo;
 
-        Drawable fallbackContactPhotoDrawable = size == SIZE_SMALL ? photo.recipient.getSmallFallbackContactPhotoDrawable(getContext(), inverted, fallbackPhotoProvider)
-                                                                   : photo.recipient.getFallbackContactPhotoDrawable(getContext(), inverted, fallbackPhotoProvider);
+        Drawable fallbackContactPhotoDrawable = size == SIZE_SMALL ? photo.recipient.getSmallFallbackContactPhotoDrawable(getContext(), inverted, fallbackPhotoProvider, ViewUtil.getWidth(this))
+                                                                   : photo.recipient.getFallbackContactPhotoDrawable(getContext(), inverted, fallbackPhotoProvider, ViewUtil.getWidth(this));
 
         if (fixedSizeTarget != null) {
           requestManager.clear(fixedSizeTarget);

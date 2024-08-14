@@ -117,9 +117,11 @@ public interface MmsSmsColumns {
 
     // Group Message Information
     protected static final long GROUP_UPDATE_BIT            = 0x10000;
-    protected static final long GROUP_QUIT_BIT              = 0x20000;
+    // Note: Leave bit was previous QUIT bit for GV1, now also general member leave for GV2
+    protected static final long GROUP_LEAVE_BIT             = 0x20000;
     protected static final long EXPIRATION_TIMER_UPDATE_BIT = 0x40000;
     protected static final long GROUP_V2_BIT                = 0x80000;
+    protected static final long GROUP_V2_LEAVE_BITS         = GROUP_V2_BIT | GROUP_LEAVE_BIT | GROUP_UPDATE_BIT;
 
     // Encrypted Storage Information XXX
     public    static final long ENCRYPTION_MASK                  = 0xFF000000;
@@ -302,7 +304,7 @@ public interface MmsSmsColumns {
     }
 
     public static boolean isGroupQuit(long type) {
-      return (type & GROUP_QUIT_BIT) != 0;
+      return (type & GROUP_LEAVE_BIT) != 0 && (type & GROUP_V2_BIT) == 0;
     }
 
     public static boolean isChatSessionRefresh(long type) {
@@ -332,6 +334,10 @@ public interface MmsSmsColumns {
 
     public static boolean isChangeLogin(long type) {
       return type == CHANGE_LOGIN_TYPE;
+    }
+
+    public static boolean isGroupV2LeaveOnly(long type) {
+      return (type & GROUP_V2_LEAVE_BITS) == GROUP_V2_LEAVE_BITS;
     }
 
     public static long translateFromSystemBaseType(long theirType) {

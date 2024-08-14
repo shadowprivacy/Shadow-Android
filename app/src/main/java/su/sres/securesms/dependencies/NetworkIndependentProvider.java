@@ -13,6 +13,7 @@ import su.sres.securesms.shakereport.ShakeToReport;
 import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.ByteUnit;
 import su.sres.securesms.video.exo.GiphyMp4Cache;
+import su.sres.securesms.video.exo.SimpleExoPlayerPool;
 
 // Here goes all the stuff that must be initialized prior to the service URL having been set
 public class NetworkIndependentProvider implements ApplicationDependencies.NetworkIndependentProvider {
@@ -61,6 +62,11 @@ public class NetworkIndependentProvider implements ApplicationDependencies.Netwo
   @Override
   public @NonNull AppForegroundObserver provideAppForegroundObserver() {
     return new AppForegroundObserver();
+  }
+
+  @Override
+  public @NonNull SimpleExoPlayerPool provideExoPlayerPool() {
+    return new SimpleExoPlayerPool(context);
   }
 
 }

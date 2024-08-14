@@ -2,7 +2,7 @@ package su.sres.securesms.components.settings.app.account
 
 import android.content.Intent
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import su.sres.securesms.R
 import su.sres.securesms.components.settings.DSLConfiguration
@@ -29,7 +29,7 @@ class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFrag
   }
 
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
-    viewModel = ViewModelProviders.of(this)[AccountSettingsViewModel::class.java]
+    viewModel = ViewModelProvider(this)[AccountSettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) { state ->
       adapter.submitList(getConfiguration(state).toMappingModelList())
@@ -41,7 +41,8 @@ class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFrag
 
       // sectionHeaderPref(R.string.preferences_app_protection__signal_pin)
 
-      /* clickPref(
+      /*  @Suppress("DEPRECATION")
+      clickPref(
         title = DSLSettingsText.from(if (state.hasPin) R.string.preferences_app_protection__change_your_pin else R.string.preferences_app_protection__create_a_pin),
         onClick = {
           if (state.hasPin) {

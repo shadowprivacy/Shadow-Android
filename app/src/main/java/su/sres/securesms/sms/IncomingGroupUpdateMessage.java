@@ -28,15 +28,19 @@ public final class IncomingGroupUpdateMessage extends IncomingTextMessage {
   }
 
   public boolean isUpdate() {
-    return groupContext.isV2Group() || groupContext.requireGroupV1Properties().isUpdate();
+    return GroupV2UpdateMessageUtil.isUpdate(groupContext) || groupContext.requireGroupV1Properties().isUpdate();
   }
 
   public boolean isGroupV2() {
-    return groupContext.isV2Group();
+    return GroupV2UpdateMessageUtil.isGroupV2(groupContext);
   }
 
   public boolean isQuit() {
-    return !groupContext.isV2Group() && groupContext.requireGroupV1Properties().isQuit();
+    return !isGroupV2() && groupContext.requireGroupV1Properties().isQuit();
   }
 
+  @Override
+  public boolean isJustAGroupLeave() {
+    return GroupV2UpdateMessageUtil.isJustAGroupLeave(groupContext);
+  }
 }

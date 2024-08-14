@@ -10,6 +10,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.viewModels
+import su.sres.core.util.logging.Log
 import su.sres.securesms.R
 import su.sres.securesms.components.settings.DSLConfiguration
 import su.sres.securesms.components.settings.DSLSettingsAdapter
@@ -19,6 +20,8 @@ import su.sres.securesms.components.settings.configure
 import su.sres.securesms.database.RecipientDatabase
 import su.sres.securesms.notifications.NotificationChannels
 import su.sres.securesms.util.RingtoneUtil
+
+private val TAG = Log.tag(CustomNotificationsSettingsFragment::class.java)
 
 class CustomNotificationsSettingsFragment : DSLSettingsFragment(R.string.CustomNotificationsDialogFragment__custom_notifications) {
 
@@ -135,7 +138,12 @@ class CustomNotificationsSettingsFragment : DSLSettingsFragment(R.string.CustomN
     } else {
       val tone = RingtoneUtil.getRingtone(requireContext(), ringtone)
       if (tone != null) {
-        return tone.getTitle(context)
+        return try {
+          tone.getTitle(context)
+        } catch (e: NullPointerException) {
+          Log.w(TAG, "Could not get correct title for ringtone.", e)
+          context.getString(R.string.CustomNotificationsDialogFragment__unknown)
+        }
       }
     }
     return context.getString(R.string.CustomNotificationsDialogFragment__default)

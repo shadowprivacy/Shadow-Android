@@ -1,7 +1,5 @@
 package su.sres.securesms.service.webrtc;
 
-import android.media.AudioManager;
-
 import androidx.annotation.NonNull;
 
 import org.signal.ringrtc.CallException;
@@ -14,7 +12,6 @@ import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
-import su.sres.securesms.util.ServiceUtil;
 import su.sres.signalservice.api.messages.calls.OfferMessage;
 
 import static su.sres.securesms.webrtc.CallNotificationBuilder.TYPE_INCOMING_CONNECTING;
@@ -75,9 +72,6 @@ public class BeginCallActionProcessorDelegate extends WebRtcActionProcessor {
     remotePeer.answering();
 
     Log.i(tag, "assign activePeer callId: " + remotePeer.getCallId() + " key: " + remotePeer.hashCode());
-
-    AudioManager androidAudioManager = ServiceUtil.getAudioManager(context);
-    androidAudioManager.setSpeakerphoneOn(false);
 
     webRtcInteractor.setCallInProgressNotification(TYPE_INCOMING_CONNECTING, remotePeer);
     webRtcInteractor.retrieveTurnServers(remotePeer);

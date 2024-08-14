@@ -151,7 +151,7 @@
             app:layout_constraintBottom_toTopOf="@id/button_barrier"
             tools:alpha="1" />
 
-        <su.sres.securesms.components.emoji.EmojiEditText
+        <su.sres.securesms.components.emoji.EmojiTextView
             android:id="@+id/add_a_message_entry"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -1,7 +1,6 @@
 package su.sres.securesms.components.webrtc;
 
 import android.content.Context;
-import android.media.AudioManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
@@ -15,27 +14,14 @@ import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.identity.IdentityRecordList;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.ServiceUtil;
 import su.sres.core.util.concurrent.SignalExecutors;
 
 class WebRtcCallRepository {
 
   private final Context      context;
-  private final AudioManager audioManager;
 
   WebRtcCallRepository(@NonNull Context context) {
     this.context      = context;
-    this.audioManager = ServiceUtil.getAudioManager(ApplicationDependencies.getApplication());
-  }
-
-  @NonNull WebRtcAudioOutput getAudioOutput() {
-    if (audioManager.isBluetoothScoOn()) {
-      return WebRtcAudioOutput.HEADSET;
-    } else if (audioManager.isSpeakerphoneOn()) {
-      return WebRtcAudioOutput.SPEAKER;
-    } else {
-      return WebRtcAudioOutput.HANDSET;
-    }
   }
 
   @WorkerThread

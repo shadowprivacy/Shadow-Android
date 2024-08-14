@@ -1,15 +1,17 @@
 package su.sres.securesms.service.webrtc;
 
 import android.content.Context;
-import android.media.AudioManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.ringrtc.CallManager;
 
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.WebRtcViewModel;
-import su.sres.securesms.util.ServiceUtil;
+import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
+import su.sres.securesms.webrtc.audio.AudioManagerCompat;
+import su.sres.securesms.webrtc.audio.SignalAudioManager;
 import su.sres.securesms.webrtc.locks.LockManager;
 
 import org.signal.ringrtc.GroupCall;
@@ -36,7 +38,7 @@ public final class WebRtcUtil {
   }
 
   public static @NonNull LockManager.PhoneState getInCallPhoneState(@NonNull Context context) {
-    AudioManager audioManager = ServiceUtil.getAudioManager(context);
+    AudioManagerCompat audioManager = ApplicationDependencies.getAndroidCallAudioManager();
     if (audioManager.isSpeakerphoneOn() || audioManager.isBluetoothScoOn() || audioManager.isWiredHeadsetOn()) {
       return LockManager.PhoneState.IN_HANDS_FREE_CALL;
     } else {
@@ -76,17 +78,15 @@ public final class WebRtcUtil {
     return OpaqueMessage.Urgency.DROPPABLE;
   }
 
-  public static void enableSpeakerPhoneIfNeeded(@NonNull Context context, boolean enable) {
-    if (!enable) {
+  public static void enableSpeakerPhoneIfNeeded(@NonNull WebRtcInteractor webRtcInteractor, WebRtcServiceState currentState) {
+    if (!currentState.getLocalDeviceState().getCameraState().isEnabled()) {
       return;
     }
 
-    AudioManager androidAudioManager = ServiceUtil.getAudioManager(context);
-    //noinspection deprecation
-    boolean shouldEnable = !(androidAudioManager.isSpeakerphoneOn() || androidAudioManager.isBluetoothScoOn() || androidAudioManager.isWiredHeadsetOn());
-
-    if (shouldEnable) {
-      androidAudioManager.setSpeakerphoneOn(true);
+    if (currentState.getLocalDeviceState().getActiveDevice() == SignalAudioManager.AudioDevice.EARPIECE ||
+        currentState.getLocalDeviceState().getActiveDevice() == SignalAudioManager.AudioDevice.NONE)
+    {
+      webRtcInteractor.setDefaultAudioDevice(SignalAudioManager.AudioDevice.SPEAKER_PHONE, true);
     }
   }
 

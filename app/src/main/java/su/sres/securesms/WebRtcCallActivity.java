@@ -81,6 +81,7 @@ import org.whispersystems.libsignal.IdentityKey;
 
 import su.sres.securesms.util.livedata.LiveDataUtil;
 import su.sres.securesms.webrtc.CallParticipantsViewState;
+import su.sres.securesms.webrtc.audio.SignalAudioManager;
 import su.sres.signalservice.api.messages.calls.HangupMessage;
 
 import java.util.List;
@@ -366,15 +367,15 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
   }
 
   private void handleSetAudioHandset() {
-    ApplicationDependencies.getSignalCallManager().setAudioSpeaker(false);
+    ApplicationDependencies.getSignalCallManager().selectAudioDevice(SignalAudioManager.AudioDevice.EARPIECE);
   }
 
   private void handleSetAudioSpeaker() {
-    ApplicationDependencies.getSignalCallManager().setAudioSpeaker(true);
+    ApplicationDependencies.getSignalCallManager().selectAudioDevice(SignalAudioManager.AudioDevice.SPEAKER_PHONE);
   }
 
   private void handleSetAudioBluetooth() {
-    ApplicationDependencies.getSignalCallManager().setAudioBluetooth(true);
+    ApplicationDependencies.getSignalCallManager().selectAudioDevice(SignalAudioManager.AudioDevice.BLUETOOTH);
   }
 
   private void handleSetMuteAudio(boolean enabled) {

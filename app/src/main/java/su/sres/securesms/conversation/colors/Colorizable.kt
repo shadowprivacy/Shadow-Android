@@ -1,5 +1,6 @@
 package su.sres.securesms.conversation.colors
 
+import android.view.ViewGroup
 import su.sres.securesms.util.Projection
 
 /**
@@ -7,5 +8,5 @@ import su.sres.securesms.util.Projection
  * generating its own projection.
  */
 interface Colorizable {
-  val colorizerProjections: List<Projection>
+  fun getColorizerProjections(coordinateRoot: ViewGroup): List<Projection>
 }

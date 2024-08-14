@@ -4,7 +4,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
 
@@ -231,7 +230,7 @@ public class SmsSendJob extends SendJob {
   }
 
   private SmsManager getSmsManagerFor(int subscriptionId) {
-    if (Build.VERSION.SDK_INT >= 22 && subscriptionId != -1) {
+    if (subscriptionId != -1) {
       return SmsManager.getSmsManagerForSubscriptionId(subscriptionId);
     } else {
       return SmsManager.getDefault();
@@ -241,7 +240,7 @@ public class SmsSendJob extends SendJob {
   private static Job.Parameters constructParameters(@NonNull Recipient destination) {
     return new Job.Parameters.Builder()
         .setMaxAttempts(MAX_ATTEMPTS)
-        .setQueue(destination.getId().toQueueKey())
+        .setQueue(destination.getId().toQueueKey() + "::SMS")
         .addConstraint(NetworkOrCellServiceConstraint.KEY)
         .build();
   }

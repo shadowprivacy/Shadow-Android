@@ -1,5 +1,6 @@
 package su.sres.securesms.components.emoji;
 
+import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.FontMetricsInt;
@@ -26,6 +27,15 @@ public class EmojiSpan extends AnimatingImageSpan {
     getDrawable().setBounds(0, 0, size, size);
   }
 
+  public EmojiSpan(@NonNull Context context, @NonNull Drawable drawable, @NonNull Paint paint) {
+    super(drawable, null);
+    fontMetrics = paint.getFontMetricsInt();
+    size        = fontMetrics != null ? Math.abs(fontMetrics.descent) + Math.abs(fontMetrics.ascent)
+                                      : context.getResources().getDimensionPixelSize(R.dimen.conversation_item_body_text_size);
+
+    getDrawable().setBounds(0, 0, size, size);
+  }
+
   @Override
   public int getSize(@NonNull Paint paint, CharSequence text, int start, int end, FontMetricsInt fm) {
     if (fm != null && this.fontMetrics != null) {
@@ -49,6 +59,7 @@ public class EmojiSpan extends AnimatingImageSpan {
     int height          = bottom - top;
     int centeringMargin = (height - size) / 2;
     int adjustedMargin  = (int) (centeringMargin * SHIFT_FACTOR);
+    int adjustedBottom  = bottom - adjustedMargin;
     super.draw(canvas, text, start, end, x, top, y, bottom - adjustedMargin, paint);
   }
 }

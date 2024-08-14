@@ -1,22 +1,16 @@
-package su.sres.securesms.events;
+package su.sres.securesms.events
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import com.annimon.stream.OptionalLong
+import su.sres.securesms.components.webrtc.BroadcastVideoSink
+import su.sres.securesms.events.CallParticipant.Companion.createLocal
+import su.sres.securesms.recipients.Recipient
+import su.sres.securesms.recipients.RecipientId
+import su.sres.securesms.service.webrtc.state.WebRtcServiceState
+import su.sres.securesms.webrtc.audio.SignalAudioManager
 
-import com.annimon.stream.OptionalLong;
-import com.annimon.stream.Stream;
+class WebRtcViewModel(state: WebRtcServiceState) {
 
-import su.sres.securesms.components.webrtc.BroadcastVideoSink;
-import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
-
-import java.util.List;
-import java.util.Set;
-
-public class WebRtcViewModel {
-
-  public enum State {
+  enum class State {
     IDLE,
 
     // Normal states
@@ -40,23 +34,17 @@ public class WebRtcViewModel {
     CALL_DECLINED_ELSEWHERE,
     CALL_ONGOING_ELSEWHERE;
 
-    public boolean isErrorState() {
-      return this == NETWORK_FAILURE ||
-             this == RECIPIENT_UNAVAILABLE ||
-             this == NO_SUCH_USER ||
-             this == UNTRUSTED_IDENTITY;
-    }
+    val isErrorState: Boolean
+      get() = this == NETWORK_FAILURE || this == RECIPIENT_UNAVAILABLE || this == NO_SUCH_USER || this == UNTRUSTED_IDENTITY
 
-    public boolean isPreJoinOrNetworkUnavailable() {
-      return this == CALL_PRE_JOIN || this == NETWORK_FAILURE;
-    }
+    val isPreJoinOrNetworkUnavailable: Boolean
+      get() = this == CALL_PRE_JOIN || this == NETWORK_FAILURE
 
-    public boolean isPassedPreJoin() {
-      return this.ordinal() > CALL_PRE_JOIN.ordinal();
-    }
+    val isPassedPreJoin: Boolean
+      get() = ordinal > ordinal
   }
 
-  public enum GroupCallState {
+  enum class GroupCallState {
     IDLE,
     RINGING,
     DISCONNECTED,
@@ -66,151 +54,75 @@ public class WebRtcViewModel {
     CONNECTED_AND_JOINING,
     CONNECTED_AND_JOINED;
 
-    public boolean isIdle() {
-      return this == IDLE;
-    }
+    val isIdle: Boolean
+      get() = this == IDLE
 
-    public boolean isNotIdle() {
-      return this != IDLE;
-    }
+    val isNotIdle: Boolean
+      get() = this != IDLE
 
-    public boolean isConnected() {
-      switch (this) {
-        case CONNECTED:
-        case CONNECTED_AND_JOINING:
-        case CONNECTED_AND_JOINED:
-          return true;
+    val isConnected: Boolean
+      get() {
+        return when (this) {
+          CONNECTED, CONNECTED_AND_JOINING, CONNECTED_AND_JOINED -> true
+          else -> false
+        }
       }
 
-      return false;
-    }
-
-    public boolean isNotIdleOrConnected() {
-      switch (this) {
-        case DISCONNECTED:
-        case CONNECTING:
-        case RECONNECTING:
-          return true;
+    val isNotIdleOrConnected: Boolean
+      get() {
+        return when (this) {
+          DISCONNECTED, CONNECTING, RECONNECTING -> true
+          else -> false
+        }
       }
 
-      return false;
-    }
-
-    public boolean isRinging() {
-      return this == RINGING;
-    }
+    val isRinging: Boolean
+      get() = this == RINGING
   }
 
-  private final @NonNull State          state;
-  private final @NonNull GroupCallState groupState;
-  private final @NonNull Recipient      recipient;
+  val state: State = state.callInfoState.callState
+  val groupState: GroupCallState = state.callInfoState.groupCallState
+  val recipient: Recipient = state.callInfoState.callRecipient
+  val isRemoteVideoOffer: Boolean = state.callSetupState.isRemoteVideoOffer
+  val callConnectedTime: Long = state.callInfoState.callConnectedTime
+  val remoteParticipants: List<CallParticipant> = state.callInfoState.remoteCallParticipants
+  val identityChangedParticipants: Set<RecipientId> = state.callInfoState.identityChangedRecipients
+  val remoteDevicesCount: OptionalLong = state.callInfoState.remoteDevicesCount
+  val participantLimit: Long? = state.callInfoState.participantLimit
+  @get:JvmName("shouldRingGroup")
+  val ringGroup: Boolean = state.callSetupState.ringGroup
+  val ringerRecipient: Recipient = state.callSetupState.ringerRecipient
+  val activeDevice: SignalAudioManager.AudioDevice = state.localDeviceState.activeDevice
+  val availableDevices: Set<SignalAudioManager.AudioDevice> = state.localDeviceState.availableDevices
 
-  private final boolean isBluetoothAvailable;
-  private final boolean isRemoteVideoOffer;
+  val localParticipant: CallParticipant = createLocal(
+    state.localDeviceState.cameraState,
+    (if (state.videoState.localSink != null) state.videoState.localSink else BroadcastVideoSink())!!,
+    state.localDeviceState.isMicrophoneEnabled
+  )
 
-  private final long callConnectedTime;
+  val isRemoteVideoEnabled: Boolean
+    get() = remoteParticipants.any(CallParticipant::isVideoEnabled) || groupState.isNotIdle && remoteParticipants.size > 1
 
-  private final CallParticipant       localParticipant;
-  private final List<CallParticipant> remoteParticipants;
-  private final Set<RecipientId>      identityChangedRecipients;
-
-  private final OptionalLong remoteDevicesCount;
-  private final Long         participantLimit;
-  private final boolean      ringGroup;
-  private final Recipient    ringerRecipient;
-
-  public WebRtcViewModel(@NonNull WebRtcServiceState state) {
-    this.state                     = state.getCallInfoState().getCallState();
-    this.groupState                = state.getCallInfoState().getGroupCallState();
-    this.recipient                 = state.getCallInfoState().getCallRecipient();
-    this.isRemoteVideoOffer        = state.getCallSetupState().isRemoteVideoOffer();
-    this.isBluetoothAvailable      = state.getLocalDeviceState().isBluetoothAvailable();
-    this.remoteParticipants        = state.getCallInfoState().getRemoteCallParticipants();
-    this.identityChangedRecipients = state.getCallInfoState().getIdentityChangedRecipients();
-    this.callConnectedTime         = state.getCallInfoState().getCallConnectedTime();
-    this.remoteDevicesCount        = state.getCallInfoState().getRemoteDevicesCount();
-    this.participantLimit          = state.getCallInfoState().getParticipantLimit();
-    this.ringGroup                 = state.getCallSetupState().shouldRingGroup();
-    this.ringerRecipient           = state.getCallSetupState().getRingerRecipient();
-    this.localParticipant          = CallParticipant.createLocal(state.getLocalDeviceState().getCameraState(),
-                                                                 state.getVideoState().getLocalSink() != null ? state.getVideoState().getLocalSink()
-                                                                                                              : new BroadcastVideoSink(),
-                                                                 state.getLocalDeviceState().isMicrophoneEnabled());
+  fun areRemoteDevicesInCall(): Boolean {
+    return remoteDevicesCount.isPresent && remoteDevicesCount.asLong > 0
   }
 
-  public @NonNull State getState() {
-    return state;
-  }
-
-  public @NonNull GroupCallState getGroupState() {
-    return groupState;
-  }
-
-  public @NonNull Recipient getRecipient() {
-    return recipient;
-  }
-
-  public boolean isRemoteVideoEnabled() {
-    return Stream.of(remoteParticipants).anyMatch(CallParticipant::isVideoEnabled) || (groupState.isNotIdle() && remoteParticipants.size() > 1);
-  }
-
-  public boolean isBluetoothAvailable() {
-    return isBluetoothAvailable;
-  }
-
-  public boolean isRemoteVideoOffer() {
-    return isRemoteVideoOffer;
-  }
-
-  public long getCallConnectedTime() {
-    return callConnectedTime;
-  }
-
-  public @NonNull CallParticipant getLocalParticipant() {
-    return localParticipant;
-  }
-
-  public @NonNull List<CallParticipant> getRemoteParticipants() {
-    return remoteParticipants;
-  }
-
-  public @NonNull Set<RecipientId> getIdentityChangedParticipants() {
-    return identityChangedRecipients;
-  }
-
-  public OptionalLong getRemoteDevicesCount() {
-    return remoteDevicesCount;
-  }
-
-  public boolean areRemoteDevicesInCall() {
-    return remoteDevicesCount.isPresent() && remoteDevicesCount.getAsLong() > 0;
-  }
-
-  public @Nullable Long getParticipantLimit() {
-    return participantLimit;
-  }
-
-  public boolean shouldRingGroup() {
-    return ringGroup;
-  }
-
-  public @NonNull Recipient getRingerRecipient() {
-    return ringerRecipient;
-  }
-
-  @Override
-  public @NonNull String toString() {
-    return "WebRtcViewModel{" +
-           "state=" + state +
-           ", recipient=" + recipient.getId() +
-           ", isBluetoothAvailable=" + isBluetoothAvailable +
-           ", isRemoteVideoOffer=" + isRemoteVideoOffer +
-           ", callConnectedTime=" + callConnectedTime +
-           ", localParticipant=" + localParticipant +
-           ", remoteParticipants=" + remoteParticipants +
-           ", identityChangedRecipients=" + identityChangedRecipients +
-           ", remoteDevicesCount=" + remoteDevicesCount +
-           ", participantLimit=" + participantLimit +
-           '}';
+  override fun toString(): String {
+    return """
+      WebRtcViewModel {
+       state=$state,
+       recipient=${recipient.id},
+       isRemoteVideoOffer=$isRemoteVideoOffer,
+       callConnectedTime=$callConnectedTime,
+       localParticipant=$localParticipant,
+       remoteParticipants=$remoteParticipants,
+       identityChangedRecipients=$identityChangedParticipants,
+       remoteDevicesCount=$remoteDevicesCount,
+       participantLimit=$participantLimit,
+       activeDevice=$activeDevice,
+       availableDevices=$availableDevices,
+      }
+    """.trimIndent()
   }
 }

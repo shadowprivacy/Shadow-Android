@@ -9,6 +9,7 @@ import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.notifications.NotificationChannels
 import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.recipients.RecipientId
+import su.sres.securesms.util.FeatureFlags
 import su.sres.securesms.util.livedata.Store
 
 class CustomNotificationsSettingsViewModel(
@@ -42,7 +43,7 @@ class CustomNotificationsSettingsViewModel(
           RecipientDatabase.VibrateState.ENABLED -> true
           RecipientDatabase.VibrateState.DISABLED -> false
         },
-        showCallingOptions = !recipient.isGroup && recipient.isRegistered,
+        showCallingOptions = recipient.isRegistered && (!recipient.isGroup || FeatureFlags.groupCallRinging()),
         callSound = recipient.callRingtone,
         callVibrateState = recipient.callVibrate
       )

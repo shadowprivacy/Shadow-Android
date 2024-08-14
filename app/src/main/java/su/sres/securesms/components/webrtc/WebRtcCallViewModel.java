@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.components.sensors.DeviceOrientationMonitor;
@@ -39,6 +40,7 @@ import su.sres.securesms.util.DefaultValueLiveData;
 import su.sres.securesms.util.SingleLiveEvent;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.livedata.LiveDataUtil;
+import su.sres.securesms.webrtc.audio.SignalAudioManager;
 
 public class WebRtcCallViewModel extends ViewModel {
 
@@ -252,9 +254,9 @@ public class WebRtcCallViewModel extends ViewModel {
                          webRtcViewModel.isRemoteVideoEnabled(),
                          webRtcViewModel.isRemoteVideoOffer(),
                          localParticipant.isMoreThanOneCameraAvailable(),
-                         webRtcViewModel.isBluetoothAvailable(),
                          Util.hasItems(webRtcViewModel.getRemoteParticipants()),
-                         repository.getAudioOutput(),
+                         webRtcViewModel.getActiveDevice(),
+                         webRtcViewModel.getAvailableDevices(),
                          webRtcViewModel.getRemoteDevicesCount().orElse(0),
                          webRtcViewModel.getParticipantLimit());
 
@@ -314,9 +316,9 @@ public class WebRtcCallViewModel extends ViewModel {
                                     boolean isRemoteVideoEnabled,
                                     boolean isRemoteVideoOffer,
                                     boolean isMoreThanOneCameraAvailable,
-                                    boolean isBluetoothAvailable,
                                     boolean hasAtLeastOneRemote,
-                                    @NonNull WebRtcAudioOutput audioOutput,
+                                    @NonNull SignalAudioManager.AudioDevice activeDevice,
+                                    @NonNull Set<SignalAudioManager.AudioDevice> availableDevices,
                                     long remoteDevicesCount,
                                     @Nullable Long participantLimit)
   {
@@ -374,14 +376,14 @@ public class WebRtcCallViewModel extends ViewModel {
     webRtcControls.setValue(new WebRtcControls(isLocalVideoEnabled,
                                                isRemoteVideoEnabled || isRemoteVideoOffer,
                                                isMoreThanOneCameraAvailable,
-                                               isBluetoothAvailable,
                                                Boolean.TRUE.equals(isInPipMode.getValue()),
                                                hasAtLeastOneRemote,
                                                callState,
                                                groupCallState,
-                                               audioOutput,
                                                participantLimit,
-                                               WebRtcControls.FoldableState.flat()));
+                                               WebRtcControls.FoldableState.flat(),
+                                               activeDevice,
+                                               availableDevices));
   }
 
   private @NonNull WebRtcControls updateControlsFoldableState(@NonNull WebRtcControls.FoldableState foldableState, @NonNull WebRtcControls controls) {

@@ -31,6 +31,7 @@ import su.sres.securesms.components.emoji.EmojiUtil;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.profiles.manage.ManageProfileViewModel.AvatarState;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.NameUtil;
 import su.sres.securesms.util.views.SimpleProgressDialog;
 
@@ -40,7 +41,7 @@ public class ManageProfileFragment extends LoggingFragment {
 
   private Toolbar     toolbar;
   private ImageView   avatarView;
-  private ImageView              avatarPlaceholderView;
+  private ImageView   avatarPlaceholderView;
   private TextView    profileNameView;
   private View        profileNameContainer;
   private TextView    usernameView;
@@ -49,8 +50,9 @@ public class ManageProfileFragment extends LoggingFragment {
   private View        aboutContainer;
   private ImageView   aboutEmojiView;
   private AlertDialog avatarProgress;
-  private TextView               avatarInitials;
-  private ImageView              avatarBackground;
+  private TextView    avatarInitials;
+  private ImageView   avatarBackground;
+  private View        badgesContainer;
 
   private ManageProfileViewModel viewModel;
 
@@ -73,6 +75,7 @@ public class ManageProfileFragment extends LoggingFragment {
     this.aboutEmojiView        = view.findViewById(R.id.manage_profile_about_icon);
     this.avatarInitials        = view.findViewById(R.id.manage_profile_avatar_initials);
     this.avatarBackground      = view.findViewById(R.id.manage_profile_avatar_background);
+    this.badgesContainer       = view.findViewById(R.id.manage_profile_badges_container);
 
     initializeViewModel();
 
@@ -105,6 +108,14 @@ public class ManageProfileFragment extends LoggingFragment {
         updateInitials(avatarInitials.getText().toString());
       }
     });
+
+    if (FeatureFlags.donorBadges()) {
+      badgesContainer.setOnClickListener(v -> {
+        Navigation.findNavController(v).navigate(ManageProfileFragmentDirections.actionManageProfileFragmentToBadgeManageFragment());
+      });
+    } else {
+      badgesContainer.setVisibility(View.GONE);
+    }
   }
 
   private void initializeViewModel() {

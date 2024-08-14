@@ -10,7 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import su.sres.core.util.StreamUtil;
-import su.sres.securesms.imageeditor.model.EditorModel;
+import su.sres.imageeditor.core.model.EditorModel;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.util.MediaUtil;

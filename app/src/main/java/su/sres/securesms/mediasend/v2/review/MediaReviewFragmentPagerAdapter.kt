@@ -5,7 +5,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import su.sres.securesms.mediasend.Media
-import su.sres.securesms.mediasend.MediaSendGifFragment
+import su.sres.securesms.mediasend.v2.gif.MediaReviewGifPageFragment
 import su.sres.securesms.mediasend.v2.images.MediaReviewImagePageFragment
 import su.sres.securesms.mediasend.v2.videos.MediaReviewVideoPageFragment
 import su.sres.securesms.util.MediaUtil
@@ -43,7 +43,7 @@ class MediaReviewFragmentPagerAdapter(fragment: Fragment) : FragmentStateAdapter
     val mediaItem: Media = mediaList[position]
 
     return when {
-      MediaUtil.isGif(mediaItem.mimeType) -> MediaSendGifFragment.newInstance(mediaItem.uri)
+      MediaUtil.isGif(mediaItem.mimeType) -> MediaReviewGifPageFragment.newInstance(mediaItem.uri)
       MediaUtil.isImageType(mediaItem.mimeType) -> MediaReviewImagePageFragment.newInstance(mediaItem.uri)
       MediaUtil.isVideoType(mediaItem.mimeType) -> MediaReviewVideoPageFragment.newInstance(mediaItem.uri, mediaItem.isVideoGif)
       else -> {

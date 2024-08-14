@@ -2,7 +2,6 @@ package su.sres.securesms.conversation;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
@@ -67,6 +66,10 @@ public class ConversationItemBodyBubble extends LinearLayout {
     public void setVideoPlayerProjection(@Nullable Projection videoPlayerProjection) {
         this.videoPlayerProjection = videoPlayerProjection;
         clipProjectionDrawable.setProjections(getProjections());
+    }
+
+    public @Nullable Projection getVideoPlayerProjection() {
+        return videoPlayerProjection;
     }
 
     public @NonNull Set<Projection> getProjections() {

@@ -80,7 +80,7 @@ public final class EnterUserLoginFragment extends LoggingFragment implements Reg
 
     RegistrationUserLoginInputController controller = new RegistrationUserLoginInputController(requireContext(),
                                                                                          userLogin,
-                                                                                         false,
+                                                                                         true,
                                                                                          this);
 
     register.setOnClickListener(v -> handleRegister(requireContext()));

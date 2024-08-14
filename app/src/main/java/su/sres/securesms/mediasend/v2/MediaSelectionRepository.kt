@@ -13,7 +13,7 @@ import su.sres.securesms.TransportOption
 import su.sres.securesms.database.AttachmentDatabase.TransformProperties
 import su.sres.securesms.database.ThreadDatabase
 import su.sres.securesms.database.model.Mention
-import su.sres.securesms.imageeditor.model.EditorModel
+import su.sres.imageeditor.core.model.EditorModel
 import su.sres.securesms.mediasend.CompositeMediaTransform
 import su.sres.securesms.mediasend.ImageEditorModelRenderMediaTransform
 import su.sres.securesms.mediasend.Media
@@ -73,6 +73,10 @@ class MediaSelectionRepository(context: Context) {
     transport: TransportOption
   ): Maybe<MediaSendActivityResult> {
 
+    if (selectedMedia.isEmpty()) {
+      throw IllegalStateException("No selected media!")
+    }
+
     return Maybe.create<MediaSendActivityResult> { emitter ->
       val trimmedBody: String = if (isViewOnce) "" else message?.toString()?.trim() ?: ""
       val trimmedMentions: List<Mention> = if (isViewOnce) emptyList() else mentions
@@ -116,8 +120,11 @@ class MediaSelectionRepository(context: Context) {
             sendMessages(recipients, splitBody, uploadResults, trimmedMentions, isViewOnce)
             uploadRepository.deleteAbandonedAttachments()
             emitter.onComplete()
-          } else {
+          } else if (uploadResults.isNotEmpty()) {
             emitter.onSuccess(MediaSendActivityResult.forPreUpload(requireNotNull(singleRecipient).id, uploadResults, splitBody, transport, isViewOnce, trimmedMentions))
+          } else {
+            Log.w(TAG, "Got empty upload results! updatedMedia.size(): ${updatedMedia.size}, isViewOnce: $isViewOnce, target: $singleRecipientId")
+            emitter.onSuccess(MediaSendActivityResult.forTraditionalSend(requireNotNull(singleRecipient).id, updatedMedia, trimmedBody, transport, isViewOnce, trimmedMentions))
           }
         }
       }
@@ -191,7 +198,7 @@ class MediaSelectionRepository(context: Context) {
         isViewOnce,
         ThreadDatabase.DistributionTypes.DEFAULT,
         null, emptyList(), emptyList(),
-        mentions, emptyList(), emptyList()
+        mentions, mutableSetOf(), mutableSetOf()
       )
       messages.add(OutgoingSecureMediaMessage(message))
 

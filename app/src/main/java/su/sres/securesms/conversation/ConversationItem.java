@@ -32,7 +32,6 @@ import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextPaint;
-import android.text.TextUtils;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
@@ -1053,7 +1052,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       mediaThumbnailStub.require().setDownloadClickListener(downloadClickListener);
       mediaThumbnailStub.require().setOnLongClickListener(passthroughClickListener);
       mediaThumbnailStub.require().setOnClickListener(passthroughClickListener);
-      mediaThumbnailStub.require().showShade(TextUtils.isEmpty(messageRecord.getDisplayBody(getContext())) && !hasExtraText(messageRecord));
+      mediaThumbnailStub.require().showShade(messageRecord.isDisplayBodyEmpty(getContext()) && !hasExtraText(messageRecord));
 
       if (!messageRecord.isOutgoing()) {
         mediaThumbnailStub.require().setConversationColor(getDefaultBubbleColor(hasWallpaper));
@@ -1073,14 +1072,14 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
           thumbnailSlides.get(0).isVideoGif() &&
           thumbnailSlides.get(0) instanceof VideoSlide)
       {
-        canPlayContent = GiphyMp4PlaybackPolicy.autoplay() || allowedToPlayInline;
-
         Uri uri = thumbnailSlides.get(0).getUri();
         if (uri != null) {
           mediaItem = MediaItem.fromUri(uri);
         } else {
           mediaItem = null;
         }
+
+        canPlayContent = (GiphyMp4PlaybackPolicy.autoplay() || allowedToPlayInline) && mediaItem != null;
       }
     } else {
       if (mediaThumbnailStub.resolved()) mediaThumbnailStub.require().setVisibility(View.GONE);
@@ -1161,7 +1160,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       }
     }
 
-    if (!TextUtils.isEmpty(current.getDisplayBody(getContext()))) {
+    if (!current.isDisplayBodyEmpty(getContext())) {
       bottomStart = 0;
       bottomEnd   = 0;
     }
@@ -1189,7 +1188,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   }
 
   private void setSharedContactCorners(@NonNull MessageRecord current, @NonNull Optional<MessageRecord> previous, @NonNull Optional<MessageRecord> next, boolean isGroupThread) {
-    if (TextUtils.isEmpty(messageRecord.getDisplayBody(getContext()))) {
+    if (messageRecord.isDisplayBodyEmpty(getContext())){
       if (isSingularMessage(current, previous, next, isGroupThread) || isEndOfMessageCluster(current, next, isGroupThread)) {
         sharedContactStub.get().setSingularStyle();
       } else if (current.isOutgoing()) {
@@ -1365,7 +1364,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     reactionsView.setOnClickListener(v -> {
       if (eventListener == null) return;
 
-      eventListener.onReactionClicked(this, current.getId(), current.isMms());
+      eventListener.onReactionClicked(new MultiselectPart.Message(conversationMessage), current.getId(), current.isMms());
     });
   }
 
@@ -1410,9 +1409,9 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   private ConversationItemFooter getActiveFooter(@NonNull MessageRecord messageRecord) {
     if (hasNoBubble(messageRecord) && stickerFooter != null) {
       return stickerFooter;
-    } else if (hasSharedContact(messageRecord) && TextUtils.isEmpty(messageRecord.getDisplayBody(getContext()))) {
+    } else if (hasSharedContact(messageRecord) && messageRecord.isDisplayBodyEmpty(getContext())) {
       return sharedContactStub.get().getFooter();
-    } else if (hasOnlyThumbnail(messageRecord) && TextUtils.isEmpty(messageRecord.getDisplayBody(getContext()))) {
+    } else if (hasOnlyThumbnail(messageRecord) && messageRecord.isDisplayBodyEmpty(getContext())) {
       return mediaThumbnailStub.require().getFooter();
     } else {
       return footer;
@@ -1677,7 +1676,9 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       return null;
     } else {
       return new GiphyMp4PlaybackPolicyEnforcer(() -> {
-        eventListener.onPlayInlineContent(null);
+        if (eventListener != null) {
+          eventListener.onPlayInlineContent(null);
+        }
       });
     }
   }
@@ -1691,10 +1692,12 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   public @NonNull Projection getGiphyMp4PlayableProjection(@NonNull ViewGroup recyclerView) {
     if (mediaThumbnailStub != null && mediaThumbnailStub.isResolvable()) {
       return Projection.relativeToParent(recyclerView, mediaThumbnailStub.require(), mediaThumbnailStub.require().getCorners())
-                       .translateX(bodyBubble.getTranslationX());
+                       .translateX(bodyBubble.getTranslationX())
+                       .translateX(getTranslationX());
     } else {
       return Projection.relativeToParent(recyclerView, bodyBubble, bodyBubbleCorners)
-                       .translateX(bodyBubble.getTranslationX());
+                       .translateX(bodyBubble.getTranslationX())
+                       .translateX(getTranslationX());
     }
   }
 
@@ -1704,7 +1707,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   }
 
   @Override
-  public @NonNull List<Projection> getColorizerProjections() {
+  public @NonNull List<Projection> getColorizerProjections(@NonNull ViewGroup coordinateRoot) {
     List<Projection> projections = new LinkedList<>();
 
     if (messageRecord.isOutgoing() &&
@@ -1712,14 +1715,21 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
         !messageRecord.isRemoteDelete() &&
         bodyBubbleCorners != null)
     {
-      projections.add(Projection.relativeToViewRoot(bodyBubble, bodyBubbleCorners).translateX(bodyBubble.getTranslationX()));
+      Projection bodyBubbleToRoot = Projection.relativeToParent(coordinateRoot, bodyBubble, bodyBubbleCorners).translateX(bodyBubble.getTranslationX());
+      Projection videoToBubble    = bodyBubble.getVideoPlayerProjection();
+      if (videoToBubble != null) {
+        Projection videoToRoot = Projection.translateFromDescendantToParentCoords(videoToBubble, bodyBubble, coordinateRoot);
+        projections.addAll(Projection.getCapAndTail(bodyBubbleToRoot, videoToRoot));
+      } else {
+        projections.add(bodyBubbleToRoot);
+      }
     }
 
     if (messageRecord.isOutgoing() &&
         hasNoBubble(messageRecord) &&
         hasWallpaper)
     {
-      Projection footerProjection = getActiveFooter(messageRecord).getProjection();
+      Projection footerProjection = getActiveFooter(messageRecord).getProjection(coordinateRoot);
       if (footerProjection != null) {
         projections.add(footerProjection.translateX(bodyBubble.getTranslationX()));
       }
@@ -1730,7 +1740,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
         quoteView != null)
     {
       bodyBubble.setQuoteViewProjection(quoteView.getProjection(bodyBubble));
-      projections.add(quoteView.getProjection((ViewGroup) getRootView()).translateX(bodyBubble.getTranslationX() + this.getTranslationX()));
+      projections.add(quoteView.getProjection(coordinateRoot).translateX(bodyBubble.getTranslationX() + this.getTranslationX()));
     }
 
     return projections;
@@ -1780,7 +1790,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     @Override
     public void onClick(View view) {
       if (eventListener != null && batchSelected.isEmpty() && messageRecord.isMms() && !((MmsMessageRecord) messageRecord).getSharedContacts().isEmpty()) {
-        eventListener.onSharedContactDetailsClicked(((MmsMessageRecord) messageRecord).getSharedContacts().get(0), sharedContactStub.get().getAvatarView());
+        eventListener.onSharedContactDetailsClicked(((MmsMessageRecord) messageRecord).getSharedContacts().get(0), (View) sharedContactStub.get().getAvatarView().getParent());
       } else {
         passthroughClickListener.onClick(view);
       }

@@ -21,11 +21,12 @@ import android.database.Cursor;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import com.annimon.stream.Stream;
 
 
-import net.zetetic.database.sqlcipher.SQLiteQueryBuilder;
+import net.sqlcipher.database.SQLiteQueryBuilder;
 
 import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.MessageDatabase.ThreadUpdate;
@@ -48,6 +49,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static su.sres.securesms.database.MmsSmsColumns.Types.GROUP_V2_LEAVE_BITS;
 
 public class MmsSmsDatabase extends Database {
 
@@ -108,10 +111,10 @@ public class MmsSmsDatabase extends Database {
                                                MmsSmsColumns.RECEIPT_TIMESTAMP };
 
   private static final String SNIPPET_QUERY = "SELECT " + MmsSmsColumns.ID + ", 0 AS " + TRANSPORT + ", " + SmsDatabase.TYPE + " AS " + MmsSmsColumns.NORMALIZED_TYPE + ", " + SmsDatabase.DATE_RECEIVED + " AS " + MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " FROM " + SmsDatabase.TABLE_NAME + " " +
-                                              "WHERE " + MmsSmsColumns.THREAD_ID + " = ? AND " + SmsDatabase.TYPE + " NOT IN (" + SmsDatabase.Types.PROFILE_CHANGE_TYPE + ", " + SmsDatabase.Types.GV1_MIGRATION_TYPE + ", " + SmsDatabase.Types.CHANGE_LOGIN_TYPE + ") " +
+                                              "WHERE " + MmsSmsColumns.THREAD_ID + " = ? AND " + SmsDatabase.TYPE + " NOT IN (" + SmsDatabase.Types.PROFILE_CHANGE_TYPE + ", " + SmsDatabase.Types.GV1_MIGRATION_TYPE + ", " + SmsDatabase.Types.CHANGE_LOGIN_TYPE + ") AND " + SmsDatabase.TYPE + " & " + GROUP_V2_LEAVE_BITS + " != " + GROUP_V2_LEAVE_BITS + " " +
                                               "UNION ALL " +
                                               "SELECT " + MmsSmsColumns.ID + ", 1 AS " + TRANSPORT + ", " + MmsDatabase.MESSAGE_BOX + " AS " + MmsSmsColumns.NORMALIZED_TYPE + ", " + MmsDatabase.DATE_RECEIVED + " AS " + MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " FROM " + MmsDatabase.TABLE_NAME + " " +
-                                              "WHERE " + MmsSmsColumns.THREAD_ID + " = ? " +
+                                              "WHERE " + MmsSmsColumns.THREAD_ID + " = ? AND " + MmsDatabase.MESSAGE_BOX + " & " + GROUP_V2_LEAVE_BITS + " != " + GROUP_V2_LEAVE_BITS + " " +
                                               "ORDER BY " + MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " DESC " +
                                               "LIMIT 1";
 
@@ -219,8 +222,7 @@ public class MmsSmsDatabase extends Database {
   }
 
   public @NonNull MessageRecord getConversationSnippet(long threadId) throws NoSuchMessageException {
-    SQLiteDatabase db = databaseHelper.getSignalReadableDatabase();
-    try (Cursor cursor = db.rawQuery(SNIPPET_QUERY, SqlUtil.buildArgs(threadId, threadId))) {
+    try (Cursor cursor = getConversationSnippetCursor(threadId)) {
       if (cursor.moveToFirst()) {
         boolean isMms = CursorUtil.requireBoolean(cursor, TRANSPORT);
         long    id    = CursorUtil.requireLong(cursor, MmsSmsColumns.ID);
@@ -236,6 +238,12 @@ public class MmsSmsDatabase extends Database {
     }
   }
 
+  @VisibleForTesting
+  @NonNull Cursor getConversationSnippetCursor(long threadId) {
+    SQLiteDatabase db = databaseHelper.getSignalReadableDatabase();
+    return db.rawQuery(SNIPPET_QUERY, SqlUtil.buildArgs(threadId, threadId));
+  }
+
   public long getConversationSnippetType(long threadId) throws NoSuchMessageException {
     SQLiteDatabase db = databaseHelper.getSignalReadableDatabase();
     try (Cursor cursor = db.rawQuery(SNIPPET_QUERY, SqlUtil.buildArgs(threadId, threadId))) {
@@ -245,13 +253,6 @@ public class MmsSmsDatabase extends Database {
         throw new NoSuchMessageException("no message");
       }
     }
-  }
-
-  public Cursor getUnread() {
-    String order     = MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " ASC";
-    String selection = MmsSmsColumns.NOTIFIED + " = 0 AND (" + MmsSmsColumns.READ + " = 0 OR " + MmsSmsColumns.REACTIONS_UNREAD + " = 1)";
-
-    return queryTables(PROJECTION, selection, order, null);
   }
 
   public Cursor getMessagesForNotificationState(Collection<MessageNotifierV2.StickyThread> stickyThreads) {
@@ -277,14 +278,13 @@ public class MmsSmsDatabase extends Database {
   }
 
   public int getUnreadCount(long threadId) {
-    String selection = MmsSmsColumns.READ + " = 0 AND " + MmsSmsColumns.NOTIFIED + " = 0 AND " + MmsSmsColumns.THREAD_ID + " = " + threadId;
+    String selection = MmsSmsColumns.READ + " = 0 AND " + MmsSmsColumns.THREAD_ID + " = " + threadId;
     Cursor cursor    = queryTables(PROJECTION, selection, null, null);
 
     try {
       return cursor != null ? cursor.getCount() : 0;
     } finally {
       if (cursor != null) cursor.close();
-      ;
     }
   }
 

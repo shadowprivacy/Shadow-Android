@@ -37,6 +37,7 @@ import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.SqlUtil;
+import su.sres.signalservice.api.util.UuidUtil;
 
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
@@ -119,11 +120,11 @@ public class IdentityDatabase extends Database {
                                        firstUse,
                                        timestamp,
                                        nonblockingApproval);
-      } else {
+      } else if (UuidUtil.isUuid(addressName)) {
         if (DatabaseFactory.getRecipientDatabase(context).containsPhoneOrUuid(addressName)) {
           Recipient recipient = Recipient.external(context, addressName);
 
-          if (recipient.hasE164()) {
+          if (recipient.hasE164() && !UuidUtil.isUuid(recipient.requireE164())) {
             Log.i(TAG, "Could not find identity for UUID. Attempting user login.");
             return getIdentityStoreRecord(recipient.requireE164());
           } else {
@@ -132,6 +133,8 @@ public class IdentityDatabase extends Database {
         } else {
           Log.i(TAG, "Could not find identity for UUID, and we don't have a recipient.");
         }
+      } else {
+        Log.i(TAG, "Could not find identity for user login either.");
       }
     } catch (InvalidKeyException | IOException e) {
       throw new AssertionError(e);

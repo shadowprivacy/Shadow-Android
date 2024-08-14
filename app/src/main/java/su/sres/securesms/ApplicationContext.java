@@ -28,6 +28,7 @@ import androidx.multidex.MultiDexApplication;
 
 import org.conscrypt.Conscrypt;
 
+import org.greenrobot.eventbus.EventBus;
 import org.signal.aesgcmprovider.AesGcmProvider;
 import org.signal.ringrtc.CallManager;
 
@@ -135,7 +136,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     super.onCreate();
 
     AppStartup.getInstance().addForemost("security-provider", this::initializeSecurityProvider)
-              .addForemost("sqlcipher-init", () -> SqlCipherLibraryLoader.load(this))
+              .addForemost("sqlcipher-init", () -> SqlCipherLibraryLoader.load())
               .addForemost("logging", () -> {
                 initializeLogging();
                 Log.i(TAG, "onCreate()");
@@ -145,6 +146,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
                 RxJavaPlugins.setInitIoSchedulerHandler(schedulerSupplier -> Schedulers.from(SignalExecutors.BOUNDED_IO, true, false));
                 RxJavaPlugins.setInitComputationSchedulerHandler(schedulerSupplier -> Schedulers.from(SignalExecutors.BOUNDED, true, false));
               })
+              .addForemost("event-bus", () -> EventBus.builder().logNoSubscriberMessages(false).installDefaultEventBus())
               .addForemost("app-network-independent-dependencies", this::initializeNetworkIndependentProvider)
               .addForemost("app-network-dependent-dependencies", this::initializeNetworkDependentProvider)
               .addForemost("notification-channels", () -> NotificationChannels.create(this))

@@ -5,6 +5,7 @@ import android.graphics.ColorFilter
 import android.graphics.Path
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
+import android.graphics.Shader
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
@@ -28,6 +29,8 @@ class ChatColors private constructor(
   private val linearGradient: LinearGradient?,
   private val singleColor: Int?
 ) {
+
+  fun isGradient(): Boolean = Build.VERSION.SDK_INT >= 21 && linearGradient != null
 
   /**
    * Returns the Drawable to render the linear gradient, or null if this ChatColors is a single color.

@@ -23,14 +23,13 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 
-import su.sres.securesms.imageeditor.Bounds;
-import su.sres.securesms.imageeditor.Renderer;
-import su.sres.securesms.imageeditor.RendererContext;
-import su.sres.securesms.imageeditor.SelectableRenderer;
-import su.sres.securesms.imageeditor.model.EditorElement;
-import su.sres.securesms.imageeditor.model.EditorModel;
+import su.sres.imageeditor.core.Bounds;
+import su.sres.imageeditor.core.Renderer;
+import su.sres.imageeditor.core.RendererContext;
+import su.sres.imageeditor.core.SelectableRenderer;
+import su.sres.imageeditor.core.model.EditorElement;
+import su.sres.imageeditor.core.model.EditorModel;
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.imageeditor.renderers.SelectedElementGuideRenderer;
 import su.sres.securesms.mms.DecryptableStreamUriLoader;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.mms.GlideRequest;
@@ -65,8 +64,6 @@ public final class UriGlideRenderer implements SelectableRenderer {
   private final RequestListener<Bitmap> bitmapRequestListener;
 
   private boolean selected;
-
-  private final SelectedElementGuideRenderer selectedElementGuideRenderer = new SelectedElementGuideRenderer();
 
   @Nullable private Bitmap bitmap;
   @Nullable private Bitmap blurredBitmap;
@@ -141,10 +138,6 @@ public final class UriGlideRenderer implements SelectableRenderer {
       // If failed to load, we draw a black out, in case image was sticker positioned to cover private info.
       rendererContext.canvas.drawRect(Bounds.FULL_BOUNDS, paint);
     }
-
-    if (selected && rendererContext.isEditing()) {
-      selectedElementGuideRenderer.render(rendererContext);
-    }
   }
 
   private void renderBlurOverlay(RendererContext rendererContext) {
@@ -207,7 +200,7 @@ public final class UriGlideRenderer implements SelectableRenderer {
 
   @Override
   public boolean hitTest(float x, float y) {
-    return pixelAlphaNotZero(x, y);
+    return selected ? Bounds.contains(x, y) : pixelAlphaNotZero(x, y);
   }
 
   private boolean pixelAlphaNotZero(float x, float y) {
@@ -338,5 +331,10 @@ public final class UriGlideRenderer implements SelectableRenderer {
     if (this.selected != selected) {
       this.selected = selected;
     }
+  }
+
+  @Override
+  public void getSelectionBounds(@NonNull RectF bounds) {
+    bounds.set(Bounds.FULL_BOUNDS);
   }
 }

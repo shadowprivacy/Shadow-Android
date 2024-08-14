@@ -6,6 +6,7 @@ import androidx.annotation.WorkerThread;
 
 import android.app.Application;
 import android.content.Context;
+import android.net.Uri;
 import android.text.TextUtils;
 
 import com.annimon.stream.Collectors;
@@ -16,6 +17,7 @@ import org.signal.zkgroup.profiles.ProfileKeyCredential;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import su.sres.securesms.badges.models.Badge;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
@@ -331,6 +333,7 @@ public class RetrieveProfileJob extends BaseJob {
     setProfileName(recipient, profile.getName());
     setProfileAbout(recipient, profile.getAbout(), profile.getAboutEmoji());
     setProfileAvatar(recipient, profile.getAvatar());
+    setProfileBadges(recipient, profile.getBadges());
     clearUsername(recipient);
     setProfileCapabilities(recipient, profile.getCapabilities());
     setIdentityKey(recipient, profile.getIdentityKey());
@@ -342,6 +345,28 @@ public class RetrieveProfileJob extends BaseJob {
         setProfileKeyCredential(recipient, recipientProfileKey, profileKeyCredential.get());
       }
     }
+  }
+
+  private void setProfileBadges(@NonNull Recipient recipient, @Nullable List<SignalServiceProfile.Badge> badges) {
+    if (badges == null) {
+      return;
+    }
+
+    DatabaseFactory.getRecipientDatabase(context)
+                   .setBadges(recipient.getId(),
+                              badges.stream().map(RetrieveProfileJob::adaptFromServiceBadge).collect(java.util.stream.Collectors.toList()));
+  }
+
+  private static Badge adaptFromServiceBadge(@NonNull SignalServiceProfile.Badge serviceBadge) {
+    return new Badge(
+        serviceBadge.getId(),
+        Badge.Category.Companion.fromCode(serviceBadge.getCategory()),
+        Uri.parse(serviceBadge.getImageUrl()),
+        serviceBadge.getName(),
+        serviceBadge.getDescription(),
+        0L,
+        true
+    );
   }
 
   private void setProfileKeyCredential(@NonNull Recipient recipient,

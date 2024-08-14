@@ -33,6 +33,7 @@ public final class SignalAccountRecord implements SignalRecord {
   private final Optional<byte[]>         profileKey;
   private final List<PinnedConversation> pinnedConversations;
   private final Payments                 payments;
+  private final List<String>             defaultReactions;
 
   public SignalAccountRecord(StorageId id, AccountRecord proto) {
     this.id               = id;
@@ -45,6 +46,7 @@ public final class SignalAccountRecord implements SignalRecord {
     this.avatarUrlPath       = OptionalUtil.absentIfEmpty(proto.getAvatarUrlPath());
     this.pinnedConversations = new ArrayList<>(proto.getPinnedConversationsCount());
     this.payments            = new Payments(proto.getPayments().getEnabled(), OptionalUtil.absentIfEmpty(proto.getPayments().getEntropy()));
+    this.defaultReactions     = new ArrayList<>(proto.getPreferredReactionEmojiList());
 
     for (AccountRecord.PinnedConversation conversation : proto.getPinnedConversationsList()) {
       pinnedConversations.add(PinnedConversation.fromRemote(conversation));
@@ -132,7 +134,11 @@ public final class SignalAccountRecord implements SignalRecord {
       }
 
       if (!Objects.equals(this.getUserLogin(), that.getUserLogin())) {
-        diff.add("E164");
+        diff.add("UserLogin");
+      }
+
+      if (!Objects.equals(this.getDefaultReactions(), that.getDefaultReactions())) {
+        diff.add("DefaultReactions");
       }
 
       if (!Objects.equals(this.hasUnknownFields(), that.hasUnknownFields())) {
@@ -215,6 +221,10 @@ public final class SignalAccountRecord implements SignalRecord {
 
   public String getUserLogin() {
     return proto.getE164();
+  }
+
+  public List<String> getDefaultReactions() {
+    return defaultReactions;
   }
 
   AccountRecord toProto() {
@@ -472,6 +482,12 @@ public final class SignalAccountRecord implements SignalRecord {
 
     public Builder setUserLogin(String userLogin) {
       builder.setE164(userLogin);
+      return this;
+    }
+
+    public Builder setDefaultReactions(List<String> defaultReactions) {
+      builder.clearPreferredReactionEmoji();
+      builder.addAllPreferredReactionEmoji(defaultReactions);
       return this;
     }
 

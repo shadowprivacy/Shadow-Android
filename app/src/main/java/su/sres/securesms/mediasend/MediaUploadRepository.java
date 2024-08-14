@@ -82,6 +82,7 @@ public class MediaUploadRepository {
         Media   oldMedia = entry.getKey();
         Media   newMedia = entry.getValue();
         boolean same     = oldMedia.equals(newMedia) && hasSameTransformProperties(oldMedia, newMedia);
+
         if (!same || !uploadResults.containsKey(newMedia)) {
           cancelUploadInternal(oldMedia);
           uploadMediaInternal(newMedia, recipient);

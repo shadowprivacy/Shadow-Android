@@ -5,8 +5,6 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
-import com.annimon.stream.Stream;
-
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
@@ -32,6 +30,7 @@ import su.sres.signalservice.api.messages.SignalServiceDataMessage;
 import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -77,10 +76,13 @@ public class ReactionSendJob extends BaseJob {
       throw new AssertionError("We have a message, but couldn't find the thread!");
     }
 
-    List<RecipientId> recipients = conversationRecipient.isGroup() ? Stream.of(RecipientUtil.getEligibleForSending(conversationRecipient.getParticipants())).map(Recipient::getId).toList()
-                                                                   : Stream.of(conversationRecipient.getId()).toList();
-
-    recipients.remove(Recipient.self().getId());
+    RecipientId selfId = Recipient.self().getId();
+    List<RecipientId> recipients = conversationRecipient.isGroup() ? RecipientUtil.getEligibleForSending(conversationRecipient.getParticipants())
+                                                                                  .stream()
+                                                                                  .map(Recipient::getId)
+                                                                                  .filter(r -> !r.equals(selfId))
+                                                                                  .collect(Collectors.toList())
+                                                                   : Collections.singletonList(conversationRecipient.getId());
 
     return new ReactionSendJob(messageId,
                                isMms,
@@ -173,7 +175,7 @@ public class ReactionSendJob extends BaseJob {
       return;
     }
 
-    List<Recipient>   resolved     = Stream.of(recipients).map(Recipient::resolved).toList();
+    List<Recipient>   resolved     = recipients.stream().map(Recipient::resolved).collect(Collectors.toList());
     List<RecipientId> unregistered = resolved.stream().filter(Recipient::isUnregistered).map(Recipient::getId).collect(Collectors.toList());
     List<Recipient>   destinations = resolved.stream().filter(Recipient::isMaybeRegistered).collect(Collectors.toList());
     List<Recipient>   completions  = deliver(conversationRecipient, destinations, targetAuthor, targetSentTimestamp);
@@ -232,13 +234,13 @@ public class ReactionSendJob extends BaseJob {
 
     SignalServiceDataMessage dataMessage = dataMessageBuilder.build();
 
-    List<SendMessageResult>  results     = GroupSendUtil.sendResendableDataMessage(context,
-                                                                                   conversationRecipient.getGroupId().transform(GroupId::requireV2).orNull(),
-                                                                                   destinations,
-                                                                                   false,
-                                                                                   ContentHint.RESENDABLE,
-                                                                                   new MessageId(messageId, isMms),
-                                                                                   dataMessage);
+    List<SendMessageResult> results = GroupSendUtil.sendResendableDataMessage(context,
+                                                                              conversationRecipient.getGroupId().transform(GroupId::requireV2).orNull(),
+                                                                              destinations,
+                                                                              false,
+                                                                              ContentHint.RESENDABLE,
+                                                                              new MessageId(messageId, isMms),
+                                                                              dataMessage);
 
     return GroupSendJobHelper.getCompletedSends(destinations, results);
   }

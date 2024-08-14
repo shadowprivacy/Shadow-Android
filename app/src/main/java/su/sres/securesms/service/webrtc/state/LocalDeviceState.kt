@@ -1,72 +1,23 @@
-package su.sres.securesms.service.webrtc.state;
+package su.sres.securesms.service.webrtc.state
 
-import androidx.annotation.NonNull;
-
-import su.sres.securesms.components.sensors.Orientation;
-import su.sres.securesms.ringrtc.CameraState;
+import su.sres.securesms.components.sensors.Orientation
+import su.sres.securesms.ringrtc.CameraState
+import su.sres.securesms.webrtc.audio.SignalAudioManager
 
 /**
  * Local device specific state.
  */
-public final class LocalDeviceState {
-  CameraState cameraState;
-  boolean     microphoneEnabled;
-  boolean     bluetoothAvailable;
-  boolean     wantsBluetooth;
-  Orientation orientation;
-  boolean     isLandscapeEnabled;
-  Orientation deviceOrientation;
+data class LocalDeviceState constructor(
+  var cameraState: CameraState = CameraState.UNKNOWN,
+  var isMicrophoneEnabled: Boolean = true,
+  var orientation: Orientation = Orientation.PORTRAIT_BOTTOM_EDGE,
+  var isLandscapeEnabled: Boolean = false,
+  var deviceOrientation: Orientation = Orientation.PORTRAIT_BOTTOM_EDGE,
+  var activeDevice: SignalAudioManager.AudioDevice = SignalAudioManager.AudioDevice.NONE,
+  var availableDevices: Set<SignalAudioManager.AudioDevice> = emptySet()
+) {
 
-  LocalDeviceState() {
-    this(CameraState.UNKNOWN, true, false, false, Orientation.PORTRAIT_BOTTOM_EDGE, false, Orientation.PORTRAIT_BOTTOM_EDGE);
-  }
-
-  LocalDeviceState(@NonNull LocalDeviceState toCopy) {
-    this(toCopy.cameraState, toCopy.microphoneEnabled, toCopy.bluetoothAvailable, toCopy.wantsBluetooth, toCopy.orientation, toCopy.isLandscapeEnabled, toCopy.deviceOrientation);
-  }
-
-  LocalDeviceState(@NonNull CameraState cameraState,
-                   boolean microphoneEnabled,
-                   boolean bluetoothAvailable,
-                   boolean wantsBluetooth,
-                   @NonNull Orientation orientation,
-                   boolean isLandscapeEnabled,
-                   @NonNull Orientation deviceOrientation)
-  {
-    this.cameraState        = cameraState;
-    this.microphoneEnabled  = microphoneEnabled;
-    this.bluetoothAvailable = bluetoothAvailable;
-    this.wantsBluetooth     = wantsBluetooth;
-    this.orientation        = orientation;
-    this.isLandscapeEnabled = isLandscapeEnabled;
-    this.deviceOrientation  = deviceOrientation;
-  }
-
-  public @NonNull CameraState getCameraState() {
-    return cameraState;
-  }
-
-  public boolean isMicrophoneEnabled() {
-    return microphoneEnabled;
-  }
-
-  public boolean isBluetoothAvailable() {
-    return bluetoothAvailable;
-  }
-
-  public boolean wantsBluetooth() {
-    return wantsBluetooth;
-  }
-
-  public @NonNull Orientation getOrientation() {
-    return orientation;
-  }
-
-  public boolean isLandscapeEnabled() {
-    return isLandscapeEnabled;
-  }
-
-  public @NonNull Orientation getDeviceOrientation() {
-    return deviceOrientation;
+  fun duplicate(): LocalDeviceState {
+    return copy()
   }
 }

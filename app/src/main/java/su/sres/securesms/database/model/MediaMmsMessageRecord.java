@@ -20,6 +20,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
 import android.text.SpannableString;
 
@@ -71,8 +72,9 @@ public class MediaMmsMessageRecord extends MmsMessageRecord {
                                String body,
                                @NonNull SlideDeck slideDeck,
                                int partCount, long mailbox,
-                               List<IdentityKeyMismatch> mismatches,
-                               List<NetworkFailure> failures, int subscriptionId,
+                               Set<IdentityKeyMismatch> mismatches,
+                               Set<NetworkFailure> failures,
+                               int subscriptionId,
                                long expiresIn, long expireStarted,
                                boolean viewOnce, int readReceiptCount,
                                @Nullable Quote quote, @NonNull List<Contact> contacts,
@@ -105,6 +107,7 @@ public class MediaMmsMessageRecord extends MmsMessageRecord {
   }
 
   @Override
+  @WorkerThread
   public SpannableString getDisplayBody(@NonNull Context context) {
     if (MmsDatabase.Types.isChatSessionRefresh(type)) {
       return emphasisAdded(context.getString(R.string.MmsMessageRecord_bad_encrypted_mms_message));

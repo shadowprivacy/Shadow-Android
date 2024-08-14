@@ -6,6 +6,7 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.securesms.badges.models.Badge;
 import su.sres.securesms.conversation.colors.AvatarColor;
 import su.sres.securesms.conversation.colors.ChatColors;
 import su.sres.securesms.database.RecipientDatabase.InsightsBannerTier;
@@ -23,6 +24,7 @@ import su.sres.securesms.wallpaper.ChatWallpaper;
 import org.signal.zkgroup.profiles.ProfileKeyCredential;
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -78,7 +80,8 @@ public class RecipientDetails {
   final String                     aboutEmoji;
   final ProfileName                systemProfileName;
   final Optional<Recipient.Extras> extras;
-  final boolean                    hasGroupsInCommon;
+  final boolean     hasGroupsInCommon;
+  final List<Badge> badges;
 
   public RecipientDetails(@Nullable String groupName,
                           @Nullable String systemContactName,
@@ -138,6 +141,7 @@ public class RecipientDetails {
     this.systemContactName           = systemContactName;
     this.extras                      = Optional.fromNullable(settings.getExtras());
     this.hasGroupsInCommon           = settings.hasGroupsInCommon();
+    this.badges                      = settings.getBadges();
   }
 
   /**
@@ -193,6 +197,7 @@ public class RecipientDetails {
     this.systemContactName           = null;
     this.extras                      = Optional.absent();
     this.hasGroupsInCommon           = false;
+    this.badges                      = Collections.emptyList();
   }
 
   public static @NonNull RecipientDetails forIndividual(@NonNull Context context, @NonNull RecipientSettings settings) {

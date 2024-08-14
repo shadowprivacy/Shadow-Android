@@ -2,19 +2,16 @@ package su.sres.securesms.service.webrtc;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.components.webrtc.BroadcastVideoSink;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.groups.GroupId;
-import su.sres.securesms.ringrtc.Camera;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.CallManager;
-import org.webrtc.CapturerObserver;
-import org.webrtc.VideoFrame;
 
 import java.util.UUID;
 
@@ -49,6 +46,12 @@ public class IdleActionProcessor extends WebRtcActionProcessor {
                                                            @NonNull OfferMessage.Type offerType)
   {
     Log.i(TAG, "handleOutgoingCall():");
+
+    Recipient recipient = Recipient.resolved(remotePeer.getId());
+    if (recipient.isGroup()) {
+      Log.w(TAG, "Aborting attempt to start 1:1 call for group recipient: " + remotePeer.getId());
+      return currentState;
+    }
 
     currentState = WebRtcVideoUtil.initializeVideo(context, webRtcInteractor.getCameraEventListener(), currentState);
     return beginCallDelegate.handleOutgoingCall(currentState, remotePeer, offerType);

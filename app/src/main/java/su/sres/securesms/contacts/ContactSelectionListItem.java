@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
+import su.sres.securesms.badges.BadgeImageView;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.components.FromTextView;
 import su.sres.securesms.mms.GlideRequests;
@@ -37,6 +38,8 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
   private TextView        labelView;
   private CheckBox        checkBox;
   private View            smsTag;
+
+  private BadgeImageView badge;
 
   private String        number;
   private String        chipName;
@@ -65,6 +68,7 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
     this.nameView          = findViewById(R.id.name);
     this.checkBox          = findViewById(R.id.check_box);
     this.smsTag            = findViewById(R.id.sms_tag);
+    this.badge             = findViewById(R.id.contact_badge);
 
     ViewUtil.setTextViewGravityStart(this.nameView, getContext());
   }
@@ -118,6 +122,8 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
     }
 
     this.checkBox.setVisibility(checkboxVisible ? View.VISIBLE : View.GONE);
+
+    badge.setBadgeFromRecipient(recipientSnapshot);
   }
 
   public void setChecked(boolean selected, boolean animate) {
@@ -229,6 +235,7 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
       contactPhotoImage.setAvatar(glideRequests, recipient, false);
       setText(recipient, contactType, contactName, contactNumber, contactLabel, contactAbout);
       smsTag.setVisibility(recipient.isRegistered() ? GONE : VISIBLE);
+      badge.setBadgeFromRecipient(recipient);
     } else {
       Log.w(TAG, "Bad change! Local recipient doesn't match. Ignoring. Local: " + (this.recipient == null ? "null" : this.recipient.getId()) + ", Changed: " + recipient.getId());
     }

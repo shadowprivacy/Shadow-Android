@@ -1,7 +1,10 @@
 package su.sres.securesms.webrtc.audio;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
+import android.media.AudioDeviceInfo;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.SoundPool;
@@ -30,6 +33,88 @@ public abstract class AudioManagerCompat {
         audioManager = ServiceUtil.getAudioManager(context);
     }
 
+    public boolean isBluetoothScoAvailableOffCall() {
+        return audioManager.isBluetoothScoAvailableOffCall();
+    }
+
+    public void startBluetoothSco() {
+        audioManager.startBluetoothSco();
+    }
+
+    public void stopBluetoothSco() {
+        audioManager.stopBluetoothSco();
+    }
+
+    public boolean isBluetoothScoOn() {
+        return audioManager.isBluetoothScoOn();
+    }
+
+    public void setBluetoothScoOn(boolean on) {
+        audioManager.setBluetoothScoOn(on);
+    }
+
+    public int getMode() {
+        return audioManager.getMode();
+    }
+
+    public void setMode(int modeInCommunication) {
+        audioManager.setMode(modeInCommunication);
+    }
+
+    public boolean isSpeakerphoneOn() {
+        return audioManager.isSpeakerphoneOn();
+    }
+
+    public void setSpeakerphoneOn(boolean on) {
+        audioManager.setSpeakerphoneOn(on);
+    }
+
+    public boolean isMicrophoneMute() {
+        return audioManager.isMicrophoneMute();
+    }
+
+    public void setMicrophoneMute(boolean on) {
+        audioManager.setMicrophoneMute(on);
+    }
+
+    public boolean hasEarpiece(@NonNull Context context) {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+    }
+
+    @SuppressLint("WrongConstant")
+    public boolean isWiredHeadsetOn() {
+        if (Build.VERSION.SDK_INT < 23) {
+            //noinspection deprecation
+            return audioManager.isWiredHeadsetOn();
+        } else {
+            AudioDeviceInfo[] devices = audioManager.getDevices(AudioManager.GET_DEVICES_ALL);
+            for (AudioDeviceInfo device : devices) {
+                final int type = device.getType();
+                if (type == AudioDeviceInfo.TYPE_WIRED_HEADSET) {
+                    return true;
+                } else if (type == AudioDeviceInfo.TYPE_USB_DEVICE) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    public float ringVolumeWithMinimum() {
+        int   currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_RING);
+        int   maxVolume     = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING);
+        float volume        = logVolume(currentVolume, maxVolume);
+        float minVolume     = logVolume(15, 100);
+        return Math.max(volume, minVolume);
+    }
+
+    private static float logVolume(int volume, int maxVolume) {
+        if (maxVolume == 0 || volume > maxVolume) {
+            return 0.5f;
+        }
+        return (float) (1 - (Math.log(maxVolume + 1 - volume) / Math.log(maxVolume + 1)));
+    }
+
     abstract public SoundPool createSoundPool();
     abstract public void requestCallAudioFocus();
     abstract public void abandonCallAudioFocus();
@@ -37,10 +122,8 @@ public abstract class AudioManagerCompat {
     public static AudioManagerCompat create(@NonNull Context context) {
         if (Build.VERSION.SDK_INT >= 26) {
             return new Api26AudioManagerCompat(context);
-        } else if (Build.VERSION.SDK_INT >= 21) {
-            return new Api21AudioManagerCompat(context);
         } else {
-            return new Api19AudioManagerCompat(context);
+            return new Api21AudioManagerCompat(context);
         }
     }
 

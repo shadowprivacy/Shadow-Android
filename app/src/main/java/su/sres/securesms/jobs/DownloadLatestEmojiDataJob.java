@@ -18,6 +18,7 @@ import su.sres.securesms.emoji.EmojiData;
 import su.sres.securesms.emoji.EmojiFiles;
 import su.sres.securesms.emoji.EmojiImageRequest;
 import su.sres.securesms.emoji.EmojiJsonRequest;
+import su.sres.securesms.emoji.EmojiPageCache;
 import su.sres.securesms.emoji.EmojiRemote;
 import su.sres.securesms.emoji.EmojiSource;
 import su.sres.securesms.jobmanager.Data;
@@ -432,6 +433,8 @@ public class DownloadLatestEmojiDataJob extends BaseJob {
           .filterNot(file -> file.getName().equals(currentDirectoryName))
           .filterNot(file -> file.getName().equals(newVersionDirectoryName))
           .forEach(FileUtils::deleteDirectory);
+
+    EmojiPageCache.INSTANCE.clear();
   }
 
   public static final class Factory implements Job.Factory<DownloadLatestEmojiDataJob> {

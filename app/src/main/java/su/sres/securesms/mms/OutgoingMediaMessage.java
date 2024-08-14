@@ -12,8 +12,10 @@ import su.sres.securesms.database.model.Mention;
 import su.sres.securesms.linkpreview.LinkPreview;
 import su.sres.securesms.recipients.Recipient;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class OutgoingMediaMessage {
 
@@ -27,9 +29,9 @@ public class OutgoingMediaMessage {
   private   final boolean                   viewOnce;
   private   final QuoteModel                outgoingQuote;
 
-  private   final List<NetworkFailure>      networkFailures       = new LinkedList<>();
-  private   final List<IdentityKeyMismatch> identityKeyMismatches = new LinkedList<>();
-  private   final List<Contact>             contacts              = new LinkedList<>();
+  private   final Set<NetworkFailure>      networkFailures       = new HashSet<>();
+  private   final Set<IdentityKeyMismatch> identityKeyMismatches = new HashSet<>();
+  private   final List<Contact>            contacts              = new LinkedList<>();
   private   final List<LinkPreview>         linkPreviews          = new LinkedList<>();
   private   final List<Mention>             mentions              = new LinkedList<>();
 
@@ -41,8 +43,8 @@ public class OutgoingMediaMessage {
                               @NonNull List<Contact> contacts,
                               @NonNull List<LinkPreview> linkPreviews,
                               @NonNull List<Mention> mentions,
-                              @NonNull List<NetworkFailure> networkFailures,
-                              @NonNull List<IdentityKeyMismatch> identityKeyMismatches)
+                              @NonNull Set<NetworkFailure> networkFailures,
+                              @NonNull Set<IdentityKeyMismatch> identityKeyMismatches)
   {
     this.recipient             = recipient;
     this.body                  = message;
@@ -74,7 +76,7 @@ public class OutgoingMediaMessage {
          slideDeck.asAttachments(),
          sentTimeMillis, subscriptionId,
             expiresIn, viewOnce, distributionType, outgoingQuote,
-            contacts, linkPreviews, mentions, new LinkedList<>(), new LinkedList<>());
+         contacts, linkPreviews, mentions, new HashSet<>(), new HashSet<>());
   }
 
   public OutgoingMediaMessage(OutgoingMediaMessage that) {
@@ -174,11 +176,11 @@ public class OutgoingMediaMessage {
     return mentions;
   }
 
-  public @NonNull List<NetworkFailure> getNetworkFailures() {
+  public @NonNull Set<NetworkFailure> getNetworkFailures() {
     return networkFailures;
   }
 
-  public @NonNull List<IdentityKeyMismatch> getIdentityKeyMismatches() {
+  public @NonNull Set<IdentityKeyMismatch> getIdentityKeyMismatches() {
     return identityKeyMismatches;
   }
 

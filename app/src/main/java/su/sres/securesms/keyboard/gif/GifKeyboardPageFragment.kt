@@ -5,17 +5,15 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import su.sres.securesms.LoggingFragment
 import su.sres.securesms.R
-import su.sres.securesms.conversation.ConversationActivity
 import su.sres.securesms.giph.mp4.GiphyMp4Fragment
 import su.sres.securesms.giph.mp4.GiphyMp4SaveResult
 import su.sres.securesms.giph.mp4.GiphyMp4ViewModel
 import su.sres.securesms.keyboard.emoji.KeyboardPageSearchView
 import su.sres.securesms.keyboard.findListener
-import su.sres.securesms.mms.AttachmentManager
 import su.sres.securesms.util.views.SimpleProgressDialog
 
 class GifKeyboardPageFragment : LoggingFragment(R.layout.gif_keyboard_page_fragment) {
@@ -49,13 +47,14 @@ class GifKeyboardPageFragment : LoggingFragment(R.layout.gif_keyboard_page_fragm
     quickSearchAdapter = GifQuickSearchAdapter(this::onQuickSearchSelected)
     quickSearchList.adapter = quickSearchAdapter
 
-    giphyMp4ViewModel = ViewModelProviders.of(requireActivity(), GiphyMp4ViewModel.Factory(host.isMms())).get(GiphyMp4ViewModel::class.java)
+    giphyMp4ViewModel = ViewModelProvider(requireActivity(), GiphyMp4ViewModel.Factory(host.isMms())).get(GiphyMp4ViewModel::class.java)
     giphyMp4ViewModel.saveResultEvents.observe(viewLifecycleOwner, this::handleGiphyMp4SaveResult)
   }
 
+  @Suppress("DEPRECATION")
   override fun onActivityCreated(savedInstanceState: Bundle?) {
     super.onActivityCreated(savedInstanceState)
-    viewModel = ViewModelProviders.of(requireActivity()).get(GifKeyboardPageViewModel::class.java)
+    viewModel = ViewModelProvider(requireActivity()).get(GifKeyboardPageViewModel::class.java)
     updateQuickSearchTabs()
   }
 

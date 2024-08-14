@@ -20,6 +20,7 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.R;
+import su.sres.securesms.badges.BadgeImageView;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.LiveRecipient;
@@ -32,6 +33,7 @@ import java.util.Objects;
 public class ConversationTitleView extends RelativeLayout {
 
   private AvatarImageView avatar;
+  private BadgeImageView  badge;
   private TextView        title;
   private TextView        subtitle;
   private ImageView       verified;
@@ -54,6 +56,7 @@ public class ConversationTitleView extends RelativeLayout {
     super.onFinishInflate();
 
     this.title                    = findViewById(R.id.title);
+    this.badge                    = findViewById(R.id.badge);
     this.subtitle                 = findViewById(R.id.subtitle);
     this.verified                 = findViewById(R.id.verified_indicator);
     this.subtitleContainer        = findViewById(R.id.subtitle_container);
@@ -104,6 +107,8 @@ public class ConversationTitleView extends RelativeLayout {
     if (recipient != null) {
       this.avatar.setAvatar(glideRequests, recipient, false);
     }
+
+    badge.setBadgeFromRecipient(recipient);
 
     updateVerifiedSubtitleVisibility();
   }

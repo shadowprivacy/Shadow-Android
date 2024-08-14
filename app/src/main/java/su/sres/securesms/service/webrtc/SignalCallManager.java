@@ -21,6 +21,7 @@ import org.signal.ringrtc.CallId;
 import org.signal.ringrtc.CallManager;
 import org.signal.ringrtc.GroupCall;
 import org.signal.ringrtc.HttpHeader;
+import org.signal.ringrtc.NetworkRoute;
 import org.signal.ringrtc.Remote;
 
 import su.sres.securesms.database.GroupDatabase;
@@ -29,6 +30,7 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.messages.GroupSendUtil;
 import su.sres.securesms.util.RecipientAccessList;
 import su.sres.securesms.util.Util;
+import su.sres.securesms.webrtc.audio.SignalAudioManager;
 import su.sres.signalservice.api.messages.SendMessageResult;
 import su.sres.storageservice.protos.groups.GroupExternalCredential;
 
@@ -54,7 +56,6 @@ import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.BubbleUtil;
 import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.webrtc.audio.SignalAudioManager;
 import su.sres.securesms.webrtc.locks.LockManager;
 
 import org.signal.zkgroup.groups.GroupIdentifier;
@@ -132,7 +133,6 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
     this.serviceState = new WebRtcServiceState(new IdleActionProcessor(new WebRtcInteractor(this.context,
                                                                                             this,
                                                                                             lockManager,
-                                                                                            new SignalAudioManager(context),
                                                                                             this,
                                                                                             this,
                                                                                             this)));
@@ -199,14 +199,6 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
     process((s, p) -> p.handleOrientationChanged(s, isLandscapeEnabled, degrees));
   }
 
-  public void setAudioSpeaker(boolean isSpeaker) {
-    process((s, p) -> p.handleSetSpeakerAudio(s, isSpeaker));
-  }
-
-  public void setAudioBluetooth(boolean isBluetooth) {
-    process((s, p) -> p.handleSetBluetoothAudio(s, isBluetooth));
-  }
-
   public void setMuteAudio(boolean enabled) {
     process((s, p) -> p.handleSetMuteAudio(s, enabled));
   }
@@ -243,10 +235,6 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
     process((s, p) -> p.handleIsInCallQuery(s, resultReceiver));
   }
 
-  public void wiredHeadsetChange(boolean available) {
-    process((s, p) -> p.handleWiredHeadsetChange(s, available));
-  }
-
   public void networkChange(boolean available) {
     process((s, p) -> p.handleNetworkChanged(s, available));
   }
@@ -257,10 +245,6 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
 
   public void screenOff() {
     process((s, p) -> p.handleScreenOffChange(s));
-  }
-
-  public void bluetoothChange(boolean available) {
-    process((s, p) -> p.handleBluetoothChange(s, available));
   }
 
   public void postStateUpdate(@NonNull WebRtcServiceState state) {
@@ -303,6 +287,14 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
 
   private void receivedGroupCallPeekForRingingCheck(@NonNull GroupCallRingCheckInfo groupCallRingCheckInfo, long deviceCount) {
     process((s, p) -> p.handleReceivedGroupCallPeekForRingingCheck(s, groupCallRingCheckInfo, deviceCount));
+  }
+
+  public void onAudioDeviceChanged(@NonNull SignalAudioManager.AudioDevice activeDevice, @NonNull Set<SignalAudioManager.AudioDevice> availableDevices) {
+    process((s, p) -> p.handleAudioDeviceChanged(s, activeDevice, availableDevices));
+  }
+
+  public void selectAudioDevice(@NonNull SignalAudioManager.AudioDevice desiredDevice) {
+    process((s, p) -> p.handleSetUserAudioDevice(s, desiredDevice));
   }
 
   public void peekGroupCall(@NonNull RecipientId id) {
@@ -492,6 +484,10 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
 
       return s;
     });
+  }
+
+  @Override public void onNetworkRouteChanged(Remote remote, NetworkRoute networkRoute) {
+    Log.i(TAG, "onNetworkRouteChanged: localAdapterType: " + networkRoute.getLocalAdapterType());
   }
 
   @Override
@@ -748,6 +744,7 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
 
   @Override
   public void onLocalDeviceStateChanged(@NonNull GroupCall groupCall) {
+    Log.i(TAG, "onLocalDeviceStateChanged: localAdapterType: " + groupCall.getLocalDeviceState().getNetworkRoute().getLocalAdapterType());
     process((s, p) -> p.handleGroupLocalDeviceStateChanged(s));
   }
 

@@ -31,7 +31,6 @@ import su.sres.securesms.jobmanager.JobMigrator;
 import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
 import su.sres.securesms.jobs.FastJobStorage;
 import su.sres.securesms.jobs.JobManagerFactories;
-import su.sres.core.util.logging.Log;
 import su.sres.securesms.megaphone.MegaphoneRepository;
 import su.sres.securesms.net.SignalWebSocketHealthMonitor;
 import su.sres.securesms.notifications.MessageNotifier;
@@ -56,6 +55,7 @@ import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.core.util.concurrent.SignalExecutors;
+import su.sres.securesms.webrtc.audio.AudioManagerCompat;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.SignalServiceMessageSender;
@@ -252,6 +252,11 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     healthMonitor.monitor(signalWebSocket);
 
     return signalWebSocket;
+  }
+
+  @Override
+  public @NonNull AudioManagerCompat provideAndroidCallAudioManager() {
+    return AudioManagerCompat.create(context);
   }
 
   private @NonNull WebSocketFactory provideWebSocketFactory(@NonNull SignalWebSocketHealthMonitor healthMonitor) {

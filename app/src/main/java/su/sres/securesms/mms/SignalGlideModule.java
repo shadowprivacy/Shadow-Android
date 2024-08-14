@@ -22,6 +22,7 @@ import com.bumptech.glide.load.resource.gif.StreamGifDecoder;
 import com.bumptech.glide.module.AppGlideModule;
 
 import su.sres.glide.apng.decode.APNGDecoder;
+import su.sres.securesms.badges.models.Badge;
 import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.blurhash.BlurHashModelLoader;
 import su.sres.securesms.blurhash.BlurHashResourceDecoder;
@@ -29,6 +30,7 @@ import su.sres.securesms.contacts.avatars.ContactPhoto;
 import su.sres.securesms.crypto.AttachmentSecret;
 import su.sres.securesms.crypto.AttachmentSecretProvider;
 import su.sres.securesms.giph.model.ChunkedImageUrl;
+import su.sres.securesms.glide.BadgeLoader;
 import su.sres.securesms.glide.ContactPhotoLoader;
 import su.sres.securesms.glide.cache.ApngBufferCacheDecoder;
 import su.sres.securesms.glide.cache.ApngFrameDrawableTranscoder;
@@ -95,6 +97,7 @@ public class SignalGlideModule extends AppGlideModule {
     registry.append(ChunkedImageUrl.class, InputStream.class, new ChunkedImageUrlLoader.Factory());
     registry.append(StickerRemoteUri.class, InputStream.class, new StickerRemoteUriLoader.Factory());
     registry.append(BlurHash.class, BlurHash.class, new BlurHashModelLoader.Factory());
+    registry.append(Badge.class, InputStream.class, BadgeLoader.createFactory());
     registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory());
   }
 

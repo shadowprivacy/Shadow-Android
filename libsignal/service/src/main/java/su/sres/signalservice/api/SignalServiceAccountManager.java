@@ -104,10 +104,11 @@ public class SignalServiceAccountManager {
 
   private static final String TAG = SignalServiceAccountManager.class.getSimpleName();
 
-  private final PushServiceSocket   pushServiceSocket;
-  private final CredentialsProvider credentials;
-  private final String              userAgent;
-  private final GroupsV2Operations  groupsV2Operations;
+  private final PushServiceSocket          pushServiceSocket;
+  private final CredentialsProvider        credentials;
+  private final String                     userAgent;
+  private final GroupsV2Operations         groupsV2Operations;
+  private final SignalServiceConfiguration configuration;
 
   /**
    * Construct a SignalServiceAccountManager.
@@ -139,6 +140,7 @@ public class SignalServiceAccountManager {
     this.pushServiceSocket  = new PushServiceSocket(configuration, credentialsProvider, signalAgent, groupsV2Operations.getProfileOperations(), automaticNetworkRetry);
     this.credentials        = credentialsProvider;
     this.userAgent          = signalAgent;
+    this.configuration      = configuration;
   }
 
   public byte[] getSenderCertificate() throws IOException {
@@ -618,7 +620,8 @@ public class SignalServiceAccountManager {
                                               String about,
                                               String aboutEmoji,
                                               Optional<SignalServiceProtos.PaymentAddress> paymentsAddress,
-                                              StreamDetails avatar)
+                                              StreamDetails avatar,
+                                              List<String> visibleBadgeIds)
       throws IOException
   {
     if (name == null) name = "";
@@ -644,7 +647,8 @@ public class SignalServiceAccountManager {
                                                                              ciphertextEmoji,
                                                                              ciphertextMobileCoinAddress,
                                                                              hasAvatar,
-                                                                             profileKey.getCommitment(uuid).serialize()),
+                                                                             profileKey.getCommitment(uuid).serialize(),
+                                                                             visibleBadgeIds),
                                                profileAvatarData);
   }
 

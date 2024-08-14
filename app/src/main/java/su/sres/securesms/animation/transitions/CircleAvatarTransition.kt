@@ -36,7 +36,7 @@ class CircleAvatarTransition(context: Context, attrs: AttributeSet?) : Transitio
   private fun captureValues(transitionValues: TransitionValues) {
     val view: View = transitionValues.view
 
-    if (view is AvatarImageView) {
+    if (view.transitionName == "avatar") {
       val topLeft = intArrayOf(0, 0)
       view.getLocationOnScreen(topLeft)
       transitionValues.values[POSITION_ON_SCREEN] = topLeft
@@ -51,7 +51,7 @@ class CircleAvatarTransition(context: Context, attrs: AttributeSet?) : Transitio
     }
 
     val view: View = endValues.view
-    if (view !is AvatarImageView || view.transitionName != "avatar") {
+    if (view.transitionName != "avatar") {
       return null
     }
 

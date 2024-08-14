@@ -83,7 +83,6 @@ import su.sres.securesms.jobs.RetrieveProfileJob;
 import su.sres.securesms.jobs.SendDeliveryReceiptJob;
 import su.sres.securesms.jobs.SenderKeyDistributionSendJob;
 import su.sres.securesms.jobs.StickerPackDownloadJob;
-import su.sres.securesms.jobs.ThreadUpdateJob;
 import su.sres.securesms.jobs.TrimThreadJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.linkpreview.LinkPreview;
@@ -239,7 +238,7 @@ public final class MessageContentProcessor {
       PendingRetryReceiptModel pending      = ApplicationDependencies.getPendingRetryReceiptCache().get(senderRecipient.getId(), content.getTimestamp());
       long                     receivedTime = handlePendingRetry(pending, content, threadRecipient);
 
-      log(String.valueOf(content.getTimestamp()), "Beginning message processing.");
+      log(String.valueOf(content.getTimestamp()), "Beginning message processing. Sender: " + senderRecipient.getId() + " | " + senderRecipient.requireServiceId());
 
       if (content.getDataMessage().isPresent()) {
         GroupDatabase            groupDatabase = DatabaseFactory.getGroupDatabase(context);
@@ -437,7 +436,7 @@ public final class MessageContentProcessor {
     }
 
     if (!updateGv2GroupFromServerOrP2PChange(content, groupV2)) {
-      log(String.valueOf(content.getTimestamp()), "Ignoring GV2 message for group we are not currently in " + groupId);
+      log(String.valueOf(content.getTimestamp()), "Ignoring GV2 message from member not in group " + groupId + ". Sender: " + senderRecipient.getId() + " | " + senderRecipient.requireServiceId());
       return true;
     }
 
@@ -729,7 +728,7 @@ public final class MessageContentProcessor {
                                                     message.getTimestamp(),
                                                     null);
       database.markAsSent(messageId, true);
-      ThreadUpdateJob.enqueue(threadId);
+      DatabaseFactory.getThreadDatabase(context).update(threadId, true);
     }
 
     return threadId;
@@ -1029,7 +1028,7 @@ public final class MessageContentProcessor {
 
     Optional<MobileCoinPublicAddress> address = outgoingPaymentMessage.getAddress().transform(MobileCoinPublicAddress::fromBytes);
     if (!address.isPresent() && recipientId == null) {
-      log("Inserting defrag");
+      log(content.getTimestamp(), "Inserting defrag");
       address     = Optional.of(ApplicationDependencies.getPayments().getWallet().getMobileCoinPublicAddress());
       recipientId = Recipient.self().getId();
     }
@@ -1367,7 +1366,7 @@ public final class MessageContentProcessor {
                                                                  sharedContacts.or(Collections.emptyList()),
                                                                  previews.or(Collections.emptyList()),
                                                                  mentions.or(Collections.emptyList()),
-                                                                 Collections.emptyList(), Collections.emptyList());
+                                                                 Collections.emptySet(), Collections.emptySet());
 
     mediaMessage = new OutgoingSecureMediaMessage(mediaMessage);
 
@@ -1566,7 +1565,7 @@ public final class MessageContentProcessor {
       messageId = DatabaseFactory.getSmsDatabase(context).insertMessageOutbox(threadId, outgoingTextMessage, false, message.getTimestamp(), null);
       database  = DatabaseFactory.getSmsDatabase(context);
       database.markUnidentified(messageId, isUnidentified(message, recipient));
-      ThreadUpdateJob.enqueue(threadId);
+      DatabaseFactory.getThreadDatabase(context).update(threadId, true);
     }
 
     database.markAsSent(messageId, true);
@@ -1778,7 +1777,7 @@ public final class MessageContentProcessor {
       GroupId.Push groupId = GroupId.push(typingMessage.getGroupId().get());
 
       if (!DatabaseFactory.getGroupDatabase(context).isCurrentMember(groupId, senderRecipient.getId())) {
-        warn(String.valueOf(content.getTimestamp()), "Seen typing indicator for non-member");
+        warn(String.valueOf(content.getTimestamp()), "Seen typing indicator for non-member " + senderRecipient.getId());
         return;
       }
 

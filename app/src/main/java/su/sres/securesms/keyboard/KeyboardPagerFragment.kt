@@ -3,7 +3,7 @@ package su.sres.securesms.keyboard
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import su.sres.securesms.R
 import su.sres.securesms.components.emoji.MediaKeyboard
 import su.sres.securesms.keyboard.emoji.EmojiKeyboardPageFragment
@@ -27,7 +27,7 @@ class KeyboardPagerFragment : Fragment(R.layout.keyboard_pager_fragment) {
     stickerButton = view.findViewById(R.id.keyboard_pager_fragment_sticker)
     gifButton = view.findViewById(R.id.keyboard_pager_fragment_gif)
 
-    viewModel = ViewModelProviders.of(requireActivity())[KeyboardPagerViewModel::class.java]
+    viewModel = ViewModelProvider(requireActivity())[KeyboardPagerViewModel::class.java]
 
     viewModel.page().observe(viewLifecycleOwner, this::onPageSelected)
     viewModel.pages().observe(viewLifecycleOwner) { pages ->
@@ -41,6 +41,7 @@ class KeyboardPagerFragment : Fragment(R.layout.keyboard_pager_fragment) {
     gifButton.setOnClickListener { viewModel.switchToPage(KeyboardPage.GIF) }
   }
 
+  @Suppress("DEPRECATION")
   override fun onActivityCreated(savedInstanceState: Bundle?) {
     super.onActivityCreated(savedInstanceState)
     viewModel.page().value?.let(this::onPageSelected)

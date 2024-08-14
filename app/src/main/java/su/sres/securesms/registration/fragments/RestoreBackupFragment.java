@@ -31,12 +31,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
 import com.dd.CircularProgressButton;
 
-import net.zetetic.database.sqlcipher.SQLiteDatabase;
+import net.sqlcipher.database.SQLiteDatabase;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -73,6 +73,7 @@ public final class RestoreBackupFragment extends LoggingFragment {
     private TextView               restoreBackupProgress;
     private CircularProgressButton restoreButton;
     private View                   skipRestoreButton;
+    private RegistrationViewModel  viewModel;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -100,11 +101,16 @@ public final class RestoreBackupFragment extends LoggingFragment {
                     .navigate(RestoreBackupFragmentDirections.actionSkip());
         });
 
-        RegistrationViewModel viewModel = ViewModelProviders.of(requireActivity()).get(RegistrationViewModel.class);
+        viewModel = new ViewModelProvider(requireActivity()).get(RegistrationViewModel.class);
         if (viewModel.isReregister()) {
             Log.i(TAG, "Skipping backup restore during re-register.");
             Navigation.findNavController(view)
                     .navigate(RestoreBackupFragmentDirections.actionSkipNoReturn());
+            return;
+        }
+
+        if (viewModel.hasBackupCompleted()) {
+            onBackupComplete();
             return;
         }
 
@@ -278,6 +284,7 @@ public final class RestoreBackupFragment extends LoggingFragment {
 
             @Override
             protected void onPostExecute(@NonNull BackupImportResult result) {
+                viewModel.markBackupCompleted();
                 cancelSpinning(restoreButton);
                 skipRestoreButton.setVisibility(View.VISIBLE);
 
@@ -305,6 +312,14 @@ public final class RestoreBackupFragment extends LoggingFragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        if (viewModel != null && viewModel.hasBackupCompleted()) {
+            onBackupComplete();
+        }
+    }
+
+    @Override
     public void onStop() {
         super.onStop();
         EventBus.getDefault().unregister(this);
@@ -324,12 +339,16 @@ public final class RestoreBackupFragment extends LoggingFragment {
         skipRestoreButton.setVisibility(View.INVISIBLE);
 
         if (event.getType() == FullBackupBase.BackupEvent.Type.FINISHED) {
-            if (BackupUtil.isUserSelectionRequired(requireContext()) && !BackupUtil.canUserAccessBackupDirectory(requireContext())) {
-                displayConfirmationDialog(requireContext());
-            } else {
-                Navigation.findNavController(requireView())
-                        .navigate(RestoreBackupFragmentDirections.actionBackupRestored());
-            }
+            onBackupComplete();
+        }
+    }
+
+    private void onBackupComplete() {
+        if (BackupUtil.isUserSelectionRequired(requireContext()) && !BackupUtil.canUserAccessBackupDirectory(requireContext())) {
+            displayConfirmationDialog(requireContext());
+        } else {
+            Navigation.findNavController(requireView())
+                      .navigate(RestoreBackupFragmentDirections.actionBackupRestored());
         }
     }
 

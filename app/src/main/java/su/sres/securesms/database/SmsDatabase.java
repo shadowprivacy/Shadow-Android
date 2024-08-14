@@ -26,14 +26,15 @@ import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import com.annimon.stream.Stream;
 import com.google.android.mms.pdu_alt.NotificationInd;
 
-import net.zetetic.database.sqlcipher.SQLiteStatement;
+import net.sqlcipher.database.SQLiteStatement;
 
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
-import su.sres.securesms.database.documents.IdentityKeyMismatchList;
+import su.sres.securesms.database.documents.IdentityKeyMismatchSet;
 import su.sres.securesms.database.documents.NetworkFailure;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.GroupCallUpdateDetailsUtil;
@@ -45,7 +46,6 @@ import su.sres.securesms.database.model.databaseprotos.GroupCallUpdateDetails;
 import su.sres.securesms.database.model.databaseprotos.ProfileChangeDetails;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupMigrationMembershipChange;
-import su.sres.securesms.jobs.ThreadUpdateJob;
 import su.sres.securesms.jobs.TrimThreadJob;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.IncomingMediaMessage;
@@ -79,6 +79,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+
+import static su.sres.securesms.database.MmsSmsColumns.Types.GROUP_V2_LEAVE_BITS;
 
 /**
  * Database for storage of SMS messages.
@@ -153,7 +155,8 @@ public class SmsDatabase extends MessageDatabase {
       REMOTE_DELETED, NOTIFIED_TIMESTAMP, RECEIPT_TIMESTAMP
   };
 
-  private static final long IGNORABLE_TYPESMASK_WHEN_COUNTING = Types.END_SESSION_BIT | Types.KEY_EXCHANGE_IDENTITY_UPDATE_BIT | Types.KEY_EXCHANGE_IDENTITY_VERIFIED_BIT;
+  @VisibleForTesting
+  static final long IGNORABLE_TYPESMASK_WHEN_COUNTING = Types.END_SESSION_BIT | Types.KEY_EXCHANGE_IDENTITY_UPDATE_BIT | Types.KEY_EXCHANGE_IDENTITY_VERIFIED_BIT;
 
   private static final EarlyReceiptCache earlyDeliveryReceiptCache = new EarlyReceiptCache("SmsDelivery");
 
@@ -273,7 +276,7 @@ public class SmsDatabase extends MessageDatabase {
   }
 
   private @NonNull SqlUtil.Query buildMeaningfulMessagesQuery(long threadId) {
-    String query = THREAD_ID + " = ? AND (NOT " + TYPE + " & ? AND TYPE != ? AND TYPE != ?)";
+    String query = THREAD_ID + " = ? AND (NOT " + TYPE + " & ? AND " + TYPE + " != ? AND " + TYPE + " != ? AND " + TYPE + " & " + GROUP_V2_LEAVE_BITS + " != " + GROUP_V2_LEAVE_BITS + ")";
     return SqlUtil.buildQuery(query, threadId, IGNORABLE_TYPESMASK_WHEN_COUNTING, Types.PROFILE_CHANGE_TYPE, Types.CHANGE_LOGIN_TYPE);
   }
 
@@ -664,7 +667,7 @@ public class SmsDatabase extends MessageDatabase {
 
     long threadId = getThreadIdForMessage(messageId);
 
-    ThreadUpdateJob.enqueue(threadId);
+    DatabaseFactory.getThreadDatabase(context).update(threadId, true);
     notifyConversationListeners(threadId);
 
     return new InsertResult(messageId, threadId);
@@ -748,7 +751,7 @@ public class SmsDatabase extends MessageDatabase {
         DatabaseFactory.getThreadDatabase(context).incrementUnread(threadId, 1);
       }
 
-      ThreadUpdateJob.enqueue(threadId);
+      DatabaseFactory.getThreadDatabase(context).update(threadId, true);
 
       db.setTransactionSuccessful();
     } finally {
@@ -825,7 +828,7 @@ public class SmsDatabase extends MessageDatabase {
         DatabaseFactory.getThreadDatabase(context).incrementUnread(threadId, 1);
       }
 
-      ThreadUpdateJob.enqueue(threadId);
+      DatabaseFactory.getThreadDatabase(context).update(threadId, true);
 
       db.setTransactionSuccessful();
     } finally {
@@ -897,7 +900,7 @@ public class SmsDatabase extends MessageDatabase {
       DatabaseFactory.getThreadDatabase(context).incrementUnread(threadId, 1);
     }
 
-    ThreadUpdateJob.enqueue(threadId);
+    DatabaseFactory.getThreadDatabase(context).update(threadId, true);
 
     notifyConversationListeners(threadId);
     TrimThreadJob.enqueueAsync(threadId);
@@ -1040,9 +1043,16 @@ public class SmsDatabase extends MessageDatabase {
       IncomingGroupUpdateMessage incomingGroupUpdateMessage = (IncomingGroupUpdateMessage) message;
 
       type |= Types.SECURE_MESSAGE_BIT;
-      if (incomingGroupUpdateMessage.isGroupV2()) type |= Types.GROUP_V2_BIT | Types.GROUP_UPDATE_BIT;
-      else if (incomingGroupUpdateMessage.isUpdate()) type |= Types.GROUP_UPDATE_BIT;
-      else if (incomingGroupUpdateMessage.isQuit()) type |= Types.GROUP_QUIT_BIT;
+      if (incomingGroupUpdateMessage.isGroupV2()) {
+        type |= Types.GROUP_V2_BIT | Types.GROUP_UPDATE_BIT;
+        if (incomingGroupUpdateMessage.isJustAGroupLeave()) {
+          type |= Types.GROUP_LEAVE_BIT;
+        }
+      } else if (incomingGroupUpdateMessage.isUpdate()) {
+        type |= Types.GROUP_UPDATE_BIT;
+      } else if (incomingGroupUpdateMessage.isQuit()) {
+        type |= Types.GROUP_LEAVE_BIT;
+      }
 
     } else if (message.isEndSession()) {
       type |= Types.SECURE_MESSAGE_BIT;
@@ -1067,9 +1077,14 @@ public class SmsDatabase extends MessageDatabase {
       groupRecipient = Recipient.resolved(id);
     }
 
-    boolean unread = (su.sres.securesms.util.Util.isDefaultSmsProvider(context) ||
-                      message.isSecureMessage() || message.isGroup() || message.isPreKeyBundle()) &&
-                     !message.isIdentityUpdate() && !message.isIdentityDefault() && !message.isIdentityVerified();
+    boolean silent = message.isIdentityUpdate()   ||
+                     message.isIdentityVerified() ||
+                     message.isIdentityDefault()  ||
+                     message.isJustAGroupLeave();
+    boolean unread = !silent && (Util.isDefaultSmsProvider(context) ||
+                                 message.isSecureMessage()          ||
+                                 message.isGroup()                  ||
+                                 message.isPreKeyBundle());
 
     long threadId;
 
@@ -1109,7 +1124,7 @@ public class SmsDatabase extends MessageDatabase {
         DatabaseFactory.getThreadDatabase(context).incrementUnread(threadId, 1);
       }
 
-      if (!message.isIdentityUpdate() && !message.isIdentityVerified() && !message.isIdentityDefault()) {
+      if (!silent) {
         DatabaseFactory.getThreadDatabase(context).update(threadId, true);
       }
 
@@ -1119,7 +1134,7 @@ public class SmsDatabase extends MessageDatabase {
 
       notifyConversationListeners(threadId);
 
-      if (!message.isIdentityUpdate() && !message.isIdentityVerified() && !message.isIdentityDefault()) {
+      if (!silent) {
         TrimThreadJob.enqueueAsync(threadId);
       }
 
@@ -1200,7 +1215,7 @@ public class SmsDatabase extends MessageDatabase {
     long messageId = db.insert(TABLE_NAME, null, values);
 
     DatabaseFactory.getThreadDatabase(context).incrementUnread(threadId, 1);
-    ThreadUpdateJob.enqueue(threadId);
+    DatabaseFactory.getThreadDatabase(context).update(threadId, true);
 
     notifyConversationListeners(threadId);
 
@@ -1224,7 +1239,7 @@ public class SmsDatabase extends MessageDatabase {
     databaseHelper.getSignalWritableDatabase().insert(TABLE_NAME, null, values);
 
     DatabaseFactory.getThreadDatabase(context).incrementUnread(threadId, 1);
-    ThreadUpdateJob.enqueue(threadId);
+    DatabaseFactory.getThreadDatabase(context).update(threadId, true);
 
     notifyConversationListeners(threadId);
 
@@ -1534,7 +1549,7 @@ public class SmsDatabase extends MessageDatabase {
   }
 
   @Override
-  public void removeFailure(long messageId, NetworkFailure failure) {
+  public void setNetworkFailures(long messageId, Set<NetworkFailure> failures) {
     throw new UnsupportedOperationException();
   }
 
@@ -1628,7 +1643,7 @@ public class SmsDatabase extends MessageDatabase {
                                   message.isSecureMessage() ? MmsSmsColumns.Types.getOutgoingEncryptedMessageType() : MmsSmsColumns.Types.getOutgoingSmsMessageType(),
                                   threadId,
                                   0,
-                                  new LinkedList<>(),
+                                  new HashSet<>(),
                                   message.getSubscriptionId(),
                                   message.getExpiresIn(),
                                   System.currentTimeMillis(),
@@ -1690,7 +1705,7 @@ public class SmsDatabase extends MessageDatabase {
         readReceiptCount = 0;
       }
 
-      List<IdentityKeyMismatch> mismatches = getMismatches(mismatchDocument);
+      Set<IdentityKeyMismatch> mismatches = getMismatches(mismatchDocument);
       Recipient                 recipient  = Recipient.live(RecipientId.from(recipientId)).get();
 
       return new SmsMessageRecord(messageId, body, recipient,
@@ -1703,16 +1718,16 @@ public class SmsDatabase extends MessageDatabase {
                                   notifiedTimestamp, receiptTimestamp);
     }
 
-    private List<IdentityKeyMismatch> getMismatches(String document) {
+    private Set<IdentityKeyMismatch> getMismatches(String document) {
       try {
         if (!TextUtils.isEmpty(document)) {
-          return JsonUtils.fromJson(document, IdentityKeyMismatchList.class).getList();
+          return JsonUtils.fromJson(document, IdentityKeyMismatchSet.class).getItems();
         }
       } catch (IOException e) {
         Log.w(TAG, e);
       }
 
-      return new LinkedList<>();
+      return Collections.emptySet();
     }
 
     @Override

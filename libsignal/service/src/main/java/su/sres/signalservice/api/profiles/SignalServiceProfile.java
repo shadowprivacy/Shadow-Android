@@ -12,6 +12,8 @@ import org.whispersystems.libsignal.logging.Log;
 
 import su.sres.signalservice.internal.util.JsonUtil;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 public class SignalServiceProfile {
@@ -58,6 +60,9 @@ public class SignalServiceProfile {
   @JsonProperty
   private byte[] credential;
 
+  @JsonProperty
+  private List<Badge> badges;
+
   @JsonIgnore
   private RequestType requestType;
 
@@ -100,6 +105,10 @@ public class SignalServiceProfile {
     return capabilities;
   }
 
+  public List<Badge> getBadges() {
+    return badges;
+  }
+
   public UUID getUuid() {
     return uuid;
   }
@@ -110,6 +119,57 @@ public class SignalServiceProfile {
 
   public void setRequestType(RequestType requestType) {
     this.requestType = requestType;
+  }
+
+  public static class Badge {
+    @JsonProperty
+    private String id;
+
+    @JsonProperty
+    private String category;
+
+    @JsonProperty
+    private String imageUrl;
+
+    @JsonProperty
+    private String name;
+
+    @JsonProperty
+    private String description;
+
+    @JsonProperty
+    private BigDecimal expiration;
+
+    @JsonProperty
+    private boolean visible;
+
+    public String getId() {
+      return id;
+    }
+
+    public String getCategory() {
+      return category;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public BigDecimal getExpiration() {
+      return expiration;
+    }
+
+    public String getImageUrl() {
+      return imageUrl;
+    }
+
+    public boolean isVisible() {
+      return visible;
+    }
   }
 
   public static class Capabilities {

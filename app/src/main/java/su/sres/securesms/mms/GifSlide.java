@@ -2,6 +2,7 @@ package su.sres.securesms.mms;
 
 import android.content.Context;
 import android.net.Uri;
+
 import androidx.annotation.Nullable;
 
 import su.sres.securesms.attachments.Attachment;
@@ -24,21 +25,21 @@ public class GifSlide extends ImageSlide {
 
   public GifSlide(Context context, Uri uri, long size, int width, int height, boolean borderless, @Nullable String caption) {
     super(context, constructAttachmentFromUri(context,
-            uri,
-            MediaUtil.IMAGE_GIF,
-            size,
-            width,
-            height,
-            true,
-            null,
-            caption,
-            null,
-            null,
-            null,
-            false,
-            borderless,
-            FeatureFlags.mp4GifSendSupport(),
-            false));
+                                              uri,
+                                              MediaUtil.IMAGE_GIF,
+                                              size,
+                                              width,
+                                              height,
+                                              true,
+                                              null,
+                                              caption,
+                                              null,
+                                              null,
+                                              null,
+                                              false,
+                                              borderless,
+                                              true,
+                                              false));
     this.borderless = borderless;
   }
 

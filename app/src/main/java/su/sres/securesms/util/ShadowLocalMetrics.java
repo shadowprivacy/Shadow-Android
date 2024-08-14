@@ -96,18 +96,14 @@ public final class ShadowLocalMetrics {
   public static final class IndividualMessageSend {
     private static final String NAME = "individual-message-send";
 
-    private static final String SPLIT_DB_INSERT               = "db-insert";
-    private static final String SPLIT_JOB_ENQUEUE             = "job-enqueue";
-    private static final String SPLIT_JOB_PRE_NETWORK         = "job-pre-network";
-    private static final String SPLIT_SENDER_KEY_SHARED       = "sk-shared";
-    private static final String SPLIT_ENCRYPTION              = "encryption";
-    private static final String SPLIT_NETWORK_SENDER_KEY      = "network-sk";
-    private static final String SPLIT_NETWORK_SENDER_KEY_SYNC = "network-sk-sync";
-    private static final String SPLIT_MSL_SENDER_KEY          = "msl-sk";
-    private static final String SPLIT_NETWORK_LEGACY          = "network-legacy";
-    private static final String SPLIT_NETWORK_LEGACY_SYNC     = "network-legacy-sync";
-    private static final String SPLIT_JOB_POST_NETWORK        = "job-post-network";
-    private static final String SPLIT_UI_UPDATE               = "ui-update";
+    private static final String SPLIT_DB_INSERT        = "db-insert";
+    private static final String SPLIT_JOB_ENQUEUE      = "job-enqueue";
+    private static final String SPLIT_JOB_PRE_NETWORK  = "job-pre-network";
+    private static final String SPLIT_ENCRYPT          = "encrypt";
+    private static final String SPLIT_NETWORK_MAIN     = "network-main";
+    private static final String SPLIT_NETWORK_SYNC     = "network-sync";
+    private static final String SPLIT_JOB_POST_NETWORK = "job-post-network";
+    private static final String SPLIT_UI_UPDATE        = "ui-update";
 
     private static final Map<Long, String> ID_MAP = new HashMap<>();
 
@@ -173,6 +169,7 @@ public final class ShadowLocalMetrics {
       LocalMetrics.getInstance().cancel(requireId(messageId));
     }
 
+
     private static @NonNull String requireId(long messageId) {
       return Objects.requireNonNull(ID_MAP.get(messageId));
     }
@@ -181,12 +178,18 @@ public final class ShadowLocalMetrics {
   public static final class GroupMessageSend {
     private static final String NAME = "group-message-send";
 
-    private static final String SPLIT_DB_INSERT        = "db-insert";
-    private static final String SPLIT_JOB_ENQUEUE      = "job-enqueue";
-    private static final String SPLIT_JOB_PRE_NETWORK  = "job-pre-network";
-    private static final String SPLIT_NETWORK          = "network";
-    private static final String SPLIT_JOB_POST_NETWORK = "job-post-network";
-    private static final String SPLIT_UI_UPDATE        = "ui-update";
+    private static final String SPLIT_DB_INSERT               = "db-insert";
+    private static final String SPLIT_JOB_ENQUEUE             = "job-enqueue";
+    private static final String SPLIT_JOB_PRE_NETWORK         = "job-pre-network";
+    private static final String SPLIT_SENDER_KEY_SHARED       = "sk-shared";
+    private static final String SPLIT_ENCRYPTION              = "encryption";
+    private static final String SPLIT_NETWORK_SENDER_KEY      = "network-sk";
+    private static final String SPLIT_NETWORK_SENDER_KEY_SYNC = "network-sk-sync";
+    private static final String SPLIT_MSL_SENDER_KEY          = "msl-sk";
+    private static final String SPLIT_NETWORK_LEGACY          = "network-legacy";
+    private static final String SPLIT_NETWORK_LEGACY_SYNC     = "network-legacy-sync";
+    private static final String SPLIT_JOB_POST_NETWORK        = "job-post-network";
+    private static final String SPLIT_UI_UPDATE               = "ui-update";
 
     private static final Map<Long, String> ID_MAP = new HashMap<>();
 

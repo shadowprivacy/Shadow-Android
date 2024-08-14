@@ -12,7 +12,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.NavHostFragment
 import androidx.preference.PreferenceManager
@@ -75,7 +75,7 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
     val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
     val repository = PrivacySettingsRepository()
     val factory = PrivacySettingsViewModel.Factory(sharedPreferences, repository)
-    viewModel = ViewModelProviders.of(this, factory)[PrivacySettingsViewModel::class.java]
+    viewModel = ViewModelProvider(this, factory)[PrivacySettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) { state ->
       adapter.submitList(getConfiguration(state).toMappingModelList())
@@ -321,15 +321,15 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
   }
 
   @StringRes
-  private fun getWhoCanFindMeByUserLoginSummary(UserLoginListingMode: UserLoginListingMode): Int {
-    return when (UserLoginListingMode) {
+  private fun getWhoCanFindMeByUserLoginSummary(userLoginListingMode: UserLoginListingMode): Int {
+    return when (userLoginListingMode) {
       UserLoginListingMode.LISTED -> R.string.PhoneNumberPrivacy_everyone
       UserLoginListingMode.UNLISTED -> R.string.PhoneNumberPrivacy_nobody
     }
   }
 
-  private fun onSeeMyUserLoginClicked(UserLoginSharingMode: UserLoginPrivacyValues.UserLoginSharingMode) {
-    val value = arrayOf(UserLoginSharingMode)
+  private fun onSeeMyUserLoginClicked(userLoginSharingMode: UserLoginPrivacyValues.UserLoginSharingMode) {
+    val value = arrayOf(userLoginSharingMode)
     val items = items(requireContext())
     val modes: List<UserLoginPrivacyValues.UserLoginSharingMode> = ArrayList(items.keys)
     val modeStrings = items.values.toTypedArray()
@@ -390,9 +390,9 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
     }
   }
 
-  fun onFindMyUserLoginClicked(UserLoginListingMode: UserLoginListingMode) {
+  fun onFindMyUserLoginClicked(userLoginListingMode: UserLoginListingMode) {
     val context = requireContext()
-    val value = arrayOf(UserLoginListingMode)
+    val value = arrayOf(userLoginListingMode)
     MaterialAlertDialogBuilder(requireActivity()).apply {
       setTitle(R.string.preferences_app_protection__find_me_by_phone_number)
       setCancelable(true)

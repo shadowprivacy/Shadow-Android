@@ -23,6 +23,7 @@ import su.sres.securesms.R;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.util.MediaUtil;
+import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.StorageUtil;
 import su.sres.securesms.util.Util;
 import su.sres.core.util.concurrent.SignalExecutors;
@@ -201,13 +202,20 @@ public class MediaRepository {
 
   @WorkerThread
   private @NonNull List<Media> getMediaInBucket(@NonNull Context context, @NonNull String bucketId) {
-    List<Media> images = getMediaInBucket(context, bucketId, Images.Media.EXTERNAL_CONTENT_URI, true);
+    Stopwatch   stopwatch = new Stopwatch("getMediaInBucket");
+    List<Media> images    = getMediaInBucket(context, bucketId, Images.Media.EXTERNAL_CONTENT_URI, true);
     List<Media> videos = getMediaInBucket(context, bucketId, Video.Media.EXTERNAL_CONTENT_URI, false);
     List<Media> media  = new ArrayList<>(images.size() + videos.size());
+
+    stopwatch.split("post fetch");
 
     media.addAll(images);
     media.addAll(videos);
     Collections.sort(media, (o1, o2) -> Long.compare(o2.getDate(), o1.getDate()));
+
+    stopwatch.split("post sort");
+
+    stopwatch.stop(TAG);
 
     return media;
   }

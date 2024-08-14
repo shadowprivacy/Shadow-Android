@@ -5,7 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.DialogInterface
 import android.widget.Toast
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import su.sres.core.util.concurrent.SignalExecutors
 import su.sres.securesms.R
@@ -33,7 +33,7 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
     val repository = InternalSettingsRepository(requireContext())
     val factory = InternalSettingsViewModel.Factory(repository)
-    viewModel = ViewModelProviders.of(this, factory)[InternalSettingsViewModel::class.java]
+    viewModel = ViewModelProvider(this, factory)[InternalSettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) {
       adapter.submitList(getConfiguration(it).toMappingModelList())
@@ -93,6 +93,19 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
           viewModel.setShakeToReport(!state.shakeToReport)
         }
       )
+
+      /* dividerPref()
+
+      sectionHeaderPref(R.string.preferences__internal_storage_service)
+
+      switchPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_disable_storage_service),
+        summary = DSLSettingsText.from(R.string.preferences__internal_disable_storage_service_description),
+        isChecked = state.disableStorageService,
+        onClick = {
+          viewModel.setDisableStorageService(!state.disableStorageService)
+        }
+      ) */
 
       dividerPref()
 
@@ -187,7 +200,7 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
         summary = DSLSettingsText.from(emojiSummary),
         isChecked = state.useBuiltInEmojiSet,
         onClick = {
-          viewModel.setDisableAutoMigrationNotification(!state.useBuiltInEmojiSet)
+          viewModel.setUseBuiltInEmoji(!state.useBuiltInEmojiSet)
         }
       )
 
@@ -255,12 +268,12 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
       .setPositiveButton(
         "Copy"
       ) { _: DialogInterface?, _: Int ->
+        val context: Context = ApplicationDependencies.getApplication()
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
         SimpleTask.run<Any?>(
           SignalExecutors.UNBOUNDED,
           {
-            val context: Context = ApplicationDependencies.getApplication()
-            val clipboard =
-              context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val tsv = DataExportUtil.createTsv()
             val clip = ClipData.newPlainText(context.getString(R.string.app_name), tsv)
             clipboard.setPrimaryClip(clip)

@@ -2,9 +2,10 @@ package su.sres.securesms.components.settings.app
 
 import android.view.View
 import android.widget.TextView
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import su.sres.securesms.R
+import su.sres.securesms.badges.BadgeImageView
 import su.sres.securesms.components.AvatarImageView
 import su.sres.securesms.components.settings.DSLConfiguration
 import su.sres.securesms.components.settings.DSLSettingsAdapter
@@ -26,7 +27,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
     adapter.registerFactory(BioPreference::class.java, MappingAdapter.LayoutFactory(::BioPreferenceViewHolder, R.layout.bio_preference_item))
     adapter.registerFactory(PaymentsPreference::class.java, MappingAdapter.LayoutFactory(::PaymentsPreferenceViewHolder, R.layout.dsl_payments_preference))
 
-    val viewModel = ViewModelProviders.of(this)[AppSettingsViewModel::class.java]
+    val viewModel = ViewModelProvider(this)[AppSettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) { state ->
       adapter.submitList(getConfiguration(state).toMappingModelList())
@@ -156,6 +157,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
 
     private val avatarView: AvatarImageView = itemView.findViewById(R.id.icon)
     private val aboutView: TextView = itemView.findViewById(R.id.about)
+    private val badgeView: BadgeImageView = itemView.findViewById(R.id.badge)
 
     override fun bind(model: BioPreference) {
       super.bind(model)
@@ -165,6 +167,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
       titleView.text = model.recipient.profileName.toString()
       summaryView.text = model.recipient.requireE164()
       avatarView.setRecipient(Recipient.self())
+      badgeView.setBadgeFromRecipient(Recipient.self())
 
       titleView.visibility = View.VISIBLE
       summaryView.visibility = View.VISIBLE

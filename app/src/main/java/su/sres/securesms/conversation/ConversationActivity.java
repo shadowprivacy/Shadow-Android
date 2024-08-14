@@ -100,7 +100,6 @@ import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.BlockUnblockDialog;
 import su.sres.securesms.MainActivity;
 import su.sres.securesms.GroupMembersDialog;
-import su.sres.securesms.components.MaskView;
 import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.components.emoji.EmojiEventListener;
 import su.sres.securesms.components.mention.MentionAnnotation;
@@ -2400,11 +2399,12 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
   @Override
   public void onReactWithAnyEmojiDialogDismissed() {
-    reactionDelegate.hideMask();
+    reactionDelegate.hide();
   }
 
   @Override
   public void onReactWithAnyEmojiSelected(@NonNull String emoji) {
+    reactionDelegate.hide();
   }
 
   @Override
@@ -3286,7 +3286,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
   @Override
   public void onReactionsDialogDismissed() {
-    reactionDelegate.hideMask();
+    fragment.clearFocusedItem();
   }
 
   @Override
@@ -3622,19 +3622,13 @@ public class ConversationActivity extends PassphraseRequiredActivity
   }
 
   @Override
-  public void handleReaction(@NonNull MaskView.MaskTarget maskTarget,
-                             @NonNull ConversationMessage conversationMessage,
+  public void handleReaction(@NonNull ConversationMessage conversationMessage,
                              @NonNull Toolbar.OnMenuItemClickListener toolbarListener,
                              @NonNull ConversationReactionOverlay.OnHideListener onHideListener)
   {
     reactionDelegate.setOnToolbarItemClickedListener(toolbarListener);
     reactionDelegate.setOnHideListener(onHideListener);
-    reactionDelegate.show(this, maskTarget, recipient.get(), conversationMessage, inputAreaHeight(), groupViewModel.isNonAdminInAnnouncementGroup());
-  }
-
-  @Override
-  public void onListVerticalTranslationChanged(float translationY) {
-    reactionDelegate.setListVerticalTranslation(translationY);
+    reactionDelegate.show(this, recipient.get(), conversationMessage, groupViewModel.isNonAdminInAnnouncementGroup());
   }
 
   @Override
@@ -3650,11 +3644,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
     } else {
       startActivity(MessageDetailsActivity.getIntentForMessageDetails(this, messageRecord, messageRecord.getRecipient().getId(), messageRecord.getThreadId()));
     }
-  }
-
-  @Override
-  public void handleReactionDetails(@NonNull MaskView.MaskTarget maskTarget) {
-    reactionDelegate.showMask(maskTarget, titleView.getMeasuredHeight(), inputAreaHeight());
   }
 
   @Override

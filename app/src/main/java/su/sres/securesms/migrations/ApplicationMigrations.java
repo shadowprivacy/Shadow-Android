@@ -65,12 +65,13 @@ public class ApplicationMigrations {
     static final int SENDER_KEY_3                  = 37;
     static final int CHANGE_USER_LOGIN_SYNC        = 38;
     static final int CHANGE_LOGIN_CAPABILITY       = 39;
-    // static final int STICKER_MY_DAILY_LIFE         = 40;
+    static final int DEFAULT_REACTIONS_SYNC        = 40;
+    static final int STICKER_MY_DAILY_LIFE         = 41;
 
 
   }
 
-  public static final int CURRENT_VERSION = 39;
+  public static final int CURRENT_VERSION = 41;
 
   /**
    * This *must* be called after the {@link JobManager} has been instantiated, but *before* the call
@@ -278,9 +279,13 @@ public class ApplicationMigrations {
       jobs.put(Version.CHANGE_LOGIN_CAPABILITY, new AttributesMigrationJob());
     }
 
-    // if (lastSeenVersion < Version.STICKER_MY_DAILY_LIFE) {
-    //  jobs.put(Version.STICKER_MY_DAILY_LIFE, new StickerMyDailyLifeMigrationJob());
-    // }
+    if (lastSeenVersion < Version.DEFAULT_REACTIONS_SYNC) {
+      jobs.put(Version.DEFAULT_REACTIONS_SYNC, new StorageServiceMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.STICKER_MY_DAILY_LIFE) {
+      jobs.put(Version.STICKER_MY_DAILY_LIFE, new StickerMyDailyLifeMigrationJob());
+    }
 
     return jobs;
   }

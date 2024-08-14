@@ -22,6 +22,7 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 import androidx.core.content.ContextCompat;
 
 import android.text.Spannable;
@@ -62,6 +63,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -75,27 +77,27 @@ public abstract class MessageRecord extends DisplayRecord {
 
   private static final String TAG = Log.tag(MessageRecord.class);
 
-  private final Recipient                 individualRecipient;
-  private final int                       recipientDeviceId;
-  private final long                      id;
-  private final List<IdentityKeyMismatch> mismatches;
-  private final List<NetworkFailure>      networkFailures;
-  private final int                       subscriptionId;
-  private final long                      expiresIn;
-  private final long                      expireStarted;
-  private final boolean                   unidentified;
-  private final List<ReactionRecord>      reactions;
-  private final long                      serverTimestamp;
-  private final boolean                   remoteDelete;
-  private final long                      notifiedTimestamp;
-  private final long                      receiptTimestamp;
+  private final Recipient                individualRecipient;
+  private final int                      recipientDeviceId;
+  private final long                     id;
+  private final Set<IdentityKeyMismatch> mismatches;
+  private final Set<NetworkFailure>      networkFailures;
+  private final int                      subscriptionId;
+  private final long                     expiresIn;
+  private final long                     expireStarted;
+  private final boolean                  unidentified;
+  private final List<ReactionRecord>     reactions;
+  private final long                     serverTimestamp;
+  private final boolean                  remoteDelete;
+  private final long                     notifiedTimestamp;
+  private final long                     receiptTimestamp;
 
   MessageRecord(long id, String body, Recipient conversationRecipient,
                 Recipient individualRecipient, int recipientDeviceId,
                 long dateSent, long dateReceived, long dateServer, long threadId,
                 int deliveryStatus, int deliveryReceiptCount, long type,
-                List<IdentityKeyMismatch> mismatches,
-                List<NetworkFailure> networkFailures,
+                Set<IdentityKeyMismatch> mismatches,
+                Set<NetworkFailure> networkFailures,
                 int subscriptionId, long expiresIn, long expireStarted,
                 int readReceiptCount, boolean unidentified,
                 @NonNull List<ReactionRecord> reactions, boolean remoteDelete, long notifiedTimestamp,
@@ -133,6 +135,7 @@ public abstract class MessageRecord extends DisplayRecord {
   }
 
   @Override
+  @WorkerThread
   public SpannableString getDisplayBody(@NonNull Context context) {
     UpdateDescription updateDisplayBody = getUpdateDisplayBody(context);
 
@@ -203,6 +206,10 @@ public abstract class MessageRecord extends DisplayRecord {
     }
 
     return null;
+  }
+
+  public boolean isDisplayBodyEmpty(@NonNull Context context) {
+    return getUpdateDisplayBody(context) == null && getBody().isEmpty();
   }
 
   public boolean isSelfCreatedGroup() {
@@ -508,11 +515,11 @@ public abstract class MessageRecord extends DisplayRecord {
     return type;
   }
 
-  public List<IdentityKeyMismatch> getIdentityKeyMismatches() {
+  public Set<IdentityKeyMismatch> getIdentityKeyMismatches() {
     return mismatches;
   }
 
-  public List<NetworkFailure> getNetworkFailures() {
+  public Set<NetworkFailure> getNetworkFailures() {
     return networkFailures;
   }
 

@@ -11,6 +11,7 @@ import su.sres.securesms.recipients.RecipientDetails
 import su.sres.securesms.recipients.RecipientId
 import su.sres.securesms.wallpaper.ChatWallpaper
 import org.whispersystems.libsignal.util.guava.Optional
+import su.sres.securesms.badges.models.Badge
 import java.util.UUID
 import kotlin.random.Random
 
@@ -75,7 +76,8 @@ object RecipientDatabaseTestUtils {
       false
     ),
     extras: Recipient.Extras? = null,
-    hasGroupsInCommon: Boolean = false
+    hasGroupsInCommon: Boolean = false,
+    badges: List<Badge> = emptyList()
   ): Recipient = Recipient(
     recipientId,
     RecipientDetails(
@@ -128,7 +130,8 @@ object RecipientDatabaseTestUtils {
         aboutEmoji,
         syncExtras,
         extras,
-        hasGroupsInCommon
+        hasGroupsInCommon,
+        badges
       ),
       participants
     ),

@@ -1,7 +1,5 @@
 package su.sres.securesms.webrtc.audio;
 
-
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
@@ -52,6 +50,8 @@ public class IncomingRinger {
     if (shouldVibrate(context, player, ringerMode, vibrate)) {
       Log.i(TAG, "Starting vibration");
       vibrator.vibrate(VIBRATE_PATTERN, 1);
+    } else {
+      Log.i(TAG, "Skipping vibration");
     }
 
     if (player != null && ringerMode == AudioManager.RINGER_MODE_NORMAL) {

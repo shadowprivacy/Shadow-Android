@@ -5,7 +5,6 @@ import android.database.Cursor
 import androidx.annotation.WorkerThread
 import androidx.lifecycle.LiveData
 import org.whispersystems.libsignal.util.guava.Optional
-import org.whispersystems.libsignal.util.guava.Preconditions
 import su.sres.core.util.concurrent.SignalExecutors
 import su.sres.core.util.logging.Log
 import su.sres.storageservice.protos.groups.local.DecryptedGroup
@@ -177,7 +176,11 @@ class ConversationSettingsRepository(
   fun block(recipientId: RecipientId) {
     SignalExecutors.BOUNDED.execute {
       val recipient = Recipient.resolved(recipientId)
-      RecipientUtil.blockNonGroup(context, recipient)
+      if (recipient.isGroup) {
+        RecipientUtil.block(context, recipient)
+      } else {
+        RecipientUtil.blockNonGroup(context, recipient)
+      }
     }
   }
 
@@ -199,28 +202,6 @@ class ConversationSettingsRepository(
     SignalExecutors.BOUNDED.execute {
       val recipient = Recipient.externalGroupExact(context, groupId)
       RecipientUtil.unblock(context, recipient)
-    }
-  }
-
-  fun disableProfileSharingForInternalUser(recipientId: RecipientId) {
-    Preconditions.checkArgument(FeatureFlags.internalUser(), "Internal users only!")
-    SignalExecutors.BOUNDED.execute {
-      DatabaseFactory.getRecipientDatabase(context).setProfileSharing(recipientId, false)
-    }
-  }
-
-  fun deleteSessionForInternalUser(recipientId: RecipientId) {
-    Preconditions.checkArgument(FeatureFlags.internalUser(), "Internal users only!")
-
-    SignalExecutors.BOUNDED.execute {
-      val recipient = Recipient.resolved(recipientId)
-
-      if (recipient.hasUuid()) {
-        DatabaseFactory.getSessionDatabase(context).deleteAllFor(recipient.requireUuid().toString())
-      }
-      if (recipient.hasE164()) {
-        DatabaseFactory.getSessionDatabase(context).deleteAllFor(recipient.requireE164())
-      }
     }
   }
 

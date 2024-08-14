@@ -129,6 +129,7 @@ public final class StorageSyncHelper {
                 .setPayments(SignalStore.paymentsValues().mobileCoinPaymentsEnabled(), Optional.fromNullable(SignalStore.paymentsValues().getPaymentsEntropy()).transform(Entropy::getBytes).orNull())
                 .setUniversalExpireTimer(SignalStore.settings().getUniversalExpireTimer())
                 .setUserLogin(TextSecurePreferences.getLocalNumber(context))
+                .setDefaultReactions(SignalStore.emojiValues().getReactions())
                 .build();
 
         return SignalStorageRecord.forAccount(account);
@@ -150,6 +151,7 @@ public final class StorageSyncHelper {
         SignalStore.userLoginPrivacy().setUserLoginSharingMode(StorageSyncModels.remoteToLocalUserLoginSharingMode(update.getNew().getUserLoginSharingMode()));
         SignalStore.paymentsValues().setEnabledAndEntropy(update.getNew().getPayments().isEnabled(), Entropy.fromBytes(update.getNew().getPayments().getEntropy().orNull()));
         SignalStore.settings().setUniversalExpireTimer(update.getNew().getUniversalExpireTimer());
+        SignalStore.emojiValues().setReactions(update.getNew().getDefaultReactions());
 
         if (fetchProfile && update.getNew().getAvatarUrlPath().isPresent()) {
             ApplicationDependencies.getJobManager().add(new RetrieveProfileAvatarJob(self, update.getNew().getAvatarUrlPath().get()));

@@ -15,4 +15,5 @@ data class InternalSettingsState(
   val emojiVersion: EmojiFiles.Version?,
   val removeSenderKeyMinimium: Boolean,
   val delayResends: Boolean,
+  val disableStorageService: Boolean,
 )

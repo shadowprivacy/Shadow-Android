@@ -18,6 +18,7 @@ import su.sres.securesms.mediasend.Media
 import su.sres.securesms.mediasend.MediaRepository
 import su.sres.securesms.mediasend.v2.MediaCountIndicatorButton
 import su.sres.securesms.util.MappingAdapter
+import su.sres.securesms.util.Stopwatch
 import su.sres.securesms.util.ViewUtil
 import su.sres.securesms.util.livedata.LiveDataUtil
 import su.sres.securesms.util.visible
@@ -74,13 +75,17 @@ class MediaGalleryFragment : Fragment(R.layout.v2_media_gallery_fragment) {
       onBack()
     }
 
-    toolbar.setOnMenuItemClickListener { item ->
-      if (item.itemId == R.id.action_camera) {
-        callbacks.onNavigateToCamera()
-        true
-      } else {
-        false
+    if (callbacks.isCameraEnabled()) {
+      toolbar.setOnMenuItemClickListener { item ->
+        if (item.itemId == R.id.action_camera) {
+          callbacks.onNavigateToCamera()
+          true
+        } else {
+          false
+        }
       }
+    } else {
+      toolbar.menu.findItem(R.id.action_camera).isVisible = false
     }
 
     countButton.setOnClickListener {
@@ -115,7 +120,10 @@ class MediaGalleryFragment : Fragment(R.layout.v2_media_gallery_fragment) {
     viewStateLiveData.observe(viewLifecycleOwner) { state ->
       bottomBarGroup.visible = state.selectedMedia.isNotEmpty()
       countButton.setCount(state.selectedMedia.size)
+      val stopwatch = Stopwatch("mediaSubmit")
       selectedAdapter.submitList(state.selectedMedia.map { MediaGallerySelectedItem.Model(it) }) {
+        stopwatch.split("after-submit")
+        stopwatch.stop("MediaGalleryFragment")
         if (state.selectedMedia.isNotEmpty()) {
           selectedRecycler.smoothScrollToPosition(state.selectedMedia.size - 1)
         }
@@ -166,6 +174,7 @@ class MediaGalleryFragment : Fragment(R.layout.v2_media_gallery_fragment) {
   )
 
   interface Callbacks {
+    fun isCameraEnabled(): Boolean = true
     fun isMultiselectEnabled(): Boolean = false
     fun onMediaSelected(media: Media)
     fun onMediaUnselected(media: Media): Unit = throw UnsupportedOperationException()

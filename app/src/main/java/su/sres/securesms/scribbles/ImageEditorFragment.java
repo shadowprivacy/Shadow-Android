@@ -26,16 +26,16 @@ import androidx.fragment.app.Fragment;
 import su.sres.securesms.R;
 import su.sres.securesms.animation.ResizeAnimation;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.imageeditor.Bounds;
-import su.sres.securesms.imageeditor.ColorableRenderer;
-import su.sres.securesms.imageeditor.ImageEditorView;
-import su.sres.securesms.imageeditor.Renderer;
-import su.sres.securesms.imageeditor.SelectableRenderer;
-import su.sres.securesms.imageeditor.model.EditorElement;
-import su.sres.securesms.imageeditor.model.EditorModel;
-import su.sres.securesms.imageeditor.renderers.BezierDrawingRenderer;
-import su.sres.securesms.imageeditor.renderers.FaceBlurRenderer;
-import su.sres.securesms.imageeditor.renderers.MultiLineTextRenderer;
+import su.sres.imageeditor.core.Bounds;
+import su.sres.imageeditor.core.ColorableRenderer;
+import su.sres.imageeditor.core.ImageEditorView;
+import su.sres.imageeditor.core.Renderer;
+import su.sres.imageeditor.core.SelectableRenderer;
+import su.sres.imageeditor.core.model.EditorElement;
+import su.sres.imageeditor.core.model.EditorModel;
+import su.sres.imageeditor.core.renderers.BezierDrawingRenderer;
+import su.sres.imageeditor.core.renderers.FaceBlurRenderer;
+import su.sres.imageeditor.core.renderers.MultiLineTextRenderer;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.mediasend.MediaSendPageFragment;
@@ -96,6 +96,9 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
   private           int           imageMaxWidth;
 
   private final ThrottledDebouncer deleteFadeDebouncer = new ThrottledDebouncer(500);
+  private       float              initialDialImageDegrees;
+  private       float              initialDialScale;
+  private       float              minDialScaleDown;
 
   public static class Data {
     private final Bundle bundle;
@@ -422,6 +425,8 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
                    .setVisible(mode == ImageEditorHudV2.Mode.DELETE)
                    .persist();
 
+    updateHudDialRotation();
+
     switch (mode) {
       case CROP: {
         imageEditorView.getModel().startCrop();
@@ -562,6 +567,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
   @Override
   public void onClearAll() {
     imageEditorView.getModel().clearUndoStack();
+    updateHudDialRotation();
   }
 
   @Override
@@ -587,6 +593,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
   public void onUndo() {
     imageEditorView.getModel().undo();
     imageEditorHud.setBlurFacesToggleEnabled(imageEditorView.getModel().hasFaceRenderer());
+    updateHudDialRotation();
   }
 
   @Override
@@ -640,6 +647,32 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
   @Override
   public void onDone() {
     controller.onDoneEditing();
+  }
+
+  @Override
+  public void onDialRotationGestureStarted() {
+    float localScaleX = imageEditorView.getModel().getMainImage().getLocalScaleX();
+    minDialScaleDown = initialDialScale / localScaleX;
+    imageEditorView.getModel().pushUndoPoint();
+    imageEditorView.getModel().updateUndoRedoAvailabilityState();
+    initialDialImageDegrees = (float) Math.toDegrees(imageEditorView.getModel().getMainImage().getLocalRotationAngle());
+  }
+
+  @Override
+  public void onDialRotationGestureFinished() {
+    imageEditorView.getModel().getMainImage().commitEditorMatrix();
+    imageEditorView.getModel().postEdit(true);
+    imageEditorView.invalidate();
+  }
+
+  @Override
+  public void onDialRotationChanged(float degrees) {
+    imageEditorView.setMainImageEditorMatrixRotation(degrees - initialDialImageDegrees, minDialScaleDown);
+  }
+
+  private void updateHudDialRotation() {
+    imageEditorHud.setDialRotation(getRotationDegreesRounded(imageEditorView.getModel().getMainImage()));
+    initialDialScale = imageEditorView.getModel().getMainImage().getLocalScaleX();
   }
 
   private ResizeAnimation resizeAnimation;
@@ -711,7 +744,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
   }
 
   private static boolean shouldScaleViewPort(@NonNull ImageEditorHudV2.Mode mode) {
-    return mode != ImageEditorHudV2.Mode.NONE && mode != ImageEditorHudV2.Mode.CROP;
+    return mode != ImageEditorHudV2.Mode.NONE;
   }
 
   private void performSaveToDisk() {
@@ -833,10 +866,18 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     }
   };
 
+  public float getRotationDegreesRounded(@Nullable EditorElement editorElement) {
+    if (editorElement == null) {
+      return 0f;
+    }
+    return Math.round(Math.toDegrees(editorElement.getLocalRotationAngle()));
+  }
+
   private final ImageEditorView.DragListener dragListener = new ImageEditorView.DragListener() {
     @Override
     public void onDragStarted(@Nullable EditorElement editorElement) {
       if (imageEditorHud.getMode() == ImageEditorHudV2.Mode.CROP) {
+        updateHudDialRotation();
         return;
       }
 
@@ -856,6 +897,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     @Override
     public void onDragMoved(@Nullable EditorElement editorElement, boolean isInTrashHitZone) {
       if (imageEditorHud.getMode() == ImageEditorHudV2.Mode.CROP || editorElement == null) {
+        updateHudDialRotation();
         return;
       }
 
@@ -883,6 +925,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
       wasInTrashHitZone = false;
       imageEditorHud.animate().alpha(1f);
       if (imageEditorHud.getMode() == ImageEditorHudV2.Mode.CROP) {
+        updateHudDialRotation();
         return;
       }
 
@@ -962,6 +1005,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     if (editorElement != null && editorElement.getRenderer() instanceof SelectableRenderer) {
       ((SelectableRenderer) editorElement.getRenderer()).onSelected(selected);
     }
+    imageEditorView.getModel().setSelected(selected ? editorElement : null);
   }
 
   private final OnBackPressedCallback onBackPressedCallback = new OnBackPressedCallback(false) {

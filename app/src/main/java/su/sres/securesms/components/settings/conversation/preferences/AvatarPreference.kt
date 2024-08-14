@@ -3,6 +3,8 @@ package su.sres.securesms.components.settings.conversation.preferences
 import android.view.View
 import androidx.core.view.ViewCompat
 import su.sres.securesms.R
+import su.sres.securesms.badges.BadgeImageView
+import su.sres.securesms.badges.models.Badge
 import su.sres.securesms.components.AvatarImageView
 import su.sres.securesms.components.settings.PreferenceModel
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto
@@ -23,7 +25,8 @@ object AvatarPreference {
 
   class Model(
     val recipient: Recipient,
-    val onAvatarClick: (View) -> Unit
+    val onAvatarClick: (View) -> Unit,
+    val onBadgeClick: (Badge) -> Unit
   ) : PreferenceModel<Model>() {
     override fun areItemsTheSame(newItem: Model): Boolean {
       return recipient == newItem.recipient
@@ -36,11 +39,23 @@ object AvatarPreference {
 
   private class ViewHolder(itemView: View) : MappingViewHolder<Model>(itemView) {
     private val avatar: AvatarImageView = itemView.findViewById<AvatarImageView>(R.id.bio_preference_avatar).apply {
-      ViewCompat.setTransitionName(this, "avatar")
       setFallbackPhotoProvider(AvatarPreferenceFallbackPhotoProvider())
     }
 
+    private val badge: BadgeImageView = itemView.findViewById(R.id.bio_preference_badge)
+
+    init {
+      ViewCompat.setTransitionName(avatar.parent as View, "avatar")
+    }
+
     override fun bind(model: Model) {
+      badge.setBadgeFromRecipient(model.recipient)
+      badge.setOnClickListener {
+        val badge = model.recipient.badges.firstOrNull()
+        if (badge != null) {
+          model.onBadgeClick(badge)
+        }
+      }
       avatar.setAvatar(model.recipient)
       avatar.disableQuickContact()
       avatar.setOnClickListener { model.onAvatarClick(avatar) }

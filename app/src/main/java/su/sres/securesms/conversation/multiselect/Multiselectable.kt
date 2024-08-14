@@ -3,8 +3,9 @@ package su.sres.securesms.conversation.multiselect
 import android.view.View
 import su.sres.securesms.conversation.ConversationMessage
 import su.sres.securesms.conversation.colors.Colorizable
+import su.sres.securesms.giph.mp4.GiphyMp4Playable
 
-interface Multiselectable : Colorizable {
+interface Multiselectable : Colorizable, GiphyMp4Playable {
   val conversationMessage: ConversationMessage
 
   fun getTopBoundaryOfMultiselectPart(multiselectPart: MultiselectPart): Int

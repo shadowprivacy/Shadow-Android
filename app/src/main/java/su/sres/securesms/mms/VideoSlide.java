@@ -19,6 +19,7 @@ package su.sres.securesms.mms;
 import android.content.Context;
 import android.content.res.Resources.Theme;
 import android.net.Uri;
+
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

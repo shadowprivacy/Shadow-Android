@@ -7,7 +7,7 @@ import android.database.Cursor;
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 
-import net.zetetic.database.sqlcipher.SQLiteDatabase;
+import net.sqlcipher.database.SQLiteDatabase;
 
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;

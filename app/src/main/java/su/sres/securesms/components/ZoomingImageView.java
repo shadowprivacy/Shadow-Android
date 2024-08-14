@@ -3,12 +3,13 @@ package su.sres.securesms.components;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.Uri;
-import android.os.AsyncTask;
+
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+
 import android.util.AttributeSet;
+
 import su.sres.core.util.logging.Log;
-import android.util.Pair;
+
 import android.view.View;
 import android.widget.FrameLayout;
 
@@ -41,7 +42,7 @@ public class ZoomingImageView extends FrameLayout {
 
   private static final int ZOOM_TRANSITION_DURATION = 300;
 
-  private static final float ZOOM_LEVEL_MIN = 1.0f;
+  private static final float ZOOM_LEVEL_MIN              = 1.0f;
   private static final float LARGE_IMAGES_ZOOM_LEVEL_MID = 2.0f;
   private static final float LARGE_IMAGES_ZOOM_LEVEL_MAX = 5.0f;
 
@@ -67,6 +68,7 @@ public class ZoomingImageView extends FrameLayout {
     this.photoView            = findViewById(R.id.image_view);
     this.subsamplingImageView = findViewById(R.id.subsampling_image_view);
 
+    this.subsamplingImageView.setOrientation(SubsamplingScaleImageView.ORIENTATION_USE_EXIF);
     this.subsamplingImageView.setOrientation(SubsamplingScaleImageView.ORIENTATION_USE_EXIF);
 
     this.photoView.setZoomTransitionDuration(ZOOM_TRANSITION_DURATION);

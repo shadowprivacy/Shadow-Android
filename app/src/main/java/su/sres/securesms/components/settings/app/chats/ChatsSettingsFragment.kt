@@ -1,6 +1,6 @@
 package su.sres.securesms.components.settings.app.chats
 
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import su.sres.securesms.R
 import su.sres.securesms.components.settings.DSLConfiguration
@@ -16,7 +16,7 @@ class ChatsSettingsFragment : DSLSettingsFragment(R.string.preferences_chats__ch
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
     val repository = ChatsSettingsRepository()
     val factory = ChatsSettingsViewModel.Factory(repository)
-    viewModel = ViewModelProviders.of(this, factory)[ChatsSettingsViewModel::class.java]
+    viewModel = ViewModelProvider(this, factory)[ChatsSettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) {
       adapter.submitList(getConfiguration(it).toMappingModelList())

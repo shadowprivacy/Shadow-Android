@@ -19,7 +19,7 @@ import su.sres.securesms.util.Projection
  * - Gives easy access to different bubble colors
  * - Watches and responds to RecyclerView scroll and layout changes to update a ColorizerView
  */
-class Colorizer(private val colorizerView: ColorizerView) : RecyclerView.OnScrollListener(), View.OnLayoutChangeListener {
+class Colorizer {
 
   private var colorsHaveBeenSet = false
   private val groupSenderColors: MutableMap<RecipientId, NameColor> = mutableMapOf()
@@ -42,49 +42,10 @@ class Colorizer(private val colorizerView: ColorizerView) : RecyclerView.OnScrol
   @ColorInt
   fun getIncomingGroupSenderColor(context: Context, recipient: Recipient): Int = groupSenderColors[recipient.id]?.getColor(context) ?: getDefaultColor(context, recipient.id)
 
-  fun attachToRecyclerView(recyclerView: RecyclerView) {
-    recyclerView.addOnScrollListener(this)
-    recyclerView.addOnLayoutChangeListener(this)
-  }
-
   fun onNameColorsChanged(nameColorMap: Map<RecipientId, NameColor>) {
     groupSenderColors.clear()
     groupSenderColors.putAll(nameColorMap)
     colorsHaveBeenSet = true
-  }
-
-  fun onChatColorsChanged(chatColors: ChatColors) {
-    colorizerView.background = chatColors.chatBubbleMask
-  }
-
-  override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-    applyClipPathsToMaskedGradient(recyclerView)
-  }
-
-  override fun onLayoutChange(v: View?, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int) {
-    applyClipPathsToMaskedGradient(v as RecyclerView)
-  }
-
-  fun applyClipPathsToMaskedGradient(recyclerView: RecyclerView) {
-    val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-
-    val firstVisibleItemPosition: Int = layoutManager.findFirstVisibleItemPosition()
-    val lastVisibleItemPosition: Int = layoutManager.findLastVisibleItemPosition()
-
-    val projections: List<Projection> = (firstVisibleItemPosition..lastVisibleItemPosition)
-      .mapNotNull { recyclerView.findViewHolderForAdapterPosition(it) as? Colorizable }
-      .map {
-        it.colorizerProjections
-          .map { p -> Projection.translateFromRootToDescendantCoords(p, colorizerView) }
-      }
-      .flatten()
-
-    if (projections.isNotEmpty()) {
-      colorizerView.visibility = View.VISIBLE
-      colorizerView.setProjections(projections)
-    } else {
-      colorizerView.visibility = View.GONE
-    }
   }
 
   @ColorInt

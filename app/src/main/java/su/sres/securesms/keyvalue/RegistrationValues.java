@@ -9,6 +9,7 @@ import java.util.List;
 public final class RegistrationValues extends SignalStoreValues {
 
     private static final String REGISTRATION_COMPLETE = "registration.complete";
+    private static final String HAS_UPLOADED_PROFILE  = "registration.has_uploaded_profile";
     private static final String SERVER_SET            = "registration.server_set";
     private static final String TRUSTSTORE_PASSWORD   = "registration.truststore_password";
 
@@ -57,5 +58,17 @@ public final class RegistrationValues extends SignalStoreValues {
 
     public synchronized boolean isServerSet() {
         return getBoolean(SERVER_SET, false);
+    }
+
+    public boolean hasUploadedProfile() {
+        return getBoolean(HAS_UPLOADED_PROFILE, false);
+    }
+
+    public void markHasUploadedProfile() {
+        putBoolean(HAS_UPLOADED_PROFILE, true);
+    }
+
+    public void clearHasUploadedProfile() {
+        putBoolean(HAS_UPLOADED_PROFILE, false);
     }
 }

@@ -12,6 +12,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.R;
+import su.sres.securesms.badges.BadgeImageView;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.components.emoji.EmojiTextView;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
@@ -28,7 +29,8 @@ public class ConversationBannerView extends ConstraintLayout {
     private TextView        contactAbout;
     private TextView      contactSubtitle;
     private EmojiTextView contactDescription;
-    private View          tapToView;
+    private View           tapToView;
+    private BadgeImageView contactBadge;
 
     public ConversationBannerView(Context context) {
         this(context, null);
@@ -44,6 +46,7 @@ public class ConversationBannerView extends ConstraintLayout {
         inflate(getContext(), R.layout.conversation_banner_view, this);
 
         contactAvatar      = findViewById(R.id.message_request_avatar);
+        contactBadge       = findViewById(R.id.message_request_badge);
         contactTitle       = findViewById(R.id.message_request_title);
         contactAbout       = findViewById(R.id.message_request_about);
         contactSubtitle    = findViewById(R.id.message_request_subtitle);
@@ -51,6 +54,10 @@ public class ConversationBannerView extends ConstraintLayout {
         tapToView          = findViewById(R.id.message_request_avatar_tap_to_view);
 
         contactAvatar.setFallbackPhotoProvider(new FallbackPhotoProvider());
+    }
+
+    public void setBadge(@Nullable Recipient recipient) {
+        contactBadge.setBadgeFromRecipient(recipient);
     }
 
     public void setAvatar(@NonNull GlideRequests requests, @Nullable Recipient recipient) {

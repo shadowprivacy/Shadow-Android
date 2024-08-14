@@ -98,8 +98,9 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
     AccountRecord.UserLoginSharingMode userLoginSharingMode   = remote.getUserLoginSharingMode();
     int                                universalExpireTimer   = remote.getUniversalExpireTimer();
     String                             userLogin              = local.getUserLogin();
-    boolean                            matchesRemote          = doParamsMatch(remote, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations, payments, universalExpireTimer, userLogin);
-    boolean                            matchesLocal           = doParamsMatch(local, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations, payments, universalExpireTimer, userLogin);
+    List<String>                       defaultReactions       = remote.getDefaultReactions().size() > 0 ? remote.getDefaultReactions() : local.getDefaultReactions();
+    boolean                            matchesRemote          = doParamsMatch(remote, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations, payments, universalExpireTimer, userLogin, defaultReactions);
+    boolean                            matchesLocal           = doParamsMatch(local, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations, payments, universalExpireTimer, userLogin, defaultReactions);
 
     if (matchesRemote) {
       return remote;
@@ -125,6 +126,7 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
           .setPayments(payments.isEnabled(), payments.getEntropy().orNull())
           .setUniversalExpireTimer(universalExpireTimer)
           .setUserLogin(userLogin)
+          .setDefaultReactions(defaultReactions)
           .build();
     }
   }
@@ -161,7 +163,8 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
                                        @NonNull List<PinnedConversation> pinnedConversations,
                                        SignalAccountRecord.Payments payments,
                                        int universalExpireTimer,
-                                       String userLogin)
+                                       String userLogin,
+                                       @NonNull List <String> defaultReactions)
   {
     return Arrays.equals(contact.serializeUnknownFields(), unknownFields) &&
            Objects.equals(contact.getGivenName().or(""), givenName) &&
@@ -169,6 +172,7 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
            Objects.equals(contact.getAvatarUrlPath().or(""), avatarUrlPath) &&
            Objects.equals(contact.getPayments(), payments) &&
            Objects.equals(contact.getUserLogin(), userLogin) &&
+           Objects.equals(contact.getDefaultReactions(), defaultReactions)     &&
            Arrays.equals(contact.getProfileKey().orNull(), profileKey) &&
            contact.isNoteToSelfArchived() == noteToSelfArchived &&
            contact.isNoteToSelfForcedUnread() == noteToSelfForcedUnread &&

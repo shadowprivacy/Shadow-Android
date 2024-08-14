@@ -10,9 +10,9 @@ import androidx.annotation.Nullable;
 import com.facebook.flipper.plugins.databases.DatabaseDescriptor;
 import com.facebook.flipper.plugins.databases.DatabaseDriver;
 
-import net.zetetic.database.DatabaseUtils;
-import net.zetetic.database.sqlcipher.SQLiteDatabase;
-import net.zetetic.database.sqlcipher.SQLiteStatement;
+import net.sqlcipher.DatabaseUtils;
+import net.sqlcipher.database.SQLiteDatabase;
+import net.sqlcipher.database.SQLiteStatement;
 
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.util.Hex;

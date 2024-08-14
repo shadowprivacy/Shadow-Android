@@ -9,7 +9,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.ViewCompat
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.transition.ChangeBounds
 import androidx.transition.Transition
 import androidx.transition.TransitionManager
@@ -69,7 +69,7 @@ class EditReactionsFragment : LoggingFragment(R.layout.edit_reactions_fragment),
       requireActivity().onBackPressed()
     }
 
-    viewModel = ViewModelProviders.of(this).get(EditReactionsViewModel::class.java)
+    viewModel = ViewModelProvider(this).get(EditReactionsViewModel::class.java)
 
     viewModel.reactions.observe(viewLifecycleOwner) { emojis ->
       emojis.forEachIndexed { index, emoji -> reactionViews[index].setImageEmoji(emoji) }
@@ -90,6 +90,7 @@ class EditReactionsFragment : LoggingFragment(R.layout.edit_reactions_fragment),
   }
 
   private fun configureToolbar() {
+    @Suppress("DEPRECATION")
     ViewCompat.setOnApplyWindowInsetsListener(toolbar) { _, insets ->
       updateToolbarTopMargin(insets.systemWindowInsetTop)
       insets

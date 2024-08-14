@@ -40,6 +40,8 @@ import su.sres.securesms.util.EarlyMessageCache;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
 import su.sres.securesms.video.exo.GiphyMp4Cache;
+import su.sres.securesms.video.exo.SimpleExoPlayerPool;
+import su.sres.securesms.webrtc.audio.AudioManagerCompat;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.SignalServiceMessageSender;
@@ -101,7 +103,9 @@ public class ApplicationDependencies {
   private static volatile TextSecurePreKeyStore        preKeyStore;
   private static volatile SignalSenderKeyStore         senderKeyStore;
   private static volatile GiphyMp4Cache                giphyMp4Cache;
-  private static volatile KeyValueStore                keyValueStore;
+  private static volatile SimpleExoPlayerPool exoPlayerPool;
+  private static volatile AudioManagerCompat  audioManagerCompat;
+  private static volatile KeyValueStore       keyValueStore;
 
   public static void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
     synchronized (NI_LOCK) {
@@ -582,6 +586,28 @@ public class ApplicationDependencies {
     return signalWebSocket;
   }
 
+  public static @NonNull SimpleExoPlayerPool getExoPlayerPool() {
+    if (exoPlayerPool == null) {
+      synchronized (NI_LOCK) {
+        if (exoPlayerPool == null) {
+          exoPlayerPool = networkIndependentProvider.provideExoPlayerPool();
+        }
+      }
+    }
+    return exoPlayerPool;
+  }
+
+  public static @NonNull AudioManagerCompat getAndroidCallAudioManager() {
+    if (audioManagerCompat == null) {
+      synchronized (LOCK) {
+        if (audioManagerCompat == null) {
+          audioManagerCompat = provider.provideAndroidCallAudioManager();
+        }
+      }
+    }
+    return audioManagerCompat;
+  }
+
   public interface Provider {
     @NonNull
     GroupsV2Operations provideGroupsV2Operations();
@@ -634,6 +660,8 @@ public class ApplicationDependencies {
     @NonNull PendingRetryReceiptCache providePendingRetryReceiptCache();
 
     @NonNull SignalWebSocket provideSignalWebSocket();
+
+    @NonNull AudioManagerCompat provideAndroidCallAudioManager();
   }
 
   public interface NetworkIndependentProvider {
@@ -648,6 +676,8 @@ public class ApplicationDependencies {
     @NonNull SignalSenderKeyStore provideSenderKeyStore();
 
     @NonNull GiphyMp4Cache provideGiphyMp4Cache();
+
+    @NonNull SimpleExoPlayerPool provideExoPlayerPool();
 
     @NonNull
     ShakeToReport provideShakeToReport();

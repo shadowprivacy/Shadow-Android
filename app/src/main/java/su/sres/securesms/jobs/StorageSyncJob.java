@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
 
-import net.zetetic.database.sqlcipher.SQLiteDatabase;
+import net.sqlcipher.database.SQLiteDatabase;
 
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.database.DatabaseFactory;
@@ -173,6 +173,11 @@ public class StorageSyncJob extends BaseJob {
         }
 
         try {
+            if (SignalStore.internalValues().storageServiceDisabled()) {
+              Log.w(TAG, "Storage service has been manually disabled. Skipping.");
+              return;
+            }
+
             boolean needsMultiDeviceSync = performSync();
 
             if (TextSecurePreferences.isMultiDevice(context) && needsMultiDeviceSync) {

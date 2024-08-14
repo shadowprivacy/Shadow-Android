@@ -1,5 +1,6 @@
 package su.sres.securesms.components.settings
 
+import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.widget.EdgeEffect
@@ -9,6 +10,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import su.sres.securesms.R
 import su.sres.securesms.components.recyclerview.OnScrollAnimationHelper
@@ -17,7 +19,8 @@ import su.sres.securesms.components.recyclerview.ToolbarShadowAnimationHelper
 abstract class DSLSettingsFragment(
   @StringRes private val titleId: Int = -1,
   @MenuRes private val menuId: Int = -1,
-  @LayoutRes layoutId: Int = R.layout.dsl_settings_fragment
+  @LayoutRes layoutId: Int = R.layout.dsl_settings_fragment,
+  val layoutManagerProducer: (Context) -> RecyclerView.LayoutManager = { context -> LinearLayoutManager(context) }
 ) : Fragment(layoutId) {
 
   private lateinit var recyclerView: RecyclerView
@@ -45,6 +48,7 @@ abstract class DSLSettingsFragment(
     scrollAnimationHelper = getOnScrollAnimationHelper(toolbarShadow)
     val adapter = DSLSettingsAdapter()
 
+    recyclerView.layoutManager = layoutManagerProducer(requireContext())
     recyclerView.adapter = adapter
     recyclerView.addOnScrollListener(scrollAnimationHelper)
 

@@ -31,8 +31,8 @@ import su.sres.securesms.database.model.databaseprotos.ReactionList;
 import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;
 
-import net.zetetic.database.sqlcipher.SQLiteDatabase;
-import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
+import net.sqlcipher.database.SQLiteDatabase;
+import net.sqlcipher.database.SQLiteOpenHelper;
 
 import su.sres.securesms.crypto.DatabaseSecret;
 import su.sres.securesms.database.AttachmentDatabase;
@@ -106,16 +106,19 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
   private static final int THREAD_CLEANUP                                                                         = 92;
   private static final int SESSION_AND_IDENTITY_MIGRATION_AND_GROUP_CALL_RING_TABLE_AND_CLEANUP_SESSION_MIGRATION = 93;
   private static final int RECEIPT_TIMESTAMP                                                                      = 94;
+  private static final int BADGES                                                                                 = 95;
 
-  private static final int    DATABASE_VERSION = 94;
+  private static final int    DATABASE_VERSION = 95;
   private static final String DATABASE_NAME    = "shadow.db";
 
-  private final Context context;
+  private final Context        context;
+  private final DatabaseSecret databaseSecret;
 
   public SQLCipherOpenHelper(@NonNull Context context, @NonNull DatabaseSecret databaseSecret) {
-    super(context, DATABASE_NAME, databaseSecret.asString(), null, DATABASE_VERSION, 0, new SqlCipherErrorHandler(DATABASE_NAME), new SqlCipherDatabaseHook());
+    super(context, DATABASE_NAME, null, DATABASE_VERSION, new SqlCipherDatabaseHook(), new SqlCipherErrorHandler(DATABASE_NAME));
 
-    this.context = context.getApplicationContext();
+    this.context        = context.getApplicationContext();
+    this.databaseSecret = databaseSecret;
   }
 
   @Override
@@ -1198,6 +1201,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
         db.execSQL("ALTER TABLE mms ADD COLUMN receipt_timestamp INTEGER DEFAULT -1");
       }
 
+      if (oldVersion < BADGES) {
+        db.execSQL("ALTER TABLE recipient ADD COLUMN badges BLOB DEFAULT NULL");
+      }
+
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -1206,35 +1213,33 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper implements SignalDatab
     Log.i(TAG, "Upgrade complete. Took " + (System.currentTimeMillis() - startTime) + " ms.");
   }
 
-  @Override
-  public net.zetetic.database.sqlcipher.SQLiteDatabase getReadableDatabase() {
+  public net.sqlcipher.database.SQLiteDatabase getReadableDatabase() {
     throw new UnsupportedOperationException("Call getSignalReadableDatabase() instead!");
   }
 
-  @Override
-  public net.zetetic.database.sqlcipher.SQLiteDatabase getWritableDatabase() {
+  public net.sqlcipher.database.SQLiteDatabase getWritableDatabase() {
     throw new UnsupportedOperationException("Call getSignalReadableDatabase() instead!");
   }
 
-  public net.zetetic.database.sqlcipher.SQLiteDatabase getRawReadableDatabase() {
-    return super.getReadableDatabase();
+  public net.sqlcipher.database.SQLiteDatabase getRawReadableDatabase() {
+    return super.getReadableDatabase(databaseSecret.asString());
   }
 
-  public net.zetetic.database.sqlcipher.SQLiteDatabase getRawWritableDatabase() {
-    return super.getWritableDatabase();
+  public net.sqlcipher.database.SQLiteDatabase getRawWritableDatabase() {
+    return super.getWritableDatabase(databaseSecret.asString());
   }
 
   public su.sres.securesms.database.SQLiteDatabase getSignalReadableDatabase() {
-    return new su.sres.securesms.database.SQLiteDatabase(super.getReadableDatabase());
+    return new su.sres.securesms.database.SQLiteDatabase(super.getReadableDatabase(databaseSecret.asString()));
   }
 
   public su.sres.securesms.database.SQLiteDatabase getSignalWritableDatabase() {
-    return new su.sres.securesms.database.SQLiteDatabase(super.getWritableDatabase());
+    return new su.sres.securesms.database.SQLiteDatabase(super.getWritableDatabase(databaseSecret.asString()));
   }
 
   @Override
-  public @NonNull net.zetetic.database.sqlcipher.SQLiteDatabase getSqlCipherDatabase() {
-    return super.getWritableDatabase();
+  public @NonNull net.sqlcipher.database.SQLiteDatabase getSqlCipherDatabase() {
+    return super.getWritableDatabase(databaseSecret.asString());
   }
 
   public void markCurrent(SQLiteDatabase db) {

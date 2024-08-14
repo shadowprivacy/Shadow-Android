@@ -16,7 +16,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.LiveData;
 
 import su.sres.securesms.R;
-import su.sres.securesms.imageeditor.model.EditorModel;
+import su.sres.imageeditor.core.model.EditorModel;
 import su.sres.securesms.mediasend.v2.gallery.MediaGalleryFragment;
 import su.sres.securesms.mms.MediaConstraints;
 import su.sres.securesms.profiles.AvatarHelper;
@@ -269,5 +269,10 @@ public class AvatarSelectionActivity extends AppCompatActivity implements Camera
   @Override
   public void onToolbarNavigationClicked() {
     finish();
+  }
+
+  @Override
+  public boolean isCameraEnabled() {
+    return true;
   }
 }

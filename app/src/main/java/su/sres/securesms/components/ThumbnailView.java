@@ -8,6 +8,7 @@ import android.graphics.PorterDuffColorFilter;
 import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
+
 import android.util.AttributeSet;
 
 import su.sres.securesms.blurhash.BlurHash;
@@ -427,8 +428,10 @@ public class ThumbnailView extends FrameLayout {
                                           .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                                           .transition(withCrossFade()), fit);
 
-    if (slide.isInProgress()) return request;
-    else                      return request.apply(RequestOptions.errorOf(R.drawable.ic_missing_thumbnail_picture));
+    boolean doNotShowMissingThumbnailImage = false;
+
+    if (slide.isInProgress() || doNotShowMissingThumbnailImage) return request;
+    else                                                        return request.apply(RequestOptions.errorOf(R.drawable.ic_missing_thumbnail_picture));
   }
 
   private RequestBuilder buildPlaceholderGlideRequest(@NonNull GlideRequests glideRequests, @NonNull Slide slide) {

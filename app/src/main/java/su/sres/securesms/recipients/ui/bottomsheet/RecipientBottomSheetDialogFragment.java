@@ -19,6 +19,8 @@ import androidx.lifecycle.ViewModelProviders;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import su.sres.securesms.R;
+import su.sres.securesms.badges.BadgeImageView;
+import su.sres.securesms.badges.view.ViewBadgeBottomSheetDialogFragment;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.components.settings.DSLSettingsIcon;
 import su.sres.securesms.components.settings.conversation.preferences.ButtonStripPreference;
@@ -61,7 +63,8 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
   private Button                   removeFromGroupButton;
   private ProgressBar              adminActionBusy;
   private View                     noteToSelfDescription;
-  private View                     buttonStrip;
+  private View           buttonStrip;
+  private BadgeImageView badgeImageView;
 
   public static BottomSheetDialogFragment create(@NonNull RecipientId recipientId,
                                                  @Nullable GroupId groupId)
@@ -106,6 +109,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
     adminActionBusy        = view.findViewById(R.id.rbs_admin_action_busy);
     noteToSelfDescription  = view.findViewById(R.id.rbs_note_to_self_description);
     buttonStrip            = view.findViewById(R.id.button_strip);
+    badgeImageView         = view.findViewById(R.id.rbs_badge);
 
     return view;
   }
@@ -130,6 +134,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
         }
       });
       avatar.setAvatar(recipient);
+      badgeImageView.setBadgeFromRecipient(recipient);
       if (recipient.isSelf()) {
         avatar.setOnClickListener(v -> {
           dismiss();
@@ -243,6 +248,11 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
     avatar.setOnClickListener(view -> {
       dismiss();
       viewModel.onAvatarClicked(requireActivity());
+    });
+
+    badgeImageView.setOnClickListener(view -> {
+      dismiss();
+      ViewBadgeBottomSheetDialogFragment.show(getParentFragmentManager(), recipientId, null);
     });
 
     blockButton.setOnClickListener(view -> viewModel.onBlockClicked(requireActivity()));

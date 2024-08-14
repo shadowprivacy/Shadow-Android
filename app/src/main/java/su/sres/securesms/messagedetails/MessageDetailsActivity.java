@@ -15,7 +15,7 @@ import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.components.recyclerview.ToolbarShadowAnimationHelper;
 import su.sres.securesms.conversation.colors.Colorizer;
-import su.sres.securesms.conversation.colors.ColorizerView;
+import su.sres.securesms.conversation.colors.RecyclerViewColorizer;
 import su.sres.securesms.conversation.ui.error.SafetyNumberChangeDialog;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.model.MessageRecord;
@@ -44,7 +44,8 @@ public final class MessageDetailsActivity extends PassphraseRequiredActivity {
   private GlideRequests           glideRequests;
   private MessageDetailsViewModel viewModel;
   private MessageDetailsAdapter   adapter;
-  private Colorizer               colorizer;
+  private Colorizer             colorizer;
+  private RecyclerViewColorizer recyclerViewColorizer;
 
   private DynamicTheme dynamicTheme = new DynamicNoActionBarTheme();
 
@@ -99,16 +100,15 @@ public final class MessageDetailsActivity extends PassphraseRequiredActivity {
 
   private void initializeList() {
     RecyclerView  list          = findViewById(R.id.message_details_list);
-    ColorizerView colorizerView = findViewById(R.id.message_details_colorizer);
     View          toolbarShadow = findViewById(R.id.toolbar_shadow);
 
-    colorizer = new Colorizer(colorizerView);
-    adapter   = new MessageDetailsAdapter(this, glideRequests, colorizer, this::onErrorClicked);
+    colorizer             = new Colorizer();
+    adapter               = new MessageDetailsAdapter(this, glideRequests, colorizer, this::onErrorClicked);
+    recyclerViewColorizer = new RecyclerViewColorizer(list);
 
     list.setAdapter(adapter);
     list.setItemAnimator(null);
     list.addOnScrollListener(new ToolbarShadowAnimationHelper(toolbarShadow));
-    colorizer.attachToRecyclerView(list);
   }
 
   private void initializeViewModel() {
@@ -126,7 +126,7 @@ public final class MessageDetailsActivity extends PassphraseRequiredActivity {
       }
     });
 
-    viewModel.getRecipient().observe(this, recipient -> colorizer.onChatColorsChanged(recipient.getChatColors()));
+    viewModel.getRecipient().observe(this, recipient -> recyclerViewColorizer.setChatColors(recipient.getChatColors()));
   }
 
   private void initializeVideoPlayer() {

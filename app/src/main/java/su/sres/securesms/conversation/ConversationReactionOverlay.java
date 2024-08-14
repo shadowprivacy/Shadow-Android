@@ -28,7 +28,6 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.R;
 import su.sres.securesms.animation.AnimationCompleteListener;
-import su.sres.securesms.components.MaskView;
 import su.sres.securesms.components.emoji.EmojiImageView;
 import su.sres.securesms.components.emoji.EmojiUtil;
 import su.sres.securesms.database.model.MessageRecord;
@@ -71,7 +70,6 @@ public final class ConversationReactionOverlay extends RelativeLayout {
   private ConstraintLayout foregroundView;
   private View             selectedView;
   private EmojiImageView[] emojiViews;
-  private MaskView         maskView;
   private Toolbar          toolbar;
 
   private int   statusBarHeight;
@@ -111,7 +109,6 @@ public final class ConversationReactionOverlay extends RelativeLayout {
     backgroundView = findViewById(R.id.conversation_reaction_scrubber_background);
     foregroundView = findViewById(R.id.conversation_reaction_scrubber_foreground);
     selectedView   = findViewById(R.id.conversation_reaction_current_selection_indicator);
-    maskView       = findViewById(R.id.conversation_reaction_mask);
     toolbar        = findViewById(R.id.conversation_reaction_toolbar);
 
     toolbar.setOnMenuItemClickListener(this::handleToolbarItemClicked);
@@ -143,15 +140,9 @@ public final class ConversationReactionOverlay extends RelativeLayout {
     initAnimators();
   }
 
-  public void setListVerticalTranslation(float translationY) {
-    maskView.setTargetParentTranslationY(translationY);
-  }
-
   public void show(@NonNull Activity activity,
-                   @NonNull MaskView.MaskTarget maskTarget,
                    @NonNull Recipient conversationRecipient,
                    @NonNull ConversationMessage conversationMessage,
-                   int maskPaddingBottom,
                    @NonNull PointF lastSeenDownPoint,
                    boolean isNonAdminInAnnouncementGroup)
   {
@@ -191,50 +182,26 @@ public final class ConversationReactionOverlay extends RelativeLayout {
     verticalScrubBoundary.update(lastSeenDownPoint.y - distanceFromTouchDownPointToTopOfScrubberDeadZone,
                                  lastSeenDownPoint.y + distanceFromTouchDownPointToBottomOfScrubberDeadZone);
 
-    maskView.setPadding(0, 0, 0, maskPaddingBottom);
-    maskView.setTarget(maskTarget);
-
     hideAnimatorSet.end();
     toolbar.setVisibility(VISIBLE);
     setVisibility(View.VISIBLE);
     revealAnimatorSet.start();
 
-    if (Build.VERSION.SDK_INT >= 21) {
-      this.activity          = activity;
-      originalStatusBarColor = activity.getWindow().getStatusBarColor();
-      WindowUtil.setStatusBarColor(activity.getWindow(), ContextCompat.getColor(getContext(), R.color.action_mode_status_bar));
+    this.activity          = activity;
+    originalStatusBarColor = activity.getWindow().getStatusBarColor();
+    WindowUtil.setStatusBarColor(activity.getWindow(), ContextCompat.getColor(getContext(), R.color.action_mode_status_bar));
 
-      if (!ThemeUtil.isDarkTheme(getContext())) {
-        WindowUtil.setLightStatusBar(activity.getWindow());
-      }
+    if (!ThemeUtil.isDarkTheme(getContext())) {
+      WindowUtil.setLightStatusBar(activity.getWindow());
     }
   }
 
-  public void showMask(@NonNull MaskView.MaskTarget maskTarget, int maskPaddingTop, int maskPaddingBottom) {
-    maskView.setPadding(0, maskPaddingTop, 0, maskPaddingBottom);
-    maskView.setTarget(maskTarget);
-
-    hideAnimatorSet.end();
-    toolbar.setVisibility(GONE);
-    setVisibility(VISIBLE);
-    revealMaskAnimatorSet.start();
-  }
-
   public void hide() {
-    maskView.setTarget(null);
     hideInternal(hideAnimatorSet, onHideListener);
   }
 
   public void hideForReactWithAny() {
     hideInternal(hideAnimatorSet, null);
-  }
-
-  public void hideMask() {
-    hideMaskAnimatorSet.start();
-
-    if (onHideListener != null) {
-      onHideListener.onHide();
-    }
   }
 
   private void hideInternal(@NonNull AnimatorSet hideAnimatorSet, @Nullable OnHideListener onHideListener) {
@@ -539,7 +506,6 @@ public final class ConversationReactionOverlay extends RelativeLayout {
                                    .toList();
 
     Animator overlayRevealAnim = AnimatorInflaterCompat.loadAnimator(getContext(), android.R.animator.fade_in);
-    overlayRevealAnim.setTarget(maskView);
     overlayRevealAnim.setDuration(duration);
     reveals.add(overlayRevealAnim);
 
@@ -574,7 +540,6 @@ public final class ConversationReactionOverlay extends RelativeLayout {
                                  .toList();
 
     Animator overlayHideAnim = AnimatorInflaterCompat.loadAnimator(getContext(), android.R.animator.fade_out);
-    overlayHideAnim.setTarget(maskView);
     overlayHideAnim.setDuration(duration);
 
     Animator backgroundHideAnim = AnimatorInflaterCompat.loadAnimator(getContext(), android.R.animator.fade_out);

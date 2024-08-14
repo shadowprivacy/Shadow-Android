@@ -148,6 +148,7 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
     ViewUtil.hideKeyboard(requireContext(), requireView())
   }
 
+  @Suppress("DEPRECATION")
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     if (requestCode == REQUEST_CODE_SELECT_IMAGE && resultCode == Activity.RESULT_OK && data != null) {
       val media: Media = requireNotNull(data.getParcelableExtra(AvatarSelectionActivity.EXTRA_MEDIA))
@@ -212,6 +213,7 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
       .navigate(AvatarPickerFragmentDirections.actionAvatarPickerFragmentToTextAvatarCreationFragment(bundle))
   }
 
+  @Suppress("DEPRECATION")
   private fun openCameraCapture() {
     Permissions.with(this)
       .request(Manifest.permission.CAMERA)
@@ -227,6 +229,7 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
       .execute()
   }
 
+  @Suppress("DEPRECATION")
   private fun openGallery() {
     Permissions.with(this)
       .request(Manifest.permission.READ_EXTERNAL_STORAGE)
