@@ -516,9 +516,6 @@ dependencyVerification {
         ['org.apache.commons:commons-csv:1.8',
          'a8bd56652ed4668d9d5a33994ae52f59b9e39c8eb0ebcb6684e68aeee7579a61'],
 
-        ['net.zetetic:android-database-sqlcipher:4.4.3',
-         '64cf472e3f6c3300fd7307aebb74dfff4eeb3805f138045c83362c7687e4af61'],
-
         ['org.apache.httpcomponents:httpclient-android:4.3.5',
          '6f56466a9bd0d42934b90bfbfe9977a8b654c058bf44a12bdc2877c4e1f033f1'],
 
@@ -575,6 +572,9 @@ dependencyVerification {
 
         ['org.signal:aesgcmprovider:0.0.3',
          '6eb4422e8a618b3b76cb2096a3619d251f9e27989dc68307a1e5414c3710f2d1'],
+
+        ['org.signal:android-database-sqlcipher:4.4.3-S8',
+         '2f08e950d2c37ff9fc97ef178f86215f3fa7b50dc7e5621a94f58180fa96ed81'],
 
         ['org.signal:argon2:13.1',
          '0f686ccff0d4842bfcc74d92e8dc780a5f159b9376e37a1189fabbcdac458bef'],

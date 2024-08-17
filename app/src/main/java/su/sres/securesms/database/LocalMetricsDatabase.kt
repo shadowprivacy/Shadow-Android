@@ -3,8 +3,8 @@ package su.sres.securesms.database
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.ContentValues
-import net.sqlcipher.database.SQLiteDatabase
-import net.sqlcipher.database.SQLiteOpenHelper
+import net.zetetic.database.sqlcipher.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteOpenHelper
 import su.sres.core.util.logging.Log
 import su.sres.securesms.crypto.DatabaseSecret
 import su.sres.securesms.crypto.DatabaseSecretProvider
@@ -25,14 +25,16 @@ import java.util.concurrent.TimeUnit
  */
 class LocalMetricsDatabase private constructor(
   application: Application,
-  private val databaseSecret: DatabaseSecret
+  databaseSecret: DatabaseSecret
 ) : SQLiteOpenHelper(
   application,
   DATABASE_NAME,
+  databaseSecret.asString(),
   null,
   DATABASE_VERSION,
-  SqlCipherDatabaseHook(),
-  SqlCipherErrorHandler(DATABASE_NAME)
+  0,
+  SqlCipherDeletingErrorHandler(DATABASE_NAME),
+  SqlCipherDatabaseHook()
 ),
   SignalDatabase {
 
@@ -237,12 +239,6 @@ class LocalMetricsDatabase private constructor(
       }
     }
   }
-
-  private val readableDatabase: SQLiteDatabase
-    get() = getReadableDatabase(databaseSecret.asString())
-
-  private val writableDatabase: SQLiteDatabase
-    get() = getWritableDatabase(databaseSecret.asString())
 
   data class EventMetrics(
     val name: String,

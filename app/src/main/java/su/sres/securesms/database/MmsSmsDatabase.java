@@ -26,7 +26,7 @@ import androidx.annotation.VisibleForTesting;
 import com.annimon.stream.Stream;
 
 
-import net.sqlcipher.database.SQLiteQueryBuilder;
+import net.zetetic.database.sqlcipher.SQLiteQueryBuilder;
 
 import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.MessageDatabase.ThreadUpdate;

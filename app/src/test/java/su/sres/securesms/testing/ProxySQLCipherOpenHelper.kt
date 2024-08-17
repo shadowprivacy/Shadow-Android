@@ -5,7 +5,7 @@ import su.sres.securesms.crypto.DatabaseSecret
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper
 import java.security.SecureRandom
 import android.database.sqlite.SQLiteDatabase as AndroidSQLiteDatabase
-import net.sqlcipher.database.SQLiteDatabase as SQLCipherSQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabase as SQLCipherSQLiteDatabase
 import su.sres.securesms.database.SQLiteDatabase as SignalSQLiteDatabase
 
 /**
@@ -32,6 +32,10 @@ class ProxySQLCipherOpenHelper(
   }
 
   override fun onConfigure(db: SQLCipherSQLiteDatabase) {
+    throw UnsupportedOperationException()
+  }
+
+  override fun onBeforeDelete(db: SQLCipherSQLiteDatabase?) {
     throw UnsupportedOperationException()
   }
 
