@@ -1,15 +1,13 @@
-FROM debian:stretch
+FROM ubuntu:jammy-20230624@sha256:b060fffe8e1561c9c3e6dea6db487b900100fc26830b9ea2ec966c151ab4c020
 
 COPY docker/ docker/
 COPY docker/apt.conf docker/sources.list /etc/apt/
 
-RUN dpkg --add-architecture i386
+RUN apt update -oAcquire::https::Verify-Peer=false
+RUN apt install -oAcquire::https::Verify-Peer=false -y ca-certificates
 
-RUN apt-get update -y && apt-get install -y apt-utils
-
-RUN apt-get update -y && apt-get install -y $(cat docker/dependencies.txt)
-RUN chmod +x docker/print-versions.sh
-RUN docker/print-versions.sh docker/dependencies.txt
+RUN apt update
+RUN apt install -y git openjdk-11-jdk openjdk-8-jdk unzip wget
 
 ENV ANDROID_COMMAND_LINE_TOOLS_FILENAME commandlinetools-linux-7583922_latest.zip
 ENV ANDROID_API_LEVELS                  android-30
