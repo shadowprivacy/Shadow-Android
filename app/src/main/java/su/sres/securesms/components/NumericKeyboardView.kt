@@ -5,7 +5,7 @@ import android.util.AttributeSet
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
-import org.thoughtcrime.securesms.R
+import su.sres.securesms.R
 
 /**
  * A "forced" EN US Numeric keyboard designed solely for SMS code entry. This

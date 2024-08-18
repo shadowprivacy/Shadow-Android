@@ -9,7 +9,6 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import androidx.appcompat.content.res.AppCompatResources
 import com.airbnb.lottie.SimpleColorFilter
-import com.amulyakhare.textdrawable.TextDrawable
 import su.sres.core.util.concurrent.SignalExecutors
 import su.sres.securesms.mediasend.Media
 import su.sres.securesms.mms.PartAuthority
