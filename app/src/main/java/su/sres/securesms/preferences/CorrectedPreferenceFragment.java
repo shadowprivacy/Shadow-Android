@@ -17,8 +17,6 @@ import android.view.ViewGroup;
 import su.sres.securesms.R;
 
 import su.sres.securesms.components.CustomDefaultPreference;
-import su.sres.securesms.preferences.widgets.ColorPickerPreference;
-import su.sres.securesms.preferences.widgets.ColorPickerPreferenceDialogFragmentCompat;
 
 public abstract class CorrectedPreferenceFragment extends PreferenceFragmentCompat {
 
@@ -39,9 +37,7 @@ public abstract class CorrectedPreferenceFragment extends PreferenceFragmentComp
   public void onDisplayPreferenceDialog(Preference preference) {
     DialogFragment dialogFragment = null;
 
-    if (preference instanceof ColorPickerPreference) {
-      dialogFragment = ColorPickerPreferenceDialogFragmentCompat.newInstance(preference.getKey());
-    } else if (preference instanceof CustomDefaultPreference) {
+    if (preference instanceof CustomDefaultPreference) {
       dialogFragment = CustomDefaultPreference.CustomDefaultPreferenceDialogFragmentCompat.newInstance(preference.getKey());
     }
 

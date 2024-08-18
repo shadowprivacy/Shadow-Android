@@ -11,6 +11,8 @@ include ':device-transfer'
 include ':device-transfer-app'
 include ':image-editor'
 include ':image-editor-app'
+include ':sticky-header-grid'
+include ':photoview'
 
 project(':app').name = 'Shadow-Client'
 project(':paging').projectDir = file('paging/lib')

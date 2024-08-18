@@ -47,7 +47,7 @@
             android:background="@drawable/circle_tintable"
             android:visibility="gone"
             app:backgroundTint="?android:windowBackground"
-            tools:backgroundTint="@color/red"
+            tools:backgroundTint="@color/red_500"
             tools:visibility="visible" />
 
         <su.sres.securesms.components.AvatarImageView

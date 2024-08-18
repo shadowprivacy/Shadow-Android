@@ -29,10 +29,6 @@ repositories {
         }
     }
 
-    maven {
-        url "https://www.jitpack.io"
-    }
-
     google()
     mavenCentral()
     mavenLocal()
@@ -42,11 +38,6 @@ repositories {
     jcenter {
         content {
             includeVersion "mobi.upod", "time-duration-picker", "1.1.3"
-            includeVersion "cn.carbswang.android", "NumberPickerView", "1.0.9"
-            includeVersion "com.takisoft.fix", "colorpicker", "0.9.1"
-            includeVersion "com.codewaves.stickyheadergrid", "stickyheadergrid", "0.9.7"
-            includeVersion "com.amulyakhare", "com.amulyakhare.textdrawable", "1.0.1"
-            includeVersion "com.google.android", "flexbox", "0.3.0"
         }
     }
 }
@@ -427,6 +418,8 @@ dependencies {
     implementation project(':video')
     implementation project(':device-transfer')
     implementation project(':image-editor')
+    implementation project(':sticky-header-grid')
+    implementation project(':photoview')
 
     implementation libs.signal.zkgroup.android
     implementation libs.signal.client.android
@@ -446,7 +439,6 @@ dependencies {
     implementation libs.emilsjolander.stickylistheaders
     implementation libs.jpardogo.materialtabstrip
     implementation libs.apache.httpclient.android
-    implementation libs.photoview
     implementation libs.glide.glide
     kapt libs.glide.compiler
     kapt libs.androidx.annotation
@@ -457,13 +449,10 @@ dependencies {
     implementation libs.floatingactionbutton
     implementation libs.google.zxing.android.integration
     implementation libs.time.duration.picker
-    implementation libs.textdrawable
     implementation libs.google.zxing.core
+    implementation libs.google.flexbox
     implementation (libs.subsampling.scale.image.view) {
         exclude group: 'com.android.support', module: 'support-annotations'
-    }
-    implementation (libs.numberpickerview) {
-        exclude group: 'com.android.support', module: 'appcompat-v7'
     }
     implementation (libs.android.tooltips) {
         exclude group: 'com.android.support', module: 'appcompat-v7'
@@ -473,14 +462,9 @@ dependencies {
         exclude group: 'com.squareup.okhttp', module: 'okhttp-urlconnection'
     }
     implementation libs.stream
-    implementation (libs.colorpicker) {
-        exclude group: 'com.android.support', module: 'appcompat-v7'
-        exclude group: 'com.android.support', module: 'recyclerview-v7'
-    }
 
     implementation libs.lottie
 
-    implementation libs.stickyheadergrid
     implementation libs.circular.progress.button
 
     implementation libs.signal.android.database.sqlcipher
