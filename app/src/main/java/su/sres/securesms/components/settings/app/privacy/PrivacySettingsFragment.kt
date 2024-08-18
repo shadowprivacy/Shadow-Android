@@ -17,11 +17,10 @@ import androidx.navigation.Navigation
 import androidx.navigation.fragment.NavHostFragment
 import androidx.preference.PreferenceManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import mobi.upod.timedurationpicker.TimeDurationPicker
-import mobi.upod.timedurationpicker.TimeDurationPickerDialog
 import su.sres.core.util.logging.Log
 import su.sres.securesms.PassphraseChangeActivity
 import su.sres.securesms.R
+import su.sres.securesms.components.TimeDurationPickerDialog
 import su.sres.securesms.components.settings.ClickPreference
 import su.sres.securesms.components.settings.ClickPreferenceViewHolder
 import su.sres.securesms.components.settings.DSLConfiguration
@@ -48,6 +47,8 @@ import java.util.ArrayList
 import java.util.LinkedHashMap
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private val TAG = Log.tag(PrivacySettingsFragment::class.java)
 
@@ -214,14 +215,13 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
         clickPref(
           title = DSLSettingsText.from(R.string.preferences__inactivity_timeout_interval),
           onClick = {
-            TimeDurationPickerDialog(
-              context,
-              { _: TimeDurationPicker?, duration: Long ->
-                val timeoutMinutes = max(TimeUnit.MILLISECONDS.toMinutes(duration).toInt(), 1)
-                viewModel.setObsoletePasswordTimeout(timeoutMinutes)
-              },
-              0, TimeDurationPicker.HH_MM
-            ).show()
+            childFragmentManager.clearFragmentResult(TimeDurationPickerDialog.RESULT_DURATION)
+            childFragmentManager.clearFragmentResultListener(TimeDurationPickerDialog.RESULT_DURATION)
+            childFragmentManager.setFragmentResultListener(TimeDurationPickerDialog.RESULT_DURATION, this@PrivacySettingsFragment) { _, bundle ->
+              val timeout = bundle.getLong(TimeDurationPickerDialog.RESULT_KEY_DURATION_MILLISECONDS).milliseconds.inWholeMinutes.toInt()
+              viewModel.setObsoletePasswordTimeout(max(timeout, 1))
+            }
+            TimeDurationPickerDialog.create(state.screenLockActivityTimeout.seconds).show(childFragmentManager, null)
           }
         )
       } else {
@@ -248,14 +248,12 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
           summary = DSLSettingsText.from(getScreenLockInactivityTimeoutSummary(state.screenLockActivityTimeout)),
           isEnabled = isKeyguardSecure && state.screenLock,
           onClick = {
-            TimeDurationPickerDialog(
-              context,
-              { _: TimeDurationPicker?, duration: Long ->
-                val timeoutSeconds = TimeUnit.MILLISECONDS.toSeconds(duration)
-                viewModel.setScreenLockTimeout(timeoutSeconds)
-              },
-              0, TimeDurationPicker.HH_MM
-            ).show()
+            childFragmentManager.clearFragmentResult(TimeDurationPickerDialog.RESULT_DURATION)
+            childFragmentManager.clearFragmentResultListener(TimeDurationPickerDialog.RESULT_DURATION)
+            childFragmentManager.setFragmentResultListener(TimeDurationPickerDialog.RESULT_DURATION, this@PrivacySettingsFragment) { _, bundle ->
+              viewModel.setScreenLockTimeout(bundle.getLong(TimeDurationPickerDialog.RESULT_KEY_DURATION_MILLISECONDS).milliseconds.inWholeSeconds)
+            }
+            TimeDurationPickerDialog.create(state.screenLockActivityTimeout.seconds).show(childFragmentManager, null)
           }
         )
       }

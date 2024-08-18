@@ -7,6 +7,19 @@
         <item name="android:letterSpacing" tools:ignore="NewApi">0</item>
     </style>
 
+    <!-- convert to region Material3 Styles -->
+    <style name="Signal.Text.Headline.Large">
+        <item name="android:lineSpacingExtra">8sp</item>
+    </style>
+
+
+    <style name="Signal.Text.Body.Small">
+        <item name="android:textSize">13sp</item>
+        <item name="android:lineSpacingExtra">3sp</item>
+    </style>
+
+    <!-- -->
+
     <style name="Signal.Text.Headline.Medium">
         <item name="android:lineSpacingExtra">5sp</item>
         <item name="android:fontFamily">sans-serif-medium</item>
