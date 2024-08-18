@@ -18,6 +18,10 @@
         <item name="android:lineSpacingExtra">3sp</item>
     </style>
 
+    <style name="Signal.Text.Title.Large">
+        <item name="android:lineSpacingExtra">6sp</item>
+    </style>
+
     <!-- -->
 
     <style name="Signal.Text.Headline.Medium">
