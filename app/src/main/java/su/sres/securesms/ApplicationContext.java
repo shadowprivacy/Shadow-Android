@@ -20,11 +20,11 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AppCompatDelegate;
 
+import android.app.Application;
 import android.content.Context;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
-import androidx.multidex.MultiDexApplication;
 
 import org.conscrypt.Conscrypt;
 
@@ -105,7 +105,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  * @author Moxie Marlinspike *
  */
 
-public class ApplicationContext extends MultiDexApplication implements AppForegroundObserver.Listener {
+public class ApplicationContext extends Application implements AppForegroundObserver.Listener {
 
   private static final String TAG = Log.tag(ApplicationContext.class);
 
