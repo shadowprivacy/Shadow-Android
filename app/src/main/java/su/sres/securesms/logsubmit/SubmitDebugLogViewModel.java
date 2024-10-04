@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import su.sres.core.util.ThreadUtil;
+import su.sres.core.util.logging.Log;
 import su.sres.core.util.tracing.Tracer;
 import su.sres.paging.PagedData;
 import su.sres.paging.PagingConfig;
@@ -43,6 +44,7 @@ public class SubmitDebugLogViewModel extends ViewModel {
     repo.getPrefixLogLines(staticLines -> {
       this.staticLines.addAll(staticLines);
 
+      Log.blockUntilAllWritesFinished();
       LogDatabase.getInstance(ApplicationDependencies.getApplication()).trimToSize();
 
       LogDataSource dataSource = new LogDataSource(ApplicationDependencies.getApplication(), staticLines, firstViewTime);

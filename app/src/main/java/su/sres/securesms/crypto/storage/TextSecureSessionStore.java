@@ -40,7 +40,7 @@ public class TextSecureSessionStore implements SignalServiceSessionStore {
       SessionRecord sessionRecord = DatabaseFactory.getSessionDatabase(context).load(address);
 
       if (sessionRecord == null) {
-        Log.w(TAG, "No existing session information found.");
+        Log.w(TAG, "No existing session information found for " + address);
         return new SessionRecord();
       }
 
@@ -60,7 +60,7 @@ public class TextSecureSessionStore implements SignalServiceSessionStore {
       }
 
       if (sessionRecords.stream().anyMatch(Objects::isNull)) {
-        throw new NoSessionException("Failed to find at least one session.");
+        throw new NoSessionException("Failed to find one or more sessions.");
       }
 
       return sessionRecords;
@@ -88,6 +88,7 @@ public class TextSecureSessionStore implements SignalServiceSessionStore {
   @Override
   public void deleteSession(SignalProtocolAddress address) {
     synchronized (LOCK) {
+      Log.w(TAG, "Deleting session for " + address);
       DatabaseFactory.getSessionDatabase(context).delete(address);
     }
   }
@@ -95,6 +96,7 @@ public class TextSecureSessionStore implements SignalServiceSessionStore {
   @Override
   public void deleteAllSessions(String name) {
     synchronized (LOCK) {
+      Log.w(TAG, "Deleting all sessions for " + name);
       DatabaseFactory.getSessionDatabase(context).deleteAllFor(name);
     }
   }

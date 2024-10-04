@@ -1,10 +1,9 @@
 package su.sres.securesms.badges.models
 
 import android.view.View
-import android.widget.ImageView
 import android.widget.TextView
 import su.sres.securesms.R
-import su.sres.securesms.mms.GlideApp
+import su.sres.securesms.badges.BadgeImageView
 import su.sres.securesms.util.MappingAdapter
 import su.sres.securesms.util.MappingModel
 import su.sres.securesms.util.MappingViewHolder
@@ -35,14 +34,12 @@ data class LargeBadge(
 
   class ViewHolder(itemView: View) : MappingViewHolder<Model>(itemView) {
 
-    private val badge: ImageView = itemView.findViewById(R.id.badge)
+    private val badge: BadgeImageView = itemView.findViewById(R.id.badge)
     private val name: TextView = itemView.findViewById(R.id.name)
     private val description: TextView = itemView.findViewById(R.id.description)
 
     override fun bind(model: Model) {
-      GlideApp.with(badge)
-        .load(model.largeBadge.badge)
-        .into(badge)
+      badge.setBadge(model.largeBadge.badge)
 
       name.text = model.largeBadge.badge.name
       description.text = model.largeBadge.badge.resolveDescription(model.shortName)

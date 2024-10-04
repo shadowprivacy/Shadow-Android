@@ -1,26 +1,23 @@
 /**
  * Copyright (C) 2015 Open Whisper Systems
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package su.sres.securesms.mms;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build.VERSION;
-import android.os.Build.VERSION_CODES;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -56,17 +53,13 @@ public class IncomingLollipopMmsConnection extends LollipopMmsConnection impleme
     super(context, ACTION);
   }
 
-  @TargetApi(VERSION_CODES.LOLLIPOP)
   @Override
   public synchronized void onResult(Context context, Intent intent) {
-    if (VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP_MR1) {
-      Log.i(TAG, "HTTP status: " + intent.getIntExtra(SmsManager.EXTRA_MMS_HTTP_STATUS, -1));
-    }
+    Log.i(TAG, "HTTP status: " + intent.getIntExtra(SmsManager.EXTRA_MMS_HTTP_STATUS, -1));
     Log.i(TAG, "code: " + getResultCode() + ", result string: " + getResultData());
   }
 
   @Override
-  @TargetApi(VERSION_CODES.LOLLIPOP)
   public synchronized @Nullable RetrieveConf retrieve(@NonNull String contentLocation,
                                                       byte[] transactionId,
                                                       int subscriptionId) throws MmsException
@@ -85,7 +78,7 @@ public class IncomingLollipopMmsConnection extends LollipopMmsConnection impleme
 
       SmsManager smsManager;
 
-      if (VERSION.SDK_INT >= 22 && subscriptionId != -1) {
+      if (subscriptionId != -1) {
         smsManager = SmsManager.getSmsManagerForSubscriptionId(subscriptionId);
       } else {
         smsManager = SmsManager.getDefault();
@@ -127,7 +120,14 @@ public class IncomingLollipopMmsConnection extends LollipopMmsConnection impleme
       Bundle  configValues            = smsManager.getCarrierConfigValues();
       boolean parseContentDisposition = configValues.getBoolean(SmsManager.MMS_CONFIG_SUPPORT_MMS_CONTENT_DISPOSITION);
 
-      RetrieveConf retrieved = (RetrieveConf) new PduParser(baos.toByteArray(), parseContentDisposition).parse();
+      RetrieveConf retrieved;
+
+      try {
+        retrieved = (RetrieveConf) new PduParser(baos.toByteArray(), parseContentDisposition).parse();
+      } catch (NullPointerException e) {
+        Log.w(TAG, "Badly formatted MMS message caused the parser to fail.", e);
+        throw new MmsException(e);
+      }
 
       if (retrieved == null) return null;
 

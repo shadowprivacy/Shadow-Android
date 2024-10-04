@@ -3,8 +3,8 @@ package su.sres.securesms.payments.confirm;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.core.util.money.FiatMoney;
 import su.sres.securesms.payments.Payee;
-import su.sres.securesms.payments.currency.FiatMoney;
 import su.sres.signalservice.api.payments.Money;
 
 import java.util.UUID;

@@ -23,6 +23,8 @@ import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.ProfileUtil;
 import su.sres.securesms.util.TextSecurePreferences;
+
+import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.securesms.util.Util;
@@ -179,12 +181,14 @@ public class RefreshOwnProfileJob extends BaseJob {
     }
 
     private static Badge adaptFromServiceBadge(@NonNull SignalServiceProfile.Badge serviceBadge) {
+        Pair<Uri, String> uriAndDensity = RetrieveProfileJob.getBestBadgeImageUriForDevice(serviceBadge);
         return new Badge(
             serviceBadge.getId(),
             Badge.Category.Companion.fromCode(serviceBadge.getCategory()),
-            Uri.parse(serviceBadge.getImageUrl()),
             serviceBadge.getName(),
             serviceBadge.getDescription(),
+            uriAndDensity.first(),
+            uriAndDensity.second(),
             getTimestamp(serviceBadge.getExpiration()),
             serviceBadge.isVisible()
         );

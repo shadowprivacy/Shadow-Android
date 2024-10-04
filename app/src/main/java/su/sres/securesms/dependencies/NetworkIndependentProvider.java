@@ -1,9 +1,14 @@
 package su.sres.securesms.dependencies;
 
 import android.app.Application;
+import android.os.Handler;
+import android.os.HandlerThread;
 
 import androidx.annotation.NonNull;
 
+import java.util.concurrent.TimeUnit;
+
+import su.sres.core.util.concurrent.DeadlockDetector;
 import su.sres.securesms.crypto.storage.SignalSenderKeyStore;
 import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
 import su.sres.securesms.crypto.storage.TextSecurePreKeyStore;
@@ -69,4 +74,10 @@ public class NetworkIndependentProvider implements ApplicationDependencies.Netwo
     return new SimpleExoPlayerPool(context);
   }
 
+  @Override
+  public @NonNull DeadlockDetector provideDeadlockDetector() {
+    HandlerThread handlerThread = new HandlerThread("signal-DeadlockDetector");
+    handlerThread.start();
+    return new DeadlockDetector(new Handler(handlerThread.getLooper()), TimeUnit.SECONDS.toMillis(5));
+  }
 }

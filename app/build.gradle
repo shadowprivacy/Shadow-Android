@@ -13,6 +13,7 @@ apply from: 'translations.gradle'
 apply from: 'witness-verifications.gradle'
 apply plugin: 'org.jetbrains.kotlin.android'
 apply plugin: 'app.cash.exhaustive'
+apply plugin: 'kotlin-parcelize'
 
 repositories {
     maven {
@@ -152,6 +153,10 @@ android {
         buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"unset\""
         buildConfigField "String", "BUILD_ENVIRONMENT_TYPE", "\"unset\""
         buildConfigField "String", "BUILD_VARIANT_TYPE", "\"unset\""
+
+        // TODO: move this to service config
+        buildConfigField "String", "BADGE_STATIC_ROOT", "\"https://example.com/\""
+        buildConfigField "String", "STRIPE_PUBLISHABLE_KEY", "\"abcdefg\""
 
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
@@ -366,6 +371,7 @@ android {
 }
 
 dependencies {
+
     implementation libs.androidx.core.ktx
     implementation libs.androidx.fragment.ktx
     lintChecks project(':lintchecks')
@@ -423,6 +429,7 @@ dependencies {
     implementation project(':video')
     implementation project(':device-transfer')
     implementation project(':image-editor')
+    implementation project(':donations')
     implementation project(':sticky-header-grid')
     implementation project(':photoview')
 
@@ -506,6 +513,8 @@ dependencies {
 
     androidTestImplementation testLibs.androidx.test.ext.junit
     androidTestImplementation testLibs.espresso.core
+
+    testImplementation testLibs.espresso.core
 
     implementation libs.kotlin.stdlib.jdk8
     implementation libs.kotlin.reflect

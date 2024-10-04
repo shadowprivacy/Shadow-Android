@@ -11,6 +11,8 @@ include ':device-transfer'
 include ':device-transfer-app'
 include ':image-editor'
 include ':image-editor-app'
+include ':donations'
+include ':donations-app'
 include ':sticky-header-grid'
 include ':photoview'
 
@@ -25,6 +27,9 @@ project(':libsignal-service').projectDir = file('libsignal/service')
 
 project(':image-editor').projectDir = file('image-editor/lib')
 project(':image-editor-app').projectDir = file('image-editor/app')
+
+project(':donations').projectDir = file('donations/lib')
+project(':donations-app').projectDir = file('donations/app')
 
 rootProject.name='Shadow-Android'
 

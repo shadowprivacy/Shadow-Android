@@ -3,8 +3,8 @@ package su.sres.securesms.payments.preferences;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import su.sres.core.util.money.FiatMoney;
 import su.sres.securesms.payments.currency.CurrencyExchange;
-import su.sres.securesms.payments.currency.FiatMoney;
 import su.sres.securesms.payments.preferences.model.PaymentItem;
 
 import java.util.Collections;

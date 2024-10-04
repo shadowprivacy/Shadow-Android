@@ -13,7 +13,7 @@ data class MediaSelectionState(
   val focusedMedia: Media? = null,
   val recipient: Recipient? = null,
   // quality is server-side managed
-  // val quality: SentMediaQuality = SentMediaQuality.STANDARD,
+  // val quality: SentMediaQuality = SignalStore.settings().sentMediaQuality,
   val quality: SentMediaQuality = SentMediaQuality.HIGH,
   val message: CharSequence? = null,
   val viewOnceToggleState: ViewOnceToggleState = ViewOnceToggleState.INFINITE,

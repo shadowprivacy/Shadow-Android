@@ -1,5 +1,6 @@
 package su.sres.securesms.conversation.multiselect.forward
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -203,6 +204,11 @@ class MultiselectForwardFragment :
     super.onPause()
 
     handler?.removeCallbacksAndMessages(null)
+  }
+
+  override fun onDismiss(dialog: DialogInterface) {
+    dismissibleDialog?.dismissNow()
+    super.onDismiss(dialog)
   }
 
   private fun displayFirstSendConfirmation() {

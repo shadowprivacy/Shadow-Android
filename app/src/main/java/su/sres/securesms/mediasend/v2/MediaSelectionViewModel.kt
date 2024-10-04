@@ -20,6 +20,7 @@ import su.sres.securesms.mms.SentMediaQuality
 import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.recipients.RecipientId
 import su.sres.securesms.scribbles.ImageEditorFragment
+import su.sres.securesms.util.SingleLiveEvent
 import su.sres.securesms.util.Util
 import su.sres.securesms.util.livedata.Store
 import java.util.Collections
@@ -48,7 +49,8 @@ class MediaSelectionViewModel(
   val state: LiveData<MediaSelectionState> = store.stateLiveData
 
   private val internalHudCommands = PublishSubject.create<HudCommand>()
-  private val internalFilterErrors = PublishSubject.create<MediaValidator.FilterError>()
+
+  val mediaErrors: SingleLiveEvent<MediaValidator.FilterError> = SingleLiveEvent()
 
   val hudCommands: Observable<HudCommand> = internalHudCommands
 
@@ -125,7 +127,7 @@ class MediaSelectionViewModel(
           }
 
           if (filterResult.filterError != null) {
-            internalFilterErrors.onNext(filterResult.filterError)
+            mediaErrors.postValue(filterResult.filterError)
           }
         }
     )
@@ -197,7 +199,7 @@ class MediaSelectionViewModel(
     }
 
     if (newMediaList.isEmpty()) {
-      internalFilterErrors.onNext(MediaValidator.FilterError.NO_ITEMS)
+      mediaErrors.postValue(MediaValidator.FilterError.NO_ITEMS)
     }
 
     repository.deleteBlobs(listOf(media))

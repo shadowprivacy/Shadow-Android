@@ -14,9 +14,9 @@ import java.util.List;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.mms.SentMediaQuality;
 import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.SingleLiveEvent;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.webrtc.CallBandwidthMode;
@@ -53,6 +53,7 @@ public final class SettingsValues extends SignalStoreValues {
   public static final  String CALL_RINGTONE                  = "settings.call.ringtone";
   public static final  String CALL_VIBRATE_ENABLED           = "settings.call.vibrate.enabled";
   private static final String UNIVERSAL_EXPIRE_TIMER         = "settings.universal.expire.timer";
+  private static final String SENT_MEDIA_QUALITY             = "settings.sentMediaQuality";
 
   public static final String UPDATE_IN_ROAMING = "settings.update_in_roaming";
 
@@ -97,7 +98,8 @@ public final class SettingsValues extends SignalStoreValues {
                          CALL_NOTIFICATIONS_ENABLED,
                          CALL_RINGTONE,
                          CALL_VIBRATE_ENABLED,
-                         UNIVERSAL_EXPIRE_TIMER);
+                         UNIVERSAL_EXPIRE_TIMER,
+                         SENT_MEDIA_QUALITY);
   }
 
   public @NonNull LiveData<String> getOnConfigurationSettingChanged() {
@@ -329,6 +331,14 @@ public final class SettingsValues extends SignalStoreValues {
 
   public int getUniversalExpireTimer() {
     return getInteger(UNIVERSAL_EXPIRE_TIMER, 0);
+  }
+
+  public void setSentMediaQuality(@NonNull SentMediaQuality sentMediaQuality) {
+    putInteger(SENT_MEDIA_QUALITY, sentMediaQuality.getCode());
+  }
+
+  public @NonNull SentMediaQuality getSentMediaQuality() {
+    return SentMediaQuality.fromCode(getInteger(SENT_MEDIA_QUALITY, SentMediaQuality.STANDARD.getCode()));
   }
 
   private @Nullable Uri getUri(@NonNull String key) {

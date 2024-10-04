@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import su.sres.core.util.logging.Log;
+import su.sres.core.util.money.FiatMoney;
 import su.sres.securesms.database.PaymentDatabase.PaymentTransaction;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -17,7 +18,6 @@ import su.sres.securesms.payments.FiatMoneyUtil;
 import su.sres.securesms.payments.PaymentTransactionLiveData;
 import su.sres.securesms.payments.PaymentsAddressException;
 import su.sres.securesms.payments.confirm.ConfirmPaymentRepository.ConfirmPaymentResult;
-import su.sres.securesms.payments.currency.FiatMoney;
 import su.sres.securesms.util.DefaultValueLiveData;
 import su.sres.securesms.util.SingleLiveEvent;
 import su.sres.securesms.util.livedata.LiveDataUtil;

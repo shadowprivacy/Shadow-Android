@@ -2,8 +2,9 @@ package su.sres.securesms.payments.create;
 
 import androidx.annotation.NonNull;
 
+import su.sres.core.util.money.FiatMoney;
 import su.sres.securesms.payments.currency.CurrencyExchange;
-import su.sres.securesms.payments.currency.FiatMoney;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.payments.Money;
 

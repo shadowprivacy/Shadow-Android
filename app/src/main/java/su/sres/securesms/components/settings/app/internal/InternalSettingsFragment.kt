@@ -17,6 +17,7 @@ import su.sres.securesms.components.settings.configure
 import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.database.LocalMetricsDatabase
 import su.sres.securesms.dependencies.ApplicationDependencies
+import su.sres.securesms.jobs.DownloadLatestEmojiDataJob
 import su.sres.securesms.jobs.RefreshAttributesJob
 import su.sres.securesms.jobs.RefreshOwnProfileJob
 import su.sres.securesms.jobs.RemoteConfigRefreshJob
@@ -201,6 +202,14 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
         isChecked = state.useBuiltInEmojiSet,
         onClick = {
           viewModel.setUseBuiltInEmoji(!state.useBuiltInEmojiSet)
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_force_emoji_download),
+        summary = DSLSettingsText.from(R.string.preferences__internal_force_emoji_download_description),
+        onClick = {
+          ApplicationDependencies.getJobManager().add(DownloadLatestEmojiDataJob(true))
         }
       )
 

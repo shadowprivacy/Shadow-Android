@@ -6,10 +6,10 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 
 import su.sres.core.util.logging.Log;
+import su.sres.core.util.money.FiatMoney;
 import su.sres.securesms.R;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.payments.currency.FiatMoney;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 import org.whispersystems.libsignal.util.guava.Optional;

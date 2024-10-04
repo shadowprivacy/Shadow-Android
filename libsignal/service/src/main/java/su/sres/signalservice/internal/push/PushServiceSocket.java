@@ -41,6 +41,7 @@ import org.signal.zkgroup.profiles.ProfileKeyCredentialRequest;
 import org.signal.zkgroup.profiles.ProfileKeyCredentialRequestContext;
 import org.signal.zkgroup.profiles.ProfileKeyCredentialResponse;
 import org.signal.zkgroup.profiles.ProfileKeyVersion;
+import org.signal.zkgroup.receipts.ReceiptCredentialPresentation;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.ecc.ECPublicKey;
 import org.whispersystems.libsignal.logging.Log;
@@ -238,6 +239,9 @@ public class PushServiceSocket {
 
   private static final String SUBMIT_RATE_LIMIT_CHALLENGE       = "/v1/challenge";
   private static final String REQUEST_RATE_LIMIT_PUSH_CHALLENGE = "/v1/challenge/push";
+
+  private static final String DONATION_INTENT         = "/v1/donation/authorize-apple-pay";
+  private static final String DONATION_REDEEM_RECEIPT = "/v1/donation/redeem-receipt";
 
   private static final String REPORT_SPAM = "/v1/messages/report/%s/%s";
 
@@ -898,6 +902,20 @@ public class PushServiceSocket {
     try (ResponseBody responseBody = makeLicenseRequest(LICENSE_DOWNLOAD_PATH, "GET", null, LICENSE_FILE_NAME)) {
       return responseBody.bytes();
     }
+  }
+
+  public void redeemDonationReceipt(ReceiptCredentialPresentation receiptCredentialPresentation, boolean visible, boolean primary) throws IOException {
+    String payload = JsonUtil.toJson(new RedeemReceiptRequest(Base64.encodeBytesToBytes(receiptCredentialPresentation.serialize()), visible, primary));
+    makeServiceRequest(DONATION_REDEEM_RECEIPT, "PUT", payload);
+  }
+
+  /**
+   * @return The PaymentIntent id
+   */
+  public DonationIntentResult createDonationIntentWithAmount(String amount, String currencyCode) throws IOException {
+    String payload = JsonUtil.toJson(new DonationIntentPayload(Long.parseLong(amount), currencyCode.toLowerCase(Locale.ROOT)));
+    String result  = makeServiceRequest(DONATION_INTENT, "POST", payload);
+    return JsonUtil.fromJsonResponse(result, DonationIntentResult.class);
   }
 
   public ContactTokenDetails getContactTokenDetails(String contactToken) throws IOException {

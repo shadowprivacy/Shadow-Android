@@ -4,6 +4,8 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
+import org.whispersystems.libsignal.SignalProtocolAddress;
+
 import su.sres.securesms.crypto.storage.SignalSenderKeyStore;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -20,7 +22,7 @@ public final class SenderKeyUtil {
    */
   public static void rotateOurKey(@NonNull Context context, @NonNull DistributionId distributionId) {
     try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
-      ApplicationDependencies.getSenderKeyStore().deleteAllFor(Recipient.self().getId(), distributionId);
+      ApplicationDependencies.getSenderKeyStore().deleteAllFor(Recipient.self().requireServiceId(), distributionId);
       DatabaseFactory.getSenderKeySharedDatabase(context).deleteAllFor(distributionId);
     }
   }
@@ -29,7 +31,8 @@ public final class SenderKeyUtil {
    * Gets when the sender key session was created, or -1 if it doesn't exist.
    */
   public static long getCreateTimeForOurKey(@NonNull Context context, @NonNull DistributionId distributionId) {
-    return DatabaseFactory.getSenderKeyDatabase(context).getCreatedTime(Recipient.self().getId(), SignalServiceAddress.DEFAULT_DEVICE_ID, distributionId);
+    SignalProtocolAddress address = new SignalProtocolAddress(Recipient.self().requireServiceId(), SignalServiceAddress.DEFAULT_DEVICE_ID);
+    return DatabaseFactory.getSenderKeyDatabase(context).getCreatedTime(address, distributionId);
   }
 
   /**

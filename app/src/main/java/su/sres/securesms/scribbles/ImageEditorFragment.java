@@ -85,7 +85,8 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
 
   private static final int SELECT_STICKER_REQUEST_CODE = 124;
 
-  private static final int HUD_PROTECTION = ViewUtil.dpToPx(72);
+  private static final int DRAW_HUD_PROTECTION = ViewUtil.dpToPx(72);
+  private static final int CROP_HUD_PROTECTION = ViewUtil.dpToPx(144);
 
   private EditorModel restoredModel;
 
@@ -479,13 +480,22 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
   {
     boolean shouldScaleViewPortForCurrentMode  = shouldScaleViewPort(mode);
     boolean shouldScaleViewPortForPreviousMode = shouldScaleViewPort(previousMode);
+    int     hudProtection                      = getHudProtection(mode);
 
     if (shouldScaleViewPortForCurrentMode != shouldScaleViewPortForPreviousMode || force) {
       if (shouldScaleViewPortForCurrentMode) {
-        scaleViewPortForDrawing(orientation);
+        scaleViewPortForDrawing(orientation, hudProtection);
       } else {
         restoreViewPortScaling(orientation);
       }
+    }
+  }
+
+  private int getHudProtection(ImageEditorHudV2.Mode mode) {
+    if (mode == ImageEditorHudV2.Mode.CROP) {
+      return CROP_HUD_PROTECTION;
+    } else {
+      return DRAW_HUD_PROTECTION;
     }
   }
 
@@ -677,7 +687,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
 
   private ResizeAnimation resizeAnimation;
 
-  private void scaleViewPortForDrawing(int orientation) {
+  private void scaleViewPortForDrawing(int orientation, int protection) {
     if (resizeAnimation != null) {
       resizeAnimation.cancel();
     }
@@ -685,7 +695,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     float aspectRatio  = getAspectRatioForOrientation(orientation);
     int   targetWidth  = getWidthForOrientation(orientation) - ViewUtil.dpToPx(32);
     int   targetHeight = (int) ((1 / aspectRatio) * targetWidth);
-    int   maxHeight    = getHeightForOrientation(orientation) - HUD_PROTECTION;
+    int   maxHeight    = getHeightForOrientation(orientation) - protection;
 
     if (targetHeight > maxHeight) {
       targetHeight = maxHeight;

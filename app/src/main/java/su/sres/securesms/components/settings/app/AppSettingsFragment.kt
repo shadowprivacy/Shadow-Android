@@ -4,6 +4,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
+import androidx.navigation.fragment.findNavController
 import su.sres.securesms.R
 import su.sres.securesms.badges.BadgeImageView
 import su.sres.securesms.components.AvatarImageView
@@ -129,6 +130,34 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
           Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_inviteActivity)
         }
       )
+
+      if (FeatureFlags.donorBadges()) {
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__subscription),
+          icon = DSLSettingsIcon.from(R.drawable.ic_heart_24),
+          onClick = {
+            findNavController()
+              .navigate(
+                AppSettingsFragmentDirections.actionAppSettingsFragmentToSubscriptions()
+                  .setSkipToSubscribe(true /* TODO [alex] -- Check state to see if user has active subscription or not. */)
+              )
+          }
+        )
+        // TODO [alex] -- clap
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__signal_boost),
+          icon = DSLSettingsIcon.from(R.drawable.ic_heart_24),
+          onClick = {
+            findNavController().navigate(R.id.action_appSettingsFragment_to_boostsFragment)
+          }
+        )
+      } /* else {
+        externalLinkPref(
+          title = DSLSettingsText.from(R.string.preferences__donate_to_signal),
+          icon = DSLSettingsIcon.from(R.drawable.ic_heart_24),
+          linkId = R.string.donate_url
+        )
+      } */
 
       if (FeatureFlags.internalUser()) {
         dividerPref()

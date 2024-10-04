@@ -11,4 +11,5 @@
     <dimen name="album_5_total_height">250dp</dimen>
     <dimen name="album_5_cell_size_big">149dp</dimen>
     <dimen name="album_5_cell_size_small">99dp</dimen>
+    <integer name="badge_columns">5</integer>
 </resources>

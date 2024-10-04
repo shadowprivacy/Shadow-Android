@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.keyvalue.SignalStore
+import su.sres.securesms.mms.SentMediaQuality
 import su.sres.securesms.util.TextSecurePreferences
 import su.sres.securesms.util.livedata.Store
 import su.sres.securesms.webrtc.CallBandwidthMode
@@ -51,6 +52,11 @@ class DataAndStorageSettingsViewModel(
     getStateAndCopyStorageUsage()
   }
 
+  fun setSentMediaQuality(sentMediaQuality: SentMediaQuality) {
+    SignalStore.settings().sentMediaQuality = sentMediaQuality
+    getStateAndCopyStorageUsage()
+  }
+
   private fun getStateAndCopyStorageUsage() {
     store.update { getState().copy(totalStorageUse = it.totalStorageUse) }
   }
@@ -68,6 +74,7 @@ class DataAndStorageSettingsViewModel(
     ),
     callBandwidthMode = SignalStore.settings().callBandwidthMode,
     isProxyEnabled = SignalStore.proxy().isProxyEnabled,
+    sentMediaQuality = SignalStore.settings().sentMediaQuality,
     updateInRoaming = SignalStore.settings().isUpdateInRoamingEnabled
   )
 

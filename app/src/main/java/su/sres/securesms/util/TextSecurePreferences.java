@@ -12,6 +12,8 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import su.sres.securesms.backup.BackupProtos;
+import su.sres.securesms.crypto.ProfileKeyUtil;
+import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraintObserver;
 import su.sres.core.util.logging.Log;
@@ -23,6 +25,7 @@ import su.sres.securesms.lock.RegistrationLockReminders;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
 
+import org.signal.zkgroup.profiles.ProfileKey;
 import org.whispersystems.libsignal.util.Medium;
 
 import su.sres.securesms.recipients.Recipient;
@@ -439,6 +442,10 @@ public class TextSecurePreferences {
     setBooleanPreference(context, UNAUTHORIZED_RECEIVED, value);
     if (previous != value) {
       Recipient.self().live().refresh();
+    }
+
+    if (value) {
+      clearLocalCredentials(context);
     }
   }
 
@@ -889,6 +896,10 @@ public class TextSecurePreferences {
     if (previous != registered) {
       Recipient.self().live().refresh();
     }
+
+    if (previous && !registered) {
+      clearLocalCredentials(context);
+    }
   }
 
   public static boolean isShowInviteReminders(Context context) {
@@ -1256,6 +1267,16 @@ public class TextSecurePreferences {
     } else {
       return defaultValues;
     }
+  }
+
+  private static void clearLocalCredentials(Context context) {
+    TextSecurePreferences.setPushServerPassword(context, Util.getSecret(18));
+
+    ProfileKey newProfileKey = ProfileKeyUtil.createNew();
+    Recipient  self          = Recipient.self();
+    DatabaseFactory.getRecipientDatabase(context).setProfileKey(self.getId(), newProfileKey);
+
+    ApplicationDependencies.getGroupsV2Authorization().clear();
   }
 
   // NEVER rename these -- they're persisted by name

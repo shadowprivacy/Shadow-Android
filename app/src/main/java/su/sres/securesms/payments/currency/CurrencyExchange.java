@@ -5,6 +5,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import org.whispersystems.libsignal.util.guava.Optional;
+
+import su.sres.core.util.money.FiatMoney;
 import su.sres.signalservice.api.payments.Money;
 
 import java.math.BigDecimal;

@@ -3,16 +3,23 @@ package su.sres.securesms.components.settings.app
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.viewModels
 import androidx.navigation.NavDirections
 import su.sres.securesms.MainActivity
 import su.sres.securesms.R
 import su.sres.securesms.components.settings.DSLSettingsActivity
+import su.sres.securesms.components.settings.app.subscription.DonationPaymentRepository
+import su.sres.securesms.components.settings.app.subscription.SubscriptionsRepository
+import su.sres.securesms.components.settings.app.subscription.boost.BoostRepository
+import su.sres.securesms.components.settings.app.subscription.boost.BoostViewModel
+import su.sres.securesms.components.settings.app.subscription.subscribe.SubscribeViewModel
 import su.sres.securesms.help.HelpFragment
 import su.sres.securesms.keyvalue.SettingsValues
 import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.service.KeyCachingService
 import su.sres.securesms.util.CachedInflater
 import su.sres.securesms.util.DynamicTheme
+import su.sres.securesms.util.FeatureFlags
 
 private const val START_LOCATION = "app.settings.start.location"
 private const val NOTIFICATION_CATEGORY = "android.intent.category.NOTIFICATION_PREFERENCES"
@@ -22,7 +29,23 @@ class AppSettingsActivity : DSLSettingsActivity() {
 
   private var wasConfigurationUpdated = false
 
+  private val donationRepository: DonationPaymentRepository by lazy { DonationPaymentRepository(this) }
+  private val subscribeViewModel: SubscribeViewModel by viewModels(
+    factoryProducer = {
+      SubscribeViewModel.Factory(SubscriptionsRepository(), donationRepository, FETCH_SUBSCRIPTION_TOKEN_REQUEST_CODE)
+    }
+  )
+
+  private val boostViewModel: BoostViewModel by viewModels(
+    factoryProducer = {
+      BoostViewModel.Factory(BoostRepository(), donationRepository, FETCH_BOOST_TOKEN_REQUEST_CODE)
+    }
+  )
+
   override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
+
+    warmDonationViewModels()
+
     if (intent?.hasExtra(ARG_NAV_GRAPH) != true) {
       intent?.putExtra(ARG_NAV_GRAPH, R.navigation.app_settings)
     }
@@ -79,7 +102,16 @@ class AppSettingsActivity : DSLSettingsActivity() {
     }
   }
 
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+    subscribeViewModel.onActivityResult(requestCode, resultCode, data)
+    boostViewModel.onActivityResult(requestCode, resultCode, data)
+  }
+
   companion object {
+
+    private const val FETCH_SUBSCRIPTION_TOKEN_REQUEST_CODE = 1000
+    private const val FETCH_BOOST_TOKEN_REQUEST_CODE = 2000
 
     @JvmStatic
     fun home(context: Context): Intent = getIntentForStartLocation(context, StartLocation.HOME)
@@ -106,6 +138,13 @@ class AppSettingsActivity : DSLSettingsActivity() {
       return Intent(context, AppSettingsActivity::class.java)
         .putExtra(ARG_NAV_GRAPH, R.navigation.app_settings)
         .putExtra(START_LOCATION, startLocation.code)
+    }
+  }
+
+  private fun warmDonationViewModels() {
+    if (FeatureFlags.donorBadges()) {
+      subscribeViewModel
+      boostViewModel
     }
   }
 

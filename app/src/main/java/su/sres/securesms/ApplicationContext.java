@@ -204,12 +204,13 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
           executePendingContactSync();
           KeyCachingService.onAppForegrounded(this);
           ApplicationDependencies.getShakeToReport().enable();
-          ApplicationDependencies.getFrameRateTracker().begin();
+          ApplicationDependencies.getFrameRateTracker().start();
           ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
           launchCertificateRefresh();
           launchLicenseRefresh();
           launchServiceConfigRefresh();
           checkBuildExpiration();
+          ApplicationDependencies.getDeadlockDetector().start();
 
           initializedOnStart = true;
 
@@ -237,7 +238,8 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
       ApplicationDependencies.getMessageNotifier().clearVisibleThread();
       ApplicationDependencies.getShakeToReport().disable();
       initWorker.execute(() -> {
-        ApplicationDependencies.getFrameRateTracker().end();
+        ApplicationDependencies.getFrameRateTracker().stop();
+        ApplicationDependencies.getDeadlockDetector().stop();
       });
     }
 
@@ -286,7 +288,10 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
     SignalProtocolLoggerProvider.setProvider(new CustomSignalProtocolLogger());
 
-    SignalExecutors.UNBOUNDED.execute(() -> LogDatabase.getInstance(this).trimToSize());
+    SignalExecutors.UNBOUNDED.execute(() -> {
+      Log.blockUntilAllWritesFinished();
+      LogDatabase.getInstance(this).trimToSize();
+    });
   }
 
   private void initializeCrashHandling() {

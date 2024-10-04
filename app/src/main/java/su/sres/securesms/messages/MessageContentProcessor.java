@@ -238,7 +238,7 @@ public final class MessageContentProcessor {
       PendingRetryReceiptModel pending      = ApplicationDependencies.getPendingRetryReceiptCache().get(senderRecipient.getId(), content.getTimestamp());
       long                     receivedTime = handlePendingRetry(pending, content, threadRecipient);
 
-      log(String.valueOf(content.getTimestamp()), "Beginning message processing. Sender: " + senderRecipient.getId() + " | " + senderRecipient.requireServiceId());
+      log(String.valueOf(content.getTimestamp()), "Beginning message processing. Sender: " + senderRecipient.getId() + " | " + senderRecipient.requireServiceId() + "." + content.getSenderDevice());
 
       if (content.getDataMessage().isPresent()) {
         GroupDatabase            groupDatabase = DatabaseFactory.getGroupDatabase(context);
@@ -1858,7 +1858,7 @@ public final class MessageContentProcessor {
     DatabaseFactory.getSenderKeySharedDatabase(context).delete(distributionId, Collections.singleton(requesterAddress));
 
     if (messageLogEntry != null) {
-      warn(content.getTimestamp(), "[RetryReceipt-SK] Found MSL entry for " + requester.getId() + " with timestamp " + sentTimestamp + ". Scheduling a resend.");
+      warn(content.getTimestamp(), "[RetryReceipt-SK] Found MSL entry for " + requester.getId() + " (" + requesterAddress + ") with timestamp " + sentTimestamp + ". Scheduling a resend.");
 
       ApplicationDependencies.getJobManager().add(new ResendMessageJob(messageLogEntry.getRecipientId(),
                                                                        messageLogEntry.getDateSent(),
@@ -1867,7 +1867,7 @@ public final class MessageContentProcessor {
                                                                        groupId,
                                                                        distributionId));
     } else {
-      warn(content.getTimestamp(), "[RetryReceipt-SK] Unable to find MSL entry for " + requester.getId() + " with timestamp " + sentTimestamp + ".");
+      warn(content.getTimestamp(), "[RetryReceipt-SK] Unable to find MSL entry for " + requester.getId() + " (" + requesterAddress + ") with timestamp " + sentTimestamp + ".");
 
       Optional<GroupRecord> groupRecord = DatabaseFactory.getGroupDatabase(context).getGroup(groupId);
 

@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import android.widget.ViewSwitcher
 import androidx.activity.OnBackPressedCallback
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -18,6 +19,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
+import app.cash.exhaustive.Exhaustive
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import su.sres.securesms.R
 import su.sres.securesms.conversation.multiselect.forward.MultiselectForwardFragment
@@ -30,6 +32,7 @@ import su.sres.securesms.mediasend.v2.MediaSelectionNavigator
 import su.sres.securesms.mediasend.v2.MediaSelectionNavigator.Companion.requestPermissionsForGallery
 import su.sres.securesms.mediasend.v2.MediaSelectionState
 import su.sres.securesms.mediasend.v2.MediaSelectionViewModel
+import su.sres.securesms.mediasend.v2.MediaValidator
 import su.sres.securesms.mms.SentMediaQuality
 import su.sres.securesms.permissions.Permissions
 import su.sres.securesms.recipients.RecipientId
@@ -200,6 +203,19 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment) {
       sendButton.isEnabled = !state.isSent && state.selectedMedia.isNotEmpty()
 
       computeViewStateAndAnimate(state)
+    }
+
+    sharedViewModel.mediaErrors.observe(viewLifecycleOwner) { error: MediaValidator.FilterError ->
+      @Exhaustive
+      when (error) {
+        MediaValidator.FilterError.ITEM_TOO_LARGE -> Toast.makeText(requireContext(), R.string.MediaReviewFragment__one_or_more_items_were_too_large, Toast.LENGTH_SHORT).show()
+        MediaValidator.FilterError.ITEM_INVALID_TYPE -> Toast.makeText(requireContext(), R.string.MediaReviewFragment__one_or_more_items_were_invalid, Toast.LENGTH_SHORT).show()
+        MediaValidator.FilterError.TOO_MANY_ITEMS -> Toast.makeText(requireContext(), R.string.MediaReviewFragment__too_many_items_selected, Toast.LENGTH_SHORT).show()
+        MediaValidator.FilterError.NO_ITEMS -> {
+          Toast.makeText(requireContext(), R.string.MediaReviewFragment__one_or_more_items_were_invalid, Toast.LENGTH_SHORT).show()
+          callback.onNoMediaSelected()
+        }
+      }
     }
 
     requireActivity().onBackPressedDispatcher.addCallback(
@@ -450,6 +466,7 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment) {
     fun onSentWithResult(mediaSendActivityResult: MediaSendActivityResult)
     fun onSentWithoutResult()
     fun onSendError(error: Throwable)
+    fun onNoMediaSelected()
     fun onPopFromReview()
   }
 }

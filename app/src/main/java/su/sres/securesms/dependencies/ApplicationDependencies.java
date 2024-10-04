@@ -6,6 +6,7 @@ import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 
 import okhttp3.OkHttpClient;
+import su.sres.core.util.concurrent.DeadlockDetector;
 import su.sres.securesms.components.TypingStatusRepository;
 import su.sres.securesms.components.TypingStatusSender;
 import su.sres.securesms.crypto.storage.SignalSenderKeyStore;
@@ -47,6 +48,7 @@ import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.SignalWebSocket;
 import su.sres.signalservice.api.groupsv2.GroupsV2Operations;
+import su.sres.signalservice.api.services.DonationsService;
 
 /**
  * Location for storing and retrieving application-scoped singletons. Users must call
@@ -103,9 +105,11 @@ public class ApplicationDependencies {
   private static volatile TextSecurePreKeyStore        preKeyStore;
   private static volatile SignalSenderKeyStore         senderKeyStore;
   private static volatile GiphyMp4Cache                giphyMp4Cache;
-  private static volatile SimpleExoPlayerPool exoPlayerPool;
-  private static volatile AudioManagerCompat  audioManagerCompat;
-  private static volatile KeyValueStore       keyValueStore;
+  private static volatile SimpleExoPlayerPool          exoPlayerPool;
+  private static volatile AudioManagerCompat           audioManagerCompat;
+  private static volatile DonationsService             donationsService;
+  private static volatile DeadlockDetector             deadlockDetector;
+  private static volatile KeyValueStore                keyValueStore;
 
   public static void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
     synchronized (NI_LOCK) {
@@ -608,6 +612,28 @@ public class ApplicationDependencies {
     return audioManagerCompat;
   }
 
+  public static @NonNull DonationsService getDonationsService() {
+    if (donationsService == null) {
+      synchronized (LOCK) {
+        if (donationsService == null) {
+          donationsService = provider.provideDonationsService();
+        }
+      }
+    }
+    return donationsService;
+  }
+
+  public static @NonNull DeadlockDetector getDeadlockDetector() {
+    if (deadlockDetector == null) {
+      synchronized (NI_LOCK) {
+        if (deadlockDetector == null) {
+          deadlockDetector = networkIndependentProvider.provideDeadlockDetector();
+        }
+      }
+    }
+    return deadlockDetector;
+  }
+
   public interface Provider {
     @NonNull
     GroupsV2Operations provideGroupsV2Operations();
@@ -662,6 +688,8 @@ public class ApplicationDependencies {
     @NonNull SignalWebSocket provideSignalWebSocket();
 
     @NonNull AudioManagerCompat provideAndroidCallAudioManager();
+
+    @NonNull DonationsService provideDonationsService();
   }
 
   public interface NetworkIndependentProvider {
@@ -683,6 +711,8 @@ public class ApplicationDependencies {
     ShakeToReport provideShakeToReport();
 
     @NonNull AppForegroundObserver provideAppForegroundObserver();
+
+    @NonNull DeadlockDetector provideDeadlockDetector();
 
   }
 }

@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.annimon.stream.Stream;
 
 import su.sres.core.util.logging.Log;
+import su.sres.core.util.money.FiatMoney;
 import su.sres.securesms.R;
 import su.sres.securesms.components.settings.SettingHeader;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -21,7 +22,6 @@ import su.sres.securesms.payments.Payment;
 import su.sres.securesms.payments.UnreadPaymentsRepository;
 import su.sres.securesms.payments.currency.CurrencyExchange;
 import su.sres.securesms.payments.currency.CurrencyExchangeRepository;
-import su.sres.securesms.payments.currency.FiatMoney;
 import su.sres.securesms.payments.preferences.model.InProgress;
 import su.sres.securesms.payments.preferences.model.InfoCard;
 import su.sres.securesms.payments.preferences.model.IntroducingPayments;

@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import su.sres.core.util.money.FiatMoney;
 import su.sres.signalservice.api.payments.Money;
 
 import java.math.BigDecimal;

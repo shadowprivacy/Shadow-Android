@@ -11,13 +11,13 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import su.sres.core.util.logging.Log;
+import su.sres.core.util.money.FiatMoney;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.payments.Balance;
 import su.sres.securesms.payments.CreatePaymentDetails;
 import su.sres.securesms.payments.FiatMoneyUtil;
 import su.sres.securesms.payments.currency.CurrencyExchange;
-import su.sres.securesms.payments.currency.FiatMoney;
 import su.sres.securesms.payments.preferences.model.PayeeParcelable;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.DefaultValueLiveData;
@@ -126,8 +126,8 @@ public class CreatePaymentViewModel extends ViewModel {
 
     void clearAmount() {
         inputState.update(s -> {
-            final Money money = Money.MobileCoin.ZERO;
-            final Optional<FiatMoney> fiat = OptionalUtil.flatMap(s.getExchangeRate(), r -> r.exchange(money));
+            final Money               money = Money.MobileCoin.ZERO;
+            final Optional<FiatMoney> fiat  = OptionalUtil.flatMap(s.getExchangeRate(), r -> r.exchange(money));
 
             return s.updateAmount("0", "0", Money.MobileCoin.ZERO, fiat);
         });
