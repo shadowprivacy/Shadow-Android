@@ -468,7 +468,7 @@ public class MmsSmsDatabase extends Database {
       }
 
       for (ThreadUpdate update : threadUpdates) {
-        threadDatabase.update(update.getThreadId(), false);
+        threadDatabase.updateSilently(update.getThreadId(), false);
       }
 
       db.setTransactionSuccessful();
@@ -481,6 +481,10 @@ public class MmsSmsDatabase extends Database {
         } else {
           notifyConversationListeners(threadUpdate.getThreadId());
         }
+      }
+
+      if (threadUpdates.size() > 0) {
+        notifyConversationListListeners();
       }
     }
 

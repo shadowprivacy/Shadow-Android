@@ -17,9 +17,9 @@ import su.sres.core.util.LinkedBlockingLifoQueue;
 public final class SignalExecutors {
 
   public static final ExecutorService UNBOUNDED  = Executors.newCachedThreadPool(new NumberedThreadFactory("shadow-unbounded"));
-  public static final ExecutorService BOUNDED    = Executors.newFixedThreadPool(getIdealThreadCount(), new NumberedThreadFactory("shadow-bounded"));
+  public static final ExecutorService BOUNDED    = Executors.newFixedThreadPool(4, new NumberedThreadFactory("shadow-bounded"));
   public static final ExecutorService SERIAL     = Executors.newSingleThreadExecutor(new NumberedThreadFactory("shadow-serial"));
-  public static final ExecutorService BOUNDED_IO = newCachedBoundedExecutor("shadow-bounded-io", 1, 32);
+  public static final ExecutorService BOUNDED_IO = newCachedBoundedExecutor("shadow-io-bounded", 1, 32, 30);
 
   private SignalExecutors() {}
 
@@ -40,10 +40,10 @@ public final class SignalExecutors {
    * So we make a queue that will always return false if it's non-empty to ensure new threads get
    * created. Then, if a task gets rejected, we simply add it to the queue.
    */
-  public static ExecutorService newCachedBoundedExecutor(final String name, int minThreads, int maxThreads) {
+  public static ExecutorService newCachedBoundedExecutor(final String name, int minThreads, int maxThreads, int timeoutSeconds) {
     ThreadPoolExecutor threadPool = new ThreadPoolExecutor(minThreads,
                                                            maxThreads,
-                                                           30,
+                                                           timeoutSeconds,
                                                            TimeUnit.SECONDS,
                                                            new LinkedBlockingQueue<Runnable>() {
                                                              @Override
@@ -79,13 +79,6 @@ public final class SignalExecutors {
     HandlerThread handlerThread = new HandlerThread(name);
     handlerThread.start();
     return handlerThread;
-  }
-
-  /**
-   * Returns an 'ideal' thread count based on the number of available processors.
-   */
-  public static int getIdealThreadCount() {
-    return Math.max(2, Math.min(Runtime.getRuntime().availableProcessors() - 1, 4));
   }
 
   private static class NumberedThreadFactory implements ThreadFactory {

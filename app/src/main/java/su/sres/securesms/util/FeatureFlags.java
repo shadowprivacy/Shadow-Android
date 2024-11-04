@@ -423,12 +423,17 @@ public final class FeatureFlags {
     return getBoolean(CHANGE_USER_LOGIN_ENABLED, false);
   }
 
-  /** Whether or not to show donor badges in the UI. */
+  /** Whether or not to show donor badges in the UI.
+   *
+   * WARNING: Donor Badges is an unfinished feature and should not be enabled in production builds.
+   *    Enabling this flag in a custom build can result in crashes and could result in your Google Pay
+   *    account being charged real money.
+   */
   public static boolean donorBadges() {
     if (Environment.IS_STAGING) {
       return  true;
     } else {
-      return getBoolean(DONOR_BADGES, false);
+      return getBoolean(DONOR_BADGES, false ) || SignalStore.donationsValues().getSubscriber() != null;
     }
   }
 

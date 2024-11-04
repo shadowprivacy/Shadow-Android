@@ -1,6 +1,5 @@
 package su.sres.securesms.jobs;
 
-import android.net.Uri;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
@@ -9,7 +8,7 @@ import androidx.annotation.Nullable;
 import org.signal.zkgroup.profiles.ProfileKey;
 import org.signal.zkgroup.profiles.ProfileKeyCredential;
 
-import su.sres.securesms.badges.models.Badge;
+import su.sres.securesms.badges.Badges;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
@@ -24,7 +23,6 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.ProfileUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 
-import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.securesms.util.Util;
@@ -34,8 +32,6 @@ import su.sres.signalservice.api.profiles.SignalServiceProfile;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -177,25 +173,7 @@ public class RefreshOwnProfileJob extends BaseJob {
 
         DatabaseFactory.getRecipientDatabase(context)
                        .setBadges(Recipient.self().getId(),
-                                  badges.stream().map(RefreshOwnProfileJob::adaptFromServiceBadge).collect(Collectors.toList()));
-    }
-
-    private static Badge adaptFromServiceBadge(@NonNull SignalServiceProfile.Badge serviceBadge) {
-        Pair<Uri, String> uriAndDensity = RetrieveProfileJob.getBestBadgeImageUriForDevice(serviceBadge);
-        return new Badge(
-            serviceBadge.getId(),
-            Badge.Category.Companion.fromCode(serviceBadge.getCategory()),
-            serviceBadge.getName(),
-            serviceBadge.getDescription(),
-            uriAndDensity.first(),
-            uriAndDensity.second(),
-            getTimestamp(serviceBadge.getExpiration()),
-            serviceBadge.isVisible()
-        );
-    }
-
-    private static long getTimestamp(@NonNull BigDecimal bigDecimal) {
-        return new Timestamp(bigDecimal.longValue() * 1000).getTime();
+                                  badges.stream().map(Badges::fromServiceBadge).collect(Collectors.toList()));
     }
 
     public static final class Factory implements Job.Factory<RefreshOwnProfileJob> {

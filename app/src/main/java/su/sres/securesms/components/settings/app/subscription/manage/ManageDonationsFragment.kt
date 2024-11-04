@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
+import su.sres.core.util.DimensionUnit
 import su.sres.securesms.R
 import su.sres.securesms.components.settings.DSLConfiguration
 import su.sres.securesms.components.settings.DSLSettingsAdapter
@@ -13,7 +14,11 @@ import su.sres.securesms.components.settings.DSLSettingsIcon
 import su.sres.securesms.components.settings.DSLSettingsText
 import su.sres.securesms.components.settings.app.subscription.SubscriptionsRepository
 import su.sres.securesms.components.settings.configure
+import su.sres.securesms.components.settings.models.IndeterminateLoadingCircle
+import su.sres.securesms.dependencies.ApplicationDependencies
+import su.sres.securesms.subscription.Subscription
 import su.sres.securesms.util.LifecycleDisposable
+import java.util.concurrent.TimeUnit
 
 /**
  * Fragment displayed when a user enters "Subscriptions" via app settings but is already
@@ -23,7 +28,7 @@ class ManageDonationsFragment : DSLSettingsFragment() {
 
   private val viewModel: ManageDonationsViewModel by viewModels(
     factoryProducer = {
-      ManageDonationsViewModel.Factory(SubscriptionsRepository())
+      ManageDonationsViewModel.Factory(SubscriptionsRepository(ApplicationDependencies.getDonationsService()))
     }
   )
 
@@ -53,6 +58,7 @@ class ManageDonationsFragment : DSLSettingsFragment() {
     }
 
     ActiveSubscriptionPreference.register(adapter)
+    IndeterminateLoadingCircle.register(adapter)
 
     viewModel.state.observe(viewLifecycleOwner) { state ->
       adapter.submitList(getConfiguration(state).toMappingModelList())
@@ -83,17 +89,32 @@ class ManageDonationsFragment : DSLSettingsFragment() {
         )
       )
 
-      if (state.activeSubscription != null) {
-        customPref(
-          ActiveSubscriptionPreference.Model(
-            subscription = state.activeSubscription,
-            onAddBoostClick = {
-              findNavController().navigate(ManageDonationsFragmentDirections.actionManageDonationsFragmentToBoosts())
-            }
-          )
-        )
+      if (state.transactionState is ManageDonationsState.TransactionState.NotInTransaction) {
+        val activeSubscription = state.transactionState.activeSubscription
+        if (activeSubscription.isActive) {
+          val subscription: Subscription? = state.availableSubscriptions.firstOrNull { activeSubscription.activeSubscription.level == it.level }
+          if (subscription != null) {
+            space(DimensionUnit.DP.toPixels(16f).toInt())
 
-        dividerPref()
+            customPref(
+              ActiveSubscriptionPreference.Model(
+                subscription = subscription,
+                onAddBoostClick = {
+                  findNavController().navigate(ManageDonationsFragmentDirections.actionManageDonationsFragmentToBoosts())
+                },
+                renewalTimestamp = TimeUnit.SECONDS.toMillis(activeSubscription.activeSubscription.endOfCurrentPeriod)
+              )
+            )
+
+            dividerPref()
+          } else {
+            customPref(IndeterminateLoadingCircle)
+          }
+        } else {
+          customPref(IndeterminateLoadingCircle)
+        }
+      } else {
+        customPref(IndeterminateLoadingCircle)
       }
 
       clickPref(

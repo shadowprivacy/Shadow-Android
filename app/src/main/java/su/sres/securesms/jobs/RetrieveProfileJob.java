@@ -6,7 +6,6 @@ import androidx.annotation.WorkerThread;
 
 import android.app.Application;
 import android.content.Context;
-import android.net.Uri;
 import android.text.TextUtils;
 
 import com.annimon.stream.Collectors;
@@ -17,8 +16,7 @@ import org.signal.zkgroup.profiles.ProfileKeyCredential;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import su.sres.securesms.BuildConfig;
-import su.sres.securesms.badges.models.Badge;
+import su.sres.securesms.badges.Badges;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
@@ -39,7 +37,6 @@ import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.ProfileUtil;
-import su.sres.securesms.util.ScreenDensity;
 import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -356,46 +353,7 @@ public class RetrieveProfileJob extends BaseJob {
 
     DatabaseFactory.getRecipientDatabase(context)
                    .setBadges(recipient.getId(),
-                              badges.stream().map(RetrieveProfileJob::adaptFromServiceBadge).collect(java.util.stream.Collectors.toList()));
-  }
-
-  private static Badge adaptFromServiceBadge(@NonNull SignalServiceProfile.Badge serviceBadge) {
-    Pair<Uri, String> uriAndDensity = RetrieveProfileJob.getBestBadgeImageUriForDevice(serviceBadge);
-    return new Badge(
-        serviceBadge.getId(),
-        Badge.Category.Companion.fromCode(serviceBadge.getCategory()),
-        serviceBadge.getName(),
-        serviceBadge.getDescription(),
-        uriAndDensity.first(),
-        uriAndDensity.second(),
-        0L,
-        true
-    );
-  }
-
-  public static @NonNull Pair<Uri, String> getBestBadgeImageUriForDevice(@NonNull SignalServiceProfile.Badge serviceBadge) {
-    String bestDensity = ScreenDensity.getBestDensityBucketForDevice();
-
-    switch (bestDensity) {
-      case "ldpi":
-        return new Pair<>(getBadgeImageUri(serviceBadge.getLdpiUri()), "ldpi");
-      case "mdpi":
-        return new Pair<>(getBadgeImageUri(serviceBadge.getMdpiUri()), "mdpi");
-      case "hdpi":
-        return new Pair<>(getBadgeImageUri(serviceBadge.getHdpiUri()), "hdpi");
-      case "xxhdpi":
-        return new Pair<>(getBadgeImageUri(serviceBadge.getXxhdpiUri()), "xxhdpi");
-      case "xxxhdpi":
-        return new Pair<>(getBadgeImageUri(serviceBadge.getXxxhdpiUri()), "xxxhdpi");
-      default:
-        return new Pair<>(getBadgeImageUri(serviceBadge.getXhdpiUri()), "xdpi");
-    }
-  }
-
-  private static @NonNull Uri getBadgeImageUri(@NonNull String densityPath) {
-    return Uri.parse(BuildConfig.BADGE_STATIC_ROOT).buildUpon()
-              .appendPath(densityPath)
-              .build();
+                              badges.stream().map(Badges::fromServiceBadge).collect(java.util.stream.Collectors.toList()));
   }
 
   private void setProfileKeyCredential(@NonNull Recipient recipient,

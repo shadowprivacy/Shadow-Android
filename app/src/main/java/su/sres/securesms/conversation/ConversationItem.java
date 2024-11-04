@@ -124,6 +124,7 @@ import su.sres.securesms.util.InterceptableLongClickCopyLinkSpan;
 import su.sres.securesms.util.LongClickMovementMethod;
 import su.sres.securesms.util.MessageRecordUtil;
 import su.sres.securesms.util.Projection;
+import su.sres.securesms.util.ProjectionList;
 import su.sres.securesms.util.SearchUtil;
 import su.sres.securesms.util.StringUtil;
 import su.sres.securesms.util.ThemeUtil;
@@ -139,7 +140,6 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -222,6 +222,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   private Colorizer          colorizer;
   private boolean            hasWallpaper;
   private float              lastYDownRelativeToThis;
+  private ProjectionList     colorizerProjections = new ProjectionList(3);
 
   public ConversationItem(Context context) {
     this(context, null);
@@ -330,6 +331,11 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   @Override
   public void updateTimestamps() {
     getActiveFooter(messageRecord).setMessageRecord(messageRecord, locale);
+  }
+
+  @Override
+  public void updateContactNameColor() {
+    setGroupAuthorColor(messageRecord, hasWallpaper, colorizer);
   }
 
   @Override
@@ -524,6 +530,10 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     if (conversationRecipient != null) {
       conversationRecipient.removeForeverObserver(this);
     }
+
+    bodyBubble.setVideoPlayerProjection(null);
+    bodyBubble.setQuoteViewProjection(null);
+
     cancelPulseOutlinerAnimation();
   }
 
@@ -581,12 +591,17 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   }
 
   private static int getProjectionTop(@NonNull View child) {
-    return (int) Projection.relativeToViewRoot(child, null).getY();
+    Projection projection = Projection.relativeToViewRoot(child, null);
+    int y = (int) projection.getY();
+    projection.release();
+    return y;
   }
 
   private static int getProjectionBottom(@NonNull View child) {
     Projection projection = Projection.relativeToViewRoot(child, null);
-    return (int) projection.getY() + projection.getHeight();
+    int bottom = (int) projection.getY() + projection.getHeight();
+    projection.release();
+    return bottom;
   }
 
   @Override
@@ -1692,10 +1707,12 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   public @NonNull Projection getGiphyMp4PlayableProjection(@NonNull ViewGroup recyclerView) {
     if (mediaThumbnailStub != null && mediaThumbnailStub.isResolvable()) {
       return Projection.relativeToParent(recyclerView, mediaThumbnailStub.require(), mediaThumbnailStub.require().getCorners())
+                       .translateY(getTranslationY())
                        .translateX(bodyBubble.getTranslationX())
                        .translateX(getTranslationX());
     } else {
       return Projection.relativeToParent(recyclerView, bodyBubble, bodyBubbleCorners)
+                       .translateY(getTranslationY())
                        .translateX(bodyBubble.getTranslationX())
                        .translateX(getTranslationX());
     }
@@ -1707,8 +1724,8 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   }
 
   @Override
-  public @NonNull List<Projection> getColorizerProjections(@NonNull ViewGroup coordinateRoot) {
-    List<Projection> projections = new LinkedList<>();
+  public @NonNull ProjectionList getColorizerProjections(@NonNull ViewGroup coordinateRoot) {
+    colorizerProjections.clear();
 
     if (messageRecord.isOutgoing() &&
         !hasNoBubble(messageRecord) &&
@@ -1719,9 +1736,9 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       Projection videoToBubble    = bodyBubble.getVideoPlayerProjection();
       if (videoToBubble != null) {
         Projection videoToRoot = Projection.translateFromDescendantToParentCoords(videoToBubble, bodyBubble, coordinateRoot);
-        projections.addAll(Projection.getCapAndTail(bodyBubbleToRoot, videoToRoot));
+        colorizerProjections.addAll(Projection.getCapAndTail(bodyBubbleToRoot, videoToRoot));
       } else {
-        projections.add(bodyBubbleToRoot);
+        colorizerProjections.add(bodyBubbleToRoot);
       }
     }
 
@@ -1731,7 +1748,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     {
       Projection footerProjection = getActiveFooter(messageRecord).getProjection(coordinateRoot);
       if (footerProjection != null) {
-        projections.add(footerProjection.translateX(bodyBubble.getTranslationX()));
+        colorizerProjections.add(footerProjection.translateX(bodyBubble.getTranslationX()));
       }
     }
 
@@ -1740,10 +1757,13 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
         quoteView != null)
     {
       bodyBubble.setQuoteViewProjection(quoteView.getProjection(bodyBubble));
-      projections.add(quoteView.getProjection(coordinateRoot).translateX(bodyBubble.getTranslationX() + this.getTranslationX()));
+      colorizerProjections.add(quoteView.getProjection(coordinateRoot).translateX(bodyBubble.getTranslationX() + this.getTranslationX()));
+    }
+    for (int i = 0; i < colorizerProjections.size(); i++) {
+      colorizerProjections.get(i).translateY(getTranslationY());
     }
 
-    return projections;
+    return colorizerProjections;
   }
 
   @Override

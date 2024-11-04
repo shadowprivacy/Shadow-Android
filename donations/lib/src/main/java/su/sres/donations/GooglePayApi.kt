@@ -26,13 +26,17 @@ import su.sres.core.util.money.FiatMoney
  * @param activity The activity the Pay Client will attach itself to
  * @param gateway The payment gateway (Such as Stripe)
  */
-class GooglePayApi(private val activity: Activity, private val gateway: Gateway) {
+class GooglePayApi(
+  private val activity: Activity,
+  private val gateway: Gateway,
+  configuration: Configuration
+) {
 
   private val paymentsClient: PaymentsClient
 
   init {
     val walletOptions = Wallet.WalletOptions.Builder()
-      .setEnvironment(PAYMENT_ENVIRONMENT)
+      .setEnvironment(configuration.walletEnvironment)
       .build()
 
     paymentsClient = Wallet.getPaymentsClient(activity, walletOptions)
@@ -166,8 +170,8 @@ class GooglePayApi(private val activity: Activity, private val gateway: Gateway)
   companion object {
     private val TAG = Log.tag(GooglePayApi::class.java)
 
-    private const val PAYMENT_ENVIRONMENT: Int = WalletConstants.ENVIRONMENT_TEST
-    private const val MERCHANT_NAME = "Signal Foundation"
+    // TODO: Move this to service config
+    private const val MERCHANT_NAME = "Shadow"
 
     private val merchantInfo: JSONObject =
       JSONObject().put("merchantName", MERCHANT_NAME)
@@ -179,6 +183,13 @@ class GooglePayApi(private val activity: Activity, private val gateway: Gateway)
       put("apiVersionMinor", 0)
     }
   }
+
+  /**
+   * @param walletEnvironment From WalletConstants
+   */
+  data class Configuration(
+    val walletEnvironment: Int
+  )
 
   interface Gateway {
     fun getTokenizationSpecificationParameters(): Map<String, String>

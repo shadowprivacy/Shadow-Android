@@ -164,7 +164,7 @@ class ConversationListSearchAdapter extends RecyclerView.Adapter<ConversationLis
               @NonNull Locale locale,
               @Nullable String query)
     {
-      root.bind(conversationResult, glideRequests, locale, Collections.emptySet(), Collections.emptySet(), false, query);
+      root.bindThread(conversationResult, glideRequests, locale, Collections.emptySet(), Collections.emptySet(), false, query);
       root.setOnClickListener(view -> eventListener.onConversationClicked(conversationResult));
     }
 
@@ -174,7 +174,7 @@ class ConversationListSearchAdapter extends RecyclerView.Adapter<ConversationLis
               @NonNull Locale locale,
               @Nullable String query)
     {
-      root.bind(contactResult, glideRequests, locale, query);
+      root.bindContact(contactResult, glideRequests, locale, query);
       root.setOnClickListener(view -> eventListener.onContactClicked(contactResult));
     }
 
@@ -184,7 +184,7 @@ class ConversationListSearchAdapter extends RecyclerView.Adapter<ConversationLis
               @NonNull Locale locale,
               @Nullable String query)
     {
-      root.bind(messageResult, glideRequests, locale, query);
+      root.bindMessage(messageResult, glideRequests, locale, query);
       root.setOnClickListener(view -> eventListener.onMessageClicked(messageResult));
     }
 

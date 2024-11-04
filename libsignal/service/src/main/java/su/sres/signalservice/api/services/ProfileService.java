@@ -20,6 +20,7 @@ import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.MalformedResponseException;
 import su.sres.signalservice.internal.ServiceResponse;
 import su.sres.signalservice.internal.ServiceResponseProcessor;
+import su.sres.signalservice.internal.push.http.AcceptLanguagesUtil;
 import su.sres.signalservice.internal.util.Hex;
 import su.sres.signalservice.internal.util.JsonUtil;
 import su.sres.signalservice.internal.websocket.DefaultResponseMapper;
@@ -27,6 +28,7 @@ import su.sres.signalservice.internal.websocket.ResponseMapper;
 import su.sres.signalservice.internal.websocket.WebSocketProtos;
 
 import java.security.SecureRandom;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -56,7 +58,8 @@ public final class ProfileService {
   public Single<ServiceResponse<ProfileAndCredential>> getProfile(SignalServiceAddress address,
                                                                   Optional<ProfileKey> profileKey,
                                                                   Optional<UnidentifiedAccess> unidentifiedAccess,
-                                                                  SignalServiceProfile.RequestType requestType)
+                                                                  SignalServiceProfile.RequestType requestType,
+                                                                  Locale locale)
   {
     UUID                               uuid           = address.getUuid();
     SecureRandom                       random         = new SecureRandom();
@@ -84,6 +87,8 @@ public final class ProfileService {
       builder.setPath(String.format("/v1/profile/%s", address.getIdentifier()));
     }
 
+    builder.addHeaders(AcceptLanguagesUtil.getAcceptLanguageHeader(locale));
+
     WebSocketProtos.WebSocketRequestMessage requestMessage = builder.build();
 
     ResponseMapper<ProfileAndCredential> responseMapper = DefaultResponseMapper.extend(ProfileAndCredential.class)
@@ -92,17 +97,18 @@ public final class ProfileService {
 
     return signalWebSocket.request(requestMessage, unidentifiedAccess)
                           .map(responseMapper::map)
-                          .onErrorResumeNext(t -> restFallback(address, profileKey, unidentifiedAccess, requestType))
+                          .onErrorResumeNext(t -> restFallback(address, profileKey, unidentifiedAccess, requestType, locale))
                           .onErrorReturn(ServiceResponse::forUnknownError);
   }
 
   private Single<ServiceResponse<ProfileAndCredential>> restFallback(SignalServiceAddress address,
                                                                      Optional<ProfileKey> profileKey,
                                                                      Optional<UnidentifiedAccess> unidentifiedAccess,
-                                                                     SignalServiceProfile.RequestType requestType)
+                                                                     SignalServiceProfile.RequestType requestType,
+                                                                     Locale locale)
   {
-    return Single.fromFuture(receiver.retrieveProfile(address, profileKey, unidentifiedAccess, requestType), 10, TimeUnit.SECONDS)
-                 .onErrorResumeNext(t -> Single.fromFuture(receiver.retrieveProfile(address, profileKey, Optional.absent(), requestType), 10, TimeUnit.SECONDS))
+    return Single.fromFuture(receiver.retrieveProfile(address, profileKey, unidentifiedAccess, requestType, locale), 10, TimeUnit.SECONDS)
+                 .onErrorResumeNext(t -> Single.fromFuture(receiver.retrieveProfile(address, profileKey, Optional.absent(), requestType, locale), 10, TimeUnit.SECONDS))
                  .map(p -> ServiceResponse.forResult(p, 0, null));
   }
 

@@ -3,12 +3,12 @@ package su.sres.securesms.util;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.os.Build;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.util.Pools;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,30 +20,40 @@ import java.util.Objects;
  */
 public final class Projection {
 
-  private final float   x;
-  private final float   y;
-  private final int     width;
-  private final int     height;
-  private final Corners corners;
-  private final Path    path;
-  private final RectF   rect;
+  private float   x;
+  private float   y;
+  private int     width;
+  private int     height;
+  private Corners corners;
+  private Path    path;
+  private RectF   rect;
+  private Projection() {
+    x       = 0f;
+    y       = 0f;
+    width   = 0;
+    height  = 0;
+    corners = null;
+    path    = new Path();
+    rect    = new RectF();
+  }
 
-  public Projection(float x, float y, int width, int height, @Nullable Corners corners) {
+  private Projection set(float x, float y, int width, int height, @Nullable Corners corners) {
     this.x       = x;
     this.y       = y;
     this.width   = width;
     this.height  = height;
     this.corners = corners;
-    this.path    = new Path();
 
-    rect = new RectF();
     rect.set(x, y, x + width, y + height);
+    path.reset();
 
     if (corners != null) {
       path.addRoundRect(rect, corners.toRadii(), Path.Direction.CW);
     } else {
       path.addRect(rect, Path.Direction.CW);
     }
+
+    return this;
   }
 
   public float getX() {
@@ -74,39 +84,16 @@ public final class Projection {
     if (corners == null) {
       path.addRect(rect, Path.Direction.CW);
     } else {
-      if (Build.VERSION.SDK_INT >= 21) {
-        path.addRoundRect(rect, corners.toRadii(), Path.Direction.CW);
-      } else {
-        path.op(path, Path.Op.UNION);
-      }
+      path.addRoundRect(rect, corners.toRadii(), Path.Direction.CW);
     }
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    final Projection that = (Projection) o;
-    return Float.compare(that.x, x) == 0 &&
-           Float.compare(that.y, y) == 0 &&
-           width == that.width &&
-           height == that.height &&
-           Objects.equals(corners, that.corners);
-  }
-
-  @Override public int hashCode() {
-    return Objects.hash(x, y, width, height, corners);
-  }
-
   public @NonNull Projection translateX(float xTranslation) {
-    return new Projection(x + xTranslation, y, width, height, corners);
+    return set(x + xTranslation, y, width, height, corners);
   }
 
-  public @NonNull Projection withDimensions(int width, int height) {
-    return new Projection(x, y, width, height, corners);
-  }
-
-  public @NonNull Projection withHeight(int height) {
-    return new Projection(x, y, width, height, corners);
+  public @NonNull Projection translateY(float yTranslation) {
+    return set(x, y + yTranslation, width, height, corners);
   }
 
   public static @NonNull Projection relativeToParent(@NonNull ViewGroup parent, @NonNull View view, @Nullable Corners corners) {
@@ -114,7 +101,7 @@ public final class Projection {
 
     view.getDrawingRect(viewBounds);
     parent.offsetDescendantRectToMyCoords(view, viewBounds);
-    return new Projection(viewBounds.left, viewBounds.top, view.getWidth(), view.getHeight(), corners);
+    return acquireAndSet(viewBounds.left, viewBounds.top, view.getWidth(), view.getHeight(), corners);
   }
 
   public static @NonNull Projection relativeToViewRoot(@NonNull View view, @Nullable Corners corners) {
@@ -124,7 +111,7 @@ public final class Projection {
     view.getDrawingRect(viewBounds);
     root.offsetDescendantRectToMyCoords(view, viewBounds);
 
-    return new Projection(viewBounds.left, viewBounds.top, view.getWidth(), view.getHeight(), corners);
+    return acquireAndSet(viewBounds.left, viewBounds.top, view.getWidth(), view.getHeight(), corners);
   }
 
   public static @NonNull Projection relativeToViewWithCommonRoot(@NonNull View toProject, @NonNull View viewWithCommonRoot, @Nullable Corners corners) {
@@ -135,7 +122,7 @@ public final class Projection {
     root.offsetDescendantRectToMyCoords(toProject, viewBounds);
     root.offsetRectIntoDescendantCoords(viewWithCommonRoot, viewBounds);
 
-    return new Projection(viewBounds.left, viewBounds.top, toProject.getWidth(), toProject.getHeight(), corners);
+    return acquireAndSet(viewBounds.left, viewBounds.top, toProject.getWidth(), toProject.getHeight(), corners);
   }
 
   public static @NonNull Projection translateFromDescendantToParentCoords(@NonNull Projection descendantProjection, @NonNull View descendant, @NonNull ViewGroup parent) {
@@ -145,7 +132,7 @@ public final class Projection {
 
     parent.offsetDescendantRectToMyCoords(descendant, viewBounds);
 
-    return new Projection(viewBounds.left, viewBounds.top, descendantProjection.width, descendantProjection.height, descendantProjection.corners);
+    return acquireAndSet(viewBounds.left, viewBounds.top, descendantProjection.width, descendantProjection.height, descendantProjection.corners);
   }
 
   public static @NonNull List<Projection> getCapAndTail(@NonNull Projection parentProjection, @NonNull Projection childProjection) {
@@ -179,9 +166,40 @@ public final class Projection {
     }
 
     return Arrays.asList(
-        new Projection(topX, topY, topWidth, topHeight, topCorners),
-        new Projection(bottomX, bottomY, bottomWidth, bottomHeight, bottomCorners)
+        acquireAndSet(topX, topY, topWidth, topHeight, topCorners),
+        acquireAndSet(bottomX, bottomY, bottomWidth, bottomHeight, bottomCorners)
     );
+  }
+
+  /**
+   * We keep a maximum of 125 Projections around at any one time.
+   */
+  private static final Pools.SimplePool<Projection> projectionPool = new Pools.SimplePool<>(125);
+  /**
+   * Acquire a projection. This will try to grab one from the pool, and, upon failure, will
+   * allocate a new one instead.
+   */
+  private static @NonNull Projection acquire() {
+    Projection fromPool = projectionPool.acquire();
+    if (fromPool != null) {
+      return fromPool;
+    } else {
+      return new Projection();
+    }
+  }
+  /**
+   * Acquire a projection and set its fields as specified.
+   */
+  private static @NonNull Projection acquireAndSet(float x, float y, int width, int height, @Nullable Corners corners) {
+    Projection projection = acquire();
+    projection.set(x, y, width, height, corners);
+    return projection;
+  }
+  /**
+   * Projections should only be kept around for the absolute maximum amount of time they are needed.
+   */
+  public void release() {
+    projectionPool.release(this);
   }
 
   public static final class Corners {

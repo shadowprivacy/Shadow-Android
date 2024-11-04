@@ -2,7 +2,7 @@ package su.sres.securesms.components.settings.app
 
 import android.view.View
 import android.widget.TextView
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.findNavController
 import su.sres.securesms.R
@@ -15,7 +15,9 @@ import su.sres.securesms.components.settings.DSLSettingsIcon
 import su.sres.securesms.components.settings.DSLSettingsText
 import su.sres.securesms.components.settings.PreferenceModel
 import su.sres.securesms.components.settings.PreferenceViewHolder
+import su.sres.securesms.components.settings.app.subscription.SubscriptionsRepository
 import su.sres.securesms.components.settings.configure
+import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.util.FeatureFlags
@@ -24,15 +26,26 @@ import su.sres.securesms.util.MappingViewHolder
 
 class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__menu_settings) {
 
+  private val viewModel: AppSettingsViewModel by viewModels(
+    factoryProducer = {
+      AppSettingsViewModel.Factory(SubscriptionsRepository(ApplicationDependencies.getDonationsService()))
+    }
+  )
+
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
     adapter.registerFactory(BioPreference::class.java, MappingAdapter.LayoutFactory(::BioPreferenceViewHolder, R.layout.bio_preference_item))
     adapter.registerFactory(PaymentsPreference::class.java, MappingAdapter.LayoutFactory(::PaymentsPreferenceViewHolder, R.layout.dsl_payments_preference))
 
-    val viewModel = ViewModelProvider(this)[AppSettingsViewModel::class.java]
+    adapter.registerFactory(SubscriptionPreference::class.java, MappingAdapter.LayoutFactory(::SubscriptionPreferenceViewHolder, R.layout.dsl_preference_item))
 
     viewModel.state.observe(viewLifecycleOwner) { state ->
       adapter.submitList(getConfiguration(state).toMappingModelList())
     }
+  }
+
+  override fun onResume() {
+    super.onResume()
+    viewModel.refreshActiveSubscription()
   }
 
   private fun getConfiguration(state: AppSettingsState): DSLConfiguration {
@@ -132,16 +145,19 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
       )
 
       if (FeatureFlags.donorBadges()) {
-        clickPref(
-          title = DSLSettingsText.from(R.string.preferences__subscription),
-          icon = DSLSettingsIcon.from(R.drawable.ic_heart_24),
-          onClick = {
-            findNavController()
-              .navigate(
-                AppSettingsFragmentDirections.actionAppSettingsFragmentToSubscriptions()
-                  .setSkipToSubscribe(true /* TODO [alex] -- Check state to see if user has active subscription or not. */)
-              )
-          }
+        customPref(
+          SubscriptionPreference(
+            title = DSLSettingsText.from(R.string.preferences__subscription),
+            icon = DSLSettingsIcon.from(R.drawable.ic_heart_24),
+            isActive = state.hasActiveSubscription,
+            onClick = { isActive ->
+              findNavController()
+                .navigate(
+                  AppSettingsFragmentDirections.actionAppSettingsFragmentToSubscriptions()
+                    .setSkipToSubscribe(!isActive)
+                )
+            }
+          )
         )
         // TODO [alex] -- clap
         clickPref(
@@ -169,6 +185,29 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
           }
         )
       }
+    }
+  }
+
+  private class SubscriptionPreference(
+    override val title: DSLSettingsText,
+    override val summary: DSLSettingsText? = null,
+    override val icon: DSLSettingsIcon? = null,
+    override val isEnabled: Boolean = true,
+    val isActive: Boolean = false,
+    val onClick: (Boolean) -> Unit
+  ) : PreferenceModel<SubscriptionPreference>() {
+    override fun areItemsTheSame(newItem: SubscriptionPreference): Boolean {
+      return true
+    }
+    override fun areContentsTheSame(newItem: SubscriptionPreference): Boolean {
+      return super.areContentsTheSame(newItem) && isActive == newItem.isActive
+    }
+  }
+
+  private class SubscriptionPreferenceViewHolder(itemView: View) : PreferenceViewHolder<SubscriptionPreference>(itemView) {
+    override fun bind(model: SubscriptionPreference) {
+      super.bind(model)
+      itemView.setOnClickListener { model.onClick(model.isActive) }
     }
   }
 

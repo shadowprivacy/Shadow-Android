@@ -52,6 +52,7 @@ import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.FrameRateTracker;
 import su.sres.securesms.util.TextSecurePreferences;
 
+import org.signal.zkgroup.receipts.ClientZkReceiptOperations;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.core.util.concurrent.SignalExecutors;
@@ -113,7 +114,7 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
                                           signalWebSocket,
                                           Optional.of(new SecurityEventListener(context)),
                                           provideClientZkOperations().getProfileOperations(),
-                                          SignalExecutors.newCachedBoundedExecutor("shadow-messages", 1, 16),
+                                          SignalExecutors.newCachedBoundedExecutor("shadow-messages", 1, 16, 30),
                                           ByteUnit.KILOBYTES.toBytes(512),
                                           FeatureFlags.okHttpAutomaticRetry());
   }
@@ -267,6 +268,11 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
                                 BuildConfig.SIGNAL_AGENT,
                                 provideGroupsV2Operations(),
                                 FeatureFlags.okHttpAutomaticRetry());
+  }
+
+  @Override
+  public @NonNull ClientZkReceiptOperations provideClientZkReceiptOperations() {
+    return provideClientZkOperations().getReceiptOperations();
   }
 
   private @NonNull WebSocketFactory provideWebSocketFactory(@NonNull SignalWebSocketHealthMonitor healthMonitor) {

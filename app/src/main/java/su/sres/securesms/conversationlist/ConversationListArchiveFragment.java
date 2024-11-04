@@ -103,11 +103,6 @@ public class ConversationListArchiveFragment extends ConversationListFragment im
     }
 
     @Override
-    protected @MenuRes int getActionModeMenuRes() {
-        return R.menu.conversation_list_batch_unarchive;
-    }
-
-    @Override
     protected @DrawableRes int getArchiveIconRes() {
         return R.drawable.ic_unarchive_white_36dp;
     }

@@ -13,6 +13,7 @@ import su.sres.securesms.components.settings.app.subscription.SubscriptionsRepos
 import su.sres.securesms.components.settings.app.subscription.boost.BoostRepository
 import su.sres.securesms.components.settings.app.subscription.boost.BoostViewModel
 import su.sres.securesms.components.settings.app.subscription.subscribe.SubscribeViewModel
+import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.help.HelpFragment
 import su.sres.securesms.keyvalue.SettingsValues
 import su.sres.securesms.keyvalue.SignalStore
@@ -32,7 +33,7 @@ class AppSettingsActivity : DSLSettingsActivity() {
   private val donationRepository: DonationPaymentRepository by lazy { DonationPaymentRepository(this) }
   private val subscribeViewModel: SubscribeViewModel by viewModels(
     factoryProducer = {
-      SubscribeViewModel.Factory(SubscriptionsRepository(), donationRepository, FETCH_SUBSCRIPTION_TOKEN_REQUEST_CODE)
+      SubscribeViewModel.Factory(SubscriptionsRepository(ApplicationDependencies.getDonationsService()), donationRepository, FETCH_SUBSCRIPTION_TOKEN_REQUEST_CODE)
     }
   )
 
@@ -63,6 +64,7 @@ class AppSettingsActivity : DSLSettingsActivity() {
         StartLocation.PROXY -> AppSettingsFragmentDirections.actionDirectToEditProxyFragment()
         StartLocation.NOTIFICATIONS -> AppSettingsFragmentDirections.actionDirectToNotificationsSettingsFragment()
         StartLocation.CHANGE_USER_LOGIN -> AppSettingsFragmentDirections.actionDirectToChangeUserLoginFragment()
+        StartLocation.SUBSCRIPTIONS -> AppSettingsFragmentDirections.actionDirectToSubscriptions()
       }
     }
 
@@ -134,6 +136,9 @@ class AppSettingsActivity : DSLSettingsActivity() {
     @JvmStatic
     fun changeUserLogin(context: Context): Intent = getIntentForStartLocation(context, StartLocation.CHANGE_USER_LOGIN)
 
+    @JvmStatic
+    fun subscriptions(context: Context): Intent = getIntentForStartLocation(context, StartLocation.SUBSCRIPTIONS)
+
     private fun getIntentForStartLocation(context: Context, startLocation: StartLocation): Intent {
       return Intent(context, AppSettingsActivity::class.java)
         .putExtra(ARG_NAV_GRAPH, R.navigation.app_settings)
@@ -154,7 +159,8 @@ class AppSettingsActivity : DSLSettingsActivity() {
     HELP(2),
     PROXY(3),
     NOTIFICATIONS(4),
-    CHANGE_USER_LOGIN(5);
+    CHANGE_USER_LOGIN(5),
+    SUBSCRIPTIONS(6);
 
     companion object {
       fun fromCode(code: Int?): StartLocation {

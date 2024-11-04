@@ -17,9 +17,7 @@
 package su.sres.securesms.conversationlist;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.Typeface;
-import android.graphics.drawable.RippleDrawable;
 import android.text.Spannable;
 import android.text.SpannableString;
 
@@ -27,18 +25,26 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.Px;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.Transformations;
 
+import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
 import android.util.AttributeSet;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
+import com.makeramen.roundedimageview.RoundedDrawable;
+
+import su.sres.core.util.DimensionUnit;
 import su.sres.securesms.BindableConversationListItem;
+import su.sres.securesms.OverlayTransformation;
 import su.sres.securesms.R;
 import su.sres.securesms.Unbindable;
 import su.sres.securesms.badges.BadgeImageView;
@@ -46,8 +52,8 @@ import su.sres.securesms.components.AlertView;
 import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.components.DeliveryStatusView;
 import su.sres.securesms.components.FromTextView;
-import su.sres.securesms.components.ThumbnailView;
 import su.sres.securesms.components.TypingIndicatorView;
+import su.sres.securesms.components.emoji.EmojiStrings;
 import su.sres.securesms.database.MmsSmsColumns;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.ThreadDatabase;
@@ -56,6 +62,8 @@ import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.database.model.UpdateDescription;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.glide.GlideLiveDataTarget;
+import su.sres.securesms.mms.DecryptableStreamUriLoader;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
@@ -105,12 +113,16 @@ public final class ConversationListItem extends ConstraintLayout
   private ThreadRecord        thread;
   private boolean             batchMode;
   private Locale              locale;
-  private String         highlightSubstring;
-  private BadgeImageView badge;
+  private String              highlightSubstring;
+  private BadgeImageView      badge;
+  private View                checkContainer;
+  private View                uncheckedView;
+  private View                checkedView;
+  private int                 thumbSize;
+  private GlideLiveDataTarget thumbTarget;
 
   private int             unreadCount;
   private AvatarImageView contactPhotoImage;
-  private ThumbnailView   thumbnailView;
 
   private final Debouncer subjectViewClearDebouncer = new Debouncer(150);
 
@@ -134,11 +146,16 @@ public final class ConversationListItem extends ConstraintLayout
     this.deliveryStatusIndicator = findViewById(R.id.conversation_list_item_status);
     this.alertView               = findViewById(R.id.conversation_list_item_alert);
     this.contactPhotoImage       = findViewById(R.id.conversation_list_item_avatar);
-    this.thumbnailView           = findViewById(R.id.conversation_list_item_thumbnail);
     this.archivedView            = findViewById(R.id.conversation_list_item_archived);
     this.unreadIndicator         = findViewById(R.id.conversation_list_item_unread_indicator);
     this.badge                   = findViewById(R.id.conversation_list_item_badge);
-    thumbnailView.setClickable(false);
+    this.checkContainer          = findViewById(R.id.conversation_list_item_check_container);
+    this.uncheckedView           = findViewById(R.id.conversation_list_item_unchecked);
+    this.checkedView             = findViewById(R.id.conversation_list_item_checked);
+    this.thumbSize               = (int) DimensionUnit.SP.toPixels(20f);
+    this.thumbTarget             = new GlideLiveDataTarget(thumbSize, thumbSize);
+
+    getLayoutTransition().setDuration(150);
   }
 
   @Override
@@ -149,16 +166,16 @@ public final class ConversationListItem extends ConstraintLayout
                    @NonNull Set<Long> selectedThreads,
                    boolean batchMode)
   {
-    bind(thread, glideRequests, locale, typingThreads, selectedThreads, batchMode, null);
+    bindThread(thread, glideRequests, locale, typingThreads, selectedThreads, batchMode, null);
   }
 
-  public void bind(@NonNull ThreadRecord thread,
-                   @NonNull GlideRequests glideRequests,
-                   @NonNull Locale locale,
-                   @NonNull Set<Long> typingThreads,
-                   @NonNull Set<Long> selectedThreads,
-                   boolean batchMode,
-                   @Nullable String highlightSubstring)
+  public void bindThread(@NonNull ThreadRecord thread,
+                         @NonNull GlideRequests glideRequests,
+                         @NonNull Locale locale,
+                         @NonNull Set<Long> typingThreads,
+                         @NonNull Set<Long> selectedThreads,
+                         boolean batchMode,
+                         @Nullable String highlightSubstring)
   {
 
     observeRecipient(thread.getRecipient().live());
@@ -185,7 +202,7 @@ public final class ConversationListItem extends ConstraintLayout
     this.typingThreads = typingThreads;
     updateTypingIndicator(typingThreads);
 
-    observeDisplayBody(getThreadDisplayBody(getContext(), thread));
+    observeDisplayBody(getThreadDisplayBody(getContext(), thread, glideRequests, thumbSize, thumbTarget));
 
     if (thread.getDate() > 0) {
       CharSequence date = DateUtils.getBriefRelativeTimeSpanString(getContext(), locale, thread.getDate());
@@ -202,18 +219,16 @@ public final class ConversationListItem extends ConstraintLayout
     }
 
     setStatusIcons(thread);
-    setThumbnailSnippet(thread);
     setBatchMode(batchMode);
-    setRippleColor(recipient.get());
     badge.setBadgeFromRecipient(recipient.get());
     setUnreadIndicator(thread);
     this.contactPhotoImage.setAvatar(glideRequests, recipient.get(), !batchMode);
   }
 
-  public void bind(@NonNull Recipient contact,
-                   @NonNull GlideRequests glideRequests,
-                   @NonNull Locale locale,
-                   @Nullable String highlightSubstring)
+  public void bindContact(@NonNull Recipient contact,
+                          @NonNull GlideRequests glideRequests,
+                          @NonNull Locale locale,
+                          @Nullable String highlightSubstring)
   {
     observeRecipient(contact.live());
     observeDisplayBody(null);
@@ -231,17 +246,16 @@ public final class ConversationListItem extends ConstraintLayout
     unreadIndicator.setVisibility(GONE);
     deliveryStatusIndicator.setNone();
     alertView.setNone();
-    thumbnailView.setVisibility(GONE);
 
     setBatchMode(false);
-    setRippleColor(contact);
+    badge.setBadgeFromRecipient(recipient.get());
     contactPhotoImage.setAvatar(glideRequests, recipient.get(), !batchMode);
   }
 
-  public void bind(@NonNull MessageResult messageResult,
-                   @NonNull GlideRequests glideRequests,
-                   @NonNull Locale locale,
-                   @Nullable String highlightSubstring)
+  public void bindMessage(@NonNull MessageResult messageResult,
+                          @NonNull GlideRequests glideRequests,
+                          @NonNull Locale locale,
+                          @Nullable String highlightSubstring)
   {
     observeRecipient(messageResult.getConversationRecipient().live());
     observeDisplayBody(null);
@@ -259,10 +273,9 @@ public final class ConversationListItem extends ConstraintLayout
     unreadIndicator.setVisibility(GONE);
     deliveryStatusIndicator.setNone();
     alertView.setNone();
-    thumbnailView.setVisibility(GONE);
 
     setBatchMode(false);
-    setRippleColor(recipient.get());
+    badge.setBadgeFromRecipient(recipient.get());
     contactPhotoImage.setAvatar(glideRequests, recipient.get(), !batchMode);
   }
 
@@ -279,7 +292,23 @@ public final class ConversationListItem extends ConstraintLayout
   @Override
   public void setBatchMode(boolean batchMode) {
     this.batchMode = batchMode;
-    setSelected(batchMode && selectedThreads.contains(thread.getThreadId()));
+
+    boolean selected = batchMode && selectedThreads.contains(thread.getThreadId());
+    setSelected(selected);
+
+    if (batchMode && selected) {
+      checkContainer.setVisibility(VISIBLE);
+      uncheckedView.setVisibility(GONE);
+      checkedView.setVisibility(VISIBLE);
+    } else if (batchMode) {
+      checkContainer.setVisibility(VISIBLE);
+      uncheckedView.setVisibility(VISIBLE);
+      checkedView.setVisibility(GONE);
+    } else {
+      checkContainer.setVisibility(GONE);
+      uncheckedView.setVisibility(GONE);
+      checkedView.setVisibility(GONE);
+    }
   }
 
   @Override
@@ -330,6 +359,10 @@ public final class ConversationListItem extends ConstraintLayout
   }
 
   private void observeDisplayBody(@Nullable LiveData<SpannableString> displayBody) {
+    if (displayBody == null && glideRequests != null) {
+      glideRequests.clear(thumbTarget);
+    }
+
     if (this.displayBody != null) {
       this.displayBody.removeObserver(this);
     }
@@ -351,20 +384,11 @@ public final class ConversationListItem extends ConstraintLayout
     }
   }
 
-  private void setThumbnailSnippet(ThreadRecord thread) {
-    if (thread.getSnippetUri() != null) {
-      this.thumbnailView.setVisibility(VISIBLE);
-      this.thumbnailView.setImageResource(glideRequests, thread.getSnippetUri());
-    } else {
-      this.thumbnailView.setVisibility(GONE);
-    }
-  }
-
   private void setStatusIcons(ThreadRecord thread) {
     if (MmsSmsColumns.Types.isBadDecryptType(thread.getType())) {
       deliveryStatusIndicator.setNone();
       alertView.setFailed();
-    } else if (!thread.isOutgoing()         ||
+    } else if (!thread.isOutgoing() ||
                thread.isOutgoingAudioCall() ||
                thread.isOutgoingVideoCall() ||
                thread.isVerificationStatusChange())
@@ -400,11 +424,6 @@ public final class ConversationListItem extends ConstraintLayout
     }
   }
 
-  private void setRippleColor(Recipient recipient) {
-    ((RippleDrawable) (getBackground()).mutate())
-        .setColor(ColorStateList.valueOf(recipient.getChatColors().asSingleColor()));
-  }
-
   private void setUnreadIndicator(ThreadRecord thread) {
     if ((thread.isOutgoing() && !thread.isForcedUnread()) || thread.isRead()) {
       unreadIndicator.setVisibility(View.GONE);
@@ -430,11 +449,15 @@ public final class ConversationListItem extends ConstraintLayout
     }
 
     contactPhotoImage.setAvatar(glideRequests, recipient, !batchMode);
-    setRippleColor(recipient);
     badge.setBadgeFromRecipient(recipient);
   }
 
-  private static @NonNull LiveData<SpannableString> getThreadDisplayBody(@NonNull Context context, @NonNull ThreadRecord thread) {
+  private static @NonNull LiveData<SpannableString> getThreadDisplayBody(@NonNull Context context,
+                                                                         @NonNull ThreadRecord thread,
+                                                                         @NonNull GlideRequests glideRequests,
+                                                                         @Px int thumbSize,
+                                                                         @NonNull GlideLiveDataTarget thumbTarget)
+  {
     int defaultTint = ContextCompat.getColor(context, R.color.signal_text_secondary);
 
     if (!thread.isMessageRequestAccepted()) {
@@ -507,14 +530,14 @@ public final class ConversationListItem extends ConstraintLayout
         return emphasisAdded(context, context.getString(thread.isOutgoing() ? R.string.ThreadRecord_you_deleted_this_message : R.string.ThreadRecord_this_message_was_deleted), defaultTint);
       } else {
         String body = removeNewlines(thread.getBody());
-        LiveData<SpannableString> finalBody = recipientToStringAsync(thread.getRecipient().getId(), threadRecipient -> {
-          if (threadRecipient.isGroup()) {
+        LiveData<SpannableString> finalBody = LiveDataUtil.mapAsync(createFinalBodyWithMediaIcon(context, body, thread, glideRequests, thumbSize, thumbTarget), updatedBody -> {
+          if (thread.getRecipient().isGroup()) {
             RecipientId groupMessageSender = thread.getGroupMessageSender();
             if (!groupMessageSender.isUnknown()) {
-              return createGroupMessageUpdateString(context, body, Recipient.resolved(groupMessageSender), thread.isRead());
+              return createGroupMessageUpdateString(context, updatedBody, Recipient.resolved(groupMessageSender), thread.isRead());
             }
           }
-          return new SpannableString(body);
+          return new SpannableString(updatedBody);
         });
 
         return whileLoadingShow(body, finalBody);
@@ -522,21 +545,70 @@ public final class ConversationListItem extends ConstraintLayout
     }
   }
 
+  private static LiveData<CharSequence> createFinalBodyWithMediaIcon(@NonNull Context context,
+                                                                     @NonNull String body,
+                                                                     @NonNull ThreadRecord thread,
+                                                                     @NonNull GlideRequests glideRequests,
+                                                                     @Px int thumbSize,
+                                                                     @NonNull GlideLiveDataTarget thumbTarget)
+  {
+    if (thread.getSnippetUri() == null) {
+      return LiveDataUtil.just(body);
+    }
+
+    final String bodyWithoutMediaPrefix;
+
+    if (body.startsWith(EmojiStrings.GIF)) {
+      bodyWithoutMediaPrefix = body.replace(EmojiStrings.GIF, "");
+    } else if (body.startsWith(EmojiStrings.VIDEO)) {
+      bodyWithoutMediaPrefix = body.replace(EmojiStrings.VIDEO, "");
+    } else if (body.startsWith(EmojiStrings.PHOTO)) {
+      bodyWithoutMediaPrefix = body.replace(EmojiStrings.PHOTO, "");
+    } else if (thread.getExtra() != null && thread.getExtra().getStickerEmoji() != null && body.startsWith(thread.getExtra().getStickerEmoji())) {
+      bodyWithoutMediaPrefix = body.replace(thread.getExtra().getStickerEmoji(), "");
+    } else {
+      return LiveDataUtil.just(body);
+    }
+
+    glideRequests.asBitmap()
+                 .load(new DecryptableStreamUriLoader.DecryptableUri(thread.getSnippetUri()))
+                 .override(thumbSize, thumbSize)
+                 .transform(
+                     new OverlayTransformation(ContextCompat.getColor(context, R.color.transparent_black_08)),
+                     new CenterCrop()
+                 )
+                 .into(thumbTarget);
+
+    return Transformations.map(thumbTarget.getLiveData(), bitmap -> {
+      if (bitmap == null) {
+        return body;
+      }
+      RoundedDrawable drawable = RoundedDrawable.fromBitmap(bitmap);
+      drawable.setBounds(0, 0, thumbSize, thumbSize);
+      drawable.setCornerRadius(DimensionUnit.DP.toPixels(4));
+      drawable.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+      CharSequence thumbnailSpan = SpanUtil.buildCenteredImageSpan(drawable);
+      return new SpannableStringBuilder()
+          .append(thumbnailSpan)
+          .append(bodyWithoutMediaPrefix);
+    });
+  }
+
   private static SpannableString createGroupMessageUpdateString(@NonNull Context context,
-                                                                @NonNull String body,
+                                                                @NonNull CharSequence body,
                                                                 @NonNull Recipient recipient,
                                                                 boolean read)
   {
     String sender = (recipient.isSelf() ? context.getString(R.string.MessageRecord_you)
                                         : recipient.getShortDisplayName(context)) + ": ";
 
-    SpannableString spannable = new SpannableString(sender + body);
-    spannable.setSpan(SpanUtil.getBoldSpan(),
-                      0,
-                      sender.length(),
-                      Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+    SpannableStringBuilder builder = new SpannableStringBuilder(sender).append(body);
+    builder.setSpan(SpanUtil.getBoldSpan(),
+                    0,
+                    sender.length(),
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-    return spannable;
+    return new SpannableString(builder);
   }
 
   /**

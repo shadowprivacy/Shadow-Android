@@ -13,7 +13,9 @@ import su.sres.securesms.components.settings.DSLConfiguration
 import su.sres.securesms.components.settings.DSLSettingsAdapter
 import su.sres.securesms.components.settings.DSLSettingsFragment
 import su.sres.securesms.components.settings.DSLSettingsText
+import su.sres.securesms.components.settings.app.subscription.SubscriptionsRepository
 import su.sres.securesms.components.settings.configure
+import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.util.LifecycleDisposable
 
@@ -26,11 +28,15 @@ class BadgesOverviewFragment : DSLSettingsFragment(
 ) {
 
   private val lifecycleDisposable = LifecycleDisposable()
-  private val viewModel: BadgesOverviewViewModel by viewModels(factoryProducer = { BadgesOverviewViewModel.Factory(BadgeRepository(requireContext())) })
+  private val viewModel: BadgesOverviewViewModel by viewModels(
+    factoryProducer = {
+      BadgesOverviewViewModel.Factory(BadgeRepository(requireContext()), SubscriptionsRepository(ApplicationDependencies.getDonationsService()))
+    }
+  )
 
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
-    Badge.register(adapter) { badge, _ ->
-      if (badge.isExpired()) {
+    Badge.register(adapter) { badge, _, isFaded ->
+      if (badge.isExpired() || isFaded) {
         findNavController().navigate(BadgesOverviewFragmentDirections.actionBadgeManageFragmentToExpiredBadgeDialog(badge))
       } else {
         ViewBadgeBottomSheetDialogFragment.show(parentFragmentManager, Recipient.self().id, badge)
@@ -56,7 +62,11 @@ class BadgesOverviewFragment : DSLSettingsFragment(
     return configure {
       sectionHeaderPref(R.string.BadgesOverviewFragment__my_badges)
 
-      displayBadges(requireContext(), state.allUnlockedBadges)
+      displayBadges(
+        context = requireContext(),
+        badges = state.allUnlockedBadges,
+        fadedBadgeId = state.fadedBadgeId
+      )
 
       switchPref(
         title = DSLSettingsText.from(R.string.BadgesOverviewFragment__display_badges_on_profile),

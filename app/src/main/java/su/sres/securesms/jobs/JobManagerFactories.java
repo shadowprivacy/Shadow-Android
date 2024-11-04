@@ -163,6 +163,9 @@ public final class JobManagerFactories {
       put(TrimThreadJob.KEY, new TrimThreadJob.Factory());
       put(TypingSendJob.KEY, new TypingSendJob.Factory());
       put(UpdateApkJob.KEY, new UpdateApkJob.Factory());
+      put(SubscriptionKeepAliveJob.KEY, new SubscriptionKeepAliveJob.Factory());
+      put(SubscriptionReceiptRequestResponseJob.KEY, new SubscriptionReceiptRequestResponseJob.Factory());
+      put(DonationReceiptRedemptionJob.KEY, new DonationReceiptRedemptionJob.Factory());
 
       // Migrations
       put(AccountRecordMigrationJob.KEY, new AccountRecordMigrationJob.Factory());

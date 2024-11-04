@@ -238,9 +238,8 @@ public final class PushGroupSendJob extends PushSendJob {
           DatabaseFactory.getAttachmentDatabase(context).deleteAttachmentFilesForViewOnceMessage(messageId);
         }
 
-      } else if (!networkFailures.isEmpty()) {
-        throw new RetryLaterException();
       } else if (!identityMismatches.isEmpty()) {
+        Log.w(TAG, "Failing because there were " + identityMismatches.size() + " identity mismatches.");
         database.markAsSentFailed(messageId);
         notifyMediaMessageDeliveryFailed(context, messageId);
 
@@ -248,8 +247,10 @@ public final class PushGroupSendJob extends PushSendJob {
                                                       .map(mismatch -> mismatch.getRecipientId(context))
                                                       .collect(Collectors.toSet());
         RetrieveProfileJob.enqueue(mismatchRecipientIds);
+      } else if (!networkFailures.isEmpty()) {
+        Log.w(TAG, "Retrying because there were " + networkFailures.size() + " network failures.");
+        throw new RetryLaterException();
       }
-
     } catch (UntrustedIdentityException | UndeliverableMessageException e) {
       warn(TAG, String.valueOf(message.getSentTimeMillis()), e);
       database.markAsSentFailed(messageId);

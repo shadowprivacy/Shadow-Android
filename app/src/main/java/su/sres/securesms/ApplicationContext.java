@@ -63,6 +63,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.logging.PersistentLogger;
 import su.sres.securesms.messageprocessingalarm.MessageProcessReceiver;
 import su.sres.securesms.ratelimit.RateLimitUtil;
+import su.sres.securesms.service.SubscriberIdKeepAliveListener;
 import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.AppStartup;
 import su.sres.securesms.util.ShadowLocalMetrics;
@@ -86,8 +87,6 @@ import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.VersionTracker;
 import su.sres.securesms.util.dynamiclanguage.DynamicLanguageContextWrapper;
 
-import org.webrtc.voiceengine.WebRtcAudioManager;
-import org.webrtc.voiceengine.WebRtcAudioUtils;
 import org.whispersystems.libsignal.logging.SignalProtocolLoggerProvider;
 
 import java.security.Security;
@@ -206,11 +205,11 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
           ApplicationDependencies.getShakeToReport().enable();
           ApplicationDependencies.getFrameRateTracker().start();
           ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
+          ApplicationDependencies.getDeadlockDetector().start();
           launchCertificateRefresh();
           launchLicenseRefresh();
           launchServiceConfigRefresh();
           checkBuildExpiration();
-          ApplicationDependencies.getDeadlockDetector().start();
 
           initializedOnStart = true;
 
@@ -368,6 +367,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     LocalBackupListener.schedule(this);
     RotateSenderCertificateListener.schedule(this);
     MessageProcessReceiver.startOrUpdateAlarm(this);
+    SubscriberIdKeepAliveListener.schedule(this);
 
     if (BuildConfig.PLAY_STORE_DISABLED) {
       UpdateApkRefreshListener.schedule(this);
@@ -376,14 +376,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
   private void initializeRingRtc() {
     try {
-      if (RtcDeviceLists.hardwareAECBlocked()) {
-        WebRtcAudioUtils.setWebRtcBasedAcousticEchoCanceler(true);
-      }
-
-      if (!RtcDeviceLists.openSLESAllowed()) {
-        WebRtcAudioManager.setBlacklistDeviceForOpenSLESUsage(true);
-      }
-
       CallManager.initialize(this, new RingRtcLogger());
     } catch (UnsatisfiedLinkError e) {
       throw new AssertionError("Unable to load ringrtc library", e);

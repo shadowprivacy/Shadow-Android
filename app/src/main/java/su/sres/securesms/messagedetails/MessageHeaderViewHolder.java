@@ -16,12 +16,10 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.annimon.stream.Stream;
 import com.google.android.exoplayer2.MediaItem;
 
 import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.R;
-import su.sres.securesms.conversation.ClipProjectionDrawable;
 import su.sres.securesms.conversation.ConversationItem;
 import su.sres.securesms.conversation.ConversationMessage;
 import su.sres.securesms.conversation.colors.Colorizable;
@@ -35,17 +33,14 @@ import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.ExpirationUtil;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.Projection;
+import su.sres.securesms.util.ProjectionList;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 final class MessageHeaderViewHolder extends RecyclerView.ViewHolder implements GiphyMp4Playable, Colorizable {
   private final TextView               sentDate;
@@ -252,7 +247,7 @@ final class MessageHeaderViewHolder extends RecyclerView.ViewHolder implements G
   }
 
   @Override
-  public @NonNull List<Projection> getColorizerProjections(@NonNull ViewGroup coordinateRoot) {
+  public @NonNull ProjectionList getColorizerProjections(@NonNull ViewGroup coordinateRoot) {
     return conversationItem.getColorizerProjections(coordinateRoot);
   }
 

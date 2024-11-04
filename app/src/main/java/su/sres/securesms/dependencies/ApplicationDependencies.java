@@ -5,6 +5,8 @@ import android.app.Application;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 
+import org.signal.zkgroup.receipts.ClientZkReceiptOperations;
+
 import okhttp3.OkHttpClient;
 import su.sres.core.util.concurrent.DeadlockDetector;
 import su.sres.securesms.components.TypingStatusRepository;
@@ -109,6 +111,7 @@ public class ApplicationDependencies {
   private static volatile AudioManagerCompat           audioManagerCompat;
   private static volatile DonationsService             donationsService;
   private static volatile DeadlockDetector             deadlockDetector;
+  private static volatile ClientZkReceiptOperations    clientZkReceiptOperations;
   private static volatile KeyValueStore                keyValueStore;
 
   public static void networkIndependentProviderInit(@NonNull Application application, @NonNull NetworkIndependentProvider networkIndependentProvider) {
@@ -623,6 +626,17 @@ public class ApplicationDependencies {
     return donationsService;
   }
 
+  public static @NonNull ClientZkReceiptOperations getClientZkReceiptOperations() {
+    if (clientZkReceiptOperations == null) {
+      synchronized (LOCK) {
+        if (clientZkReceiptOperations == null) {
+          clientZkReceiptOperations = provider.provideClientZkReceiptOperations();
+        }
+      }
+    }
+    return clientZkReceiptOperations;
+  }
+
   public static @NonNull DeadlockDetector getDeadlockDetector() {
     if (deadlockDetector == null) {
       synchronized (NI_LOCK) {
@@ -690,6 +704,8 @@ public class ApplicationDependencies {
     @NonNull AudioManagerCompat provideAndroidCallAudioManager();
 
     @NonNull DonationsService provideDonationsService();
+
+    @NonNull ClientZkReceiptOperations provideClientZkReceiptOperations();
   }
 
   public interface NetworkIndependentProvider {

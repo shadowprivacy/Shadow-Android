@@ -40,6 +40,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.Projection;
+import su.sres.securesms.util.ProjectionList;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
@@ -50,8 +51,6 @@ import su.sres.securesms.util.livedata.LiveDataUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
@@ -61,7 +60,8 @@ import java.util.concurrent.ExecutionException;
 public final class ConversationUpdateItem extends FrameLayout
     implements BindableConversationItem
 {
-  private static final String TAG = Log.tag(ConversationUpdateItem.class);
+  private static final String         TAG                   = Log.tag(ConversationUpdateItem.class);
+  private static final ProjectionList EMPTY_PROJECTION_LIST = new ProjectionList();
 
   private Set<MultiselectPart> batchSelected;
 
@@ -226,8 +226,8 @@ public final class ConversationUpdateItem extends FrameLayout
   }
 
   @Override
-  public @NonNull List<Projection> getColorizerProjections(@NonNull ViewGroup coordinateRoot) {
-    return Collections.emptyList();
+  public @NonNull ProjectionList getColorizerProjections(@NonNull ViewGroup coordinateRoot) {
+    return EMPTY_PROJECTION_LIST;
   }
 
   @Override

@@ -6,6 +6,7 @@ import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
 import su.sres.securesms.keyvalue.SignalStore
 import org.whispersystems.libsignal.util.guava.Optional
+import su.sres.securesms.util.ThrottledDebouncer
 
 open class SimpleEmojiTextView @JvmOverloads constructor(
   context: Context,
@@ -14,6 +15,7 @@ open class SimpleEmojiTextView @JvmOverloads constructor(
 ) : AppCompatTextView(context, attrs, defStyleAttr) {
 
   private var bufferType: BufferType? = null
+  private val sizeChangeDebouncer: ThrottledDebouncer = ThrottledDebouncer(200)
 
   override fun setText(text: CharSequence?, type: BufferType?) {
     bufferType = type
@@ -44,8 +46,10 @@ open class SimpleEmojiTextView @JvmOverloads constructor(
 
   override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
     super.onSizeChanged(width, height, oldWidth, oldHeight)
-    if (width > 0 && oldWidth != width) {
-      setText(text, bufferType ?: BufferType.SPANNABLE)
+    sizeChangeDebouncer.publish {
+      if (width > 0 && oldWidth != width) {
+        setText(text, bufferType ?: BufferType.SPANNABLE)
+      }
     }
   }
 }

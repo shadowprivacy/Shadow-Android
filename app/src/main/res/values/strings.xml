@@ -227,9 +227,6 @@
     <string name="ConversationItem_not_sent_recipient_inactive">Send failed. The recipient\'s account is disabled.</string>
 
     <!-- ConversationActivity -->
-    <string name="ConversationActivity_reset_secure_session_question">Reset secure session?</string>
-    <string name="ConversationActivity_this_may_help_if_youre_having_encryption_problems">This may help if you\'re having encryption problems in this conversation. Your messages will be kept.</string>
-    <string name="ConversationActivity_reset">Reset</string>
     <string name="ConversationActivity_add_attachment">Add attachment</string>
     <string name="ConversationActivity_select_contact_info">Select contact info</string>
     <string name="ConversationActivity_compose_message">Compose message</string>
@@ -374,6 +371,48 @@
     <plurals name="ConversationListFragment_moved_conversations_to_inbox">
         <item quantity="one">Moved conversation to inbox</item>
         <item quantity="other">Moved %d conversations to inbox</item>
+    </plurals>
+    <plurals name="ConversationListFragment_read_plural">
+        <item quantity="one">Read</item>
+        <item quantity="other">Read</item>
+    </plurals>
+    <plurals name="ConversationListFragment_unread_plural">
+        <item quantity="one">Unread</item>
+        <item quantity="other">Unread</item>
+    </plurals>
+    <plurals name="ConversationListFragment_pin_plural">
+        <item quantity="one">Pin</item>
+        <item quantity="other">Pin</item>
+    </plurals>
+    <plurals name="ConversationListFragment_unpin_plural">
+        <item quantity="one">Unpin</item>
+        <item quantity="other">Unpin</item>
+    </plurals>
+    <plurals name="ConversationListFragment_mute_plural">
+        <item quantity="one">Mute</item>
+        <item quantity="other">Mute</item>
+    </plurals>
+    <plurals name="ConversationListFragment_unmute_plural">
+        <item quantity="one">Unmute</item>
+        <item quantity="other">Unmute</item>
+    </plurals>
+    <string name="ConversationListFragment_select">Select</string>
+    <plurals name="ConversationListFragment_archive_plural">
+        <item quantity="one">Archive</item>
+        <item quantity="other">Archive</item>
+    </plurals>
+    <plurals name="ConversationListFragment_unarchive_plural">
+        <item quantity="one">Unarchive</item>
+        <item quantity="other">Unarchive</item>
+    </plurals>
+    <plurals name="ConversationListFragment_delete_plural">
+        <item quantity="one">Delete</item>
+        <item quantity="other">Delete</item>
+    </plurals>
+    <string name="ConversationListFragment_select_all">Select all</string>
+    <plurals name="ConversationListFragment_s_selected">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
     </plurals>
 
     <!-- ConversationListItem -->
@@ -947,13 +986,18 @@
     <string name="MediaOverviewActivity_Grid_view_description">Grid view</string>
     <string name="MediaOverviewActivity_List_view_description">List view</string>
     <string name="MediaOverviewActivity_Selected_description">Selected</string>
-    <plurals name="MediaOverviewActivity_d_items_s">
-        <item quantity="one">%1$d item %2$s</item>
-        <item quantity="other">%1$d items %2$s</item>
+    <string name="MediaOverviewActivity_select_all">Select all</string>
+    <plurals name="MediaOverviewActivity_save_plural">
+        <item quantity="one">Save</item>
+        <item quantity="other">Save</item>
     </plurals>
-    <plurals name="MediaOverviewActivity_d_items">
-        <item quantity="one">%1$d item</item>
-        <item quantity="other">%1$d items</item>
+    <plurals name="MediaOverviewActivity_delete_plural">
+        <item quantity="one">Delete</item>
+        <item quantity="other">Delete</item>
+    </plurals>
+    <plurals name="MediaOverviewActivity_d_selected_s">
+        <item quantity="one">%1$d selected (%2$s)</item>
+        <item quantity="other">%1$d selected (%2$s)</item>
     </plurals>
     <string name="MediaOverviewActivity_file">File</string>
     <string name="MediaOverviewActivity_audio">Audio</string>
@@ -1536,6 +1580,9 @@
     <string name="SharedContactView_add_to_contacts">Add to Contacts</string>
     <string name="SharedContactView_invite_to_signal">Invite to Shadow</string>
     <string name="SharedContactView_message">Shadow Message</string>
+
+    <!-- SignalBottomActionBar -->
+    <string name="SignalBottomActionBar_more">More</string>
 
     <!-- Slide -->
     <string name="Slide_image">Image</string>
@@ -2188,14 +2235,15 @@
     <string name="HelpFragment__debug_log">Debug Log:</string>
     <string name="HelpFragment__could_not_upload_logs">Could not upload logs</string>
     <string name="HelpFragment__please_be_as_descriptive_as_possible">Please be as descriptive as possible to help us understand the issue.</string>
-    <string-array name="HelpFragment__categories">
+    <string-array name="HelpFragment__categories_2">
         <item>-- Please select an option --</item>
         <item>Something\'s Not Working</item>
         <item>Feature Request</item>
         <item>Question</item>
         <item>Feedback</item>
         <item>Other</item>
-        <item>Payments</item>
+        <item>Payments (MobileCoin)</item>
+        <item>Donations (Sustainers &amp; Shadow Boost)</item>
     </string-array>
 
     <!-- ReactWithAnyEmojiBottomSheetDialogFragment -->
@@ -2449,8 +2497,8 @@
     <string name="preferences__internal_rotate_profile_key" translatable="false">Rotate profile key</string>
     <string name="preferences__internal_rotate_profile_key_description" translatable="false">Creates a new versioned profile, and triggers an update of any GV2 group you belong to.</string>
     <string name="preferences__internal_misc" translatable="false">Miscellaneous</string>
-    <string name="preferences__internal_user_details" translatable="false">User Details</string>
-    <string name="preferences__internal_user_details_description" translatable="false">See more information about a user when viewing conversation settings.</string>
+    <string name="preferences__internal_user_details" translatable="false">\'Internal Details\' button</string>
+    <string name="preferences__internal_user_details_description" translatable="false">Show a button in conversation settings that lets you see more information about a user.</string>
     <string name="preferences__internal_shake_to_report" translatable="false">Shake to Report</string>
     <string name="preferences__internal_shake_to_report_description" translatable="false">Shake your phone to easily submit and share a debug log.</string>
     <string name="preferences__internal_disable_storage_service" translatable="false">Disable syncing</string>
@@ -3698,13 +3746,17 @@
     <string name="SubscribeFragment__confirm">Confirm</string>
     <string name="SubscribeFragment__update_subscription">Update Subscription</string>
     <string name="SubscribeFragment__your_subscription_has_been_cancelled">Your subscription has been cancelled.</string>
+    <string name="SubscribeFragment__update_subscription_question">Update subscription?</string>
+    <string name="SubscribeFragment__update">Update</string>
+    <string name="SubscribeFragment__you_will_be_charged_the_full_amount">You will be charged the full amount of the new subscription price today. Your subscription will renew %1$s.</string>
 
     <string name="Subscription__s_per_month">%s/month</string>
     <string name="Subscription__s_per_month_dot_renews_s">%1$s/month · Renews %2$s</string>
+    <string name="Subscription__s_per_month_dot_expires_s">%1$s/month · Expires %2$s</string>
 
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_a_non_profit_with_no">Signal is a non-profit with no advertisers or investors, sustained only by the people who use and value it. Make a recurring monthly contribution and receive a profile badge to share your support.</string>
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_a_non_profit_with_no">Shadow is a non-profit with no advertisers or investors, sustained only by the people who use and value it. Make a recurring monthly contribution and receive a profile badge to share your support.</string>
     <string name="SubscribeLearnMoreBottomSheetDialogFragment__why_contribute">Why Contribute?</string>
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__the_team_at_signal_is_committed">The team at Signal is committed to the mission of developing open source privacy technology that protects free expression and enables secure global communication. Your contribution fuels this cause. No ads. No trackers. No kidding.</string>
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__the_team_at_signal_is_committed">The team at Shadow is committed to the mission of developing open source privacy technology that protects free expression and enables secure global communication. Your contribution fuels this cause. No ads. No trackers. No kidding.</string>
     <string name="SubscribeLearnMoreBottomSheetDialogFragment__your_contribution_helps_pay">Your contribution helps pay for the development, servers, and bandwidth of an app used by millions around the world for private and instantaneous communication.</string>
 
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_your_support">Thanks for your Support!</string>
@@ -3713,6 +3765,7 @@
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__display_on_profile">Display on Profile</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__make_featured_badge">Make featured badge</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__done">Done</string>
+    <string name="ThanksForYourSupportBottomSheetFragment__when_you_have_more">When you have more than one badge, you can choose one to feature for others to see on your profile.</string>
 
     <string name="ManageDonationsFragment__my_support">My support</string>
     <string name="ManageDonationsFragment__manage_subscription">Manage subscription</string>
@@ -3735,6 +3788,21 @@
     <string name="ExpiredBadgeBottomSheetDialogFragment__to_continue_supporting">To continue supporting technology that is built for you—not for your data—please consider becoming a monthly subscriber.</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__become_a_subscriber">Become a subscriber</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__not_now">Not now</string>
+
+    <string name="Subscription__verification_failed">Subscription Verification Failed</string>
+    <string name="Subscription__please_contact_support_for_more_information">Please contact support for more information.</string>
+    <string name="Subscription__contact_support">Contact Support</string>
+    <string name="Subscription__earn_a_s_badge">Earn a %1$s badge</string>
+
+    <string name="SubscribeFragment__processing_payment">Processing payment…</string>
+    <string name="DonationsErrors__payment_failed">Payment failed</string>
+    <string name="DonationsErrors__your_payment">Your payment couldn\'t be processed and you have not been charged. Please try again.</string>
+    <string name="DonationsErrors__redemption_still_pending">Redemption still pending</string>
+    <string name="DonationsErrors__you_might_not_see_your_badge_right_away">You may not see your badge right away, but we\'re working on it!</string>
+    <string name="DonationsErrors__google_pay_unavailable">Google Pay Unavailable</string>
+    <string name="DonationsErrors__you_have_to_set_up_google_pay_to_donate_in_app">You have to set up Google Pay to donate in-app.</string>
+    <string name="DonationsErrors__failed_to_cancel_subscription">Failed to cancel subscription</string>
+    <string name="DonationsErrors__subscription_cancellation_requires_an_internet_connection">Subscription cancellation requires an internet connection.</string>
 
 
 
