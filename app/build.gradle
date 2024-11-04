@@ -132,7 +132,6 @@ android {
 
         minSdkVersion MINIMUM_SDK
         targetSdkVersion TARGET_SDK
-        multiDexEnabled true
 
         vectorDrawables.useSupportLibrary = true
         project.ext.set("archivesBaseName", "Shadow");
@@ -399,7 +398,6 @@ dependencies {
     implementation libs.androidx.gridlayout
     implementation libs.androidx.exifinterface
     implementation libs.androidx.constraintlayout
-    implementation libs.androidx.multidex
     implementation libs.androidx.navigation.fragment.ktx
     implementation libs.androidx.navigation.ui.ktx
     implementation libs.androidx.lifecycle.extensions
@@ -511,7 +509,6 @@ dependencies {
     testImplementation (testLibs.robolectric.robolectric) {
         exclude group: 'com.google.protobuf', module: 'protobuf-java'
     }
-    testImplementation testLibs.robolectric.shadows.multidex
     testImplementation testLibs.hamcrest.hamcrest
 
     testImplementation(testFixtures(project(":libsignal-service")))
