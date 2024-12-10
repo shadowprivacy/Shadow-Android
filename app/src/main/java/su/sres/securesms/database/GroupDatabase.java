@@ -25,6 +25,7 @@ import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.groupsv2.GroupChangeReconstruct;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.push.DistributionId;
 import su.sres.storageservice.protos.groups.AccessControl;
 import su.sres.storageservice.protos.groups.Member;
@@ -727,7 +728,7 @@ public final class GroupDatabase extends Database {
       List<UUID>           removed = DecryptedGroupUtil.removedMembersUuidList(change);
 
       if (removed.size() > 0) {
-        Log.i(TAG, removed.size() + " members were removed from group " + groupId + ". Rotating the sender key.");
+        Log.i(TAG, removed.size() + " members were removed from group " + groupId + ". Rotating the DistributionId " + distributionId);
         SenderKeyUtil.rotateOurKey(context, distributionId);
       }
     }
@@ -813,10 +814,10 @@ public final class GroupDatabase extends Database {
   }
 
   private static boolean gv2GroupActive(@NonNull DecryptedGroup decryptedGroup) {
-    UUID uuid = Recipient.self().getUuid().get();
+    ACI aci = Recipient.self().requireAci();
 
-    return DecryptedGroupUtil.findMemberByUuid(decryptedGroup.getMembersList(), uuid).isPresent() ||
-           DecryptedGroupUtil.findPendingByUuid(decryptedGroup.getPendingMembersList(), uuid).isPresent();
+    return DecryptedGroupUtil.findMemberByUuid(decryptedGroup.getMembersList(), aci.uuid()).isPresent() ||
+           DecryptedGroupUtil.findPendingByUuid(decryptedGroup.getPendingMembersList(), aci.uuid()).isPresent();
   }
 
   private List<RecipientId> getCurrentMembers(@NonNull GroupId groupId) {
@@ -876,7 +877,7 @@ public final class GroupDatabase extends Database {
       if (UuidUtil.UNKNOWN_UUID.equals(uuid)) {
         Log.w(TAG, "Seen unknown UUID in members list");
       } else {
-        groupMembers.add(RecipientId.from(uuid, null));
+        groupMembers.add(RecipientId.from(ACI.from(uuid), null));
       }
     }
 
@@ -1196,9 +1197,9 @@ public final class GroupDatabase extends Database {
      */
     public boolean isPendingMember(@NonNull Recipient recipient) {
       if (isV2Group()) {
-        Optional<UUID> uuid = recipient.getUuid();
-        if (uuid.isPresent()) {
-          return DecryptedGroupUtil.findPendingByUuid(requireV2GroupProperties().getDecryptedGroup().getPendingMembersList(), uuid.get())
+        Optional<ACI> aci = recipient.getAci();
+        if (aci.isPresent()) {
+          return DecryptedGroupUtil.findPendingByUuid(requireV2GroupProperties().getDecryptedGroup().getPendingMembersList(), aci.get().uuid())
                                    .isPresent();
         }
       }
@@ -1239,13 +1240,13 @@ public final class GroupDatabase extends Database {
     }
 
     public boolean isAdmin(@NonNull Recipient recipient) {
-      Optional<UUID> uuid = recipient.getUuid();
+      Optional<ACI> aci = recipient.getAci();
 
-      if (!uuid.isPresent()) {
+      if (!aci.isPresent()) {
         return false;
       }
 
-      return DecryptedGroupUtil.findMemberByUuid(getDecryptedGroup().getMembersList(), uuid.get())
+      return DecryptedGroupUtil.findMemberByUuid(getDecryptedGroup().getMembersList(), aci.get().uuid())
                                .transform(t -> t.getRole() == Member.Role.ADMINISTRATOR)
                                .or(false);
     }
@@ -1255,20 +1256,20 @@ public final class GroupDatabase extends Database {
     }
 
     public MemberLevel memberLevel(@NonNull Recipient recipient) {
-      Optional<UUID> uuid = recipient.getUuid();
+      Optional<ACI> aci = recipient.getAci();
 
-      if (!uuid.isPresent()) {
+      if (!aci.isPresent()) {
         return MemberLevel.NOT_A_MEMBER;
       }
       DecryptedGroup decryptedGroup = getDecryptedGroup();
 
-      return DecryptedGroupUtil.findMemberByUuid(decryptedGroup.getMembersList(), uuid.get())
+      return DecryptedGroupUtil.findMemberByUuid(decryptedGroup.getMembersList(), aci.get().uuid())
                                .transform(member -> member.getRole() == Member.Role.ADMINISTRATOR
                                                     ? MemberLevel.ADMINISTRATOR
                                                     : MemberLevel.FULL_MEMBER)
-                               .or(() -> DecryptedGroupUtil.findPendingByUuid(decryptedGroup.getPendingMembersList(), uuid.get())
+                               .or(() -> DecryptedGroupUtil.findPendingByUuid(decryptedGroup.getPendingMembersList(), aci.get().uuid())
                                                            .transform(m -> MemberLevel.PENDING_MEMBER)
-                                                           .or(() -> DecryptedGroupUtil.findRequestingByUuid(decryptedGroup.getRequestingMembersList(), uuid.get())
+                                                           .or(() -> DecryptedGroupUtil.findRequestingByUuid(decryptedGroup.getRequestingMembersList(), aci.get().uuid())
                                                                                        .transform(m -> MemberLevel.REQUESTING_MEMBER)
                                                                                        .or(MemberLevel.NOT_A_MEMBER)));
     }
@@ -1280,7 +1281,7 @@ public final class GroupDatabase extends Database {
     public List<RecipientId> getMemberRecipientIds(@NonNull MemberSet memberSet) {
       boolean           includeSelf    = memberSet.includeSelf;
       DecryptedGroup    groupV2        = getDecryptedGroup();
-      UUID              selfUuid       = Recipient.self().getUuid().get();
+      UUID              selfUuid       = Recipient.self().requireAci().uuid();
       List<RecipientId> recipients     = new ArrayList<>(groupV2.getMembersCount() + groupV2.getPendingMembersCount());
       int               unknownMembers = 0;
       int               unknownPending = 0;
@@ -1289,7 +1290,7 @@ public final class GroupDatabase extends Database {
         if (UuidUtil.UNKNOWN_UUID.equals(uuid)) {
           unknownMembers++;
         } else if (includeSelf || !selfUuid.equals(uuid)) {
-          recipients.add(RecipientId.from(uuid, null));
+          recipients.add(RecipientId.from(ACI.from(uuid), null));
         }
       }
       if (memberSet.includePending) {
@@ -1297,7 +1298,7 @@ public final class GroupDatabase extends Database {
           if (UuidUtil.UNKNOWN_UUID.equals(uuid)) {
             unknownPending++;
           } else if (includeSelf || !selfUuid.equals(uuid)) {
-            recipients.add(RecipientId.from(uuid, null));
+            recipients.add(RecipientId.from(ACI.from(uuid), null));
           }
         }
       }

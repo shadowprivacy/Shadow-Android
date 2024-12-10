@@ -7,9 +7,13 @@ import androidx.annotation.NonNull;
 import net.zetetic.database.DatabaseErrorHandler;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import su.sres.core.util.ExceptionUtil;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.CursorUtil;
-import su.sres.securesms.util.Util;
 
 /**
  * The default error handler wipes the file. This one instead prints some diagnostics and then crashes so the original corrupt file isn't lost.
@@ -45,7 +49,7 @@ public final class SqlCipherErrorHandler implements DatabaseErrorHandler {
       }
     } catch (Throwable t) {
       output.append("Failed to do integrity_check!").append("\n")
-            .append(Util.convertThrowableToString(t));
+            .append(ExceptionUtil.convertThrowableToString(t));
     }
 
     output.append("\n").append("===== PRAGMA cipher_integrity_check =====").append("\n");
@@ -56,28 +60,54 @@ public final class SqlCipherErrorHandler implements DatabaseErrorHandler {
       }
     } catch (Throwable t) {
       output.append("Failed to do cipher_integrity_check!").append("\n")
-            .append(Util.convertThrowableToString(t));
+            .append(ExceptionUtil.convertThrowableToString(t));
     }
 
     Log.e(TAG, output.toString());
 
+    List<String> lines = new ArrayList<>(Arrays.asList(output.toString().split("\n")));
+
     if (pragma1Passes && pragma2Passes) {
-      throw new DatabaseCorruptedError_BothChecksPass();
+      throw new DatabaseCorruptedError_BothChecksPass(lines);
     } else if (!pragma1Passes && pragma2Passes) {
-      throw new DatabaseCorruptedError_NormalCheckFailsCipherCheckPasses();
+      throw new DatabaseCorruptedError_NormalCheckFailsCipherCheckPasses(lines);
     } else if (pragma1Passes && !pragma2Passes) {
-      throw new DatabaseCorruptedError_NormalCheckPassesCipherCheckFails();
+      throw new DatabaseCorruptedError_NormalCheckPassesCipherCheckFails(lines);
     } else {
-      throw new DatabaseCorruptedError_BothChecksFail();
+      throw new DatabaseCorruptedError_BothChecksFail(lines);
     }
   }
 
-  public static final class DatabaseCorruptedError_BothChecksPass extends Error {
+  public static class CustomTraceError extends Error {
+
+    CustomTraceError(@NonNull List<String> lines) {
+      StackTraceElement[] custom = lines.stream().map(line -> new StackTraceElement(line, "", "", 0)).toArray(StackTraceElement[]::new);
+
+      setStackTrace(ExceptionUtil.joinStackTrace(getStackTrace(), custom));
+    }
   }
-  public static final class DatabaseCorruptedError_BothChecksFail extends Error {
+
+  public static final class DatabaseCorruptedError_BothChecksPass extends CustomTraceError {
+    DatabaseCorruptedError_BothChecksPass(@NonNull List<String> lines) {
+      super(lines);
+    }
   }
-  public static final class DatabaseCorruptedError_NormalCheckFailsCipherCheckPasses extends Error {
+
+  public static final class DatabaseCorruptedError_BothChecksFail extends CustomTraceError {
+    DatabaseCorruptedError_BothChecksFail(@NonNull List<String> lines) {
+      super(lines);
+    }
   }
-  public static final class DatabaseCorruptedError_NormalCheckPassesCipherCheckFails extends Error {
+
+  public static final class DatabaseCorruptedError_NormalCheckFailsCipherCheckPasses extends CustomTraceError {
+    DatabaseCorruptedError_NormalCheckFailsCipherCheckPasses(@NonNull List<String> lines) {
+      super(lines);
+    }
+  }
+
+  public static final class DatabaseCorruptedError_NormalCheckPassesCipherCheckFails extends CustomTraceError {
+    DatabaseCorruptedError_NormalCheckPassesCipherCheckFails(@NonNull List<String> lines) {
+      super(lines);
+    }
   }
 }

@@ -1,47 +1,33 @@
 package su.sres.securesms.components.settings.app.subscription.boost
 
-import android.net.Uri
 import io.reactivex.rxjava3.core.Single
 import su.sres.core.util.money.FiatMoney
+import su.sres.securesms.badges.Badges
 import su.sres.securesms.badges.models.Badge
+import su.sres.securesms.util.PlatformCurrencyUtil
+import su.sres.signalservice.api.profiles.SignalServiceProfile
+import su.sres.signalservice.api.services.DonationsService
+import su.sres.signalservice.internal.ServiceResponse
 import java.math.BigDecimal
 import java.util.Currency
+import java.util.Locale
 
-class BoostRepository {
+class BoostRepository(private val donationsService: DonationsService) {
 
-  fun getBoosts(currency: Currency): Single<Pair<List<Boost>, Boost?>> {
-    val boosts = testBoosts(currency)
-
-    return Single.just(
-      Pair(
-        boosts,
-        boosts[2]
-      )
-    )
+  fun getBoosts(): Single<Map<Currency, List<Boost>>> {
+    return donationsService.boostAmounts
+      .flatMap(ServiceResponse<Map<String, List<BigDecimal>>>::flattenResult)
+      .map { result ->
+        result
+          .filter { PlatformCurrencyUtil.getAvailableCurrencyCodes().contains(it.key) }
+          .mapKeys { (code, _) -> Currency.getInstance(code) }
+          .mapValues { (currency, prices) -> prices.map { Boost(FiatMoney(it, currency)) } }
+      }
   }
 
-  fun getBoostBadge(): Single<Badge> = Single.fromCallable {
-    // Get boost badge from server
-    // throw NotImplementedError()
-    testBadge
-  }
-
-  companion object {
-    private val testBadge = Badge(
-      id = "TEST",
-      category = Badge.Category.Testing,
-      name = "Test Badge",
-      description = "Test Badge",
-      imageUrl = Uri.EMPTY,
-      imageDensity = "xxxhdpi",
-      expirationTimestamp = 0L,
-      visible = false,
-    )
-
-    private fun testBoosts(currency: Currency) = listOf(
-      3L, 5L, 10L, 20L, 50L, 100L
-    ).map {
-      Boost(testBadge, FiatMoney(BigDecimal.valueOf(it), currency))
-    }
+  fun getBoostBadge(): Single<Badge> {
+    return donationsService.getBoostBadge(Locale.getDefault())
+      .flatMap(ServiceResponse<SignalServiceProfile.Badge>::flattenResult)
+      .map(Badges::fromServiceBadge)
   }
 }

@@ -3,6 +3,7 @@ package su.sres.securesms.util;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
@@ -78,11 +79,13 @@ public final class FeatureFlags {
   private static final String RETRY_RECEIPT_LIFESPAN            = "android.retryReceiptLifespan";
   private static final String RETRY_RESPOND_MAX_AGE             = "android.retryRespondMaxAge";
   private static final String SENDER_KEY                        = "android.senderKey.5";
+  private static final String SENDER_KEY_MAX_AGE                = "android.senderKeyMaxAge";
   private static final String RETRY_RECEIPTS                    = "android.retryReceipts";
   private static final String MAX_GROUP_CALL_RING_SIZE          = "global.calling.maxGroupCallRingSize";
   private static final String GROUP_CALL_RINGING                = "android.calling.groupCallRinging";
   private static final String CHANGE_USER_LOGIN_ENABLED         = "android.changeLogin";
-  private static final String DONOR_BADGES                      = "android.donorBadges";
+  private static final String DONOR_BADGES                      = "android.donorBadges.4";
+  private static final String DONOR_BADGES_DISPLAY              = "android.donorBadges.display.2";
 
   /**
    * We will only store remote values for flags in this set. If you want a flag to be controllable
@@ -117,14 +120,16 @@ public final class FeatureFlags {
       SENDER_KEY,
       RETRY_RECEIPTS,
       MAX_GROUP_CALL_RING_SIZE,
-      GROUP_CALL_RINGING
+      GROUP_CALL_RINGING,
+      SENDER_KEY_MAX_AGE,
+      DONOR_BADGES,
+      DONOR_BADGES_DISPLAY
   );
 
   @VisibleForTesting
   static final Set<String> NOT_REMOTE_CAPABLE = SetUtil.newHashSet(
       USER_LOGIN_PRIVACY_VERSION,
-      CHANGE_USER_LOGIN_ENABLED,
-      DONOR_BADGES
+      CHANGE_USER_LOGIN_ENABLED
   );
 
   /**
@@ -167,7 +172,9 @@ public final class FeatureFlags {
       RETRY_RECEIPTS,
       SENDER_KEY,
       MAX_GROUP_CALL_RING_SIZE,
-      GROUP_CALL_RINGING
+      GROUP_CALL_RINGING,
+      SENDER_KEY_MAX_AGE,
+      DONOR_BADGES_DISPLAY
   );
 
   /**
@@ -395,11 +402,9 @@ public final class FeatureFlags {
     return getLong(RETRY_RESPOND_MAX_AGE, TimeUnit.DAYS.toMillis(14));
   }
 
-  /**
-   * Whether or not sending using sender key is enabled.
-   */
-  public static boolean senderKey() {
-    return getBoolean(SENDER_KEY, true);
+  /** How long a sender key can live before it needs to be rotated. */
+  public static long senderKeyMaxAge() {
+    return Math.min(getLong(SENDER_KEY_MAX_AGE, TimeUnit.DAYS.toMillis(14)), TimeUnit.DAYS.toMillis(90));
   }
 
   /**
@@ -435,6 +440,13 @@ public final class FeatureFlags {
     } else {
       return getBoolean(DONOR_BADGES, false ) || SignalStore.donationsValues().getSubscriber() != null;
     }
+  }
+
+  /**
+   * Whether or not donor badges should be displayed throughout the app.
+   */
+  public static boolean displayDonorBadges() {
+    return getBoolean(DONOR_BADGES_DISPLAY, Environment.IS_STAGING);
   }
 
   /**

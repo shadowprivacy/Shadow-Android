@@ -18,6 +18,7 @@ import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.databaseprotos.BodyRangeList;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.util.UuidUtil;
 
 import java.util.ArrayList;
@@ -105,7 +106,7 @@ public final class MentionUtil {
     BodyRangeList.Builder builder = BodyRangeList.newBuilder();
 
     for (Mention mention : mentions) {
-      String uuid = Recipient.resolved(mention.getRecipientId()).requireUuid().toString();
+      String uuid = Recipient.resolved(mention.getRecipientId()).requireAci().toString();
       builder.addRanges(BodyRangeList.BodyRange.newBuilder()
                                                .setMentionUuid(uuid)
                                                .setStart(mention.getStart())
@@ -121,7 +122,7 @@ public final class MentionUtil {
         return Stream.of(BodyRangeList.parseFrom(data).getRangesList())
                      .filter(bodyRange -> bodyRange.getAssociatedValueCase() == BodyRangeList.BodyRange.AssociatedValueCase.MENTIONUUID)
                      .map(mention -> {
-                       RecipientId id = Recipient.externalPush(context, UuidUtil.parseOrThrow(mention.getMentionUuid()), null, false).getId();
+                       RecipientId id = Recipient.externalPush(context, ACI.parseOrThrow(mention.getMentionUuid()), null, false).getId();
                        return new Mention(id, mention.getStart(), mention.getLength());
                      })
                      .toList();

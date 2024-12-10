@@ -20,6 +20,7 @@ import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.wallpaper.ChatWallpaper;
+import su.sres.signalservice.api.push.ACI;
 
 import org.signal.zkgroup.profiles.ProfileKeyCredential;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -28,12 +29,10 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import java.util.UUID;
-
 public class RecipientDetails {
 
-  final UUID                       uuid;
-  final String                     username;
+  final ACI    aci;
+  final String username;
   final String                     e164;
   final String                     email;
   final GroupId                    groupId;
@@ -95,9 +94,9 @@ public class RecipientDetails {
     this.groupAvatarId               = groupAvatarId;
     this.systemContactPhoto          = Util.uri(settings.getSystemContactPhotoUri());
     this.customLabel                 = settings.getSystemPhoneLabel();
-    this.contactUri                  = Util.uri(settings.getSystemContactUri());
-    this.uuid                        = settings.getUuid();
-    this.username                    = settings.getUsername();
+    this.contactUri = null;
+    this.aci        = null;
+    this.username   = null;
     this.e164                        = settings.getE164();
     this.email                       = settings.getEmail();
     this.groupId                     = settings.getGroupId();
@@ -152,7 +151,7 @@ public class RecipientDetails {
     this.systemContactPhoto          = null;
     this.customLabel                 = null;
     this.contactUri                  = null;
-    this.uuid                        = null;
+    this.aci                        = null;
     this.username                    = null;
     this.e164                        = null;
     this.email                       = null;
@@ -203,7 +202,7 @@ public class RecipientDetails {
   public static @NonNull RecipientDetails forIndividual(@NonNull Context context, @NonNull RecipientSettings settings) {
     boolean systemContact = !settings.getSystemProfileName().isEmpty();
     boolean isSelf = (settings.getE164() != null && settings.getE164().equals(TextSecurePreferences.getLocalNumber(context))) ||
-                     (settings.getUuid() != null && settings.getUuid().equals(TextSecurePreferences.getLocalUuid(context)));
+                     (settings.getAci() != null && settings.getAci().equals(TextSecurePreferences.getLocalAci(context)));
 
     RegisteredState registeredState = settings.getRegistered();
 

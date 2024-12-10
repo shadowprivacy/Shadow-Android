@@ -12,6 +12,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.Base64;
 import su.sres.signalservice.api.groupsv2.DecryptedGroupUtil;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.push.SignalServiceProtos.GroupContext;
 import su.sres.signalservice.internal.push.SignalServiceProtos.GroupContextV2;
@@ -192,7 +193,7 @@ public final class MessageGroupContext {
       List<RecipientId> members = new ArrayList<>(decryptedGroupV2Context.getGroupState().getMembersCount());
 
       for (DecryptedMember member : decryptedGroupV2Context.getGroupState().getMembersList()) {
-        RecipientId recipient = RecipientId.from(UuidUtil.fromByteString(member.getUuid()), null);
+        RecipientId recipient = RecipientId.from(ACI.fromByteString(member.getUuid()), null);
         if (!Recipient.self().getId().equals(recipient)) {
           members.add(recipient);
         }

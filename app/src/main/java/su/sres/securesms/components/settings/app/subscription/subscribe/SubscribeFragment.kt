@@ -1,9 +1,7 @@
 package su.sres.securesms.components.settings.app.subscription.subscribe
 
 import android.graphics.Color
-import android.text.SpannableStringBuilder
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -21,15 +19,20 @@ import su.sres.securesms.components.settings.DSLSettingsText
 import su.sres.securesms.components.settings.app.AppSettingsActivity
 import su.sres.securesms.components.settings.app.subscription.DonationEvent
 import su.sres.securesms.components.settings.app.subscription.DonationExceptions
+import su.sres.securesms.components.settings.app.subscription.DonationPaymentComponent
+import su.sres.securesms.components.settings.app.subscription.SubscriptionsRepository
 import su.sres.securesms.components.settings.app.subscription.models.CurrencySelection
 import su.sres.securesms.components.settings.app.subscription.models.GooglePayButton
+import su.sres.securesms.components.settings.app.subscription.models.NetworkFailure
 import su.sres.securesms.components.settings.configure
+import su.sres.securesms.components.settings.models.Progress
+import su.sres.securesms.dependencies.ApplicationDependencies
+import su.sres.securesms.help.HelpFragment
+import su.sres.securesms.keyboard.findListener
+import su.sres.securesms.payments.FiatMoneyUtil
 import su.sres.securesms.subscription.Subscription
-import su.sres.securesms.util.DateUtils
 import su.sres.securesms.util.LifecycleDisposable
-import su.sres.securesms.util.SpanUtil
 import java.util.Calendar
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
@@ -39,21 +42,26 @@ class SubscribeFragment : DSLSettingsFragment(
   layoutId = R.layout.subscribe_fragment
 ) {
 
-  private val viewModel: SubscribeViewModel by viewModels(ownerProducer = { requireActivity() })
-
   private val lifecycleDisposable = LifecycleDisposable()
 
   /* private val supportTechSummary: CharSequence by lazy {
-    SpannableStringBuilder(requireContext().getString(R.string.SubscribeFragment__support_technology_that_is_built_for_you))
+    SpannableStringBuilder(requireContext().getString(R.string.SubscribeFragment__support_technology_that_is_built_for_you_not))
       .append(" ")
       .append(
-        SpanUtil.learnMore(requireContext(), ContextCompat.getColor(requireContext(), R.color.signal_accent_primary)) {
+        SpanUtil.readMore(requireContext(), ContextCompat.getColor(requireContext(), R.color.signal_accent_primary)) {
           findNavController().navigate(SubscribeFragmentDirections.actionSubscribeFragmentToSubscribeLearnMoreBottomSheetDialog())
         }
       )
   } */
 
   private lateinit var processingDonationPaymentDialog: AlertDialog
+  private lateinit var donationPaymentComponent: DonationPaymentComponent
+
+  private val viewModel: SubscribeViewModel by viewModels(
+    factoryProducer = {
+      SubscribeViewModel.Factory(SubscriptionsRepository(ApplicationDependencies.getDonationsService()), donationPaymentComponent.donationPaymentRepository, FETCH_SUBSCRIPTION_TOKEN_REQUEST_CODE)
+    }
+  )
 
   override fun onResume() {
     super.onResume()
@@ -61,10 +69,15 @@ class SubscribeFragment : DSLSettingsFragment(
   }
 
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
+    donationPaymentComponent = findListener()!!
+    viewModel.refresh()
+
     BadgePreview.register(adapter)
     CurrencySelection.register(adapter)
     Subscription.register(adapter)
     GooglePayButton.register(adapter)
+    Progress.register(adapter)
+    NetworkFailure.register(adapter)
 
     processingDonationPaymentDialog = MaterialAlertDialogBuilder(requireContext())
       .setView(R.layout.processing_payment_dialog)
@@ -78,7 +91,7 @@ class SubscribeFragment : DSLSettingsFragment(
     lifecycleDisposable.bindTo(viewLifecycleOwner.lifecycle)
     lifecycleDisposable += viewModel.events.subscribe {
       when (it) {
-        is DonationEvent.GooglePayUnavailableError -> onGooglePayUnavailable(it.throwable)
+        is DonationEvent.GooglePayUnavailableError -> Unit
         is DonationEvent.PaymentConfirmationError -> onPaymentError(it.throwable)
         is DonationEvent.PaymentConfirmationSuccess -> onPaymentConfirmed(it.badge)
         DonationEvent.RequestTokenError -> onPaymentError(null)
@@ -87,6 +100,15 @@ class SubscribeFragment : DSLSettingsFragment(
         is DonationEvent.SubscriptionCancellationFailed -> onSubscriptionFailedToCancel(it.throwable)
       }
     }
+
+    lifecycleDisposable += donationPaymentComponent.googlePayResultPublisher.subscribe {
+      viewModel.onActivityResult(it.requestCode, it.resultCode, it.data)
+    }
+  }
+
+  override fun onDestroyView() {
+    super.onDestroyView()
+    processingDonationPaymentDialog.hide()
   }
 
   private fun getConfiguration(state: SubscribeState): DSLConfiguration {
@@ -116,27 +138,48 @@ class SubscribeFragment : DSLSettingsFragment(
 
       customPref(
         CurrencySelection.Model(
-          currencySelection = state.currencySelection,
+          selectedCurrency = state.currencySelection,
           isEnabled = areFieldsEnabled && state.activeSubscription?.isActive != true,
           onClick = {
-            findNavController().navigate(SubscribeFragmentDirections.actionSubscribeFragmentToSetDonationCurrencyFragment(false))
+            val selectableCurrencies = viewModel.getSelectableCurrencyCodes()
+            if (selectableCurrencies != null) {
+              findNavController().navigate(SubscribeFragmentDirections.actionSubscribeFragmentToSetDonationCurrencyFragment(false, selectableCurrencies.toTypedArray()))
+            }
           }
         )
       )
 
-      state.subscriptions.forEach {
-        val isActive = state.activeSubscription?.activeSubscription?.level == it.level
+      space(DimensionUnit.DP.toPixels(4f).toInt())
+
+      @Suppress("CascadeIf")
+      if (state.stage == SubscribeState.Stage.INIT) {
         customPref(
-          Subscription.Model(
-            subscription = it,
-            isSelected = state.selectedSubscription == it,
-            isEnabled = areFieldsEnabled,
-            isActive = isActive,
-            willRenew = isActive && state.activeSubscription?.activeSubscription?.willCancelAtPeriodEnd() ?: false,
-            onClick = { viewModel.setSelectedSubscription(it) },
-            renewalTimestamp = TimeUnit.SECONDS.toMillis(state.activeSubscription?.activeSubscription?.endOfCurrentPeriod ?: 0L)
-          )
+          Subscription.LoaderModel()
         )
+      } else if (state.stage == SubscribeState.Stage.FAILURE) {
+        space(DimensionUnit.DP.toPixels(69f).toInt())
+        customPref(
+          NetworkFailure.Model {
+            viewModel.refresh()
+          }
+        )
+        space(DimensionUnit.DP.toPixels(75f).toInt())
+      } else {
+        state.subscriptions.forEach {
+          val isActive = state.activeSubscription?.activeSubscription?.level == it.level
+          customPref(
+            Subscription.Model(
+              subscription = it,
+              isSelected = state.selectedSubscription == it,
+              isEnabled = areFieldsEnabled,
+              isActive = isActive,
+              willRenew = isActive && state.activeSubscription?.activeSubscription?.willCancelAtPeriodEnd() ?: false,
+              onClick = { viewModel.setSelectedSubscription(it) },
+              renewalTimestamp = TimeUnit.SECONDS.toMillis(state.activeSubscription?.activeSubscription?.endOfCurrentPeriod ?: 0L),
+              selectedCurrency = state.currencySelection
+            )
+          )
+        }
       }
 
       if (state.activeSubscription?.isActive == true) {
@@ -150,14 +193,19 @@ class SubscribeFragment : DSLSettingsFragment(
           text = DSLSettingsText.from(R.string.SubscribeFragment__update_subscription),
           isEnabled = areFieldsEnabled && (!activeAndSameLevel || isExpiring),
           onClick = {
+            val price = viewModel.getPriceOfSelectedSubscription() ?: return@primaryButton
             val calendar = Calendar.getInstance()
             calendar.add(Calendar.MONTH, 1)
             MaterialAlertDialogBuilder(requireContext())
               .setTitle(R.string.SubscribeFragment__update_subscription_question)
               .setMessage(
                 getString(
-                  R.string.SubscribeFragment__you_will_be_charged_the_full_amount,
-                  DateUtils.formatDateWithYear(Locale.getDefault(), calendar.timeInMillis)
+                  R.string.SubscribeFragment__you_will_be_charged_the_full_amount_s_of,
+                  FiatMoneyUtil.format(
+                    requireContext().resources,
+                    price,
+                    FiatMoneyUtil.formatOptions().trimZerosAfterDecimal()
+                  )
                 )
               )
               .setPositiveButton(R.string.SubscribeFragment__update) { dialog, _ ->
@@ -189,16 +237,14 @@ class SubscribeFragment : DSLSettingsFragment(
           }
         )
       } else {
-        if (state.isGooglePayAvailable) {
-          space(DimensionUnit.DP.toPixels(16f).toInt())
+        space(DimensionUnit.DP.toPixels(16f).toInt())
 
-          customPref(
-            GooglePayButton.Model(
-              onClick = this@SubscribeFragment::onGooglePayButtonClicked,
-              isEnabled = areFieldsEnabled && state.selectedSubscription != null
-            )
+        customPref(
+          GooglePayButton.Model(
+            onClick = this@SubscribeFragment::onGooglePayButtonClicked,
+            isEnabled = areFieldsEnabled && state.selectedSubscription != null
           )
-        }
+        )
 
         secondaryButtonNoOutline(
           text = DSLSettingsText.from(R.string.SubscribeFragment__more_payment_options),
@@ -223,35 +269,37 @@ class SubscribeFragment : DSLSettingsFragment(
 
   private fun onPaymentError(throwable: Throwable?) {
     if (throwable is DonationExceptions.TimedOutWaitingForTokenRedemption) {
-      Log.w(TAG, "Error occurred while redeeming token", throwable)
+      Log.w(TAG, "Timeout occurred while redeeming token", throwable, true)
       MaterialAlertDialogBuilder(requireContext())
-        .setTitle(R.string.DonationsErrors__redemption_still_pending)
-        .setMessage(R.string.DonationsErrors__you_might_not_see_your_badge_right_away)
+        .setTitle(R.string.DonationsErrors__still_processing)
+        .setMessage(R.string.DonationsErrors__your_payment)
         .setPositiveButton(android.R.string.ok) { dialog, _ ->
           dialog.dismiss()
           requireActivity().finish()
-          requireActivity().startActivity(AppSettingsActivity.subscriptions(requireContext()))
+          requireActivity().startActivity(AppSettingsActivity.manageSubscriptions(requireContext()))
         }
-    } else {
-      Log.w(TAG, "Error occurred while processing payment", throwable)
+        .show()
+    } else if (throwable is DonationExceptions.SetupFailed) {
+      Log.w(TAG, "Error occurred while processing payment", throwable, true)
       MaterialAlertDialogBuilder(requireContext())
         .setTitle(R.string.DonationsErrors__payment_failed)
         .setMessage(R.string.DonationsErrors__your_payment)
         .setPositiveButton(android.R.string.ok) { dialog, _ ->
           dialog.dismiss()
         }
+        .show()
+    } else {
+      Log.w(TAG, "Error occurred while trying to redeem token", throwable, true)
+      MaterialAlertDialogBuilder(requireContext())
+        .setTitle(R.string.DonationsErrors__redemption_failed)
+        .setMessage(R.string.DonationsErrors__please_contact_support)
+        .setPositiveButton(R.string.Subscription__contact_support) { dialog, _ ->
+          dialog.dismiss()
+          requireActivity().finish()
+          requireActivity().startActivity(AppSettingsActivity.help(requireContext(), HelpFragment.DONATION_INDEX))
+        }
+        .show()
     }
-  }
-
-  private fun onGooglePayUnavailable(throwable: Throwable?) {
-    Log.w(TAG, "Google Pay error", throwable)
-    MaterialAlertDialogBuilder(requireContext())
-      .setTitle(R.string.DonationsErrors__google_pay_unavailable)
-      .setMessage(R.string.DonationsErrors__you_have_to_set_up_google_pay_to_donate_in_app)
-      .setPositiveButton(android.R.string.ok) { dialog, _ ->
-        dialog.dismiss()
-        findNavController().popBackStack()
-      }
   }
 
   private fun onSubscriptionCancelled() {
@@ -264,7 +312,7 @@ class SubscribeFragment : DSLSettingsFragment(
   }
 
   private fun onSubscriptionFailedToCancel(throwable: Throwable) {
-    Log.w(TAG, "Failed to cancel subscription", throwable)
+    Log.w(TAG, "Failed to cancel subscription", throwable, true)
     MaterialAlertDialogBuilder(requireContext())
       .setTitle(R.string.DonationsErrors__failed_to_cancel_subscription)
       .setMessage(R.string.DonationsErrors__subscription_cancellation_requires_an_internet_connection)
@@ -272,9 +320,11 @@ class SubscribeFragment : DSLSettingsFragment(
         dialog.dismiss()
         findNavController().popBackStack()
       }
+      .show()
   }
 
   companion object {
     private val TAG = Log.tag(SubscribeFragment::class.java)
+    private const val FETCH_SUBSCRIPTION_TOKEN_REQUEST_CODE = 1000
   }
 }

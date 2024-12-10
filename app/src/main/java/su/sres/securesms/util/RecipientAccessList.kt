@@ -2,9 +2,9 @@ package su.sres.securesms.util
 
 import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.recipients.RecipientId
+import su.sres.signalservice.api.push.ACI
 import su.sres.signalservice.api.push.SignalServiceAddress
 import java.lang.IllegalArgumentException
-import java.util.UUID
 
 /**
  * A list of Recipients, but with some helpful methods for retrieving them by various properties. Uses lazy properties to ensure that it will be as performant
@@ -12,10 +12,10 @@ import java.util.UUID
  */
 class RecipientAccessList(private val recipients: List<Recipient>) : List<Recipient> by recipients {
 
-  private val byUuid: Map<UUID, Recipient> by lazy {
+  private val byAci: Map<ACI, Recipient> by lazy {
     recipients
-      .filter { it.hasUuid() }
-      .associateBy { it.requireUuid() }
+      .filter { it.hasAci() }
+      .associateBy { it.requireAci() }
   }
 
   private val byUserLogin: Map<String, Recipient> by lazy {
@@ -25,10 +25,10 @@ class RecipientAccessList(private val recipients: List<Recipient>) : List<Recipi
   }
 
   fun requireByAddress(address: SignalServiceAddress): Recipient {
-    if (byUuid.containsKey(address.uuid)) {
-      return byUuid.get(address.uuid)!!
+    if (byAci.containsKey(address.aci)) {
+      return byAci[address.aci]!!
     } else if (address.number.isPresent && byUserLogin.containsKey(address.number.get())) {
-      return byUserLogin.get(address.number.get())!!
+      return byUserLogin[address.number.get()]!!
     } else {
       throw IllegalArgumentException("Could not find a matching recipient!")
     }

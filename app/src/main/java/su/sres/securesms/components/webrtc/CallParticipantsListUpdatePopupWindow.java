@@ -13,9 +13,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 
 import su.sres.securesms.R;
+import su.sres.securesms.badges.BadgeImageView;
 import su.sres.securesms.components.AvatarImageView;
-import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
-import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.ViewUtil;
 
@@ -30,6 +29,7 @@ public class CallParticipantsListUpdatePopupWindow extends PopupWindow {
 
     private final ViewGroup       parent;
     private final AvatarImageView avatarImageView;
+    private final BadgeImageView  badgeImageView;
     private final TextView        descriptionTextView;
 
     private final Set<CallParticipantListUpdate.Wrapper> pendingAdditions = new HashSet<>();
@@ -44,6 +44,7 @@ public class CallParticipantsListUpdatePopupWindow extends PopupWindow {
 
         this.parent              = parent;
         this.avatarImageView     = getContentView().findViewById(R.id.avatar);
+        this.badgeImageView      = getContentView().findViewById(R.id.badge);
         this.descriptionTextView = getContentView().findViewById(R.id.description);
 
         setOnDismissListener(this::showPending);
@@ -110,6 +111,7 @@ public class CallParticipantsListUpdatePopupWindow extends PopupWindow {
 
     private void setAvatar(@Nullable Recipient recipient) {
         avatarImageView.setAvatarUsingProfile(recipient);
+        badgeImageView.setBadgeFromRecipient(recipient);
         avatarImageView.setVisibility(recipient == null ? View.GONE : View.VISIBLE);
     }
 

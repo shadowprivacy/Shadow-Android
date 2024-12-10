@@ -35,7 +35,6 @@ import android.os.Vibrator;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.OneShotPreDrawListener;
@@ -74,6 +73,8 @@ import android.widget.TextSwitcher;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import su.sres.securesms.components.camera.CameraView;
 import su.sres.securesms.crypto.IdentityKeyParcelable;
 import su.sres.securesms.crypto.IdentityKeyUtil;
@@ -101,7 +102,6 @@ import org.whispersystems.libsignal.fingerprint.FingerprintVersionMismatchExcept
 import org.whispersystems.libsignal.fingerprint.NumericFingerprintGenerator;
 
 import su.sres.signalservice.api.SignalSessionLock;
-import su.sres.signalservice.api.util.UuidUtil;
 
 import java.nio.charset.Charset;
 import java.util.Locale;
@@ -237,9 +237,9 @@ public class VerifyIdentityActivity extends PassphraseRequiredActivity implement
     private IdentityKey   remoteIdentity;
     private Fingerprint   fingerprint;
 
-    private Toolbar    toolbar;
-    private ScrollView scrollView;
-    private View       container;
+    private Toolbar              toolbar;
+    private ScrollView           scrollView;
+    private View                 container;
     private View                 numbersContainer;
     private View                 loading;
     private View                 qrCodeContainer;
@@ -293,8 +293,8 @@ public class VerifyIdentityActivity extends PassphraseRequiredActivity implement
 
       this.scrollView.getViewTreeObserver().addOnScrollChangedListener(this);
 
-      ((AppCompatActivity)requireActivity()).setSupportActionBar(toolbar);
-      ((AppCompatActivity)requireActivity()).setTitle(R.string.AndroidManifest__verify_safety_number);
+      ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
+      ((AppCompatActivity) requireActivity()).setTitle(R.string.AndroidManifest__verify_safety_number);
 
       return container;
     }
@@ -327,22 +327,25 @@ public class VerifyIdentityActivity extends PassphraseRequiredActivity implement
       //noinspection WrongThread
       Recipient resolved = recipient.resolve();
 
-      if (FeatureFlags.verifyV2() && resolved.getUuid().isPresent()) {
+      if (FeatureFlags.verifyV2() && resolved.getAci().isPresent()) {
         Log.i(TAG, "Using UUID (version 2).");
         version  = 2;
-        localId  = UuidUtil.toByteArray(TextSecurePreferences.getLocalUuid(requireContext()));
-        remoteId = UuidUtil.toByteArray(resolved.getUuid().get());
+        localId  = TextSecurePreferences.getLocalAci(requireContext()).toByteArray();
+        remoteId = resolved.requireAci().toByteArray();
       } else if (!FeatureFlags.verifyV2() && resolved.getE164().isPresent()) {
         Log.i(TAG, "Using E164 (version 1).");
         version  = 1;
         localId  = TextSecurePreferences.getLocalNumber(requireContext()).getBytes();
         remoteId = resolved.requireE164().getBytes();
       } else {
-        Log.w(TAG, String.format(Locale.ENGLISH, "Could not show proper verification! verifyV2: %s, hasUuid: %s, hasE164: %s", FeatureFlags.verifyV2(), resolved.getUuid().isPresent(), resolved.getE164().isPresent()));
-        new AlertDialog.Builder(requireContext())
+        Log.w(TAG, String.format(Locale.ENGLISH, "Could not show proper verification! verifyV2: %s, hasUuid: %s, hasE164: %s", FeatureFlags.verifyV2(), resolved.getAci().isPresent(), resolved.getE164().isPresent()));
+        new MaterialAlertDialogBuilder(requireContext())
             .setMessage(getString(R.string.VerifyIdentityActivity_you_must_first_exchange_messages_in_order_to_view, resolved.getDisplayName(requireContext())))
             .setPositiveButton(android.R.string.ok, (dialog, which) -> requireActivity().finish())
-            .setOnDismissListener(dialog -> requireActivity().finish())
+            .setOnDismissListener(dialog -> {
+              requireActivity().finish();
+              dialog.dismiss();
+            })
             .show();
         return;
       }

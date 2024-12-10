@@ -56,6 +56,7 @@ import su.sres.securesms.jobs.PushNotificationReceiveJob;
 import su.sres.securesms.jobs.RefreshPreKeysJob;
 import su.sres.securesms.jobs.RetrieveProfileJob;
 import su.sres.securesms.jobs.ServiceConfigRefreshJob;
+import su.sres.securesms.jobs.SubscriptionKeepAliveJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.AndroidLogger;
 import su.sres.securesms.logging.CustomSignalProtocolLogger;
@@ -63,7 +64,6 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.logging.PersistentLogger;
 import su.sres.securesms.messageprocessingalarm.MessageProcessReceiver;
 import su.sres.securesms.ratelimit.RateLimitUtil;
-import su.sres.securesms.service.SubscriberIdKeepAliveListener;
 import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.AppStartup;
 import su.sres.securesms.util.ShadowLocalMetrics;
@@ -209,6 +209,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
           launchCertificateRefresh();
           launchLicenseRefresh();
           launchServiceConfigRefresh();
+          SubscriptionKeepAliveJob.launchSubscriberIdKeepAliveJobIfNecessary();
           checkBuildExpiration();
 
           initializedOnStart = true;
@@ -367,7 +368,6 @@ public class ApplicationContext extends Application implements AppForegroundObse
     LocalBackupListener.schedule(this);
     RotateSenderCertificateListener.schedule(this);
     MessageProcessReceiver.startOrUpdateAlarm(this);
-    SubscriberIdKeepAliveListener.schedule(this);
 
     if (BuildConfig.PLAY_STORE_DISABLED) {
       UpdateApkRefreshListener.schedule(this);

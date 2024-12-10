@@ -5,9 +5,11 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 
 import su.sres.core.util.logging.Log;
+
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.CallManager;
 import org.signal.ringrtc.GroupCall;
+
 import su.sres.securesms.components.webrtc.BroadcastVideoSink;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
@@ -23,6 +25,8 @@ import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.util.NetworkUtil;
 import su.sres.securesms.webrtc.locks.LockManager;
+import su.sres.signalservice.api.push.ACI;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.UUID;
@@ -136,7 +140,7 @@ public final class IncomingGroupCallActionProcessor extends DeviceAwareActionPro
                        .changeCallSetupState()
                        .isRemoteVideoOffer(true)
                        .ringId(ringId)
-                       .ringerRecipient(Recipient.externalPush(context, uuid, null, false))
+                       .ringerRecipient(Recipient.externalPush(context, ACI.from(uuid), null, false))
                        .commit()
                        .changeCallInfoState()
                        .callRecipient(remotePeerGroup.getRecipient())

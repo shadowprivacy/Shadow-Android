@@ -45,7 +45,7 @@ repositories {
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:3.10.0'
+        artifact = 'com.google.protobuf:protoc:3.11.4'
     }
     generateProtoTasks {
         all().each { task ->
@@ -145,7 +145,7 @@ android {
         buildConfigField "String[]", "LANGUAGES", "new String[]{\"" + autoResConfig().collect { s -> s.replace('-r', '_') }.join('", "') + '"}'
         buildConfigField "int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode"
         buildConfigField "String", "DEFAULT_CURRENCIES", "\"EUR,AUD,GBP,CAD,CNY\""
-        buildConfigField "int[]", "MOBILE_COIN_REGIONS", "new int[]{44,49,33,41}"
+        buildConfigField "int[]", "MOBILE_COIN_BLACKLIST", "new int[]{98,963,53,850,7}"
         buildConfigField "String", "GIPHY_API_KEY", "\"3o6ZsYH6U6Eri53TXy\""
         buildConfigField "String", "RECAPTCHA_PROOF_URL", "\"https://signalcaptchas.org/challenge/generate.html\""
 
@@ -494,6 +494,7 @@ dependencies {
 
     flipperImplementation libs.facebook.flipper
     flipperImplementation libs.facebook.soloader
+    flipperImplementation libs.square.leakcanary
 
     releaseImplementation 'com.facebook.flipper:flipper-noop:0.75.0'
 

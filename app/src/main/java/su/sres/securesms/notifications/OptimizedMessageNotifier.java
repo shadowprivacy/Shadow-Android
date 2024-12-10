@@ -7,11 +7,11 @@ import android.os.Handler;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 
+import su.sres.core.util.ExceptionUtil;
 import su.sres.securesms.notifications.v2.MessageNotifierV2;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.BubbleUtil;
 import su.sres.securesms.util.LeakyBucketLimiter;
-import su.sres.securesms.util.Util;
 import su.sres.core.util.concurrent.SignalExecutors;
 
 /**
@@ -110,7 +110,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
       try {
         runnable.run();
       } catch (RuntimeException e) {
-        throw Util.appendStackTrace(e, prettyException);
+        throw ExceptionUtil.joinStackTrace(e, prettyException);
       }
     });
   }

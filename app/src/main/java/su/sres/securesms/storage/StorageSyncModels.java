@@ -1,6 +1,7 @@
 package su.sres.securesms.storage;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
@@ -11,18 +12,19 @@ import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.keyvalue.UserLoginPrivacyValues;
+import su.sres.securesms.subscription.Subscriber;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.storage.SignalAccountRecord;
 import su.sres.signalservice.api.storage.SignalContactRecord;
 import su.sres.signalservice.api.storage.SignalGroupV1Record;
 import su.sres.signalservice.api.storage.SignalGroupV2Record;
 import su.sres.signalservice.api.storage.SignalStorageRecord;
-import su.sres.signalservice.api.util.UuidUtil;
+import su.sres.signalservice.api.subscriptions.SubscriberId;
 import su.sres.signalservice.internal.storage.protos.AccountRecord;
 import su.sres.signalservice.internal.storage.protos.ContactRecord.IdentityState;
 
 import java.util.List;
-import java.util.UUID;
 
 public final class StorageSyncModels {
 
@@ -92,7 +94,7 @@ public final class StorageSyncModels {
   private static @NonNull SignalAccountRecord.PinnedConversation localToRemotePinnedConversation(@NonNull RecipientSettings settings) {
     switch (settings.getGroupType()) {
       case NONE:
-        return SignalAccountRecord.PinnedConversation.forContact(new SignalServiceAddress(settings.getUuid(), settings.getE164()));
+        return SignalAccountRecord.PinnedConversation.forContact(new SignalServiceAddress(settings.getAci(), settings.getE164()));
       case SIGNAL_V1:
         return SignalAccountRecord.PinnedConversation.forGroupV1(settings.getGroupId().requireV1().getDecodedId());
       case SIGNAL_V2:
@@ -103,13 +105,13 @@ public final class StorageSyncModels {
   }
 
   private static @NonNull SignalContactRecord localToRemoteContact(@NonNull RecipientSettings recipient, byte[] rawStorageId) {
-    if (recipient.getUuid() == null && recipient.getE164() == null) {
+    if (recipient.getAci() == null && recipient.getE164() == null) {
       throw new AssertionError("Must have either a UUID or a phone number!");
     }
 
-    UUID uuid = recipient.getUuid() != null ? recipient.getUuid() : UuidUtil.UNKNOWN_UUID;
+    ACI aci = recipient.getAci() != null ? recipient.getAci() : ACI.UNKNOWN;
 
-    return new SignalContactRecord.Builder(rawStorageId, new SignalServiceAddress(uuid, recipient.getE164()))
+    return new SignalContactRecord.Builder(rawStorageId, new SignalServiceAddress(aci, recipient.getE164()))
         .setUnknownFields(recipient.getSyncExtras().getStorageProto())
         .setProfileKey(recipient.getProfileKey())
         .setGivenName(recipient.getProfileName().getGivenName())
@@ -192,4 +194,19 @@ public final class StorageSyncModels {
     }
   }
 
+  public static @NonNull SignalAccountRecord.Subscriber localToRemoteSubscriber(@Nullable Subscriber subscriber) {
+    if (subscriber == null) {
+      return new SignalAccountRecord.Subscriber(null, null);
+    } else {
+      return new SignalAccountRecord.Subscriber(subscriber.getCurrencyCode(), subscriber.getSubscriberId().getBytes());
+    }
+  }
+
+  public static @Nullable Subscriber remoteToLocalSubscriber(@NonNull SignalAccountRecord.Subscriber subscriber) {
+    if (subscriber.getId().isPresent()) {
+      return new Subscriber(SubscriberId.fromBytes(subscriber.getId().get()), subscriber.getCurrencyCode().get());
+    } else {
+      return null;
+    }
+  }
 }

@@ -20,6 +20,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.payments.Balance;
 import su.sres.securesms.payments.Entropy;
 // import su.sres.securesms.payments.GeographicalRestrictions;
+import su.sres.securesms.payments.GeographicalRestrictions;
 import su.sres.securesms.payments.Mnemonic;
 import su.sres.securesms.payments.MobileCoinLedgerWrapper;
 import su.sres.securesms.payments.currency.CurrencyUtil;
@@ -110,8 +111,10 @@ public final class PaymentsValues extends SignalStoreValues {
         Context context = ApplicationDependencies.getApplication();
 
         if (!TextSecurePreferences.isPushRegistered(context)
-//            || !GeographicalRestrictions.e164Allowed(TextSecurePreferences.getLocalNumber(context))
-        ) {
+            // ||
+            // !GeographicalRestrictions.e164Allowed(TextSecurePreferences.getLocalNumber(context))
+        )
+        {
             return PaymentsAvailability.NOT_IN_REGION;
         }
 

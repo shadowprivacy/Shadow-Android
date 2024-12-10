@@ -25,6 +25,16 @@
             app:layout_constraintTop_toTopOf="@id/my_support_title"
             tools:src="@drawable/test_gradient" />
 
+        <ProgressBar
+            android:id="@+id/my_support_progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/my_support_badge"
+            app:layout_constraintEnd_toEndOf="@id/my_support_badge"
+            app:layout_constraintStart_toStartOf="@id/my_support_badge"
+            app:layout_constraintTop_toTopOf="@id/my_support_badge" />
+
         <TextView
             android:id="@+id/my_support_title"
             android:layout_width="0dp"

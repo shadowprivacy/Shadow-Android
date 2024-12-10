@@ -9,7 +9,6 @@ import su.sres.securesms.testutil.EmptyLogger;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
 
 public final class GeographicalRestrictionsTest {
 
@@ -34,8 +33,14 @@ public final class GeographicalRestrictionsTest {
   }
 
   @Test
-  public void us_not_allowed_in_release() {
-    assumeFalse(BuildConfig.DEBUG);
-    assertFalse(GeographicalRestrictions.e164Allowed("+15407011234"));
+  public void crimea_not_allowed() {
+    assertFalse(GeographicalRestrictions.e164Allowed("+79782222222"));
+  }
+
+  @Test
+  public void blacklist_not_allowed() {
+    for (int code : BuildConfig.MOBILE_COIN_BLACKLIST) {
+      assertFalse(GeographicalRestrictions.regionAllowed(code));
+    }
   }
 }

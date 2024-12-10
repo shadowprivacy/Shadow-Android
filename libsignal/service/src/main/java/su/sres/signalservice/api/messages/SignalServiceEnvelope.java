@@ -13,6 +13,7 @@ import org.whispersystems.libsignal.InvalidVersionException;
 import org.whispersystems.libsignal.logging.Log;
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.push.SignalServiceProtos.Envelope;
@@ -86,7 +87,7 @@ public class SignalServiceEnvelope {
                                        .setServerTimestamp(serverReceivedTimestamp);
 
     if (sender.isPresent()) {
-      builder.setSourceUuid(sender.get().getUuid().toString());
+      builder.setSourceUuid(sender.get().getAci().toString());
 
       if (sender.get().getNumber().isPresent()) {
         builder.setSourceE164(sender.get().getNumber().get());
@@ -177,7 +178,7 @@ public class SignalServiceEnvelope {
    * @return The envelope's sender as a SignalServiceAddress.
    */
   public SignalServiceAddress getSourceAddress() {
-    return new SignalServiceAddress(UuidUtil.parseOrNull(envelope.getSourceUuid()), envelope.getSourceE164());
+    return new SignalServiceAddress(ACI.parseOrNull(envelope.getSourceUuid()), envelope.getSourceE164());
   }
 
   /**

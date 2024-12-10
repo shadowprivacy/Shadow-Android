@@ -2252,16 +2252,6 @@
     <string name="HelpFragment__debug_log">Журнал отладки:</string>
     <string name="HelpFragment__could_not_upload_logs">Не удалось отправить журналы</string>
     <string name="HelpFragment__please_be_as_descriptive_as_possible">Пожалуйста, пишите как можно подробнее, чтобы помочь нам понять проблему.</string>
-    <string-array name="HelpFragment__categories_2">
-        <item>-- Пожалуйста, выберите вариант --</item>
-        <item>Что-то не работает</item>
-        <item>Запросить новые функции</item>
-        <item>Вопрос</item>
-        <item>Обратная связь</item>
-        <item>Другое</item>
-        <item>Платежи (MobileCoin)</item>
-        <item>Пожертвования (поддержка и Ускорение Shadow)</item>
-    </string-array>
 
     <!--ReactWithAnyEmojiBottomSheetDialogFragment-->
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__this_message">Это сообщение</string>
@@ -3577,7 +3567,6 @@
     <string name="ImageView__badge">Значок</string>
     <string name="SubscribeFragment__signal_is_powered_by_people_like_you">Shadow существует благодаря таким людям, как вы.</string>
     <string name="SubscribeFragment__support_technology_that_is_built_for_you">Поддержите технологию, сделанную для вас, а не для ваших данных, присоединившись к сообществу людей, поддерживающих её.</string>
-    <string name="SubscribeFragment__donation_amount">Сумма пожертвования</string>
     <string name="SubscribeFragment__more_payment_options">Больше способов оплаты</string>
     <string name="SubscribeFragment__cancel_subscription">Отменить подписку</string>
     <string name="SubscribeFragment__confirm_cancellation">Подтверждаете отмену?</string>
@@ -3594,7 +3583,6 @@
     <string name="Subscription__s_per_month_dot_expires_s">%1$s/месяц · Истекает %2$s</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_your_support">Спасибо за вашу поддержку!</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_the_boost">Спасибо за Ускорение!</string>
-    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_s_badge">Вы получили значок «%s»! Если вы будете показывать значок в своём профиле, то люди, с которыми вы общаетесь, увидят, что вы поддерживаете Signal.</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__display_on_profile">Показывать в профиле</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__make_featured_badge">Сделать главным значком</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__done">Готово</string>
@@ -3612,9 +3600,6 @@
     <string name="MySupportPreference__s_per_month">%1$s/месяц</string>
     <string name="MySupportPreference__renews_s">Возобновится %1$s</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__your_badge_has_expired">Ваш значок истёк</string>
-    <string name="ExpiredBadgeBottomSheetDialogFragment__your_s_badge_has_expired">Ваш значок «%1$s» истёк и больше не виден другим людям в вашем профиле.</string>
-    <string name="ExpiredBadgeBottomSheetDialogFragment__to_continue_supporting">Чтобы продолжить поддерживать технологию, сделанную для вас, а не для ваших данных, пожалуйста, подумайте о том, чтобы стать ежемесячным подписчиком.</string>
-    <string name="ExpiredBadgeBottomSheetDialogFragment__become_a_subscriber">Стать подписчиком</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__not_now">Не сейчас</string>
     <string name="Subscription__verification_failed">Не удалось проверить подписку</string>
     <string name="Subscription__please_contact_support_for_more_information">Пожалуйста, свяжитесь с поддержкой, чтобы получить больше информации.</string>
@@ -3623,8 +3608,7 @@
     <string name="SubscribeFragment__processing_payment">Обрабатываем платёж…</string>
     <string name="DonationsErrors__payment_failed">Платёж не удался</string>
     <string name="DonationsErrors__your_payment">Не удалось обработать ваш платёж; с вас не была взята плата. Пожалуйста, попробуйте ещё раз.</string>
-    <string name="DonationsErrors__redemption_still_pending">Получение значка всё ещё в процессе</string>
-    <string name="DonationsErrors__you_might_not_see_your_badge_right_away">Возможно, вы не сразу увидите свой значок, но мы работаем над этим!</string>
+
     <string name="DonationsErrors__google_pay_unavailable">Google Pay недоступен</string>
     <string name="DonationsErrors__you_have_to_set_up_google_pay_to_donate_in_app">Вам необходимо настроить Google Pay, чтобы пожертвовать в приложении.</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">Не удалось отменить подписку</string>

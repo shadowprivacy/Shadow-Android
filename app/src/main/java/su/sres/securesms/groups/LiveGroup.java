@@ -24,7 +24,7 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.livedata.LiveDataUtil;
-import su.sres.signalservice.api.util.UuidUtil;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.storageservice.protos.groups.AccessControl;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedRequestingMember;
@@ -110,7 +110,7 @@ public final class LiveGroup {
 
                                    return Stream.of(requestingMembersList)
                                                 .map(requestingMember -> {
-                                                  Recipient recipient = Recipient.externalPush(ApplicationDependencies.getApplication(), UuidUtil.fromByteString(requestingMember.getUuid()), null, false);
+                                                  Recipient recipient = Recipient.externalPush(ApplicationDependencies.getApplication(), ACI.fromByteString(requestingMember.getUuid()), null, false);
                                                   return new GroupMemberEntry.RequestingMember(recipient, selfAdmin);
                                                 })
                                                 .toList();

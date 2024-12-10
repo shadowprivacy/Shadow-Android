@@ -84,6 +84,14 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
       payments = local.getPayments();
     }
 
+    SignalAccountRecord.Subscriber subscriber;
+
+    if (remote.getSubscriber().getId().isPresent()) {
+      subscriber = remote.getSubscriber();
+    } else {
+      subscriber = local.getSubscriber();
+    }
+
     byte[]                             unknownFields          = remote.serializeUnknownFields();
     String                             avatarUrlPath          = remote.getAvatarUrlPath().or(local.getAvatarUrlPath()).or("");
     byte[]                             profileKey             = remote.getProfileKey().or(local.getProfileKey()).orNull();
@@ -99,8 +107,9 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
     int                                universalExpireTimer   = remote.getUniversalExpireTimer();
     String                             userLogin              = local.getUserLogin();
     List<String>                       defaultReactions       = remote.getDefaultReactions().size() > 0 ? remote.getDefaultReactions() : local.getDefaultReactions();
-    boolean                            matchesRemote          = doParamsMatch(remote, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations, payments, universalExpireTimer, userLogin, defaultReactions);
-    boolean                            matchesLocal           = doParamsMatch(local, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations, payments, universalExpireTimer, userLogin, defaultReactions);
+    boolean                              displayBadgesOnProfile = remote.isDisplayBadgesOnProfile();
+    boolean                            matchesRemote          = doParamsMatch(remote, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations, payments, universalExpireTimer, userLogin, defaultReactions, subscriber, displayBadgesOnProfile);
+    boolean                            matchesLocal           = doParamsMatch(local, unknownFields, givenName, familyName, avatarUrlPath, profileKey, noteToSelfArchived, noteToSelfForcedUnread, readReceipts, typingIndicators, sealedSenderIndicators, linkPreviews, userLoginSharingMode, unlisted, pinnedConversations, payments, universalExpireTimer, userLogin, defaultReactions, subscriber, displayBadgesOnProfile);
 
     if (matchesRemote) {
       return remote;
@@ -127,6 +136,8 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
           .setUniversalExpireTimer(universalExpireTimer)
           .setUserLogin(userLogin)
           .setDefaultReactions(defaultReactions)
+          .setSubscriber(subscriber)
+          .setDisplayBadgesOnProfile(displayBadgesOnProfile)
           .build();
     }
   }
@@ -164,7 +175,9 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
                                        SignalAccountRecord.Payments payments,
                                        int universalExpireTimer,
                                        String userLogin,
-                                       @NonNull List <String> defaultReactions)
+                                       @NonNull List <String> defaultReactions,
+                                       @NonNull SignalAccountRecord.Subscriber subscriber,
+                                       boolean displayBadgesOnProfile)
   {
     return Arrays.equals(contact.serializeUnknownFields(), unknownFields) &&
            Objects.equals(contact.getGivenName().or(""), givenName) &&
@@ -183,6 +196,8 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
            contact.getUserLoginSharingMode() == userLoginSharingMode &&
            contact.isUserLoginUnlisted() == unlistedPhoneNumber &&
            contact.getUniversalExpireTimer() == universalExpireTimer &&
-           Objects.equals(contact.getPinnedConversations(), pinnedConversations);
+           Objects.equals(contact.getPinnedConversations(), pinnedConversations) &&
+           Objects.equals(contact.getSubscriber(), subscriber)                   &&
+           contact.isDisplayBadgesOnProfile() == displayBadgesOnProfile;
   }
 }

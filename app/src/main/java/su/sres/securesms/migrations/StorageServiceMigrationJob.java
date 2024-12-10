@@ -18,59 +18,59 @@ import su.sres.securesms.util.TextSecurePreferences;
  */
 public class StorageServiceMigrationJob extends MigrationJob {
 
-    private static final String TAG = Log.tag(StorageServiceMigrationJob.class);
+  private static final String TAG = Log.tag(StorageServiceMigrationJob.class);
 
-    public static final String KEY = "StorageServiceMigrationJob";
+  public static final String KEY = "StorageServiceMigrationJob";
 
-    StorageServiceMigrationJob() {
-        this(new Parameters.Builder().build());
+  StorageServiceMigrationJob() {
+    this(new Parameters.Builder().build());
+  }
+
+  private StorageServiceMigrationJob(@NonNull Parameters parameters) {
+    super(parameters);
+  }
+
+  @Override
+  public boolean isUiBlocking() {
+    return false;
+  }
+
+  @Override
+  public @NonNull String getFactoryKey() {
+    return KEY;
+  }
+
+  @Override
+  public void performMigration() {
+    if (TextSecurePreferences.getLocalAci(context) == null) {
+      Log.w(TAG, "Self not yet available.");
+      return;
     }
 
-    private StorageServiceMigrationJob(@NonNull Parameters parameters) {
-        super(parameters);
-    }
+    DatabaseFactory.getRecipientDatabase(context).markNeedsSync(Recipient.self().getId());
 
+    JobManager jobManager = ApplicationDependencies.getJobManager();
+
+    if (TextSecurePreferences.isMultiDevice(context)) {
+      Log.i(TAG, "Multi-device.");
+      jobManager.startChain(new StorageSyncJob())
+                .then(new MultiDeviceKeysUpdateJob())
+                .enqueue();
+    } else {
+      Log.i(TAG, "Single-device.");
+      jobManager.add(new StorageSyncJob());
+    }
+  }
+
+  @Override
+  boolean shouldRetry(@NonNull Exception e) {
+    return false;
+  }
+
+  public static class Factory implements Job.Factory<StorageServiceMigrationJob> {
     @Override
-    public boolean isUiBlocking() {
-        return false;
+    public @NonNull StorageServiceMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+      return new StorageServiceMigrationJob(parameters);
     }
-
-    @Override
-    public @NonNull String getFactoryKey() {
-        return KEY;
-    }
-
-    @Override
-    public void performMigration() {
-        if (TextSecurePreferences.getLocalUuid(context) == null) {
-            Log.w(TAG, "Self not yet available.");
-            return;
-        }
-
-        DatabaseFactory.getRecipientDatabase(context).markNeedsSync(Recipient.self().getId());
-
-        JobManager jobManager = ApplicationDependencies.getJobManager();
-
-        if (TextSecurePreferences.isMultiDevice(context)) {
-            Log.i(TAG, "Multi-device.");
-            jobManager.startChain(new StorageSyncJob())
-                    .then(new MultiDeviceKeysUpdateJob())
-                    .enqueue();
-        } else {
-            Log.i(TAG, "Single-device.");
-            jobManager.add(new StorageSyncJob());
-        }
-    }
-
-    @Override
-    boolean shouldRetry(@NonNull Exception e) {
-        return false;
-    }
-
-    public static class Factory implements Job.Factory<StorageServiceMigrationJob> {
-        @Override
-        public @NonNull StorageServiceMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
-            return new StorageServiceMigrationJob(parameters);
-        }
-    }
+  }
 }

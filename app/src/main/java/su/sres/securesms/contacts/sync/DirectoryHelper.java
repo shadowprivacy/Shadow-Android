@@ -19,13 +19,13 @@ import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.registration.RegistrationUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceAccountManager;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.storage.protos.DirectoryResponse;
 import su.sres.signalservice.internal.util.JsonUtil;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Manages the up-to-date state of the local directory.
@@ -79,9 +79,9 @@ public class DirectoryHelper {
                     // this will effectively skip an empty incremental update
                     if (userLogin.equals("")) continue;
 
-                    String field = entry.getValue();
-                    UUID uuid = null;
-                    RecipientId id = recipientDatabase.getOrInsertFromUserLogin(userLogin);
+                    String      field = entry.getValue();
+                    ACI         uuid  = null;
+                    RecipientId id    = recipientDatabase.getOrInsertFromUserLogin(userLogin);
 
                     // removal
                     if (field.equals("-1")) {
@@ -92,7 +92,7 @@ public class DirectoryHelper {
 
                         if (!field.equals("")) {
                             DirectoryEntryValue entryValue = JsonUtil.fromJson(field, DirectoryEntryValue.class);
-                            uuid = entryValue.getUuid();
+                            uuid = ACI.from(entryValue.getUuid());
                         }
 
                         // this will be triggered only for old installations which were already active when UUIDs were not yet supported on the server side
@@ -123,7 +123,7 @@ public class DirectoryHelper {
 
                         RecipientId id = recipientDatabase.getOrInsertFromUserLogin(entry.getKey());
                         DirectoryEntryValue entryValue = JsonUtil.fromJson(entry.getValue(), DirectoryEntryValue.class);
-                        UUID uuid = entryValue.getUuid();
+                        ACI uuid = ACI.from(entryValue.getUuid());
 
                         recipientDatabase.markRegistered(id, uuid);
                         recipientDatabase.setProfileSharing(id, true);
@@ -206,13 +206,13 @@ public class DirectoryHelper {
 
             RecipientId id = db.getOrInsertFromUserLogin(entry.getKey());
             String field = entry.getValue();
-            UUID uuid = null;
+            ACI uuid = null;
 
             if (field.equals("")) {
                 uuidSupported = false;
             } else {
                 DirectoryEntryValue entryValue = JsonUtil.fromJson(field, DirectoryEntryValue.class);
-                uuid = entryValue.getUuid();
+                uuid = ACI.from(entryValue.getUuid());
             }
 
             db.markRegistered(id, uuid);

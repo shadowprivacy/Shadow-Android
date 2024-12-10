@@ -56,6 +56,7 @@ import su.sres.securesms.util.JsonUtils;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.storage.SignalAccountRecord;
 import su.sres.signalservice.api.storage.SignalContactRecord;
 import su.sres.signalservice.api.storage.SignalGroupV1Record;
@@ -1396,7 +1397,7 @@ public class ThreadDatabase extends Database {
         if (threadRecipient.isPushV2Group()) {
           MessageRecord.InviteAddState inviteAddState = record.getGv2AddInviteState();
           if (inviteAddState != null) {
-            RecipientId from = RecipientId.from(inviteAddState.getAddedOrInvitedBy(), null);
+            RecipientId from = RecipientId.from(ACI.from(inviteAddState.getAddedOrInvitedBy()), null);
             if (inviteAddState.isInvited()) {
               Log.i(TAG, "GV2 invite message request from " + from);
               return Extra.forGroupV2invite(from, individualRecipientId);

@@ -13,6 +13,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.switchmaterial.SwitchMaterial
 import su.sres.core.util.logging.Log
 import su.sres.securesms.R
+import su.sres.securesms.components.settings.models.AsyncSwitch
 import su.sres.securesms.components.settings.models.Button
 import su.sres.securesms.components.settings.models.Space
 import su.sres.securesms.components.settings.models.Text
@@ -37,6 +38,7 @@ class DSLSettingsAdapter : MappingAdapter() {
     Text.register(this)
     Space.register(this)
     Button.register(this)
+    AsyncSwitch.register(this)
   }
 }
 

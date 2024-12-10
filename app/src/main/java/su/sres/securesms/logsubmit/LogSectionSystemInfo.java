@@ -25,6 +25,7 @@ import su.sres.securesms.util.ServiceUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.VersionTracker;
+import su.sres.signalservice.api.push.ACI;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -59,7 +60,7 @@ public class LogSectionSystemInfo implements LogSection {
     builder.append("MemInfo       : ").append(getMemoryInfo(context)).append("\n");
     builder.append("OS Host      : ").append(Build.HOST).append("\n");
     builder.append("RecipientId   : ").append(SignalStore.registrationValues().isRegistrationComplete() ? Recipient.self().getId() : "N/A").append("\n");
-    builder.append("UUID          : ").append(getCensoredUuid(context)).append("\n");
+    builder.append("ACI           : ").append(getCensoredAci(context)).append("\n");
     builder.append("Play Services: ").append(getPlayServicesString(context)).append("\n");
     builder.append("FCM          : ").append(!TextSecurePreferences.isFcmDisabled(context)).append("\n");
     builder.append("BkgRestricted : ").append(Build.VERSION.SDK_INT >= 28 ? DeviceProperties.isBackgroundRestricted(context) : "N/A").append("\n");
@@ -152,12 +153,12 @@ public class LogSectionSystemInfo implements LogSection {
     }
   }
 
-  private static String getCensoredUuid(@NonNull Context context) {
-    UUID uuid = TextSecurePreferences.getLocalUuid(context);
+  private static String getCensoredAci(@NonNull Context context) {
+    ACI aci = TextSecurePreferences.getLocalAci(context);
 
-    if (uuid != null) {
-      String uuidString = uuid.toString();
-      String lastTwo    = uuidString.substring(uuidString.length() - 2);
+    if (aci != null) {
+      String aciString = aci.toString();
+      String lastTwo   = aciString.substring(aciString.length() - 2);
 
       return "********-****-****-****-**********" + lastTwo;
     } else {

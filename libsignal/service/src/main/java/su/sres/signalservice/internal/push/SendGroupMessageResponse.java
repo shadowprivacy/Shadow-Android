@@ -3,6 +3,8 @@ package su.sres.signalservice.internal.push;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.whispersystems.libsignal.util.guava.Optional;
+
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.util.UuidUtil;
 
 import java.util.HashSet;
@@ -16,16 +18,16 @@ public class SendGroupMessageResponse {
 
   public SendGroupMessageResponse() {}
 
-  public Set<UUID> getUnsentTargets() {
-    Set<UUID> uuids = new HashSet<>(uuids404.length);
+  public Set<ACI> getUnsentTargets() {
+    Set<ACI> acis = new HashSet<>(uuids404.length);
 
     for (String raw : uuids404) {
-      Optional<UUID> parsed = UuidUtil.parse(raw);
+      Optional<ACI> parsed = ACI.parse(raw);
       if (parsed.isPresent()) {
-        uuids.add(parsed.get());
+        acis.add(parsed.get());
       }
     }
 
-    return uuids;
+    return acis;
   }
 }

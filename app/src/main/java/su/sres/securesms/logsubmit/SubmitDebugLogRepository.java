@@ -50,6 +50,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.Stopwatch;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.util.Tls12SocketFactory;
@@ -93,6 +94,9 @@ public class SubmitDebugLogRepository {
     add(new LogSectionTrace());
     add(new LogSectionThreads());
     add(new LogSectionBlockedThreads());
+    if (FeatureFlags.internalUser()) {
+      add(new LogSectionSenderKey());
+    }
     add(new LogSectionLogcat());
     add(new LogSectionLoggerHeader());
   }};

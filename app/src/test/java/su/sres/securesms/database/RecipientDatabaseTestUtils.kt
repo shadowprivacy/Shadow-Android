@@ -12,6 +12,7 @@ import su.sres.securesms.recipients.RecipientId
 import su.sres.securesms.wallpaper.ChatWallpaper
 import org.whispersystems.libsignal.util.guava.Optional
 import su.sres.securesms.badges.models.Badge
+import su.sres.signalservice.api.push.ACI
 import java.util.UUID
 import kotlin.random.Random
 
@@ -28,7 +29,7 @@ object RecipientDatabaseTestUtils {
     isSelf: Boolean = false,
     participants: List<Recipient> = listOf(),
     recipientId: RecipientId = RecipientId.from(Random.nextLong()),
-    uuid: UUID? = UUID.randomUUID(),
+    aci: ACI? = ACI.from(UUID.randomUUID()),
     username: String? = null,
     e164: String? = null,
     email: String? = null,
@@ -89,7 +90,7 @@ object RecipientDatabaseTestUtils {
       registered,
       RecipientDatabase.RecipientSettings(
         recipientId,
-        uuid,
+        aci,
         username,
         e164,
         email,

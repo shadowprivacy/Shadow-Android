@@ -3,22 +3,28 @@ package su.sres.securesms.components.settings.app.subscription.thanks
 import android.animation.Animator
 import android.content.DialogInterface
 import android.os.Bundle
+import android.text.SpannableStringBuilder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.findNavController
 import com.airbnb.lottie.LottieAnimationView
 import com.airbnb.lottie.LottieDrawable
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.switchmaterial.SwitchMaterial
+import io.reactivex.rxjava3.kotlin.subscribeBy
+import su.sres.core.util.logging.Log
 import su.sres.securesms.R
 import su.sres.securesms.animation.AnimationCompleteListener
 import su.sres.securesms.badges.BadgeImageView
 import su.sres.securesms.badges.BadgeRepository
 import su.sres.securesms.components.FixedRoundedCornerBottomSheetDialogFragment
 import su.sres.securesms.components.settings.app.AppSettingsActivity
+import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.recipients.Recipient
+import su.sres.securesms.util.SpanUtil
 import su.sres.securesms.util.visible
 
 class ThanksForYourSupportBottomSheetDialogFragment : FixedRoundedCornerBottomSheetDialogFragment() {
@@ -49,6 +55,7 @@ class ThanksForYourSupportBottomSheetDialogFragment : FixedRoundedCornerBottomSh
     val done: MaterialButton = view.findViewById(R.id.thanks_bottom_sheet_done)
     val controlText: TextView = view.findViewById(R.id.thanks_bottom_sheet_control_text)
     val controlNote: View = view.findViewById(R.id.thanks_bottom_sheet_featured_note)
+    val subhead: TextView = view.findViewById(R.id.thanks_bottom_sheet_subhead)
 
     heading = view.findViewById(R.id.thanks_bottom_sheet_heading)
     switch = view.findViewById(R.id.thanks_bottom_sheet_switch)
@@ -57,9 +64,32 @@ class ThanksForYourSupportBottomSheetDialogFragment : FixedRoundedCornerBottomSh
 
     badgeView.setBadge(args.badge)
     badgeName.text = args.badge.name
+
+    if (args.badge.isBoost()) {
+      if (Recipient.self().badges.any { !it.isBoost() }) {
+        subhead.setText(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_boost_badge_help_signal)
+      } else {
+        subhead.text = SpannableStringBuilder(getString(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_boost_badge_help_signal))
+          .append(" ")
+          .append(getString(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__you_can_also))
+          .append(
+            SpanUtil.clickable(
+              getString(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__become_a_montly_sustainer),
+              ContextCompat.getColor(requireContext(), R.color.signal_accent_primary),
+            ) {
+              requireActivity().finish()
+              requireActivity().startActivity(AppSettingsActivity.subscriptions(requireContext()))
+            }
+          )
+      }
+    } else {
+      subhead.text = getString(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_s_badge_help_signal, args.badge.name)
+    }
+
+
     val otherBadges = Recipient.self().badges.filterNot { it.id == args.badge.id }
     val hasOtherBadges = otherBadges.isNotEmpty()
-    val displayingBadges = otherBadges.all { it.visible }
+    val displayingBadges = SignalStore.donationsValues().getDisplayBadgesOnProfile()
 
     if (hasOtherBadges && displayingBadges) {
       switch.isChecked = false
@@ -80,6 +110,7 @@ class ThanksForYourSupportBottomSheetDialogFragment : FixedRoundedCornerBottomSh
 
     if (args.isBoost) {
       presentBoostCopy()
+      badgeView.visibility = View.INVISIBLE
       lottie.visible = true
       lottie.playAnimation()
       lottie.addAnimatorListener(object : AnimationCompleteListener() {
@@ -105,16 +136,24 @@ class ThanksForYourSupportBottomSheetDialogFragment : FixedRoundedCornerBottomSh
     val args = ThanksForYourSupportBottomSheetDialogFragmentArgs.fromBundle(requireArguments())
 
     if (controlState == ControlState.DISPLAY) {
-      badgeRepository.setVisibilityForAllBadges(controlChecked).subscribe()
-    } else {
-      badgeRepository.setFeaturedBadge(args.badge).subscribe()
+      badgeRepository.setVisibilityForAllBadges(controlChecked).subscribeBy(
+        onError = {
+          Log.w(TAG, "Failure while updating badge visibility", it)
+        }
+      )
+    } else if (controlChecked) {
+      badgeRepository.setFeaturedBadge(args.badge).subscribeBy(
+        onError = {
+          Log.w(TAG, "Failure while updating featured badge", it)
+        }
+      )
     }
 
     if (args.isBoost) {
       findNavController().popBackStack()
     } else {
       requireActivity().finish()
-      requireActivity().startActivity(AppSettingsActivity.subscriptions(requireContext()))
+      requireActivity().startActivity(AppSettingsActivity.manageSubscriptions(requireContext()))
     }
   }
 
@@ -124,5 +163,9 @@ class ThanksForYourSupportBottomSheetDialogFragment : FixedRoundedCornerBottomSh
 
   private fun presentSubscriptionCopy() {
     heading.setText(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_your_support)
+  }
+
+  companion object {
+    private val TAG = Log.tag(ThanksForYourSupportBottomSheetDialogFragment::class.java)
   }
 }

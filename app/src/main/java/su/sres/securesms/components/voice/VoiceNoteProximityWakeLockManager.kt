@@ -29,11 +29,8 @@ class VoiceNoteProximityWakeLockManager(
   private val mediaController: MediaControllerCompat
 ) : DefaultLifecycleObserver {
 
-  private val wakeLock: PowerManager.WakeLock? = if (Build.VERSION.SDK_INT >= 21) {
-    ServiceUtil.getPowerManager(activity).newWakeLock(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK, TAG)
-  } else {
-    null
-  }
+  private val wakeLock: PowerManager.WakeLock? =
+    ServiceUtil.getPowerManager(activity.applicationContext).newWakeLock(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK, TAG)
 
   private val sensorManager: SensorManager = ServiceUtil.getSensorManager(activity)
   private val proximitySensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)

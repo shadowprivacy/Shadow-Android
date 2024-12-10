@@ -22,7 +22,6 @@ import android.provider.ContactsContract;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.text.SpannableString;
@@ -143,7 +142,7 @@ public class ContactSelectionListAdapter extends CursorRecyclerViewAdapter<ViewH
 
     @Override
     public void unbind(@NonNull GlideRequests glideRequests) {
-      getView().unbind(glideRequests);
+      getView().unbind();
     }
 
     @Override

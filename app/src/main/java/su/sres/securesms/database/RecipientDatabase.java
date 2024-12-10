@@ -22,6 +22,7 @@ import org.signal.zkgroup.groups.GroupMasterKey;
 import org.signal.zkgroup.profiles.ProfileKey;
 import org.signal.zkgroup.profiles.ProfileKeyCredential;
 
+import su.sres.securesms.badges.Badges;
 import su.sres.securesms.badges.models.Badge;
 import su.sres.securesms.color.MaterialColor;
 import su.sres.securesms.conversation.colors.AvatarColor;
@@ -74,6 +75,7 @@ import su.sres.securesms.wallpaper.ChatWallpaper;
 import su.sres.securesms.wallpaper.ChatWallpaperFactory;
 import su.sres.securesms.wallpaper.WallpaperStorage;
 import su.sres.signalservice.api.profiles.SignalServiceProfile;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.storage.SignalAccountRecord;
 import su.sres.signalservice.api.storage.SignalGroupV2Record;
@@ -99,7 +101,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class RecipientDatabase extends Database {
@@ -108,7 +109,7 @@ public class RecipientDatabase extends Database {
 
   static final         String TABLE_NAME               = "recipient";
   public static final  String ID                       = "_id";
-  private static final String UUID                     = "uuid";
+  private static final String ACI_COLUMN                = "aci";
   private static final String USERNAME                 = "username";
   public static final  String PHONE                    = "phone";
   public static final  String EMAIL                    = "email";
@@ -178,7 +179,7 @@ public class RecipientDatabase extends Database {
   }
 
   private static final String[] RECIPIENT_PROJECTION = new String[] {
-      ID, UUID, USERNAME, PHONE, EMAIL, GROUP_ID, GROUP_TYPE,
+      ID, ACI_COLUMN, USERNAME, PHONE, EMAIL, GROUP_ID, GROUP_TYPE,
       BLOCKED, MESSAGE_RINGTONE, CALL_RINGTONE, MESSAGE_VIBRATE, CALL_VIBRATE, MUTE_UNTIL, AVATAR_COLOR, SEEN_INVITE_REMINDER, DEFAULT_SUBSCRIPTION_ID, MESSAGE_EXPIRATION_TIME, REGISTERED,
       PROFILE_KEY, PROFILE_KEY_CREDENTIAL,
       SYSTEM_JOINED_NAME, SYSTEM_GIVEN_NAME, SYSTEM_FAMILY_NAME, SYSTEM_PHOTO_URI, SYSTEM_PHONE_LABEL, SYSTEM_PHONE_TYPE, SYSTEM_CONTACT_URI,
@@ -329,7 +330,7 @@ public class RecipientDatabase extends Database {
 
   public static final String CREATE_TABLE =
       "CREATE TABLE " + TABLE_NAME + " (" + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-      UUID + " TEXT UNIQUE DEFAULT NULL, " +
+      ACI_COLUMN                + " TEXT UNIQUE DEFAULT NULL, " +
       USERNAME + " TEXT UNIQUE DEFAULT NULL, " +
       PHONE + " TEXT UNIQUE DEFAULT NULL, " +
       EMAIL + " TEXT UNIQUE DEFAULT NULL, " +
@@ -399,7 +400,7 @@ public class RecipientDatabase extends Database {
 
   public @NonNull boolean containsPhoneOrUuid(@NonNull String id) {
     SQLiteDatabase db    = databaseHelper.getSignalReadableDatabase();
-    String         query = UUID + " = ? OR " + PHONE + " = ?";
+    String         query = ACI_COLUMN + " = ? OR " + PHONE + " = ?";
     String[]       args  = new String[] { id, id };
 
     try (Cursor cursor = db.query(TABLE_NAME, new String[] { ID }, query, args, null, null, null)) {
@@ -419,21 +420,21 @@ public class RecipientDatabase extends Database {
     return getByColumn(GROUP_ID, groupId.toString());
   }
 
-  public @NonNull Optional<RecipientId> getByUuid(@NonNull UUID uuid) {
-    return getByColumn(UUID, uuid.toString());
+  public Optional<RecipientId> getByAci(@NonNull ACI aci) {
+    return getByColumn(ACI_COLUMN, aci.toString());
   }
 
   public @NonNull Optional<RecipientId> getByUsername(@NonNull String username) {
     return getByColumn(USERNAME, username);
   }
 
-  public @NonNull RecipientId getAndPossiblyMerge(@Nullable UUID uuid, @Nullable String userLogin, boolean highTrust) {
-    return getAndPossiblyMerge(uuid, userLogin, highTrust, false);
+  public @NonNull RecipientId getAndPossiblyMerge(@Nullable ACI aci, @Nullable String userLogin, boolean highTrust) {
+    return getAndPossiblyMerge(aci, userLogin, highTrust, false);
   }
 
-  public @NonNull RecipientId getAndPossiblyMerge(@Nullable UUID uuid, @Nullable String userLogin, boolean highTrust, boolean changeSelf) {
-    if (uuid == null && userLogin == null) {
-      throw new IllegalArgumentException("Must provide a UUID or user login!");
+  public @NonNull RecipientId getAndPossiblyMerge(@Nullable ACI aci, @Nullable String userLogin, boolean highTrust, boolean changeSelf) {
+    if (aci == null && userLogin == null) {
+      throw new IllegalArgumentException("Must provide a ACI or user login!");
     }
 
     RecipientId                    recipientNeedingRefresh = null;
@@ -446,38 +447,38 @@ public class RecipientDatabase extends Database {
 
     try {
       Optional<RecipientId> byUserLogin = userLogin != null ? getByE164(userLogin) : Optional.absent();
-      Optional<RecipientId> byUuid      = uuid != null ? getByUuid(uuid) : Optional.absent();
+      Optional<RecipientId> byAci      = aci != null ? getByAci(aci) : Optional.absent();
 
       RecipientId finalId;
 
-      if (!byUserLogin.isPresent() && !byUuid.isPresent()) {
+      if (!byUserLogin.isPresent() && !byAci.isPresent()) {
 
-        Log.w(TAG, "Neither found by user login nor by UUID. Inserting", true);
+        Log.w(TAG, "Neither found by user login nor by ACI. Inserting", true);
         if (highTrust) {
-          long id = db.insert(TABLE_NAME, null, buildContentValuesForNewUser(userLogin, uuid));
+          long id = db.insert(TABLE_NAME, null, buildContentValuesForNewUser(userLogin, aci));
           finalId = RecipientId.from(id);
         } else {
-          long id = db.insert(TABLE_NAME, null, buildContentValuesForNewUser(uuid == null ? userLogin : null, uuid));
+          long id = db.insert(TABLE_NAME, null, buildContentValuesForNewUser(aci == null ? userLogin : null, aci));
           finalId = RecipientId.from(id);
         }
 
-      } else if (byUserLogin.isPresent() && !byUuid.isPresent()) {
-        // whether uuid is present or not, we get the finalId by user login
+      } else if (byUserLogin.isPresent() && !byAci.isPresent()) {
+        // whether aci is present or not, we get the finalId by user login
         finalId = byUserLogin.get();
 
-      } else if (!byUserLogin.isPresent() && byUuid.isPresent()) {
+      } else if (!byUserLogin.isPresent() && byAci.isPresent()) {
         if (userLogin != null) {
           // this is something which will not happen
-          throw new AssertionError("Not found by user login while found by UUID");
+          throw new AssertionError("Not found by user login while found by ACI");
         } else {
-          finalId = byUuid.get();
+          finalId = byAci.get();
         }
 
       } else {
-        if (byUserLogin.equals(byUuid)) {
-          finalId = byUuid.get();
+        if (byUserLogin.equals(byAci)) {
+          finalId = byAci.get();
         } else {
-          throw new AssertionError("Hit a conflict between " + byUserLogin.get() + " (user login) and " + byUuid.get() + " (UUID). They map to different recipients.");
+          throw new AssertionError("Hit a conflict between " + byUserLogin.get() + " (user login) and " + byAci.get() + " (ACI). They map to different recipients.");
         }
       }
 
@@ -510,13 +511,13 @@ public class RecipientDatabase extends Database {
     }
   }
 
-  private static ContentValues buildContentValuesForNewUser(@Nullable String e164, @Nullable UUID uuid) {
+  private static ContentValues buildContentValuesForNewUser(@Nullable String e164, @Nullable ACI aci) {
     ContentValues values = new ContentValues();
 
     values.put(PHONE, e164);
 
-    if (uuid != null) {
-      values.put(UUID, uuid.toString().toLowerCase());
+    if (aci != null) {
+      values.put(ACI_COLUMN, aci.toString().toLowerCase());
       values.put(REGISTERED, RegisteredState.REGISTERED.getId());
       values.put(STORAGE_SERVICE_ID, Base64.encodeBytes(StorageSyncHelper.generateKey()));
       values.put(AVATAR_COLOR, AvatarColor.random().serialize());
@@ -525,8 +526,8 @@ public class RecipientDatabase extends Database {
     return values;
   }
 
-  public @NonNull RecipientId getOrInsertFromUuid(@NonNull UUID uuid) {
-    return getOrInsertByColumn(UUID, uuid.toString()).recipientId;
+  public @NonNull RecipientId getOrInsertFromAci(@NonNull ACI aci) {
+    return getOrInsertByColumn(ACI_COLUMN, aci.toString()).recipientId;
   }
 
   public @NonNull RecipientId getOrInsertFromUserLogin(@NonNull String userLogin) {
@@ -748,13 +749,13 @@ public class RecipientDatabase extends Database {
 
     if (id < 0) {
       Log.w(TAG, "[applyStorageSyncContactInsert] Failed to insert. Possibly merging.");
-      recipientId = getAndPossiblyMerge(insert.getAddress().hasValidUuid() ? insert.getAddress().getUuid() : null, insert.getAddress().getNumber().get(), true);
+      recipientId = getAndPossiblyMerge(insert.getAddress().hasValidAci() ? insert.getAddress().getAci() : null, insert.getAddress().getNumber().get(), true);
       db.update(TABLE_NAME, values, ID_WHERE, SqlUtil.buildArgs(recipientId));
     } else {
       recipientId = RecipientId.from(id);
     }
 
-    if (insert.getIdentityKey().isPresent() && insert.getAddress().hasValidUuid()) {
+    if (insert.getIdentityKey().isPresent() && insert.getAddress().hasValidAci()) {
       try {
         IdentityKey identityKey = new IdentityKey(insert.getIdentityKey().get(), 0);
 
@@ -783,7 +784,7 @@ public class RecipientDatabase extends Database {
       RecipientId recipientId = getByColumn(STORAGE_SERVICE_ID, Base64.encodeBytes(update.getOld().getId().getRaw())).get();
       Log.w(TAG, "[applyStorageSyncContactUpdate] Found user " + recipientId + ". Possibly merging.");
 
-      recipientId = getAndPossiblyMerge(update.getNew().getAddress().hasValidUuid() ? update.getNew().getAddress().getUuid() : null, update.getNew().getAddress().getNumber().orNull(), true);
+      recipientId = getAndPossiblyMerge(update.getNew().getAddress().hasValidAci() ? update.getNew().getAddress().getAci() : null, update.getNew().getAddress().getNumber().orNull(), true);
       Log.w(TAG, "[applyStorageSyncContactUpdate] Merged into " + recipientId);
 
       db.update(TABLE_NAME, values, ID_WHERE, SqlUtil.buildArgs(recipientId));
@@ -800,7 +801,7 @@ public class RecipientDatabase extends Database {
     try {
       Optional<IdentityRecord> oldIdentityRecord = identityStore.getIdentityRecord(recipientId);
 
-      if (update.getNew().getIdentityKey().isPresent() && update.getNew().getAddress().hasValidUuid()) {
+      if (update.getNew().getIdentityKey().isPresent() && update.getNew().getAddress().hasValidAci()) {
         IdentityKey identityKey = new IdentityKey(update.getNew().getIdentityKey().get(), 0);
         DatabaseFactory.getIdentityDatabase(context).updateIdentityAfterSync(update.getNew().getAddress().getIdentifier(), recipientId, identityKey, StorageSyncModels.remoteToLocalIdentityStatus(update.getNew().getIdentityState()));
       }
@@ -978,8 +979,8 @@ public class RecipientDatabase extends Database {
     ProfileName profileName = ProfileName.fromParts(contact.getGivenName().orNull(), contact.getFamilyName().orNull());
     String      username    = contact.getUsername().orNull();
 
-    if (contact.getAddress().hasValidUuid()) {
-      values.put(UUID, contact.getAddress().getUuid().toString());
+    if (contact.getAddress().hasValidAci()) {
+      values.put(ACI_COLUMN, contact.getAddress().getAci().toString());
     }
 
     values.put(PHONE, contact.getAddress().getNumber().orNull());
@@ -1052,7 +1053,7 @@ public class RecipientDatabase extends Database {
 
   private List<RecipientSettings> getRecipientSettingsForSync(@Nullable String query, @Nullable String[] args) {
     SQLiteDatabase db = databaseHelper.getSignalReadableDatabase();
-    String table = TABLE_NAME + " LEFT OUTER JOIN " + IdentityDatabase.TABLE_NAME + " ON " + TABLE_NAME + "." + UUID + " = " + IdentityDatabase.TABLE_NAME + "." + IdentityDatabase.ADDRESS
+    String table = TABLE_NAME + " LEFT OUTER JOIN " + IdentityDatabase.TABLE_NAME + " ON " + TABLE_NAME + "." + ACI_COLUMN + " = " + IdentityDatabase.TABLE_NAME + "." + IdentityDatabase.ADDRESS
                    + " LEFT OUTER JOIN " + GroupDatabase.TABLE_NAME + " ON " + TABLE_NAME + "." + GROUP_ID + " = " + GroupDatabase.TABLE_NAME + "." + GroupDatabase.GROUP_ID
                    + " LEFT OUTER JOIN " + ThreadDatabase.TABLE_NAME + " ON " + TABLE_NAME + "." + ID + " = " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.RECIPIENT_ID;
     List<RecipientSettings> out = new ArrayList<>();
@@ -1088,7 +1089,7 @@ public class RecipientDatabase extends Database {
    */
   public @NonNull Map<RecipientId, StorageId> getContactStorageSyncIdsMap() {
     SQLiteDatabase              db    = databaseHelper.getSignalReadableDatabase();
-    String                      query = STORAGE_SERVICE_ID + " NOT NULL AND " + UUID + " NOT NULL AND " + ID + " != ? AND " + GROUP_TYPE + " != ?";
+    String                      query = STORAGE_SERVICE_ID + " NOT NULL AND " + ACI_COLUMN + " NOT NULL AND " + ID + " != ? AND " + GROUP_TYPE + " != ?";
     String[]                    args  = SqlUtil.buildArgs(Recipient.self().getId(), String.valueOf(GroupType.SIGNAL_V2.getId()));
     Map<RecipientId, StorageId> out   = new HashMap<>();
 
@@ -1137,7 +1138,7 @@ public class RecipientDatabase extends Database {
 
   static @NonNull RecipientSettings getRecipientSettings(@NonNull Context context, @NonNull Cursor cursor, @NonNull String idColumnName) {
     long    id                         = CursorUtil.requireLong(cursor, idColumnName);
-    UUID    uuid                       = UuidUtil.parseOrNull(CursorUtil.requireString(cursor, UUID));
+    ACI       uuid                       = ACI.parseOrNull(CursorUtil.requireString(cursor, ACI_COLUMN));
     String  username                   = CursorUtil.requireString(cursor, USERNAME);
     String  e164                       = CursorUtil.requireString(cursor, PHONE);
     String  email                      = CursorUtil.requireString(cursor, EMAIL);
@@ -1293,16 +1294,7 @@ public class RecipientDatabase extends Database {
       List<BadgeList.Badge> protoBadges = badgeList.getBadgesList();
       badges = new ArrayList<>(protoBadges.size());
       for (BadgeList.Badge protoBadge : protoBadges) {
-        badges.add(new Badge(
-            protoBadge.getId(),
-            Badge.Category.Companion.fromCode(protoBadge.getCategory()),
-            protoBadge.getName(),
-            protoBadge.getDescription(),
-            Uri.parse(protoBadge.getImageUrl()),
-            protoBadge.getImageDensity(),
-            protoBadge.getExpiration(),
-            protoBadge.getVisible()
-        ));
+        badges.add(Badges.fromDatabaseBadge(protoBadge));
       }
     } else {
       badges = Collections.emptyList();
@@ -1636,15 +1628,7 @@ public class RecipientDatabase extends Database {
     BadgeList.Builder badgeListBuilder = BadgeList.newBuilder();
 
     for (final Badge badge : badges) {
-      badgeListBuilder.addBadges(BadgeList.Badge.newBuilder()
-                                                .setId(badge.getId())
-                                                .setCategory(badge.getCategory().getCode())
-                                                .setDescription(badge.getDescription())
-                                                .setExpiration(badge.getExpirationTimestamp())
-                                                .setVisible(badge.getVisible())
-                                                .setName(badge.getName())
-                                                .setImageUrl(badge.getImageUrl().toString())
-                                                .setImageDensity(badge.getImageDensity()));
+      badgeListBuilder.addBadges(Badges.toDatabaseBadge(badge));
     }
 
     ContentValues values = new ContentValues(1);
@@ -1782,8 +1766,8 @@ public class RecipientDatabase extends Database {
    * database if missing.
    */
   public Set<RecipientId> persistProfileKeySet(@NonNull ProfileKeySet profileKeySet) {
-    Map<UUID, ProfileKey> profileKeys              = profileKeySet.getProfileKeys();
-    Map<UUID, ProfileKey> authoritativeProfileKeys = profileKeySet.getAuthoritativeProfileKeys();
+    Map<ACI, ProfileKey> profileKeys              = profileKeySet.getProfileKeys();
+    Map<ACI, ProfileKey> authoritativeProfileKeys = profileKeySet.getAuthoritativeProfileKeys();
     int                   totalKeys                = profileKeys.size() + authoritativeProfileKeys.size();
 
     if (totalKeys == 0) {
@@ -1795,8 +1779,8 @@ public class RecipientDatabase extends Database {
     HashSet<RecipientId> updated = new HashSet<>(totalKeys);
     RecipientId          selfId  = Recipient.self().getId();
 
-    for (Map.Entry<UUID, ProfileKey> entry : profileKeys.entrySet()) {
-      RecipientId recipientId = getOrInsertFromUuid(entry.getKey());
+    for (Map.Entry<ACI, ProfileKey> entry : profileKeys.entrySet()) {
+      RecipientId recipientId = getOrInsertFromAci(entry.getKey());
 
       if (setProfileKeyIfAbsent(recipientId, entry.getValue())) {
         Log.i(TAG, "Learned new profile key");
@@ -1804,8 +1788,8 @@ public class RecipientDatabase extends Database {
       }
     }
 
-    for (Map.Entry<UUID, ProfileKey> entry : authoritativeProfileKeys.entrySet()) {
-      RecipientId recipientId = getOrInsertFromUuid(entry.getKey());
+    for (Map.Entry<ACI, ProfileKey> entry : authoritativeProfileKeys.entrySet()) {
+      RecipientId recipientId = getOrInsertFromAci(entry.getKey());
 
       if (selfId.equals(recipientId)) {
         Log.i(TAG, "Seen authoritative update for self");
@@ -2052,7 +2036,7 @@ public class RecipientDatabase extends Database {
       Log.w(TAG, "[setPhoneNumber] Hit a conflict when trying to update " + id + ". Possibly merging.");
 
       RecipientSettings existing = getRecipientSettings(id);
-      RecipientId       newId    = getAndPossiblyMerge(existing.getUuid(), e164, true);
+      RecipientId       newId    = getAndPossiblyMerge(existing.getAci(), e164, true);
       Log.w(TAG, "[setPhoneNumber] Resulting id: " + newId);
 
       db.setTransactionSuccessful();
@@ -2087,7 +2071,7 @@ public class RecipientDatabase extends Database {
 
     try {
       RecipientId id    = Recipient.self().getId();
-      RecipientId newId = getAndPossiblyMerge(Recipient.self().requireUuid(), login, true, true);
+      RecipientId newId = getAndPossiblyMerge(Recipient.self().requireAci(), login, true, true);
 
       if (id.equals(newId)) {
         Log.i(TAG, "[updateSelfLogin] Login updated for self");
@@ -2144,20 +2128,20 @@ public class RecipientDatabase extends Database {
   }
 
   /**
-   * @return True if setting the UUID resulted in changed recipientId, otherwise false.
+   * @return True if setting the ACI resulted in changed recipientId, otherwise false.
    */
-  /* public boolean markRegistered(@NonNull RecipientId id, @NonNull UUID uuid) {
+  /* public boolean markRegistered(@NonNull RecipientId id, @NonNull ACI aci) {
     SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
     db.beginTransaction();
     try {
-      markRegisteredOrThrow(id, uuid);
+      markRegisteredOrThrow(id, aci);
       db.setTransactionSuccessful();
       return false;
     } catch (SQLiteConstraintException e) {
       Log.w(TAG, "[markRegistered] Hit a conflict when trying to update " + id + ". Possibly merging.");
 
       RecipientSettings existing = getRecipientSettings(id);
-      RecipientId       newId    = getAndPossiblyMerge(uuid, existing.getE164(), true);
+      RecipientId       newId    = getAndPossiblyMerge(aci, existing.getE164(), true);
       Log.w(TAG, "[markRegistered] Merged into " + newId);
 
       db.setTransactionSuccessful();
@@ -2166,12 +2150,12 @@ public class RecipientDatabase extends Database {
       db.endTransaction();
     }
   } */
-  public void markRegistered(@NonNull RecipientId id, @Nullable UUID uuid) {
+  public void markRegistered(@NonNull RecipientId id, @Nullable ACI aci) {
     ContentValues contentValues = new ContentValues(2);
     contentValues.put(REGISTERED, RegisteredState.REGISTERED.getId());
 
-    if (uuid != null) {
-      contentValues.put(UUID, uuid.toString().toLowerCase());
+    if (aci != null) {
+      contentValues.put(ACI_COLUMN, aci.toString().toLowerCase());
     }
 
     if (update(id, contentValues)) {
@@ -2189,28 +2173,31 @@ public class RecipientDatabase extends Database {
     }
   }
 
-  public void bulkUpdatedRegisteredStatus(@NonNull Map<RecipientId, String> registered, Collection<RecipientId> unregistered) {
+  public void bulkUpdatedRegisteredStatus(@NonNull Map<RecipientId, ACI> registered, Collection<RecipientId> unregistered) {
     SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
     db.beginTransaction();
 
     try {
-      for (Map.Entry<RecipientId, String> entry : registered.entrySet()) {
+      for (Map.Entry<RecipientId, ACI> entry : registered.entrySet()) {
+        RecipientId recipientId = entry.getKey();
+        ACI         aci         = entry.getValue();
+
         ContentValues values = new ContentValues(2);
         values.put(REGISTERED, RegisteredState.REGISTERED.getId());
 
-        if (entry.getValue() != null) {
-          values.put(UUID, entry.getValue().toLowerCase());
+        if (aci != null) {
+          values.put(ACI_COLUMN, aci.toString().toLowerCase());
         }
 
         try {
-          if (update(entry.getKey(), values)) {
-            setStorageIdIfNotSet(entry.getKey());
+          if (update(recipientId, values)) {
+            setStorageIdIfNotSet(recipientId);
           }
         } catch (SQLiteConstraintException e) {
-          Log.w(TAG, "[bulkUpdateRegisteredStatus] Hit a conflict when trying to update " + entry.getKey() + ". Possibly merging.");
+          Log.w(TAG, "[bulkUpdateRegisteredStatus] Hit a conflict when trying to update " + recipientId + ". Possibly merging.");
 
           RecipientSettings existing = getRecipientSettings(entry.getKey());
-          RecipientId       newId    = getAndPossiblyMerge(UuidUtil.parseOrThrow(entry.getValue()), existing.getE164(), true);
+          RecipientId       newId    = getAndPossiblyMerge(aci, existing.getE164(), true);
           Log.w(TAG, "[bulkUpdateRegisteredStatus] Merged into " + newId);
         }
       }
@@ -2632,7 +2619,7 @@ public class RecipientDatabase extends Database {
                                      .map(b -> b.getNumber().get())
                                      .toList();
     List<String> blockedUuid = Stream.of(blocked)
-                                     .map(b -> b.getUuid().toString().toLowerCase())
+                                     .map(b -> b.getAci().toString().toLowerCase())
                                      .toList();
 
     SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
@@ -2651,8 +2638,8 @@ public class RecipientDatabase extends Database {
         db.update(TABLE_NAME, setBlocked, PHONE + " = ?", new String[] { e164 });
       }
 
-      for (String uuid : blockedUuid) {
-        db.update(TABLE_NAME, setBlocked, UUID + " = ?", new String[] { uuid });
+      for (String aci : blockedUuid) {
+        db.update(TABLE_NAME, setBlocked, ACI_COLUMN + " = ?", new String[] { aci });
       }
 
       List<GroupId.V1> groupIdStrings = new ArrayList<>(groupIds.size());
@@ -2914,61 +2901,61 @@ public class RecipientDatabase extends Database {
   }
 
   /**
-   * Merges one UUID recipient with an E164 recipient. It is assumed that the E164 recipient does
-   * *not* have a UUID.
+   * Merges one ACI recipient with an E164 recipient. It is assumed that the E164 recipient does
+   * *not* have a ACI.
    */
   /* @SuppressWarnings("ConstantConditions")
-  private @NonNull RecipientId merge(@NonNull RecipientId byUuid, @NonNull RecipientId byE164) {
+  private @NonNull RecipientId merge(@NonNull RecipientId byAci, @NonNull RecipientId byE164) {
     ensureInTransaction();
 
     SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
 
-    RecipientSettings uuidSettings = getRecipientSettings(byUuid);
+    RecipientSettings aciSettings = getRecipientSettings(byAci);
     RecipientSettings e164Settings = getRecipientSettings(byE164);
 
     // Recipient
     Log.w(TAG, "Deleting recipient " + byE164, IMPORTANT_LOG_DURATION);
     db.delete(TABLE_NAME, ID_WHERE, SqlUtil.buildArgs(byE164));
-    RemappedRecords.getInstance().addRecipient(context, byE164, byUuid);
+    RemappedRecords.getInstance().addRecipient(context, byE164, byAci);
 
-    ContentValues uuidValues = new ContentValues();
-    uuidValues.put(PHONE, e164Settings.getE164());
-    uuidValues.put(BLOCKED, e164Settings.isBlocked() || uuidSettings.isBlocked());
-    uuidValues.put(MESSAGE_RINGTONE, Optional.fromNullable(uuidSettings.getMessageRingtone()).or(Optional.fromNullable(e164Settings.getMessageRingtone())).transform(Uri::toString).orNull());
-    uuidValues.put(MESSAGE_VIBRATE, uuidSettings.getMessageVibrateState() != VibrateState.DEFAULT ? uuidSettings.getMessageVibrateState().getId() : e164Settings.getMessageVibrateState().getId());
-    uuidValues.put(CALL_RINGTONE, Optional.fromNullable(uuidSettings.getCallRingtone()).or(Optional.fromNullable(e164Settings.getCallRingtone())).transform(Uri::toString).orNull());
-    uuidValues.put(CALL_VIBRATE, uuidSettings.getCallVibrateState() != VibrateState.DEFAULT ? uuidSettings.getCallVibrateState().getId() : e164Settings.getCallVibrateState().getId());
-    uuidValues.put(NOTIFICATION_CHANNEL, uuidSettings.getNotificationChannel() != null ? uuidSettings.getNotificationChannel() : e164Settings.getNotificationChannel());
-    uuidValues.put(MUTE_UNTIL, uuidSettings.getMuteUntil() > 0 ? uuidSettings.getMuteUntil() : e164Settings.getMuteUntil());
-    uuidValues.put(CHAT_COLORS, Optional.fromNullable(uuidSettings.getChatColors()).or(Optional.fromNullable(e164Settings.getChatColors())).transform(colors -> colors.serialize().toByteArray()).orNull());
-    uuidValues.put(AVATAR_COLOR, uuidSettings.getAvatarColor().serialize());
-    uuidValues.put(CUSTOM_CHAT_COLORS_ID, Optional.fromNullable(uuidSettings.getChatColors()).or(Optional.fromNullable(e164Settings.getChatColors())).transform(colors -> colors.getId().getLongValue()).orNull());
-    uuidValues.put(SEEN_INVITE_REMINDER, e164Settings.getInsightsBannerTier().getId());
-    uuidValues.put(DEFAULT_SUBSCRIPTION_ID, e164Settings.getDefaultSubscriptionId().or(-1));
-    uuidValues.put(MESSAGE_EXPIRATION_TIME, uuidSettings.getExpireMessages() > 0 ? uuidSettings.getExpireMessages() : e164Settings.getExpireMessages());
-    uuidValues.put(REGISTERED, RegisteredState.REGISTERED.getId());
-    uuidValues.put(SYSTEM_GIVEN_NAME, e164Settings.getSystemProfileName().getGivenName());
-    uuidValues.put(SYSTEM_FAMILY_NAME, e164Settings.getSystemProfileName().getFamilyName());
-    uuidValues.put(SYSTEM_JOINED_NAME, e164Settings.getSystemProfileName().toString());
-    uuidValues.put(SYSTEM_PHOTO_URI, e164Settings.getSystemContactPhotoUri());
-    uuidValues.put(SYSTEM_PHONE_LABEL, e164Settings.getSystemPhoneLabel());
-    uuidValues.put(SYSTEM_CONTACT_URI, e164Settings.getSystemContactUri());
-    uuidValues.put(PROFILE_SHARING, uuidSettings.isProfileSharing() || e164Settings.isProfileSharing());
-    uuidValues.put(CAPABILITIES, Math.max(uuidSettings.getCapabilities(), e164Settings.getCapabilities()));
-    uuidValues.put(MENTION_SETTING, uuidSettings.getMentionSetting() != MentionSetting.ALWAYS_NOTIFY ? uuidSettings.getMentionSetting().getId() : e164Settings.getMentionSetting().getId());
-    if (uuidSettings.getProfileKey() != null) {
-      updateProfileValuesForMerge(uuidValues, uuidSettings);
+    ContentValues aciValues = new ContentValues();
+    aciValues.put(PHONE, e164Settings.getE164());
+    aciValues.put(BLOCKED, e164Settings.isBlocked() || aciSettings.isBlocked());
+    aciValues.put(MESSAGE_RINGTONE, Optional.fromNullable(aciSettings.getMessageRingtone()).or(Optional.fromNullable(e164Settings.getMessageRingtone())).transform(Uri::toString).orNull());
+    aciValues.put(MESSAGE_VIBRATE, aciSettings.getMessageVibrateState() != VibrateState.DEFAULT ? aciSettings.getMessageVibrateState().getId() : e164Settings.getMessageVibrateState().getId());
+    aciValues.put(CALL_RINGTONE, Optional.fromNullable(aciSettings.getCallRingtone()).or(Optional.fromNullable(e164Settings.getCallRingtone())).transform(Uri::toString).orNull());
+    aciValues.put(CALL_VIBRATE, aciSettings.getCallVibrateState() != VibrateState.DEFAULT ? aciSettings.getCallVibrateState().getId() : e164Settings.getCallVibrateState().getId());
+    aciValues.put(NOTIFICATION_CHANNEL, aciSettings.getNotificationChannel() != null ? aciSettings.getNotificationChannel() : e164Settings.getNotificationChannel());
+    aciValues.put(MUTE_UNTIL, aciSettings.getMuteUntil() > 0 ? aciSettings.getMuteUntil() : e164Settings.getMuteUntil());
+    aciValues.put(CHAT_COLORS, Optional.fromNullable(aciSettings.getChatColors()).or(Optional.fromNullable(e164Settings.getChatColors())).transform(colors -> colors.serialize().toByteArray()).orNull());
+    aciValues.put(AVATAR_COLOR, aciSettings.getAvatarColor().serialize());
+    aciValues.put(CUSTOM_CHAT_COLORS_ID, Optional.fromNullable(aciSettings.getChatColors()).or(Optional.fromNullable(e164Settings.getChatColors())).transform(colors -> colors.getId().getLongValue()).orNull());
+    aciValues.put(SEEN_INVITE_REMINDER, e164Settings.getInsightsBannerTier().getId());
+    aciValues.put(DEFAULT_SUBSCRIPTION_ID, e164Settings.getDefaultSubscriptionId().or(-1));
+    aciValues.put(MESSAGE_EXPIRATION_TIME, aciSettings.getExpireMessages() > 0 ? aciSettings.getExpireMessages() : e164Settings.getExpireMessages());
+    aciValues.put(REGISTERED, RegisteredState.REGISTERED.getId());
+    aciValues.put(SYSTEM_GIVEN_NAME, e164Settings.getSystemProfileName().getGivenName());
+    aciValues.put(SYSTEM_FAMILY_NAME, e164Settings.getSystemProfileName().getFamilyName());
+    aciValues.put(SYSTEM_JOINED_NAME, e164Settings.getSystemProfileName().toString());
+    aciValues.put(SYSTEM_PHOTO_URI, e164Settings.getSystemContactPhotoUri());
+    aciValues.put(SYSTEM_PHONE_LABEL, e164Settings.getSystemPhoneLabel());
+    aciValues.put(SYSTEM_CONTACT_URI, e164Settings.getSystemContactUri());
+    aciValues.put(PROFILE_SHARING, aciSettings.isProfileSharing() || e164Settings.isProfileSharing());
+    aciValues.put(CAPABILITIES, Math.max(aciSettings.getCapabilities(), e164Settings.getCapabilities()));
+    aciValues.put(MENTION_SETTING, aciSettings.getMentionSetting() != MentionSetting.ALWAYS_NOTIFY ? aciSettings.getMentionSetting().getId() : e164Settings.getMentionSetting().getId());
+    if (aciSettings.getProfileKey() != null) {
+      updateProfileValuesForMerge(aciValues, aciSettings);
     } else if (e164Settings.getProfileKey() != null) {
-      updateProfileValuesForMerge(uuidValues, e164Settings);
+      updateProfileValuesForMerge(aciValues, e164Settings);
     }
-    db.update(TABLE_NAME, uuidValues, ID_WHERE, SqlUtil.buildArgs(byUuid));
+    db.update(TABLE_NAME, aciValues, ID_WHERE, SqlUtil.buildArgs(byAci));
 
     // Identities
     ApplicationDependencies.getIdentityStore().delete(e164Settings.e164);
 
     // Group Receipts
     ContentValues groupReceiptValues = new ContentValues();
-    groupReceiptValues.put(GroupReceiptDatabase.RECIPIENT_ID, byUuid.serialize());
+    groupReceiptValues.put(GroupReceiptDatabase.RECIPIENT_ID, byAci.serialize());
     db.update(GroupReceiptDatabase.TABLE_NAME, groupReceiptValues, GroupReceiptDatabase.RECIPIENT_ID + " = ?", SqlUtil.buildArgs(byE164));
 
     // Groups
@@ -2976,7 +2963,7 @@ public class RecipientDatabase extends Database {
     for (GroupDatabase.GroupRecord group : groupDatabase.getGroupsContainingMember(byE164, false, true)) {
       LinkedHashSet<RecipientId> newMembers = new LinkedHashSet<>(group.getMembers());
       newMembers.remove(byE164);
-      newMembers.add(byUuid);
+      newMembers.add(byAci);
 
       ContentValues groupValues = new ContentValues();
       groupValues.put(GroupDatabase.MEMBERS, RecipientId.toSerializedList(newMembers));
@@ -2988,11 +2975,11 @@ public class RecipientDatabase extends Database {
     }
 
     // Threads
-    ThreadDatabase.MergeResult threadMerge = DatabaseFactory.getThreadDatabase(context).merge(byUuid, byE164);
+    ThreadDatabase.MergeResult threadMerge = DatabaseFactory.getThreadDatabase(context).merge(byAci, byE164);
 
     // SMS Messages
     ContentValues smsValues = new ContentValues();
-    smsValues.put(SmsDatabase.RECIPIENT_ID, byUuid.serialize());
+    smsValues.put(SmsDatabase.RECIPIENT_ID, byAci.serialize());
     db.update(SmsDatabase.TABLE_NAME, smsValues, SmsDatabase.RECIPIENT_ID + " = ?", SqlUtil.buildArgs(byE164));
 
     if (threadMerge.neededMerge) {
@@ -3003,7 +2990,7 @@ public class RecipientDatabase extends Database {
 
     // MMS Messages
     ContentValues mmsValues = new ContentValues();
-    mmsValues.put(MmsDatabase.RECIPIENT_ID, byUuid.serialize());
+    mmsValues.put(MmsDatabase.RECIPIENT_ID, byAci.serialize());
     db.update(MmsDatabase.TABLE_NAME, mmsValues, MmsDatabase.RECIPIENT_ID + " = ?", SqlUtil.buildArgs(byE164));
 
     if (threadMerge.neededMerge) {
@@ -3016,28 +3003,28 @@ public class RecipientDatabase extends Database {
     SessionDatabase sessionDatabase = DatabaseFactory.getSessionDatabase(context);
 
     boolean hasE164Session = sessionDatabase.getAllFor(e164Settings.e164).size() > 0;
-    boolean hasUuidSession = sessionDatabase.getAllFor(uuidSettings.uuid.toString()).size() > 0;
+    boolean hasUuidSession = sessionDatabase.getAllFor(aciSettings.aci.toString()).size() > 0;
 
     if (hasE164Session && hasUuidSession) {
        Log.w(TAG, "Had a session for both users. Deleting the E164.", IMPORTANT_LOG_DURATION);
       sessionDatabase.deleteAllFor(e164Settings.e164);
     } else if (hasE164Session && !hasUuidSession) {
-      Log.w(TAG, "Had a session for E164, but not UUID. Re-assigning to the UUID.", IMPORTANT_LOG_DURATION);
+      Log.w(TAG, "Had a session for E164, but not ACI. Re-assigning to the ACI.", IMPORTANT_LOG_DURATION);
       ContentValues values = new ContentValues();
-            values.put(SessionDatabase.ADDRESS, uuidSettings.uuid.toString());
+            values.put(SessionDatabase.ADDRESS, aciSettings.aci.toString());
       db.update(SessionDatabase.TABLE_NAME, values, SessionDatabase.ADDRESS + " = ?", SqlUtil.buildArgs(e164Settings.e164));
     } else if (!hasE164Session && hasUuidSession) {
-      Log.w(TAG, "Had a session for UUID, but not E164. No action necessary.", IMPORTANT_LOG_DURATION);
+      Log.w(TAG, "Had a session for ACI, but not E164. No action necessary.", IMPORTANT_LOG_DURATION);
     } else {
       Log.w(TAG, "Had no sessions. No action necessary.", IMPORTANT_LOG_DURATION);
     }
 
     // MSL
-    DatabaseFactory.getMessageLogDatabase(context).remapRecipient(byE164, byUuid);
+    DatabaseFactory.getMessageLogDatabase(context).remapRecipient(byE164, byAci);
 
     // Mentions
     ContentValues mentionRecipientValues = new ContentValues();
-    mentionRecipientValues.put(MentionDatabase.RECIPIENT_ID, byUuid.serialize());
+    mentionRecipientValues.put(MentionDatabase.RECIPIENT_ID, byAci.serialize());
     db.update(MentionDatabase.TABLE_NAME, mentionRecipientValues, MentionDatabase.RECIPIENT_ID + " = ?", SqlUtil.buildArgs(byE164));
     if (threadMerge.neededMerge) {
       ContentValues mentionThreadValues = new ContentValues();
@@ -3048,7 +3035,7 @@ public class RecipientDatabase extends Database {
     DatabaseFactory.getThreadDatabase(context).setLastScrolled(threadMerge.threadId, 0);
     DatabaseFactory.getThreadDatabase(context).update(threadMerge.threadId, false, false);
 
-    return byUuid;
+    return byAci;
   } */
   private static void updateProfileValuesForMerge(@NonNull ContentValues values, @NonNull RecipientSettings settings) {
     values.put(PROFILE_KEY, settings.getProfileKey() != null ? Base64.encodeBytes(settings.getProfileKey()) : null);
@@ -3170,7 +3157,7 @@ public class RecipientDatabase extends Database {
 
   public static class RecipientSettings {
     private final RecipientId            id;
-    private final UUID                   uuid;
+    private final ACI                   aci;
     private final String                 username;
     private final String                 e164;
     private final String                 email;
@@ -3220,7 +3207,7 @@ public class RecipientDatabase extends Database {
     private final List<Badge>            badges;
 
     RecipientSettings(@NonNull RecipientId id,
-                      @Nullable UUID uuid,
+                      @Nullable ACI aci,
                       @Nullable String username,
                       @Nullable String e164,
                       @Nullable String email,
@@ -3265,7 +3252,7 @@ public class RecipientDatabase extends Database {
                       @NonNull List<Badge> badges)
     {
       this.id                          = id;
-      this.uuid                        = uuid;
+      this.aci                        = aci;
       this.username                    = username;
       this.e164                        = e164;
       this.email                       = email;
@@ -3319,8 +3306,8 @@ public class RecipientDatabase extends Database {
       return id;
     }
 
-    public @Nullable UUID getUuid() {
-      return uuid;
+    public @Nullable ACI getAci() {
+      return aci;
     }
 
     public @Nullable String getUsername() {

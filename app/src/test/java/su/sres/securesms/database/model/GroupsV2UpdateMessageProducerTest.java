@@ -20,19 +20,20 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import su.sres.core.util.ThreadUtil;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.storageservice.protos.groups.AccessControl;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 import su.sres.storageservice.protos.groups.local.DecryptedMember;
 import su.sres.storageservice.protos.groups.local.DecryptedPendingMember;
 import su.sres.securesms.testutil.MainThreadUtil;
-import su.sres.securesms.util.Util;
 import su.sres.signalservice.api.util.UuidUtil;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -1351,12 +1352,14 @@ public final class GroupsV2UpdateMessageProducerTest {
     }
 
     private void assertSingleChangeMentioning(DecryptedGroupChange change, List<UUID> expectedMentions) {
+        List<ACI> expectedMentionAcis = expectedMentions.stream().map(ACI::from).collect(Collectors.toList());
+
         List<UpdateDescription> changes = producer.describeChanges(null, change);
 
         assertThat(changes.size(), is(1));
 
         UpdateDescription description = changes.get(0);
-        assertThat(description.getMentioned(), is(expectedMentions));
+        assertThat(description.getMentioned(), is(expectedMentionAcis));
 
         if (expectedMentions.isEmpty()) {
             assertTrue(description.isStringStatic());
@@ -1395,8 +1398,8 @@ public final class GroupsV2UpdateMessageProducerTest {
     }
 
     private static @NonNull GroupsV2UpdateMessageProducer.DescribeMemberStrategy createDescriber(@NonNull Map<UUID, String> map) {
-        return uuid -> {
-            String name = map.get(uuid);
+        return aci -> {
+            String name = map.get(aci.uuid());
             assertNotNull(name);
             return name;
         };

@@ -6,6 +6,7 @@ import android.hardware.Camera.CameraInfo;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+
 import androidx.annotation.ArrayRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,6 +20,7 @@ import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraintObserver;
 import su.sres.core.util.logging.Log;
 
 import org.greenrobot.eventbus.EventBus;
+
 import su.sres.securesms.R;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.lock.RegistrationLockReminders;
@@ -29,6 +31,7 @@ import org.signal.zkgroup.profiles.ProfileKey;
 import org.whispersystems.libsignal.util.Medium;
 
 import su.sres.securesms.recipients.Recipient;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.util.UuidUtil;
 
 import java.io.IOException;
@@ -45,46 +48,46 @@ public class TextSecurePreferences {
 
   private static final String TAG = Log.tag(TextSecurePreferences.class);
 
-  public  static final String IDENTITY_PREF                    = "pref_choose_identity";
-  public  static final String CHANGE_PASSPHRASE_PREF           = "pref_change_passphrase";
-  public  static final String DISABLE_PASSPHRASE_PREF          = "pref_disable_passphrase";
-  public  static final String THEME_PREF                       = "pref_theme";
-  public  static final String LANGUAGE_PREF                    = "pref_language";
-  private static final String MMSC_CUSTOM_HOST_PREF            = "pref_apn_mmsc_custom_host";
-  public  static final String MMSC_HOST_PREF                   = "pref_apn_mmsc_host";
-  private static final String MMSC_CUSTOM_PROXY_PREF           = "pref_apn_mms_custom_proxy";
-  public  static final String MMSC_PROXY_HOST_PREF             = "pref_apn_mms_proxy";
-  private static final String MMSC_CUSTOM_PROXY_PORT_PREF      = "pref_apn_mms_custom_proxy_port";
-  public  static final String MMSC_PROXY_PORT_PREF             = "pref_apn_mms_proxy_port";
-  private static final String MMSC_CUSTOM_USERNAME_PREF        = "pref_apn_mmsc_custom_username";
-  public  static final String MMSC_USERNAME_PREF               = "pref_apn_mmsc_username";
-  private static final String MMSC_CUSTOM_PASSWORD_PREF        = "pref_apn_mmsc_custom_password";
-  public  static final String MMSC_PASSWORD_PREF               = "pref_apn_mmsc_password";
-  public  static final String ENABLE_MANUAL_MMS_PREF           = "pref_enable_manual_mms";
+  public static final  String IDENTITY_PREF               = "pref_choose_identity";
+  public static final  String CHANGE_PASSPHRASE_PREF      = "pref_change_passphrase";
+  public static final  String DISABLE_PASSPHRASE_PREF     = "pref_disable_passphrase";
+  public static final  String THEME_PREF                  = "pref_theme";
+  public static final  String LANGUAGE_PREF               = "pref_language";
+  private static final String MMSC_CUSTOM_HOST_PREF       = "pref_apn_mmsc_custom_host";
+  public static final  String MMSC_HOST_PREF              = "pref_apn_mmsc_host";
+  private static final String MMSC_CUSTOM_PROXY_PREF      = "pref_apn_mms_custom_proxy";
+  public static final  String MMSC_PROXY_HOST_PREF        = "pref_apn_mms_proxy";
+  private static final String MMSC_CUSTOM_PROXY_PORT_PREF = "pref_apn_mms_custom_proxy_port";
+  public static final  String MMSC_PROXY_PORT_PREF        = "pref_apn_mms_proxy_port";
+  private static final String MMSC_CUSTOM_USERNAME_PREF   = "pref_apn_mmsc_custom_username";
+  public static final  String MMSC_USERNAME_PREF          = "pref_apn_mmsc_username";
+  private static final String MMSC_CUSTOM_PASSWORD_PREF   = "pref_apn_mmsc_custom_password";
+  public static final  String MMSC_PASSWORD_PREF          = "pref_apn_mmsc_password";
+  public static final  String ENABLE_MANUAL_MMS_PREF      = "pref_enable_manual_mms";
 
   private static final String LAST_VERSION_CODE_PREF           = "last_version_code";
   private static final String LAST_EXPERIENCE_VERSION_PREF     = "last_experience_version_code";
   private static final String EXPERIENCE_DISMISSED_PREF        = "experience_dismissed";
-  public  static final String RINGTONE_PREF                    = "pref_key_ringtone";
-  public  static final String VIBRATE_PREF                     = "pref_key_vibrate";
+  public static final  String RINGTONE_PREF                    = "pref_key_ringtone";
+  public static final  String VIBRATE_PREF                     = "pref_key_vibrate";
   private static final String NOTIFICATION_PREF                = "pref_key_enable_notifications";
-  public  static final String LED_COLOR_PREF                   = "pref_led_color";
-  public  static final String LED_BLINK_PREF                   = "pref_led_blink";
+  public static final  String LED_COLOR_PREF                   = "pref_led_color";
+  public static final  String LED_BLINK_PREF                   = "pref_led_blink";
   private static final String LED_BLINK_PREF_CUSTOM            = "pref_led_blink_custom";
-  public  static final String ALL_MMS_PREF                     = "pref_all_mms";
-  public  static final String ALL_SMS_PREF                     = "pref_all_sms";
-  public  static final String PASSPHRASE_TIMEOUT_INTERVAL_PREF = "pref_timeout_interval";
-  public  static final String PASSPHRASE_TIMEOUT_PREF          = "pref_timeout_passphrase";
-  public  static final String SCREEN_SECURITY_PREF             = "pref_screen_security";
+  public static final  String ALL_MMS_PREF                     = "pref_all_mms";
+  public static final  String ALL_SMS_PREF                     = "pref_all_sms";
+  public static final  String PASSPHRASE_TIMEOUT_INTERVAL_PREF = "pref_timeout_interval";
+  public static final  String PASSPHRASE_TIMEOUT_PREF          = "pref_timeout_passphrase";
+  public static final  String SCREEN_SECURITY_PREF             = "pref_screen_security";
   private static final String ENTER_SENDS_PREF                 = "pref_enter_sends";
   private static final String ENTER_PRESENT_PREF               = "pref_enter_key";
   private static final String SMS_DELIVERY_REPORT_PREF         = "pref_delivery_report_sms";
-  public  static final String MMS_USER_AGENT                   = "pref_mms_user_agent";
+  public static final  String MMS_USER_AGENT                   = "pref_mms_user_agent";
   private static final String MMS_CUSTOM_USER_AGENT            = "pref_custom_mms_user_agent";
   private static final String LOCAL_NUMBER_PREF                = "pref_local_number";
-  private static final String LOCAL_UUID_PREF                  = "pref_local_uuid";
+  private static final String LOCAL_ACI_PREF                   = "pref_local_uuid";
   private static final String LOCAL_USERNAME_PREF              = "pref_local_username";
-  public  static final String REGISTERED_GCM_PREF              = "pref_gcm_registered";
+  public static final  String REGISTERED_GCM_PREF              = "pref_gcm_registered";
   private static final String GCM_PASSWORD_PREF                = "pref_gcm_password";
   private static final String SEEN_WELCOME_SCREEN_PREF         = "pref_seen_welcome_screen";
   private static final String PROMPTED_PUSH_REGISTRATION_PREF  = "pref_prompted_push_registration";
@@ -95,13 +98,13 @@ public class TextSecurePreferences {
   private static final String UPDATE_APK_DIGEST                = "pref_update_apk_digest";
   private static final String SIGNED_PREKEY_ROTATION_TIME_PREF = "pref_signed_pre_key_rotation_time";
 
-  private static final String IN_THREAD_NOTIFICATION_PREF      = "pref_key_inthread_notifications";
-  private static final String SHOW_INVITE_REMINDER_PREF        = "pref_show_invite_reminder";
-  public  static final String MESSAGE_BODY_TEXT_SIZE_PREF      = "pref_message_body_text_size";
+  private static final String IN_THREAD_NOTIFICATION_PREF = "pref_key_inthread_notifications";
+  private static final String SHOW_INVITE_REMINDER_PREF   = "pref_show_invite_reminder";
+  public static final  String MESSAGE_BODY_TEXT_SIZE_PREF = "pref_message_body_text_size";
 
-  private static final String LOCAL_REGISTRATION_ID_PREF       = "pref_local_registration_id";
-  private static final String SIGNED_PREKEY_REGISTERED_PREF    = "pref_signed_prekey_registered";
-  private static final String WIFI_SMS_PREF                    = "pref_wifi_sms";
+  private static final String LOCAL_REGISTRATION_ID_PREF    = "pref_local_registration_id";
+  private static final String SIGNED_PREKEY_REGISTERED_PREF = "pref_signed_prekey_registered";
+  private static final String WIFI_SMS_PREF                 = "pref_wifi_sms";
 
   private static final String GCM_DISABLED_PREF                = "pref_gcm_disabled";
   private static final String GCM_REGISTRATION_ID_PREF         = "pref_gcm_registration_id";
@@ -112,27 +115,27 @@ public class TextSecurePreferences {
   private static final String RATING_ENABLED_PREF              = "pref_rating_enabled";
   private static final String SIGNED_PREKEY_FAILURE_COUNT_PREF = "pref_signed_prekey_failure_count";
 
-  public  static final String REPEAT_ALERTS_PREF               = "pref_repeat_alerts";
-  public  static final String NOTIFICATION_PRIVACY_PREF        = "pref_notification_privacy";
-  public  static final String NOTIFICATION_PRIORITY_PREF       = "pref_notification_priority";
-  public  static final String WEBRTC_CALLING_PREF              = "pref_webrtc_calling";
+  public static final String REPEAT_ALERTS_PREF         = "pref_repeat_alerts";
+  public static final String NOTIFICATION_PRIVACY_PREF  = "pref_notification_privacy";
+  public static final String NOTIFICATION_PRIORITY_PREF = "pref_notification_priority";
+  public static final String WEBRTC_CALLING_PREF        = "pref_webrtc_calling";
 
-  public  static final String MEDIA_DOWNLOAD_MOBILE_PREF       = "pref_media_download_mobile";
-  public  static final String MEDIA_DOWNLOAD_WIFI_PREF         = "pref_media_download_wifi";
-  public  static final String MEDIA_DOWNLOAD_ROAMING_PREF      = "pref_media_download_roaming";
+  public static final String MEDIA_DOWNLOAD_MOBILE_PREF  = "pref_media_download_mobile";
+  public static final String MEDIA_DOWNLOAD_WIFI_PREF    = "pref_media_download_wifi";
+  public static final String MEDIA_DOWNLOAD_ROAMING_PREF = "pref_media_download_roaming";
 
-  public  static final String CALL_BANDWIDTH_PREF              = "pref_data_call_bandwidth";
+  public static final String CALL_BANDWIDTH_PREF = "pref_data_call_bandwidth";
 
-  public  static final String SYSTEM_EMOJI_PREF                = "pref_system_emoji";
-  private static final String MULTI_DEVICE_PROVISIONED_PREF    = "pref_multi_device";
-  public  static final String DIRECT_CAPTURE_CAMERA_ID         = "pref_direct_capture_camera_id";
-  public static final String ALWAYS_RELAY_CALLS_PREF          = "pref_turn_only";
-  private static final String PROFILE_NAME_PREF                = "pref_profile_name";
-  private static final String PROFILE_AVATAR_ID_PREF           = "pref_profile_avatar_id";
-  public  static final String READ_RECEIPTS_PREF               = "pref_read_receipts";
-  public  static final String INCOGNITO_KEYBORAD_PREF          = "pref_incognito_keyboard";
-  private static final String UNAUTHORIZED_RECEIVED            = "pref_unauthorized_received";
-  private static final String SUCCESSFUL_DIRECTORY_PREF        = "pref_successful_directory";
+  public static final  String SYSTEM_EMOJI_PREF             = "pref_system_emoji";
+  private static final String MULTI_DEVICE_PROVISIONED_PREF = "pref_multi_device";
+  public static final  String DIRECT_CAPTURE_CAMERA_ID      = "pref_direct_capture_camera_id";
+  public static final  String ALWAYS_RELAY_CALLS_PREF       = "pref_turn_only";
+  private static final String PROFILE_NAME_PREF             = "pref_profile_name";
+  private static final String PROFILE_AVATAR_ID_PREF        = "pref_profile_avatar_id";
+  public static final  String READ_RECEIPTS_PREF            = "pref_read_receipts";
+  public static final  String INCOGNITO_KEYBORAD_PREF       = "pref_incognito_keyboard";
+  private static final String UNAUTHORIZED_RECEIVED         = "pref_unauthorized_received";
+  private static final String SUCCESSFUL_DIRECTORY_PREF     = "pref_successful_directory";
 
   private static final String DATABASE_ENCRYPTED_SECRET     = "pref_database_encrypted_secret";
   private static final String DATABASE_UNENCRYPTED_SECRET   = "pref_database_unencrypted_secret";
@@ -148,8 +151,8 @@ public class TextSecurePreferences {
   private static final String ACTIVE_SIGNED_PRE_KEY_ID = "pref_active_signed_pre_key_id";
   private static final String NEXT_SIGNED_PRE_KEY_ID   = "pref_next_signed_pre_key_id";
 
-  public  static final String BACKUP                      = "pref_backup";
-  public  static final String BACKUP_ENABLED              = "pref_backup_enabled";
+  public static final  String BACKUP                      = "pref_backup";
+  public static final  String BACKUP_ENABLED              = "pref_backup_enabled";
   private static final String BACKUP_PASSPHRASE           = "pref_backup_passphrase";
   private static final String ENCRYPTED_BACKUP_PASSPHRASE = "pref_encrypted_backup_passphrase";
   private static final String BACKUP_TIME                 = "pref_backup_next_time";
@@ -159,8 +162,8 @@ public class TextSecurePreferences {
   public static final String SCREEN_LOCK         = "pref_android_screen_lock";
   public static final String SCREEN_LOCK_TIMEOUT = "pref_android_screen_lock_timeout";
 
-  public static final  String REGISTRATION_LOCK_PREF                   = "pref_registration_lock";
-  private static final String REGISTRATION_LOCK_PIN_PREF               = "pref_registration_lock_pin";
+  public static final  String REGISTRATION_LOCK_PREF     = "pref_registration_lock";
+  private static final String REGISTRATION_LOCK_PIN_PREF = "pref_registration_lock_pin";
 
   private static final String REGISTRATION_LOCK_LAST_REMINDER_TIME     = "pref_registration_lock_last_reminder_time";
   private static final String REGISTRATION_LOCK_NEXT_REMINDER_INTERVAL = "pref_registration_lock_next_reminder_interval";
@@ -171,16 +174,16 @@ public class TextSecurePreferences {
   private static final String LAST_FULL_CONTACT_SYNC_TIME = "pref_last_full_contact_sync_time";
   private static final String NEEDS_FULL_CONTACT_SYNC     = "pref_needs_full_contact_sync";
 
-  private static final String LOG_ENCRYPTED_SECRET   = "pref_log_encrypted_secret";
-  private static final String LOG_UNENCRYPTED_SECRET = "pref_log_unencrypted_secret";
+  private static final String LOG_ENCRYPTED_SECRET                  = "pref_log_encrypted_secret";
+  private static final String LOG_UNENCRYPTED_SECRET                = "pref_log_unencrypted_secret";
   private static final String NOTIFICATION_CHANNEL_VERSION          = "pref_notification_channel_version";
   private static final String NOTIFICATION_MESSAGES_CHANNEL_VERSION = "pref_notification_messages_channel_version";
 
   private static final String NEEDS_MESSAGE_PULL = "pref_needs_message_pull";
 
   private static final String UNIDENTIFIED_ACCESS_CERTIFICATE_ROTATION_TIME_PREF = "pref_unidentified_access_certificate_rotation_time";
-  public  static final String UNIVERSAL_UNIDENTIFIED_ACCESS                      = "pref_universal_unidentified_access";
-  public  static final String SHOW_UNIDENTIFIED_DELIVERY_INDICATORS              = "pref_show_unidentifed_delivery_indicators";
+  public static final  String UNIVERSAL_UNIDENTIFIED_ACCESS                      = "pref_universal_unidentified_access";
+  public static final  String SHOW_UNIDENTIFIED_DELIVERY_INDICATORS              = "pref_show_unidentifed_delivery_indicators";
   private static final String UNIDENTIFIED_DELIVERY_ENABLED                      = "pref_unidentified_delivery_enabled";
 
   public static final String TYPING_INDICATORS = "pref_typing_indicators";
@@ -192,7 +195,7 @@ public class TextSecurePreferences {
   private static final String SEEN_STICKER_INTRO_TOOLTIP = "pref_seen_sticker_intro_tooltip";
 
   private static final String MEDIA_KEYBOARD_MODE = "pref_media_keyboard_mode";
-  public  static final String RECENT_STORAGE_KEY  = "pref_recent_emoji2";
+  public static final  String RECENT_STORAGE_KEY  = "pref_recent_emoji2";
 
   private static final String VIEW_ONCE_TOOLTIP_SEEN = "pref_revealable_message_tooltip_seen";
 
@@ -210,33 +213,33 @@ public class TextSecurePreferences {
 
   private static final String HAS_STICKERS_DOWNLOADED = "pref_has_stickers_downloaded";
 
-  private static final String[] booleanPreferencesToBackup = {SCREEN_SECURITY_PREF,
-          INCOGNITO_KEYBORAD_PREF,
-          ALWAYS_RELAY_CALLS_PREF,
-          READ_RECEIPTS_PREF,
-          TYPING_INDICATORS,
-          SHOW_UNIDENTIFIED_DELIVERY_INDICATORS,
-          UNIVERSAL_UNIDENTIFIED_ACCESS,
-          NOTIFICATION_PREF,
-          VIBRATE_PREF,
-          IN_THREAD_NOTIFICATION_PREF,
-          CALL_NOTIFICATIONS_PREF,
-          CALL_VIBRATE_PREF,
-          SHOW_INVITE_REMINDER_PREF,
-          SYSTEM_EMOJI_PREF,
-          ENTER_SENDS_PREF};
+  private static final String[] booleanPreferencesToBackup = { SCREEN_SECURITY_PREF,
+                                                               INCOGNITO_KEYBORAD_PREF,
+                                                               ALWAYS_RELAY_CALLS_PREF,
+                                                               READ_RECEIPTS_PREF,
+                                                               TYPING_INDICATORS,
+                                                               SHOW_UNIDENTIFIED_DELIVERY_INDICATORS,
+                                                               UNIVERSAL_UNIDENTIFIED_ACCESS,
+                                                               NOTIFICATION_PREF,
+                                                               VIBRATE_PREF,
+                                                               IN_THREAD_NOTIFICATION_PREF,
+                                                               CALL_NOTIFICATIONS_PREF,
+                                                               CALL_VIBRATE_PREF,
+                                                               SHOW_INVITE_REMINDER_PREF,
+                                                               SYSTEM_EMOJI_PREF,
+                                                               ENTER_SENDS_PREF };
 
-  private static final String[] stringPreferencesToBackup = {LED_COLOR_PREF,
-          LED_BLINK_PREF,
-          REPEAT_ALERTS_PREF,
-          NOTIFICATION_PRIVACY_PREF,
-          THEME_PREF,
-          LANGUAGE_PREF,
-          MESSAGE_BODY_TEXT_SIZE_PREF};
+  private static final String[] stringPreferencesToBackup = { LED_COLOR_PREF,
+                                                              LED_BLINK_PREF,
+                                                              REPEAT_ALERTS_PREF,
+                                                              NOTIFICATION_PRIVACY_PREF,
+                                                              THEME_PREF,
+                                                              LANGUAGE_PREF,
+                                                              MESSAGE_BODY_TEXT_SIZE_PREF };
 
-  private static final String[] stringSetPreferencesToBackup = {MEDIA_DOWNLOAD_MOBILE_PREF,
-          MEDIA_DOWNLOAD_WIFI_PREF,
-          MEDIA_DOWNLOAD_ROAMING_PREF};
+  private static final String[] stringSetPreferencesToBackup = { MEDIA_DOWNLOAD_MOBILE_PREF,
+                                                                 MEDIA_DOWNLOAD_WIFI_PREF,
+                                                                 MEDIA_DOWNLOAD_ROAMING_PREF };
 
   public static List<BackupProtos.SharedPreference> getPreferencesToSaveToBackup(@NonNull Context context) {
     SharedPreferences                   preferences  = PreferenceManager.getDefaultSharedPreferences(context);
@@ -246,31 +249,31 @@ public class TextSecurePreferences {
     for (String booleanPreference : booleanPreferencesToBackup) {
       if (preferences.contains(booleanPreference)) {
         backupProtos.add(BackupProtos.SharedPreference.newBuilder()
-                .setFile(defaultFile)
-                .setKey(booleanPreference)
-                .setBooleanValue(preferences.getBoolean(booleanPreference, false))
-                .build());
+                                                      .setFile(defaultFile)
+                                                      .setKey(booleanPreference)
+                                                      .setBooleanValue(preferences.getBoolean(booleanPreference, false))
+                                                      .build());
       }
     }
 
     for (String stringPreference : stringPreferencesToBackup) {
       if (preferences.contains(stringPreference)) {
         backupProtos.add(BackupProtos.SharedPreference.newBuilder()
-                .setFile(defaultFile)
-                .setKey(stringPreference)
-                .setValue(preferences.getString(stringPreference, null))
-                .build());
+                                                      .setFile(defaultFile)
+                                                      .setKey(stringPreference)
+                                                      .setValue(preferences.getString(stringPreference, null))
+                                                      .build());
       }
     }
 
     for (String stringSetPreference : stringSetPreferencesToBackup) {
       if (preferences.contains(stringSetPreference)) {
         backupProtos.add(BackupProtos.SharedPreference.newBuilder()
-                .setFile(defaultFile)
-                .setKey(stringSetPreference)
-                .setIsStringSetValue(true)
-                .addAllStringSetValue(preferences.getStringSet(stringSetPreference, Collections.emptySet()))
-                .build());
+                                                      .setFile(defaultFile)
+                                                      .setKey(stringSetPreference)
+                                                      .setIsStringSetValue(true)
+                                                      .addAllStringSetValue(preferences.getStringSet(stringSetPreference, Collections.emptySet()))
+                                                      .build());
       }
     }
 
@@ -385,7 +388,7 @@ public class TextSecurePreferences {
   }
 
   public static void setActiveSignedPreKeyId(@NonNull Context context, int value) {
-    setIntegerPrefrence(context, ACTIVE_SIGNED_PRE_KEY_ID, value);;
+    setIntegerPrefrence(context, ACTIVE_SIGNED_PRE_KEY_ID, value); ;
   }
 
   public static void setNeedsSqlCipherMigration(@NonNull Context context, boolean value) {
@@ -706,12 +709,12 @@ public class TextSecurePreferences {
     setStringPreference(context, LOCAL_NUMBER_PREF, localNumber);
   }
 
-  public static UUID getLocalUuid(Context context) {
-    return UuidUtil.parseOrNull(getStringPreference(context, LOCAL_UUID_PREF, null));
+  public static ACI getLocalAci(Context context) {
+    return ACI.parseOrNull(getStringPreference(context, LOCAL_ACI_PREF, null));
   }
 
-  public static void setLocalUuid(Context context, UUID uuid) {
-    setStringPreference(context, LOCAL_UUID_PREF, uuid.toString());
+  public static void setLocalAci(Context context, ACI aci) {
+    setStringPreference(context, LOCAL_ACI_PREF, aci.toString());
   }
 
   public static String getPushServerPassword(Context context) {
@@ -828,7 +831,7 @@ public class TextSecurePreferences {
     boolean useCustom = getBooleanPreference(context, MMS_CUSTOM_USER_AGENT, false);
 
     if (useCustom) return getStringPreference(context, MMS_USER_AGENT, defaultUserAgent);
-    else           return defaultUserAgent;
+    else return defaultUserAgent;
   }
 
   public static String getIdentityContactUri(Context context) {
@@ -881,7 +884,7 @@ public class TextSecurePreferences {
    * @deprecated Use {@link SettingsValues#getTheme()} via {@link su.sres.securesms.keyvalue.SignalStore} instead.
    */
   public static String getTheme(Context context) {
-      return getStringPreference(context, THEME_PREF, DynamicTheme.systemThemeAvailable() ? DynamicTheme.SYSTEM : DynamicTheme.LIGHT);
+    return getStringPreference(context, THEME_PREF, DynamicTheme.systemThemeAvailable() ? DynamicTheme.SYSTEM : DynamicTheme.LIGHT);
   }
 
   public static boolean isPushRegistered(Context context) {
@@ -1103,6 +1106,7 @@ public class TextSecurePreferences {
   public static String getLogUnencryptedSecret(Context context) {
     return getStringPreference(context, LOG_UNENCRYPTED_SECRET, null);
   }
+
   public static int getNotificationChannelVersion(Context context) {
     return getIntegerPreference(context, NOTIFICATION_CHANNEL_VERSION, 1);
   }
@@ -1213,11 +1217,11 @@ public class TextSecurePreferences {
   }
 
   public static boolean areStickersDownloaded(Context context) {
-      return getBooleanPreference(context, HAS_STICKERS_DOWNLOADED, false);
+    return getBooleanPreference(context, HAS_STICKERS_DOWNLOADED, false);
   }
 
   public static void setStickersDownloaded(Context context, boolean done) {
-      setBooleanPreference(context, HAS_STICKERS_DOWNLOADED, done);
+    setBooleanPreference(context, HAS_STICKERS_DOWNLOADED, done);
   }
 
   public static void setBooleanPreference(Context context, String key, boolean value) {

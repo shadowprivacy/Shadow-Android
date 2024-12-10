@@ -9,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
-import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.ProfileUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -43,7 +42,6 @@ public final class ProfileUploadJob extends BaseJob {
         }
 
         ProfileUtil.uploadProfile(context);
-        SignalStore.registrationValues().markHasUploadedProfile();
         Log.i(TAG, "Profile uploaded.");
     }
 

@@ -52,6 +52,7 @@ import su.sres.signalservice.api.crypto.InvalidCiphertextException;
 import su.sres.signalservice.api.crypto.ProfileCipher;
 import su.sres.signalservice.api.profiles.ProfileAndCredential;
 import su.sres.signalservice.api.profiles.SignalServiceProfile;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.services.ProfileService;
 import su.sres.signalservice.internal.ServiceResponse;
 
@@ -173,7 +174,7 @@ public class RetrieveProfileJob extends BaseJob {
   public static void enqueueRoutineFetchIfNecessary(Application application) {
     if (!SignalStore.registrationValues().isRegistrationComplete() ||
         !TextSecurePreferences.isPushRegistered(application) ||
-        TextSecurePreferences.getLocalUuid(application) == null)
+        TextSecurePreferences.getLocalAci(application) == null)
     {
       Log.i(TAG, "Registration not complete. Skipping.");
       return;
@@ -292,11 +293,11 @@ public class RetrieveProfileJob extends BaseJob {
     Set<RecipientId> success = SetUtil.difference(recipientIds, operationState.retries);
     recipientDatabase.markProfilesFetched(success, System.currentTimeMillis());
 
-    Map<RecipientId, String> newlyRegistered = Stream.of(operationState.profiles)
-                                                     .map(Pair::first)
-                                                     .filterNot(Recipient::isRegistered)
-                                                     .collect(Collectors.toMap(Recipient::getId,
-                                                                               r -> r.getUuid().transform(UUID::toString).orNull()));
+    Map<RecipientId, ACI> newlyRegistered = Stream.of(operationState.profiles)
+                                                  .map(Pair::first)
+                                                  .filterNot(Recipient::isRegistered)
+                                                  .collect(Collectors.toMap(Recipient::getId,
+                                                                            r -> r.getAci().orNull()));
 
     if (operationState.unregistered.size() > 0 || newlyRegistered.size() > 0) {
       Log.i(TAG, "Marking " + newlyRegistered.size() + " users as registered and " + operationState.unregistered.size() + " users as unregistered.");

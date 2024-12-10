@@ -20,6 +20,7 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.payments.Entropy;
 import su.sres.securesms.recipients.Recipient;
+import su.sres.securesms.subscription.Subscriber;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -130,6 +131,8 @@ public final class StorageSyncHelper {
                 .setUniversalExpireTimer(SignalStore.settings().getUniversalExpireTimer())
                 .setUserLogin(TextSecurePreferences.getLocalNumber(context))
                 .setDefaultReactions(SignalStore.emojiValues().getReactions())
+                .setSubscriber(StorageSyncModels.localToRemoteSubscriber(SignalStore.donationsValues().getSubscriber()))
+                .setDisplayBadgesOnProfile(SignalStore.donationsValues().getDisplayBadgesOnProfile())
                 .build();
 
         return SignalStorageRecord.forAccount(account);
@@ -152,6 +155,13 @@ public final class StorageSyncHelper {
         SignalStore.paymentsValues().setEnabledAndEntropy(update.getNew().getPayments().isEnabled(), Entropy.fromBytes(update.getNew().getPayments().getEntropy().orNull()));
         SignalStore.settings().setUniversalExpireTimer(update.getNew().getUniversalExpireTimer());
         SignalStore.emojiValues().setReactions(update.getNew().getDefaultReactions());
+        SignalStore.donationsValues().setDisplayBadgesOnProfile(update.getNew().isDisplayBadgesOnProfile());
+
+        Subscriber subscriber = StorageSyncModels.remoteToLocalSubscriber(update.getNew().getSubscriber());
+
+        if (subscriber != null) {
+            SignalStore.donationsValues().setSubscriber(subscriber);
+        }
 
         if (fetchProfile && update.getNew().getAvatarUrlPath().isPresent()) {
             ApplicationDependencies.getJobManager().add(new RetrieveProfileAvatarJob(self, update.getNew().getAvatarUrlPath().get()));

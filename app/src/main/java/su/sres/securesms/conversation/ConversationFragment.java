@@ -32,6 +32,7 @@ import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 
+import kotlin.Unit;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
@@ -58,7 +59,6 @@ import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.model.InMemoryMessageRecord;
 import su.sres.securesms.giph.mp4.GiphyMp4ItemDecoration;
-import su.sres.securesms.giph.mp4.GiphyMp4Playable;
 import su.sres.securesms.giph.mp4.GiphyMp4PlaybackController;
 import su.sres.securesms.giph.mp4.GiphyMp4PlaybackPolicy;
 import su.sres.securesms.giph.mp4.GiphyMp4ProjectionPlayerHolder;
@@ -218,9 +218,9 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
   private int                         lastSeenScrollOffset;
   private View                        toolbarShadow;
   private Stopwatch                   startupStopwatch;
-  private View               reactionsShade;
-  private LayoutTransition                    layoutTransition;
-  private TransitionListener transitionListener;
+  private LayoutTransition            layoutTransition;
+  private TransitionListener          transitionListener;
+  private View                        reactionsShade;
 
   private GiphyMp4ProjectionRecycler giphyMp4ProjectionRecycler;
   private Colorizer                  colorizer;
@@ -306,8 +306,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
                                                            conversationMessage.getMessageRecord(),
                                                            messageRequestViewModel.shouldShowMessageRequest(),
                                                            groupViewModel.isNonAdminInAnnouncementGroup()),
-        this::handleReplyMessage,
-        this::onViewHolderPositionTranslated
+        this::handleReplyMessage
     ).attachToRecyclerView(list);
 
     giphyMp4ProjectionRecycler = initializeGiphyMp4();
@@ -381,7 +380,10 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
     GiphyMp4ProjectionRecycler callback = new GiphyMp4ProjectionRecycler(holders);
 
     GiphyMp4PlaybackController.attach(list, callback, maxPlayback);
-    list.addItemDecoration(new GiphyMp4ItemDecoration(callback), 0);
+    list.addItemDecoration(new GiphyMp4ItemDecoration(callback, translationY -> {
+      reactionsShade.setTranslationY(translationY);
+      return Unit.INSTANCE;
+    }), 0);
 
     return callback;
   }
@@ -389,7 +391,6 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
   public void clearFocusedItem() {
     multiselectItemDecoration.setFocusedItem(null);
     list.invalidateItemDecorations();
-    reactionsShade.setVisibility(View.INVISIBLE);
   }
 
   private void updateConversationItemTimestamps() {
@@ -500,12 +501,6 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
           setInlineDateDecoration(adapter);
         }
       }
-    }
-  }
-
-  private void onViewHolderPositionTranslated(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
-    if (viewHolder instanceof GiphyMp4Playable) {
-      giphyMp4ProjectionRecycler.updateVideoDisplayPositionAndSize(recyclerView, (GiphyMp4Playable) viewHolder);
     }
   }
 
@@ -1044,7 +1039,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
                            .submit();
     } else if (conversation.getMessageRequestData().isMessageRequestAccepted()) {
       snapToTopDataObserver.buildScrollPosition(conversation.shouldScrollToLastSeen() ? lastSeenPosition : lastScrolledPosition)
-                           .withOnPerformScroll((layoutManager, position) -> layoutManager.scrollToPositionWithOffset(position, (list.getHeight() + reactionsShade.getHeight()) - (conversation.shouldScrollToLastSeen() ? lastSeenScrollOffset : 0)))
+                           .withOnPerformScroll((layoutManager, position) -> layoutManager.scrollToPositionWithOffset(position, list.getHeight() - (conversation.shouldScrollToLastSeen() ? lastSeenScrollOffset : 0)))
                            .withOnScrollRequestComplete(afterScroll)
                            .submit();
     } else {
@@ -1351,13 +1346,14 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
           ((ConversationAdapter) list.getAdapter()).getSelectedItems().isEmpty())
       {
         multiselectItemDecoration.setFocusedItem(new MultiselectPart.Message(item.getConversationMessage()));
-        reactionsShade.setVisibility(View.VISIBLE);
         list.invalidateItemDecorations();
 
         isReacting = true;
+        reactionsShade.setVisibility(View.VISIBLE);
         list.setLayoutFrozen(true);
         listener.handleReaction(item.getConversationMessage(), new ReactionsToolbarListener(item.getConversationMessage()), () -> {
           isReacting = false;
+          reactionsShade.setVisibility(View.GONE);
           list.setLayoutFrozen(false);
           WindowUtil.setLightStatusBarFromTheme(requireActivity());
           clearFocusedItem();
@@ -1509,7 +1505,6 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
       if (getContext() == null) return;
 
       multiselectItemDecoration.setFocusedItem(multiselectPart);
-      reactionsShade.setVisibility(View.VISIBLE);
       ReactionsBottomSheetDialogFragment.create(messageId, isMms).show(requireFragmentManager(), null);
     }
 
@@ -1951,22 +1946,27 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
 
   private static final class TransitionListener implements Animator.AnimatorListener {
     private final ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
+
     TransitionListener(RecyclerView recyclerView) {
       animator.addUpdateListener(unused -> recyclerView.invalidate());
       animator.setDuration(100L);
     }
+
     @Override
     public void onAnimationStart(Animator animation) {
       animator.start();
     }
+
     @Override
     public void onAnimationEnd(Animator animation) {
       animator.end();
     }
+
     @Override
     public void onAnimationCancel(Animator animation) {
       // Do Nothing
     }
+
     @Override
     public void onAnimationRepeat(Animator animation) {
       // Do Nothing

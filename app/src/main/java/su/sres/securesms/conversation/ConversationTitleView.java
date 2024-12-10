@@ -108,7 +108,11 @@ public class ConversationTitleView extends RelativeLayout {
       this.avatar.setAvatar(glideRequests, recipient, false);
     }
 
-    badge.setBadgeFromRecipient(recipient);
+    if (recipient == null || recipient.isSelf()) {
+      badge.setBadgeFromRecipient(null);
+    } else {
+      badge.setBadgeFromRecipient(recipient);
+    }
 
     updateVerifiedSubtitleVisibility();
   }

@@ -1,9 +1,9 @@
 package su.sres.securesms.components.settings
 
 import androidx.annotation.CallSuper
-import androidx.annotation.DrawableRes
 import androidx.annotation.Px
 import androidx.annotation.StringRes
+import su.sres.securesms.components.settings.models.AsyncSwitch
 import su.sres.securesms.components.settings.models.Button
 import su.sres.securesms.components.settings.models.Space
 import su.sres.securesms.components.settings.models.Text
@@ -54,6 +54,17 @@ class DSLConfiguration {
     onSelected: (BooleanArray) -> Unit
   ) {
     val preference = MultiSelectListPreference(title, isEnabled, listItems, selected, onSelected)
+    children.add(preference)
+  }
+
+  fun asyncSwitchPref(
+    title: DSLSettingsText,
+    isEnabled: Boolean = true,
+    isChecked: Boolean,
+    isProcessing: Boolean,
+    onClick: () -> Unit
+  ) {
+    val preference = AsyncSwitch.Model(title, isEnabled, isChecked, isProcessing, onClick)
     children.add(preference)
   }
 

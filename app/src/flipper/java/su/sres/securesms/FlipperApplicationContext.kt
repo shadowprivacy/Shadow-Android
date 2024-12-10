@@ -1,25 +1,46 @@
-package su.sres.securesms;
+package su.sres.securesms
 
-import com.facebook.flipper.android.AndroidFlipperClient;
-import com.facebook.flipper.core.FlipperClient;
-import com.facebook.flipper.plugins.databases.DatabasesFlipperPlugin;
-import com.facebook.flipper.plugins.inspector.DescriptorMapping;
-import com.facebook.flipper.plugins.inspector.InspectorFlipperPlugin;
-import com.facebook.flipper.plugins.sharedpreferences.SharedPreferencesFlipperPlugin;
-import com.facebook.soloader.SoLoader;
+import com.facebook.soloader.SoLoader
+import com.facebook.flipper.android.AndroidFlipperClient
+import com.facebook.flipper.plugins.inspector.InspectorFlipperPlugin
+import com.facebook.flipper.plugins.inspector.DescriptorMapping
+import com.facebook.flipper.plugins.databases.DatabasesFlipperPlugin
+import org.thoughtcrime.securesms.database.FlipperSqlCipherAdapter
+import com.facebook.flipper.plugins.sharedpreferences.SharedPreferencesFlipperPlugin
+import leakcanary.LeakCanary
+import shark.AndroidReferenceMatchers
 
-public class FlipperApplicationContext extends ApplicationContext {
+class FlipperApplicationContext : ApplicationContext() {
+  override fun onCreate() {
+    super.onCreate()
+    SoLoader.init(this, false)
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
+    val client = AndroidFlipperClient.getInstance(this)
+    client.addPlugin(InspectorFlipperPlugin(this, DescriptorMapping.withDefaults()))
+    client.addPlugin(DatabasesFlipperPlugin(FlipperSqlCipherAdapter(this)))
+    client.addPlugin(SharedPreferencesFlipperPlugin(this))
+    client.start()
 
-        SoLoader.init(this, false);
-
-        FlipperClient client = AndroidFlipperClient.getInstance(this);
-        client.addPlugin(new InspectorFlipperPlugin(this, DescriptorMapping.withDefaults()));
-        client.addPlugin(new DatabasesFlipperPlugin(new FlipperSqlCipherAdapter(this)));
-        client.addPlugin(new SharedPreferencesFlipperPlugin(this));
-        client.start();
-    }
+    LeakCanary.config = LeakCanary.config.copy(
+      referenceMatchers = AndroidReferenceMatchers.appDefaults +
+        AndroidReferenceMatchers.instanceFieldLeak(
+          className = "android.service.media.MediaBrowserService\$ServiceBinder",
+          fieldName = "this\$0",
+          description = "Framework bug",
+          patternApplies = { true }
+        ) +
+        AndroidReferenceMatchers.instanceFieldLeak(
+          className = "androidx.media.MediaBrowserServiceCompat\$MediaBrowserServiceImplApi26\$MediaBrowserServiceApi26",
+          fieldName = "mBase",
+          description = "Framework bug",
+          patternApplies = { true }
+        ) +
+        AndroidReferenceMatchers.instanceFieldLeak(
+          className = "su.sres.securesms.components.voice.VoiceNotePlaybackService",
+          fieldName = "mApplication",
+          description = "Framework bug",
+          patternApplies = { true }
+        )
+    )
+  }
 }

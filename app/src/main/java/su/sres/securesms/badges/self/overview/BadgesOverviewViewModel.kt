@@ -37,26 +37,32 @@ class BadgesOverviewViewModel(
       state.copy(
         stage = if (state.stage == BadgesOverviewState.Stage.INIT) BadgesOverviewState.Stage.READY else state.stage,
         allUnlockedBadges = recipient.badges,
-        displayBadgesOnProfile = recipient.badges.firstOrNull()?.visible == true,
+        displayBadgesOnProfile = SignalStore.donationsValues().getDisplayBadgesOnProfile(),
         featuredBadge = recipient.featuredBadge
       )
     }
 
     disposables += Single.zip(
       subscriptionsRepository.getActiveSubscription(),
-      subscriptionsRepository.getSubscriptions(SignalStore.donationsValues().getSubscriptionCurrency())
+      subscriptionsRepository.getSubscriptions()
     ) { active, all ->
       if (!active.isActive && active.activeSubscription?.willCancelAtPeriodEnd() == true) {
         Optional.fromNullable<String>(all.firstOrNull { it.level == active.activeSubscription?.level }?.badge?.id)
       } else {
         Optional.absent()
       }
-    }.subscribeBy { badgeId ->
-      store.update { it.copy(fadedBadgeId = badgeId.orNull()) }
-    }
+    }.subscribeBy(
+      onSuccess = { badgeId ->
+        store.update { it.copy(fadedBadgeId = badgeId.orNull()) }
+      },
+      onError = { throwable ->
+        Log.w(TAG, "Could not retrieve data from server", throwable)
+      }
+    )
   }
 
   fun setDisplayBadgesOnProfile(displayBadgesOnProfile: Boolean) {
+    store.update { it.copy(stage = BadgesOverviewState.Stage.UPDATING_BADGE_DISPLAY_STATE) }
     disposables += badgeRepository.setVisibilityForAllBadges(displayBadgesOnProfile)
       .subscribe(
         {
@@ -81,5 +87,9 @@ class BadgesOverviewViewModel(
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
       return requireNotNull(modelClass.cast(BadgesOverviewViewModel(badgeRepository, subscriptionsRepository)))
     }
+  }
+
+  companion object {
+    private val TAG = Log.tag(BadgesOverviewViewModel::class.java)
   }
 }

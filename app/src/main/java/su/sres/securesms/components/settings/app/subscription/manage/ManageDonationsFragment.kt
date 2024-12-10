@@ -7,15 +7,18 @@ import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import su.sres.core.util.DimensionUnit
 import su.sres.securesms.R
+import su.sres.securesms.badges.models.BadgePreview
 import su.sres.securesms.components.settings.DSLConfiguration
 import su.sres.securesms.components.settings.DSLSettingsAdapter
 import su.sres.securesms.components.settings.DSLSettingsFragment
 import su.sres.securesms.components.settings.DSLSettingsIcon
 import su.sres.securesms.components.settings.DSLSettingsText
+import su.sres.securesms.components.settings.app.AppSettingsActivity
 import su.sres.securesms.components.settings.app.subscription.SubscriptionsRepository
 import su.sres.securesms.components.settings.configure
 import su.sres.securesms.components.settings.models.IndeterminateLoadingCircle
 import su.sres.securesms.dependencies.ApplicationDependencies
+import su.sres.securesms.help.HelpFragment
 import su.sres.securesms.subscription.Subscription
 import su.sres.securesms.util.LifecycleDisposable
 import java.util.concurrent.TimeUnit
@@ -60,6 +63,8 @@ class ManageDonationsFragment : DSLSettingsFragment() {
     ActiveSubscriptionPreference.register(adapter)
     IndeterminateLoadingCircle.register(adapter)
 
+    BadgePreview.register(adapter)
+
     viewModel.state.observe(viewLifecycleOwner) { state ->
       adapter.submitList(getConfiguration(state).toMappingModelList())
     }
@@ -75,6 +80,13 @@ class ManageDonationsFragment : DSLSettingsFragment() {
 
   private fun getConfiguration(state: ManageDonationsState): DSLConfiguration {
     return configure {
+      /* customPref(
+        BadgePreview.Model(
+          badge = state.featuredBadge
+        )
+      )
+      space(DimensionUnit.DP.toPixels(8f).toInt()) */
+
       sectionHeaderPref(
         title = DSLSettingsText.from(
           R.string.SubscribeFragment__signal_is_powered_by_people_like_you,
@@ -82,10 +94,12 @@ class ManageDonationsFragment : DSLSettingsFragment() {
         )
       )
 
+      space(DimensionUnit.DP.toPixels(32f).toInt())
+
       noPadTextPref(
         title = DSLSettingsText.from(
           R.string.ManageDonationsFragment__my_support,
-          DSLSettingsText.Title2BoldModifier
+          DSLSettingsText.Body1BoldModifier, DSLSettingsText.BoldModifier
         )
       )
 
@@ -94,7 +108,7 @@ class ManageDonationsFragment : DSLSettingsFragment() {
         if (activeSubscription.isActive) {
           val subscription: Subscription? = state.availableSubscriptions.firstOrNull { activeSubscription.activeSubscription.level == it.level }
           if (subscription != null) {
-            space(DimensionUnit.DP.toPixels(16f).toInt())
+            space(DimensionUnit.DP.toPixels(12f).toInt())
 
             customPref(
               ActiveSubscriptionPreference.Model(
@@ -102,7 +116,12 @@ class ManageDonationsFragment : DSLSettingsFragment() {
                 onAddBoostClick = {
                   findNavController().navigate(ManageDonationsFragmentDirections.actionManageDonationsFragmentToBoosts())
                 },
-                renewalTimestamp = TimeUnit.SECONDS.toMillis(activeSubscription.activeSubscription.endOfCurrentPeriod)
+                renewalTimestamp = TimeUnit.SECONDS.toMillis(activeSubscription.activeSubscription.endOfCurrentPeriod),
+                redemptionState = state.subscriptionRedemptionState,
+                onContactSupport = {
+                  requireActivity().finish()
+                  requireActivity().startActivity(AppSettingsActivity.help(requireContext(), HelpFragment.DONATION_INDEX))
+                }
               )
             )
 
@@ -120,6 +139,7 @@ class ManageDonationsFragment : DSLSettingsFragment() {
       clickPref(
         title = DSLSettingsText.from(R.string.ManageDonationsFragment__manage_subscription),
         icon = DSLSettingsIcon.from(R.drawable.ic_person_white_24dp),
+        isEnabled = state.subscriptionRedemptionState != ManageDonationsState.SubscriptionRedemptionState.IN_PROGRESS,
         onClick = {
           findNavController().navigate(ManageDonationsFragmentDirections.actionManageDonationsFragmentToSubscribeFragment())
         }

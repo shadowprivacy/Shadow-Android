@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
@@ -15,10 +16,14 @@ import su.sres.securesms.badges.BadgeRepository
 import su.sres.securesms.badges.models.Badge
 import su.sres.securesms.badges.models.LargeBadge
 import su.sres.securesms.components.FixedRoundedCornerBottomSheetDialogFragment
+import su.sres.securesms.components.settings.app.AppSettingsActivity
 import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.recipients.RecipientId
 import su.sres.securesms.util.BottomSheetUtil
+import su.sres.securesms.util.CommunicationActions
+import su.sres.securesms.util.FeatureFlags
 import su.sres.securesms.util.MappingAdapter
+import su.sres.securesms.util.PlayServicesUtil
 import su.sres.securesms.util.visible
 
 class ViewBadgeBottomSheetDialogFragment : FixedRoundedCornerBottomSheetDialogFragment() {
@@ -37,8 +42,25 @@ class ViewBadgeBottomSheetDialogFragment : FixedRoundedCornerBottomSheetDialogFr
     val pager: ViewPager2 = view.findViewById(R.id.pager)
     val tabs: TabLayout = view.findViewById(R.id.tab_layout)
     val action: MaterialButton = view.findViewById(R.id.action)
+    val noSupport: View = view.findViewById(R.id.no_support)
 
     if (getRecipientId() == Recipient.self().id) {
+      action.visible = false
+    }
+
+    @Suppress("CascadeIf")
+    if (PlayServicesUtil.getPlayServicesStatus(requireContext()) != PlayServicesUtil.PlayServicesStatus.SUCCESS) {
+      noSupport.visible = true
+      /* action.icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_open_20)
+      action.setText(R.string.preferences__donate_to_signal)
+      action.setOnClickListener {
+        CommunicationActions.openBrowserLink(requireContext(), getString(R.string.donate_url))
+      } */
+    } else if (FeatureFlags.donorBadges()) {
+      action.setOnClickListener {
+        startActivity(AppSettingsActivity.subscriptions(requireContext()))
+      }
+    } else {
       action.visible = false
     }
 
@@ -98,6 +120,11 @@ class ViewBadgeBottomSheetDialogFragment : FixedRoundedCornerBottomSheetDialogFr
       recipientId: RecipientId,
       startBadge: Badge? = null
     ) {
+
+      if (!FeatureFlags.displayDonorBadges()) {
+        return
+      }
+
       ViewBadgeBottomSheetDialogFragment().apply {
         arguments = Bundle().apply {
           putParcelable(ARG_START_BADGE, startBadge)

@@ -1,11 +1,11 @@
 package su.sres.securesms.components.settings.app.subscription.subscribe
 
-import su.sres.securesms.components.settings.app.subscription.models.CurrencySelection
 import su.sres.securesms.subscription.Subscription
 import su.sres.signalservice.api.subscriptions.ActiveSubscription
+import java.util.Currency
 
 data class SubscribeState(
-  val currencySelection: CurrencySelection = CurrencySelection("USD"),
+  val currencySelection: Currency,
   val subscriptions: List<Subscription> = listOf(),
   val selectedSubscription: Subscription? = null,
   val activeSubscription: ActiveSubscription? = null,
@@ -18,6 +18,7 @@ data class SubscribeState(
     READY,
     TOKEN_REQUEST,
     PAYMENT_PIPELINE,
-    CANCELLING
+    CANCELLING,
+    FAILURE
   }
 }

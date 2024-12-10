@@ -146,6 +146,21 @@ public final class SpanUtil {
                           ContextCompat.getColor(context, R.color.signal_accent_primary));
   }
 
+  public static CharSequence readMore(@NonNull Context context,
+                                      @ColorInt int color,
+                                      @NonNull View.OnClickListener onLearnMoreClicked)
+  {
+    String readMore = context.getString(R.string.SpanUtil__read_more);
+    return clickSubstring(readMore, readMore, onLearnMoreClicked, color);
+  }
+
+  public static CharSequence clickable(@NonNull CharSequence text,
+                                       @ColorInt int color,
+                                       @NonNull View.OnClickListener onLearnMoreClicked)
+  {
+    return clickSubstring(text, text, onLearnMoreClicked, color);
+  }
+
   /**
    * Takes two resources:
    * - one resource that has a single string placeholder

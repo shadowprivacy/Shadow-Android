@@ -165,6 +165,7 @@ public final class JobManagerFactories {
       put(UpdateApkJob.KEY, new UpdateApkJob.Factory());
       put(SubscriptionKeepAliveJob.KEY, new SubscriptionKeepAliveJob.Factory());
       put(SubscriptionReceiptRequestResponseJob.KEY, new SubscriptionReceiptRequestResponseJob.Factory());
+      put(BoostReceiptRequestResponseJob.KEY, new BoostReceiptRequestResponseJob.Factory());
       put(DonationReceiptRedemptionJob.KEY, new DonationReceiptRedemptionJob.Factory());
 
       // Migrations

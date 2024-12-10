@@ -13,8 +13,6 @@ import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.webrtc.locks.LockManager;
 
-import java.util.List;
-
 /**
  * Handles action for a connected/ongoing call. At this point it's mostly responding
  * to user actions (local and remote) on video/mic and adjusting accordingly.
@@ -85,15 +83,6 @@ public class ConnectedCallActionProcessor extends DeviceAwareActionProcessor {
   @Override
   protected @NonNull WebRtcServiceState handleScreenSharingEnable(@NonNull WebRtcServiceState currentState, boolean enable) {
     return activeCallDelegate.handleScreenSharingEnable(currentState, enable);
-  }
-
-  @Override
-  protected @NonNull WebRtcServiceState handleSendIceCandidates(@NonNull WebRtcServiceState currentState,
-                                                                @NonNull WebRtcData.CallMetadata callMetadata,
-                                                                boolean broadcast,
-                                                                @NonNull List<byte[]> iceCandidates)
-  {
-    return activeCallDelegate.handleSendIceCandidates(currentState, callMetadata, broadcast, iceCandidates);
   }
 
   @Override

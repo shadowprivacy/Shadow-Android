@@ -9,8 +9,8 @@ import androidx.annotation.Nullable;
 
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.signalservice.api.push.DistributionId;
-import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.SqlUtil;
 
@@ -21,7 +21,7 @@ import java.io.IOException;
 
 /**
  * Stores all of the sender keys -- both the ones we create, and the ones we're told about.
- *
+ * <p>
  * When working with SenderKeys, keep this in mind: they're not *really* keys. They're sessions.
  * The name is largely historical, and there's too much momentum to change it.
  */
@@ -53,14 +53,31 @@ public class SenderKeyDatabase extends Database {
   public void store(@NonNull SignalProtocolAddress address, @NonNull DistributionId distributionId, @NonNull SenderKeyRecord record) {
     SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
 
-    ContentValues values = new ContentValues();
-    values.put(ADDRESS, address.getName());
-    values.put(DEVICE, address.getDeviceId());
-    values.put(DISTRIBUTION_ID, distributionId.toString());
-    values.put(RECORD, record.serialize());
-    values.put(CREATED_AT, System.currentTimeMillis());
+    db.beginTransaction();
+    try {
+      ContentValues updateValues = new ContentValues();
+      updateValues.put(RECORD, record.serialize());
 
-    db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+      String   query       = ADDRESS + " = ? AND " + DEVICE + " = ? AND " + DISTRIBUTION_ID + " = ?";
+      String[] args        = SqlUtil.buildArgs(address.getName(), address.getDeviceId(), distributionId);
+      int      updateCount = db.update(TABLE_NAME, updateValues, query, args);
+
+      if (updateCount <= 0) {
+        Log.d(TAG, "New sender key " + distributionId + " from " + address);
+
+        ContentValues insertValues = new ContentValues();
+        insertValues.put(ADDRESS, address.getName());
+        insertValues.put(DEVICE, address.getDeviceId());
+        insertValues.put(DISTRIBUTION_ID, distributionId.toString());
+        insertValues.put(RECORD, record.serialize());
+        insertValues.put(CREATED_AT, System.currentTimeMillis());
+        db.insertWithOnConflict(TABLE_NAME, null, insertValues, SQLiteDatabase.CONFLICT_REPLACE);
+      }
+
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+    }
   }
 
   public @Nullable SenderKeyRecord load(@NonNull SignalProtocolAddress address, @NonNull DistributionId distributionId) {
@@ -109,6 +126,17 @@ public class SenderKeyDatabase extends Database {
     String[]       args  = SqlUtil.buildArgs(addressName, distributionId);
 
     db.delete(TABLE_NAME, query, args);
+  }
+
+  /**
+   * Get metadata for all sender keys created by the local user. Used for debugging.
+   */
+  public Cursor getAllCreatedBySelf() {
+    SQLiteDatabase db    = databaseHelper.getSignalReadableDatabase();
+    String         query = ADDRESS + " = ?";
+    String[]       args  = SqlUtil.buildArgs(Recipient.self().requireAci());
+
+    return db.query(TABLE_NAME, new String[]{ ID, DISTRIBUTION_ID, CREATED_AT }, query, args, null, null, CREATED_AT + " DESC");
   }
 
   /**

@@ -190,8 +190,13 @@ public final class EnterUserLoginFragment extends LoggingFragment implements Reg
                                     } else if (processor.rateLimit()) {
                                       Log.i(TAG, "Unable to request verification code due to rate limit");
                                       Toast.makeText(register.getContext(), R.string.RegistrationActivity_rate_limited_to_service, Toast.LENGTH_LONG).show();
+                                    } else if (processor.isInvalidLogin()) {
+                                      Log.w(TAG, "Invalid user login", processor.getError());
+                                      Dialogs.showAlertDialog(requireContext(),
+                                                              getString(R.string.RegistrationActivity_invalid_user_login),
+                                                              String.format(getString(R.string.RegistrationActivity_the_login_you_specified_s_is_invalid), viewModel.getUserLogin()));
                                     } else {
-                                      Log.w(TAG, "Unable to request verification code", processor.getError());
+                                      Log.i(TAG, "Unknown error during verification code request", processor.getError());
                                       Toast.makeText(register.getContext(), R.string.RegistrationActivity_unable_to_connect_to_service, Toast.LENGTH_LONG).show();
                                     }
 

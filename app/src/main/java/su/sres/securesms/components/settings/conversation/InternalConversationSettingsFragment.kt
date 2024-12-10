@@ -18,14 +18,17 @@ import su.sres.securesms.components.settings.configure
 import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.groups.GroupId
+import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.recipients.Recipient
 import su.sres.securesms.recipients.RecipientForeverObserver
 import su.sres.securesms.recipients.RecipientId
+import su.sres.securesms.subscription.Subscriber
 import su.sres.securesms.util.Base64
 import su.sres.securesms.util.Hex
 import su.sres.securesms.util.SpanUtil
 import su.sres.securesms.util.Util
 import su.sres.securesms.util.livedata.Store
+import su.sres.signalservice.api.push.ACI
 import java.util.Objects
 import java.util.UUID
 
@@ -60,7 +63,7 @@ class InternalConversationSettingsFragment : DSLSettingsFragment(
       )
 
       if (!recipient.isGroup) {
-        val uuid = recipient.uuid.transform(UUID::toString).or("null")
+        val uuid = recipient.aci.transform(ACI::toString).or("null")
         longClickPref(
           title = DSLSettingsText.from("UUID"),
           summary = DSLSettingsText.from(uuid),
@@ -145,14 +148,37 @@ class InternalConversationSettingsFragment : DSLSettingsFragment(
               .setTitle("Are you sure?")
               .setNegativeButton(android.R.string.cancel) { d, _ -> d.dismiss() }
               .setPositiveButton(android.R.string.ok) { _, _ ->
-                if (recipient.hasUuid()) {
-                  DatabaseFactory.getSessionDatabase(context).deleteAllFor(recipient.requireUuid().toString())
+                if (recipient.hasAci()) {
+                  DatabaseFactory.getSessionDatabase(context).deleteAllFor(recipient.requireAci().toString())
                 }
                 if (recipient.hasE164()) {
                   DatabaseFactory.getSessionDatabase(context).deleteAllFor(recipient.requireE164())
                 }
               }
               .show()
+          }
+        )
+      }
+
+      if (recipient.isSelf) {
+        sectionHeaderPref(DSLSettingsText.from("Donations"))
+
+        val subscriber: Subscriber? = SignalStore.donationsValues().getSubscriber()
+        val summary = if (subscriber != null) {
+          """currency code: ${subscriber.currencyCode}
+            |subscriber id: ${subscriber.subscriberId.serialize()}
+          """.trimMargin()
+        } else {
+          "None"
+        }
+
+        longClickPref(
+          title = DSLSettingsText.from("Subscriber ID"),
+          summary = DSLSettingsText.from(summary),
+          onLongClick = {
+            if (subscriber != null) {
+              copyToClipboard(subscriber.subscriberId.serialize())
+            }
           }
         )
       }

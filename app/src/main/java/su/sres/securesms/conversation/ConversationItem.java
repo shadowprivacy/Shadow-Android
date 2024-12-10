@@ -44,6 +44,7 @@ import android.util.AttributeSet;
 import su.sres.securesms.BindableConversationItem;
 import su.sres.securesms.MediaPreviewActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.badges.BadgeImageView;
 import su.sres.securesms.components.LinkPreviewView;
 import su.sres.securesms.components.Outliner;
 import su.sres.securesms.components.PlaybackSpeedToggleTextView;
@@ -182,7 +183,8 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   @Nullable private   View                       groupSenderHolder;
   private             AvatarImageView            contactPhoto;
   private             AlertView                  alertView;
-  protected           ReactionsConversationView  reactionsView;
+  protected ReactionsConversationView reactionsView;
+  private   BadgeImageView            badgeImageView;
 
   private @NonNull  Set<MultiselectPart>                    batchSelected = new HashSet<>();
   private @NonNull  Outliner                                outliner      = new Outliner();
@@ -264,6 +266,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     this.reply              = findViewById(R.id.reply_icon_wrapper);
     this.replyIcon          = findViewById(R.id.reply_icon);
     this.reactionsView      = findViewById(R.id.reactions_view);
+    this.badgeImageView          =                    findViewById(R.id.badge);
 
     setOnClickListener(new ClickListener(null));
 
@@ -326,6 +329,10 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     setMessageSpacing(context, messageRecord, previousMessageRecord, nextMessageRecord, groupThread);
     setReactions(messageRecord);
     setFooter(messageRecord, nextMessageRecord, locale, groupThread, hasWallpaper);
+
+    if (audioViewStub.resolved()) {
+      audioViewStub.get().setOnLongClickListener(passthroughClickListener);
+    }
   }
 
   @Override
@@ -1243,6 +1250,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     });
 
     contactPhoto.setAvatar(glideRequests, recipient, false);
+    badgeImageView.setBadgeFromRecipient(recipient, glideRequests);
   }
 
   private void linkifyMessageBody(@NonNull Spannable messageBody,
@@ -1480,8 +1488,10 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
       if (!next.isPresent() || next.get().isUpdate() || !current.getRecipient().equals(next.get().getRecipient())) {
         contactPhoto.setVisibility(VISIBLE);
+        badgeImageView.setVisibility(VISIBLE);
       } else {
         contactPhoto.setVisibility(GONE);
+        badgeImageView.setVisibility(GONE);
       }
     } else {
       if (groupSenderHolder != null) {
@@ -1490,6 +1500,10 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
       if (contactPhotoHolder != null) {
         contactPhotoHolder.setVisibility(GONE);
+      }
+
+      if (badgeImageView != null) {
+        badgeImageView.setVisibility(GONE);
       }
     }
   }

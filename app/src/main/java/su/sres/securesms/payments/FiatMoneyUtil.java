@@ -60,12 +60,19 @@ public final class FiatMoneyUtil {
       formatter.setMinimumFractionDigits(amount.getCurrency().getDefaultFractionDigits());
     }
 
+    if (options.trimZerosAfterDecimal) {
+      formatter.setMinimumFractionDigits(0);
+      formatter.setMaximumFractionDigits(amount.getCurrency().getDefaultFractionDigits());
+    }
+
     String formattedAmount = formatter.format(amount.getAmount());
+
     if (amount.getTimestamp() > 0 && options.displayTime) {
       return resources.getString(R.string.CurrencyAmountFormatter_s_at_s,
                                  formattedAmount,
                                  DateUtils.getTimeString(ApplicationDependencies.getApplication(), Locale.getDefault(), amount.getTimestamp()));
     }
+
     return formattedAmount;
   }
 
@@ -106,8 +113,9 @@ public final class FiatMoneyUtil {
   }
 
   public static class FormatOptions {
-    private boolean displayTime = true;
-    private boolean withSymbol  = true;
+    private boolean displayTime           = true;
+    private boolean withSymbol            = true;
+    private boolean trimZerosAfterDecimal = false;
 
     private FormatOptions() {
     }
@@ -119,6 +127,11 @@ public final class FiatMoneyUtil {
 
     public @NonNull FormatOptions numberOnly() {
       this.withSymbol = false;
+      return this;
+    }
+
+    public @NonNull FormatOptions trimZerosAfterDecimal() {
+      this.trimZerosAfterDecimal = true;
       return this;
     }
   }

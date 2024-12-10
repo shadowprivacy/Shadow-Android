@@ -13,7 +13,9 @@ import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.InvalidMessageException;
 import org.whispersystems.libsignal.logging.Log;
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.messages.SignalServiceAttachmentStream;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.push.SignalServiceProtos;
@@ -32,7 +34,7 @@ public class DeviceContactsInputStream extends ChunkedInputStream {
 
   public DeviceContact read() throws IOException {
     long   detailsLength     = readRawVarint32();
-    byte[] detailsSerialized = new byte[(int)detailsLength];
+    byte[] detailsSerialized = new byte[(int) detailsLength];
     Util.readFully(in, detailsSerialized);
 
     SignalServiceProtos.ContactDetails details = SignalServiceProtos.ContactDetails.parseFrom(detailsSerialized);
@@ -41,7 +43,7 @@ public class DeviceContactsInputStream extends ChunkedInputStream {
       throw new IOException("Missing contact address!");
     }
 
-    SignalServiceAddress                    address       = new SignalServiceAddress(UuidUtil.parseOrThrow(details.getUuid()), details.getNumber());
+    SignalServiceAddress                    address       = new SignalServiceAddress(ACI.parseOrThrow(details.getUuid()), details.getNumber());
     Optional<String>                        name          = Optional.fromNullable(details.getName());
     Optional<SignalServiceAttachmentStream> avatar        = Optional.absent();
     Optional<String>                        color         = details.hasColor() ? Optional.of(details.getColor()) : Optional.<String>absent();
@@ -66,17 +68,21 @@ public class DeviceContactsInputStream extends ChunkedInputStream {
           throw new InvalidMessageException("Missing Verified address!");
         }
 
-        IdentityKey          identityKey = new IdentityKey(details.getVerified().getIdentityKey().toByteArray(), 0);
-        SignalServiceAddress destination = new SignalServiceAddress(UuidUtil.parseOrThrow(details.getVerified().getDestinationUuid()),
-                details.getVerified().getDestinationE164());
+        IdentityKey identityKey = new IdentityKey(details.getVerified().getIdentityKey().toByteArray(), 0);
+        SignalServiceAddress destination = new SignalServiceAddress(ACI.parseOrThrow(details.getVerified().getDestinationUuid()),
+                                                                    details.getVerified().getDestinationE164());
 
         VerifiedMessage.VerifiedState state;
 
         switch (details.getVerified().getState()) {
-          case VERIFIED:  state = VerifiedMessage.VerifiedState.VERIFIED;   break;
-          case UNVERIFIED:state = VerifiedMessage.VerifiedState.UNVERIFIED; break;
-          case DEFAULT:   state = VerifiedMessage.VerifiedState.DEFAULT;    break;
-          default:        throw new InvalidMessageException("Unknown state: " + details.getVerified().getState());
+          case VERIFIED:
+            state = VerifiedMessage.VerifiedState.VERIFIED; break;
+          case UNVERIFIED:
+            state = VerifiedMessage.VerifiedState.UNVERIFIED; break;
+          case DEFAULT:
+            state = VerifiedMessage.VerifiedState.DEFAULT; break;
+          default:
+            throw new InvalidMessageException("Unknown state: " + details.getVerified().getState());
         }
 
         verified = Optional.of(new VerifiedMessage(destination, identityKey, state, System.currentTimeMillis()));

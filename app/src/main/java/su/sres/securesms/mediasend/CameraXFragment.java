@@ -406,6 +406,7 @@ public class CameraXFragment extends LoggingFragment implements CameraFragment {
           try {
             return CameraXUtil.toJpeg(image, camera.getCameraLensFacing() == CameraSelector.LENS_FACING_FRONT);
           } catch (IOException e) {
+            Log.w(TAG, "Failed to encode captured image.", e);
             return null;
           } finally {
             image.close();
@@ -424,6 +425,7 @@ public class CameraXFragment extends LoggingFragment implements CameraFragment {
 
       @Override
       public void onError(ImageCaptureException exception) {
+        Log.w(TAG, "Failed to capture image", exception);
         flashHelper.endFlash();
         controller.onCameraError();
       }

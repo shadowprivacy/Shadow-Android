@@ -75,7 +75,7 @@ public class SmsReceiveJob extends BaseJob {
   @Override
   public void onRun() throws MigrationPendingException, RetryLaterException {
     Optional<IncomingTextMessage> message = assembleMessageFragments(pdus, subscriptionId);
-    if (TextSecurePreferences.getLocalUuid(context) == null && TextSecurePreferences.getLocalNumber(context) == null) {
+    if (TextSecurePreferences.getLocalAci(context) == null && TextSecurePreferences.getLocalNumber(context) == null) {
       Log.i(TAG, "Received an SMS before we're registered...");
 
       if (message.isPresent()) {

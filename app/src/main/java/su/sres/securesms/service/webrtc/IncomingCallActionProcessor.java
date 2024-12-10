@@ -28,9 +28,6 @@ import org.signal.ringrtc.CallId;
 import org.signal.ringrtc.CallManager;
 import org.webrtc.PeerConnection;
 
-import su.sres.signalservice.api.messages.calls.AnswerMessage;
-import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
-
 import java.util.List;
 import java.util.Objects;
 
@@ -57,23 +54,6 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
   @Override
   protected @NonNull WebRtcServiceState handleIsInCallQuery(@NonNull WebRtcServiceState currentState, @Nullable ResultReceiver resultReceiver) {
     return activeCallDelegate.handleIsInCallQuery(currentState, resultReceiver);
-  }
-
-  @Override
-  protected @NonNull WebRtcServiceState handleSendAnswer(@NonNull WebRtcServiceState currentState,
-                                                         @NonNull WebRtcData.CallMetadata callMetadata,
-                                                         @NonNull WebRtcData.AnswerMetadata answerMetadata,
-                                                         boolean broadcast)
-  {
-    Log.i(TAG, "handleSendAnswer(): id: " + callMetadata.getCallId().format(callMetadata.getRemoteDevice()));
-
-    AnswerMessage            answerMessage       = new AnswerMessage(callMetadata.getCallId().longValue(), answerMetadata.getSdp(), answerMetadata.getOpaque());
-    Integer                  destinationDeviceId = broadcast ? null : callMetadata.getRemoteDevice();
-    SignalServiceCallMessage callMessage         = SignalServiceCallMessage.forAnswer(answerMessage, true, destinationDeviceId);
-
-    webRtcInteractor.sendCallMessage(callMetadata.getRemotePeer(), callMessage);
-
-    return currentState;
   }
 
   @Override
@@ -227,15 +207,6 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
   @Override
   protected @NonNull WebRtcServiceState handleCallConcluded(@NonNull WebRtcServiceState currentState, @Nullable RemotePeer remotePeer) {
     return activeCallDelegate.handleCallConcluded(currentState, remotePeer);
-  }
-
-  @Override
-  protected @NonNull WebRtcServiceState handleSendIceCandidates(@NonNull WebRtcServiceState currentState,
-                                                                @NonNull WebRtcData.CallMetadata callMetadata,
-                                                                boolean broadcast,
-                                                                @NonNull List<byte[]> iceCandidates)
-  {
-    return activeCallDelegate.handleSendIceCandidates(currentState, callMetadata, broadcast, iceCandidates);
   }
 
   @Override

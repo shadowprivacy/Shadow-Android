@@ -285,7 +285,7 @@ public final class ProfileUtil {
     ProfileKey                  profileKey     = ProfileKeyUtil.getSelfProfileKey();
     SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
 
-    String avatarPath = accountManager.setVersionedProfile(Recipient.self().getUuid().get(),
+    String avatarPath = accountManager.setVersionedProfile(Recipient.self().requireAci(),
                                                            profileKey,
                                                            profileName.serialize(),
                                                            about,
@@ -294,6 +294,7 @@ public final class ProfileUtil {
                                                            avatar,
                                                            badgeIds).orNull();
 
+    SignalStore.registrationValues().markHasUploadedProfile();
     DatabaseFactory.getRecipientDatabase(context).setProfileAvatar(Recipient.self().getId(), avatarPath);
   }
 
@@ -322,8 +323,8 @@ public final class ProfileUtil {
 
   private static @NonNull SignalServiceAddress toSignalServiceAddress(@NonNull Context context, @NonNull Recipient recipient) throws IOException {
     if (recipient.getRegistered() == RecipientDatabase.RegisteredState.NOT_REGISTERED) {
-      if (recipient.hasUuid()) {
-        return new SignalServiceAddress(recipient.requireUuid(), recipient.getE164().orNull());
+      if (recipient.hasAci()) {
+        return new SignalServiceAddress(recipient.requireAci(), recipient.getE164().orNull());
       } else {
         throw new IOException(recipient.getId() + " not registered!");
       }

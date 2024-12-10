@@ -14,6 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import su.sres.securesms.R;
+import su.sres.securesms.badges.BadgeImageView;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 
@@ -24,7 +25,10 @@ public class ConversationTypingView extends ConstraintLayout {
   private AvatarImageView     avatar1;
   private AvatarImageView     avatar2;
   private AvatarImageView     avatar3;
-  private View                bubble;
+  private BadgeImageView      badge1;
+  private BadgeImageView badge2;
+  private BadgeImageView badge3;
+  private View           bubble;
   private TypingIndicatorView indicator;
   private TextView            typistCount;
 
@@ -39,6 +43,9 @@ public class ConversationTypingView extends ConstraintLayout {
     avatar1     = findViewById(R.id.typing_avatar_1);
     avatar2     = findViewById(R.id.typing_avatar_2);
     avatar3     = findViewById(R.id.typing_avatar_3);
+    badge1      = findViewById(R.id.typing_badge_1);
+    badge2      = findViewById(R.id.typing_badge_2);
+    badge3      = findViewById(R.id.typing_badge_3);
     typistCount = findViewById(R.id.typing_count);
     bubble      = findViewById(R.id.typing_bubble);
     indicator   = findViewById(R.id.typing_indicator);
@@ -53,6 +60,9 @@ public class ConversationTypingView extends ConstraintLayout {
     avatar1.setVisibility(GONE);
     avatar2.setVisibility(GONE);
     avatar3.setVisibility(GONE);
+    badge1.setVisibility(GONE);
+    badge2.setVisibility(GONE);
+    badge3.setVisibility(GONE);
     typistCount.setVisibility(GONE);
 
     if (isGroupThread) {
@@ -73,15 +83,21 @@ public class ConversationTypingView extends ConstraintLayout {
   private void presentGroupThreadAvatars(@NonNull GlideRequests glideRequests, @NonNull List<Recipient> typists) {
     avatar1.setAvatar(glideRequests, typists.get(0), typists.size() == 1);
     avatar1.setVisibility(VISIBLE);
+    badge1.setBadgeFromRecipient(typists.get(0), glideRequests);
+    badge1.setVisibility(VISIBLE);
 
     if (typists.size() > 1) {
       avatar2.setAvatar(glideRequests, typists.get(1), false);
       avatar2.setVisibility(VISIBLE);
+      badge2.setBadgeFromRecipient(typists.get(1), glideRequests);
+      badge2.setVisibility(VISIBLE);
     }
 
     if (typists.size() == 3) {
       avatar3.setAvatar(glideRequests, typists.get(2), false);
       avatar3.setVisibility(VISIBLE);
+      badge3.setBadgeFromRecipient(typists.get(2), glideRequests);
+      badge3.setVisibility(VISIBLE);
     }
 
     if (typists.size() > 3) {

@@ -1,5 +1,8 @@
 package su.sres.securesms.components.settings.app.subscription.boost
 
+import android.animation.Animator
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.text.Editable
 import android.text.Spanned
 import android.text.TextWatcher
@@ -7,7 +10,10 @@ import android.text.method.DigitsKeyListener
 import android.view.View
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.widget.AppCompatEditText
-import androidx.core.widget.addTextChangedListener
+import androidx.core.animation.doOnEnd
+import androidx.core.text.isDigitsOnly
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import com.google.android.material.button.MaterialButton
 import su.sres.core.util.money.FiatMoney
 import su.sres.securesms.R
@@ -19,6 +25,7 @@ import su.sres.securesms.util.MappingAdapter
 import su.sres.securesms.util.MappingViewHolder
 import su.sres.securesms.util.ViewUtil
 import java.lang.Integer.min
+import java.text.DecimalFormatSymbols
 import java.util.Currency
 import java.util.Locale
 import java.util.regex.Pattern
@@ -28,7 +35,6 @@ import java.util.regex.Pattern
  * can unlock a corresponding badge for a time determined by the server.
  */
 data class Boost(
-  val badge: Badge,
   val price: FiatMoney
 ) {
 
@@ -45,6 +51,45 @@ data class Boost(
     }
   }
 
+  class LoadingModel : PreferenceModel<LoadingModel>() {
+    override fun areItemsTheSame(newItem: LoadingModel): Boolean = true
+  }
+
+  class LoadingViewHolder(itemView: View) : MappingViewHolder<LoadingModel>(itemView), DefaultLifecycleObserver {
+
+    private val animator: Animator = AnimatorSet().apply {
+      val fadeTo25Animator = ObjectAnimator.ofFloat(itemView, "alpha", 0.8f, 0.25f).apply {
+        duration = 1000L
+      }
+
+      val fadeTo80Animator = ObjectAnimator.ofFloat(itemView, "alpha", 0.25f, 0.8f).apply {
+        duration = 300L
+      }
+
+      playSequentially(fadeTo25Animator, fadeTo80Animator)
+      doOnEnd { start() }
+    }
+
+    init {
+      lifecycle.addObserver(this)
+    }
+
+    override fun bind(model: LoadingModel) {
+    }
+
+    override fun onResume(owner: LifecycleOwner) {
+      if (animator.isStarted) {
+        animator.resume()
+      } else {
+        animator.start()
+      }
+    }
+
+    override fun onDestroy(owner: LifecycleOwner) {
+      animator.pause()
+    }
+  }
+
   /**
    * A widget that allows a user to select from six different amounts, or enter a custom amount.
    */
@@ -53,7 +98,7 @@ data class Boost(
     val selectedBoost: Boost?,
     val currency: Currency,
     override val isEnabled: Boolean,
-    val onBoostClick: (Boost) -> Unit,
+    val onBoostClick: (View, Boost) -> Unit,
     val isCustomAmountFocused: Boolean,
     val onCustomAmountChanged: (String) -> Unit,
     val onCustomAmountFocusChanged: (Boolean) -> Unit,
@@ -93,10 +138,13 @@ data class Boost(
         button.text = FiatMoneyUtil.format(
           context.resources,
           boost.price,
-          FiatMoneyUtil.formatOptions()
+          FiatMoneyUtil
+            .formatOptions()
+            .numberOnly()
+            .trimZerosAfterDecimal()
         )
         button.setOnClickListener {
-          model.onBoostClick(boost)
+          model.onBoostClick(it, boost)
           custom.clearFocus()
         }
       }
@@ -120,6 +168,9 @@ data class Boost(
 
       if (model.isCustomAmountFocused && !custom.hasFocus()) {
         ViewUtil.focusAndShowKeyboard(custom)
+      } else if (!model.isCustomAmountFocused && custom.hasFocus()) {
+        ViewUtil.hideKeyboard(context, custom)
+        custom.clearFocus()
       }
     }
   }
@@ -134,11 +185,12 @@ data class Boost(
   }
 
   @VisibleForTesting
-  class MoneyFilter(val currency: Currency, private val onCustomAmountChanged: (String) -> Unit = {}) : DigitsKeyListener(), TextWatcher {
+  class MoneyFilter(val currency: Currency, private val onCustomAmountChanged: (String) -> Unit = {}) : DigitsKeyListener(false, true), TextWatcher {
 
+    val separator = DecimalFormatSymbols.getInstance().decimalSeparator
     val separatorCount = min(1, currency.defaultFractionDigits)
-    val prefix: String = "${currency.getSymbol(Locale.getDefault())} "
-    val pattern: Pattern = "[0-9]*([.,]){0,$separatorCount}[0-9]{0,${currency.defaultFractionDigits}}".toPattern()
+    val prefix: String = currency.getSymbol(Locale.getDefault())
+    val pattern: Pattern = "[0-9]*($separator){0,$separatorCount}[0-9]{0,${currency.defaultFractionDigits}}".toPattern()
 
     override fun filter(
       source: CharSequence,
@@ -151,6 +203,11 @@ data class Boost(
 
       val result = dest.subSequence(0, dstart).toString() + source.toString() + dest.subSequence(dend, dest.length)
       val resultWithoutCurrencyPrefix = result.removePrefix(prefix)
+
+      if (result.length == 1 && !result.isDigitsOnly() && result != separator.toString()) {
+        return dest.subSequence(dstart, dend)
+      }
+
       val matcher = pattern.matcher(resultWithoutCurrencyPrefix)
 
       if (!matcher.matches()) {
@@ -182,6 +239,7 @@ data class Boost(
     fun register(adapter: MappingAdapter) {
       adapter.registerFactory(SelectionModel::class.java, MappingAdapter.LayoutFactory({ SelectionViewHolder(it) }, R.layout.boost_preference))
       adapter.registerFactory(HeadingModel::class.java, MappingAdapter.LayoutFactory({ HeadingViewHolder(it) }, R.layout.boost_preview_preference))
+      adapter.registerFactory(LoadingModel::class.java, MappingAdapter.LayoutFactory({ LoadingViewHolder(it) }, R.layout.boost_loading_preference))
     }
   }
 }

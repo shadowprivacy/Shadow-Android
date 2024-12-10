@@ -47,6 +47,7 @@ import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
 import su.sres.securesms.util.concurrent.ListenableFuture;
 import su.sres.securesms.util.livedata.LiveDataUtil;
+import su.sres.signalservice.api.push.ACI;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -54,7 +55,6 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public final class ConversationUpdateItem extends FrameLayout
@@ -344,11 +344,11 @@ public final class ConversationUpdateItem extends FrameLayout
     } else if (conversationMessage.getMessageRecord().isGroupCall()) {
 
       UpdateDescription updateDescription = MessageRecord.getGroupCallUpdateDescription(getContext(), conversationMessage.getMessageRecord().getBody(), true);
-      Collection<UUID>  uuids             = updateDescription.getMentioned();
+      Collection<ACI>   acis              = updateDescription.getMentioned();
 
       int text = 0;
-      if (Util.hasItems(uuids)) {
-        if (uuids.contains(TextSecurePreferences.getLocalUuid(getContext()))) {
+      if (Util.hasItems(acis)) {
+        if (acis.contains(TextSecurePreferences.getLocalAci(getContext()))) {
           text = R.string.ConversationUpdateItem_return_to_call;
         } else if (GroupCallUpdateDetailsUtil.parse(conversationMessage.getMessageRecord().getBody()).getIsCallFull()) {
           text = R.string.ConversationUpdateItem_call_is_full;
@@ -494,11 +494,11 @@ public final class ConversationUpdateItem extends FrameLayout
   }
 
   private static boolean isSameType(@NonNull MessageRecord current, @NonNull MessageRecord candidate) {
-    return (current.isGroupUpdate()           && candidate.isGroupUpdate())           ||
-           (current.isProfileChange()         && candidate.isProfileChange())         ||
-           (current.isGroupCall()             && candidate.isGroupCall())             ||
+    return (current.isGroupUpdate() && candidate.isGroupUpdate()) ||
+           (current.isProfileChange() && candidate.isProfileChange()) ||
+           (current.isGroupCall() && candidate.isGroupCall()) ||
            (current.isExpirationTimerUpdate() && candidate.isExpirationTimerUpdate()) ||
-           (current.isChangeLogin()          && candidate.isChangeLogin());
+           (current.isChangeLogin() && candidate.isChangeLogin());
   }
 
   @Override

@@ -23,8 +23,11 @@ import su.sres.securesms.jobs.RefreshOwnProfileJob
 import su.sres.securesms.jobs.RemoteConfigRefreshJob
 import su.sres.securesms.jobs.RotateProfileKeyJob
 import su.sres.securesms.jobs.StorageForcePushJob
+import su.sres.securesms.jobs.SubscriptionReceiptRequestResponseJob
+import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.payments.DataExportUtil
 import su.sres.securesms.util.ConversationUtil
+import su.sres.securesms.util.FeatureFlags
 import su.sres.securesms.util.concurrent.SimpleTask
 
 class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__internal_preferences) {
@@ -262,6 +265,17 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
           clearAllLocalMetricsState()
         }
       )
+
+      if (FeatureFlags.donorBadges() && SignalStore.donationsValues().getSubscriber() != null) {
+        sectionHeaderPref(R.string.preferences__internal_badges)
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__internal_badges_enqueue_redemption),
+          onClick = {
+            enqueueSubscriptionRedemption()
+          }
+        )
+      }
     }
   }
 
@@ -343,5 +357,9 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
   private fun clearAllLocalMetricsState() {
     LocalMetricsDatabase.getInstance(ApplicationDependencies.getApplication()).clear()
     Toast.makeText(context, "Cleared all local metrics state.", Toast.LENGTH_SHORT).show()
+  }
+
+  private fun enqueueSubscriptionRedemption() {
+    SubscriptionReceiptRequestResponseJob.createSubscriptionContinuationJobChain().enqueue()
   }
 }

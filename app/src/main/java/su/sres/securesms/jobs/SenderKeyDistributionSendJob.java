@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.crypto.storage.SignalSenderKeyStore;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -32,7 +31,7 @@ import java.util.stream.Collectors;
 
 /**
  * Sends a {@link SenderKeyDistributionMessage} to a target recipient.
- *
+ * <p>
  * Will re-check group membership at send time and send the proper distribution message if they're still a member.
  */
 public final class SenderKeyDistributionSendJob extends BaseJob {
@@ -103,7 +102,7 @@ public final class SenderKeyDistributionSendJob extends BaseJob {
     SenderKeyDistributionMessage           message        = messageSender.getOrCreateNewGroupSession(distributionId);
     List<Optional<UnidentifiedAccessPair>> access         = UnidentifiedAccessUtil.getAccessFor(context, Collections.singletonList(recipient));
 
-    SendMessageResult result = messageSender.sendSenderKeyDistributionMessage(address, access, message, groupId.getDecodedId()).get(0);
+    SendMessageResult result = messageSender.sendSenderKeyDistributionMessage(distributionId, address, access, message, groupId.getDecodedId()).get(0);
 
     if (result.isSuccess()) {
       List<SignalProtocolAddress> addresses = result.getSuccess()

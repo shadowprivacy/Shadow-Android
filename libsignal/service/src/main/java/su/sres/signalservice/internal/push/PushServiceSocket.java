@@ -8,6 +8,7 @@ package su.sres.signalservice.internal.push;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
 
@@ -21,7 +22,9 @@ import su.sres.signalservice.api.account.ChangeUserLoginRequest;
 import su.sres.signalservice.api.groupsv2.GroupsV2AuthorizationString;
 import su.sres.signalservice.api.messages.calls.CallingResponse;
 import su.sres.signalservice.api.payments.CurrencyConversions;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.push.exceptions.DeprecatedVersionException;
+import su.sres.signalservice.api.push.exceptions.InvalidUserLoginException;
 import su.sres.signalservice.api.push.exceptions.MalformedResponseException;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResumableUploadResponseCodeException;
 import su.sres.signalservice.api.push.exceptions.ProofRequiredException;
@@ -136,6 +139,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -246,7 +250,6 @@ public class PushServiceSocket {
   private static final String SUBMIT_RATE_LIMIT_CHALLENGE       = "/v1/challenge";
   private static final String REQUEST_RATE_LIMIT_PUSH_CHALLENGE = "/v1/challenge/push";
 
-  private static final String DONATION_INTENT         = "/v1/donation/authorize-apple-pay";
   private static final String DONATION_REDEEM_RECEIPT = "/v1/donation/redeem-receipt";
 
   private static final String SUBSCRIPTION_LEVELS                 = "/v1/subscription/levels";
@@ -255,6 +258,10 @@ public class PushServiceSocket {
   private static final String CREATE_SUBSCRIPTION_PAYMENT_METHOD  = "/v1/subscription/%s/create_payment_method";
   private static final String DEFAULT_SUBSCRIPTION_PAYMENT_METHOD = "/v1/subscription/%s/default_payment_method/%s";
   private static final String SUBSCRIPTION_RECEIPT_CREDENTIALS    = "/v1/subscription/%s/receipt_credentials";
+  private static final String BOOST_AMOUNTS                       = "/v1/subscription/boost/amounts";
+  private static final String CREATE_BOOST_PAYMENT_INTENT         = "/v1/subscription/boost/create";
+  private static final String BOOST_RECEIPT_CREDENTIALS           = "/v1/subscription/boost/receipt_credentials";
+  private static final String BOOST_BADGES                        = "/v1/subscription/boost/badges";
 
   private static final String REPORT_SPAM = "/v1/messages/report/%s/%s";
 
@@ -310,43 +317,16 @@ public class PushServiceSocket {
       path += "&challenge=" + challenge.get();
     }
 
-    makeServiceRequest(path, "GET", null, NO_HEADERS, new ResponseCodeHandler() {
-      @Override
-      public void handle(int responseCode, Headers responseHeaders) throws NonSuccessfulResponseCodeException {
-        if (responseCode == 402) {
-          throw new CaptchaRequiredException();
-        }
-      }
-    });
+    makeServiceRequest(path, "GET", null, NO_HEADERS, new VerificationCodeResponseHandler());
   }
 
-  public void requestVoiceVerificationCode(Locale locale, Optional<String> captchaToken, Optional<String> challenge) throws IOException {
-    Map<String, String> headers = locale != null ? Collections.singletonMap("Accept-Language", locale.getLanguage() + "-" + locale.getCountry()) : NO_HEADERS;
-    String              path    = String.format(CREATE_ACCOUNT_VOICE_PATH, credentialsProvider.getUserLogin());
-
-    if (captchaToken.isPresent()) {
-      path += "?captcha=" + captchaToken.get();
-    } else if (challenge.isPresent()) {
-      path += "?challenge=" + challenge.get();
-    }
-
-    makeServiceRequest(path, "GET", null, headers, new ResponseCodeHandler() {
-      @Override
-      public void handle(int responseCode, Headers responseHeaders) throws NonSuccessfulResponseCodeException {
-        if (responseCode == 402) {
-          throw new CaptchaRequiredException();
-        }
-      }
-    });
-  }
-
-  public UUID getOwnUuid() throws IOException {
+  public ACI getOwnAci() throws IOException {
     String         body     = makeServiceRequest(WHO_AM_I, "GET", null);
     WhoAmIResponse response = JsonUtil.fromJson(body, WhoAmIResponse.class);
-    Optional<UUID> uuid     = UuidUtil.parse(response.getUuid());
+    Optional<ACI>  aci      = ACI.parse(response.getUuid());
 
-    if (uuid.isPresent()) {
-      return uuid.get();
+    if (aci.isPresent()) {
+      return aci.get();
     } else {
       throw new IOException("Invalid UUID!");
     }
@@ -367,7 +347,7 @@ public class PushServiceSocket {
     String responseBody = makeServiceRequest(String.format(VERIFY_ACCOUNT_CODE_PATH, verificationCode), "PUT", requestBody, NO_HEADERS,
                                              new ResponseCodeHandler() {
                                                @Override
-                                               public void handle(int responseCode, Headers responseHeaders) throws NonSuccessfulResponseCodeException {
+                                               public void handle(int responseCode, Headers responseHeaders, ResponseBody body) throws NonSuccessfulResponseCodeException {
                                                  if (responseCode == 503 && responseHeaders.get("Retry-After") != null) {
                                                    throw new RetryAfterException();
                                                  }
@@ -828,7 +808,7 @@ public class PushServiceSocket {
                                          NO_HEADERS,
                                          new ResponseCodeHandler() {
                                            @Override
-                                           public void handle(int responseCode, Headers responseHeaders) throws PaymentsRegionException {
+                                           public void handle(int responseCode, Headers responseHeaders, ResponseBody body) throws PaymentsRegionException {
                                              if (responseCode == 403) {
                                                throw new PaymentsRegionException(responseCode);
                                              }
@@ -858,15 +838,12 @@ public class PushServiceSocket {
   }
 
   public void setUsername(String username) throws IOException {
-    makeServiceRequest(String.format(SET_USERNAME_PATH, username), "PUT", "", NO_HEADERS, new ResponseCodeHandler() {
-      @Override
-      public void handle(int responseCode, Headers responseHeaders) throws NonSuccessfulResponseCodeException {
-        switch (responseCode) {
-          case 400:
-            throw new UsernameMalformedException();
-          case 409:
-            throw new UsernameTakenException();
-        }
+    makeServiceRequest(String.format(SET_USERNAME_PATH, username), "PUT", "", NO_HEADERS, (responseCode, headers, body) -> {
+      switch (responseCode) {
+        case 400:
+          throw new UsernameMalformedException();
+        case 409:
+          throw new UsernameTakenException();
       }
     }, Optional.<UnidentifiedAccess>absent());
   }
@@ -922,17 +899,43 @@ public class PushServiceSocket {
     makeServiceRequest(DONATION_REDEEM_RECEIPT, "POST", payload);
   }
 
-  /**
-   * @return The PaymentIntent id
-   */
-  public DonationIntentResult createDonationIntentWithAmount(String amount, String currencyCode) throws IOException {
-    String payload = JsonUtil.toJson(new DonationIntentPayload(Long.parseLong(amount), currencyCode.toLowerCase(Locale.ROOT)));
-    String result  = makeServiceRequest(DONATION_INTENT, "POST", payload);
-    return JsonUtil.fromJsonResponse(result, DonationIntentResult.class);
+  public SubscriptionClientSecret createBoostPaymentMethod(String currencyCode, long amount, String description) throws IOException {
+    String payload = JsonUtil.toJson(new DonationIntentPayload(amount, currencyCode, description));
+    String result  = makeServiceRequestWithoutAuthentication(CREATE_BOOST_PAYMENT_INTENT, "POST", payload);
+    return JsonUtil.fromJsonResponse(result, SubscriptionClientSecret.class);
   }
 
-  public SubscriptionLevels getSubscriptionLevels() throws IOException {
-    String result = makeServiceRequestWithoutAuthentication(SUBSCRIPTION_LEVELS, "GET", null);
+  public Map<String, List<BigDecimal>> getBoostAmounts() throws IOException {
+    String                                           result  = makeServiceRequestWithoutAuthentication(BOOST_AMOUNTS, "GET", null);
+    TypeReference<HashMap<String, List<BigDecimal>>> typeRef = new TypeReference<HashMap<String, List<BigDecimal>>>() {
+    };
+    return JsonUtil.fromJsonResponse(result, typeRef);
+  }
+
+  public SubscriptionLevels getBoostLevels(Locale locale) throws IOException {
+    String result = makeServiceRequestWithoutAuthentication(BOOST_BADGES, "GET", null, AcceptLanguagesUtil.getHeadersWithAcceptLanguage(locale));
+    return JsonUtil.fromJsonResponse(result, SubscriptionLevels.class);
+  }
+
+  public ReceiptCredentialResponse submitBoostReceiptCredentials(String paymentIntentId, ReceiptCredentialRequest receiptCredentialRequest) throws IOException {
+    String payload = JsonUtil.toJson(new BoostReceiptCredentialRequestJson(paymentIntentId, receiptCredentialRequest));
+    String response = makeServiceRequestWithoutAuthentication(
+        BOOST_RECEIPT_CREDENTIALS,
+        "POST",
+        payload,
+        (code, headers, body) -> {
+          if (code == 204) throw new NonSuccessfulResponseCodeException(204);
+        });
+    ReceiptCredentialResponseJson responseJson = JsonUtil.fromJson(response, ReceiptCredentialResponseJson.class);
+    if (responseJson.getReceiptCredentialResponse() != null) {
+      return responseJson.getReceiptCredentialResponse();
+    } else {
+      throw new MalformedResponseException("Unable to parse response");
+    }
+  }
+
+  public SubscriptionLevels getSubscriptionLevels(Locale locale) throws IOException {
+    String result = makeServiceRequestWithoutAuthentication(SUBSCRIPTION_LEVELS, "GET", null, AcceptLanguagesUtil.getHeadersWithAcceptLanguage(locale));
     return JsonUtil.fromJsonResponse(result, SubscriptionLevels.class);
   }
 
@@ -963,12 +966,12 @@ public class PushServiceSocket {
   }
 
   public ReceiptCredentialResponse submitReceiptCredentials(String subscriptionId, ReceiptCredentialRequest receiptCredentialRequest) throws IOException {
-    String payload  = JsonUtil.toJson(new ReceiptCredentialRequestJson(receiptCredentialRequest));
+    String payload = JsonUtil.toJson(new ReceiptCredentialRequestJson(receiptCredentialRequest));
     String response = makeServiceRequestWithoutAuthentication(
         String.format(SUBSCRIPTION_RECEIPT_CREDENTIALS, subscriptionId),
         "POST",
         payload,
-        (code, headers) -> {
+        (code, headers, body) -> {
           if (code == 204) throw new NonSuccessfulResponseCodeException(204);
         });
 
@@ -1520,7 +1523,19 @@ public class PushServiceSocket {
   private String makeServiceRequestWithoutAuthentication(String urlFragment, String method, String jsonBody, ResponseCodeHandler responseCodeHandler)
       throws NonSuccessfulResponseCodeException, PushNetworkException, MalformedResponseException
   {
-    ResponseBody responseBody = makeServiceRequest(urlFragment, method, jsonRequestBody(jsonBody), NO_HEADERS, responseCodeHandler, Optional.absent(), true).body();
+    return makeServiceRequestWithoutAuthentication(urlFragment, method, jsonBody, NO_HEADERS, responseCodeHandler);
+  }
+
+  private String makeServiceRequestWithoutAuthentication(String urlFragment, String method, String jsonBody, Map<String, String> headers)
+      throws NonSuccessfulResponseCodeException, PushNetworkException, MalformedResponseException
+  {
+    return makeServiceRequestWithoutAuthentication(urlFragment, method, jsonBody, headers, NO_HANDLER);
+  }
+
+  private String makeServiceRequestWithoutAuthentication(String urlFragment, String method, String jsonBody, Map<String, String> headers, ResponseCodeHandler responseCodeHandler)
+      throws NonSuccessfulResponseCodeException, PushNetworkException, MalformedResponseException
+  {
+    ResponseBody responseBody = makeServiceRequest(urlFragment, method, jsonRequestBody(jsonBody), headers, responseCodeHandler, Optional.absent(), true).body();
     try {
       return responseBody.string();
     } catch (IOException e) {
@@ -1579,7 +1594,7 @@ public class PushServiceSocket {
                                   NO_HEADERS,
                                   new ResponseCodeHandler() {
                                     @Override
-                                    public void handle(int responseCode, Headers responseHeaders) throws NonSuccessfulResponseCodeException {
+                                    public void handle(int responseCode, Headers responseHeaders, ResponseBody body) throws NonSuccessfulResponseCodeException {
 
                                       String cdHeader = responseHeaders.get("Content-Disposition");
                                       String contents = "attachment; filename=\"" + filename + "\"";
@@ -1673,7 +1688,7 @@ public class PushServiceSocket {
   {
     Response response = getServiceConnection(urlFragment, method, body, headers, unidentifiedAccessKey, doNotAddAuthenticationOrUnidentifiedAccessKey);
 
-    responseCodeHandler.handle(response.code(), response.headers());
+    responseCodeHandler.handle(response.code(), response.headers(), response.body());
 
     return validateServiceResponse(response);
   }
@@ -1778,7 +1793,8 @@ public class PushServiceSocket {
                                       RequestBody body,
                                       Map<String, String> headers,
                                       Optional<UnidentifiedAccess> unidentifiedAccess,
-                                      boolean doNotAddAuthenticationOrUnidentifiedAccessKey) {
+                                      boolean doNotAddAuthenticationOrUnidentifiedAccessKey)
+  {
     ServiceConnectionHolder connectionHolder = (ServiceConnectionHolder) getRandom(serviceClients, random);
 
 //      Log.d(TAG, "Push service URL: " + connectionHolder.getUrl());
@@ -1869,7 +1885,7 @@ public class PushServiceSocket {
       }
     }
 
-    responseCodeHandler.handle(response.code(), response.headers());
+    responseCodeHandler.handle(response.code(), response.headers(), response.body());
 
     switch (response.code()) {
       case 204:
@@ -2024,7 +2040,7 @@ public class PushServiceSocket {
 
   private String getAuthorizationHeader(CredentialsProvider credentialsProvider) {
     try {
-      String identifier = credentialsProvider.getUuid() != null ? credentialsProvider.getUuid().toString() : credentialsProvider.getUserLogin();
+      String identifier = credentialsProvider.getAci() != null ? credentialsProvider.getAci().toString() : credentialsProvider.getUserLogin();
       return "Basic " + Base64.encodeBytes((identifier + ":" + credentialsProvider.getPassword()).getBytes("UTF-8"));
     } catch (UnsupportedEncodingException e) {
       throw new AssertionError(e);
@@ -2191,12 +2207,12 @@ public class PushServiceSocket {
   }
 
   private interface ResponseCodeHandler {
-    void handle(int responseCode, Headers responseHeaders) throws NonSuccessfulResponseCodeException, PushNetworkException;
+    void handle(int responseCode, Headers responseHeaders, ResponseBody body) throws NonSuccessfulResponseCodeException, PushNetworkException;
   }
 
   private static class EmptyResponseCodeHandler implements ResponseCodeHandler {
     @Override
-    public void handle(int responseCode, Headers responseHeaders) {
+    public void handle(int responseCode, Headers responseHeaders, ResponseBody body) {
     }
   }
 
@@ -2213,12 +2229,12 @@ public class PushServiceSocket {
     return JsonUtil.fromJson(response, CredentialResponse.class);
   }
 
-  private static final ResponseCodeHandler GROUPS_V2_PUT_RESPONSE_HANDLER = (responseCode, responseHeaders) -> {
+  private static final ResponseCodeHandler GROUPS_V2_PUT_RESPONSE_HANDLER = (responseCode, responseHeaders, body) -> {
     if (responseCode == 409) throw new GroupExistsException();
   };
   ;
   private static final ResponseCodeHandler GROUPS_V2_GET_LOGS_HANDLER       = NO_HANDLER;
-  private static final ResponseCodeHandler GROUPS_V2_GET_CURRENT_HANDLER    = (responseCode, responseHeaders) -> {
+  private static final ResponseCodeHandler GROUPS_V2_GET_CURRENT_HANDLER    = (responseCode, responseHeaders, body) -> {
     switch (responseCode) {
       case 403:
         throw new NotInGroupException();
@@ -2226,10 +2242,10 @@ public class PushServiceSocket {
         throw new GroupNotFoundException();
     }
   };
-  private static final ResponseCodeHandler GROUPS_V2_PATCH_RESPONSE_HANDLER = (responseCode, responseHeaders) -> {
+  private static final ResponseCodeHandler GROUPS_V2_PATCH_RESPONSE_HANDLER = (responseCode, responseHeaders, body) -> {
     if (responseCode == 400) throw new GroupPatchNotAcceptedException();
   };
-  private static final ResponseCodeHandler GROUPS_V2_GET_JOIN_INFO_HANDLER  = (responseCode, responseheaders) -> {
+  private static final ResponseCodeHandler GROUPS_V2_GET_JOIN_INFO_HANDLER  = (responseCode, responseheaders, body) -> {
     if (responseCode == 403) throw new ForbiddenException();
   };
 
@@ -2364,6 +2380,18 @@ public class PushServiceSocket {
       throws NonSuccessfulResponseCodeException, MalformedResponseException, PushNetworkException
   {
     makeServiceRequest(String.format(REPORT_SPAM, e164, serverGuid), "POST", "");
+  }
+
+  private static class VerificationCodeResponseHandler implements ResponseCodeHandler {
+    @Override
+    public void handle(int responseCode, Headers headers, ResponseBody responseBody) throws NonSuccessfulResponseCodeException, PushNetworkException {
+      switch (responseCode) {
+        case 400:
+          throw new InvalidUserLoginException();
+        case 402:
+          throw new CaptchaRequiredException();
+      }
+    }
   }
 
   public static final class GroupHistory {

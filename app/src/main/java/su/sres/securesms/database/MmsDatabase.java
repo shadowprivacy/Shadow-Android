@@ -81,6 +81,7 @@ import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
+import su.sres.signalservice.api.push.ACI;
 
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -1587,7 +1588,7 @@ public class MmsDatabase extends MessageDatabase {
         MessageGroupContext.GroupV2Properties groupV2Properties = outgoingGroupUpdateMessage.requireGroupV2Properties();
         members.addAll(Stream.of(groupV2Properties.getAllActivePendingAndRemovedMembers())
                              .distinct()
-                             .map(uuid -> RecipientId.from(uuid, null))
+                             .map(uuid -> RecipientId.from(ACI.from(uuid), null))
                              .toList());
         members.remove(Recipient.self().getId());
       } else {

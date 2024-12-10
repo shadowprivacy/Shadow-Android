@@ -10,11 +10,11 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.subjects.PublishSubject
-import org.whispersystems.libsignal.util.guava.Optional
+import su.sres.core.util.logging.Log
 import su.sres.securesms.components.settings.app.subscription.SubscriptionsRepository
+import su.sres.securesms.jobmanager.JobTracker
 import su.sres.securesms.keyvalue.SignalStore
-import su.sres.securesms.recipients.Recipient
-import su.sres.securesms.subscription.LevelUpdateOperation
+import su.sres.securesms.subscription.LevelUpdate
 import su.sres.securesms.util.livedata.Store
 import su.sres.signalservice.api.subscriptions.ActiveSubscription
 
@@ -41,11 +41,27 @@ class ManageDonationsViewModel(
 
   fun refresh() {
     disposables.clear()
-    val levelUpdateOperationEdges: Observable<Optional<LevelUpdateOperation>> = SignalStore.donationsValues().levelUpdateOperationObservable.distinctUntilChanged()
+    val levelUpdateOperationEdges: Observable<Boolean> = LevelUpdate.isProcessing.distinctUntilChanged()
     val activeSubscription: Single<ActiveSubscription> = subscriptionsRepository.getActiveSubscription()
 
-    disposables += levelUpdateOperationEdges.flatMapSingle { optionalKey ->
-      if (optionalKey.isPresent) {
+    disposables += SubscriptionRedemptionJobWatcher.watch().subscribeBy { jobStateOptional ->
+      store.update { manageDonationsState ->
+        manageDonationsState.copy(
+          subscriptionRedemptionState = jobStateOptional.transform { jobState ->
+            when (jobState) {
+              JobTracker.JobState.PENDING -> ManageDonationsState.SubscriptionRedemptionState.IN_PROGRESS
+              JobTracker.JobState.RUNNING -> ManageDonationsState.SubscriptionRedemptionState.IN_PROGRESS
+              JobTracker.JobState.SUCCESS -> ManageDonationsState.SubscriptionRedemptionState.NONE
+              JobTracker.JobState.FAILURE -> ManageDonationsState.SubscriptionRedemptionState.FAILED
+              JobTracker.JobState.IGNORED -> ManageDonationsState.SubscriptionRedemptionState.NONE
+            }
+          }.or(ManageDonationsState.SubscriptionRedemptionState.NONE)
+        )
+      }
+    }
+
+    disposables += levelUpdateOperationEdges.flatMapSingle { isProcessing ->
+      if (isProcessing) {
         Single.just(ManageDonationsState.TransactionState.InTransaction)
       } else {
         activeSubscription.map { ManageDonationsState.TransactionState.NotInTransaction(it) }
@@ -65,9 +81,14 @@ class ManageDonationsViewModel(
       }
     )
 
-    disposables += subscriptionsRepository.getSubscriptions(SignalStore.donationsValues().getSubscriptionCurrency()).subscribeBy { subs ->
-      store.update { it.copy(availableSubscriptions = subs) }
-    }
+    disposables += subscriptionsRepository.getSubscriptions().subscribeBy(
+      onSuccess = { subs ->
+        store.update { it.copy(availableSubscriptions = subs) }
+      },
+      onError = {
+        Log.w(TAG, "Error retrieving subscriptions data", it)
+      }
+    )
   }
 
   class Factory(
@@ -76,5 +97,9 @@ class ManageDonationsViewModel(
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
       return modelClass.cast(ManageDonationsViewModel(subscriptionsRepository))!!
     }
+  }
+
+  companion object {
+    private val TAG = Log.tag(ManageDonationsViewModel::class.java)
   }
 }

@@ -124,7 +124,7 @@ public class TextSecureIdentityKeyStore implements IdentityKeyStore {
 
   @Override
   public boolean isTrustedIdentity(SignalProtocolAddress address, IdentityKey identityKey, Direction direction) {
-    boolean isSelf = address.getName().equals(TextSecurePreferences.getLocalUuid(context).toString()) ||
+    boolean isSelf = address.getName().equals(TextSecurePreferences.getLocalAci(context).toString()) ||
                      address.getName().equals(TextSecurePreferences.getLocalNumber(context));
 
     if (isSelf) {

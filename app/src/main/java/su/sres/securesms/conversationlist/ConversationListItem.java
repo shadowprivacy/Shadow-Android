@@ -220,9 +220,17 @@ public final class ConversationListItem extends ConstraintLayout
 
     setStatusIcons(thread);
     setBatchMode(batchMode);
-    badge.setBadgeFromRecipient(recipient.get());
+    setBadgeFromRecipient(recipient.get());
     setUnreadIndicator(thread);
     this.contactPhotoImage.setAvatar(glideRequests, recipient.get(), !batchMode);
+  }
+
+  private void setBadgeFromRecipient(Recipient recipient) {
+    if (!recipient.isSelf()) {
+      badge.setBadgeFromRecipient(recipient);
+    } else {
+      badge.setBadge(null);
+    }
   }
 
   public void bindContact(@NonNull Recipient contact,
@@ -248,7 +256,7 @@ public final class ConversationListItem extends ConstraintLayout
     alertView.setNone();
 
     setBatchMode(false);
-    badge.setBadgeFromRecipient(recipient.get());
+    setBadgeFromRecipient(recipient.get());
     contactPhotoImage.setAvatar(glideRequests, recipient.get(), !batchMode);
   }
 
@@ -275,7 +283,7 @@ public final class ConversationListItem extends ConstraintLayout
     alertView.setNone();
 
     setBatchMode(false);
-    badge.setBadgeFromRecipient(recipient.get());
+    setBadgeFromRecipient(recipient.get());
     contactPhotoImage.setAvatar(glideRequests, recipient.get(), !batchMode);
   }
 
@@ -295,6 +303,10 @@ public final class ConversationListItem extends ConstraintLayout
 
     boolean selected = batchMode && selectedThreads.contains(thread.getThreadId());
     setSelected(selected);
+
+    if (recipient != null) {
+      contactPhotoImage.setAvatar(glideRequests, recipient.get(), !batchMode);
+    }
 
     if (batchMode && selected) {
       checkContainer.setVisibility(VISIBLE);
@@ -449,7 +461,7 @@ public final class ConversationListItem extends ConstraintLayout
     }
 
     contactPhotoImage.setAvatar(glideRequests, recipient, !batchMode);
-    badge.setBadgeFromRecipient(recipient);
+    setBadgeFromRecipient(recipient);
   }
 
   private static @NonNull LiveData<SpannableString> getThreadDisplayBody(@NonNull Context context,

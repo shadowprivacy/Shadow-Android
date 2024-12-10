@@ -93,6 +93,7 @@ data class CallParticipantsState(
           remoteParticipants[0].getShortRecipientDisplayName(context),
           remoteParticipants[1].getShortRecipientDisplayName(context)
         )
+
         else -> {
           val others = remoteParticipants.size() - 2
           context.resources.getQuantityString(
@@ -127,10 +128,10 @@ data class CallParticipantsState(
   fun getIncomingRingingGroupDescription(context: Context): String? {
     if (callState == WebRtcViewModel.State.CALL_INCOMING &&
       groupCallState == WebRtcViewModel.GroupCallState.RINGING &&
-      ringerRecipient.hasUuid()
+      ringerRecipient.hasAci()
     ) {
       val ringerName = ringerRecipient.getShortDisplayName(context)
-      val membersWithoutYouOrRinger: List<GroupMemberEntry.FullMember> = groupMembers.filterNot { it.member.isSelf || ringerRecipient.requireUuid() == it.member.uuid.orNull() }
+      val membersWithoutYouOrRinger: List<GroupMemberEntry.FullMember> = groupMembers.filterNot { it.member.isSelf || ringerRecipient.requireAci() == it.member.aci.orNull() }
 
       return when (membersWithoutYouOrRinger.size) {
         0 -> context.getString(R.string.WebRtcCallView__s_is_calling_you, ringerName)
@@ -139,12 +140,14 @@ data class CallParticipantsState(
           ringerName,
           membersWithoutYouOrRinger[0].member.getShortDisplayName(context)
         )
+
         2 -> context.getString(
           R.string.WebRtcCallView__s_is_calling_you_s_and_s,
           ringerName,
           membersWithoutYouOrRinger[0].member.getShortDisplayName(context),
           membersWithoutYouOrRinger[1].member.getShortDisplayName(context)
         )
+
         else -> {
           val others = membersWithoutYouOrRinger.size - 2
           context.resources.getQuantityString(
@@ -320,11 +323,13 @@ data class CallParticipantsState(
           oneParticipant,
           membersWithoutYou[0].member.getShortDisplayName(context)
         )
+
         2 -> context.getString(
           twoParticipants,
           membersWithoutYou[0].member.getShortDisplayName(context),
           membersWithoutYou[1].member.getShortDisplayName(context)
         )
+
         else -> {
           val others = membersWithoutYou.size - 2
           context.resources.getQuantityString(

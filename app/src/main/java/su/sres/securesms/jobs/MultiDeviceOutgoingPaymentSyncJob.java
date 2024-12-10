@@ -21,6 +21,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.signalservice.api.messages.multidevice.OutgoingPaymentMessage;
 import su.sres.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
+import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.api.push.exceptions.ServerRejectedException;
 
@@ -90,9 +91,9 @@ public final class MultiDeviceOutgoingPaymentSyncJob extends BaseJob {
 
     boolean defrag = payment.isDefrag();
 
-    Optional<UUID> uuid;
+    Optional<SignalServiceAddress> uuid;
     if (!defrag && payment.getPayee().hasRecipientId()) {
-      uuid = Optional.of(Recipient.resolved(payment.getPayee().requireRecipientId()).requireUuid());
+      uuid = Optional.of(new SignalServiceAddress(Recipient.resolved(payment.getPayee().requireRecipientId()).requireAci()));
     } else {
       uuid = Optional.absent();
     }

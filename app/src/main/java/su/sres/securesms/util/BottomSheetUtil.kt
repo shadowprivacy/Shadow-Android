@@ -1,27 +1,29 @@
-package su.sres.securesms.util;
+package su.sres.securesms.util
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.fragment.app.FragmentManager
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import su.sres.securesms.R
 
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+object BottomSheetUtil {
+  const val STANDARD_BOTTOM_SHEET_FRAGMENT_TAG = "BOTTOM"
 
-public final class BottomSheetUtil {
-
-    public static final String STANDARD_BOTTOM_SHEET_FRAGMENT_TAG = "BOTTOM";
-
-    private BottomSheetUtil() {}
-
-    /**
-     * Show preventing a possible IllegalStateException.
-     */
-    public static void show(@NonNull FragmentManager manager,
-                            @Nullable String tag,
-                            @NonNull BottomSheetDialogFragment dialog)
-    {
-        FragmentTransaction transaction = manager.beginTransaction();
-        transaction.add(dialog, tag);
-        transaction.commitAllowingStateLoss();
+  /**
+   * Show preventing a possible IllegalStateException.
+   */
+  @JvmStatic
+  fun show(
+    manager: FragmentManager,
+    tag: String?,
+    dialog: BottomSheetDialogFragment
+  ) {
+    manager.beginTransaction().apply {
+      add(dialog, tag)
+      commitAllowingStateLoss()
     }
+  }
+
+  fun BottomSheetDialogFragment.requireCoordinatorLayout(): CoordinatorLayout {
+    return requireDialog().findViewById(R.id.coordinator)
+  }
 }

@@ -52,8 +52,8 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.messages.calls.ConfigurationInfo;
 import su.sres.signalservice.api.messages.calls.SystemCertificates;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.push.TrustStore;
-import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.ServiceResponse;
 import su.sres.signalservice.internal.push.VerifyAccountResponse;
 
@@ -69,7 +69,6 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.List;
-import java.util.UUID;
 
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -146,14 +145,14 @@ public final class RegistrationRepository {
     SessionUtil.archiveAllSessions();
     SenderKeyUtil.clearAllState(context);
 
-    UUID    uuid   = UuidUtil.parseOrThrow(response.getUuid());
+    ACI     aci    = ACI.parseOrThrow(response.getUuid());
     boolean hasPin = response.isStorageCapable();
 
     IdentityKeyPair    identityKey  = IdentityKeyUtil.getIdentityKeyPair(context);
     List<PreKeyRecord> records      = PreKeyUtil.generatePreKeys(context);
     SignedPreKeyRecord signedPreKey = PreKeyUtil.generateSignedPreKey(context, identityKey, true);
 
-    SignalServiceAccountManager accountManager = AccountManagerFactory.createAuthenticated(context, uuid, registrationData.getE164(), registrationData.getPassword());
+    SignalServiceAccountManager accountManager = AccountManagerFactory.createAuthenticated(context, aci, registrationData.getE164(), registrationData.getPassword());
     accountManager.setPreKeys(identityKey.getPublicKey(), signedPreKey, records);
 
     if (registrationData.isFcm()) {
@@ -309,13 +308,13 @@ public final class RegistrationRepository {
     /// Shadow-specific end
 
     RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-    RecipientId       selfId            = Recipient.externalPush(context, uuid, registrationData.getE164(), true).getId();
+    RecipientId       selfId            = Recipient.externalPush(context, aci, registrationData.getE164(), true).getId();
 
     recipientDatabase.setProfileSharing(selfId, true);
-    recipientDatabase.markRegistered(selfId, uuid);
+    recipientDatabase.markRegistered(selfId, aci);
 
     TextSecurePreferences.setLocalNumber(context, registrationData.getE164());
-    TextSecurePreferences.setLocalUuid(context, uuid);
+    TextSecurePreferences.setLocalAci(context, aci);
     recipientDatabase.setProfileKey(selfId, registrationData.getProfileKey());
     ApplicationDependencies.getRecipientCache().clearSelf();
 

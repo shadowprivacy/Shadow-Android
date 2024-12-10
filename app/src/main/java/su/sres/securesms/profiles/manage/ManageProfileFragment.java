@@ -22,11 +22,15 @@ import androidx.navigation.Navigation;
 import com.airbnb.lottie.SimpleColorFilter;
 import com.bumptech.glide.Glide;
 
+import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.LoggingFragment;
 import su.sres.securesms.R;
 import su.sres.securesms.avatar.Avatars;
 import su.sres.securesms.avatar.picker.AvatarPickerFragment;
+import su.sres.securesms.badges.BadgeImageView;
+import su.sres.securesms.badges.models.Badge;
 import su.sres.securesms.components.emoji.EmojiUtil;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.profiles.ProfileName;
@@ -52,7 +56,8 @@ public class ManageProfileFragment extends LoggingFragment {
   private AlertDialog avatarProgress;
   private TextView    avatarInitials;
   private ImageView   avatarBackground;
-  private View        badgesContainer;
+  private View           badgesContainer;
+  private BadgeImageView badgeView;
 
   private ManageProfileViewModel viewModel;
 
@@ -76,11 +81,13 @@ public class ManageProfileFragment extends LoggingFragment {
     this.avatarInitials        = view.findViewById(R.id.manage_profile_avatar_initials);
     this.avatarBackground      = view.findViewById(R.id.manage_profile_avatar_background);
     this.badgesContainer       = view.findViewById(R.id.manage_profile_badges_container);
+    this.badgeView             = view.findViewById(R.id.manage_profile_badge);
 
     initializeViewModel();
 
     this.toolbar.setNavigationOnClickListener(v -> requireActivity().finish());
-    this.avatarView.setOnClickListener(v -> onAvatarClicked());
+    View editAvatar = view.findViewById(R.id.manage_profile_edit_photo);
+    editAvatar.setOnClickListener(v -> onEditAvatarClicked());
 
     this.profileNameContainer.setOnClickListener(v -> {
       Navigation.findNavController(v).navigate(ManageProfileFragmentDirections.actionManageProfileName());
@@ -126,6 +133,7 @@ public class ManageProfileFragment extends LoggingFragment {
     viewModel.getEvents().observe(getViewLifecycleOwner(), this::presentEvent);
     viewModel.getAbout().observe(getViewLifecycleOwner(), this::presentAbout);
     viewModel.getAboutEmoji().observe(getViewLifecycleOwner(), this::presentAboutEmoji);
+    viewModel.getBadge().observe(getViewLifecycleOwner(), this::presentBadge);
 
     if (viewModel.shouldShowUsername()) {
       viewModel.getUsername().observe(getViewLifecycleOwner(), this::presentUsername);
@@ -216,6 +224,14 @@ public class ManageProfileFragment extends LoggingFragment {
     }
   }
 
+  private void presentBadge(@NonNull Optional<Badge> badge) {
+    if (badge.isPresent() && badge.get().getVisible() && !badge.get().isExpired()) {
+      badgeView.setBadge(badge.orNull());
+    } else {
+      badgeView.setBadge(null);
+    }
+  }
+
   private void presentEvent(@NonNull ManageProfileViewModel.Event event) {
     switch (event) {
       case AVATAR_DISK_FAILURE:
@@ -227,7 +243,7 @@ public class ManageProfileFragment extends LoggingFragment {
     }
   }
 
-  private void onAvatarClicked() {
+  private void onEditAvatarClicked() {
     Navigation.findNavController(requireView()).navigate(ManageProfileFragmentDirections.actionManageProfileFragmentToAvatarPicker(null, null));
   }
 }

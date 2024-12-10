@@ -579,7 +579,7 @@ public final class ContactSelectionListFragment extends LoggingFragment
           AlertDialog loadingDialog = SimpleProgressDialog.show(requireContext());
 
           SimpleTask.run(getViewLifecycleOwner().getLifecycle(), () -> {
-            return UsernameUtil.fetchUuidForUsername(requireContext(), contact.getNumber());
+            return UsernameUtil.fetchAciForUsername(requireContext(), contact.getNumber());
           }, uuid -> {
             loadingDialog.dismiss();
             if (uuid.isPresent()) {

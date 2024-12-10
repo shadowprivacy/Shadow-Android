@@ -63,14 +63,13 @@ import su.sres.signalservice.api.SignalServiceMessageSender;
 import su.sres.signalservice.api.SignalWebSocket;
 import su.sres.signalservice.api.groupsv2.ClientZkOperations;
 import su.sres.signalservice.api.groupsv2.GroupsV2Operations;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.services.DonationsService;
 import su.sres.signalservice.api.util.CredentialsProvider;
 import su.sres.signalservice.api.util.SleepTimer;
 import su.sres.signalservice.api.util.UptimeSleepTimer;
 import su.sres.signalservice.api.websocket.WebSocketFactory;
 import su.sres.signalservice.internal.websocket.WebSocketConnection;
-
-import java.util.UUID;
 
 /**
  * Implementation of {@link ApplicationDependencies.Provider} that provides real app dependencies.
@@ -306,8 +305,8 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
     }
 
     @Override
-    public UUID getUuid() {
-      return TextSecurePreferences.getLocalUuid(context);
+    public ACI getAci() {
+      return TextSecurePreferences.getLocalAci(context);
     }
 
     @Override

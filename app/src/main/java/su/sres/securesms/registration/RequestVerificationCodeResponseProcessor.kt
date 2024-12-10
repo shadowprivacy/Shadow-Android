@@ -1,5 +1,6 @@
 package su.sres.securesms.registration
 
+import su.sres.signalservice.api.push.exceptions.InvalidUserLoginException
 import su.sres.signalservice.api.push.exceptions.LocalRateLimitException
 import su.sres.signalservice.internal.ServiceResponse
 import su.sres.signalservice.internal.ServiceResponseProcessor
@@ -23,6 +24,10 @@ class RequestVerificationCodeResponseProcessor(response: ServiceResponse<Request
 
   fun localRateLimit(): Boolean {
     return error is LocalRateLimitException
+  }
+
+  fun isInvalidLogin(): Boolean {
+    return error is InvalidUserLoginException
   }
 
   companion object {

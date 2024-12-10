@@ -9,6 +9,7 @@ package su.sres.signalservice.api.messages.multidevice;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.signalservice.api.messages.SignalServiceDataMessage;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ public class SentTranscriptMessage {
   private final long                           timestamp;
   private final long                           expirationStartTimestamp;
   private final SignalServiceDataMessage       message;
-  private final Map<String, Boolean>           unidentifiedStatusByUuid;
+  private final Map<String, Boolean>           unidentifiedStatusByAci;
   private final Map<String, Boolean>           unidentifiedStatusByE164;
   private final Set<SignalServiceAddress>      recipients;
   private final boolean                        isRecipientUpdate;
@@ -38,13 +39,13 @@ public class SentTranscriptMessage {
     this.timestamp                = timestamp;
     this.message                  = message;
     this.expirationStartTimestamp = expirationStartTimestamp;
-    this.unidentifiedStatusByUuid = new HashMap<>();
+    this.unidentifiedStatusByAci  = new HashMap<>();
     this.unidentifiedStatusByE164 = new HashMap<>();
     this.recipients               = unidentifiedStatus.keySet();
     this.isRecipientUpdate        = isRecipientUpdate;
 
     for (Map.Entry<SignalServiceAddress, Boolean> entry : unidentifiedStatus.entrySet()) {
-      unidentifiedStatusByUuid.put(entry.getKey().getUuid().toString(), entry.getValue());
+      unidentifiedStatusByAci.put(entry.getKey().getAci().toString(), entry.getValue());
 
       if (entry.getKey().getNumber().isPresent()) {
         unidentifiedStatusByE164.put(entry.getKey().getNumber().get(), entry.getValue());
@@ -68,13 +69,13 @@ public class SentTranscriptMessage {
     return message;
   }
 
-  public boolean isUnidentified(UUID uuid) {
-    return isUnidentified(uuid.toString());
+  public boolean isUnidentified(ACI aci) {
+    return isUnidentified(aci.toString());
   }
 
   public boolean isUnidentified(String destination) {
-    if (unidentifiedStatusByUuid.containsKey(destination)) {
-      return unidentifiedStatusByUuid.get(destination);
+    if (unidentifiedStatusByAci.containsKey(destination)) {
+      return unidentifiedStatusByAci.get(destination);
     } else if (unidentifiedStatusByE164.containsKey(destination)) {
       return unidentifiedStatusByE164.get(destination);
     } else {

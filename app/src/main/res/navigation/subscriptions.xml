@@ -69,6 +69,10 @@
             android:name="isBoost"
             app:argType="boolean" />
 
+        <argument
+            android:name="supportedCurrencyCodes"
+            app:argType="string[]" />
+
     </dialog>
 
     <dialog

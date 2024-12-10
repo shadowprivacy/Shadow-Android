@@ -418,7 +418,7 @@ public abstract class PushSendJob extends SendJob {
 
   List<SignalServiceDataMessage.Mention> getMentionsFor(@NonNull List<Mention> mentions) {
     return Stream.of(mentions)
-                 .map(m -> new SignalServiceDataMessage.Mention(Recipient.resolved(m.getRecipientId()).requireUuid(), m.getStart(), m.getLength()))
+                 .map(m -> new SignalServiceDataMessage.Mention(Recipient.resolved(m.getRecipientId()).requireAci(), m.getStart(), m.getLength()))
                  .toList();
   }
 
@@ -456,7 +456,7 @@ public abstract class PushSendJob extends SendJob {
   }
 
   protected SignalServiceSyncMessage buildSelfSendSyncMessage(@NonNull Context context, @NonNull SignalServiceDataMessage message, Optional<UnidentifiedAccessPair> syncAccess) {
-    SignalServiceAddress localAddress = new SignalServiceAddress(TextSecurePreferences.getLocalUuid(context), TextSecurePreferences.getLocalNumber(context));
+    SignalServiceAddress localAddress = new SignalServiceAddress(TextSecurePreferences.getLocalAci(context), TextSecurePreferences.getLocalNumber(context));
     SentTranscriptMessage transcript = new SentTranscriptMessage(Optional.of(localAddress),
                                                                  message.getTimestamp(),
                                                                  message,

@@ -1,14 +1,17 @@
 package su.sres.securesms.badges.self.expired
 
+import androidx.fragment.app.FragmentManager
 import androidx.navigation.fragment.findNavController
 import su.sres.core.util.DimensionUnit
 import su.sres.securesms.R
+import su.sres.securesms.badges.models.Badge
 import su.sres.securesms.badges.models.ExpiredBadge
 import su.sres.securesms.components.settings.DSLConfiguration
 import su.sres.securesms.components.settings.DSLSettingsAdapter
 import su.sres.securesms.components.settings.DSLSettingsBottomSheetFragment
 import su.sres.securesms.components.settings.DSLSettingsText
 import su.sres.securesms.components.settings.configure
+import su.sres.securesms.util.BottomSheetUtil
 
 /**
  * Bottom sheet displaying a fading badge with a notice and action for becoming a subscriber again.
@@ -28,13 +31,26 @@ class ExpiredBadgeBottomSheetDialogFragment : DSLSettingsBottomSheetFragment(
     return configure {
       customPref(ExpiredBadge.Model(badge))
 
-      sectionHeaderPref(R.string.ExpiredBadgeBottomSheetDialogFragment__your_badge_has_expired)
+      sectionHeaderPref(
+        DSLSettingsText.from(
+          if (badge.isBoost()) {
+            R.string.ExpiredBadgeBottomSheetDialogFragment__your_badge_has_expired
+          } else {
+            R.string.ExpiredBadgeBottomSheetDialogFragment__subscription_cancelled
+          },
+          DSLSettingsText.CenterModifier
+        )
+      )
 
       space(DimensionUnit.DP.toPixels(4f).toInt())
 
       noPadTextPref(
         DSLSettingsText.from(
-          getString(R.string.ExpiredBadgeBottomSheetDialogFragment__your_s_badge_has_expired, badge.name),
+          if (badge.isBoost()) {
+            getString(R.string.ExpiredBadgeBottomSheetDialogFragment__your_boost_badge_has_expired)
+          } else {
+            getString(R.string.ExpiredBadgeBottomSheetDialogFragment__your_sustainer)
+          },
           DSLSettingsText.CenterModifier
         )
       )
@@ -43,7 +59,11 @@ class ExpiredBadgeBottomSheetDialogFragment : DSLSettingsBottomSheetFragment(
 
       noPadTextPref(
         DSLSettingsText.from(
-          R.string.ExpiredBadgeBottomSheetDialogFragment__to_continue_supporting,
+          if (badge.isBoost()) {
+            R.string.ExpiredBadgeBottomSheetDialogFragment__to_continue_supporting_technology
+          } else {
+            R.string.ExpiredBadgeBottomSheetDialogFragment__you_can
+          },
           DSLSettingsText.CenterModifier
         )
       )
@@ -51,7 +71,13 @@ class ExpiredBadgeBottomSheetDialogFragment : DSLSettingsBottomSheetFragment(
       space(DimensionUnit.DP.toPixels(92f).toInt())
 
       primaryButton(
-        text = DSLSettingsText.from(R.string.ExpiredBadgeBottomSheetDialogFragment__become_a_subscriber),
+        text = DSLSettingsText.from(
+          if (badge.isBoost()) {
+            R.string.ExpiredBadgeBottomSheetDialogFragment__become_a_sustainer
+          } else {
+            R.string.ExpiredBadgeBottomSheetDialogFragment__renew_subscription
+          }
+        ),
         onClick = {
           dismiss()
           findNavController().navigate(R.id.action_directly_to_subscribe)
@@ -64,6 +90,16 @@ class ExpiredBadgeBottomSheetDialogFragment : DSLSettingsBottomSheetFragment(
           dismiss()
         }
       )
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    fun show(badge: Badge, fragmentManager: FragmentManager) {
+      val args = ExpiredBadgeBottomSheetDialogFragmentArgs.Builder(badge).build()
+      val fragment = ExpiredBadgeBottomSheetDialogFragment()
+      fragment.arguments = args.toBundle()
+      fragment.show(fragmentManager, BottomSheetUtil.STANDARD_BOTTOM_SHEET_FRAGMENT_TAG)
     }
   }
 }

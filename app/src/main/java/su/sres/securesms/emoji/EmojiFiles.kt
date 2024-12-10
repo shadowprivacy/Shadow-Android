@@ -9,6 +9,9 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import okio.HashingSink
 import okio.Okio
+import okio.blackholeSink
+import okio.buffer
+import okio.source
 import su.sres.core.util.logging.Log
 import su.sres.securesms.crypto.AttachmentSecretProvider
 import su.sres.securesms.crypto.ModernDecryptingPartInputStream
@@ -98,11 +101,11 @@ object EmojiFiles {
     val file = version.getFile(context, uuid)
 
     try {
-      HashingSink.md5(Okio.blackhole()).use { hashingSink ->
-        Okio.buffer(Okio.source(getInputStream(context, file))).use { source ->
+      HashingSink.md5(blackholeSink()).use { hashingSink ->
+        getInputStream(context, file).source().buffer().use { source ->
           source.readAll(hashingSink)
 
-          return hashingSink.hash().toByteArray()
+          return hashingSink.hash.toByteArray()
         }
       }
     } catch (e: Exception) {

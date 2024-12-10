@@ -248,7 +248,6 @@ import su.sres.securesms.search.MessageResult;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.sms.MessageSender;
 import su.sres.securesms.sms.OutgoingEncryptedMessage;
-import su.sres.securesms.sms.OutgoingEndSessionMessage;
 import su.sres.securesms.sms.OutgoingTextMessage;
 import su.sres.securesms.stickers.StickerEventListener;
 import su.sres.securesms.stickers.StickerLocator;
@@ -1519,13 +1518,13 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
     sendButton.resetAvailableTransports(isMediaMessage);
 
-    if (!isSecureText && !isPushGroupConversation() && !recipient.get().isUuidOnly())
+    if (!isSecureText && !isPushGroupConversation() && !recipient.get().isAciOnly())
       // sendButton.disableTransport(Type.TEXTSECURE);
 
       if (!recipient.get().isPushGroup() && recipient.get().isForceSmsSelection()) {
         // noop
       } else {
-        if (isSecureText || isPushGroupConversation() || recipient.get().isUuidOnly())
+        if (isSecureText || isPushGroupConversation() || recipient.get().isAciOnly())
           sendButton.setDefaultTransport(Type.TEXTSECURE);
       }
 
@@ -2914,7 +2913,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     //    return new SettableFuture<>(null);
     // }
 
-    final boolean sendPush = (isSecureText && !forceSms) || recipient.get().isUuidOnly();
+    final boolean sendPush = (isSecureText && !forceSms) || recipient.get().isAciOnly();
     final long    thread   = this.threadId;
 
     if (sendPush) {
@@ -2972,7 +2971,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     final long    thread      = this.threadId;
     final Context context     = getApplicationContext();
     final String  messageBody = getMessage();
-    final boolean sendPush    = (isSecureText && !forceSms) || recipient.get().isUuidOnly();
+    final boolean sendPush    = (isSecureText && !forceSms) || recipient.get().isAciOnly();
 
     OutgoingTextMessage message;
 

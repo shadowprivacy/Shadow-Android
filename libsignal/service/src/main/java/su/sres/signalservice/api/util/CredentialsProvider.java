@@ -8,8 +8,10 @@ package su.sres.signalservice.api.util;
 
 import java.util.UUID;
 
+import su.sres.signalservice.api.push.ACI;
+
 public interface CredentialsProvider {
-  public UUID getUuid();
-  public String getUserLogin();
-  public String getPassword();
+  ACI getAci();
+  String getUserLogin();
+  String getPassword();
 }

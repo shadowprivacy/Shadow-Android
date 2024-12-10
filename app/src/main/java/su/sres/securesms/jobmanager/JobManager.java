@@ -10,10 +10,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import su.sres.core.util.ThreadUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.jobmanager.impl.DefaultExecutorFactory;
 import su.sres.securesms.jobmanager.impl.JsonDataSerializer;
-import su.sres.securesms.jobmanager.workmanager.WorkManagerMigrator;
 import su.sres.securesms.jobmanager.persistence.JobStorage;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.Debouncer;
@@ -61,44 +59,40 @@ public class JobManager implements ConstraintObserver.Notifier {
   public JobManager(@NonNull Application application, @NonNull Configuration configuration) {
     this.application   = application;
     this.configuration = configuration;
-    this.executor      = new FilteredExecutor(configuration.getExecutorFactory().newSingleThreadExecutor("shadow-JobManager"), ThreadUtil::isMainThread);
+    this.executor      = ThreadUtil.trace(new FilteredExecutor(configuration.getExecutorFactory().newSingleThreadExecutor("shadow-JobManager"), ThreadUtil::isMainThread));
     this.jobTracker    = configuration.getJobTracker();
     this.jobController = new JobController(application,
-            configuration.getJobStorage(),
-            configuration.getJobInstantiator(),
-            configuration.getConstraintFactories(),
-            configuration.getDataSerializer(),
-            configuration.getJobTracker(),
-            Build.VERSION.SDK_INT < 26 ? new AlarmManagerScheduler(application)
-                    : new CompositeScheduler(new InAppScheduler(this), new JobSchedulerScheduler(application)),
-            new Debouncer(500),
-            this::onEmptyQueue);
+                                           configuration.getJobStorage(),
+                                           configuration.getJobInstantiator(),
+                                           configuration.getConstraintFactories(),
+                                           configuration.getDataSerializer(),
+                                           configuration.getJobTracker(),
+                                           Build.VERSION.SDK_INT < 26 ? new AlarmManagerScheduler(application)
+                                                                      : new CompositeScheduler(new InAppScheduler(this), new JobSchedulerScheduler(application)),
+                                           new Debouncer(500),
+                                           this::onEmptyQueue);
 
     executor.execute(() -> {
-              synchronized (this) {
-                if (WorkManagerMigrator.needsMigration(application)) {
-                  Log.i(TAG, "Detected an old WorkManager database. Migrating.");
-                  WorkManagerMigrator.migrate(application, configuration.getJobStorage(), configuration.getDataSerializer());
-                }
+      synchronized (this) {
 
-      JobStorage jobStorage = configuration.getJobStorage();
-      jobStorage.init();
+        JobStorage jobStorage = configuration.getJobStorage();
+        jobStorage.init();
 
-      int latestVersion = configuration.getJobMigrator().migrate(jobStorage, configuration.getDataSerializer());
-      TextSecurePreferences.setJobManagerVersion(application, latestVersion);
+        int latestVersion = configuration.getJobMigrator().migrate(jobStorage, configuration.getDataSerializer());
+        TextSecurePreferences.setJobManagerVersion(application, latestVersion);
 
-      jobController.init();
+        jobController.init();
 
-      for (ConstraintObserver constraintObserver : configuration.getConstraintObservers()) {
-        constraintObserver.register(this);
-      }
+        for (ConstraintObserver constraintObserver : configuration.getConstraintObservers()) {
+          constraintObserver.register(this);
+        }
 
-                if (Build.VERSION.SDK_INT < 26) {
-                  application.startService(new Intent(application, KeepAliveService.class));
-                }
+        if (Build.VERSION.SDK_INT < 26) {
+          application.startService(new Intent(application, KeepAliveService.class));
+        }
 
-                initialized = true;
-                notifyAll();
+        initialized = true;
+        notifyAll();
       }
     });
   }
@@ -107,7 +101,7 @@ public class JobManager implements ConstraintObserver.Notifier {
    * Begins the execution of jobs.
    */
   public void beginJobLoop() {
-    runOnExecutor(()-> {
+    runOnExecutor(() -> {
       int id = 0;
 
       for (int i = 0; i < configuration.getJobThreadCount(); i++) {
@@ -145,6 +139,15 @@ public class JobManager implements ConstraintObserver.Notifier {
   public void removeListener(@NonNull JobTracker.JobListener listener) {
     jobTracker.removeListener(listener);
   }
+
+  /**
+   * Returns the state of the first Job that matches the provided filter. Note that there will always be races here, and the result you get back may not be
+   * valid anymore by the time you get it. Use with caution.
+   */
+  public @Nullable JobTracker.JobState getFirstMatchingJobState(@NonNull JobTracker.JobFilter filter) {
+    return jobTracker.getFirstMatchingJobState(filter);
+  }
+
 
   /**
    * Enqueues a single job to be run.
@@ -193,6 +196,7 @@ public class JobManager implements ConstraintObserver.Notifier {
 
   /**
    * Begins the creation of a job chain with a single job.
+   *
    * @see Chain
    */
 
@@ -202,6 +206,7 @@ public class JobManager implements ConstraintObserver.Notifier {
 
   /**
    * Begins the creation of a job chain with a set of jobs that can be run in parallel.
+   *
    * @see Chain
    */
 
@@ -213,7 +218,7 @@ public class JobManager implements ConstraintObserver.Notifier {
    * Attempts to cancel a job. This is best-effort and may not actually prevent a job from
    * completing if it was already running. If this job is running, this can only stop jobs that
    * bother to check {@link Job#isCanceled()}.
-   *
+   * <p>
    * When a job is canceled, {@link Job#onFailure()} will be triggered at the earliest possible
    * moment. Just like a normal failure, all later jobs in the same chain will also be failed.
    */
@@ -242,7 +247,7 @@ public class JobManager implements ConstraintObserver.Notifier {
    * you must take great care where you call this. It could take a very long time to complete!
    *
    * @return If the job completed, this will contain its completion state. If it timed out or
-   *         otherwise didn't complete, this will be absent.
+   * otherwise didn't complete, this will be absent.
    */
   @WorkerThread
   public Optional<JobTracker.JobState> runSynchronously(@NonNull Job job, long timeout) {
@@ -446,7 +451,7 @@ public class JobManager implements ConstraintObserver.Notifier {
    */
   public static class Chain {
 
-    private final JobManager jobManager;
+    private final JobManager      jobManager;
     private final List<List<Job>> jobs;
 
     private Chain(@NonNull JobManager jobManager, @NonNull List<? extends Job> jobs) {
@@ -469,6 +474,14 @@ public class JobManager implements ConstraintObserver.Notifier {
 
     public void enqueue() {
       jobManager.enqueueChain(this);
+    }
+
+    public void enqueue(@NonNull JobTracker.JobListener listener) {
+      List<Job> lastChain          = jobs.get(jobs.size() - 1);
+      Job       lastJobInLastChain = lastChain.get(lastChain.size() - 1);
+
+      jobManager.addListener(lastJobInLastChain.getId(), listener);
+      enqueue();
     }
 
     private List<List<Job>> getJobListChain() {
@@ -613,15 +626,15 @@ public class JobManager implements ConstraintObserver.Notifier {
 
       public @NonNull Configuration build() {
         return new Configuration(jobThreadCount,
-                executorFactory,
-                new JobInstantiator(jobFactories),
-                new ConstraintInstantiator(constraintFactories),
-                new ArrayList<>(constraintObservers),
-                dataSerializer,
-                jobStorage,
-                jobMigrator,
-                jobTracker,
-                reservedJobRunners);
+                                 executorFactory,
+                                 new JobInstantiator(jobFactories),
+                                 new ConstraintInstantiator(constraintFactories),
+                                 new ArrayList<>(constraintObservers),
+                                 dataSerializer,
+                                 jobStorage,
+                                 jobMigrator,
+                                 jobTracker,
+                                 reservedJobRunners);
       }
     }
   }

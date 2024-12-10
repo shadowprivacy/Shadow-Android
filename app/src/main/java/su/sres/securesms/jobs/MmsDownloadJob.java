@@ -1,6 +1,7 @@
 package su.sres.securesms.jobs;
 
 import android.net.Uri;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -38,6 +39,7 @@ import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
@@ -65,12 +67,12 @@ public class MmsDownloadJob extends BaseJob {
 
   public MmsDownloadJob(long messageId, long threadId, boolean automatic) {
     this(new Job.Parameters.Builder()
-                    .setQueue("mms-operation")
-                    .setMaxAttempts(25)
-                    .build(),
-            messageId,
-            threadId,
-            automatic);
+             .setQueue("mms-operation")
+             .setMaxAttempts(25)
+             .build(),
+         messageId,
+         threadId,
+         automatic);
 
   }
 
@@ -85,9 +87,9 @@ public class MmsDownloadJob extends BaseJob {
   @Override
   public @NonNull Data serialize() {
     return new Data.Builder().putLong(KEY_MESSAGE_ID, messageId)
-            .putLong(KEY_THREAD_ID, threadId)
-            .putBoolean(KEY_AUTOMATIC, automatic)
-            .build();
+                             .putLong(KEY_THREAD_ID, threadId)
+                             .putBoolean(KEY_AUTOMATIC, automatic)
+                             .build();
   }
 
   @Override
@@ -105,10 +107,10 @@ public class MmsDownloadJob extends BaseJob {
 
   @Override
   public void onRun() {
-    if (TextSecurePreferences.getLocalUuid(context) == null && TextSecurePreferences.getLocalNumber(context) == null) {
+    if (TextSecurePreferences.getLocalAci(context) == null && TextSecurePreferences.getLocalNumber(context) == null) {
       throw new NotReadyException();
     }
-    MessageDatabase database     = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase                           database     = DatabaseFactory.getMmsDatabase(context);
     Optional<MmsDatabase.MmsNotificationInfo> notification = database.getNotification(messageId);
 
     if (!notification.isPresent()) {
@@ -185,13 +187,13 @@ public class MmsDownloadJob extends BaseJob {
   private void storeRetrievedMms(String contentLocation,
                                  long messageId, long threadId, RetrieveConf retrieved,
                                  int subscriptionId, @Nullable RecipientId notificationFrom)
-          throws MmsException
+      throws MmsException
   {
-    MessageDatabase   database    = DatabaseFactory.getMmsDatabase(context);
-    Optional<GroupId> group       = Optional.absent();
-    Set<RecipientId>  members     = new HashSet<>();
-    String            body        = null;
-    List<Attachment>  attachments = new LinkedList<>();
+    MessageDatabase   database       = DatabaseFactory.getMmsDatabase(context);
+    Optional<GroupId> group          = Optional.absent();
+    Set<RecipientId>  members        = new HashSet<>();
+    String            body           = null;
+    List<Attachment>  attachments    = new LinkedList<>();
     List<Contact>     sharedContacts = new LinkedList<>();
 
     RecipientId from = null;
@@ -223,11 +225,11 @@ public class MmsDownloadJob extends BaseJob {
       body = PartParser.getMessageText(retrieved.getBody());
       PduBody media = PartParser.getSupportedMediaParts(retrieved.getBody());
 
-      for (int i=0;i<media.getPartsNum();i++) {
+      for (int i = 0; i < media.getPartsNum(); i++) {
         PduPart part = media.getPart(i);
 
         if (part.getData() != null) {
-          if (Util.toIsoString(part.getContentType()).toLowerCase().equals(MediaUtil.VCARD)){
+          if (Util.toIsoString(part.getContentType()).toLowerCase().equals(MediaUtil.VCARD)) {
             sharedContacts.addAll(VCardUtil.parseContacts(new String(part.getData())));
           } else {
             Uri    uri  = BlobProvider.getInstance().forData(part.getData()).createForSingleUseInMemory();
@@ -236,8 +238,8 @@ public class MmsDownloadJob extends BaseJob {
             if (part.getName() != null) name = Util.toIsoString(part.getName());
 
             attachments.add(new UriAttachment(uri, Util.toIsoString(part.getContentType()),
-                    AttachmentDatabase.TRANSFER_PROGRESS_DONE,
-                    part.getData().length, name, false, false, false, false, null, null, null, null, null));
+                                              AttachmentDatabase.TRANSFER_PROGRESS_DONE,
+                                              part.getData().length, name, false, false, false, false, null, null, null, null, null));
           }
         }
       }
@@ -273,9 +275,9 @@ public class MmsDownloadJob extends BaseJob {
     @Override
     public @NonNull MmsDownloadJob create(@NonNull Parameters parameters, @NonNull Data data) {
       return new MmsDownloadJob(parameters,
-              data.getLong(KEY_MESSAGE_ID),
-              data.getLong(KEY_THREAD_ID),
-              data.getBoolean(KEY_AUTOMATIC));
+                                data.getLong(KEY_MESSAGE_ID),
+                                data.getLong(KEY_THREAD_ID),
+                                data.getBoolean(KEY_AUTOMATIC));
     }
   }
 

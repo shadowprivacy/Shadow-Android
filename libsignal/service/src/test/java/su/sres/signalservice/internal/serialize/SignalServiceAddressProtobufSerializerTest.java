@@ -3,6 +3,7 @@ package su.sres.signalservice.internal.serialize;
 import org.junit.Test;
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.internal.serialize.protos.AddressProto;
 
@@ -14,7 +15,7 @@ public final class SignalServiceAddressProtobufSerializerTest {
 
   @Test
   public void serialize_and_deserialize_uuid_address() {
-    SignalServiceAddress address      = new SignalServiceAddress(UUID.randomUUID(), Optional.absent());
+    SignalServiceAddress address      = new SignalServiceAddress(ACI.from(UUID.randomUUID()), Optional.absent());
     AddressProto         addressProto = su.sres.signalservice.internal.serialize.SignalServiceAddressProtobufSerializer.toProtobuf(address);
     SignalServiceAddress deserialized = su.sres.signalservice.internal.serialize.SignalServiceAddressProtobufSerializer.fromProtobuf(addressProto);
 
@@ -23,7 +24,7 @@ public final class SignalServiceAddressProtobufSerializerTest {
 
   @Test
   public void serialize_and_deserialize_both_address() {
-    SignalServiceAddress address      = new SignalServiceAddress(UUID.randomUUID(), Optional.of("+15552345678"));
+    SignalServiceAddress address      = new SignalServiceAddress(ACI.from(UUID.randomUUID()), Optional.of("+15552345678"));
     AddressProto         addressProto = su.sres.signalservice.internal.serialize.SignalServiceAddressProtobufSerializer.toProtobuf(address);
     SignalServiceAddress deserialized = su.sres.signalservice.internal.serialize.SignalServiceAddressProtobufSerializer.fromProtobuf(addressProto);
 

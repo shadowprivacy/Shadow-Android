@@ -21,6 +21,7 @@ import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceStateBuilder;
 import su.sres.securesms.util.NetworkUtil;
 import su.sres.signalservice.api.messages.calls.OfferMessage;
+import su.sres.signalservice.api.push.ACI;
 
 import java.util.List;
 
@@ -113,7 +114,7 @@ public class GroupPreJoinActionProcessor extends GroupActionProcessor {
     }
 
     List<Recipient> callParticipants = Stream.of(peekInfo.getJoinedMembers())
-                                             .map(uuid -> Recipient.externalPush(context, uuid, null, false))
+                                             .map(uuid -> Recipient.externalPush(context, ACI.from(uuid), null, false))
                                              .toList();
 
     WebRtcServiceStateBuilder.CallInfoStateBuilder builder = currentState.builder()

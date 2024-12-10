@@ -16,6 +16,7 @@ import su.sres.signalservice.api.SignalWebSocket;
 import su.sres.signalservice.api.crypto.UnidentifiedAccess;
 import su.sres.signalservice.api.profiles.ProfileAndCredential;
 import su.sres.signalservice.api.profiles.SignalServiceProfile;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.push.exceptions.MalformedResponseException;
 import su.sres.signalservice.internal.ServiceResponse;
@@ -61,7 +62,7 @@ public final class ProfileService {
                                                                   SignalServiceProfile.RequestType requestType,
                                                                   Locale locale)
   {
-    UUID                               uuid           = address.getUuid();
+    ACI                                aci            = address.getAci();
     SecureRandom                       random         = new SecureRandom();
     ProfileKeyCredentialRequestContext requestContext = null;
 
@@ -70,18 +71,18 @@ public final class ProfileService {
                                                                                                      .setVerb("GET");
 
     if (profileKey.isPresent()) {
-      ProfileKeyVersion profileKeyIdentifier = profileKey.get().getProfileKeyVersion(uuid);
+      ProfileKeyVersion profileKeyIdentifier = profileKey.get().getProfileKeyVersion(aci.uuid());
       String            version              = profileKeyIdentifier.serialize();
 
       if (requestType == SignalServiceProfile.RequestType.PROFILE_AND_CREDENTIAL) {
-        requestContext = clientZkProfileOperations.createProfileKeyCredentialRequestContext(random, uuid, profileKey.get());
+        requestContext = clientZkProfileOperations.createProfileKeyCredentialRequestContext(random, aci.uuid(), profileKey.get());
 
         ProfileKeyCredentialRequest request           = requestContext.getRequest();
         String                      credentialRequest = Hex.toStringCondensed(request.serialize());
 
-        builder.setPath(String.format("/v1/profile/%s/%s/%s", uuid, version, credentialRequest));
+        builder.setPath(String.format("/v1/profile/%s/%s/%s", aci, version, credentialRequest));
       } else {
-        builder.setPath(String.format("/v1/profile/%s/%s", uuid, version));
+        builder.setPath(String.format("/v1/profile/%s/%s", aci, version));
       }
     } else {
       builder.setPath(String.format("/v1/profile/%s", address.getIdentifier()));

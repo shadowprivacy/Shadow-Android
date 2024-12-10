@@ -72,7 +72,7 @@ public final class UuidUtil {
     return parseOrNull(bytes.toByteArray());
   }
 
-  private static UUID parseOrNull(byte[] byteArray) {
+  public static UUID parseOrNull(byte[] byteArray) {
     return byteArray != null && byteArray.length == 16 ? parseOrThrow(byteArray) : null;
   }
 

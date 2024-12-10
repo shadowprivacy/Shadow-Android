@@ -3,6 +3,7 @@ package su.sres.signalservice.internal;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
 
+import io.reactivex.rxjava3.core.Single;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 import su.sres.signalservice.internal.websocket.WebsocketResponse;
@@ -67,6 +68,18 @@ public final class ServiceResponse<Result> {
 
   public Optional<Throwable> getExecutionError() {
     return executionError;
+  }
+
+  public Single<Result> flattenResult() {
+    if (result.isPresent()) {
+      return Single.just(result.get());
+    } else if (applicationError.isPresent()) {
+      return Single.error(applicationError.get());
+    } else if (executionError.isPresent()) {
+      return Single.error(executionError.get());
+    } else {
+      return Single.error(new AssertionError("Should never get here."));
+    }
   }
 
   public static <T> ServiceResponse<T> forResult(T result, WebsocketResponse response) {

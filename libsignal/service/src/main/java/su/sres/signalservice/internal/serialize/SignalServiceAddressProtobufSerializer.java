@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.serialize.protos.AddressProto;
@@ -18,7 +19,7 @@ public final class SignalServiceAddressProtobufSerializer {
   public static AddressProto toProtobuf(SignalServiceAddress signalServiceAddress) {
     AddressProto.Builder builder = AddressProto.newBuilder();
 
-    builder.setUuid(ByteString.copyFrom(UuidUtil.toByteArray(signalServiceAddress.getUuid())));
+    builder.setUuid(signalServiceAddress.getAci().toByteString());
 
     if (signalServiceAddress.getNumber().isPresent()) {
       builder.setE164(signalServiceAddress.getNumber().get());
@@ -28,9 +29,9 @@ public final class SignalServiceAddressProtobufSerializer {
   }
 
   public static SignalServiceAddress fromProtobuf(AddressProto addressProto) {
-    UUID             uuid   = UuidUtil.parseOrThrow(addressProto.getUuid().toByteArray());
+    ACI              aci    = ACI.parseOrThrow(addressProto.getUuid().toByteArray());
     Optional<String> number = addressProto.hasE164() ? Optional.of(addressProto.getE164()) : Optional.absent();
 
-    return new SignalServiceAddress(uuid, number);
+    return new SignalServiceAddress(aci, number);
   }
 }

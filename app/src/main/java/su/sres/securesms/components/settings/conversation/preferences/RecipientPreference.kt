@@ -3,6 +3,7 @@ package su.sres.securesms.components.settings.conversation.preferences
 import android.view.View
 import android.widget.TextView
 import su.sres.securesms.R
+import su.sres.securesms.badges.BadgeImageView
 import su.sres.securesms.components.AvatarImageView
 import su.sres.securesms.components.settings.PreferenceModel
 import su.sres.securesms.recipients.Recipient
@@ -40,11 +41,13 @@ object RecipientPreference {
     private val name: TextView = itemView.findViewById(R.id.recipient_name)
     private val about: TextView = itemView.findViewById(R.id.recipient_about)
     private val admin: View = itemView.findViewById(R.id.admin)
+    private val badge: BadgeImageView = itemView.findViewById(R.id.recipient_badge)
 
     override fun bind(model: Model) {
       itemView.setOnClickListener { model.onClick() }
 
       avatar.setRecipient(model.recipient)
+      badge.setBadgeFromRecipient(model.recipient)
       name.text = if (model.recipient.isSelf) {
         context.getString(R.string.Recipient_you)
       } else {

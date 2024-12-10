@@ -7,6 +7,7 @@
     <string name="transfer_support_url" translatable="false">https://support.signal.org/hc/articles/360007059752</string>
     <string name="support_center_url" translatable="false">https://support.signal.org/</string>
     <string name="terms_and_privacy_policy_url" translatable="false">https://signal.org/legal</string>
+    <string name="sustainer_boost_and_badges" translatable="false">https://support.signal.org/hc/articles/4408365318426</string>
 
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -819,6 +820,7 @@
     <string name="ManageProfileFragment_your_username">Your username</string>
     <string name="ManageProfileFragment_failed_to_set_avatar">Failed to set avatar</string>
     <string name="ManageProfileFragment_badges">Badges</string>
+    <string name="ManageProfileFragment__edit_photo">Edit photo</string>
 
     <!-- ManageRecipientActivity -->
     <string name="ManageRecipientActivity_no_groups_in_common">No groups in common</string>
@@ -948,6 +950,8 @@
 
     <!-- LearnMoreTextView -->
     <string name="LearnMoreTextView_learn_more">Learn more</string>
+
+    <string name="SpanUtil__read_more">Read more</string>
 
     <!-- LongMessageActivity -->
     <string name="LongMessageActivity_unable_to_find_message">Unable to find message</string>
@@ -2235,7 +2239,7 @@
     <string name="HelpFragment__debug_log">Debug Log:</string>
     <string name="HelpFragment__could_not_upload_logs">Could not upload logs</string>
     <string name="HelpFragment__please_be_as_descriptive_as_possible">Please be as descriptive as possible to help us understand the issue.</string>
-    <string-array name="HelpFragment__categories_2">
+    <string-array name="HelpFragment__categories_3">
         <item>-- Please select an option --</item>
         <item>Something\'s Not Working</item>
         <item>Feature Request</item>
@@ -2243,7 +2247,7 @@
         <item>Feedback</item>
         <item>Other</item>
         <item>Payments (MobileCoin)</item>
-        <item>Donations (Sustainers &amp; Shadow Boost)</item>
+        <item>Sustainers &amp; Shadow Boost</item>
     </string-array>
 
     <!-- ReactWithAnyEmojiBottomSheetDialogFragment -->
@@ -2349,6 +2353,7 @@
     <string name="preferences__help">Help</string>
     <string name="preferences__advanced">Advanced</string>
     <string name="preferences__subscription">Subscription</string>
+    <string name="preferences__become_a_signal_sustainer">Become a subscriber</string>
     <string name="preferences__signal_boost">Shadow Boost</string>
     <string name="preferences__privacy">Privacy</string>
     <string name="preferences__mms_user_agent">MMS User Agent</string>
@@ -2527,6 +2532,8 @@
     <string name="preferences__internal_local_metrics" translatable="false">Local Metrics</string>
     <string name="preferences__internal_clear_local_metrics" translatable="false">Clear local metrics</string>
     <string name="preferences__internal_click_to_clear_all_local_metrics_state" translatable="false">Click to clear all local metrics state.</string>
+    <string name="preferences__internal_badges" translatable="false">Badges</string>
+    <string name="preferences__internal_badges_enqueue_redemption" translatable="false">Enqueue redemption.</string>
 
     <!-- Payments -->
     <string name="PaymentsActivityFragment__all_activity">All activity</string>
@@ -3737,7 +3744,7 @@
 
     <string name="SubscribeFragment__signal_is_powered_by_people_like_you">Shadow is powered by people like you.</string>
     <string name="SubscribeFragment__support_technology_that_is_built_for_you">Support technology that is built for you—not for your data—by joining the community of people that sustain it.</string>
-    <string name="SubscribeFragment__donation_amount">Donation amount</string>
+    <string name="SubscribeFragment__currency">Currency</string>
     <string name="SubscribeFragment__more_payment_options">More Payment Options</string>
     <string name="SubscribeFragment__cancel_subscription">Cancel Subscription</string>
     <string name="SubscribeFragment__confirm_cancellation">Confirm Cancellation?</string>
@@ -3749,6 +3756,7 @@
     <string name="SubscribeFragment__update_subscription_question">Update subscription?</string>
     <string name="SubscribeFragment__update">Update</string>
     <string name="SubscribeFragment__you_will_be_charged_the_full_amount">You will be charged the full amount of the new subscription price today. Your subscription will renew %1$s.</string>
+    <string name="SubscribeFragment__you_will_be_charged_the_full_amount_s_of">You will be charged the full amount (%1$s) of the new subscription price today. Your subscription will renew monthly.</string>
 
     <string name="Subscription__s_per_month">%s/month</string>
     <string name="Subscription__s_per_month_dot_renews_s">%1$s/month · Renews %2$s</string>
@@ -3761,7 +3769,10 @@
 
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_your_support">Thanks for your Support!</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_the_boost">Thanks for the Boost!</string>
-    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_s_badge">You\'ve earned a %s badge!</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_s_badge_help_signal">You\'ve earned %s badge! Help Shadow build awareness by displaying this badge on your profile.</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_boost_badge_help_signal">You\'ve earned a Boost badge! Help Shadow build awareness by displaying this badge on your profile.</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__you_can_also">You can also</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__become_a_montly_sustainer">become a monthly Sustainer.</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__display_on_profile">Display on Profile</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__make_featured_badge">Make featured badge</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__done">Done</string>
@@ -3779,17 +3790,26 @@
     <string name="Boost__enter_custom_amount">Enter Custom Amount</string>
     <string name="Boost__one_time_contribution">One-time contribution</string>
 
-    <string name="MySupportPreference__add_a_signal_boost">Add a Signal Boost</string>
+    <string name="MySupportPreference__add_a_signal_boost">Add a Shadow Boost</string>
     <string name="MySupportPreference__s_per_month">%1$s/month</string>
     <string name="MySupportPreference__renews_s">Renews %1$s</string>
+    <string name="MySupportPreference__processing_transaction">Processing transaction…</string>
+    <string name="MySupportPreference__couldnt_add_badge">Couldn\'t add badge.</string>
+    <string name="MySupportPreference__please_contact_support">Please contact support.</string>
 
     <string name="ExpiredBadgeBottomSheetDialogFragment__your_badge_has_expired">Your Badge has Expired</string>
-    <string name="ExpiredBadgeBottomSheetDialogFragment__your_s_badge_has_expired">Your %1$s badge has expired, and is no longer visible to others on your profile.</string>
-    <string name="ExpiredBadgeBottomSheetDialogFragment__to_continue_supporting">To continue supporting technology that is built for you—not for your data—please consider becoming a monthly subscriber.</string>
-    <string name="ExpiredBadgeBottomSheetDialogFragment__become_a_subscriber">Become a subscriber</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__badge_expired">Badge expired</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__subscription_cancelled">Subscription cancelled</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__your_boost_badge_has_expired">Your Boost badge has expired, and is no longer visible to others on your profile.</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__to_continue_supporting_technology">Please consider becoming a monthly subscriber.</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__become_a_sustainer">Become a subscriber</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__not_now">Not now</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__your_sustainer">Your subscription was automatically cancelled because you were inactive for too long.</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__you_can">Renew now.</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__renew_subscription">Renew subscription</string>
 
     <string name="Subscription__verification_failed">Subscription Verification Failed</string>
+    <string name="Subscription__redemption_failed">Badge Redemption Failed</string>
     <string name="Subscription__please_contact_support_for_more_information">Please contact support for more information.</string>
     <string name="Subscription__contact_support">Contact Support</string>
     <string name="Subscription__earn_a_s_badge">Earn a %1$s badge</string>
@@ -3797,14 +3817,21 @@
     <string name="SubscribeFragment__processing_payment">Processing payment…</string>
     <string name="DonationsErrors__payment_failed">Payment failed</string>
     <string name="DonationsErrors__your_payment">Your payment couldn\'t be processed and you have not been charged. Please try again.</string>
-    <string name="DonationsErrors__redemption_still_pending">Redemption still pending</string>
-    <string name="DonationsErrors__you_might_not_see_your_badge_right_away">You may not see your badge right away, but we\'re working on it!</string>
+    <string name="DonationsErrors__still_processing">Still processing</string>
+    <string name="DonationsErrors__redemption_failed">Redemption failed</string>
+    <string name="DonationsErrors__please_contact_support">Please contact support</string>
+    <string name="DonationsErrors__your_payment_is_still">Your payment is still being processed. This can take a few minutes depending on your connection.</string>
     <string name="DonationsErrors__google_pay_unavailable">Google Pay Unavailable</string>
     <string name="DonationsErrors__you_have_to_set_up_google_pay_to_donate_in_app">You have to set up Google Pay to donate in-app.</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">Failed to cancel subscription</string>
     <string name="DonationsErrors__subscription_cancellation_requires_an_internet_connection">Subscription cancellation requires an internet connection.</string>
 
+    <string name="ViewBadgeBottomSheetDialogFragment__your_device_doesn_t_support_google_pay_so_you_can_t_subscribe_to_earn_a_badge_you_can_still_support_signal_by_making_a_donation_on_our_website">Your device doesn\'t support Google Pay, so you can\'t subscribe.</string>
 
+    <string name="NetworkFailure__network_error_check_your_connection_and_try_again">Network error. Check your connection and try again.</string>
+    <string name="NetworkFailure__retry">Retry</string>
+
+    <string name="Boost__thank_you_for_your_donation" translatable="false">Thank you for your donation.</string>
 
     <!-- EOF -->
 

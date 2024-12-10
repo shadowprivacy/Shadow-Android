@@ -10,6 +10,7 @@ import com.google.protobuf.ByteString;
 
 import su.sres.signalservice.api.payments.CurrencyConversions;
 import su.sres.signalservice.api.profiles.ProfileAndCredential;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.storage.protos.DirectoryResponse;
 import su.sres.signalservice.api.groupsv2.ClientZkOperations;
 import su.sres.signalservice.api.groupsv2.GroupsV2Api;
@@ -113,18 +114,21 @@ public class SignalServiceAccountManager {
   /**
    * Construct a SignalServiceAccountManager.
    *
-   * @param configuration The URL for the Signal Service.
-   * @param uuid          The Signal Service UUID.
-   * @param userLogin     The Signal Service user login.
-   * @param password      A Signal Service password.
+   * @param configuration The URL for the Shadow Service.
+   * @param aci The Shadow Service UUID.
+   * @param userLogin     The Shadow Service user login.
+   * @param password      A Shadow Service password.
    * @param signalAgent   A string which identifies the client software.
    */
   public SignalServiceAccountManager(SignalServiceConfiguration configuration,
-                                     UUID uuid, String userLogin, String password,
-                                     String signalAgent, boolean automaticNetworkRetry)
+                                     ACI aci,
+                                     String userLogin,
+                                     String password,
+                                     String signalAgent,
+                                     boolean automaticNetworkRetry)
   {
     this(configuration,
-         new StaticCredentialsProvider(uuid, userLogin, password),
+         new StaticCredentialsProvider(aci, userLogin, password),
          signalAgent,
          new GroupsV2Operations(ClientZkOperations.create(configuration)),
          automaticNetworkRetry);
@@ -159,8 +163,8 @@ public class SignalServiceAccountManager {
     }
   }
 
-  public UUID getOwnUuid() throws IOException {
-    return this.pushServiceSocket.getOwnUuid();
+  public ACI getOwnAci() throws IOException {
+    return this.pushServiceSocket.getOwnAci();
   }
 
   public WhoAmIResponse getWhoAmI() throws IOException {
@@ -549,7 +553,7 @@ public class SignalServiceAccountManager {
                                                        .setProvisioningCode(code)
                                                        .setProvisioningVersion(ProvisioningVersion.CURRENT_VALUE);
     String userLogin = credentials.getUserLogin();
-    UUID   uuid      = credentials.getUuid();
+    ACI    aci  = credentials.getAci();
 
     if (userLogin != null) {
       message.setNumber(userLogin);
@@ -557,8 +561,8 @@ public class SignalServiceAccountManager {
       throw new AssertionError("Missing user login!");
     }
 
-    if (uuid != null) {
-      message.setUuid(uuid.toString());
+    if (aci != null) {
+      message.setUuid(aci.toString());
     } else {
       Log.w(TAG, "[addDevice] Missing UUID.");
     }
@@ -614,7 +618,7 @@ public class SignalServiceAccountManager {
   /**
    * @return The avatar URL path, if one was written.
    */
-  public Optional<String> setVersionedProfile(UUID uuid,
+  public Optional<String> setVersionedProfile(ACI aci,
                                               ProfileKey profileKey,
                                               String name,
                                               String about,
@@ -641,22 +645,22 @@ public class SignalServiceAccountManager {
                                                 new ProfileCipherOutputStreamFactory(profileKey));
     }
 
-    return this.pushServiceSocket.writeProfile(new SignalServiceProfileWrite(profileKey.getProfileKeyVersion(uuid).serialize(),
+    return this.pushServiceSocket.writeProfile(new SignalServiceProfileWrite(profileKey.getProfileKeyVersion(aci.uuid()).serialize(),
                                                                              ciphertextName,
                                                                              ciphertextAbout,
                                                                              ciphertextEmoji,
                                                                              ciphertextMobileCoinAddress,
                                                                              hasAvatar,
-                                                                             profileKey.getCommitment(uuid).serialize(),
+                                                                             profileKey.getCommitment(aci.uuid()).serialize(),
                                                                              visibleBadgeIds),
                                                profileAvatarData);
   }
 
-  public Optional<ProfileKeyCredential> resolveProfileKeyCredential(UUID uuid, ProfileKey profileKey, Locale locale)
+  public Optional<ProfileKeyCredential> resolveProfileKeyCredential(ACI aci, ProfileKey profileKey, Locale locale)
       throws NonSuccessfulResponseCodeException, PushNetworkException
   {
     try {
-      ProfileAndCredential credential = this.pushServiceSocket.retrieveVersionedProfileAndCredential(uuid, profileKey, Optional.absent(), locale).get(10, TimeUnit.SECONDS);
+      ProfileAndCredential credential = this.pushServiceSocket.retrieveVersionedProfileAndCredential(aci.uuid(), profileKey, Optional.absent(), locale).get(10, TimeUnit.SECONDS);
       return credential.getProfileKeyCredential();
     } catch (InterruptedException | TimeoutException e) {
       throw new PushNetworkException(e);

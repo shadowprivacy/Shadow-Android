@@ -25,6 +25,7 @@ import su.sres.securesms.service.webrtc.state.WebRtcServiceStateBuilder;
 import org.webrtc.VideoTrack;
 
 import su.sres.signalservice.api.messages.calls.OfferMessage;
+import su.sres.signalservice.api.push.ACI;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -85,7 +86,7 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
     seen.add(Recipient.self());
 
     for (GroupCall.RemoteDeviceState device : remoteDeviceStates) {
-      Recipient         recipient         = Recipient.externalPush(context, device.getUserId(), null, false);
+      Recipient         recipient         = Recipient.externalPush(context, ACI.from(device.getUserId()), null, false);
       CallParticipantId callParticipantId = new CallParticipantId(device.getDemuxId(), recipient.getId());
       CallParticipant   callParticipant   = participants.get(callParticipantId);
 

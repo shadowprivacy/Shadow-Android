@@ -5,92 +5,107 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 
+import su.sres.core.util.concurrent.TracingExecutor;
+import su.sres.core.util.concurrent.TracingExecutorService;
+
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+
+import su.sres.core.util.concurrent.TracingExecutorService;
 
 /**
  * Thread related utility functions.
  */
 public final class ThreadUtil {
 
-    private static volatile Handler handler;
+  private static volatile Handler handler;
 
-    private ThreadUtil() {}
+  private ThreadUtil() {}
 
-    private static Handler getHandler() {
+  private static Handler getHandler() {
+    if (handler == null) {
+      synchronized (ThreadUtil.class) {
         if (handler == null) {
-            synchronized (ThreadUtil.class) {
-                if (handler == null) {
-                    handler = new Handler(Looper.getMainLooper());
-                }
-            }
+          handler = new Handler(Looper.getMainLooper());
         }
-        return handler;
+      }
     }
+    return handler;
+  }
 
-    public static boolean isMainThread() {
-        return Looper.myLooper() == Looper.getMainLooper();
+  public static boolean isMainThread() {
+    return Looper.myLooper() == Looper.getMainLooper();
+  }
+
+  public static void assertMainThread() {
+    if (!isMainThread()) {
+      throw new AssertionError("Must run on main thread.");
     }
+  }
 
-    public static void assertMainThread() {
-        if (!isMainThread()) {
-            throw new AssertionError("Must run on main thread.");
-        }
+  public static void assertNotMainThread() {
+    if (isMainThread()) {
+      throw new AssertionError("Cannot run on main thread.");
     }
+  }
 
-    public static void assertNotMainThread() {
-        if (isMainThread()) {
-            throw new AssertionError("Cannot run on main thread.");
-        }
-    }
+  public static void postToMain(final @NonNull Runnable runnable) {
+    getHandler().post(runnable);
+  }
 
-    public static void postToMain(final @NonNull Runnable runnable) {
-        getHandler().post(runnable);
-    }
+  public static void runOnMain(final @NonNull Runnable runnable) {
+    if (isMainThread()) runnable.run();
+    else getHandler().post(runnable);
+  }
 
-    public static void runOnMain(final @NonNull Runnable runnable) {
-        if (isMainThread()) runnable.run();
-        else                getHandler().post(runnable);
-    }
+  public static void runOnMainDelayed(final @NonNull Runnable runnable, long delayMillis) {
+    getHandler().postDelayed(runnable, delayMillis);
+  }
 
-    public static void runOnMainDelayed(final @NonNull Runnable runnable, long delayMillis) {
-        getHandler().postDelayed(runnable, delayMillis);
-    }
+  public static void cancelRunnableOnMain(@NonNull Runnable runnable) {
+    getHandler().removeCallbacks(runnable);
+  }
 
-    public static void cancelRunnableOnMain(@NonNull Runnable runnable) {
-        getHandler().removeCallbacks(runnable);
-    }
-
-    public static void runOnMainSync(final @NonNull Runnable runnable) {
-        if (isMainThread()) {
-            runnable.run();
-        } else {
-            final CountDownLatch sync = new CountDownLatch(1);
-            runOnMain(() -> {
-                try {
-                    runnable.run();
-                } finally {
-                    sync.countDown();
-                }
-            });
-            try {
-                sync.await();
-            } catch (InterruptedException ie) {
-                throw new AssertionError(ie);
-            }
-        }
-    }
-
-    public static void sleep(long millis) {
+  public static void runOnMainSync(final @NonNull Runnable runnable) {
+    if (isMainThread()) {
+      runnable.run();
+    } else {
+      final CountDownLatch sync = new CountDownLatch(1);
+      runOnMain(() -> {
         try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            throw new AssertionError(e);
+          runnable.run();
+        } finally {
+          sync.countDown();
         }
+      });
+      try {
+        sync.await();
+      } catch (InterruptedException ie) {
+        throw new AssertionError(ie);
+      }
     }
+  }
 
-    public static void interruptableSleep(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException ignored) { }
+  public static void sleep(long millis) {
+    try {
+      Thread.sleep(millis);
+    } catch (InterruptedException e) {
+      throw new AssertionError(e);
     }
+  }
+
+  public static void interruptableSleep(long millis) {
+    try {
+      Thread.sleep(millis);
+    } catch (InterruptedException ignored) {}
+  }
+
+  public static Executor trace(Executor executor) {
+    return new TracingExecutor(executor);
+  }
+
+  public static ExecutorService trace(ExecutorService executor) {
+    return new TracingExecutorService(executor);
+  }
 }

@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
+import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.MissingRecipientException;
@@ -22,12 +23,12 @@ import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.FilteredExecutor;
+import su.sres.signalservice.api.push.ACI;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -59,7 +60,7 @@ public final class LiveRecipientCache {
     this.localRecipientId  = new AtomicReference<>(null);
     this.unknown           = new LiveRecipient(context, Recipient.UNKNOWN);
     this.db                = DatabaseFactory.getInstance(context).getRawDatabase();
-    this.resolveExecutor   = new FilteredExecutor(SignalExecutors.BOUNDED, () -> !db.inTransaction());
+    this.resolveExecutor   = ThreadUtil.trace(new FilteredExecutor(SignalExecutors.BOUNDED, () -> !db.inTransaction()));
   }
 
   @AnyThread
@@ -82,16 +83,7 @@ public final class LiveRecipientCache {
     }
 
     if (needsResolve) {
-      final LiveRecipient toResolve = live;
-
-      MissingRecipientException prettyStackTraceError = new MissingRecipientException(toResolve.getId());
-      resolveExecutor.execute(() -> {
-        try {
-          toResolve.resolve();
-        } catch (MissingRecipientException e) {
-          throw prettyStackTraceError;
-        }
-      });
+      resolveExecutor.execute(live::resolve);
     }
 
     return live;
@@ -160,11 +152,11 @@ public final class LiveRecipientCache {
     }
 
     if (selfId == null) {
-      UUID   localUuid = TextSecurePreferences.getLocalUuid(context);
+      ACI    localAci  = TextSecurePreferences.getLocalAci(context);
       String localE164 = TextSecurePreferences.getLocalNumber(context);
 
-      if (localUuid != null) {
-        selfId = recipientDatabase.getByUuid(localUuid).or(recipientDatabase.getByE164(localE164)).orNull();
+      if (localAci != null) {
+        selfId = recipientDatabase.getByAci(localAci).or(recipientDatabase.getByE164(localE164)).orNull();
       } else if (localE164 != null) {
         selfId = recipientDatabase.getByE164(localE164).orNull();
       } else {
@@ -172,7 +164,7 @@ public final class LiveRecipientCache {
       }
 
       if (selfId == null) {
-        throw new MissingRecipientException(null);
+        selfId = recipientDatabase.getAndPossiblyMerge(localAci, localE164, false);
       }
 
       synchronized (localRecipientId) {

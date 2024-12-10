@@ -51,12 +51,11 @@ public class RecipientUtil {
   {
     recipient = recipient.resolve();
 
-    if (!recipient.getUuid().isPresent() && !recipient.getE164().isPresent()) {
+    if (!recipient.getAci().isPresent() && !recipient.getE164().isPresent()) {
       throw new AssertionError(recipient.getId() + " - No UUID or phone number!");
     }
 
-
-    if (!recipient.getUuid().isPresent()) {
+    if (!recipient.getAci().isPresent()) {
 
       Log.i(TAG, recipient.getId() + " is missing a UUID...");
       DirectoryHelper.refreshDirectory(context);
@@ -65,8 +64,8 @@ public class RecipientUtil {
 
     }
 
-    if (recipient.hasUuid()) {
-      return new SignalServiceAddress(recipient.requireUuid(), Optional.fromNullable(recipient.resolve().getE164().orNull()));
+    if (recipient.hasAci()) {
+      return new SignalServiceAddress(recipient.requireAci(), Optional.fromNullable(recipient.resolve().getE164().orNull()));
     } else {
       throw new NotFoundException(recipient.getId() + " is not registered!");
     }
@@ -87,7 +86,7 @@ public class RecipientUtil {
 
     return Stream.of(recipients)
                  .map(Recipient::resolve)
-                 .map(r -> new SignalServiceAddress(r.requireUuid(), r.getE164().orNull()))
+                 .map(r -> new SignalServiceAddress(r.requireAci(), r.getE164().orNull()))
                  .toList();
   }
 
@@ -100,7 +99,7 @@ public class RecipientUtil {
 
     List<Recipient> recipientsWithoutUuids = Stream.of(recipients)
                                                    .map(Recipient::resolve)
-                                                   .filterNot(Recipient::hasUuid)
+                                                   .filterNot(Recipient::hasAci)
                                                    .toList();
 
     if (recipientsWithoutUuids.size() > 0) {

@@ -625,6 +625,7 @@ public class ShareActivity extends PassphraseRequiredActivity
 
     viewModel.onSuccessfulShare();
 
+    finish();
     startActivity(builder.build());
   }
 

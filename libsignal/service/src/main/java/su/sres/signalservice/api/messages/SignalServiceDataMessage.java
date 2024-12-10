@@ -11,6 +11,7 @@ import org.whispersystems.libsignal.InvalidMessageException;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.signalservice.api.messages.shared.SharedContact;
+import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.util.OptionalUtil;
 
@@ -590,18 +591,18 @@ public class SignalServiceDataMessage {
   }
 
   public static class Mention {
-    private final UUID uuid;
-    private final int  start;
-    private final int  length;
+    private final ACI aci;
+    private final int start;
+    private final int length;
 
-    public Mention(UUID uuid, int start, int length) {
-      this.uuid   = uuid;
+    public Mention(ACI aci, int start, int length) {
+      this.aci    = aci;
       this.start  = start;
       this.length = length;
     }
 
-    public UUID getUuid() {
-      return uuid;
+    public ACI getAci() {
+      return aci;
     }
 
     public int getStart() {
