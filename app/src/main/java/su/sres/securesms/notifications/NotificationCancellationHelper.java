@@ -11,7 +11,7 @@ import androidx.annotation.RequiresApi;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.notifications.v2.MessageNotifierV2;
@@ -179,7 +179,7 @@ public final class NotificationCancellationHelper {
       return true;
     }
 
-    Long threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipientId);
+    Long threadId = ShadowDatabase.threads().getThreadIdFor(recipientId);
 
     long focusedThreadId = ApplicationDependencies.getMessageNotifier().getVisibleThread();
 

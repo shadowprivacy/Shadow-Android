@@ -16,7 +16,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static su.sres.securesms.testutil.ZkGroupLibraryUtil.assumeZkGroupSupportedOnOS;
+import static su.sres.signalservice.testutil.LibSignalLibraryUtil.assumeLibSignalSupportedOnOS;
 import static su.sres.securesms.testutil.SecureRandomTestUtil.mockRandom;
 
 public final class GroupIdTest {
@@ -54,7 +54,7 @@ public final class GroupIdTest {
 
     @Test
     public void can_create_for_gv2_from_GroupMasterKey() throws IOException, InvalidInputException {
-        assumeZkGroupSupportedOnOS();
+        assumeLibSignalSupportedOnOS();
 
         GroupId.V2 groupId = GroupId.v2(new GroupMasterKey(Hex.fromStringCondensed("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")));
 

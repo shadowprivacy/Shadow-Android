@@ -2,7 +2,7 @@ package su.sres.securesms.components.settings.app.chats
 
 import android.content.Context
 import su.sres.core.util.concurrent.SignalExecutors
-import su.sres.securesms.database.DatabaseFactory
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.jobs.MultiDeviceConfigurationUpdateJob
 import su.sres.securesms.keyvalue.SignalStore
@@ -19,7 +19,7 @@ class ChatsSettingsRepository {
     SignalExecutors.BOUNDED.execute {
       val isLinkPreviewsEnabled = SignalStore.settings().isLinkPreviewsEnabled
 
-      DatabaseFactory.getRecipientDatabase(context).markNeedsSync(Recipient.self().id)
+      ShadowDatabase.recipients.markNeedsSync(Recipient.self().id)
       // StorageSyncHelper.scheduleSyncForDataChange()
       ApplicationDependencies.getJobManager().add(
         MultiDeviceConfigurationUpdateJob(

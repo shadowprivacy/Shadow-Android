@@ -225,6 +225,7 @@ public final class AvatarImageView extends AppCompatImageView {
           blurred = shouldBlur;
 
           GlideRequest<Drawable> request = requestManager.load(photo.contactPhoto)
+                                                         .dontAnimate()
                                                          .fallback(fallbackContactPhotoDrawable)
                                                          .error(fallbackContactPhotoDrawable)
                                                          .diskCacheStrategy(DiskCacheStrategy.ALL)
@@ -293,6 +294,7 @@ public final class AvatarImageView extends AppCompatImageView {
 
     GlideApp.with(this)
             .load(avatarBytes)
+            .dontAnimate()
             .fallback(fallback)
             .error(fallback)
             .diskCacheStrategy(DiskCacheStrategy.ALL)

@@ -11,10 +11,10 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
 import su.sres.core.util.concurrent.SignalExecutors;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase.ExpirationInfo;
 import su.sres.securesms.database.MessageDatabase.MarkedMessageInfo;
 import su.sres.securesms.database.MessageDatabase.SyncMessageId;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceReadUpdateJob;
 import su.sres.securesms.jobs.SendReadReceiptJob;
@@ -54,7 +54,7 @@ public class MarkReadReceiver extends BroadcastReceiver {
 
         for (long threadId : threadIds) {
           Log.i(TAG, "Marking as read: " + threadId);
-          List<MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context).setRead(threadId, true);
+          List<MarkedMessageInfo> messageIds = ShadowDatabase.threads().setRead(threadId, true);
           messageIdsCollection.addAll(messageIds);
         }
 
@@ -110,11 +110,11 @@ public class MarkReadReceiver extends BroadcastReceiver {
                                        @NonNull List<ExpirationInfo> mmsExpirationInfo)
   {
     if (smsExpirationInfo.size() > 0) {
-      DatabaseFactory.getSmsDatabase(context).markExpireStarted(Stream.of(smsExpirationInfo).map(ExpirationInfo::getId).toList(), System.currentTimeMillis());
+      ShadowDatabase.sms().markExpireStarted(Stream.of(smsExpirationInfo).map(ExpirationInfo::getId).toList(), System.currentTimeMillis());
     }
 
     if (mmsExpirationInfo.size() > 0) {
-      DatabaseFactory.getMmsDatabase(context).markExpireStarted(Stream.of(mmsExpirationInfo).map(ExpirationInfo::getId).toList(), System.currentTimeMillis());
+      ShadowDatabase.mms().markExpireStarted(Stream.of(mmsExpirationInfo).map(ExpirationInfo::getId).toList(), System.currentTimeMillis());
     }
 
     if (smsExpirationInfo.size() + mmsExpirationInfo.size() > 0) {

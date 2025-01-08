@@ -9,15 +9,16 @@ import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
+
 import android.text.TextUtils;
 
 import su.sres.securesms.attachments.AttachmentId;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.core.util.logging.Log;
+
 import android.util.Pair;
 import android.webkit.MimeTypeMap;
 
@@ -25,6 +26,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 
 import su.sres.securesms.attachments.Attachment;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mms.AudioSlide;
 import su.sres.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
@@ -94,15 +96,24 @@ public class MediaUtil {
     }
 
     switch (getSlideTypeFromContentType(attachment.getContentType())) {
-      case GIF       : return new GifSlide(context, attachment);
-      case IMAGE     : return new ImageSlide(context, attachment);
-      case VIDEO     : return new VideoSlide(context, attachment);
-      case AUDIO     : return new AudioSlide(context, attachment);
-      case MMS       : return new MmsSlide(context, attachment);
-      case LONG_TEXT : return new TextSlide(context, attachment);
-      case VIEW_ONCE : return new ViewOnceSlide(context, attachment);
-      case DOCUMENT  : return new DocumentSlide(context, attachment);
-      default        : throw new AssertionError();
+      case GIF:
+        return new GifSlide(context, attachment);
+      case IMAGE:
+        return new ImageSlide(context, attachment);
+      case VIDEO:
+        return new VideoSlide(context, attachment);
+      case AUDIO:
+        return new AudioSlide(context, attachment);
+      case MMS:
+        return new MmsSlide(context, attachment);
+      case LONG_TEXT:
+        return new TextSlide(context, attachment);
+      case VIEW_ONCE:
+        return new ViewOnceSlide(context, attachment);
+      case DOCUMENT:
+        return new DocumentSlide(context, attachment);
+      default:
+        throw new AssertionError();
     }
   }
 
@@ -124,19 +135,19 @@ public class MediaUtil {
 
   public static @Nullable String getExtension(@NonNull Context context, @Nullable Uri uri) {
     return MimeTypeMap.getSingleton()
-            .getExtensionFromMimeType(getMimeType(context, uri));
+                      .getExtensionFromMimeType(getMimeType(context, uri));
   }
 
   public static @Nullable String getCorrectedMimeType(@Nullable String mimeType) {
     if (mimeType == null) return null;
 
-    switch(mimeType) {
-    case "image/jpg":
-      return MimeTypeMap.getSingleton().hasMimeType(IMAGE_JPEG)
-             ? IMAGE_JPEG
-             : mimeType;
-    default:
-      return mimeType;
+    switch (mimeType) {
+      case "image/jpg":
+        return MimeTypeMap.getSingleton().hasMimeType(IMAGE_JPEG)
+               ? IMAGE_JPEG
+               : mimeType;
+      default:
+        return mimeType;
     }
   }
 
@@ -167,12 +178,12 @@ public class MediaUtil {
     if (MediaUtil.isGif(contentType)) {
       try {
         GifDrawable drawable = GlideApp.with(context)
-                .asGif()
-                .skipMemoryCache(true)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .load(new DecryptableUri(uri))
-                .submit()
-                .get();
+                                       .asGif()
+                                       .skipMemoryCache(true)
+                                       .diskCacheStrategy(DiskCacheStrategy.NONE)
+                                       .load(new DecryptableUri(uri))
+                                       .submit()
+                                       .get();
         dimens = new Pair<>(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
       } catch (InterruptedException e) {
         Log.w(TAG, "Was unable to complete work for GIF dimensions.", e);
@@ -190,13 +201,13 @@ public class MediaUtil {
       try {
         if (MediaUtil.isJpegType(contentType)) {
           attachmentStream = PartAuthority.getAttachmentStream(context, uri);
-          dimens = BitmapUtil.getExifDimensions(attachmentStream);
+          dimens           = BitmapUtil.getExifDimensions(attachmentStream);
           attachmentStream.close();
           attachmentStream = null;
         }
         if (dimens == null) {
           attachmentStream = PartAuthority.getAttachmentStream(context, uri);
-          dimens = BitmapUtil.getDimensions(attachmentStream);
+          dimens           = BitmapUtil.getDimensions(attachmentStream);
         }
       } catch (FileNotFoundException e) {
         Log.w(TAG, "Failed to find file when retrieving media dimensions.", e);
@@ -358,7 +369,8 @@ public class MediaUtil {
     } else if (uri.toString().startsWith(MediaStore.Video.Media.EXTERNAL_CONTENT_URI.toString())) {
       return true;
     } else if (uri.toString().startsWith("file://") &&
-            MediaUtil.isVideo(URLConnection.guessContentTypeFromName(uri.toString()))) {
+               MediaUtil.isVideo(URLConnection.guessContentTypeFromName(uri.toString())))
+    {
       return true;
     } else if (PartAuthority.isAttachmentUri(uri) && MediaUtil.isVideoType(PartAuthority.getAttachmentContentType(context, uri))) {
       return true;
@@ -375,9 +387,9 @@ public class MediaUtil {
       long videoId = Long.parseLong(uri.getLastPathSegment().split(":")[1]);
 
       return MediaStore.Video.Thumbnails.getThumbnail(context.getContentResolver(),
-              videoId,
-              MediaStore.Images.Thumbnails.MINI_KIND,
-              null);
+                                                      videoId,
+                                                      MediaStore.Images.Thumbnails.MINI_KIND,
+                                                      null);
     } else if (uri.toString().startsWith(MediaStore.Video.Media.EXTERNAL_CONTENT_URI.toString())) {
       long videoId = Long.parseLong(uri.getLastPathSegment());
 
@@ -386,12 +398,13 @@ public class MediaUtil {
                                                       MediaStore.Images.Thumbnails.MINI_KIND,
                                                       null);
     } else if (uri.toString().startsWith("file://") &&
-            MediaUtil.isVideo(URLConnection.guessContentTypeFromName(uri.toString()))) {
+               MediaUtil.isVideo(URLConnection.guessContentTypeFromName(uri.toString())))
+    {
       return ThumbnailUtils.createVideoThumbnail(uri.toString().replace("file://", ""),
-              MediaStore.Video.Thumbnails.MINI_KIND);
-    } else if (Build.VERSION.SDK_INT >= 23   &&
-            BlobProvider.isAuthority(uri) &&
-            MediaUtil.isVideo(BlobProvider.getMimeType(uri)))
+                                                 MediaStore.Video.Thumbnails.MINI_KIND);
+    } else if (Build.VERSION.SDK_INT >= 23 &&
+               BlobProvider.isAuthority(uri) &&
+               MediaUtil.isVideo(BlobProvider.getMimeType(uri)))
     {
       try {
         MediaDataSource source = BlobProvider.getInstance().getMediaDataSource(context, uri);
@@ -399,13 +412,11 @@ public class MediaUtil {
       } catch (IOException e) {
         Log.w(TAG, "Failed to extract frame for URI: " + uri, e);
       }
-    } else if (Build.VERSION.SDK_INT >= 23        &&
-            PartAuthority.isAttachmentUri(uri) &&
-            MediaUtil.isVideoType(PartAuthority.getAttachmentContentType(context, uri)))
+    } else if (PartAuthority.isAttachmentUri(uri) && MediaUtil.isVideoType(PartAuthority.getAttachmentContentType(context, uri)))
     {
       try {
-        AttachmentId attachmentId = PartAuthority.requireAttachmentId(uri);
-        MediaDataSource source       = DatabaseFactory.getAttachmentDatabase(context).mediaDataSourceFor(attachmentId);
+        AttachmentId    attachmentId = PartAuthority.requireAttachmentId(uri);
+        MediaDataSource source       = ShadowDatabase.attachments().mediaDataSourceFor(attachmentId);
         return extractFrame(source, timeUs);
       } catch (IOException e) {
         Log.w(TAG, "Failed to extract frame for URI: " + uri, e);
@@ -415,7 +426,6 @@ public class MediaUtil {
     return null;
   }
 
-  @RequiresApi(23)
   private static @Nullable Bitmap extractFrame(@Nullable MediaDataSource dataSource, long timeUs) throws IOException {
     if (dataSource == null) {
       return null;
@@ -435,7 +445,7 @@ public class MediaUtil {
   public static class ThumbnailData implements AutoCloseable {
 
     @NonNull private final Bitmap bitmap;
-    private final float  aspectRatio;
+    private final          float  aspectRatio;
 
     public ThumbnailData(@NonNull Bitmap bitmap) {
       this.bitmap      = bitmap;
@@ -462,7 +472,7 @@ public class MediaUtil {
 
   private static boolean isSupportedVideoUriScheme(@Nullable String scheme) {
     return ContentResolver.SCHEME_CONTENT.equals(scheme) ||
-            ContentResolver.SCHEME_FILE.equals(scheme);
+           ContentResolver.SCHEME_FILE.equals(scheme);
   }
 
   public enum SlideType {

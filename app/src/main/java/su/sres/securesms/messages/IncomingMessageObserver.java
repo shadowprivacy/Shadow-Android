@@ -29,7 +29,6 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.push.SignalServiceNetworkAccess;
 import su.sres.securesms.util.AppForegroundObserver;
-import su.sres.securesms.util.TextSecurePreferences;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -64,6 +63,11 @@ public class IncomingMessageObserver {
   private volatile boolean decryptionDrained;
   private volatile boolean terminated;
 
+  /**
+   * The application-level manager of our websocket connection.
+   *
+   * This class is responsible for opening/closing the websocket based on the app's state and observing new inbound messages received on the websocket.
+   */
   public IncomingMessageObserver(@NonNull Application context) {
     if (INSTANCE_COUNT.incrementAndGet() != 1) {
       throw new AssertionError("Multiple observers!");
@@ -75,7 +79,7 @@ public class IncomingMessageObserver {
 
     new MessageRetrievalThread().start();
 
-    if (TextSecurePreferences.isFcmDisabled(context)) {
+    if (!SignalStore.account().isFcmEnabled()) {
       ContextCompat.startForegroundService(context, new Intent(context, ForegroundService.class));
     }
 
@@ -151,23 +155,22 @@ public class IncomingMessageObserver {
   }
 
   private synchronized boolean isConnectionNecessary() {
-    boolean registered          = TextSecurePreferences.isPushRegistered(context);
-    boolean websocketRegistered = TextSecurePreferences.isWebsocketRegistered(context);
-    boolean isGcmDisabled       = TextSecurePreferences.isFcmDisabled(context);
-    boolean hasNetwork          = NetworkConstraint.isMet(context);
-    boolean hasProxy            = SignalStore.proxy().isProxyEnabled();
+    boolean registered = SignalStore.account().isRegistered();
+    boolean fcmEnabled = SignalStore.account().isFcmEnabled();
+    boolean hasNetwork = NetworkConstraint.isMet(context);
+    boolean hasProxy   = SignalStore.proxy().isProxyEnabled();
 
-    Log.d(TAG, String.format("Network: %s, Foreground: %s, FCM: %s, Registered: %s, Websocket Registered: %s, Proxy: %s",
-                             hasNetwork, appVisible, !isGcmDisabled, registered, websocketRegistered, hasProxy));
+    Log.d(TAG, String.format("Network: %s, Foreground: %s, FCM: %s, Registered: %s, Proxy: %s",
+                             hasNetwork, appVisible, fcmEnabled, registered, hasProxy));
 
     return registered &&
-           websocketRegistered &&
-           (appVisible || isGcmDisabled) &&
+           (appVisible || !fcmEnabled) &&
            hasNetwork;
   }
 
   private synchronized void waitForConnectionNecessary() {
-    long timeout = TextSecurePreferences.isPushRegistered(context) ? 0 : 60000;
+    // long timeout = SignalStore.account().isRegistered() ? 0 : 60000;
+    long timeout = 60000;
 
     try {
       while (!isConnectionNecessary()) wait(timeout);

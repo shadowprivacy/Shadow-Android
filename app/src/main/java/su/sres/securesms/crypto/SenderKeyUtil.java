@@ -6,8 +6,7 @@ import androidx.annotation.NonNull;
 
 import org.whispersystems.libsignal.SignalProtocolAddress;
 
-import su.sres.securesms.crypto.storage.SignalSenderKeyStore;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.signalservice.api.SignalSessionLock;
@@ -23,7 +22,7 @@ public final class SenderKeyUtil {
   public static void rotateOurKey(@NonNull Context context, @NonNull DistributionId distributionId) {
     try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
       ApplicationDependencies.getSenderKeyStore().deleteAllFor(Recipient.self().requireServiceId(), distributionId);
-      DatabaseFactory.getSenderKeySharedDatabase(context).deleteAllFor(distributionId);
+      ShadowDatabase.senderKeyShared().deleteAllFor(distributionId);
     }
   }
 
@@ -32,7 +31,7 @@ public final class SenderKeyUtil {
    */
   public static long getCreateTimeForOurKey(@NonNull Context context, @NonNull DistributionId distributionId) {
     SignalProtocolAddress address = new SignalProtocolAddress(Recipient.self().requireServiceId(), SignalServiceAddress.DEFAULT_DEVICE_ID);
-    return DatabaseFactory.getSenderKeyDatabase(context).getCreatedTime(address, distributionId);
+    return ShadowDatabase.senderKeys().getCreatedTime(address, distributionId);
   }
 
   /**
@@ -41,7 +40,7 @@ public final class SenderKeyUtil {
   public static void clearAllState(@NonNull Context context) {
     try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
       ApplicationDependencies.getSenderKeyStore().deleteAll();
-      DatabaseFactory.getSenderKeySharedDatabase(context).deleteAll();
+      ShadowDatabase.senderKeyShared().deleteAll();
     }
   }
 }

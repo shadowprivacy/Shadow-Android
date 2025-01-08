@@ -11,6 +11,7 @@ import com.annimon.stream.Stream;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.groups.v2.GroupInviteLinkUrl;
 import su.sres.securesms.groups.v2.GroupLinkPassword;
@@ -42,7 +43,6 @@ import org.signal.zkgroup.groups.UuidCiphertext;
 import org.signal.zkgroup.profiles.ProfileKey;
 
 import su.sres.securesms.crypto.ProfileKeyUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.model.databaseprotos.DecryptedGroupV2Context;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -102,7 +102,7 @@ final class GroupManagerV2 {
 
   GroupManagerV2(@NonNull Context context) {
     this.context                = context;
-    this.groupDatabase          = DatabaseFactory.getGroupDatabase(context);
+    this.groupDatabase          = ShadowDatabase.groups();
     this.groupsV2Api            = ApplicationDependencies.getSignalServiceAccountManager().getGroupsV2Api();
     this.groupsV2Operations     = ApplicationDependencies.getGroupsV2Operations();
     this.authorization          = ApplicationDependencies.getGroupsV2Authorization();
@@ -126,7 +126,7 @@ final class GroupManagerV2 {
   GroupExternalCredential getGroupExternalCredential(@NonNull GroupId.V2 groupId)
       throws IOException, VerificationFailedException
   {
-    GroupMasterKey groupMasterKey = DatabaseFactory.getGroupDatabase(context)
+    GroupMasterKey groupMasterKey = ShadowDatabase.groups()
                                                    .requireGroup(groupId)
                                                    .requireV2GroupProperties()
                                                    .getGroupMasterKey();
@@ -138,7 +138,7 @@ final class GroupManagerV2 {
 
   @WorkerThread
   @NonNull Map<UUID, UuidCiphertext> getUuidCipherTexts(@NonNull GroupId.V2 groupId) {
-    GroupDatabase.GroupRecord       groupRecord         = DatabaseFactory.getGroupDatabase(context).requireGroup(groupId);
+    GroupDatabase.GroupRecord       groupRecord         = ShadowDatabase.groups().requireGroup(groupId);
     GroupDatabase.V2GroupProperties v2GroupProperties   = groupRecord.requireV2GroupProperties();
     GroupMasterKey                  groupMasterKey      = v2GroupProperties.getGroupMasterKey();
     ClientZkGroupCipher             clientZkGroupCipher = new ClientZkGroupCipher(GroupSecretParams.deriveFromMasterKey(groupMasterKey));
@@ -169,7 +169,7 @@ final class GroupManagerV2 {
 
   @WorkerThread
   GroupJoiner cancelRequest(@NonNull GroupId.V2 groupId) throws GroupChangeBusyException {
-    GroupMasterKey groupMasterKey = DatabaseFactory.getGroupDatabase(context)
+    GroupMasterKey groupMasterKey = ShadowDatabase.groups()
                                                    .requireGroup(groupId)
                                                    .requireV2GroupProperties()
                                                    .getGroupMasterKey();
@@ -264,12 +264,12 @@ final class GroupManagerV2 {
 
       GroupMasterKey masterKey        = groupSecretParams.getMasterKey();
       GroupId.V2     groupId          = groupDatabase.create(masterKey, decryptedGroup);
-      RecipientId    groupRecipientId = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
+      RecipientId    groupRecipientId = ShadowDatabase.recipients().getOrInsertFromGroupId(groupId);
       Recipient      groupRecipient   = Recipient.resolved(groupRecipientId);
 
       AvatarHelper.setAvatar(context, groupRecipientId, avatar != null ? new ByteArrayInputStream(avatar) : null);
       groupDatabase.onAvatarUpdated(groupId, avatar != null);
-      DatabaseFactory.getRecipientDatabase(context).setProfileSharing(groupRecipient.getId(), true);
+      ShadowDatabase.recipients().setProfileSharing(groupRecipient.getId(), true);
 
       DecryptedGroupChange groupChange = DecryptedGroupChange.newBuilder(GroupChangeReconstruct.reconstructGroupChange(DecryptedGroup.newBuilder().build(), decryptedGroup))
                                                              .setEditor(selfAci.toByteString())
@@ -577,7 +577,7 @@ final class GroupManagerV2 {
           if (GroupChangeUtil.changeIsEmpty(change.build())) {
             Log.i(TAG, "Change is empty after conflict resolution");
             Recipient groupRecipient = Recipient.externalGroupExact(context, groupId);
-            long      threadId       = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(groupRecipient);
+            long      threadId       = ShadowDatabase.threads().getOrCreateThreadIdFor(groupRecipient);
 
             return new GroupManager.GroupActionResult(groupRecipient, threadId, 0, Collections.emptyList());
           }
@@ -839,17 +839,17 @@ final class GroupManagerV2 {
         Log.i(TAG, "Created local group with placeholder");
       }
 
-      RecipientId groupRecipientId = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
+      RecipientId groupRecipientId = ShadowDatabase.recipients().getOrInsertFromGroupId(groupId);
       Recipient   groupRecipient   = Recipient.resolved(groupRecipientId);
 
       AvatarHelper.setAvatar(context, groupRecipientId, avatar != null ? new ByteArrayInputStream(avatar) : null);
       groupDatabase.onAvatarUpdated(groupId, avatar != null);
-      DatabaseFactory.getRecipientDatabase(context).setProfileSharing(groupRecipientId, true);
+      ShadowDatabase.recipients().setProfileSharing(groupRecipientId, true);
 
       if (alreadyAMember) {
         Log.i(TAG, "Already a member of the group");
 
-        ThreadDatabase threadDatabase = DatabaseFactory.getThreadDatabase(context);
+        ThreadDatabase threadDatabase = ShadowDatabase.threads();
         long           threadId       = threadDatabase.getOrCreateValidThreadId(groupRecipient, -1);
 
         return new GroupManager.GroupActionResult(groupRecipient,

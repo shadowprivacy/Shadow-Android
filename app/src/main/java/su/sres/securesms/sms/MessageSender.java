@@ -32,6 +32,8 @@ import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
+import su.sres.securesms.database.ShadowDatabase;
+import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.database.model.SmsMessageRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Job;
@@ -47,7 +49,6 @@ import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.database.AttachmentDatabase;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.SmsDatabase;
@@ -105,11 +106,11 @@ public class MessageSender {
                           final SmsDatabase.InsertListener insertListener)
   {
     Log.i(TAG, "Sending text message to " + message.getRecipient().getId() + ", thread: " + threadId);
-    MessageDatabase database    = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase database    = ShadowDatabase.sms();
     Recipient       recipient   = message.getRecipient();
     boolean         keyExchange = message.isKeyExchange();
 
-    long allocatedThreadId = DatabaseFactory.getThreadDatabase(context).getOrCreateValidThreadId(recipient, threadId);
+    long allocatedThreadId = ShadowDatabase.threads().getOrCreateValidThreadId(recipient, threadId);
     long messageId = database.insertMessageOutbox(allocatedThreadId,
                                                   applyUniversalExpireTimerIfNecessary(context, recipient, message, allocatedThreadId),
                                                   forceSms,
@@ -120,7 +121,7 @@ public class MessageSender {
 
     sendTextMessage(context, recipient, forceSms, keyExchange, messageId);
     onMessageSent();
-    DatabaseFactory.getThreadDatabase(context).update(threadId, true);
+    ShadowDatabase.threads().update(threadId, true);
 
     return allocatedThreadId;
   }
@@ -134,8 +135,8 @@ public class MessageSender {
   {
     Log.i(TAG, "Sending media message to " + message.getRecipient().getId() + ", thread: " + threadId);
     try {
-      ThreadDatabase  threadDatabase = DatabaseFactory.getThreadDatabase(context);
-      MessageDatabase database       = DatabaseFactory.getMmsDatabase(context);
+      ThreadDatabase  threadDatabase = ShadowDatabase.threads();
+      MessageDatabase database       = ShadowDatabase.mms();
 
       long      allocatedThreadId = threadDatabase.getOrCreateValidThreadId(message.getRecipient(), threadId, message.getDistributionType());
       Recipient recipient         = message.getRecipient();
@@ -168,9 +169,9 @@ public class MessageSender {
     Preconditions.checkArgument(message.getAttachments().isEmpty(), "If the media is pre-uploaded, there should be no attachments on the message.");
 
     try {
-      ThreadDatabase     threadDatabase     = DatabaseFactory.getThreadDatabase(context);
-      MessageDatabase    mmsDatabase        = DatabaseFactory.getMmsDatabase(context);
-      AttachmentDatabase attachmentDatabase = DatabaseFactory.getAttachmentDatabase(context);
+      ThreadDatabase     threadDatabase     = ShadowDatabase.threads();
+      MessageDatabase    mmsDatabase        = ShadowDatabase.mms();
+      AttachmentDatabase attachmentDatabase = ShadowDatabase.attachments();
 
       long allocatedThreadId;
 
@@ -208,9 +209,9 @@ public class MessageSender {
     Preconditions.checkArgument(Stream.of(messages).allMatch(m -> m.getAttachments().isEmpty()), "Messages can't have attachments! They should be pre-uploaded.");
 
     JobManager         jobManager             = ApplicationDependencies.getJobManager();
-    AttachmentDatabase attachmentDatabase     = DatabaseFactory.getAttachmentDatabase(context);
-    MessageDatabase    mmsDatabase            = DatabaseFactory.getMmsDatabase(context);
-    ThreadDatabase     threadDatabase         = DatabaseFactory.getThreadDatabase(context);
+    AttachmentDatabase attachmentDatabase     = ShadowDatabase.attachments();
+    MessageDatabase    mmsDatabase            = ShadowDatabase.mms();
+    ThreadDatabase     threadDatabase         = ShadowDatabase.threads();
     List<AttachmentId> preUploadAttachmentIds = Stream.of(preUploadResults).map(PreUploadResult::getAttachmentId).toList();
     List<String>       preUploadJobIds        = Stream.of(preUploadResults).map(PreUploadResult::getJobIds).flatMap(Stream::of).toList();
     List<Long>         messageIds             = new ArrayList<>(messages.size());
@@ -299,7 +300,7 @@ public class MessageSender {
     Log.i(TAG, "Pre-uploading attachment for " + (recipient != null ? recipient.getId() : "null"));
 
     try {
-      AttachmentDatabase attachmentDatabase = DatabaseFactory.getAttachmentDatabase(context);
+      AttachmentDatabase attachmentDatabase = ShadowDatabase.attachments();
       DatabaseAttachment databaseAttachment = attachmentDatabase.insertAttachmentForPreUpload(attachment);
 
       Job compressionJob         = AttachmentCompressionJob.fromAttachment(databaseAttachment, false, -1);
@@ -319,27 +320,23 @@ public class MessageSender {
     }
   }
 
-  public static void sendNewReaction(@NonNull Context context, long messageId, boolean isMms, @NonNull String emoji) {
-    MessageDatabase db       = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
-    ReactionRecord  reaction = new ReactionRecord(emoji, Recipient.self().getId(), System.currentTimeMillis(), System.currentTimeMillis());
-
-    db.addReaction(messageId, reaction);
+  public static void sendNewReaction(@NonNull Context context, @NonNull MessageId messageId, @NonNull String emoji) {
+    ReactionRecord reaction = new ReactionRecord(emoji, Recipient.self().getId(), System.currentTimeMillis(), System.currentTimeMillis());
+    ShadowDatabase.reactions().addReaction(messageId, reaction);
 
     try {
-      ApplicationDependencies.getJobManager().add(ReactionSendJob.create(context, messageId, isMms, reaction, false));
+      ApplicationDependencies.getJobManager().add(ReactionSendJob.create(context, messageId, reaction, false));
       onMessageSent();
     } catch (NoSuchMessageException e) {
       Log.w(TAG, "[sendNewReaction] Could not find message! Ignoring.");
     }
   }
 
-  public static void sendReactionRemoval(@NonNull Context context, long messageId, boolean isMms, @NonNull ReactionRecord reaction) {
-    MessageDatabase db = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
-
-    db.deleteReaction(messageId, reaction.getAuthor());
+  public static void sendReactionRemoval(@NonNull Context context, @NonNull MessageId messageId, @NonNull ReactionRecord reaction) {
+    ShadowDatabase.reactions().deleteReaction(messageId, reaction.getAuthor());
 
     try {
-      ApplicationDependencies.getJobManager().add(ReactionSendJob.create(context, messageId, isMms, reaction, true));
+      ApplicationDependencies.getJobManager().add(ReactionSendJob.create(context, messageId, reaction, true));
       onMessageSent();
     } catch (NoSuchMessageException e) {
       Log.w(TAG, "[sendReactionRemoval] Could not find message! Ignoring.");
@@ -347,7 +344,7 @@ public class MessageSender {
   }
 
   public static void sendRemoteDelete(@NonNull Context context, long messageId, boolean isMms) {
-    MessageDatabase db = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase db = isMms ? ShadowDatabase.mms() : ShadowDatabase.sms();
     db.markAsRemoteDelete(messageId);
     db.markAsSending(messageId);
 
@@ -462,7 +459,7 @@ public class MessageSender {
   }
 
   private static boolean isPushTextSend(Context context, Recipient recipient, boolean keyExchange) {
-    if (!TextSecurePreferences.isPushRegistered(context)) {
+    if (!SignalStore.account().isRegistered()) {
       return false;
     }
 
@@ -474,7 +471,7 @@ public class MessageSender {
   }
 
   private static boolean isPushMediaSend(Context context, Recipient recipient) {
-    if (!TextSecurePreferences.isPushRegistered(context)) {
+    if (!SignalStore.account().isRegistered()) {
       return false;
     }
 
@@ -508,18 +505,18 @@ public class MessageSender {
   }
 
   public static boolean isLocalSelfSend(@NonNull Context context, @Nullable Recipient recipient, boolean forceSms) {
-    return recipient != null &&
-           recipient.isSelf() &&
-           !forceSms &&
-           TextSecurePreferences.isPushRegistered(context) &&
+    return recipient != null                    &&
+           recipient.isSelf()                   &&
+           !forceSms                            &&
+           SignalStore.account().isRegistered() &&
            !TextSecurePreferences.isMultiDevice(context);
   }
 
   private static void sendLocalMediaSelf(Context context, long messageId) {
     try {
       ExpiringMessageManager expirationManager = ApplicationDependencies.getExpiringMessageManager();
-      MessageDatabase        mmsDatabase       = DatabaseFactory.getMmsDatabase(context);
-      MmsSmsDatabase         mmsSmsDatabase    = DatabaseFactory.getMmsSmsDatabase(context);
+      MessageDatabase        mmsDatabase       = ShadowDatabase.mms();
+      MmsSmsDatabase         mmsSmsDatabase    = ShadowDatabase.mmsSms();
       OutgoingMediaMessage   message           = mmsDatabase.getOutgoingMessage(messageId);
       SyncMessageId          syncId            = new SyncMessageId(Recipient.self().getId(), message.getSentTimeMillis());
       List<Attachment>       attachments       = new LinkedList<>();
@@ -568,8 +565,8 @@ public class MessageSender {
   private static void sendLocalTextSelf(Context context, long messageId) {
     try {
       ExpiringMessageManager expirationManager = ApplicationDependencies.getExpiringMessageManager();
-      MessageDatabase        smsDatabase       = DatabaseFactory.getSmsDatabase(context);
-      MmsSmsDatabase         mmsSmsDatabase    = DatabaseFactory.getMmsSmsDatabase(context);
+      MessageDatabase        smsDatabase       = ShadowDatabase.sms();
+      MmsSmsDatabase         mmsSmsDatabase    = ShadowDatabase.mmsSms();
       SmsMessageRecord       message           = smsDatabase.getSmsMessage(messageId);
       SyncMessageId          syncId            = new SyncMessageId(Recipient.self().getId(), message.getDateSent());
 

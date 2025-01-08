@@ -49,7 +49,6 @@ import su.sres.securesms.storage.StorageSyncHelper;
 import su.sres.securesms.storage.StorageSyncModels;
 import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.database.IdentityDatabase.VerifiedStatus;
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.databaseprotos.ProfileKeyCredentialColumnData;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
@@ -79,7 +78,6 @@ import su.sres.signalservice.api.push.ACI;
 import su.sres.signalservice.api.push.SignalServiceAddress;
 import su.sres.signalservice.api.storage.SignalAccountRecord;
 import su.sres.signalservice.api.storage.SignalGroupV2Record;
-import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.api.storage.SignalContactRecord;
 import su.sres.signalservice.api.storage.SignalGroupV1Record;
 import su.sres.signalservice.api.storage.StorageId;
@@ -394,7 +392,7 @@ public class RecipientDatabase extends Database {
                                                       ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.DATE + " > ?" +
                                                       " ORDER BY " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.DATE + " DESC LIMIT 50";
 
-  public RecipientDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public RecipientDatabase(Context context, ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 
@@ -543,9 +541,9 @@ public class RecipientDatabase extends Database {
 
     if (existing.isPresent()) {
       return existing.get();
-    } else if (groupId.isV1() && DatabaseFactory.getGroupDatabase(context).groupExists(groupId.requireV1().deriveV2MigrationGroupId())) {
+    } else if (groupId.isV1() && ShadowDatabase.groups().groupExists(groupId.requireV1().deriveV2MigrationGroupId())) {
       throw new GroupDatabase.LegacyGroupInsertException(groupId);
-    } else if (groupId.isV2() && DatabaseFactory.getGroupDatabase(context).getGroupV1ByExpectedV2(groupId.requireV2()).isPresent()) {
+    } else if (groupId.isV2() && ShadowDatabase.groups().getGroupV1ByExpectedV2(groupId.requireV2()).isPresent()) {
       throw new GroupDatabase.MissedGroupMigrationInsertException(groupId);
     } else {
       ContentValues values = new ContentValues();
@@ -559,9 +557,9 @@ public class RecipientDatabase extends Database {
 
         if (existing.isPresent()) {
           return existing.get();
-        } else if (groupId.isV1() && DatabaseFactory.getGroupDatabase(context).groupExists(groupId.requireV1().deriveV2MigrationGroupId())) {
+        } else if (groupId.isV1() && ShadowDatabase.groups().groupExists(groupId.requireV1().deriveV2MigrationGroupId())) {
           throw new GroupDatabase.LegacyGroupInsertException(groupId);
-        } else if (groupId.isV2() && DatabaseFactory.getGroupDatabase(context).getGroupV1ByExpectedV2(groupId.requireV2()).isPresent()) {
+        } else if (groupId.isV2() && ShadowDatabase.groups().getGroupV1ByExpectedV2(groupId.requireV2()).isPresent()) {
           throw new GroupDatabase.MissedGroupMigrationInsertException(groupId);
         } else {
           throw new AssertionError("Failed to insert recipient!");
@@ -612,7 +610,7 @@ public class RecipientDatabase extends Database {
       }
 
       if (groupId.isV2()) {
-        Optional<GroupDatabase.GroupRecord> v1 = DatabaseFactory.getGroupDatabase(context).getGroupV1ByExpectedV2(groupId.requireV2());
+        Optional<GroupDatabase.GroupRecord> v1 = ShadowDatabase.groups().getGroupV1ByExpectedV2(groupId.requireV2());
         if (v1.isPresent()) {
           db.setTransactionSuccessful();
           return v1.get().getRecipientId();
@@ -659,7 +657,7 @@ public class RecipientDatabase extends Database {
         return getRecipientSettings(context, cursor);
       } else {
         throw new MissingRecipientException(id);
-        /* Optional<RecipientId> remapped = RemappedRecords.getInstance().getRecipient(context, id);
+        /* Optional<RecipientId> remapped = RemappedRecords.getInstance().getRecipient(id);
         if (remapped.isPresent()) {
           Log.w(TAG, "Missing recipient for " + id + ", but found it in the remapped records as " + remapped.get());
           return getRecipientSettings(remapped.get());
@@ -741,7 +739,7 @@ public class RecipientDatabase extends Database {
 
   public void applyStorageSyncContactInsert(@NonNull SignalContactRecord insert) {
     SQLiteDatabase db             = databaseHelper.getSignalWritableDatabase();
-    ThreadDatabase threadDatabase = DatabaseFactory.getThreadDatabase(context);
+    ThreadDatabase threadDatabase = ShadowDatabase.threads();
 
     ContentValues values      = getValuesForStorageContact(insert, true);
     long          id          = db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
@@ -749,7 +747,7 @@ public class RecipientDatabase extends Database {
 
     if (id < 0) {
       Log.w(TAG, "[applyStorageSyncContactInsert] Failed to insert. Possibly merging.");
-      recipientId = getAndPossiblyMerge(insert.getAddress().hasValidAci() ? insert.getAddress().getAci() : null, insert.getAddress().getNumber().get(), true);
+      recipientId = getAndPossiblyMerge(insert.getAddress().hasValidAci() ? insert.getAddress().getAci() : null, insert.getAddress().getNumber().orNull(), true);
       db.update(TABLE_NAME, values, ID_WHERE, SqlUtil.buildArgs(recipientId));
     } else {
       recipientId = RecipientId.from(id);
@@ -759,7 +757,7 @@ public class RecipientDatabase extends Database {
       try {
         IdentityKey identityKey = new IdentityKey(insert.getIdentityKey().get(), 0);
 
-        DatabaseFactory.getIdentityDatabase(context).updateIdentityAfterSync(insert.getAddress().getIdentifier(), recipientId, identityKey, StorageSyncModels.remoteToLocalIdentityStatus(insert.getIdentityState()));
+        ShadowDatabase.identities().updateIdentityAfterSync(insert.getAddress().getIdentifier(), recipientId, identityKey, StorageSyncModels.remoteToLocalIdentityStatus(insert.getIdentityState()));
       } catch (InvalidKeyException e) {
         Log.w(TAG, "Failed to process identity key during insert! Skipping.", e);
       }
@@ -803,7 +801,7 @@ public class RecipientDatabase extends Database {
 
       if (update.getNew().getIdentityKey().isPresent() && update.getNew().getAddress().hasValidAci()) {
         IdentityKey identityKey = new IdentityKey(update.getNew().getIdentityKey().get(), 0);
-        DatabaseFactory.getIdentityDatabase(context).updateIdentityAfterSync(update.getNew().getAddress().getIdentifier(), recipientId, identityKey, StorageSyncModels.remoteToLocalIdentityStatus(update.getNew().getIdentityState()));
+        ShadowDatabase.identities().updateIdentityAfterSync(update.getNew().getAddress().getIdentifier(), recipientId, identityKey, StorageSyncModels.remoteToLocalIdentityStatus(update.getNew().getIdentityState()));
       }
 
       Optional<IdentityRecord> newIdentityRecord = identityStore.getIdentityRecord(recipientId);
@@ -821,7 +819,7 @@ public class RecipientDatabase extends Database {
       Log.w(TAG, "Failed to process identity key during update! Skipping.", e);
     }
 
-    DatabaseFactory.getThreadDatabase(context).applyStorageSyncUpdate(recipientId, update.getNew());
+    ShadowDatabase.threads().applyStorageSyncUpdate(recipientId, update.getNew());
 
     Recipient.live(recipientId).refresh();
   }
@@ -832,7 +830,7 @@ public class RecipientDatabase extends Database {
     long        id          = db.insertOrThrow(TABLE_NAME, null, getValuesForStorageGroupV1(insert, true));
     RecipientId recipientId = RecipientId.from(id);
 
-    DatabaseFactory.getThreadDatabase(context).applyStorageSyncUpdate(recipientId, insert);
+    ShadowDatabase.threads().applyStorageSyncUpdate(recipientId, insert);
 
     Recipient.live(recipientId).refresh();
   }
@@ -849,7 +847,7 @@ public class RecipientDatabase extends Database {
 
     Recipient recipient = Recipient.externalGroupExact(context, GroupId.v1orThrow(update.getOld().getGroupId()));
 
-    DatabaseFactory.getThreadDatabase(context).applyStorageSyncUpdate(recipient.getId(), update.getNew());
+    ShadowDatabase.threads().applyStorageSyncUpdate(recipient.getId(), update.getNew());
 
     recipient.live().refresh();
   }
@@ -864,7 +862,7 @@ public class RecipientDatabase extends Database {
     Recipient      recipient = Recipient.externalGroupExact(context, groupId);
 
     Log.i(TAG, "Creating restore placeholder for " + groupId);
-    DatabaseFactory.getGroupDatabase(context)
+    ShadowDatabase.groups()
                    .create(masterKey,
                            DecryptedGroup.newBuilder()
                                          .setRevision(GroupsV2StateProcessor.RESTORE_PLACEHOLDER_REVISION)
@@ -874,7 +872,7 @@ public class RecipientDatabase extends Database {
 
     ApplicationDependencies.getJobManager().add(new RequestGroupV2InfoJob(groupId));
 
-    DatabaseFactory.getThreadDatabase(context).applyStorageSyncUpdate(recipient.getId(), insert);
+    ShadowDatabase.threads().applyStorageSyncUpdate(recipient.getId(), insert);
 
     recipient.live().refresh();
   }
@@ -892,7 +890,7 @@ public class RecipientDatabase extends Database {
     GroupMasterKey masterKey = update.getOld().getMasterKeyOrThrow();
     Recipient      recipient = Recipient.externalGroupExact(context, GroupId.v2(masterKey));
 
-    DatabaseFactory.getThreadDatabase(context).applyStorageSyncUpdate(recipient.getId(), update.getNew());
+    ShadowDatabase.threads().applyStorageSyncUpdate(recipient.getId(), update.getNew());
 
     recipient.live().refresh();
   }
@@ -931,7 +929,7 @@ public class RecipientDatabase extends Database {
       ApplicationDependencies.getJobManager().add(new RefreshAttributesJob());
     }
 
-    DatabaseFactory.getThreadDatabase(context).applyStorageSyncUpdate(Recipient.self().getId(), update.getNew());
+    ShadowDatabase.threads().applyStorageSyncUpdate(Recipient.self().getId(), update.getNew());
 
     Recipient.self().live().refresh();
   }
@@ -1111,7 +1109,7 @@ public class RecipientDatabase extends Database {
       }
     }
 
-    for (GroupId.V2 id : DatabaseFactory.getGroupDatabase(context).getAllGroupV2Ids()) {
+    for (GroupId.V2 id : ShadowDatabase.groups().getAllGroupV2Ids()) {
       Recipient         recipient                = Recipient.externalGroupExact(context, id);
       RecipientId       recipientId              = recipient.getId();
       RecipientSettings recipientSettingsForSync = getRecipientSettingsForSync(recipientId);
@@ -1871,7 +1869,7 @@ public class RecipientDatabase extends Database {
     boolean profiledUpdated = update(id, contentValues);
 
     if (profiledUpdated && enabled) {
-      Optional<GroupDatabase.GroupRecord> group = DatabaseFactory.getGroupDatabase(context).getGroup(id);
+      Optional<GroupDatabase.GroupRecord> group = ShadowDatabase.groups().getGroup(id);
 
       if (group.isPresent()) {
         setHasGroupsInCommon(group.get().getMembers());
@@ -2572,7 +2570,7 @@ public class RecipientDatabase extends Database {
    * @param limit                     Only return at most this many contact.
    */
   public List<RecipientId> getRecipientsForRoutineProfileFetch(long lastInteractionThreshold, long lastProfileFetchThreshold, int limit) {
-    ThreadDatabase threadDatabase                       = DatabaseFactory.getThreadDatabase(context);
+    ThreadDatabase threadDatabase                       = ShadowDatabase.threads();
     Set<Recipient> recipientsWithinInteractionThreshold = new LinkedHashSet<>();
 
     try (ThreadDatabase.Reader reader = threadDatabase.readerFor(threadDatabase.getRecentPushConversationList(-1, false))) {
@@ -2913,43 +2911,6 @@ public class RecipientDatabase extends Database {
     RecipientSettings aciSettings = getRecipientSettings(byAci);
     RecipientSettings e164Settings = getRecipientSettings(byE164);
 
-    // Recipient
-    Log.w(TAG, "Deleting recipient " + byE164, IMPORTANT_LOG_DURATION);
-    db.delete(TABLE_NAME, ID_WHERE, SqlUtil.buildArgs(byE164));
-    RemappedRecords.getInstance().addRecipient(context, byE164, byAci);
-
-    ContentValues aciValues = new ContentValues();
-    aciValues.put(PHONE, e164Settings.getE164());
-    aciValues.put(BLOCKED, e164Settings.isBlocked() || aciSettings.isBlocked());
-    aciValues.put(MESSAGE_RINGTONE, Optional.fromNullable(aciSettings.getMessageRingtone()).or(Optional.fromNullable(e164Settings.getMessageRingtone())).transform(Uri::toString).orNull());
-    aciValues.put(MESSAGE_VIBRATE, aciSettings.getMessageVibrateState() != VibrateState.DEFAULT ? aciSettings.getMessageVibrateState().getId() : e164Settings.getMessageVibrateState().getId());
-    aciValues.put(CALL_RINGTONE, Optional.fromNullable(aciSettings.getCallRingtone()).or(Optional.fromNullable(e164Settings.getCallRingtone())).transform(Uri::toString).orNull());
-    aciValues.put(CALL_VIBRATE, aciSettings.getCallVibrateState() != VibrateState.DEFAULT ? aciSettings.getCallVibrateState().getId() : e164Settings.getCallVibrateState().getId());
-    aciValues.put(NOTIFICATION_CHANNEL, aciSettings.getNotificationChannel() != null ? aciSettings.getNotificationChannel() : e164Settings.getNotificationChannel());
-    aciValues.put(MUTE_UNTIL, aciSettings.getMuteUntil() > 0 ? aciSettings.getMuteUntil() : e164Settings.getMuteUntil());
-    aciValues.put(CHAT_COLORS, Optional.fromNullable(aciSettings.getChatColors()).or(Optional.fromNullable(e164Settings.getChatColors())).transform(colors -> colors.serialize().toByteArray()).orNull());
-    aciValues.put(AVATAR_COLOR, aciSettings.getAvatarColor().serialize());
-    aciValues.put(CUSTOM_CHAT_COLORS_ID, Optional.fromNullable(aciSettings.getChatColors()).or(Optional.fromNullable(e164Settings.getChatColors())).transform(colors -> colors.getId().getLongValue()).orNull());
-    aciValues.put(SEEN_INVITE_REMINDER, e164Settings.getInsightsBannerTier().getId());
-    aciValues.put(DEFAULT_SUBSCRIPTION_ID, e164Settings.getDefaultSubscriptionId().or(-1));
-    aciValues.put(MESSAGE_EXPIRATION_TIME, aciSettings.getExpireMessages() > 0 ? aciSettings.getExpireMessages() : e164Settings.getExpireMessages());
-    aciValues.put(REGISTERED, RegisteredState.REGISTERED.getId());
-    aciValues.put(SYSTEM_GIVEN_NAME, e164Settings.getSystemProfileName().getGivenName());
-    aciValues.put(SYSTEM_FAMILY_NAME, e164Settings.getSystemProfileName().getFamilyName());
-    aciValues.put(SYSTEM_JOINED_NAME, e164Settings.getSystemProfileName().toString());
-    aciValues.put(SYSTEM_PHOTO_URI, e164Settings.getSystemContactPhotoUri());
-    aciValues.put(SYSTEM_PHONE_LABEL, e164Settings.getSystemPhoneLabel());
-    aciValues.put(SYSTEM_CONTACT_URI, e164Settings.getSystemContactUri());
-    aciValues.put(PROFILE_SHARING, aciSettings.isProfileSharing() || e164Settings.isProfileSharing());
-    aciValues.put(CAPABILITIES, Math.max(aciSettings.getCapabilities(), e164Settings.getCapabilities()));
-    aciValues.put(MENTION_SETTING, aciSettings.getMentionSetting() != MentionSetting.ALWAYS_NOTIFY ? aciSettings.getMentionSetting().getId() : e164Settings.getMentionSetting().getId());
-    if (aciSettings.getProfileKey() != null) {
-      updateProfileValuesForMerge(aciValues, aciSettings);
-    } else if (e164Settings.getProfileKey() != null) {
-      updateProfileValuesForMerge(aciValues, e164Settings);
-    }
-    db.update(TABLE_NAME, aciValues, ID_WHERE, SqlUtil.buildArgs(byAci));
-
     // Identities
     ApplicationDependencies.getIdentityStore().delete(e164Settings.e164);
 
@@ -2959,7 +2920,7 @@ public class RecipientDatabase extends Database {
     db.update(GroupReceiptDatabase.TABLE_NAME, groupReceiptValues, GroupReceiptDatabase.RECIPIENT_ID + " = ?", SqlUtil.buildArgs(byE164));
 
     // Groups
-    GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
+    GroupDatabase groupDatabase = ShadowDatabase.groups();
     for (GroupDatabase.GroupRecord group : groupDatabase.getGroupsContainingMember(byE164, false, true)) {
       LinkedHashSet<RecipientId> newMembers = new LinkedHashSet<>(group.getMembers());
       newMembers.remove(byE164);
@@ -2975,7 +2936,7 @@ public class RecipientDatabase extends Database {
     }
 
     // Threads
-    ThreadDatabase.MergeResult threadMerge = DatabaseFactory.getThreadDatabase(context).merge(byAci, byE164);
+    ThreadDatabase.MergeResult threadMerge = ShadowDatabase.threads().merge(byAci, byE164);
 
     // SMS Messages
     ContentValues smsValues = new ContentValues();
@@ -3000,7 +2961,7 @@ public class RecipientDatabase extends Database {
     }
 
     // Sessions
-    SessionDatabase sessionDatabase = DatabaseFactory.getSessionDatabase(context);
+    SessionDatabase sessionDatabase = ShadowDatabase.sessions();
 
     boolean hasE164Session = sessionDatabase.getAllFor(e164Settings.e164).size() > 0;
     boolean hasUuidSession = sessionDatabase.getAllFor(aciSettings.aci.toString()).size() > 0;
@@ -3020,7 +2981,7 @@ public class RecipientDatabase extends Database {
     }
 
     // MSL
-    DatabaseFactory.getMessageLogDatabase(context).remapRecipient(byE164, byAci);
+    ShadowDatabase.messageLog().remapRecipient(byE164, byAci);
 
     // Mentions
     ContentValues mentionRecipientValues = new ContentValues();
@@ -3032,10 +2993,50 @@ public class RecipientDatabase extends Database {
       db.update(MentionDatabase.TABLE_NAME, mentionThreadValues, MentionDatabase.THREAD_ID + " = ?", SqlUtil.buildArgs(threadMerge.previousThreadId));
     }
 
-    DatabaseFactory.getThreadDatabase(context).setLastScrolled(threadMerge.threadId, 0);
-    DatabaseFactory.getThreadDatabase(context).update(threadMerge.threadId, false, false);
+    ShadowDatabase.threads().setLastScrolled(threadMerge.threadId, 0);
+    ShadowDatabase.threads().update(threadMerge.threadId, false, false);
 
-    return byAci;
+    // Reactions
+    ShadowDatabase.reactions().remapRecipient(byE164, byUuid);
+
+    // Recipient
+    Log.w(TAG, "Deleting recipient " + byE164, true);
+    db.delete(TABLE_NAME, ID_WHERE, SqlUtil.buildArgs(byE164));
+    RemappedRecords.getInstance().addRecipient(byE164, byUuid);
+
+    ContentValues uuidValues = new ContentValues();
+    uuidValues.put(PHONE, e164Settings.getE164());
+    uuidValues.put(BLOCKED, e164Settings.isBlocked() || uuidSettings.isBlocked());
+    uuidValues.put(MESSAGE_RINGTONE, Optional.fromNullable(uuidSettings.getMessageRingtone()).or(Optional.fromNullable(e164Settings.getMessageRingtone())).transform(Uri::toString).orNull());
+    uuidValues.put(MESSAGE_VIBRATE, uuidSettings.getMessageVibrateState() != VibrateState.DEFAULT ? uuidSettings.getMessageVibrateState().getId() : e164Settings.getMessageVibrateState().getId());
+    uuidValues.put(CALL_RINGTONE, Optional.fromNullable(uuidSettings.getCallRingtone()).or(Optional.fromNullable(e164Settings.getCallRingtone())).transform(Uri::toString).orNull());
+    uuidValues.put(CALL_VIBRATE, uuidSettings.getCallVibrateState() != VibrateState.DEFAULT ? uuidSettings.getCallVibrateState().getId() : e164Settings.getCallVibrateState().getId());
+    uuidValues.put(NOTIFICATION_CHANNEL, uuidSettings.getNotificationChannel() != null ? uuidSettings.getNotificationChannel() : e164Settings.getNotificationChannel());
+    uuidValues.put(MUTE_UNTIL, uuidSettings.getMuteUntil() > 0 ? uuidSettings.getMuteUntil() : e164Settings.getMuteUntil());
+    uuidValues.put(CHAT_COLORS, Optional.fromNullable(uuidSettings.getChatColors()).or(Optional.fromNullable(e164Settings.getChatColors())).transform(colors -> colors.serialize().toByteArray()).orNull());
+    uuidValues.put(AVATAR_COLOR, uuidSettings.getAvatarColor().serialize());
+    uuidValues.put(CUSTOM_CHAT_COLORS_ID, Optional.fromNullable(uuidSettings.getChatColors()).or(Optional.fromNullable(e164Settings.getChatColors())).transform(colors -> colors.getId().getLongValue()).orNull());
+    uuidValues.put(SEEN_INVITE_REMINDER, e164Settings.getInsightsBannerTier().getId());
+    uuidValues.put(DEFAULT_SUBSCRIPTION_ID, e164Settings.getDefaultSubscriptionId().or(-1));
+    uuidValues.put(MESSAGE_EXPIRATION_TIME, uuidSettings.getExpireMessages() > 0 ? uuidSettings.getExpireMessages() : e164Settings.getExpireMessages());
+    uuidValues.put(REGISTERED, RegisteredState.REGISTERED.getId());
+    uuidValues.put(SYSTEM_GIVEN_NAME, e164Settings.getSystemProfileName().getGivenName());
+    uuidValues.put(SYSTEM_FAMILY_NAME, e164Settings.getSystemProfileName().getFamilyName());
+    uuidValues.put(SYSTEM_JOINED_NAME, e164Settings.getSystemProfileName().toString());
+    uuidValues.put(SYSTEM_PHOTO_URI, e164Settings.getSystemContactPhotoUri());
+    uuidValues.put(SYSTEM_PHONE_LABEL, e164Settings.getSystemPhoneLabel());
+    uuidValues.put(SYSTEM_CONTACT_URI, e164Settings.getSystemContactUri());
+    uuidValues.put(PROFILE_SHARING, uuidSettings.isProfileSharing() || e164Settings.isProfileSharing());
+    uuidValues.put(CAPABILITIES, Math.max(uuidSettings.getCapabilities(), e164Settings.getCapabilities()));
+    uuidValues.put(MENTION_SETTING, uuidSettings.getMentionSetting() != MentionSetting.ALWAYS_NOTIFY ? uuidSettings.getMentionSetting().getId() : e164Settings.getMentionSetting().getId());
+    if (uuidSettings.getProfileKey() != null) {
+      updateProfileValuesForMerge(uuidValues, uuidSettings);
+    } else if (e164Settings.getProfileKey() != null) {
+      updateProfileValuesForMerge(uuidValues, e164Settings);
+    }
+    db.update(TABLE_NAME, uuidValues, ID_WHERE, SqlUtil.buildArgs(byUuid));
+
+    return byUUid;
   } */
   private static void updateProfileValuesForMerge(@NonNull ContentValues values, @NonNull RecipientSettings settings) {
     values.put(PROFILE_KEY, settings.getProfileKey() != null ? Base64.encodeBytes(settings.getProfileKey()) : null);

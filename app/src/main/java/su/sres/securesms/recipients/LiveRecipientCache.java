@@ -10,9 +10,9 @@ import androidx.annotation.NonNull;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import su.sres.core.util.ThreadUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.MissingRecipientException;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.core.util.logging.Log;
@@ -20,7 +20,6 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.LRUCache;
 import su.sres.securesms.util.Stopwatch;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.concurrent.FilteredExecutor;
 import su.sres.signalservice.api.push.ACI;
@@ -46,7 +45,6 @@ public final class LiveRecipientCache {
   private final Map<RecipientId, LiveRecipient> recipients;
   private final LiveRecipient                   unknown;
   private final Executor                        resolveExecutor;
-  private final SQLiteDatabase                  db;
 
   private final AtomicReference<RecipientId> localRecipientId;
   private final AtomicBoolean                warmedUp;
@@ -54,13 +52,12 @@ public final class LiveRecipientCache {
   @SuppressLint("UseSparseArrays")
   public LiveRecipientCache(@NonNull Context context) {
     this.context           = context.getApplicationContext();
-    this.recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+    this.recipientDatabase = ShadowDatabase.recipients();
     this.recipients        = new LRUCache<>(CACHE_MAX);
     this.warmedUp          = new AtomicBoolean(false);
     this.localRecipientId  = new AtomicReference<>(null);
     this.unknown           = new LiveRecipient(context, Recipient.UNKNOWN);
-    this.db                = DatabaseFactory.getInstance(context).getRawDatabase();
-    this.resolveExecutor   = ThreadUtil.trace(new FilteredExecutor(SignalExecutors.BOUNDED, () -> !db.inTransaction()));
+    this.resolveExecutor   = ThreadUtil.trace(new FilteredExecutor(SignalExecutors.BOUNDED, () -> !ShadowDatabase.inTransaction()));
   }
 
   @AnyThread
@@ -152,19 +149,19 @@ public final class LiveRecipientCache {
     }
 
     if (selfId == null) {
-      ACI    localAci  = TextSecurePreferences.getLocalAci(context);
-      String localE164 = TextSecurePreferences.getLocalNumber(context);
+      ACI    localAci  = SignalStore.account().getAci();
+      String localUserLogin = SignalStore.account().getUserLogin();
 
       if (localAci != null) {
-        selfId = recipientDatabase.getByAci(localAci).or(recipientDatabase.getByE164(localE164)).orNull();
-      } else if (localE164 != null) {
-        selfId = recipientDatabase.getByE164(localE164).orNull();
+        selfId = recipientDatabase.getByAci(localAci).or(recipientDatabase.getByE164(localUserLogin)).orNull();
+      } else if (localUserLogin != null) {
+        selfId = recipientDatabase.getByE164(localUserLogin).orNull();
       } else {
         throw new IllegalStateException("Tried to call getSelf() before local data was set!");
       }
 
       if (selfId == null) {
-        selfId = recipientDatabase.getAndPossiblyMerge(localAci, localE164, false);
+        selfId = recipientDatabase.getAndPossiblyMerge(localAci, localUserLogin, false);
       }
 
       synchronized (localRecipientId) {
@@ -187,7 +184,7 @@ public final class LiveRecipientCache {
     Stopwatch stopwatch = new Stopwatch("recipient-warm-up");
 
     SignalExecutors.BOUNDED.execute(() -> {
-      ThreadDatabase  threadDatabase = DatabaseFactory.getThreadDatabase(context);
+      ThreadDatabase  threadDatabase = ShadowDatabase.threads();
       List<Recipient> recipients     = new ArrayList<>();
 
       try (ThreadDatabase.Reader reader = threadDatabase.readerFor(threadDatabase.getRecentConversationList(THREAD_CACHE_WARM_MAX, false, false))) {
@@ -206,7 +203,7 @@ public final class LiveRecipientCache {
       stopwatch.split("thread");
 
       if (SignalStore.registrationValues().isRegistrationComplete()) {
-        try (Cursor cursor = DatabaseFactory.getRecipientDatabase(context).getNonGroupContacts(false)) {
+        try (Cursor cursor = ShadowDatabase.recipients().getNonGroupContacts(false)) {
           int count = 0;
           while (cursor != null && cursor.moveToNext() && count < CONTACT_CACHE_WARM_MAX) {
             RecipientId id = RecipientId.from(CursorUtil.requireLong(cursor, RecipientDatabase.ID));

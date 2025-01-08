@@ -19,6 +19,7 @@ import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.ringrtc.Camera;
+import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 
 /**
@@ -115,7 +116,7 @@ public class GroupConnectedActionProcessor extends GroupActionProcessor {
       return currentState;
     }
 
-    if (currentState.getCallSetupState().hasSentJoinedMessage()) {
+    if (currentState.getCallSetupState(RemotePeer.GROUP_CALL_ID).hasSentJoinedMessage()) {
       return currentState;
     }
 
@@ -129,7 +130,7 @@ public class GroupConnectedActionProcessor extends GroupActionProcessor {
     webRtcInteractor.updateGroupCallUpdateMessage(currentState.getCallInfoState().getCallRecipient().getId(), eraId, members, WebRtcUtil.isCallFull(peekInfo));
 
     return currentState.builder()
-                       .changeCallSetupState()
+                       .changeCallSetupState(RemotePeer.GROUP_CALL_ID)
                        .sentJoinedMessage(true)
                        .build();
   }

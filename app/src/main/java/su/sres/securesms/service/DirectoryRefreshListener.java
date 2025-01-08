@@ -21,7 +21,7 @@ public class DirectoryRefreshListener extends PersistentAlarmManagerListener {
 
   @Override
   protected long onAlarm(Context context, long scheduledTime) {
-    if (scheduledTime != 0 && TextSecurePreferences.isPushRegistered(context)) {
+    if (scheduledTime != 0 && SignalStore.account().isRegistered()) {
         ApplicationDependencies.getJobManager().add(new DirectorySyncJob(true));
     }
 

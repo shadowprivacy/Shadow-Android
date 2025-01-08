@@ -15,7 +15,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.mobilecoin.lib.exceptions.SerializationException;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.databaseprotos.CryptoValue;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.payments.CryptoValueUtil;
@@ -92,7 +91,7 @@ public final class PaymentDatabase extends Database {
 
   private final MutableLiveData<Object> changeSignal;
 
-  PaymentDatabase(@NonNull Context context, @NonNull SQLCipherOpenHelper databaseHelper) {
+  PaymentDatabase(@NonNull Context context, @NonNull ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
 
     this.changeSignal = new MutableLiveData<>(new Object());

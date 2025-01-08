@@ -16,7 +16,7 @@ import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.attachments.PointerAttachment;
 import su.sres.securesms.blurhash.BlurHashEncoder;
 import su.sres.securesms.database.AttachmentDatabase;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.PartProgressEvent;
 import su.sres.securesms.jobmanager.Data;
@@ -131,7 +131,7 @@ public final class AttachmentUploadJob extends BaseJob {
     }
 
     SignalServiceMessageSender messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-    AttachmentDatabase         database           = DatabaseFactory.getAttachmentDatabase(context);
+    AttachmentDatabase         database           = ShadowDatabase.attachments();
     DatabaseAttachment         databaseAttachment = database.getAttachment(attachmentId);
 
     if (databaseAttachment == null) {
@@ -174,7 +174,7 @@ public final class AttachmentUploadJob extends BaseJob {
   @Override
   public void onFailure() {
     if (isCanceled()) {
-      DatabaseFactory.getAttachmentDatabase(context).deleteAttachment(attachmentId);
+      ShadowDatabase.attachments().deleteAttachment(attachmentId);
     }
   }
 

@@ -29,8 +29,8 @@ import com.google.android.exoplayer2.ui.PlayerNotificationManager;
 
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceViewedUpdateJob;
@@ -241,7 +241,7 @@ public class VoiceNotePlaybackService extends MediaBrowserServiceCompat {
         }
         long            messageId       = extras.getLong(VoiceNoteMediaItemFactory.EXTRA_MESSAGE_ID);
         RecipientId     recipientId     = RecipientId.from(extras.getString(VoiceNoteMediaItemFactory.EXTRA_INDIVIDUAL_RECIPIENT_ID));
-        MessageDatabase messageDatabase = DatabaseFactory.getMmsDatabase(this);
+        MessageDatabase messageDatabase = ShadowDatabase.mms();
 
         MessageDatabase.MarkedMessageInfo markedMessageInfo = messageDatabase.setIncomingMessageViewed(messageId);
 

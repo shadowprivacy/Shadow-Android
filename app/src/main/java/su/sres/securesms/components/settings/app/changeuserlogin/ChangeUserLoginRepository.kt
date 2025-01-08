@@ -5,12 +5,10 @@ import androidx.annotation.WorkerThread
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import su.sres.core.util.logging.Log
-import su.sres.securesms.database.DatabaseFactory
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.keyvalue.CertificateType
 import su.sres.securesms.keyvalue.SignalStore
-import su.sres.securesms.registration.VerifyAccountRepository
-import su.sres.securesms.util.TextSecurePreferences
 import su.sres.signalservice.internal.ServiceResponse
 import su.sres.signalservice.internal.push.VerifyAccountResponse
 import su.sres.signalservice.internal.push.WhoAmIResponse
@@ -34,9 +32,9 @@ class ChangeUserLoginRepository(private val context: Context) {
 
   @WorkerThread
   fun changeLocalLogin(login: String): Single<Unit> {
-    DatabaseFactory.getRecipientDatabase(context).updateSelfLogin(login)
+    ShadowDatabase.recipients.updateSelfLogin(login)
 
-    TextSecurePreferences.setLocalNumber(context, login)
+    SignalStore.account().setUserLogin(login)
 
     ApplicationDependencies.closeConnections()
     ApplicationDependencies.getIncomingMessageObserver()

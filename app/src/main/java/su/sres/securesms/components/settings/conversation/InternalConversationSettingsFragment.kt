@@ -15,7 +15,7 @@ import su.sres.securesms.components.settings.DSLSettingsAdapter
 import su.sres.securesms.components.settings.DSLSettingsFragment
 import su.sres.securesms.components.settings.DSLSettingsText
 import su.sres.securesms.components.settings.configure
-import su.sres.securesms.database.DatabaseFactory
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.groups.GroupId
 import su.sres.securesms.keyvalue.SignalStore
@@ -30,7 +30,6 @@ import su.sres.securesms.util.Util
 import su.sres.securesms.util.livedata.Store
 import su.sres.signalservice.api.push.ACI
 import java.util.Objects
-import java.util.UUID
 
 /**
  * Shows internal details about a recipient that you can view from the conversation settings.
@@ -135,7 +134,7 @@ class InternalConversationSettingsFragment : DSLSettingsFragment(
             MaterialAlertDialogBuilder(requireContext())
               .setTitle("Are you sure?")
               .setNegativeButton(android.R.string.cancel) { d, _ -> d.dismiss() }
-              .setPositiveButton(android.R.string.ok) { _, _ -> DatabaseFactory.getRecipientDatabase(requireContext()).setProfileSharing(recipient.id, false) }
+              .setPositiveButton(android.R.string.ok) { _, _ -> ShadowDatabase.recipients.setProfileSharing(recipient.id, false) }
               .show()
           }
         )
@@ -149,10 +148,10 @@ class InternalConversationSettingsFragment : DSLSettingsFragment(
               .setNegativeButton(android.R.string.cancel) { d, _ -> d.dismiss() }
               .setPositiveButton(android.R.string.ok) { _, _ ->
                 if (recipient.hasAci()) {
-                  DatabaseFactory.getSessionDatabase(context).deleteAllFor(recipient.requireAci().toString())
+                  ShadowDatabase.sessions.deleteAllFor(recipient.requireAci().toString())
                 }
                 if (recipient.hasE164()) {
-                  DatabaseFactory.getSessionDatabase(context).deleteAllFor(recipient.requireE164())
+                  ShadowDatabase.sessions.deleteAllFor(recipient.requireE164())
                 }
               }
               .show()
@@ -231,9 +230,8 @@ class InternalConversationSettingsFragment : DSLSettingsFragment(
       liveRecipient.observeForever(this)
 
       SignalExecutors.BOUNDED.execute {
-        val context: Context = ApplicationDependencies.getApplication()
-        val threadId: Long? = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipientId)
-        val groupId: GroupId? = DatabaseFactory.getGroupDatabase(context).getGroup(recipientId).transform { it.id }.orNull()
+        val threadId: Long? = ShadowDatabase.threads.getThreadIdFor(recipientId)
+        val groupId: GroupId? = ShadowDatabase.groups.getGroup(recipientId).transform { it.id }.orNull()
         store.update { state -> state.copy(threadId = threadId, groupId = groupId) }
       }
     }

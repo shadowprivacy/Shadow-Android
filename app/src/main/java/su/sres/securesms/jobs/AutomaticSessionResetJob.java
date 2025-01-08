@@ -5,8 +5,8 @@ import androidx.annotation.NonNull;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.SessionUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.databaseprotos.DeviceLastResetTime;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
@@ -87,11 +87,11 @@ public class AutomaticSessionResetJob extends BaseJob {
   @Override
   protected void onRun() throws Exception {
     SessionUtil.archiveSession(recipientId, deviceId);
-    DatabaseFactory.getSenderKeySharedDatabase(context).deleteAllFor(recipientId);
+    ShadowDatabase.senderKeyShared().deleteAllFor(recipientId);
     insertLocalMessage();
     if (FeatureFlags.automaticSessionReset()) {
       long                resetInterval      = TimeUnit.SECONDS.toMillis(FeatureFlags.automaticSessionResetIntervalSeconds());
-      DeviceLastResetTime resetTimes         = DatabaseFactory.getRecipientDatabase(context).getLastSessionResetTimes(recipientId);
+      DeviceLastResetTime resetTimes         = ShadowDatabase.recipients().getLastSessionResetTimes(recipientId);
       long                timeSinceLastReset = System.currentTimeMillis() - getLastResetTime(resetTimes, deviceId);
 
       Log.i(TAG, "DeviceId: " + deviceId + ", Reset interval: " + resetInterval + ", Time since last reset: " + timeSinceLastReset);
@@ -99,7 +99,7 @@ public class AutomaticSessionResetJob extends BaseJob {
       if (timeSinceLastReset > resetInterval) {
         Log.i(TAG, "We're good! Sending a null message.");
 
-        DatabaseFactory.getRecipientDatabase(context).setLastSessionResetTime(recipientId, setLastResetTime(resetTimes, deviceId, System.currentTimeMillis()));
+        ShadowDatabase.recipients().setLastSessionResetTime(recipientId, setLastResetTime(resetTimes, deviceId, System.currentTimeMillis()));
         Log.i(TAG, "Marked last reset time: " + System.currentTimeMillis());
 
         sendNullMessage();
@@ -122,7 +122,7 @@ public class AutomaticSessionResetJob extends BaseJob {
   }
 
   private void insertLocalMessage() {
-    MessageDatabase.InsertResult result = DatabaseFactory.getSmsDatabase(context).insertChatSessionRefreshedMessage(recipientId, deviceId, sentTimestamp);
+    MessageDatabase.InsertResult result = ShadowDatabase.sms().insertChatSessionRefreshedMessage(recipientId, deviceId, sentTimestamp);
     ApplicationDependencies.getMessageNotifier().updateNotification(context, result.getThreadId());
   }
 

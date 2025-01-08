@@ -10,7 +10,6 @@ import su.sres.securesms.keyvalue.MiscellaneousValues;
 import su.sres.securesms.keyvalue.ServiceConfigurationValues;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.util.TextSecurePreferences;
 
 /**
  * Performs cleanup of keyvalues related to the old activation scheme, and substitutes server-side activation key for the old client-side key.
@@ -58,7 +57,7 @@ public final class LicenseMigrationJob extends MigrationJob {
 
         // launch the novel LicenseManagementJob
         // should not be launched if the client is not (yet) registered, which would be the case e.g. on first-ever install
-        if (TextSecurePreferences.isPushRegistered(context)) {
+        if (SignalStore.account().isRegistered()) {
             Log.i(TAG, "Scheduling license migration job");
             ApplicationDependencies.getJobManager().add(new LicenseManagementJob());
         }

@@ -4,8 +4,8 @@ import android.content.Context;
 import android.database.Cursor;
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MediaDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 
 public final class ThreadMediaLoader extends MediaLoader {
 
@@ -33,7 +33,7 @@ public final class ThreadMediaLoader extends MediaLoader {
                                         long threadId,
                                         @NonNull MediaType mediaType,
                                         @NonNull MediaDatabase.Sorting sorting) {
-    MediaDatabase mediaDatabase = DatabaseFactory.getMediaDatabase(context);
+    MediaDatabase mediaDatabase = ShadowDatabase.media();
 
     switch (mediaType) {
       case GALLERY : return mediaDatabase.getGalleryMediaForThread(threadId, sorting);

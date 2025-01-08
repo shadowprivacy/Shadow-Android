@@ -2,7 +2,7 @@ package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -104,12 +104,12 @@ public class StorageAccountRestoreJob extends BaseJob {
     }
 
     Log.i(TAG, "Applying changes locally...");
-    DatabaseFactory.getInstance(context).getRawDatabase().beginTransaction();
+    ShadowDatabase.getRawDatabase().beginTransaction();
     try {
       StorageSyncHelper.applyAccountStorageSyncUpdates(context, Recipient.self(), accountRecord, false);
-      DatabaseFactory.getInstance(context).getRawDatabase().setTransactionSuccessful();
+      ShadowDatabase.getRawDatabase().setTransactionSuccessful();
     } finally {
-      DatabaseFactory.getInstance(context).getRawDatabase().endTransaction();
+      ShadowDatabase.getRawDatabase().endTransaction();
     }
 
     JobManager jobManager = ApplicationDependencies.getJobManager();

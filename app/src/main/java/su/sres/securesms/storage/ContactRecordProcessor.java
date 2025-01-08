@@ -6,8 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 
@@ -30,7 +30,7 @@ public class ContactRecordProcessor extends DefaultStorageRecordProcessor<Signal
   private final RecipientDatabase recipientDatabase;
 
   public ContactRecordProcessor(@NonNull Context context, @NonNull Recipient self) {
-    this(self, DatabaseFactory.getRecipientDatabase(context));
+    this(self, ShadowDatabase.recipients());
   }
 
   ContactRecordProcessor(@NonNull Recipient self, @NonNull RecipientDatabase recipientDatabase) {

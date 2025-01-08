@@ -40,9 +40,9 @@ import su.sres.securesms.R;
 import su.sres.securesms.components.AnimatingToggle;
 import su.sres.securesms.components.BoldSelectionTabItem;
 import su.sres.securesms.components.ControllableTabLayout;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MediaDatabase;
 import su.sres.securesms.database.MediaDatabase.Sorting;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.loaders.MediaLoader;
 import su.sres.securesms.util.DynamicNoActionBarTheme;
 import su.sres.securesms.util.DynamicTheme;
@@ -205,7 +205,7 @@ public final class MediaOverviewActivity extends PassphraseRequiredActivity {
     if (threadId == MediaDatabase.ALL_THREADS) {
       getSupportActionBar().setTitle(R.string.MediaOverviewActivity_All_storage_use);
     } else {
-      SimpleTask.run(() -> DatabaseFactory.getThreadDatabase(this).getRecipientForThreadId(threadId),
+      SimpleTask.run(() -> ShadowDatabase.threads().getRecipientForThreadId(threadId),
                      (recipient) -> {
                        if (recipient != null) {
                          getSupportActionBar().setTitle(recipient.getDisplayName(this));

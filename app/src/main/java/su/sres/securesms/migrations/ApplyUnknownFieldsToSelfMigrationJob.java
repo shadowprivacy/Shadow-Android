@@ -5,13 +5,13 @@ import androidx.annotation.NonNull;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.storage.StorageSyncHelper;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.storage.SignalAccountRecord;
 import su.sres.signalservice.api.storage.StorageId;
 import su.sres.signalservice.internal.storage.protos.AccountRecord;
@@ -45,7 +45,7 @@ public class ApplyUnknownFieldsToSelfMigrationJob extends MigrationJob {
 
   @Override
   public void performMigration() {
-    if (!TextSecurePreferences.isPushRegistered(context) || TextSecurePreferences.getLocalAci(context) == null) {
+    if (!SignalStore.account().isRegistered() || SignalStore.account().getAci() == null) {
       Log.w(TAG, "Not registered!");
       return;
     }
@@ -55,7 +55,7 @@ public class ApplyUnknownFieldsToSelfMigrationJob extends MigrationJob {
 
     try {
       self     = Recipient.self();
-      settings = DatabaseFactory.getRecipientDatabase(context).getRecipientSettingsForSync(self.getId());
+      settings = ShadowDatabase.recipients().getRecipientSettingsForSync(self.getId());
     } catch (RecipientDatabase.MissingRecipientException e) {
       Log.w(TAG, "Unable to find self");
       return;

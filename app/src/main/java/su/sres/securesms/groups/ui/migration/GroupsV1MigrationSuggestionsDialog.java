@@ -8,7 +8,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.FragmentActivity;
 
 import su.sres.securesms.R;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.groups.GroupChangeBusyException;
 import su.sres.securesms.groups.GroupChangeFailedException;
 import su.sres.securesms.groups.GroupId;
@@ -33,75 +33,77 @@ import java.util.List;
  */
 public final class GroupsV1MigrationSuggestionsDialog {
 
-    private static final String TAG = Log.tag(GroupsV1MigrationSuggestionsDialog.class);
+  private static final String TAG = Log.tag(GroupsV1MigrationSuggestionsDialog.class);
 
-    private final FragmentActivity  fragmentActivity;
-    private final GroupId.V2        groupId;
-    private final List<RecipientId> suggestions;
+  private final FragmentActivity  fragmentActivity;
+  private final GroupId.V2        groupId;
+  private final List<RecipientId> suggestions;
 
-    public static void show(@NonNull FragmentActivity activity,
-                            @NonNull GroupId.V2 groupId,
-                            @NonNull List<RecipientId> suggestions)
-    {
-        new GroupsV1MigrationSuggestionsDialog(activity, groupId, suggestions).display();
-    }
+  public static void show(@NonNull FragmentActivity activity,
+                          @NonNull GroupId.V2 groupId,
+                          @NonNull List<RecipientId> suggestions)
+  {
+    new GroupsV1MigrationSuggestionsDialog(activity, groupId, suggestions).display();
+  }
 
-    private GroupsV1MigrationSuggestionsDialog(@NonNull FragmentActivity activity,
-                                               @NonNull GroupId.V2 groupId,
-                                               @NonNull List<RecipientId> suggestions)
-    {
-        this.fragmentActivity = activity;
-        this.groupId          = groupId;
-        this.suggestions      = suggestions;
-    }
+  private GroupsV1MigrationSuggestionsDialog(@NonNull FragmentActivity activity,
+                                             @NonNull GroupId.V2 groupId,
+                                             @NonNull List<RecipientId> suggestions)
+  {
+    this.fragmentActivity = activity;
+    this.groupId          = groupId;
+    this.suggestions      = suggestions;
+  }
 
-    private void display() {
-        AlertDialog dialog = new AlertDialog.Builder(fragmentActivity)
-                .setTitle(fragmentActivity.getResources().getQuantityString(R.plurals.GroupsV1MigrationSuggestionsDialog_add_members_question, suggestions.size()))
-                .setMessage(fragmentActivity.getResources().getQuantityString(R.plurals.GroupsV1MigrationSuggestionsDialog_these_members_couldnt_be_automatically_added, suggestions.size()))
-                .setView(R.layout.dialog_group_members)
-                .setPositiveButton(fragmentActivity.getResources().getQuantityString(R.plurals.GroupsV1MigrationSuggestionsDialog_add_members, suggestions.size()), (d, i) -> onAddClicked(d))
-                .setNegativeButton(android.R.string.cancel, (d, i) -> d.dismiss())
-                .show();
+  private void display() {
+    AlertDialog dialog = new AlertDialog.Builder(fragmentActivity)
+        .setTitle(fragmentActivity.getResources().getQuantityString(R.plurals.GroupsV1MigrationSuggestionsDialog_add_members_question, suggestions.size()))
+        .setMessage(fragmentActivity.getResources().getQuantityString(R.plurals.GroupsV1MigrationSuggestionsDialog_these_members_couldnt_be_automatically_added, suggestions.size()))
+        .setView(R.layout.dialog_group_members)
+        .setPositiveButton(fragmentActivity.getResources().getQuantityString(R.plurals.GroupsV1MigrationSuggestionsDialog_add_members, suggestions.size()), (d, i) -> onAddClicked(d))
+        .setNegativeButton(android.R.string.cancel, (d, i) -> d.dismiss())
+        .show();
 
-        GroupMemberListView memberListView = dialog.findViewById(R.id.list_members);
+    GroupMemberListView memberListView = dialog.findViewById(R.id.list_members);
 
-        SimpleTask.run(() -> Recipient.resolvedList(suggestions),
-                memberListView::setDisplayOnlyMembers);
-    }
+    memberListView.initializeAdapter(fragmentActivity);
 
-    private void onAddClicked(@NonNull DialogInterface rootDialog) {
-        SimpleProgressDialog.DismissibleDialog progressDialog = SimpleProgressDialog.showDelayed(fragmentActivity, 300, 0);
-        SimpleTask.run(SignalExecutors.UNBOUNDED, () -> {
-            try {
-                GroupManager.addMembers(fragmentActivity, groupId.requirePush(), suggestions);
-                Log.i(TAG, "Successfully added members! Removing these dropped members from the list.");
-                DatabaseFactory.getGroupDatabase(fragmentActivity).removeUnmigratedV1Members(groupId, suggestions);
-                return Result.SUCCESS;
-            } catch (IOException | GroupChangeBusyException e) {
-                Log.w(TAG, "Temporary failure.", e);
-                return Result.NETWORK_ERROR;
-            } catch (GroupNotAMemberException | GroupInsufficientRightsException | MembershipNotSuitableForV2Exception | GroupChangeFailedException e) {
-                Log.w(TAG, "Permanent failure! Removing these dropped members from the list.", e);
-                DatabaseFactory.getGroupDatabase(fragmentActivity).removeUnmigratedV1Members(groupId, suggestions);
-                return Result.IMPOSSIBLE;
-            }
-        }, result -> {
-            progressDialog.dismiss();
-            rootDialog.dismiss();
+    SimpleTask.run(() -> Recipient.resolvedList(suggestions),
+                   memberListView::setDisplayOnlyMembers);
+  }
 
-            switch (result) {
-                case NETWORK_ERROR:
-                    Toast.makeText(fragmentActivity, fragmentActivity.getResources().getQuantityText(R.plurals.GroupsV1MigrationSuggestionsDialog_failed_to_add_members_try_again_later, suggestions.size()), Toast.LENGTH_SHORT).show();
-                    break;
-                case IMPOSSIBLE:
-                    Toast.makeText(fragmentActivity, fragmentActivity.getResources().getQuantityText(R.plurals.GroupsV1MigrationSuggestionsDialog_cannot_add_members, suggestions.size()), Toast.LENGTH_SHORT).show();
-                    break;
-            }
-        });
-    }
+  private void onAddClicked(@NonNull DialogInterface rootDialog) {
+    SimpleProgressDialog.DismissibleDialog progressDialog = SimpleProgressDialog.showDelayed(fragmentActivity, 300, 0);
+    SimpleTask.run(SignalExecutors.UNBOUNDED, () -> {
+      try {
+        GroupManager.addMembers(fragmentActivity, groupId.requirePush(), suggestions);
+        Log.i(TAG, "Successfully added members! Removing these dropped members from the list.");
+        ShadowDatabase.groups().removeUnmigratedV1Members(groupId, suggestions);
+        return Result.SUCCESS;
+      } catch (IOException | GroupChangeBusyException e) {
+        Log.w(TAG, "Temporary failure.", e);
+        return Result.NETWORK_ERROR;
+      } catch (GroupNotAMemberException | GroupInsufficientRightsException | MembershipNotSuitableForV2Exception | GroupChangeFailedException e) {
+        Log.w(TAG, "Permanent failure! Removing these dropped members from the list.", e);
+        ShadowDatabase.groups().removeUnmigratedV1Members(groupId, suggestions);
+        return Result.IMPOSSIBLE;
+      }
+    }, result -> {
+      progressDialog.dismiss();
+      rootDialog.dismiss();
 
-    private enum Result {
-        SUCCESS, NETWORK_ERROR, IMPOSSIBLE
-    }
+      switch (result) {
+        case NETWORK_ERROR:
+          Toast.makeText(fragmentActivity, fragmentActivity.getResources().getQuantityText(R.plurals.GroupsV1MigrationSuggestionsDialog_failed_to_add_members_try_again_later, suggestions.size()), Toast.LENGTH_SHORT).show();
+          break;
+        case IMPOSSIBLE:
+          Toast.makeText(fragmentActivity, fragmentActivity.getResources().getQuantityText(R.plurals.GroupsV1MigrationSuggestionsDialog_cannot_add_members, suggestions.size()), Toast.LENGTH_SHORT).show();
+          break;
+      }
+    });
+  }
+
+  private enum Result {
+    SUCCESS, NETWORK_ERROR, IMPOSSIBLE
+  }
 }

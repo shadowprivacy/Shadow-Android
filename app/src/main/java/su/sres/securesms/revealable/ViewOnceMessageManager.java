@@ -10,11 +10,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
-import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.database.AttachmentDatabase;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.service.TimedEventManager;
 
@@ -31,8 +30,8 @@ public class ViewOnceMessageManager extends TimedEventManager<ViewOnceExpiration
     public ViewOnceMessageManager(@NonNull Application application) {
         super(application, "ViewOnceMessageManager");
 
-        this.mmsDatabase        = DatabaseFactory.getMmsDatabase(application);
-        this.attachmentDatabase = DatabaseFactory.getAttachmentDatabase(application);
+        this.mmsDatabase        = ShadowDatabase.mms();
+        this.attachmentDatabase = ShadowDatabase.attachments();
 
         scheduleIfNecessary();
     }

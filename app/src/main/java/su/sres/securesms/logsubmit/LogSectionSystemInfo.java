@@ -29,7 +29,6 @@ import su.sres.signalservice.api.push.ACI;
 
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.UUID;
 
 public class LogSectionSystemInfo implements LogSection {
 
@@ -62,7 +61,7 @@ public class LogSectionSystemInfo implements LogSection {
     builder.append("RecipientId   : ").append(SignalStore.registrationValues().isRegistrationComplete() ? Recipient.self().getId() : "N/A").append("\n");
     builder.append("ACI           : ").append(getCensoredAci(context)).append("\n");
     builder.append("Play Services: ").append(getPlayServicesString(context)).append("\n");
-    builder.append("FCM          : ").append(!TextSecurePreferences.isFcmDisabled(context)).append("\n");
+    builder.append("FCM           : ").append(SignalStore.account().isFcmEnabled()).append("\n");
     builder.append("BkgRestricted : ").append(Build.VERSION.SDK_INT >= 28 ? DeviceProperties.isBackgroundRestricted(context) : "N/A").append("\n");
     builder.append("Locale       : ").append(Locale.getDefault().toString()).append("\n");
     builder.append("Linked Devices: ").append(TextSecurePreferences.isMultiDevice(context)).append("\n");
@@ -154,7 +153,7 @@ public class LogSectionSystemInfo implements LogSection {
   }
 
   private static String getCensoredAci(@NonNull Context context) {
-    ACI aci = TextSecurePreferences.getLocalAci(context);
+    ACI aci = SignalStore.account().getAci();
 
     if (aci != null) {
       String aciString = aci.toString();

@@ -3,7 +3,6 @@ package su.sres.securesms.components;
 import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.Typeface;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -13,14 +12,12 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.style.CharacterStyle;
-import android.text.style.StyleSpan;
 import android.util.AttributeSet;
 
 import java.util.Objects;
 
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
-import su.sres.securesms.components.emoji.EmojiTextView;
 import su.sres.securesms.components.emoji.SimpleEmojiTextView;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.SpanUtil;
@@ -29,9 +26,6 @@ import su.sres.securesms.util.ViewUtil;
 public class FromTextView extends SimpleEmojiTextView {
 
   private static final String TAG = Log.tag(FromTextView.class);
-
-  private final static Typeface  BOLD_TYPEFACE  = Typeface.create("sans-serif-medium", Typeface.NORMAL);
-  private final static Typeface  LIGHT_TYPEFACE = Typeface.create("sans-serif", Typeface.NORMAL);
 
   public FromTextView(Context context) {
     super(context);
@@ -50,7 +44,10 @@ public class FromTextView extends SimpleEmojiTextView {
   }
 
   public void setText(Recipient recipient, boolean read, @Nullable String suffix) {
-    String fromString = recipient.getDisplayName(getContext());
+    setText(recipient, recipient.getDisplayName(getContext()), read, suffix);
+  }
+
+  public void setText(Recipient recipient, @Nullable CharSequence fromString, boolean read, @Nullable String suffix) {
 
     SpannableStringBuilder builder  = new SpannableStringBuilder();
     SpannableString        fromSpan = new SpannableString(fromString);

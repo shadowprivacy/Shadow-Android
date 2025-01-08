@@ -1227,6 +1227,9 @@ public class SignalServiceMessageSender {
       case STORAGE_MANIFEST:
         fetchMessage.setType(SyncMessage.FetchLatest.Type.STORAGE_MANIFEST);
         break;
+      case SUBSCRIPTION_STATUS:
+        fetchMessage.setType(SyncMessage.FetchLatest.Type.SUBSCRIPTION_STATUS);
+        break;
       default:
         Log.w(TAG, "Unknown fetch type!");
         break;
@@ -1784,8 +1787,8 @@ public class SignalServiceMessageSender {
                                                       .map(SendMessageResult::getAddress)
                                                       .collect(Collectors.toList());
 
-        Set<String>                successUuids     = successes.stream().map(a -> a.getAci().toString()).collect(Collectors.toSet());
-        Set<SignalProtocolAddress> successAddresses = targetInfo.destinations.stream().filter(a -> successUuids.contains(a.getName())).collect(Collectors.toSet());
+        Set<String>                successAcis      = successes.stream().map(a -> a.getAci().toString()).collect(Collectors.toSet());
+        Set<SignalProtocolAddress> successAddresses = targetInfo.destinations.stream().filter(a -> successAcis.contains(a.getName())).collect(Collectors.toSet());
 
         store.markSenderKeySharedWith(distributionId, successAddresses);
 

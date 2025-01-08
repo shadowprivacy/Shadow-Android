@@ -9,10 +9,8 @@ import com.annimon.stream.Stream;
 import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.R;
 import su.sres.securesms.components.emoji.RecentEmojiPageModel;
-import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MessageDatabase;
-import su.sres.securesms.database.NoSuchMessageException;
-import su.sres.securesms.database.model.MessageRecord;
+import su.sres.securesms.database.ShadowDatabase;
+import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.emoji.EmojiCategory;
@@ -65,24 +63,18 @@ final class ReactWithAnyEmojiRepository {
     return pages;
   }
 
-  void addEmojiToMessage(@NonNull String emoji, long messageId, boolean isMms) {
+  void addEmojiToMessage(@NonNull String emoji, @NonNull MessageId messageId) {
     SignalExecutors.BOUNDED.execute(() -> {
-      try {
-        MessageDatabase db            = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
-        MessageRecord   messageRecord = db.getMessageRecord(messageId);
-        ReactionRecord oldRecord = Stream.of(messageRecord.getReactions())
-                                         .filter(record -> record.getAuthor().equals(Recipient.self().getId()))
-                                         .findFirst()
-                                         .orElse(null);
+      ReactionRecord  oldRecord = Stream.of(ShadowDatabase.reactions().getReactions(messageId))
+                                        .filter(record -> record.getAuthor().equals(Recipient.self().getId()))
+                                        .findFirst()
+                                        .orElse(null);
 
-        if (oldRecord != null && oldRecord.getEmoji().equals(emoji)) {
-          MessageSender.sendReactionRemoval(context, messageRecord.getId(), messageRecord.isMms(), oldRecord);
-        } else {
-          MessageSender.sendNewReaction(context, messageRecord.getId(), messageRecord.isMms(), emoji);
-          ThreadUtil.runOnMain(() -> recentEmojiPageModel.onCodePointSelected(emoji));
-        }
-      } catch (NoSuchMessageException e) {
-        Log.w(TAG, "Message not found! Ignoring.");
+      if (oldRecord != null && oldRecord.getEmoji().equals(emoji)) {
+        MessageSender.sendReactionRemoval(context, messageId, oldRecord);
+      } else {
+        MessageSender.sendNewReaction(context, messageId, emoji);
+        ThreadUtil.runOnMain(() -> recentEmojiPageModel.onCodePointSelected(emoji));
       }
     });
   }

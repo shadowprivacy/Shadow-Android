@@ -7,6 +7,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
+import su.sres.core.util.money.FiatMoney
 import su.sres.securesms.R
 import su.sres.securesms.badges.BadgeImageView
 import su.sres.securesms.components.settings.PreferenceModel
@@ -18,6 +19,7 @@ import su.sres.securesms.util.MappingAdapter
 import su.sres.securesms.util.MappingViewHolder
 import su.sres.securesms.util.SpanUtil
 import su.sres.securesms.util.visible
+import su.sres.signalservice.api.subscriptions.ActiveSubscription
 import java.util.Locale
 
 /**
@@ -27,10 +29,12 @@ import java.util.Locale
 object ActiveSubscriptionPreference {
 
   class Model(
+    val price: FiatMoney,
     val subscription: Subscription,
     val onAddBoostClick: () -> Unit,
     val renewalTimestamp: Long = -1L,
     val redemptionState: ManageDonationsState.SubscriptionRedemptionState,
+    val activeSubscription: ActiveSubscription.Subscription,
     val onContactSupport: () -> Unit
   ) : PreferenceModel<Model>() {
     override fun areItemsTheSame(newItem: Model): Boolean {
@@ -41,7 +45,9 @@ object ActiveSubscriptionPreference {
       return super.areContentsTheSame(newItem) &&
         subscription == newItem.subscription &&
         renewalTimestamp == newItem.renewalTimestamp &&
-        redemptionState == newItem.redemptionState
+        redemptionState == newItem.redemptionState &&
+        FiatMoney.equals(price, newItem.price) &&
+        activeSubscription == newItem.activeSubscription
     }
   }
 
@@ -62,7 +68,7 @@ object ActiveSubscriptionPreference {
         R.string.MySupportPreference__s_per_month,
         FiatMoneyUtil.format(
           context.resources,
-          model.subscription.prices.first { it.currency == SignalStore.donationsValues().getSubscriptionCurrency() },
+          model.price,
           FiatMoneyUtil.formatOptions()
         )
       )
@@ -101,14 +107,39 @@ object ActiveSubscriptionPreference {
     }
 
     private fun presentFailureState(model: Model) {
-      expiry.text = SpannableStringBuilder(context.getString(R.string.MySupportPreference__couldnt_add_badge))
-        .append(" ")
-        .append(
-          SpanUtil.clickable(
-            context.getString(R.string.MySupportPreference__please_contact_support),
-            ContextCompat.getColor(context, R.color.signal_accent_primary)
-          ) { model.onContactSupport() }
-        )
+      if (model.activeSubscription.isFailedPayment || SignalStore.donationsValues().shouldCancelSubscriptionBeforeNextSubscribeAttempt) {
+        presentPaymentFailureState(model)
+      } else {
+        presentRedemptionFailureState(model)
+      }
+    }
+
+    private fun presentPaymentFailureState(model: Model) {
+      val contactString = context.getString(R.string.MySupportPreference__please_contact_support)
+
+      expiry.text = SpanUtil.clickSubstring(
+        context.getString(R.string.DonationsErrors__error_processing_payment_s, contactString),
+        contactString,
+        {
+          model.onContactSupport()
+        },
+        ContextCompat.getColor(context, R.color.signal_accent_primary)
+      )
+      badge.alpha = 0.2f
+      progress.visible = false
+    }
+
+    private fun presentRedemptionFailureState(model: Model) {
+      val contactString = context.getString(R.string.MySupportPreference__please_contact_support)
+
+      expiry.text = SpanUtil.clickSubstring(
+        context.getString(R.string.MySupportPreference__couldnt_add_badge_s, contactString),
+        contactString,
+        {
+          model.onContactSupport()
+        },
+        ContextCompat.getColor(context, R.color.signal_accent_primary)
+      )
       badge.alpha = 0.2f
       progress.visible = false
     }

@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.mms.PartAuthority;
 import su.sres.securesms.util.storage.FileStorage;
@@ -64,7 +64,7 @@ public final class WallpaperStorage {
       return;
     }
 
-    int recipientCount = DatabaseFactory.getRecipientDatabase(context).getWallpaperUriUsageCount(uri);
+    int recipientCount = ShadowDatabase.recipients().getWallpaperUriUsageCount(uri);
     if (recipientCount > 0) {
       return;
     }

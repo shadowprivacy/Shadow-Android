@@ -11,8 +11,8 @@ import org.signal.zkgroup.profiles.ProfileKey;
 import su.sres.securesms.conversation.colors.ChatColorsMapper;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
@@ -143,8 +143,8 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
 
       Optional<IdentityRecord>  identityRecord  = ApplicationDependencies.getIdentityStore().getIdentityRecord(recipient.getId());
       Optional<VerifiedMessage> verifiedMessage = getVerifiedMessage(recipient, identityRecord);
-      Map<RecipientId, Integer> inboxPositions  = DatabaseFactory.getThreadDatabase(context).getInboxPositions();
-      Set<RecipientId>          archived        = DatabaseFactory.getThreadDatabase(context).getArchivedRecipients();
+      Map<RecipientId, Integer> inboxPositions  = ShadowDatabase.threads().getInboxPositions();
+      Set<RecipientId>          archived        = ShadowDatabase.threads().getArchivedRecipients();
 
       out.write(new DeviceContact(RecipientUtil.toSignalServiceAddress(context, recipient),
                                   Optional.fromNullable(recipient.isGroup() || recipient.isSystemContact() ? recipient.getDisplayName(context) : null),
@@ -195,9 +195,9 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
 
     try {
       DeviceContactsOutputStream out            = new DeviceContactsOutputStream(writeDetails.outputStream);
-      List<Recipient>            recipients     = DatabaseFactory.getRecipientDatabase(context).getRecipientsForMultiDeviceSync();
-      Map<RecipientId, Integer>  inboxPositions = DatabaseFactory.getThreadDatabase(context).getInboxPositions();
-      Set<RecipientId>           archived       = DatabaseFactory.getThreadDatabase(context).getArchivedRecipients();
+      List<Recipient>            recipients     = ShadowDatabase.recipients().getRecipientsForMultiDeviceSync();
+      Map<RecipientId, Integer>  inboxPositions = ShadowDatabase.threads().getInboxPositions();
+      Set<RecipientId>           archived       = ShadowDatabase.threads().getArchivedRecipients();
 
       for (Recipient recipient : recipients) {
         Optional<IdentityRecord>  identity      = ApplicationDependencies.getIdentityStore().getIdentityRecord(recipient.getId());

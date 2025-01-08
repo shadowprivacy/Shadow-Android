@@ -3,7 +3,7 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.StickerDatabase.StickerPackRecordReader;
 import su.sres.securesms.database.model.StickerPackRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -73,7 +73,7 @@ public class MultiDeviceStickerPackSyncJob extends BaseJob  {
 
         List<StickerPackOperationMessage> operations = new LinkedList<>();
 
-        try (StickerPackRecordReader reader = new StickerPackRecordReader(DatabaseFactory.getStickerDatabase(context).getInstalledStickerPacks())) {
+        try (StickerPackRecordReader reader = new StickerPackRecordReader(ShadowDatabase.stickers().getInstalledStickerPacks())) {
             StickerPackRecord pack;
             while ((pack = reader.getNext()) != null) {
                 byte[] packIdBytes  = Hex.fromStringCondensed(pack.getPackId());

@@ -10,6 +10,7 @@ import androidx.annotation.WorkerThread;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.groups.GroupDoesNotExistException;
 import su.sres.securesms.groups.GroupMutation;
@@ -26,7 +27,6 @@ import org.signal.zkgroup.VerificationFailedException;
 import org.signal.zkgroup.groups.GroupMasterKey;
 import org.signal.zkgroup.groups.GroupSecretParams;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.model.databaseprotos.DecryptedGroupV2Context;
@@ -100,8 +100,8 @@ public final class GroupsV2StateProcessor {
     this.jobManager            = ApplicationDependencies.getJobManager();
     this.groupsV2Authorization = ApplicationDependencies.getGroupsV2Authorization();
     this.groupsV2Api           = ApplicationDependencies.getSignalServiceAccountManager().getGroupsV2Api();
-    this.recipientDatabase     = DatabaseFactory.getRecipientDatabase(context);
-    this.groupDatabase         = DatabaseFactory.getGroupDatabase(context);
+    this.recipientDatabase     = ShadowDatabase.recipients();
+    this.groupDatabase         = ShadowDatabase.groups();
   }
 
   public StateProcessorForGroup forGroup(@NonNull GroupMasterKey groupMasterKey) {
@@ -315,8 +315,8 @@ public final class GroupsV2StateProcessor {
                                                                                Collections.emptyList());
 
       try {
-        MessageDatabase mmsDatabase    = DatabaseFactory.getMmsDatabase(context);
-        ThreadDatabase  threadDatabase = DatabaseFactory.getThreadDatabase(context);
+        MessageDatabase mmsDatabase    = ShadowDatabase.mms();
+        ThreadDatabase  threadDatabase = ShadowDatabase.threads();
         long            threadId       = threadDatabase.getOrCreateThreadIdFor(groupRecipient);
         long            id             = mmsDatabase.insertMessageOutbox(leaveMessage, threadId, false, null);
         mmsDatabase.markAsSent(id, true);
@@ -508,8 +508,8 @@ public final class GroupsV2StateProcessor {
 
       if (outgoing) {
         try {
-          MessageDatabase            mmsDatabase     = DatabaseFactory.getMmsDatabase(context);
-          ThreadDatabase             threadDatabase  = DatabaseFactory.getThreadDatabase(context);
+          MessageDatabase            mmsDatabase     = ShadowDatabase.mms();
+          ThreadDatabase             threadDatabase  = ShadowDatabase.threads();
           RecipientId                recipientId     = recipientDatabase.getOrInsertFromGroupId(groupId);
           Recipient                  recipient       = Recipient.resolved(recipientId);
           OutgoingGroupUpdateMessage outgoingMessage = new OutgoingGroupUpdateMessage(recipient, decryptedGroupV2Context, null, timestamp, 0, false, null, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
@@ -522,14 +522,14 @@ public final class GroupsV2StateProcessor {
           Log.w(TAG, e);
         }
       } else {
-        MessageDatabase                        smsDatabase  = DatabaseFactory.getSmsDatabase(context);
+        MessageDatabase                        smsDatabase  = ShadowDatabase.sms();
         RecipientId                            sender       = RecipientId.from(editor.get(), null);
         IncomingTextMessage                    incoming     = new IncomingTextMessage(sender, -1, timestamp, timestamp, timestamp, "", Optional.of(groupId), 0, false, null);
         IncomingGroupUpdateMessage             groupMessage = new IncomingGroupUpdateMessage(incoming, decryptedGroupV2Context);
         Optional<MessageDatabase.InsertResult> insertResult = smsDatabase.insertMessageInbox(groupMessage);
 
         if (insertResult.isPresent()) {
-          DatabaseFactory.getThreadDatabase(context).update(insertResult.get().getThreadId(), false, false);
+          ShadowDatabase.threads().update(insertResult.get().getThreadId(), false, false);
         } else {
           Log.w(TAG, "Could not insert update message");
         }

@@ -1,14 +1,11 @@
 package su.sres.securesms.keyvalue;
 
-import android.app.Application;
-
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
-import su.sres.securesms.database.KeyValueDatabase;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.SignalUncaughtExceptionHandler;
 import su.sres.core.util.concurrent.SignalExecutors;
@@ -33,14 +30,14 @@ public final class KeyValueStore implements KeyValueReader {
 
     private static final String TAG = Log.tag(KeyValueStore.class);
 
-    private final ExecutorService  executor;
-    private final KeyValueDatabase database;
+    private final ExecutorService           executor;
+    private final KeyValuePersistentStorage storage;
 
     private KeyValueDataSet dataSet;
 
-    public KeyValueStore(@NonNull Application application) {
+    public KeyValueStore(@NonNull KeyValuePersistentStorage storage) {
         this.executor = SignalExecutors.newCachedSingleThreadExecutor("signal-KeyValueStore");
-        this.database = KeyValueDatabase.getInstance(application);
+        this.storage  = storage;
     }
 
     @AnyThread
@@ -148,12 +145,12 @@ public final class KeyValueStore implements KeyValueReader {
         dataSet.putAll(newDataSet);
         dataSet.removeAll(removes);
 
-        executor.execute(() -> database.writeDataSet(newDataSet, removes));
+        executor.execute(() -> storage.writeDataSet(newDataSet, removes));
     }
 
     private void initializeIfNecessary() {
         if (dataSet != null) return;
-        this.dataSet = database.getDataSet();
+        this.dataSet = storage.getDataSet();
     }
 
     class Writer {

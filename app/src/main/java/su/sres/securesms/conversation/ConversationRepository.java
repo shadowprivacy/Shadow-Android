@@ -10,8 +10,8 @@ import androidx.lifecycle.MutableLiveData;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -47,7 +47,7 @@ class ConversationRepository {
   @WorkerThread
   boolean canShowAsBubble(long threadId) {
     if (Build.VERSION.SDK_INT >= ConversationUtil.CONVERSATION_SUPPORT_VERSION) {
-      Recipient recipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
+      Recipient recipient = ShadowDatabase.threads().getRecipientForThreadId(threadId);
 
       return recipient != null && BubbleUtil.canBubble(context, recipient.getId(), threadId);
     } else {
@@ -56,8 +56,8 @@ class ConversationRepository {
   }
 
   private @NonNull ConversationData getConversationDataInternal(long threadId, @NonNull Recipient conversationRecipient, int jumpToPosition) {
-    ThreadDatabase.ConversationMetadata metadata                       = DatabaseFactory.getThreadDatabase(context).getConversationMetadata(threadId);
-    int                                 threadSize                     = DatabaseFactory.getMmsSmsDatabase(context).getConversationCount(threadId);
+    ThreadDatabase.ConversationMetadata metadata                       = ShadowDatabase.threads().getConversationMetadata(threadId);
+    int                                 threadSize                     = ShadowDatabase.mmsSms().getConversationCount(threadId);
     long                                lastSeen                       = metadata.getLastSeen();
     boolean                             hasSent                        = metadata.hasSent();
     int                                 lastSeenPosition               = 0;
@@ -68,7 +68,7 @@ class ConversationRepository {
     boolean                             showUniversalExpireTimerUpdate = false;
 
     if (lastSeen > 0) {
-      lastSeenPosition = DatabaseFactory.getMmsSmsDatabase(context).getMessagePositionOnOrAfterTimestamp(threadId, lastSeen);
+      lastSeenPosition = ShadowDatabase.mmsSms().getMessagePositionOnOrAfterTimestamp(threadId, lastSeen);
     }
 
     if (lastSeenPosition <= 0) {
@@ -76,14 +76,14 @@ class ConversationRepository {
     }
 
     if (lastSeen == 0 && lastScrolled > 0) {
-      lastScrolledPosition = DatabaseFactory.getMmsSmsDatabase(context).getMessagePositionOnOrAfterTimestamp(threadId, lastScrolled);
+      lastScrolledPosition = ShadowDatabase.mmsSms().getMessagePositionOnOrAfterTimestamp(threadId, lastScrolled);
     }
 
     if (!isMessageRequestAccepted) {
       boolean isGroup                             = false;
       boolean recipientIsKnownOrHasGroupsInCommon = false;
       if (conversationRecipient.isGroup()) {
-        Optional<GroupDatabase.GroupRecord> group = DatabaseFactory.getGroupDatabase(context).getGroup(conversationRecipient.getId());
+        Optional<GroupDatabase.GroupRecord> group = ShadowDatabase.groups().getGroup(conversationRecipient.getId());
         if (group.isPresent()) {
           List<Recipient> recipients = Recipient.resolvedList(group.get().getMembers());
           for (Recipient recipient : recipients) {
@@ -104,7 +104,7 @@ class ConversationRepository {
         conversationRecipient.getExpiresInSeconds() == 0 &&
         !conversationRecipient.isGroup() &&
         conversationRecipient.isRegistered() &&
-        (threadId == -1 || !DatabaseFactory.getMmsSmsDatabase(context).hasMeaningfulMessage(threadId)))
+        (threadId == -1 || !ShadowDatabase.mmsSms().hasMeaningfulMessage(threadId)))
     {
       showUniversalExpireTimerUpdate = true;
     }

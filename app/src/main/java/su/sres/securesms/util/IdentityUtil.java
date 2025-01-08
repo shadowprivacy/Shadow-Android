@@ -10,15 +10,14 @@ import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.R;
 import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.IdentityDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MessageDatabase.InsertResult;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.jobs.ThreadUpdateJob;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sms.IncomingIdentityDefaultMessage;
@@ -63,8 +62,8 @@ public final class IdentityUtil {
   public static void markIdentityVerified(Context context, Recipient recipient, boolean verified, boolean remote)
   {
     long            time          = System.currentTimeMillis();
-    MessageDatabase smsDatabase   = DatabaseFactory.getSmsDatabase(context);
-    GroupDatabase   groupDatabase = DatabaseFactory.getGroupDatabase(context);
+    MessageDatabase smsDatabase   = ShadowDatabase.sms();
+    GroupDatabase   groupDatabase = ShadowDatabase.groups();
 
     try (GroupDatabase.Reader reader = groupDatabase.getGroups()) {
 
@@ -81,16 +80,16 @@ public final class IdentityUtil {
 
             smsDatabase.insertMessageInbox(incoming);
           } else {
-            RecipientId         recipientId    = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupRecord.getId());
+            RecipientId         recipientId    = ShadowDatabase.recipients().getOrInsertFromGroupId(groupRecord.getId());
             Recipient           groupRecipient = Recipient.resolved(recipientId);
-            long                threadId       = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(groupRecipient);
+            long                threadId       = ShadowDatabase.threads().getOrCreateThreadIdFor(groupRecipient);
             OutgoingTextMessage outgoing;
 
             if (verified) outgoing = new OutgoingIdentityVerifiedMessage(recipient);
             else outgoing = new OutgoingIdentityDefaultMessage(recipient);
 
-            DatabaseFactory.getSmsDatabase(context).insertMessageOutbox(threadId, outgoing, false, time, null);
-            DatabaseFactory.getThreadDatabase(context).update(threadId, true);
+            ShadowDatabase.sms().insertMessageOutbox(threadId, outgoing, false, time, null);
+            ShadowDatabase.threads().update(threadId, true);
           }
         }
       }
@@ -109,18 +108,18 @@ public final class IdentityUtil {
       if (verified) outgoing = new OutgoingIdentityVerifiedMessage(recipient);
       else outgoing = new OutgoingIdentityDefaultMessage(recipient);
 
-      long threadId = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(recipient);
+      long threadId = ShadowDatabase.threads().getOrCreateThreadIdFor(recipient);
 
       Log.i(TAG, "Inserting verified outbox...");
-      DatabaseFactory.getSmsDatabase(context).insertMessageOutbox(threadId, outgoing, false, time, null);
-      DatabaseFactory.getThreadDatabase(context).update(threadId, true);
+      ShadowDatabase.sms().insertMessageOutbox(threadId, outgoing, false, time, null);
+      ShadowDatabase.threads().update(threadId, true);
     }
   }
 
   public static void markIdentityUpdate(@NonNull Context context, @NonNull RecipientId recipientId) {
     long            time          = System.currentTimeMillis();
-    MessageDatabase smsDatabase   = DatabaseFactory.getSmsDatabase(context);
-    GroupDatabase   groupDatabase = DatabaseFactory.getGroupDatabase(context);
+    MessageDatabase smsDatabase   = ShadowDatabase.sms();
+    GroupDatabase   groupDatabase = ShadowDatabase.groups();
 
     try (GroupDatabase.Reader reader = groupDatabase.getGroups()) {
       GroupDatabase.GroupRecord groupRecord;

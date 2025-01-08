@@ -23,9 +23,11 @@ import su.sres.securesms.components.settings.PreferenceModel
 import su.sres.securesms.payments.FiatMoneyUtil
 import su.sres.securesms.util.MappingAdapter
 import su.sres.securesms.util.MappingViewHolder
+import su.sres.securesms.util.StringUtil
 import su.sres.securesms.util.ViewUtil
 import java.lang.Integer.min
 import java.text.DecimalFormatSymbols
+import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
 import java.util.regex.Pattern
@@ -55,7 +57,7 @@ data class Boost(
     override fun areItemsTheSame(newItem: LoadingModel): Boolean = true
   }
 
-  class LoadingViewHolder(itemView: View) : MappingViewHolder<LoadingModel>(itemView), DefaultLifecycleObserver {
+  class LoadingViewHolder(itemView: View) : MappingViewHolder<LoadingModel>(itemView) {
 
     private val animator: Animator = AnimatorSet().apply {
       val fadeTo25Animator = ObjectAnimator.ofFloat(itemView, "alpha", 0.8f, 0.25f).apply {
@@ -67,17 +69,18 @@ data class Boost(
       }
 
       playSequentially(fadeTo25Animator, fadeTo80Animator)
-      doOnEnd { start() }
-    }
 
-    init {
-      lifecycle.addObserver(this)
+      doOnEnd {
+        if (itemView.isAttachedToWindow) {
+          start()
+        }
+      }
     }
 
     override fun bind(model: LoadingModel) {
     }
 
-    override fun onResume(owner: LifecycleOwner) {
+    override fun onAttachedToWindow() {
       if (animator.isStarted) {
         animator.resume()
       } else {
@@ -85,7 +88,7 @@ data class Boost(
       }
     }
 
-    override fun onDestroy(owner: LifecycleOwner) {
+    override fun onDetachedFromWindow() {
       animator.pause()
     }
   }
@@ -124,6 +127,15 @@ data class Boost(
     private val boost6: MaterialButton = itemView.findViewById(R.id.boost_6)
     private val custom: AppCompatEditText = itemView.findViewById(R.id.boost_custom)
 
+    private val boostButtons: List<MaterialButton>
+      get() {
+        return if (ViewUtil.isLtr(context)) {
+          listOf(boost1, boost2, boost3, boost4, boost5, boost6)
+        } else {
+          listOf(boost3, boost2, boost1, boost6, boost5, boost4)
+        }
+      }
+
     private var filter: MoneyFilter? = null
 
     init {
@@ -133,14 +145,13 @@ data class Boost(
     override fun bind(model: SelectionModel) {
       itemView.isEnabled = model.isEnabled
 
-      model.boosts.zip(listOf(boost1, boost2, boost3, boost4, boost5, boost6)).forEach { (boost, button) ->
+      model.boosts.zip(boostButtons).forEach { (boost, button) ->
         button.isSelected = boost == model.selectedBoost && !model.isCustomAmountFocused
         button.text = FiatMoneyUtil.format(
           context.resources,
           boost.price,
           FiatMoneyUtil
             .formatOptions()
-            .numberOnly()
             .trimZerosAfterDecimal()
         )
         button.setOnClickListener {
@@ -152,7 +163,7 @@ data class Boost(
       if (filter == null || filter?.currency != model.currency) {
         custom.removeTextChangedListener(filter)
 
-        filter = MoneyFilter(model.currency) {
+        filter = MoneyFilter(model.currency, custom) {
           model.onCustomAmountChanged(it)
         }
 
@@ -185,12 +196,27 @@ data class Boost(
   }
 
   @VisibleForTesting
-  class MoneyFilter(val currency: Currency, private val onCustomAmountChanged: (String) -> Unit = {}) : DigitsKeyListener(false, true), TextWatcher {
+  class MoneyFilter(val currency: Currency, private val text: AppCompatEditText? = null, private val onCustomAmountChanged: (String) -> Unit = {}) : DigitsKeyListener(false, true), TextWatcher {
 
     val separator = DecimalFormatSymbols.getInstance().decimalSeparator
     val separatorCount = min(1, currency.defaultFractionDigits)
-    val prefix: String = currency.getSymbol(Locale.getDefault())
-    val pattern: Pattern = "[0-9]*($separator){0,$separatorCount}[0-9]{0,${currency.defaultFractionDigits}}".toPattern()
+    val symbol: String = currency.getSymbol(Locale.getDefault())
+
+    /**
+     * From Character.isDigit:
+     *
+     * * '\u0030' through '\u0039', ISO-LATIN-1 digits ('0' through '9')
+     * * '\u0660' through '\u0669', Arabic-Indic digits
+     * * '\u06F0' through '\u06F9', Extended Arabic-Indic digits
+     * * '\u0966' through '\u096F', Devanagari digits
+     * * '\uFF10' through '\uFF19', Fullwidth digits
+     */
+    val digitsGroup: String = "[\\u0030-\\u0039]|[\\u0660-\\u0669]|[\\u06F0-\\u06F9]|[\\u0966-\\u096F]|[\\uFF10-\\uFF19]"
+    val zeros: String = "\\u0030|\\u0660|\\u06F0|\\u0966|\\uFF10"
+
+    val pattern: Pattern = "($digitsGroup)*([$separator]){0,$separatorCount}($digitsGroup){0,${currency.defaultFractionDigits}}".toPattern()
+    val symbolPattern: Regex = """\s*${Regex.escape(symbol)}\s*""".toRegex()
+    val leadingZeroesPattern: Regex = """^($zeros)*""".toRegex()
 
     override fun filter(
       source: CharSequence,
@@ -202,9 +228,9 @@ data class Boost(
     ): CharSequence? {
 
       val result = dest.subSequence(0, dstart).toString() + source.toString() + dest.subSequence(dend, dest.length)
-      val resultWithoutCurrencyPrefix = result.removePrefix(prefix)
+      val resultWithoutCurrencyPrefix = StringUtil.stripBidiIndicator(result.removePrefix(symbol).removeSuffix(symbol).trim())
 
-      if (result.length == 1 && !result.isDigitsOnly() && result != separator.toString()) {
+      if (resultWithoutCurrencyPrefix.length == 1 && !resultWithoutCurrencyPrefix.isDigitsOnly() && resultWithoutCurrencyPrefix != separator.toString()) {
         return dest.subSequence(dstart, dend)
       }
 
@@ -224,14 +250,64 @@ data class Boost(
     override fun afterTextChanged(s: Editable?) {
       if (s.isNullOrEmpty()) return
 
-      val hasPrefix = s.startsWith(prefix)
-      if (hasPrefix && s.length == prefix.length) {
+      val hasSymbol = s.startsWith(symbol) || s.endsWith(symbol)
+      if (hasSymbol && symbolPattern.matchEntire(s.toString()) != null) {
         s.clear()
-      } else if (!hasPrefix) {
-        s.insert(0, prefix)
+      } else if (!hasSymbol) {
+        val formatter = NumberFormat.getCurrencyInstance()
+
+        formatter.currency = currency
+        if (s.contains(separator)) {
+          formatter.minimumFractionDigits = s.split(separator).last().length
+        } else {
+          formatter.minimumFractionDigits = 0
+        }
+
+        formatter.maximumFractionDigits = currency.defaultFractionDigits
+
+        val value = s.toString().toDoubleOrNull()
+
+        if (value != null) {
+          val formatted = formatter.format(value)
+
+          text?.removeTextChangedListener(this)
+
+          s.replace(0, s.length, formatted)
+          if (formatted.endsWith(symbol)) {
+            val result: MatchResult? = symbolPattern.find(formatted)
+            if (result != null && result.range.first < s.length) {
+              text?.setSelection(result.range.first)
+            }
+          }
+
+          text?.addTextChangedListener(this)
+        }
       }
 
-      onCustomAmountChanged(s.removePrefix(prefix).toString())
+      val withoutSymbol = s.removePrefix(symbol).removeSuffix(symbol).trim().toString()
+      val withoutLeadingZeroes: String = try {
+        NumberFormat.getInstance().apply {
+          isGroupingUsed = false
+
+          if (s.contains(separator)) {
+            minimumFractionDigits = s.split(separator).last().length
+          }
+
+        }.format(withoutSymbol.toBigDecimal()) + (if (withoutSymbol.endsWith(separator)) separator else "")
+      } catch (e: NumberFormatException) {
+        withoutSymbol
+      }
+
+      if (withoutSymbol != withoutLeadingZeroes) {
+        text?.removeTextChangedListener(this)
+
+        val start = s.indexOf(withoutSymbol)
+        s.replace(start, start + withoutSymbol.length, withoutLeadingZeroes)
+
+        text?.addTextChangedListener(this)
+      }
+
+      onCustomAmountChanged(s.removePrefix(symbol).removeSuffix(symbol).trim().toString())
     }
   }
 

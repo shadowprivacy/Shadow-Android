@@ -9,9 +9,9 @@ import androidx.annotation.WorkerThread;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.contacts.sync.DirectoryHelper;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.groups.GroupChangeBusyException;
@@ -163,11 +163,11 @@ public class RecipientUtil {
       GroupManager.leaveGroupFromBlockOrMessageRequest(context, recipient.getGroupId().get().requirePush());
     }
 
-    DatabaseFactory.getRecipientDatabase(context).setBlocked(recipient.getId(), true);
+    ShadowDatabase.recipients().setBlocked(recipient.getId(), true);
 
     if (recipient.isSystemContact() || recipient.isProfileSharing() || isProfileSharedViaGroup(context, recipient)) {
       ApplicationDependencies.getJobManager().add(new RotateProfileKeyJob());
-      DatabaseFactory.getRecipientDatabase(context).setProfileSharing(recipient.getId(), false);
+      ShadowDatabase.recipients().setProfileSharing(recipient.getId(), false);
     }
 
     ApplicationDependencies.getJobManager().add(new MultiDeviceBlockedUpdateJob());
@@ -180,8 +180,8 @@ public class RecipientUtil {
       throw new AssertionError("Recipient is not blockable!");
     }
 
-    DatabaseFactory.getRecipientDatabase(context).setBlocked(recipient.getId(), false);
-    DatabaseFactory.getRecipientDatabase(context).setProfileSharing(recipient.getId(), true);
+    ShadowDatabase.recipients().setBlocked(recipient.getId(), false);
+    ShadowDatabase.recipients().setProfileSharing(recipient.getId(), true);
     ApplicationDependencies.getJobManager().add(new MultiDeviceBlockedUpdateJob());
 //        StorageSyncHelper.scheduleSyncForDataChange();
 
@@ -203,7 +203,7 @@ public class RecipientUtil {
       return true;
     }
 
-    ThreadDatabase threadDatabase  = DatabaseFactory.getThreadDatabase(context);
+    ThreadDatabase threadDatabase  = ShadowDatabase.threads();
     Recipient      threadRecipient = threadDatabase.getRecipientForThreadId(threadId);
 
     if (threadRecipient == null) {
@@ -222,7 +222,7 @@ public class RecipientUtil {
       return true;
     }
 
-    Long threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(threadRecipient.getId());
+    Long threadId = ShadowDatabase.threads().getThreadIdFor(threadRecipient.getId());
     return isMessageRequestAccepted(context, threadId, threadRecipient);
   }
 
@@ -236,7 +236,7 @@ public class RecipientUtil {
       return true;
     }
 
-    Long threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(threadRecipient.getId());
+    Long threadId = ShadowDatabase.threads().getThreadIdFor(threadRecipient.getId());
     return isCallRequestAccepted(context, threadId, threadRecipient);
   }
 
@@ -247,7 +247,7 @@ public class RecipientUtil {
   public static boolean isPreMessageRequestThread(@NonNull Context context, @Nullable Long threadId) {
 
     long beforeTime = SignalStore.misc().getMessageRequestEnableTime();
-    return threadId != null && DatabaseFactory.getMmsSmsDatabase(context).getConversationCount(threadId, beforeTime) > 0;
+    return threadId != null && ShadowDatabase.mmsSms().getConversationCount(threadId, beforeTime) > 0;
   }
 
   @WorkerThread
@@ -256,16 +256,16 @@ public class RecipientUtil {
       return;
     }
 
-    long threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdIfExistsFor(recipient.getId());
+    long threadId = ShadowDatabase.threads().getThreadIdIfExistsFor(recipient.getId());
 
     if (isPreMessageRequestThread(context, threadId)) {
       return;
     }
 
-    boolean firstMessage = DatabaseFactory.getMmsSmsDatabase(context).getOutgoingSecureConversationCount(threadId) == 0;
+    boolean firstMessage = ShadowDatabase.mmsSms().getOutgoingSecureConversationCount(threadId) == 0;
 
     if (firstMessage) {
-      DatabaseFactory.getRecipientDatabase(context).setProfileSharing(recipient.getId(), true);
+      ShadowDatabase.recipients().setProfileSharing(recipient.getId(), true);
     }
   }
 
@@ -288,7 +288,7 @@ public class RecipientUtil {
     if (recipient.isProfileSharing()) {
       return true;
     } else {
-      GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
+      GroupDatabase groupDatabase = ShadowDatabase.groups();
       return groupDatabase.getPushGroupsContainingMember(recipient.getId())
                           .stream()
                           .anyMatch(GroupDatabase.GroupRecord::isV2Group);
@@ -307,10 +307,10 @@ public class RecipientUtil {
       return false;
     }
 
-    if (threadId == -1 || !DatabaseFactory.getMmsSmsDatabase(context).hasMeaningfulMessage(threadId)) {
-      DatabaseFactory.getRecipientDatabase(context).setExpireMessages(recipient.getId(), defaultTimer);
+    if (threadId == -1 || !ShadowDatabase.mmsSms().hasMeaningfulMessage(threadId)) {
+      ShadowDatabase.recipients().setExpireMessages(recipient.getId(), defaultTimer);
       OutgoingExpirationUpdateMessage outgoingMessage = new OutgoingExpirationUpdateMessage(recipient, System.currentTimeMillis(), defaultTimer * 1000L);
-      MessageSender.send(context, outgoingMessage, DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(recipient), false, null, null);
+      MessageSender.send(context, outgoingMessage, ShadowDatabase.threads().getOrCreateThreadIdFor(recipient), false, null, null);
       return true;
     }
     return false;
@@ -339,7 +339,7 @@ public class RecipientUtil {
 
   @WorkerThread
   public static boolean hasSentMessageInThread(@NonNull Context context, @Nullable Long threadId) {
-    return threadId != null && DatabaseFactory.getMmsSmsDatabase(context).getOutgoingSecureConversationCount(threadId) != 0;
+    return threadId != null && ShadowDatabase.mmsSms().getOutgoingSecureConversationCount(threadId) != 0;
   }
 
   @WorkerThread
@@ -348,13 +348,13 @@ public class RecipientUtil {
       return true;
     }
 
-    return DatabaseFactory.getMmsSmsDatabase(context).getSecureConversationCount(threadId) == 0 &&
-           !DatabaseFactory.getThreadDatabase(context).hasReceivedAnyCallsSince(threadId, 0);
+    return ShadowDatabase.mmsSms().getSecureConversationCount(threadId) == 0 &&
+           !ShadowDatabase.threads().hasReceivedAnyCallsSince(threadId, 0);
   }
 
   @WorkerThread
   private static boolean isProfileSharedViaGroup(@NonNull Context context, @NonNull Recipient recipient) {
-    return Stream.of(DatabaseFactory.getGroupDatabase(context).getPushGroupsContainingMember(recipient.getId()))
+    return Stream.of(ShadowDatabase.groups().getPushGroupsContainingMember(recipient.getId()))
                  .anyMatch(group -> Recipient.resolved(group.getRecipientId()).isProfileSharing());
   }
 }

@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.SignalServiceDataStore;
@@ -192,10 +192,10 @@ public class SignalProtocolStoreImpl implements SignalServiceDataStore {
 
   @Override
   public Transaction beginTransaction() {
-    DatabaseFactory.getInstance(context).getRawDatabase().beginTransaction();
+    ShadowDatabase.getRawDatabase().beginTransaction();
     return () -> {
-      DatabaseFactory.getInstance(context).getRawDatabase().setTransactionSuccessful();
-      DatabaseFactory.getInstance(context).getRawDatabase().endTransaction();
+      ShadowDatabase.getRawDatabase().setTransactionSuccessful();
+      ShadowDatabase.getRawDatabase().endTransaction();
     };
   }
 }

@@ -4,8 +4,8 @@ import android.content.Context
 import android.net.Uri
 import androidx.annotation.WorkerThread
 import su.sres.core.util.concurrent.SignalExecutors
-import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.database.RecipientDatabase
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.notifications.NotificationChannels
 import su.sres.securesms.recipients.Recipient
@@ -20,7 +20,7 @@ class CustomNotificationsSettingsRepository(context: Context) {
   fun initialize(recipientId: RecipientId, onInitializationComplete: () -> Unit) {
     executor.execute {
       val recipient = Recipient.resolved(recipientId)
-      val database = DatabaseFactory.getRecipientDatabase(context)
+      val database = ShadowDatabase.recipients
 
       if (NotificationChannels.supported() && recipient.notificationChannel != null) {
         database.setMessageRingtone(recipient.id, NotificationChannels.getMessageRingtone(context, recipient))
@@ -47,14 +47,14 @@ class CustomNotificationsSettingsRepository(context: Context) {
     executor.execute {
       val recipient: Recipient = Recipient.resolved(recipientId)
 
-      DatabaseFactory.getRecipientDatabase(context).setMessageVibrate(recipient.id, vibrateState)
+      ShadowDatabase.recipients.setMessageVibrate(recipient.id, vibrateState)
       NotificationChannels.updateMessageVibrate(context, recipient, vibrateState)
     }
   }
 
   fun setCallingVibrate(recipientId: RecipientId, vibrateState: RecipientDatabase.VibrateState) {
     executor.execute {
-      DatabaseFactory.getRecipientDatabase(context).setCallVibrate(recipientId, vibrateState)
+      ShadowDatabase.recipients.setCallVibrate(recipientId, vibrateState)
     }
   }
 
@@ -64,7 +64,7 @@ class CustomNotificationsSettingsRepository(context: Context) {
       val defaultValue = SignalStore.settings().messageNotificationSound
       val newValue: Uri? = if (defaultValue == sound) null else sound ?: Uri.EMPTY
 
-      DatabaseFactory.getRecipientDatabase(context).setMessageRingtone(recipient.id, newValue)
+      ShadowDatabase.recipients.setMessageRingtone(recipient.id, newValue)
       NotificationChannels.updateMessageRingtone(context, recipient, newValue)
     }
   }
@@ -74,7 +74,7 @@ class CustomNotificationsSettingsRepository(context: Context) {
       val defaultValue = SignalStore.settings().callRingtone
       val newValue: Uri? = if (defaultValue == sound) null else sound ?: Uri.EMPTY
 
-      DatabaseFactory.getRecipientDatabase(context).setCallRingtone(recipientId, newValue)
+      ShadowDatabase.recipients.setCallRingtone(recipientId, newValue)
     }
   }
 
@@ -82,13 +82,13 @@ class CustomNotificationsSettingsRepository(context: Context) {
   private fun createCustomNotificationChannel(recipientId: RecipientId) {
     val recipient: Recipient = Recipient.resolved(recipientId)
     val channelId = NotificationChannels.createChannelFor(context, recipient)
-    DatabaseFactory.getRecipientDatabase(context).setNotificationChannel(recipient.id, channelId)
+    ShadowDatabase.recipients.setNotificationChannel(recipient.id, channelId)
   }
 
   @WorkerThread
   private fun deleteCustomNotificationChannel(recipientId: RecipientId) {
     val recipient: Recipient = Recipient.resolved(recipientId)
-    DatabaseFactory.getRecipientDatabase(context).setNotificationChannel(recipient.id, null)
+    ShadowDatabase.recipients.setNotificationChannel(recipient.id, null)
     NotificationChannels.deleteChannelFor(context, recipient)
   }
 }

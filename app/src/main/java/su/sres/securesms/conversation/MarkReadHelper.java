@@ -6,8 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleOwner;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
@@ -46,7 +46,7 @@ class MarkReadHelper {
 
     debouncer.publish(() -> {
       EXECUTOR.execute(() -> {
-        ThreadDatabase                          threadDatabase = DatabaseFactory.getThreadDatabase(context);
+        ThreadDatabase                          threadDatabase = ShadowDatabase.threads();
         List<MessageDatabase.MarkedMessageInfo> infos          = threadDatabase.setReadSince(threadId, false, timestamp);
 
         Log.d(TAG, "Marking " + infos.size() + " messages as read.");

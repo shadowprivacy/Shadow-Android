@@ -852,6 +852,7 @@
     <string name="ManageProfileFragment_your_username">Ваше имя пользователя</string>
     <string name="ManageProfileFragment_failed_to_set_avatar">Не удалось установить аватару</string>
     <string name="ManageProfileFragment_badges">Значки</string>
+    <string name="ManageProfileFragment__edit_photo">Редактировать фото</string>
 
     <!--ManageRecipientActivity-->
     <string name="ManageRecipientActivity_no_groups_in_common">Нет общих групп</string>
@@ -995,6 +996,7 @@
 
     <!-- LearnMoreTextView -->
     <string name="LearnMoreTextView_learn_more">Узнать больше</string>
+    <string name="SpanUtil__read_more">Читать далее</string>
 
     <!--LongMessageActivity-->
     <string name="LongMessageActivity_unable_to_find_message">Не удалось найти сообщение</string>
@@ -1504,7 +1506,7 @@
         <item quantity="one">Signal будет звонить у %1$s, %2$s и ещё %3$d человека</item>
         <item quantity="few">Signal будет звонить у %1$s, %2$s и ещё %3$d человек</item>
         <item quantity="many">Signal будет звонить у %1$s, %2$s и ещё %3$d человек</item>
-        <item quantity="other">Signal будет звонить у %1$s, %2$s и ещё %3$d человек</item>
+        <item quantity="other">Signal будет звонить у %1$s, %2$s и еще у %3$d человек</item>
     </plurals>
     <string name="WebRtcCallView__s_will_be_notified">%1$s будет уведомлен(-а)</string>
     <string name="WebRtcCallView__s_and_s_will_be_notified">%1$s и %2$s будут уведомлены</string>
@@ -1512,7 +1514,7 @@
         <item quantity="one">%1$s, %2$s и ещё %3$d человек будут уведомлены</item>
         <item quantity="few">%1$s, %2$s и ещё %3$d человека будут уведомлены</item>
         <item quantity="many">%1$s, %2$s и ещё %3$d человек будут уведомлены</item>
-        <item quantity="other">%1$s, %2$s и ещё %3$d человек будут уведомлены</item>
+        <item quantity="other">%1$s, %2$s и еще %3$d человек будут уведомлены</item>
     </plurals>
     <string name="WebRtcCallView__ringing_s">Звоним %1$s</string>
     <string name="WebRtcCallView__ringing_s_and_s">Звоним %1$s и %2$s</string>
@@ -1520,7 +1522,7 @@
         <item quantity="one">Звоним %1$s, %2$s и ещё %3$d человеку</item>
         <item quantity="few">Звоним %1$s, %2$s и ещё %3$d людям</item>
         <item quantity="many">Звоним %1$s, %2$s и ещё %3$d людям</item>
-        <item quantity="other">Звоним %1$s, %2$s и ещё %3$d людям</item>
+        <item quantity="other">Вызываем %1$s, %2$s и еще %3$d людям</item>
     </plurals>
     <string name="WebRtcCallView__s_is_calling_you">%1$s звонит вам</string>
     <string name="WebRtcCallView__s_is_calling_you_and_s">%1$s звонит вам и %2$s</string>
@@ -1529,7 +1531,7 @@
         <item quantity="one">%1$s звонит вам, %2$s, %3$s и ещё %4$d человеку</item>
         <item quantity="few">%1$s звонит вам, %2$s, %3$s и ещё %4$d людям</item>
         <item quantity="many">%1$s звонит вам, %2$s, %3$s и ещё %4$d людям</item>
-        <item quantity="other">%1$s звонит вам, %2$s, %3$s и ещё %4$d людям</item>
+        <item quantity="other">%1$s вызывает вас, %2$s, %3$s и еще %4$d людям</item>
     </plurals>
     <string name="WebRtcCallView__no_one_else_is_here">Здесь нет никого, кроме вас</string>
     <string name="WebRtcCallView__s_is_in_this_call">%1$s в этом звонке</string>
@@ -1587,7 +1589,7 @@
     <string name="RegistrationActivity_play_services_error">Ошибка Служб Google Play</string>
     <string name="RegistrationActivity_google_play_services_is_updating_or_unavailable">Службы Google Play обновляются или временно недоступны. Пожалуйста, попробуйте еще раз.</string>
     <string name="RegistrationActivity_terms_and_privacy">Условия и Политика конфиденциальности</string>
-    <string name="RegistrationActivity_signal_needs_access_to_your_contacts_and_media_in_order_to_connect_with_friends">Shadow необходим доступ к вашим контактам и медиафайлам для того, чтобы связываться с друзьями, обмениваться сообщениями и совершать защищённые звонки</string>
+    <string name="RegistrationActivity_signal_needs_access_to_your_contacts_and_media_in_order_to_connect_with_friends">Shadow необходим доступ к вашим контактам и медиафайлам для того, чтобы обмениваться сообщениями</string>
     <string name="RegistrationActivity_signal_needs_access_to_your_contacts_in_order_to_connect_with_friends">Shadow необходим доступ к вашим контактам для того, чтобы отправлять контакты во вложении</string>
     <string name="RegistrationActivity_rate_limited_to_service">Вы сделали слишком много попыток зарегистрировать этот логин. Пожалуйста, попробуйте ещё раз позже.</string>
     <string name="RegistrationActivity_unable_to_connect_to_service">Не удается подключиться к сервису. Пожалуйста, проверьте подключение к сети и повторите попытку.</string>
@@ -2252,6 +2254,16 @@
     <string name="HelpFragment__debug_log">Журнал отладки:</string>
     <string name="HelpFragment__could_not_upload_logs">Не удалось отправить журналы</string>
     <string name="HelpFragment__please_be_as_descriptive_as_possible">Пожалуйста, пишите как можно подробнее, чтобы помочь нам понять проблему.</string>
+    <string-array name="HelpFragment__categories_3">
+    <item>\-\- Пожалуйста, выберите вариант \-\-</item>
+    <item>Что-то не работает</item>
+    <item>Запросить новые функции</item>
+    <item>Вопрос</item>
+    <item>Обратная связь</item>
+    <item>Другое</item>
+    <item>Платежи (MobileCoin)</item>
+        <item>Ускорение Shadow и Поддерживающие</item>
+    </string-array>
 
     <!--ReactWithAnyEmojiBottomSheetDialogFragment-->
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__this_message">Это сообщение</string>
@@ -2350,6 +2362,7 @@
     <string name="preferences__help">Помощь</string>
     <string name="preferences__advanced">Расширенные</string>
     <string name="preferences__subscription">Подписка</string>
+    <string name="preferences__become_a_signal_sustainer">Станьте подписчиком</string>
     <string name="preferences__signal_boost">Ускорение Shadow</string>
     <string name="preferences__privacy">Конфиденциальность</string>
     <string name="preferences__mms_user_agent">MMS-агент</string>
@@ -2715,7 +2728,7 @@
     <string name="Insights__title">Выводы</string>
     <string name="InsightsDashboardFragment__title">Выводы</string>
     <string name="InsightsDashboardFragment__signal_protocol_automatically_protected">Signal Protocol автоматически защитил %1$d%% от ваших исходящих сообщений за последние %2$d дней. Разговоры между пользователями Shadow всегда защищены сквозным шифрованием.</string>
-    <string name="InsightsDashboardFragment__boost_your_signal">Улучшение Shadow</string>
+    <string name="InsightsDashboardFragment__spread_the_word">Расскажите другим</string>
     <string name="InsightsDashboardFragment__not_enough_data">Недостаточно данных</string>
     <string name="InsightsDashboardFragment__your_insights_percentage_is_calculated_based_on">Ваш процент в «Выводах» считается на основе исходящих сообщений за последние %1$d дней, которые не исчезли и не были удалены.</string>
     <string name="InsightsDashboardFragment__start_a_conversation">Начните разговор</string>
@@ -3100,7 +3113,7 @@
     <string name="ChatWallpaperFragment__reset_chat_color">Сбросить цвет чата</string>
     <string name="ChatWallpaperFragment__reset_chat_color_question">Сбросить цвет чата?</string>
     <string name="ChatWallpaperFragment__set_wallpaper">Установить обои</string>
-    <string name="ChatWallpaperFragment__dark_mode_dims_wallpaper">Затемнение обоев при тёмной теме</string>
+    <string name="ChatWallpaperFragment__dark_mode_dims_wallpaper">Тёмная тема затемняет обои</string>
     <string name="ChatWallpaperFragment__contact_name">Имя контакта</string>
     <string name="ChatWallpaperFragment__reset">Сбросить</string>
     <string name="ChatWallpaperFragment__clear">Удалить</string>
@@ -3245,7 +3258,7 @@
     <string name="ChangeNumberEnterPhoneNumberFragment__old_phone_number">Старый логин</string>
     <string name="ChangeNumberEnterPhoneNumberFragment__your_new_number">Ваш новый логин</string>
     <string name="ChangeNumberEnterPhoneNumberFragment__new_phone_number">Новый логин</string>
-    <string name="ChangeNumberEnterPhoneNumberFragment__the_phone_number_you_entered_doesnt_match_your_accounts">Логин, который вы ввели, не совпадает с логином вашей учётной записи.</string>
+    <string name="ChangeNumberEnterPhoneNumberFragment__the_phone_number_you_entered_doesnt_match_your_accounts">Введенный вами логин не соответствует логину вашей учетной записи.</string>
     <string name="ChangeNumberEnterPhoneNumberFragment__you_must_specify_your_old_phone_number">Вы должны указать свой старый логин</string>
     <string name="ChangeNumberEnterPhoneNumberFragment__you_must_specify_your_new_phone_number">Вы должны указать свой новый логин</string>
     <!--ChangeNumberVerifyFragment-->
@@ -3429,6 +3442,7 @@
     <string name="ConversationSettingsFragment__conversation_muted_forever">Звуки разговора отключены навсегда</string>
     <string name="ConversationSettingsFragment__copied_phone_number_to_clipboard">Логин пользователя был скопирован в буфер обмена.</string>
     <string name="ConversationSettingsFragment__phone_number">Логин пользователя</string>
+
     <!--PermissionsSettingsFragment-->
     <string name="PermissionsSettingsFragment__add_members">Добавлять участников</string>
     <string name="PermissionsSettingsFragment__edit_group_info">Редактировать информацию</string>
@@ -3566,11 +3580,12 @@
     <string name="ViewBadgeBottomSheetDialogFragment__become_a_sustainer">Стать поддерживающим</string>
     <string name="ImageView__badge">Значок</string>
     <string name="SubscribeFragment__signal_is_powered_by_people_like_you">Shadow существует благодаря таким людям, как вы.</string>
-    <string name="SubscribeFragment__support_technology_that_is_built_for_you">Поддержите технологию, сделанную для вас, а не для ваших данных, присоединившись к сообществу людей, поддерживающих её.</string>
+    <string name="SubscribeFragment__support_technology_that_is_built_for_you">Поддержите технологию, которая создана для вас, а не ради ваших данных, присоединившись к сообществу людей, которые ее поддерживают.</string>
+    <string name="SubscribeFragment__currency">Валюта</string>
     <string name="SubscribeFragment__more_payment_options">Больше способов оплаты</string>
     <string name="SubscribeFragment__cancel_subscription">Отменить подписку</string>
     <string name="SubscribeFragment__confirm_cancellation">Подтверждаете отмену?</string>
-    <string name="SubscribeFragment__you_wont_be_charged_again">С вас больше не будет взиматься плата. Ваш значок будет удалён из профиля в конце вашего расчётного периода.</string>
+    <string name="SubscribeFragment__you_wont_be_charged_again">С вас больше не будет взиматься плата.</string>
     <string name="SubscribeFragment__not_now">Не сейчас</string>
     <string name="SubscribeFragment__confirm">Подтвердить</string>
     <string name="SubscribeFragment__update_subscription">Обновить подписку</string>
@@ -3578,15 +3593,23 @@
     <string name="SubscribeFragment__update_subscription_question">Обновить подписку?</string>
     <string name="SubscribeFragment__update">Обновить</string>
     <string name="SubscribeFragment__you_will_be_charged_the_full_amount">Полная сумма новой подписки будет взята с вас сегодня. Ваша подписка продлится %1$s.</string>
+    <string name="SubscribeFragment__you_will_be_charged_the_full_amount_s_of">Полная сумма новой подписки (%1$s) будет взята с вас сегодня. Ваша подписка будет продлеваться ежемесячно.</string>
     <string name="Subscription__s_per_month">%s/месяц</string>
     <string name="Subscription__s_per_month_dot_renews_s">%1$s/месяц · Возобновится %2$s</string>
     <string name="Subscription__s_per_month_dot_expires_s">%1$s/месяц · Истекает %2$s</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_your_support">Спасибо за вашу поддержку!</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_the_boost">Спасибо за Ускорение!</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_s_badge_help_signal">Вы заработали значок "%s"!</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_boost_badge_help_signal">Вы заработали значок "Ускорение"!</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__you_can_also">Вы также можете</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__become_a_montly_sustainer">стать ежемесячным подписчиком.</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__display_on_profile">Показывать в профиле</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__make_featured_badge">Сделать главным значком</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__done">Готово</string>
     <string name="ThanksForYourSupportBottomSheetFragment__when_you_have_more">Когда у вас больше одного значка, вы можете выбрать главный значок, который другие люди будут видеть в вашем профиле.</string>
+
+    <string name="BecomeASustainerFragment__get_badges">Стать подписчиком</string>
+
     <string name="ManageDonationsFragment__my_support">Моя поддержка</string>
     <string name="ManageDonationsFragment__manage_subscription">Управлять подпиской</string>
     <string name="ManageDonationsFragment__badges">Значки</string>
@@ -3599,20 +3622,49 @@
     <string name="MySupportPreference__add_a_signal_boost">Добавить Ускорение Shadow</string>
     <string name="MySupportPreference__s_per_month">%1$s/месяц</string>
     <string name="MySupportPreference__renews_s">Возобновится %1$s</string>
+    <string name="MySupportPreference__processing_transaction">Обрабатываем транзакцию…</string>
+    <!--Displayed on "My Support" screen when user badge failed to be added to their account-->
+    <string name="MySupportPreference__couldnt_add_badge_s">Не удалось добавить значок. %1$s</string>
+    <string name="MySupportPreference__please_contact_support">Пожалуйста, свяжитесь с поддержкой.</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__your_badge_has_expired">Ваш значок истёк</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__badge_expired">Значок истёк</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__subscription_cancelled">Подписка отменена</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__your_boost_badge_has_expired">Ваш значок «Ускорение» истёк и больше не виден другим людям в вашем профиле.</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__you_can_reactivate">Вы можете заново активировать свой значок «Ускорение» ещё на 30 дней, сделав одноразовое пожертвование.</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__to_continue_supporting_technology">Пожалуйста, подумайте о том, чтобы стать ежемесячным подписчиком.</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__become_a_sustainer">Стать подписчиком</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__add_a_boost">Добавить Ускорение</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__not_now">Не сейчас</string>
-    <string name="Subscription__verification_failed">Не удалось проверить подписку</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__your_sustainer">Ваша подписка была автоматически отменена, потому что вы были неактивны слишком долго. Ваш значок «%1$s» больше не виден в вашем профиле.</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__you_can">Продлите подписку сейчас.</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__renew_subscription">Продлить подписку</string>
+
     <string name="Subscription__please_contact_support_for_more_information">Пожалуйста, свяжитесь с поддержкой, чтобы получить больше информации.</string>
     <string name="Subscription__contact_support">Связаться с поддержкой</string>
     <string name="Subscription__earn_a_s_badge">Заработайте значок «%1$s»</string>
-    <string name="SubscribeFragment__processing_payment">Обрабатываем платёж…</string>
-    <string name="DonationsErrors__payment_failed">Платёж не удался</string>
-    <string name="DonationsErrors__your_payment">Не удалось обработать ваш платёж; с вас не была взята плата. Пожалуйста, попробуйте ещё раз.</string>
+    <string name="SubscribeFragment__processing_payment">Обработка платежа…</string>
+    <!--Displayed in notification when user payment fails to process on Stripe-->
+    <string name="DonationsErrors__error_processing_payment">Ошибка обработки платежа</string>
+    <!--Displayed on "My Support" screen when user subscription payment method failed.-->
+    <string name="DonationsErrors__error_processing_payment_s">Ошибка обработки платежа. %1$s</string>
+    <string name="DonationsErrors__your_badge_could_not_be_added">Ваш значок не удалось добавить в вашу учетную запись, но, возможно, с вас была снята плата. Пожалуйста, свяжитесь с поддержкой.</string>
+    <string name="DonationsErrors__payment_failed">Платеж не прошел</string>
+    <string name="DonationsErrors__your_payment">Не удалось обработать ваш платеж, и с вас не была снята плата. Пожалуйста, попробуйте ещё раз.</string>
+    <string name="DonationsErrors__still_processing">Продолжается обработка</string>
+    <string name="DonationsErrors__couldnt_add_badge">Не удалось обработать</string>
+    <string name="DonationsErrors__your_badge_could_not">Обратитесь в службу поддержки</string>
+    <string name="DonationsErrors__your_payment_is_still">Ваш платеж все ещё обрабатывается. Это может занять несколько минут в зависимости от вашего соединения.</string>
 
     <string name="DonationsErrors__google_pay_unavailable">Google Pay недоступен</string>
     <string name="DonationsErrors__you_have_to_set_up_google_pay_to_donate_in_app">Вам необходимо настроить Google Pay, чтобы пожертвовать в приложении.</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">Не удалось отменить подписку</string>
     <string name="DonationsErrors__subscription_cancellation_requires_an_internet_connection">Для отмены подписки требуется соединение с интернетом.</string>
+    <string name="ViewBadgeBottomSheetDialogFragment__your_device_doesn_t_support_google_pay_so_you_can_t_subscribe_to_earn_a_badge_you_can_still_support_signal_by_making_a_donation_on_our_website">Ваше устройство не поддерживает Google Pay, поэтому вы не можете подписаться</string>
+    <string name="NetworkFailure__network_error_check_your_connection_and_try_again">Ошибка сети. Проверьте подключение и повторите попытку.</string>
+    <string name="NetworkFailure__retry">Повторить попытку</string>
+
+    <!--Displayed in a toast when we fail to open the ringtone picker-->
+    <string name="NotificationSettingsFragment__failed_to_open_picker">Не удалось открыть приложение для выбора мелодии.</string>
 
     <!--EOF-->
 </resources>

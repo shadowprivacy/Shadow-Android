@@ -84,6 +84,7 @@ class BoostFragment : DSLSettingsBottomSheetFragment(
     GooglePayButton.register(adapter)
     Progress.register(adapter)
     NetworkFailure.register(adapter)
+    BoostAnimation.register(adapter)
 
     processingDonationPaymentDialog = MaterialAlertDialogBuilder(requireContext())
       .setView(R.layout.processing_payment_dialog)
@@ -121,7 +122,7 @@ class BoostFragment : DSLSettingsBottomSheetFragment(
         is DonationEvent.GooglePayUnavailableError -> Unit
         is DonationEvent.PaymentConfirmationError -> onPaymentError(event.throwable)
         is DonationEvent.PaymentConfirmationSuccess -> onPaymentConfirmed(event.badge)
-        DonationEvent.RequestTokenError -> onPaymentError(null)
+        is DonationEvent.RequestTokenError -> onPaymentError(DonationExceptions.SetupFailed(event.throwable))
         DonationEvent.RequestTokenSuccess -> Log.i(TAG, "Successfully got request token from Google Pay")
         DonationEvent.SubscriptionCancelled -> Unit
         is DonationEvent.SubscriptionCancellationFailed -> Unit
@@ -146,7 +147,7 @@ class BoostFragment : DSLSettingsBottomSheetFragment(
     }
 
     return configure {
-      customPref(BadgePreview.SubscriptionModel(state.boostBadge))
+      customPref(BoostAnimation.Model())
 
       sectionHeaderPref(
         title = DSLSettingsText.from(
@@ -253,7 +254,7 @@ class BoostFragment : DSLSettingsBottomSheetFragment(
     } else if (throwable is DonationExceptions.SetupFailed) {
       Log.w(TAG, "Error occurred while processing payment", throwable, true)
       MaterialAlertDialogBuilder(requireContext())
-        .setTitle(R.string.DonationsErrors__payment_failed)
+        .setTitle(R.string.DonationsErrors__error_processing_payment)
         .setMessage(R.string.DonationsErrors__your_payment)
         .setPositiveButton(android.R.string.ok) { dialog, _ ->
           dialog.dismiss()
@@ -263,12 +264,11 @@ class BoostFragment : DSLSettingsBottomSheetFragment(
     } else {
       Log.w(TAG, "Error occurred while trying to redeem token", throwable, true)
       MaterialAlertDialogBuilder(requireContext())
-        .setTitle(R.string.DonationsErrors__redemption_failed)
-        .setMessage(R.string.DonationsErrors__please_contact_support)
+        .setTitle(R.string.DonationsErrors__couldnt_add_badge)
+        .setMessage(R.string.DonationsErrors__your_badge_could_not)
         .setPositiveButton(R.string.Subscription__contact_support) { dialog, _ ->
           dialog.dismiss()
-          requireActivity().finish()
-          requireActivity().startActivity(AppSettingsActivity.help(requireContext(), HelpFragment.DONATION_INDEX))
+          findNavController().popBackStack()
         }
         .show()
     }

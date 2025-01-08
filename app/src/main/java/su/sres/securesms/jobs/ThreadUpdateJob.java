@@ -3,7 +3,7 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 
 import su.sres.core.util.ThreadUtil;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -45,7 +45,7 @@ public final class ThreadUpdateJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    DatabaseFactory.getThreadDatabase(context).update(threadId, true);
+    ShadowDatabase.threads().update(threadId, true);
     ThreadUtil.sleep(1000);
   }
 

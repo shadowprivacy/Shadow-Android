@@ -33,7 +33,7 @@ import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.attachments.DatabaseAttachment;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.mms.PartUriParser;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.util.MemoryFileUtil;
@@ -106,7 +106,7 @@ public final class PartProvider extends BaseContentProvider {
 
     if (uriMatcher.match(uri) == SINGLE_ROW) {
       PartUriParser      partUriParser = new PartUriParser(uri);
-      DatabaseAttachment attachment    = DatabaseFactory.getAttachmentDatabase(getContext()).getAttachment(partUriParser.getPartId());
+      DatabaseAttachment attachment    = ShadowDatabase.attachments().getAttachment(partUriParser.getPartId());
 
       if (attachment != null) {
         Log.i(TAG, "getType() called: " + uri + " It's " + attachment.getContentType());
@@ -129,7 +129,7 @@ public final class PartProvider extends BaseContentProvider {
 
     if (uriMatcher.match(url) == SINGLE_ROW) {
       PartUriParser      partUri    = new PartUriParser(url);
-      DatabaseAttachment attachment = DatabaseFactory.getAttachmentDatabase(getContext()).getAttachment(partUri.getPartId());
+      DatabaseAttachment attachment = ShadowDatabase.attachments().getAttachment(partUri.getPartId());
 
       if (attachment == null) return null;
 
@@ -156,10 +156,10 @@ public final class PartProvider extends BaseContentProvider {
   }
 
   private ParcelFileDescriptor getParcelStreamForAttachment(AttachmentId attachmentId) throws IOException {
-    long       plaintextLength = StreamUtil.getStreamLength(DatabaseFactory.getAttachmentDatabase(getContext()).getAttachmentStream(attachmentId, 0));
+    long       plaintextLength = StreamUtil.getStreamLength(ShadowDatabase.attachments().getAttachmentStream(attachmentId, 0));
     MemoryFile memoryFile      = new MemoryFile(attachmentId.toString(), Util.toIntExact(plaintextLength));
 
-    InputStream  in  = DatabaseFactory.getAttachmentDatabase(getContext()).getAttachmentStream(attachmentId, 0);
+    InputStream  in  = ShadowDatabase.attachments().getAttachmentStream(attachmentId, 0);
     OutputStream out = memoryFile.getOutputStream();
 
     StreamUtil.copy(in, out);

@@ -11,11 +11,11 @@ import su.sres.securesms.notifications.NotificationChannels
 import su.sres.securesms.notifications.NotificationIds
 
 sealed class SubscriptionNotification {
-  object VerificationFailed : SubscriptionNotification() {
+  object RedemptionFailed : SubscriptionNotification() {
     override fun show(context: Context) {
       val notification = NotificationCompat.Builder(context, NotificationChannels.FAILURES)
         .setSmallIcon(R.drawable.ic_notification)
-        .setContentTitle(context.getString(R.string.Subscription__verification_failed))
+        .setContentTitle(context.getString(R.string.DonationsErrors__couldnt_add_badge))
         .setContentText(context.getString(R.string.Subscription__please_contact_support_for_more_information))
         .addAction(
           NotificationCompat.Action.Builder(
@@ -37,12 +37,12 @@ sealed class SubscriptionNotification {
     }
   }
 
-  object RedemptionFailed : SubscriptionNotification() {
+  object PaymentFailed : SubscriptionNotification() {
     override fun show(context: Context) {
       val notification = NotificationCompat.Builder(context, NotificationChannels.FAILURES)
         .setSmallIcon(R.drawable.ic_notification)
-        .setContentTitle(context.getString(R.string.Subscription__redemption_failed))
-        .setContentText(context.getString(R.string.Subscription__please_contact_support_for_more_information))
+        .setContentTitle(context.getString(R.string.DonationsErrors__error_processing_payment))
+        .setContentText(context.getString(R.string.DonationsErrors__your_badge_could_not_be_added))
         .addAction(
           NotificationCompat.Action.Builder(
             null,

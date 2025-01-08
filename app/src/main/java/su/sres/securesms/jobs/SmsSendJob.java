@@ -12,12 +12,12 @@ import android.telephony.SmsManager;
 
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkOrCellServiceConstraint;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.model.SmsMessageRecord;
 import su.sres.securesms.recipients.Recipient;
@@ -69,7 +69,7 @@ public class SmsSendJob extends SendJob {
 
   @Override
   public void onAdded() {
-    DatabaseFactory.getSmsDatabase(context).markAsSending(messageId);
+    ShadowDatabase.sms().markAsSending(messageId);
   }
 
   @Override
@@ -81,7 +81,7 @@ public class SmsSendJob extends SendJob {
     }
 
 
-    MessageDatabase  database = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase  database = ShadowDatabase.sms();
     SmsMessageRecord record   = database.getSmsMessage(messageId);
 
     if (!record.isPending() && !record.isFailed()) {
@@ -99,7 +99,7 @@ public class SmsSendJob extends SendJob {
       log(TAG, String.valueOf(record.getDateSent()), "Sent message: " + messageId);
     } catch (UndeliverableMessageException ude) {
       warn(TAG, ude);
-      DatabaseFactory.getSmsDatabase(context).markAsSentFailed(record.getId());
+      ShadowDatabase.sms().markAsSentFailed(record.getId());
       ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, record.getRecipient(), record.getThreadId());
     }
   }
@@ -112,10 +112,10 @@ public class SmsSendJob extends SendJob {
   @Override
   public void onFailure() {
     warn(TAG, "onFailure() messageId: " + messageId);
-    long      threadId  = DatabaseFactory.getSmsDatabase(context).getThreadIdForMessage(messageId);
-    Recipient recipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
+    long      threadId  = ShadowDatabase.sms().getThreadIdForMessage(messageId);
+    Recipient recipient = ShadowDatabase.threads().getRecipientForThreadId(threadId);
 
-    DatabaseFactory.getSmsDatabase(context).markAsSentFailed(messageId);
+    ShadowDatabase.sms().markAsSentFailed(messageId);
 
     if (threadId != -1 && recipient != null) {
       ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, recipient, threadId);

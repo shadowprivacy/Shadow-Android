@@ -8,15 +8,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import su.sres.securesms.contacts.ContactRepository;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.FeatureFlags;
 import su.sres.core.util.concurrent.SignalExecutors;
 
 import java.util.ArrayList;
@@ -47,9 +46,9 @@ class CameraContactsRepository {
 
     CameraContactsRepository(@NonNull Context context) {
         this.context           = context.getApplicationContext();
-        this.threadDatabase    = DatabaseFactory.getThreadDatabase(context);
-        this.groupDatabase     = DatabaseFactory.getGroupDatabase(context);
-        this.recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+        this.threadDatabase    = ShadowDatabase.threads();
+        this.groupDatabase     = ShadowDatabase.groups();
+        this.recipientDatabase = ShadowDatabase.recipients();
         this.contactRepository = new ContactRepository(context);
         this.serialExecutor    = SignalExecutors.SERIAL;
         this.parallelExecutor  = SignalExecutors.BOUNDED;

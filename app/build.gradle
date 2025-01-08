@@ -71,16 +71,9 @@ def abiPostFix = ['universal'  : 0,
 def keystores = ['debug': loadKeystoreProperties('keystore.debug.properties')]
 
 def selectableVariants = [
-        'internalProdFlipper',
-        'internalProdPerf',
-        'internalProdRelease',
-        'internalStagingFlipper',
-        'internalStagingPerf',
-        'internalStagingRelease',
         'nightlyProdFlipper',
         'nightlyProdPerf',
         'nightlyProdRelease',
-        'nightlyStagingPerf',
         'playProdDebug',
         'playProdFlipper',
         'playProdPerf',
@@ -278,14 +271,6 @@ android {
             buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"website\""
         }
 
-        internal {
-            dimension 'distribution'
-            ext.websiteUpdateUrl = "null"
-            buildConfigField "boolean", "PLAY_STORE_DISABLED", "false"
-            buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
-            buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"internal\""
-        }
-
         nightly {
             dimension 'distribution'
             versionNameSuffix "-nightly-untagged-${getDateSuffix()}"
@@ -436,7 +421,6 @@ dependencies {
     implementation project(':sticky-header-grid')
     implementation project(':photoview')
 
-    implementation libs.signal.zkgroup.android
     implementation libs.signal.client.android
     implementation libs.google.protobuf.javalite
     implementation(libs.mobilecoin) {
@@ -638,7 +622,8 @@ def getCurrentGitTag() {
     def output = stdout.toString().trim()
 
     if (output != null && output.size() > 0) {
-        return output.split('\n')[0];
+        def tags = output.split('\n').toList()
+        return tags.stream().filter(t -> t.contains('nightly')).findFirst().orElse(tags.get(0))
     } else {
         return null
     }

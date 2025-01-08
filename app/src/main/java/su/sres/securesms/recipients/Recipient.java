@@ -24,12 +24,12 @@ import su.sres.securesms.contacts.avatars.TransparentContactPhoto;
 import su.sres.securesms.conversation.colors.AvatarColor;
 import su.sres.securesms.conversation.colors.ChatColors;
 import su.sres.securesms.conversation.colors.ChatColorsPalette;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.MentionSetting;
 import su.sres.securesms.database.RecipientDatabase.RegisteredState;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
 import su.sres.securesms.database.RecipientDatabase.VibrateState;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.databaseprotos.RecipientExtras;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
@@ -61,7 +61,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static su.sres.securesms.database.RecipientDatabase.InsightsBannerTier;
@@ -167,7 +166,7 @@ public class Recipient {
   @WorkerThread
   public static @NonNull Recipient externalUsername(@NonNull Context context, @NonNull ACI aci, @NonNull String username) {
     Recipient recipient = externalPush(context, aci, null, false);
-    DatabaseFactory.getRecipientDatabase(context).setUsername(recipient.getId(), username);
+    ShadowDatabase.recipients().setUsername(recipient.getId(), username);
     return recipient;
   }
 
@@ -227,7 +226,7 @@ public class Recipient {
       throw new AssertionError();
     }
 
-    RecipientDatabase db          = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase db          = ShadowDatabase.recipients();
     RecipientId       recipientId = db.getAndPossiblyMerge(aci, e164, highTrust);
 
     Recipient resolved = resolved(recipientId);
@@ -251,7 +250,7 @@ public class Recipient {
    */
   @WorkerThread
   public static @NonNull Recipient externalContact(@NonNull Context context, @NonNull String identifier) {
-    RecipientDatabase db = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase db = ShadowDatabase.recipients();
     RecipientId       id = null;
     if (UuidUtil.isUuid(identifier)) {
       throw new AssertionError("UUIDs are not valid system contact identifiers!");
@@ -276,7 +275,7 @@ public class Recipient {
   @WorkerThread
   public static @NonNull Recipient externalGroupExact(@NonNull Context context, @NonNull GroupId groupId) {
 
-    return Recipient.resolved(DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId));
+    return Recipient.resolved(ShadowDatabase.recipients().getOrInsertFromGroupId(groupId));
   }
 
   /**
@@ -291,7 +290,7 @@ public class Recipient {
    */
   @WorkerThread
   public static @NonNull Recipient externalPossiblyMigratedGroup(@NonNull Context context, @NonNull GroupId groupId) {
-    return Recipient.resolved(DatabaseFactory.getRecipientDatabase(context).getOrInsertFromPossiblyMigratedGroupId(groupId));
+    return Recipient.resolved(ShadowDatabase.recipients().getOrInsertFromPossiblyMigratedGroupId(groupId));
   }
 
   /**
@@ -306,7 +305,7 @@ public class Recipient {
   @WorkerThread
   public static @NonNull Recipient external(@NonNull Context context, @NonNull String identifier) {
     Preconditions.checkNotNull(identifier, "Identifier cannot be null!");
-    RecipientDatabase db = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase db = ShadowDatabase.recipients();
     RecipientId       id = null;
 
     if (UuidUtil.isUuid(identifier)) {
@@ -1027,7 +1026,7 @@ public class Recipient {
   }
 
   public @NonNull List<Badge> getBadges() {
-    return FeatureFlags.displayDonorBadges() ? badges : Collections.emptyList();
+    return FeatureFlags.displayDonorBadges() || isSelf() ? badges : Collections.emptyList();
   }
 
   public @Nullable Badge getFeaturedBadge() {

@@ -15,8 +15,8 @@ import com.annimon.stream.Stream;
 
 import su.sres.securesms.R;
 import su.sres.securesms.conversation.ConversationIntents;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobs.ConversationShortcutUpdateJob;
 import su.sres.core.util.logging.Log;
@@ -194,7 +194,7 @@ public final class ConversationUtil {
   {
     Recipient resolved   = recipient.resolve();
     Person[]  persons    = buildPersons(context, resolved);
-    Long      threadId   = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(resolved.getId());
+    Long      threadId   = ShadowDatabase.threads().getThreadIdFor(resolved.getId());
     String    shortName  = resolved.isSelf() ? context.getString(R.string.note_to_self) : resolved.getShortDisplayName(context);
     String    longName   = resolved.isSelf() ? context.getString(R.string.note_to_self) : resolved.getDisplayName(context);
     String    shortcutId = getShortcutId(resolved);
@@ -229,7 +229,7 @@ public final class ConversationUtil {
    */
   @WorkerThread
   private static @NonNull Person[] buildPersonsForGroup(@NonNull Context context, @NonNull GroupId groupId) {
-    List<Recipient> members = DatabaseFactory.getGroupDatabase(context).getGroupMembers(groupId, GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
+    List<Recipient> members = ShadowDatabase.groups().getGroupMembers(groupId, GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
 
     return Stream.of(members).map(member -> buildPersonWithoutIcon(context, member.resolve())).toArray(Person[]::new);
   }

@@ -3,9 +3,9 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupDatabase.GroupRecord;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
@@ -91,7 +91,7 @@ public class PushGroupUpdateJob extends BaseJob {
       return;
     }
 
-    GroupDatabase           groupDatabase = DatabaseFactory.getGroupDatabase(context);
+    GroupDatabase           groupDatabase = ShadowDatabase.groups();
     Optional<GroupRecord>   record        = groupDatabase.getGroup(groupId);
     SignalServiceAttachment avatar        = null;
 
@@ -124,7 +124,7 @@ public class PushGroupUpdateJob extends BaseJob {
                                                         .withName(record.get().getTitle())
                                                         .build();
 
-    RecipientId groupRecipientId = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
+    RecipientId groupRecipientId = ShadowDatabase.recipients().getOrInsertFromGroupId(groupId);
     Recipient   groupRecipient   = Recipient.resolved(groupRecipientId);
 
     SignalServiceDataMessage message = SignalServiceDataMessage.newBuilder()

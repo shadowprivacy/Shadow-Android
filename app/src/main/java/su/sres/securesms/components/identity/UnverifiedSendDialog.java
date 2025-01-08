@@ -2,14 +2,12 @@ package su.sres.securesms.components.identity;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.os.AsyncTask;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
 import su.sres.securesms.R;
 import su.sres.securesms.crypto.ReentrantSessionLock;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;

@@ -3,8 +3,8 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupChangeBusyException;
 import su.sres.securesms.groups.GroupId;
@@ -79,7 +79,7 @@ final class RequestGroupV2InfoWorkerJob extends BaseJob {
             Log.i(TAG, "Updating group to revision " + toRevision);
         }
 
-        Optional<GroupDatabase.GroupRecord> group = DatabaseFactory.getGroupDatabase(context).getGroup(groupId);
+        Optional<GroupDatabase.GroupRecord> group = ShadowDatabase.groups().getGroup(groupId);
 
         if (!group.isPresent()) {
             Log.w(TAG, "Group not found");

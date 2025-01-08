@@ -4,7 +4,7 @@ import android.app.Application;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.jobmanager.Constraint;
 import su.sres.securesms.jobmanager.ConstraintObserver;
 import su.sres.securesms.jobmanager.Job;
@@ -106,6 +106,7 @@ public final class JobManagerFactories {
       put(MultiDeviceStickerPackOperationJob.KEY, new MultiDeviceStickerPackOperationJob.Factory());
       put(MultiDeviceStickerPackSyncJob.KEY, new MultiDeviceStickerPackSyncJob.Factory());
       put(MultiDeviceStorageSyncRequestJob.KEY, new MultiDeviceStorageSyncRequestJob.Factory());
+      put(MultiDeviceSubscriptionSyncRequestJob.KEY, new MultiDeviceSubscriptionSyncRequestJob.Factory());
       put(MultiDeviceVerifiedUpdateJob.KEY, new MultiDeviceVerifiedUpdateJob.Factory());
       put(MultiDeviceViewOnceOpenJob.KEY, new MultiDeviceViewOnceOpenJob.Factory());
       put(MultiDeviceViewedUpdateJob.KEY, new MultiDeviceViewedUpdateJob.Factory());
@@ -233,7 +234,7 @@ public final class JobManagerFactories {
     return Arrays.asList(new RecipientIdJobMigration(application),
                          new RecipientIdFollowUpJobMigration(),
                          new RecipientIdFollowUpJobMigration2(),
-                         new SendReadReceiptsJobMigration(DatabaseFactory.getMmsSmsDatabase(application)),
+                         new SendReadReceiptsJobMigration(ShadowDatabase.mmsSms()),
                          new PushProcessMessageQueueJobMigration(application),
                          new RetrieveProfileJobMigration(),
                          new PushDecryptMessageJobEnvelopeMigration(application));

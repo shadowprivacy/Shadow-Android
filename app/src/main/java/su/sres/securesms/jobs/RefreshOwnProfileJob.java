@@ -12,8 +12,8 @@ import su.sres.securesms.badges.BadgeRepository;
 import su.sres.securesms.badges.Badges;
 import su.sres.securesms.badges.models.Badge;
 import su.sres.securesms.crypto.ProfileKeyUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -23,7 +23,6 @@ import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.ProfileUtil;
-import su.sres.securesms.util.TextSecurePreferences;
 
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -52,13 +51,28 @@ public class RefreshOwnProfileJob extends BaseJob {
 
   private static final String TAG = Log.tag(RefreshOwnProfileJob.class);
 
+  private static final String SUBSCRIPTION_QUEUE = ProfileUploadJob.QUEUE + "_Subscription";
+  private static final String BOOST_QUEUE        = ProfileUploadJob.QUEUE + "_Boost";
+
   public RefreshOwnProfileJob() {
+    this(ProfileUploadJob.QUEUE);
+  }
+
+  private RefreshOwnProfileJob(@NonNull String queue) {
     this(new Parameters.Builder()
              .addConstraint(NetworkConstraint.KEY)
-             .setQueue(ProfileUploadJob.QUEUE)
+             .setQueue(queue)
              .setMaxInstancesForFactory(1)
              .setMaxAttempts(10)
              .build());
+  }
+
+  public static @NonNull RefreshOwnProfileJob forSubscription() {
+    return new RefreshOwnProfileJob(SUBSCRIPTION_QUEUE);
+  }
+
+  public static @NonNull RefreshOwnProfileJob forBoost() {
+    return new RefreshOwnProfileJob(BOOST_QUEUE);
   }
 
 
@@ -78,7 +92,7 @@ public class RefreshOwnProfileJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    if (!TextSecurePreferences.isPushRegistered(context) || TextUtils.isEmpty(TextSecurePreferences.getLocalNumber(context))) {
+    if (!SignalStore.account().isRegistered() || TextUtils.isEmpty(SignalStore.account().getUserLogin())) {
       Log.w(TAG, "Not yet registered!");
       return;
     }
@@ -112,7 +126,7 @@ public class RefreshOwnProfileJob extends BaseJob {
                                        @NonNull ProfileKey recipientProfileKey,
                                        @NonNull ProfileKeyCredential credential)
   {
-    RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase recipientDatabase = ShadowDatabase.recipients();
     recipientDatabase.setProfileKeyCredential(recipient.getId(), recipientProfileKey, credential);
   }
 
@@ -137,7 +151,7 @@ public class RefreshOwnProfileJob extends BaseJob {
       ProfileName profileName   = ProfileName.fromSerialized(plaintextName);
 
       Log.d(TAG, "Saving " + (!Util.isEmpty(plaintextName) ? "non-" : "") + "empty name.");
-      DatabaseFactory.getRecipientDatabase(context).setProfileName(Recipient.self().getId(), profileName);
+      ShadowDatabase.recipients().setProfileName(Recipient.self().getId(), profileName);
     } catch (InvalidCiphertextException | IOException e) {
       Log.w(TAG, e);
     }
@@ -152,7 +166,7 @@ public class RefreshOwnProfileJob extends BaseJob {
       Log.d(TAG, "Saving " + (!Util.isEmpty(plaintextAbout) ? "non-" : "") + "empty about.");
       Log.d(TAG, "Saving " + (!Util.isEmpty(plaintextEmoji) ? "non-" : "") + "empty emoji.");
 
-      DatabaseFactory.getRecipientDatabase(context).setAbout(Recipient.self().getId(), plaintextAbout, plaintextEmoji);
+      ShadowDatabase.recipients().setAbout(Recipient.self().getId(), plaintextAbout, plaintextEmoji);
     } catch (InvalidCiphertextException | IOException e) {
       Log.w(TAG, e);
     }
@@ -168,7 +182,7 @@ public class RefreshOwnProfileJob extends BaseJob {
       return;
     }
 
-    DatabaseFactory.getRecipientDatabase(context).setCapabilities(Recipient.self().getId(), capabilities);
+    ShadowDatabase.recipients().setCapabilities(Recipient.self().getId(), capabilities);
   }
 
   private void setProfileBadges(@Nullable List<SignalServiceProfile.Badge> badges) {
@@ -202,8 +216,15 @@ public class RefreshOwnProfileJob extends BaseJob {
                                             .max(Comparator.comparingLong(Badge::getExpirationTimestamp))
                                             .get();
 
-      Log.d(TAG, "Marking subscription badge as expired, should notify next time the conversation list is open.");
+      Log.d(TAG, "Marking subscription badge as expired, should notify next time the conversation list is open.", true);
       SignalStore.donationsValues().setExpiredBadge(mostRecentExpiration);
+
+      if (!SignalStore.donationsValues().isUserManuallyCancelled()) {
+        Log.d(TAG, "Detected an unexpected subscription expiry.", true);
+        MultiDeviceSubscriptionSyncRequestJob.enqueue();
+        SignalStore.donationsValues().setShouldCancelSubscriptionBeforeNextSubscribeAttempt(true);
+      }
+
     } else if (!remoteHasBoostBadges && localHasBoostBadges) {
       Badge mostRecentExpiration = Recipient.self()
                                             .getBadges()
@@ -213,7 +234,7 @@ public class RefreshOwnProfileJob extends BaseJob {
                                             .max(Comparator.comparingLong(Badge::getExpirationTimestamp))
                                             .get();
 
-      Log.d(TAG, "Marking boost badge as expired, should notify next time the conversation list is open.");
+      Log.d(TAG, "Marking boost badge as expired, should notify next time the conversation list is open.", true);
       SignalStore.donationsValues().setExpiredBadge(mostRecentExpiration);
     }
 
@@ -232,7 +253,7 @@ public class RefreshOwnProfileJob extends BaseJob {
       badgeRepository.setVisibilityForAllBadges(displayBadgesOnProfile, appBadges).blockingSubscribe();
 
     } else {
-      DatabaseFactory.getRecipientDatabase(context)
+      ShadowDatabase.recipients()
                      .setBadges(Recipient.self().getId(), appBadges);
     }
   }

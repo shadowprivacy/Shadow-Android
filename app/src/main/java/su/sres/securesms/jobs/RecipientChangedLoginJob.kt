@@ -1,7 +1,7 @@
 package su.sres.securesms.jobs
 
 import su.sres.core.util.logging.Log
-import su.sres.securesms.database.DatabaseFactory
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.jobmanager.Data
 import su.sres.securesms.jobmanager.Job
 import su.sres.securesms.recipients.Recipient
@@ -32,7 +32,7 @@ class RecipientChangedLoginJob(parameters: Parameters, private val recipientId: 
 
     if (!recipient.isBlocked && !recipient.isGroup && !recipient.isSelf) {
       Log.i(TAG, "Writing a number change event.")
-      DatabaseFactory.getSmsDatabase(context).insertLoginChangeMessages(recipient)
+      ShadowDatabase.sms.insertLoginChangeMessages(recipient)
     } else {
       Log.i(TAG, "Number changed but not relevant. blocked: ${recipient.isBlocked} isGroup: ${recipient.isGroup} isSelf: ${recipient.isSelf}")
     }

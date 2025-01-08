@@ -30,7 +30,6 @@ import net.zetetic.database.sqlcipher.SQLiteQueryBuilder;
 
 import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.MessageDatabase.ThreadUpdate;
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.notifications.v2.MessageNotifierV2;
@@ -76,7 +75,6 @@ public class MmsSmsDatabase extends Database {
                                                MmsDatabase.MESSAGE_BOX,
                                                SmsDatabase.STATUS,
                                                MmsSmsColumns.UNIDENTIFIED,
-                                               MmsSmsColumns.REACTIONS,
                                                MmsDatabase.PART_COUNT,
                                                MmsDatabase.CONTENT_LOCATION, MmsDatabase.TRANSACTION_ID,
                                                MmsDatabase.MESSAGE_SIZE, MmsDatabase.EXPIRY,
@@ -101,7 +99,6 @@ public class MmsSmsDatabase extends Database {
                                                MmsDatabase.LINK_PREVIEWS,
                                                MmsDatabase.VIEW_ONCE,
                                                MmsSmsColumns.READ,
-                                               MmsSmsColumns.REACTIONS,
                                                MmsSmsColumns.REACTIONS_UNREAD,
                                                MmsSmsColumns.REACTIONS_LAST_SEEN,
                                                MmsSmsColumns.REMOTE_DELETED,
@@ -118,7 +115,7 @@ public class MmsSmsDatabase extends Database {
                                               "ORDER BY " + MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " DESC " +
                                               "LIMIT 1";
 
-  public MmsSmsDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public MmsSmsDatabase(Context context, ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 
@@ -143,8 +140,8 @@ public class MmsSmsDatabase extends Database {
   }
 
   private @NonNull Pair<RecipientId, Long> getGroupAddedBy(long threadId, long lastQuitChecked) {
-    MessageDatabase mmsDatabase = DatabaseFactory.getMmsDatabase(context);
-    MessageDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase mmsDatabase = ShadowDatabase.mms();
+    MessageDatabase smsDatabase = ShadowDatabase.sms();
     long            latestQuit  = mmsDatabase.getLatestGroupQuitTimestamp(threadId, lastQuitChecked);
     RecipientId     id          = smsDatabase.getOldestGroupUpdateSender(threadId, latestQuit);
 
@@ -184,9 +181,9 @@ public class MmsSmsDatabase extends Database {
   }
 
   public @NonNull List<MessageRecord> getMessagesAfterVoiceNoteInclusive(long messageId, long limit) throws NoSuchMessageException {
-    MessageRecord       origin = DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId);
-    List<MessageRecord> mms    = DatabaseFactory.getMmsDatabase(context).getMessagesInThreadAfterInclusive(origin.getThreadId(), origin.getDateReceived(), limit);
-    List<MessageRecord> sms    = DatabaseFactory.getSmsDatabase(context).getMessagesInThreadAfterInclusive(origin.getThreadId(), origin.getDateReceived(), limit);
+    MessageRecord       origin = ShadowDatabase.mms().getMessageRecord(messageId);
+    List<MessageRecord> mms    = ShadowDatabase.mms().getMessagesInThreadAfterInclusive(origin.getThreadId(), origin.getDateReceived(), limit);
+    List<MessageRecord> sms    = ShadowDatabase.sms().getMessagesInThreadAfterInclusive(origin.getThreadId(), origin.getDateReceived(), limit);
 
     mms.addAll(sms);
     Collections.sort(mms, (a, b) -> Long.compare(a.getDateReceived(), b.getDateReceived()));
@@ -201,24 +198,11 @@ public class MmsSmsDatabase extends Database {
     String         limitStr  = limit > 0 || offset > 0 ? offset + ", " + limit : null;
     String         query     = buildQuery(PROJECTION, selection, order, limitStr, false);
 
-    Cursor cursor = db.rawQuery(query, null);
-    setNotifyConversationListeners(cursor, threadId);
-
-    return cursor;
+    return db.rawQuery(query, null);
   }
 
   public Cursor getConversation(long threadId) {
     return getConversation(threadId, 0, 0);
-  }
-
-  public Cursor getIdentityConflictMessagesForThread(long threadId) {
-    String order     = MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " ASC";
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " + MmsSmsColumns.MISMATCHED_IDENTITIES + " IS NOT NULL";
-
-    Cursor cursor = queryTables(PROJECTION, selection, order, null);
-    setNotifyConversationListeners(cursor, threadId);
-
-    return cursor;
   }
 
   public @NonNull MessageRecord getConversationSnippet(long threadId) throws NoSuchMessageException {
@@ -228,9 +212,9 @@ public class MmsSmsDatabase extends Database {
         long    id    = CursorUtil.requireLong(cursor, MmsSmsColumns.ID);
 
         if (isMms) {
-          return DatabaseFactory.getMmsDatabase(context).getMessageRecord(id);
+          return ShadowDatabase.mms().getMessageRecord(id);
         } else {
-          return DatabaseFactory.getSmsDatabase(context).getMessageRecord(id);
+          return ShadowDatabase.sms().getMessageRecord(id);
         }
       } else {
         throw new NoSuchMessageException("no message");
@@ -289,8 +273,8 @@ public class MmsSmsDatabase extends Database {
   }
 
   public boolean checkMessageExists(@NonNull MessageRecord messageRecord) {
-    MessageDatabase db = messageRecord.isMms() ? DatabaseFactory.getMmsDatabase(context)
-                                               : DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase db = messageRecord.isMms() ? ShadowDatabase.mms()
+                                               : ShadowDatabase.sms();
 
     try (Cursor cursor = db.getMessageCursor(messageRecord.getId())) {
       return cursor != null && cursor.getCount() > 0;
@@ -302,8 +286,8 @@ public class MmsSmsDatabase extends Database {
       return 0;
     }
 
-    int count = DatabaseFactory.getSmsDatabase(context).getSecureMessageCount(threadId);
-    count += DatabaseFactory.getMmsDatabase(context).getSecureMessageCount(threadId);
+    int count = ShadowDatabase.sms().getSecureMessageCount(threadId);
+    count += ShadowDatabase.mms().getSecureMessageCount(threadId);
 
     return count;
   }
@@ -313,34 +297,34 @@ public class MmsSmsDatabase extends Database {
       return 0;
     }
 
-    int count = DatabaseFactory.getSmsDatabase(context).getOutgoingSecureMessageCount(threadId);
-    count += DatabaseFactory.getMmsDatabase(context).getOutgoingSecureMessageCount(threadId);
+    int count = ShadowDatabase.sms().getOutgoingSecureMessageCount(threadId);
+    count += ShadowDatabase.mms().getOutgoingSecureMessageCount(threadId);
 
     return count;
   }
 
   public int getConversationCount(long threadId) {
-    int count = DatabaseFactory.getSmsDatabase(context).getMessageCountForThread(threadId);
-    count += DatabaseFactory.getMmsDatabase(context).getMessageCountForThread(threadId);
+    int count = ShadowDatabase.sms().getMessageCountForThread(threadId);
+    count += ShadowDatabase.mms().getMessageCountForThread(threadId);
 
     return count;
   }
 
   public int getConversationCount(long threadId, long beforeTime) {
-    return DatabaseFactory.getSmsDatabase(context).getMessageCountForThread(threadId, beforeTime) +
-           DatabaseFactory.getMmsDatabase(context).getMessageCountForThread(threadId, beforeTime);
+    return ShadowDatabase.sms().getMessageCountForThread(threadId, beforeTime) +
+           ShadowDatabase.mms().getMessageCountForThread(threadId, beforeTime);
   }
 
   public int getInsecureSentCount(long threadId) {
-    int count = DatabaseFactory.getSmsDatabase(context).getInsecureMessagesSentForThread(threadId);
-    count += DatabaseFactory.getMmsDatabase(context).getInsecureMessagesSentForThread(threadId);
+    int count = ShadowDatabase.sms().getInsecureMessagesSentForThread(threadId);
+    count += ShadowDatabase.mms().getInsecureMessagesSentForThread(threadId);
 
     return count;
   }
 
   public int getInsecureMessageCountForInsights() {
-    int count = DatabaseFactory.getSmsDatabase(context).getInsecureMessageCountForInsights();
-    count += DatabaseFactory.getMmsDatabase(context).getInsecureMessageCountForInsights();
+    int count = ShadowDatabase.sms().getInsecureMessageCountForInsights();
+    count += ShadowDatabase.mms().getInsecureMessageCountForInsights();
 
     return count;
   }
@@ -358,8 +342,8 @@ public class MmsSmsDatabase extends Database {
   }
 
   public int getSecureMessageCountForInsights() {
-    int count = DatabaseFactory.getSmsDatabase(context).getSecureMessageCountForInsights();
-    count += DatabaseFactory.getMmsDatabase(context).getSecureMessageCountForInsights();
+    int count = ShadowDatabase.sms().getSecureMessageCountForInsights();
+    count += ShadowDatabase.mms().getSecureMessageCountForInsights();
 
     return count;
   }
@@ -369,14 +353,14 @@ public class MmsSmsDatabase extends Database {
       return false;
     }
 
-    return DatabaseFactory.getSmsDatabase(context).hasMeaningfulMessage(threadId) ||
-           DatabaseFactory.getMmsDatabase(context).hasMeaningfulMessage(threadId);
+    return ShadowDatabase.sms().hasMeaningfulMessage(threadId) ||
+           ShadowDatabase.mms().hasMeaningfulMessage(threadId);
   }
 
   public long getThreadForMessageId(long messageId) {
-    long id = DatabaseFactory.getSmsDatabase(context).getThreadIdForMessage(messageId);
+    long id = ShadowDatabase.sms().getThreadIdForMessage(messageId);
 
-    if (id == -1) return DatabaseFactory.getMmsDatabase(context).getThreadIdForMessage(messageId);
+    if (id == -1) return ShadowDatabase.mms().getThreadIdForMessage(messageId);
     else return id;
   }
 
@@ -417,7 +401,7 @@ public class MmsSmsDatabase extends Database {
    */
   private boolean incrementReceiptCount(SyncMessageId syncMessageId, long timestamp, @NonNull MessageDatabase.ReceiptType receiptType) {
     SQLiteDatabase    db             = databaseHelper.getSignalWritableDatabase();
-    ThreadDatabase    threadDatabase = DatabaseFactory.getThreadDatabase(context);
+    ThreadDatabase    threadDatabase = ShadowDatabase.threads();
     Set<ThreadUpdate> threadUpdates  = new HashSet<>();
 
     db.beginTransaction();
@@ -451,7 +435,7 @@ public class MmsSmsDatabase extends Database {
    */
   private @NonNull Collection<SyncMessageId> incrementReceiptCounts(@NonNull List<SyncMessageId> syncMessageIds, long timestamp, @NonNull MessageDatabase.ReceiptType receiptType) {
     SQLiteDatabase            db             = databaseHelper.getSignalWritableDatabase();
-    ThreadDatabase            threadDatabase = DatabaseFactory.getThreadDatabase(context);
+    ThreadDatabase            threadDatabase = ShadowDatabase.threads();
     Set<ThreadUpdate>         threadUpdates  = new HashSet<>();
     Collection<SyncMessageId> unhandled      = new HashSet<>();
 
@@ -497,8 +481,8 @@ public class MmsSmsDatabase extends Database {
   private @NonNull Set<ThreadUpdate> incrementReceiptCountInternal(SyncMessageId syncMessageId, long timestamp, MessageDatabase.ReceiptType receiptType) {
     Set<ThreadUpdate> threadUpdates = new HashSet<>();
 
-    threadUpdates.addAll(DatabaseFactory.getSmsDatabase(context).incrementReceiptCount(syncMessageId, timestamp, receiptType));
-    threadUpdates.addAll(DatabaseFactory.getMmsDatabase(context).incrementReceiptCount(syncMessageId, timestamp, receiptType));
+    threadUpdates.addAll(ShadowDatabase.sms().incrementReceiptCount(syncMessageId, timestamp, receiptType));
+    threadUpdates.addAll(ShadowDatabase.mms().incrementReceiptCount(syncMessageId, timestamp, receiptType));
 
     return threadUpdates;
   }
@@ -550,7 +534,7 @@ public class MmsSmsDatabase extends Database {
   }
 
   boolean hasReceivedAnyCallsSince(long threadId, long timestamp) {
-    return DatabaseFactory.getSmsDatabase(context).hasReceivedAnyCallsSince(threadId, timestamp);
+    return ShadowDatabase.sms().hasReceivedAnyCallsSince(threadId, timestamp);
   }
 
   /**
@@ -588,29 +572,29 @@ public class MmsSmsDatabase extends Database {
   }
 
   public void setNotifiedTimestamp(long timestamp, @NonNull List<Long> smsIds, @NonNull List<Long> mmsIds) {
-    DatabaseFactory.getSmsDatabase(context).setNotifiedTimestamp(timestamp, smsIds);
-    DatabaseFactory.getMmsDatabase(context).setNotifiedTimestamp(timestamp, mmsIds);
+    ShadowDatabase.sms().setNotifiedTimestamp(timestamp, smsIds);
+    ShadowDatabase.mms().setNotifiedTimestamp(timestamp, mmsIds);
   }
 
   public int deleteMessagesInThreadBeforeDate(long threadId, long trimBeforeDate) {
     Log.d(TAG, "deleteMessagesInThreadBeforeData(" + threadId + ", " + trimBeforeDate + ")");
 
-    int deletes = DatabaseFactory.getSmsDatabase(context).deleteMessagesInThreadBeforeDate(threadId, trimBeforeDate);
-    deletes += DatabaseFactory.getMmsDatabase(context).deleteMessagesInThreadBeforeDate(threadId, trimBeforeDate);
+    int deletes = ShadowDatabase.sms().deleteMessagesInThreadBeforeDate(threadId, trimBeforeDate);
+    deletes += ShadowDatabase.mms().deleteMessagesInThreadBeforeDate(threadId, trimBeforeDate);
     return deletes;
   }
 
   public void deleteAbandonedMessages() {
     Log.d(TAG, "deleteAbandonedMessages()");
 
-    DatabaseFactory.getSmsDatabase(context).deleteAbandonedMessages();
-    DatabaseFactory.getMmsDatabase(context).deleteAbandonedMessages();
+    ShadowDatabase.sms().deleteAbandonedMessages();
+    ShadowDatabase.mms().deleteAbandonedMessages();
   }
 
   public @NonNull List<MessageDatabase.ReportSpamData> getReportSpamMessageServerData(long threadId, long timestamp, int limit) {
     List<MessageDatabase.ReportSpamData> data = new ArrayList<>();
-    data.addAll(DatabaseFactory.getSmsDatabase(context).getReportSpamMessageServerGuids(threadId, timestamp));
-    data.addAll(DatabaseFactory.getMmsDatabase(context).getReportSpamMessageServerGuids(threadId, timestamp));
+    data.addAll(ShadowDatabase.sms().getReportSpamMessageServerGuids(threadId, timestamp));
+    data.addAll(ShadowDatabase.mms().getReportSpamMessageServerGuids(threadId, timestamp));
     return data.stream()
                .sorted((l, r) -> -Long.compare(l.getDateReceived(), r.getDateReceived()))
                .limit(limit)
@@ -677,7 +661,6 @@ public class MmsSmsDatabase extends Database {
                                MmsDatabase.SHARED_CONTACTS,
                                MmsDatabase.LINK_PREVIEWS,
                                MmsDatabase.VIEW_ONCE,
-                               MmsDatabase.REACTIONS,
                                MmsSmsColumns.REACTIONS_UNREAD,
                                MmsSmsColumns.REACTIONS_LAST_SEEN,
                                MmsSmsColumns.DATE_SERVER,
@@ -711,7 +694,6 @@ public class MmsSmsDatabase extends Database {
                                MmsDatabase.SHARED_CONTACTS,
                                MmsDatabase.LINK_PREVIEWS,
                                MmsDatabase.VIEW_ONCE,
-                               MmsDatabase.REACTIONS,
                                MmsSmsColumns.REACTIONS_UNREAD,
                                MmsSmsColumns.REACTIONS_LAST_SEEN,
                                MmsSmsColumns.DATE_SERVER,
@@ -775,7 +757,6 @@ public class MmsSmsDatabase extends Database {
     mmsColumnsPresent.add(MmsDatabase.SHARED_CONTACTS);
     mmsColumnsPresent.add(MmsDatabase.LINK_PREVIEWS);
     mmsColumnsPresent.add(MmsDatabase.VIEW_ONCE);
-    mmsColumnsPresent.add(MmsDatabase.REACTIONS);
     mmsColumnsPresent.add(MmsDatabase.REACTIONS_UNREAD);
     mmsColumnsPresent.add(MmsDatabase.REACTIONS_LAST_SEEN);
     mmsColumnsPresent.add(MmsDatabase.REMOTE_DELETED);
@@ -805,7 +786,6 @@ public class MmsSmsDatabase extends Database {
     smsColumnsPresent.add(SmsDatabase.DATE_SERVER);
     smsColumnsPresent.add(SmsDatabase.STATUS);
     smsColumnsPresent.add(SmsDatabase.UNIDENTIFIED);
-    smsColumnsPresent.add(SmsDatabase.REACTIONS);
     smsColumnsPresent.add(SmsDatabase.REACTIONS_UNREAD);
     smsColumnsPresent.add(SmsDatabase.REACTIONS_LAST_SEEN);
     smsColumnsPresent.add(MmsDatabase.REMOTE_DELETED);

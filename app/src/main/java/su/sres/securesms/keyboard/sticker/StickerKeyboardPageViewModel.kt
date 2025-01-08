@@ -5,7 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import su.sres.securesms.database.DatabaseFactory
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.keyboard.sticker.KeyboardStickerPackListAdapter.StickerPack
 import su.sres.securesms.util.MappingModelList
 import su.sres.securesms.util.livedata.LiveDataUtil
@@ -57,7 +57,7 @@ class StickerKeyboardPageViewModel(private val repository: StickerKeyboardReposi
   }
 
   class Factory(context: Context) : ViewModelProvider.Factory {
-    private val repository = StickerKeyboardRepository(DatabaseFactory.getStickerDatabase(context))
+    private val repository = StickerKeyboardRepository(ShadowDatabase.stickers)
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
       return requireNotNull(modelClass.cast(StickerKeyboardPageViewModel(repository)))

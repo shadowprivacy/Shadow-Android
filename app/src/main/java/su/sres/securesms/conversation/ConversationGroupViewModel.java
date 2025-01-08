@@ -14,9 +14,9 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupDatabase.GroupRecord;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupChangeBusyException;
 import su.sres.securesms.groups.GroupChangeFailedException;
@@ -81,7 +81,7 @@ final class ConversationGroupViewModel extends ViewModel {
   void onSuggestedMembersBannerDismissed(@NonNull GroupId groupId, @NonNull List<RecipientId> suggestions) {
     SignalExecutors.BOUNDED.execute(() -> {
       if (groupId.isV2()) {
-        DatabaseFactory.getGroupDatabase(ApplicationDependencies.getApplication()).removeUnmigratedV1Members(groupId.requireV2(), suggestions);
+        ShadowDatabase.groups().removeUnmigratedV1Members(groupId.requireV2(), suggestions);
         liveRecipient.postValue(liveRecipient.getValue());
       }
     });
@@ -118,7 +118,7 @@ final class ConversationGroupViewModel extends ViewModel {
   private static @Nullable GroupRecord getGroupRecordForRecipient(@Nullable Recipient recipient) {
     if (recipient != null && recipient.isGroup()) {
       Application   context       = ApplicationDependencies.getApplication();
-      GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
+      GroupDatabase groupDatabase = ShadowDatabase.groups();
       return groupDatabase.getGroup(recipient.getId()).orNull();
     } else {
       return null;
@@ -198,7 +198,7 @@ final class ConversationGroupViewModel extends ViewModel {
 
     firstTimeInviteFriendsTriggered = true;
 
-    SimpleTask.run(() -> DatabaseFactory.getGroupDatabase(ApplicationDependencies.getApplication())
+    SimpleTask.run(() -> ShadowDatabase.groups()
                                         .requireGroup(groupId)
                                         .getMembers().equals(Collections.singletonList(Recipient.self().getId())),
                    justSelf -> {

@@ -12,7 +12,7 @@ import su.sres.securesms.conversation.ConversationIntents;
 import su.sres.core.util.logging.Log;
 import android.widget.Toast;
 
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.Rfc5724Uri;
 
@@ -48,7 +48,7 @@ public class SmsSendtoActivity extends Activity {
       Toast.makeText(this, R.string.ConversationActivity_specify_recipient, Toast.LENGTH_LONG).show();
     } else {
       Recipient recipient = Recipient.external(this, destination.getDestination());
-      long      threadId  = DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient.getId());
+      long      threadId  = ShadowDatabase.threads().getThreadIdIfExistsFor(recipient.getId());
 
       nextIntent = ConversationIntents.createBuilder(this, recipient.getId(), threadId)
               .withDraftText(destination.getBody())

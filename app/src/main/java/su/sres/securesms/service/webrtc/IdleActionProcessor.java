@@ -2,7 +2,8 @@ package su.sres.securesms.service.webrtc;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.components.webrtc.EglBaseWrapper;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.groups.GroupId;
@@ -36,7 +37,7 @@ public class IdleActionProcessor extends WebRtcActionProcessor {
   protected @NonNull WebRtcServiceState handleStartIncomingCall(@NonNull WebRtcServiceState currentState, @NonNull RemotePeer remotePeer) {
     Log.i(TAG, "handleStartIncomingCall():");
 
-    currentState = WebRtcVideoUtil.initializeVideo(context, webRtcInteractor.getCameraEventListener(), currentState);
+    currentState = WebRtcVideoUtil.initializeVideo(context, webRtcInteractor.getCameraEventListener(), currentState, remotePeer.getCallId().longValue());
     return beginCallDelegate.handleStartIncomingCall(currentState, remotePeer);
   }
 
@@ -53,7 +54,7 @@ public class IdleActionProcessor extends WebRtcActionProcessor {
       return currentState;
     }
 
-    currentState = WebRtcVideoUtil.initializeVideo(context, webRtcInteractor.getCameraEventListener(), currentState);
+    currentState = WebRtcVideoUtil.initializeVideo(context, webRtcInteractor.getCameraEventListener(), currentState, EglBaseWrapper.OUTGOING_PLACEHOLDER);
     return beginCallDelegate.handleOutgoingCall(currentState, remotePeer, offerType);
   }
 
@@ -65,7 +66,11 @@ public class IdleActionProcessor extends WebRtcActionProcessor {
     WebRtcActionProcessor processor = isGroupCall ? new GroupPreJoinActionProcessor(webRtcInteractor)
                                                   : new PreJoinActionProcessor(webRtcInteractor);
 
-    currentState = WebRtcVideoUtil.initializeVanityCamera(WebRtcVideoUtil.initializeVideo(context, webRtcInteractor.getCameraEventListener(), currentState));
+    currentState = WebRtcVideoUtil.initializeVanityCamera(WebRtcVideoUtil.initializeVideo(context,
+                                                                                          webRtcInteractor.getCameraEventListener(),
+                                                                                          currentState,
+                                                                                          isGroupCall ? RemotePeer.GROUP_CALL_ID.longValue()
+                                                                                                      : EglBaseWrapper.OUTGOING_PLACEHOLDER));
 
     currentState = currentState.builder()
                                .actionProcessor(processor)
@@ -89,9 +94,9 @@ public class IdleActionProcessor extends WebRtcActionProcessor {
     Log.i(TAG, "handleGroupCallRingUpdate(): recipient: " + remotePeerGroup.getId() + " ring: " + ringId + " update: " + ringUpdate);
 
     if (ringUpdate != CallManager.RingUpdate.REQUESTED) {
-      DatabaseFactory.getGroupCallRingDatabase(context).insertOrUpdateGroupRing(ringId, System.currentTimeMillis(), ringUpdate);
+      ShadowDatabase.groupCallRings().insertOrUpdateGroupRing(ringId, System.currentTimeMillis(), ringUpdate);
       return currentState;
-    } else if (DatabaseFactory.getGroupCallRingDatabase(context).isCancelled(ringId)) {
+    } else if (ShadowDatabase.groupCallRings().isCancelled(ringId)) {
       try {
         Log.i(TAG, "Incoming ring request for already cancelled ring: " + ringId);
         webRtcInteractor.getCallManager().cancelGroupRing(groupId.getDecodedId(), ringId, null);
@@ -110,7 +115,7 @@ public class IdleActionProcessor extends WebRtcActionProcessor {
   protected @NonNull WebRtcServiceState handleReceivedGroupCallPeekForRingingCheck(@NonNull WebRtcServiceState currentState, @NonNull GroupCallRingCheckInfo info, long deviceCount) {
     Log.i(tag, "handleReceivedGroupCallPeekForRingingCheck(): recipient: " + info.getRecipientId() + " ring: " + info.getRingId() + " deviceCount: " + deviceCount);
 
-    if (DatabaseFactory.getGroupCallRingDatabase(context).isCancelled(info.getRingId())) {
+    if (ShadowDatabase.groupCallRings().isCancelled(info.getRingId())) {
       try {
         Log.i(TAG, "Ring was cancelled while getting peek info ring: " + info.getRingId());
         webRtcInteractor.getCallManager().cancelGroupRing(info.getGroupId().getDecodedId(), info.getRingId(), null);
@@ -122,7 +127,7 @@ public class IdleActionProcessor extends WebRtcActionProcessor {
 
     if (deviceCount == 0) {
       Log.i(TAG, "No one in the group call, mark as expired and do not ring");
-      DatabaseFactory.getGroupCallRingDatabase(context).insertOrUpdateGroupRing(info.getRingId(), System.currentTimeMillis(), CallManager.RingUpdate.EXPIRED_REQUEST);
+      ShadowDatabase.groupCallRings().insertOrUpdateGroupRing(info.getRingId(), System.currentTimeMillis(), CallManager.RingUpdate.EXPIRED_REQUEST);
       return currentState;
     }
 

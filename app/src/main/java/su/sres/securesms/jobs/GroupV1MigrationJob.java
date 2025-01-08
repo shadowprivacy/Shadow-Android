@@ -6,8 +6,8 @@ import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
 
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.groups.GroupsV1MigrationUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupChangeBusyException;
@@ -20,7 +20,6 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.transport.RetryLaterException;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.signalservice.api.groupsv2.NoCredentialForRedemptionTimeException;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
@@ -71,8 +70,8 @@ public class GroupV1MigrationJob extends BaseJob {
   public static void enqueueRoutineMigrationsIfNecessary(@NonNull Application application) {
 
     if (!SignalStore.registrationValues().isRegistrationComplete() ||
-        !TextSecurePreferences.isPushRegistered(application) ||
-        TextSecurePreferences.getLocalAci(application) == null)
+        !SignalStore.account().isRegistered() ||
+        SignalStore.account().getAci() == null)
     {
       Log.i(TAG, "Registration not complete. Skipping.");
       return;
@@ -88,7 +87,7 @@ public class GroupV1MigrationJob extends BaseJob {
 
     SignalExecutors.BOUNDED.execute(() -> {
       JobManager         jobManager   = ApplicationDependencies.getJobManager();
-      List<ThreadRecord> threads      = DatabaseFactory.getThreadDatabase(application).getRecentV1Groups(ROUTINE_LIMIT);
+      List<ThreadRecord> threads      = ShadowDatabase.threads().getRecentV1Groups(ROUTINE_LIMIT);
       Set<RecipientId>   needsRefresh = new HashSet<>();
 
       if (threads.size() > 0) {

@@ -2,7 +2,6 @@ package su.sres.securesms.database
 
 import android.content.ContentValues
 import android.content.Context
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper
 import su.sres.securesms.database.model.MessageId
 import su.sres.securesms.database.model.MessageLogEntry
 import su.sres.securesms.recipients.Recipient
@@ -14,7 +13,6 @@ import su.sres.securesms.util.SqlUtil
 import su.sres.signalservice.api.crypto.ContentHint
 import su.sres.signalservice.api.messages.SendMessageResult
 import su.sres.signalservice.internal.push.SignalServiceProtos
-import java.util.UUID
 
 /**
  * Stores a 24-hr buffer of all outgoing messages. Used for the retry logic required for sender key.
@@ -45,7 +43,7 @@ import java.util.UUID
  * - We *don't* really need to optimize for retrieval, since that happens very infrequently. In particular, we don't want to slow down inserts in order to
  *   improve retrieval time. That means we shouldn't be adding indexes that optimize for retrieval.
  */
-class MessageSendLogDatabase constructor(context: Context?, databaseHelper: SQLCipherOpenHelper?) : Database(context, databaseHelper) {
+class MessageSendLogDatabase constructor(context: Context?, databaseHelper: ShadowDatabase?) : Database(context, databaseHelper) {
 
   companion object {
     @JvmField

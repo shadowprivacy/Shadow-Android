@@ -5,8 +5,8 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.core.util.Consumer;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.groups.GroupChangeBusyException;
 import su.sres.securesms.groups.GroupChangeFailedException;
 import su.sres.core.util.logging.Log;
@@ -32,7 +32,7 @@ class BlockedUsersRepository {
 
     void getBlocked(@NonNull Consumer<List<Recipient>> blockedUsers) {
         SignalExecutors.BOUNDED.execute(() -> {
-            RecipientDatabase db = DatabaseFactory.getRecipientDatabase(context);
+            RecipientDatabase db = ShadowDatabase.recipients();
             try (RecipientDatabase.RecipientReader reader = db.readerForBlocked(db.getBlocked())) {
                 int count = reader.getCount();
                 if (count == 0) {

@@ -13,7 +13,6 @@ import su.sres.securesms.crypto.storage.SignalSenderKeyStore;
 import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
 import su.sres.securesms.crypto.storage.TextSecurePreKeyStore;
 import su.sres.securesms.crypto.storage.TextSecureSessionStore;
-import su.sres.securesms.keyvalue.KeyValueStore;
 import su.sres.securesms.shakereport.ShakeToReport;
 import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.ByteUnit;
@@ -27,11 +26,6 @@ public class NetworkIndependentProvider implements ApplicationDependencies.Netwo
 
   public NetworkIndependentProvider(@NonNull Application context) {
     this.context = context;
-  }
-
-  public @NonNull
-  KeyValueStore provideKeyValueStore() {
-    return new KeyValueStore(context);
   }
 
   @Override

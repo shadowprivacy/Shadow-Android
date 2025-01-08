@@ -6,6 +6,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import su.sres.core.util.DimensionUnit
+import su.sres.core.util.money.FiatMoney
 import su.sres.securesms.R
 import su.sres.securesms.badges.models.BadgePreview
 import su.sres.securesms.components.settings.DSLConfiguration
@@ -21,6 +22,7 @@ import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.help.HelpFragment
 import su.sres.securesms.subscription.Subscription
 import su.sres.securesms.util.LifecycleDisposable
+import java.util.Currency
 import java.util.concurrent.TimeUnit
 
 /**
@@ -37,29 +39,12 @@ class ManageDonationsFragment : DSLSettingsFragment() {
 
   private val lifecycleDisposable = LifecycleDisposable()
 
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-
-    val args = ManageDonationsFragmentArgs.fromBundle(requireArguments())
-    if (args.skipToSubscribe) {
-      findNavController().navigate(
-        ManageDonationsFragmentDirections.actionManageDonationsFragmentToSubscribeFragment(),
-        NavOptions.Builder().setPopUpTo(R.id.manageDonationsFragment, true).build()
-      )
-    }
-  }
-
   override fun onResume() {
     super.onResume()
     viewModel.refresh()
   }
 
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
-    val args = ManageDonationsFragmentArgs.fromBundle(requireArguments())
-    if (args.skipToSubscribe) {
-      return
-    }
-
     ActiveSubscriptionPreference.register(adapter)
     IndeterminateLoadingCircle.register(adapter)
 
@@ -104,24 +89,29 @@ class ManageDonationsFragment : DSLSettingsFragment() {
       )
 
       if (state.transactionState is ManageDonationsState.TransactionState.NotInTransaction) {
-        val activeSubscription = state.transactionState.activeSubscription
-        if (activeSubscription.isActive) {
-          val subscription: Subscription? = state.availableSubscriptions.firstOrNull { activeSubscription.activeSubscription.level == it.level }
+        val activeSubscription = state.transactionState.activeSubscription.activeSubscription
+        if (activeSubscription != null) {
+          val subscription: Subscription? = state.availableSubscriptions.firstOrNull { activeSubscription.level == it.level }
           if (subscription != null) {
             space(DimensionUnit.DP.toPixels(12f).toInt())
 
+            val activeCurrency = Currency.getInstance(activeSubscription.currency)
+            val activeAmount = activeSubscription.amount.movePointLeft(activeCurrency.defaultFractionDigits)
+
             customPref(
               ActiveSubscriptionPreference.Model(
+                price = FiatMoney(activeAmount, activeCurrency),
                 subscription = subscription,
                 onAddBoostClick = {
                   findNavController().navigate(ManageDonationsFragmentDirections.actionManageDonationsFragmentToBoosts())
                 },
-                renewalTimestamp = TimeUnit.SECONDS.toMillis(activeSubscription.activeSubscription.endOfCurrentPeriod),
-                redemptionState = state.subscriptionRedemptionState,
+                renewalTimestamp = TimeUnit.SECONDS.toMillis(activeSubscription.endOfCurrentPeriod),
+                redemptionState = state.getRedemptionState(),
                 onContactSupport = {
                   requireActivity().finish()
                   requireActivity().startActivity(AppSettingsActivity.help(requireContext(), HelpFragment.DONATION_INDEX))
-                }
+                },
+                activeSubscription = activeSubscription
               )
             )
 
@@ -139,7 +129,7 @@ class ManageDonationsFragment : DSLSettingsFragment() {
       clickPref(
         title = DSLSettingsText.from(R.string.ManageDonationsFragment__manage_subscription),
         icon = DSLSettingsIcon.from(R.drawable.ic_person_white_24dp),
-        isEnabled = state.subscriptionRedemptionState != ManageDonationsState.SubscriptionRedemptionState.IN_PROGRESS,
+        isEnabled = state.getRedemptionState() != ManageDonationsState.SubscriptionRedemptionState.IN_PROGRESS,
         onClick = {
           findNavController().navigate(ManageDonationsFragmentDirections.actionManageDonationsFragmentToSubscribeFragment())
         }
@@ -149,7 +139,7 @@ class ManageDonationsFragment : DSLSettingsFragment() {
         title = DSLSettingsText.from(R.string.ManageDonationsFragment__badges),
         icon = DSLSettingsIcon.from(R.drawable.ic_badge_24),
         onClick = {
-          findNavController().navigate(ManageDonationsFragmentDirections.actionManageDonationsFragmentToSubscriptionBadgeManageFragment())
+          findNavController().navigate(ManageDonationsFragmentDirections.actionManageDonationsFragmentToManageBadges())
         }
       )
 

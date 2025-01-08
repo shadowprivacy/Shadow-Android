@@ -38,8 +38,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import static su.sres.securesms.database.GroupDatabase.GroupRecord;
-
 /**
  * This class was originally a layer of indirection between
  * ContactAccessorNewApi and ContactAccessorOldApi, which corresponded

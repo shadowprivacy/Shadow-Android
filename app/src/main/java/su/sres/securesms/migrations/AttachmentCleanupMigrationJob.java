@@ -3,7 +3,7 @@ package su.sres.securesms.migrations;
 import androidx.annotation.NonNull;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 
@@ -36,7 +36,7 @@ public class AttachmentCleanupMigrationJob extends MigrationJob {
 
   @Override
   public void performMigration() {
-    int deletes = DatabaseFactory.getAttachmentDatabase(context).deleteAbandonedAttachmentFiles();
+    int deletes = ShadowDatabase.attachments().deleteAbandonedAttachmentFiles();
     Log.i(TAG, "Deleted " + deletes + " abandoned attachments.");
   }
 

@@ -19,7 +19,7 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 
 import su.sres.core.util.concurrent.SignalExecutors;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
@@ -77,7 +77,7 @@ public class TrimThreadJob extends BaseJob {
     long trimBeforeDate = keepMessagesDuration != KeepMessagesDuration.FOREVER ? System.currentTimeMillis() - keepMessagesDuration.getDuration()
                                                                                : ThreadDatabase.NO_TRIM_BEFORE_DATE_SET;
 
-    DatabaseFactory.getThreadDatabase(context).trimThread(threadId, trimLength, trimBeforeDate);
+    ShadowDatabase.threads().trimThread(threadId, trimLength, trimBeforeDate);
   }
 
   @Override

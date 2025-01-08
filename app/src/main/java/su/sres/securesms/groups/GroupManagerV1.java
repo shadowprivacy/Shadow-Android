@@ -12,9 +12,9 @@ import com.google.protobuf.ByteString;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.UriAttachment;
 import su.sres.securesms.database.AttachmentDatabase;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.groups.GroupManager.GroupActionResult;
 import su.sres.core.util.logging.Log;
@@ -51,10 +51,10 @@ final class GroupManagerV1 {
                                                 @Nullable String name,
                                                 boolean mms)
   {
-    final GroupDatabase groupDatabase    = DatabaseFactory.getGroupDatabase(context);
+    final GroupDatabase groupDatabase    = ShadowDatabase.groups();
     final SecureRandom  secureRandom     = new SecureRandom();
     final GroupId       groupId          = mms ? GroupId.createMms(secureRandom) : GroupId.createV1(secureRandom);
-    final RecipientId   groupRecipientId = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
+    final RecipientId   groupRecipientId = ShadowDatabase.recipients().getOrInsertFromGroupId(groupId);
     final Recipient     groupRecipient   = Recipient.resolved(groupRecipientId);
 
     memberIds.add(Recipient.self().getId());
@@ -69,7 +69,7 @@ final class GroupManagerV1 {
         Log.w(TAG, "Failed to save avatar!", e);
       }
       groupDatabase.onAvatarUpdated(groupIdV1, avatarBytes != null);
-      DatabaseFactory.getRecipientDatabase(context).setProfileSharing(groupRecipient.getId(), true);
+      ShadowDatabase.recipients().setProfileSharing(groupRecipient.getId(), true);
       return sendGroupUpdate(context, groupIdV1, memberIds, name, avatarBytes, memberIds.size() - 1);
     } else {
       groupDatabase.create(groupId.requireMms(), name, memberIds);
@@ -81,7 +81,7 @@ final class GroupManagerV1 {
       }
       groupDatabase.onAvatarUpdated(groupId, avatarBytes != null);
 
-      long threadId = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(groupRecipient, ThreadDatabase.DistributionTypes.CONVERSATION);
+      long threadId = ShadowDatabase.threads().getOrCreateThreadIdFor(groupRecipient, ThreadDatabase.DistributionTypes.CONVERSATION);
       return new GroupActionResult(groupRecipient, threadId, memberIds.size() - 1, Collections.emptyList());
     }
   }
@@ -93,8 +93,8 @@ final class GroupManagerV1 {
                                        @Nullable String name,
                                        int newMemberCount)
   {
-    final GroupDatabase groupDatabase    = DatabaseFactory.getGroupDatabase(context);
-    final RecipientId   groupRecipientId = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
+    final GroupDatabase groupDatabase    = ShadowDatabase.groups();
+    final RecipientId   groupRecipientId = ShadowDatabase.recipients().getOrInsertFromGroupId(groupId);
 
     memberAddresses.add(Recipient.self().getId());
     groupDatabase.updateMembers(groupId, new LinkedList<>(memberAddresses));
@@ -113,7 +113,7 @@ final class GroupManagerV1 {
       return sendGroupUpdate(context, groupIdV1, memberAddresses, name, avatarBytes, newMemberCount);
     } else {
       Recipient groupRecipient = Recipient.resolved(groupRecipientId);
-      long      threadId       = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(groupRecipient);
+      long      threadId       = ShadowDatabase.threads().getOrCreateThreadIdFor(groupRecipient);
       return new GroupActionResult(groupRecipient, threadId, newMemberCount, Collections.emptyList());
     }
   }
@@ -123,10 +123,10 @@ final class GroupManagerV1 {
                                        @Nullable byte[] avatarBytes,
                                        @Nullable String name)
   {
-    GroupDatabase groupDatabase    = DatabaseFactory.getGroupDatabase(context);
-    RecipientId   groupRecipientId = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
+    GroupDatabase groupDatabase    = ShadowDatabase.groups();
+    RecipientId   groupRecipientId = ShadowDatabase.recipients().getOrInsertFromGroupId(groupId);
     Recipient     groupRecipient   = Recipient.resolved(groupRecipientId);
-    long          threadId         = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(groupRecipient);
+    long          threadId         = ShadowDatabase.threads().getOrCreateThreadIdFor(groupRecipient);
 
     groupDatabase.updateTitle(groupId, name);
     groupDatabase.onAvatarUpdated(groupId, avatarBytes != null);
@@ -148,7 +148,7 @@ final class GroupManagerV1 {
                                                    int newMemberCount)
   {
     Attachment  avatarAttachment = null;
-    RecipientId groupRecipientId = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
+    RecipientId groupRecipientId = ShadowDatabase.recipients().getOrInsertFromGroupId(groupId);
     Recipient   groupRecipient   = Recipient.resolved(groupRecipientId);
 
     List<GroupContext.Member> uuidMembers = new ArrayList<>(members.size());
@@ -193,8 +193,8 @@ final class GroupManagerV1 {
 
   @WorkerThread
   static void updateGroupTimer(@NonNull Context context, @NonNull GroupId.V1 groupId, int expirationTime) {
-    RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-    ThreadDatabase    threadDatabase    = DatabaseFactory.getThreadDatabase(context);
+    RecipientDatabase recipientDatabase = ShadowDatabase.recipients();
+    ThreadDatabase    threadDatabase    = ShadowDatabase.threads();
     Recipient         recipient         = Recipient.externalGroupExact(context, groupId);
     long              threadId          = threadDatabase.getOrCreateThreadIdFor(recipient);
 
@@ -208,7 +208,7 @@ final class GroupManagerV1 {
                                                                               @NonNull GroupId.V1 groupId,
                                                                               @NonNull Recipient groupRecipient)
   {
-    GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
+    GroupDatabase groupDatabase = ShadowDatabase.groups();
 
     if (!groupDatabase.isActive(groupId)) {
       Log.w(TAG, "Group has already been left.");

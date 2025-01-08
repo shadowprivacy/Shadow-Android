@@ -9,7 +9,6 @@ import androidx.annotation.NonNull;
 import java.util.LinkedList;
 import java.util.List;
 
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.PendingRetryReceiptModel;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.CursorUtil;
@@ -39,7 +38,7 @@ public final class PendingRetryReceiptDatabase extends Database {
                                             THREAD_ID + " INTEGER NOT NULL, " +
                                             "UNIQUE(" + AUTHOR + "," + SENT_TIMESTAMP + ") ON CONFLICT REPLACE);";
 
-  PendingRetryReceiptDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  PendingRetryReceiptDatabase(Context context, ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 

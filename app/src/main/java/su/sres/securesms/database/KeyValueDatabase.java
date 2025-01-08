@@ -14,6 +14,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.DatabaseSecret;
 import su.sres.securesms.crypto.DatabaseSecretProvider;
 import su.sres.securesms.keyvalue.KeyValueDataSet;
+import su.sres.securesms.keyvalue.KeyValuePersistentStorage;
 import su.sres.securesms.util.CursorUtil;
 
 import java.util.Collection;
@@ -25,7 +26,7 @@ import java.util.Map;
  * This is it's own separate physical database, so it cannot do joins or queries with any other
  * tables.
  */
-public class KeyValueDatabase extends SQLiteOpenHelper implements SignalDatabase {
+public class KeyValueDatabase extends SQLiteOpenHelper implements ShadowDatabaseOpenHelper, KeyValuePersistentStorage {
 
   private static final String TAG = Log.tag(KeyValueDatabase.class);
 
@@ -71,9 +72,9 @@ public class KeyValueDatabase extends SQLiteOpenHelper implements SignalDatabase
 
     db.execSQL(CREATE_TABLE);
 
-    if (DatabaseFactory.getInstance(application).hasTable("key_value")) {
+    if (ShadowDatabase.hasTable("key_value")) {
       Log.i(TAG, "Found old key_value table. Migrating data.");
-      migrateDataFromPreviousDatabase(DatabaseFactory.getInstance(application).getRawDatabase(), db);
+      migrateDataFromPreviousDatabase(ShadowDatabase.getRawDatabase(), db);
     }
   }
 
@@ -90,13 +91,14 @@ public class KeyValueDatabase extends SQLiteOpenHelper implements SignalDatabase
     db.setForeignKeyConstraintsEnabled(true);
 
     SignalExecutors.BOUNDED.execute(() -> {
-      if (DatabaseFactory.getInstance(application).hasTable("key_value")) {
+      if (ShadowDatabase.hasTable("key_value")) {
         Log.i(TAG, "Dropping original key_value table from the main database.");
-        DatabaseFactory.getInstance(application).getRawDatabase().execSQL("DROP TABLE key_value");
+        ShadowDatabase.getRawDatabase().execSQL("DROP TABLE key_value");
       }
     });
   }
 
+  @Override
   public @NonNull KeyValueDataSet getDataSet() {
     KeyValueDataSet dataSet = new KeyValueDataSet();
 
@@ -131,6 +133,7 @@ public class KeyValueDatabase extends SQLiteOpenHelper implements SignalDatabase
     return dataSet;
   }
 
+  @Override
   public void writeDataSet(@NonNull KeyValueDataSet dataSet, @NonNull Collection<String> removes) {
     SQLiteDatabase db = getWritableDatabase();
 

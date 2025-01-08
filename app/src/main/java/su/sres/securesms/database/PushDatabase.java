@@ -9,7 +9,6 @@ import androidx.annotation.NonNull;
 import su.sres.core.util.logging.Log;
 
 
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.util.Base64;
 
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -50,7 +49,7 @@ public class PushDatabase extends Database {
                                             SERVER_DELIVERED_TIMESTAMP + " INTEGER DEFAULT 0, " +
                                             SERVER_GUID + " TEXT DEFAULT NULL);";
 
-  public PushDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public PushDatabase(Context context, ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 

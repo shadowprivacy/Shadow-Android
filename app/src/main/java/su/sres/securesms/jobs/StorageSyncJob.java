@@ -9,9 +9,9 @@ import com.annimon.stream.Stream;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.UnknownStorageIdDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
@@ -167,7 +167,7 @@ public class StorageSyncJob extends BaseJob {
     return;
         /* }
 
-        if (!TextSecurePreferences.isPushRegistered(context)) {
+        if (!SignalStore.account().isRegistered()) {
             Log.i(TAG, "Not registered. Skipping.");
             return;
         }
@@ -206,9 +206,9 @@ public class StorageSyncJob extends BaseJob {
 
   private boolean performSync() throws IOException, RetryLaterException, InvalidKeyException {
     final Stopwatch                   stopwatch         = new Stopwatch("StorageSync");
-    final SQLiteDatabase              db                = DatabaseFactory.getInstance(context).getRawDatabase();
+    final SQLiteDatabase              db                = ShadowDatabase.getRawDatabase();
     final SignalServiceAccountManager accountManager    = ApplicationDependencies.getSignalServiceAccountManager();
-    final UnknownStorageIdDatabase    storageIdDatabase = DatabaseFactory.getUnknownStorageIdDatabase(context);
+    final UnknownStorageIdDatabase    storageIdDatabase = ShadowDatabase.unknownStorageIds();
     final StorageKey                  storageServiceKey = SignalStore.storageService().getOrCreateStorageKey();
 
     final SignalStorageManifest localManifest  = SignalStore.storageService().getManifest();
@@ -222,7 +222,7 @@ public class StorageSyncJob extends BaseJob {
 
     if (self.getStorageServiceId() == null) {
       Log.w(TAG, "No storageId for self. Generating.");
-      DatabaseFactory.getRecipientDatabase(context).updateStorageId(self.getId(), StorageSyncHelper.generateKey());
+      ShadowDatabase.recipients().updateStorageId(self.getId(), StorageSyncHelper.generateKey());
       self = freshSelf();
     }
 
@@ -374,17 +374,17 @@ public class StorageSyncJob extends BaseJob {
   }
 
   private static @NonNull List<StorageId> getAllLocalStorageIds(@NonNull Context context, @NonNull Recipient self) {
-    return Util.concatenatedList(DatabaseFactory.getRecipientDatabase(context).getContactStorageSyncIds(),
+    return Util.concatenatedList(ShadowDatabase.recipients().getContactStorageSyncIds(),
                                  Collections.singletonList(StorageId.forAccount(self.getStorageServiceId())),
-                                 DatabaseFactory.getUnknownStorageIdDatabase(context).getAllUnknownIds());
+                                 ShadowDatabase.unknownStorageIds().getAllUnknownIds());
   }
 
   private static @NonNull List<SignalStorageRecord> buildLocalStorageRecords(@NonNull Context context, @NonNull Recipient self, @NonNull Collection<StorageId> ids) {
     if (ids.isEmpty()) {
       return Collections.emptyList();
     }
-    RecipientDatabase        recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-    UnknownStorageIdDatabase storageIdDatabase = DatabaseFactory.getUnknownStorageIdDatabase(context);
+    RecipientDatabase        recipientDatabase = ShadowDatabase.recipients();
+    UnknownStorageIdDatabase storageIdDatabase = ShadowDatabase.unknownStorageIds();
 
     List<SignalStorageRecord> records = new ArrayList<>(ids.size());
 

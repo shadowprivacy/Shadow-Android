@@ -21,15 +21,13 @@ import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 
 import androidx.core.app.RemoteInput;
 
 import su.sres.core.util.concurrent.SignalExecutors;
-import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase.MarkedMessageInfo;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.mms.OutgoingMediaMessage;
 import su.sres.securesms.notifications.v2.MessageNotifierV2;
@@ -113,7 +111,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
 
         ApplicationDependencies.getMessageNotifier().addStickyThread(threadId, intent.getLongExtra(EARLIEST_TIMESTAMP, System.currentTimeMillis()));
 
-        List<MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context).setRead(threadId, true);
+        List<MarkedMessageInfo> messageIds = ShadowDatabase.threads().setRead(threadId, true);
 
         ApplicationDependencies.getMessageNotifier().updateNotification(context);
         MarkReadReceiver.process(context, messageIds);

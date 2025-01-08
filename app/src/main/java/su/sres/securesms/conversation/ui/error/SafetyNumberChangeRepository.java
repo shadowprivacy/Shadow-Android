@@ -13,8 +13,8 @@ import com.annimon.stream.Stream;
 import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.crypto.SessionUtil;
 import su.sres.securesms.crypto.storage.TextSecureIdentityKeyStore;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsSmsDatabase;
@@ -83,9 +83,9 @@ final class SafetyNumberChangeRepository {
     try {
       switch (messageType) {
         case MmsSmsDatabase.SMS_TRANSPORT:
-          return DatabaseFactory.getSmsDatabase(context).getMessageRecord(messageId);
+          return ShadowDatabase.sms().getMessageRecord(messageId);
         case MmsSmsDatabase.MMS_TRANSPORT:
-          return DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId);
+          return ShadowDatabase.mms().getMessageRecord(messageId);
         default:
           throw new AssertionError("no valid message type specified");
       }
@@ -137,7 +137,7 @@ final class SafetyNumberChangeRepository {
           Log.i(TAG, "Archiving sessions explicitly as they appear to be out of sync.");
           SessionUtil.archiveSession(changedRecipient.getRecipient().getId(), SignalServiceAddress.DEFAULT_DEVICE_ID);
           SessionUtil.archiveSiblingSessions(mismatchAddress);
-          DatabaseFactory.getSenderKeySharedDatabase(context).deleteAllFor(changedRecipient.getRecipient().getId());
+          ShadowDatabase.senderKeyShared().deleteAllFor(changedRecipient.getRecipient().getId());
         }
       }
     }
@@ -152,8 +152,8 @@ final class SafetyNumberChangeRepository {
   @WorkerThread
   private void processOutgoingMessageRecord(@NonNull List<ChangedRecipient> changedRecipients, @NonNull MessageRecord messageRecord) {
     Log.d(TAG, "processOutgoingMessageRecord");
-    MessageDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
-    MessageDatabase mmsDatabase = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase smsDatabase = ShadowDatabase.sms();
+    MessageDatabase mmsDatabase = ShadowDatabase.mms();
 
     for (ChangedRecipient changedRecipient : changedRecipients) {
       RecipientId id          = changedRecipient.getRecipient().getId();

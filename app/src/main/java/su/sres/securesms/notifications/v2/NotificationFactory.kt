@@ -20,7 +20,7 @@ import su.sres.core.util.logging.Log
 import su.sres.securesms.MainActivity
 import su.sres.securesms.R
 import su.sres.securesms.conversation.ConversationIntents
-import su.sres.securesms.database.DatabaseFactory
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.database.model.InMemoryMessageRecord
 import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.notifications.NotificationChannels
@@ -380,7 +380,7 @@ object NotificationFactory {
       Log.i(TAG, "Security exception when posting notification, clearing ringtone")
       if (threadRecipient != null) {
         SignalExecutors.BOUNDED.execute {
-          DatabaseFactory.getRecipientDatabase(context).setMessageRingtone(threadRecipient.id, null)
+          ShadowDatabase.recipients.setMessageRingtone(threadRecipient.id, null)
           NotificationChannels.updateMessageRingtone(context, threadRecipient, null)
         }
       }

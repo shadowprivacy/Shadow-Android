@@ -10,7 +10,7 @@ import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.database.AttachmentDatabase;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
@@ -55,7 +55,7 @@ public abstract class SendJob extends BaseJob {
     if (message.getOutgoingQuote() != null) {
       attachments.addAll(message.getOutgoingQuote().getAttachments());
     }
-    AttachmentDatabase database = DatabaseFactory.getAttachmentDatabase(context);
+    AttachmentDatabase database = ShadowDatabase.attachments();
 
     for (Attachment attachment : attachments) {
       database.markAttachmentUploaded(messageId, attachment);

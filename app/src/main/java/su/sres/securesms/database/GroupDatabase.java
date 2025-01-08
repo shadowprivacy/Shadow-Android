@@ -35,7 +35,6 @@ import su.sres.storageservice.protos.groups.local.DecryptedGroupChange;
 import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.groups.GroupMasterKey;
 
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
@@ -134,7 +133,7 @@ public final class GroupDatabase extends Database {
 
   static final List<String> TYPED_GROUP_PROJECTION = Stream.of(GROUP_PROJECTION).map(columnName -> TABLE_NAME + "." + columnName).toList();
 
-  public GroupDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public GroupDatabase(Context context, ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 
@@ -533,7 +532,7 @@ public final class GroupDatabase extends Database {
                       @Nullable GroupMasterKey groupMasterKey,
                       @Nullable DecryptedGroup groupState)
   {
-    RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase recipientDatabase = ShadowDatabase.recipients();
     RecipientId       groupRecipientId  = recipientDatabase.getOrInsertFromGroupId(groupId);
     List<RecipientId> members           = new ArrayList<>(new HashSet<>(memberCollection));
 
@@ -621,7 +620,7 @@ public final class GroupDatabase extends Database {
                                                       GROUP_ID + " = ?",
                                                       new String[] { groupId.toString() });
 
-    RecipientId groupRecipient = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
+    RecipientId groupRecipient = ShadowDatabase.recipients().getOrInsertFromGroupId(groupId);
     Recipient.live(groupRecipient).refresh();
 
     notifyConversationListListeners();
@@ -667,11 +666,11 @@ public final class GroupDatabase extends Database {
         throw new AssertionError();
       }
 
-      DatabaseFactory.getRecipientDatabase(context).updateGroupId(groupIdV1, groupIdV2);
+      ShadowDatabase.recipients().updateGroupId(groupIdV1, groupIdV2);
 
       update(groupMasterKey, decryptedGroup);
 
-      DatabaseFactory.getSmsDatabase(context).insertGroupV1MigrationEvents(record.getRecipientId(),
+      ShadowDatabase.sms().insertGroupV1MigrationEvents(record.getRecipientId(),
                                                                            threadId,
                                                                            new GroupMigrationMembershipChange(pendingMembers, droppedMembers));
 
@@ -688,7 +687,7 @@ public final class GroupDatabase extends Database {
   }
 
   public void update(@NonNull GroupId.V2 groupId, @NonNull DecryptedGroup decryptedGroup) {
-    RecipientDatabase     recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase     recipientDatabase = ShadowDatabase.recipients();
     RecipientId           groupRecipientId  = recipientDatabase.getOrInsertFromGroupId(groupId);
     Optional<GroupRecord> existingGroup     = getGroup(groupId);
     String                title             = decryptedGroup.getTitle();
@@ -767,7 +766,7 @@ public final class GroupDatabase extends Database {
     databaseHelper.getSignalWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID + " = ?",
                                                       new String[] { groupId.toString() });
 
-    RecipientId groupRecipient = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
+    RecipientId groupRecipient = ShadowDatabase.recipients().getOrInsertFromGroupId(groupId);
     Recipient.live(groupRecipient).refresh();
   }
 
@@ -781,7 +780,7 @@ public final class GroupDatabase extends Database {
     databaseHelper.getSignalWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID + " = ?",
                                                       new String[] { groupId.toString() });
 
-    RecipientId groupRecipient = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
+    RecipientId groupRecipient = ShadowDatabase.recipients().getOrInsertFromGroupId(groupId);
     Recipient.live(groupRecipient).refresh();
   }
 
@@ -795,7 +794,7 @@ public final class GroupDatabase extends Database {
     databaseHelper.getSignalWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?",
                                                       new String[] { groupId.toString() });
 
-    RecipientId groupRecipient = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
+    RecipientId groupRecipient = ShadowDatabase.recipients().getOrInsertFromGroupId(groupId);
     Recipient.live(groupRecipient).refresh();
   }
 
@@ -809,7 +808,7 @@ public final class GroupDatabase extends Database {
     databaseHelper.getSignalWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?",
                                                       new String[] { groupId.toString() });
 
-    RecipientId groupRecipient = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
+    RecipientId groupRecipient = ShadowDatabase.recipients().getOrInsertFromGroupId(groupId);
     Recipient.live(groupRecipient).refresh();
   }
 

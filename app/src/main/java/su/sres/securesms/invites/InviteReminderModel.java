@@ -9,8 +9,7 @@ import androidx.annotation.WorkerThread;
 import su.sres.securesms.components.reminder.SecondInviteReminder;
 import su.sres.securesms.components.reminder.FirstInviteReminder;
 import su.sres.securesms.components.reminder.Reminder;
-import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.database.MmsSmsDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.recipients.LiveRecipient;
 import su.sres.securesms.recipients.Recipient;
@@ -49,11 +48,11 @@ public final class InviteReminderModel {
             return new NoReminderInfo();
         }
 
-        ThreadDatabase threadDatabase = DatabaseFactory.getThreadDatabase(context);
+        ThreadDatabase threadDatabase = ShadowDatabase.threads();
         Long threadId                 = threadDatabase.getThreadIdFor(recipient.getId());
 
         if (threadId != null) {
-            int conversationCount = DatabaseFactory.getMmsSmsDatabase(context).getInsecureSentCount(threadId);
+            int conversationCount = ShadowDatabase.mmsSms().getInsecureSentCount(threadId);
 
             if (conversationCount >= SECOND_INVITE_REMINDER_MESSAGE_THRESHOLD && !resolved.hasSeenSecondInviteReminder()) {
                 return new SecondInviteReminderInfo(context, resolved, repository, repository.getPercentOfInsecureMessages(conversationCount));

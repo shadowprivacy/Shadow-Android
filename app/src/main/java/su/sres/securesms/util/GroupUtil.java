@@ -9,8 +9,8 @@ import androidx.annotation.WorkerThread;
 import com.google.protobuf.ByteString;
 
 import su.sres.securesms.R;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.groups.BadGroupIdException;
 import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;
@@ -122,7 +122,7 @@ public final class GroupUtil {
                                                 @NonNull GroupId.Push groupId)
   {
     if (groupId.isV2()) {
-      GroupDatabase                   groupDatabase     = DatabaseFactory.getGroupDatabase(context);
+      GroupDatabase                   groupDatabase     = ShadowDatabase.groups();
       GroupDatabase.GroupRecord       groupRecord       = groupDatabase.requireGroup(groupId);
       GroupDatabase.V2GroupProperties v2GroupProperties = groupRecord.requireV2GroupProperties();
       SignalServiceGroupV2            group             = SignalServiceGroupV2.newBuilder(v2GroupProperties.getGroupMasterKey())

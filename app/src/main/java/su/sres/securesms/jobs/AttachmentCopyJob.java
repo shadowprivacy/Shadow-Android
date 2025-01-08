@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.database.AttachmentDatabase;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.util.JsonUtils;
@@ -75,7 +75,7 @@ public class AttachmentCopyJob extends BaseJob {
 
     @Override
     protected void onRun() throws Exception {
-        AttachmentDatabase database = DatabaseFactory.getAttachmentDatabase(context);
+        AttachmentDatabase database = ShadowDatabase.attachments();
 
         for (AttachmentId destinationId : destinationIds) {
             database.copyAttachmentData(sourceId, destinationId);

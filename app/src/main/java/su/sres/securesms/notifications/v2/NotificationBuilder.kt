@@ -18,9 +18,9 @@ import androidx.core.graphics.drawable.IconCompat
 import org.whispersystems.libsignal.util.guava.Optional
 import su.sres.securesms.R
 import su.sres.securesms.conversation.ConversationIntents
-import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.database.GroupDatabase
 import su.sres.securesms.database.RecipientDatabase
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.notifications.NotificationChannels
 import su.sres.securesms.notifications.ReplyMethod
@@ -118,7 +118,7 @@ sealed class NotificationBuilder(protected val context: Context) {
   fun addReplyActions(conversation: NotificationConversation) {
     if (privacy.isDisplayMessage && isNotLocked && !conversation.recipient.isPushV1Group && RecipientUtil.isMessageRequestAccepted(context, conversation.recipient)) {
       if (conversation.recipient.isPushV2Group) {
-        val group: Optional<GroupDatabase.GroupRecord> = DatabaseFactory.getGroupDatabase(context).getGroup(conversation.recipient.requireGroupId())
+        val group: Optional<GroupDatabase.GroupRecord> = ShadowDatabase.groups.getGroup(conversation.recipient.requireGroupId())
         if (group.isPresent && group.get().isAnnouncementGroup && !group.get().isAdmin(Recipient.self())) {
           return
         }

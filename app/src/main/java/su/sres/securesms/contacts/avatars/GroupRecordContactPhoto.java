@@ -5,8 +5,8 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.core.util.Conversions;
@@ -28,7 +28,7 @@ public final class GroupRecordContactPhoto implements ContactPhoto {
 
   @Override
   public InputStream openInputStream(Context context) throws IOException {
-    GroupDatabase                       groupDatabase = DatabaseFactory.getGroupDatabase(context);
+    GroupDatabase                       groupDatabase = ShadowDatabase.groups();
     Optional<GroupDatabase.GroupRecord> groupRecord   = groupDatabase.getGroup(groupId);
 
     if (!groupRecord.isPresent() || !AvatarHelper.hasAvatar(context, groupRecord.get().getRecipientId())) {

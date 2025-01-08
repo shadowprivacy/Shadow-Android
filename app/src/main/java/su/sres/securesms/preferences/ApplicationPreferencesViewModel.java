@@ -11,8 +11,8 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProviders;
 
 import su.sres.securesms.R;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MediaDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.preferences.widgets.StorageGraphView;
 import su.sres.core.util.concurrent.SignalExecutors;
 
@@ -32,7 +32,7 @@ public class ApplicationPreferencesViewModel extends ViewModel {
 
     void refreshStorageBreakdown(@NonNull Context context) {
         SignalExecutors.BOUNDED.execute(() -> {
-            MediaDatabase.StorageBreakdown breakdown = DatabaseFactory.getMediaDatabase(context)
+            MediaDatabase.StorageBreakdown breakdown = ShadowDatabase.media()
                     .getStorageBreakdown();
 
             StorageGraphView.StorageBreakdown latestStorageBreakdown = new StorageGraphView.StorageBreakdown(Arrays.asList(

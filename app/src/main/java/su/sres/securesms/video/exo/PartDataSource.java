@@ -11,7 +11,7 @@ import com.google.android.exoplayer2.upstream.TransferListener;
 
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.database.AttachmentDatabase;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.mms.PartUriParser;
 
 import java.io.EOFException;
@@ -42,7 +42,7 @@ class PartDataSource implements DataSource {
   public long open(DataSpec dataSpec) throws IOException {
     this.uri = dataSpec.uri;
 
-    AttachmentDatabase attachmentDatabase = DatabaseFactory.getAttachmentDatabase(context);
+    AttachmentDatabase attachmentDatabase = ShadowDatabase.attachments();
     PartUriParser      partUri            = new PartUriParser(uri);
     Attachment         attachment         = attachmentDatabase.getAttachment(partUri.getPartId());
 

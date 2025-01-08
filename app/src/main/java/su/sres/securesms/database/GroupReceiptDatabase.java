@@ -9,7 +9,6 @@ import androidx.annotation.Nullable;
 
 import org.whispersystems.libsignal.util.Pair;
 
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.SqlUtil;
 
@@ -42,7 +41,7 @@ public class GroupReceiptDatabase extends Database {
       "CREATE INDEX IF NOT EXISTS group_receipt_mms_id_index ON " + TABLE_NAME + " (" + MMS_ID + ");",
   };
 
-  public GroupReceiptDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public GroupReceiptDatabase(Context context, ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 

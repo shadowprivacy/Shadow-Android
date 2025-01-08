@@ -1,89 +1,90 @@
 package su.sres.securesms.stickers;
 
 import android.app.Application;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
-import android.database.ContentObserver;
+
 import androidx.annotation.NonNull;
+
 import android.text.TextUtils;
 
-import su.sres.securesms.database.DatabaseContentProviders;
+import su.sres.securesms.database.DatabaseObserver;
+import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.stickers.StickerPackPreviewRepository.StickerManifestResult;
+
 import org.whispersystems.libsignal.util.guava.Optional;
 
 final class StickerPackPreviewViewModel extends ViewModel {
 
-    private final Application                                      application;
-    private final StickerPackPreviewRepository                     previewRepository;
-    private final StickerManagementRepository                      managementRepository;
-    private final MutableLiveData<Optional<StickerManifestResult>> stickerManifest;
-    private final ContentObserver                                  packObserver;
+  private final Application                                      application;
+  private final StickerPackPreviewRepository                     previewRepository;
+  private final StickerManagementRepository                      managementRepository;
+  private final MutableLiveData<Optional<StickerManifestResult>> stickerManifest;
+  private final DatabaseObserver.Observer                        packObserver;
 
-    private String packId;
-    private String packKey;
+  private String packId;
+  private String packKey;
 
-    private StickerPackPreviewViewModel(@NonNull Application application,
-                                        @NonNull StickerPackPreviewRepository previewRepository,
-                                        @NonNull StickerManagementRepository  managementRepository)
-    {
-        this.application          = application;
-        this.previewRepository    = previewRepository;
-        this.managementRepository = managementRepository;
-        this.stickerManifest      = new MutableLiveData<>();
-        this.packObserver         = new ContentObserver(null) {
-            @Override
-            public void onChange(boolean selfChange) {
-                if (!TextUtils.isEmpty(packId) && !TextUtils.isEmpty(packKey)) {
-                    previewRepository.getStickerManifest(packId, packKey, stickerManifest::postValue);
-                }
-            }
-        };
-
-        application.getContentResolver().registerContentObserver(DatabaseContentProviders.StickerPack.CONTENT_URI, true, packObserver);
-    }
-
-    LiveData<Optional<StickerManifestResult>> getStickerManifest(@NonNull String packId, @NonNull String packKey) {
-        this.packId  = packId;
-        this.packKey = packKey;
-
+  private StickerPackPreviewViewModel(@NonNull Application application,
+                                      @NonNull StickerPackPreviewRepository previewRepository,
+                                      @NonNull StickerManagementRepository managementRepository)
+  {
+    this.application          = application;
+    this.previewRepository    = previewRepository;
+    this.managementRepository = managementRepository;
+    this.stickerManifest      = new MutableLiveData<>();
+    this.packObserver         = () -> {
+      if (!TextUtils.isEmpty(packId) && !TextUtils.isEmpty(packKey)) {
         previewRepository.getStickerManifest(packId, packKey, stickerManifest::postValue);
+      }
+    };
 
-        return stickerManifest;
-    }
+    ApplicationDependencies.getDatabaseObserver().registerStickerPackObserver(packObserver);
+  }
 
-    void onInstallClicked() {
-        managementRepository.installStickerPack(packId, packKey, true);
-    }
+  LiveData<Optional<StickerManifestResult>> getStickerManifest(@NonNull String packId, @NonNull String packKey) {
+    this.packId  = packId;
+    this.packKey = packKey;
 
-    void onRemoveClicked() {
-        managementRepository.uninstallStickerPack(packId, packKey);
+    previewRepository.getStickerManifest(packId, packKey, stickerManifest::postValue);
+
+    return stickerManifest;
+  }
+
+  void onInstallClicked() {
+    managementRepository.installStickerPack(packId, packKey, true);
+  }
+
+  void onRemoveClicked() {
+    managementRepository.uninstallStickerPack(packId, packKey);
+  }
+
+  @Override
+  protected void onCleared() {
+    ApplicationDependencies.getDatabaseObserver().unregisterObserver(packObserver);
+  }
+
+  static class Factory extends ViewModelProvider.NewInstanceFactory {
+    private final Application                  application;
+    private final StickerPackPreviewRepository previewRepository;
+    private final StickerManagementRepository  managementRepository;
+
+    Factory(@NonNull Application application,
+            @NonNull StickerPackPreviewRepository previewRepository,
+            @NonNull StickerManagementRepository managementRepository)
+    {
+      this.application          = application;
+      this.previewRepository    = previewRepository;
+      this.managementRepository = managementRepository;
     }
 
     @Override
-    protected void onCleared() {
-        application.getContentResolver().unregisterContentObserver(packObserver);
+    public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
+      //noinspection ConstantConditions
+      return modelClass.cast(new StickerPackPreviewViewModel(application, previewRepository, managementRepository));
     }
-
-    static class Factory extends ViewModelProvider.NewInstanceFactory {
-        private final Application                  application;
-        private final StickerPackPreviewRepository previewRepository;
-        private final StickerManagementRepository  managementRepository;
-
-        Factory(@NonNull Application application,
-                @NonNull StickerPackPreviewRepository previewRepository,
-                @NonNull StickerManagementRepository managementRepository)
-        {
-            this.application          = application;
-            this.previewRepository    = previewRepository;
-            this.managementRepository = managementRepository;
-        }
-
-        @Override
-        public @NonNull<T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-            //noinspection ConstantConditions
-            return modelClass.cast(new StickerPackPreviewViewModel(application, previewRepository, managementRepository));
-        }
-    }
+  }
 }

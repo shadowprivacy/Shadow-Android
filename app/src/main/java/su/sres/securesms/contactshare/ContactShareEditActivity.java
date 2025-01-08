@@ -1,22 +1,26 @@
 package su.sres.securesms.contactshare;
 
 import android.app.Activity;
+
 import androidx.lifecycle.ViewModelProviders;
+
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.view.View;
 import android.widget.Toast;
 
 import su.sres.securesms.PassphraseRequiredActivity;
 import su.sres.securesms.R;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.mms.GlideApp;
 import su.sres.securesms.util.DynamicLanguage;
 import su.sres.securesms.util.DynamicTheme;
@@ -29,7 +33,7 @@ import static su.sres.securesms.contactshare.ContactShareEditViewModel.*;
 
 public class ContactShareEditActivity extends PassphraseRequiredActivity implements ContactShareEditAdapter.EventListener {
 
-  public  static final String KEY_CONTACTS     = "contacts";
+  public static final  String KEY_CONTACTS     = "contacts";
   private static final String KEY_CONTACT_URIS = "contact_uris";
   private static final int    CODE_NAME_EDIT   = 55;
 
@@ -76,8 +80,8 @@ public class ContactShareEditActivity extends PassphraseRequiredActivity impleme
     contactList.setAdapter(contactAdapter);
 
     SharedContactRepository contactRepository = new SharedContactRepository(this,
-                                                                AsyncTask.THREAD_POOL_EXECUTOR,
-                                                                DatabaseFactory.getContactsDatabase(this));
+                                                                            AsyncTask.THREAD_POOL_EXECUTOR,
+                                                                            ShadowDatabase.contacts());
 
     viewModel = ViewModelProviders.of(this, new Factory(contactUris, contactRepository)).get(ContactShareEditViewModel.class);
     viewModel.getContacts().observe(this, contacts -> {

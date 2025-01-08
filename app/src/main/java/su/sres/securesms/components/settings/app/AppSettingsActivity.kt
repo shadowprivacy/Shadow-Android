@@ -55,8 +55,9 @@ class AppSettingsActivity : DSLSettingsActivity(), DonationPaymentComponent {
         StartLocation.PROXY -> AppSettingsFragmentDirections.actionDirectToEditProxyFragment()
         StartLocation.NOTIFICATIONS -> AppSettingsFragmentDirections.actionDirectToNotificationsSettingsFragment()
         StartLocation.CHANGE_USER_LOGIN -> AppSettingsFragmentDirections.actionDirectToChangeUserLoginFragment()
-        StartLocation.SUBSCRIPTIONS -> AppSettingsFragmentDirections.actionDirectToSubscriptions().setSkipToSubscribe(true)
-        StartLocation.MANAGE_SUBSCRIPTIONS -> AppSettingsFragmentDirections.actionDirectToSubscriptions()
+        StartLocation.SUBSCRIPTIONS -> AppSettingsFragmentDirections.actionDirectToSubscriptions()
+        StartLocation.BOOST -> AppSettingsFragmentDirections.actionAppSettingsFragmentToBoostsFragment()
+        StartLocation.MANAGE_SUBSCRIPTIONS -> AppSettingsFragmentDirections.actionDirectToManageDonations()
       }
     }
 
@@ -81,6 +82,12 @@ class AppSettingsActivity : DSLSettingsActivity(), DonationPaymentComponent {
         startService(intent)
       }
     }
+  }
+
+  override fun onNewIntent(intent: Intent?) {
+    super.onNewIntent(intent)
+    finish()
+    startActivity(intent)
   }
 
   override fun onSaveInstanceState(outState: Bundle) {
@@ -128,6 +135,9 @@ class AppSettingsActivity : DSLSettingsActivity(), DonationPaymentComponent {
     fun subscriptions(context: Context): Intent = getIntentForStartLocation(context, StartLocation.SUBSCRIPTIONS)
 
     @JvmStatic
+    fun boost(context: Context): Intent = getIntentForStartLocation(context, StartLocation.BOOST)
+
+    @JvmStatic
     fun manageSubscriptions(context: Context): Intent = getIntentForStartLocation(context, StartLocation.MANAGE_SUBSCRIPTIONS)
 
     private fun getIntentForStartLocation(context: Context, startLocation: StartLocation): Intent {
@@ -145,7 +155,8 @@ class AppSettingsActivity : DSLSettingsActivity(), DonationPaymentComponent {
     NOTIFICATIONS(4),
     CHANGE_USER_LOGIN(5),
     SUBSCRIPTIONS(6),
-    MANAGE_SUBSCRIPTIONS(7);
+    BOOST(7),
+    MANAGE_SUBSCRIPTIONS(8);
 
     companion object {
       fun fromCode(code: Int?): StartLocation {

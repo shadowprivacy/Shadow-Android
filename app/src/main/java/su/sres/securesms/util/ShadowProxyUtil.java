@@ -8,7 +8,6 @@ import org.conscrypt.Conscrypt;
 
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -78,7 +77,7 @@ public final class ShadowProxyUtil {
   public static boolean testWebsocketConnection(long timeout) {
     startListeningToWebsocket();
 
-    if (TextSecurePreferences.getLocalNumber(ApplicationDependencies.getApplication()) == null) {
+    if (SignalStore.account().getUserLogin() == null) {
       Log.i(TAG, "User is unregistered! Doing simple check.");
       return testWebsocketConnectionUnregistered(timeout);
     }

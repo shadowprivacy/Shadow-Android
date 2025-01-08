@@ -9,8 +9,8 @@ import androidx.core.util.Consumer;
 import java.util.Collections;
 import java.util.List;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.identity.IdentityRecordList;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.recipients.Recipient;
@@ -30,7 +30,7 @@ class WebRtcCallRepository {
       List<Recipient> recipients;
 
       if (recipient.isGroup()) {
-        recipients = DatabaseFactory.getGroupDatabase(context).getGroupMembers(recipient.requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
+        recipients = ShadowDatabase.groups().getGroupMembers(recipient.requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
       } else {
         recipients = Collections.singletonList(recipient);
       }

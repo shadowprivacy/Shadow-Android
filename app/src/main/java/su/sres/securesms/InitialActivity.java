@@ -50,7 +50,6 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 
 import java.security.cert.Certificate;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -154,6 +153,7 @@ public class InitialActivity extends AppCompatActivity implements OnClickListene
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
+        super.onRequestPermissionsResult(requestCode,permissions,grantResults);
     }
 
     @Override

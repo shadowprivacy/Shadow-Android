@@ -9,9 +9,9 @@ import org.signal.zkgroup.groups.GroupMasterKey;
 import org.signal.zkgroup.groups.GroupSecretParams;
 
 import su.sres.core.util.StreamUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupDatabase.GroupRecord;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
@@ -20,7 +20,9 @@ import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.util.ByteUnit;
+
 import org.whispersystems.libsignal.util.guava.Optional;
+
 import su.sres.signalservice.api.SignalServiceMessageReceiver;
 import su.sres.signalservice.api.groupsv2.GroupsV2Operations;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
@@ -32,126 +34,126 @@ import java.io.IOException;
 
 public final class AvatarGroupsV2DownloadJob extends BaseJob {
 
-    public static final String KEY = "AvatarGroupsV2DownloadJob";
+  public static final String KEY = "AvatarGroupsV2DownloadJob";
 
-    private static final String TAG = Log.tag(AvatarGroupsV2DownloadJob.class);
+  private static final String TAG = Log.tag(AvatarGroupsV2DownloadJob.class);
 
-    private static final long AVATAR_DOWNLOAD_FAIL_SAFE_MAX_SIZE = ByteUnit.MEGABYTES.toBytes(5);
+  private static final long AVATAR_DOWNLOAD_FAIL_SAFE_MAX_SIZE = ByteUnit.MEGABYTES.toBytes(5);
 
-    private static final String KEY_GROUP_ID = "group_id";
-    private static final String CDN_KEY      = "cdn_key";
+  private static final String KEY_GROUP_ID = "group_id";
+  private static final String CDN_KEY      = "cdn_key";
 
-    private final GroupId.V2 groupId;
-    private final String     cdnKey;
+  private final GroupId.V2 groupId;
+  private final String     cdnKey;
 
-    public AvatarGroupsV2DownloadJob(@NonNull GroupId.V2 groupId, @NonNull String cdnKey) {
-        this(new Parameters.Builder()
-                        .addConstraint(NetworkConstraint.KEY)
-                        .setQueue("AvatarGroupsV2DownloadJob::" + groupId)
-                        .setMaxAttempts(10)
-                        .build(),
-                groupId,
-                cdnKey);
+  public AvatarGroupsV2DownloadJob(@NonNull GroupId.V2 groupId, @NonNull String cdnKey) {
+    this(new Parameters.Builder()
+             .addConstraint(NetworkConstraint.KEY)
+             .setQueue("AvatarGroupsV2DownloadJob::" + groupId)
+             .setMaxAttempts(10)
+             .build(),
+         groupId,
+         cdnKey);
+  }
+
+  private AvatarGroupsV2DownloadJob(@NonNull Parameters parameters, @NonNull GroupId.V2 groupId, @NonNull String cdnKey) {
+    super(parameters);
+    this.groupId = groupId;
+    this.cdnKey  = cdnKey;
+  }
+
+  @Override
+  public @NonNull Data serialize() {
+    return new Data.Builder()
+        .putString(KEY_GROUP_ID, groupId.toString())
+        .putString(CDN_KEY, cdnKey)
+        .build();
+  }
+
+  @Override
+  public @NonNull String getFactoryKey() {
+    return KEY;
+  }
+
+  @Override
+  public void onRun() throws IOException {
+    GroupDatabase         database   = ShadowDatabase.groups();
+    Optional<GroupRecord> record     = database.getGroup(groupId);
+    File                  attachment = null;
+
+    try {
+      if (!record.isPresent()) {
+        Log.w(TAG, "Cannot download avatar for unknown group");
+        return;
+      }
+
+      if (cdnKey.length() == 0) {
+        Log.w(TAG, "Removing avatar for group " + groupId);
+        AvatarHelper.setAvatar(context, record.get().getRecipientId(), null);
+        database.onAvatarUpdated(groupId, false);
+        return;
+      }
+
+      Log.i(TAG, "Downloading new avatar for group " + groupId);
+
+      byte[] decryptedAvatar = downloadGroupAvatarBytes(context, record.get().requireV2GroupProperties().getGroupMasterKey(), cdnKey);
+
+      AvatarHelper.setAvatar(context, record.get().getRecipientId(), decryptedAvatar != null ? new ByteArrayInputStream(decryptedAvatar) : null);
+      database.onAvatarUpdated(groupId, true);
+
+    } catch (NonSuccessfulResponseCodeException e) {
+      Log.w(TAG, e);
+    }
+  }
+
+  public static @Nullable
+  byte[] downloadGroupAvatarBytes(@NonNull Context context,
+                                  @NonNull GroupMasterKey groupMasterKey,
+                                  @NonNull String cdnKey)
+      throws IOException
+  {
+    if (cdnKey.length() == 0) {
+      return null;
     }
 
-    private AvatarGroupsV2DownloadJob(@NonNull Parameters parameters, @NonNull GroupId.V2 groupId, @NonNull String cdnKey) {
-        super(parameters);
-        this.groupId = groupId;
-        this.cdnKey  = cdnKey;
-    }
+    GroupSecretParams groupSecretParams = GroupSecretParams.deriveFromMasterKey(groupMasterKey);
+    File              attachment        = File.createTempFile("avatar", "gv2", context.getCacheDir());
+    attachment.deleteOnExit();
 
-    @Override
-    public @NonNull Data serialize() {
-        return new Data.Builder()
-                .putString(KEY_GROUP_ID, groupId.toString())
-                .putString(CDN_KEY, cdnKey)
-                .build();
-    }
+    SignalServiceMessageReceiver receiver = ApplicationDependencies.getSignalServiceMessageReceiver();
+    byte[]                       encryptedData;
 
-    @Override
-    public @NonNull String getFactoryKey() {
-        return KEY;
-    }
+    try (FileInputStream inputStream = receiver.retrieveGroupsV2ProfileAvatar(cdnKey, attachment, AVATAR_DOWNLOAD_FAIL_SAFE_MAX_SIZE)) {
+      encryptedData = new byte[(int) attachment.length()];
 
-    @Override
-    public void onRun() throws IOException {
-        GroupDatabase         database   = DatabaseFactory.getGroupDatabase(context);
-        Optional<GroupRecord> record     = database.getGroup(groupId);
-        File                  attachment = null;
+      StreamUtil.readFully(inputStream, encryptedData);
 
-        try {
-            if (!record.isPresent()) {
-                Log.w(TAG, "Cannot download avatar for unknown group");
-                return;
-            }
+      GroupsV2Operations                 operations      = ApplicationDependencies.getGroupsV2Operations();
+      GroupsV2Operations.GroupOperations groupOperations = operations.forGroup(groupSecretParams);
 
-            if (cdnKey.length() == 0) {
-                Log.w(TAG, "Removing avatar for group " + groupId);
-                AvatarHelper.setAvatar(context, record.get().getRecipientId(), null);
-                database.onAvatarUpdated(groupId, false);
-                return;
-            }
-
-            Log.i(TAG, "Downloading new avatar for group " + groupId);
-
-            byte[] decryptedAvatar = downloadGroupAvatarBytes(context, record.get().requireV2GroupProperties().getGroupMasterKey(), cdnKey);
-
-            AvatarHelper.setAvatar(context, record.get().getRecipientId(), decryptedAvatar != null ? new ByteArrayInputStream(decryptedAvatar) : null);
-            database.onAvatarUpdated(groupId, true);
-
-        } catch (NonSuccessfulResponseCodeException e) {
-            Log.w(TAG, e);
+      return groupOperations.decryptAvatar(encryptedData);
+    } finally {
+      if (attachment.exists())
+        if (!attachment.delete()) {
+          Log.w(TAG, "Unable to delete temp avatar file");
         }
     }
+  }
 
-    public static @Nullable
-    byte[] downloadGroupAvatarBytes(@NonNull Context context,
-                                    @NonNull GroupMasterKey groupMasterKey,
-                                    @NonNull String cdnKey)
-            throws IOException
-    {
-        if (cdnKey.length() == 0) {
-            return null;
-        }
+  @Override
+  public void onFailure() {}
 
-        GroupSecretParams groupSecretParams = GroupSecretParams.deriveFromMasterKey(groupMasterKey);
-        File              attachment        = File.createTempFile("avatar", "gv2", context.getCacheDir());
-        attachment.deleteOnExit();
+  @Override
+  public boolean onShouldRetry(@NonNull Exception exception) {
+    return exception instanceof IOException;
+  }
 
-        SignalServiceMessageReceiver receiver      = ApplicationDependencies.getSignalServiceMessageReceiver();
-        byte[]                       encryptedData;
-
-        try (FileInputStream inputStream = receiver.retrieveGroupsV2ProfileAvatar(cdnKey, attachment, AVATAR_DOWNLOAD_FAIL_SAFE_MAX_SIZE)) {
-            encryptedData = new byte[(int) attachment.length()];
-
-            StreamUtil.readFully(inputStream, encryptedData);
-
-            GroupsV2Operations                 operations      = ApplicationDependencies.getGroupsV2Operations();
-            GroupsV2Operations.GroupOperations groupOperations = operations.forGroup(groupSecretParams);
-
-            return groupOperations.decryptAvatar(encryptedData);
-        } finally {
-            if (attachment.exists())
-                if (!attachment.delete()) {
-                    Log.w(TAG, "Unable to delete temp avatar file");
-                }
-        }
-    }
-
+  public static final class Factory implements Job.Factory<AvatarGroupsV2DownloadJob> {
     @Override
-    public void onFailure() {}
-
-    @Override
-    public boolean onShouldRetry(@NonNull Exception exception) {
-        return exception instanceof IOException;
+    public @NonNull AvatarGroupsV2DownloadJob create(@NonNull Parameters parameters, @NonNull Data data) {
+      return new AvatarGroupsV2DownloadJob(parameters,
+                                           GroupId.parseOrThrow(data.getString(KEY_GROUP_ID)).requireV2(),
+                                           data.getString(CDN_KEY));
     }
-
-    public static final class Factory implements Job.Factory<AvatarGroupsV2DownloadJob> {
-        @Override
-        public @NonNull AvatarGroupsV2DownloadJob create(@NonNull Parameters parameters, @NonNull Data data) {
-            return new AvatarGroupsV2DownloadJob(parameters,
-                    GroupId.parseOrThrow(data.getString(KEY_GROUP_ID)).requireV2(),
-                    data.getString(CDN_KEY));
-        }
-    }
+  }
 }

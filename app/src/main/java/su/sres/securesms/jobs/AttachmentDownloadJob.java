@@ -3,6 +3,8 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import android.text.TextUtils;
+
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.JobLogger;
@@ -15,7 +17,6 @@ import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.blurhash.BlurHash;
 import su.sres.securesms.database.AttachmentDatabase;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.PartProgressEvent;
 import su.sres.securesms.mms.MmsException;
@@ -97,7 +98,7 @@ public final class AttachmentDownloadJob extends BaseJob {
   public void onAdded() {
     Log.i(TAG, "onAdded() messageId: " + messageId + "  partRowId: " + partRowId + "  partUniqueId: " + partUniqueId + "  manual: " + manual);
 
-    final AttachmentDatabase database     = DatabaseFactory.getAttachmentDatabase(context);
+    final AttachmentDatabase database     = ShadowDatabase.attachments();
     final AttachmentId       attachmentId = new AttachmentId(partRowId, partUniqueId);
     final DatabaseAttachment attachment   = database.getAttachment(attachmentId);
     final boolean            pending      = attachment != null && attachment.getTransferState() != AttachmentDatabase.TRANSFER_PROGRESS_DONE;
@@ -117,7 +118,7 @@ public final class AttachmentDownloadJob extends BaseJob {
   public void doWork() throws IOException, RetryLaterException {
     Log.i(TAG, "onRun() messageId: " + messageId + "  partRowId: " + partRowId + "  partUniqueId: " + partUniqueId + "  manual: " + manual);
 
-    final AttachmentDatabase database     = DatabaseFactory.getAttachmentDatabase(context);
+    final AttachmentDatabase database     = ShadowDatabase.attachments();
     final AttachmentId       attachmentId = new AttachmentId(partRowId, partUniqueId);
     final DatabaseAttachment attachment   = database.getAttachment(attachmentId);
 
@@ -163,7 +164,7 @@ public final class AttachmentDownloadJob extends BaseJob {
           throws IOException, RetryLaterException
   {
 
-    AttachmentDatabase database       = DatabaseFactory.getAttachmentDatabase(context);
+    AttachmentDatabase database       = ShadowDatabase.attachments();
     File               attachmentFile = database.getOrCreateTransferFile(attachmentId);
 
     try {
@@ -227,7 +228,7 @@ public final class AttachmentDownloadJob extends BaseJob {
 
   private void markFailed(long messageId, AttachmentId attachmentId) {
     try {
-      AttachmentDatabase database = DatabaseFactory.getAttachmentDatabase(context);
+      AttachmentDatabase database = ShadowDatabase.attachments();
       database.setTransferProgressFailed(attachmentId, messageId);
     } catch (MmsException e) {
       Log.w(TAG, e);

@@ -16,6 +16,7 @@ import su.sres.securesms.database.RecipientDatabase.RegisteredState;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
 import su.sres.securesms.database.RecipientDatabase.VibrateState;
 import su.sres.securesms.groups.GroupId;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
@@ -201,13 +202,13 @@ public class RecipientDetails {
 
   public static @NonNull RecipientDetails forIndividual(@NonNull Context context, @NonNull RecipientSettings settings) {
     boolean systemContact = !settings.getSystemProfileName().isEmpty();
-    boolean isSelf = (settings.getE164() != null && settings.getE164().equals(TextSecurePreferences.getLocalNumber(context))) ||
-                     (settings.getAci() != null && settings.getAci().equals(TextSecurePreferences.getLocalAci(context)));
+    boolean isSelf        = (settings.getE164() != null && settings.getE164().equals(SignalStore.account().getUserLogin())) ||
+                            (settings.getAci() != null && settings.getAci().equals(SignalStore.account().getAci()));
 
     RegisteredState registeredState = settings.getRegistered();
 
     if (isSelf) {
-      if (TextSecurePreferences.isPushRegistered(context) && !TextSecurePreferences.isUnauthorizedRecieved(context)) {
+      if (SignalStore.account().isRegistered() && !TextSecurePreferences.isUnauthorizedRecieved(context)) {
         registeredState = RegisteredState.REGISTERED;
       } else {
         registeredState = RegisteredState.NOT_REGISTERED;

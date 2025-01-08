@@ -1,10 +1,12 @@
 package su.sres.securesms.jobs;
 
 import android.Manifest;
+
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.backup.BackupFileIOError;
 import su.sres.securesms.backup.BackupPassphrase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -15,7 +17,6 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
 import su.sres.securesms.backup.FullBackupExporter;
 import su.sres.securesms.crypto.AttachmentSecretProvider;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoExternalStorageException;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.permissions.Permissions;
@@ -44,9 +45,9 @@ public final class LocalBackupJob extends BaseJob {
   public static void enqueue(boolean force) {
     JobManager jobManager = ApplicationDependencies.getJobManager();
     Parameters.Builder parameters = new Parameters.Builder()
-            .setQueue(QUEUE)
-            .setMaxInstancesForFactory(1)
-            .setMaxAttempts(3);
+        .setQueue(QUEUE)
+        .setMaxInstancesForFactory(1)
+        .setMaxAttempts(3);
     if (force) {
       jobManager.cancelAllInQueue(QUEUE);
     } else {
@@ -85,9 +86,9 @@ public final class LocalBackupJob extends BaseJob {
     }
 
     try (NotificationController notification = GenericForegroundService.startForegroundTask(context,
-            context.getString(R.string.LocalBackupJob_creating_backup),
-            NotificationChannels.BACKUPS,
-            R.drawable.ic_signal_backup))
+                                                                                            context.getString(R.string.LocalBackupJob_creating_backup),
+                                                                                            NotificationChannels.BACKUPS,
+                                                                                            R.drawable.ic_signal_backup))
     {
       notification.setIndeterminateProgress();
       String backupPassword  = BackupPassphrase.get(context);
@@ -110,11 +111,11 @@ public final class LocalBackupJob extends BaseJob {
 
       try {
         FullBackupExporter.export(context,
-                AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret(),
-                DatabaseFactory.getBackupDatabase(context),
-                tempFile,
-                backupPassword,
-                this::isCanceled);
+                                  AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret(),
+                                  ShadowDatabase.getBackupDatabase(),
+                                  tempFile,
+                                  backupPassword,
+                                  this::isCanceled);
 
         if (!tempFile.renameTo(backupFile)) {
           Log.w(TAG, "Failed to rename temp file");
@@ -161,7 +162,7 @@ public final class LocalBackupJob extends BaseJob {
   }
 
   @Override
-  public void onFailure() { }
+  public void onFailure() {}
 
   public static class Factory implements Job.Factory<LocalBackupJob> {
     @Override

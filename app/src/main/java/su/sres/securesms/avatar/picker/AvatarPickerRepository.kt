@@ -14,7 +14,7 @@ import su.sres.securesms.avatar.AvatarPickerStorage
 import su.sres.securesms.avatar.AvatarRenderer
 import su.sres.securesms.avatar.Avatars
 import su.sres.securesms.conversation.colors.AvatarColor
-import su.sres.securesms.database.DatabaseFactory
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.groups.GroupId
 import su.sres.securesms.mediasend.Media
 import su.sres.securesms.profiles.AvatarHelper
@@ -70,11 +70,11 @@ class AvatarPickerRepository(context: Context) {
   }
 
   fun getPersistedAvatarsForSelf(): Single<List<Avatar>> = Single.fromCallable {
-    DatabaseFactory.getAvatarPickerDatabase(applicationContext).getAvatarsForSelf()
+    ShadowDatabase.avatarPicker.getAvatarsForSelf()
   }
 
   fun getPersistedAvatarsForGroup(groupId: GroupId): Single<List<Avatar>> = Single.fromCallable {
-    DatabaseFactory.getAvatarPickerDatabase(applicationContext).getAvatarsForGroup(groupId)
+    ShadowDatabase.avatarPicker.getAvatarsForGroup(groupId)
   }
 
   fun getDefaultAvatarsForSelf(): Single<List<Avatar>> = Single.fromCallable {
@@ -97,7 +97,7 @@ class AvatarPickerRepository(context: Context) {
 
   fun persistAvatarForSelf(avatar: Avatar, onPersisted: (Avatar) -> Unit) {
     SignalExecutors.BOUNDED.execute {
-      val avatarDatabase = DatabaseFactory.getAvatarPickerDatabase(applicationContext)
+      val avatarDatabase = ShadowDatabase.avatarPicker
       val savedAvatar = avatarDatabase.saveAvatarForSelf(avatar)
       avatarDatabase.markUsage(savedAvatar)
       onPersisted(savedAvatar)
@@ -106,7 +106,7 @@ class AvatarPickerRepository(context: Context) {
 
   fun persistAvatarForGroup(avatar: Avatar, groupId: GroupId, onPersisted: (Avatar) -> Unit) {
     SignalExecutors.BOUNDED.execute {
-      val avatarDatabase = DatabaseFactory.getAvatarPickerDatabase(applicationContext)
+      val avatarDatabase = ShadowDatabase.avatarPicker
       val savedAvatar = avatarDatabase.saveAvatarForGroup(avatar, groupId)
       avatarDatabase.markUsage(savedAvatar)
       onPersisted(savedAvatar)
@@ -180,7 +180,7 @@ class AvatarPickerRepository(context: Context) {
   fun delete(avatar: Avatar, onDelete: () -> Unit) {
     SignalExecutors.BOUNDED.execute {
       if (avatar.databaseId is Avatar.DatabaseId.Saved) {
-        val avatarDatabase = DatabaseFactory.getAvatarPickerDatabase(applicationContext)
+        val avatarDatabase = ShadowDatabase.avatarPicker
         avatarDatabase.deleteAvatar(avatar)
       }
       onDelete()

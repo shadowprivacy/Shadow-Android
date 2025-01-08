@@ -18,10 +18,10 @@ import su.sres.securesms.components.settings.DSLSettingsAdapter
 import su.sres.securesms.components.settings.DSLSettingsFragment
 import su.sres.securesms.components.settings.DSLSettingsText
 import su.sres.securesms.components.settings.configure
+import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.registration.RegistrationNavigationActivity
 import su.sres.securesms.util.CommunicationActions
 import su.sres.securesms.util.SpanUtil
-import su.sres.securesms.util.TextSecurePreferences
 import su.sres.securesms.util.ViewUtil
 
 class AdvancedPrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__advanced) {
@@ -159,7 +159,7 @@ class AdvancedPrivacySettingsFragment : DSLSettingsFragment(R.string.preferences
 
   private fun getPushToggleSummary(isPushEnabled: Boolean): String {
     return if (isPushEnabled) {
-      TextSecurePreferences.getLocalNumber(requireContext())
+      SignalStore.account().userLogin!!
     } else {
       getString(R.string.preferences__free_private_messages_and_calls)
     }

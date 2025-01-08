@@ -52,11 +52,11 @@ class ChangeLoginLockActivity : PassphraseRequiredActivity() {
     disposables.add(
       changeLoginRepository.whoAmI()
         .flatMap { whoAmI ->
-          if (Objects.equals(whoAmI.userLogin, TextSecurePreferences.getLocalNumber(this))) {
-            Log.i(TAG, "Local and remote numbers match, nothing needs to be done.")
+          if (Objects.equals(whoAmI.userLogin, SignalStore.account().userLogin)) {
+            Log.i(TAG, "Local and remote logins match, nothing needs to be done.")
             Single.just(false)
           } else {
-            Log.i(TAG, "Local (${TextSecurePreferences.getLocalNumber(this)}) and remote (${whoAmI.userLogin}) numbers do not match, updating local.")
+            Log.i(TAG, "Local (${SignalStore.account().userLogin}) and remote (${whoAmI.userLogin}) logins do not match, updating local.")
             changeLoginRepository.changeLocalLogin(whoAmI.userLogin)
               .map { true }
           }
@@ -71,7 +71,7 @@ class ChangeLoginLockActivity : PassphraseRequiredActivity() {
 
     MaterialAlertDialogBuilder(this)
       .setTitle(R.string.ChangeNumberLockActivity__change_status_confirmed)
-      .setMessage(getString(R.string.ChangeNumberLockActivity__your_number_has_been_confirmed_as_s, TextSecurePreferences.getLocalNumber(this)))
+      .setMessage(getString(R.string.ChangeNumberLockActivity__your_number_has_been_confirmed_as_s, SignalStore.account().userLogin!!))
       .setPositiveButton(android.R.string.ok) { _, _ ->
         startActivity(MainActivity.clearTop(this))
         finish()

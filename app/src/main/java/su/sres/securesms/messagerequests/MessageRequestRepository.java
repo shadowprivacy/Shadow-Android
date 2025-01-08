@@ -6,10 +6,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 import androidx.core.util.Consumer;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupChangeException;
@@ -52,14 +52,14 @@ final class MessageRequestRepository {
 
   void getGroups(@NonNull RecipientId recipientId, @NonNull Consumer<List<String>> onGroupsLoaded) {
     executor.execute(() -> {
-      GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
+      GroupDatabase groupDatabase = ShadowDatabase.groups();
       onGroupsLoaded.accept(groupDatabase.getPushGroupNamesContainingMember(recipientId));
     });
   }
 
   void getGroupInfo(@NonNull RecipientId recipientId, @NonNull Consumer<GroupInfo> onGroupInfoLoaded) {
     executor.execute(() -> {
-      GroupDatabase                       groupDatabase = DatabaseFactory.getGroupDatabase(context);
+      GroupDatabase                       groupDatabase = ShadowDatabase.groups();
       Optional<GroupDatabase.GroupRecord> groupRecord   = groupDatabase.getGroup(recipientId);
       onGroupInfoLoaded.accept(groupRecord.transform(record -> {
         if (record.isV2Group()) {
@@ -133,7 +133,7 @@ final class MessageRequestRepository {
           Log.i(TAG, "GV2 accepting invite");
           GroupManager.acceptInvite(context, liveRecipient.get().requireGroupId().requireV2());
 
-          RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+          RecipientDatabase recipientDatabase = ShadowDatabase.recipients();
           recipientDatabase.setProfileSharing(liveRecipient.getId(), true);
 
           onMessageRequestAccepted.run();
@@ -142,17 +142,17 @@ final class MessageRequestRepository {
           error.onError(GroupChangeFailureReason.fromException(e));
         }
       } else {
-        RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+        RecipientDatabase recipientDatabase = ShadowDatabase.recipients();
         recipientDatabase.setProfileSharing(liveRecipient.getId(), true);
 
         MessageSender.sendProfileKey(context, threadId);
 
-        List<MessageDatabase.MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context)
+        List<MessageDatabase.MarkedMessageInfo> messageIds = ShadowDatabase.threads()
                                                                             .setEntireThreadRead(threadId);
         ApplicationDependencies.getMessageNotifier().updateNotification(context);
         MarkReadReceiver.process(context, messageIds);
 
-        List<MessageDatabase.MarkedMessageInfo> viewedInfos = DatabaseFactory.getMmsDatabase(context)
+        List<MessageDatabase.MarkedMessageInfo> viewedInfos = ShadowDatabase.mms()
                                                                              .getViewedIncomingMessages(threadId);
 
         SendViewedReceiptJob.enqueue(threadId, liveRecipient.getId(), viewedInfos);
@@ -178,7 +178,7 @@ final class MessageRequestRepository {
         try {
           GroupManager.leaveGroupFromBlockOrMessageRequest(context, resolved.requireGroupId().requirePush());
         } catch (GroupChangeException | GroupPatchNotAcceptedException e) {
-          if (DatabaseFactory.getGroupDatabase(context).isCurrentMember(resolved.requireGroupId().requirePush(), Recipient.self().getId())) {
+          if (ShadowDatabase.groups().isCurrentMember(resolved.requireGroupId().requirePush(), Recipient.self().getId())) {
             Log.w(TAG, "Failed to leave group, and we're still a member.", e);
             error.onError(GroupChangeFailureReason.fromException(e));
             return;
@@ -196,7 +196,7 @@ final class MessageRequestRepository {
         ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forDelete(recipient.getId()));
       }
 
-      ThreadDatabase threadDatabase = DatabaseFactory.getThreadDatabase(context);
+      ThreadDatabase threadDatabase = ShadowDatabase.threads();
       threadDatabase.deleteConversation(threadId);
 
       onMessageRequestDeleted.run();
@@ -258,7 +258,7 @@ final class MessageRequestRepository {
 
       RecipientUtil.unblock(context, recipient);
 
-      List<MessageDatabase.MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context)
+      List<MessageDatabase.MarkedMessageInfo> messageIds = ShadowDatabase.threads()
                                                                           .setEntireThreadRead(threadId);
       ApplicationDependencies.getMessageNotifier().updateNotification(context);
       MarkReadReceiver.process(context, messageIds);
@@ -272,7 +272,7 @@ final class MessageRequestRepository {
   }
 
   private GroupDatabase.MemberLevel getGroupMemberLevel(@NonNull RecipientId recipientId) {
-    return DatabaseFactory.getGroupDatabase(context)
+    return ShadowDatabase.groups()
                           .getGroup(recipientId)
                           .transform(g -> g.memberLevel(Recipient.self()))
                           .or(GroupDatabase.MemberLevel.NOT_A_MEMBER);
@@ -281,7 +281,7 @@ final class MessageRequestRepository {
   @WorkerThread
   private boolean isLegacyThread(@NonNull Recipient recipient) {
     Context context  = ApplicationDependencies.getApplication();
-    Long    threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient.getId());
+    Long    threadId = ShadowDatabase.threads().getThreadIdFor(recipient.getId());
 
     return threadId != null &&
            (RecipientUtil.hasSentMessageInThread(context, threadId) || RecipientUtil.isPreMessageRequestThread(context, threadId));

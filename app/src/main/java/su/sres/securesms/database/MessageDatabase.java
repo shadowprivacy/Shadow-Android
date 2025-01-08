@@ -8,9 +8,7 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.annimon.stream.Stream;
 import com.google.android.mms.pdu_alt.NotificationInd;
-import com.google.protobuf.InvalidProtocolBufferException;
 
 import net.zetetic.database.sqlcipher.SQLiteStatement;
 
@@ -18,12 +16,9 @@ import su.sres.securesms.database.documents.Document;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.documents.IdentityKeyMismatchSet;
 import su.sres.securesms.database.documents.NetworkFailure;
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.SmsMessageRecord;
-import su.sres.securesms.database.model.databaseprotos.ReactionList;
-import su.sres.securesms.database.model.ReactionRecord;
 import su.sres.securesms.groups.GroupMigrationMembershipChange;
 import su.sres.securesms.insights.InsightsConstants;
 import su.sres.core.util.logging.Log;
@@ -48,7 +43,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -64,7 +58,7 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   protected static final String   THREAD_ID_WHERE      = THREAD_ID + " = ?";
   protected static final String[] THREAD_ID_PROJECTION = new String[] { THREAD_ID };
 
-  public MessageDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public MessageDatabase(Context context, ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 
@@ -110,8 +104,6 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   public abstract MessageRecord getMessageRecord(long messageId) throws NoSuchMessageException;
 
   public abstract @Nullable MessageRecord getMessageRecordOrNull(long messageId);
-
-  public abstract Cursor getVerboseMessageCursor(long messageId);
 
   public abstract boolean hasReceivedAnyCallsSince(long threadId, long timestamp);
 
@@ -324,10 +316,10 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
   final int getOutgoingSecureMessageCount(long threadId) {
     SQLiteDatabase db         = databaseHelper.getSignalReadableDatabase();
     String[]       projection = new String[] { "COUNT(*)" };
-    String         query        = getOutgoingSecureMessageClause() +
-                                  "AND " + MmsSmsColumns.THREAD_ID + " = ? " +
-                                  "AND (" + getTypeField() + " & " + Types.GROUP_LEAVE_BIT + " = 0 OR " + getTypeField() + " & " + Types.GROUP_V2_BIT + " = " + Types.GROUP_V2_BIT + ")";
-    String[]       args       = new String[] { String.valueOf(threadId) };
+    String query = getOutgoingSecureMessageClause() +
+                   "AND " + MmsSmsColumns.THREAD_ID + " = ? " +
+                   "AND (" + getTypeField() + " & " + Types.GROUP_LEAVE_BIT + " = 0 OR " + getTypeField() + " & " + Types.GROUP_V2_BIT + " = " + Types.GROUP_V2_BIT + ")";
+    String[] args = new String[] { String.valueOf(threadId) };
 
     try (Cursor cursor = db.query(getTableName(), projection, query, args, null, null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
@@ -398,73 +390,6 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
     db.update(getTableName(), values, query, args);
   }
 
-  public void addReaction(long messageId, @NonNull ReactionRecord reaction) {
-    SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
-
-    db.beginTransaction();
-
-    try {
-      ReactionList reactions = getReactions(db, messageId).or(ReactionList.getDefaultInstance());
-      ReactionList.Reaction newReaction = ReactionList.Reaction.newBuilder()
-                                                               .setEmoji(reaction.getEmoji())
-                                                               .setAuthor(reaction.getAuthor().toLong())
-                                                               .setSentTime(reaction.getDateSent())
-                                                               .setReceivedTime(reaction.getDateReceived())
-                                                               .build();
-
-      ReactionList updatedList = pruneByAuthor(reactions, reaction.getAuthor()).toBuilder()
-                                                                               .addReactions(newReaction)
-                                                                               .build();
-
-      setReactions(db, messageId, updatedList);
-
-      db.setTransactionSuccessful();
-    } catch (NoSuchMessageException e) {
-      Log.w(TAG, "No message for provided id", e);
-    } finally {
-      db.endTransaction();
-    }
-
-    notifyConversationListeners(getThreadId(db, messageId));
-  }
-
-  public void deleteReaction(long messageId, @NonNull RecipientId author) {
-    SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
-
-    db.beginTransaction();
-
-    try {
-      ReactionList reactions   = getReactions(db, messageId).or(ReactionList.getDefaultInstance());
-      ReactionList updatedList = pruneByAuthor(reactions, author);
-
-      setReactions(db, messageId, updatedList);
-
-      db.setTransactionSuccessful();
-    } catch (NoSuchMessageException e) {
-      Log.w(TAG, "No message for provided id", e);
-    } finally {
-      db.endTransaction();
-    }
-
-    notifyConversationListeners(getThreadId(db, messageId));
-  }
-
-  public boolean hasReaction(long messageId, @NonNull ReactionRecord reactionRecord) {
-    SQLiteDatabase db = databaseHelper.getSignalReadableDatabase();
-
-    ReactionList reactions = getReactions(db, messageId).or(ReactionList.getDefaultInstance());
-
-    for (ReactionList.Reaction reaction : reactions.getReactionsList()) {
-      if (reactionRecord.getAuthor().toLong() == reaction.getAuthor() &&
-          reactionRecord.getEmoji().equals(reaction.getEmoji()))
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   public void setNotifiedTimestamp(long timestamp, @NonNull List<Long> ids) {
     if (ids.isEmpty()) {
       return;
@@ -526,25 +451,25 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
     return data;
   }
 
-  protected static List<ReactionRecord> parseReactions(@NonNull Cursor cursor) {
-    byte[] raw = cursor.getBlob(cursor.getColumnIndexOrThrow(REACTIONS));
+  void updateReactionsUnread(SQLiteDatabase db, long messageId, boolean hasReactions, boolean isRemoval) {
+    try {
+      boolean       isOutgoing = getMessageRecord(messageId).isOutgoing();
+      ContentValues values     = new ContentValues();
 
-    if (raw != null) {
-      try {
-        return Stream.of(ReactionList.parseFrom(raw).getReactionsList())
-                     .map(r -> {
-                       return new ReactionRecord(r.getEmoji(),
-                                                 RecipientId.from(r.getAuthor()),
-                                                 r.getSentTime(),
-                                                 r.getReceivedTime());
-                     })
-                     .toList();
-      } catch (InvalidProtocolBufferException e) {
-        Log.w(TAG, "[parseReactions] Failed to parse reaction list!", e);
-        return Collections.emptyList();
+      if (!hasReactions) {
+        values.put(REACTIONS_UNREAD, 0);
+      } else if (!isRemoval) {
+        values.put(REACTIONS_UNREAD, 1);
       }
-    } else {
-      return Collections.emptyList();
+      if (isOutgoing && hasReactions) {
+        values.put(NOTIFIED, 0);
+      }
+
+      if (values.size() > 0) {
+        db.update(getTableName(), values, ID_WHERE, SqlUtil.buildArgs(messageId));
+      }
+    } catch (NoSuchMessageException e) {
+      Log.w(TAG, "Failed to find message " + messageId);
     }
   }
 
@@ -641,55 +566,6 @@ public abstract class MessageDatabase extends Database implements MmsSmsColumns 
       if (cursor != null)
         cursor.close();
     }
-  }
-
-  private static @NonNull ReactionList pruneByAuthor(@NonNull ReactionList reactionList, @NonNull RecipientId recipientId) {
-    List<ReactionList.Reaction> pruned = Stream.of(reactionList.getReactionsList())
-                                               .filterNot(r -> r.getAuthor() == recipientId.toLong())
-                                               .toList();
-
-    return reactionList.toBuilder()
-                       .clearReactions()
-                       .addAllReactions(pruned)
-                       .build();
-  }
-
-  private @NonNull Optional<ReactionList> getReactions(SQLiteDatabase db, long messageId) {
-    String[] projection = new String[] { REACTIONS };
-    String   query      = ID + " = ?";
-    String[] args       = new String[] { String.valueOf(messageId) };
-
-    try (Cursor cursor = db.query(getTableName(), projection, query, args, null, null, null)) {
-      if (cursor != null && cursor.moveToFirst()) {
-        byte[] raw = cursor.getBlob(cursor.getColumnIndexOrThrow(REACTIONS));
-
-        if (raw != null) {
-          return Optional.of(ReactionList.parseFrom(raw));
-        }
-      }
-    } catch (InvalidProtocolBufferException e) {
-      Log.w(TAG, "[getRecipients] Failed to parse reaction list!", e);
-    }
-
-    return Optional.absent();
-  }
-
-  private void setReactions(@NonNull SQLiteDatabase db, long messageId, @NonNull ReactionList reactionList) throws NoSuchMessageException {
-    ContentValues values       = new ContentValues();
-    boolean       isOutgoing   = getMessageRecord(messageId).isOutgoing();
-    boolean       hasReactions = reactionList.getReactionsCount() != 0;
-
-    values.put(REACTIONS, reactionList.getReactionsList().isEmpty() ? null : reactionList.toByteArray());
-    values.put(REACTIONS_UNREAD, hasReactions ? 1 : 0);
-
-    if (isOutgoing && hasReactions) {
-      values.put(NOTIFIED, 0);
-    }
-
-    String   query = ID + " = ?";
-    String[] args  = new String[] { String.valueOf(messageId) };
-
-    db.update(getTableName(), values, query, args);
   }
 
   private long getThreadId(@NonNull SQLiteDatabase db, long messageId) {

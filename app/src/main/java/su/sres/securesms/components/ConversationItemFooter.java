@@ -29,7 +29,7 @@ import com.airbnb.lottie.model.KeyPath;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.R;
 import su.sres.securesms.animation.AnimationCompleteListener;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -363,8 +363,11 @@ public class ConversationItemFooter extends ConstraintLayout {
           long                   id                = messageRecord.getId();
           boolean                mms               = messageRecord.isMms();
 
-          if (mms) DatabaseFactory.getMmsDatabase(getContext()).markExpireStarted(id);
-          else DatabaseFactory.getSmsDatabase(getContext()).markExpireStarted(id);
+          if (mms) {
+            ShadowDatabase.mms().markExpireStarted(id);
+          } else {
+            ShadowDatabase.sms().markExpireStarted(id);
+          }
 
           expirationManager.scheduleDeletion(id, mms, messageRecord.getExpiresIn());
         });

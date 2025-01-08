@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.annotation.WorkerThread
 import su.sres.core.util.concurrent.SignalExecutors
 import su.sres.core.util.logging.Log
-import su.sres.securesms.database.DatabaseFactory
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.database.ThreadDatabase
 import su.sres.securesms.groups.GroupChangeException
 import su.sres.securesms.groups.GroupManager
@@ -36,7 +36,7 @@ class ExpireTimerSettingsRepository(val context: Context) {
           consumer.invoke(Result.failure(e))
         }
       } else {
-        DatabaseFactory.getRecipientDatabase(context).setExpireMessages(recipientId, newExpirationTime)
+        ShadowDatabase.recipients.setExpireMessages(recipientId, newExpirationTime)
         val outgoingMessage = OutgoingExpirationUpdateMessage(Recipient.resolved(recipientId), System.currentTimeMillis(), newExpirationTime * 1000L)
         MessageSender.send(context, outgoingMessage, getThreadId(recipientId), false, null, null)
         consumer.invoke(Result.success(newExpirationTime))
@@ -46,7 +46,7 @@ class ExpireTimerSettingsRepository(val context: Context) {
 
   @WorkerThread
   private fun getThreadId(recipientId: RecipientId): Long {
-    val threadDatabase: ThreadDatabase = DatabaseFactory.getThreadDatabase(context)
+    val threadDatabase: ThreadDatabase = ShadowDatabase.threads
     val recipient: Recipient = Recipient.resolved(recipientId)
     return threadDatabase.getOrCreateThreadIdFor(recipient)
   }

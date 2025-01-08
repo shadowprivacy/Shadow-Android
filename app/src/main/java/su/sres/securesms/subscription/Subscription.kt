@@ -57,17 +57,17 @@ data class Subscription(
       }
 
       playSequentially(fadeTo25Animator, fadeTo80Animator)
-      doOnEnd { start() }
-    }
-
-    init {
-      lifecycle.addObserver(this)
+      doOnEnd {
+        if (itemView.isAttachedToWindow) {
+          start()
+        }
+      }
     }
 
     override fun bind(model: LoaderModel) {
     }
 
-    override fun onResume(owner: LifecycleOwner) {
+    override fun onAttachedToWindow() {
       if (animator.isStarted) {
         animator.resume()
       } else {
@@ -75,12 +75,13 @@ data class Subscription(
       }
     }
 
-    override fun onDestroy(owner: LifecycleOwner) {
+    override fun onDetachedFromWindow() {
       animator.pause()
     }
   }
 
   class Model(
+    val activePrice: FiatMoney?,
     val subscription: Subscription,
     val isSelected: Boolean,
     val isActive: Boolean,
@@ -128,6 +129,7 @@ data class Subscription(
       itemView.isSelected = model.isSelected
       if (payload.isEmpty()) {
         badge.setBadge(model.subscription.badge)
+        badge.isClickable = false
       }
 
       title.text = model.subscription.name
@@ -135,7 +137,7 @@ data class Subscription(
 
       val formattedPrice = FiatMoneyUtil.format(
         context.resources,
-        model.subscription.prices.first { it.currency == model.selectedCurrency },
+        model.activePrice ?: model.subscription.prices.first { it.currency == model.selectedCurrency },
         FiatMoneyUtil.formatOptions()
       )
 

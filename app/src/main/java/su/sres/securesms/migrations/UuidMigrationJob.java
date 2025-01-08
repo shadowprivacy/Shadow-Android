@@ -5,18 +5,19 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.push.ACI;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * Couple migrations steps need to happen after we move to UUIDS.
@@ -50,7 +51,7 @@ public class UuidMigrationJob extends MigrationJob {
 
   @Override
   void performMigration() throws Exception {
-    if (!TextSecurePreferences.isPushRegistered(context) || TextUtils.isEmpty(TextSecurePreferences.getLocalNumber(context))) {
+    if (!SignalStore.account().isRegistered() || TextUtils.isEmpty(SignalStore.account().getUserLogin())) {
       Log.w(TAG, "Not registered! Skipping migration, as it wouldn't do anything.");
       return;
     }
@@ -65,15 +66,15 @@ public class UuidMigrationJob extends MigrationJob {
   }
 
   private static void ensureSelfRecipientExists(@NonNull Context context) {
-    DatabaseFactory.getRecipientDatabase(context).getOrInsertFromUserLogin(TextSecurePreferences.getLocalNumber(context));
+    ShadowDatabase.recipients().getOrInsertFromUserLogin(Objects.requireNonNull(SignalStore.account().getUserLogin()));
   }
 
   private static void fetchOwnUuid(@NonNull Context context) throws IOException {
     RecipientId self      = Recipient.self().getId();
     ACI         localUuid = ApplicationDependencies.getSignalServiceAccountManager().getOwnAci();
 
-    DatabaseFactory.getRecipientDatabase(context).markRegistered(self, localUuid);
-    TextSecurePreferences.setLocalAci(context, localUuid);
+    ShadowDatabase.recipients().markRegistered(self, localUuid);
+    SignalStore.account().setAci(localUuid);
   }
 
   public static class Factory implements Job.Factory<UuidMigrationJob> {

@@ -11,6 +11,7 @@ import com.google.protobuf.ByteString;
 import su.sres.signalservice.api.payments.CurrencyConversions;
 import su.sres.signalservice.api.profiles.ProfileAndCredential;
 import su.sres.signalservice.api.push.ACI;
+import su.sres.signalservice.api.push.AccountIdentifier;
 import su.sres.signalservice.api.storage.protos.DirectoryResponse;
 import su.sres.signalservice.api.groupsv2.ClientZkOperations;
 import su.sres.signalservice.api.groupsv2.GroupsV2Api;
@@ -356,6 +357,13 @@ public class SignalServiceAccountManager {
    */
   public SignedPreKeyEntity getSignedPreKey() throws IOException {
     return this.pushServiceSocket.getCurrentSignedPreKey();
+  }
+
+  /**
+   * @return True if the identifier corresponds to a registered user, otherwise false.
+   */
+  public boolean isIdentifierRegistered(AccountIdentifier identifier) throws IOException {
+    return pushServiceSocket.isIdentifierRegistered(identifier);
   }
 
   public DirectoryResponse getDirectoryResponse(long directoryVersion, boolean forceFull) throws IOException {

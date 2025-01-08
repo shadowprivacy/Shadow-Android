@@ -11,8 +11,8 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
-import static su.sres.securesms.testutil.ZkGroupLibraryUtil.assumeZkGroupSupportedOnOS;
-import static su.sres.signalservice.test.LibSignalLibraryUtil.assumeLibSignalSupportedOnOS;
+
+import static su.sres.signalservice.testutil.LibSignalLibraryUtil.assumeLibSignalSupportedOnOS;
 
 @RunWith(Parameterized.class)
 public final class GroupId_v1_v2_migration_derivation_Test {
@@ -20,7 +20,6 @@ public final class GroupId_v1_v2_migration_derivation_Test {
     @Before
     public void ensureNativeSupported() {
         assumeLibSignalSupportedOnOS();
-        assumeZkGroupSupportedOnOS();
     }
 
     @Parameterized.Parameter(0)

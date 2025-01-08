@@ -9,8 +9,8 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.DatabaseObserver;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.concurrent.SerialMonoLifoExecutor;
@@ -81,12 +81,12 @@ public class MessageCountsViewModel extends ViewModel {
   }
 
   private int getUnreadCount(@NonNull Context context, long threadId) {
-    ThreadRecord threadRecord = DatabaseFactory.getThreadDatabase(context).getThreadRecord(threadId);
+    ThreadRecord threadRecord = ShadowDatabase.threads().getThreadRecord(threadId);
     return threadRecord != null ? threadRecord.getUnreadCount() : 0;
   }
 
   private int getUnreadMentionsCount(@NonNull Context context, long threadId) {
-    return DatabaseFactory.getMmsDatabase(context).getUnreadMentionCount(threadId);
+    return ShadowDatabase.mms().getUnreadMentionCount(threadId);
   }
 
   @Override

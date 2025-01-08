@@ -1,371 +1,331 @@
-package su.sres.securesms.keyvalue;
+package su.sres.securesms.keyvalue
 
-import android.content.Context;
+import androidx.annotation.WorkerThread
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
+import com.google.protobuf.InvalidProtocolBufferException
+import com.mobilecoin.lib.Mnemonics
+import com.mobilecoin.lib.exceptions.BadMnemonicException
+import su.sres.core.util.logging.Log
+import su.sres.securesms.database.ShadowDatabase
+import su.sres.securesms.dependencies.ApplicationDependencies
+import su.sres.securesms.payments.Balance
+import su.sres.securesms.payments.Entropy
+import su.sres.securesms.payments.GeographicalRestrictions
+import su.sres.securesms.payments.Mnemonic
+import su.sres.securesms.payments.MobileCoinLedgerWrapper
+import su.sres.securesms.payments.currency.CurrencyUtil
+import su.sres.securesms.payments.proto.MobileCoinLedger
+import su.sres.securesms.recipients.Recipient
+import su.sres.securesms.util.FeatureFlags
+import su.sres.securesms.util.Util
+import su.sres.signalservice.api.payments.Money
+import java.lang.AssertionError
+import java.lang.IllegalStateException
+import java.math.BigDecimal
+import java.util.Arrays
+import java.util.Currency
+import java.util.Locale
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.WorkerThread;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Transformations;
+internal class PaymentsValues internal constructor(store: KeyValueStore) : SignalStoreValues(store) {
 
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.mobilecoin.lib.Mnemonics;
-import com.mobilecoin.lib.exceptions.BadMnemonicException;
+  companion object {
+    private val TAG = Log.tag(PaymentsValues::class.java)
 
-import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
-import su.sres.securesms.dependencies.ApplicationDependencies;
-// import su.sres.securesms.lock.v2.PinKeyboardType;
-import su.sres.securesms.payments.Balance;
-import su.sres.securesms.payments.Entropy;
-// import su.sres.securesms.payments.GeographicalRestrictions;
-import su.sres.securesms.payments.GeographicalRestrictions;
-import su.sres.securesms.payments.Mnemonic;
-import su.sres.securesms.payments.MobileCoinLedgerWrapper;
-import su.sres.securesms.payments.currency.CurrencyUtil;
-import su.sres.securesms.payments.proto.MobileCoinLedger;
-import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.TextSecurePreferences;
-import su.sres.securesms.util.Util;
-import su.sres.signalservice.api.payments.Money;
+    private const val PAYMENTS_ENTROPY = "payments_entropy"
+    private const val MOB_PAYMENTS_ENABLED = "mob_payments_enabled"
+    private const val MOB_LEDGER = "mob_ledger"
+    private const val PAYMENTS_CURRENT_CURRENCY = "payments_current_currency"
+    private const val DEFAULT_CURRENCY_CODE = "GBP"
+    private const val USER_CONFIRMED_MNEMONIC = "mob_payments_user_confirmed_mnemonic"
+    private const val SHOW_ABOUT_MOBILE_COIN_INFO_CARD = "mob_payments_show_about_mobile_coin_info_card"
+    private const val SHOW_ADDING_TO_YOUR_WALLET_INFO_CARD = "mob_payments_show_adding_to_your_wallet_info_card"
+    private const val SHOW_CASHING_OUT_INFO_CARD = "mob_payments_show_cashing_out_info_card"
+    private const val SHOW_RECOVERY_PHRASE_INFO_CARD = "mob_payments_show_recovery_phrase_info_card"
+    private const val SHOW_UPDATE_PIN_INFO_CARD = "mob_payments_show_update_pin_info_card"
 
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Currency;
-import java.util.List;
-import java.util.Locale;
+    private val LARGE_BALANCE_THRESHOLD = Money.mobileCoin(BigDecimal.valueOf(500))
+  }
 
-public final class PaymentsValues extends SignalStoreValues {
+  private val liveCurrentCurrency: MutableLiveData<Currency> by lazy { MutableLiveData(currentCurrency()) }
+  private val liveMobileCoinLedger: MutableLiveData<MobileCoinLedgerWrapper> by lazy { MutableLiveData(mobileCoinLatestFullLedger()) }
+  private val liveMobileCoinBalance: LiveData<Balance> by lazy { Transformations.map(liveMobileCoinLedger) { obj: MobileCoinLedgerWrapper -> obj.balance } }
 
-    private static final String TAG = Log.tag(PaymentsValues.class);
+  public override fun onFirstEverAppLaunch() {}
 
-    private static final String PAYMENTS_ENTROPY = "payments_entropy";
-    private static final String MOB_PAYMENTS_ENABLED = "mob_payments_enabled";
-    private static final String MOB_LEDGER = "mob_ledger";
-    private static final String PAYMENTS_CURRENT_CURRENCY = "payments_current_currency";
-    private static final String DEFAULT_CURRENCY_CODE = "GBP";
-    private static final String USER_CONFIRMED_MNEMONIC = "mob_payments_user_confirmed_mnemonic";
+  public override fun getKeysToIncludeInBackup(): List<String> {
+    return listOf(
+      PAYMENTS_ENTROPY,
+      MOB_PAYMENTS_ENABLED,
+      MOB_LEDGER,
+      PAYMENTS_CURRENT_CURRENCY,
+      DEFAULT_CURRENCY_CODE,
+      USER_CONFIRMED_MNEMONIC,
+      SHOW_ABOUT_MOBILE_COIN_INFO_CARD,
+      SHOW_ADDING_TO_YOUR_WALLET_INFO_CARD,
+      SHOW_CASHING_OUT_INFO_CARD,
+      SHOW_RECOVERY_PHRASE_INFO_CARD,
+      SHOW_UPDATE_PIN_INFO_CARD
+    )
+  }
 
-    private static final String SHOW_ABOUT_MOBILE_COIN_INFO_CARD = "mob_payments_show_about_mobile_coin_info_card";
-    private static final String SHOW_ADDING_TO_YOUR_WALLET_INFO_CARD = "mob_payments_show_adding_to_your_wallet_info_card";
-    private static final String SHOW_CASHING_OUT_INFO_CARD = "mob_payments_show_cashing_out_info_card";
-    private static final String SHOW_RECOVERY_PHRASE_INFO_CARD = "mob_payments_show_recovery_phrase_info_card";
-    private static final String SHOW_UPDATE_PIN_INFO_CARD = "mob_payments_show_update_pin_info_card";
+  fun userConfirmedMnemonic(): Boolean {
+    return store.getBoolean(USER_CONFIRMED_MNEMONIC, false)
+  }
 
-    private static final Money.MobileCoin LARGE_BALANCE_THRESHOLD = Money.mobileCoin(BigDecimal.valueOf(500));
+  fun setUserConfirmedMnemonic(userConfirmedMnemonic: Boolean) {
+    store.beginWrite().putBoolean(USER_CONFIRMED_MNEMONIC, userConfirmedMnemonic).commit()
+  }
 
-    private final MutableLiveData<Currency> liveCurrentCurrency;
-    private final MutableLiveData<MobileCoinLedgerWrapper> liveMobileCoinLedger;
-    private final LiveData<Balance> liveMobileCoinBalance;
+  /**
+   * Consider using [.getPaymentsAvailability] which includes feature flag and region status.
+   */
+  fun mobileCoinPaymentsEnabled(): Boolean {
+    return getBoolean(MOB_PAYMENTS_ENABLED, false)
+  }
 
-    PaymentsValues(@NonNull KeyValueStore store) {
-        super(store);
-        this.liveCurrentCurrency = new MutableLiveData<>(currentCurrency());
-        this.liveMobileCoinLedger = new MutableLiveData<>(mobileCoinLatestFullLedger());
-        this.liveMobileCoinBalance = Transformations.map(liveMobileCoinLedger, MobileCoinLedgerWrapper::getBalance);
-    }
-
-    @Override
-    void onFirstEverAppLaunch() {
-    }
-
-    @Override
-    @NonNull
-    List<String> getKeysToIncludeInBackup() {
-        return Arrays.asList(PAYMENTS_ENTROPY,
-                MOB_PAYMENTS_ENABLED,
-                MOB_LEDGER,
-                PAYMENTS_CURRENT_CURRENCY,
-                DEFAULT_CURRENCY_CODE,
-                USER_CONFIRMED_MNEMONIC,
-                SHOW_ABOUT_MOBILE_COIN_INFO_CARD,
-                SHOW_ADDING_TO_YOUR_WALLET_INFO_CARD,
-                SHOW_CASHING_OUT_INFO_CARD,
-                SHOW_RECOVERY_PHRASE_INFO_CARD,
-                SHOW_UPDATE_PIN_INFO_CARD);
-    }
-
-    public boolean userConfirmedMnemonic() {
-        return getStore().getBoolean(USER_CONFIRMED_MNEMONIC, false);
-    }
-
-    public void setUserConfirmedMnemonic(boolean userConfirmedMnemonic) {
-        getStore().beginWrite().putBoolean(USER_CONFIRMED_MNEMONIC, userConfirmedMnemonic).commit();
-    }
-
-    /**
-     * Consider using {@link #getPaymentsAvailability} which includes feature flag and region status.
-     */
-    public boolean mobileCoinPaymentsEnabled() {
-        KeyValueReader reader = getStore().beginRead();
-
-        return reader.getBoolean(MOB_PAYMENTS_ENABLED, false);
-    }
-
-    /**
-     * Applies feature flags and region restrictions to return an enum which describes the available feature set for the user.
-     */
-    public PaymentsAvailability getPaymentsAvailability() {
-        Context context = ApplicationDependencies.getApplication();
-
-        if (!TextSecurePreferences.isPushRegistered(context)
-            // ||
-            // !GeographicalRestrictions.e164Allowed(TextSecurePreferences.getLocalNumber(context))
-        )
-        {
-            return PaymentsAvailability.NOT_IN_REGION;
-        }
-
-        if (FeatureFlags.payments() && SignalStore.serviceConfigurationValues().getPaymentsEnabled()) {
-            if (mobileCoinPaymentsEnabled()) {
-                return PaymentsAvailability.WITHDRAW_AND_SEND;
-            } else {
-                return PaymentsAvailability.REGISTRATION_AVAILABLE;
-            }
+  /**
+   * Applies feature flags and region restrictions to return an enum which describes the available feature set for the user.
+   */
+  val paymentsAvailability: PaymentsAvailability
+    get() {
+      if (!SignalStore.account().isRegistered ||
+        !GeographicalRestrictions.e164Allowed(Recipient.self().requireE164())
+      ) {
+        return PaymentsAvailability.NOT_IN_REGION
+      }
+      return if (FeatureFlags.payments()) {
+        if (mobileCoinPaymentsEnabled()) {
+          PaymentsAvailability.WITHDRAW_AND_SEND
         } else {
-            if (mobileCoinPaymentsEnabled()) {
-                return PaymentsAvailability.WITHDRAW_ONLY;
-            } else {
-                return PaymentsAvailability.DISABLED_REMOTELY;
-            }
+          PaymentsAvailability.REGISTRATION_AVAILABLE
         }
-    }
-
-    @WorkerThread
-    public void setMobileCoinPaymentsEnabled(boolean isMobileCoinPaymentsEnabled) {
-        if (mobileCoinPaymentsEnabled() == isMobileCoinPaymentsEnabled) {
-            return;
-        }
-
-        if (isMobileCoinPaymentsEnabled) {
-            Entropy entropy = getPaymentsEntropy();
-            if (entropy == null) {
-                entropy = Entropy.generateNew();
-                Log.i(TAG, "Generated new payments entropy");
-            }
-
-            getStore().beginWrite()
-                    .putBlob(PAYMENTS_ENTROPY, entropy.getBytes())
-                    .putBoolean(MOB_PAYMENTS_ENABLED, true)
-                    .putString(PAYMENTS_CURRENT_CURRENCY, currentCurrency().getCurrencyCode())
-                    .commit();
+      } else {
+        if (mobileCoinPaymentsEnabled()) {
+          PaymentsAvailability.WITHDRAW_ONLY
         } else {
-            getStore().beginWrite()
-                    .putBoolean(MOB_PAYMENTS_ENABLED, false)
-                    .putBoolean(USER_CONFIRMED_MNEMONIC, false)
-                    .commit();
+          PaymentsAvailability.DISABLED_REMOTELY
         }
-
-        DatabaseFactory.getRecipientDatabase(ApplicationDependencies.getApplication()).markNeedsSync(Recipient.self().getId());
-        // StorageSyncHelper.scheduleSyncForDataChange();
+      }
     }
 
-    public @NonNull Mnemonic getPaymentsMnemonic() {
-        Entropy paymentsEntropy = getPaymentsEntropy();
-        if (paymentsEntropy == null) {
-            throw new IllegalStateException("Entropy has not been set");
-        }
+  @WorkerThread
+  fun setMobileCoinPaymentsEnabled(isMobileCoinPaymentsEnabled: Boolean) {
+    if (mobileCoinPaymentsEnabled() == isMobileCoinPaymentsEnabled) {
+      return
+    }
+    if (isMobileCoinPaymentsEnabled) {
+      var entropy = paymentsEntropy
+      if (entropy == null) {
+        entropy = Entropy.generateNew()
+        Log.i(TAG, "Generated new payments entropy")
+      }
+      store.beginWrite()
+        .putBlob(PAYMENTS_ENTROPY, entropy.bytes)
+        .putBoolean(MOB_PAYMENTS_ENABLED, true)
+        .putString(PAYMENTS_CURRENT_CURRENCY, currentCurrency().currencyCode)
+        .commit()
+    } else {
+      store.beginWrite()
+        .putBoolean(MOB_PAYMENTS_ENABLED, false)
+        .putBoolean(USER_CONFIRMED_MNEMONIC, false)
+        .commit()
+    }
+    ShadowDatabase.recipients.markNeedsSync(Recipient.self().id)
+    // StorageSyncHelper.scheduleSyncForDataChange()
+  }
 
-        return paymentsEntropy.asMnemonic();
+  val paymentsMnemonic: Mnemonic
+    get() {
+      val paymentsEntropy = paymentsEntropy ?: throw IllegalStateException("Entropy has not been set")
+      return paymentsEntropy.asMnemonic()
     }
 
-    /**
-     * True if a local entropy is set, regardless of whether payments is currently enabled.
-     */
-    public boolean hasPaymentsEntropy() {
-        return getPaymentsEntropy() != null;
+  /**
+   * True if a local entropy is set, regardless of whether payments is currently enabled.
+   */
+  fun hasPaymentsEntropy(): Boolean {
+    return paymentsEntropy != null
+  }
+
+  /**
+   * Returns the local payments entropy, regardless of whether payments is currently enabled.
+   *
+   *
+   * And null if has never been set.
+   */
+  val paymentsEntropy: Entropy?
+    get() = Entropy.fromBytes(store.getBlob(PAYMENTS_ENTROPY, null))
+
+  fun mobileCoinLatestBalance(): Balance {
+    return mobileCoinLatestFullLedger().balance
+  }
+
+  fun liveMobileCoinLedger(): LiveData<MobileCoinLedgerWrapper> {
+    return liveMobileCoinLedger
+  }
+
+  fun liveMobileCoinBalance(): LiveData<Balance> {
+    return liveMobileCoinBalance
+  }
+
+  fun setCurrentCurrency(currentCurrency: Currency) {
+    store.beginWrite()
+      .putString(PAYMENTS_CURRENT_CURRENCY, currentCurrency.currencyCode)
+      .commit()
+    liveCurrentCurrency.postValue(currentCurrency)
+  }
+
+  fun currentCurrency(): Currency {
+    val currencyCode = store.getString(PAYMENTS_CURRENT_CURRENCY, null)
+    return if (currencyCode == null) determineCurrency() else Currency.getInstance(currencyCode)
+  }
+
+  fun liveCurrentCurrency(): MutableLiveData<Currency> {
+    return liveCurrentCurrency
+  }
+
+  fun showAboutMobileCoinInfoCard(): Boolean {
+    return store.getBoolean(SHOW_ABOUT_MOBILE_COIN_INFO_CARD, true)
+  }
+
+  fun showAddingToYourWalletInfoCard(): Boolean {
+    return store.getBoolean(SHOW_ADDING_TO_YOUR_WALLET_INFO_CARD, true)
+  }
+
+  fun showCashingOutInfoCard(): Boolean {
+    return store.getBoolean(SHOW_CASHING_OUT_INFO_CARD, true)
+  }
+
+  fun showRecoveryPhraseInfoCard(): Boolean {
+    return if (userHasLargeBalance()) {
+      store.getBoolean(SHOW_CASHING_OUT_INFO_CARD, true)
+    } else {
+      false
+    }
+  }
+
+  fun showUpdatePinInfoCard(): Boolean {
+    return false
+    // if (userHasLargeBalance() &&
+    //  SignalStore.kbsValues().hasPin() &&
+    //  !SignalStore.kbsValues().hasOptedOut() && SignalStore.pinValues().keyboardType == PinKeyboardType.NUMERIC
+    // ) {
+    //  store.getBoolean(SHOW_CASHING_OUT_INFO_CARD, true)
+    // } else {
+    //  false
+    // }
+  }
+
+  fun dismissAboutMobileCoinInfoCard() {
+    store.beginWrite()
+      .putBoolean(SHOW_ABOUT_MOBILE_COIN_INFO_CARD, false)
+      .apply()
+  }
+
+  fun dismissAddingToYourWalletInfoCard() {
+    store.beginWrite()
+      .putBoolean(SHOW_ADDING_TO_YOUR_WALLET_INFO_CARD, false)
+      .apply()
+  }
+
+  fun dismissCashingOutInfoCard() {
+    store.beginWrite()
+      .putBoolean(SHOW_CASHING_OUT_INFO_CARD, false)
+      .apply()
+  }
+
+  fun dismissRecoveryPhraseInfoCard() {
+    store.beginWrite()
+      .putBoolean(SHOW_RECOVERY_PHRASE_INFO_CARD, false)
+      .apply()
+  }
+
+  fun dismissUpdatePinInfoCard() {
+    store.beginWrite()
+      .putBoolean(SHOW_UPDATE_PIN_INFO_CARD, false)
+      .apply()
+  }
+
+  fun setMobileCoinFullLedger(ledger: MobileCoinLedgerWrapper) {
+    store.beginWrite()
+      .putBlob(MOB_LEDGER, ledger.serialize())
+      .commit()
+    liveMobileCoinLedger.postValue(ledger)
+  }
+
+  fun mobileCoinLatestFullLedger(): MobileCoinLedgerWrapper {
+    val blob = store.getBlob(MOB_LEDGER, null) ?: return MobileCoinLedgerWrapper(MobileCoinLedger.getDefaultInstance())
+    return try {
+      MobileCoinLedgerWrapper(MobileCoinLedger.parseFrom(blob))
+    } catch (e: InvalidProtocolBufferException) {
+      Log.w(TAG, "Bad cached ledger, clearing", e)
+      setMobileCoinFullLedger(MobileCoinLedgerWrapper(MobileCoinLedger.getDefaultInstance()))
+      throw AssertionError(e)
+    }
+  }
+
+  private fun determineCurrency(): Currency {
+    val localE164: String = SignalStore.account().userLogin ?: ""
+
+    return Util.firstNonNull(
+      CurrencyUtil.getCurrencyByE164(localE164),
+      CurrencyUtil.getCurrencyByLocale(Locale.getDefault()),
+      Currency.getInstance(DEFAULT_CURRENCY_CODE)
+    )
+  }
+
+  /**
+   * Does not trigger a storage sync.
+   */
+  fun setEnabledAndEntropy(enabled: Boolean, entropy: Entropy?) {
+    val writer = store.beginWrite()
+
+    if (entropy != null) {
+      writer.putBlob(PAYMENTS_ENTROPY, entropy.bytes)
     }
 
-    /**
-     * Returns the local payments entropy, regardless of whether payments is currently enabled.
-     * <p>
-     * And null if has never been set.
-     */
-    public @Nullable Entropy getPaymentsEntropy() {
-        return Entropy.fromBytes(getStore().getBlob(PAYMENTS_ENTROPY, null));
+    writer.putBoolean(MOB_PAYMENTS_ENABLED, enabled).commit()
+  }
+
+  @WorkerThread
+  fun restoreWallet(mnemonic: String): WalletRestoreResult {
+    val entropyFromMnemonic: ByteArray = try {
+      Mnemonics.bip39EntropyFromMnemonic(mnemonic)
+    } catch (e: BadMnemonicException) {
+      return WalletRestoreResult.MNEMONIC_ERROR
     }
 
-    public @NonNull Balance mobileCoinLatestBalance() {
-        return mobileCoinLatestFullLedger().getBalance();
+    val paymentsEntropy = paymentsEntropy
+
+    if (paymentsEntropy != null) {
+      val existingEntropy = paymentsEntropy.bytes
+      if (Arrays.equals(existingEntropy, entropyFromMnemonic)) {
+        setMobileCoinPaymentsEnabled(true)
+        setUserConfirmedMnemonic(true)
+        return WalletRestoreResult.ENTROPY_UNCHANGED
+      }
     }
 
-    public @NonNull LiveData<MobileCoinLedgerWrapper> liveMobileCoinLedger() {
-        return liveMobileCoinLedger;
-    }
+    store.beginWrite()
+      .putBlob(PAYMENTS_ENTROPY, entropyFromMnemonic)
+      .putBoolean(MOB_PAYMENTS_ENABLED, true)
+      .remove(MOB_LEDGER)
+      .putBoolean(USER_CONFIRMED_MNEMONIC, true)
+      .commit()
 
-    public @NonNull LiveData<Balance> liveMobileCoinBalance() {
-        return liveMobileCoinBalance;
-    }
+    liveMobileCoinLedger.postValue(MobileCoinLedgerWrapper(MobileCoinLedger.getDefaultInstance()))
+    // StorageSyncHelper.scheduleSyncForDataChange()
 
-    public void setCurrentCurrency(@NonNull Currency currentCurrency) {
-        getStore().beginWrite()
-                .putString(PAYMENTS_CURRENT_CURRENCY, currentCurrency.getCurrencyCode())
-                .commit();
+    return WalletRestoreResult.ENTROPY_CHANGED
+  }
 
-        liveCurrentCurrency.postValue(currentCurrency);
-    }
+  enum class WalletRestoreResult {
+    ENTROPY_CHANGED, ENTROPY_UNCHANGED, MNEMONIC_ERROR
+  }
 
-    public @NonNull Currency currentCurrency() {
-        String currencyCode = getStore().getString(PAYMENTS_CURRENT_CURRENCY, null);
-        return currencyCode == null ? determineCurrency()
-                : Currency.getInstance(currencyCode);
-    }
-
-    public @NonNull MutableLiveData<Currency> liveCurrentCurrency() {
-        return liveCurrentCurrency;
-    }
-
-    public boolean showAboutMobileCoinInfoCard() {
-        return getStore().getBoolean(SHOW_ABOUT_MOBILE_COIN_INFO_CARD, true);
-    }
-
-    public boolean showAddingToYourWalletInfoCard() {
-        return getStore().getBoolean(SHOW_ADDING_TO_YOUR_WALLET_INFO_CARD, true);
-    }
-
-    public boolean showCashingOutInfoCard() {
-        return getStore().getBoolean(SHOW_CASHING_OUT_INFO_CARD, true);
-    }
-
-    public boolean showRecoveryPhraseInfoCard() {
-        if (userHasLargeBalance()) {
-            return getStore().getBoolean(SHOW_CASHING_OUT_INFO_CARD, true);
-        } else {
-            return false;
-        }
-    }
-
-    public boolean showUpdatePinInfoCard() {
-//    if (userHasLargeBalance()                  &&
-//        SignalStore.kbsValues().hasPin()       &&
-//        !SignalStore.kbsValues().hasOptedOut() &&
-//        SignalStore.pinValues().getKeyboardType().equals(PinKeyboardType.NUMERIC)) {
-//      return getStore().getBoolean(SHOW_CASHING_OUT_INFO_CARD, true);
-//    } else {
-        return false;
-//    }
-    }
-
-    public void dismissAboutMobileCoinInfoCard() {
-        getStore().beginWrite()
-                .putBoolean(SHOW_ABOUT_MOBILE_COIN_INFO_CARD, false)
-                .apply();
-    }
-
-    public void dismissAddingToYourWalletInfoCard() {
-        getStore().beginWrite()
-                .putBoolean(SHOW_ADDING_TO_YOUR_WALLET_INFO_CARD, false)
-                .apply();
-    }
-
-    public void dismissCashingOutInfoCard() {
-        getStore().beginWrite()
-                .putBoolean(SHOW_CASHING_OUT_INFO_CARD, false)
-                .apply();
-    }
-
-    public void dismissRecoveryPhraseInfoCard() {
-        getStore().beginWrite()
-                .putBoolean(SHOW_RECOVERY_PHRASE_INFO_CARD, false)
-                .apply();
-    }
-
-    public void dismissUpdatePinInfoCard() {
-        getStore().beginWrite()
-                .putBoolean(SHOW_UPDATE_PIN_INFO_CARD, false)
-                .apply();
-    }
-
-    public void setMobileCoinFullLedger(@NonNull MobileCoinLedgerWrapper ledger) {
-        getStore().beginWrite()
-                .putBlob(MOB_LEDGER, ledger.serialize())
-                .commit();
-
-        liveMobileCoinLedger.postValue(ledger);
-    }
-
-    public @NonNull MobileCoinLedgerWrapper mobileCoinLatestFullLedger() {
-        byte[] blob = getStore().getBlob(MOB_LEDGER, null);
-
-        if (blob == null) {
-            return new MobileCoinLedgerWrapper(MobileCoinLedger.getDefaultInstance());
-        }
-
-        try {
-            return new MobileCoinLedgerWrapper(MobileCoinLedger.parseFrom(blob));
-        } catch (InvalidProtocolBufferException e) {
-            Log.w(TAG, "Bad cached ledger, clearing", e);
-            setMobileCoinFullLedger(new MobileCoinLedgerWrapper(MobileCoinLedger.getDefaultInstance()));
-            throw new AssertionError(e);
-        }
-    }
-
-    private @NonNull Currency determineCurrency() {
-        String localE164 = TextSecurePreferences.getLocalNumber(ApplicationDependencies.getApplication());
-        if (localE164 == null) {
-            localE164 = "";
-        }
-        return Util.firstNonNull(CurrencyUtil.getCurrencyByE164(localE164),
-                CurrencyUtil.getCurrencyByLocale(Locale.getDefault()),
-                Currency.getInstance(DEFAULT_CURRENCY_CODE));
-    }
-
-
-    /**
-     * Does not trigger a storage sync.
-     */
-    public void setEnabledAndEntropy(boolean enabled, @Nullable Entropy entropy) {
-        KeyValueStore.Writer writer = getStore().beginWrite();
-
-        if (entropy != null) {
-            writer.putBlob(PAYMENTS_ENTROPY, entropy.getBytes());
-        }
-
-        writer.putBoolean(MOB_PAYMENTS_ENABLED, enabled)
-                .commit();
-    }
-
-    @WorkerThread
-    public WalletRestoreResult restoreWallet(@NonNull String mnemonic) {
-        byte[] entropyFromMnemonic;
-        try {
-            entropyFromMnemonic = Mnemonics.bip39EntropyFromMnemonic(mnemonic);
-        } catch (BadMnemonicException e) {
-            return WalletRestoreResult.MNEMONIC_ERROR;
-        }
-        Entropy paymentsEntropy = getPaymentsEntropy();
-        if (paymentsEntropy != null) {
-            byte[] existingEntropy = paymentsEntropy.getBytes();
-            if (Arrays.equals(existingEntropy, entropyFromMnemonic)) {
-                setMobileCoinPaymentsEnabled(true);
-                setUserConfirmedMnemonic(true);
-                return WalletRestoreResult.ENTROPY_UNCHANGED;
-            }
-        }
-
-        getStore().beginWrite()
-                .putBlob(PAYMENTS_ENTROPY, entropyFromMnemonic)
-                .putBoolean(MOB_PAYMENTS_ENABLED, true)
-                .remove(MOB_LEDGER)
-                .putBoolean(USER_CONFIRMED_MNEMONIC, true)
-                .commit();
-
-        liveMobileCoinLedger.postValue(new MobileCoinLedgerWrapper(MobileCoinLedger.getDefaultInstance()));
-
-        // StorageSyncHelper.scheduleSyncForDataChange();
-
-        return WalletRestoreResult.ENTROPY_CHANGED;
-    }
-
-    public enum WalletRestoreResult {
-        ENTROPY_CHANGED,
-        ENTROPY_UNCHANGED,
-        MNEMONIC_ERROR
-    }
-
-    private boolean userHasLargeBalance() {
-        return mobileCoinLatestBalance().getFullAmount().requireMobileCoin().greaterThan(LARGE_BALANCE_THRESHOLD);
-    }
+  private fun userHasLargeBalance(): Boolean {
+    return mobileCoinLatestBalance().fullAmount.requireMobileCoin().greaterThan(LARGE_BALANCE_THRESHOLD)
+  }
 }

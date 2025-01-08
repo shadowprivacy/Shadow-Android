@@ -10,7 +10,6 @@ import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
-import net.zetetic.database.sqlcipher.SQLiteDatabaseHook;
 
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.core.util.logging.Log;
@@ -25,7 +24,7 @@ import su.sres.securesms.util.CursorUtil;
 import java.util.LinkedList;
 import java.util.List;
 
-public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
+public class JobDatabase extends SQLiteOpenHelper implements ShadowDatabaseOpenHelper {
 
   private static final String TAG = Log.tag(JobDatabase.class);
 
@@ -116,19 +115,19 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
     db.execSQL(Constraints.CREATE_TABLE);
     db.execSQL(Dependencies.CREATE_TABLE);
 
-    if (DatabaseFactory.getInstance(application).hasTable("job_spec")) {
+    if (ShadowDatabase.hasTable("job_spec")) {
       Log.i(TAG, "Found old job_spec table. Migrating data.");
-      migrateJobSpecsFromPreviousDatabase(DatabaseFactory.getInstance(application).getRawDatabase(), db);
+      migrateJobSpecsFromPreviousDatabase(ShadowDatabase.getRawDatabase(), db);
     }
 
-    if (DatabaseFactory.getInstance(application).hasTable("constraint_spec")) {
+    if (ShadowDatabase.hasTable("constraint_spec")) {
       Log.i(TAG, "Found old constraint_spec table. Migrating data.");
-      migrateConstraintSpecsFromPreviousDatabase(DatabaseFactory.getInstance(application).getRawDatabase(), db);
+      migrateConstraintSpecsFromPreviousDatabase(ShadowDatabase.getRawDatabase(), db);
     }
 
-    if (DatabaseFactory.getInstance(application).hasTable("dependency_spec")) {
+    if (ShadowDatabase.hasTable("dependency_spec")) {
       Log.i(TAG, "Found old dependency_spec table. Migrating data.");
-      migrateDependencySpecsFromPreviousDatabase(DatabaseFactory.getInstance(application).getRawDatabase(), db);
+      migrateDependencySpecsFromPreviousDatabase(ShadowDatabase.getRawDatabase(), db);
     }
   }
 
@@ -373,9 +372,9 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
   }
 
   private void dropTableIfPresent(@NonNull String table) {
-    if (DatabaseFactory.getInstance(application).hasTable(table)) {
+    if (ShadowDatabase.hasTable(table)) {
       Log.i(TAG, "Dropping original " + table + " table from the main database.");
-      DatabaseFactory.getInstance(application).getRawDatabase().execSQL("DROP TABLE " + table);
+      ShadowDatabase.getRawDatabase().execSQL("DROP TABLE " + table);
     }
   }
 

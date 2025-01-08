@@ -2,7 +2,7 @@ package su.sres.securesms.migrations;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -12,41 +12,41 @@ import su.sres.securesms.keyvalue.SignalStore;
  */
 public class ProfileSharingUpdateMigrationJob extends MigrationJob {
 
-    public static final String KEY = "ProfileSharingUpdateMigrationJob";
+  public static final String KEY = "ProfileSharingUpdateMigrationJob";
 
-    ProfileSharingUpdateMigrationJob() {
-        this(new Parameters.Builder().build());
-    }
+  ProfileSharingUpdateMigrationJob() {
+    this(new Parameters.Builder().build());
+  }
 
-    private ProfileSharingUpdateMigrationJob(@NonNull Parameters parameters) {
-        super(parameters);
-    }
+  private ProfileSharingUpdateMigrationJob(@NonNull Parameters parameters) {
+    super(parameters);
+  }
 
+  @Override
+  public boolean isUiBlocking() {
+    return true;
+  }
+
+  @Override
+  public @NonNull String getFactoryKey() {
+    return KEY;
+  }
+
+  @Override
+  public void performMigration() {
+    long messageRequestEnableTime = SignalStore.misc().getMessageRequestEnableTime();
+    ShadowDatabase.recipients().markPreMessageRequestRecipientsAsProfileSharingEnabled(messageRequestEnableTime);
+  }
+
+  @Override
+  boolean shouldRetry(@NonNull Exception e) {
+    return false;
+  }
+
+  public static class Factory implements Job.Factory<ProfileSharingUpdateMigrationJob> {
     @Override
-    public boolean isUiBlocking() {
-        return true;
+    public @NonNull ProfileSharingUpdateMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+      return new ProfileSharingUpdateMigrationJob(parameters);
     }
-
-    @Override
-    public @NonNull String getFactoryKey() {
-        return KEY;
-    }
-
-    @Override
-    public void performMigration() {
-        long messageRequestEnableTime = SignalStore.misc().getMessageRequestEnableTime();
-        DatabaseFactory.getRecipientDatabase(context).markPreMessageRequestRecipientsAsProfileSharingEnabled(messageRequestEnableTime);
-    }
-
-    @Override
-    boolean shouldRetry(@NonNull Exception e) {
-        return false;
-    }
-
-    public static class Factory implements Job.Factory<ProfileSharingUpdateMigrationJob> {
-        @Override
-        public @NonNull ProfileSharingUpdateMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
-            return new ProfileSharingUpdateMigrationJob(parameters);
-        }
-    }
+  }
 }

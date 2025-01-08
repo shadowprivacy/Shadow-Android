@@ -1,7 +1,6 @@
 package su.sres.securesms.conversation.ui.mentions;
 
 import android.content.Context;
-import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -9,10 +8,9 @@ import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.RecipientDatabase;
-import su.sres.securesms.groups.ui.GroupMemberEntry;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 
@@ -25,8 +23,8 @@ final class MentionsPickerRepository {
     private final GroupDatabase groupDatabase;
 
     MentionsPickerRepository(@NonNull Context context) {
-        recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-        groupDatabase     = DatabaseFactory.getGroupDatabase(context);
+        recipientDatabase = ShadowDatabase.recipients();
+        groupDatabase     = ShadowDatabase.groups();
     }
 
     @WorkerThread

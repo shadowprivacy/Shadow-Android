@@ -17,7 +17,7 @@ import su.sres.securesms.components.AvatarImageView;
 import su.sres.securesms.components.emoji.EmojiTextView;
 import su.sres.securesms.contacts.avatars.FallbackContactPhoto;
 import su.sres.securesms.contacts.avatars.ResourceContactPhoto;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.mms.GlideRequests;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.LongClickMovementMethod;
@@ -70,8 +70,8 @@ public class ConversationBannerView extends ConstraintLayout {
     if (recipient != null && recipient.shouldBlurAvatar() && recipient.getContactPhoto() != null) {
       tapToView.setVisibility(VISIBLE);
       tapToView.setOnClickListener(v -> {
-        SignalExecutors.BOUNDED.execute(() -> DatabaseFactory.getRecipientDatabase(getContext().getApplicationContext())
-                                                             .manuallyShowAvatar(recipient.getId()));
+        SignalExecutors.BOUNDED.execute(() -> ShadowDatabase.recipients()
+                                                            .manuallyShowAvatar(recipient.getId()));
       });
     } else {
       tapToView.setVisibility(GONE);

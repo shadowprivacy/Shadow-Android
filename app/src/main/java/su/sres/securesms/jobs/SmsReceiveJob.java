@@ -6,14 +6,15 @@ import androidx.annotation.Nullable;
 import android.telephony.SmsMessage;
 
 import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.SqlCipherMigrationConstraint;
 import su.sres.core.util.logging.Log;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase.InsertResult;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.sms.IncomingTextMessage;
 import su.sres.securesms.transport.RetryLaterException;
@@ -75,7 +76,7 @@ public class SmsReceiveJob extends BaseJob {
   @Override
   public void onRun() throws MigrationPendingException, RetryLaterException {
     Optional<IncomingTextMessage> message = assembleMessageFragments(pdus, subscriptionId);
-    if (TextSecurePreferences.getLocalAci(context) == null && TextSecurePreferences.getLocalNumber(context) == null) {
+    if (SignalStore.account().getUserLogin() == null) {
       Log.i(TAG, "Received an SMS before we're registered...");
 
       if (message.isPresent()) {
@@ -121,7 +122,7 @@ public class SmsReceiveJob extends BaseJob {
   }
 
   private Optional<InsertResult> storeMessage(IncomingTextMessage message) throws MigrationPendingException {
-    MessageDatabase database = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase database = ShadowDatabase.sms();
     database.ensureMigration();
 
     if (TextSecurePreferences.getNeedsSqlCipherMigration(context)) {

@@ -6,8 +6,8 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.PaymentDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.payments.reconciliation.LedgerReconcile;
@@ -33,9 +33,8 @@ public final class DataExportUtil {
       throw new AssertionError();
     }
 
-    Context context = ApplicationDependencies.getApplication();
-    List<PaymentDatabase.PaymentTransaction> paymentTransactions = DatabaseFactory.getPaymentDatabase(context)
-                                                                                  .getAll();
+    List<PaymentDatabase.PaymentTransaction> paymentTransactions = ShadowDatabase.payments()
+                                                                                 .getAll();
     MobileCoinLedgerWrapper ledger     = SignalStore.paymentsValues().liveMobileCoinLedger().getValue();
     List<Payment>           reconciled = LedgerReconcile.reconcile(paymentTransactions, Objects.requireNonNull(ledger));
 

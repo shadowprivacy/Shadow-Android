@@ -5,6 +5,7 @@ import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import androidx.core.animation.doOnEnd
 import androidx.recyclerview.widget.RecyclerView
+import su.sres.core.util.logging.Log
 import su.sres.securesms.conversation.ConversationAdapter
 
 /**
@@ -18,11 +19,6 @@ class ConversationItemAnimator(
   private val shouldPlayMessageAnimations: () -> Boolean,
   private val isParentFilled: () -> Boolean
 ) : RecyclerView.ItemAnimator() {
-
-  private enum class Operation {
-    ADD,
-    CHANGE
-  }
 
   private data class TweeningInfo(
     val startValue: Float,
@@ -62,11 +58,12 @@ class ConversationItemAnimator(
       return false
     }
 
-    return animateSlide(viewHolder, preLayoutInfo, postLayoutInfo, Operation.ADD)
+    return animateSlide(viewHolder, preLayoutInfo, postLayoutInfo)
   }
 
-  private fun animateSlide(viewHolder: RecyclerView.ViewHolder, preLayoutInfo: ItemHolderInfo?, postLayoutInfo: ItemHolderInfo, operation: Operation): Boolean {
+  private fun animateSlide(viewHolder: RecyclerView.ViewHolder, preLayoutInfo: ItemHolderInfo?, postLayoutInfo: ItemHolderInfo): Boolean {
     if (isInMultiSelectMode() || !shouldPlayMessageAnimations()) {
+      Log.d(TAG, "Dropping slide animation: (${isInMultiSelectMode()}, ${shouldPlayMessageAnimations()}) :: ${viewHolder.absoluteAdapterPosition}")
       dispatchAnimationFinished(viewHolder)
       return false
     }
@@ -83,6 +80,7 @@ class ConversationItemAnimator(
     }.toFloat()
 
     if (translationY == 0f) {
+      viewHolder.itemView.translationY = 0f
       dispatchAnimationFinished(viewHolder)
       return false
     }
@@ -101,9 +99,10 @@ class ConversationItemAnimator(
         dispatchAnimationFinished(viewHolder)
         false
       } else {
-        animateSlide(viewHolder, preLayoutInfo, postLayoutInfo, Operation.CHANGE)
+        animateSlide(viewHolder, preLayoutInfo, postLayoutInfo)
       }
     } else {
+      Log.d(TAG, "Dropping persistence animation: (${isInMultiSelectMode()}, ${shouldPlayMessageAnimations()}, ${isParentFilled()}) :: ${viewHolder.absoluteAdapterPosition}")
       dispatchAnimationFinished(viewHolder)
       false
     }
@@ -121,6 +120,7 @@ class ConversationItemAnimator(
   }
 
   private fun runPendingSlideAnimations() {
+    Log.d(TAG, "Starting ${pendingSlideAnimations.size} animations.")
     val animators: MutableList<Animator> = mutableListOf()
     for ((viewHolder, tweeningInfo) in pendingSlideAnimations) {
       val animator = ValueAnimator.ofFloat(0f, 1f)
@@ -176,14 +176,19 @@ class ConversationItemAnimator(
     slideAnimations[item]?.sharedAnimator?.cancel()
   }
 
-  fun endSlideAnimations() {
+  private fun endSlideAnimations() {
     slideAnimations.values.map { it.sharedAnimator }.forEach {
       it.cancel()
     }
   }
   private fun dispatchFinishedWhenDone() {
     if (!isRunning) {
+      Log.d(TAG, "Finished running animations.")
       dispatchAnimationsFinished()
     }
+  }
+
+  companion object {
+    private val TAG = Log.tag(ConversationItemAnimator::class.java)
   }
 }

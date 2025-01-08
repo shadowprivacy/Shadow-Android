@@ -26,10 +26,11 @@ import androidx.appcompat.app.AlertDialog;
 
 import su.sres.securesms.contacts.sync.DirectoryHelper;
 import su.sres.securesms.conversation.ConversationIntents;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.groups.ui.creategroup.CreateGroupActivity;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 
@@ -38,7 +39,6 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.concurrent.SimpleTask;
 import su.sres.securesms.util.views.SimpleProgressDialog;
 
@@ -69,7 +69,7 @@ public class NewConversationActivity extends ContactSelectionActivity
     } else {
       // is there a case when a recipientId would be absent?
       Log.i(TAG, "[onContactSelected] Maybe creating a new recipient.");
-      if (TextSecurePreferences.isPushRegistered(this) && NetworkConstraint.isMet(this)) {
+      if (SignalStore.account().isRegistered() && NetworkConstraint.isMet(this)) {
         Log.i(TAG, "[onContactSelected] Doing contact refresh.");
 
         AlertDialog progress = SimpleProgressDialog.show(this);
@@ -105,7 +105,7 @@ public class NewConversationActivity extends ContactSelectionActivity
 
   private void launch(Recipient recipient) {
 
-    long existingThread = DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient.getId());
+    long existingThread = ShadowDatabase.threads().getThreadIdIfExistsFor(recipient.getId());
     Intent intent = ConversationIntents.createBuilder(this, recipient.getId(), existingThread)
                                        .withDraftText(getIntent().getStringExtra(Intent.EXTRA_TEXT))
                                        .withDataUri(getIntent().getData())
@@ -139,7 +139,7 @@ public class NewConversationActivity extends ContactSelectionActivity
   }
 
   private void handleCreateGroup(Context context) {
-    if (TextSecurePreferences.isPushRegistered(context)) {
+    if (SignalStore.account().isRegistered()) {
       startActivity(CreateGroupActivity.newIntent(this));
     }
   }

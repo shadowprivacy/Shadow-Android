@@ -19,6 +19,7 @@ import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.WebRtcActionProcessor;
 import su.sres.securesms.webrtc.audio.SignalAudioManager;
 
+import org.signal.ringrtc.CallId;
 import org.signal.ringrtc.GroupCall;
 
 import java.util.Collection;
@@ -44,8 +45,8 @@ public class WebRtcServiceStateBuilder {
     return this;
   }
 
-  public @NonNull CallSetupStateBuilder changeCallSetupState() {
-    return new CallSetupStateBuilder();
+  public @NonNull CallSetupStateBuilder changeCallSetupState(@NonNull CallId callId) {
+    return new CallSetupStateBuilder(callId);
   }
 
   public @NonNull CallInfoStateBuilder changeCallInfoState() {
@@ -60,14 +61,14 @@ public class WebRtcServiceStateBuilder {
     return new VideoStateBuilder();
   }
 
-  public @NonNull WebRtcServiceStateBuilder terminate() {
-    toBuild.callSetupState   = new CallSetupState();
+  public @NonNull WebRtcServiceStateBuilder terminate(@NonNull CallId callId) {
     toBuild.localDeviceState = new LocalDeviceState();
     toBuild.videoState       = new VideoState();
 
     CallInfoState newCallInfoState = new CallInfoState();
     newCallInfoState.peerMap.putAll(toBuild.callInfoState.peerMap);
     toBuild.callInfoState = newCallInfoState;
+    toBuild.callSetupStates.remove(callId);
 
     return this;
   }
@@ -127,13 +128,15 @@ public class WebRtcServiceStateBuilder {
 
   public class CallSetupStateBuilder {
     private CallSetupState toBuild;
+    private CallId         callId;
 
-    public CallSetupStateBuilder() {
-      toBuild = WebRtcServiceStateBuilder.this.toBuild.callSetupState.duplicate();
+    public CallSetupStateBuilder(@NonNull CallId callId) {
+      this.toBuild = WebRtcServiceStateBuilder.this.toBuild.getCallSetupState(callId).duplicate();
+      this.callId  = callId;
     }
 
     public @NonNull WebRtcServiceStateBuilder commit() {
-      WebRtcServiceStateBuilder.this.toBuild.callSetupState = toBuild;
+      WebRtcServiceStateBuilder.this.toBuild.callSetupStates.put(callId, toBuild);
       return WebRtcServiceStateBuilder.this;
     }
 

@@ -12,7 +12,7 @@ import androidx.annotation.VisibleForTesting;
 import su.sres.paging.PagedDataSource;
 import su.sres.securesms.conversationlist.model.Conversation;
 import su.sres.securesms.conversationlist.model.ConversationReader;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -26,174 +26,175 @@ import java.util.List;
 
 abstract class ConversationListDataSource implements PagedDataSource<Long, Conversation> {
 
-    private static final String TAG = Log.tag(ConversationListDataSource.class);
+  private static final String TAG = Log.tag(ConversationListDataSource.class);
 
-    protected final ThreadDatabase threadDatabase;
+  protected final ThreadDatabase threadDatabase;
 
-    protected ConversationListDataSource(@NonNull Context context) {
-        this.threadDatabase = DatabaseFactory.getThreadDatabase(context);
+  protected ConversationListDataSource(@NonNull Context context) {
+    this.threadDatabase = ShadowDatabase.threads();
+  }
+
+  public static ConversationListDataSource create(@NonNull Context context, boolean isArchived) {
+    if (!isArchived) return new UnarchivedConversationListDataSource(context);
+    else return new ArchivedConversationListDataSource(context);
+  }
+
+  @Override
+  public int size() {
+    long startTime = System.currentTimeMillis();
+    int  count     = getTotalCount();
+
+    Log.d(TAG, "[size(), " + getClass().getSimpleName() + "] " + (System.currentTimeMillis() - startTime) + " ms");
+    return count;
+  }
+
+  @Override
+  public @NonNull List<Conversation> load(int start, int length, @NonNull CancellationSignal cancellationSignal) {
+    Stopwatch stopwatch = new Stopwatch("load(" + start + ", " + length + "), " + getClass().getSimpleName());
+
+    List<Conversation> conversations = new ArrayList<>(length);
+    List<Recipient>    recipients    = new LinkedList<>();
+
+    try (ConversationReader reader = new ConversationReader(getCursor(start, length))) {
+      ThreadRecord record;
+      while ((record = reader.getNext()) != null && !cancellationSignal.isCanceled()) {
+        conversations.add(new Conversation(record));
+        recipients.add(record.getRecipient());
+      }
     }
 
-    public static ConversationListDataSource create(@NonNull Context context, boolean isArchived) {
-        if (!isArchived) return new UnarchivedConversationListDataSource(context);
-        else             return new ArchivedConversationListDataSource(context);
+    stopwatch.split("cursor");
+
+    ApplicationDependencies.getRecipientCache().addToCache(recipients);
+
+    stopwatch.split("cache-recipients");
+
+    stopwatch.stop(TAG);
+
+    return conversations;
+  }
+
+  @Override
+  public @Nullable Conversation load(Long threadId) {
+    throw new UnsupportedOperationException("Not implemented!");
+  }
+
+  @Override
+  public @NonNull Long getKey(@NonNull Conversation conversation) {
+    return conversation.getThreadRecord().getThreadId();
+  }
+
+  protected abstract int getTotalCount();
+
+  protected abstract Cursor getCursor(long offset, long limit);
+
+  private static class ArchivedConversationListDataSource extends ConversationListDataSource {
+
+    ArchivedConversationListDataSource(@NonNull Context context) {
+      super(context);
     }
 
     @Override
-    public int size() {
-        long startTime = System.currentTimeMillis();
-        int  count     = getTotalCount();
-
-        Log.d(TAG, "[size(), " + getClass().getSimpleName() + "] " + (System.currentTimeMillis() - startTime) + " ms");
-        return count;
+    protected int getTotalCount() {
+      return threadDatabase.getArchivedConversationListCount();
     }
 
     @Override
-    public @NonNull List<Conversation> load(int start, int length, @NonNull CancellationSignal cancellationSignal) {
-        Stopwatch stopwatch = new Stopwatch("load(" + start + ", " + length + "), " + getClass().getSimpleName());
+    protected Cursor getCursor(long offset, long limit) {
+      return threadDatabase.getArchivedConversationList(offset, limit);
+    }
+  }
 
-        List<Conversation> conversations  = new ArrayList<>(length);
-        List<Recipient>    recipients     = new LinkedList<>();
+  @VisibleForTesting
+  static class UnarchivedConversationListDataSource extends ConversationListDataSource {
 
-        try (ConversationReader reader = new ConversationReader(getCursor(start, length))) {
-            ThreadRecord record;
-            while ((record = reader.getNext()) != null && !cancellationSignal.isCanceled()) {
-                conversations.add(new Conversation(record));
-                recipients.add(record.getRecipient());
-            }
-        }
+    private int totalCount;
+    private int pinnedCount;
+    private int archivedCount;
+    private int unpinnedCount;
 
-        stopwatch.split("cursor");
-
-        ApplicationDependencies.getRecipientCache().addToCache(recipients);
-
-        stopwatch.split("cache-recipients");
-
-        stopwatch.stop(TAG);
-
-        return conversations;
+    UnarchivedConversationListDataSource(@NonNull Context context) {
+      super(context);
     }
 
     @Override
-    public @Nullable Conversation load(Long threadId) {
-        throw new UnsupportedOperationException("Not implemented!");
+    protected int getTotalCount() {
+      int unarchivedCount = threadDatabase.getUnarchivedConversationListCount();
+
+      pinnedCount   = threadDatabase.getPinnedConversationListCount();
+      archivedCount = threadDatabase.getArchivedConversationListCount();
+      unpinnedCount = unarchivedCount - pinnedCount;
+      totalCount    = unarchivedCount;
+
+      if (archivedCount != 0) {
+        totalCount++;
+      }
+
+      if (pinnedCount != 0) {
+        if (unpinnedCount != 0) {
+          totalCount += 2;
+        } else {
+          totalCount += 1;
+        }
+      }
+
+      return totalCount;
     }
 
     @Override
-    public @NonNull Long getKey(@NonNull Conversation conversation) {
-        return conversation.getThreadRecord().getThreadId();
-    }
+    protected Cursor getCursor(long offset, long limit) {
+      List<Cursor> cursors       = new ArrayList<>(5);
+      long         originalLimit = limit;
 
-    protected abstract int getTotalCount();
-    protected abstract Cursor getCursor(long offset, long limit);
+      if (offset == 0 && hasPinnedHeader()) {
+        MatrixCursor pinnedHeaderCursor = new MatrixCursor(ConversationReader.HEADER_COLUMN);
+        pinnedHeaderCursor.addRow(ConversationReader.PINNED_HEADER);
+        cursors.add(pinnedHeaderCursor);
+        limit--;
+      }
 
-    private static class ArchivedConversationListDataSource extends ConversationListDataSource {
+      Cursor pinnedCursor = threadDatabase.getUnarchivedConversationList(true, offset, limit);
+      cursors.add(pinnedCursor);
+      limit -= pinnedCursor.getCount();
 
-        ArchivedConversationListDataSource(@NonNull Context context) {
-            super(context);
-        }
+      if (offset == 0 && hasUnpinnedHeader()) {
+        MatrixCursor unpinnedHeaderCursor = new MatrixCursor(ConversationReader.HEADER_COLUMN);
+        unpinnedHeaderCursor.addRow(ConversationReader.UNPINNED_HEADER);
+        cursors.add(unpinnedHeaderCursor);
+        limit--;
+      }
 
-        @Override
-        protected int getTotalCount() {
-            return threadDatabase.getArchivedConversationListCount();
-        }
+      long   unpinnedOffset = Math.max(0, offset - pinnedCount - getHeaderOffset());
+      Cursor unpinnedCursor = threadDatabase.getUnarchivedConversationList(false, unpinnedOffset, limit);
+      cursors.add(unpinnedCursor);
 
-        @Override
-        protected Cursor getCursor(long offset, long limit) {
-            return threadDatabase.getArchivedConversationList(offset, limit);
-        }
+      if (offset + originalLimit >= totalCount && hasArchivedFooter()) {
+        MatrixCursor archivedFooterCursor = new MatrixCursor(ConversationReader.ARCHIVED_COLUMNS);
+        archivedFooterCursor.addRow(ConversationReader.createArchivedFooterRow(archivedCount));
+        cursors.add(archivedFooterCursor);
+      }
+
+      return new MergeCursor(cursors.toArray(new Cursor[] {}));
     }
 
     @VisibleForTesting
-    static class UnarchivedConversationListDataSource extends ConversationListDataSource {
-
-        private int totalCount;
-        private int pinnedCount;
-        private int archivedCount;
-        private int unpinnedCount;
-
-        UnarchivedConversationListDataSource(@NonNull Context context) {
-            super(context);
-        }
-
-        @Override
-        protected int getTotalCount() {
-            int unarchivedCount = threadDatabase.getUnarchivedConversationListCount();
-
-            pinnedCount   = threadDatabase.getPinnedConversationListCount();
-            archivedCount = threadDatabase.getArchivedConversationListCount();
-            unpinnedCount = unarchivedCount - pinnedCount;
-            totalCount    = unarchivedCount;
-
-            if (archivedCount != 0) {
-                totalCount++;
-            }
-
-            if (pinnedCount != 0) {
-                if (unpinnedCount != 0) {
-                    totalCount += 2;
-                } else {
-                    totalCount += 1;
-                }
-            }
-
-            return totalCount;
-        }
-
-        @Override
-        protected Cursor getCursor(long offset, long limit) {
-            List<Cursor> cursors       = new ArrayList<>(5);
-            long         originalLimit = limit;
-
-            if (offset == 0 && hasPinnedHeader()) {
-                MatrixCursor pinnedHeaderCursor = new MatrixCursor(ConversationReader.HEADER_COLUMN);
-                pinnedHeaderCursor.addRow(ConversationReader.PINNED_HEADER);
-                cursors.add(pinnedHeaderCursor);
-                limit--;
-            }
-
-            Cursor pinnedCursor = threadDatabase.getUnarchivedConversationList(true, offset, limit);
-            cursors.add(pinnedCursor);
-            limit -= pinnedCursor.getCount();
-
-            if (offset == 0 && hasUnpinnedHeader()) {
-                MatrixCursor unpinnedHeaderCursor = new MatrixCursor(ConversationReader.HEADER_COLUMN);
-                unpinnedHeaderCursor.addRow(ConversationReader.UNPINNED_HEADER);
-                cursors.add(unpinnedHeaderCursor);
-                limit--;
-            }
-
-            long   unpinnedOffset = Math.max(0, offset - pinnedCount - getHeaderOffset());
-            Cursor unpinnedCursor = threadDatabase.getUnarchivedConversationList(false, unpinnedOffset, limit);
-            cursors.add(unpinnedCursor);
-
-            if (offset + originalLimit >= totalCount && hasArchivedFooter()) {
-                MatrixCursor archivedFooterCursor = new MatrixCursor(ConversationReader.ARCHIVED_COLUMNS);
-                archivedFooterCursor.addRow(ConversationReader.createArchivedFooterRow(archivedCount));
-                cursors.add(archivedFooterCursor);
-            }
-
-            return new MergeCursor(cursors.toArray(new Cursor[]{}));
-        }
-
-        @VisibleForTesting
-        int getHeaderOffset() {
-            return (hasPinnedHeader() ? 1 : 0) + (hasUnpinnedHeader() ? 1 : 0);
-        }
-
-        @VisibleForTesting
-        boolean hasPinnedHeader() {
-            return pinnedCount != 0;
-        }
-
-        @VisibleForTesting
-        boolean hasUnpinnedHeader() {
-            return hasPinnedHeader() && unpinnedCount != 0;
-        }
-
-        @VisibleForTesting
-        boolean hasArchivedFooter() {
-            return archivedCount != 0;
-        }
+    int getHeaderOffset() {
+      return (hasPinnedHeader() ? 1 : 0) + (hasUnpinnedHeader() ? 1 : 0);
     }
+
+    @VisibleForTesting
+    boolean hasPinnedHeader() {
+      return pinnedCount != 0;
+    }
+
+    @VisibleForTesting
+    boolean hasUnpinnedHeader() {
+      return hasPinnedHeader() && unpinnedCount != 0;
+    }
+
+    @VisibleForTesting
+    boolean hasArchivedFooter() {
+      return archivedCount != 0;
+    }
+  }
 }

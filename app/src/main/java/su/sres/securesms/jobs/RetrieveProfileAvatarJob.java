@@ -7,8 +7,8 @@ import android.text.TextUtils;
 import org.signal.zkgroup.profiles.ProfileKey;
 
 import su.sres.securesms.crypto.ProfileKeyUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -74,7 +74,7 @@ public class RetrieveProfileAvatarJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException {
-    RecipientDatabase database   = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase database   = ShadowDatabase.recipients();
     ProfileKey        profileKey = ProfileKeyUtil.profileKeyOrNull(recipient.resolve().getProfileKey());
 
     if (profileKey == null) {

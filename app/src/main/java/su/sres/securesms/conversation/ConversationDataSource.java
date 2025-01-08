@@ -11,15 +11,17 @@ import su.sres.paging.PagedDataSource;
 import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.conversation.ConversationData.MessageRequestData;
 import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsSmsDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.InMemoryMessageRecord;
 import su.sres.securesms.database.model.MediaMmsMessageRecord;
 import su.sres.securesms.database.model.Mention;
 import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.database.model.ReactionRecord;
+import su.sres.securesms.database.model.SmsMessageRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.Stopwatch;
 import su.sres.securesms.util.Util;
@@ -55,7 +57,7 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
   @Override
   public int size() {
     long startTime = System.currentTimeMillis();
-    int size = DatabaseFactory.getMmsSmsDatabase(context).getConversationCount(threadId) +
+    int size = ShadowDatabase.mmsSms().getConversationCount(threadId) +
                (messageRequestData.includeWarningUpdateMessage() ? 1 : 0) +
                (showUniversalExpireTimerUpdate ? 1 : 0);
 
@@ -67,16 +69,18 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
   @Override
   public @NonNull List<ConversationMessage> load(int start, int length, @NonNull CancellationSignal cancellationSignal) {
     Stopwatch           stopwatch        = new Stopwatch("load(" + start + ", " + length + "), thread " + threadId);
-    MmsSmsDatabase      db               = DatabaseFactory.getMmsSmsDatabase(context);
+    MmsSmsDatabase      db               = ShadowDatabase.mmsSms();
     List<MessageRecord> records          = new ArrayList<>(length);
     MentionHelper       mentionHelper    = new MentionHelper();
     AttachmentHelper    attachmentHelper = new AttachmentHelper();
+    ReactionHelper      reactionHelper   = new ReactionHelper();
 
     try (MmsSmsDatabase.Reader reader = MmsSmsDatabase.readerFor(db.getConversation(threadId, start, length))) {
       MessageRecord record;
       while ((record = reader.getNext()) != null && !cancellationSignal.isCanceled()) {
         records.add(record);
         mentionHelper.add(record);
+        reactionHelper.add(record);
         attachmentHelper.add(record);
       }
     }
@@ -94,6 +98,12 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
     }
 
     stopwatch.split("mentions");
+
+    reactionHelper.fetchReactions(context);
+    stopwatch.split("reactions");
+
+    records = reactionHelper.buildUpdatedModels(context, records);
+    stopwatch.split("reaction-models");
 
     attachmentHelper.fetchAttachments(context);
 
@@ -116,7 +126,7 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
   @Override
   public @Nullable ConversationMessage load(@NonNull MessageId messageId) {
     Stopwatch       stopwatch = new Stopwatch("load(" + messageId + "), thread " + threadId);
-    MessageDatabase database  = messageId.isMms() ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase database  = messageId.isMms() ? ShadowDatabase.mms() : ShadowDatabase.sms();
     MessageRecord   record    = database.getMessageRecordOrNull(messageId.getId());
 
     stopwatch.split("message");
@@ -125,15 +135,20 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
       if (record != null) {
         List<Mention> mentions;
         if (messageId.isMms()) {
-          mentions = DatabaseFactory.getMentionDatabase(context).getMentionsForMessage(messageId.getId());
+          mentions = ShadowDatabase.mentions().getMentionsForMessage(messageId.getId());
         } else {
           mentions = Collections.emptyList();
         }
 
         stopwatch.split("mentions");
 
+        List<ReactionRecord> reactions = ShadowDatabase.reactions().getReactions(messageId);
+        record = ReactionHelper.recordWithReactions(record, reactions);
+
+        stopwatch.split("reactions");
+
         if (messageId.isMms()) {
-          List<DatabaseAttachment> attachments = DatabaseFactory.getAttachmentDatabase(context).getAttachmentsForMessage(messageId.getId());
+          List<DatabaseAttachment> attachments = ShadowDatabase.attachments().getAttachmentsForMessage(messageId.getId());
           if (attachments.size() > 0) {
             record = ((MediaMmsMessageRecord) record).withAttachments(context, attachments);
           }
@@ -167,7 +182,7 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
     }
 
     void fetchMentions(Context context) {
-      messageIdToMentions = DatabaseFactory.getMentionDatabase(context).getMentionsForMessages(messageIds);
+      messageIdToMentions = ShadowDatabase.mentions().getMentionsForMessages(messageIds);
     }
 
     @Nullable
@@ -188,7 +203,7 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
     }
 
     void fetchAttachments(Context context) {
-      messageIdToAttachments = DatabaseFactory.getAttachmentDatabase(context).getAttachmentsForMessages(messageIds);
+      messageIdToAttachments = ShadowDatabase.attachments().getAttachmentsForMessages(messageIds);
     }
 
     @NonNull List<MessageRecord> buildUpdatedModels(@NonNull Context context, @NonNull List<MessageRecord> records) {
@@ -205,6 +220,45 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
                       return record;
                     })
                     .collect(Collectors.toList());
+    }
+  }
+
+  private static class ReactionHelper {
+
+    private Collection<MessageId>                messageIds           = new LinkedList<>();
+    private Map<MessageId, List<ReactionRecord>> messageIdToReactions = new HashMap<>();
+
+    void add(MessageRecord record) {
+      messageIds.add(new MessageId(record.getId(), record.isMms()));
+    }
+
+    void fetchReactions(Context context) {
+      messageIdToReactions = ShadowDatabase.reactions().getReactionsForMessages(messageIds);
+    }
+
+    @NonNull List<MessageRecord> buildUpdatedModels(@NonNull Context context, @NonNull List<MessageRecord> records) {
+      return records.stream()
+                    .map(record -> {
+                      MessageId            messageId = new MessageId(record.getId(), record.isMms());
+                      List<ReactionRecord> reactions = messageIdToReactions.get(messageId);
+
+                      return recordWithReactions(record, reactions);
+                    })
+                    .collect(Collectors.toList());
+    }
+
+    static MessageRecord recordWithReactions(@NonNull MessageRecord record, List<ReactionRecord> reactions) {
+      if (Util.hasItems(reactions)) {
+        if (record instanceof MediaMmsMessageRecord) {
+          return ((MediaMmsMessageRecord) record).withReactions(reactions);
+        } else if (record instanceof SmsMessageRecord) {
+          return ((SmsMessageRecord) record).withReactions(reactions);
+        } else {
+          throw new IllegalStateException("We have reactions for an unsupported record type: " + record.getClass().getName());
+        }
+      } else {
+        return record;
+      }
     }
   }
 }

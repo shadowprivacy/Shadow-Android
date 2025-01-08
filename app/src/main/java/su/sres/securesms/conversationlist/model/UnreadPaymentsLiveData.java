@@ -5,9 +5,9 @@ import androidx.annotation.WorkerThread;
 import androidx.lifecycle.LiveData;
 
 import su.sres.core.util.concurrent.SignalExecutors;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.DatabaseObserver;
 import su.sres.securesms.database.PaymentDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.concurrent.SerialMonoLifoExecutor;
@@ -28,7 +28,7 @@ public final class UnreadPaymentsLiveData extends LiveData<Optional<UnreadPaymen
   private final Executor                  executor;
 
   public UnreadPaymentsLiveData() {
-    this.paymentDatabase = DatabaseFactory.getPaymentDatabase(ApplicationDependencies.getApplication());
+    this.paymentDatabase = ShadowDatabase.payments();
     this.observer        = this::refreshUnreadPayments;
     this.executor        = new SerialMonoLifoExecutor(SignalExecutors.BOUNDED);
   }

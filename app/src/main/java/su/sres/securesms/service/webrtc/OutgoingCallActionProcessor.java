@@ -7,8 +7,9 @@ import androidx.annotation.Nullable;
 
 import org.signal.ringrtc.CallException;
 
+import su.sres.securesms.components.webrtc.EglBaseWrapper;
 import su.sres.securesms.crypto.IdentityKeyUtil;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.core.util.logging.Log;
@@ -27,6 +28,7 @@ import org.webrtc.PeerConnection;
 import org.whispersystems.libsignal.InvalidKeyException;
 
 import su.sres.securesms.webrtc.audio.SignalAudioManager;
+import su.sres.signalservice.api.messages.calls.OfferMessage;
 
 import java.util.List;
 import java.util.Objects;
@@ -57,29 +59,36 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
   }
 
   @Override
-  protected @NonNull WebRtcServiceState handleStartOutgoingCall(@NonNull WebRtcServiceState currentState, @NonNull RemotePeer remotePeer) {
+  protected @NonNull WebRtcServiceState handleStartOutgoingCall(@NonNull WebRtcServiceState currentState, @NonNull RemotePeer remotePeer, @NonNull OfferMessage.Type offerType) {
     Log.i(TAG, "handleStartOutgoingCall():");
     WebRtcServiceStateBuilder builder = currentState.builder();
 
     remotePeer.dialing();
 
-    Log.i(TAG, "assign activePeer callId: " + remotePeer.getCallId() + " key: " + remotePeer.hashCode());
+    Log.i(TAG, "assign activePeer callId: " + remotePeer.getCallId() + " key: " + remotePeer.hashCode() + " type: " + offerType);
+
+    boolean isVideoCall = offerType == OfferMessage.Type.VIDEO_CALL;
 
     webRtcInteractor.setCallInProgressNotification(TYPE_OUTGOING_RINGING, remotePeer);
-    webRtcInteractor.setDefaultAudioDevice(currentState.getCallSetupState().isEnableVideoOnCreate() ? SignalAudioManager.AudioDevice.SPEAKER_PHONE
-                                                                                                    : SignalAudioManager.AudioDevice.EARPIECE,
+    webRtcInteractor.setDefaultAudioDevice(isVideoCall ? SignalAudioManager.AudioDevice.SPEAKER_PHONE
+                                                       : SignalAudioManager.AudioDevice.EARPIECE,
                                            false);
 
     webRtcInteractor.updatePhoneState(WebRtcUtil.getInCallPhoneState(context));
     webRtcInteractor.initializeAudioForCall();
     webRtcInteractor.startOutgoingRinger();
 
-    RecipientUtil.setAndSendUniversalExpireTimerIfNecessary(context, Recipient.resolved(remotePeer.getId()), DatabaseFactory.getThreadDatabase(context).getThreadIdIfExistsFor(remotePeer.getId()));
-    DatabaseFactory.getSmsDatabase(context).insertOutgoingCall(remotePeer.getId(), currentState.getCallSetupState().isEnableVideoOnCreate());
+    RecipientUtil.setAndSendUniversalExpireTimerIfNecessary(context, Recipient.resolved(remotePeer.getId()), ShadowDatabase.threads().getThreadIdIfExistsFor(remotePeer.getId()));
+    ShadowDatabase.sms().insertOutgoingCall(remotePeer.getId(), isVideoCall);
+
+    EglBaseWrapper.replaceHolder(EglBaseWrapper.OUTGOING_PLACEHOLDER, remotePeer.getCallId().longValue());
 
     webRtcInteractor.retrieveTurnServers(remotePeer);
 
-    return builder.changeCallInfoState()
+    return builder.changeCallSetupState(remotePeer.getCallId())
+                  .enableVideoOnCreate(isVideoCall)
+                  .commit()
+                  .changeCallInfoState()
                   .activePeer(remotePeer)
                   .callState(WebRtcViewModel.State.CALL_OUTGOING)
                   .commit()
@@ -106,7 +115,7 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
                                                 iceServers,
                                                 isAlwaysTurn,
                                                 NetworkUtil.getCallingBandwidthMode(context),
-                                                currentState.getCallSetupState().isEnableVideoOnCreate());
+                                                currentState.getCallSetupState(activePeer).isEnableVideoOnCreate());
     } catch (CallException e) {
       return callFailure(currentState, "Unable to proceed with call: ", e);
     }
@@ -206,11 +215,6 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
   @Override
   protected @NonNull WebRtcServiceState handleSetupFailure(@NonNull WebRtcServiceState currentState, @NonNull CallId callId) {
     return activeCallDelegate.handleSetupFailure(currentState, callId);
-  }
-
-  @Override
-  protected @NonNull WebRtcServiceState handleCallConcluded(@NonNull WebRtcServiceState currentState, @Nullable RemotePeer remotePeer) {
-    return activeCallDelegate.handleCallConcluded(currentState, remotePeer);
   }
 
   @Override

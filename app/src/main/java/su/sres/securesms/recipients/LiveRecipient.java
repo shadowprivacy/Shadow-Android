@@ -12,12 +12,12 @@ import androidx.lifecycle.Observer;
 import com.annimon.stream.Stream;
 
 import su.sres.core.util.ThreadUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupDatabase.GroupRecord;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.RecipientSettings;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.util.livedata.LiveDataUtil;
 
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -47,8 +47,8 @@ public final class LiveRecipient {
     this.context                    = context.getApplicationContext();
     this.liveData                   = new MutableLiveData<>(defaultRecipient);
     this.recipient                  = new AtomicReference<>(defaultRecipient);
-    this.recipientDatabase          = DatabaseFactory.getRecipientDatabase(context);
-    this.groupDatabase              = DatabaseFactory.getGroupDatabase(context);
+    this.recipientDatabase          = ShadowDatabase.recipients();
+    this.groupDatabase              = ShadowDatabase.groups();
     this.observers                  = new CopyOnWriteArraySet<>();
     this.foreverObserver            = recipient -> {
       ThreadUtil.postToMain(() -> {

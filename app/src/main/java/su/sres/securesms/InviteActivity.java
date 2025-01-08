@@ -24,7 +24,7 @@ import su.sres.securesms.components.ContactFilterView;
 import su.sres.securesms.components.ContactFilterView.OnFilterChangedListener;
 import su.sres.securesms.contacts.ContactsCursorLoader.DisplayMode;
 import su.sres.securesms.contacts.SelectedContact;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.groups.SelectionLimits;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
@@ -256,7 +256,7 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
         MessageSender.send(context, new OutgoingTextMessage(recipient, message, subscriptionId), -1L, true, null, null);
 
         if (recipient.getContactUri() != null) {
-          DatabaseFactory.getRecipientDatabase(context).setHasSentInvite(recipient.getId());
+          ShadowDatabase.recipients().setHasSentInvite(recipient.getId());
         }
       }
 

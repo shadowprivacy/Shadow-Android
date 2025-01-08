@@ -2,9 +2,9 @@ package su.sres.securesms.jobs;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupDatabase.GroupRecord;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
@@ -61,7 +61,7 @@ public final class AvatarGroupsV1DownloadJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException {
-    GroupDatabase         database   = DatabaseFactory.getGroupDatabase(context);
+    GroupDatabase         database   = ShadowDatabase.groups();
     Optional<GroupRecord> record     = database.getGroup(groupId);
     File                  attachment = null;
 
@@ -90,7 +90,7 @@ public final class AvatarGroupsV1DownloadJob extends BaseJob {
         InputStream                    inputStream = receiver.retrieveAttachment(pointer, attachment, AvatarHelper.AVATAR_DOWNLOAD_FAILSAFE_MAX_SIZE);
 
         AvatarHelper.setAvatar(context, record.get().getRecipientId(), inputStream);
-        DatabaseFactory.getGroupDatabase(context).onAvatarUpdated(groupId, true);
+        ShadowDatabase.groups().onAvatarUpdated(groupId, true);
 
         inputStream.close();
       }

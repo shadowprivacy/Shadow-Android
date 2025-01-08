@@ -15,8 +15,8 @@ import su.sres.securesms.badges.models.Badge;
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.payments.MobileCoinPublicAddress;
@@ -295,7 +295,7 @@ public final class ProfileUtil {
                                                            badgeIds).orNull();
 
     SignalStore.registrationValues().markHasUploadedProfile();
-    DatabaseFactory.getRecipientDatabase(context).setProfileAvatar(Recipient.self().getId(), avatarPath);
+    ShadowDatabase.recipients().setProfileAvatar(Recipient.self().getId(), avatarPath);
   }
 
   private static @Nullable SignalServiceProtos.PaymentAddress getSelfPaymentsAddressProtobuf() {

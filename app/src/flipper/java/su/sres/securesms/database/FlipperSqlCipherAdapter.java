@@ -14,7 +14,6 @@ import net.zetetic.database.DatabaseUtils;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteStatement;
 
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.util.Hex;
 import su.sres.core.util.logging.Log;
 
@@ -40,13 +39,13 @@ public class FlipperSqlCipherAdapter extends DatabaseDriver<FlipperSqlCipherAdap
   @Override
   public List<Descriptor> getDatabases() {
     try {
-      Field databaseHelperField = DatabaseFactory.class.getDeclaredField("databaseHelper");
+      Field databaseHelperField = ShadowDatabase.class.getDeclaredField("databaseHelper");
       databaseHelperField.setAccessible(true);
-      SignalDatabase mainOpenHelper       = Objects.requireNonNull((SQLCipherOpenHelper) databaseHelperField.get(DatabaseFactory.getInstance(getContext())));
-      SignalDatabase keyValueOpenHelper   = KeyValueDatabase.getInstance((Application) getContext());
-      SignalDatabase megaphoneOpenHelper  = MegaphoneDatabase.getInstance((Application) getContext());
-      SignalDatabase jobManagerOpenHelper = JobDatabase.getInstance((Application) getContext());
-      SignalDatabase metricsOpenHelper    = LocalMetricsDatabase.getInstance((Application) getContext());
+      ShadowDatabaseOpenHelper mainOpenHelper       = Objects.requireNonNull(SignalDatabase.getInstance());
+      ShadowDatabaseOpenHelper keyValueOpenHelper   = KeyValueDatabase.getInstance((Application) getContext());
+      ShadowDatabaseOpenHelper megaphoneOpenHelper  = MegaphoneDatabase.getInstance((Application) getContext());
+      ShadowDatabaseOpenHelper jobManagerOpenHelper = JobDatabase.getInstance((Application) getContext());
+      ShadowDatabaseOpenHelper metricsOpenHelper    = LocalMetricsDatabase.getInstance((Application) getContext());
 
       return Arrays.asList(new Descriptor(mainOpenHelper),
                            new Descriptor(keyValueOpenHelper),
@@ -249,9 +248,9 @@ public class FlipperSqlCipherAdapter extends DatabaseDriver<FlipperSqlCipherAdap
   }
 
   static class Descriptor implements DatabaseDescriptor {
-    private final SignalDatabase sqlCipherOpenHelper;
+    private final ShadowDatabaseOpenHelper sqlCipherOpenHelper;
 
-    Descriptor(@NonNull SignalDatabase sqlCipherOpenHelper) {
+    Descriptor(@NonNull ShadowDatabaseOpenHelper sqlCipherOpenHelper) {
       this.sqlCipherOpenHelper = sqlCipherOpenHelper;
     }
 

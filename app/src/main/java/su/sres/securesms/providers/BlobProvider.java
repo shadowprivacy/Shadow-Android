@@ -20,8 +20,8 @@ import su.sres.securesms.crypto.AttachmentSecretProvider;
 import su.sres.securesms.crypto.ModernDecryptingPartInputStream;
 import su.sres.securesms.crypto.ModernEncryptingPartOutputStream;
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.DraftDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.util.IOFunction;
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.securesms.util.Util;
@@ -243,7 +243,7 @@ public class BlobProvider {
       return;
     }
 
-    DraftDatabase        draftDatabase   = DatabaseFactory.getDraftDatabase(context);
+    DraftDatabase        draftDatabase   = ShadowDatabase.drafts();
     DraftDatabase.Drafts voiceNoteDrafts = draftDatabase.getAllVoiceNoteDrafts();
 
     @SuppressWarnings("ConstantConditions")

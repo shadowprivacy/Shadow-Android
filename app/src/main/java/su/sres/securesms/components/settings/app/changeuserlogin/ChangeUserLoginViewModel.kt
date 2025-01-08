@@ -108,8 +108,8 @@ class ChangeUserLoginViewModel(
 
     override fun <T : ViewModel?> create(key: String, modelClass: Class<T>, handle: SavedStateHandle): T {
       val context: Application = ApplicationDependencies.getApplication()
-      val localLogin: String = TextSecurePreferences.getLocalNumber(context)
-      val password: String = TextSecurePreferences.getPushServerPassword(context)
+      val localLogin: String = SignalStore.account().userLogin!!
+      val password: String = SignalStore.account().servicePassword!!
 
       val viewModel = ChangeUserLoginViewModel(
         localLogin = localLogin,

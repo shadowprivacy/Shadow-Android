@@ -24,7 +24,7 @@ import org.signal.zkgroup.profiles.ProfileKey;
 
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.util.Util;
-import su.sres.signalservice.testutil.ZkGroupLibraryUtil;
+import su.sres.signalservice.testutil.LibSignalLibraryUtil;
 import su.sres.storageservice.protos.groups.local.EnabledState;
 
 import java.util.UUID;
@@ -39,7 +39,7 @@ public final class GroupsV2Operations_decrypt_group_Test {
 
   @Before
   public void setup() throws InvalidInputException {
-    ZkGroupLibraryUtil.assumeZkGroupSupportedOnOS();
+    LibSignalLibraryUtil.assumeLibSignalSupportedOnOS();
 
     TestZkGroupServer  server             = new TestZkGroupServer();
     ClientZkOperations clientZkOperations = new ClientZkOperations(server.getServerPublicParams());

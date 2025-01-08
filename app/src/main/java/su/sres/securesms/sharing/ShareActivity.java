@@ -50,8 +50,8 @@ import su.sres.securesms.R;
 import su.sres.securesms.components.SearchToolbar;
 import su.sres.securesms.contacts.ContactsCursorLoader.DisplayMode;
 import su.sres.securesms.conversation.ConversationIntents;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.mediasend.v2.MediaSelectionActivity;
@@ -326,7 +326,7 @@ public class ShareActivity extends PassphraseRequiredActivity
     int         distributionType = ThreadDatabase.DistributionTypes.DEFAULT;
 
     if (recipientId != null) {
-      threadId = DatabaseFactory.getThreadDatabase(this).getThreadIdFor(recipientId);
+      threadId = ShadowDatabase.threads().getThreadIdFor(recipientId);
       extras.putString(EXTRA_RECIPIENT_ID, recipientId.serialize());
       extras.putLong(EXTRA_THREAD_ID, threadId != null ? threadId : -1);
       extras.putInt(EXTRA_DISTRIBUTION_TYPE, distributionType);
@@ -518,7 +518,7 @@ public class ShareActivity extends PassphraseRequiredActivity
                                                              .or(() -> Recipient.external(this, contact.getNumber())))
                                       .collect(Collectors.toSet());
 
-    Map<RecipientId, Long> existingThreads = DatabaseFactory.getThreadDatabase(this)
+    Map<RecipientId, Long> existingThreads = ShadowDatabase.threads()
                                                             .getThreadIdsIfExistsFor(Stream.of(recipients)
                                                                                            .map(Recipient::getId)
                                                                                            .toArray(RecipientId[]::new));
@@ -537,7 +537,7 @@ public class ShareActivity extends PassphraseRequiredActivity
       Log.i(TAG, "[onContactSelected] Maybe creating a new recipient.");
       recipient = Recipient.external(this, shareContact.getNumber());
     }
-    long existingThread = DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient.getId());
+    long existingThread = ShadowDatabase.threads().getThreadIdIfExistsFor(recipient.getId());
     return new ShareContactAndThread(recipient.getId(), existingThread, recipient.isForceSmsSelection() || !recipient.isRegistered());
   }
 

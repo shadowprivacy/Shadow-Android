@@ -9,9 +9,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import su.sres.core.util.ThreadUtil;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.crypto.storage.SignalSenderKeyStore;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
@@ -138,7 +137,7 @@ public class ResendMessageJob extends BaseJob {
     Content                          contentToSend = content;
 
     if (distributionId != null) {
-      Optional<GroupDatabase.GroupRecord> groupRecord = DatabaseFactory.getGroupDatabase(context).getGroupByDistributionId(distributionId);
+      Optional<GroupDatabase.GroupRecord> groupRecord = ShadowDatabase.groups().getGroupByDistributionId(distributionId);
 
       if (!groupRecord.isPresent()) {
         Log.w(TAG, "Could not find a matching group for the distributionId! Skipping message send.");

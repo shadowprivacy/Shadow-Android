@@ -2,7 +2,7 @@ package su.sres.securesms.migrations;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -10,6 +10,7 @@ import su.sres.securesms.jobmanager.JobManager;
 import su.sres.securesms.jobs.MultiDeviceKeysUpdateJob;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.jobs.StorageSyncJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.TextSecurePreferences;
 
@@ -42,12 +43,12 @@ public class StorageServiceMigrationJob extends MigrationJob {
 
   @Override
   public void performMigration() {
-    if (TextSecurePreferences.getLocalAci(context) == null) {
+    if (SignalStore.account().getAci() == null) {
       Log.w(TAG, "Self not yet available.");
       return;
     }
 
-    DatabaseFactory.getRecipientDatabase(context).markNeedsSync(Recipient.self().getId());
+    ShadowDatabase.recipients().markNeedsSync(Recipient.self().getId());
 
     JobManager jobManager = ApplicationDependencies.getJobManager();
 

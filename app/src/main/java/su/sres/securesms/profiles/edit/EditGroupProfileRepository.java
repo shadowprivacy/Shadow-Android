@@ -9,7 +9,7 @@ import androidx.core.util.Consumer;
 
 import su.sres.core.util.StreamUtil;
 import su.sres.securesms.conversation.colors.AvatarColor;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.groups.GroupChangeException;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
@@ -75,13 +75,13 @@ class EditGroupProfileRepository implements EditProfileRepository {
       RecipientId recipientId = getRecipientId();
       Recipient   recipient   = Recipient.resolved(recipientId);
 
-      return DatabaseFactory.getGroupDatabase(context)
-                            .getGroup(recipientId)
-                            .transform(groupRecord -> {
+      return ShadowDatabase.groups()
+                           .getGroup(recipientId)
+                           .transform(groupRecord -> {
                               String title = groupRecord.getTitle();
                               return title == null ? "" : title;
                             })
-                            .or(() -> recipient.getGroupName(context));
+                           .or(() -> recipient.getGroupName(context));
     }, nameConsumer::accept);
   }
 
@@ -90,7 +90,7 @@ class EditGroupProfileRepository implements EditProfileRepository {
     SimpleTask.run(() -> {
       RecipientId recipientId = getRecipientId();
 
-      return DatabaseFactory.getGroupDatabase(context)
+      return ShadowDatabase.groups()
                             .getGroup(recipientId)
                             .transform(groupRecord -> {
                               String description = groupRecord.getDescription();
@@ -129,7 +129,7 @@ class EditGroupProfileRepository implements EditProfileRepository {
 
   @WorkerThread
   private RecipientId getRecipientId() {
-    return DatabaseFactory.getRecipientDatabase(context).getByGroupId(groupId)
+    return ShadowDatabase.recipients().getByGroupId(groupId)
                           .or(() -> {
                             throw new AssertionError("Recipient ID for Group ID does not exist.");
                           });

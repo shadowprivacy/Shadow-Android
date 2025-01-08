@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * IMPORTANT: Writes should only be made through {@link su.sres.securesms.megaphone.MegaphoneRepository}.
  */
-public class MegaphoneDatabase extends SQLiteOpenHelper implements SignalDatabase {
+public class MegaphoneDatabase extends SQLiteOpenHelper implements ShadowDatabaseOpenHelper {
 
   private static final String TAG = Log.tag(MegaphoneDatabase.class);
 
@@ -76,9 +76,9 @@ public class MegaphoneDatabase extends SQLiteOpenHelper implements SignalDatabas
 
     db.execSQL(CREATE_TABLE);
 
-    if (DatabaseFactory.getInstance(application).hasTable("megaphone")) {
+    if (ShadowDatabase.hasTable("megaphone")) {
       Log.i(TAG, "Found old megaphone table. Migrating data.");
-      migrateDataFromPreviousDatabase(DatabaseFactory.getInstance(application).getRawDatabase(), db);
+      migrateDataFromPreviousDatabase(ShadowDatabase.getRawDatabase(), db);
     }
   }
 
@@ -95,9 +95,9 @@ public class MegaphoneDatabase extends SQLiteOpenHelper implements SignalDatabas
     db.setForeignKeyConstraintsEnabled(true);
 
     SignalExecutors.BOUNDED.execute(() -> {
-      if (DatabaseFactory.getInstance(application).hasTable("megaphone")) {
+      if (ShadowDatabase.hasTable("megaphone")) {
         Log.i(TAG, "Dropping original megaphone table from the main database.");
-        DatabaseFactory.getInstance(application).getRawDatabase().execSQL("DROP TABLE megaphone");
+        ShadowDatabase.getRawDatabase().execSQL("DROP TABLE megaphone");
       }
     });
   }

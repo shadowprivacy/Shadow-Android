@@ -4,7 +4,6 @@ import android.content.Context
 import com.google.firebase.iid.FirebaseInstanceId
 import su.sres.core.util.concurrent.SignalExecutors
 import su.sres.core.util.logging.Log
-import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.jobs.MultiDeviceConfigurationUpdateJob
 import su.sres.securesms.keyvalue.SignalStore
@@ -12,6 +11,7 @@ import su.sres.securesms.recipients.Recipient
 // import su.sres.securesms.storage.StorageSyncHelper
 import su.sres.securesms.util.TextSecurePreferences
 import org.whispersystems.libsignal.util.guava.Optional
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.signalservice.api.push.exceptions.AuthorizationFailedException
 import java.io.IOException
 
@@ -28,7 +28,7 @@ class AdvancedPrivacySettingsRepository(private val context: Context) {
         } catch (e: AuthorizationFailedException) {
           Log.w(TAG, e)
         }
-        if (!TextSecurePreferences.isFcmDisabled(context)) {
+        if (SignalStore.account().fcmEnabled) {
           FirebaseInstanceId.getInstance().deleteInstanceId()
         }
         DisablePushMessagesResult.SUCCESS
@@ -43,7 +43,7 @@ class AdvancedPrivacySettingsRepository(private val context: Context) {
 
   fun syncShowSealedSenderIconState() {
     SignalExecutors.BOUNDED.execute {
-      DatabaseFactory.getRecipientDatabase(context).markNeedsSync(Recipient.self().id)
+      ShadowDatabase.recipients.markNeedsSync(Recipient.self().id)
       // StorageSyncHelper.scheduleSyncForDataChange()
       ApplicationDependencies.getJobManager().add(
         MultiDeviceConfigurationUpdateJob(

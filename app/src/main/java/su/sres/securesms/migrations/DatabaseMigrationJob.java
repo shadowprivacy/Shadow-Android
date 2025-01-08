@@ -2,7 +2,7 @@ package su.sres.securesms.migrations;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 
@@ -12,40 +12,40 @@ import su.sres.securesms.jobmanager.Job;
  */
 public class DatabaseMigrationJob extends MigrationJob {
 
-    public static final String KEY = "DatabaseMigrationJob";
+  public static final String KEY = "DatabaseMigrationJob";
 
-    DatabaseMigrationJob() {
-        this(new Parameters.Builder().build());
-    }
+  DatabaseMigrationJob() {
+    this(new Parameters.Builder().build());
+  }
 
-    private DatabaseMigrationJob(@NonNull Parameters parameters) {
-        super(parameters);
-    }
+  private DatabaseMigrationJob(@NonNull Parameters parameters) {
+    super(parameters);
+  }
 
+  @Override
+  public boolean isUiBlocking() {
+    return true;
+  }
+
+  @Override
+  public @NonNull String getFactoryKey() {
+    return KEY;
+  }
+
+  @Override
+  public void performMigration() {
+    ShadowDatabase.triggerDatabaseAccess();
+  }
+
+  @Override
+  boolean shouldRetry(@NonNull Exception e) {
+    return false;
+  }
+
+  public static class Factory implements Job.Factory<DatabaseMigrationJob> {
     @Override
-    public boolean isUiBlocking() {
-        return true;
+    public @NonNull DatabaseMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+      return new DatabaseMigrationJob(parameters);
     }
-
-    @Override
-    public @NonNull String getFactoryKey() {
-        return KEY;
-    }
-
-    @Override
-    public void performMigration() {
-        DatabaseFactory.getInstance(context).triggerDatabaseAccess();
-    }
-
-    @Override
-    boolean shouldRetry(@NonNull Exception e) {
-        return false;
-    }
-
-    public static class Factory implements Job.Factory<DatabaseMigrationJob> {
-        @Override
-        public @NonNull DatabaseMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
-            return new DatabaseMigrationJob(parameters);
-        }
-    }
+  }
 }

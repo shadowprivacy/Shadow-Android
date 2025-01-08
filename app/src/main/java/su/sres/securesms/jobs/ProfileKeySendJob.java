@@ -7,7 +7,7 @@ import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.core.util.logging.Log;
@@ -49,7 +49,7 @@ public class ProfileKeySendJob extends BaseJob {
    */
   @WorkerThread
   public static ProfileKeySendJob create(@NonNull Context context, long threadId, boolean queueLimits) {
-    Recipient conversationRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
+    Recipient conversationRecipient = ShadowDatabase.threads().getRecipientForThreadId(threadId);
 
     if (conversationRecipient == null) {
       throw new AssertionError("We have a thread but no recipient!");
@@ -94,7 +94,7 @@ public class ProfileKeySendJob extends BaseJob {
       throw new NotPushRegisteredException();
     }
 
-    Recipient conversationRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
+    Recipient conversationRecipient = ShadowDatabase.threads().getRecipientForThreadId(threadId);
 
     if (conversationRecipient == null) {
       Log.w(TAG, "Thread no longer present");

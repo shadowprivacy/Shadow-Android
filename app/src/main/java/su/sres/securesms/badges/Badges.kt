@@ -37,13 +37,9 @@ object Badges {
       }
       .forEach { customPref(it) }
 
-    val gutter = context.resources.getDimensionPixelSize(R.dimen.dsl_settings_gutter)
-    val buffer = DimensionUnit.DP.toPixels(12f)
-    val gutterExtra = gutter - buffer
     val badgeSize = DimensionUnit.DP.toPixels(88f)
     val windowWidth = context.resources.displayMetrics.widthPixels
-    val availableWidth = windowWidth - gutterExtra
-    val perRow = (availableWidth / badgeSize).toInt()
+    val perRow = (windowWidth / badgeSize).toInt()
 
     val empties = ((perRow - (badges.size % perRow)) % perRow)
 
@@ -75,7 +71,7 @@ object Badges {
       "hdpi" -> Pair(getBadgeImageUri(serviceBadge.sprites6[2]), "hdpi")
       "xxhdpi" -> Pair(getBadgeImageUri(serviceBadge.sprites6[4]), "xxhdpi")
       "xxxhdpi" -> Pair(getBadgeImageUri(serviceBadge.sprites6[5]), "xxxhdpi")
-      else -> Pair(getBadgeImageUri(serviceBadge.sprites6[3]), "xdpi")
+      else -> Pair(getBadgeImageUri(serviceBadge.sprites6[3]), "xhdpi")
     }
   }
 

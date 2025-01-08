@@ -3,13 +3,13 @@ package su.sres.securesms.migrations;
 import androidx.annotation.NonNull;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobs.StorageSyncJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.TextSecurePreferences;
 
 /**
  * Marks the AccountRecord as dirty and runs a storage sync. Can be enqueued when we've added a new
@@ -41,12 +41,12 @@ public class AccountRecordMigrationJob extends MigrationJob {
 
   @Override
   public void performMigration() {
-    if (!TextSecurePreferences.isPushRegistered(context) || TextSecurePreferences.getLocalAci(context) == null) {
+    if (!SignalStore.account().isRegistered() || SignalStore.account().getAci() == null) {
       Log.w(TAG, "Not registered!");
       return;
     }
 
-    DatabaseFactory.getRecipientDatabase(context).markNeedsSync(Recipient.self().getId());
+    ShadowDatabase.recipients().markNeedsSync(Recipient.self().getId());
     ApplicationDependencies.getJobManager().add(new StorageSyncJob());
   }
 

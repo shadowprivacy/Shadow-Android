@@ -8,7 +8,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.signalservice.api.push.DistributionId;
 import su.sres.securesms.util.CursorUtil;
@@ -46,7 +45,7 @@ public class SenderKeyDatabase extends Database {
                                             CREATED_AT      + " INTEGER NOT NULL, " +
                                             "UNIQUE(" + ADDRESS + "," + DEVICE + ", " + DISTRIBUTION_ID + ") ON CONFLICT REPLACE);";
 
-  SenderKeyDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  SenderKeyDatabase(Context context, ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 

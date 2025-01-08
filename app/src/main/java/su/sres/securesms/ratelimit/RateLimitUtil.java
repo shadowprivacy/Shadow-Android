@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobs.PushGroupSendJob;
@@ -26,8 +26,8 @@ public final class RateLimitUtil {
      */
     @WorkerThread
     public static void retryAllRateLimitedMessages(@NonNull Context context) {
-        Set<Long> sms = DatabaseFactory.getSmsDatabase(context).getAllRateLimitedMessageIds();
-        Set<Long> mms = DatabaseFactory.getMmsDatabase(context).getAllRateLimitedMessageIds();
+        Set<Long> sms = ShadowDatabase.sms().getAllRateLimitedMessageIds();
+        Set<Long> mms = ShadowDatabase.mms().getAllRateLimitedMessageIds();
 
         if (sms.isEmpty() && mms.isEmpty()) {
             return;
@@ -35,8 +35,8 @@ public final class RateLimitUtil {
 
         Log.i(TAG, "Retrying " + sms.size() + " sms records and " + mms.size() + " mms records.");
 
-        DatabaseFactory.getSmsDatabase(context).clearRateLimitStatus(sms);
-        DatabaseFactory.getMmsDatabase(context).clearRateLimitStatus(mms);
+        ShadowDatabase.sms().clearRateLimitStatus(sms);
+        ShadowDatabase.mms().clearRateLimitStatus(mms);
 
         ApplicationDependencies.getJobManager().update((job, serializer) -> {
             Data data = serializer.deserialize(job.getSerializedData());

@@ -5,8 +5,7 @@ import androidx.core.util.Consumer
 import io.reactivex.rxjava3.core.Single
 import org.whispersystems.libsignal.util.guava.Optional
 import su.sres.core.util.concurrent.SignalExecutors
-import su.sres.securesms.database.DatabaseFactory
-import su.sres.securesms.database.IdentityDatabase
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.database.ThreadDatabase
 import su.sres.securesms.database.identity.IdentityRecordList
 import su.sres.securesms.database.model.IdentityRecord
@@ -45,7 +44,7 @@ class MultiselectForwardRepository(context: Context) {
     return Single.fromCallable {
       val recipient = Recipient.resolved(recipientId.get())
       if (recipient.isPushV2Group) {
-        val record = DatabaseFactory.getGroupDatabase(context).getGroup(recipient.requireGroupId())
+        val record = ShadowDatabase.groups.getGroup(recipient.requireGroupId())
         !(record.isPresent && record.get().isAnnouncementGroup && !record.get().isAdmin(Recipient.self()))
       } else {
         true
@@ -60,7 +59,7 @@ class MultiselectForwardRepository(context: Context) {
     resultHandlers: MultiselectForwardResultHandlers
   ) {
     SignalExecutors.BOUNDED.execute {
-      val threadDatabase: ThreadDatabase = DatabaseFactory.getThreadDatabase(context)
+      val threadDatabase: ThreadDatabase = ShadowDatabase.threads
 
       val sharedContactsAndThreads: Set<ShareContactAndThread> = shareContacts
         .asSequence()

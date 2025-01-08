@@ -13,8 +13,8 @@ import com.annimon.stream.ComparatorCompat;
 import com.annimon.stream.Stream;
 
 import su.sres.securesms.R;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.ui.GroupMemberEntry;
 import su.sres.securesms.groups.v2.GroupInviteLinkUrl;
@@ -57,7 +57,7 @@ public final class LiveGroup {
     Context                        context       = ApplicationDependencies.getApplication();
     MutableLiveData<LiveRecipient> liveRecipient = new MutableLiveData<>();
 
-    this.groupDatabase     = DatabaseFactory.getGroupDatabase(context);
+    this.groupDatabase     = ShadowDatabase.groups();
     this.recipient         = Transformations.switchMap(liveRecipient, LiveRecipient::getLiveData);
     this.groupRecord       = LiveDataUtil.filterNotNull(LiveDataUtil.mapAsync(recipient, groupRecipient -> groupDatabase.getGroup(groupRecipient.getId()).orNull()));
     this.fullMembers       = mapToFullMembers(this.groupRecord);

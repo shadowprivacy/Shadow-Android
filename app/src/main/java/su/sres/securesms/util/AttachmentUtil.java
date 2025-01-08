@@ -11,7 +11,7 @@ import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.attachments.DatabaseAttachment;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.jobmanager.impl.NotInCallConstraint;
 import su.sres.securesms.recipients.Recipient;
@@ -62,14 +62,14 @@ public class AttachmentUtil {
   {
     AttachmentId attachmentId    = attachment.getAttachmentId();
     long         mmsId           = attachment.getMmsId();
-    int          attachmentCount = DatabaseFactory.getAttachmentDatabase(context)
-        .getAttachmentsForMessage(mmsId)
-        .size();
+    int          attachmentCount = ShadowDatabase.attachments()
+                                                 .getAttachmentsForMessage(mmsId)
+                                                 .size();
 
     if (attachmentCount <= 1) {
-      DatabaseFactory.getMmsDatabase(context).deleteMessage(mmsId);
+      ShadowDatabase.mms().deleteMessage(mmsId);
     } else {
-      DatabaseFactory.getAttachmentDatabase(context).deleteAttachment(attachmentId);
+      ShadowDatabase.attachments().deleteAttachment(attachmentId);
     }
   }
 
@@ -90,10 +90,10 @@ public class AttachmentUtil {
   @WorkerThread
   private static boolean isFromTrustedConversation(@NonNull Context context, @NonNull DatabaseAttachment attachment) {
     try {
-      MessageRecord message = DatabaseFactory.getMmsDatabase(context).getMessageRecord(attachment.getMmsId());
+      MessageRecord message = ShadowDatabase.mms().getMessageRecord(attachment.getMmsId());
 
       Recipient individualRecipient = message.getRecipient();
-      Recipient threadRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(message.getThreadId());
+      Recipient threadRecipient = ShadowDatabase.threads().getRecipientForThreadId(message.getThreadId());
 
       if (threadRecipient != null && threadRecipient.isGroup()) {
         return threadRecipient.isProfileSharing() || isTrustedIndividual(individualRecipient, message);

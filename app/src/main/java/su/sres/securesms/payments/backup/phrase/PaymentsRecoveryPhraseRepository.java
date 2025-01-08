@@ -5,7 +5,7 @@ import androidx.core.util.Consumer;
 
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.PaymentLedgerUpdateJob;
 import su.sres.securesms.jobs.ProfileUploadJob;
@@ -29,7 +29,7 @@ class PaymentsRecoveryPhraseRepository {
       switch (result) {
         case ENTROPY_CHANGED:
           Log.i(TAG, "restoreMnemonic: mnemonic resulted in entropy mismatch, flushing cached values");
-          DatabaseFactory.getPaymentDatabase(ApplicationDependencies.getApplication()).deleteAll();
+          ShadowDatabase.payments().deleteAll();
           ApplicationDependencies.getPayments().closeWallet();
           updateProfileAndFetchLedger();
           break;

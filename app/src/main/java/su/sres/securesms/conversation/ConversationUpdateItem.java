@@ -41,7 +41,6 @@ import su.sres.securesms.util.DateUtils;
 import su.sres.securesms.util.IdentityUtil;
 import su.sres.securesms.util.Projection;
 import su.sres.securesms.util.ProjectionList;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.ThemeUtil;
 import su.sres.securesms.util.Util;
 import su.sres.securesms.util.ViewUtil;
@@ -348,7 +347,7 @@ public final class ConversationUpdateItem extends FrameLayout
 
       int text = 0;
       if (Util.hasItems(acis)) {
-        if (acis.contains(TextSecurePreferences.getLocalAci(getContext()))) {
+        if (acis.contains(Recipient.self().requireAci())) {
           text = R.string.ConversationUpdateItem_return_to_call;
         } else if (GroupCallUpdateDetailsUtil.parse(conversationMessage.getMessageRecord().getBody()).getIsCallFull()) {
           text = R.string.ConversationUpdateItem_call_is_full;

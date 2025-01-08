@@ -22,7 +22,6 @@ import android.os.Bundle;
 import android.view.View;
 
 import androidx.annotation.DrawableRes;
-import androidx.annotation.MenuRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
@@ -38,7 +37,7 @@ import java.util.Set;
 
 import su.sres.securesms.R;
 import su.sres.securesms.components.registration.PulsingFloatingActionButton;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.util.task.SnackbarAsyncTask;
 import su.sres.securesms.util.views.Stub;
 
@@ -109,13 +108,13 @@ public class ConversationListArchiveFragment extends ConversationListFragment im
   @Override
   @WorkerThread
   protected void archiveThreads(Set<Long> threadIds) {
-    DatabaseFactory.getThreadDatabase(getActivity()).setArchived(threadIds, false);
+    ShadowDatabase.threads().setArchived(threadIds, false);
   }
 
   @Override
   @WorkerThread
   protected void reverseArchiveThreads(Set<Long> threadIds) {
-    DatabaseFactory.getThreadDatabase(getActivity()).setArchived(threadIds, true);
+    ShadowDatabase.threads().setArchived(threadIds, true);
   }
 
   @SuppressLint("StaticFieldLeak")
@@ -134,12 +133,12 @@ public class ConversationListArchiveFragment extends ConversationListFragment im
     {
       @Override
       protected void executeAction(@Nullable Long parameter) {
-        DatabaseFactory.getThreadDatabase(getActivity()).unarchiveConversation(threadId);
+        ShadowDatabase.threads().unarchiveConversation(threadId);
       }
 
       @Override
       protected void reverseAction(@Nullable Long parameter) {
-        DatabaseFactory.getThreadDatabase(getActivity()).archiveConversation(threadId);
+        ShadowDatabase.threads().archiveConversation(threadId);
       }
     }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, threadId);
   }

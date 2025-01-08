@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import su.sres.core.util.concurrent.SignalExecutors;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.mms.SentMediaQuality;
 import su.sres.securesms.preferences.widgets.NotificationPrivacyPreference;
@@ -324,7 +324,7 @@ public final class SettingsValues extends SignalStoreValues {
   public void setUniversalExpireTimer(int seconds) {
     putInteger(UNIVERSAL_EXPIRE_TIMER, seconds);
     SignalExecutors.BOUNDED.execute(() -> {
-      DatabaseFactory.getRecipientDatabase(ApplicationDependencies.getApplication()).markNeedsSync(Recipient.self().getId());
+      ShadowDatabase.recipients().markNeedsSync(Recipient.self().getId());
       // StorageSyncHelper.scheduleSyncForDataChange();
     });
   }

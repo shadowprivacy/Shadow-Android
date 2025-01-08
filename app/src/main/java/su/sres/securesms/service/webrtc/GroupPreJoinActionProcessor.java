@@ -9,6 +9,7 @@ import org.signal.ringrtc.GroupCall;
 import org.signal.ringrtc.PeekInfo;
 
 import su.sres.securesms.components.webrtc.BroadcastVideoSink;
+import su.sres.securesms.components.webrtc.EglBaseWrapper;
 import su.sres.securesms.events.CallParticipant;
 import su.sres.securesms.events.CallParticipantId;
 import su.sres.securesms.events.WebRtcViewModel;
@@ -67,6 +68,7 @@ public class GroupPreJoinActionProcessor extends GroupActionProcessor {
                        .changeCallInfoState()
                        .groupCall(groupCall)
                        .groupCallState(WebRtcViewModel.GroupCallState.DISCONNECTED)
+                       .activePeer(new RemotePeer(currentState.getCallInfoState().getCallRecipient().getId(), RemotePeer.GROUP_CALL_ID))
                        .build();
   }
 
@@ -82,6 +84,8 @@ public class GroupPreJoinActionProcessor extends GroupActionProcessor {
     }
 
     WebRtcVideoUtil.deinitializeVideo(currentState);
+
+    EglBaseWrapper.releaseEglBase(RemotePeer.GROUP_CALL_ID.longValue());
 
     return new WebRtcServiceState(new IdleActionProcessor(webRtcInteractor));
   }
@@ -182,7 +186,7 @@ public class GroupPreJoinActionProcessor extends GroupActionProcessor {
 
     currentState.getVideoState().requireCamera().setEnabled(enable);
     return currentState.builder()
-                       .changeCallSetupState()
+                       .changeCallSetupState(RemotePeer.GROUP_CALL_ID)
                        .enableVideoOnCreate(enable)
                        .commit()
                        .changeLocalDeviceState()

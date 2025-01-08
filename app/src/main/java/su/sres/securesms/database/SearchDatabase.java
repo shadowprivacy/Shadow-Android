@@ -7,8 +7,6 @@ import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
-
 /**
  * Contains all databases necessary for full-text search (FTS).
  */
@@ -119,7 +117,7 @@ public class SearchDatabase extends Database {
                   "ORDER BY " + MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " DESC " +
                   "LIMIT 500";
 
-  public SearchDatabase(@NonNull Context context, @NonNull SQLCipherOpenHelper databaseHelper) {
+  public SearchDatabase(@NonNull Context context, @NonNull ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 

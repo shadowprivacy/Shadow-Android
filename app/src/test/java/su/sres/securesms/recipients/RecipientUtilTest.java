@@ -8,11 +8,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import su.sres.securesms.database.DatabaseFactory;
+
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
-import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.FeatureFlags;
 
 import static org.junit.Assert.assertFalse;
@@ -26,7 +26,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({DatabaseFactory.class, FeatureFlags.class})
+@PrepareForTest({ ShadowDatabase.class, FeatureFlags.class})
 public class RecipientUtilTest {
 
     private Context           context               = mock(Context.class);
@@ -37,10 +37,10 @@ public class RecipientUtilTest {
 
     @Before
     public void setUp() {
-        mockStatic(DatabaseFactory.class);
-        when(DatabaseFactory.getThreadDatabase(any())).thenReturn(mockThreadDatabase);
-        when(DatabaseFactory.getMmsSmsDatabase(any())).thenReturn(mockMmsSmsDatabase);
-        when(DatabaseFactory.getRecipientDatabase(any())).thenReturn(mockRecipientDatabase);
+        mockStatic(ShadowDatabase.class);
+        when(ShadowDatabase.threads()).thenReturn(mockThreadDatabase);
+        when(ShadowDatabase.mmsSms()).thenReturn(mockMmsSmsDatabase);
+        when(ShadowDatabase.recipients()).thenReturn(mockRecipientDatabase);
 
         mockStatic(FeatureFlags.class);
 

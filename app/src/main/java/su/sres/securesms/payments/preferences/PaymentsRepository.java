@@ -9,8 +9,8 @@ import androidx.lifecycle.LiveData;
 import com.annimon.stream.Stream;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.PaymentDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.payments.Direction;
@@ -36,7 +36,7 @@ public class PaymentsRepository {
   private final LiveData<List<Payment>> recentReceivedPayments;
 
   public PaymentsRepository() {
-    paymentDatabase = DatabaseFactory.getPaymentDatabase(ApplicationDependencies.getApplication());
+    paymentDatabase = ShadowDatabase.payments();
 
     LiveData<List<PaymentDatabase.PaymentTransaction>> localPayments = paymentDatabase.getAllLive();
     LiveData<MobileCoinLedgerWrapper>                  ledger        = SignalStore.paymentsValues().liveMobileCoinLedger();

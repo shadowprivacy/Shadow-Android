@@ -16,7 +16,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 import su.sres.securesms.R;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
 import su.sres.core.util.logging.Log;
@@ -52,7 +52,7 @@ class VoiceNoteMediaItemFactory {
                                   @NonNull Uri draftUri)
   {
 
-    Recipient threadRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
+    Recipient threadRecipient = ShadowDatabase.threads().getRecipientForThreadId(threadId);
     if (threadRecipient == null) {
       threadRecipient = Recipient.UNKNOWN;
     }
@@ -81,11 +81,11 @@ class VoiceNoteMediaItemFactory {
                                             @NonNull MessageRecord messageRecord)
   {
 
-    int startingPosition = DatabaseFactory.getMmsSmsDatabase(context)
+    int startingPosition = ShadowDatabase.mmsSms()
                                           .getMessagePositionInConversation(messageRecord.getThreadId(),
                                                                             messageRecord.getDateReceived());
 
-    Recipient threadRecipient = Objects.requireNonNull(DatabaseFactory.getThreadDatabase(context)
+    Recipient threadRecipient = Objects.requireNonNull(ShadowDatabase.threads()
                                                                       .getRecipientForThreadId(messageRecord.getThreadId()));
     Recipient  sender          = messageRecord.isOutgoing() ? Recipient.self() : messageRecord.getIndividualRecipient();
     Recipient  avatarRecipient = threadRecipient.isGroup() ? threadRecipient : sender;

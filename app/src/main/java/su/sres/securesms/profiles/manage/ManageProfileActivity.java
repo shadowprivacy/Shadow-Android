@@ -22,6 +22,8 @@ import su.sres.securesms.util.DynamicTheme;
  */
 public class ManageProfileActivity extends PassphraseRequiredActivity implements ReactWithAnyEmojiBottomSheetDialogFragment.Callback {
 
+  public static final int RESULT_BECOME_A_SUSTAINER = 12382;
+
   private final DynamicTheme dynamicTheme = new DynamicNoActionBarTheme();
 
   public static final String START_AT_USERNAME = "start_at_username";

@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import su.sres.securesms.contactshare.Contact;
 import su.sres.securesms.contactshare.VCardUtil;
 import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -22,10 +23,10 @@ import com.google.android.mms.pdu_alt.RetrieveConf;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.UriAttachment;
 import su.sres.securesms.database.AttachmentDatabase;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase.InsertResult;
 import su.sres.securesms.database.MmsDatabase;
 import su.sres.securesms.groups.GroupId;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.mms.ApnUnavailableException;
 import su.sres.securesms.mms.CompatMmsConnection;
 import su.sres.securesms.mms.IncomingMediaMessage;
@@ -37,7 +38,6 @@ import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.service.KeyCachingService;
 import su.sres.securesms.util.MediaUtil;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -100,17 +100,17 @@ public class MmsDownloadJob extends BaseJob {
   @Override
   public void onAdded() {
     if (automatic && KeyCachingService.isLocked(context)) {
-      DatabaseFactory.getMmsDatabase(context).markIncomingNotificationReceived(threadId);
+      ShadowDatabase.mms().markIncomingNotificationReceived(threadId);
       ApplicationDependencies.getMessageNotifier().updateNotification(context);
     }
   }
 
   @Override
   public void onRun() {
-    if (TextSecurePreferences.getLocalAci(context) == null && TextSecurePreferences.getLocalNumber(context) == null) {
+    if (SignalStore.account().getUserLogin() == null) {
       throw new NotReadyException();
     }
-    MessageDatabase                           database     = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase                           database     = ShadowDatabase.mms();
     Optional<MmsDatabase.MmsNotificationInfo> notification = database.getNotification(messageId);
 
     if (!notification.isPresent()) {
@@ -123,7 +123,7 @@ public class MmsDownloadJob extends BaseJob {
         throw new MmsException("Notification content location was null.");
       }
 
-      if (!TextSecurePreferences.isPushRegistered(context)) {
+      if (!SignalStore.account().isRegistered()) {
         throw new MmsException("Not registered or no valid activation");
       }
 
@@ -170,7 +170,7 @@ public class MmsDownloadJob extends BaseJob {
 
   @Override
   public void onFailure() {
-    MessageDatabase database = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase database = ShadowDatabase.mms();
     database.markDownloadState(messageId, MmsDatabase.Status.DOWNLOAD_SOFT_FAILURE);
 
     if (automatic) {
@@ -189,7 +189,7 @@ public class MmsDownloadJob extends BaseJob {
                                  int subscriptionId, @Nullable RecipientId notificationFrom)
       throws MmsException
   {
-    MessageDatabase   database       = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase   database       = ShadowDatabase.mms();
     Optional<GroupId> group          = Optional.absent();
     Set<RecipientId>  members        = new HashSet<>();
     String            body           = null;
@@ -247,7 +247,7 @@ public class MmsDownloadJob extends BaseJob {
 
     if (members.size() > 2) {
       List<RecipientId> recipients = new ArrayList<>(members);
-      group = Optional.of(DatabaseFactory.getGroupDatabase(context).getOrCreateMmsGroupForMembers(recipients));
+      group = Optional.of(ShadowDatabase.groups().getOrCreateMmsGroupForMembers(recipients));
     }
 
     IncomingMediaMessage   message      = new IncomingMediaMessage(from, group, body, TimeUnit.SECONDS.toMillis(retrieved.getDate()), -1, System.currentTimeMillis(), attachments, subscriptionId, 0, false, false, false, Optional.of(sharedContacts));
@@ -261,7 +261,7 @@ public class MmsDownloadJob extends BaseJob {
 
   private void handleDownloadError(long messageId, long threadId, int downloadStatus, boolean automatic)
   {
-    MessageDatabase db = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase db = ShadowDatabase.mms();
 
     db.markDownloadState(messageId, downloadStatus);
 

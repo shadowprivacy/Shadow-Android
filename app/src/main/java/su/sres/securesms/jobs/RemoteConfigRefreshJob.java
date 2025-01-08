@@ -6,8 +6,8 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.FeatureFlags;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.util.Collections;
@@ -46,7 +46,7 @@ public class RemoteConfigRefreshJob extends BaseJob {
 
     @Override
     protected void onRun() throws Exception {
-        if (!TextSecurePreferences.isPushRegistered(context)) {
+        if (!SignalStore.account().isRegistered()) {
             Log.w(TAG, "Not registered. Skipping.");
             return;
         }

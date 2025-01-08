@@ -36,6 +36,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.components.LabeledEditText;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.registration.util.RegistrationUserLoginInputController;
 import su.sres.securesms.registration.viewmodel.RegistrationViewModel;
 import su.sres.securesms.registration.VerifyAccountRepository.Mode;
@@ -175,7 +176,7 @@ public final class EnterUserLoginFragment extends LoggingFragment implements Reg
     NavController navController = NavHostFragment.findNavController(this);
 
     Disposable request = viewModel.requestVerificationCode(mode)
-                                  .doOnSubscribe(unused -> TextSecurePreferences.setPushRegistered(ApplicationDependencies.getApplication(), false))
+                                  .doOnSubscribe(unused -> SignalStore.account().setRegistered(false))
                                   .observeOn(AndroidSchedulers.mainThread())
                                   .subscribe(processor -> {
                                     if (processor.hasResult()) {

@@ -21,9 +21,9 @@ import su.sres.securesms.crypto.PreKeyUtil;
 import su.sres.securesms.crypto.ProfileKeyUtil;
 import su.sres.securesms.crypto.SenderKeyUtil;
 import su.sres.securesms.crypto.SessionUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.IdentityDatabase;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.events.ServerCertErrorEvent;
 import su.sres.securesms.jobmanager.JobManager;
@@ -89,10 +89,10 @@ public final class RegistrationRepository {
   }
 
   public int getRegistrationId() {
-    int registrationId = TextSecurePreferences.getLocalRegistrationId(context);
+    int registrationId = SignalStore.account().getRegistrationId();
     if (registrationId == 0) {
       registrationId = KeyHelper.generateRegistrationId(false);
-      TextSecurePreferences.setLocalRegistrationId(context, registrationId);
+      SignalStore.account().setRegistrationId(registrationId);
     }
     return registrationId;
   }
@@ -307,20 +307,19 @@ public final class RegistrationRepository {
 
     /// Shadow-specific end
 
-    RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase recipientDatabase = ShadowDatabase.recipients();
     RecipientId       selfId            = Recipient.externalPush(context, aci, registrationData.getE164(), true).getId();
 
     recipientDatabase.setProfileSharing(selfId, true);
     recipientDatabase.markRegistered(selfId, aci);
 
-    TextSecurePreferences.setLocalNumber(context, registrationData.getE164());
-    TextSecurePreferences.setLocalAci(context, aci);
+    SignalStore.account().setUserLogin(registrationData.getE164());
+    SignalStore.account().setAci(aci);
     recipientDatabase.setProfileKey(selfId, registrationData.getProfileKey());
     ApplicationDependencies.getRecipientCache().clearSelf();
 
-    TextSecurePreferences.setFcmToken(context, registrationData.getFcmToken());
-    TextSecurePreferences.setFcmDisabled(context, registrationData.isNotFcm());
-    TextSecurePreferences.setWebsocketRegistered(context, true);
+    SignalStore.account().setFcmToken(registrationData.getFcmToken());
+    SignalStore.account().setFcmEnabled(registrationData.isFcm());
 
     ApplicationDependencies.getIdentityStore()
                            .saveIdentityWithoutSideEffects(selfId,
@@ -330,8 +329,8 @@ public final class RegistrationRepository {
                                                            System.currentTimeMillis(),
                                                            true);
 
-    TextSecurePreferences.setPushServerPassword(context, registrationData.getPassword());
-    TextSecurePreferences.setPushRegistered(context, true);
+    SignalStore.account().setServicePassword(registrationData.getPassword());
+    SignalStore.account().setRegistered(true);
     TextSecurePreferences.setSignedPreKeyRegistered(context, true);
     TextSecurePreferences.setPromptedPushRegistration(context, true);
     TextSecurePreferences.setUnauthorizedReceived(context, false);
@@ -346,7 +345,7 @@ public final class RegistrationRepository {
 
   @WorkerThread
   private static @Nullable ProfileKey findExistingProfileKey(@NonNull Context context, @NonNull String e164number) {
-    RecipientDatabase     recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase     recipientDatabase = ShadowDatabase.recipients();
     Optional<RecipientId> recipient         = recipientDatabase.getByE164(e164number);
 
     if (recipient.isPresent()) {

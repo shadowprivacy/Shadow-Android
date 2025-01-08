@@ -1,11 +1,7 @@
 package su.sres.securesms.conversationlist;
 
 import android.app.Application;
-import android.content.ContentResolver;
-import android.content.Context;
 import android.database.Cursor;
-
-import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -18,16 +14,14 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import su.sres.securesms.conversationlist.model.ConversationReader;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.DatabaseObserver;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
-import su.sres.securesms.util.paging.Invalidator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
@@ -39,7 +33,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE, application = Application.class)
 @PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "androidx.*", "org.powermock.*" })
-@PrepareForTest({ ApplicationDependencies.class, DatabaseFactory.class, DatabaseObserver.class })
+@PrepareForTest({ ApplicationDependencies.class, ShadowDatabase.class, DatabaseObserver.class })
 public class UnarchivedConversationListDataSourceTest {
 
     @Rule
@@ -52,11 +46,11 @@ public class UnarchivedConversationListDataSourceTest {
     @Before
     public void setUp() {
         mockStatic(ApplicationDependencies.class);
-        mockStatic(DatabaseFactory.class);
+        mockStatic(ShadowDatabase.class);
 
         threadDatabase = mock(ThreadDatabase.class);
 
-        when(DatabaseFactory.getThreadDatabase(any())).thenReturn(threadDatabase);
+        when(ShadowDatabase.threads()).thenReturn(threadDatabase);
         when(ApplicationDependencies.getDatabaseObserver()).thenReturn(mock(DatabaseObserver.class));
 
         testSubject = new ConversationListDataSource.UnarchivedConversationListDataSource(mock(Application.class));

@@ -27,9 +27,11 @@ import org.whispersystems.libsignal.util.guava.Optional
 import su.sres.core.util.logging.Log
 import su.sres.core.util.money.FiatMoney
 import su.sres.securesms.components.settings.app.subscription.DonationExceptions
+import su.sres.securesms.jobs.MultiDeviceSubscriptionSyncRequestJob
 import su.sres.securesms.storage.StorageSyncHelper
 import su.sres.securesms.subscription.LevelUpdate
 import su.sres.securesms.subscription.Subscriber
+import su.sres.securesms.util.InternetConnectionObserver
 import su.sres.securesms.util.PlatformCurrencyUtil
 import su.sres.signalservice.api.subscriptions.ActiveSubscription
 import su.sres.signalservice.api.subscriptions.SubscriberId
@@ -53,8 +55,8 @@ class SubscribeViewModel(
   private val activeSubscriptionSubject = PublishSubject.create<ActiveSubscription>()
 
   init {
-    networkDisposable = donationPaymentRepository
-      .internetConnectionObserver()
+    networkDisposable = InternetConnectionObserver
+      .observe()
       .distinctUntilChanged()
       .subscribe { isConnected ->
         if (isConnected) {
@@ -164,6 +166,21 @@ class SubscribeViewModel(
     }
   }
 
+  private fun cancelActiveSubscriptionIfNecessary(): Completable {
+    return Single.just(SignalStore.donationsValues().shouldCancelSubscriptionBeforeNextSubscribeAttempt).flatMapCompletable {
+      if (it) {
+        donationPaymentRepository.cancelActiveSubscription().doOnComplete {
+          SignalStore.donationsValues().setLastEndOfPeriod(0L)
+          SignalStore.donationsValues().clearLevelOperations()
+          SignalStore.donationsValues().shouldCancelSubscriptionBeforeNextSubscribeAttempt = false
+          MultiDeviceSubscriptionSyncRequestJob.enqueue()
+        }
+      } else {
+        Completable.complete()
+      }
+    }
+  }
+
   fun cancel() {
     store.update { it.copy(stage = SubscribeState.Stage.CANCELLING) }
     disposables += donationPaymentRepository.cancelActiveSubscription().subscribeBy(
@@ -173,6 +190,7 @@ class SubscribeViewModel(
         SignalStore.donationsValues().clearLevelOperations()
         SignalStore.donationsValues().markUserManuallyCancelled()
         refreshActiveSubscription()
+        MultiDeviceSubscriptionSyncRequestJob.enqueue()
         store.update { it.copy(stage = SubscribeState.Stage.READY) }
       },
       onError = { throwable ->
@@ -203,7 +221,10 @@ class SubscribeViewModel(
 
             store.update { it.copy(stage = SubscribeState.Stage.PAYMENT_PIPELINE) }
 
-            val setup = ensureSubscriberId.andThen(continueSetup).onErrorResumeNext { Completable.error(DonationExceptions.SetupFailed(it)) }
+            val setup = ensureSubscriberId
+              .andThen(cancelActiveSubscriptionIfNecessary())
+              .andThen(continueSetup)
+              .onErrorResumeNext { Completable.error(DonationExceptions.SetupFailed(it)) }
 
             setup.andThen(setLevel).subscribeBy(
               onError = { throwable ->
@@ -221,9 +242,9 @@ class SubscribeViewModel(
           }
         }
 
-        override fun onError() {
+        override fun onError(googlePayException: GooglePayApi.GooglePayException) {
           store.update { it.copy(stage = SubscribeState.Stage.READY) }
-          eventPublisher.onNext(DonationEvent.RequestTokenError)
+          eventPublisher.onNext(DonationEvent.RequestTokenError(googlePayException))
         }
 
         override fun onCancelled() {
@@ -235,7 +256,7 @@ class SubscribeViewModel(
 
   fun updateSubscription() {
     store.update { it.copy(stage = SubscribeState.Stage.PAYMENT_PIPELINE) }
-    donationPaymentRepository.setSubscriptionLevel(store.state.selectedSubscription!!.level.toString())
+    cancelActiveSubscriptionIfNecessary().andThen(donationPaymentRepository.setSubscriptionLevel(store.state.selectedSubscription!!.level.toString()))
       .subscribeBy(
         onComplete = {
           store.update { it.copy(stage = SubscribeState.Stage.READY) }

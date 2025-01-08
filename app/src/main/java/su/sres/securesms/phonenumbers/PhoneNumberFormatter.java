@@ -14,6 +14,7 @@ import com.google.i18n.phonenumbers.ShortNumberInfo;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.SetUtil;
 import su.sres.securesms.util.StringUtil;
 import su.sres.securesms.util.TextSecurePreferences;
@@ -47,9 +48,9 @@ public class PhoneNumberFormatter {
 
 
     public static @NonNull PhoneNumberFormatter get(Context context) {
-        String localNumber = TextSecurePreferences.getLocalNumber(context);
+        String localNumber = SignalStore.account().getUserLogin();
 
-        if (!TextUtils.isEmpty(localNumber)) {
+        if (!Util.isEmpty(localNumber)) {
             Pair<String, PhoneNumberFormatter> cached = cachedFormatter.get();
 
             if (cached != null && cached.first().equals(localNumber)) return cached.second();

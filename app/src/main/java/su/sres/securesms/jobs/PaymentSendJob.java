@@ -5,8 +5,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.PaymentDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -136,7 +136,7 @@ public final class PaymentSendJob extends BaseJob {
     Stopwatch stopwatch = new Stopwatch("Payment submission");
 
     Wallet          wallet          = ApplicationDependencies.getPayments().getWallet();
-    PaymentDatabase paymentDatabase = DatabaseFactory.getPaymentDatabase(context);
+    PaymentDatabase paymentDatabase = ShadowDatabase.payments();
 
     paymentDatabase.createOutgoingPayment(uuid,
                                           recipientId,

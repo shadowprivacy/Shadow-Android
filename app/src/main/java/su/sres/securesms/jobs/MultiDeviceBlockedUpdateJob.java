@@ -3,9 +3,9 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.RecipientDatabase;
 import su.sres.securesms.database.RecipientDatabase.RecipientReader;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -73,7 +73,7 @@ public class MultiDeviceBlockedUpdateJob extends BaseJob {
       return;
     }
 
-    RecipientDatabase database = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase database = ShadowDatabase.recipients();
     try (RecipientReader reader = database.readerForBlocked(database.getBlocked())) {
       List<SignalServiceAddress> blockedIndividuals = new LinkedList<>();
       List<byte[]>               blockedGroups      = new LinkedList<>();

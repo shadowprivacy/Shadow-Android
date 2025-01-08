@@ -10,8 +10,8 @@ import su.sres.core.util.logging.Log
 import su.sres.securesms.R
 import su.sres.securesms.contactshare.Contact
 import su.sres.securesms.contactshare.ContactUtil
-import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.database.MentionUtil
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.database.ThreadBodyUtil
 import su.sres.securesms.database.model.MessageRecord
 import su.sres.securesms.database.model.MmsMessageRecord
@@ -303,7 +303,7 @@ class ReactionNotification(threadRecipient: Recipient, record: MessageRecord, va
   }
 
   override fun getStartingPosition(context: Context): Int {
-    return DatabaseFactory.getMmsSmsDatabase(context).getMessagePositionInConversation(threadId, record.dateReceived)
+    return ShadowDatabase.mmsSms.getMessagePositionInConversation(threadId, record.dateReceived)
   }
 
   override fun getLargeIconUri(): Uri? = null

@@ -10,7 +10,9 @@ import su.sres.securesms.components.settings.DSLConfiguration
 import su.sres.securesms.components.settings.DSLSettingsAdapter
 import su.sres.securesms.components.settings.DSLSettingsBottomSheetFragment
 import su.sres.securesms.components.settings.DSLSettingsText
+import su.sres.securesms.components.settings.app.AppSettingsActivity
 import su.sres.securesms.components.settings.configure
+import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.util.BottomSheetUtil
 
 /**
@@ -26,7 +28,8 @@ class ExpiredBadgeBottomSheetDialogFragment : DSLSettingsBottomSheetFragment(
   }
 
   private fun getConfiguration(): DSLConfiguration {
-    val badge = ExpiredBadgeBottomSheetDialogFragmentArgs.fromBundle(requireArguments()).badge
+    val badge: Badge = ExpiredBadgeBottomSheetDialogFragmentArgs.fromBundle(requireArguments()).badge
+    val isLikelyASustainer = SignalStore.donationsValues().isLikelyASustainer()
 
     return configure {
       customPref(ExpiredBadge.Model(badge))
@@ -60,7 +63,11 @@ class ExpiredBadgeBottomSheetDialogFragment : DSLSettingsBottomSheetFragment(
       noPadTextPref(
         DSLSettingsText.from(
           if (badge.isBoost()) {
-            R.string.ExpiredBadgeBottomSheetDialogFragment__to_continue_supporting_technology
+            if (isLikelyASustainer) {
+              R.string.ExpiredBadgeBottomSheetDialogFragment__you_can_reactivate
+            } else {
+              R.string.ExpiredBadgeBottomSheetDialogFragment__to_continue_supporting_technology
+            }
           } else {
             R.string.ExpiredBadgeBottomSheetDialogFragment__you_can
           },
@@ -73,14 +80,22 @@ class ExpiredBadgeBottomSheetDialogFragment : DSLSettingsBottomSheetFragment(
       primaryButton(
         text = DSLSettingsText.from(
           if (badge.isBoost()) {
-            R.string.ExpiredBadgeBottomSheetDialogFragment__become_a_sustainer
+            if (isLikelyASustainer) {
+              R.string.ExpiredBadgeBottomSheetDialogFragment__add_a_boost
+            } else {
+              R.string.ExpiredBadgeBottomSheetDialogFragment__become_a_sustainer
+            }
           } else {
             R.string.ExpiredBadgeBottomSheetDialogFragment__renew_subscription
           }
         ),
         onClick = {
           dismiss()
-          findNavController().navigate(R.id.action_directly_to_subscribe)
+          if (isLikelyASustainer) {
+            requireActivity().startActivity(AppSettingsActivity.boost(requireContext()))
+          } else {
+            requireActivity().startActivity(AppSettingsActivity.subscriptions(requireContext()))
+          }
         }
       )
 

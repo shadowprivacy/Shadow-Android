@@ -9,9 +9,9 @@ import su.sres.core.util.concurrent.SignalExecutors
 import su.sres.core.util.logging.Log
 import su.sres.storageservice.protos.groups.local.DecryptedGroup
 import su.sres.storageservice.protos.groups.local.DecryptedPendingMember
-import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.database.GroupDatabase
 import su.sres.securesms.database.MediaDatabase
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.database.model.IdentityRecord
 import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.groups.GroupId
@@ -38,27 +38,27 @@ class ConversationSettingsRepository(
     return if (threadId <= 0) {
       Optional.absent()
     } else {
-      Optional.of(DatabaseFactory.getMediaDatabase(context).getGalleryMediaForThread(threadId, MediaDatabase.Sorting.Newest))
+      Optional.of(ShadowDatabase.media.getGalleryMediaForThread(threadId, MediaDatabase.Sorting.Newest))
     }
   }
 
   fun getThreadId(recipientId: RecipientId, consumer: (Long) -> Unit) {
     SignalExecutors.BOUNDED.execute {
-      consumer(DatabaseFactory.getThreadDatabase(context).getThreadIdIfExistsFor(recipientId))
+      consumer(ShadowDatabase.threads.getThreadIdIfExistsFor(recipientId))
     }
   }
 
   fun getThreadId(groupId: GroupId, consumer: (Long) -> Unit) {
     SignalExecutors.BOUNDED.execute {
       val recipientId = Recipient.externalGroupExact(context, groupId).id
-      consumer(DatabaseFactory.getThreadDatabase(context).getThreadIdIfExistsFor(recipientId))
+      consumer(ShadowDatabase.threads.getThreadIdIfExistsFor(recipientId))
     }
   }
 
   fun isInternalRecipientDetailsEnabled(): Boolean = SignalStore.internalValues().recipientDetails()
 
   fun hasGroups(consumer: (Boolean) -> Unit) {
-    SignalExecutors.BOUNDED.execute { consumer(DatabaseFactory.getGroupDatabase(context).activeGroupCount > 0) }
+    SignalExecutors.BOUNDED.execute { consumer(ShadowDatabase.groups.activeGroupCount > 0) }
   }
 
   fun getIdentity(recipientId: RecipientId, consumer: (IdentityRecord?) -> Unit) {
@@ -70,8 +70,8 @@ class ConversationSettingsRepository(
   fun getGroupsInCommon(recipientId: RecipientId, consumer: (List<Recipient>) -> Unit) {
     SignalExecutors.BOUNDED.execute {
       consumer(
-        DatabaseFactory
-          .getGroupDatabase(context)
+        ShadowDatabase
+          .groups
           .getPushGroupsContainingMember(recipientId)
           .asSequence()
           .filter { it.members.contains(Recipient.self().id) }
@@ -85,7 +85,7 @@ class ConversationSettingsRepository(
 
   fun getGroupMembership(recipientId: RecipientId, consumer: (List<RecipientId>) -> Unit) {
     SignalExecutors.BOUNDED.execute {
-      val groupDatabase = DatabaseFactory.getGroupDatabase(context)
+      val groupDatabase = ShadowDatabase.groups
       val groupRecords = groupDatabase.getPushGroupsContainingMember(recipientId)
       val groupRecipients = ArrayList<RecipientId>(groupRecords.size)
       for (groupRecord in groupRecords) {
@@ -107,13 +107,13 @@ class ConversationSettingsRepository(
 
   fun setMuteUntil(recipientId: RecipientId, until: Long) {
     SignalExecutors.BOUNDED.execute {
-      DatabaseFactory.getRecipientDatabase(context).setMuted(recipientId, until)
+      ShadowDatabase.recipients.setMuted(recipientId, until)
     }
   }
 
   fun getGroupCapacity(groupId: GroupId, consumer: (GroupCapacityResult) -> Unit) {
     SignalExecutors.BOUNDED.execute {
-      val groupRecord: GroupDatabase.GroupRecord = DatabaseFactory.getGroupDatabase(context).getGroup(groupId).get()
+      val groupRecord: GroupDatabase.GroupRecord = ShadowDatabase.groups.getGroup(groupId).get()
       consumer(
         if (groupRecord.isV2Group) {
           val decryptedGroup: DecryptedGroup = groupRecord.requireV2GroupProperties().decryptedGroup
@@ -136,7 +136,7 @@ class ConversationSettingsRepository(
 
   fun addMembers(groupId: GroupId, selected: List<RecipientId>, consumer: (GroupAddMembersResult) -> Unit) {
     SignalExecutors.BOUNDED.execute {
-      val record: GroupDatabase.GroupRecord = DatabaseFactory.getGroupDatabase(context).getGroup(groupId).get()
+      val record: GroupDatabase.GroupRecord = ShadowDatabase.groups.getGroup(groupId).get()
 
       if (record.isAnnouncementGroup) {
         val needsResolve = selected
@@ -169,7 +169,7 @@ class ConversationSettingsRepository(
   fun setMuteUntil(groupId: GroupId, until: Long) {
     SignalExecutors.BOUNDED.execute {
       val recipientId = Recipient.externalGroupExact(context, groupId).id
-      DatabaseFactory.getRecipientDatabase(context).setMuted(recipientId, until)
+      ShadowDatabase.recipients.setMuted(recipientId, until)
     }
   }
 

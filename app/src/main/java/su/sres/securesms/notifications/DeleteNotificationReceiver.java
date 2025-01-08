@@ -4,10 +4,9 @@ package su.sres.securesms.notifications;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 
 import su.sres.core.util.concurrent.SignalExecutors;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 
 public class DeleteNotificationReceiver extends BroadcastReceiver {
@@ -41,9 +40,9 @@ public class DeleteNotificationReceiver extends BroadcastReceiver {
       SignalExecutors.BOUNDED.execute(() -> {
         for (int i = 0; i < ids.length; i++) {
           if (!mms[i]) {
-            DatabaseFactory.getSmsDatabase(context).markAsNotified(ids[i]);
+            ShadowDatabase.sms().markAsNotified(ids[i]);
           } else {
-            DatabaseFactory.getMmsDatabase(context).markAsNotified(ids[i]);
+            ShadowDatabase.mms().markAsNotified(ids[i]);
           }
         }
         finisher.finish();

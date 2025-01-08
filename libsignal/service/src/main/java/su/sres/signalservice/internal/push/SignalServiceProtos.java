@@ -31433,6 +31433,10 @@ public final class SignalServiceProtos {
          * <code>STORAGE_MANIFEST = 2;</code>
          */
         STORAGE_MANIFEST(2),
+        /**
+         * <code>SUBSCRIPTION_STATUS = 3;</code>
+         */
+        SUBSCRIPTION_STATUS(3),
         ;
 
         /**
@@ -31447,6 +31451,10 @@ public final class SignalServiceProtos {
          * <code>STORAGE_MANIFEST = 2;</code>
          */
         public static final int STORAGE_MANIFEST_VALUE = 2;
+        /**
+         * <code>SUBSCRIPTION_STATUS = 3;</code>
+         */
+        public static final int SUBSCRIPTION_STATUS_VALUE = 3;
 
 
         @java.lang.Override
@@ -31469,6 +31477,7 @@ public final class SignalServiceProtos {
             case 0: return UNKNOWN;
             case 1: return LOCAL_PROFILE;
             case 2: return STORAGE_MANIFEST;
+            case 3: return SUBSCRIPTION_STATUS;
             default: return null;
           }
         }

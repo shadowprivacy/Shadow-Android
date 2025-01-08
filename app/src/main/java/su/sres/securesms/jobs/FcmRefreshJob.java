@@ -37,10 +37,10 @@ import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.PlayServicesProblemActivity;
 import su.sres.securesms.R;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.notifications.NotificationChannels;
 import su.sres.securesms.notifications.NotificationIds;
 import su.sres.securesms.transport.RetryLaterException;
-import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 
@@ -79,7 +79,7 @@ public class FcmRefreshJob extends BaseJob {
 
   @Override
   public void onRun() throws Exception {
-    if (TextSecurePreferences.isFcmDisabled(context)) return;
+    if (!SignalStore.account().isFcmEnabled()) return;
 
     Log.i(TAG, "Reregistering FCM...");
 
@@ -91,7 +91,7 @@ public class FcmRefreshJob extends BaseJob {
       Optional<String> token = FcmUtil.getToken();
 
       if (token.isPresent()) {
-        String oldToken = TextSecurePreferences.getFcmToken(context);
+        String oldToken = SignalStore.account().getFcmToken();
 
         if (!token.get().equals(oldToken)) {
           int oldLength = oldToken != null ? oldToken.length() : -1;
@@ -101,9 +101,7 @@ public class FcmRefreshJob extends BaseJob {
         }
 
         ApplicationDependencies.getSignalServiceAccountManager().setGcmId(token);
-        TextSecurePreferences.setFcmToken(context, token.get());
-        TextSecurePreferences.setFcmTokenLastSetTime(context, System.currentTimeMillis());
-        TextSecurePreferences.setWebsocketRegistered(context, true);
+        SignalStore.account().setFcmToken(token.get());
       } else {
         throw new RetryLaterException(new IOException("Failed to retrieve a token."));
       }

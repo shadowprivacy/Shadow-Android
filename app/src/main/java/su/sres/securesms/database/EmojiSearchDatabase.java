@@ -7,7 +7,6 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.EmojiSearchData;
 import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.FtsUtil;
@@ -28,7 +27,7 @@ public class EmojiSearchDatabase extends Database {
 
   public static final String CREATE_TABLE = "CREATE VIRTUAL TABLE " + TABLE_NAME + " USING fts5(" + LABEL + ", " + EMOJI + " UNINDEXED)";
 
-  public EmojiSearchDatabase(@NonNull Context context, @NonNull SQLCipherOpenHelper databaseHelper) {
+  public EmojiSearchDatabase(@NonNull Context context, @NonNull ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 

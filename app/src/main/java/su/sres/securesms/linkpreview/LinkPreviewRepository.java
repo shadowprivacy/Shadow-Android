@@ -15,8 +15,8 @@ import su.sres.securesms.R;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.UriAttachment;
 import su.sres.securesms.database.AttachmentDatabase;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
@@ -262,8 +262,8 @@ public class LinkPreviewRepository {
 
         GroupMasterKey groupMasterKey = groupInviteLinkUrl.getGroupMasterKey();
         GroupId.V2     groupId        = GroupId.v2(groupMasterKey);
-        Optional<GroupDatabase.GroupRecord> group = DatabaseFactory.getGroupDatabase(context)
-                                                                   .getGroup(groupId);
+        Optional<GroupDatabase.GroupRecord> group = ShadowDatabase.groups()
+                                                                  .getGroup(groupId);
 
         if (group.isPresent()) {
           Log.i(TAG, "Creating preview for locally available group");

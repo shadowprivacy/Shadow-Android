@@ -2,7 +2,6 @@ package su.sres.securesms.jobmanager.migrations;
 
 import androidx.annotation.NonNull;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.JobMigration;

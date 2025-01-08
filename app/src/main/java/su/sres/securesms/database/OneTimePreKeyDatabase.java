@@ -8,8 +8,6 @@ import androidx.annotation.Nullable;
 import su.sres.core.util.logging.Log;
 
 
-
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.util.Base64;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.ecc.Curve;
@@ -36,7 +34,7 @@ public class OneTimePreKeyDatabase extends Database {
       PUBLIC_KEY + " TEXT NOT NULL, " +
       PRIVATE_KEY + " TEXT NOT NULL);";
 
-  OneTimePreKeyDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  OneTimePreKeyDatabase(Context context, ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 

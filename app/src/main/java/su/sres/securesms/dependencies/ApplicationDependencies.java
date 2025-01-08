@@ -4,6 +4,7 @@ import android.app.Application;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import org.signal.zkgroup.receipts.ClientZkReceiptOperations;
 
@@ -141,6 +142,10 @@ public class ApplicationDependencies {
     ApplicationDependencies.provider = provider;
   }
 
+  @VisibleForTesting
+  public static boolean isInitialized() {
+    return ApplicationDependencies.application != null;
+  }
 
   public static @NonNull Application getApplication() {
     return application;
@@ -310,20 +315,6 @@ public class ApplicationDependencies {
       }
     }
     return frameRateTracker;
-  }
-
-  public static @NonNull KeyValueStore getKeyValueStore() {
-
-    if (keyValueStore == null) {
-
-      synchronized (NI_LOCK) {
-        if (keyValueStore == null) {
-          keyValueStore = networkIndependentProvider.provideKeyValueStore();
-        }
-      }
-    }
-
-    return keyValueStore;
   }
 
   public static @NonNull TextSecureIdentityKeyStore getIdentityStore() {
@@ -709,7 +700,6 @@ public class ApplicationDependencies {
   }
 
   public interface NetworkIndependentProvider {
-    @NonNull KeyValueStore provideKeyValueStore();
 
     @NonNull TextSecureIdentityKeyStore provideIdentityStore();
 

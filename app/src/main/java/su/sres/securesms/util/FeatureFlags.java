@@ -3,7 +3,6 @@ package su.sres.securesms.util;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
@@ -84,8 +83,8 @@ public final class FeatureFlags {
   private static final String MAX_GROUP_CALL_RING_SIZE          = "global.calling.maxGroupCallRingSize";
   private static final String GROUP_CALL_RINGING                = "android.calling.groupCallRinging";
   private static final String CHANGE_USER_LOGIN_ENABLED         = "android.changeLogin";
-  private static final String DONOR_BADGES                      = "android.donorBadges.4";
-  private static final String DONOR_BADGES_DISPLAY              = "android.donorBadges.display.2";
+  private static final String DONOR_BADGES                      = "android.donorBadges.6";
+  private static final String DONOR_BADGES_DISPLAY              = "android.donorBadges.display.4";
 
   /**
    * We will only store remote values for flags in this set. If you want a flag to be controllable
@@ -428,17 +427,14 @@ public final class FeatureFlags {
     return getBoolean(CHANGE_USER_LOGIN_ENABLED, false);
   }
 
-  /** Whether or not to show donor badges in the UI.
-   *
-   * WARNING: Donor Badges is an unfinished feature and should not be enabled in production builds.
-   *    Enabling this flag in a custom build can result in crashes and could result in your Google Pay
-   *    account being charged real money.
+  /**
+   * Whether or not to show donor badges in the UI.
    */
   public static boolean donorBadges() {
     if (Environment.IS_STAGING) {
       return  true;
     } else {
-      return getBoolean(DONOR_BADGES, false ) || SignalStore.donationsValues().getSubscriber() != null;
+      return getBoolean(DONOR_BADGES, true ) || SignalStore.donationsValues().getSubscriber() != null;
     }
   }
 
@@ -446,7 +442,7 @@ public final class FeatureFlags {
    * Whether or not donor badges should be displayed throughout the app.
    */
   public static boolean displayDonorBadges() {
-    return getBoolean(DONOR_BADGES_DISPLAY, Environment.IS_STAGING);
+    return getBoolean(DONOR_BADGES_DISPLAY, true);
   }
 
   /**

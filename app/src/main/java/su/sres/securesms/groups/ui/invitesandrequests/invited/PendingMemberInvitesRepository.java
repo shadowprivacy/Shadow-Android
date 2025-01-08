@@ -9,6 +9,7 @@ import androidx.core.util.Consumer;
 import com.annimon.stream.Stream;
 import com.google.protobuf.ByteString;
 
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.groups.GroupChangeException;
 import su.sres.storageservice.protos.groups.local.DecryptedGroup;
 import su.sres.storageservice.protos.groups.local.DecryptedPendingMember;
@@ -16,7 +17,6 @@ import su.sres.storageservice.protos.groups.local.DecryptedPendingMember;
 import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.groups.UuidCiphertext;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
@@ -50,7 +50,7 @@ final class PendingMemberInvitesRepository {
 
   public void getInvitees(@NonNull Consumer<InviteeResult> onInviteesLoaded) {
     executor.execute(() -> {
-      GroupDatabase                                groupDatabase      = DatabaseFactory.getGroupDatabase(context);
+      GroupDatabase                                groupDatabase      = ShadowDatabase.groups();
       GroupDatabase.V2GroupProperties              v2GroupProperties  = groupDatabase.getGroup(groupId).get().requireV2GroupProperties();
       DecryptedGroup                               decryptedGroup     = v2GroupProperties.getDecryptedGroup();
       List<DecryptedPendingMember>                 pendingMembersList = decryptedGroup.getPendingMembersList();

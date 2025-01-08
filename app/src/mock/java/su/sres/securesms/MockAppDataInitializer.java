@@ -54,7 +54,7 @@ final class MockAppDataInitializer {
         String mainSql     = StreamUtil.readFullyAsString(new FileInputStream(new File(sqlDirectory, "signal.sql")));
         String keyValueSql = StreamUtil.readFullyAsString(new FileInputStream(new File(sqlDirectory, "signal-key-value.sql")));
 
-        initializeDatabase(DatabaseFactory.getInstance(application).getRawDatabase(), mainSql);
+        initializeDatabase(ShadowDatabase.getRawDatabase(), mainSql);
         initializeDatabase(KeyValueDatabase.getInstance(application).getSqlCipherDatabase(), keyValueSql);
 
         initializePreferences(application, localE164);

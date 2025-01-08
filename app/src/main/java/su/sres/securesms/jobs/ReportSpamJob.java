@@ -3,14 +3,14 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase.ReportSpamData;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobmanager.impl.NetworkConstraint;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import su.sres.signalservice.api.SignalServiceAccountManager;
 import su.sres.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
@@ -63,12 +63,12 @@ public class ReportSpamJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException {
-    if (!TextSecurePreferences.isPushRegistered(context)) {
+    if (!SignalStore.account().isRegistered()) {
       return;
     }
 
     int                         count                       = 0;
-    List<ReportSpamData>        reportSpamData              = DatabaseFactory.getMmsSmsDatabase(context).getReportSpamMessageServerData(threadId, timestamp, MAX_MESSAGE_COUNT);
+    List<ReportSpamData>        reportSpamData              = ShadowDatabase.mmsSms().getReportSpamMessageServerData(threadId, timestamp, MAX_MESSAGE_COUNT);
     SignalServiceAccountManager signalServiceAccountManager = ApplicationDependencies.getSignalServiceAccountManager();
     for (ReportSpamData data : reportSpamData) {
       Optional<String> e164 = Recipient.resolved(data.getRecipientId()).getE164();

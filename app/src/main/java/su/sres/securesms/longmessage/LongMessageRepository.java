@@ -9,9 +9,9 @@ import androidx.annotation.WorkerThread;
 
 import su.sres.core.util.StreamUtil;
 import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.MmsDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
@@ -33,8 +33,8 @@ class LongMessageRepository {
   private final MessageDatabase smsDatabase;
 
   LongMessageRepository(@NonNull Context context) {
-    this.mmsDatabase = DatabaseFactory.getMmsDatabase(context);
-    this.smsDatabase = DatabaseFactory.getSmsDatabase(context);
+    this.mmsDatabase = ShadowDatabase.mms();
+    this.smsDatabase = ShadowDatabase.sms();
   }
 
   void getMessage(@NonNull Context context, long messageId, boolean isMms, @NonNull Callback<Optional<LongMessage>> callback) {

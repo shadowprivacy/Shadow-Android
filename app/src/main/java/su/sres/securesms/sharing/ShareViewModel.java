@@ -14,8 +14,8 @@ import androidx.lifecycle.ViewModelProvider;
 import com.annimon.stream.Stream;
 
 import io.reactivex.rxjava3.core.Single;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.providers.BlobProvider;
@@ -71,7 +71,7 @@ public class ShareViewModel extends ViewModel {
         Recipient recipient = Recipient.resolved(selectedContact.getRecipientId().get());
 
         if (recipient.isPushV2Group()) {
-          Optional<GroupDatabase.GroupRecord> record = DatabaseFactory.getGroupDatabase(context).getGroup(recipient.requireGroupId());
+          Optional<GroupDatabase.GroupRecord> record = ShadowDatabase.groups().getGroup(recipient.requireGroupId());
 
           if (record.isPresent() && record.get().isAnnouncementGroup() && !record.get().isAdmin(Recipient.self())) {
             return ContactSelectResult.FALSE_AND_SHOW_PERMISSION_TOAST;

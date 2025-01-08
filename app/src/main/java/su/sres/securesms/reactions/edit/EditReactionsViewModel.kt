@@ -3,12 +3,11 @@ package su.sres.securesms.reactions.edit
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import su.sres.core.util.concurrent.SignalExecutors
-import su.sres.securesms.database.DatabaseFactory
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.keyvalue.EmojiValues
 import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.recipients.Recipient
-import su.sres.securesms.storage.StorageSyncHelper
 import su.sres.securesms.util.livedata.LiveDataUtil
 import su.sres.securesms.util.livedata.Store
 
@@ -43,7 +42,7 @@ class EditReactionsViewModel : ViewModel() {
   fun save() {
     emojiValues.reactions = store.state.reactions
     SignalExecutors.BOUNDED.execute {
-      DatabaseFactory.getRecipientDatabase(ApplicationDependencies.getApplication()).markNeedsSync(Recipient.self().id)
+      ShadowDatabase.recipients.markNeedsSync(Recipient.self().id)
       // StorageSyncHelper.scheduleSyncForDataChange()
     }
   }

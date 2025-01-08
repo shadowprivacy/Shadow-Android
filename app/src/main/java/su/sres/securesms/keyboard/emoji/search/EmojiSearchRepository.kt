@@ -6,8 +6,8 @@ import su.sres.core.util.concurrent.SignalExecutors
 import su.sres.securesms.components.emoji.Emoji
 import su.sres.securesms.components.emoji.EmojiPageModel
 import su.sres.securesms.components.emoji.RecentEmojiPageModel
-import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.database.EmojiSearchDatabase
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.emoji.EmojiSource
 import su.sres.securesms.util.TextSecurePreferences
 import java.util.function.Consumer
@@ -17,7 +17,7 @@ private const val EMOJI_SEARCH_LIMIT = 20
 
 class EmojiSearchRepository(private val context: Context) {
 
-  private val emojiSearchDatabase: EmojiSearchDatabase = DatabaseFactory.getEmojiSearchDatabase(context)
+  private val emojiSearchDatabase: EmojiSearchDatabase = ShadowDatabase.emojiSearch
 
   fun submitQuery(query: String, includeRecents: Boolean, limit: Int = EMOJI_SEARCH_LIMIT, consumer: Consumer<EmojiPageModel>) {
     if (query.length < MINIMUM_QUERY_THRESHOLD && includeRecents) {

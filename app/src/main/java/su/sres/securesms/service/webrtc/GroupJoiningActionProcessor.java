@@ -9,6 +9,7 @@ import org.signal.ringrtc.GroupCall;
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.ringrtc.Camera;
+import su.sres.securesms.ringrtc.RemotePeer;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceState;
 import su.sres.securesms.service.webrtc.state.WebRtcServiceStateBuilder;
 import su.sres.securesms.util.FeatureFlags;
@@ -81,7 +82,7 @@ public class GroupJoiningActionProcessor extends GroupActionProcessor {
             throw new RuntimeException(e);
           }
 
-          if (FeatureFlags.groupCallRinging() && currentState.getCallSetupState().shouldRingGroup()) {
+          if (FeatureFlags.groupCallRinging() && currentState.getCallSetupState(RemotePeer.GROUP_CALL_ID).shouldRingGroup()) {
             try {
               groupCall.ringAll();
             } catch (CallException e) {

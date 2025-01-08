@@ -5,8 +5,8 @@ import android.app.Application;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase.MarkedMessageInfo;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
@@ -174,7 +174,7 @@ public class SendViewedReceiptJob extends BaseJob {
                                                          receiptMessage);
 
     if (Util.hasItems(messageIds)) {
-      DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(recipientId, timestamp, result, ContentHint.IMPLICIT, messageIds);
+      ShadowDatabase.messageLog().insertIfPossible(recipientId, timestamp, result, ContentHint.IMPLICIT, messageIds);
     }
   }
 

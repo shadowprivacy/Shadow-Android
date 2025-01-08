@@ -3,7 +3,7 @@ package su.sres.securesms.jobs;
 import androidx.annotation.NonNull;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
@@ -63,7 +63,7 @@ public class ConversationShortcutUpdateJob extends BaseJob {
       return;
     }
 
-    ThreadDatabase  threadDatabase = DatabaseFactory.getThreadDatabase(context);
+    ThreadDatabase  threadDatabase = ShadowDatabase.threads();
     int             maxShortcuts   = ConversationUtil.getMaxShortcuts(context);
     List<Recipient> ranked         = new ArrayList<>(maxShortcuts);
 

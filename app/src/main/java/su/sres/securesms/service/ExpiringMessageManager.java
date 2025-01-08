@@ -5,8 +5,8 @@ import android.content.Context;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.core.util.logging.Log;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MmsDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.SmsDatabase;
 import su.sres.securesms.database.model.MessageRecord;
 
@@ -28,8 +28,8 @@ public class ExpiringMessageManager {
 
   public ExpiringMessageManager(Context context) {
     this.context     = context.getApplicationContext();
-    this.smsDatabase = DatabaseFactory.getSmsDatabase(context);
-    this.mmsDatabase = DatabaseFactory.getMmsDatabase(context);
+    this.smsDatabase = ShadowDatabase.sms();
+    this.mmsDatabase = ShadowDatabase.mms();
 
     executor.execute(new LoadTask());
     executor.execute(new ProcessTask());

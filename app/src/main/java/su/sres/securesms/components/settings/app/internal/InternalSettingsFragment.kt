@@ -14,8 +14,8 @@ import su.sres.securesms.components.settings.DSLSettingsAdapter
 import su.sres.securesms.components.settings.DSLSettingsFragment
 import su.sres.securesms.components.settings.DSLSettingsText
 import su.sres.securesms.components.settings.configure
-import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.database.LocalMetricsDatabase
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.jobs.DownloadLatestEmojiDataJob
 import su.sres.securesms.jobs.RefreshAttributesJob
@@ -344,13 +344,13 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
   }
 
   private fun clearAllSenderKeyState() {
-    DatabaseFactory.getSenderKeyDatabase(requireContext()).deleteAll()
-    DatabaseFactory.getSenderKeySharedDatabase(requireContext()).deleteAll()
+    ShadowDatabase.senderKeys.deleteAll()
+    ShadowDatabase.senderKeyShared.deleteAll()
     Toast.makeText(context, "Deleted all sender key state.", Toast.LENGTH_SHORT).show()
   }
 
   private fun clearAllSenderKeySharedState() {
-    DatabaseFactory.getSenderKeySharedDatabase(requireContext()).deleteAll()
+    ShadowDatabase.senderKeyShared.deleteAll()
     Toast.makeText(context, "Deleted all sender key shared state.", Toast.LENGTH_SHORT).show()
   }
 

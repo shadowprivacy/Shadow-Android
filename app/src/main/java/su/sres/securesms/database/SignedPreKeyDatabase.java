@@ -8,8 +8,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 
-
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.Base64;
 import org.whispersystems.libsignal.InvalidKeyException;
@@ -44,7 +42,7 @@ public class SignedPreKeyDatabase extends Database {
       SIGNATURE + " TEXT NOT NULL, " +
       TIMESTAMP + " INTEGER DEFAULT 0);";
 
-  SignedPreKeyDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  SignedPreKeyDatabase(Context context, ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 

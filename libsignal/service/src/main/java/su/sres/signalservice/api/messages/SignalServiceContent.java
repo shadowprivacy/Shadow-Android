@@ -745,6 +745,8 @@ public final class SignalServiceContent {
           return SignalServiceSyncMessage.forFetchLatest(SignalServiceSyncMessage.FetchType.LOCAL_PROFILE);
         case STORAGE_MANIFEST:
           return SignalServiceSyncMessage.forFetchLatest(SignalServiceSyncMessage.FetchType.STORAGE_MANIFEST);
+        case SUBSCRIPTION_STATUS:
+          return SignalServiceSyncMessage.forFetchLatest(SignalServiceSyncMessage.FetchType.SUBSCRIPTION_STATUS);
       }
     }
 

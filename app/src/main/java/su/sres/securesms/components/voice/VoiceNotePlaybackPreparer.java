@@ -22,8 +22,8 @@ import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector;
 
 import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.R;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.util.MessageRecordUtil;
@@ -241,8 +241,8 @@ final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackP
 
   private @NonNull List<MediaItem> loadMediaItemsForSinglePlayback(long messageId) {
     try {
-      MessageRecord messageRecord = DatabaseFactory.getMmsDatabase(context)
-                                                   .getMessageRecord(messageId);
+      MessageRecord messageRecord = ShadowDatabase.mms()
+                                                  .getMessageRecord(messageId);
 
       if (!MessageRecordUtil.hasAudio(messageRecord)) {
         Log.w(TAG, "Message does not contain audio.");
@@ -269,8 +269,8 @@ final class VoiceNotePlaybackPreparer implements MediaSessionConnector.PlaybackP
   @WorkerThread
   private @NonNull List<MediaItem> loadMediaItemsForConsecutivePlayback(long messageId) {
     try {
-      List<MessageRecord> recordsAfter = DatabaseFactory.getMmsSmsDatabase(context)
-                                                        .getMessagesAfterVoiceNoteInclusive(messageId, LIMIT);
+      List<MessageRecord> recordsAfter = ShadowDatabase.mmsSms()
+                                                       .getMessagesAfterVoiceNoteInclusive(messageId, LIMIT);
 
       return buildFilteredMessageRecordList(recordsAfter).stream()
                                                          .map(record -> VoiceNoteMediaItemFactory

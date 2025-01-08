@@ -11,7 +11,7 @@ import su.sres.core.util.concurrent.SignalExecutors
 import su.sres.securesms.R
 import su.sres.securesms.avatar.AvatarBundler
 import su.sres.securesms.avatar.AvatarPickerStorage
-import su.sres.securesms.database.DatabaseFactory
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.providers.BlobProvider
 import su.sres.securesms.scribbles.ImageEditorFragment
 
@@ -44,7 +44,7 @@ class PhotoEditorFragment : Fragment(R.layout.avatar_photo_editor_fragment), Ima
       val inputStream = BlobProvider.getInstance().getStream(applicationContext, editedImageUri)
       val onDiskUri = AvatarPickerStorage.save(applicationContext, inputStream)
       val photo = AvatarBundler.extractPhoto(args.photoAvatar)
-      val database = DatabaseFactory.getAvatarPickerDatabase(applicationContext)
+      val database = ShadowDatabase.avatarPicker
       val newPhoto = photo.copy(uri = onDiskUri, size = size)
 
       database.update(newPhoto)

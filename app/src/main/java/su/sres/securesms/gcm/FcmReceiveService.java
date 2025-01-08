@@ -14,8 +14,8 @@ import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.FcmRefreshJob;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.jobs.SubmitRateLimitPushChallengeJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.registration.PushChallengeRequest;
-import su.sres.securesms.util.TextSecurePreferences;
 
 public class FcmReceiveService extends FirebaseMessagingService {
 
@@ -25,11 +25,11 @@ public class FcmReceiveService extends FirebaseMessagingService {
   public void onMessageReceived(RemoteMessage remoteMessage) {
 
     Log.i(TAG, String.format(Locale.US,
-            "onMessageReceived() ID: %s, Delay: %d, Priority: %d, Original Priority: %d",
-            remoteMessage.getMessageId(),
-            (System.currentTimeMillis() - remoteMessage.getSentTime()),
-            remoteMessage.getPriority(),
-            remoteMessage.getOriginalPriority()));
+                             "onMessageReceived() ID: %s, Delay: %d, Priority: %d, Original Priority: %d",
+                             remoteMessage.getMessageId(),
+                             (System.currentTimeMillis() - remoteMessage.getSentTime()),
+                             remoteMessage.getPriority(),
+                             remoteMessage.getOriginalPriority()));
 
     String registrationChallenge = remoteMessage.getData().get("challenge");
     String rateLimitChallenge    = remoteMessage.getData().get("rateLimitChallenge");
@@ -53,7 +53,7 @@ public class FcmReceiveService extends FirebaseMessagingService {
   public void onNewToken(String token) {
     Log.i(TAG, "onNewToken()");
 
-    if (!TextSecurePreferences.isPushRegistered(ApplicationDependencies.getApplication())) {
+    if (!SignalStore.account().isRegistered()) {
       Log.i(TAG, "Got a new FCM token, but the user isn't registered.");
       return;
     }

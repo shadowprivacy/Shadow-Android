@@ -18,11 +18,14 @@ import su.sres.donations.GooglePayApi
 import su.sres.securesms.badges.models.Badge
 import su.sres.securesms.components.settings.app.subscription.DonationEvent
 import su.sres.securesms.components.settings.app.subscription.DonationPaymentRepository
-import su.sres.securesms.components.settings.app.subscription.models.CurrencySelection
 import su.sres.securesms.keyvalue.SignalStore
+import su.sres.securesms.util.InternetConnectionObserver
 import su.sres.securesms.util.PlatformCurrencyUtil
+import su.sres.securesms.util.StringUtil
 import su.sres.securesms.util.livedata.Store
+import java.lang.NumberFormatException
 import java.math.BigDecimal
+import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Currency
 
@@ -43,8 +46,8 @@ class BoostViewModel(
   private var boostToPurchase: Boost? = null
 
   init {
-    networkDisposable = donationPaymentRepository
-      .internetConnectionObserver()
+    networkDisposable = InternetConnectionObserver
+      .observe()
       .distinctUntilChanged()
       .subscribe { isConnected ->
         if (isConnected) {
@@ -137,6 +140,9 @@ class BoostViewModel(
 
           if (boost != null) {
             eventPublisher.onNext(DonationEvent.RequestTokenSuccess)
+
+            store.update { it.copy(stage = BoostState.Stage.PAYMENT_PIPELINE) }
+
             donationPaymentRepository.continuePayment(boost.price, paymentData).subscribeBy(
               onError = { throwable ->
                 store.update { it.copy(stage = BoostState.Stage.READY) }
@@ -152,9 +158,9 @@ class BoostViewModel(
           }
         }
 
-        override fun onError() {
+        override fun onError(googlePayException: GooglePayApi.GooglePayException) {
           store.update { it.copy(stage = BoostState.Stage.READY) }
-          eventPublisher.onNext(DonationEvent.RequestTokenError)
+          eventPublisher.onNext(DonationEvent.RequestTokenError(googlePayException))
         }
 
         override fun onCancelled() {
@@ -170,15 +176,18 @@ class BoostViewModel(
       return
     }
 
-    store.update { it.copy(stage = BoostState.Stage.PAYMENT_PIPELINE) }
+    store.update { it.copy(stage = BoostState.Stage.TOKEN_REQUEST) }
 
-    boostToPurchase = if (snapshot.isCustomAmountFocused) {
+    val boost = if (snapshot.isCustomAmountFocused) {
+      Log.d(TAG, "Boosting with custom amount ${snapshot.customAmount}")
       Boost(snapshot.customAmount)
     } else {
+      Log.d(TAG, "Boosting with preset amount ${snapshot.selectedBoost.price}")
       snapshot.selectedBoost
     }
 
-    donationPaymentRepository.requestTokenFromGooglePay(snapshot.selectedBoost.price, label, fetchTokenRequestCode)
+    boostToPurchase = boost
+    donationPaymentRepository.requestTokenFromGooglePay(boost.price, label, fetchTokenRequestCode)
   }
 
   fun setSelectedBoost(boost: Boost) {
@@ -190,11 +199,19 @@ class BoostViewModel(
     }
   }
 
-  fun setCustomAmount(amount: String) {
-    val bigDecimalAmount = if (amount.isEmpty() || amount == DecimalFormatSymbols.getInstance().decimalSeparator.toString()) {
+  fun setCustomAmount(rawAmount: String) {
+    val amount = StringUtil.stripBidiIndicator(rawAmount)
+    val bigDecimalAmount: BigDecimal = if (amount.isEmpty() || amount == DecimalFormatSymbols.getInstance().decimalSeparator.toString()) {
       BigDecimal.ZERO
     } else {
-      BigDecimal(amount)
+      val decimalFormat = DecimalFormat.getInstance() as DecimalFormat
+      decimalFormat.isParseBigDecimal = true
+
+      try {
+        decimalFormat.parse(amount) as BigDecimal
+      } catch (e: NumberFormatException) {
+        BigDecimal.ZERO
+      }
     }
 
     store.update { it.copy(customAmount = FiatMoney(bigDecimalAmount, it.customAmount.currency)) }

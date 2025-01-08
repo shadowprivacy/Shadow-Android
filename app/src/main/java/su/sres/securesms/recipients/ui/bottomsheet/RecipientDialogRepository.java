@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.IdentityRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupChangeException;
@@ -95,7 +95,7 @@ final class RecipientDialogRepository {
   void getGroupMembership(@NonNull Consumer<List<RecipientId>> onComplete) {
     SimpleTask.run(SignalExecutors.UNBOUNDED,
                    () -> {
-                     GroupDatabase                   groupDatabase   = DatabaseFactory.getGroupDatabase(context);
+                     GroupDatabase                   groupDatabase   = ShadowDatabase.groups();
                      List<GroupDatabase.GroupRecord> groupRecords    = groupDatabase.getPushGroupsContainingMember(recipientId);
                      ArrayList<RecipientId>          groupRecipients = new ArrayList<>(groupRecords.size());
 
@@ -109,7 +109,7 @@ final class RecipientDialogRepository {
   }
 
   public void getActiveGroupCount(@NonNull Consumer<Integer> onComplete) {
-    SignalExecutors.BOUNDED.execute(() -> onComplete.accept(DatabaseFactory.getGroupDatabase(context).getActiveGroupCount()));
+    SignalExecutors.BOUNDED.execute(() -> onComplete.accept(ShadowDatabase.groups().getActiveGroupCount()));
   }
 
   interface RecipientCallback {

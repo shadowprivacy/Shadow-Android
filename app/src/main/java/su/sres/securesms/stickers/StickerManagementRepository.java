@@ -2,10 +2,11 @@ package su.sres.securesms.stickers;
 
 import android.content.Context;
 import android.database.Cursor;
+
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.database.AttachmentDatabase;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.StickerDatabase;
 import su.sres.securesms.database.StickerDatabase.StickerPackRecordReader;
 import su.sres.securesms.database.model.StickerPackRecord;
@@ -21,119 +22,119 @@ import java.util.List;
 
 final class StickerManagementRepository {
 
-    private final Context            context;
-    private final StickerDatabase    stickerDatabase;
-    private final AttachmentDatabase attachmentDatabase;
+  private final Context            context;
+  private final StickerDatabase    stickerDatabase;
+  private final AttachmentDatabase attachmentDatabase;
 
-    StickerManagementRepository(@NonNull Context context) {
-        this.context            = context.getApplicationContext();
-        this.stickerDatabase    = DatabaseFactory.getStickerDatabase(context);
-        this.attachmentDatabase = DatabaseFactory.getAttachmentDatabase(context);
-    }
+  StickerManagementRepository(@NonNull Context context) {
+    this.context            = context.getApplicationContext();
+    this.stickerDatabase    = ShadowDatabase.stickers();
+    this.attachmentDatabase = ShadowDatabase.attachments();
+  }
 
-    void deleteOrphanedStickerPacks() {
-        SignalExecutors.SERIAL.execute(stickerDatabase::deleteOrphanedPacks);
-    }
+  void deleteOrphanedStickerPacks() {
+    SignalExecutors.SERIAL.execute(stickerDatabase::deleteOrphanedPacks);
+  }
 
-    void fetchUnretrievedReferencePacks() {
-        SignalExecutors.SERIAL.execute(() -> {
-            JobManager jobManager = ApplicationDependencies.getJobManager();
+  void fetchUnretrievedReferencePacks() {
+    SignalExecutors.SERIAL.execute(() -> {
+      JobManager jobManager = ApplicationDependencies.getJobManager();
 
-            try (Cursor cursor = attachmentDatabase.getUnavailableStickerPacks()) {
-                while (cursor != null && cursor.moveToNext()) {
-                    String packId  = cursor.getString(cursor.getColumnIndexOrThrow(AttachmentDatabase.STICKER_PACK_ID));
-                    String packKey = cursor.getString(cursor.getColumnIndexOrThrow(AttachmentDatabase.STICKER_PACK_KEY));
+      try (Cursor cursor = attachmentDatabase.getUnavailableStickerPacks()) {
+        while (cursor != null && cursor.moveToNext()) {
+          String packId  = cursor.getString(cursor.getColumnIndexOrThrow(AttachmentDatabase.STICKER_PACK_ID));
+          String packKey = cursor.getString(cursor.getColumnIndexOrThrow(AttachmentDatabase.STICKER_PACK_KEY));
 
-                    jobManager.add(StickerPackDownloadJob.forReference(packId, packKey));
-                }
-            }
-        });
-    }
-
-    void getStickerPacks(@NonNull Callback<PackResult> callback) {
-        SignalExecutors.SERIAL.execute(() -> {
-            List<StickerPackRecord> installedPacks = new ArrayList<>();
-            List<StickerPackRecord> availablePacks = new ArrayList<>();
-            List<StickerPackRecord> blessedPacks   = new ArrayList<>();
-
-            try (StickerPackRecordReader reader = new StickerPackRecordReader(stickerDatabase.getAllStickerPacks())) {
-                StickerPackRecord record;
-                while ((record = reader.getNext()) != null) {
-                    if (record.isInstalled()) {
-                        installedPacks.add(record);
-                    } else if (BlessedPacks.contains(record.getPackId())) {
-                        blessedPacks.add(record);
-                    } else {
-                        availablePacks.add(record);
-                    }
-                }
-            }
-
-            callback.onComplete(new PackResult(installedPacks, availablePacks, blessedPacks));
-        });
-    }
-
-    void uninstallStickerPack(@NonNull String packId, @NonNull String packKey) {
-        SignalExecutors.SERIAL.execute(() -> {
-            stickerDatabase.uninstallPack(packId);
-
-            if (TextSecurePreferences.isMultiDevice(context)) {
-                ApplicationDependencies.getJobManager().add(new MultiDeviceStickerPackOperationJob(packId, packKey, MultiDeviceStickerPackOperationJob.Type.REMOVE));
-            }
-        });
-    }
-
-    void installStickerPack(@NonNull String packId, @NonNull String packKey, boolean notify) {
-        SignalExecutors.SERIAL.execute(() -> {
-            JobManager jobManager = ApplicationDependencies.getJobManager();
-
-            if (stickerDatabase.isPackAvailableAsReference(packId)) {
-                stickerDatabase.markPackAsInstalled(packId, notify);
-            }
-
-            jobManager.add(StickerPackDownloadJob.forInstall(packId, packKey, notify));
-
-            if (TextSecurePreferences.isMultiDevice(context)) {
-                jobManager.add(new MultiDeviceStickerPackOperationJob(packId, packKey, MultiDeviceStickerPackOperationJob.Type.INSTALL));
-            }
-        });
-    }
-
-    void setPackOrder(@NonNull List<StickerPackRecord> packsInOrder) {
-        SignalExecutors.SERIAL.execute(() -> {
-            stickerDatabase.updatePackOrder(packsInOrder);
-        });
-    }
-
-    static class PackResult {
-
-        private final List<StickerPackRecord> installedPacks;
-        private final List<StickerPackRecord> availablePacks;
-        private final List<StickerPackRecord> blessedPacks;
-
-        PackResult(@NonNull List<StickerPackRecord> installedPacks,
-                   @NonNull List<StickerPackRecord> availablePacks,
-                   @NonNull List<StickerPackRecord> blessedPacks)
-        {
-            this.installedPacks = installedPacks;
-            this.availablePacks = availablePacks;
-            this.blessedPacks   = blessedPacks;
+          jobManager.add(StickerPackDownloadJob.forReference(packId, packKey));
         }
+      }
+    });
+  }
 
-        @NonNull List<StickerPackRecord> getInstalledPacks() {
-            return installedPacks;
-        }
+  void getStickerPacks(@NonNull Callback<PackResult> callback) {
+    SignalExecutors.SERIAL.execute(() -> {
+      List<StickerPackRecord> installedPacks = new ArrayList<>();
+      List<StickerPackRecord> availablePacks = new ArrayList<>();
+      List<StickerPackRecord> blessedPacks   = new ArrayList<>();
 
-        @NonNull List<StickerPackRecord> getAvailablePacks() {
-            return availablePacks;
+      try (StickerPackRecordReader reader = new StickerPackRecordReader(stickerDatabase.getAllStickerPacks())) {
+        StickerPackRecord record;
+        while ((record = reader.getNext()) != null) {
+          if (record.isInstalled()) {
+            installedPacks.add(record);
+          } else if (BlessedPacks.contains(record.getPackId())) {
+            blessedPacks.add(record);
+          } else {
+            availablePacks.add(record);
+          }
         }
+      }
 
-        @NonNull List<StickerPackRecord> getBlessedPacks() {
-            return blessedPacks;
-        }
+      callback.onComplete(new PackResult(installedPacks, availablePacks, blessedPacks));
+    });
+  }
+
+  void uninstallStickerPack(@NonNull String packId, @NonNull String packKey) {
+    SignalExecutors.SERIAL.execute(() -> {
+      stickerDatabase.uninstallPack(packId);
+
+      if (TextSecurePreferences.isMultiDevice(context)) {
+        ApplicationDependencies.getJobManager().add(new MultiDeviceStickerPackOperationJob(packId, packKey, MultiDeviceStickerPackOperationJob.Type.REMOVE));
+      }
+    });
+  }
+
+  void installStickerPack(@NonNull String packId, @NonNull String packKey, boolean notify) {
+    SignalExecutors.SERIAL.execute(() -> {
+      JobManager jobManager = ApplicationDependencies.getJobManager();
+
+      if (stickerDatabase.isPackAvailableAsReference(packId)) {
+        stickerDatabase.markPackAsInstalled(packId, notify);
+      }
+
+      jobManager.add(StickerPackDownloadJob.forInstall(packId, packKey, notify));
+
+      if (TextSecurePreferences.isMultiDevice(context)) {
+        jobManager.add(new MultiDeviceStickerPackOperationJob(packId, packKey, MultiDeviceStickerPackOperationJob.Type.INSTALL));
+      }
+    });
+  }
+
+  void setPackOrder(@NonNull List<StickerPackRecord> packsInOrder) {
+    SignalExecutors.SERIAL.execute(() -> {
+      stickerDatabase.updatePackOrder(packsInOrder);
+    });
+  }
+
+  static class PackResult {
+
+    private final List<StickerPackRecord> installedPacks;
+    private final List<StickerPackRecord> availablePacks;
+    private final List<StickerPackRecord> blessedPacks;
+
+    PackResult(@NonNull List<StickerPackRecord> installedPacks,
+               @NonNull List<StickerPackRecord> availablePacks,
+               @NonNull List<StickerPackRecord> blessedPacks)
+    {
+      this.installedPacks = installedPacks;
+      this.availablePacks = availablePacks;
+      this.blessedPacks   = blessedPacks;
     }
 
-    interface Callback<T> {
-        void onComplete(T result);
+    @NonNull List<StickerPackRecord> getInstalledPacks() {
+      return installedPacks;
     }
+
+    @NonNull List<StickerPackRecord> getAvailablePacks() {
+      return availablePacks;
+    }
+
+    @NonNull List<StickerPackRecord> getBlessedPacks() {
+      return blessedPacks;
+    }
+  }
+
+  interface Callback<T> {
+    void onComplete(T result);
+  }
 }

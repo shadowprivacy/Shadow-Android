@@ -19,7 +19,7 @@ import su.sres.core.util.ThreadUtil;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.DatabaseAttachment;
 import su.sres.securesms.database.AttachmentDatabase;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.databaseprotos.AudioWaveFormData;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.media.DecryptableUriMediaInput;
@@ -98,7 +98,7 @@ public final class AudioWaveForm {
 
       if (attachment instanceof DatabaseAttachment) {
         try {
-          AttachmentDatabase attachmentDatabase = DatabaseFactory.getAttachmentDatabase(context);
+          AttachmentDatabase attachmentDatabase = ShadowDatabase.attachments();
           DatabaseAttachment dbAttachment       = (DatabaseAttachment) attachment;
           long               startTime          = System.currentTimeMillis();
 

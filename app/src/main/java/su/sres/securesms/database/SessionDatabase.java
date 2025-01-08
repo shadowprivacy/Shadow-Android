@@ -8,7 +8,6 @@ import androidx.annotation.Nullable;
 
 import net.zetetic.database.sqlcipher.SQLiteStatement;
 
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.core.util.logging.Log;
 
 import org.whispersystems.libsignal.SignalProtocolAddress;
@@ -42,7 +41,7 @@ public class SessionDatabase extends Database {
                                             RECORD + " BLOB NOT NULL, " +
                                             "UNIQUE(" + ADDRESS + "," + DEVICE + "));";
 
-  SessionDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  SessionDatabase(Context context, ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 

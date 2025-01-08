@@ -12,8 +12,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.core.util.logging.Log;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.permissions.Permissions;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.CursorUtil;
@@ -116,7 +116,6 @@ public final class DoNotDisturbUtil {
   }
 
   private static boolean isRepeatCaller(@NonNull Context context, @NonNull Recipient recipient) {
-    return DatabaseFactory.getThreadDatabase(context).hasCalledSince(recipient, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(15));
+    return ShadowDatabase.threads().hasCalledSince(recipient, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(15));
   }
-
 }

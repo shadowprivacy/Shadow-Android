@@ -16,6 +16,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.navigation.Navigation;
 
@@ -31,10 +33,12 @@ import su.sres.securesms.avatar.Avatars;
 import su.sres.securesms.avatar.picker.AvatarPickerFragment;
 import su.sres.securesms.badges.BadgeImageView;
 import su.sres.securesms.badges.models.Badge;
+import su.sres.securesms.badges.self.none.BecomeASustainerFragment;
 import su.sres.securesms.components.emoji.EmojiUtil;
 import su.sres.securesms.mediasend.Media;
 import su.sres.securesms.profiles.ProfileName;
 import su.sres.securesms.profiles.manage.ManageProfileViewModel.AvatarState;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.NameUtil;
 import su.sres.securesms.util.views.SimpleProgressDialog;
@@ -43,19 +47,19 @@ public class ManageProfileFragment extends LoggingFragment {
 
   private static final String TAG = Log.tag(ManageProfileFragment.class);
 
-  private Toolbar     toolbar;
-  private ImageView   avatarView;
-  private ImageView   avatarPlaceholderView;
-  private TextView    profileNameView;
-  private View        profileNameContainer;
-  private TextView    usernameView;
-  private View        usernameContainer;
-  private TextView    aboutView;
-  private View        aboutContainer;
-  private ImageView   aboutEmojiView;
-  private AlertDialog avatarProgress;
-  private TextView    avatarInitials;
-  private ImageView   avatarBackground;
+  private Toolbar        toolbar;
+  private ImageView      avatarView;
+  private ImageView      avatarPlaceholderView;
+  private TextView       profileNameView;
+  private View           profileNameContainer;
+  private TextView       usernameView;
+  private View           usernameContainer;
+  private TextView       aboutView;
+  private View           aboutContainer;
+  private ImageView      aboutEmojiView;
+  private AlertDialog    avatarProgress;
+  private TextView       avatarInitials;
+  private ImageView      avatarBackground;
   private View           badgesContainer;
   private BadgeImageView badgeView;
 
@@ -118,7 +122,11 @@ public class ManageProfileFragment extends LoggingFragment {
 
     if (FeatureFlags.donorBadges()) {
       badgesContainer.setOnClickListener(v -> {
-        Navigation.findNavController(v).navigate(ManageProfileFragmentDirections.actionManageProfileFragmentToBadgeManageFragment());
+        if (Recipient.self().getBadges().isEmpty()) {
+          BecomeASustainerFragment.show(getParentFragmentManager());
+        } else {
+          Navigation.findNavController(v).navigate(ManageProfileFragmentDirections.actionManageProfileFragmentToBadgeManageFragment());
+        }
       });
     } else {
       badgesContainer.setVisibility(View.GONE);
@@ -128,7 +136,10 @@ public class ManageProfileFragment extends LoggingFragment {
   private void initializeViewModel() {
     viewModel = ViewModelProviders.of(this, new ManageProfileViewModel.Factory()).get(ManageProfileViewModel.class);
 
-    viewModel.getAvatar().observe(getViewLifecycleOwner(), this::presentAvatar);
+    LiveData<Optional<byte[]>> avatarImage = Transformations.distinctUntilChanged(Transformations.map(viewModel.getAvatar(), avatar -> Optional.fromNullable(avatar.getAvatar())));
+    avatarImage.observe(getViewLifecycleOwner(), this::presentAvatarImage);
+
+    viewModel.getAvatar().observe(getViewLifecycleOwner(), this::presentAvatarPlaceholder);
     viewModel.getProfileName().observe(getViewLifecycleOwner(), this::presentProfileName);
     viewModel.getEvents().observe(getViewLifecycleOwner(), this::presentEvent);
     viewModel.getAbout().observe(getViewLifecycleOwner(), this::presentAbout);
@@ -142,9 +153,19 @@ public class ManageProfileFragment extends LoggingFragment {
     }
   }
 
-  private void presentAvatar(@NonNull AvatarState avatarState) {
-    if (avatarState.getAvatar() == null) {
+  private void presentAvatarImage(@NonNull Optional<byte[]> avatarData) {
+    if (avatarData.isPresent()) {
+      Glide.with(this)
+           .load(avatarData.get())
+           .circleCrop()
+           .into(avatarView);
+    } else {
       avatarView.setImageDrawable(null);
+    }
+  }
+
+  private void presentAvatarPlaceholder(@NonNull AvatarState avatarState) {
+    if (avatarState.getAvatar() == null) {
       CharSequence            initials        = NameUtil.getAbbreviation(avatarState.getSelf().getDisplayName(requireContext()));
       Avatars.ForegroundColor foregroundColor = Avatars.getForegroundColor(avatarState.getSelf().getAvatarColor());
 
@@ -163,11 +184,6 @@ public class ManageProfileFragment extends LoggingFragment {
     } else {
       avatarPlaceholderView.setVisibility(View.GONE);
       avatarInitials.setVisibility(View.GONE);
-
-      Glide.with(this)
-           .load(avatarState.getAvatar())
-           .circleCrop()
-           .into(avatarView);
     }
 
     if (avatarProgress == null && avatarState.getLoadingState() == ManageProfileViewModel.LoadingState.LOADING) {
@@ -193,20 +209,16 @@ public class ManageProfileFragment extends LoggingFragment {
   private void presentUsername(@Nullable String username) {
     if (username == null || username.isEmpty()) {
       usernameView.setText(R.string.ManageProfileFragment_username);
-      usernameView.setTextColor(requireContext().getResources().getColor(R.color.signal_text_secondary));
     } else {
       usernameView.setText(username);
-      usernameView.setTextColor(requireContext().getResources().getColor(R.color.signal_text_primary));
     }
   }
 
   private void presentAbout(@Nullable String about) {
     if (about == null || about.isEmpty()) {
       aboutView.setText(R.string.ManageProfileFragment_about);
-      aboutView.setTextColor(requireContext().getResources().getColor(R.color.signal_text_secondary));
     } else {
       aboutView.setText(about);
-      aboutView.setTextColor(requireContext().getResources().getColor(R.color.signal_text_primary));
     }
   }
 

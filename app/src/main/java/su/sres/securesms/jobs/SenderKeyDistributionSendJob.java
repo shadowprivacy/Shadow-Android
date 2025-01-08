@@ -4,8 +4,8 @@ import androidx.annotation.NonNull;
 
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
@@ -77,7 +77,7 @@ public final class SenderKeyDistributionSendJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
+    GroupDatabase groupDatabase = ShadowDatabase.groups();
 
     if (!groupDatabase.isCurrentMember(groupId, recipientId)) {
       Log.w(TAG, recipientId + " is no longer a member of " + groupId + "! Not sending.");

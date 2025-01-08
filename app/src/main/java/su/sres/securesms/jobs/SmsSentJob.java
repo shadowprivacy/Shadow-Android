@@ -7,12 +7,12 @@ import androidx.annotation.NonNull;
 import android.telephony.SmsManager;
 
 import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.core.util.logging.Log;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
 import su.sres.securesms.database.model.SmsMessageRecord;
 import su.sres.securesms.service.SmsDeliveryListener;
@@ -94,12 +94,12 @@ public class SmsSentJob extends BaseJob {
   }
 
   private void handleDeliveredResult(long messageId, int result) {
-    DatabaseFactory.getSmsDatabase(context).markSmsStatus(messageId, result);
+    ShadowDatabase.sms().markSmsStatus(messageId, result);
   }
 
   private void handleSentResult(long messageId, int result) {
     try {
-      MessageDatabase  database = DatabaseFactory.getSmsDatabase(context);
+      MessageDatabase  database = ShadowDatabase.sms();
       SmsMessageRecord record   = database.getSmsMessage(messageId);
 
       switch (result) {

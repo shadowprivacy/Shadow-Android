@@ -67,11 +67,12 @@ public class ApplicationMigrations {
     static final int CHANGE_LOGIN_CAPABILITY       = 39;
     static final int DEFAULT_REACTIONS_SYNC        = 40;
     static final int STICKER_MY_DAILY_LIFE         = 41;
+    static final int DB_REACTIONS_MIGRATION        = 42;
 
 
   }
 
-  public static final int CURRENT_VERSION = 41;
+  public static final int CURRENT_VERSION = 42;
 
   /**
    * This *must* be called after the {@link JobManager} has been instantiated, but *before* the call
@@ -285,6 +286,10 @@ public class ApplicationMigrations {
 
     if (lastSeenVersion < Version.STICKER_MY_DAILY_LIFE) {
       jobs.put(Version.STICKER_MY_DAILY_LIFE, new StickerMyDailyLifeMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.DB_REACTIONS_MIGRATION) {
+      jobs.put(Version.DB_REACTIONS_MIGRATION, new DatabaseMigrationJob());
     }
 
     return jobs;

@@ -8,10 +8,10 @@ import androidx.annotation.Nullable;
 
 import su.sres.securesms.crypto.IdentityKeyUtil;
 import su.sres.securesms.crypto.ReentrantSessionLock;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.MmsSmsDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.BadGroupIdException;
 import su.sres.securesms.groups.GroupChangeBusyException;
@@ -73,7 +73,7 @@ public class IncomingMessageProcessor {
 
     private Processor(@NonNull Context context) {
       this.context        = context;
-      this.mmsSmsDatabase = DatabaseFactory.getMmsSmsDatabase(context);
+      this.mmsSmsDatabase = ShadowDatabase.mmsSms();
       this.jobManager     = ApplicationDependencies.getJobManager();
     }
 
@@ -165,7 +165,7 @@ public class IncomingMessageProcessor {
       Log.i(TAG, "Received server receipt. Sender: " + sender.getId() + ", Device: " + envelope.getSourceDevice() + ", Timestamp: " + envelope.getTimestamp());
 
       mmsSmsDatabase.incrementDeliveryReceiptCount(new SyncMessageId(sender.getId(), envelope.getTimestamp()), System.currentTimeMillis());
-      DatabaseFactory.getMessageLogDatabase(context).deleteEntryForRecipient(envelope.getTimestamp(), sender.getId(), envelope.getSourceDevice());
+      ShadowDatabase.messageLog().deleteEntryForRecipient(envelope.getTimestamp(), sender.getId(), envelope.getSourceDevice());
     }
 
     private boolean needsToEnqueueDecryption() {
@@ -183,7 +183,7 @@ public class IncomingMessageProcessor {
 
           if (groupId.isV2()) {
             String        queueName     = PushProcessMessageJob.getQueueName(Recipient.externalPossiblyMigratedGroup(context, groupId).getId());
-            GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
+            GroupDatabase groupDatabase = ShadowDatabase.groups();
 
             return !jobManager.isQueueEmpty(queueName) ||
                    groupContext.getGroupV2().get().getRevision() > groupDatabase.getGroupV2Revision(groupId.requireV2()) ||

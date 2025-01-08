@@ -9,9 +9,9 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import su.sres.securesms.conversation.ConversationMessage.ConversationMessageFactory;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
 import su.sres.securesms.database.GroupReceiptDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.documents.IdentityKeyMismatch;
 import su.sres.securesms.database.documents.NetworkFailure;
 import su.sres.securesms.database.model.MessageRecord;
@@ -55,10 +55,10 @@ final class MessageDetailsRepository {
                                                  getNetworkFailure(messageRecord, messageRecord.getRecipient()),
                                                  getKeyMismatchFailure(messageRecord, messageRecord.getRecipient())));
     } else {
-      List<GroupReceiptDatabase.GroupReceiptInfo> receiptInfoList = DatabaseFactory.getGroupReceiptDatabase(context).getGroupReceiptInfo(messageRecord.getId());
+      List<GroupReceiptDatabase.GroupReceiptInfo> receiptInfoList = ShadowDatabase.groupReceipts().getGroupReceiptInfo(messageRecord.getId());
 
       if (receiptInfoList.isEmpty()) {
-        List<Recipient> group = DatabaseFactory.getGroupDatabase(context).getGroupMembers(messageRecord.getRecipient().requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
+        List<Recipient> group = ShadowDatabase.groups().getGroupMembers(messageRecord.getRecipient().requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
 
         for (Recipient recipient : group) {
           recipients.add(new RecipientDeliveryStatus(messageRecord,

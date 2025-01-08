@@ -13,8 +13,8 @@ import androidx.core.content.ContextCompat
 import me.leolin.shortcutbadger.ShortcutBadger
 import su.sres.core.util.logging.Log
 import su.sres.securesms.R
-import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.database.MessageDatabase
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.dependencies.ApplicationDependencies
 import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.messages.IncomingMessageObserver
@@ -140,7 +140,7 @@ class MessageNotifierV2(context: Application) : MessageNotifier {
         .forEach { conversation ->
           cleanedUpThreadIds += conversation.threadId
           conversation.notificationItems.forEach { item ->
-            val messageDatabase: MessageDatabase = if (item.isMms) DatabaseFactory.getMmsDatabase(context) else DatabaseFactory.getSmsDatabase(context)
+            val messageDatabase: MessageDatabase = if (item.isMms) ShadowDatabase.mms else ShadowDatabase.sms
             messageDatabase.markAsNotified(item.id)
           }
         }
@@ -192,7 +192,7 @@ class MessageNotifierV2(context: Application) : MessageNotifier {
         smsIds.add(item.id)
       }
     }
-    DatabaseFactory.getMmsSmsDatabase(context).setNotifiedTimestamp(System.currentTimeMillis(), smsIds, mmsIds)
+    ShadowDatabase.mmsSms.setNotifiedTimestamp(System.currentTimeMillis(), smsIds, mmsIds)
 
     Log.i(TAG, "threads: ${state.threadCount} messages: ${state.messageCount}")
   }

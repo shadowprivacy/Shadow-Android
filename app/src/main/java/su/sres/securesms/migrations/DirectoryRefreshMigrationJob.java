@@ -7,7 +7,6 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.util.TextSecurePreferences;
 
 import java.io.IOException;
 
@@ -40,9 +39,9 @@ public final class DirectoryRefreshMigrationJob extends MigrationJob {
 
   @Override
   public void performMigration() throws IOException {
-    if (!TextSecurePreferences.isPushRegistered(context) ||
+    if (!SignalStore.account().isRegistered()                      ||
         !SignalStore.registrationValues().isRegistrationComplete() ||
-        TextSecurePreferences.getLocalAci(context) == null)
+        SignalStore.account().getAci() == null)
     {
       Log.w(TAG, "Not registered! Skipping.");
       return;

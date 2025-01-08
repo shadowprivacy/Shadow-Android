@@ -9,8 +9,8 @@ import org.signal.zkgroup.VerificationFailedException;
 import org.signal.zkgroup.groups.GroupMasterKey;
 import org.signal.zkgroup.groups.UuidCiphertext;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.groups.v2.GroupInviteLinkUrl;
 import su.sres.securesms.groups.v2.GroupLinkPassword;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -82,8 +82,8 @@ public final class GroupManager {
                 avatarChanged);
       }
     } else if (groupId.isV1()) {
-      List<Recipient> members = DatabaseFactory.getGroupDatabase(context)
-              .getGroupMembers(groupId, GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
+      List<Recipient> members = ShadowDatabase.groups()
+                                              .getGroupMembers(groupId, GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
 
       Set<RecipientId> recipientIds = getMemberIds(new HashSet<>(members));
 
@@ -229,7 +229,7 @@ public final class GroupManager {
   public static void updateSelfProfileKeyInGroup(@NonNull Context context, @NonNull GroupId.V2 groupId)
           throws IOException, GroupChangeBusyException, GroupInsufficientRightsException, GroupNotAMemberException, GroupChangeFailedException
   {
-    if (!DatabaseFactory.getGroupDatabase(context).groupExists(groupId)) {
+    if (!ShadowDatabase.groups().groupExists(groupId)) {
       Log.i(TAG, "Group is not available locally " + groupId);
       return;
     }
@@ -245,8 +245,7 @@ public final class GroupManager {
   {
     try (GroupManagerV2.GroupEditor editor = new GroupManagerV2(context).edit(groupId.requireV2())) {
       editor.acceptInvite();
-      DatabaseFactory.getGroupDatabase(context)
-              .setActive(groupId, true);
+      ShadowDatabase.groups().setActive(groupId, true);
     }
   }
 
@@ -361,7 +360,7 @@ public final class GroupManager {
         return editor.addMembers(newMembers);
       }
     } else {
-      GroupDatabase.GroupRecord groupRecord  = DatabaseFactory.getGroupDatabase(context).requireGroup(groupId);
+      GroupDatabase.GroupRecord groupRecord  = ShadowDatabase.groups().requireGroup(groupId);
       List<RecipientId>         members      = groupRecord.getMembers();
       byte[]                    avatar       = groupRecord.hasAvatar() ? AvatarHelper.getAvatarBytes(context, groupRecord.getRecipientId()) : null;
       Set<RecipientId>          recipientIds = new HashSet<>(members);

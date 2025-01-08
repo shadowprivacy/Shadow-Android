@@ -11,7 +11,6 @@ import androidx.annotation.Nullable;
 
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.R;
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.util.CursorUtil;
 import su.sres.securesms.util.SqlUtil;
 
@@ -36,7 +35,7 @@ public class DraftDatabase extends Database {
       "CREATE INDEX IF NOT EXISTS draft_thread_index ON " + TABLE_NAME + " (" + THREAD_ID + ");",
       };
 
-  public DraftDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public DraftDatabase(Context context, ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 

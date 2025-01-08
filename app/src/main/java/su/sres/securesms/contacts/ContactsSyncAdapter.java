@@ -9,7 +9,7 @@ import android.os.Bundle;
 import su.sres.core.util.logging.Log;
 
 import su.sres.securesms.contacts.sync.DirectoryHelper;
-import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.keyvalue.SignalStore;
 
 import java.io.IOException;
 
@@ -29,7 +29,7 @@ public class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
 
     Context context = getContext();
 
-    if (TextSecurePreferences.isPushRegistered(context)) {
+    if (!SignalStore.account().isRegistered()) {
       try {
         DirectoryHelper.refreshDirectory(context);
       } catch (IOException e) {

@@ -14,8 +14,8 @@ import java.io.IOException;
 import java.util.List;
 
 import su.sres.securesms.R;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.groups.GroupChangeException;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.GroupManager;
@@ -54,10 +54,10 @@ public final class LeaveGroupDialog {
         }
 
         SimpleTask.run(activity.getLifecycle(), () -> {
-            GroupDatabase.V2GroupProperties groupProperties = DatabaseFactory.getGroupDatabase(activity)
-                    .getGroup(groupId)
-                    .transform(GroupDatabase.GroupRecord::requireV2GroupProperties)
-                    .orNull();
+            GroupDatabase.V2GroupProperties groupProperties = ShadowDatabase.groups()
+                                                                            .getGroup(groupId)
+                                                                            .transform(GroupDatabase.GroupRecord::requireV2GroupProperties)
+                                                                            .orNull();
 
             if (groupProperties != null && groupProperties.isAdmin(Recipient.self())) {
                 List<Recipient> otherMemberRecipients = groupProperties.getMemberRecipients(GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);

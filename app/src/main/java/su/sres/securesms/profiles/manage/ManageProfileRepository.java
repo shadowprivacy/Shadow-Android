@@ -7,7 +7,9 @@ import androidx.core.util.Consumer;
 
 import su.sres.core.util.concurrent.SignalExecutors;
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
+import su.sres.securesms.dependencies.ApplicationDependencies;
+import su.sres.securesms.jobs.MultiDeviceProfileContentUpdateJob;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.profiles.AvatarHelper;
 import su.sres.securesms.profiles.ProfileName;
@@ -26,7 +28,8 @@ final class ManageProfileRepository {
     SignalExecutors.UNBOUNDED.execute(() -> {
       try {
         ProfileUtil.uploadProfileWithName(context, profileName);
-        DatabaseFactory.getRecipientDatabase(context).setProfileName(Recipient.self().getId(), profileName);
+        ShadowDatabase.recipients().setProfileName(Recipient.self().getId(), profileName);
+        ApplicationDependencies.getJobManager().add(new MultiDeviceProfileContentUpdateJob());
         callback.accept(Result.SUCCESS);
       } catch (IOException e) {
         Log.w(TAG, "Failed to upload profile during name change.", e);
@@ -39,7 +42,8 @@ final class ManageProfileRepository {
     SignalExecutors.UNBOUNDED.execute(() -> {
       try {
         ProfileUtil.uploadProfileWithAbout(context, about, emoji);
-        DatabaseFactory.getRecipientDatabase(context).setAbout(Recipient.self().getId(), about, emoji);
+        ShadowDatabase.recipients().setAbout(Recipient.self().getId(), about, emoji);
+        ApplicationDependencies.getJobManager().add(new MultiDeviceProfileContentUpdateJob());
         callback.accept(Result.SUCCESS);
       } catch (IOException e) {
         Log.w(TAG, "Failed to upload profile during about change.", e);
@@ -54,6 +58,7 @@ final class ManageProfileRepository {
         ProfileUtil.uploadProfileWithAvatar(context, new StreamDetails(new ByteArrayInputStream(data), contentType, data.length));
         AvatarHelper.setAvatar(context, Recipient.self().getId(), new ByteArrayInputStream(data));
         SignalStore.misc().markHasEverHadAnAvatar();
+        ApplicationDependencies.getJobManager().add(new MultiDeviceProfileContentUpdateJob());
         callback.accept(Result.SUCCESS);
       } catch (IOException e) {
         Log.w(TAG, "Failed to upload profile during avatar change.", e);
@@ -67,6 +72,7 @@ final class ManageProfileRepository {
       try {
         ProfileUtil.uploadProfileWithAvatar(context, null);
         AvatarHelper.delete(context, Recipient.self().getId());
+        ApplicationDependencies.getJobManager().add(new MultiDeviceProfileContentUpdateJob());
         callback.accept(Result.SUCCESS);
       } catch (IOException e) {
         Log.w(TAG, "Failed to upload profile during name change.", e);

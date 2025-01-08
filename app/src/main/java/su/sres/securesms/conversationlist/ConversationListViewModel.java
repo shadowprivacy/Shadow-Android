@@ -23,8 +23,8 @@ import su.sres.paging.PagingController;
 import su.sres.securesms.conversationlist.model.Conversation;
 import su.sres.securesms.conversationlist.model.UnreadPayments;
 import su.sres.securesms.conversationlist.model.UnreadPaymentsLiveData;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.DatabaseObserver;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.megaphone.Megaphone;
@@ -90,12 +90,12 @@ class ConversationListViewModel extends ViewModel {
     };
 
     this.hasNoConversations = LiveDataUtil.mapAsync(pagedData.getData(), conversations -> {
-      pinnedCount = DatabaseFactory.getThreadDatabase(application).getPinnedConversationListCount();
+      pinnedCount = ShadowDatabase.threads().getPinnedConversationListCount();
 
       if (conversations.size() > 0) {
         return false;
       } else {
-        return DatabaseFactory.getThreadDatabase(application).getArchivedConversationListCount() == 0;
+        return ShadowDatabase.threads().getArchivedConversationListCount() == 0;
       }
     });
 

@@ -8,13 +8,14 @@ import su.sres.securesms.database.MessageDatabase.SyncMessageId;
 import su.sres.securesms.database.RecipientDatabase.UnidentifiedAccessMode;
 
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.NoSuchMessageException;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.database.model.SmsMessageRecord;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.recipients.RecipientUtil;
@@ -23,7 +24,6 @@ import su.sres.securesms.transport.InsecureFallbackApprovalException;
 import su.sres.securesms.transport.RetryLaterException;
 import su.sres.securesms.transport.UndeliverableMessageException;
 import su.sres.securesms.util.ShadowLocalMetrics;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.Util;
 
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -73,14 +73,14 @@ public class PushTextSendJob extends PushSendJob {
 
   @Override
   public void onAdded() {
-    DatabaseFactory.getSmsDatabase(context).markAsSending(messageId);
+    ShadowDatabase.sms().markAsSending(messageId);
   }
 
   @Override
   public void onPushSend() throws IOException, NoSuchMessageException, UndeliverableMessageException, RetryLaterException {
     ShadowLocalMetrics.IndividualMessageSend.onJobStarted(messageId);
     ExpiringMessageManager expirationManager = ApplicationDependencies.getExpiringMessageManager();
-    MessageDatabase        database          = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase        database          = ShadowDatabase.sms();
     SmsMessageRecord       record            = database.getSmsMessage(messageId);
 
     if (!record.isPending() && !record.isFailed()) {
@@ -104,19 +104,19 @@ public class PushTextSendJob extends PushSendJob {
 
       if (recipient.isSelf()) {
         SyncMessageId id = new SyncMessageId(recipient.getId(), record.getDateSent());
-        DatabaseFactory.getMmsSmsDatabase(context).incrementDeliveryReceiptCount(id, System.currentTimeMillis());
-        DatabaseFactory.getMmsSmsDatabase(context).incrementReadReceiptCount(id, System.currentTimeMillis());
+        ShadowDatabase.mmsSms().incrementDeliveryReceiptCount(id, System.currentTimeMillis());
+        ShadowDatabase.mmsSms().incrementReadReceiptCount(id, System.currentTimeMillis());
       }
 
       if (unidentified && accessMode == UnidentifiedAccessMode.UNKNOWN && profileKey == null) {
         log(TAG, String.valueOf(record.getDateSent()), "Marking recipient as UD-unrestricted following a UD send.");
-        DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.UNRESTRICTED);
+        ShadowDatabase.recipients().setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.UNRESTRICTED);
       } else if (unidentified && accessMode == UnidentifiedAccessMode.UNKNOWN) {
         log(TAG, String.valueOf(record.getDateSent()), "Marking recipient as UD-enabled following a UD send.");
-        DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.ENABLED);
+        ShadowDatabase.recipients().setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.ENABLED);
       } else if (!unidentified && accessMode != UnidentifiedAccessMode.DISABLED) {
         log(TAG, String.valueOf(record.getDateSent()), "Marking recipient as UD-disabled following a non-UD send.");
-        DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.DISABLED);
+        ShadowDatabase.recipients().setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.DISABLED);
       }
 
       if (record.getExpiresIn() > 0) {
@@ -154,10 +154,10 @@ public class PushTextSendJob extends PushSendJob {
 
   @Override
   public void onFailure() {
-    DatabaseFactory.getSmsDatabase(context).markAsSentFailed(messageId);
+    ShadowDatabase.sms().markAsSentFailed(messageId);
 
-    long      threadId  = DatabaseFactory.getSmsDatabase(context).getThreadIdForMessage(messageId);
-    Recipient recipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
+    long      threadId  = ShadowDatabase.sms().getThreadIdForMessage(messageId);
+    Recipient recipient = ShadowDatabase.threads().getRecipientForThreadId(threadId);
 
     if (threadId != -1 && recipient != null) {
       ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, recipient, threadId);
@@ -191,20 +191,20 @@ public class PushTextSendJob extends PushSendJob {
                                                                            .asEndSessionMessage(message.isEndSession())
                                                                            .build();
 
-      if (Util.equals(TextSecurePreferences.getLocalAci(context), address.getAci())) {
+      if (Util.equals(SignalStore.account().getAci(), address.getAci())) {
         Optional<UnidentifiedAccessPair> syncAccess  = UnidentifiedAccessUtil.getAccessForSync(context);
         SignalServiceSyncMessage         syncMessage = buildSelfSendSyncMessage(context, textSecureMessage, syncAccess);
 
         ShadowLocalMetrics.IndividualMessageSend.onDeliveryStarted(messageId);
         SendMessageResult result = messageSender.sendSyncMessage(syncMessage, syncAccess);
 
-        DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(messageRecipient.getId(), message.getDateSent(), result, ContentHint.RESENDABLE, new MessageId(messageId, false));
+        ShadowDatabase.messageLog().insertIfPossible(messageRecipient.getId(), message.getDateSent(), result, ContentHint.RESENDABLE, new MessageId(messageId, false));
         return syncAccess.isPresent();
       } else {
         ShadowLocalMetrics.IndividualMessageSend.onDeliveryStarted(messageId);
         SendMessageResult result = messageSender.sendDataMessage(address, unidentifiedAccess, ContentHint.RESENDABLE, textSecureMessage, new MetricEventListener(messageId));
 
-        DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(messageRecipient.getId(), message.getDateSent(), result, ContentHint.RESENDABLE, new MessageId(messageId, false));
+        ShadowDatabase.messageLog().insertIfPossible(messageRecipient.getId(), message.getDateSent(), result, ContentHint.RESENDABLE, new MessageId(messageId, false));
         return result.getSuccess().isUnidentified();
       }
     } catch (UnregisteredUserException e) {

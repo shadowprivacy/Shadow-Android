@@ -10,6 +10,7 @@ import su.sres.core.util.logging.Log;
 
 import org.signal.ringrtc.GroupCall;
 
+import su.sres.securesms.components.webrtc.EglBaseWrapper;
 import su.sres.securesms.events.WebRtcViewModel;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.ringrtc.RemotePeer;
@@ -62,6 +63,8 @@ class GroupNetworkUnavailableActionProcessor extends WebRtcActionProcessor {
     Log.i(TAG, "handleCancelPreJoinCall():");
 
     WebRtcVideoUtil.deinitializeVideo(currentState);
+
+    EglBaseWrapper.releaseEglBase(RemotePeer.GROUP_CALL_ID.longValue());
 
     return new WebRtcServiceState(new IdleActionProcessor(webRtcInteractor));
   }

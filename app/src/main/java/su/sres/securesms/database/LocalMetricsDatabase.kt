@@ -36,7 +36,7 @@ class LocalMetricsDatabase private constructor(
   SqlCipherDeletingErrorHandler(DATABASE_NAME),
   SqlCipherDatabaseHook()
 ),
-  SignalDatabase {
+  ShadowDatabaseOpenHelper {
 
   companion object {
     private val TAG = Log.tag(LocalMetricsDatabase::class.java)

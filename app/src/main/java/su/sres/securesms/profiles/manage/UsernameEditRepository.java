@@ -5,7 +5,7 @@ import android.app.Application;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.recipients.Recipient;
@@ -43,7 +43,7 @@ class UsernameEditRepository {
     private @NonNull UsernameSetResult setUsernameInternal(@NonNull String username) {
         try {
             accountManager.setUsername(username);
-            DatabaseFactory.getRecipientDatabase(application).setUsername(Recipient.self().getId(), username);
+            ShadowDatabase.recipients().setUsername(Recipient.self().getId(), username);
             Log.i(TAG, "[setUsername] Successfully set username.");
             return UsernameSetResult.SUCCESS;
         } catch (UsernameTakenException e) {
@@ -62,7 +62,7 @@ class UsernameEditRepository {
     private @NonNull UsernameDeleteResult deleteUsernameInternal() {
         try {
             accountManager.deleteUsername();
-            DatabaseFactory.getRecipientDatabase(application).setUsername(Recipient.self().getId(), null);
+            ShadowDatabase.recipients().setUsername(Recipient.self().getId(), null);
             Log.i(TAG, "[deleteUsername] Successfully deleted the username.");
             return UsernameDeleteResult.SUCCESS;
         } catch (IOException e) {

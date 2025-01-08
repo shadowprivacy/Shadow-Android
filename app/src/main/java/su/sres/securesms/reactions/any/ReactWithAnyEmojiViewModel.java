@@ -10,15 +10,19 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.subjects.BehaviorSubject;
 import su.sres.securesms.components.emoji.EmojiPageModel;
 import su.sres.securesms.components.emoji.EmojiPageViewGridAdapter;
 import su.sres.securesms.components.emoji.RecentEmojiPageModel;
+import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.emoji.EmojiCategory;
 import su.sres.securesms.keyboard.emoji.EmojiKeyboardPageCategoryMappingModel;
 import su.sres.securesms.keyboard.emoji.search.EmojiSearchRepository;
 import su.sres.securesms.keyvalue.SignalStore;
-import su.sres.securesms.reactions.ReactionsLoader;
+import su.sres.securesms.reactions.ReactionsRepository;
 import su.sres.securesms.util.MappingModelList;
 import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.securesms.util.livedata.LiveDataUtil;
@@ -35,13 +39,12 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
   private final boolean                     isMms;
   private final EmojiSearchRepository       emojiSearchRepository;
 
-  private final LiveData<MappingModelList>         categories;
-  private final LiveData<MappingModelList>         emojiList;
-  private final MutableLiveData<EmojiSearchResult> searchResults;
-  private final MutableLiveData<String>            selectedKey;
+  private final Observable<MappingModelList>       categories;
+  private final Observable<MappingModelList>       emojiList;
+  private final BehaviorSubject<EmojiSearchResult> searchResults;
+  private final BehaviorSubject<String>            selectedKey;
 
-  private ReactWithAnyEmojiViewModel(@NonNull ReactionsLoader reactionsLoader,
-                                     @NonNull ReactWithAnyEmojiRepository repository,
+  private ReactWithAnyEmojiViewModel(@NonNull ReactWithAnyEmojiRepository repository,
                                      long messageId,
                                      boolean isMms,
                                      @NonNull EmojiSearchRepository emojiSearchRepository)
@@ -50,12 +53,13 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
     this.messageId             = messageId;
     this.isMms                 = isMms;
     this.emojiSearchRepository = emojiSearchRepository;
-    this.searchResults         = new MutableLiveData<>(new EmojiSearchResult());
-    this.selectedKey           = new MutableLiveData<>(getStartingKey());
+    this.searchResults         = BehaviorSubject.createDefault(new EmojiSearchResult());
+    this.selectedKey           = BehaviorSubject.createDefault(getStartingKey());
 
-    LiveData<List<ReactWithAnyEmojiPage>> emojiPages = Transformations.map(reactionsLoader.getReactions(), repository::getEmojiPageModels);
+    Observable<List<ReactWithAnyEmojiPage>> emojiPages = new ReactionsRepository().getReactions(new MessageId(messageId, isMms))
+                                                                                  .map(repository::getEmojiPageModels);
 
-    LiveData<MappingModelList> emojiList = Transformations.map(emojiPages, (pages) -> {
+    Observable<MappingModelList> emojiList = emojiPages.map(pages -> {
       MappingModelList list = new MappingModelList();
 
       for (ReactWithAnyEmojiPage page : pages) {
@@ -69,7 +73,7 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
       return list;
     });
 
-    this.categories = LiveDataUtil.combineLatest(emojiPages, this.selectedKey, (pages, selectedKey) -> {
+    this.categories = Observable.combineLatest(emojiPages, this.selectedKey.distinctUntilChanged(), (pages, selectedKey) -> {
       MappingModelList list = new MappingModelList();
       list.add(new EmojiKeyboardPageCategoryMappingModel.RecentsMappingModel(RecentEmojiPageModel.KEY.equals(selectedKey)));
       list.addAll(pages.stream()
@@ -82,7 +86,7 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
       return list;
     });
 
-    this.emojiList = LiveDataUtil.combineLatest(emojiList, searchResults, (all, search) -> {
+    this.emojiList = Observable.combineLatest(emojiList, searchResults.distinctUntilChanged(), (all, search) -> {
       if (TextUtils.isEmpty(search.query)) {
         return all;
       } else {
@@ -94,35 +98,31 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
     });
   }
 
-  LiveData<MappingModelList> getCategories() {
-    return categories;
+  @NonNull Observable<MappingModelList> getCategories() {
+    return categories.observeOn(AndroidSchedulers.mainThread());
   }
 
-  LiveData<String> getSelectedKey() {
-    return selectedKey;
+  @NonNull Observable<String> getSelectedKey() {
+    return selectedKey.observeOn(AndroidSchedulers.mainThread());
+  }
+
+  @NonNull Observable<MappingModelList> getEmojiList() {
+    return emojiList.observeOn(AndroidSchedulers.mainThread());
   }
 
   void onEmojiSelected(@NonNull String emoji) {
     if (messageId > 0) {
       SignalStore.emojiValues().setPreferredVariation(emoji);
-      repository.addEmojiToMessage(emoji, messageId, isMms);
+      repository.addEmojiToMessage(emoji, new MessageId(messageId, isMms));
     }
-  }
-
-  LiveData<MappingModelList> getEmojiList() {
-    return emojiList;
   }
 
   public void onQueryChanged(String query) {
-    emojiSearchRepository.submitQuery(query, false, SEARCH_LIMIT, m -> searchResults.postValue(new EmojiSearchResult(query, m)));
+    emojiSearchRepository.submitQuery(query, false, SEARCH_LIMIT, m -> searchResults.onNext(new EmojiSearchResult(query, m)));
   }
 
   public void selectPage(@NonNull String key) {
-    if (key.equals(selectedKey.getValue())) {
-      return;
-    }
-
-    selectedKey.setValue(key);
+    selectedKey.onNext(key);
   }
 
   private static @NonNull MappingModelList toMappingModels(@NonNull EmojiPageModel model) {
@@ -156,22 +156,20 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
 
   static class Factory implements ViewModelProvider.Factory {
 
-    private final ReactionsLoader             reactionsLoader;
     private final ReactWithAnyEmojiRepository repository;
     private final long                        messageId;
     private final boolean                     isMms;
 
-    Factory(@NonNull ReactionsLoader reactionsLoader, @NonNull ReactWithAnyEmojiRepository repository, long messageId, boolean isMms) {
-      this.reactionsLoader = reactionsLoader;
-      this.repository      = repository;
-      this.messageId       = messageId;
-      this.isMms           = isMms;
+    Factory(@NonNull ReactWithAnyEmojiRepository repository, long messageId, boolean isMms) {
+      this.repository = repository;
+      this.messageId  = messageId;
+      this.isMms      = isMms;
     }
 
     @Override
     public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
       //noinspection ConstantConditions
-      return modelClass.cast(new ReactWithAnyEmojiViewModel(reactionsLoader, repository, messageId, isMms, new EmojiSearchRepository(ApplicationDependencies.getApplication())));
+      return modelClass.cast(new ReactWithAnyEmojiViewModel(repository, messageId, isMms, new EmojiSearchRepository(ApplicationDependencies.getApplication())));
     }
   }
 }

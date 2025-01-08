@@ -66,7 +66,7 @@ public class RefreshAttributesJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException {
-    if (!TextSecurePreferences.isPushRegistered(context) || TextSecurePreferences.getLocalNumber(context) == null) {
+    if (!SignalStore.account().isRegistered() || SignalStore.account().getUserLogin() == null) {
       Log.w(TAG, "Not yet registered. Skipping.");
       return;
     }
@@ -76,8 +76,8 @@ public class RefreshAttributesJob extends BaseJob {
       return;
     }
 
-    int     registrationId              = TextSecurePreferences.getLocalRegistrationId(context);
-    boolean fetchesMessages             = TextSecurePreferences.isFcmDisabled(context);
+    int     registrationId              = SignalStore.account().getRegistrationId();
+    boolean fetchesMessages             = !SignalStore.account().isFcmEnabled();
     String  pin                         = TextSecurePreferences.getRegistrationLockPin(context);
     byte[]  unidentifiedAccessKey       = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
     boolean universalUnidentifiedAccess = TextSecurePreferences.isUniversalUnidentifiedAccess(context);

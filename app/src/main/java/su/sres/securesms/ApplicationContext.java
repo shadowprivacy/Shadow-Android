@@ -35,10 +35,11 @@ import org.signal.ringrtc.CallManager;
 import su.sres.core.util.tracing.Tracer;
 import su.sres.glide.SignalGlideCodecs;
 import su.sres.securesms.avatar.AvatarPickerStorage;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.crypto.AttachmentSecretProvider;
+import su.sres.securesms.crypto.DatabaseSecretProvider;
 import su.sres.securesms.database.LogDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.SqlCipherLibraryLoader;
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.dependencies.ApplicationDependencyProvider;
 import su.sres.securesms.dependencies.NetworkIndependentProvider;
@@ -52,6 +53,7 @@ import su.sres.securesms.jobs.LicenseManagementJob;
 import su.sres.securesms.jobs.MultiDeviceContactUpdateJob;
 import su.sres.securesms.jobs.CreateSignedPreKeyJob;
 import su.sres.securesms.jobs.FcmRefreshJob;
+import su.sres.securesms.jobs.ProfileUploadJob;
 import su.sres.securesms.jobs.PushNotificationReceiveJob;
 import su.sres.securesms.jobs.RefreshPreKeysJob;
 import su.sres.securesms.jobs.RetrieveProfileJob;
@@ -64,6 +66,7 @@ import su.sres.core.util.logging.Log;
 import su.sres.securesms.logging.PersistentLogger;
 import su.sres.securesms.messageprocessingalarm.MessageProcessReceiver;
 import su.sres.securesms.ratelimit.RateLimitUtil;
+import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.AppForegroundObserver;
 import su.sres.securesms.util.AppStartup;
 import su.sres.securesms.util.ShadowLocalMetrics;
@@ -135,7 +138,12 @@ public class ApplicationContext extends Application implements AppForegroundObse
     super.onCreate();
 
     AppStartup.getInstance().addForemost("security-provider", this::initializeSecurityProvider)
-              .addForemost("sqlcipher-init", () -> SqlCipherLibraryLoader.load())
+              .addForemost("sqlcipher-init", () -> {
+                SqlCipherLibraryLoader.load();
+                ShadowDatabase.init(this,
+                                    DatabaseSecretProvider.getOrCreateDatabaseSecret(this),
+                                    AttachmentSecretProvider.getInstance(this).getOrCreateAttachmentSecret());
+              })
               .addForemost("logging", () -> {
                 initializeLogging();
                 Log.i(TAG, "onCreate()");
@@ -317,7 +325,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
 
   private void initializeFirstEverAppLaunch() {
     if (TextSecurePreferences.getFirstInstallVersion(this) == -1) {
-      if (!SQLCipherOpenHelper.databaseFileExists(this) || VersionTracker.getDaysSinceFirstInstalled(this) < 365) {
+      if (!ShadowDatabase.databaseFileExists(this) || VersionTracker.getDaysSinceFirstInstalled(this) < 365) {
         Log.i(TAG, "First ever app launch!");
 
         AppInitialization.onFirstEverAppLaunch(this);
@@ -334,11 +342,11 @@ public class ApplicationContext extends Application implements AppForegroundObse
     }
   }
 
-  private void initializeGcmCheck() {
-    if (TextSecurePreferences.isPushRegistered(this)) {
-      long nextSetTime = TextSecurePreferences.getFcmTokenLastSetTime(this) + TimeUnit.HOURS.toMillis(6);
+  private void initializeFcmCheck() {
+    if (SignalStore.account().isRegistered()) {
+      long nextSetTime = SignalStore.account().getFcmTokenLastSetTime() + TimeUnit.HOURS.toMillis(6);
 
-      if (TextSecurePreferences.getFcmToken(this) == null || nextSetTime <= System.currentTimeMillis()) {
+      if (SignalStore.account().getFcmToken() == null || nextSetTime <= System.currentTimeMillis()) {
         ApplicationDependencies.getJobManager().add(new FcmRefreshJob());
       }
     }
@@ -382,6 +390,13 @@ public class ApplicationContext extends Application implements AppForegroundObse
     }
   }
 
+  private void ensureProfileUploaded() {
+    if (SignalStore.account().isRegistered() && !SignalStore.registrationValues().hasUploadedProfile() && !Recipient.self().getProfileName().isEmpty()) {
+      Log.w(TAG, "User has a profile, but has not uploaded one. Uploading now.");
+      ApplicationDependencies.getJobManager().add(new ProfileUploadJob());
+    }
+  }
+
   private void executePendingContactSync() {
     if (TextSecurePreferences.needsFullContactSync(this)) {
       ApplicationDependencies.getJobManager().add(new MultiDeviceContactUpdateJob(true));
@@ -412,7 +427,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
 
   @WorkerThread
   private void initializeCleanup() {
-    int deleted = DatabaseFactory.getAttachmentDatabase(this).deleteAbandonedPreuploadedAttachments();
+    int deleted = ShadowDatabase.attachments().deleteAbandonedPreuploadedAttachments();
     Log.i(TAG, "Deleted " + deleted + " abandoned attachments.");
   }
 
@@ -480,7 +495,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
               .addNonBlocking(this::cleanAvatarStorage)
               .addNonBlocking(this::initializeRevealableMessageManager)
               .addNonBlocking(this::initializePendingRetryReceiptManager)
-              .addNonBlocking(this::initializeGcmCheck)
+              .addNonBlocking(this::initializeFcmCheck)
               .addNonBlocking(this::initializeSignedPreKeyCheck)
               .addNonBlocking(this::initializePeriodicTasks)
               .addNonBlocking(this::initializePendingMessages)
@@ -492,11 +507,12 @@ public class ApplicationContext extends Application implements AppForegroundObse
               .addNonBlocking(() -> ApplicationDependencies.getJobManager().beginJobLoop())
               .addNonBlocking(EmojiSource::refresh)
               .addNonBlocking(() -> ApplicationDependencies.getGiphyMp4Cache().onAppStart(this))
+              .addNonBlocking(this::ensureProfileUploaded)
               .addPostRender(() -> RateLimitUtil.retryAllRateLimitedMessages(this))
               .addPostRender(this::initializeExpiringMessageManager)
               .addPostRender(() -> DownloadLatestEmojiDataJob.scheduleIfNecessary(this))
               .addPostRender(EmojiSearchIndexDownloadJob::scheduleIfNecessary)
-              .addPostRender(() -> DatabaseFactory.getMessageLogDatabase(this).trimOldMessages(System.currentTimeMillis(), FeatureFlags.retryRespondMaxAge()))
+              .addPostRender(() -> ShadowDatabase.messageLog().trimOldMessages(System.currentTimeMillis(), FeatureFlags.retryRespondMaxAge()))
               .execute();
 
     initializedOnCreate = true;
@@ -504,7 +520,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
   }
 
   private void launchCertificateRefresh() {
-    if (TextSecurePreferences.isPushRegistered(this)) {
+    if (SignalStore.account().isRegistered()) {
       CertificateRefreshJob.scheduleIfNecessary();
     } else {
       Log.i(TAG, "The client is not registered. Certificate refresh will not be triggered.");
@@ -512,7 +528,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
   }
 
   private void launchLicenseRefresh() {
-    if (TextSecurePreferences.isPushRegistered(this)) {
+    if (SignalStore.account().isRegistered()) {
       LicenseManagementJob.scheduleIfNecessary();
     } else {
       Log.i(TAG, "The client is not registered. License refresh will not be triggered.");
@@ -520,7 +536,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
   }
 
   private void launchServiceConfigRefresh() {
-    if (TextSecurePreferences.isPushRegistered(this)) {
+    if (SignalStore.account().isRegistered()) {
       ServiceConfigRefreshJob.scheduleIfNecessary();
     } else {
       Log.i(TAG, "The client is not registered. Service configuration refresh will not be triggered.");

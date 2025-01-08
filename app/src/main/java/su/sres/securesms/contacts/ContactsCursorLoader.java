@@ -23,8 +23,8 @@ import android.database.MatrixCursor;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.R;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.ThreadDatabase;
 import su.sres.securesms.database.model.ThreadRecord;
 import su.sres.core.util.logging.Log;
@@ -184,7 +184,7 @@ public class ContactsCursorLoader extends AbstractContactsCursorLoader {
   }
 
   private Cursor getRecentConversationsCursor(boolean groupsOnly) {
-    ThreadDatabase threadDatabase = DatabaseFactory.getThreadDatabase(getContext());
+    ThreadDatabase threadDatabase = ShadowDatabase.threads();
 
     MatrixCursor recentConversations = ContactsCursorRows.createMatrixCursor(RECENT_CONVERSATION_MAX);
     try (Cursor rawConversations = threadDatabase.getRecentConversationList(RECENT_CONVERSATION_MAX, flagSet(mode, DisplayMode.FLAG_INACTIVE_GROUPS), groupsOnly, hideGroupsV1(mode), !smsEnabled(mode))) {
@@ -212,7 +212,7 @@ public class ContactsCursorLoader extends AbstractContactsCursorLoader {
 
   private Cursor getGroupsCursor() {
     MatrixCursor groupContacts = ContactsCursorRows.createMatrixCursor();
-    try (GroupDatabase.Reader reader = DatabaseFactory.getGroupDatabase(getContext()).getGroupsFilteredByTitle(getFilter(), flagSet(mode, DisplayMode.FLAG_INACTIVE_GROUPS), hideGroupsV1(mode), !smsEnabled(mode))) {
+    try (GroupDatabase.Reader reader = ShadowDatabase.groups().getGroupsFilteredByTitle(getFilter(), flagSet(mode, DisplayMode.FLAG_INACTIVE_GROUPS), hideGroupsV1(mode), !smsEnabled(mode))) {
       GroupDatabase.GroupRecord groupRecord;
       while ((groupRecord = reader.getNext()) != null) {
         groupContacts.addRow(ContactsCursorRows.forGroup(groupRecord));

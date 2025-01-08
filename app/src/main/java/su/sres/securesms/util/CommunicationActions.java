@@ -23,8 +23,8 @@ import androidx.fragment.app.FragmentActivity;
 import su.sres.securesms.R;
 import su.sres.securesms.WebRtcCallActivity;
 import su.sres.securesms.conversation.ConversationIntents;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.groups.ui.invitesandrequests.joining.GroupJoinBottomSheetDialogFragment;
@@ -100,7 +100,7 @@ public class CommunicationActions {
     new AsyncTask<Void, Void, Long>() {
       @Override
       protected Long doInBackground(Void... voids) {
-        return DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient.getId());
+        return ShadowDatabase.threads().getThreadIdFor(recipient.getId());
       }
 
       @Override
@@ -182,9 +182,9 @@ public class CommunicationActions {
     GroupId.V2 groupId = GroupId.v2(groupInviteLinkUrl.getGroupMasterKey());
 
     SimpleTask.run(SignalExecutors.BOUNDED, () -> {
-                     GroupDatabase.GroupRecord group = DatabaseFactory.getGroupDatabase(activity)
-                                                                      .getGroup(groupId)
-                                                                      .orNull();
+                     GroupDatabase.GroupRecord group = ShadowDatabase.groups()
+                                                                     .getGroup(groupId)
+                                                                     .orNull();
 
                      return group != null && group.isActive() ? Recipient.resolved(group.getRecipientId())
                                                               : null;

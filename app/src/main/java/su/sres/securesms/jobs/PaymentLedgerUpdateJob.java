@@ -6,8 +6,8 @@ import androidx.annotation.Nullable;
 import com.mobilecoin.lib.exceptions.FogSyncException;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.PaymentDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -41,10 +41,10 @@ public final class PaymentLedgerUpdateJob extends BaseJob {
 
   private PaymentLedgerUpdateJob(@Nullable UUID paymentUuid) {
     this(new Parameters.Builder()
-                 .setQueue(PaymentSendJob.QUEUE)
-                 .setMaxAttempts(10)
-                 .setMaxInstancesForQueue(1)
-                 .build(),
+             .setQueue(PaymentSendJob.QUEUE)
+             .setMaxAttempts(10)
+             .setMaxInstancesForQueue(1)
+             .build(),
          paymentUuid);
   }
 
@@ -64,8 +64,8 @@ public final class PaymentLedgerUpdateJob extends BaseJob {
 
     Long minimumBlockIndex = null;
     if (paymentUuid != null) {
-      PaymentDatabase.PaymentTransaction payment = DatabaseFactory.getPaymentDatabase(context)
-                                                                  .getPayment(paymentUuid);
+      PaymentDatabase.PaymentTransaction payment = ShadowDatabase.payments()
+                                                                 .getPayment(paymentUuid);
 
       if (payment != null) {
         minimumBlockIndex = payment.getBlockIndex();
@@ -98,8 +98,8 @@ public final class PaymentLedgerUpdateJob extends BaseJob {
   @Override
   public @NonNull Data serialize() {
     return new Data.Builder()
-                   .putString(KEY_PAYMENT_UUID, paymentUuid != null ? paymentUuid.toString() : null)
-                   .build();
+        .putString(KEY_PAYMENT_UUID, paymentUuid != null ? paymentUuid.toString() : null)
+        .build();
   }
 
   @NonNull @Override

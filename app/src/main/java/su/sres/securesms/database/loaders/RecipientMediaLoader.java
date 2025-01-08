@@ -6,8 +6,8 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MediaDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 
@@ -35,10 +35,9 @@ public final class RecipientMediaLoader extends MediaLoader {
   public Cursor getCursor() {
     if (recipientId == null || recipientId.isUnknown()) return null;
 
-    long threadId = DatabaseFactory.getThreadDatabase(getContext())
-                                   .getOrCreateThreadIdFor(Recipient.resolved(recipientId));
+    long threadId = ShadowDatabase.threads()
+                                  .getOrCreateThreadIdFor(Recipient.resolved(recipientId));
 
     return ThreadMediaLoader.createThreadMediaCursor(context, threadId, mediaType, sorting);
   }
-
 }

@@ -4,8 +4,8 @@ import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.groups.GroupId;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -86,7 +86,7 @@ public class TypingSendJob extends BaseJob {
 
     Log.d(TAG, "Sending typing " + (typing ? "started" : "stopped") + " for thread " + threadId);
 
-    Recipient recipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
+    Recipient recipient = ShadowDatabase.threads().getRecipientForThreadId(threadId);
 
     if (recipient == null) {
       Log.w(TAG, "Tried to send a typing indicator to a non-existent thread.");
@@ -117,7 +117,7 @@ public class TypingSendJob extends BaseJob {
     Optional<byte[]> groupId    = Optional.absent();
 
     if (recipient.isGroup()) {
-      recipients = DatabaseFactory.getGroupDatabase(context).getGroupMembers(recipient.requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
+      recipients = ShadowDatabase.groups().getGroupMembers(recipient.requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
       groupId    = Optional.of(recipient.requireGroupId().getDecodedId());
     }
 

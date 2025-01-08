@@ -13,7 +13,7 @@ import java.util.Objects;
 
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.AttachmentId;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.mms.PartUriParser;
 import su.sres.securesms.util.MediaUtil;
 import su.sres.securesms.util.concurrent.SimpleTask;
@@ -85,15 +85,13 @@ public abstract class MediaPreviewFragment extends Fragment {
     return null;
   }
 
-  public void checkMediaStillAvailable() {
+  private void checkMediaStillAvailable() {
     if (attachmentId == null) {
       attachmentId = new PartUriParser(Objects.requireNonNull(requireArguments().getParcelable(DATA_URI))).getPartId();
     }
 
-    final Context context = requireContext().getApplicationContext();
-
     SimpleTask.run(getViewLifecycleOwner().getLifecycle(),
-                   () -> DatabaseFactory.getAttachmentDatabase(context).hasAttachment(attachmentId),
+                   () -> ShadowDatabase.attachments().hasAttachment(attachmentId),
                    hasAttachment -> {if (!hasAttachment) events.mediaNotAvailable();});
   }
 

@@ -3,8 +3,8 @@ package su.sres.securesms.keyboard.sticker
 import android.content.Context
 import androidx.annotation.WorkerThread
 import su.sres.securesms.components.emoji.EmojiUtil
-import su.sres.securesms.database.DatabaseFactory
 import su.sres.securesms.database.EmojiSearchDatabase
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.database.StickerDatabase
 import su.sres.securesms.database.StickerDatabase.StickerRecordReader
 import su.sres.securesms.database.model.StickerRecord
@@ -14,8 +14,8 @@ private const val EMOJI_SEARCH_RESULTS_LIMIT = 20
 
 class StickerSearchRepository(context: Context) {
 
-  private val emojiSearchDatabase: EmojiSearchDatabase = DatabaseFactory.getEmojiSearchDatabase(context)
-  private val stickerDatabase: StickerDatabase = DatabaseFactory.getStickerDatabase(context)
+  private val emojiSearchDatabase: EmojiSearchDatabase = ShadowDatabase.emojiSearch
+  private val stickerDatabase: StickerDatabase = ShadowDatabase.stickers
 
   @WorkerThread
   fun search(query: String): List<StickerRecord> {

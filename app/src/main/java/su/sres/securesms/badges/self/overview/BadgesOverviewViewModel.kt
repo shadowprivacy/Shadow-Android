@@ -16,6 +16,7 @@ import su.sres.securesms.badges.BadgeRepository
 import su.sres.securesms.components.settings.app.subscription.SubscriptionsRepository
 import su.sres.securesms.keyvalue.SignalStore
 import su.sres.securesms.recipients.Recipient
+import su.sres.securesms.util.InternetConnectionObserver
 import su.sres.securesms.util.livedata.Store
 
 private val TAG = Log.tag(BadgesOverviewViewModel::class.java)
@@ -41,6 +42,12 @@ class BadgesOverviewViewModel(
         featuredBadge = recipient.featuredBadge
       )
     }
+
+    disposables += InternetConnectionObserver.observe()
+      .distinctUntilChanged()
+      .subscribeBy { isConnected ->
+        store.update { it.copy(hasInternet = isConnected) }
+      }
 
     disposables += Single.zip(
       subscriptionsRepository.getActiveSubscription(),

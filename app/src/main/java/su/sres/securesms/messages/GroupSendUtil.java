@@ -9,9 +9,9 @@ import androidx.annotation.WorkerThread;
 import su.sres.core.util.logging.Log;
 import su.sres.securesms.crypto.SenderKeyUtil;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase.GroupRecord;
 import su.sres.securesms.database.MessageSendLogDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.GroupId;
@@ -43,6 +43,7 @@ import su.sres.signalservice.api.messages.SignalServiceTypingMessage;
 import su.sres.signalservice.api.messages.calls.SignalServiceCallMessage;
 import su.sres.signalservice.api.push.DistributionId;
 import su.sres.signalservice.api.push.SignalServiceAddress;
+import su.sres.signalservice.api.push.exceptions.NotFoundException;
 import su.sres.signalservice.internal.push.exceptions.InvalidUnidentifiedAccessHeaderException;
 import su.sres.signalservice.internal.push.http.CancelationSignal;
 import su.sres.signalservice.internal.push.http.PartialSendCompleteListener;
@@ -167,7 +168,7 @@ public final class GroupSendUtil {
     List<Recipient> registeredTargets   = allTargets.stream().filter(r -> !unregisteredTargets.contains(r)).collect(Collectors.toList());
 
     RecipientData         recipients  = new RecipientData(context, registeredTargets);
-    Optional<GroupRecord> groupRecord = groupId != null ? DatabaseFactory.getGroupDatabase(context).getGroup(groupId) : Optional.absent();
+    Optional<GroupRecord> groupRecord = groupId != null ? ShadowDatabase.groups().getGroup(groupId) : Optional.absent();
 
     List<Recipient> senderKeyTargets = new LinkedList<>();
     List<Recipient> legacyTargets    = new LinkedList<>();
@@ -213,7 +214,7 @@ public final class GroupSendUtil {
     List<SendMessageResult>    allResults    = new ArrayList<>(allTargets.size());
     SignalServiceMessageSender messageSender = ApplicationDependencies.getSignalServiceMessageSender();
     if (senderKeyTargets.size() > 0 && groupId != null) {
-      DistributionId distributionId = DatabaseFactory.getGroupDatabase(context).getOrCreateDistributionId(groupId);
+      DistributionId distributionId = ShadowDatabase.groups().getOrCreateDistributionId(groupId);
       long           keyCreateTime  = SenderKeyUtil.getCreateTimeForOurKey(context, distributionId);
       long           keyAge         = System.currentTimeMillis() - keyCreateTime;
 
@@ -233,7 +234,7 @@ public final class GroupSendUtil {
         Log.d(TAG, "Successfully sent using sender key to " + successCount + "/" + targets.size() + " sender key targets.");
 
         if (sendOperation.shouldIncludeInMessageLog()) {
-          DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(sendOperation.getSentTimestamp(), senderKeyTargets, results, sendOperation.getContentHint(), sendOperation.getRelatedMessageId());
+          ShadowDatabase.messageLog().insertIfPossible(sendOperation.getSentTimestamp(), senderKeyTargets, results, sendOperation.getContentHint(), sendOperation.getRelatedMessageId());
         }
 
         if (relatedMessageId != null) {
@@ -250,6 +251,9 @@ public final class GroupSendUtil {
         legacyTargets.addAll(senderKeyTargets);
       } catch (InvalidRegistrationIdException e) {
         Log.w(TAG, "Invalid registrationId. Falling back to legacy sends.", e);
+        legacyTargets.addAll(senderKeyTargets);
+      } catch (NotFoundException e) {
+        Log.w(TAG, "Someone was unregistered. Falling back to legacy sends.", e);
         legacyTargets.addAll(senderKeyTargets);
       }
     } else if (relatedMessageId != null) {
@@ -277,7 +281,7 @@ public final class GroupSendUtil {
       List<Optional<UnidentifiedAccessPair>> access          = legacyTargets.stream().map(r -> recipients.getAccessPair(r.getId())).collect(Collectors.toList());
       boolean                                recipientUpdate = isRecipientUpdate || allResults.size() > 0;
 
-      final MessageSendLogDatabase messageLogDatabase  = DatabaseFactory.getMessageLogDatabase(context);
+      final MessageSendLogDatabase messageLogDatabase  = ShadowDatabase.messageLog();
       final AtomicLong             entryId             = new AtomicLong(-1);
       final boolean                includeInMessageLog = sendOperation.shouldIncludeInMessageLog();
 

@@ -5,8 +5,8 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import su.sres.securesms.AppCapabilities;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.recipients.Recipient;
-import su.sres.securesms.util.TextSecurePreferences;
 import su.sres.signalservice.api.account.AccountAttributes;
 
 public final class LogSectionCapabilities implements LogSection {
@@ -18,11 +18,11 @@ public final class LogSectionCapabilities implements LogSection {
 
   @Override
   public @NonNull CharSequence getContent(@NonNull Context context) {
-    if (!TextSecurePreferences.isPushRegistered(context)) {
+    if (!SignalStore.account().isRegistered()) {
       return "Unregistered";
     }
 
-    if (TextSecurePreferences.getLocalNumber(context) == null || TextSecurePreferences.getLocalAci(context) == null) {
+    if (SignalStore.account().getUserLogin() == null || SignalStore.account().getAci() == null) {
       return "Self not yet available!";
     }
 

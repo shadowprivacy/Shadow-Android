@@ -7,7 +7,6 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.recipients.Recipient;
 import org.whispersystems.libsignal.SignalProtocolAddress;
 import su.sres.signalservice.api.push.DistributionId;
@@ -42,7 +41,7 @@ public class SenderKeySharedDatabase extends Database {
                                             TIMESTAMP       + " INTEGER DEFAULT 0, " +
                                             "UNIQUE(" + DISTRIBUTION_ID + "," + ADDRESS + ", " + DEVICE + ") ON CONFLICT REPLACE);";
 
-  SenderKeySharedDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  SenderKeySharedDatabase(Context context, ShadowDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 

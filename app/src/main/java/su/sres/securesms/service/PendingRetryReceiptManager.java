@@ -11,9 +11,9 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.PendingRetryReceiptCache;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.PendingRetryReceiptModel;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.util.FeatureFlags;
@@ -32,7 +32,7 @@ public final class PendingRetryReceiptManager extends TimedEventManager<PendingR
     super(application, "PendingRetryReceiptManager");
 
     this.pendingCache    = ApplicationDependencies.getPendingRetryReceiptCache();
-    this.messageDatabase = DatabaseFactory.getSmsDatabase(application);
+    this.messageDatabase = ShadowDatabase.sms();
 
     scheduleIfNecessary();
   }

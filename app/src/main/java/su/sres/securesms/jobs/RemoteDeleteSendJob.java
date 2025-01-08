@@ -7,9 +7,9 @@ import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MessageDatabase;
 import su.sres.securesms.database.NoSuchMessageException;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.MessageId;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.groups.GroupId;
@@ -57,10 +57,10 @@ public class RemoteDeleteSendJob extends BaseJob {
                                                     boolean isMms)
       throws NoSuchMessageException
   {
-    MessageRecord message = isMms ? DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId)
-                                  : DatabaseFactory.getSmsDatabase(context).getSmsMessage(messageId);
+    MessageRecord message = isMms ? ShadowDatabase.mms().getMessageRecord(messageId)
+                                  : ShadowDatabase.sms().getSmsMessage(messageId);
 
-    Recipient conversationRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(message.getThreadId());
+    Recipient conversationRecipient = ShadowDatabase.threads().getRecipientForThreadId(message.getThreadId());
 
     if (conversationRecipient == null) {
       throw new AssertionError("We have a message, but couldn't find the thread!");
@@ -120,15 +120,15 @@ public class RemoteDeleteSendJob extends BaseJob {
     MessageRecord   message;
 
     if (isMms) {
-      db      = DatabaseFactory.getMmsDatabase(context);
-      message = DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId);
+      db      = ShadowDatabase.mms();
+      message = ShadowDatabase.mms().getMessageRecord(messageId);
     } else {
-      db      = DatabaseFactory.getSmsDatabase(context);
-      message = DatabaseFactory.getSmsDatabase(context).getSmsMessage(messageId);
+      db      = ShadowDatabase.sms();
+      message = ShadowDatabase.sms().getSmsMessage(messageId);
     }
 
     long      targetSentTimestamp   = message.getDateSent();
-    Recipient conversationRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(message.getThreadId());
+    Recipient conversationRecipient = ShadowDatabase.threads().getRecipientForThreadId(message.getThreadId());
 
     if (conversationRecipient == null) {
       throw new AssertionError("We have a message, but couldn't find the thread!");

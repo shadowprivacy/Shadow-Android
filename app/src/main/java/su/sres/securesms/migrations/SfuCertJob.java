@@ -7,7 +7,7 @@ import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
 import su.sres.securesms.jobs.CertificatePullJob;
 import su.sres.core.util.logging.Log;
-import su.sres.securesms.util.TextSecurePreferences;
+import su.sres.securesms.keyvalue.SignalStore;
 
 /**
  * Triggers a certificate pull to import the SFU certificate into the truststore.
@@ -42,7 +42,7 @@ public final class SfuCertJob extends MigrationJob {
 
         // launch CertificatePullJob
         // should not be launched if the client is not (yet) registered, which would be the case e.g. on first-ever install
-        if (TextSecurePreferences.isPushRegistered(context)) {
+        if (SignalStore.account().isRegistered()) {
             Log.i(TAG, "Scheduling certificate pull job");
             ApplicationDependencies.getJobManager().add(new CertificatePullJob());
         }

@@ -1,6 +1,7 @@
 package su.sres.securesms.jobs;
 
 import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -15,7 +16,6 @@ import com.google.android.mms.pdu_alt.PduParser;
 
 import org.whispersystems.libsignal.util.Pair;
 
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.Util;
@@ -48,8 +48,8 @@ public class MmsReceiveJob extends BaseJob {
   @Override
   public @NonNull Data serialize() {
     return new Data.Builder().putString(KEY_DATA, Base64.encodeBytes(data))
-            .putInt(KEY_SUBSCRIPTION_ID, subscriptionId)
-            .build();
+                             .putInt(KEY_SUBSCRIPTION_ID, subscriptionId)
+                             .build();
   }
 
   @Override
@@ -75,14 +75,14 @@ public class MmsReceiveJob extends BaseJob {
     }
 
     if (isNotification(pdu) && !isBlocked(pdu)) {
-      MessageDatabase database           = DatabaseFactory.getMmsDatabase(context);
-      Pair<Long, Long> messageAndThreadId = database.insertMessageInbox((NotificationInd)pdu, subscriptionId);
+      MessageDatabase  database           = ShadowDatabase.mms();
+      Pair<Long, Long> messageAndThreadId = database.insertMessageInbox((NotificationInd) pdu, subscriptionId);
 
       Log.i(TAG, "Inserted received MMS notification...");
 
       ApplicationDependencies.getJobManager().add(new MmsDownloadJob(messageAndThreadId.first(),
-              messageAndThreadId.second(),
-              true));
+                                                                     messageAndThreadId.second(),
+                                                                     true));
     } else if (isNotification(pdu)) {
       Log.w(TAG, "*** Received blocked MMS, ignoring...");
     }

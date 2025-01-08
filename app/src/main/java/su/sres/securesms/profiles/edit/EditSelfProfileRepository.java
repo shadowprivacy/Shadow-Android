@@ -9,7 +9,7 @@ import androidx.core.util.Consumer;
 
 import su.sres.core.util.StreamUtil;
 import su.sres.securesms.conversation.colors.AvatarColor;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.MultiDeviceProfileContentUpdateJob;
 import su.sres.securesms.jobs.MultiDeviceProfileKeyUpdateJob;
@@ -131,7 +131,7 @@ public class EditSelfProfileRepository implements EditProfileRepository {
                             @NonNull Consumer<UploadResult> uploadResultConsumer)
   {
     SimpleTask.run(() -> {
-      DatabaseFactory.getRecipientDatabase(context).setProfileName(Recipient.self().getId(), profileName);
+      ShadowDatabase.recipients().setProfileName(Recipient.self().getId(), profileName);
 
       if (avatarChanged) {
         try {

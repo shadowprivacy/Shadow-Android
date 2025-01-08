@@ -28,7 +28,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.crypto.ReentrantSessionLock;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
 import su.sres.securesms.crypto.storage.SignalProtocolStoreImpl;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.groups.BadGroupIdException;
 import su.sres.securesms.groups.GroupId;
@@ -44,7 +44,6 @@ import su.sres.securesms.notifications.NotificationIds;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.util.FeatureFlags;
 import su.sres.securesms.util.GroupUtil;
-import su.sres.securesms.util.TextSecurePreferences;
 
 import org.whispersystems.libsignal.protocol.CiphertextMessage;
 import org.whispersystems.libsignal.protocol.DecryptionErrorMessage;
@@ -82,7 +81,7 @@ public final class MessageDecryptionUtil {
    */
   public static @NonNull DecryptionResult decrypt(@NonNull Context context, @NonNull SignalServiceEnvelope envelope) {
     SignalProtocolStore  axolotlStore = new SignalProtocolStoreImpl(context);
-    SignalServiceAddress localAddress = new SignalServiceAddress(TextSecurePreferences.getLocalAci(context), Optional.of(TextSecurePreferences.getLocalNumber(context)));
+    SignalServiceAddress localAddress = new SignalServiceAddress(Recipient.self().requireAci(), Recipient.self().requireE164());
     SignalServiceCipher  cipher       = new SignalServiceCipher(localAddress, axolotlStore, ReentrantSessionLock.INSTANCE, UnidentifiedAccessUtil.getCertificateValidator());
     List<Job>            jobs         = new LinkedList<>();
 
@@ -170,15 +169,15 @@ public final class MessageDecryptionUtil {
 
     if (groupId.isPresent()) {
       Recipient groupRecipient = Recipient.externalPossiblyMigratedGroup(context, groupId.get());
-      threadId = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(groupRecipient);
+      threadId = ShadowDatabase.threads().getOrCreateThreadIdFor(groupRecipient);
     } else {
-      threadId = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(sender);
+      threadId = ShadowDatabase.threads().getOrCreateThreadIdFor(sender);
     }
 
     switch (contentHint) {
       case DEFAULT:
         Log.w(TAG, "[" + envelope.getTimestamp() + "] Inserting an error right away because it's " + contentHint);
-        DatabaseFactory.getSmsDatabase(context).insertBadDecryptMessage(sender.getId(), senderDevice, envelope.getTimestamp(), receivedTimestamp, threadId);
+        ShadowDatabase.sms().insertBadDecryptMessage(sender.getId(), senderDevice, envelope.getTimestamp(), receivedTimestamp, threadId);
         break;
       case RESENDABLE:
         Log.w(TAG, "[" + envelope.getTimestamp() + "] Inserting into pending retries store because it's " + contentHint);

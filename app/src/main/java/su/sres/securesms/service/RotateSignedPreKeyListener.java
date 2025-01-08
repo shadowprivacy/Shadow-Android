@@ -6,6 +6,7 @@ import android.content.Intent;
 import su.sres.securesms.ApplicationContext;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobs.RotateSignedPreKeyJob;
+import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.util.TextSecurePreferences;
 
 import java.util.concurrent.TimeUnit;
@@ -21,7 +22,7 @@ public class RotateSignedPreKeyListener extends PersistentAlarmManagerListener {
 
   @Override
   protected long onAlarm(Context context, long scheduledTime) {
-    if (scheduledTime != 0 && TextSecurePreferences.isPushRegistered(context)) {
+    if (scheduledTime != 0 && SignalStore.account().isRegistered()) {
       ApplicationDependencies.getJobManager().add(new RotateSignedPreKeyJob());
     }
 

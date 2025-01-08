@@ -6,7 +6,7 @@ import android.net.Uri
 import su.sres.securesms.avatar.Avatar
 import su.sres.securesms.avatar.Avatars
 import su.sres.securesms.database.Database
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper
+import su.sres.securesms.database.ShadowDatabase
 import su.sres.securesms.database.model.databaseprotos.CustomAvatar
 import su.sres.securesms.groups.GroupId
 import su.sres.securesms.util.CursorUtil
@@ -15,7 +15,7 @@ import su.sres.securesms.util.SqlUtil
 /**
  * Database which manages the record keeping for custom created avatars.
  */
-class AvatarPickerDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Database(context, databaseHelper) {
+class AvatarPickerDatabase(context: Context, databaseHelper: ShadowDatabase) : Database(context, databaseHelper) {
 
   companion object {
     const val TABLE_NAME = "avatar_picker"

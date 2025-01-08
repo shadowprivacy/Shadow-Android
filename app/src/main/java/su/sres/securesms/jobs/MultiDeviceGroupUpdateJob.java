@@ -7,8 +7,8 @@ import androidx.annotation.NonNull;
 
 import su.sres.securesms.conversation.colors.ChatColorsMapper;
 import su.sres.securesms.crypto.UnidentifiedAccessUtil;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.GroupDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.Data;
 import su.sres.securesms.jobmanager.Job;
@@ -93,7 +93,7 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
                                                              () -> Log.i(TAG, "Write successful."),
                                                              e -> Log.w(TAG, "Error during write.", e));
 
-    try (GroupDatabase.Reader reader = DatabaseFactory.getGroupDatabase(context).getGroups()) {
+    try (GroupDatabase.Reader reader = ShadowDatabase.groups().getGroups()) {
       DeviceGroupsOutputStream out     = new DeviceGroupsOutputStream(new ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]));
       boolean                  hasData = false;
 
@@ -108,11 +108,11 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
             members.add(RecipientUtil.toSignalServiceAddress(context, member));
           }
 
-          RecipientId               recipientId     = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromPossiblyMigratedGroupId(record.getId());
+          RecipientId               recipientId     = ShadowDatabase.recipients().getOrInsertFromPossiblyMigratedGroupId(record.getId());
           Recipient                 recipient       = Recipient.resolved(recipientId);
           Optional<Integer>         expirationTimer = recipient.getExpiresInSeconds() > 0 ? Optional.of(recipient.getExpiresInSeconds()) : Optional.absent();
-          Map<RecipientId, Integer> inboxPositions  = DatabaseFactory.getThreadDatabase(context).getInboxPositions();
-          Set<RecipientId>          archived        = DatabaseFactory.getThreadDatabase(context).getArchivedRecipients();
+          Map<RecipientId, Integer> inboxPositions  = ShadowDatabase.threads().getInboxPositions();
+          Set<RecipientId>          archived        = ShadowDatabase.threads().getArchivedRecipients();
 
           out.write(new DeviceGroup(record.getId().getDecodedId(),
                                     Optional.fromNullable(record.getTitle()),

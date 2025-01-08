@@ -12,7 +12,6 @@ import com.annimon.stream.Stream;
 
 import org.whispersystems.libsignal.util.guava.Preconditions;
 
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.util.Base64;
 import su.sres.securesms.util.SqlUtil;
 import su.sres.signalservice.api.storage.SignalStorageRecord;
@@ -42,7 +41,7 @@ public class UnknownStorageIdDatabase extends Database {
             "CREATE INDEX IF NOT EXISTS storage_key_type_index ON " + TABLE_NAME + " (" + TYPE + ");"
     };
 
-    public UnknownStorageIdDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+    public UnknownStorageIdDatabase(Context context, ShadowDatabase databaseHelper) {
         super(context, databaseHelper);
     }
 

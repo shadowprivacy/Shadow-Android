@@ -12,7 +12,7 @@ import su.sres.securesms.BuildConfig;
 import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.avatar.AvatarPickerStorage;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.emoji.EmojiFiles;
 import su.sres.securesms.providers.BlobProvider;
 import su.sres.securesms.providers.DeprecatedPersistentBlobProvider;
@@ -71,9 +71,9 @@ public class PartAuthority {
     try {
       switch (match) {
         case PART_ROW:
-          return DatabaseFactory.getAttachmentDatabase(context).getAttachmentStream(new PartUriParser(uri).getPartId(), 0);
+          return ShadowDatabase.attachments().getAttachmentStream(new PartUriParser(uri).getPartId(), 0);
         case STICKER_ROW:
-          return DatabaseFactory.getStickerDatabase(context).getStickerStream(ContentUris.parseId(uri));
+          return ShadowDatabase.stickers().getStickerStream(ContentUris.parseId(uri));
         case PERSISTENT_ROW:
           return DeprecatedPersistentBlobProvider.getInstance(context).getStream(context, ContentUris.parseId(uri));
         case BLOB_ROW:
@@ -97,7 +97,7 @@ public class PartAuthority {
 
     switch (match) {
       case PART_ROW:
-        Attachment attachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new PartUriParser(uri).getPartId());
+        Attachment attachment = ShadowDatabase.attachments().getAttachment(new PartUriParser(uri).getPartId());
 
         if (attachment != null) return attachment.getFileName();
         else return null;
@@ -115,7 +115,7 @@ public class PartAuthority {
 
     switch (match) {
       case PART_ROW:
-        Attachment attachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new PartUriParser(uri).getPartId());
+        Attachment attachment = ShadowDatabase.attachments().getAttachment(new PartUriParser(uri).getPartId());
 
         if (attachment != null) return attachment.getSize();
         else return null;
@@ -133,7 +133,7 @@ public class PartAuthority {
 
     switch (match) {
       case PART_ROW:
-        Attachment attachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new PartUriParser(uri).getPartId());
+        Attachment attachment = ShadowDatabase.attachments().getAttachment(new PartUriParser(uri).getPartId());
 
         if (attachment != null) return attachment.getContentType();
         else return null;
@@ -151,7 +151,7 @@ public class PartAuthority {
 
     switch (match) {
       case PART_ROW:
-        Attachment attachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new PartUriParser(uri).getPartId());
+        Attachment attachment = ShadowDatabase.attachments().getAttachment(new PartUriParser(uri).getPartId());
 
         if (attachment != null) return attachment.isVideoGif();
         else return false;

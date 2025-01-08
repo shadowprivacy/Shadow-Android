@@ -36,7 +36,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 
 import su.sres.signalservice.api.util.UuidUtil;
 import su.sres.signalservice.internal.util.Util;
-import su.sres.signalservice.testutil.ZkGroupLibraryUtil;
+import su.sres.signalservice.testutil.LibSignalLibraryUtil;
 import su.sres.storageservice.protos.groups.local.EnabledState;
 
 import java.util.Collections;
@@ -55,7 +55,7 @@ public final class GroupsV2Operations_decrypt_change_Test {
 
   @Before
   public void setup() throws InvalidInputException {
-    ZkGroupLibraryUtil.assumeZkGroupSupportedOnOS();
+    LibSignalLibraryUtil.assumeLibSignalSupportedOnOS();
 
     server             = new TestZkGroupServer();
     groupSecretParams  = GroupSecretParams.deriveFromMasterKey(new GroupMasterKey(Util.getSecretBytes(32)));
@@ -145,7 +145,7 @@ public final class GroupsV2Operations_decrypt_change_Test {
 
   @Test(expected = InvalidGroupStateException.class)
   public void cannot_decrypt_member_additions_with_bad_cipher_text_field3() throws InvalidProtocolBufferException, VerificationFailedException, InvalidGroupStateException {
-    byte[]                      randomPresentation = Util.getSecretBytes(ProfileKeyCredentialPresentation.SIZE);
+    byte[]                      randomPresentation = Util.getSecretBytes(5);
     GroupChange.Actions.Builder actions            = GroupChange.Actions.newBuilder();
 
     actions.addAddMembers(GroupChange.Actions.AddMemberAction.newBuilder()
@@ -168,7 +168,7 @@ public final class GroupsV2Operations_decrypt_change_Test {
 
   @Test(expected = InvalidGroupStateException.class)
   public void cannot_decrypt_member_removals_with_bad_cipher_text_field4() throws InvalidProtocolBufferException, VerificationFailedException, InvalidGroupStateException {
-    byte[]                      randomPresentation = Util.getSecretBytes(UuidCiphertext.SIZE);
+    byte[]                      randomPresentation = Util.getSecretBytes(5);
     GroupChange.Actions.Builder actions            = GroupChange.Actions.newBuilder();
 
     actions.addDeleteMembers(GroupChange.Actions.DeleteMemberAction.newBuilder()

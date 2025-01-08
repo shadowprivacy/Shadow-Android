@@ -11,8 +11,8 @@ import androidx.annotation.WorkerThread;
 import su.sres.securesms.components.mention.MentionAnnotation;
 import su.sres.securesms.conversation.multiselect.Multiselect;
 import su.sres.securesms.conversation.multiselect.MultiselectCollection;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MentionUtil;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.database.model.Mention;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.core.util.Conversions;
@@ -149,7 +149,7 @@ public class ConversationMessage {
     @WorkerThread
     public static @NonNull ConversationMessage createWithUnresolvedData(@NonNull Context context, @NonNull MessageRecord messageRecord, @NonNull CharSequence body) {
       if (messageRecord.isMms()) {
-        List<Mention> mentions = DatabaseFactory.getMentionDatabase(context).getMentionsForMessage(messageRecord.getId());
+        List<Mention> mentions = ShadowDatabase.mentions().getMentionsForMessage(messageRecord.getId());
         if (!mentions.isEmpty()) {
           MentionUtil.UpdatedBodyAndMentions updated = MentionUtil.updateBodyAndMentionsWithDisplayNames(context, body, mentions);
           return new ConversationMessage(messageRecord, updated.getBody(), updated.getMentions());

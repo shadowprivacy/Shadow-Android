@@ -11,8 +11,6 @@ import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 
 
-
-import su.sres.securesms.database.helpers.SQLCipherOpenHelper;
 import su.sres.securesms.database.model.Mention;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.util.CursorUtil;
@@ -30,7 +28,7 @@ public class MentionDatabase extends Database {
 
     private static final String ID           = "_id";
     static final String THREAD_ID    = "thread_id";
-    private static final String MESSAGE_ID   = "message_id";
+    static final String MESSAGE_ID   = "message_id";
     static final String RECIPIENT_ID = "recipient_id";
     private static final String RANGE_START  = "range_start";
     private static final String RANGE_LENGTH = "range_length";
@@ -47,7 +45,7 @@ public class MentionDatabase extends Database {
             "CREATE INDEX IF NOT EXISTS mention_recipient_id_thread_id_index ON " + TABLE_NAME + " (" + RECIPIENT_ID + ", " + THREAD_ID + ");"
     };
 
-    public MentionDatabase(@NonNull Context context, @NonNull SQLCipherOpenHelper databaseHelper) {
+    public MentionDatabase(@NonNull Context context, @NonNull ShadowDatabase databaseHelper) {
         super(context, databaseHelper);
     }
 

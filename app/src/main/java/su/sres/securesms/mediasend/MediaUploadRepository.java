@@ -12,7 +12,7 @@ import su.sres.securesms.attachments.Attachment;
 import su.sres.securesms.attachments.AttachmentId;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.AttachmentDatabase.TransformProperties;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 import su.sres.securesms.jobmanager.JobManager;
 import su.sres.core.util.logging.Log;
@@ -136,7 +136,7 @@ public class MediaUploadRepository {
 
   public void deleteAbandonedAttachments() {
     executor.execute(() -> {
-      int deleted = DatabaseFactory.getAttachmentDatabase(context).deleteAbandonedPreuploadedAttachments();
+      int deleted = ShadowDatabase.attachments().deleteAbandonedPreuploadedAttachments();
       Log.i(TAG, "Deleted " + deleted + " abandoned attachments.");
     });
   }
@@ -165,7 +165,7 @@ public class MediaUploadRepository {
 
   @WorkerThread
   private void updateCaptionsInternal(@NonNull List<Media> updatedMedia) {
-    AttachmentDatabase db = DatabaseFactory.getAttachmentDatabase(context);
+    AttachmentDatabase db = ShadowDatabase.attachments();
 
     for (Media updated : updatedMedia) {
       PreUploadResult result = uploadResults.get(updated);
@@ -195,7 +195,7 @@ public class MediaUploadRepository {
       }
     }
 
-    DatabaseFactory.getAttachmentDatabase(context).updateDisplayOrder(orderMap);
+    ShadowDatabase.attachments().updateDisplayOrder(orderMap);
 
     if (orderedUploadResults.size() == uploadResults.size()) {
       uploadResults.clear();

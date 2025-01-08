@@ -10,9 +10,9 @@ import com.annimon.stream.Stream;
 import su.sres.securesms.R;
 import su.sres.securesms.contacts.avatars.GeneratedContactPhoto;
 import su.sres.securesms.contacts.avatars.ProfileContactPhoto;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.MmsSmsDatabase;
 import su.sres.securesms.database.RecipientDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.recipients.Recipient;
 import su.sres.securesms.recipients.RecipientId;
 import su.sres.securesms.sms.MessageSender;
@@ -35,7 +35,7 @@ public class InsightsRepository implements InsightsDashboardViewModel.Repository
   @Override
   public void getInsightsData(@NonNull Consumer<InsightsData> insightsDataConsumer) {
     SimpleTask.run(() -> {
-      MmsSmsDatabase mmsSmsDatabase = DatabaseFactory.getMmsSmsDatabase(context);
+      MmsSmsDatabase mmsSmsDatabase = ShadowDatabase.mmsSms();
       int            insecure       = mmsSmsDatabase.getInsecureMessageCountForInsights();
       int            secure         = mmsSmsDatabase.getSecureMessageCountForInsights();
 
@@ -50,7 +50,7 @@ public class InsightsRepository implements InsightsDashboardViewModel.Repository
   @Override
   public void getInsecureRecipients(@NonNull Consumer<List<Recipient>> insecureRecipientsConsumer) {
     SimpleTask.run(() -> {
-                     RecipientDatabase recipientDatabase      = DatabaseFactory.getRecipientDatabase(context);
+                     RecipientDatabase recipientDatabase      = ShadowDatabase.recipients();
                      List<RecipientId> unregisteredRecipients = recipientDatabase.getUninvitedRecipientsForInsights();
 
                      return Stream.of(unregisteredRecipients)
@@ -81,7 +81,7 @@ public class InsightsRepository implements InsightsDashboardViewModel.Repository
 
       MessageSender.send(context, new OutgoingTextMessage(resolved, message, subscriptionId), -1L, true, null, null);
 
-      RecipientDatabase database = DatabaseFactory.getRecipientDatabase(context);
+      RecipientDatabase database = ShadowDatabase.recipients();
       database.setHasSentInvite(recipient.getId());
 
       return null;

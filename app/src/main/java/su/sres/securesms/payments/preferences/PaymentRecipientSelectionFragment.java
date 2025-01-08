@@ -16,7 +16,7 @@ import su.sres.securesms.R;
 import su.sres.securesms.components.ContactFilterView;
 import su.sres.securesms.contacts.ContactsCursorLoader.DisplayMode;
 import su.sres.securesms.conversation.ConversationIntents;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.payments.CanNotSendPaymentDialog;
 import su.sres.securesms.payments.preferences.model.PayeeParcelable;
 import su.sres.securesms.recipients.Recipient;
@@ -117,7 +117,7 @@ public class PaymentRecipientSelectionFragment extends LoggingFragment implement
 
   private void openConversation(@NonNull RecipientId recipientId) {
     SimpleTask.run(getViewLifecycleOwner().getLifecycle(),
-                   () -> DatabaseFactory.getThreadDatabase(requireContext()).getThreadIdIfExistsFor(recipientId),
+                   () -> ShadowDatabase.threads().getThreadIdIfExistsFor(recipientId),
                    threadId -> startActivity(ConversationIntents.createBuilder(requireContext(), recipientId, threadId).build()));
   }
 }

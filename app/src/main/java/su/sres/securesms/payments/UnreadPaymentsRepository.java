@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import su.sres.core.util.concurrent.SignalExecutors;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.dependencies.ApplicationDependencies;
 
 import java.util.UUID;
@@ -27,13 +27,12 @@ public class UnreadPaymentsRepository {
   @WorkerThread
   private void markAllPaymentsSeenInternal() {
     Context context = ApplicationDependencies.getApplication();
-    DatabaseFactory.getPaymentDatabase(context).markAllSeen();
+    ShadowDatabase.payments().markAllSeen();
   }
 
   @WorkerThread
   private void markPaymentSeenInternal(@NonNull UUID paymentId) {
     Context context = ApplicationDependencies.getApplication();
-    DatabaseFactory.getPaymentDatabase(context).markPaymentSeen(paymentId);
+    ShadowDatabase.payments().markPaymentSeen(paymentId);
   }
-
 }

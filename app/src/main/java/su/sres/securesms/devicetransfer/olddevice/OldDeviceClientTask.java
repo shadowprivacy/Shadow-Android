@@ -7,12 +7,13 @@ import androidx.annotation.NonNull;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+
 import su.sres.core.util.logging.Log;
 import su.sres.devicetransfer.ClientTask;
 import su.sres.securesms.backup.FullBackupBase;
 import su.sres.securesms.backup.FullBackupExporter;
 import su.sres.securesms.crypto.AttachmentSecretProvider;
-import su.sres.securesms.database.DatabaseFactory;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.keyvalue.SignalStore;
 import su.sres.securesms.net.DeviceTransferBlockingInterceptor;
 
@@ -25,67 +26,67 @@ import java.io.OutputStream;
  */
 final class OldDeviceClientTask implements ClientTask {
 
-    private static final String TAG = Log.tag(OldDeviceClientTask.class);
+  private static final String TAG = Log.tag(OldDeviceClientTask.class);
 
-    private static final long PROGRESS_UPDATE_THROTTLE = 250;
+  private static final long PROGRESS_UPDATE_THROTTLE = 250;
 
-    private long lastProgressUpdate = 0;
+  private long lastProgressUpdate = 0;
 
-    @Override
-    public void run(@NonNull Context context, @NonNull OutputStream outputStream) throws IOException {
-        DeviceTransferBlockingInterceptor.getInstance().blockNetwork();
+  @Override
+  public void run(@NonNull Context context, @NonNull OutputStream outputStream) throws IOException {
+    DeviceTransferBlockingInterceptor.getInstance().blockNetwork();
 
-        long start = System.currentTimeMillis();
+    long start = System.currentTimeMillis();
 
-        EventBus.getDefault().register(this);
-        try {
-            FullBackupExporter.transfer(context,
-                    AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret(),
-                    DatabaseFactory.getBackupDatabase(context),
-                    outputStream,
-                    "deadbeef");
-        } catch (Exception e) {
-            DeviceTransferBlockingInterceptor.getInstance().unblockNetwork();
-            throw e;
-        } finally {
-            EventBus.getDefault().unregister(this);
-        }
-
-        long end = System.currentTimeMillis();
-        Log.i(TAG, "Sending took: " + (end - start));
+    EventBus.getDefault().register(this);
+    try {
+      FullBackupExporter.transfer(context,
+                                  AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret(),
+                                  ShadowDatabase.getBackupDatabase(),
+                                  outputStream,
+                                  "deadbeef");
+    } catch (Exception e) {
+      DeviceTransferBlockingInterceptor.getInstance().unblockNetwork();
+      throw e;
+    } finally {
+      EventBus.getDefault().unregister(this);
     }
 
-    @Subscribe(threadMode = ThreadMode.POSTING)
-    public void onEvent(FullBackupBase.BackupEvent event) {
-        if (event.getType() == FullBackupBase.BackupEvent.Type.PROGRESS) {
-            if (System.currentTimeMillis() > lastProgressUpdate + PROGRESS_UPDATE_THROTTLE) {
-                EventBus.getDefault().post(new Status(event.getCount(), false));
-                lastProgressUpdate = System.currentTimeMillis();
-            }
-        }
+    long end = System.currentTimeMillis();
+    Log.i(TAG, "Sending took: " + (end - start));
+  }
+
+  @Subscribe(threadMode = ThreadMode.POSTING)
+  public void onEvent(FullBackupBase.BackupEvent event) {
+    if (event.getType() == FullBackupBase.BackupEvent.Type.PROGRESS) {
+      if (System.currentTimeMillis() > lastProgressUpdate + PROGRESS_UPDATE_THROTTLE) {
+        EventBus.getDefault().post(new Status(event.getCount(), false));
+        lastProgressUpdate = System.currentTimeMillis();
+      }
+    }
+  }
+
+  @Override
+  public void success() {
+    SignalStore.misc().markOldDeviceTransferLocked();
+    EventBus.getDefault().post(new Status(0, true));
+  }
+
+  public static final class Status {
+    private final long    messages;
+    private final boolean done;
+
+    public Status(long messages, boolean done) {
+      this.messages = messages;
+      this.done     = done;
     }
 
-    @Override
-    public void success() {
-        SignalStore.misc().markOldDeviceTransferLocked();
-        EventBus.getDefault().post(new Status(0, true));
+    public long getMessageCount() {
+      return messages;
     }
 
-    public static final class Status {
-        private final long    messages;
-        private final boolean done;
-
-        public Status(long messages, boolean done) {
-            this.messages = messages;
-            this.done     = done;
-        }
-
-        public long getMessageCount() {
-            return messages;
-        }
-
-        public boolean isDone() {
-            return done;
-        }
+    public boolean isDone() {
+      return done;
     }
+  }
 }

@@ -28,8 +28,6 @@ import static su.sres.securesms.webrtc.CallNotificationBuilder.TYPE_INCOMING_CON
 import static su.sres.securesms.webrtc.CallNotificationBuilder.TYPE_INCOMING_RINGING;
 import static su.sres.securesms.webrtc.CallNotificationBuilder.TYPE_OUTGOING_RINGING;
 
-import com.annimon.stream.Stream;
-
 /**
  * Encapsulates the shared logic to manage an active 1:1 call. An active call is any call that is being setup
  * or ongoing. Other action processors delegate the appropriate action to it but it is not intended
@@ -117,21 +115,6 @@ public class ActiveCallActionProcessorDelegate extends WebRtcActionProcessor {
     }
 
     @Override
-    protected @NonNull WebRtcServiceState handleCallConcluded(@NonNull WebRtcServiceState currentState, @Nullable RemotePeer remotePeer) {
-        Log.i(tag, "handleCallConcluded():");
-
-        if (remotePeer == null) {
-            return currentState;
-        }
-
-        Log.i(tag, "delete remotePeer callId: " + remotePeer.getCallId() + " key: " + remotePeer.hashCode());
-        return currentState.builder()
-                .changeCallInfoState()
-                .removeRemotePeer(remotePeer)
-                .build();
-    }
-
-    @Override
     protected  @NonNull WebRtcServiceState handleReceivedOfferWhileActive(@NonNull WebRtcServiceState currentState, @NonNull RemotePeer remotePeer) {
         RemotePeer activePeer = currentState.getCallInfoState().requireActivePeer();
 
@@ -160,7 +143,7 @@ public class ActiveCallActionProcessorDelegate extends WebRtcActionProcessor {
             webRtcInteractor.stopForegroundService();
         }
 
-        webRtcInteractor.insertMissedCall(remotePeer, remotePeer.getCallStartTimestamp(), currentState.getCallSetupState().isRemoteVideoOffer());
+        webRtcInteractor.insertMissedCall(remotePeer, remotePeer.getCallStartTimestamp(), currentState.getCallSetupState(remotePeer).isRemoteVideoOffer());
 
         return terminate(currentState, remotePeer);
     }
@@ -188,7 +171,7 @@ public class ActiveCallActionProcessorDelegate extends WebRtcActionProcessor {
             }
 
             if (incomingBeforeAccept) {
-                webRtcInteractor.insertMissedCall(remotePeer, remotePeer.getCallStartTimestamp(), currentState.getCallSetupState().isRemoteVideoOffer());
+                webRtcInteractor.insertMissedCall(remotePeer, remotePeer.getCallStartTimestamp(), currentState.getCallSetupState(remotePeer).isRemoteVideoOffer());
             }
         } else if (endedRemoteEvent == CallEvent.ENDED_REMOTE_BUSY && remotePeerIsActive) {
             activePeer.receivedBusy();
@@ -197,11 +180,11 @@ public class ActiveCallActionProcessorDelegate extends WebRtcActionProcessor {
             ringer.start(OutgoingRinger.Type.BUSY);
             ThreadUtil.runOnMainDelayed(ringer::stop, SignalCallManager.BUSY_TONE_LENGTH);
         } else if (endedRemoteEvent == CallEvent.ENDED_REMOTE_GLARE && incomingBeforeAccept) {
-            webRtcInteractor.insertMissedCall(remotePeer, remotePeer.getCallStartTimestamp(), currentState.getCallSetupState().isRemoteVideoOffer());
+            webRtcInteractor.insertMissedCall(remotePeer, remotePeer.getCallStartTimestamp(), currentState.getCallSetupState(remotePeer).isRemoteVideoOffer());
         }
 
         if (state == WebRtcViewModel.State.CALL_ACCEPTED_ELSEWHERE) {
-            webRtcInteractor.insertReceivedCall(remotePeer, currentState.getCallSetupState().isRemoteVideoOffer());
+            webRtcInteractor.insertReceivedCall(remotePeer, currentState.getCallSetupState(remotePeer).isRemoteVideoOffer());
         }
 
         currentState = currentState.builder()
@@ -228,7 +211,7 @@ public class ActiveCallActionProcessorDelegate extends WebRtcActionProcessor {
         }
 
         if (remotePeer.getState() == CallState.ANSWERING || remotePeer.getState() == CallState.LOCAL_RINGING) {
-            webRtcInteractor.insertMissedCall(remotePeer, remotePeer.getCallStartTimestamp(), currentState.getCallSetupState().isRemoteVideoOffer());
+            webRtcInteractor.insertMissedCall(remotePeer, remotePeer.getCallStartTimestamp(), currentState.getCallSetupState(remotePeer).isRemoteVideoOffer());
         }
 
         return terminate(currentState, remotePeer);
@@ -259,7 +242,7 @@ public class ActiveCallActionProcessorDelegate extends WebRtcActionProcessor {
             webRtcInteractor.postStateUpdate(currentState);
 
             if (activePeer.getState() == CallState.ANSWERING || activePeer.getState() == CallState.LOCAL_RINGING) {
-                webRtcInteractor.insertMissedCall(activePeer, activePeer.getCallStartTimestamp(), currentState.getCallSetupState().isRemoteVideoOffer());
+                webRtcInteractor.insertMissedCall(activePeer, activePeer.getCallStartTimestamp(), currentState.getCallSetupState(activePeer).isRemoteVideoOffer());
             }
 
             return terminate(currentState, activePeer);

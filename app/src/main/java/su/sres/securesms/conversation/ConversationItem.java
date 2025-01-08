@@ -56,6 +56,7 @@ import su.sres.securesms.conversation.multiselect.MultiselectCollection;
 import su.sres.securesms.conversation.multiselect.MultiselectPart;
 import su.sres.securesms.database.AttachmentDatabase;
 import su.sres.securesms.database.MessageDatabase;
+import su.sres.securesms.database.ShadowDatabase;
 import su.sres.securesms.giph.mp4.GiphyMp4PlaybackPolicy;
 import su.sres.securesms.giph.mp4.GiphyMp4PlaybackPolicyEnforcer;
 import su.sres.securesms.keyvalue.SignalStore;
@@ -102,7 +103,6 @@ import su.sres.securesms.revealable.ViewOnceMessageView;
 import su.sres.securesms.components.SharedContactView;
 import su.sres.securesms.components.BorderlessImageView;
 import su.sres.securesms.contactshare.Contact;
-import su.sres.securesms.database.DatabaseFactory;
 import su.sres.securesms.database.model.MediaMmsMessageRecord;
 import su.sres.securesms.database.model.MessageRecord;
 import su.sres.securesms.database.model.MmsMessageRecord;
@@ -183,8 +183,8 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   @Nullable private   View                       groupSenderHolder;
   private             AvatarImageView            contactPhoto;
   private             AlertView                  alertView;
-  protected ReactionsConversationView reactionsView;
-  private   BadgeImageView            badgeImageView;
+  protected           ReactionsConversationView  reactionsView;
+  protected           BadgeImageView             badgeImageView;
 
   private @NonNull  Set<MultiselectPart>                    batchSelected = new HashSet<>();
   private @NonNull  Outliner                                outliner      = new Outliner();
@@ -218,8 +218,8 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
   private final Context context;
 
-  private MediaItem mediaItem;
-  private boolean   canPlayContent;
+  private MediaItem          mediaItem;
+  private boolean            canPlayContent;
   private Projection.Corners bodyBubbleCorners;
   private Colorizer          colorizer;
   private boolean            hasWallpaper;
@@ -266,7 +266,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     this.reply              = findViewById(R.id.reply_icon_wrapper);
     this.replyIcon          = findViewById(R.id.reply_icon);
     this.reactionsView      = findViewById(R.id.reactions_view);
-    this.badgeImageView          =                    findViewById(R.id.badge);
+    this.badgeImageView     = findViewById(R.id.badge);
 
     setOnClickListener(new ClickListener(null));
 
@@ -308,7 +308,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     this.groupThread           = conversationRecipient.isGroup();
     this.recipient             = messageRecord.getIndividualRecipient().live();
     this.canPlayContent        = false;
-    this.mediaItem              = null;
+    this.mediaItem             = null;
     this.colorizer             = colorizer;
 
     this.recipient.observeForever(this);
@@ -599,14 +599,14 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
   private static int getProjectionTop(@NonNull View child) {
     Projection projection = Projection.relativeToViewRoot(child, null);
-    int y = (int) projection.getY();
+    int        y          = (int) projection.getY();
     projection.release();
     return y;
   }
 
   private static int getProjectionBottom(@NonNull View child) {
     Projection projection = Projection.relativeToViewRoot(child, null);
-    int bottom = (int) projection.getY() + projection.getHeight();
+    int        bottom     = (int) projection.getY() + projection.getHeight();
     projection.release();
     return bottom;
   }
@@ -1090,7 +1090,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       ViewUtil.updateLayoutParamsIfNonNull(groupSenderHolder, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
       footer.setVisibility(VISIBLE);
 
-      if (thumbnailSlides.size() == 1          &&
+      if (thumbnailSlides.size() == 1 &&
           thumbnailSlides.get(0).isVideoGif() &&
           thumbnailSlides.get(0) instanceof VideoSlide)
       {
@@ -1210,7 +1210,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   }
 
   private void setSharedContactCorners(@NonNull MessageRecord current, @NonNull Optional<MessageRecord> previous, @NonNull Optional<MessageRecord> next, boolean isGroupThread) {
-    if (messageRecord.isDisplayBodyEmpty(getContext())){
+    if (messageRecord.isDisplayBodyEmpty(getContext())) {
       if (isSingularMessage(current, previous, next, isGroupThread) || isEndOfMessageCluster(current, next, isGroupThread)) {
         sharedContactStub.get().setSingularStyle();
       } else if (current.isOutgoing()) {
@@ -1251,6 +1251,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
     contactPhoto.setAvatar(glideRequests, recipient, false);
     badgeImageView.setBadgeFromRecipient(recipient, glideRequests);
+    badgeImageView.setClickable(false);
   }
 
   private void linkifyMessageBody(@NonNull Spannable messageBody,
@@ -2099,8 +2100,8 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     if (message > -1) builder.setMessage(message);
 
     builder.setPositiveButton(R.string.yes, (dialogInterface, i) -> {
-      MessageDatabase db = messageRecord.isMms() ? DatabaseFactory.getMmsDatabase(context)
-                                                 : DatabaseFactory.getSmsDatabase(context);
+      MessageDatabase db = messageRecord.isMms() ? ShadowDatabase.mms()
+                                                 : ShadowDatabase.sms();
 
       db.markAsInsecure(messageRecord.getId());
       db.markAsOutbox(messageRecord.getId());
@@ -2119,9 +2120,9 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
     builder.setNegativeButton(R.string.no, (dialogInterface, i) -> {
       if (messageRecord.isMms()) {
-        DatabaseFactory.getMmsDatabase(context).markAsSentFailed(messageRecord.getId());
+        ShadowDatabase.mms().markAsSentFailed(messageRecord.getId());
       } else {
-        DatabaseFactory.getSmsDatabase(context).markAsSentFailed(messageRecord.getId());
+        ShadowDatabase.sms().markAsSentFailed(messageRecord.getId());
       }
     });
     builder.show();
