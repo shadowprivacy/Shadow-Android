@@ -90,8 +90,8 @@ class MessageSendLogDatabase constructor(context: Context?, databaseHelper: Shad
         BEGIN 
         	DELETE FROM $TABLE_NAME WHERE $ID IN (SELECT ${MessageTable.PAYLOAD_ID} FROM ${MessageTable.TABLE_NAME} WHERE ${MessageTable.MESSAGE_ID} = old.${MmsDatabase.ID} AND ${MessageTable.IS_MMS} = 1);
         END
-        ""${'"'},
-      ""${'"'}
+      """,
+      """
         CREATE TRIGGER msl_attachment_delete AFTER DELETE ON ${AttachmentDatabase.TABLE_NAME}
         BEGIN
         	DELETE FROM $TABLE_NAME WHERE $ID IN (SELECT ${MessageTable.PAYLOAD_ID} FROM ${MessageTable.TABLE_NAME} WHERE ${MessageTable.MESSAGE_ID} = old.${AttachmentDatabase.MMS_ID} AND ${MessageTable.IS_MMS} = 1);
