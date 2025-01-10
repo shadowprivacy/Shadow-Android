@@ -158,7 +158,7 @@ open class ShadowDatabase(private val context: Application, databaseSecret: Data
 
   companion object {
     private val TAG = Log.tag(ShadowDatabase::class.java)
-    private const val DATABASE_NAME = "signal.db"
+    private const val DATABASE_NAME = "shadow.db"
 
     @JvmStatic
     @Volatile
